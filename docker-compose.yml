@@ -1,0 +1,32 @@
+services:
+
+  db:
+    image: postgres:16
+    container_name: ncollection-db
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  odoo:
+    image: odoo:19
+    container_name: ncollection-odoo
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: odoo
+    restart: always
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - ./custom_addons:/mnt/extra-addons
+
+volumes:
+  postgres_data:
+  odoo_data:

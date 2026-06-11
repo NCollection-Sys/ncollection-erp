@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pre-fill main company name with NCollection on install (noupdate so users can change it freely afterwards) -->
+    <record id="base.main_company" model="res.company">
+        <field name="name">NCollection</field>
+    </record>
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Browser title -->
+    <template id="layout" inherit_id="web.layout" name="NCollection Browser Title">
+        <xpath expr="//head/title" position="replace">
+            <title>NCollection ERP</title>
+        </xpath>
+        <!-- Favicon -->
+        <xpath expr="//head/link[@rel='shortcut icon']" position="attributes">
+            <attribute name="href">/ncollection_branding/static/src/img/favicon.ico</attribute>
+        </xpath>
+    </template>
+
+</odoo>

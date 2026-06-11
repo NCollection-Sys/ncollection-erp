@@ -1,0 +1,60 @@
+// NCollection brand color palette
+$ncollection-primary: #1F5F8F;
+$ncollection-secondary: #2D7AB7;
+$ncollection-silver: #C0C7D1;
+$ncollection-background: #F7F9FC;
+$ncollection-text: #0F172A;
+
+:root {
+    --ncollection-primary: #{$ncollection-primary};
+    --ncollection-secondary: #{$ncollection-secondary};
+    --ncollection-silver: #{$ncollection-silver};
+    --ncollection-background: #{$ncollection-background};
+    --ncollection-text: #{$ncollection-text};
+}
+
+body {
+    background-color: var(--ncollection-background);
+    color: var(--ncollection-text);
+}
+
+.o_main_navbar {
+    background-color: $ncollection-primary !important;
+}
+
+a {
+    color: $ncollection-secondary;
+}
+
+.btn-primary {
+    background-color: $ncollection-secondary;
+    border-color: $ncollection-secondary;
+}
+
+.btn-primary:hover {
+    background-color: $ncollection-primary;
+    border-color: $ncollection-primary;
+}
+
+/* Login page */
+.o_login_page .card {
+    border-color: $ncollection-silver;
+}
+
+.ncollection_login_logo {
+    text-align: center;
+    margin-bottom: 20px;
+
+    img {
+        max-height: 60px;
+    }
+}
+
+.o_login_page .btn-primary {
+    background-color: $ncollection-primary;
+    border-color: $ncollection-primary;
+}
+
+.o_login_page a {
+    color: $ncollection-secondary;
+}
