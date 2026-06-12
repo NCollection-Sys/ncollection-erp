@@ -103,19 +103,7 @@
         <field name="name">ncollection.tenant.search</field>
         <field name="model">ncollection.tenant</field>
         <field name="arch" type="xml">
-            <search string="Search Tenants">
-                <field name="company_name"/>
-                <field name="email"/>
-                <field name="plan_id"/>
-                <filter string="Trial" name="trial" domain="[('status', '=', 'trial')]"/>
-                <filter string="Active" name="active_status" domain="[('status', '=', 'active')]"/>
-                <filter string="Suspended" name="suspended" domain="[('status', '=', 'suspended')]"/>
-                <filter string="Expired" name="expired" domain="[('status', '=', 'expired')]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
-                    <filter string="Plan" name="group_plan" context="{'group_by': 'plan_id'}"/>
-                </group>
-            </search>
+            <search/>
         </field>
     </record>
 
@@ -123,7 +111,6 @@
         <field name="name">Tenants</field>
         <field name="res_model">ncollection.tenant</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_ncollection_tenant_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Add your first tenant company

@@ -56,18 +56,7 @@
         <field name="name">ncollection.provisioning.job.search</field>
         <field name="model">ncollection.provisioning.job</field>
         <field name="arch" type="xml">
-            <search string="Search Provisioning Jobs">
-                <field name="tenant_id"/>
-                <field name="database_name"/>
-                <filter string="Queued" name="queued" domain="[('status', '=', 'queued')]"/>
-                <filter string="Running" name="running" domain="[('status', '=', 'running')]"/>
-                <filter string="Done" name="done" domain="[('status', '=', 'done')]"/>
-                <filter string="Failed" name="failed" domain="[('status', '=', 'failed')]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
-                    <filter string="Tenant" name="group_tenant" context="{'group_by': 'tenant_id'}"/>
-                </group>
-            </search>
+            <search/>
         </field>
     </record>
 
@@ -75,7 +64,6 @@
         <field name="name">Provisioning Queue</field>
         <field name="res_model">ncollection.provisioning.job</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_ncollection_provisioning_job_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No provisioning jobs yet
