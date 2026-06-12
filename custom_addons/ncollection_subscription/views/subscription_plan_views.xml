@@ -5,7 +5,7 @@
         <field name="name">ncollection.subscription.plan.tree</field>
         <field name="model">ncollection.subscription.plan</field>
         <field name="arch" type="xml">
-            <tree string="Subscription Plans" decoration-muted="not active">
+            <list string="Subscription Plans" decoration-muted="not active">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="monthly_price" widget="monetary"/>
@@ -15,7 +15,7 @@
                 <field name="tenant_count"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="active" column_invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -51,11 +51,11 @@
                         </page>
                         <page string="Tenants">
                             <field name="tenant_ids" readonly="1">
-                                <tree>
+                                <list>
                                     <field name="company_name"/>
                                     <field name="status"/>
                                     <field name="email"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -80,7 +80,7 @@
     <record id="action_ncollection_subscription_plan" model="ir.actions.act_window">
         <field name="name">Subscription Plans</field>
         <field name="res_model">ncollection.subscription.plan</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_ncollection_subscription_plan_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

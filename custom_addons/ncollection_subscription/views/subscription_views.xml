@@ -5,7 +5,7 @@
         <field name="name">ncollection.subscription.tree</field>
         <field name="model">ncollection.subscription</field>
         <field name="arch" type="xml">
-            <tree string="Subscriptions" decoration-success="status == 'active'"
+            <list string="Subscriptions" decoration-success="status == 'active'"
                   decoration-info="status == 'draft'"
                   decoration-warning="status == 'expired'"
                   decoration-danger="status == 'cancelled'">
@@ -20,7 +20,7 @@
                        decoration-info="status == 'draft'"
                        decoration-warning="status == 'expired'"
                        decoration-danger="status == 'cancelled'"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -78,7 +78,7 @@
     <record id="action_ncollection_subscription" model="ir.actions.act_window">
         <field name="name">Subscriptions</field>
         <field name="res_model">ncollection.subscription</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_ncollection_subscription_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
