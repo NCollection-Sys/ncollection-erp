@@ -26,9 +26,7 @@ SaaS management platform for NCollection ERP administrators:
         'views/provisioning_job_views.xml',
         'views/dashboard_views.xml',
         'views/menus.xml',
-    ],
-    'demo': [
-        'demo/demo_data.xml',
+        'data/demo_data.xml',
     ],
     'assets': {
         'web.assets_backend': [
