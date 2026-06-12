@@ -1,0 +1,42 @@
+{
+    'name': 'NCollection Subscription Management',
+    'version': '19.0.1.0.0',
+    'category': 'Services/SaaS',
+    'summary': 'SaaS subscription, tenant and plan management for NCollection ERP',
+    'description': """
+NCollection Subscription Management
+====================================
+SaaS management platform for NCollection ERP administrators:
+
+* Subscription Plans
+* Tenant Companies
+* Subscriptions
+* Trial account tracking
+* KPI dashboard
+""",
+    'author': 'NCollection',
+    'website': 'https://ncollection.com',
+    'license': 'LGPL-3',
+    'depends': ['base', 'mail'],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/subscription_plan_views.xml',
+        'views/tenant_views.xml',
+        'views/subscription_views.xml',
+        'views/provisioning_job_views.xml',
+        'views/dashboard_views.xml',
+        'views/menus.xml',
+    ],
+    'demo': [
+        'demo/demo_data.xml',
+    ],
+    'assets': {
+        'web.assets_backend': [
+            'ncollection_subscription/static/src/scss/dashboard.scss',
+        ],
+    },
+    'images': ['static/description/icon.png'],
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}

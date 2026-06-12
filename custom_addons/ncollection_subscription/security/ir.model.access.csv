@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ncollection_subscription_plan_admin,ncollection.subscription.plan.admin,model_ncollection_subscription_plan,base.group_system,1,1,1,1
+access_ncollection_tenant_admin,ncollection.tenant.admin,model_ncollection_tenant,base.group_system,1,1,1,1
+access_ncollection_subscription_admin,ncollection.subscription.admin,model_ncollection_subscription,base.group_system,1,1,1,1
+access_ncollection_subscription_dashboard_admin,ncollection.subscription.dashboard.admin,model_ncollection_subscription_dashboard,base.group_system,1,1,1,1
+access_ncollection_provisioning_job_admin,ncollection.provisioning.job.admin,model_ncollection_provisioning_job,base.group_system,1,1,1,1

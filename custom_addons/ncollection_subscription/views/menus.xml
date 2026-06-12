@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_ncollection_saas_root"
+              name="NCollection SaaS"
+              sequence="10"
+              web_icon="ncollection_subscription,static/description/icon.png"/>
+
+    <menuitem id="menu_ncollection_saas_dashboard"
+              name="Dashboard"
+              parent="menu_ncollection_saas_root"
+              action="action_ncollection_subscription_dashboard"
+              sequence="10"/>
+
+    <menuitem id="menu_ncollection_saas_plans"
+              name="Subscription Plans"
+              parent="menu_ncollection_saas_root"
+              action="action_ncollection_subscription_plan"
+              sequence="20"/>
+
+    <menuitem id="menu_ncollection_saas_tenants"
+              name="Tenants"
+              parent="menu_ncollection_saas_root"
+              action="action_ncollection_tenant"
+              sequence="30"/>
+
+    <menuitem id="menu_ncollection_saas_subscriptions"
+              name="Subscriptions"
+              parent="menu_ncollection_saas_root"
+              action="action_ncollection_subscription"
+              sequence="40"/>
+
+    <menuitem id="menu_ncollection_saas_provisioning"
+              name="Provisioning Queue"
+              parent="menu_ncollection_saas_root"
+              action="action_ncollection_provisioning_job"
+              sequence="50"/>
+
+</odoo>

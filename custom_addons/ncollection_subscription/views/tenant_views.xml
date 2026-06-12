@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ncollection_tenant_tree" model="ir.ui.view">
+        <field name="name">ncollection.tenant.tree</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="arch" type="xml">
+            <tree string="Tenants" decoration-success="status == 'active'"
+                  decoration-info="status == 'trial'"
+                  decoration-warning="status == 'suspended'"
+                  decoration-muted="status == 'expired'">
+                <field name="company_name"/>
+                <field name="domain"/>
+                <field name="contact_name"/>
+                <field name="email"/>
+                <field name="plan_id"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'active'"
+                       decoration-info="status == 'trial'"
+                       decoration-warning="status == 'suspended'"
+                       decoration-muted="status == 'expired'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ncollection_tenant_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="arch" type="xml">
+            <form string="Tenant">
+                <header>
+                    <field name="status" widget="statusbar" statusbar_visible="trial,active,suspended,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="company_name" placeholder="e.g. ABC Trading LLC"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Tenant Information">
+                            <field name="database_name"/>
+                            <field name="database_status" widget="badge"
+                                   decoration-success="database_status == 'ready'"
+                                   decoration-info="database_status == 'provisioning'"
+                                   decoration-muted="database_status == 'not_provisioned'"
+                                   decoration-danger="database_status == 'error'"/>
+                            <field name="tenant_uuid" readonly="1"/>
+                            <field name="domain"/>
+                            <field name="plan_id"/>
+                            <field name="subscription_id"/>
+                            <field name="trial_end_date"/>
+                        </group>
+                        <group string="Contact">
+                            <field name="contact_name"/>
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Subscriptions">
+                            <field name="subscription_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="plan_id"/>
+                                    <field name="billing_cycle"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="status" widget="badge"
+                                           decoration-success="status == 'active'"
+                                           decoration-info="status == 'draft'"
+                                           decoration-warning="status == 'expired'"
+                                           decoration-danger="status == 'cancelled'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Provisioning Jobs">
+                            <field name="provisioning_job_ids">
+                                <tree>
+                                    <field name="database_name"/>
+                                    <field name="created_at"/>
+                                    <field name="completed_at"/>
+                                    <field name="status" widget="badge"
+                                           decoration-success="status == 'done'"
+                                           decoration-info="status == 'queued'"
+                                           decoration-warning="status == 'running'"
+                                           decoration-danger="status == 'failed'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ncollection_tenant_search" model="ir.ui.view">
+        <field name="name">ncollection.tenant.search</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="arch" type="xml">
+            <search string="Search Tenants">
+                <field name="company_name"/>
+                <field name="domain"/>
+                <field name="email"/>
+                <field name="plan_id"/>
+                <filter string="Trial" name="trial" domain="[('status', '=', 'trial')]"/>
+                <filter string="Active" name="active_status" domain="[('status', '=', 'active')]"/>
+                <filter string="Suspended" name="suspended" domain="[('status', '=', 'suspended')]"/>
+                <filter string="Expired" name="expired" domain="[('status', '=', 'expired')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Plan" name="group_plan" context="{'group_by': 'plan_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ncollection_tenant" model="ir.actions.act_window">
+        <field name="name">Tenants</field>
+        <field name="res_model">ncollection.tenant</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_ncollection_tenant_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add your first tenant company
+            </p>
+            <p>
+                Tenants represent client companies using NCollection ERP.
+            </p>
+        </field>
+    </record>
+
+</odoo>

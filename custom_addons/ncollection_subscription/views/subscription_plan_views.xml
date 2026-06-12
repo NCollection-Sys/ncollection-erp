@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ncollection_subscription_plan_tree" model="ir.ui.view">
+        <field name="name">ncollection.subscription.plan.tree</field>
+        <field name="model">ncollection.subscription.plan</field>
+        <field name="arch" type="xml">
+            <tree string="Subscription Plans" decoration-muted="not active">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="monthly_price" widget="monetary"/>
+                <field name="yearly_price" widget="monetary"/>
+                <field name="max_users"/>
+                <field name="max_companies"/>
+                <field name="tenant_count"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="active" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ncollection_subscription_plan_form" model="ir.ui.view">
+        <field name="name">ncollection.subscription.plan.form</field>
+        <field name="model">ncollection.subscription.plan</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Plan">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g. Growth"/>
+                        </h1>
+                        <h3>
+                            <field name="code" placeholder="e.g. GROWTH"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="Pricing">
+                            <field name="currency_id" groups="base.group_multi_currency"/>
+                            <field name="monthly_price" widget="monetary"/>
+                            <field name="yearly_price" widget="monetary"/>
+                        </group>
+                        <group string="Limits">
+                            <field name="max_users"/>
+                            <field name="max_companies"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Plan description for client demos..."/>
+                        </page>
+                        <page string="Tenants">
+                            <field name="tenant_ids" readonly="1">
+                                <tree>
+                                    <field name="company_name"/>
+                                    <field name="status"/>
+                                    <field name="email"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ncollection_subscription_plan_search" model="ir.ui.view">
+        <field name="name">ncollection.subscription.plan.search</field>
+        <field name="model">ncollection.subscription.plan</field>
+        <field name="arch" type="xml">
+            <search string="Search Subscription Plans">
+                <field name="name"/>
+                <field name="code"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ncollection_subscription_plan" model="ir.actions.act_window">
+        <field name="name">Subscription Plans</field>
+        <field name="res_model">ncollection.subscription.plan</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_ncollection_subscription_plan_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription plan
+            </p>
+            <p>
+                Define pricing tiers such as Starter, Growth and Enterprise.
+            </p>
+        </field>
+    </record>
+
+</odoo>

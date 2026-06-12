@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ncollection_subscription_dashboard_form" model="ir.ui.view">
+        <field name="name">ncollection.subscription.dashboard.form</field>
+        <field name="model">ncollection.subscription.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="NCollection SaaS Dashboard" create="false" edit="false" delete="false">
+                <div class="o_ncollection_dashboard">
+                    <h1 class="o_ncollection_dashboard_title">NCollection SaaS Overview</h1>
+                    <div class="o_ncollection_kpi_row">
+                        <div class="o_ncollection_kpi_card">
+                            <span class="o_ncollection_kpi_label">Total Tenants</span>
+                            <field name="total_tenants" class="o_ncollection_kpi_value" nolabel="1"/>
+                        </div>
+                        <div class="o_ncollection_kpi_card">
+                            <span class="o_ncollection_kpi_label">Active Tenants</span>
+                            <field name="active_tenants" class="o_ncollection_kpi_value" nolabel="1"/>
+                        </div>
+                        <div class="o_ncollection_kpi_card">
+                            <span class="o_ncollection_kpi_label">Trial Accounts</span>
+                            <field name="trial_tenants" class="o_ncollection_kpi_value" nolabel="1"/>
+                        </div>
+                        <div class="o_ncollection_kpi_card">
+                            <span class="o_ncollection_kpi_label">Active Subscriptions</span>
+                            <field name="active_subscriptions" class="o_ncollection_kpi_value" nolabel="1"/>
+                        </div>
+                        <div class="o_ncollection_kpi_card">
+                            <span class="o_ncollection_kpi_label">Monthly Revenue</span>
+                            <field name="monthly_revenue" widget="monetary" class="o_ncollection_kpi_value" nolabel="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </div>
+                        <div class="o_ncollection_kpi_card">
+                            <span class="o_ncollection_kpi_label">Expiring Soon (30 days)</span>
+                            <field name="expiring_soon" class="o_ncollection_kpi_value" nolabel="1"/>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Open the dashboard on a fresh transient record each time -->
+    <record id="action_ncollection_subscription_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard</field>
+        <field name="res_model">ncollection.subscription.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="view_id" ref="view_ncollection_subscription_dashboard_form"/>
+    </record>
+
+</odoo>

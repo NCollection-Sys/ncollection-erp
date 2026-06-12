@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Subscription Plans -->
+    <record id="demo_plan_starter" model="ncollection.subscription.plan">
+        <field name="name">Starter</field>
+        <field name="code">STARTER</field>
+        <field name="monthly_price">49.0</field>
+        <field name="yearly_price">490.0</field>
+        <field name="max_users">5</field>
+        <field name="max_companies">1</field>
+        <field name="description">Entry-level plan for small businesses getting started with NCollection ERP.</field>
+    </record>
+
+    <record id="demo_plan_growth" model="ncollection.subscription.plan">
+        <field name="name">Growth</field>
+        <field name="code">GROWTH</field>
+        <field name="monthly_price">149.0</field>
+        <field name="yearly_price">1490.0</field>
+        <field name="max_users">25</field>
+        <field name="max_companies">3</field>
+        <field name="description">For growing companies that need multiple users and companies.</field>
+    </record>
+
+    <record id="demo_plan_enterprise" model="ncollection.subscription.plan">
+        <field name="name">Enterprise</field>
+        <field name="code">ENTERPRISE</field>
+        <field name="monthly_price">399.0</field>
+        <field name="yearly_price">3990.0</field>
+        <field name="max_users">100</field>
+        <field name="max_companies">10</field>
+        <field name="description">Full-scale plan for large organizations with multiple subsidiaries.</field>
+    </record>
+
+    <!-- Tenants -->
+    <record id="demo_tenant_abc_trading" model="ncollection.tenant">
+        <field name="company_name">ABC Trading LLC</field>
+        <field name="database_name">abc_trading</field>
+        <field name="domain">abctrading.ncollection.com</field>
+        <field name="contact_name">Ahmed Al Mansoori</field>
+        <field name="email">ahmed@abctrading.example</field>
+        <field name="phone">+971 50 123 4567</field>
+        <field name="plan_id" ref="demo_plan_growth"/>
+        <field name="status">active</field>
+    </record>
+
+    <record id="demo_tenant_dubai_food" model="ncollection.tenant">
+        <field name="company_name">Dubai Food Industries</field>
+        <field name="database_name">dubai_food</field>
+        <field name="domain">dubaifood.ncollection.com</field>
+        <field name="contact_name">Fatima Al Suwaidi</field>
+        <field name="email">fatima@dubaifood.example</field>
+        <field name="phone">+971 50 234 5678</field>
+        <field name="plan_id" ref="demo_plan_enterprise"/>
+        <field name="status">active</field>
+    </record>
+
+    <record id="demo_tenant_emirates_logistics" model="ncollection.tenant">
+        <field name="company_name">Emirates Logistics</field>
+        <field name="database_name">emirates_logistics</field>
+        <field name="domain">emirateslogistics.ncollection.com</field>
+        <field name="contact_name">Khalid Al Marri</field>
+        <field name="email">khalid@emirateslogistics.example</field>
+        <field name="phone">+971 50 345 6789</field>
+        <field name="plan_id" ref="demo_plan_starter"/>
+        <field name="status">trial</field>
+    </record>
+
+    <!-- Subscriptions -->
+    <record id="demo_subscription_abc_trading" model="ncollection.subscription">
+        <field name="name">SUB-ABC-0001</field>
+        <field name="tenant_id" ref="demo_tenant_abc_trading"/>
+        <field name="plan_id" ref="demo_plan_growth"/>
+        <field name="start_date" eval="(DateTime.now() - relativedelta(months=2)).strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.now() + relativedelta(months=10)).strftime('%Y-%m-%d')"/>
+        <field name="billing_cycle">yearly</field>
+        <field name="status">active</field>
+    </record>
+
+    <record id="demo_subscription_dubai_food" model="ncollection.subscription">
+        <field name="name">SUB-DFI-0001</field>
+        <field name="tenant_id" ref="demo_tenant_dubai_food"/>
+        <field name="plan_id" ref="demo_plan_enterprise"/>
+        <field name="start_date" eval="(DateTime.now() - relativedelta(months=6)).strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.now() + relativedelta(months=6)).strftime('%Y-%m-%d')"/>
+        <field name="billing_cycle">yearly</field>
+        <field name="status">active</field>
+    </record>
+
+    <record id="demo_subscription_emirates_logistics" model="ncollection.subscription">
+        <field name="name">SUB-EL-0001</field>
+        <field name="tenant_id" ref="demo_tenant_emirates_logistics"/>
+        <field name="plan_id" ref="demo_plan_starter"/>
+        <field name="start_date" eval="DateTime.now().strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.now() + relativedelta(days=14)).strftime('%Y-%m-%d')"/>
+        <field name="billing_cycle">monthly</field>
+        <field name="status">draft</field>
+    </record>
+
+    <!-- Link tenants to their current subscription -->
+    <record id="demo_tenant_abc_trading" model="ncollection.tenant">
+        <field name="subscription_id" ref="demo_subscription_abc_trading"/>
+    </record>
+
+    <record id="demo_tenant_dubai_food" model="ncollection.tenant">
+        <field name="subscription_id" ref="demo_subscription_dubai_food"/>
+    </record>
+
+    <record id="demo_tenant_emirates_logistics" model="ncollection.tenant">
+        <field name="subscription_id" ref="demo_subscription_emirates_logistics"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,51 @@
+// NCollection brand colors (kept in sync with ncollection_branding)
+$ncollection-primary: #1F5F8F;
+$ncollection-secondary: #2D7AB7;
+$ncollection-silver: #C0C7D1;
+$ncollection-background: #F7F9FC;
+$ncollection-text: #0F172A;
+
+.o_ncollection_dashboard {
+    padding: 24px;
+    background-color: $ncollection-background;
+
+    .o_ncollection_dashboard_title {
+        color: $ncollection-text;
+        font-weight: 600;
+        margin-bottom: 24px;
+    }
+
+    .o_ncollection_kpi_row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .o_ncollection_kpi_card {
+        flex: 1 1 220px;
+        min-width: 200px;
+        background-color: #FFFFFF;
+        border: 1px solid $ncollection-silver;
+        border-left: 4px solid $ncollection-primary;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .o_ncollection_kpi_label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $ncollection-secondary;
+        margin-bottom: 8px;
+    }
+
+    .o_ncollection_kpi_value {
+        display: block;
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: $ncollection-text;
+    }
+}

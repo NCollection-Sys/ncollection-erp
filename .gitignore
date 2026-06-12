@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+backup/
+*.zip
+
+.vscode/
+.idea/
+
+odoo_data/
+postgres_data/
