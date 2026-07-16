@@ -1,6 +1,6 @@
 # NCollection ERP Platform — Project Management Guide
 
-> **Version**: 2.0  
+> **Version**: 2.1 (aligned with DELIVERABLE_1 v5.0 — see [PLANNING_REVIEW.md](PLANNING_REVIEW.md) for what changed)  
 > **Date**: July 16, 2026  
 > **Classification**: Internal — Project Management Reference  
 > **Prepared By**: Architecture & Planning Team (Gemini, Claude, ChatGPT)  
@@ -34,11 +34,11 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Phases** | 10 |
-| **Total Tasks** | 96 atomic tasks |
+| **Total Phases** | 10 (execution order differs from numbering — see DELIVERABLE_1 §8; Phase 9 Marketplace is DEFERRED after Phase 10) |
+| **Total Tasks** | 99 atomic tasks (max 5 days each) |
 | **Team Size** | 3 remote developers + 3 AI agents |
 | **Estimated Duration** | 14–18 months (realistic range) |
-| **First Production Deployment** | End of Phase 2 (~4 months from now) |
+| **First Production Deployment** | Phase 3 go-live gate P3-T13 (~4–5 months from now) |
 | **Full Platform Completion** | ~16–18 months |
 
 **Reason** for the 14–18 month range: The project includes two experimental phases (AI Platform, Marketplace) and one enterprise-hardening phase that depend heavily on real-world feedback from early tenants.
@@ -119,41 +119,43 @@ Each phase allocates time across three work stages. The ratios shift by phase co
 
 | Phase | Tasks | Dev-Days | Calendar Weeks | Priority | Notes |
 |-------|:-----:|:--------:|:--------------:|:--------:|-------|
-| **1. Customer Workspace** | 16 | 57 | 8–12 | P0 | **CURRENT SPRINT** |
-| **2. SaaS Automation** | 10 | 40 | 6–8 | P1 | Starts after P1 stabilization |
-| **3. ERP + UAE** | 10 | 32 | 5–7 | P1 | Overlaps with Phase 2 (DEV-2/3) |
-| **4. Dashboards** | 4 | 17 | 3–4 | P2 | Relatively lightweight |
-| **5. AI Platform** | 6 | 27 | 4–6 | P3 | Experimental — budget 25% for spikes |
-| **6. Customer Portal** | 5 | 22 | 3–5 | P3 | Depends on Phase 2 billing |
-| **7. Mobile** | 6 | 30 | 6–8 | P3 | New stack; longest single-dev load |
-| **8. Platform Services** | 7 | 32 | 5–7 | P3 | REST API is the largest task |
-| **9. Marketplace** | 6 | 31 | 5–7 | P3 | Revenue sharing model needs business input |
-| **10. Enterprise** | 8 | 45 | 8–10 | P3 | HA and scaling are infrastructure-intensive |
-| **TOTAL** | **78** | **333** | **53–74** | | |
+| **1. Customer Workspace** | 21 | 63 | 8–12 | P0 | **CURRENT SPRINT** — incl. E2E framework + license enforcement |
+| **2. SaaS Automation** | 18 | 61 | 7–9 | P1 | DEV-1-heavy by design; DEV-2/3 start Phase 3 in parallel |
+| **3. ERP + UAE** | 13 | 40 | 5–7 | P1 | Ends with the go-live gate (P3-T13) → FIRST PRODUCTION DEPLOY |
+| **4. Dashboards** | 4 | 17 | 3–4 | P2 | Aggregation engine also feeds the AI phase |
+| **5. AI Platform** | 7 | 30 | 5–6 | P3 | Executed AFTER Phase 6; starts with a design spike |
+| **6. Customer Portal** | 5 | 22 | 3–5 | P2 | Pulled ahead of AI — revenue/retention |
+| **7. Mobile** | 7 | 31 | 6–8 | P3 | New stack; framework decision documented |
+| **8. Platform Services** | 8 | 32 | 5–7 | P3 | REST API + full observability |
+| **9. Marketplace** | 7 | 30 | 5–7 | DEFERRED | Executed after Phase 10, only with proven demand |
+| **10. Enterprise** | 9 | 42 | 8–10 | P3 | Executed BEFORE Phase 9 |
+| **TOTAL** | **99** | **368** | **55–76** | | |
 
-> **333 dev-days ÷ 3 developers ÷ 5 days/week = ~22 work-weeks per developer**  
-> With reviews, debugging, meetings, iteration, and holidays: **~53–74 calendar weeks (12–18 months)**
+> **368 dev-days ÷ 3 developers ÷ 5 days/week = ~24.5 work-weeks per developer**  
+> With reviews, debugging, meetings, iteration, and holidays: **~55–76 calendar weeks (13–18 months)**
 
 ### 2.3 Developer Workload Distribution (Phase 1 — Current Sprint)
 
 | Developer | Tasks | Total Days | Critical Path? |
 |-----------|-------|:----------:|:--------------:|
-| DEV-1 | P1-T01, T02, T03, T05, T13, T16 | 19 | ✅ Yes — T01 blocks everything |
-| DEV-2 | P1-T04, T06, T07, T08 | 15 | ✅ Yes — T04 blocks T06 |
-| DEV-3 | P1-T09, T10, T11, T12, T14, T15 | 23 | ⚠️ Heaviest load |
+| DEV-1 | P1-T02, T03, T04, T05, T06, T15, T19, T21 | 20 | ✅ Yes — T02→T03→T06 infra chain |
+| DEV-2 | P1-T01, T07, T08, T09, T10, T11, T18 | 21 | ✅ Yes — T07→T09→T10 licensing chain |
+| DEV-3 | P1-T12, T13, T14, T16, T17, T20 | 22 | Balanced (was 23 in v4.0 — email → DEV-2, URL rewriting → DEV-1) |
 
-**Recommendation**: If DEV-3 is bottlenecked, shift P1-T15 (Email Template Branding) to DEV-2 (who has capacity in Week 4–5).
+**Day-1 starts with zero cross-blocking**: DEV-1 → P1-T02 + P1-T04, DEV-2 → P1-T01, DEV-3 → P1-T13.
 
 ### 2.4 Critical Path Analysis
 
 The critical path (longest sequential chain) for Phase 1:
 
 ```
-P1-T01 → P1-T03 → P1-T04 → P1-T06 → P1-T16
-  4d       1d       5d       5d       3d     = 18 working days minimum
+DEV-2 chain: P1-T01 → P1-T07 → P1-T09 → P1-T10 → P1-T21
+               1d       5d       4d       3d       3d    = 16 working days
+DEV-1 chain: P1-T02 → P1-T03 → P1-T06 → P1-T19 → P1-T21
+               2d       3d       4d       3d       3d    = 15 working days
 ```
 
-**Implication**: Even with infinite developers, Phase 1 cannot complete faster than **~4 calendar weeks** of pure development time (plus buffer).
+**Implication**: Even with infinite developers, Phase 1 cannot complete faster than **~16 working days (~3.5 calendar weeks)** of pure development time (plus buffer) — improved from 18 days in v4.0 by removing the artificial skeleton→Docker dependency.
 
 ---
 
@@ -219,10 +221,10 @@ Each sprint must have a clear, measurable goal:
 ### Committed Tasks
 | Task ID | Task Name | Assigned | Status |
 |---------|-----------|----------|--------|
-| P1-T01  | Docker Hardening | DEV-1 | 🏗️ In Progress |
-| P1-T03  | Addon Skeletons | DEV-1 | 🏗️ In Progress |
-| P1-T07  | Tenant Roles | DEV-2 | 📋 Ready |
-| P1-T09  | Branding Completion | DEV-3 | 📋 Ready |
+| P1-T02  | Multi-Tenant Odoo Config & Secrets | DEV-1 | 🏗️ In Progress |
+| P1-T01  | Addon Skeleton & Test Scaffolding | DEV-2 | 🏗️ In Progress |
+| P1-T08  | Tenant Role Definitions | DEV-2 | 📋 Ready |
+| P1-T13  | Branding Completion | DEV-3 | 📋 Ready |
 
 ### Success Criteria
 - [ ] `docker compose up` starts with Nginx, multi-tenant odoo.conf
@@ -374,7 +376,7 @@ Milestone: Phase 1 — Customer Workspace
 ### 5.3 Issue Template
 
 ```markdown
-## [P1-T04] Tenant & Subscription Model Enhancements
+## [P1-T07] Tenant & Subscription Model Enhancements
 
 **Phase**: 1 — Customer Workspace  
 **Layer**: Platform  
@@ -382,7 +384,7 @@ Milestone: Phase 1 — Customer Workspace
 **Priority**: P0  
 **Estimated Days**: 5  
 **Complexity**: High  
-**Dependencies**: P1-T03 (Addon Skeleton Finalization)
+**Dependencies**: P1-T01 (Addon Skeleton & Test Scaffolding)
 
 ### Context
 The `ncollection.tenant`, `ncollection.subscription`, and `ncollection.subscription.plan`
@@ -420,16 +422,16 @@ business logic required for the Customer Workspace phase.
 
 | Milestone | Due Date | Issues |
 |-----------|----------|:------:|
-| Phase 1: Customer Workspace | Week 12 | 16 |
-| Phase 2: SaaS Automation | Week 18 | 10 |
-| Phase 3: ERP + UAE | Week 20 | 10 |
+| Phase 1: Customer Workspace | Week 12 | 21 |
+| Phase 2: SaaS Automation | Week 18 | 18 |
+| Phase 3: ERP + UAE | Week 20 | 13 |
 | Phase 4: Dashboards | Week 24 | 4 |
-| Phase 5: AI Platform | Week 32 | 6 |
-| Phase 6: Customer Portal | Week 36 | 5 |
-| Phase 7: Mobile | Week 44 | 6 |
-| Phase 8: Platform Services | Week 52 | 7 |
-| Phase 9: Marketplace | Week 60 | 6 |
-| Phase 10: Enterprise Readiness | Week 72 | 8 |
+| Phase 6: Customer Portal | Week 30 | 5 |
+| Phase 5: AI Platform | Week 36 | 7 |
+| Phase 7: Mobile | Week 44 | 7 |
+| Phase 8: Platform Services | Week 52 | 8 |
+| Phase 10: Enterprise Readiness | Week 64 | 9 |
+| Phase 9: Marketplace (DEFERRED) | Week 72+ | 7 |
 
 ---
 
@@ -843,6 +845,7 @@ curl -X POST $DISCORD_WEBHOOK -d '{"content": "⚠️ Rollback to v1.x-1.0 compl
 
 | Level | What | How | Frequency | Retention |
 |-------|------|-----|:---------:|-----------|
+| **PITR / WAL** | Whole cluster, restore to any minute | pgBackRest WAL archiving + weekly full / daily diff base backups (P2-T04) | Continuous | 7-day PITR window, monthly fulls 6 months |
 | **Database** | All tenant PostgreSQL databases | `pg_dump --format=custom` per database | Daily (02:00 UTC) | 7 daily, 4 weekly, 12 monthly |
 | **Filestore** | Odoo attachments per tenant | `tar` of `/data/odoo/filestore/<db>/` | Daily (03:00 UTC) | 7 daily, 4 weekly, 12 monthly |
 | **Configuration** | Docker configs, Nginx, odoo.conf | Git repository (already versioned) | On every commit | Infinite (Git history) |
@@ -889,6 +892,8 @@ curl -X POST $DISCORD_WEBHOOK -d '{"content": "⚠️ Rollback to v1.x-1.0 compl
 | **Design/Wireframes** | Figma | Dashboard/portal/mobile UI design; free for 3 editors | Free |
 | **Database Admin** | pgAdmin (Docker) | Already in Docker Compose; development only | Free |
 | **API Testing** | Bruno (Git-friendly) or Postman | REST API testing (Phase 8) | Free |
+| **E2E Testing** | Playwright (P1-T20) | Automated multi-tenant isolation, visibility, and journey tests in CI | Free |
+| **OCA Dependencies** | git-aggregator (`repos.yml`, P1-T04) | Pinned, reproducible OCA modules across dev/CI/prod | Free |
 | **AI Pair Programming** | Claude (Antigravity) | Implementation partner; follows project rules | Included |
 | **AI Architecture** | ChatGPT | Solution design; OCA evaluation | Subscription |
 | **AI Planning** | Gemini (Antigravity) | Architecture review; planning documents | Included |

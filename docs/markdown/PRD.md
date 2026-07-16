@@ -253,7 +253,7 @@ These are the **core intellectual property** of the NCollection platform.
 
 ### 7.2 `ncollection_subscription` — Subscription Management
 
-**Status**: 🔲 Planned (Sprint 2)
+**Status**: ✅ Implemented (core models, views, security, demo data — see DELIVERABLE_1 §1.2; business-logic enhancements tracked as P1-T07)
 
 **Purpose**: Define and manage subscription plans that control what modules each tenant can access.
 
@@ -274,7 +274,7 @@ These are the **core intellectual property** of the NCollection platform.
 
 ### 7.3 `ncollection_tenant_manager` — Tenant Management
 
-**Status**: 🔲 Planned (Sprint 3)
+**Status**: ✅ Superseded — tenant management was implemented inside `ncollection_subscription` (the `ncollection.tenant` model); a separate module is no longer planned. Provisioning automation lives in `ncollection_saas` (Phase 2).
 
 **Purpose**: Manage isolated customer environments.
 
@@ -718,8 +718,6 @@ ncollection-erp/ ← Our repository, all changes here
 
 | Item | Phase |
 |------|-------|
-| Subscription Management | Phase 1 |
-| Tenant Manager | Phase 1 |
 | UAE Localization | Phase 3 |
 | SaaS Automation | Phase 2 |
 | Executive Dashboards | Phase 4 |

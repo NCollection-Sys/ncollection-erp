@@ -1,10 +1,17 @@
 # NCollection ERP Platform — Master System Design & Execution Plan
 
-> **Version**: 4.0  
-> **Date**: July 16, 2026  
-> **Classification**: Internal — Enterprise Engineering Reference  
-> **Prepared By**: Architecture & Planning Team (Gemini, Claude, ChatGPT)  
-> **Purpose**: The authoritative technical reference for the NCollection ERP Platform. This document defines the complete system architecture, current project state, developer personas, and an exhaustive phase-by-phase execution plan. It assumes all previously completed milestones are stable and continues from the current project state.
+> **Version**: 5.0
+> **Date**: July 16, 2026
+> **Classification**: Internal — Enterprise Engineering Reference
+> **Prepared By**: Architecture & Planning Team
+> **Purpose**: The single authoritative technical reference and execution plan for the NCollection ERP Platform. Version 5.0 is a full revision of v4.0 incorporating the July 2026 planning review: rebalanced workloads, defense-in-depth license enforcement, OCA-first authentication, PITR backups, a dedicated provisioning runner, automated E2E testing, OCA dependency pinning, and two new deep-dive companion documents.
+>
+> **Companion documents** (read together with this plan):
+> - [ARCHITECTURE_DATA_PLATFORM.md](ARCHITECTURE_DATA_PLATFORM.md) — the database & distributed-data backbone: tenant registry, pooling topology, PITR, scaling stages, migration orchestration, and the platform-services (microservices) decomposition roadmap.
+> - [ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md) — the layered security architecture: threat model, tenant isolation guarantees, license enforcement design, authentication, secrets, encryption, and compliance (UAE PDPL).
+> - [DELIVERABLE_2_TIMELINE_AND_TOOLING.md](DELIVERABLE_2_TIMELINE_AND_TOOLING.md) — timeline, sprints, GitHub strategy, CI/CD, releases, risks, budget.
+> - [SPRINT_SCHEDULE.md](SPRINT_SCHEDULE.md) — the resource-constrained sprint-by-sprint schedule: what runs in parallel vs series, per-developer utilization, and how idle gaps are filled by pulling later-phase work forward.
+> - [PLANNING_REVIEW.md](PLANNING_REVIEW.md) — the July 2026 review findings and the v4.0 → v5.0 task ID mapping.
 
 ---
 
@@ -17,17 +24,18 @@
 5. [Team Structure & Personas](#5-team-structure--personas)
 6. [Development Rules & Principles](#6-development-rules--principles)
 7. [Collaboration Workflow](#7-collaboration-workflow)
-8. [Phase 1: Customer Workspace — CURRENT SPRINT](#phase-1-customer-workspace--current-sprint)
-9. [Phase 2: SaaS Automation](#phase-2-saas-automation)
-10. [Phase 3: ERP Enhancement & UAE Localization](#phase-3-erp-enhancement--uae-localization)
-11. [Phase 4: Executive Dashboards](#phase-4-executive-dashboards)
-12. [Phase 5: AI Platform](#phase-5-ai-platform)
-13. [Phase 6: Customer Portal](#phase-6-customer-portal)
-14. [Phase 7: Mobile Application](#phase-7-mobile-application)
-15. [Phase 8: Platform Services](#phase-8-platform-services)
-16. [Phase 9: Marketplace](#phase-9-marketplace)
-17. [Phase 10: Enterprise Readiness](#phase-10-enterprise-readiness)
-18. [Cross-Cutting Concerns](#18-cross-cutting-concerns)
+8. [Phase Execution Order & Gates](#8-phase-execution-order--gates)
+9. [Phase 1: Customer Workspace — CURRENT SPRINT](#phase-1-customer-workspace--current-sprint)
+10. [Phase 2: SaaS Automation](#phase-2-saas-automation)
+11. [Phase 3: ERP Enhancement & UAE Localization](#phase-3-erp-enhancement--uae-localization)
+12. [Phase 4: Executive Dashboards](#phase-4-executive-dashboards)
+13. [Phase 5: AI Platform](#phase-5-ai-platform)
+14. [Phase 6: Customer Portal](#phase-6-customer-portal)
+15. [Phase 7: Mobile Application](#phase-7-mobile-application)
+16. [Phase 8: Platform Services](#phase-8-platform-services)
+17. [Phase 9: Marketplace (DEFERRED)](#phase-9-marketplace-deferred)
+18. [Phase 10: Enterprise Readiness](#phase-10-enterprise-readiness)
+19. [Cross-Cutting Concerns](#19-cross-cutting-concerns)
 
 ---
 
@@ -37,7 +45,7 @@
 
 NCollection ERP is a **commercial SaaS ERP Platform** built on top of **Odoo 19 Community Edition**, targeting small-to-medium businesses (5–100 employees) across the **UAE and GCC region**.
 
-**Critical distinction**: The project is NOT an Odoo customization. Odoo is the **ERP engine**. The real product is the **SaaS platform layer** around Odoo — tenant management, subscription licensing, provisioning, white-label branding, and UAE localization. This platform will eventually serve **thousands of companies across the GCC**.
+**Critical distinction**: The project is NOT an Odoo customization. Odoo is the **ERP engine**. The real product is the **SaaS platform layer** around Odoo — tenant management, subscription licensing, provisioning, white-label branding, and UAE localization. This platform will eventually serve **thousands of companies across the GCC**, which means every design decision must assume: multiple hostile-by-default tenants sharing infrastructure, strict data isolation, and an additional platform layer that must never leak into (or be leaked by) the ERP layer beneath it.
 
 ### 1.2 Completed Milestones (DO NOT REDESIGN)
 
@@ -56,7 +64,6 @@ The following milestones are **complete and stable**. They must not be recreated
 | **MIS Builder** | ✅ Complete | OCA `mis_builder` installed with custom `ncollection_mis_templates` (Balance Sheet, P&L) |
 | **Fresh Origin Demo** | ✅ Complete | Demo company with sample data across CRM, Sales, Purchase, Inventory, HR, Projects |
 | **Dashboard Redesign** | ✅ Complete | `ncollection.subscription.dashboard` transient model with KPI computations (total tenants, MRR, expiring subscriptions) |
-| **OCA Integration** | ✅ Complete | `account_financial_report` + `mis_builder` integrated and verified |
 | **CI/CD Foundation** | ✅ Complete | GitHub Actions pipeline with flake8 linting on PRs to `develop` and `main` |
 
 ### 1.3 Current Project State — What Exists in Code
@@ -67,87 +74,72 @@ The following milestones are **complete and stable**. They must not be recreated
 ncollection-erp/
 ├── custom_addons/
 │   ├── ncollection_branding/        ✅ Implemented (partial — pending items remain)
-│   │   ├── __manifest__.py
-│   │   ├── views/webclient_templates.xml  (title + favicon)
-│   │   ├── static/src/scss/theme_colors.scss
-│   │   ├── static/src/img/
-│   │   └── data/res_company_data.xml
 │   ├── ncollection_subscription/    ✅ Implemented (models + views + demo data)
-│   │   ├── models/  (tenant.py, subscription.py, subscription_plan.py,
-│   │   │            provisioning_job.py, dashboard.py)
-│   │   ├── views/   (6 XML view files + menus)
-│   │   ├── security/ir.model.access.csv
-│   │   ├── data/demo_data.xml
-│   │   └── static/src/scss/dashboard.scss
 │   ├── ncollection_core/            🔲 Skeleton only (manifest + empty init)
 │   └── ncollection_saas/            🔲 Skeleton only (manifest + empty init)
-├── docs/                            ✅ PRD, Roadmap, Master Context, System Design
+├── docs/                            ✅ PRD, Roadmap, System Design, Architecture deep-dives
+├── scripts/github_issue_sync.py     ✅ Task → GitHub Issue importer
 ├── .github/workflows/ci.yml         ✅ flake8 on PRs
 └── docker-compose.yml               ✅ PostgreSQL 16 + Odoo 19
 ```
 
 ### 1.4 Current Sprint: Customer Workspace
 
-The team must focus **exclusively** on the **Customer Workspace** phase. Everything else is lower priority and must not be started until Customer Workspace is complete, tested, and stable.
+The team must focus **exclusively** on the **Customer Workspace** phase (Phase 1 below). Everything else is lower priority and must not be started until Customer Workspace is complete, tested, and stable.
 
 ---
 
 ## 2. System Architecture
 
+> This section is the executive summary. The full backend/database design — connection pooling topology, PITR, tenant registry, scaling stages, service decomposition — lives in **[ARCHITECTURE_DATA_PLATFORM.md](ARCHITECTURE_DATA_PLATFORM.md)**. The full security design lives in **[ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md)**.
+
 ### 2.1 Architecture Overview
 
-The NCollection ERP Platform follows a **database-per-tenant** multi-tenant SaaS architecture, where a single Odoo 19 process serves multiple isolated PostgreSQL databases, each belonging to a different subscribing company.
+The NCollection ERP Platform follows a **database-per-tenant** multi-tenant SaaS architecture, where a single Odoo 19 deployment serves multiple isolated PostgreSQL databases, each belonging to a different subscribing company.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                          INTERNET / CLIENTS                             │
-│                                                                         │
-│  client-a.ncollectionerp.com    client-b.ncollectionerp.com             │
-│  admin.ncollectionerp.com       www.ncollectionerp.com                  │
-└───────────────────────────┬─────────────────────────────────────────────┘
-                            │
+│                          INTERNET / CLIENTS                              │
+│  client-a.ncollectionerp.com    client-b.ncollectionerp.com              │
+│  admin.ncollectionerp.com       www.ncollectionerp.com                   │
+└───────────────────────────┬──────────────────────────────────────────────┘
                             ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                       NGINX REVERSE PROXY                               │
-│                                                                         │
-│  • TLS termination (Let's Encrypt / Certbot auto-renewal)               │
-│  • Wildcard *.ncollectionerp.com → upstream Odoo                        │
-│  • Static file serving + gzip compression                               │
-│  • Rate limiting per IP / per tenant                                    │
-│  • WebSocket proxy for longpolling (port 8072)                          │
-│  • X-Forwarded-For / X-Forwarded-Proto / Host headers                   │
-│  • Security headers (HSTS, X-Frame-Options, CSP)                        │
-└───────────────────────────┬─────────────────────────────────────────────┘
+│                       NGINX REVERSE PROXY (Edge Layer)                   │
+│  • TLS termination (Let's Encrypt wildcard, Certbot auto-renewal)        │
+│  • Wildcard *.ncollectionerp.com → upstream Odoo                         │
+│  • Rate limiting (login endpoints), security headers, gzip               │
+│  • WebSocket proxy for longpolling (port 8072) — DIRECT to Odoo          │
+│  • /web/database/* blocked at the edge                                   │
+└───────────────────────────┬──────────────────────────────────────────────┘
                             │
-             ┌──────────────┼──────────────┐
-             ▼              ▼              ▼
-┌──────────────────┐ ┌──────────────┐ ┌──────────────────┐
-│  Odoo Worker 1   │ │ Odoo Worker 2│ │  Odoo Cron Worker │
-│  (HTTP requests) │ │ (HTTP)       │ │  (scheduled jobs) │
-│  Port 8069       │ │ Port 8069    │ │  Port 8069        │
-└────────┬─────────┘ └──────┬───────┘ └────────┬──────────┘
-         │                  │                   │
-         └──────────────────┼───────────────────┘
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-┌──────────────────┐ ┌────────────┐ ┌───────────────┐
-│  PostgreSQL 16   │ │   Redis    │ │  PgBouncer    │
-│                  │ │  (sessions │ │  (connection   │
-│  ┌────────────┐  │ │   + cache) │ │   pooling)    │
-│  │ admin_db   │  │ └────────────┘ └───────────────┘
-│  │ (Platform) │  │
-│  ├────────────┤  │
-│  │ client1_db │  │        ┌──────────────────────────┐
-│  │ (Tenant)   │  │        │     EXTERNAL SERVICES     │
-│  ├────────────┤  │        │                          │
-│  │ client2_db │  │        │  S3/Backblaze  (Backups) │
-│  │ (Tenant)   │  │        │  SMTP/Mailgun  (Email)   │
-│  ├────────────┤  │        │  LLM API       (Phase 5) │
-│  │ client_N   │  │        │  Payment GW    (Phase 6) │
-│  │ (Tenant)   │  │        │  Firebase FCM  (Phase 7) │
-│  └────────────┘  │        │  Prometheus    (Phase 8) │
-└──────────────────┘        └──────────────────────────┘
+             ┌──────────────┼────────────────────┐
+             ▼              ▼                    ▼
+┌──────────────────┐ ┌──────────────┐ ┌─────────────────────────────┐
+│  Odoo HTTP       │ │ Odoo Cron    │ │ Provisioning Runner          │
+│  Workers (8069)  │ │ Worker       │ │ (dedicated container,        │
+│                  │ │              │ │  queue_job — Phase 2)        │
+└────────┬─────────┘ └──────┬───────┘ └────────┬────────────────────┘
+         │ 8069 via PgBouncer│                  │ direct
+         │ 8072 DIRECT ──────┼──────────────────┤
+         ▼                   ▼                  ▼
+┌──────────────────────────────────────────────────────────┐
+│  PgBouncer (transaction pooling — HTTP workers ONLY)      │
+│  WebSocket/bus connections BYPASS PgBouncer (LISTEN/NOTIFY│
+│  requires direct sessions)                                │
+└───────────────────────────┬──────────────────────────────┘
+                            ▼
+┌──────────────────┐   ┌────────────┐   ┌──────────────────────────┐
+│  PostgreSQL 16   │   │   Redis    │   │  EXTERNAL SERVICES        │
+│  ┌────────────┐  │   │ (cache,    │   │  S3/Backblaze  (Backups)  │
+│  │ admin_db   │  │   │  queues)   │   │  SMTP/Mailgun  (Email)    │
+│  │ (Platform) │  │   └────────────┘   │  Stripe        (Phase 2)  │
+│  ├────────────┤  │                    │  LLM API       (Phase 5)  │
+│  │ clienta    │  │   ┌────────────┐   │  PayTabs/Tap   (Phase 6)  │
+│  │ clientb    │  │   │ pgBackRest │   │  Firebase FCM  (Phase 7)  │
+│  │ client_N   │  │   │ (WAL/PITR) │   │  Prometheus    (Phase 8)  │
+│  └────────────┘  │   └────────────┘   └──────────────────────────┘
+└──────────────────┘
 ```
 
 ### 2.2 Database-per-Tenant Isolation Strategy
@@ -160,13 +152,13 @@ The NCollection ERP Platform follows a **database-per-tenant** multi-tenant SaaS
 - Complete data isolation between tenants — impossible to accidentally query another tenant's data
 - Independent backup and restore per tenant without affecting others
 - Independent Odoo module upgrades per tenant (can roll out changes gradually)
-- Compliance-friendly — each tenant's data can be stored/deleted independently
+- Compliance-friendly — each tenant's data can be stored/deleted independently (UAE PDPL)
 - Follows the proven Odoo.com architecture
 
-**Risks**:
-- PostgreSQL connection count grows linearly with tenant count (mitigated by PgBouncer)
-- Cron jobs run per-database, increasing CPU usage as tenants grow
-- Schema migrations must be applied to all tenant databases
+**Risks & Mitigations**:
+- PostgreSQL connection count grows linearly with tenant count → PgBouncer transaction pooling (see [ARCHITECTURE_DATA_PLATFORM.md §4](ARCHITECTURE_DATA_PLATFORM.md))
+- Cron jobs run per-database → dedicated cron worker + queue_job runner
+- Schema migrations must be applied to all tenant databases → migration orchestrator with canary tenants (see [ARCHITECTURE_DATA_PLATFORM.md §7](ARCHITECTURE_DATA_PLATFORM.md))
 
 **Alternatives Considered**:
 
@@ -176,8 +168,6 @@ The NCollection ERP Platform follows a **database-per-tenant** multi-tenant SaaS
 | Schema-per-tenant | Odoo doesn't support this natively; would require deep core modifications violating Rule 1 |
 | Row-level security | Same as multi-company; insufficient for enterprise SaaS compliance requirements |
 
-**Recommendation**: Continue with database-per-tenant. Invest in PgBouncer for connection pooling once tenant count exceeds 20.
-
 ### 2.3 Subdomain Routing Mechanism
 
 **How It Works**:
@@ -186,12 +176,15 @@ The NCollection ERP Platform follows a **database-per-tenant** multi-tenant SaaS
 1. DNS: *.ncollectionerp.com → VPS IP (wildcard A record)
 2. Nginx: Receives request for clienta.ncollectionerp.com
 3. Nginx: Proxies to Odoo with Host header preserved
-4. Odoo: --db-filter=^%h$ extracts "clienta" from hostname
-5. Odoo: Routes request to database "clienta" (or "clienta_db")
+4. Odoo: db_filter = ^%d$ extracts "clienta" from the hostname
+5. Odoo: Routes the request to database "clienta"
 6. Odoo: Session cookie is scoped to that database only
 ```
 
-**Odoo Configuration** (`odoo.conf`):
+> [!IMPORTANT]
+> **`%d` vs `%h` — a correction from v4.0**: In Odoo's `db_filter`, `%h` is replaced by the **full hostname** (`clienta.ncollectionerp.com`) while `%d` is replaced by the **first subdomain component** (`clienta`). Since tenant databases are named after the subdomain (`clienta`), the correct filter is **`db_filter = ^%d$`**. Using `^%h$` (as v4.0 stated) would require databases literally named `clienta.ncollectionerp.com` and would break routing.
+
+**Odoo Configuration** (`config/odoo.conf`):
 
 ```ini
 [options]
@@ -201,142 +194,72 @@ db_port = 5432
 db_user = odoo
 db_password = ${DB_PASSWORD}
 db_name = False                          ; Allow connections to any database
-db_filter = ^%h$                         ; Route by subdomain (CRITICAL)
+db_filter = ^%d$                         ; Route by SUBDOMAIN (CRITICAL — see note above)
 list_db = False                          ; SECURITY: Hide database selector completely
 
-; --- Performance (4 vCPU / 8 GB RAM) ---
-workers = 4                              ; (2 × CPU_cores) + 1
+; --- Performance (4 vCPU / 8 GB RAM baseline) ---
+workers = 4                              ; (2 × CPU_cores) + 1 guideline, tuned in P3-T03
 max_cron_threads = 1                     ; Dedicated cron worker
 limit_memory_hard = 2684354560           ; 2.5 GB per worker
 limit_memory_soft = 2147483648           ; 2.0 GB per worker
-limit_time_cpu = 600                     ; 10 min CPU time limit
-limit_time_real = 1200                   ; 20 min wall clock limit
-limit_time_real_cron = 3600              ; 1 hour for cron jobs
+limit_time_cpu = 600
+limit_time_real = 1200
+limit_time_real_cron = 3600
 
 ; --- Security ---
-admin_passwd = ${ADMIN_MASTER_PASSWORD}  ; Strong, unique; disabled in prod
+admin_passwd = ${ADMIN_MASTER_PASSWORD}  ; Strong, unique; DB management API disabled in prod
 proxy_mode = True                        ; Trust Nginx X-Forwarded headers
 
 ; --- Paths ---
-addons_path = /mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+addons_path = /mnt/extra-addons,/mnt/oca-addons,/usr/lib/python3/dist-packages/odoo/addons
 
 ; --- Logging ---
 log_level = info
-logfile = /var/log/odoo/odoo-server.log
 log_handler = :INFO,werkzeug:WARNING
 ```
-
-**Reason** for each critical setting:
-- `db_filter = ^%h$` — The single most important setting for multi-tenant SaaS. It ensures each subdomain only sees its own database.
-- `list_db = False` — Prevents users from seeing the database dropdown on the login page. Without this, any visitor could see all tenant database names — a serious security and privacy violation.
-- `proxy_mode = True` — Required when Odoo sits behind Nginx. Without this, Odoo generates incorrect URLs (HTTP instead of HTTPS) and logs Nginx's IP instead of the client's IP.
 
 ### 2.4 Isolation Guarantees
 
 | Layer | Mechanism | Verification |
 |-------|-----------|-------------|
 | **Database** | Each tenant has its own PostgreSQL database — no shared tables | `SELECT datname FROM pg_database` shows separate DBs |
-| **Application** | `--db-filter` ensures each HTTP request only accesses the matched database | Test: access `clienta.ncollectionerp.com`, verify no data from `clientb` is accessible |
-| **Session** | Odoo sessions are database-scoped — cookies are tied to the specific DB | Test: log into `clienta`, then visit `clientb` — must see login page, not `clienta`'s session |
-| **Filestore** | Attachments stored in `~/.local/share/Odoo/filestore/<db_name>/` — physically separated | Verify directory listing shows separate folders per tenant |
-| **Network** | Nginx enforces subdomain routing; no URL path exposes another tenant | Test: no API call from `clienta` can retrieve `clientb` records |
+| **Application** | `db_filter = ^%d$` ensures each HTTP request only accesses the matched database | Automated E2E test (P1-T20): `clienta` subdomain can never read `clientb` data |
+| **Session** | Odoo sessions are database-scoped — cookies are tied to the specific DB | E2E test: login on `clienta`, visit `clientb` → must see login page |
+| **License** | Menu hiding (UI) **plus** ORM/RPC enforcement (security) — see [ARCHITECTURE_SECURITY.md §4](ARCHITECTURE_SECURITY.md) | Automated test: RPC call to an unlicensed model is denied |
+| **Filestore** | Attachments stored per database directory — physically separated | Directory listing shows separate folders per tenant |
+| **Network** | Nginx enforces subdomain routing; `/web/database/*` blocked at the edge | Port scan + URL probing in the P1-T21 security audit |
 
-### 2.5 Docker Infrastructure (EXISTING — Completed)
+### 2.5 Per-Database Module Installation Matrix
 
-**Current State** (already working):
+> **New in v5.0.** The v4.0 plan never stated which addon runs where — a recurring source of confusion. This matrix is authoritative:
 
-```yaml
-services:
-  db:
-    image: postgres:16
-    container_name: ncollection-db
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: odoo
-    restart: always
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+| Module | admin_db (Platform) | Tenant DBs | Notes |
+|--------|:------:|:------:|-------|
+| `ncollection_subscription` | ✅ | ❌ | Tenants, plans, subscriptions, provisioning jobs — platform staff only |
+| `ncollection_saas` | ✅ | ❌ | Provisioning automation, billing, domains — platform staff only |
+| `ncollection_core` | ❌ | ✅ | Roles, workspace config, module visibility & license enforcement |
+| `ncollection_branding` | ✅ | ✅ | White-label everywhere |
+| `ncollection_uae` | ❌ | ✅ | VAT, CoA, currency — per tenant (plan-dependent) |
+| `ncollection_ai` (Phase 5) | ❌ | ✅ | Gateway config is platform-side; widget/context run per tenant |
+| OCA financial modules | ❌ | ✅ | Installed by provisioning when the plan includes accounting |
+| Odoo business modules (crm, sale, …) | minimal | ✅ | Tenant DBs get exactly the plan's licensed set |
 
-  odoo:
-    image: odoo:19
-    container_name: ncollection-odoo
-    depends_on:
-      - db
-    ports:
-      - "8069:8069"
-    environment:
-      HOST: db
-      USER: odoo
-      PASSWORD: odoo
-    restart: always
-    volumes:
-      - odoo_data:/var/lib/odoo
-      - ./custom_addons:/mnt/extra-addons
+The **provisioning engine (P2-T01/T02) is the only writer** of tenant module sets, and the **workspace config sync (P2-T03)** is the only channel that updates them afterwards.
 
-volumes:
-  postgres_data:
-  odoo_data:
-```
+### 2.6 Security Architecture (Summary)
 
-**Planned Production Enhancements** (Phase 2+):
+Full detail, threat model, and rationale: **[ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md)**.
 
-| Service | Purpose | When |
-|---------|---------|------|
-| `nginx` | Reverse proxy, TLS, subdomain routing | Phase 1 (P1-T05) |
-| `redis` | Session store, cache | Phase 2 |
-| `pgbouncer` | Connection pooling (when tenants > 20) | Phase 2 |
-| `backup-cron` | Automated `pg_dump` to cloud storage | Phase 2 |
-| `prometheus` + `grafana` | Monitoring | Phase 8 |
-| `certbot` | SSL auto-renewal | Phase 1 (P1-T05) |
-
-### 2.6 Security Architecture
-
-| Concern | Mechanism | Status |
-|---------|-----------|:------:|
-| **TLS/HTTPS** | Nginx with Let's Encrypt; HTTP→HTTPS redirect enforced | 🔲 Phase 1 |
-| **Database selector hidden** | `list_db = False` in `odoo.conf` | 🔲 Phase 1 |
-| **Admin master password** | Strong unique password; database management API disabled in production | 🔲 Phase 1 |
-| **Session security** | `SameSite=Lax`, `Secure` flag, database-scoped sessions | 🔲 Phase 1 |
-| **Rate limiting** | Nginx `limit_req_zone` on login endpoints | 🔲 Phase 1 |
-| **Firewall** | UFW: only ports 80, 443, 22 open; PostgreSQL NOT exposed | 🔲 Phase 2 |
-| **SSH** | Key-based auth only; password auth disabled | 🔲 Phase 2 |
-| **Secrets** | `.env` file (not committed); Docker secrets in production | 🔲 Phase 1 |
-| **Audit trail** | Field-level change tracking on critical models | 🔲 Phase 8 |
-
-### 2.7 Network Topology (Production Target)
-
-```
-              ┌─── DNS: *.ncollectionerp.com → VPS IP ───┐
-              │       (Wildcard A Record)                  │
-              └──────────────────┬─────────────────────────┘
-                                 │
-                                 ▼
-           ┌───────────── Hetzner Cloud VPS ─────────────────┐
-           │   CX42: 8 vCPU / 16 GB RAM / 160 GB NVMe SSD    │
-           │   Ubuntu 24.04 LTS                                │
-           │                                                   │
-           │  ┌─────────────────────────────────────────────┐  │
-           │  │    Docker Network: ncollection_net           │  │
-           │  │                                             │  │
-           │  │  nginx:443 ──► odoo:8069 (HTTP workers)     │  │
-           │  │           └──► odoo:8072 (longpolling)      │  │
-           │  │                    │                         │  │
-           │  │  odoo ────────► pgbouncer:6432 ──► db:5432  │  │
-           │  │            └──► redis:6379                   │  │
-           │  │                                             │  │
-           │  │  backup-cron ──► db:5432 (pg_dump)          │  │
-           │  │             └──► s3 (upload)                │  │
-           │  └─────────────────────────────────────────────┘  │
-           │                                                   │
-           │  Persistent Volumes:                              │
-           │   /data/postgres    (tenant databases)            │
-           │   /data/odoo        (filestore per tenant)        │
-           │   /data/backups     (local backup staging)        │
-           │   /data/nginx       (configs, SSL certs)          │
-           │   /data/redis       (session persistence)         │
-           └───────────────────────────────────────────────────┘
-```
+| Layer | Mechanism | Delivered By |
+|-------|-----------|:------:|
+| **Edge** | TLS everywhere, HSTS, rate limiting, security headers, `/web/database/*` blocked | P1-T03 |
+| **Application** | OCA-based brute-force protection & session timeout, auth audit log, hardened cookies | P1-T19 |
+| **Authorization** | 8 predefined roles, Apps/Settings stripping, Owner-only workspace settings | P1-T08/T11/T12 |
+| **License enforcement** | Menu hiding + ORM `ir.rule`/ACL enforcement + RPC guard (defense in depth) | P1-T09/T10 |
+| **Database** | Not exposed publicly; PgBouncer topology; least-privilege roles | P2-T08/T09 |
+| **Data** | PITR (pgBackRest), encrypted off-site backups, restore drills | P2-T04/T05 |
+| **Operations** | UFW, SSH keys only, fail2ban, image/dependency scanning in CI, secrets in `.env`→Docker secrets | P2-T08, P1-T05 |
+| **Assurance** | Automated cross-tenant E2E tests, pre-launch security assessment, audit trail | P1-T20/T21, P3-T12, P8-T05 |
 
 ---
 
@@ -355,11 +278,11 @@ This is the single most important architectural principle of the NCollection ERP
 | Organizations | Tenant companies, UUIDs, onboarding stages | `ncollection_subscription` |
 | Plans | Subscription tiers, pricing, module licensing | `ncollection_subscription` |
 | Subscriptions | Tenant↔Plan linking, billing cycle, status lifecycle | `ncollection_subscription` |
-| Provisioning | Database creation, module installation, admin user setup | `ncollection_subscription` → `ncollection_saas` |
-| Billing | Invoice generation for SaaS subscriptions | `ncollection_saas` (Phase 2) |
+| Provisioning | Database creation, module installation, admin user setup | `ncollection_saas` (dedicated runner) |
+| Billing & Payments | Invoice generation + Stripe collection for SaaS subscriptions | `ncollection_saas` (Phase 2) |
 | Domains | Subdomain assignment, SSL management | `ncollection_saas` (Phase 2) |
-| Licensing | Module visibility control per subscription | `ncollection_core` (Phase 1) |
-| Monitoring | Platform health, tenant DB sizes, request metrics | `ncollection_saas` (Phase 8) |
+| Licensing | Module visibility + enforcement per subscription | `ncollection_core` (Phase 1) |
+| Monitoring | Platform health, tenant DB sizes, request metrics | Phase 2 (lightweight) → Phase 8 (full) |
 
 **Accessed by**: NCollection platform administrators only (never by tenant end-users).
 
@@ -382,28 +305,25 @@ This is the single most important architectural principle of the NCollection ERP
 ### 3.3 How the Layers Interact
 
 ```
-Platform Layer (admin.ncollectionerp.com)
+Platform Layer (admin.ncollectionerp.com — admin_db)
     │
-    │ 1. Admin creates Organization (Tenant)
-    │ 2. Admin assigns Subscription Plan
-    │ 3. Provisioning engine creates new DB
-    │ 4. Provisioning engine installs licensed modules
-    │ 5. Provisioning engine creates tenant admin user
-    │ 6. Provisioning engine applies branding defaults
-    │
+    │ 1. Customer self-registers via public checkout (or admin creates Organization)
+    │ 2. Subscription Plan assigned (trial or paid)
+    │ 3. Provisioning runner creates the tenant DB (isolated container)
+    │ 4. Runner installs exactly the licensed modules
+    │ 5. Runner creates the tenant admin user + writes workspace config
+    │ 6. Runner applies branding defaults, registers domain + SSL
+    │ 7. Plan changes propagate later via the config sync channel (P2-T03)
     ▼
-ERP Layer (clienta.ncollectionerp.com)
+ERP Layer (clienta.ncollectionerp.com — clienta DB)
     │
-    │ Tenant users log in
-    │ Users see ONLY their licensed modules
-    │ Users work in their isolated ERP workspace
-    │ Zero visibility into Platform Layer
-    │
+    │ Tenant users log in and see ONLY their licensed modules
+    │ License enforcement blocks unlicensed models even via RPC
+    │ Zero visibility into the Platform Layer
     ▼
 Tenant's End Customers (Portal — Phase 6)
     │
-    │ Portal users see invoices, orders, tickets
-    │ Zero visibility into ERP internals
+    │ Portal users see their own invoices, orders, tickets — nothing else
 ```
 
 ---
@@ -416,8 +336,8 @@ Tenant's End Customers (Portal — Phase 6)
 |--------|:------:|-------------|------------|
 | `ncollection_branding` | ✅ Partial | White-label: logo, favicon, title, SCSS colors | — (template overrides) |
 | `ncollection_subscription` | ✅ Core | SaaS foundation: tenants, plans, subscriptions, provisioning, dashboard | `ncollection.tenant`, `ncollection.subscription`, `ncollection.subscription.plan`, `ncollection.provisioning.job`, `ncollection.subscription.dashboard` |
-| `ncollection_core` | 🔲 Skeleton | Will hold: roles, access rights, module visibility engine | — |
-| `ncollection_saas` | 🔲 Skeleton | Will hold: provisioning automation, billing, domain management | — |
+| `ncollection_core` | 🔲 Skeleton | Will hold: roles, access rights, module visibility + license enforcement, workspace config | — |
+| `ncollection_saas` | 🔲 Skeleton | Will hold: provisioning automation, billing, payments, domain management | — |
 
 ### 4.2 Planned Custom Modules
 
@@ -427,7 +347,7 @@ Tenant's End Customers (Portal — Phase 6)
 | `ncollection_ai` | 5 | AI platform: LLM gateway, context engine, chat widget |
 | `ncollection_portal` | 6 | Portal redesign and customer-facing ticketing |
 | `ncollection_api` | 8 | Public REST API with OAuth2 |
-| `ncollection_marketplace` | 9 | Integration marketplace |
+| `ncollection_marketplace` | 9 (deferred) | Integration marketplace |
 
 ### 4.3 OCA Modules (Installed)
 
@@ -436,29 +356,32 @@ Tenant's End Customers (Portal — Phase 6)
 | `account_financial_report` | `OCA/account-financial-reporting` | 19.0 | ✅ Installed |
 | `mis_builder` | `OCA/mis-builder` | 19.0 | ✅ Installed |
 
+> [!WARNING]
+> These were initially cloned manually. **P1-T04** converts all OCA dependencies to pinned, reproducible management via `git-aggregator` (`repos.yml` with commit hashes) so every developer, CI, and production run identical code.
+
 ### 4.4 OCA Modules to Evaluate Before Custom Development
 
 > **Rule 2**: Always search OCA before suggesting new development. Never reinvent mature OCA modules.
 
-Before building ANY new feature, the team MUST check these OCA repositories for existing solutions:
-
-| Need | OCA Repository to Check | If Available |
+| Need | OCA Repository to Check | Task Affected |
 |------|------------------------|-------------|
-| Audit Trail | `OCA/server-tools` → `auditlog` | Use instead of custom P8-T04 |
-| REST API | `OCA/rest-framework` → `base_rest` | Evaluate vs. custom P8-T01 |
-| Webhooks | `OCA/server-tools` → `base_webhook` | Use instead of custom P8-T02 |
-| Multi-currency | `OCA/currency` | Check for exchange rate providers |
-| UAE Payroll | `OCA/payroll` | Use if UAE-compatible |
-| Helpdesk/Ticketing | `OCA/helpdesk` | Evaluate vs. custom P6-T03 |
-| Portal enhancements | `OCA/website` | Check for portal improvements |
-| Queue Job | `OCA/queue` → `queue_job` | Use for async provisioning |
-| PDF improvements | `OCA/reporting-engine` | Check for QWeb report tools |
+| Brute-force login protection | `OCA/server-auth` → `auth_brute_force` | P1-T19 |
+| Session timeout | `OCA/server-auth` → `auth_session_timeout` | P1-T19 |
+| 2FA / TOTP | `OCA/server-auth` | P10-T04 |
+| Queue / async jobs | `OCA/queue` → `queue_job` | P2-T01 |
+| Audit Trail | `OCA/server-tools` → `auditlog` | P8-T05 |
+| REST API | `OCA/rest-framework` → `base_rest` / FastAPI addon | P8-T01 |
+| Webhooks | `OCA/server-tools` | P8-T03 |
+| Currency rates | `OCA/currency` | P3-T06 |
+| Helpdesk/Ticketing | `OCA/helpdesk` | P6-T03 |
+| Bank reconciliation | `OCA/account-reconcile` | P10-T06 |
+| PDF/report tooling | `OCA/reporting-engine` | P3-T09 |
 
 **Process**: Before starting any task, the assigned developer must:
 1. Search the relevant OCA repository for an Odoo 19-compatible module
 2. If found: evaluate fit, install in dev environment, test compatibility
-3. If suitable: use the OCA module and document the integration
-4. If not suitable: document WHY it was rejected, then build custom
+3. If suitable: pin it in `repos.yml` and document the integration
+4. If not suitable (or no 19.0 port exists): document WHY, then build custom
 5. Log the decision in the GitHub Issue for the task
 
 ---
@@ -473,50 +396,49 @@ Before building ANY new feature, the team MUST check these OCA repositories for 
 
 **Responsibilities**:
 - Owns the entire infrastructure layer: Docker, Nginx, PostgreSQL, CI/CD, server provisioning
-- Designs and implements SaaS automation: tenant provisioning, database creation, backup management, domain/SSL management
-- Builds the DB routing engine (`--db-filter`, Nginx subdomain routing)
+- Owns the data platform: pooling topology, PITR/backups, replication, migration orchestration ([ARCHITECTURE_DATA_PLATFORM.md](ARCHITECTURE_DATA_PLATFORM.md))
+- Designs and operates SaaS automation: provisioning runner, database creation, domain/SSL management
+- Builds the DB routing engine and the authentication hardening layer
 - Implements API layers (REST, OAuth2, mobile API optimization)
-- Handles security hardening, performance tuning, and monitoring setup
-- Manages deployment pipeline and server operations
+- Owns security operations, performance tuning, and monitoring
 
-**Module Ownership**: Infrastructure configs, `ncollection_saas` (provisioning), `ncollection_api`, monitoring.
+**Module Ownership**: Infrastructure configs, `ncollection_saas` (provisioning/ops), `ncollection_api`, monitoring.
 
 #### [DEV-2] Odoo & Business Logic Specialist
 
-**Core Skills**: Odoo ORM, XML views (form/tree/kanban/search), QWeb reports, Access Rights (`ir.model.access`, `ir.rule`), Odoo Accounting, Workflows, OCA module integration.
+**Core Skills**: Odoo ORM, XML views (form/list/kanban/search), QWeb reports, Access Rights (`ir.model.access`, `ir.rule`), Odoo Accounting, Workflows, OCA module integration.
 
 **Responsibilities**:
 - Owns all business logic: model definitions, computed fields, constraints, state machines
-- Implements module visibility engine (subscription-based menu filtering)
+- Implements module visibility engine AND ORM-level license enforcement
 - Defines `res.groups`, access rights, and record rules for tenant role isolation
 - Handles ERP enhancements: CRM, Sales, Purchase workflows
-- Owns UAE localization: VAT, Chart of Accounts, currency, Arabic translations
-- Implements billing engine, KPI logic, anomaly detection
+- Owns UAE localization: VAT, Chart of Accounts, currency
+- Implements billing engine, payment collection (Odoo payment providers), KPI logic, anomaly detection
 
-**Module Ownership**: `ncollection_subscription` (business logic), `ncollection_core` (roles/access), `ncollection_uae`.
+**Module Ownership**: `ncollection_subscription` (business logic), `ncollection_core` (roles/access/licensing), `ncollection_uae`.
 
 #### [DEV-3] Frontend & Integration Specialist
 
-**Core Skills**: OWL framework, JavaScript (ES6+), QWeb templates, SCSS/CSS, responsive design, mobile development (React Native / Flutter), UI/UX design.
+**Core Skills**: OWL framework, JavaScript (ES6+), QWeb templates, SCSS/CSS, responsive design, mobile development (React Native / Flutter), UI/UX design, Playwright E2E testing.
 
 **Responsibilities**:
-- Owns the branding system: `ncollection_branding` completion (logos, login page, About dialog, URL rewriting, email templates)
-- Builds dynamic per-tenant branding (CSS variable injection)
+- Owns the branding system: `ncollection_branding` completion (logos, login page, About dialog)
+- Builds dynamic per-tenant branding (CSS variable injection) and the Owner's workspace settings UI
 - Develops all dashboard UIs: Customer Dashboard, CEO Dashboard, Department Dashboards (OWL + charting)
-- Designs and implements the SaaS checkout flow
-- Builds the customer portal UI redesign
-- Creates the AI Assistant chat widget (OWL)
-- Develops the mobile application
+- Owns the Playwright E2E test framework and UI test journeys
+- Designs and implements the self-service checkout flow and customer portal redesign
+- Creates the AI Assistant chat widget (OWL) and develops the mobile application
 
-**Module Ownership**: `ncollection_branding`, all UI components, dashboard widgets, portal templates, mobile app.
+**Module Ownership**: `ncollection_branding`, all UI components, dashboard widgets, portal templates, E2E suite, mobile app.
 
 ### 5.2 AI Engineering Team
 
 | AI Agent | Role | Responsibility |
 |----------|------|---------------|
-| **ChatGPT** | Chief Solution Architect | High-level architecture decisions, business logic design, OCA module evaluation, pattern recommendations |
-| **Claude** | Implementation Engineer | Code generation, pair programming with developers, debugging, code review assistance |
-| **Gemini** | Architecture Reviewer & Planning Assistant | Architecture review, planning documents, dependency analysis, risk assessment, timeline estimation |
+| **ChatGPT** | Chief Solution Architect | High-level architecture decisions, business logic design, OCA module evaluation |
+| **Claude** | Implementation Engineer | Code generation, pair programming, debugging, code review assistance |
+| **Gemini** | Architecture Reviewer & Planning Assistant | Architecture review, planning documents, dependency analysis, risk assessment |
 
 **AI Collaboration Rules**:
 1. AI agents understand the current milestone before generating code
@@ -524,6 +446,7 @@ Before building ANY new feature, the team MUST check these OCA repositories for 
 3. AI agents avoid regressions and maintain Odoo 19 Community compatibility
 4. AI agents build features incrementally — never generate entire modules in one shot
 5. AI agents NEVER jump to future phases unless the current phase is complete
+6. AI agents follow **Rule 6 (Odoo 19 conventions)** — `<list>` not `<tree>`, no deprecated `attrs=`, no legacy widget syntax
 
 ---
 
@@ -533,7 +456,7 @@ These rules are **mandatory and non-negotiable**. Every developer, every code re
 
 ### Rule 1: Never Modify Odoo Core
 
-**Reason**: Modifying Odoo core files creates unsustainable technical debt. Any change to core files will be overwritten during Odoo version upgrades, causing regressions, data loss, and weeks of debugging.
+**Reason**: Modifying Odoo core files creates unsustainable technical debt. Any change will be overwritten during Odoo version upgrades.
 
 **Approved Extension Methods**:
 
@@ -546,31 +469,21 @@ These rules are **mandatory and non-negotiable**. Every developer, every code re
 | **SCSS Overrides** | Changing visual styles | Custom SCSS in asset bundles |
 | **Controller Override** | Modifying HTTP routes | `class CustomHome(Home): @route('/web/login')` |
 
-**Alternatives Rejected**: Direct edits to Odoo source files, monkey-patching at module load time, replacing core Python files.
-
 ### Rule 2: OCA First
 
-**Reason**: The Odoo Community Association (OCA) maintains 1000+ battle-tested modules. Reinventing what OCA has already built wastes development time and produces less reliable code.
-
-**Process**: Before ANY new development → search OCA → evaluate → decide → document.
+The OCA maintains 1000+ battle-tested modules. Before ANY new development → search OCA → evaluate → decide → document. This now explicitly includes **authentication** (`auth_brute_force`, `auth_session_timeout`), **async jobs** (`queue_job`), and **audit** (`auditlog`).
 
 ### Rule 3: Two-Layer Separation
 
-See [Section 3](#3-two-layer-architecture-philosophy). Platform Layer and ERP Layer must never mix code, models, or views.
+See [Section 3](#3-two-layer-architecture-philosophy). Platform Layer and ERP Layer must never mix code, models, or views. The [module installation matrix (§2.5)](#25-per-database-module-installation-matrix) is the enforcement reference.
 
 ### Rule 4: Upgrade Compatibility
 
-**Reason**: Odoo releases a new major version annually. NCollection must be able to upgrade from Odoo 19 → 20 → 21 without rewriting custom modules.
-
-**Requirements**:
 - No fragile overrides that depend on internal Odoo implementation details
-- Use public API methods only (`env['model'].search()`, not `self.env.cr.execute('SELECT...')` unless for performance-critical analytics)
-- Document every `_inherit` override with the reason and the Odoo method being overridden
-- Pin OCA module versions in requirements files
+- Use public API methods; document every `_inherit` override with the reason and the Odoo method being overridden
+- Pin OCA module versions via `git-aggregator` `repos.yml` (P1-T04)
 
 ### Rule 5: Enterprise SaaS Mindset
-
-**Reason**: This is not a single-company Odoo deployment. It's a multi-tenant SaaS platform that will serve thousands of companies. Every decision must consider: scalability, tenant isolation, zero downtime, data sovereignty, and operational overhead.
 
 **Checklist for every feature**:
 - [ ] Does this work correctly across 100+ tenant databases?
@@ -578,6 +491,26 @@ See [Section 3](#3-two-layer-architecture-philosophy). Platform Layer and ERP La
 - [ ] Does this impact Odoo startup time or memory usage?
 - [ ] Can this be configured per-tenant without code changes?
 - [ ] Does this preserve upgrade compatibility?
+
+### Rule 6: Odoo 19 View & Code Conventions (NEW in v5.0)
+
+**Reason**: Odoo 19 deprecated several patterns; using them fails module installation or breaks silently.
+
+- Views: use **`<list>`** — `<tree>` is deprecated/removed in Odoo 19
+- View attributes: use direct `invisible="condition"` / `readonly="condition"` expressions — the legacy `attrs="{...}"` dict is removed
+- Frontend: OWL 2 components only; no legacy `odoo.define` AMD modules
+- Backend URLs live under `/odoo/...` in Odoo 19 — do not hardcode legacy `/web#` fragments
+- Python: 3.12+, type annotations on new code, no `print()` (use `_logger`)
+- Every developer and AI agent must be prompted with these conventions before generating view XML
+
+### Rule 7: Security Is a Feature, Not a Phase (NEW in v5.0)
+
+**Reason**: The platform hosts many companies' financial data on shared infrastructure with a custom layer on top of Odoo. A single isolation or licensing bypass is an existential business risk.
+
+- UI-level hiding is never sufficient — every restriction must also exist at the ORM/RPC layer
+- Every phase gate includes the cross-tenant isolation test suite (established in P1-T20/T21)
+- Security-sensitive PRs (auth, access rights, provisioning, payments) require review against [ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md) checklists
+- Secrets never enter git; dependency and image scanning run in CI
 
 ---
 
@@ -590,10 +523,10 @@ main (production-ready, always deployable)
   │
   └── develop (integration branch — all PRs merge here)
         │
-        ├── feature/P1-T01-docker-hardening       (DEV-1)
-        ├── feature/P1-T06-module-visibility       (DEV-2)
-        ├── feature/P1-T09-branding-completion     (DEV-3)
-        ├── hotfix/login-csrf-fix                  (any DEV)
+        ├── feature/P1-T02-odoo-conf-multitenant      (DEV-1)
+        ├── feature/P1-T09-module-visibility          (DEV-2)
+        ├── feature/P1-T13-branding-completion        (DEV-3)
+        ├── hotfix/login-csrf-fix                     (any DEV)
         └── ...
 ```
 
@@ -606,284 +539,374 @@ main (production-ready, always deployable)
 ### 7.2 Commit Message Convention
 
 ```
-[P1-T01] feat: Harden docker-compose for multi-tenant production
+[P1-T02] feat: Multi-tenant odoo.conf with subdomain db_filter
 
-- Add Nginx service with wildcard SSL configuration
-- Add Redis for session store
-- Configure odoo.conf with db-filter and list_db=False
-- Create .env file for secrets management
+- db_filter=^%d$, list_db=False, proxy_mode=True
+- .env-based secrets, dev/prod compose overrides
+- Health checks for db and odoo services
 
 Closes #42
 ```
 
-Format: `[P{phase}-T{id}] {type}: {description}`
+Format: `[P{phase}-T{id}] {type}: {description}` — Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `security`.
 
-Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`.
+---
+
+## 8. Phase Execution Order & Gates
+
+> **New in v5.0.** Phase numbers are stable identifiers (labels, milestones) — but they are NOT the strict execution order.
+
+| Order | Phase | Priority | Overlap Notes |
+|:-----:|-------|:--------:|---------------|
+| 1 | Phase 1 — Customer Workspace | **P0** | THE ONLY FOCUS right now |
+| 2 | Phase 2 — SaaS Automation | P1 | DEV-2/DEV-3 begin Phase 3 tasks during Phase 2 (DEV-1 is the Phase 2 bottleneck by design) |
+| 3 | Phase 3 — ERP + UAE | P1 | Ends with the **go-live gate (P3-T13)** → FIRST PRODUCTION DEPLOYMENT |
+| 4 | Phase 4 — Dashboards | P2 | Lightweight; also feeds the AI context engine |
+| 5 | Phase 6 — Customer Portal | P2 | **Pulled ahead of AI**: portal + regional payments drive revenue/retention |
+| 6 | Phase 5 — AI Platform | P3 | Experimental; starts with a mandatory design spike (P5-T01) |
+| 7 | Phase 7 — Mobile | P3 | New stack; framework decision documented in P7-T05 |
+| 8 | Phase 8 — Platform Services | P3 | REST API + full observability |
+| 9 | Phase 10 — Enterprise Readiness | P3 | HA, scaling, compliance — **before** Marketplace |
+| 10 | Phase 9 — Marketplace | **DEFERRED** | Build a third-party ecosystem only after the core is enterprise-grade and there is proven tenant demand |
+
+**Phase gates**: Phases 1, 2, and 3 each end with an explicit integration/security gate task (P1-T21, P2-T18, P3-T13). No phase is "done" until its gate passes and the regression checklist is green. Later phases re-run the cumulative regression + isolation suite.
 
 ---
 
 ## Phase 1: Customer Workspace — CURRENT SPRINT
 
-**Priority**: P0 — IMMEDIATE — **THE ONLY FOCUS**  
-**Objective**: Build the foundational SaaS experience where subscribers land directly in their isolated ERP workspace, see only their licensed modules, and experience NCollection branding with zero Odoo references.
+**Priority**: P0 — IMMEDIATE — **THE ONLY FOCUS**
+**Objective**: Build the foundational SaaS experience where subscribers land directly in their isolated ERP workspace, see only their licensed modules — enforced at the UI **and** ORM layer — and experience NCollection branding with zero Odoo references.
 
 > **IMPORTANT**: This phase builds ON TOP of the already-completed SaaS foundation. The tenant, subscription, and plan models ALREADY EXIST. This phase focuses on the CUSTOMER-FACING experience — what the tenant's employees see when they log into their workspace.
 
 **Acceptance Criteria (Definition of Done)**:
 - [ ] Users can log in via `company.ncollectionerp.com`
 - [ ] Users land directly in their ERP workspace (NOT a SaaS admin panel)
-- [ ] Users see ONLY their licensed modules based on subscription plan
-- [ ] Users CANNOT access any SaaS administration screens (Organizations, Plans, Subscriptions, Provisioning)
-- [ ] Users CANNOT see or access any other tenant's data
-- [ ] Basic role-based access control works within the tenant (Owner, CEO, Manager, Sales, etc.)
-- [ ] Tenant can customize their own logo and company information
-- [ ] All visible branding says "NCollection ERP" — zero Odoo references anywhere
-- [ ] Customer Dashboard shows business KPIs relevant to the tenant
+- [ ] Users see ONLY their licensed modules — and unlicensed models are **inaccessible via direct URL and RPC**, not merely hidden
+- [ ] Users CANNOT access any SaaS administration screens
+- [ ] Users CANNOT see or access any other tenant's data (verified by automated E2E tests)
+- [ ] Role-based access control works for all 8 roles; Owner manages users via a safe settings surface
+- [ ] Tenant can customize their own logo, colors, and company information
+- [ ] All visible branding says "NCollection ERP" — zero Odoo references anywhere (UI + emails)
+- [ ] Customer Dashboard shows business KPIs relevant to the tenant and the viewer's role
+- [ ] Playwright E2E suite covers login, routing, isolation, and visibility — running in CI
 
 ### Phase 1 Tasks
 
 | ID | Task Name | Description | Assigned | Dependencies | Est. Days |
 |---|---|---|---|---|:---:|
-| **P1-T01** | Docker Environment Hardening | Extend the EXISTING `docker-compose.yml` to production-grade: (1) Add Nginx service with wildcard `*.ncollectionerp.com` server block, TLS termination via Certbot, WebSocket proxy for longpolling on port 8072, rate limiting on `/web/login`, and security headers (HSTS, X-Frame-Options). (2) Create `config/odoo.conf` with all multi-tenant settings: `db_filter=^%h$`, `list_db=False`, `proxy_mode=True`, `workers=4`, memory limits. (3) Create `.env` file for secrets (DB password, admin master password) — add `.env` to `.gitignore`. (4) Create `docker-compose.dev.yml` override: pgadmin service, single worker, debug mode, mounted source. (5) Add Docker health checks for all services. (6) Create `docker-compose.prod.yml` for production overrides. **Reason**: The existing docker-compose works for development but lacks the security and routing infrastructure required for multi-tenant SaaS. **Benefits**: Dev/staging/prod parity, secure secrets management, TLS from day one. **Risks**: Nginx wildcard config complexity; Certbot requires real domain for staging tests. **Alternative**: Use Traefik instead of Nginx (rejected: Nginx is more widely understood and documented for Odoo). **Recommendation**: Use Nginx with manual config generation per-tenant initially; automate in Phase 2. | `[DEV-1]` | None | 4 |
-| **P1-T02** | CI Pipeline Enhancement | Extend the EXISTING GitHub Actions CI pipeline (`.github/workflows/ci.yml`). Add: (1) `pylint-odoo` alongside flake8 for Odoo-specific linting. (2) Docker build smoke test: build the production image, start services, verify Odoo responds with HTTP 200 on `http://localhost:8069/web/login`. (3) Python unit test runner: start PostgreSQL in CI, run `odoo-bin --test-enable -d test_db --stop-after-init -i ncollection_subscription,ncollection_core,ncollection_branding`. (4) Add branch protection rules documentation (require CI pass + 1 approval for `develop`). **Reason**: Current CI only runs flake8, which catches syntax errors but not Odoo-specific issues or runtime failures. **Benefits**: Catch model errors, missing dependencies, and import failures before merge. **Risks**: CI test time may increase to 3–5 minutes per run. **Alternative**: Use pre-commit hooks locally (complement, don't replace CI). **Recommendation**: Implement all four enhancements; accept the longer CI time as a worthwhile tradeoff. | `[DEV-1]` | P1-T01 | 2 |
-| **P1-T03** | Addon Skeleton Finalization | Complete the EXISTING skeleton modules `ncollection_core` and `ncollection_saas`. For each: (1) Create proper `__init__.py` with imports, (2) Update `__manifest__.py` with correct dependencies, (3) Create placeholder directories: `models/`, `views/`, `security/`, `data/`, `static/`, `controllers/`, `wizards/`, (4) Ensure all addons are importable by Odoo without errors (`odoo-bin -i ncollection_core --stop-after-init` exits cleanly). **Reason**: DEV-2 and DEV-3 cannot start addon work without importable module structures in place. **Benefits**: Unblocks parallel development; establishes consistent module structure. **Risks**: Minimal — this is scaffolding. **Recommendation**: DEV-1 should complete this within the first 2 days of the sprint. | `[DEV-1]` | P1-T01 | 1 |
-| **P1-T04** | Tenant Model Enhancements | The `ncollection.tenant` and `ncollection.subscription` models ALREADY EXIST with core fields. Enhance them for the Customer Workspace: (1) Add `module_ids` Many2many field to `ncollection.subscription.plan` → `ir.module.module` (defines which Odoo modules this plan grants access to). (2) Add `user_count` computed field to tenant (counts users in the tenant's DB — may need cross-DB query or local tracking). (3) Add `days_remaining` computed field to subscription. (4) Add state transition methods with validation: `action_activate()`, `action_suspend()`, `action_expire()`, `action_cancel()`, `action_renew()`. Each transition must verify the current state is valid for the requested transition. (5) Add `_track_subtype()` for mail notifications on status changes. (6) Add `_check_` constraints: `end_date > start_date`, `max_users > 0`. **Reason**: The existing models have fields but lack business logic, state transitions, and the critical `module_ids` field needed for module visibility. **Benefits**: Enables the Module Visibility Engine; prevents invalid state transitions; improves admin UX with chatter notifications. **Risks**: `module_ids` linking to `ir.module.module` requires that the admin DB has the same modules installed as tenant DBs. **Alternative**: Use a text field listing module technical names instead of M2M to `ir.module.module` (simpler, avoids cross-DB concerns). **Recommendation**: Use a text/serialized field approach for module lists (comma-separated technical names) to avoid cross-database complications. | `[DEV-2]` | P1-T03 | 5 |
-| **P1-T05** | DB Routing Engine | Implement subdomain-to-database routing. (1) Configure `odoo.conf` with `--db-filter=^%h$`. (2) Create Nginx wildcard server block: `server_name *.ncollectionerp.com;` proxying to Odoo with `proxy_set_header Host $host;`. (3) Create development workaround: add entries to `/etc/hosts` (e.g., `127.0.0.1 clienta.localhost clientb.localhost admin.localhost`) and Nginx config for `.localhost` domains. (4) Create a second test database manually to verify routing works. (5) Document the complete routing flow with diagrams. (6) Test: access `clienta.localhost:8069` → see only `clienta` database; access `clientb.localhost:8069` → see only `clientb` database; access `admin.localhost:8069` → see only admin database. **Reason**: This is the backbone of the entire multi-tenant SaaS platform. Without working subdomain routing, nothing else in the platform functions. **Benefits**: True tenant isolation; familiar URL pattern for end-users; follows Odoo.com's proven model. **Risks**: Local development with subdomains requires `/etc/hosts` hacks or a local DNS resolver like `dnsmasq`. CI environments may struggle with subdomain testing. **Alternative**: Use URL-path-based routing instead of subdomains (rejected: less professional, more error-prone, doesn't match industry standard). **Recommendation**: Implement subdomain routing with the `/etc/hosts` workaround for development; automate domain management in Phase 2. | `[DEV-1]` | P1-T01 | 5 |
-| **P1-T06** | Module Visibility Engine | Create the core engine that controls which Odoo modules (menu items) each tenant sees. (1) Override `ir.ui.menu`'s `_visible_menu_ids()` method in `ncollection_core`. (2) At menu load time, read the tenant's active subscription plan (from a local config record synced during provisioning — NOT a cross-database query). (3) Compare the plan's allowed modules against installed modules. (4) Remove menu items for unlicensed modules from the returned set. (5) Create `ncollection.workspace.config` model (installed in each tenant DB during provisioning) with fields: `allowed_module_names` (Text — comma-separated technical names like `crm,sale,stock`), `plan_code`, `subscription_status`. This record is written during provisioning and updated when the subscription changes. (6) Test: Starter plan tenant sees only CRM + Sales + Invoicing menus; Enterprise plan tenant sees all menus. **Reason**: Module visibility control is the core product differentiator. Without it, every tenant sees every module regardless of what they paid for. **Benefits**: Subscription monetization; clean UX; prevents user confusion from seeing modules they didn't purchase. **Risks**: Overriding `_visible_menu_ids` may break if Odoo 19 changes the menu loading internals. Mitigation: pin to the specific method signature and add a version check. **Alternative**: Use `res.groups` to control module access (partially works but doesn't hide menus — users see "Access Denied" instead of clean hiding). **Recommendation**: Override `_visible_menu_ids` for menu hiding PLUS use `res.groups` for security enforcement (defense in depth). | `[DEV-2]` | P1-T04 | 5 |
-| **P1-T07** | Tenant Role Definitions | Create XML data files in `ncollection_core` defining `res.groups` for standard SaaS tenant roles. Groups: (1) `NCollection / Owner` — full control including billing access, implies all other NCollection groups + `base.group_system`. (2) `NCollection / CEO` — all ERP modules, read-only financials. (3) `NCollection / Manager` — department-level access. (4) `NCollection / Sales` — CRM + Sales + Invoicing, implies `sales_team.group_sale_salesman`. (5) `NCollection / Warehouse` — Inventory + Purchase, implies `stock.group_stock_user`. (6) `NCollection / HR` — HR module, implies `hr.group_hr_user`. (7) `NCollection / Accountant` — Accounting + Reports, implies `account.group_account_user`. (8) `NCollection / Employee` — limited self-service (attendance, leave requests). Each group must use `implied_ids` correctly to inherit from base Odoo groups. (9) Create a role matrix documentation file. **Reason**: Predefined roles simplify tenant admin onboarding — they select from sensible defaults instead of understanding Odoo's complex permission system. **Benefits**: Consistent security across all tenants; faster onboarding; prevents misconfiguration. **Risks**: `implied_ids` chains can cause unintended permission escalation if not carefully designed. **Alternative**: Let each tenant define their own roles (rejected: too complex for SMB target market; high support burden). **Recommendation**: Provide predefined roles as defaults; allow Owner role to create custom groups in Phase 2+. | `[DEV-2]` | P1-T03 | 3 |
-| **P1-T08** | Apps & Settings Menu Stripping | Remove access to Odoo "Apps" and "Settings" menus for all tenant users except the Owner role. (1) Override `ir.ui.menu` access for `base.menu_management` (Apps) — restrict to `NCollection / Owner` group only. (2) Override `ir.ui.menu` access for `base.menu_administration` (Settings) — restrict to Owner only. (3) Block direct URL access: override the Settings controller to return 403 for non-Owner users. (4) Disable Developer Mode toggle for non-Owner users. (5) Block `/web/database/manager` URL entirely (no user should access this). (6) Block debug mode activation via URL parameter (`?debug=1`). (7) Test: a Sales-role user must not see Apps or Settings menus; manually navigating to `/odoo/settings` must show Access Denied. **Reason**: Tenant users must not install/uninstall modules, change system settings, or access developer tools. These actions could break their workspace and create support tickets. **Benefits**: Prevents accidental or malicious system modification by tenants; reduces support burden. **Risks**: Some legitimate Settings sub-menus (e.g., user management) may need to be exposed to Owner. Mitigation: create a simplified "Workspace Settings" view for Owner. **Recommendation**: Block everything first, then selectively expose Owner-appropriate settings through a custom menu. | `[DEV-2]` | P1-T07 | 2 |
-| **P1-T09** | Web Client Branding Completion | Extend the EXISTING `ncollection_branding` module (currently: browser title, favicon, SCSS colors). Complete all remaining branding items: (1) Replace the Odoo logo in the top-left navbar with NCollection logo — use OWL component patching or QWeb template inheritance targeting the WebClient/NavBar. (2) Replace the loading/splash screen animation with NCollection branding. (3) Override "Powered by Odoo" footer text in all views. (4) Replace the About dialog (`Help → About`) — show NCollection ERP version, copyright, and company info instead of Odoo's. (5) Replace the default backend wallpaper/background. (6) Customize error pages (404, 500) with NCollection styling. (7) Ensure ALL text references to "Odoo" in the visible UI are replaced or hidden. (8) Audit: grep the entire rendered frontend for the string "Odoo" — anything visible must be replaced. **Reason**: The end-user experience must be 100% NCollection-branded. Any Odoo reference breaks the white-label illusion and may confuse tenants. **Benefits**: Professional product identity; client confidence; competitive differentiation. **Risks**: Some Odoo references may be deeply embedded in JavaScript bundles (e.g., error messages). Mitigation: override at the template level where possible; CSS `display:none` for stubborn references. **Recommendation**: Prioritize user-visible elements first; schedule a "branding audit" at the end of Phase 1 to catch remaining references. | `[DEV-3]` | P1-T03 | 5 |
-| **P1-T10** | Login Page Redesign | Completely redesign the Odoo login page (`/web/login`) using QWeb template inheritance on `web.login`. (1) Custom full-page background (gradient or professional image). (2) NCollection logo prominently displayed above the login form. (3) Modern, centered login card with email/password fields. (4) "Remember Me" checkbox. (5) "Forgot Password" link (functional — sends reset email). (6) NCollection copyright footer. (7) Remove all Odoo references from the page HTML source. (8) If per-tenant login pages are desired: detect subdomain and optionally show tenant logo alongside NCollection logo. (9) Mobile-responsive design. **Reason**: The login page is the first impression. A generic Odoo login undermines the premium SaaS positioning. **Benefits**: Professional first impression; brand reinforcement on every login. **Risks**: Custom login page must not break Odoo's CSRF protection or session management. Mitigation: only override the template, not the controller logic. **Recommendation**: Override the template only; keep the controller intact to preserve security. | `[DEV-3]` | P1-T09 | 3 |
-| **P1-T11** | URL Path Rewriting | Replace Odoo's default URL paths that contain "odoo" in the path. In Odoo 19, the backend URL is `/odoo/...`. (1) Use Nginx rewrite rules to map: `/odoo` → `/app` or root `/`. (2) Ensure internal Odoo redirects still work (may need JavaScript route override). (3) Ensure bookmarked old URLs still work (301 redirect from `/odoo/...` to new paths). (4) Test: no URL in the browser address bar should contain the word "odoo" during normal use. **Reason**: URL paths containing "odoo" reveal the underlying technology and undermine the white-label positioning. **Benefits**: Complete white-label; clean URLs. **Risks**: Odoo 19 may generate internal URLs with `/odoo/` prefix that break if rewritten. Mitigation: only rewrite user-visible URLs; preserve internal API paths. **Alternative**: Accept `/odoo/` URLs (rejected: undermines white-label goal). **Recommendation**: Implement Nginx-level rewrites first; evaluate the need for JavaScript-level route overrides after testing. | `[DEV-3]` | P1-T09 | 3 |
-| **P1-T12** | Dynamic Tenant Branding | Build per-tenant visual customization. (1) Extend `res.company` with fields: `nc_primary_color`, `nc_secondary_color`, `nc_sidebar_color`, `nc_login_background` (Binary/Image). (2) Create a QWeb template (or OWL component) that generates a `<style>` block with CSS custom properties: `--nc-primary`, `--nc-secondary`, `--nc-sidebar-bg`, etc. (3) Inject this style block on every page load using session-based data. (4) Update the `ncollection_branding` SCSS to use these CSS variables with NCollection defaults as fallback. (5) Create a simple "Workspace Appearance" settings page for the tenant Owner to change colors and upload a logo. (6) Test: change a tenant's primary color → navbar/sidebar color updates on next page load. **Reason**: Tenant branding is a premium SaaS feature that increases perceived value and tenant satisfaction. **Benefits**: Tenants feel ownership of their workspace; reduces "generic SaaS" perception. **Risks**: CSS variable injection must be sanitized — prevent XSS via malicious color values. Mitigation: validate hex color format server-side. **Recommendation**: Implement with server-side validation; limit customization to colors and logo initially. | `[DEV-3]` | P1-T05, P1-T09 | 4 |
-| **P1-T13** | Customer Authentication Hardening | Override the Odoo login controller (`web.Home.web_login`) to add SaaS-specific authentication: (1) Enforce that users can only log in to their assigned tenant database — the DB is determined by subdomain, never by user choice. (2) Implement login attempt rate limiting (max 5 failed attempts → 15-minute lockout per IP). (3) Add session timeout configuration (configurable per tenant via `ir.config_parameter`). (4) Implement "Forgot Password" flow with secure email reset tokens (time-limited, single-use). (5) Log all authentication events to `ncollection.auth.log` model (login success, login failure, logout, password reset). (6) Ensure session cookies have `Secure`, `HttpOnly`, and `SameSite=Lax` flags. **Reason**: Default Odoo authentication lacks rate limiting, session management, and audit logging — insufficient for a commercial SaaS platform. **Benefits**: Protection against brute-force attacks; audit compliance; configurable session policies per tenant. **Risks**: Overriding the login controller is sensitive — bugs here lock users out. Mitigation: extensive testing; feature flag to disable custom auth. **Alternative**: Use an external auth provider (Keycloak, Auth0) — rejected for Phase 1 (adds infrastructure complexity); reconsider in Phase 10. **Recommendation**: Implement custom auth hardening with a feature flag toggle for safe rollout. | `[DEV-1]` | P1-T05 | 4 |
-| **P1-T14** | Customer Workspace Dashboard | Build the main ERP landing dashboard for tenant users using the OWL framework. This is the CUSTOMER dashboard (what a CEO/Manager sees after login) — NOT the SaaS admin dashboard (which already exists). Widgets: (1) Sales summary card (this month vs. last month, with trend arrow), (2) Accounts Receivable total, (3) Accounts Payable total, (4) Cash/bank balance, (5) Open activities/tasks count, (6) Pending approvals count, (7) Quick action buttons (New Quotation, New Invoice, New Purchase Order), (8) Revenue trend chart (line chart, last 6 months — use Chart.js or ApexCharts), (9) Top 5 customers by revenue (bar chart). Each widget must fetch data via `useService('rpc')` from backend computed fields. Dashboard must be responsive for tablet screens. Dashboard must respect role permissions (Accountant sees financial widgets; Sales sees sales widgets; CEO sees everything). **Reason**: The default Odoo home page is a list of installed apps. A proper dashboard provides immediate business value upon login. **Benefits**: Executive visibility; faster decision-making; professional SaaS experience. **Risks**: Dashboard queries across multiple models can be slow if not optimized. Mitigation: use precomputed fields or caching for expensive aggregations. **Recommendation**: Start with simple `search_count` and `read_group` queries; optimize to raw SQL only if performance is insufficient. | `[DEV-3]` | P1-T03 | 5 |
-| **P1-T15** | Email Template Branding | Override all default Odoo email templates to use NCollection branding. (1) Create a base HTML email layout template: NCollection logo header, brand color accents, professional footer with company info. (2) Override: password reset emails, user invitation emails, quotation/SO emails, invoice emails, purchase order emails. (3) Remove all Odoo references from email HTML source. (4) Ensure responsive design for mobile email clients (Gmail, Outlook). (5) Test: send a sample email from each workflow and verify branding is correct. **Reason**: Emails are a high-visibility touchpoint. Odoo-branded emails undermine the white-label positioning. **Benefits**: Consistent brand experience; professional communication. **Risks**: Odoo email templates use complex QWeb inheritance — overriding can be fragile across Odoo upgrades. Mitigation: override at the highest-level template possible. **Recommendation**: Create one base email layout; have all email templates inherit from it. | `[DEV-3]` | P1-T09 | 3 |
-| **P1-T16** | Phase 1 Integration Testing | Comprehensive testing of all Phase 1 deliverables working together. (1) Create 2+ test tenant databases with different subscription plans. (2) Verify multi-tenant routing (access each tenant via different subdomain). (3) Verify module visibility (Starter tenant sees fewer menus than Enterprise tenant). (4) Verify role-based access (test each of the 8 roles). (5) Verify branding completeness (audit for any remaining "Odoo" references). (6) Verify login page branding and functionality. (7) Verify dashboard loads with correct data per role. (8) Verify email templates send with correct branding. (9) Verify cross-tenant isolation (attempt to access another tenant's data — must fail). (10) Document results in a test report. Create regression test checklist for future sprints. **Reason**: Individual features may work in isolation but fail when combined. Integration testing catches gaps in tenant isolation, role enforcement, and branding. **Benefits**: Confidence before deploying to staging; documented regression checklist. **Risks**: Integration testing is time-consuming. Mitigation: automate repeatable tests where possible. **Recommendation**: Spend 2 full days on integration testing; document every test case and result. | `[DEV-1]` | All P1 tasks | 3 |
+| **P1-T01** | Addon Skeleton & Test Scaffolding | Complete the EXISTING skeleton modules `ncollection_core` and `ncollection_saas` so every developer can start addon work on day 1. Scope: (1) proper `__init__.py` imports and `__manifest__.py` metadata with correct dependencies, (2) placeholder directories: `models/`, `views/`, `security/`, `data/`, `controllers/`, `wizards/`, `tests/`, (3) a smoke `TransactionCase` test in each module so the CI test runner has something to execute, (4) verify `odoo-bin -i ncollection_core,ncollection_saas --stop-after-init` exits cleanly. <br>**Reason**: nothing else in this phase can start without importable module structures — this task has NO dependency on infrastructure work and must be finished on Day 1. <br>**Acceptance**: both modules install without errors; smoke tests run green locally. | `[DEV-2]` | None | 1 |
+| **P1-T02** | Multi-Tenant Odoo Configuration & Secrets | Create `config/odoo.conf` with all multi-tenant settings: `db_filter=^%d$` (NOTE: `%d` extracts the subdomain — `%h` is the FULL hostname and would require databases named `clienta.ncollectionerp.com`; v4.0 had this wrong), `list_db=False`, `proxy_mode=True`, workers and memory/time limits per §2.3. Create `.env` for secrets (DB password, admin master password), add it to `.gitignore`, and provide `.env.example`. Create `docker-compose.dev.yml` override (pgadmin, single worker, debug logging, mounted source) and a `docker-compose.prod.yml` stub. Add Docker health checks for db and odoo services. <br>**Reason**: the existing compose file works for development but has hardcoded credentials and no multi-tenant routing configuration. <br>**Acceptance**: `docker compose up` boots Odoo with the new config; the database selector is hidden; all secrets come from `.env`. | `[DEV-1]` | None | 2 |
+| **P1-T03** | Nginx Reverse Proxy & TLS | Add an `nginx` service to the compose stack: wildcard server block for `*.ncollectionerp.com`, TLS termination via Certbot (wildcard certificate through the DNS-01 challenge), HTTP→HTTPS redirect, WebSocket proxy for longpolling on port 8072 (routed DIRECT to Odoo — never through a DB pooler), rate limiting on `/web/login` (`limit_req_zone`), gzip, and security headers (HSTS, X-Frame-Options, CSP). Block `/web/database/*` at the edge. Include a dev config for `*.localhost` domains without TLS. <br>**Reason**: Nginx is the routing and security front door for the whole multi-tenant platform. <br>**Risks**: wildcard cert automation requires DNS provider API access — document the manual fallback. <br>**Acceptance**: `https://anything.ncollectionerp.com` reaches Odoo with the correct Host header; security headers present; `/web/database/manager` returns 403 from the edge. | `[DEV-1]` | P1-T02 | 3 |
+| **P1-T04** | OCA Dependency Management | Replace manual OCA clones/symlinks with reproducible dependency management. (1) Introduce `git-aggregator` with a `repos.yml` pinning `OCA/account-financial-reporting` and `OCA/mis-builder` (and all future OCA repos) to exact 19.0 commit hashes, (2) aggregate into `/mnt/oca-addons` mounted alongside `custom_addons`, (3) wire into the Docker build and CI so every environment resolves identical code, (4) document the update workflow (bump hash → PR → CI). <br>**Reason**: manual symlinks guarantee works-on-my-machine failures across a 3-person remote team, CI, and production. <br>**Acceptance**: a fresh clone + `gitaggregate -c repos.yml` + `docker compose up` reproduces the exact current environment on any machine. | `[DEV-1]` | None | 2 |
+| **P1-T05** | CI Pipeline Enhancement | Extend `.github/workflows/ci.yml`: (1) add `pylint-odoo` and XML validation alongside flake8, (2) Docker build smoke test — start the stack and assert HTTP 200 on `/web/login`, (3) Odoo test runner — start PostgreSQL service, run `odoo-bin --test-enable -d test_db --stop-after-init -i ncollection_subscription,ncollection_core,ncollection_branding`, (4) dependency + image security scanning (`pip-audit`, `trivy`) as non-blocking warnings initially, (5) document branch protection (require CI + 1 approval on `develop`). <br>**Reason**: flake8 alone cannot catch broken views, missing dependencies, failing model logic, or vulnerable dependencies. <br>**Risks**: CI time grows to 5–8 minutes — run lint and build jobs in parallel. <br>**Acceptance**: a PR that breaks a model or view fails CI; scan reports appear on every PR. | `[DEV-1]` | P1-T01, P1-T04 | 2 |
+| **P1-T06** | DB Routing Engine & Multi-DB Verification | Prove end-to-end subdomain→database routing. (1) Verify `db_filter=^%d$` against multiple databases, (2) create test databases `clienta` and `clientb` plus the `admin` database, (3) dev workaround: `/etc/hosts` entries for `clienta.localhost`, `clientb.localhost`, `admin.localhost` and a matching Nginx dev config, (4) verify session isolation — a login on `clienta` must not carry to `clientb`, (5) document the complete routing flow with a diagram and troubleshooting section in `docs/ROUTING.md`. <br>**Reason**: this is the backbone of the platform — nothing ships until routing is bulletproof. <br>**Acceptance**: each subdomain reaches only its own database; the database selector is unreachable; sessions do not leak across tenants. | `[DEV-1]` | P1-T03 | 4 |
+| **P1-T07** | Tenant & Subscription Model Enhancements | Enhance the EXISTING `ncollection.tenant` / `ncollection.subscription` / `ncollection.subscription.plan` models with the business logic the workspace needs. (1) Add `allowed_module_names` Text field on the plan (comma-separated technical names like `crm,sale,stock` — deliberately NOT a Many2many to `ir.module.module`, to avoid cross-database coupling), (2) `days_remaining` computed field on subscription, (3) state transition methods `action_activate/suspend/expire/cancel/renew` that validate the current state before transitioning, (4) `_check_` constraints (`end_date > start_date`, `max_users > 0`), (5) `_track_subtype` chatter notifications on status change, (6) unit tests for every transition and constraint. <br>**Reason**: the models exist but have no guarded lifecycle and no module licensing data — both are prerequisites for visibility, enforcement, and provisioning. <br>**Acceptance**: invalid transitions raise ValidationError; the plan stores a module list; tests pass in CI. | `[DEV-2]` | P1-T01 | 5 |
+| **P1-T08** | Tenant Role Definitions | Create XML data in `ncollection_core` defining `res.groups` for the 8 standard tenant roles: Owner (full control incl. billing), CEO (all modules, read-only financials), Manager (department-level), Sales (implies `sales_team.group_sale_salesman`), Warehouse (implies `stock.group_stock_user`), HR (implies `hr.group_hr_user`), Accountant (implies `account.group_account_user`), Employee (self-service only). Use `implied_ids` chains carefully — document every inheritance decision in a role matrix (`docs/ROLE_MATRIX.md`). <br>**Reason**: predefined roles are what make onboarding an SMB possible without teaching them Odoo's permission system. <br>**Risks**: `implied_ids` chains can silently escalate permissions — the matrix doc plus P1-T21 testing guard against this. <br>**Acceptance**: all groups importable; each role sees exactly the menus/actions defined in the matrix. | `[DEV-2]` | P1-T01 | 3 |
+| **P1-T09** | Module Visibility Engine (Menus) | Build the UI layer of subscription-based module control. (1) Create `ncollection.workspace.config` model (one record per tenant DB, written during provisioning): `allowed_module_names`, `plan_code`, `subscription_status`, (2) override `ir.ui.menu._visible_menu_ids()` in `ncollection_core` to remove menus of unlicensed modules, (3) respect Odoo's menu caching and clear caches on config change, (4) test with two plans: Starter (`crm,sale,account`) vs Enterprise (all). <br>**Reason**: subscription-based module visibility is THE core product differentiator. <br>**Risks**: `_visible_menu_ids` is an internal method — pin the override to the Odoo 19 signature and add a startup assertion. <br>**Note**: this task is deliberately UI-ONLY; the security layer is P1-T10 — the two together form defense in depth. <br>**Acceptance**: a Starter tenant sees only licensed menus; changing workspace config updates menus after cache clear. | `[DEV-2]` | P1-T07 | 4 |
+| **P1-T10** | License Enforcement at ORM & RPC Layer | Menu hiding is a UI convenience, NOT security — a savvy user can hit unlicensed models via direct URLs or XML-RPC/JSON-RPC. Enforce licensing at the data layer: (1) map licensed module set → allowed model namespaces, (2) generate/activate `ir.rule` record rules and/or override `check_access_rights` via an AbstractModel mixin so read/write/create/unlink on models of unlicensed modules is denied for all non-system users, (3) return a branded "not in your plan" error (upsell message) instead of a raw AccessError where the UI can catch it, (4) automated tests: RPC calls against unlicensed models must be denied for a Starter tenant and allowed for Enterprise, (5) measure ORM overhead — enforcement must add < 5ms per request. <br>**Reason**: without ORM-level enforcement, module licensing is trivially bypassable — a paying-for-Starter tenant could use the full ERP via API. <br>**Acceptance**: the P1-T20 E2E suite proves URL and RPC access to unlicensed modules is blocked. | `[DEV-2]` | P1-T09 | 3 |
+| **P1-T11** | Apps & Settings Menu Stripping | Lock tenant users out of platform-dangerous areas. (1) Restrict the Apps menu (`base.menu_management`) and Settings (`base.menu_administration`) to the Owner group, (2) return 403 from the Settings controller for non-Owner users, (3) block `/web/database/manager` and `/web/database/selector` at BOTH Nginx and Odoo levels, (4) block debug mode activation (`?debug=1`) for non-Owner users. <br>**Reason**: a tenant user who uninstalls a module or edits system parameters creates a support incident — or an outage. <br>**Acceptance**: a Sales-role user sees no Apps/Settings menus and every direct URL returns Access Denied; the database manager is unreachable from any tenant subdomain. | `[DEV-2]` | P1-T08 | 2 |
+| **P1-T12** | Owner Workspace Settings & User Management | Build the simplified admin surface a tenant Owner actually needs (instead of raw Odoo Settings, which P1-T11 strips). (1) "Workspace Settings" menu visible to Owner only: company info (name, logo, address, TRN), user management (invite user by email, assign one of the 8 NCollection roles, deactivate user), (2) max-user enforcement against the subscription limit with a friendly upgrade hint when the limit is reached, (3) do NOT expose raw `res.groups` — role selection maps to the predefined groups from P1-T08. <br>**Reason**: without a safe replacement for Settings, every tenant user change becomes a support ticket. <br>**Acceptance**: Owner can invite/deactivate users and assign roles; a user beyond the plan limit is blocked with a clear message; non-Owner roles cannot see the menu. | `[DEV-3]` | P1-T08, P1-T11 | 3 |
+| **P1-T13** | Web Client Branding Completion | Finish the EXISTING `ncollection_branding` module. (1) Navbar logo replacement (OWL patch or QWeb inheritance), (2) loading/splash screen, (3) "Powered by Odoo" footer overrides, (4) About dialog replacement (NCollection version + copyright), (5) backend wallpaper, (6) branded 404/500 error pages, (7) full audit: grep the rendered frontend for "Odoo" — every visible occurrence replaced or hidden, (8) document LGPL v3 attribution obligations in `docs/LEGAL.md` — rebranding the UI is permitted but source attribution rules must be recorded. <br>**Reason**: one visible "Odoo" string breaks the white-label promise. <br>**Risks**: some strings live deep in JS bundles — override at template level where possible, CSS-hide as a last resort, and log unfixable cases. <br>**Acceptance**: zero visible Odoo references in a full click-through of every licensed module. | `[DEV-3]` | None | 5 |
+| **P1-T14** | Login Page Redesign | Redesign `/web/login` via QWeb inheritance on `web.login` — template ONLY, never the auth controller logic (preserves CSRF and session security). (1) Full-page branded background, (2) NCollection logo and centered login card, (3) Remember Me, (4) functional Forgot Password link, (5) copyright footer, (6) mobile responsive, (7) optional per-tenant logo detection by subdomain, (8) zero Odoo references in the page source. <br>**Reason**: the login page is the first impression of the product. <br>**Acceptance**: pixel-reviewed at 320/768/1440 widths; login, remember-me, and password reset all function. | `[DEV-3]` | P1-T13 | 2 |
+| **P1-T15** | Public URL Rewriting (Scoped) | TIMEBOXED (1 day), reassigned to DEV-1 because this is pure Nginx work. Hide "odoo" from PUBLIC-FACING URLs only: login, password reset, portal, and website pages. Odoo 19's JavaScript router hardcodes internal `/odoo/...` backend paths — rewriting them causes endless routing bugs on every upgrade, so internal backend URLs stay as-is (accepted trade-off, documented). (1) Nginx rewrites + 301s for public surfaces, (2) verify assets, websocket, and redirects still work, (3) document the decision boundary in `docs/ROUTING.md`. <br>**Reason**: white-labeling matters most where prospects and portal users look; breaking the backend router for cosmetic URLs is a bad trade. <br>**Acceptance**: no "odoo" appears in any public/portal/login URL; the backend still functions flawlessly. | `[DEV-1]` | P1-T03 | 1 |
+| **P1-T16** | Dynamic Tenant Branding | Per-tenant visual customization. (1) Extend `res.company`: `nc_primary_color`, `nc_secondary_color`, `nc_sidebar_color`, `nc_login_background` (Image), (2) inject a style block with CSS custom properties (`--nc-primary`, etc.) on page load, (3) refactor `ncollection_branding` SCSS to consume the variables with NCollection defaults as fallback, (4) "Workspace Appearance" page for the Owner (integrates into the P1-T12 settings menu) to pick colors and upload a logo, (5) server-side validation of color values (strict hex format) to prevent CSS/XSS injection. <br>**Reason**: tenant-owned branding is a premium differentiator and drives perceived value. <br>**Acceptance**: changing a color updates navbar/sidebar on reload; invalid color strings are rejected server-side. | `[DEV-3]` | P1-T06, P1-T13 | 4 |
+| **P1-T17** | Customer Workspace Dashboard | Build the tenant-facing landing dashboard in OWL (this is the CUSTOMER dashboard — the SaaS admin dashboard already exists and is a different thing). Widgets: sales this month vs last (trend arrow), receivables, payables, cash/bank balance, open activities, pending approvals, quick actions (New Quotation / Invoice / PO), 6-month revenue line chart, top-5 customers bar chart. Data via ORM `read_group`/`search_count` through a dedicated backend service model — optimize to SQL only if measured slow. Role-aware: Accountant sees financial widgets, Sales sees pipeline widgets, CEO sees everything (driven by the P1-T08 groups). Responsive down to tablet. <br>**Reason**: landing on a KPI dashboard instead of an app grid is what makes this feel like a product. <br>**Acceptance**: loads under 2s on demo data; widgets respect roles; charts render with the tenant's brand colors. | `[DEV-3]` | P1-T01 | 5 |
+| **P1-T18** | Email Template Branding | Create one branded base email layout (logo header, brand accents, footer with company info) and rebase all transactional templates on it: password reset, user invitation, quotation/SO, invoice, purchase order. Remove every Odoo reference from email HTML. Test rendering in Gmail and Outlook (mobile + desktop). <br>**Reason**: emails are a high-visibility touchpoint and currently leak Odoo branding. Reassigned to DEV-2 (QWeb/XML-heavy work) to relieve the DEV-3 bottleneck identified in the planning review. <br>**Risks**: Odoo email templates use layered QWeb inheritance — override at the highest shared layout (`mail.mail_notification_layout`) to survive upgrades. <br>**Acceptance**: every listed template sends with NCollection branding and renders correctly in both clients. | `[DEV-2]` | P1-T13 | 3 |
+| **P1-T19** | Authentication Hardening (OCA-First) | Harden authentication WITHOUT overriding Odoo's login controller wholesale (fragile across versions — Rule 2 applies). (1) Evaluate and install OCA `auth_brute_force` (login rate limiting/lockout) and `auth_session_timeout` from `OCA/server-auth`; if no Odoo 19 port exists, port the OCA module (preferred) or implement the minimal equivalent behind a feature flag — document the decision, (2) `ncollection.auth.log` model recording login success/failure, logout, password resets (IP, user agent, database), (3) configurable session timeout via `ir.config_parameter`, (4) verified secure cookie flags (`Secure`, `HttpOnly`, `SameSite=Lax`), (5) verify Odoo's password reset tokens are time-limited and single-use. <br>**Reason**: default Odoo auth has no brute-force protection or audit trail — table stakes for commercial SaaS; OCA modules eliminate the lockout-bug risk of custom auth code. <br>**Acceptance**: repeated failed logins trigger lockout; all auth events appear in the log; Nginx (edge) + OCA (app) rate limits both verified. | `[DEV-1]` | P1-T06 | 3 |
+| **P1-T20** | E2E Test Framework (Playwright) | Stand up the automated end-to-end testing foundation that replaces unsustainable manual multi-tenant testing. (1) Playwright project with fixtures that spin up two test tenant DBs on different plans, (2) core journeys: login/logout per subdomain, session isolation (login A, visit B → login page), module visibility per plan, RPC license-enforcement probes (with P1-T10), role menu matrix spot checks, branding audit (page source contains no "Odoo"), (3) wire into CI (P1-T05) to run on every PR to `develop`, (4) document how to add new journeys. <br>**Reason**: by Phase 3 there will be 8 roles × multiple plans × multiple tenants — manual verification would take weeks and rot instantly; automation makes the isolation guarantee continuously enforced. <br>**Acceptance**: the suite runs green in CI in under 10 minutes and fails when an isolation or visibility regression is introduced deliberately. | `[DEV-3]` | P1-T05, P1-T06 | 3 |
+| **P1-T21** | Phase 1 Integration Testing & Security Audit | The Phase 1 gate. With 2+ test tenants on different plans: (1) run the full P1-T20 E2E suite plus exploratory testing, (2) role click-through matrix for all 8 roles, (3) scripted cross-tenant RPC attack attempts MUST fail, (4) license bypass attempts (URL + RPC) MUST fail, (5) branding audit: zero Odoo references, (6) auth: lockout, session timeout and reset flows, (7) dashboard data correctness per role, (8) email rendering, (9) publish the regression checklist that every future phase re-runs, (10) publish a test report in `docs/`. <br>**Reason**: features that pass alone fail together — isolation and role gaps only appear under combined testing. <br>**Acceptance**: signed-off test report; regression checklist committed; all criticals fixed or ticketed. | `[DEV-1]` | P1-T06, P1-T10, P1-T11, P1-T12, P1-T14, P1-T15, P1-T16, P1-T17, P1-T18, P1-T19, P1-T20 | 3 |
 
 ### Phase 1 Dependency Graph
 
 ```
-P1-T01 (Docker) ──► P1-T02 (CI Enhancement)
-       │
-       ├──► P1-T03 (Skeleton) ──► P1-T04 (Model Enhancement) ──► P1-T06 (Visibility)
-       │         │
-       │         ├──► P1-T07 (Roles) ──► P1-T08 (Menu Stripping)
-       │         │
-       │         ├──► P1-T09 (Branding) ──► P1-T10 (Login Page)
-       │         │         │
-       │         │         ├──► P1-T11 (URL Rewriting)
-       │         │         │
-       │         │         └──► P1-T15 (Email Templates)
-       │         │
-       │         └──► P1-T14 (Customer Dashboard)
-       │
-       └──► P1-T05 (DB Routing) ──► P1-T12 (Dynamic Branding)
-                    │                   [also requires P1-T09]
-                    │
-                    └──► P1-T13 (Auth Hardening)
-
-All P1 Tasks ──► P1-T16 (Integration Testing)
+DEV-1:  P1-T02 ──► P1-T03 ──► P1-T06 ──► P1-T19 ──────────────┐
+        P1-T04 ──┬► P1-T05 ─────────────────┐                  │
+                 │            P1-T03 ──► P1-T15                │
+DEV-2:  P1-T01 ──┼► P1-T07 ──► P1-T09 ──► P1-T10 ──────────────┤
+                 └► P1-T08 ──► P1-T11 ─────────┐               │
+                               P1-T13 ──► P1-T18               ├──► P1-T21
+DEV-3:  P1-T13 ──► P1-T14 ─────────────────────┤               │    (gate)
+        P1-T08 + P1-T11 ──► P1-T12             │               │
+        P1-T06 + P1-T13 ──► P1-T16             ├───────────────┘
+        P1-T01 ──► P1-T17                      │
+        P1-T05 + P1-T06 ──► P1-T20 ────────────┘
 ```
+
+**Day-1 parallel starts** (no cross-blocking): DEV-1 → P1-T02 + P1-T04, DEV-2 → P1-T01 (then P1-T07/T08), DEV-3 → P1-T13.
 
 ### Phase 1 Developer Workload
 
 | Developer | Tasks | Total Days | Notes |
 |-----------|-------|:----------:|-------|
-| DEV-1 | P1-T01, T02, T03, T05, T13, T16 | 19 | Heaviest load in Week 1 (infra setup); then routing + auth |
-| DEV-2 | P1-T04, T06, T07, T08 | 15 | Blocked until P1-T03 complete; start with role design analysis |
-| DEV-3 | P1-T09, T10, T11, T12, T14, T15 | 23 | Heaviest overall; consider shifting P1-T15 to DEV-2 if bottlenecked |
+| DEV-1 | T02, T03, T04, T05, T06, T15, T19, T21 | 20 | Infra chain is the critical path (16 days sequential) |
+| DEV-2 | T01, T07, T08, T09, T10, T11, T18 | 21 | Starts Day 1 via T01 (no infra dependency) |
+| DEV-3 | T12, T13, T14, T16, T17, T20 | 22 | Rebalanced from 23 (v4.0): email → DEV-2, URL rewriting → DEV-1; gained E2E + Owner settings |
+
+**Critical path**: `P1-T02 → P1-T03 → P1-T06 → P1-T19 → P1-T21` (DEV-1, 15 days) and `P1-T01 → P1-T07 → P1-T09 → P1-T10 → P1-T21` (DEV-2, 16 days) — Phase 1 cannot complete in fewer than **~16 working days** of pure development plus buffer → 8–10 calendar weeks including reviews, iteration, and stabilization.
 
 ---
 
 ## Phase 2: SaaS Automation
 
-**Priority**: P1 — HIGH (starts after Phase 1 stabilization)  
-**Objective**: Automate tenant provisioning, billing, subscription lifecycle, backups, and domain management.
+**Priority**: P1 — HIGH (starts after the Phase 1 gate)
+**Objective**: Automate tenant provisioning, billing, payment collection, subscription lifecycle, backups (PITR), domains, and stand up staging + production operations.
 
-> This phase builds on the SaaS foundation models (already completed) and the Customer Workspace (Phase 1). It transforms manual operations into automated pipelines.
+> DEV-1 is intentionally the bottleneck of this phase (it is infrastructure-dominated). DEV-2 and DEV-3 begin Phase 3 tasks (UAE localization, translations, PDF invoices) in parallel once their Phase 2 queue drains.
+
+**Acceptance Criteria (Definition of Done)**:
+- [ ] A stranger can self-provision a trial workspace end-to-end with zero staff involvement
+- [ ] Subscription activation → provisioned tenant in under 10 minutes, fully automated, idempotent on retry
+- [ ] Plan changes propagate to the tenant workspace within one minute
+- [ ] PITR can restore the cluster to any minute in the last 7 days; tenant-level restore drill passes
+- [ ] Subscriptions can be paid online (Stripe test + live mode)
+- [ ] Staging auto-deploys on merge to `develop`; production servers are hardened; uptime alerting is live
 
 ### Phase 2 Tasks
 
 | ID | Task Name | Description | Assigned | Dependencies | Est. Days |
 |---|---|---|---|---|:---:|
-| **P2-T01** | Provisioning Engine Activation | Extend the EXISTING `ncollection.provisioning.job` model into a fully functional provisioning engine. `action_run_provisioning()`: (1) Create new PostgreSQL database via Odoo CLI (`odoo-bin -d {db_name} -i base --stop-after-init`) or direct SQL `CREATE DATABASE`, (2) Install subscription-specified modules, (3) Create tenant admin user, (4) Write `ncollection.workspace.config` record with allowed modules and plan info, (5) Apply branding defaults, (6) Update job status through each stage, (7) Rollback on failure (drop DB). **Before building**: Check `OCA/queue` → `queue_job` for async job processing. **Reason**: Manual DB creation doesn't scale beyond 10 tenants. **Benefits**: One-click tenant onboarding; consistent setup. **Risks**: `odoo-bin` CLI execution from within a running Odoo process may cause resource contention. **Alternative**: Use `subprocess.Popen` with resource limits. **Recommendation**: Use `queue_job` OCA module for async execution with retry logic. | `[DEV-1]` | P1-T04 | 5 |
-| **P2-T02** | Auto-Provisioning Pipeline | End-to-end automation: subscription `draft→active` triggers provisioning. (1) Auto-generate sanitized DB name from company name, (2) Create provisioning job, (3) Execute async (via `queue_job`), (4) On success: update tenant status, set `portal_url`, send welcome email, (5) On failure: alert admin, log details. Add "Provision Now" button on Tenant form. **Reason**: Eliminates manual steps in tenant creation. **Benefits**: Sub-10-minute tenant onboarding. **Risks**: Async failure may leave partial state. **Recommendation**: Implement idempotent provisioning (safe to retry). | `[DEV-1]` | P2-T01 | 5 |
-| **P2-T03** | Backup Manager | Automated backup system. Create `ncollection.backup` model. Daily `ir.cron`: (1) `pg_dump --format=custom` each active tenant DB, (2) Compress + encrypt, (3) Upload to S3/Backblaze B2, (4) Apply retention: 7 daily, 4 weekly, 12 monthly, (5) Log results, alert on failures. Add "Restore Backup" wizard. **Before building**: Check OCA for backup modules. **Reason**: Data loss is catastrophic for SaaS. **Benefits**: Automated, tested backups; tenant-level restore. **Risks**: `pg_dump` of large DBs can take minutes; schedule during off-peak. **Recommendation**: Run backups between 02:00–05:00 UTC; test restore monthly. | `[DEV-1]` | P2-T02 | 4 |
-| **P2-T04** | Domain & SSL Manager | Automate subdomain and SSL. On provisioning: (1) Generate Nginx server block from Jinja2 template, (2) Reload Nginx gracefully, (3) Request Let's Encrypt cert via Certbot, (4) Store domain + SSL expiry on tenant record. Create `ncollection.domain` model. Weekly cron: auto-renew certificates expiring within 14 days. **Reason**: Manual domain/SSL management doesn't scale. **Benefits**: Instant tenant availability; zero SSL lapses. **Risks**: Let's Encrypt rate limits (50 certs/week). **Recommendation**: Use wildcard cert initially; per-tenant certs for custom domains. | `[DEV-1]` | P1-T05 | 3 |
-| **P2-T05** | Subscription Expiration Scheduler | Daily `ir.cron`: (1) Find subscriptions where `end_date < today`, (2) Transition to `expired`, (3) Update tenant status, (4) Send expiration email, (5) After grace period (15 days): transition to `suspended` — show "Subscription Expired" page. Add advance warning emails at 30, 14, 7, 1 day before expiry. **Reason**: Manual tracking of expiring subscriptions is unsustainable. **Benefits**: Automated lifecycle management; reduced churn via reminders. **Risks**: Incorrect expiration could lock out paying customers. **Recommendation**: Add 48-hour grace period buffer; admin override for reactivation. | `[DEV-1]` | P1-T04 | 2 |
-| **P2-T06** | Billing Engine | Auto-generate Odoo invoices when subscriptions are purchased/renewed. (1) Create `account.move` in admin DB, (2) Line items: plan name, period, price, (3) Apply UAE VAT (5%), (4) On upgrade: prorate difference. Link invoices to tenant. Track payment status. **Before building**: Check OCA for subscription billing modules. **Reason**: Manual invoicing doesn't scale. **Benefits**: Automated revenue tracking. **Risks**: VAT calculation must be accurate for UAE compliance. **Recommendation**: Implement basic invoicing first; add payment gateway integration in Phase 6. | `[DEV-2]` | P1-T04 | 5 |
-| **P2-T07** | Subscription Lifecycle State Machine | Complete lifecycle: `draft→active→expired→suspended→terminated`. Also `active→cancelled`. Each transition triggers actions: `draft→active`: provision + invoice; `expired→suspended`: block access; `suspended→active`: reactivation flow. Add `action_renew()`, `action_upgrade()`, `action_downgrade()`. **Reason**: Formal state machine prevents invalid transitions and ensures consistent side effects. **Benefits**: Predictable behavior; audit trail. **Risks**: Edge cases (e.g., reactivation during provisioning) need careful handling. **Recommendation**: Implement with `_check_` constraints to validate state transitions. | `[DEV-2]` | P2-T06, P1-T04 | 4 |
-| **P2-T08** | SaaS Admin Dashboard Enhancement | Extend EXISTING dashboard transient model. Add views: (1) KPI summary (total tenants, MRR, churn rate, trial conversion), (2) Tenant list with color-coded status badges + quick actions, (3) Provisioning job log with status filters, (4) Revenue analytics (monthly trend, per-plan breakdown), (5) System health (DB sizes, storage). Restrict to `NCollection / Platform Admin` group. **Reason**: Platform operators need visibility into business and operational metrics. **Benefits**: Data-driven operations; proactive issue detection. **Recommendation**: Implement incrementally — KPI cards first, then charts. | `[DEV-2]` | P1-T04 | 4 |
-| **P2-T09** | Public Checkout Flow | Public-facing subscription purchase pages. (1) Landing page with plan comparison table, (2) Billing cycle toggle (monthly/yearly), (3) Company registration form, (4) Payment placeholder (actual gateway in Phase 6), (5) "Your workspace is being prepared" confirmation. On submit: create tenant + subscription, trigger provisioning. All pages: NCollection branding, zero Odoo references. **Reason**: Self-service signup is essential for SaaS scalability. **Benefits**: 24/7 customer acquisition without staff involvement. **Risks**: Public forms need strong input validation and spam protection. **Recommendation**: Add reCAPTCHA; validate company name uniqueness; sanitize all inputs. | `[DEV-3]` | P1-T09 | 5 |
-| **P2-T10** | Email Automation System | Complete transactional email set: (1) Welcome (on provisioning complete — login URL, credentials, getting-started guide), (2) Renewal reminders (30/14/7/1 day), (3) Expiration notice, (4) Suspension warning, (5) Payment confirmation, (6) Upgrade/downgrade confirmation. Use NCollection email layout from P1-T15. Schedule emails to avoid sending multiple on the same day. **Reason**: Lifecycle emails reduce churn and improve tenant retention. **Benefits**: Automated communication; professional customer journey. **Recommendation**: Use `ir.cron` with `mail.mail` for scheduled sending. | `[DEV-3]` | P1-T15, P2-T05 | 3 |
+| **P2-T01** | Dedicated Provisioning Runner & Engine Core | Turn the EXISTING `ncollection.provisioning.job` model into a working engine executed in an ISOLATED runner. (1) Add a dedicated Docker container running OCA `queue_job` workers — provisioning (CREATE DATABASE + `odoo-bin -d {db} -i base --stop-after-init` + module installs) is CPU/RAM intensive and must NEVER run on the HTTP workers serving live tenants, (2) engine steps: create tenant DB, install the plan's modules from `allowed_module_names`, create tenant admin user with forced password reset, write the `ncollection.workspace.config` record, apply branding defaults, (3) step-by-step status + log updates on the job, (4) rollback (drop DB) on failure. Evaluate `queue_job` 19.0 availability FIRST; document the fallback (subprocess with resource limits) if unavailable. <br>**Reason**: manual DB creation cannot scale past a handful of tenants, and in-process provisioning would cause latency spikes for paying customers. <br>**Acceptance**: a queued job produces a login-ready tenant DB (or a clean rollback with readable logs) while a load test against existing tenants shows no latency degradation. | `[DEV-1]` | P1-T07 | 5 |
+| **P2-T02** | Auto-Provisioning Pipeline | End-to-end automation: subscription `draft→active` (or `trial`) triggers provisioning without human action. (1) Sanitized, collision-safe DB name generation from company name, (2) job creation + async execution on the dedicated runner, (3) on success: tenant status active, `portal_url` set, welcome email fired, (4) on failure: admin alert with the job log, (5) idempotent — safe to retry a half-failed provision, (6) "Provision Now" manual button retained on the tenant form. <br>**Acceptance**: activating a subscription yields a working tenant in under 10 minutes with zero manual steps; retrying a deliberately failed job heals cleanly. | `[DEV-1]` | P2-T01 | 4 |
+| **P2-T03** | Workspace Config Sync & Plan Change Propagation | Keep tenant workspaces in sync with the platform. When a subscription changes (plan upgrade/downgrade, suspension, renewal), push the new `allowed_module_names` and `subscription_status` into the tenant DB's `ncollection.workspace.config`. Mechanism: XML-RPC call to localhost with the tenant DB name using a dedicated service account (credentials secured per [ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md)) — never direct cross-DB SQL. Trigger on write + a nightly reconciliation cron that repairs drift. Suspended tenants get a branded "Subscription Expired" interstitial. <br>**Reason**: without propagation, plan changes silently never reach the tenant — billing and access desync. <br>**Acceptance**: a plan upgrade adds menus (and ORM access) in the tenant workspace within one minute; the reconciliation cron heals a manually broken config. | `[DEV-2]` | P2-T02 | 3 |
+| **P2-T04** | PITR & WAL Archiving (pgBackRest) | Daily dumps alone mean a 24-hour RPO — unacceptable for commercial SaaS. Implement Point-in-Time Recovery: (1) deploy `pgBackRest` (or WAL-G — evaluate, document choice) against the PostgreSQL cluster with continuous WAL archiving to S3/Backblaze B2, (2) full base backup weekly + differentials daily, (3) encryption of archives at rest, (4) retention policy, (5) documented + scripted restore procedure including the tenant-level nuance: PITR restores the CLUSTER to a point in time — per-tenant restore means restoring to a scratch instance and extracting the single DB (see [ARCHITECTURE_DATA_PLATFORM.md §5](ARCHITECTURE_DATA_PLATFORM.md)), (6) restore rehearsal on staging. <br>**Reason**: with PITR the RPO drops from 24 hours to ~1 minute — a tenant corrupting data at 4 PM loses minutes, not a business day. <br>**Acceptance**: demonstrated restore of the staging cluster to an arbitrary timestamp; WAL archive lag alerting configured. | `[DEV-1]` | P1-T02 | 3 |
+| **P2-T05** | Tenant Backup Manager & Restore Drills | Tenant-granular backup layer on top of PITR: (1) nightly `pg_dump --format=custom` per active tenant DB PLUS tar of the tenant filestore (attachments live on disk, not in the DB), (2) compress + encrypt, upload to S3/Backblaze B2, (3) retention 7 daily / 4 weekly / 12 monthly, (4) `ncollection.backup` records with results and alerting on failure, (5) "Restore Backup" wizard to a staging DB, (6) monthly restore drill scheduled and documented. <br>**Reason**: pg_dump gives cheap per-tenant restore granularity and long-term archival; PITR (P2-T04) covers disaster recovery — together they satisfy both RPO and per-tenant needs. <br>**Acceptance**: backup of a demo tenant restores to a working workspace including attachments. | `[DEV-1]` | P2-T04 | 4 |
+| **P2-T06** | Domain & SSL Automation | Automate domains and certificates. On provisioning: (1) render the Nginx server block from a Jinja2 template, (2) graceful nginx reload, (3) tenant subdomains ride the wildcard cert (per-tenant Let's Encrypt only for future custom domains), (4) `ncollection.domain` model tracking domain + SSL expiry, (5) weekly renewal cron with 14-day-lead alerting. <br>**Acceptance**: a newly provisioned tenant is reachable over HTTPS with zero manual server work. | `[DEV-1]` | P1-T06 | 3 |
+| **P2-T07** | Staging Environment & Continuous Deployment | Stand up the staging server and continuous deployment — promised by the tooling guide but never tasked in v4.0. (1) Provision the Hetzner VPS (Ubuntu 24.04, Docker), (2) production compose files running against real DNS (`*.staging.ncollectionerp.com`), (3) GitHub Actions: on merge to `develop` — build image, push to registry, SSH deploy, health-check smoke test, Discord notification, (4) documented rollback (previous image tag). <br>**Reason**: every later phase needs multi-tenant behavior tested on real DNS + TLS; deploys must be boring by go-live. <br>**Acceptance**: merging to `develop` updates staging automatically within 10 minutes. | `[DEV-1]` | P1-T05 | 3 |
+| **P2-T08** | Production Server Hardening | Harden the server(s): UFW (only 22/80/443), SSH key-only auth + fail2ban, PostgreSQL never exposed publicly, Docker socket protection, unattended security updates, secrets outside git with restricted permissions, least-privilege deploy user. Produce `docs/RUNBOOK_SECURITY.md`. <br>**Reason**: the v4.0 security table listed firewall/SSH hardening as "Phase 2" but no task implemented it. <br>**Acceptance**: external port scan shows only 22/80/443; SSH password auth rejected; checklist committed. | `[DEV-1]` | P2-T07 | 2 |
+| **P2-T09** | Connection Pooling Topology (PgBouncer) | Deploy PgBouncer with the topology from [ARCHITECTURE_DATA_PLATFORM.md §4](ARCHITECTURE_DATA_PLATFORM.md): (1) transaction-pooling pool for Odoo HTTP workers (port 8069 traffic) sized against `max_connections`, (2) Odoo's longpolling/bus (port 8072) and the cron + queue_job workers connect DIRECT to PostgreSQL — LISTEN/NOTIFY and long-lived sessions break under transaction pooling, (3) per-database pool limits so one hot tenant cannot starve others, (4) monitoring hooks (pool saturation). <br>**Reason**: connection count grows linearly with tenants; without pooling the cluster falls over around ~20 active tenants — and naive pooling breaks Odoo's realtime bus. <br>**Acceptance**: staging runs all traffic through the correct paths; chatter/bus notifications still work; pool metrics visible. | `[DEV-1]` | P2-T07 | 2 |
+| **P2-T10** | Platform Uptime Monitoring & Alerting | Lightweight production monitoring NOW (the full Prometheus stack lands in Phase 8). (1) Uptime Kuma (or Healthchecks.io) probing each tenant subdomain + admin, (2) disk/memory/CPU threshold alerts via a simple agent or cron script, (3) Odoo ERROR-level log watcher, (4) WAL-archive and backup-failure alerts, (5) all alerts to Discord. <br>**Reason**: the first production tenants arrive at the end of this phase — flying blind until Phase 8 is not acceptable. <br>**Acceptance**: killing the Odoo container triggers a Discord alert within 2 minutes. | `[DEV-1]` | P2-T07 | 2 |
+| **P2-T11** | Billing Engine | Automatic invoicing for subscriptions in the admin DB. (1) `account.move` generation on purchase and renewal (plan, period, price), (2) UAE VAT 5% applied, (3) proration on mid-cycle upgrades, (4) invoice linked to tenant + subscription, (5) payment status tracked on the subscription. CHECK OCA first (contract/subscription-oriented modules) and document the decision. <br>**Acceptance**: activating or renewing a subscription always produces exactly one correct invoice. | `[DEV-2]` | P1-T07 | 5 |
+| **P2-T12** | Subscription Lifecycle & Trial Support | Formal lifecycle: `draft→trial→active→expired→suspended→terminated` (+ `active→cancelled`). Trial support: `trial_days` on plan, trial state with full plan access, auto-conversion or expiry at trial end. Transition side effects: activation → provision + invoice; expiry → grace period; suspension → access blocked with the branded interstitial (via P2-T03); reactivation flow. Guarded transitions with constraints + tests. <br>**Acceptance**: every transition path tested, including trial conversion and reactivation during grace. | `[DEV-2]` | P2-T11 | 4 |
+| **P2-T13** | Subscription Payment Collection (Stripe) | Collect subscription money online — v4.0 deferred ALL payment capability to Phase 6, meaning go-live with manual bank-transfer chasing. Configure Odoo's built-in `payment_stripe` provider in the admin DB (Community ships it — do NOT build a gateway from scratch): (1) payment links / hosted checkout attached to subscription invoices and renewal emails, (2) webhook confirmation marks the invoice paid and extends the subscription, (3) failed-payment handling feeds the dunning scheduler. Regional gateways (PayTabs, Tap) are deliberately Phase 6 scope (tenant-facing). <br>**Acceptance**: a test-mode card payment marks the invoice paid and renews the subscription automatically. | `[DEV-2]` | P2-T11 | 4 |
+| **P2-T14** | Expiration & Dunning Scheduler | Daily lifecycle cron: (1) advance-warning emails 30/14/7/1 days before expiry, (2) transition to `expired` after `end_date` (+48h safety buffer), (3) suspension after the 15-day grace, (4) failed-payment dunning sequence (retry schedule + emails), (5) admin override to reactivate, (6) every action logged to chatter. <br>**Acceptance**: simulated-clock tests prove each threshold fires exactly once per subscription. | `[DEV-2]` | P2-T12 | 2 |
+| **P2-T15** | SaaS Admin Dashboard Enhancement | Extend the EXISTING SaaS admin dashboard: KPI cards (tenants, MRR, churn, trial conversions), tenant list with status badges and quick actions, provisioning job monitor, revenue trend + per-plan breakdown, DB size / storage health. Restrict to a new `NCollection / Platform Admin` group. <br>**Acceptance**: platform staff can spot a failed provision or an expiring tenant in under 10 seconds. | `[DEV-2]` | P1-T07 | 4 |
+| **P2-T16** | Self-Service Onboarding & Public Checkout | The platform's best sales tool: visit the site, pick a plan, get an isolated ERP in minutes. (1) Pricing page with plan comparison + monthly/yearly toggle, (2) company registration form (validated, reCAPTCHA, unique company/subdomain check with live availability feedback), (3) creates tenant + trial/draft subscription and triggers provisioning, (4) "your workspace is being prepared" progress page that polls provisioning status and reveals the login URL when ready, (5) NCollection branding, zero Odoo references, bilingual-ready copy. <br>**Acceptance**: a stranger can self-provision a trial workspace end-to-end without staff, in under 10 minutes. | `[DEV-3]` | P1-T13 | 5 |
+| **P2-T17** | Email Automation System | Complete the transactional email set on the P1-T18 base layout: welcome (login URL + getting started), trial ending, renewal reminders, expiration, suspension warning, payment received, payment failed, plan change confirmations. De-duplicate so a tenant never receives two lifecycle emails on the same day. <br>**Acceptance**: every lifecycle transition sends exactly the right email, verified on staging. | `[DEV-3]` | P1-T18, P2-T14 | 3 |
+| **P2-T18** | Phase 2 Integration & E2E Suite Expansion | The Phase 2 gate. End-to-end on staging: public checkout → provision → login → pay (Stripe test mode) → plan upgrade (config sync visible) → backup → tenant restore → suspend → reactivate. Extend the Playwright suite (P1-T20) with checkout and lifecycle journeys. Re-run the full Phase 1 regression checklist. <br>**Acceptance**: signed-off test report; the full tenant lifecycle needs zero manual server intervention; E2E suite green in CI. | `[DEV-1]` | P2-T02, P2-T03, P2-T05, P2-T06, P2-T13, P2-T16, P2-T17 | 3 |
+
+### Phase 2 Dependency Graph
+
+```
+P1-T07 ──► P2-T01 ──► P2-T02 ──► P2-T03 (sync)
+                         │
+P1-T02 ──► P2-T04 ──► P2-T05 (backups)
+P1-T06 ──► P2-T06 (domains)
+P1-T05 ──► P2-T07 ──► P2-T08 / P2-T09 / P2-T10 (staging, hardening, pooling, monitoring)
+P1-T07 ──► P2-T11 ──► P2-T12 ──► P2-T14 ──► P2-T17
+                └───► P2-T13 (Stripe)
+P1-T07 ──► P2-T15          P1-T13 ──► P2-T16
+All key P2 ──► P2-T18 (gate)
+```
+
+### Phase 2 Developer Workload
+
+| Developer | Tasks | Total Days | Notes |
+|-----------|-------|:----------:|-------|
+| DEV-1 | T01, T02, T04, T05, T06, T07, T08, T09, T10, T18 | 31 | Deliberate bottleneck — infra phase |
+| DEV-2 | T03, T11, T12, T13, T14, T15 | 22 | Starts Phase 3 (UAE) when queue drains |
+| DEV-3 | T16, T17 | 8 | Starts Phase 3 (translations, PDF) early |
 
 ---
 
 ## Phase 3: ERP Enhancement & UAE Localization
 
-**Priority**: P1 — HIGH (can overlap with Phase 2 for DEV-2 and DEV-3)  
-**Objective**: Enhance core ERP modules and implement full UAE/GCC localization.
+**Priority**: P1 — HIGH (overlaps Phase 2 for DEV-2 and DEV-3)
+**Objective**: Full UAE/GCC localization, core ERP polish, performance baselines, pre-launch security assessment — ending in the **first production deployment**.
+
+**Acceptance Criteria (Definition of Done)**:
+- [ ] A provisioned tenant computes 5% UAE VAT with the UAE Chart of Accounts out of the box
+- [ ] Fully bilingual Arabic/English interface with correct RTL rendering
+- [ ] UAE-compliant bilingual PDF invoices with TRN and QR code
+- [ ] Documented performance baseline under simulated multi-tenant load
+- [ ] External-grade security assessment passed; go-live checklist executed with evidence
+- [ ] Real paying tenant(s) live in production
 
 ### Phase 3 Tasks
 
-| ID | Task Name | Description | Assigned | Dependencies | Est. |
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
 |---|---|---|---|---|:---:|
-| **P3-T01** | OCA Financial Stack Verification | Verify EXISTING OCA modules (`account_financial_report`, `mis_builder`) work correctly with tenant provisioning. Ensure they are auto-installed during provisioning. Test all report types with UAE sample data. Patch if needed for Odoo 19 compatibility. **Before building**: Check OCA 19.0 branches for updates. | `[DEV-1]` | P1-T01 | 2 |
-| **P3-T02** | PostgreSQL Performance Tuning | Tune `postgresql.conf` for multi-tenant ERP: `shared_buffers` (25% RAM), `effective_cache_size` (75%), `work_mem` (64MB), `maintenance_work_mem` (512MB), SSD settings. Create indexes on hot fields. Setup `pg_stat_statements`. Log slow queries (>500ms). | `[DEV-1]` | P1-T01 | 2 |
-| **P3-T03** | Odoo Worker Optimization | Tune `odoo.conf` workers. Template config for env-variable substitution. Load test with simulated concurrent users. Document performance baseline and scaling thresholds. | `[DEV-1]` | P3-T02 | 2 |
-| **P3-T04** | UAE VAT Configuration | Create `ncollection_uae` addon. Tax records: 5% standard, 0% zero-rated, exempt. Tax groups, fiscal positions (domestic/GCC/international). Default taxes on products. All via XML data files for auto-install. | `[DEV-2]` | P1-T03 | 3 |
-| **P3-T05** | UAE Chart of Accounts | Standard UAE CoA within `ncollection_uae`: Assets (1xxx), Liabilities (2xxx), Equity (3xxx), Revenue (4xxx), COGS (5xxx), Expenses (6xxx-7xxx). Tax accounts linked to P3-T04. Test: complete sale→invoice→payment cycle with correct journal entries. | `[DEV-2]` | P3-T01, P3-T04 | 4 |
-| **P3-T06** | AED Currency & Multi-Currency | AED as default. Enable multi-currency. Auto exchange rates (ECB/UAE Central Bank). Common GCC currencies: USD, EUR, SAR, KWD, BHD, QAR, OMR. Rounding rules per UAE standards. | `[DEV-2]` | P3-T04 | 2 |
-| **P3-T07** | Workflow Enhancements | Multi-level approvals for UAE businesses. Sales: manager approval above threshold. Purchase: two-level (dept manager + finance). CRM: territory-based lead assignment. Using `mail.activity` and custom state fields — NOT core workflow modification. | `[DEV-2]` | P1-T07 | 5 |
-| **P3-T08** | Arabic/English Translation | Complete bilingual support. Export `.po` files for all `ncollection_*` modules. Translate all labels, menus, status values, error messages. Verify RTL layout. Test Arabic PDF rendering (font support). | `[DEV-3]` | P1-T09 | 5 |
-| **P3-T09** | UAE-Compliant PDF Invoices | Custom QWeb PDF templates: bilingual header, TRN, itemized VAT, QR code (e-invoicing readiness), NCollection or tenant branding, sequential numbering, bank details. A4 + thermal receipt formats. | `[DEV-3]` | P3-T04 | 4 |
-| **P3-T10** | MIS Builder Report Enhancement | Extend EXISTING `ncollection_mis_templates`: Balance Sheet (proper account grouping), P&L, Cash Flow (if feasible). Add period comparison, budget vs. actual. Verify with UAE CoA. | `[DEV-3]` | P3-T01, P3-T05 | 3 |
+| **P3-T01** | OCA Financial Stack Verification | Verify the EXISTING OCA modules (`account_financial_report`, `mis_builder`) install cleanly during automated provisioning and function inside tenant DBs. Add them to the provisioning module set for plans that include accounting. Test every report against UAE demo data. Pin versions in `repos.yml` (P1-T04). <br>**Acceptance**: a freshly provisioned Enterprise tenant can run a Trial Balance immediately. | `[DEV-2]` | P2-T01 | 2 |
+| **P3-T02** | PostgreSQL Performance Tuning | Tune `postgresql.conf` for multi-tenant load per [ARCHITECTURE_DATA_PLATFORM.md §9](ARCHITECTURE_DATA_PLATFORM.md): `shared_buffers` (25% RAM), `effective_cache_size` (75%), `work_mem`, `maintenance_work_mem`, SSD-appropriate settings. Enable `pg_stat_statements`; log queries over 500ms. Baseline before/after with the same workload. <br>**Acceptance**: documented measurable improvement and a committed config template. | `[DEV-1]` | P2-T07 | 2 |
+| **P3-T03** | Odoo Worker Tuning & Load Testing | Tune Odoo workers from measured load: worker count vs memory reality, cron/queue worker isolation, `limit_time` tuning. Load-test with k6/Locust simulating 50 concurrent users across 3 tenant DBs on staging (through the PgBouncer topology). Document scaling thresholds (when to add RAM / workers / a second node). <br>**Acceptance**: performance baseline doc with graphs committed to `docs/`. | `[DEV-1]` | P3-T02, P2-T09 | 2 |
+| **P3-T04** | UAE VAT Configuration | Create the `ncollection_uae` addon with UAE VAT: 5% standard, 0% zero-rated, exempt; tax groups; fiscal positions for domestic/GCC/international; defaults wired to products and accounts. All XML data — installable unattended during provisioning. <br>**Acceptance**: a sale in a fresh tenant computes 5% VAT with correct tax accounts. | `[DEV-2]` | P1-T01 | 3 |
+| **P3-T05** | UAE Chart of Accounts | UAE CoA in `ncollection_uae` as an account chart template: Assets 1xxx, Liabilities 2xxx, Equity 3xxx, Revenue 4xxx, COGS 5xxx, Expenses 6xxx–7xxx, VAT accounts linked to P3-T04 taxes. Test the full sale→invoice→payment→reconciliation cycle. <br>**Acceptance**: journal entries post to correct accounts through the whole cycle. | `[DEV-2]` | P3-T04 | 4 |
+| **P3-T06** | AED & Multi-Currency Setup | AED default currency, multi-currency activation, automated exchange rates (UAE Central Bank or ECB provider — check `OCA/currency` first), GCC currencies preloaded (USD, EUR, SAR, KWD, BHD, QAR, OMR), UAE rounding rules. <br>**Acceptance**: a USD invoice posts with correct AED conversion at the day's rate. | `[DEV-2]` | P3-T04 | 2 |
+| **P3-T07** | Approval Workflow Enhancements | Configurable approval workflows without touching core: sales orders above a threshold require manager approval; purchases require two-level approval (department + finance); CRM territory-based lead assignment. Implemented with `mail.activity` + state fields in a custom addon. <br>**Acceptance**: a threshold-crossing SO cannot confirm until the approval activity completes. | `[DEV-2]` | P1-T08 | 5 |
+| **P3-T08** | Arabic/English Translation & RTL Audit | Full bilingual pass: export `.po` files for every `ncollection_*` module, professional Arabic translation of labels/menus/status/errors, RTL layout audit of backend + dashboard + login, Arabic PDF rendering (embedded font support). <br>**Acceptance**: switching to Arabic yields a fully translated RTL interface with zero broken layouts on core flows. | `[DEV-3]` | P1-T13 | 5 |
+| **P3-T09** | UAE-Compliant PDF Invoice Templates | UAE-compliant QWeb invoice PDFs: bilingual Arabic/English layout, TRN display, itemized VAT summary, QR code (e-invoicing readiness), sequential numbering, bank details, tenant branding integration (P1-T16 colors/logo), A4 + thermal formats. <br>**Acceptance**: a sample invoice passes a UAE tax-invoice requirements checklist (documented in the PR). | `[DEV-3]` | P3-T04 | 4 |
+| **P3-T10** | MIS Builder Report Enhancement | Extend `ncollection_mis_templates`: corrected Balance Sheet grouping for the UAE CoA, P&L, cash flow if feasible, period comparison, budget vs actual. <br>**Acceptance**: reports reconcile to the penny with the General Ledger on demo data. | `[DEV-3]` | P3-T05 | 3 |
+| **P3-T11** | Tenant Data Import Toolkit | Onboarding import toolkit: documented CSV/XLSX templates + import wizards for customers, suppliers, products, opening stock, and opening balances. Validation with row-level error reporting a non-technical admin can understand. <br>**Reason**: the first real tenants arrive with existing data — without this, onboarding is manual data entry. <br>**Acceptance**: the full template set imports into a fresh tenant without developer help. | `[DEV-2]` | P3-T05 | 3 |
+| **P3-T12** | Pre-Launch Security Assessment | Formal security assessment BEFORE real tenant data arrives (v4.0 deferred this to Phase 10 — far too late). (1) Run the full checklist from [ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md): isolation suite, license enforcement, auth hardening, headers, TLS config (SSL Labs A grade), secrets audit, dependency scan review, (2) OWASP-style probing of checkout, login, portal-facing endpoints (injection, IDOR, CSRF, SSRF), (3) engage an external tester if budget allows — otherwise a structured internal red-team day with documented methodology, (4) remediate all criticals/highs. <br>**Acceptance**: assessment report committed; zero unresolved critical or high findings. | `[DEV-1]` | P2-T18 | 3 |
+| **P3-T13** | Go-Live Readiness & First Production Deployment | The go-live gate. Execute a written checklist with evidence linked in the issue: security assessment passed (P3-T12), PITR + tenant backups verified ON PRODUCTION (P2-T04/T05), monitoring + alerting live (P2-T10), UAE compliance sanity check (P3-T04/05/09), full regression + E2E suite green, rollback procedure rehearsed, incident response runbook (`docs/RUNBOOK_INCIDENTS.md`) and on-call rotation agreed. Then deploy production and onboard the first real tenant(s). <br>**Acceptance**: production serves a real paying tenant; every checklist item has linked evidence. | `[DEV-1]` | P3-T12, P3-T05, P3-T08, P3-T09 | 2 |
+
+### Phase 3 Developer Workload
+
+| Developer | Tasks | Total Days |
+|-----------|-------|:----------:|
+| DEV-1 | T02, T03, T12, T13 | 9 |
+| DEV-2 | T01, T04, T05, T06, T07, T11 | 19 |
+| DEV-3 | T08, T09, T10 | 12 |
 
 ---
 
 ## Phase 4: Executive Dashboards
 
-**Priority**: P2 — MEDIUM  
-**Objective**: Real-time analytics dashboards for tenant executives and department managers.
+**Priority**: P2 — MEDIUM
+**Objective**: Real-time analytics dashboards for tenant executives and department managers, built on a single reusable aggregation engine.
 
-| ID | Task | Assigned | Dependencies | Est. |
-|---|---|---|---|:---:|
-| **P4-T01** | Data Aggregation Engine | Optimized SQL/Python for cross-module data aggregation within a tenant. Caching layer for expensive queries. | `[DEV-1]` | P1-T04 | 4 |
-| **P4-T02** | KPI Logic Models | `ncollection.kpi` model. Computed KPIs: Revenue Growth %, Avg Deal Size, DSO, Gross Margin %, Employee Turnover, Inventory Turnover. | `[DEV-2]` | P4-T01 | 3 |
-| **P4-T03** | CEO Dashboard UI | OWL dashboard: KPI cards, revenue trend chart, sales pipeline, top customers. Chart.js/ApexCharts. Date range selector. Drill-down navigation. < 3s load time. | `[DEV-3]` | P4-T02 | 5 |
-| **P4-T04** | Department Dashboards | Role-specific: Sales (pipeline, targets), Finance (receivables aging, P&L sparkline), HR (headcount, leave), Warehouse (stock valuation, low-stock alerts). | `[DEV-3]` | P4-T02 | 5 |
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
+|---|---|---|---|---|:---:|
+| **P4-T01** | Data Aggregation & Caching Engine | Build the tenant-side aggregation service that powers ALL dashboards (and later the AI context engine): optimized `read_group`/SQL aggregations across sale, account, stock, hr with a caching layer (`ormcache` or Redis) and cache invalidation on source writes. Establish the query performance budget: every dashboard endpoint under 500ms on 100k-record demo data. <br>**Reason**: every dashboard in Phases 4–5 sits on this engine — build it once, correctly. <br>**Acceptance**: documented aggregation API consumed by P4-T03/T04 with measured query times. | `[DEV-1]` | P1-T07 | 4 |
+| **P4-T02** | KPI Logic Models | `ncollection.kpi` model with computed KPI definitions: Revenue Growth %, Average Deal Size, Days Sales Outstanding, Gross Margin %, Employee Turnover, Inventory Turnover. Each KPI: computation method, period comparison, target/threshold configuration. Unit tests against known fixture data. <br>**Acceptance**: KPI values match hand-calculated fixtures exactly. | `[DEV-2]` | P4-T01 | 3 |
+| **P4-T03** | CEO Dashboard UI | CEO dashboard in OWL on the P4-T01 engine: KPI cards with trends, revenue chart, sales pipeline funnel, top customers, date-range selector, drill-down navigation to source records, export to PDF. Loads under 3s. <br>**Acceptance**: renders correctly on desktop/tablet with tenant brand colors and respects role access. | `[DEV-3]` | P4-T02 | 5 |
+| **P4-T04** | Department Dashboards | Role-specific dashboards reusing P4-T03 widget components (no copy-paste widgets): Sales (pipeline, targets, leaderboard), Finance (receivables aging, cash position, P&L sparkline), HR (headcount, leave calendar, attendance), Warehouse (stock valuation, low-stock alerts, movement velocity). <br>**Acceptance**: each of the 4 dashboards visible only to its role group. | `[DEV-3]` | P4-T02 | 5 |
 
 ---
 
 ## Phase 5: AI Platform
 
-**Priority**: P3  
-**Objective**: AI-powered assistance for ERP users.
+**Priority**: P3 — executed AFTER Phase 6 (see [§8 execution order](#8-phase-execution-order--gates))
+**Objective**: AI-powered assistance for ERP users — behind a single secured gateway, with absolute tenant isolation.
 
-| ID | Task | Assigned | Dependencies | Est. |
-|---|---|---|---|:---:|
-| **P5-T01** | LLM Gateway | Secure API gateway to OpenAI/Claude. Tenant-scoped rate limiting. Token usage tracking. API key management in `ir.config_parameter`. | `[DEV-1]` | P1-T04 | 4 |
-| **P5-T02** | Context Injection Engine | Tenant-specific data enrichment for LLM prompts. PII sanitization. Context window management. Prompt templates. Absolute tenant isolation. | `[DEV-1]` | P5-T01, P4-T01 | 5 |
-| **P5-T03** | Anomaly Detection | Background jobs: stock below safety level, sales drop detection, unusual expenses, attendance anomalies. Alert records with severity and suggested actions. | `[DEV-2]` | P4-T01 | 4 |
-| **P5-T04** | NL→Domain Mapper | Natural language to Odoo domain filter translation via LLM. Input validation. Supported models: `sale.order`, `account.move`, `stock.picking`, `crm.lead`. | `[DEV-2]` | P5-T01 | 5 |
-| **P5-T05** | AI Chat Widget | Persistent OWL floating chat widget. Message history. Markdown rendering. Suggested prompts. Minimize/maximize. | `[DEV-3]` | P5-T02 | 5 |
-| **P5-T06** | Smart Search UI | NL-enhanced Odoo search bar. Model-grouped results dropdown. AI search toggle. Recent query cache. | `[DEV-3]` | P5-T04 | 4 |
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
+|---|---|---|---|---|:---:|
+| **P5-T01** | LLM Provider Evaluation & Design Spike | Timeboxed spike: evaluate LLM providers (Claude, OpenAI, regional hosting options for data residency), prompt architecture, cost model per tenant, PII-handling policy, streaming vs batch UX. Deliverable: `docs/AI_PLATFORM_DESIGN.md` with the chosen provider, prompt templates, token budget per plan tier, and evaluation results. No production code. <br>**Acceptance**: design doc approved before any AI implementation task starts. | `[DEV-1]` | None | 3 |
+| **P5-T02** | LLM Gateway Service | `ncollection_ai` gateway: the single choke point for ALL LLM calls — provider abstraction (swap Claude/OpenAI via config), per-tenant rate limiting and token budgets, request/response logging with PII scrubbing, API keys stored encrypted, circuit breaker on provider outage. <br>**Acceptance**: no module calls an LLM API except through this gateway; budget exhaustion returns a friendly error. | `[DEV-1]` | P5-T01 | 4 |
+| **P5-T03** | Context Injection Engine | Builds tenant-scoped context for prompts from ERP data (via P4-T01 aggregations), enforces absolute tenant isolation (the context builder physically cannot read another DB), sanitizes PII per the P5-T01 policy, manages context-window truncation. <br>**Acceptance**: injection tests prove no cross-tenant data can enter a prompt; context quality reviewed on 20 sample questions. | `[DEV-1]` | P5-T02, P4-T01 | 5 |
+| **P5-T04** | Anomaly Detection Jobs | Scheduled detection: stock below safety levels, sales trend drops, unusual expense spikes, attendance anomalies. Statistical baselines first (z-scores/moving averages) — LLM explanation layered on top only where useful. `ncollection.alert` records with severity + suggested action, surfaced on dashboards and via email digest. <br>**Acceptance**: seeded anomalies in demo data are detected with zero false negatives on the test set. | `[DEV-2]` | P4-T01 | 4 |
+| **P5-T05** | NL→Domain Mapper | Natural-language to Odoo domain translation: the LLM converts user queries (e.g. "unpaid invoices over 5000 AED last quarter") into domain filters for whitelisted models (`sale.order`, `account.move`, `stock.picking`, `crm.lead`). CRITICAL: generated domains are parsed and validated server-side against a strict schema — LLM output is NEVER passed to eval or executed raw. <br>**Acceptance**: a 50-question test set passes with domains verified safe; injection attempts in queries produce refusals. | `[DEV-2]` | P5-T02 | 5 |
+| **P5-T06** | AI Chat Widget | Persistent OWL chat widget: floating assistant on every screen, message history per user, markdown rendering, streaming responses, suggested prompts per module context, minimize/expand. Talks only to the P5-T02 gateway. <br>**Acceptance**: usable chat experience demoed across 5 modules with brand styling. | `[DEV-3]` | P5-T03 | 5 |
+| **P5-T07** | Smart Search UI | Extend the Odoo command palette/search with a natural-language mode backed by P5-T05: grouped results by model, recent query cache, opt-out toggle. <br>**Acceptance**: NL search returns correct records for the P5-T05 test set from the UI. | `[DEV-3]` | P5-T05 | 4 |
 
 ---
 
 ## Phase 6: Customer Portal
 
-**Priority**: P3  
-**Objective**: Self-service portal for the tenants' end-customers.
+**Priority**: P2 — executed BEFORE Phase 5 (portal + regional payments drive revenue and retention)
+**Objective**: Self-service portal for the tenants' end-customers: invoices, payments, orders, tickets, knowledge base.
 
-| ID | Task | Assigned | Dependencies | Est. |
-|---|---|---|---|:---:|
-| **P6-T01** | Payment Gateways | Stripe + PayTabs + Tap Payments integration. Webhook handling. Auto-reconciliation. PCI-DSS compliance (tokenization). **Check OCA first**: `OCA/payment` for existing providers. | `[DEV-1]` | P2-T06 | 5 |
-| **P6-T02** | Portal Access Rights | Strict `ir.rule` for portal users. Own invoices, orders, tickets only. Extensive isolation testing. | `[DEV-2]` | P1-T07 | 3 |
-| **P6-T03** | Support Ticketing | `ncollection.support.ticket` model. Portal submission form. Auto-assignment. SLA tracking. CSAT rating. **Check OCA first**: `OCA/helpdesk`. | `[DEV-2]` | P6-T02 | 5 |
-| **P6-T04** | Portal UI Redesign | Override `/my` portal templates. Modern card-based design. Tenant branding (not NCollection branding). Responsive. | `[DEV-3]` | P6-T02 | 5 |
-| **P6-T05** | Knowledge Base | `ncollection.knowledge.article` model. Category navigation. Full-text PostgreSQL `tsvector` search. Admin editor. | `[DEV-3]` | P6-T04 | 4 |
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
+|---|---|---|---|---|:---:|
+| **P6-T01** | Regional Payment Gateways (Tenant Invoices) | Payment collection for TENANT invoices (the tenants' end-customers paying them — distinct from the platform's own Stripe billing in P2-T13): PayTabs and Tap Payments provider modules following Odoo's payment-provider framework (reuse patterns from P2-T13), webhook reconciliation, multi-currency, PCI compliance via tokenization (no card data stored). Check `OCA/payment` and existing community providers first. <br>**Acceptance**: an end-customer pays a tenant invoice in AED via the PayTabs sandbox and it auto-reconciles. | `[DEV-1]` | P2-T13 | 5 |
+| **P6-T02** | Portal Access Rights | Strict portal isolation: `ir.rule` record rules ensuring portal users see ONLY their own invoices, orders, deliveries, and tickets; penetration-style tests attempting IDOR access to other partners' records via URL manipulation and RPC. <br>**Acceptance**: the isolation test suite (added to E2E) passes; zero cross-partner leakage. | `[DEV-2]` | P1-T08 | 3 |
+| **P6-T03** | Support Ticketing | Evaluate `OCA/helpdesk` first; if unsuitable build `ncollection.support.ticket` with portal submission, team assignment rules, SLA timers, stage workflow, email notifications, CSAT rating on close. <br>**Acceptance**: a portal user submits a ticket, an agent resolves it in the backend, the customer rates it — full loop on staging. | `[DEV-2]` | P6-T02 | 5 |
+| **P6-T04** | Portal UI Redesign | Override `/my` templates with a modern card-based responsive design carrying the TENANT's branding (P1-T16 colors/logo — the tenant's customers see the tenant's brand, not NCollection's). Bilingual Arabic/English. <br>**Acceptance**: the portal passes the same branding audit standard as the backend (zero Odoo references) and renders RTL correctly. | `[DEV-3]` | P6-T02 | 5 |
+| **P6-T05** | Knowledge Base | `ncollection.knowledge.article` with categories, tags, PostgreSQL `tsvector` full-text search (Arabic + English analyzers), WYSIWYG admin editor, view analytics. Portal-facing browse/search UI. <br>**Acceptance**: seeded articles are searchable in both languages from the portal. | `[DEV-3]` | P6-T04 | 4 |
 
 ---
 
 ## Phase 7: Mobile Application
 
-**Priority**: P3  
-**Objective**: Mobile accessibility for field workers and executives.
+**Priority**: P3
+**Objective**: Mobile accessibility for field workers and executives — sales entry, approvals, barcode operations, offline capability.
 
-| ID | Task | Assigned | Dependencies | Est. |
-|---|---|---|---|:---:|
-| **P7-T01** | Mobile API Optimization | Lightweight JSON-RPC wrappers. Pagination. Field selection. Compression. JWT auth tokens. API versioning. | `[DEV-1]` | P1-T01 | 5 |
-| **P7-T02** | Push Notification Server | Firebase FCM integration. Device registration model. Triggers: approval requests, lead assignment, stock alerts, payment received. | `[DEV-1]` | P7-T01 | 3 |
-| **P7-T03** | Offline Sync Logic | Conflict resolution: last-write-wins (simple fields), server-wins (financial), merge (chatter). Sync queue model. | `[DEV-2]` | P7-T01 | 5 |
-| **P7-T04** | Barcode Endpoints | Hyper-optimized endpoints: scan, transfer, receive, pick. < 200ms response. Redis cache for product data. | `[DEV-2]` | P7-T01 | 4 |
-| **P7-T05** | Mobile App Scaffold | React Native or Flutter project. Auth (login + biometrics). API layer. State management. Offline storage. Push notification handler. | `[DEV-3]` | P7-T01 | 5 |
-| **P7-T06** | Mobile UI Screens | Dashboard, Sales Entry, Barcode Scanner, Approvals, Notifications, Profile. NCollection + tenant branding. | `[DEV-3]` | P7-T05 | 8 |
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
+|---|---|---|---|---|:---:|
+| **P7-T01** | Mobile API Optimization | Mobile-optimized API layer: lightweight JSON endpoints wrapping ORM calls with pagination, sparse field selection, gzip, JWT-based auth (short-lived access + refresh tokens), device registry, API versioning (`/mobile/v1/`), rate limiting per device. <br>**Reason**: raw XML-RPC is too chatty for mobile networks. <br>**Acceptance**: documented endpoint set for auth, dashboard, sales, inventory, approvals with median response under 300ms. | `[DEV-1]` | P1-T19 | 5 |
+| **P7-T02** | Push Notification Server | FCM integration: device token registration model, notification dispatch service with per-user preferences, triggers for approval requests, lead assignment, stock alerts, payment received. <br>**Acceptance**: an approval request reaches a test device in under 5 seconds. | `[DEV-1]` | P7-T01 | 3 |
+| **P7-T03** | Offline Sync Logic | Client sync queue with conflict-resolution policies: last-write-wins for simple fields, server-wins for financial records, append for chatter. Server-side sync journal model with idempotent replay. <br>**Acceptance**: airplane-mode edits sync cleanly on reconnect; a conflicting financial edit is rejected with a clear message. | `[DEV-2]` | P7-T01 | 5 |
+| **P7-T04** | Barcode Endpoints | Barcode operations: scan-to-lookup, internal transfer, receipt, picking confirmation — optimized to under 200ms via Redis product cache. Designed for continuous-scanning workflows (no page reload between scans). <br>**Acceptance**: a 50-scan session completes without errors on staging with measured latencies. | `[DEV-2]` | P7-T01 | 4 |
+| **P7-T05** | Mobile Framework Decision & App Scaffold | Framework decision (React Native vs Flutter — document the choice and rationale) + app scaffold: navigation shell, login with biometric unlock, secure token storage, API client layer, state management, offline storage foundation, push handler, environment config. <br>**Acceptance**: an authenticated shell app runs on Android and iOS simulators against staging. | `[DEV-3]` | P7-T01 | 5 |
+| **P7-T06** | Mobile Core Screens | Core screens: dashboard (KPI cards from the P4 engine), sales order entry, customer lookup, approvals inbox with approve/reject, notifications center, profile/settings. NCollection + tenant branding. <br>**Acceptance**: a sales manager can review KPIs and approve an order end-to-end from the app. | `[DEV-3]` | P7-T05 | 5 |
+| **P7-T07** | Mobile Field Operations Screens | Field ops: camera-based barcode scanner for inventory counts/transfers/receipts on the P7-T04 endpoints, offline queue UI showing pending syncs, warehouse task list. <br>**Acceptance**: the receive-scan-confirm warehouse flow works offline and syncs on reconnect. | `[DEV-3]` | P7-T06, P7-T04 | 4 |
 
 ---
 
 ## Phase 8: Platform Services
 
-**Priority**: P3  
-**Objective**: Enterprise integrations and operational monitoring.
+**Priority**: P3
+**Objective**: Enterprise integrations (REST API, webhooks, SDKs) and full observability.
 
-| ID | Task | Assigned | Dependencies | Est. |
-|---|---|---|---|:---:|
-| **P8-T01** | Public REST API | OAuth2 authentication. Rate limiting. Standard REST endpoints for Contacts, Products, Sales, Invoices, Inventory. Versioned `/api/v1/`. **Check OCA first**: `OCA/rest-framework` → `base_rest`. | `[DEV-1]` | P1-T01 | 8 |
-| **P8-T02** | Webhooks System | Event-driven outgoing webhooks. HMAC-SHA256 signing. Retry with backoff. Event catalog: sale/invoice/stock/crm events. **Check OCA first**: `OCA/server-tools` → `base_webhook`. | `[DEV-1]` | P8-T01 | 4 |
-| **P8-T03** | System Monitoring | Prometheus + Grafana. `node_exporter`, `postgres_exporter`, custom Odoo metrics. Alert rules: CPU, disk, connections, SSL expiry. | `[DEV-1]` | P1-T01 | 3 |
-| **P8-T04** | Audit Trail | Field-level change tracking on critical models. `ncollection.audit.log` model. Per-record history tab. CSV export. Retention policy. **Check OCA first**: `OCA/server-tools` → `auditlog`. | `[DEV-2]` | P1-T04 | 4 |
-| **P8-T05** | Developer SDK | Python + Node.js client SDKs. Auto-generated from OpenAPI spec. Documentation site. | `[DEV-2]` | P8-T01 | 5 |
-| **P8-T06** | API Documentation Portal | Swagger UI or Redoc. Auto-generated OpenAPI 3.0 spec. "Try it out" sandbox. NCollection branding. | `[DEV-3]` | P8-T01 | 3 |
-| **P8-T07** | Integration Directory UI | Browse/install verified integrations. `ncollection.marketplace.listing` model. Category filters. Admin curation. | `[DEV-3]` | P1-T03 | 5 |
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
+|---|---|---|---|---|:---:|
+| **P8-T01** | REST API Foundation | Public REST API foundation: evaluate OCA `base_rest` / the FastAPI addon first — document the choice. OAuth2 client-credentials + authorization-code flows, per-tenant API keys, scoped tokens, rate limiting, request logging, versioned `/api/v1/` routing, standard error envelope. <br>**Acceptance**: the OAuth2 flow issues a token that lists contacts on a demo tenant; unauthorized scopes are rejected. | `[DEV-1]` | P1-T19 | 4 |
+| **P8-T02** | REST Business Endpoints | Business endpoints on the P8-T01 foundation: Contacts, Products, Sales Orders, Invoices, Stock levels, CRM leads — full CRUD where sensible, filtered list endpoints with pagination, OpenAPI 3.1 spec auto-generated. <br>**Acceptance**: the OpenAPI spec validates; a Bruno/Postman collection of all endpoints passes against staging. | `[DEV-1]` | P8-T01 | 4 |
+| **P8-T03** | Webhooks System | Outgoing webhooks: event subscription model per tenant (sale confirmed, invoice paid, stock low, lead created), HMAC-SHA256 signed payloads, at-least-once delivery with exponential backoff and dead-letter status, delivery log UI. Check `OCA/server-tools` first. <br>**Acceptance**: a subscribed test endpoint receives signed events, with retries proven by a flaky-receiver test. | `[DEV-1]` | P8-T02 | 4 |
+| **P8-T04** | Full Observability Stack | Prometheus + Grafana + `node_exporter` + `postgres_exporter` + a custom Odoo metrics exporter (request latency per tenant DB, worker saturation, cron duration, queue depth, pool saturation). Alert rules: CPU, disk, connection pool, SSL expiry, backup/WAL failure, replication lag. Supersedes the lightweight P2-T10 probes. <br>**Acceptance**: Grafana shows live per-tenant latency; a test alert fires to Discord. | `[DEV-1]` | P2-T10 | 3 |
+| **P8-T05** | Audit Trail | Evaluate OCA `auditlog` first. Field-level change tracking on critical models (`account.move`, `res.partner`, `sale.order`, `res.users`, all ncollection platform models), per-record history view, CSV export, retention policy, tamper evidence (hash chaining if feasible). <br>**Acceptance**: changing an invoice amount produces an audit entry with old/new values, user, IP, and timestamp. | `[DEV-2]` | P1-T07 | 4 |
+| **P8-T06** | Developer SDKs | Client SDKs generated from the OpenAPI spec: Python and Node.js packages with auth handling, retries, pagination helpers; published under the NCollection scope; quickstart docs with real examples. <br>**Acceptance**: a 10-line SDK script creates a contact and lists invoices against staging. | `[DEV-2]` | P8-T02 | 5 |
+| **P8-T07** | API Documentation Portal | Branded Redoc/Swagger UI from the OpenAPI spec with a try-it-out sandbox against a demo tenant, authentication guide, webhook integration guide, rate-limit documentation. <br>**Acceptance**: an external developer can go from zero to first API call using only the portal. | `[DEV-3]` | P8-T02 | 3 |
+| **P8-T08** | Integration Directory UI | Curated integration catalog inside the workspace (`ncollection.integration.listing`): categories, search, per-integration setup guides, request-an-integration form. This is the curated precursor to the (deferred) Phase 9 marketplace. <br>**Acceptance**: 5 seeded listings browsable with working setup links. | `[DEV-3]` | P8-T02 | 5 |
 
 ---
 
-## Phase 9: Marketplace
+## Phase 9: Marketplace (DEFERRED)
 
-**Priority**: P3  
-**Objective**: Build a full-featured marketplace for third-party addon distribution.
+**Priority**: P3 — DEFERRED — **executed AFTER Phase 10, and only with proven tenant demand**
+**Objective**: Full third-party addon marketplace with publisher ecosystem.
 
-| ID | Task | Assigned | Dependencies | Est. |
-|---|---|---|---|:---:|
-| **P9-T01** | Marketplace Backend | `ncollection.marketplace.app` model with versioning, compatibility matrix, pricing, reviews. Developer submission workflow. Automated compatibility testing pipeline. App signing for trust verification. | `[DEV-1]` | P8-T01 | 8 |
-| **P9-T02** | App Installation Engine | Secure server-side module installation from marketplace. Sandbox testing before install. Rollback on failure. Per-tenant installation tracking. Dependency resolution. | `[DEV-1]` | P9-T01 | 5 |
-| **P9-T03** | Developer Portal | Self-service portal for third-party developers. App submission form. Documentation requirements. Review process. Revenue sharing configuration. Analytics dashboard (installs, ratings, revenue). | `[DEV-2]` | P9-T01 | 5 |
-| **P9-T04** | App Review & Rating System | Customer reviews and ratings. Review moderation. Average rating computation. Featured/trending algorithms. Abuse detection. | `[DEV-2]` | P9-T01 | 3 |
-| **P9-T05** | Marketplace Storefront UI | Public-facing marketplace website. Category browsing, search, detail pages, screenshots, reviews, install button. NCollection branding. SEO-optimized. | `[DEV-3]` | P9-T01 | 6 |
-| **P9-T06** | In-App Marketplace Widget | OWL component within the tenant ERP. Browse marketplace from within their workspace. One-click install. Installed apps management. | `[DEV-3]` | P9-T02 | 4 |
+> [!WARNING]
+> **Deferral rationale (v5.0)**: Building a third-party developer ecosystem before the core platform is enterprise-grade is a distraction with negative expected value — every marketplace feature multiplies the security surface (arbitrary third-party code installed into tenant DBs). The curated Integration Directory (P8-T08) covers the near-term need. Re-evaluate after Phase 10 with real tenant demand data.
+
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
+|---|---|---|---|---|:---:|
+| **P9-T01** | Marketplace Backend Models | `ncollection.marketplace.app` with versioning, Odoo-version compatibility matrix, pricing models (free/one-time/recurring), publisher accounts, review states. <br>**Acceptance**: an app record moves draft→submitted→approved→published with correct gating. | `[DEV-1]` | P8-T02 | 4 |
+| **P9-T02** | App Submission & Compatibility Pipeline | Publisher upload (zip), automated lint + install test against a disposable DB in CI, security scan (no raw SQL/eval, manifest policy), signing of approved packages. <br>**Acceptance**: a malformed addon is auto-rejected with a readable report; a clean addon passes to review. | `[DEV-1]` | P9-T01 | 4 |
+| **P9-T03** | App Installation Engine | One-click install of a signed marketplace app into a tenant DB — sandbox install test, dependency resolution, rollback on failure, per-tenant installed-apps registry, update notifications. <br>**Acceptance**: install, upgrade, and rollback of a sample app on a staging tenant. | `[DEV-1]` | P9-T02 | 5 |
+| **P9-T04** | Developer Portal | Publisher self-service: submission wizard, docs requirements, review status tracking, revenue-share configuration, payout statements, install/rating analytics. <br>**Acceptance**: an external publisher account can submit and track an app without admin help. | `[DEV-2]` | P9-T02 | 5 |
+| **P9-T05** | Review & Rating System | Verified-install-only reviews, moderation queue, weighted average ratings, featured/trending computation, abuse reporting. <br>**Acceptance**: only tenants with the app installed can review; moderation hides flagged content. | `[DEV-2]` | P9-T01 | 3 |
+| **P9-T06** | Marketplace Storefront UI | Public branded storefront: category browse, search, app detail pages with screenshots and reviews, SEO metadata, bilingual. <br>**Acceptance**: Lighthouse SEO score above 90; the storefront lists published apps live from the backend. | `[DEV-3]` | P9-T01 | 5 |
+| **P9-T07** | In-Workspace Marketplace Widget | OWL component to browse/install from within the ERP, entitlement checks against the subscription plan, installed-apps management screen. <br>**Acceptance**: one-click install from inside a staging tenant workspace. | `[DEV-3]` | P9-T03 | 4 |
 
 ---
 
 ## Phase 10: Enterprise Readiness
 
-**Priority**: P3  
-**Objective**: Harden the platform for enterprise-scale operations and compliance.
+**Priority**: P3 — executed BEFORE Phase 9
+**Objective**: Harden the platform for enterprise-scale operations: high availability, horizontal scaling, advanced security, multi-region data residency, and compliance.
 
-| ID | Task | Assigned | Dependencies | Est. |
-|---|---|---|---|:---:|
-| **P10-T01** | High Availability Setup | Multi-server deployment with load balancing. PostgreSQL streaming replication (primary + standby). Automated failover. Zero-downtime deployments via blue-green or rolling updates. | `[DEV-1]` | P8-T03 | 8 |
-| **P10-T02** | Horizontal Scaling | Docker Swarm or Kubernetes orchestration. Auto-scaling Odoo workers based on request load. Shared filestore (NFS or S3-backed). Session stickiness or Redis-backed sessions. | `[DEV-1]` | P10-T01 | 6 |
-| **P10-T03** | Advanced Security | External auth provider integration (Keycloak/Auth0). Two-factor authentication (TOTP). IP whitelisting per tenant. SOC 2 compliance checklist. Penetration testing. Security audit. | `[DEV-1]` | P1-T13 | 5 |
-| **P10-T04** | Multi-Region Support | Geo-distributed deployment for GCC coverage. Data residency per region (UAE data stays in UAE). CDN for static assets. Region-aware DNS routing. | `[DEV-1]` | P10-T02 | 6 |
-| **P10-T05** | Enterprise Accounting | Advanced financial workflows: multi-company consolidation, intercompany transactions, advanced bank reconciliation. Evaluate Enterprise-level OCA modules. | `[DEV-2]` | P3-T05 | 5 |
-| **P10-T06** | Compliance & Governance | UAE e-invoicing compliance (when mandated). GDPR-equivalent data protection. Tenant data export (right to portability). Tenant data deletion (right to erasure). Data retention policies. | `[DEV-2]` | P8-T04 | 4 |
-| **P10-T07** | Enterprise Onboarding Wizard | Guided setup wizard for new enterprise tenants. Industry-specific templates (trading, services, manufacturing). Data migration tools (import from Excel/CSV/other ERPs). Setup checklist with progress tracking. | `[DEV-3]` | P2-T02 | 5 |
-| **P10-T08** | White-Label Reseller System | Allow NCollection partners to resell the platform under their own brand. Partner dashboard. Revenue sharing. Sub-tenant management. Partner-specific branding cascading. | `[DEV-3]` | P1-T12 | 6 |
+| ID | Task Name | Description | Assigned | Dependencies | Est. Days |
+|---|---|---|---|---|:---:|
+| **P10-T01** | HA Foundation: PostgreSQL Replication | PostgreSQL streaming replication (primary + hot standby) with pgBackRest integration, documented promotion procedure, replication monitoring (lag alerts via P8-T04). See [ARCHITECTURE_DATA_PLATFORM.md §6](ARCHITECTURE_DATA_PLATFORM.md). <br>**Acceptance**: a controlled failover drill completes with under 60s data-plane interruption and zero data loss. | `[DEV-1]` | P8-T04 | 4 |
+| **P10-T02** | Automated Failover & Zero-Downtime Deploys | Patroni (or repmgr — evaluate) for automatic promotion, HAProxy/PgBouncer re-pointing, blue-green Odoo deployment with health-gated switchover, session draining. <br>**Acceptance**: killing the primary DB self-heals without operator action; a deploy causes zero dropped requests in a load test. | `[DEV-1]` | P10-T01 | 4 |
+| **P10-T03** | Horizontal Scaling & Tenant Sharding | Multi-node Odoo behind a load balancer, shared session strategy, S3-backed or NFS shared filestore, tenant-to-cluster mapping in the registry enabling a second PostgreSQL cluster (sharding by tenant), capacity runbook. See [ARCHITECTURE_DATA_PLATFORM.md §6](ARCHITECTURE_DATA_PLATFORM.md). <br>**Acceptance**: tenants split across two DB clusters transparently; a load test at 5× baseline passes. | `[DEV-1]` | P10-T02 | 5 |
+| **P10-T04** | Advanced Security & External Pen Test | SSO via external IdP (Keycloak/Auth0) for enterprise tenants, TOTP 2FA for all plans (check `OCA/server-auth`), per-tenant IP allowlists, secrets migration to a vault, third-party penetration test with remediation, SOC 2 readiness gap analysis. <br>**Acceptance**: pen-test report criticals resolved; 2FA enforceable per tenant policy. | `[DEV-1]` | P3-T12 | 5 |
+| **P10-T05** | Multi-Region Support | Region-aware tenant placement (UAE data residency), per-region DB clusters + filestores, CDN for static assets, geo-DNS routing, region-scoped backups. <br>**Acceptance**: a tenant provisioned with region=UAE has all data (DB, filestore, backups) physically in the UAE region. | `[DEV-1]` | P10-T03 | 5 |
+| **P10-T06** | Enterprise Accounting | Multi-company consolidation within a tenant, intercompany transaction flows, advanced bank reconciliation (evaluate `OCA/account-reconcile`), budget management. <br>**Acceptance**: a two-company tenant produces consolidated statements that reconcile. | `[DEV-2]` | P3-T05 | 5 |
+| **P10-T07** | Compliance & Data Governance | UAE PDPL (Federal Decree-Law 45/2021) alignment: consent registry, tenant data export (portability), verified erasure workflow, retention policies, UAE e-invoicing readiness tracking, records-of-processing documentation. See [ARCHITECTURE_SECURITY.md §9](ARCHITECTURE_SECURITY.md). <br>**Acceptance**: a tenant offboarding produces a complete export and a certified deletion log. | `[DEV-2]` | P8-T05 | 4 |
+| **P10-T08** | Enterprise Onboarding Wizard | Guided setup with industry templates (trading, services, manufacturing), P3-T11 import integration, progress checklist, sample-data toggle. <br>**Acceptance**: a new enterprise tenant reaches a configured, data-loaded workspace in under one day without engineering help. | `[DEV-3]` | P2-T02, P3-T11 | 5 |
+| **P10-T09** | White-Label Reseller System | Partner accounts reselling under their own brand: cascading branding (partner brand overrides NCollection defaults), partner dashboard with sub-tenant management, revenue-share reporting, partner-scoped provisioning quotas. <br>**Acceptance**: a partner provisions a sub-tenant carrying partner branding end-to-end. | `[DEV-3]` | P1-T16 | 5 |
 
 ---
 
-## 18. Cross-Cutting Concerns
+## 19. Cross-Cutting Concerns
 
-### 18.1 Testing Strategy
+### 19.1 Testing Strategy
 
 | Level | Scope | Tools | Responsibility |
 |-------|-------|-------|---------------|
-| **Unit Tests** | Model methods, computed fields, constraints | `odoo.tests.common.TransactionCase` | Each DEV for own code |
+| **Unit Tests** | Model methods, computed fields, constraints, state machines | `odoo.tests.common.TransactionCase` | Each DEV for own code |
 | **Integration Tests** | Cross-model workflows, provisioning pipeline | `odoo.tests.common.HttpCase` | DEV-1 leads |
-| **Security Tests** | Cross-tenant access, role enforcement | Manual + custom scripts | DEV-1 + DEV-2 |
-| **UI Tests** | Dashboard rendering, branding completeness | Manual + Odoo Tours | DEV-3 leads |
-| **Load Tests** | Multi-tenant performance, concurrent users | Locust / k6 | DEV-1 |
-| **Regression Tests** | After every sprint, verify no regressions | Automated test suite | All DEVs |
+| **E2E Tests** | Login, routing, isolation, visibility, checkout, lifecycle | **Playwright (P1-T20)** — runs in CI on every PR | DEV-3 owns framework; all DEVs add journeys |
+| **Security Tests** | Cross-tenant access, license bypass, role enforcement | Automated (in E2E) + P3-T12 assessment | DEV-1 + DEV-2 |
+| **Load Tests** | Multi-tenant performance, concurrent users | k6 / Locust (P3-T03) | DEV-1 |
+| **Regression** | Cumulative checklist re-run at every phase gate | E2E suite + checklist | Gate owner |
 
-### 18.2 Documentation Requirements
+### 19.2 Documentation Requirements
 
 Every completed phase must produce:
-1. **Technical Docs**: Model schemas, API specs, configuration guides
-2. **User Guides**: How to use features (for tenant admins and end-users)
-3. **Admin Guides**: How NCollection staff operate the platform
-4. **Runbooks**: Operational procedures (backup, restore, scale, debug, incident response)
+1. **Technical Docs**: model schemas, API specs, configuration guides
+2. **User Guides**: tenant admin and end-user documentation
+3. **Admin Guides**: how NCollection staff operate the platform
+4. **Runbooks**: `RUNBOOK_SECURITY.md`, `RUNBOOK_INCIDENTS.md`, backup/restore, scaling, deploy/rollback
 
-### 18.3 Environment Progression
+### 19.3 Environment Progression
 
 ```
 Local (docker-compose.dev.yml)
-    → Staging (Hetzner VPS #1 — auto-deploy on merge to develop)
-        → Production (Hetzner VPS #2 — manual promotion from main)
+    → Staging (Hetzner VPS #1 — auto-deploy on merge to develop, P2-T07)
+        → Production (Hetzner VPS #2 — manual promotion from main, P3-T13)
 ```
+
+### 19.4 Definition of Ready / Definition of Done
+
+**A task is READY when**: dependencies are Done, the OCA check is recorded on the issue, acceptance criteria are understood, and the assignee has estimated it fits the sprint.
+
+**A task is DONE when**: CI green (lint + tests + scans), unit tests added, E2E journeys updated where relevant, PR approved by 1 reviewer, merged to `develop`, docs updated, and the acceptance criteria on the issue are checked off with evidence.
 
 ---
 
-> **Document End**  
-> This is a living document. Update after each sprint to reflect completed tasks, new decisions, and architectural changes. Never redesign completed milestones unless explicitly requested.
+> **Document End**
+> This is a living document. Update after each sprint to reflect completed tasks, new decisions, and architectural changes. Never redesign completed milestones unless explicitly requested. Task tables in this file are machine-readable by `scripts/github_issue_sync.py` — keep the 6-column row format intact.

@@ -1,5 +1,8 @@
 # NCollection ERP: Master System Design & Execution Plan
 
+> [!WARNING]
+> **SUPERSEDED (July 16, 2026)** — This early 8-phase draft is **outdated**. The authoritative plan is [DELIVERABLE_1_SYSTEM_DESIGN.md](DELIVERABLE_1_SYSTEM_DESIGN.md) (v5.0). Kept for historical context only — do not implement tasks from it.
+
 This document serves as the master system design and execution plan for the **entire NCollection ERP project** (all 8 phases). It outlines the architecture, workflow, and detailed task distribution for a 3-developer remote team.
 
 ## User Review Required

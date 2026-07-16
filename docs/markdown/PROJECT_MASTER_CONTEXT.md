@@ -1,5 +1,8 @@
 # NCollection ERP: Project Master Context
 
+> [!WARNING]
+> **SUPERSEDED (July 16, 2026)** — The task IDs (`1.1`–`8.7`), phase breakdown, and estimates in this document are **outdated**. The authoritative plan is [DELIVERABLE_1_SYSTEM_DESIGN.md](DELIVERABLE_1_SYSTEM_DESIGN.md) (v5.0) with [DELIVERABLE_2_TIMELINE_AND_TOOLING.md](DELIVERABLE_2_TIMELINE_AND_TOOLING.md), [ARCHITECTURE_DATA_PLATFORM.md](ARCHITECTURE_DATA_PLATFORM.md), and [ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md). This file is kept for historical context only — do not implement tasks from it.
+
 > **Version**: 2.0  
 > **Date**: July 14, 2026  
 > **Purpose**: This is the single, authoritative reference document for the entire NCollection ERP project. It combines the PRD, System Architecture, Developer Personas, and an exhaustive, highly detailed task breakdown for all 8 phases.
