@@ -75,6 +75,29 @@ def run_gh(args: list[str], capture: bool = True) -> subprocess.CompletedProcess
     return subprocess.run(["gh"] + args, capture_output=capture, text=True)
 
 
+_ASSIGNABLE_CACHE: set[str] | None = None
+
+
+def assignable_users() -> set[str]:
+    """GitHub usernames that can actually be assigned issues on this repo.
+
+    A username that maps a dev but is NOT a repo collaborator cannot be
+    assigned — passing --assignee for them makes `gh issue create` fail.
+    We query once and only assign users who are genuinely assignable; the
+    dev:DEV-N label still records ownership either way.
+    """
+    global _ASSIGNABLE_CACHE
+    if _ASSIGNABLE_CACHE is None:
+        result = run_gh(["api", "repos/{owner}/{repo}/assignees", "--paginate",
+                         "--jq", ".[].login"])
+        if result.returncode != 0:
+            print("⚠️ Could not fetch assignable users — assignments will be skipped.")
+            _ASSIGNABLE_CACHE = set()
+        else:
+            _ASSIGNABLE_CACHE = {u.strip() for u in result.stdout.splitlines() if u.strip()}
+    return _ASSIGNABLE_CACHE
+
+
 def parse_markdown_tasks() -> list[dict]:
     content = DOC_PATH.read_text(encoding="utf-8")
     tasks = []
@@ -170,13 +193,16 @@ def create_github_issue(task: dict, dry_run: bool = False) -> bool:
     cmd = ["issue", "create", "--title", title, "--body", build_body(task),
            "--label", labels, "--milestone", milestone]
     github_user = GITHUB_USERNAMES.get(task["assignee"], "")
-    if github_user:
+    assign_note = ""
+    if github_user and github_user in assignable_users():
         cmd += ["--assignee", github_user]
+    elif github_user:
+        assign_note = f" (unassigned — {github_user} is not a repo collaborator; dev:{task['assignee']} label set)"
 
     print(f"\nCreating issue: {title}")
     result = run_gh(cmd, capture=False)
     if result.returncode == 0:
-        print("✅ Created successfully!")
+        print(f"✅ Created successfully!{assign_note}")
         return True
     print(f"❌ Failed to create: {title}")
     return False
