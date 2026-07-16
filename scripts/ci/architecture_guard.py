@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""Deterministic architecture-rule checks for a PR diff.
+
+Not a linter substitute (flake8/pylint-odoo already run separately) and not
+an LLM reviewer — this catches the specific regression classes that
+NCollection ERP's architecture docs exist to prevent:
+
+  1. Deprecated Odoo 19 view syntax (`<tree>` instead of `<list>`, `attrs=`)
+  2. Menu-only license/role gating with no matching ORM/RPC-layer check
+     (docs/markdown/ARCHITECTURE_SECURITY.md §4 — Defense in Depth)
+  3. Platform-layer code touching tenant-layer models directly instead of
+     going through RPC/JSON-RPC (docs/markdown/DELIVERABLE_1_SYSTEM_DESIGN.md §7,
+     the two-layer separation rule)
+  4. Hardcoded secrets (belt-and-suspenders; GitHub secret scanning is the
+     primary control, this is a fast local backstop)
+
+LIMITATIONS (read before trusting this as a hard gate):
+  - This is regex/substring matching, not an AST or RPC-boundary analysis.
+    Rule 2 only proves "a Python file in the same addon changed," not that
+    it contains a matching enforcement change — treat a pass as a hint, not
+    proof, and still spot-check licensing-relevant PRs by eye.
+  - Rule 3's model list is a fixed set of common tenant models, not
+    exhaustive — dynamic model names (`self.env[var]`), aliased `env`
+    variables, and XML-defined server actions are not caught.
+  - A future Rule (`ir.rule` records cross-referenced against a role matrix
+    doc) is intentionally NOT implemented yet — docs/markdown/ROLE_MATRIX.md
+    does not exist in the repo as of this writing.
+
+Usage:
+    python scripts/ci/architecture_guard.py --base origin/develop
+    python scripts/ci/architecture_guard.py --base origin/main
+    python scripts/ci/architecture_guard.py --files a.py b.xml  # explicit file list
+
+Exit code 0 = clean, 1 = violations found OR the diff could not be computed
+(fails closed — see changed_files()).
+"""
+
+import argparse
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# ---------------------------------------------------------------------------
+# Rule 1: deprecated Odoo 19 view syntax
+# ---------------------------------------------------------------------------
+TREE_TAG_RE = re.compile(r"<tree\b")
+ATTRS_RE = re.compile(r"\battrs\s*=")
+
+# ---------------------------------------------------------------------------
+# Rule 2: menu hiding without matching ORM/RPC enforcement
+# A changed view/menu file that adds `groups=` restrictions is fine on its
+# own, but if a PR touches menu-visibility for a *licensed* feature area and
+# doesn't touch any Python access-control file in the same addon, flag it
+# for human review rather than silently trusting UI-only gating.
+# ---------------------------------------------------------------------------
+LICENSE_MENU_HINT_RE = re.compile(r"groups=[\"'][\w.]*license", re.IGNORECASE)
+ORM_ENFORCEMENT_HINTS = ("check_access_rights", "ir.rule", "_check_company", "AccessError")
+
+# ---------------------------------------------------------------------------
+# Rule 3: two-layer separation — platform layer (ncollection_saas,
+# ncollection_subscription) must not import/query tenant ERP models
+# directly. Cross-layer communication goes through RPC/JSON-RPC per
+# DELIVERABLE_1 §7. List is not exhaustive (see LIMITATIONS in the module
+# docstring) — covers the highest-traffic tenant models.
+# ---------------------------------------------------------------------------
+PLATFORM_ADDONS = {"ncollection_saas", "ncollection_subscription"}
+TENANT_MODELS = (
+    "sale.order", "stock.move", "account.move", "purchase.order",
+    "res.partner", "account.move.line", "crm.lead", "hr.employee",
+    "product.product", "product.template", "stock.picking",
+)
+TENANT_MODEL_HINTS = tuple(
+    f"self.env[{q}{m}{q}]" for m in TENANT_MODELS for q in ("'", '"')
+)
+
+# ---------------------------------------------------------------------------
+# Rule 4: obvious hardcoded secrets
+# ---------------------------------------------------------------------------
+SECRET_PATTERNS = [
+    re.compile(r"(?i)(api[_-]?key|secret[_-]?key|password|token)\s*=\s*[\"'][^\"'\s]{8,}[\"']"),
+    re.compile(r"sk_live_[0-9a-zA-Z]{16,}"),   # Stripe live secret key
+    re.compile(r"AKIA[0-9A-Z]{16}"),           # AWS access key id
+]
+# Matched per potential-secret occurrence, not per whole line, so a real
+# secret sharing a line with an unrelated comment containing one of these
+# words is still caught.
+SECRET_ALLOW_HINTS = ("os.environ", "getenv", "example", "placeholder", "xxx", "changeme")
+
+
+def changed_files(base: str) -> list[Path]:
+    result = subprocess.run(
+        ["git", "diff", "--name-only", f"{base}...HEAD"],
+        cwd=REPO_ROOT, capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"error: git diff against {base} failed:\n{result.stderr}", file=sys.stderr)
+        print("architecture-guard cannot verify this PR — failing closed.", file=sys.stderr)
+        sys.exit(1)
+    return [REPO_ROOT / p for p in result.stdout.splitlines() if p.strip()]
+
+
+def addon_of(path: Path) -> str | None:
+    try:
+        rel = path.resolve().relative_to(REPO_ROOT / "custom_addons")
+    except ValueError:
+        return None
+    return rel.parts[0] if rel.parts else None
+
+
+def check_view_syntax(path: Path, text: str, findings: list[str]) -> None:
+    if path.suffix != ".xml":
+        return
+    for i, line in enumerate(text.splitlines(), 1):
+        if TREE_TAG_RE.search(line):
+            findings.append(f"{path}:{i}: uses <tree> — Odoo 19 requires <list> (Rule 6)")
+        if ATTRS_RE.search(line):
+            findings.append(f"{path}:{i}: uses deprecated attrs= — use direct field conditions (Rule 6)")
+
+
+def check_menu_license_gate(path: Path, text: str, changed_paths: set[Path], findings: list[str]) -> None:
+    if path.suffix != ".xml" or not LICENSE_MENU_HINT_RE.search(text):
+        return
+    addon = addon_of(path)
+    if addon is None:
+        return
+    # Require an actual enforcement-hint string (check_access_rights, ir.rule,
+    # AccessError, ...) inside a changed .py file in the same addon — not just
+    # "some Python file changed nearby", which proves nothing about intent.
+    addon_py_enforcement_changed = any(
+        addon_of(p) == addon and p.suffix == ".py"
+        and any(hint in p.read_text(encoding="utf-8", errors="ignore") for hint in ORM_ENFORCEMENT_HINTS)
+        for p in changed_paths if p.exists()
+    )
+    if not addon_py_enforcement_changed:
+        findings.append(
+            f"{path}: license-gated menu/group changed with no matching ORM-enforcement "
+            f"hint ({', '.join(ORM_ENFORCEMENT_HINTS)}) in any changed Python file in "
+            f"'{addon}' — UI hiding without ORM/RPC enforcement is not security "
+            f"(ARCHITECTURE_SECURITY.md §4, Ring 2). Verify a matching "
+            f"check_access_rights/ir.rule change exists, or justify in the PR description."
+        )
+
+
+def check_two_layer_separation(path: Path, text: str, findings: list[str]) -> None:
+    addon = addon_of(path)
+    if addon not in PLATFORM_ADDONS or path.suffix != ".py":
+        return
+    for i, line in enumerate(text.splitlines(), 1):
+        if any(hint in line for hint in TENANT_MODEL_HINTS):
+            findings.append(
+                f"{path}:{i}: platform-layer addon '{addon}' directly references a "
+                f"tenant ERP model — cross-layer access must go through RPC/JSON-RPC, "
+                f"not direct ORM calls into a tenant database (two-layer separation rule)."
+            )
+
+
+def check_secrets(path: Path, text: str, findings: list[str]) -> None:
+    if path.suffix not in (".py", ".xml", ".yml", ".yaml", ".json", ".env", ""):
+        return
+    for i, line in enumerate(text.splitlines(), 1):
+        for pattern in SECRET_PATTERNS:
+            match = pattern.search(line)
+            if not match:
+                continue
+            # Only exempt if the allow-hint sits near the actual match, not
+            # merely anywhere on the line — a real secret sharing a line with
+            # an unrelated "# example" comment must still be caught.
+            window = line[max(0, match.start() - 20):match.end() + 20].lower()
+            if any(hint in window for hint in SECRET_ALLOW_HINTS):
+                continue
+            findings.append(f"{path}:{i}: looks like a hardcoded secret — use env vars / secrets manager")
+            break
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base", default="origin/main", help="git ref to diff against")
+    parser.add_argument("--files", nargs="*", help="explicit file list instead of git diff")
+    args = parser.parse_args()
+
+    paths = [Path(f) for f in args.files] if args.files else changed_files(args.base)
+    paths = [p for p in paths if p.exists() and p.is_file()]
+    path_set = set(paths)
+
+    findings: list[str] = []
+    for path in paths:
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        check_view_syntax(path, text, findings)
+        check_menu_license_gate(path, text, path_set, findings)
+        check_two_layer_separation(path, text, findings)
+        check_secrets(path, text, findings)
+
+    if findings:
+        print("architecture-guard: violations found\n")
+        for f in findings:
+            print(f"  ✗ {f}")
+        print(f"\n{len(findings)} violation(s). Fix or justify in the PR description, then re-run.")
+        return 1
+
+    print(f"architecture-guard: clean ({len(paths)} file(s) checked).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

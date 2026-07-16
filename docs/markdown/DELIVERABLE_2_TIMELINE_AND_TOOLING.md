@@ -35,7 +35,7 @@
 | Metric | Value |
 |--------|-------|
 | **Total Phases** | 10 (execution order differs from numbering — see DELIVERABLE_1 §8; Phase 9 Marketplace is DEFERRED after Phase 10) |
-| **Total Tasks** | 99 atomic tasks (max 5 days each) |
+| **Total Tasks** | 100 atomic tasks (max 5 days each) |
 | **Team Size** | 3 remote developers + 3 AI agents |
 | **Estimated Duration** | 14–18 months (realistic range) |
 | **First Production Deployment** | Phase 3 go-live gate P3-T13 (~4–5 months from now) |
@@ -126,12 +126,12 @@ Each phase allocates time across three work stages. The ratios shift by phase co
 | **5. AI Platform** | 7 | 30 | 5–6 | P3 | Executed AFTER Phase 6; starts with a design spike |
 | **6. Customer Portal** | 5 | 22 | 3–5 | P2 | Pulled ahead of AI — revenue/retention |
 | **7. Mobile** | 7 | 31 | 6–8 | P3 | New stack; framework decision documented |
-| **8. Platform Services** | 8 | 32 | 5–7 | P3 | REST API + full observability |
+| **8. Platform Services** | 9 | 35 | 5–7 | P3 | REST API + full observability + per-tenant cost dashboard |
 | **9. Marketplace** | 7 | 30 | 5–7 | DEFERRED | Executed after Phase 10, only with proven demand |
 | **10. Enterprise** | 9 | 42 | 8–10 | P3 | Executed BEFORE Phase 9 |
-| **TOTAL** | **99** | **368** | **55–76** | | |
+| **TOTAL** | **100** | **371** | **55–76** | | |
 
-> **368 dev-days ÷ 3 developers ÷ 5 days/week = ~24.5 work-weeks per developer**  
+> **371 dev-days ÷ 3 developers ÷ 5 days/week = ~24.7 work-weeks per developer**  
 > With reviews, debugging, meetings, iteration, and holidays: **~55–76 calendar weeks (13–18 months)**
 
 ### 2.3 Developer Workload Distribution (Phase 1 — Current Sprint)

@@ -23,6 +23,8 @@
 10. [Service Decomposition Roadmap (Microservices)](#10-service-decomposition-roadmap-microservices)
 11. [Event & Job Backbone](#11-event--job-backbone)
 12. [Capacity Model](#12-capacity-model)
+13. [Audit Log Architecture](#13-audit-log-architecture)
+14. [Per-Tenant Cost Dashboard](#14-per-tenant-cost-dashboard)
 
 ---
 
@@ -349,6 +351,54 @@ Planning numbers (validated against the P3-T03 load-test baseline, then re-measu
 | 500 | 2 clusters (Stage 3), LB, object storage | ~€700 |
 
 Break-even at a $50/tenant/month average price: infrastructure is < 10% of revenue at every stage — the platform's economics improve with scale, as designed.
+
+---
+
+## 13. Audit Log Architecture
+
+P8-T05 (task table) covers the OCA `auditlog` integration and field-level tracking. This section covers the *data-platform* side that task doesn't: where audit data lives and how it's queried at scale, since that's a backend-architecture concern, not a module-configuration one.
+
+**Storage: per-tenant, not centralized.** Each tenant's `auditlog.log` / `auditlog.log.line` records live inside that tenant's own database, exactly like every other table — there is no cross-tenant audit warehouse. This follows directly from §2's isolation model: a centralized audit store would itself become a cross-tenant data-leak surface and defeat the database-per-tenant guarantee. The cost is that "show me all failed-login attempts across all tenants" is not a single query — it's a fan-out the Admin DB has to issue per tenant DB (acceptable at current scale; revisit only if fleet-wide audit querying becomes a frequent operational need, per the extraction rule in §10.3).
+
+**What gets audited, and where the line is drawn:**
+
+| Layer | What's logged | Where |
+|-------|---------------|-------|
+| Tenant data layer | Field-level changes on `account.move`, `res.partner`, `sale.order`, `res.users`, all `ncollection.*` models | `auditlog.log` inside the tenant DB (P8-T05) |
+| Application auth | Login success/failure, logout, password reset, IP, user agent | `ncollection.auth.log` inside the tenant DB (P1-T19) |
+| Platform layer | Provisioning actions, subscription state transitions, admin-initiated tenant operations | `ncollection.tenant` chatter + a dedicated `ncollection.platform.audit.log` in the **Admin DB only** — this is platform-operator activity, not tenant data, so it correctly lives outside any tenant boundary |
+| Infrastructure | SSH access, `sudo` use, firewall changes | Host-level `auditd` + centralized log shipping (P2-T08 hardening) — outside the database entirely |
+
+**Retention & tamper evidence.** Per-tenant audit tables inherit that tenant's PITR/backup schedule (§5) — no separate retention mechanism needed. Tamper evidence (hash-chaining consecutive audit rows, flagged as "if feasible" in P8-T05) is scoped per-tenant-DB for the same reason: a chain that spanned tenant boundaries would itself be a cross-tenant coupling. Where UAE PDPL requires a records-of-processing register, that's populated from the platform-layer audit log in the Admin DB, not by querying into tenant DBs.
+
+**Query cost.** Audit tables are among the fastest-growing in any OLTP schema (every write potentially fans out to N audit rows). Follow the same archival discipline as §8/§9: partition or periodically archive `auditlog.log.line` past the tenant's compliance-required retention window, and never let an unindexed audit-table query run against a live tenant DB during business hours — this is exactly the kind of query the P4-T01 caching lessons apply to if audit data ever needs to power a dashboard (see §14).
+
+---
+
+## 14. Per-Tenant Cost Dashboard
+
+**Gap this section closes**: §12's Capacity Model gives platform-wide infrastructure economics (cost per *tier of tenant count*), but nothing today gives a **per-tenant** cost view — neither to NCollection's internal ops (which tenants are expensive relative to what they pay) nor to a tenant Owner (transparent usage-based billing, if/when the pricing model needs it). This is a real gap, not yet covered by any task in [DELIVERABLE_1_SYSTEM_DESIGN.md](DELIVERABLE_1_SYSTEM_DESIGN.md) — flagging it here as the architectural design so a task can be scoped from it (see note at the end of this section).
+
+**What "cost" means here — two distinct dashboards, not one:**
+
+1. **Internal ops cost dashboard** (Admin DB, NCollection-facing only): per-tenant infrastructure cost attribution — DB size × storage rate, filestore size × storage rate, average worker-time share (derived from §12's "~0.15 workers/tenant" baseline, refined per-tenant from actual request volume), backup/PITR storage share, and (from Phase 5 onward) LLM token spend per tenant if AI features are enabled. Purpose: catch a tenant whose usage pattern makes them unprofitable at their plan tier before it's a quarter-end surprise.
+2. **Tenant-facing usage dashboard** (optional, only if a usage-based pricing tier is ever introduced — not assumed by the current flat-plan model in P1-T07): a tenant's own view of their consumption against their plan's included limits (storage, users, API calls, AI tokens if applicable). This is a product decision, not just an architecture one — build it only when a plan tier actually needs it, per the "don't add infrastructure before its stage needs it" principle already applied to Redis in §4.3.
+
+**Data sources (both dashboards read from the same underlying signals, aggregated differently):**
+
+| Signal | Source | Collection method |
+|--------|--------|--------------------|
+| DB size | `pg_database_size()` per tenant DB | Scheduled probe from the provisioning runner (§10.2), written to the Admin DB's `ncollection.tenant` record — never queried live from a dashboard render |
+| Filestore size | `du`-equivalent per tenant filestore dir (§8) | Same scheduled probe, same cadence |
+| Worker/CPU time | Nginx/Odoo access logs tagged by `db_name` (already present via the routing layer, §2) | Aggregated in the Prometheus pipeline (P8-T04), not queried from Postgres directly |
+| Backup storage | pgBackRest repository size per tenant (§5) | Read from the backup agent's own metadata, same scheduled-probe cadence |
+| LLM token spend (Phase 5+) | AI Gateway's per-tenant token counter (P5-T02, budget enforcement already required there) | Already collected for budget enforcement — this dashboard reuses it, doesn't duplicate it |
+
+**Why a scheduled probe, not a live query**: every one of these signals is expensive to compute live (`pg_database_size` alone is cheap per-call but not at fleet scale run synchronously on every dashboard load) and none of them need sub-hourly freshness for a cost dashboard — this mirrors the §9 rule that dashboard aggregation must be cached with explicit invalidation, not computed per-request. A nightly (or hourly, for the internal ops view) job writes rollup rows into the Admin DB; the dashboard itself only ever reads pre-aggregated data.
+
+**Isolation note**: the internal ops dashboard lives entirely in the Admin DB and aggregates *metadata about* tenant resource usage — it never queries tenant business data, so it doesn't create a cross-tenant data-access path. The optional tenant-facing dashboard only ever shows that tenant's own numbers, enforced the same way every other tenant-scoped view is (§2, database-per-tenant routing already prevents cross-tenant reads at the connection level).
+
+> **Backlog note**: this section is architecture, not an implementation task yet. If/when built, it fits naturally as a Phase 8 task (alongside P8-T04 Prometheus and P8-T05 Audit Trail, which it depends on for both the metrics pipeline and the audit-log-informed anomaly view) — a candidate task ID would be **P8-T06: Per-Tenant Cost & Usage Dashboard**, dependent on P8-T04 and P5-T02 (for the LLM token signal, if Phase 5 has shipped by then). Not added to the task table in this pass — say the word and it can be formalized there with full acceptance criteria.
 
 ---
 
