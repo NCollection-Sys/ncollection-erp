@@ -1,0 +1,119 @@
+/*
+ * NCollection ERP — design tokens.
+ *
+ * Grounded in the committed brand palette from
+ * custom_addons/ncollection_branding/static/src/scss/theme_colors.scss:
+ *   primary #1F5F8F · secondary #2D7AB7 · silver #C0C7D1
+ *   background #F7F9FC · text #0F172A
+ *
+ * These map 1:1 onto the future Odoo `--nc-*` CSS custom properties, so the
+ * whole visual language ports into the real product. Neutrals are biased
+ * slightly cool (blue) rather than pure grey, to sit with the corporate blue.
+ */
+
+:root {
+  /* Brand — stable across themes */
+  --nc-primary: #1f5f8f;
+  --nc-primary-strong: #184c72;
+  --nc-secondary: #2d7ab7;
+  --nc-silver: #c0c7d1;
+
+  /* Semantic status — deliberately separate from the accent hue */
+  --nc-success: #2e7d5b;
+  --nc-success-soft: #e6f4ec;
+  --nc-warning: #b7791f;
+  --nc-warning-soft: #fbf1de;
+  --nc-danger: #b4453c;
+  --nc-danger-soft: #fbe9e7;
+  --nc-info: #2d7ab7;
+  --nc-info-soft: #e7f1fa;
+
+  /* Radii, shadows, spacing rhythm */
+  --nc-radius-sm: 6px;
+  --nc-radius: 10px;
+  --nc-radius-lg: 16px;
+  --nc-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --nc-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --nc-shadow-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.18);
+
+  --nc-font-sans: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --nc-font-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --nc-sidebar-w: 248px;
+  --nc-topbar-h: 60px;
+}
+
+/* ---- Light theme (default) ---- */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --nc-bg: #f7f9fc;
+  --nc-bg-elevated: #ffffff;
+  --nc-surface: #ffffff;
+  --nc-surface-muted: #f1f5fa;
+  --nc-sidebar-bg: #12233a;
+  --nc-sidebar-fg: #d7e0ec;
+  --nc-sidebar-fg-muted: #8fa3bd;
+  --nc-sidebar-active: #1f5f8f;
+  --nc-border: #e2e8f0;
+  --nc-border-strong: #c0c7d1;
+  --nc-text: #0f172a;
+  --nc-text-muted: #5a6b83;
+  --nc-text-faint: #8896a8;
+  --nc-accent-fg: #1f5f8f;
+  --nc-chart-grid: rgba(15, 23, 42, 0.07);
+  --nc-kpi-accent: var(--nc-primary);
+}
+
+/* ---- Dark theme ---- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --nc-bg: #0b1220;
+    --nc-bg-elevated: #131c2e;
+    --nc-surface: #131c2e;
+    --nc-surface-muted: #1a2436;
+    --nc-sidebar-bg: #0a1220;
+    --nc-sidebar-fg: #d7e0ec;
+    --nc-sidebar-fg-muted: #7186a3;
+    --nc-sidebar-active: #2d7ab7;
+    --nc-border: #233046;
+    --nc-border-strong: #2f3f58;
+    --nc-text: #e6edf5;
+    --nc-text-muted: #9fb0c7;
+    --nc-text-faint: #6b7d97;
+    --nc-accent-fg: #67a6d8;
+    --nc-chart-grid: rgba(230, 237, 245, 0.08);
+    --nc-kpi-accent: #4c93c9;
+    --nc-success-soft: #12271e;
+    --nc-warning-soft: #2a2110;
+    --nc-danger-soft: #2a1512;
+    --nc-info-soft: #10202f;
+  }
+}
+
+/* Explicit toggle wins over the media query, in both directions */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --nc-bg: #0b1220;
+  --nc-bg-elevated: #131c2e;
+  --nc-surface: #131c2e;
+  --nc-surface-muted: #1a2436;
+  --nc-sidebar-bg: #0a1220;
+  --nc-sidebar-fg: #d7e0ec;
+  --nc-sidebar-fg-muted: #7186a3;
+  --nc-sidebar-active: #2d7ab7;
+  --nc-border: #233046;
+  --nc-border-strong: #2f3f58;
+  --nc-text: #e6edf5;
+  --nc-text-muted: #9fb0c7;
+  --nc-text-faint: #6b7d97;
+  --nc-accent-fg: #67a6d8;
+  --nc-chart-grid: rgba(230, 237, 245, 0.08);
+  --nc-kpi-accent: #4c93c9;
+  --nc-success-soft: #12271e;
+  --nc-warning-soft: #2a2110;
+  --nc-danger-soft: #2a1512;
+  --nc-info-soft: #10202f;
+}

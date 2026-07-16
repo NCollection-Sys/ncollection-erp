@@ -1,0 +1,287 @@
+/* Shared styling for the reusable UI primitives. */
+
+/* ---------- Button ---------- */
+.nc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: var(--nc-radius-sm);
+  border: 1px solid transparent;
+  padding: 9px 16px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+.nc-btn:active {
+  transform: translateY(0.5px);
+}
+.nc-btn--primary {
+  background: var(--nc-primary);
+  color: #fff;
+}
+.nc-btn--primary:hover {
+  background: var(--nc-primary-strong);
+}
+.nc-btn--secondary {
+  background: var(--nc-surface);
+  color: var(--nc-text);
+  border-color: var(--nc-border-strong);
+}
+.nc-btn--secondary:hover {
+  background: var(--nc-surface-muted);
+  border-color: var(--nc-secondary);
+}
+.nc-btn--ghost {
+  background: transparent;
+  color: var(--nc-text-muted);
+}
+.nc-btn--ghost:hover {
+  background: var(--nc-surface-muted);
+  color: var(--nc-text);
+}
+.nc-btn--sm {
+  padding: 6px 11px;
+  font-size: 0.8rem;
+}
+.nc-btn--block {
+  width: 100%;
+}
+.nc-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- Card ---------- */
+.nc-card {
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+  box-shadow: var(--nc-shadow);
+}
+.nc-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--nc-border);
+}
+.nc-card__title {
+  font-size: 0.98rem;
+  font-weight: 650;
+  color: var(--nc-text);
+}
+.nc-card__body {
+  padding: 20px;
+}
+
+/* ---------- KPI card (mirrors the Odoo .o_ncollection_kpi_card) ---------- */
+.nc-kpi {
+  position: relative;
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-inline-start: 4px solid var(--nc-kpi-accent);
+  border-radius: var(--nc-radius);
+  padding: 18px 20px;
+  box-shadow: var(--nc-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.nc-kpi__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.nc-kpi__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--nc-info-soft);
+  color: var(--nc-accent-fg);
+  flex-shrink: 0;
+}
+.nc-kpi__value {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--nc-text);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.nc-kpi__sub {
+  font-size: 0.8rem;
+  color: var(--nc-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- Trend chip ---------- */
+.nc-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 650;
+  font-size: 0.78rem;
+  padding: 2px 7px 2px 5px;
+  border-radius: 999px;
+}
+.nc-trend--up {
+  color: var(--nc-success);
+  background: var(--nc-success-soft);
+}
+.nc-trend--down {
+  color: var(--nc-danger);
+  background: var(--nc-danger-soft);
+}
+
+/* ---------- Badge / pill ---------- */
+.nc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.nc-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+.nc-badge--success {
+  color: var(--nc-success);
+  background: var(--nc-success-soft);
+}
+.nc-badge--warning {
+  color: var(--nc-warning);
+  background: var(--nc-warning-soft);
+}
+.nc-badge--danger {
+  color: var(--nc-danger);
+  background: var(--nc-danger-soft);
+}
+.nc-badge--info {
+  color: var(--nc-info);
+  background: var(--nc-info-soft);
+}
+.nc-badge--neutral {
+  color: var(--nc-text-muted);
+  background: var(--nc-surface-muted);
+}
+
+/* ---------- Table ---------- */
+.nc-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--nc-radius);
+}
+.nc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.nc-table thead th {
+  text-align: start;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--nc-text-faint);
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--nc-border);
+  background: var(--nc-surface-muted);
+  white-space: nowrap;
+}
+.nc-table tbody td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--nc-border);
+  color: var(--nc-text);
+  vertical-align: middle;
+}
+.nc-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.nc-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+.nc-table tbody tr:hover {
+  background: var(--nc-surface-muted);
+}
+.nc-table .nc-num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Section header ---------- */
+.nc-section-title {
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--nc-text);
+  margin-bottom: 2px;
+}
+.nc-section-sub {
+  font-size: 0.85rem;
+  color: var(--nc-text-muted);
+}
+
+/* ---------- Form field ---------- */
+.nc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.nc-field > label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--nc-text-muted);
+}
+.nc-input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--nc-radius-sm);
+  border: 1px solid var(--nc-border-strong);
+  background: var(--nc-bg-elevated);
+  color: var(--nc-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.nc-input:focus {
+  outline: none;
+  border-color: var(--nc-secondary);
+  box-shadow: 0 0 0 3px var(--nc-info-soft);
+}
+.nc-input::placeholder {
+  color: var(--nc-text-faint);
+}
+/* Latin/numeric fields (email, phone, TRN, website) force LTR so digit groups
+   and symbols don't reorder under RTL bidi, but stay aligned to the RTL edge. */
+[dir="rtl"] .nc-ltr {
+  text-align: right;
+}
+
+/* Avatar */
+.nc-avatar {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--nc-primary);
+  color: #fff;
+  font-weight: 650;
+  flex-shrink: 0;
+}

@@ -1,0 +1,109 @@
+.email__tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--nc-surface-muted);
+  padding: 4px;
+  border-radius: 9px;
+  width: fit-content;
+  margin-bottom: 18px;
+}
+
+.email__frame {
+  background: var(--nc-surface-muted);
+  padding: 28px;
+  border-radius: var(--nc-radius);
+  display: flex;
+  justify-content: center;
+}
+
+/* The email itself uses fixed light styling — emails render on white in
+   every client, regardless of the app theme. */
+.email__mail {
+  width: 100%;
+  max-width: 540px;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px -12px rgba(15, 23, 42, 0.35);
+  border: 1px solid #e6ebf2;
+}
+.email__header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 20px 28px;
+  background: linear-gradient(135deg, #1f5f8f, #16344f);
+}
+.email__brand {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+.email__body {
+  padding: 32px 28px 28px;
+  color: #0f172a;
+}
+.email__body h2 {
+  font-size: 1.3rem;
+  color: #0f172a;
+  margin-bottom: 14px;
+}
+.email__body p {
+  color: #33445c;
+  line-height: 1.6;
+  margin-bottom: 14px;
+  font-size: 0.94rem;
+}
+.email__cta {
+  display: inline-block;
+  background: #1f5f8f;
+  color: #fff;
+  font-weight: 600;
+  padding: 11px 22px;
+  border-radius: 8px;
+  margin: 8px 0 18px;
+  font-size: 0.92rem;
+}
+.email__muted {
+  font-size: 0.84rem !important;
+  color: #7b8aa0 !important;
+}
+.email__invoice {
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  padding: 6px 16px;
+  margin: 6px 0 20px;
+}
+.email__invoice-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 0.9rem;
+  color: #33445c;
+  font-variant-numeric: tabular-nums;
+}
+.email__invoice-row:last-child {
+  border-bottom: none;
+}
+.email__invoice-row--total {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 1rem;
+}
+.email__footer {
+  padding: 20px 28px 26px;
+  background: #f7f9fc;
+  border-top: 1px solid #eef2f7;
+}
+.email__footer p {
+  font-size: 0.8rem;
+  color: #7b8aa0;
+  line-height: 1.5;
+  margin: 0 0 4px;
+}
+.email__footer-fine {
+  margin-top: 8px !important;
+  color: #9aa8bd !important;
+}

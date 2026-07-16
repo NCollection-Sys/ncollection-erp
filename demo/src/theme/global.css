@@ -1,0 +1,125 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--nc-font-sans);
+  background-color: var(--nc-bg);
+  color: var(--nc-text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--nc-accent-fg);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Tabular figures wherever numbers line up */
+.nc-tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visible focus for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--nc-secondary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Uppercase micro-label used across KPI cards, table heads, eyebrows */
+.nc-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--nc-accent-fg);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--nc-border-strong);
+  border-radius: 8px;
+  border: 2px solid var(--nc-bg);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---- Arabic / RTL typography ----
+ * Arabic script is cursive: letter-spacing disconnects joined glyphs and
+ * uppercase has no meaning, so we neutralize both. Use a font stack with
+ * strong Arabic coverage (Latin faces like Inter have no Arabic glyphs). */
+[dir="rtl"] body {
+  font-family: "SF Arabic", "Geeza Pro", "Segoe UI", Tahoma, "Noto Sans Arabic",
+    "Dubai", var(--nc-font-sans);
+}
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4 {
+  letter-spacing: normal;
+}
+[dir="rtl"] .nc-label,
+[dir="rtl"] .nc-table thead th,
+[dir="rtl"] .sidebar__section,
+[dir="rtl"] .sidebar__plan-label,
+[dir="rtl"] .nc-stat__label,
+[dir="rtl"] .nc-kancol__title,
+[dir="rtl"] .topbar__role-label,
+[dir="rtl"] .nc-pageheader__title,
+[dir="rtl"] .nc-kpi__value {
+  letter-spacing: normal;
+  text-transform: none;
+}
