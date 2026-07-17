@@ -36,6 +36,23 @@ sees financial widgets; Sales sees pipeline widgets). This mirrors the 8 NCollec
 
 Both **light and dark themes** are supported (toggle in the top bar).
 
+### Bilingual: English & Arabic (RTL)
+
+Use the **EN / ع** toggle in the top bar to switch language. Arabic mode:
+- Sets `dir="rtl"` + `lang="ar"` on the document; the entire layout mirrors (sidebar moves
+  to the right, KPI/card accents flip, tables and text right-align).
+- Translates all chrome — navigation, page headers, KPI labels, table headers, statuses,
+  roles, settings, login, and email templates. Proper nouns (company, customer, and person
+  names) stay as entered data, exactly as a real bilingual GCC ERP behaves.
+- Keeps Latin/numeric fields (email, phone, TRN, website) rendering left-to-right so digit
+  groups don't reorder under bidi, while staying aligned to the RTL edge.
+- Neutralizes `letter-spacing`/uppercase for Arabic (cursive script) and uses an
+  Arabic-capable font stack.
+
+All four combinations — **EN/AR × light/dark** — are verified. This RTL groundwork maps
+directly onto the real product's Arabic phase (P3-T08); the `t()` keys become Odoo `.po`
+message ids and the logical-property CSS ports as-is.
+
 ## Architecture — why this is reusable, not throwaway
 
 Two design choices make the port into Odoo mechanical rather than a rewrite:

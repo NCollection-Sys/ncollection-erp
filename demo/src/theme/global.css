@@ -16,6 +16,13 @@ body,
   height: 100%;
 }
 
+/* Clip horizontal overflow at the root so an off-screen mobile drawer (or any
+   stray wide element) never produces a sideways page scroll. `clip` doesn't
+   create a scroll container, so the sticky topbar keeps working. */
+html {
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--nc-font-sans);
   background-color: var(--nc-bg);
@@ -24,6 +31,9 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Clip the off-screen mobile nav drawer without establishing a scroll
+     container (keeps the sticky topbar working, unlike overflow-x: hidden). */
+  overflow-x: clip;
 }
 
 h1,
