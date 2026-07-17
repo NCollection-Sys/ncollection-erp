@@ -3,6 +3,9 @@ __pycache__/
 *.pyo
 *.log
 
+# Local environment (never commit real secrets — see .env.example)
+.env
+
 backup/
 *.zip
 

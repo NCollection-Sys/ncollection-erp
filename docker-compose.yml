@@ -4,9 +4,9 @@ services:
     image: postgres:16
     container_name: ncollection-db
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: ${DB_NAME:-postgres}
+      POSTGRES_USER: ${DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-odoo}
     restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -20,12 +20,16 @@ services:
       - "8069:8069"
     environment:
       HOST: db
-      USER: odoo
-      PASSWORD: odoo
+      USER: ${DB_USER:-odoo}
+      PASSWORD: ${DB_PASSWORD:-odoo}
     restart: always
     volumes:
       - odoo_data:/var/lib/odoo
       - ./custom_addons:/mnt/extra-addons
+      # Local-dev Odoo config. Values above (${VAR:-default}) come from an
+      # optional .env; the stack still runs with no .env present. Production
+      # config is P1-T02 — see docs/markdown/LOCAL_DEV_AND_ARCHITECTURE.md.
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
 
 volumes:
   postgres_data:
