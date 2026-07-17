@@ -103,6 +103,16 @@
   flex-direction: column;
   gap: 18px;
 }
+.login__error {
+  background: var(--nc-danger-soft);
+  color: var(--nc-danger);
+  border: 1px solid color-mix(in srgb, var(--nc-danger) 25%, transparent);
+  border-radius: var(--nc-radius-sm);
+  padding: 10px 13px;
+  font-size: 0.86rem;
+  font-weight: 550;
+}
+
 .login__row {
   display: flex;
   align-items: center;
