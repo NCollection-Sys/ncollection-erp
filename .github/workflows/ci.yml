@@ -135,10 +135,15 @@ jobs:
       - name: Build and start stack
         run: docker compose up -d
 
+      # On a fresh stack (no database yet — always the case in CI),
+      # /web/login answers 303 -> the database-selector page, so we must
+      # follow redirects (-L) and accept that page as proof of life.
+      # Proven by the first live run (PR #104): without -L the body is
+      # empty and the grep fails.
       - name: Wait for Odoo to respond
         run: |
           for _ in $(seq 1 30); do
-            if curl -sf http://localhost:8069/web/login > /dev/null; then
+            if curl -sfL http://localhost:8069/web/login > /dev/null; then
               echo "Odoo is up."
               exit 0
             fi
@@ -148,8 +153,8 @@ jobs:
           docker compose logs
           exit 1
 
-      - name: Smoke test — login page loads
-        run: curl -sf http://localhost:8069/web/login | grep -qi "odoo\|login"
+      - name: Smoke test — login (or database-selector) page loads
+        run: curl -sfL http://localhost:8069/web/login | grep -qiE "odoo|login|database"
 
       - name: Tear down
         if: always()
