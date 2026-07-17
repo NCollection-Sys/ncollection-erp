@@ -100,9 +100,12 @@ jobs:
       # own network namespace, so it cannot reach the service via `localhost`
       # unless it also runs with --network host, which shares the runner
       # VM's network namespace (and therefore does reach the published
-      # port). This was verified against GitHub's documented behavior, not
-      # a live run — treat the first real CI run on this workflow as the
-      # actual confirmation.
+      # port). CONFIRMED WORKING by the first live run (PR #104).
+      #
+      # --test-tags scopes the test run to OUR modules. Without it,
+      # --test-enable also runs Odoo core's own suite (base, web, …), and
+      # core's CLI self-tests (test_cli) fail inside this container —
+      # proven by the first live run.
       - name: Install addons and run tests
         run: |
           docker run --rm \
@@ -113,7 +116,9 @@ jobs:
             odoo --db_host=localhost --db_user=odoo --db_password=odoo \
                  -d ci_test \
                  -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas \
-                 --test-enable --stop-after-init --log-level=test \
+                 --test-enable \
+                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas \
+                 --stop-after-init --log-level=test \
             2>&1 | tee odoo-test.log
           test "${PIPESTATUS[0]}" -eq 0
 
