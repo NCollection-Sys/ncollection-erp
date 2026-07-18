@@ -1,0 +1,35 @@
+# ============================================================================
+#  Development override  (ticket P1-T02)
+# ============================================================================
+#  Layer this ON TOP of the base file for local dev conveniences:
+#      docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+#  The base docker-compose.yml already gives you the dev config
+#  (config/odoo.conf: list_db=True, workers=0), the source bind mount, and the
+#  host DB port. This override adds:
+#    - pgAdmin4 web UI (browse the DB at http://localhost:5050)
+#    - debug-level Odoo logging
+# ============================================================================
+services:
+
+  odoo:
+    # Verbose logging + Odoo dev conveniences (auto-reload of assets, etc.).
+    command: odoo --log-level=debug --dev=reload,qweb,xml
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ncollection-pgadmin
+    depends_on:
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ncollection.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    restart: unless-stopped
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  pgadmin_data:

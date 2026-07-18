@@ -1,0 +1,28 @@
+# ============================================================================
+#  Production override  (ticket P1-T02 — STUB)
+# ============================================================================
+#  Layer this ON TOP of the base file for a production-shaped run:
+#      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+#  It switches Odoo to the multi-tenant config (config/odoo.prod.conf:
+#  db_filter=^%d$, list_db=False, proxy_mode, workers=4) via `-c`, and removes
+#  the host-exposed DB port. Both configs stay mounted; `-c` selects prod, so
+#  there is no mount-target conflict with the base's dev config.
+#
+#  STUB: a real production deploy also needs Nginx+TLS (P1-T03), a baked addon
+#  image instead of a bind mount, a real admin_passwd secret, and off-host
+#  backups (P2). Those are their own tickets — this is the config seam.
+# ============================================================================
+services:
+
+  db:
+    # Do NOT expose Postgres to the host in production.
+    ports: !reset []
+
+  odoo:
+    # Select the multi-tenant production config (mounted below). The image
+    # entrypoint still appends db_host/user/password from the HOST/USER/PASSWORD
+    # env vars, so DB secrets continue to come from .env.
+    command: odoo -c /etc/odoo/odoo.prod.conf
+    volumes:
+      - ./config/odoo.prod.conf:/etc/odoo/odoo.prod.conf:ro
