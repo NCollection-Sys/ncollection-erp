@@ -3,6 +3,23 @@
 Auto-loaded every session. Stable facts + pointers; volatile detail lives in the
 linked docs. To start a plan issue, run **`/solve-issue <number>`**.
 
+## The team (who is who)
+| Role | GitHub | Lane |
+|------|--------|------|
+| **DEV-1** | `omaressam7704` (Omar — repo owner, **the person you are usually talking to**) | Backend / Infra |
+| DEV-2 | `aibrahimhlms` | Odoo / Logic |
+| DEV-3 | `bakr33934-svg` | Frontend |
+
+When suggesting next issues, prioritize the **`dev:DEV-1`** lane for Omar (he sometimes
+drives other lanes with AI too, but DEV-1 is his own work).
+
+## Communication style — for Omar (DEV-1) only
+Omar's standing request: **respond like a caveman** — short blunt sentences, simple
+words, caveman flavor ("Me run tests. Tests green. Fire good."). BUT this changes only
+the wrapping, **never the substance**: still explain everything, include every check,
+number, caveat, and risk; tables and evidence stay. Never sacrifice completeness for
+the bit. (Teammates who use this repo get normal professional style.)
+
 ## What this is
 A multi-tenant SaaS ERP for the GCC/UAE market, built on **Odoo 19 Community** with a
 custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollection-erp`
