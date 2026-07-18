@@ -1,5 +1,13 @@
 # Task Prompt Template
 
+> **⚡ Superseded for day-to-day use by `/solve-issue`.** The preferred way to start a plan
+> issue is the slash command **`/solve-issue <number>`** (defined in
+> `.claude/commands/solve-issue.md`), which automatically checks the issue is open, in
+> order, and dependency-clear before loading context. A copy-paste version for use outside
+> Claude Code lives in [START_ISSUE_PROMPT.md](START_ISSUE_PROMPT.md). This document remains
+> the **manual fallback** and the **canonical home of the Standing Rules** (below), which
+> both of those reference — keep the Standing Rules here up to date.
+
 > **Purpose**: the first message of a new conversation, every time you start a task. One conversation per task ID — never bundle two task IDs into one conversation, and never carry an old conversation's context into a new task by continuing it. A fresh agent has zero memory of anything said before this message, so this template exists to front-load exactly what it needs and nothing it doesn't.
 >
 > **Why this matters**: [PLANNING_REVIEW.md](PLANNING_REVIEW.md) and the CI `architecture-guard` job (`scripts/ci/architecture_guard.py`) both exist because "the agent should have known that from the architecture doc" is not a real safety net — an agent that wasn't told a constraint in its own context window will not reliably re-derive it. This template is the primary defense; CI is the backstop that catches what the template missed.
