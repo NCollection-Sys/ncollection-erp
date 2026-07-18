@@ -4,6 +4,8 @@
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
+    'website': 'https://ncollection.com',
+    'license': 'LGPL-3',
     'depends': ['base', 'web'],
     'data': [],
     'installable': True,
