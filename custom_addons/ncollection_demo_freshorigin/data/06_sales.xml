@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Quotation: Gourmet Market -->
+    <record id="so_gourmet_market" model="sale.order">
+        <field name="partner_id" ref="customer_gourmet_market"/>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+    <record id="sol_gourmet_orange" model="sale.order.line">
+        <field name="order_id" ref="so_gourmet_market"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_orange_juice').id)]"/>
+        <field name="product_uom_qty">120</field>
+        <field name="price_unit">12.0</field>
+    </record>
+
+    <record id="sol_gourmet_apple" model="sale.order.line">
+        <field name="order_id" ref="so_gourmet_market"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_apple_juice').id)]"/>
+        <field name="product_uom_qty">80</field>
+        <field name="price_unit">14.0</field>
+    </record>
+
+    <record id="sol_gourmet_berry" model="sale.order.line">
+        <field name="order_id" ref="so_gourmet_market"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_berry_smoothie').id)]"/>
+        <field name="product_uom_qty">60</field>
+        <field name="price_unit">16.0</field>
+    </record>
+
+    <!-- Confirmed Sales Order: Atrium Cafés -->
+    <record id="so_atrium_cafes" model="sale.order">
+        <field name="partner_id" ref="customer_atrium_cafes"/>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="state">sale</field>
+    </record>
+
+    <record id="sol_atrium_green" model="sale.order.line">
+        <field name="order_id" ref="so_atrium_cafes"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_green_juice').id)]"/>
+        <field name="product_uom_qty">200</field>
+        <field name="price_unit">18.0</field>
+    </record>
+
+    <record id="sol_atrium_banana" model="sale.order.line">
+        <field name="order_id" ref="so_atrium_cafes"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_banana_smoothie').id)]"/>
+        <field name="product_uom_qty">150</field>
+        <field name="price_unit">15.0</field>
+    </record>
+
+    <record id="sol_atrium_delivery" model="sale.order.line">
+        <field name="order_id" ref="so_atrium_cafes"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_delivery_service').id)]"/>
+        <field name="product_uom_qty">1</field>
+        <field name="price_unit">25.0</field>
+    </record>
+
+    <!-- Confirmed Sales Order: Marina Hotels -->
+    <record id="so_marina_hotels" model="sale.order">
+        <field name="partner_id" ref="customer_marina_hotels"/>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="state">sale</field>
+    </record>
+
+    <record id="sol_marina_orange" model="sale.order.line">
+        <field name="order_id" ref="so_marina_hotels"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_orange_juice').id)]"/>
+        <field name="product_uom_qty">300</field>
+        <field name="price_unit">12.0</field>
+    </record>
+
+    <record id="sol_marina_green" model="sale.order.line">
+        <field name="order_id" ref="so_marina_hotels"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_green_juice').id)]"/>
+        <field name="product_uom_qty">200</field>
+        <field name="price_unit">18.0</field>
+    </record>
+
+    <!-- Draft quote: Lighthouse Catering -->
+    <record id="so_lighthouse" model="sale.order">
+        <field name="partner_id" ref="customer_lighthouse_catering"/>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+    <record id="sol_lighthouse_berry" model="sale.order.line">
+        <field name="order_id" ref="so_lighthouse"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_berry_smoothie').id)]"/>
+        <field name="product_uom_qty">100</field>
+        <field name="price_unit">16.0</field>
+    </record>
+
+    <record id="sol_lighthouse_banana" model="sale.order.line">
+        <field name="order_id" ref="so_lighthouse"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_banana_smoothie').id)]"/>
+        <field name="product_uom_qty">100</field>
+        <field name="price_unit">15.0</field>
+    </record>
+
+</odoo>

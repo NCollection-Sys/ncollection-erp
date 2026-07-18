@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Customers -->
+    <record id="customer_gourmet_market" model="res.partner">
+        <field name="name">Gourmet Market LLC</field>
+        <field name="is_company">True</field>
+        <field name="email">orders@gourmetmarket.example</field>
+        <field name="phone">+971 4 555 0101</field>
+        <field name="street">Sheikh Zayed Road, Tower 12</field>
+        <field name="city">Dubai</field>
+        <field name="customer_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <record id="customer_atrium_cafes" model="res.partner">
+        <field name="name">Atrium Cafés Group</field>
+        <field name="is_company">True</field>
+        <field name="email">procurement@atriumcafes.example</field>
+        <field name="phone">+971 2 555 0202</field>
+        <field name="street">Corniche Road, Block 4</field>
+        <field name="city">Abu Dhabi</field>
+        <field name="customer_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <record id="customer_marina_hotels" model="res.partner">
+        <field name="name">Marina Hotels &amp; Resorts</field>
+        <field name="is_company">True</field>
+        <field name="email">supply@marinahotels.example</field>
+        <field name="phone">+971 4 555 0303</field>
+        <field name="street">Marina Walk, Building 7</field>
+        <field name="city">Dubai</field>
+        <field name="customer_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <record id="customer_oasis_retail" model="res.partner">
+        <field name="name">Oasis Retail Group</field>
+        <field name="is_company">True</field>
+        <field name="email">buying@oasisretail.example</field>
+        <field name="phone">+971 6 555 0404</field>
+        <field name="street">Industrial Area 13</field>
+        <field name="city">Sharjah</field>
+        <field name="customer_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <record id="customer_lighthouse_catering" model="res.partner">
+        <field name="name">Lighthouse Catering Services</field>
+        <field name="is_company">True</field>
+        <field name="email">contact@lighthousecatering.example</field>
+        <field name="phone">+971 4 555 0505</field>
+        <field name="city">Dubai</field>
+        <field name="customer_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <!-- Vendors -->
+    <record id="vendor_farm_direct" model="res.partner">
+        <field name="name">Farm Direct Producers Co.</field>
+        <field name="is_company">True</field>
+        <field name="email">sales@farmdirect.example</field>
+        <field name="phone">+971 4 555 0706</field>
+        <field name="street">Al Quoz Industrial 3</field>
+        <field name="city">Dubai</field>
+        <field name="supplier_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <record id="vendor_glass_co" model="res.partner">
+        <field name="name">Crystal Glass Packaging</field>
+        <field name="is_company">True</field>
+        <field name="email">orders@crystalglass.example</field>
+        <field name="phone">+971 6 555 0808</field>
+        <field name="street">Industrial Area 7</field>
+        <field name="city">Sharjah</field>
+        <field name="supplier_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <record id="vendor_logistics_hub" model="res.partner">
+        <field name="name">Emirates Logistics Hub</field>
+        <field name="is_company">True</field>
+        <field name="email">ops@emirateshub.example</field>
+        <field name="phone">+971 4 555 0909</field>
+        <field name="city">Dubai</field>
+        <field name="supplier_rank">1</field>
+        <field name="company_type">company</field>
+    </record>
+
+</odoo>

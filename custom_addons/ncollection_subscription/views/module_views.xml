@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ncollection_module_tree" model="ir.ui.view">
+        <field name="name">ncollection.module.tree</field>
+        <field name="model">ncollection.module</field>
+        <field name="arch" type="xml">
+            <list string="Modules" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="category"/>
+                <field name="is_default" widget="boolean_toggle"/>
+                <field name="tenant_count"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ncollection_module_kanban" model="ir.ui.view">
+        <field name="name">ncollection.module.kanban</field>
+        <field name="model">ncollection.module</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="icon"/>
+                <field name="is_default"/>
+                <field name="description"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_ncollection_module_card">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="o_ncollection_module_card_icon me-2">
+                                    <i t-attf-class="fa #{record.icon.raw_value or 'fa-cube'}"/>
+                                </span>
+                                <div class="flex-grow-1">
+                                    <strong><field name="name"/></strong>
+                                    <div class="text-muted small"><field name="technical_name"/></div>
+                                </div>
+                                <span t-if="record.is_default.raw_value" class="badge text-bg-primary">Default</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge text-bg-light"><field name="category"/></span>
+                                <span class="text-muted small">
+                                    <i class="fa fa-building me-1"/>
+                                    <field name="tenant_count"/> tenants
+                                </span>
+                            </div>
+                            <div t-if="record.description.raw_value" class="text-muted small">
+                                <field name="description"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_ncollection_module_form" model="ir.ui.view">
+        <field name="name">ncollection.module.form</field>
+        <field name="model">ncollection.module</field>
+        <field name="arch" type="xml">
+            <form string="Module">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g. Sales Management"/>
+                        </h1>
+                        <h3>
+                            <field name="technical_name" placeholder="e.g. sale_management"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group string="Catalog">
+                            <field name="category"/>
+                            <field name="icon"/>
+                            <field name="sequence"/>
+                            <field name="is_default"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Adoption">
+                            <field name="tenant_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Short module description shown to administrators..."/>
+                        </page>
+                        <page string="Tenants">
+                            <field name="tenant_ids" readonly="1">
+                                <list>
+                                    <field name="company_name"/>
+                                    <field name="status"/>
+                                    <field name="database_status"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ncollection_module_search" model="ir.ui.view">
+        <field name="name">ncollection.module.search</field>
+        <field name="model">ncollection.module</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="technical_name"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ncollection_module" model="ir.actions.act_window">
+        <field name="name">Modules</field>
+        <field name="res_model">ncollection.module</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Catalog the modules your SaaS platform offers
+            </p>
+            <p>
+                Modules can be selected per tenant and tracked by provisioning jobs.
+            </p>
+        </field>
+    </record>
+
+</odoo>

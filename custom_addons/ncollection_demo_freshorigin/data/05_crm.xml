@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Leads -->
+    <record id="lead_blue_lagoon" model="crm.lead">
+        <field name="name">Blue Lagoon Spa — wellness drinks partnership</field>
+        <field name="type">lead</field>
+        <field name="contact_name">Hala Ibrahim</field>
+        <field name="email_from">hala@bluelagoonspa.example</field>
+        <field name="phone">+971 4 555 1010</field>
+        <field name="expected_revenue">42000</field>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+    <record id="lead_skyline_gym" model="crm.lead">
+        <field name="name">Skyline Gym chain — post-workout shake supplier</field>
+        <field name="type">lead</field>
+        <field name="contact_name">Rashid Al Mansoori</field>
+        <field name="email_from">rashid@skylinegym.example</field>
+        <field name="phone">+971 4 555 1212</field>
+        <field name="expected_revenue">78000</field>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+    <record id="lead_corporate_office" model="crm.lead">
+        <field name="name">Pearl Tower — corporate snack program</field>
+        <field name="type">lead</field>
+        <field name="contact_name">Nour Ahmed</field>
+        <field name="email_from">nour@pearltower.example</field>
+        <field name="expected_revenue">22000</field>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+    <!-- Opportunities -->
+    <record id="opp_marina_expansion" model="crm.lead">
+        <field name="name">Marina Hotels — expansion to 4 new properties</field>
+        <field name="type">opportunity</field>
+        <field name="partner_id" ref="customer_marina_hotels"/>
+        <field name="expected_revenue">185000</field>
+        <field name="probability">70</field>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+    <record id="opp_atrium_seasonal" model="crm.lead">
+        <field name="name">Atrium Cafés — seasonal smoothie launch</field>
+        <field name="type">opportunity</field>
+        <field name="partner_id" ref="customer_atrium_cafes"/>
+        <field name="expected_revenue">96000</field>
+        <field name="probability">55</field>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+    <record id="opp_oasis_private_label" model="crm.lead">
+        <field name="name">Oasis Retail — private-label juice line</field>
+        <field name="type">opportunity</field>
+        <field name="partner_id" ref="customer_oasis_retail"/>
+        <field name="expected_revenue">240000</field>
+        <field name="probability">35</field>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+
+</odoo>

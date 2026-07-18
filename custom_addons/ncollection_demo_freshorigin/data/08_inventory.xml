@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Stock quantities are created via post_init_hook (Quant's
+         creation is restricted by Odoo security for direct XML import).
+         See __init__.py / _create_demo_stock(). -->
+</odoo>

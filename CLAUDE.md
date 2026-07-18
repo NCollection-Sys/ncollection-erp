@@ -75,11 +75,19 @@ frontend/backend deploy — it's a monolith.
 3. Two-layer separation: platform addons (`ncollection_saas`, `ncollection_subscription`)
    must not directly query tenant ERP models — go through RPC.
 4. Any UI restriction (menu/`groups=`) must be mirrored at the ORM/RPC layer.
-5. OCA-first: check for an existing OCA module before building custom; record the decision.
+5. OCA-first for mature infrastructure and security concerns.
+  Business features that become part of the NCollection product should gradually migrate to native ncollection_* modules according to the project roadmap.
+  Never introduce a new OCA dependency without checking the project architecture first.
 6. Small incremental commits, each verified. Run local gates before pushing:
    `flake8 custom_addons/` + `scripts/ci/architecture_guard.py --base origin/develop`
    (+ `cd demo && npx tsc --noEmit` if `demo/` changed).
 7. No secrets in git; dev creds live in `.env` (gitignored; template `.env.example`).
+8. The architecture documents are authoritative.
+If a requested implementation appears to conflict with
+DELIVERABLE_1_SYSTEM_DESIGN.md,
+ARCHITECTURE_DATA_PLATFORM.md,
+or ARCHITECTURE_SECURITY.md,
+STOP and ask before changing the architecture.
 
 ## Odoo 19 gotchas (live-verified here — save yourself the debugging)
 - HTTP JSON routes are `type='jsonrpc'` (`type='json'` is deprecated).
@@ -99,3 +107,43 @@ frontend/backend deploy — it's a monolith.
 - `ARCHITECTURE_DATA_PLATFORM.md` · `ARCHITECTURE_SECURITY.md` — backend & security deep-dives.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
 - `PRD.md` · `DELIVERABLE_2_TIMELINE_AND_TOOLING.md` · `PLANNING_REVIEW.md` — product & planning.
+
+Architecture priority (highest first)
+
+1. DELIVERABLE_1_SYSTEM_DESIGN.md
+2. ARCHITECTURE_DATA_PLATFORM.md
+3. ARCHITECTURE_SECURITY.md
+4. DELIVERABLE_2_TIMELINE_AND_TOOLING.md
+5. SPRINT_SCHEDULE.md
+
+If older documents contradict these, treat them as historical only.
+
+## Architecture Safety
+
+Never:
+
+- redesign the architecture without approval
+- add new OCA modules without approval
+- modify module states or databases unless explicitly requested
+- replace existing code when extending it is sufficient
+
+When unsure:
+STOP.
+Explain.
+Ask.
+
+## AI Expectations
+Think like a senior software architect.
+
+Do not optimize for writing code quickly.
+
+Optimize for:
+
+- maintainability
+- scalability
+- security
+- backward compatibility
+- minimal scope
+- long-term architecture
+
+Always preserve existing architectural decisions unless explicitly instructed otherwise.

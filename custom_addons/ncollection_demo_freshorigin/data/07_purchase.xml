@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Purchase Order: Farm Direct (RFQ) -->
+    <record id="po_farm_direct" model="purchase.order">
+        <field name="partner_id" ref="vendor_farm_direct"/>
+    </record>
+
+    <record id="pol_farm_oranges" model="purchase.order.line">
+        <field name="order_id" ref="po_farm_direct"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_orange_juice').id)]"/>
+        <field name="name">Bulk oranges (juice grade)</field>
+        <field name="product_qty">500</field>
+        <field name="price_unit">4.5</field>
+        <field name="date_planned" eval="(DateTime.now() + relativedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
+    <record id="pol_farm_apples" model="purchase.order.line">
+        <field name="order_id" ref="po_farm_direct"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_apple_juice').id)]"/>
+        <field name="name">Bulk apples + ginger pack</field>
+        <field name="product_qty">300</field>
+        <field name="price_unit">5.5</field>
+        <field name="date_planned" eval="(DateTime.now() + relativedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
+    <!-- Purchase Order: Crystal Glass Packaging (confirmed) -->
+    <record id="po_glass_co" model="purchase.order">
+        <field name="partner_id" ref="vendor_glass_co"/>
+        <field name="state">purchase</field>
+    </record>
+
+    <record id="pol_glass_bottles" model="purchase.order.line">
+        <field name="order_id" ref="po_glass_co"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_glass_bottle_500').id)]"/>
+        <field name="name">Glass bottles 500ml (case of 100)</field>
+        <field name="product_qty">2000</field>
+        <field name="price_unit">1.2</field>
+        <field name="date_planned" eval="(DateTime.now() + relativedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
+</odoo>

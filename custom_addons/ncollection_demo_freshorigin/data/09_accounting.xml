@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Customer invoices (draft) -->
+    <record id="invoice_gourmet" model="account.move">
+        <field name="move_type">out_invoice</field>
+        <field name="partner_id" ref="customer_gourmet_market"/>
+        <field name="invoice_date" eval="(DateTime.now() - relativedelta(days=15)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="invl_gourmet_orange" model="account.move.line">
+        <field name="move_id" ref="invoice_gourmet"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_orange_juice').id)]"/>
+        <field name="name">Orange Juice 500ml</field>
+        <field name="quantity">120</field>
+        <field name="price_unit">12.0</field>
+    </record>
+
+    <record id="invl_gourmet_apple" model="account.move.line">
+        <field name="move_id" ref="invoice_gourmet"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_apple_juice').id)]"/>
+        <field name="name">Apple &amp; Ginger Juice 500ml</field>
+        <field name="quantity">80</field>
+        <field name="price_unit">14.0</field>
+    </record>
+
+    <record id="invoice_marina" model="account.move">
+        <field name="move_type">out_invoice</field>
+        <field name="partner_id" ref="customer_marina_hotels"/>
+        <field name="invoice_date" eval="(DateTime.now() - relativedelta(days=5)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="invl_marina_orange" model="account.move.line">
+        <field name="move_id" ref="invoice_marina"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_orange_juice').id)]"/>
+        <field name="name">Orange Juice 500ml</field>
+        <field name="quantity">300</field>
+        <field name="price_unit">12.0</field>
+    </record>
+
+    <record id="invl_marina_green" model="account.move.line">
+        <field name="move_id" ref="invoice_marina"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_green_juice').id)]"/>
+        <field name="name">Green Detox Juice 500ml</field>
+        <field name="quantity">200</field>
+        <field name="price_unit">18.0</field>
+    </record>
+
+    <!-- Vendor bill (draft) -->
+    <record id="bill_farm_direct" model="account.move">
+        <field name="move_type">in_invoice</field>
+        <field name="partner_id" ref="vendor_farm_direct"/>
+        <field name="invoice_date" eval="(DateTime.now() - relativedelta(days=10)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="billl_farm_oranges" model="account.move.line">
+        <field name="move_id" ref="bill_farm_direct"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_orange_juice').id)]"/>
+        <field name="name">Bulk oranges (juice grade)</field>
+        <field name="quantity">500</field>
+        <field name="price_unit">4.5</field>
+    </record>
+
+    <record id="bill_glass_co" model="account.move">
+        <field name="move_type">in_invoice</field>
+        <field name="partner_id" ref="vendor_glass_co"/>
+        <field name="invoice_date" eval="(DateTime.now() - relativedelta(days=3)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="billl_glass_bottles" model="account.move.line">
+        <field name="move_id" ref="bill_glass_co"/>
+        <field name="product_id" search="[('product_tmpl_id', '=', obj().env.ref('ncollection_demo_freshorigin.product_glass_bottle_500').id)]"/>
+        <field name="name">Glass bottles 500ml</field>
+        <field name="quantity">2000</field>
+        <field name="price_unit">1.2</field>
+    </record>
+
+</odoo>

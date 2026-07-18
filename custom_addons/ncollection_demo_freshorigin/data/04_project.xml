@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="project_launch_q3" model="project.project">
+        <field name="name">Q3 Product Line Launch — Summer Smoothies</field>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="privacy_visibility">employees</field>
+    </record>
+
+    <!-- Reusable stages on the project -->
+    <record id="project_stage_todo" model="project.task.type">
+        <field name="name">To Do</field>
+        <field name="sequence">10</field>
+        <field name="project_ids" eval="[(4, ref('project_launch_q3'))]"/>
+    </record>
+
+    <record id="project_stage_in_progress" model="project.task.type">
+        <field name="name">In Progress</field>
+        <field name="sequence">20</field>
+        <field name="project_ids" eval="[(4, ref('project_launch_q3'))]"/>
+    </record>
+
+    <record id="project_stage_review" model="project.task.type">
+        <field name="name">Review</field>
+        <field name="sequence">30</field>
+        <field name="project_ids" eval="[(4, ref('project_launch_q3'))]"/>
+    </record>
+
+    <record id="project_stage_done" model="project.task.type">
+        <field name="name">Done</field>
+        <field name="sequence">40</field>
+        <field name="project_ids" eval="[(4, ref('project_launch_q3'))]"/>
+    </record>
+
+    <!-- Tasks across all stages -->
+    <record id="task_recipe_sign_off" model="project.task">
+        <field name="name">Finalize summer smoothie recipes</field>
+        <field name="project_id" ref="project_launch_q3"/>
+        <field name="stage_id" ref="project_stage_done"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="task_packaging_design" model="project.task">
+        <field name="name">Approve new bottle label design</field>
+        <field name="project_id" ref="project_launch_q3"/>
+        <field name="stage_id" ref="project_stage_review"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="task_supplier_sourcing" model="project.task">
+        <field name="name">Source organic mangoes for limited edition</field>
+        <field name="project_id" ref="project_launch_q3"/>
+        <field name="stage_id" ref="project_stage_in_progress"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="task_marketing_campaign" model="project.task">
+        <field name="name">Q3 launch marketing campaign</field>
+        <field name="project_id" ref="project_launch_q3"/>
+        <field name="stage_id" ref="project_stage_in_progress"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="task_pos_displays" model="project.task">
+        <field name="name">Coordinate POS display rollout with Atrium Cafés</field>
+        <field name="project_id" ref="project_launch_q3"/>
+        <field name="stage_id" ref="project_stage_todo"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="task_logistics_plan" model="project.task">
+        <field name="name">Cold-chain logistics plan for summer route</field>
+        <field name="project_id" ref="project_launch_q3"/>
+        <field name="stage_id" ref="project_stage_todo"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+</odoo>

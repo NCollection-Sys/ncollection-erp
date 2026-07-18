@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- White-label system parameters. noupdate=1 keeps client edits sticky. -->
+
+    <!-- Default outgoing email "from name" used by templates that fall back
+         to ir.config_parameter when no specific from is set. -->
+    <record id="ir_config_mail_default_from_filter" model="ir.config_parameter">
+        <field name="key">mail.default.from_filter</field>
+        <field name="value">ncollection.com</field>
+    </record>
+
+    <record id="ir_config_mail_default_from" model="ir.config_parameter">
+        <field name="key">mail.default.from</field>
+        <field name="value">noreply@ncollection.com</field>
+    </record>
+
+    <!-- Web title appearing in some HTTP responses / shortcuts -->
+    <record id="ir_config_web_title" model="ir.config_parameter">
+        <field name="key">web.base.title</field>
+        <field name="value">NCollection ERP</field>
+    </record>
+
+    <!-- Database list shown on /web/database/manager (when list_db=True) -->
+    <record id="ir_config_database_manager_show_name" model="ir.config_parameter">
+        <field name="key">database.show_name</field>
+        <field name="value">NCollection ERP Platform</field>
+    </record>
+
+</odoo>
