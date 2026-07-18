@@ -15,12 +15,18 @@ services:
       - "${DB_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   odoo:
     image: odoo:19
     container_name: ncollection-odoo
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8069:8069"
     environment:
@@ -31,10 +37,18 @@ services:
     volumes:
       - odoo_data:/var/lib/odoo
       - ./custom_addons:/mnt/extra-addons
-      # Local-dev Odoo config. Values above (${VAR:-default}) come from an
-      # optional .env; the stack still runs with no .env present. Production
-      # config is P1-T02 — see docs/markdown/LOCAL_DEV_AND_ARCHITECTURE.md.
+      # Base mounts the DEV config (config/odoo.conf: list_db=True, workers=0)
+      # so a plain `docker compose up` gives a working localhost dev stack.
+      # The production multi-tenant config is config/odoo.prod.conf, selected
+      # by docker-compose.prod.yml. See docs/markdown/LOCAL_DEV_AND_ARCHITECTURE.md.
       - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+    healthcheck:
+      # /web/health is Odoo's built-in no-database health route (200 OK).
+      test: ["CMD-SHELL", "curl -sf http://localhost:8069/web/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
   postgres_data:
