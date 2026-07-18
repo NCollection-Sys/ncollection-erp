@@ -8,6 +8,11 @@ services:
       POSTGRES_USER: ${DB_USER:-odoo}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-odoo}
     restart: always
+    ports:
+      # Host 5433 -> container 5432, so a local Postgres install (which
+      # normally owns host 5432) never conflicts. Connect pgAdmin4 /
+      # any DB client to localhost:5433.
+      - "${DB_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
