@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useSession } from "./mock/session";
 import { AppShell } from "./layout/AppShell";
 import { LoginPage } from "./pages/Login";
+import { SignupPage } from "./pages/Signup";
 import { DashboardPage } from "./pages/Dashboard";
 import { SettingsPage } from "./pages/Settings";
 import { SalesOrdersPage } from "./pages/SalesOrders";
@@ -12,12 +13,17 @@ import { EmailPreviewPage } from "./pages/EmailPreview";
 import { PlaceholderPage } from "./pages/Placeholder";
 
 export function App() {
-  const { authed } = useSession();
+  const { authed, booting } = useSession();
+
+  // While restoring a possible existing session, render nothing rather than
+  // flashing the login page for authenticated users on reload.
+  if (booting) return null;
 
   if (!authed) {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );

@@ -1,55 +1,82 @@
 /*
- * Mock session — who is "logged in" and their role. The demo exposes a role
- * switcher (in the topbar) so a reviewer can see the role-aware UI change
- * without needing separate accounts. In production this is replaced by the
- * real Odoo session / res.users group membership.
+ * Session state — REAL authentication, demo role switching (Refs issue #103).
+ *
+ * login/logout/restore go through the actual Odoo backend (src/api/odoo.ts):
+ * credentials are checked against PostgreSQL and a real session cookie is
+ * kept. The ROLE the UI renders for (sidebar/widget visibility) remains a
+ * demo-only switcher until the real role mapping ships with P1-T08/P1-T09.
  */
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import type { RoleKey } from "../lib/roles";
-import { ROLES } from "../lib/roles";
+import { ROLES, type RoleKey, type RoleDef } from "../lib/roles";
+import { odooApi } from "../api/odoo";
 
-type SessionValue = {
+interface SessionValue {
+  /** True while we check for an existing server session on first load. */
+  booting: boolean;
   authed: boolean;
   role: RoleKey;
   userName: string;
-  login: () => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   setRole: (r: RoleKey) => void;
-};
+}
 
 const SessionContext = createContext<SessionValue | null>(null);
 
-const ROLE_USER: Record<RoleKey, string> = {
-  owner: "Layla Al Nuaimi",
-  ceo: "Omar Haddad",
-  manager: "Sara Mansour",
-  sales: "Yousef Karim",
-  warehouse: "Bilal Ahmed",
-  hr: "Noura Saleh",
-  accountant: "Fatima Rahmani",
-  employee: "Aisha Darwish",
-};
-
 export function SessionProvider({ children }: { children: ReactNode }) {
+  const [booting, setBooting] = useState(true);
   const [authed, setAuthed] = useState(false);
+  const [userName, setUserName] = useState("");
   const [role, setRoleState] = useState<RoleKey>("owner");
+
+  // Session restore: if a valid session cookie exists (page reload), pick it
+  // up. The endpoint rejects when there is no session — that's simply
+  // "not logged in", never an error worth surfacing.
+  useEffect(() => {
+    let cancelled = false;
+    odooApi
+      .getSessionInfo()
+      .then((session) => {
+        if (!cancelled && session.uid) {
+          setUserName(session.name ?? "User");
+          setAuthed(true);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setBooting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const value = useMemo<SessionValue>(
     () => ({
+      booting,
       authed,
       role,
-      userName: ROLE_USER[role],
-      login: () => setAuthed(true),
-      logout: () => setAuthed(false),
-      setRole: (r) => setRoleState(r),
+      userName,
+      login: async (email: string, password: string) => {
+        const session = await odooApi.authenticate(email, password);
+        setUserName(session.name ?? "User");
+        setAuthed(true);
+      },
+      logout: () => {
+        odooApi.logout().catch(() => undefined);
+        setAuthed(false);
+        setUserName("");
+      },
+      setRole: (r: RoleKey) => setRoleState(r),
     }),
-    [authed, role],
+    [booting, authed, role, userName],
   );
 
   return (
@@ -63,7 +90,7 @@ export function useSession(): SessionValue {
   return ctx;
 }
 
-export function useRoleDef() {
+export function useRoleDef(): RoleDef {
   const { role } = useSession();
   return ROLES[role];
 }

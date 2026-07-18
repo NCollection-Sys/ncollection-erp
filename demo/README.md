@@ -5,9 +5,15 @@ Built to be demoed **now** while the backend and database are still in progress,
 designed so the **design system and screens are reused later** when the UI is ported into
 the real Odoo product.
 
-> ⚠️ **Demo only.** Every number, name, and record on screen is mock data. There is no
-> backend, no database, no real authentication. This is not the Phase 1 tasks marked "done"
-> — it's a visual/interaction prototype of them.
+> ⚠️ **Demo only.** Every number, name, and record on the business screens is mock data.
+> This is not the Phase 1 tasks marked "done" — it's a visual/interaction prototype of them.
+>
+> **Exception — login & signup are REAL** (GitHub issue #103): they authenticate against
+> the running Odoo stack's `ncollection` database via `/web/session/authenticate` and a
+> custom signup controller in `ncollection_core`. Start the Odoo stack first (`make up`,
+> `make bootstrap db=ncollection`), then log in with `admin` / `admin` or create an
+> account on the Signup page. Requests reach Odoo through the Vite dev proxy
+> (`vite.config.ts`); override the target database with `VITE_ODOO_DB`.
 
 ## Run it
 
