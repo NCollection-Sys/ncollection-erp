@@ -14,7 +14,7 @@
 
 | Phase | Done | Total | % |
 |---|---|---|---|
-| Phase 1 — Customer Workspace | 5 | 21 | 24% |
+| Phase 1 — Customer Workspace | 6 | 21 | 29% |
 | Phase 2 — SaaS Automation | 0 | 18 | 0% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **5** | **100** | **5%** |
+| **Total** | **6** | **100** | **6%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -35,7 +35,7 @@
 | P1-T03 | Nginx Reverse Proxy & TLS | DEV-1 | P1-T02 | [#4](https://github.com/NCollection-Sys/ncollection-erp/issues/4) | ✅ done | 2026-07-19 |
 | P1-T04 | OCA Dependency Management | DEV-1 | None | [#5](https://github.com/NCollection-Sys/ncollection-erp/issues/5) | 🔨 open |  |
 | P1-T05 | CI Pipeline Enhancement | DEV-1 | P1-T01, P1-T04 | [#6](https://github.com/NCollection-Sys/ncollection-erp/issues/6) | 🔨 open |  |
-| P1-T06 | DB Routing Engine & Multi-DB Verification | DEV-1 | P1-T03 | [#7](https://github.com/NCollection-Sys/ncollection-erp/issues/7) | 🔨 open |  |
+| P1-T06 | DB Routing Engine & Multi-DB Verification | DEV-1 | P1-T03 | [#7](https://github.com/NCollection-Sys/ncollection-erp/issues/7) | ✅ done | 2026-07-19 |
 | P1-T07 | Tenant & Subscription Model Enhancements | DEV-2 | P1-T01 | [#8](https://github.com/NCollection-Sys/ncollection-erp/issues/8) | ✅ done | 2026-07-19 |
 | P1-T08 | Tenant Role Definitions | DEV-2 | P1-T01 | [#9](https://github.com/NCollection-Sys/ncollection-erp/issues/9) | ✅ done | 2026-07-19 |
 | P1-T09 | Module Visibility Engine (Menus) | DEV-2 | P1-T07 | [#10](https://github.com/NCollection-Sys/ncollection-erp/issues/10) | 🔨 open |  |
