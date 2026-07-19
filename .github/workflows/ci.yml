@@ -32,6 +32,14 @@ jobs:
       - name: Run flake8
         run: flake8 custom_addons/
 
+      # Fast XML well-formedness gate over OUR addons only (not the
+      # aggregated ./oca tree). pylint-odoo checks XML semantics; this
+      # catches malformed XML before the slower test job has to install it.
+      - name: Validate XML (well-formedness)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libxml2-utils
+          find custom_addons -name '*.xml' -print0 | xargs -0 -r xmllint --noout
+
       # pylint-odoo currently reports 60 pre-existing findings across the
       # addons (missing README.rst, superfluous/deprecated manifest keys,
       # redundant `string=` attrs — measured directly, see
@@ -61,6 +69,71 @@ jobs:
             echo "New pylint-odoo findings introduced ($COUNT > baseline $PYLINT_BASELINE) — see log above."
             exit 1
           fi
+
+  # Supply-chain security scanning (P1-T05). NON-BLOCKING by design
+  # (continue-on-error) — the issue mandates "non-blocking warnings
+  # initially" so a fresh advisory never stops a merge; the reports still
+  # surface on every PR (job summary + uploaded artifacts). Runs in PARALLEL
+  # with lint so it does not extend the critical path. Flip continue-on-error
+  # off once the advisory backlog is triaged.
+  security-scan:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: pip-audit (Python dependency advisories)
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          # Audit the pinned runtime/tooling requirements if present, else the
+          # environment. --strict off: report, never fail (non-blocking phase).
+          if [ -f requirements.txt ]; then
+            pip-audit -r requirements.txt --desc --format markdown | tee pip-audit-report.md || true
+          else
+            pip-audit --desc --format markdown | tee pip-audit-report.md || true
+          fi
+
+      - name: Trivy (filesystem vulnerability + secret scan)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          output: trivy-report.txt
+          exit-code: '0'            # non-blocking: report only
+          severity: CRITICAL,HIGH
+          scanners: vuln,secret
+
+      - name: Publish scan summary
+        if: always()
+        run: |
+          {
+            echo "## Security scan reports"
+            echo "### pip-audit"
+            echo '```'
+            [ -f pip-audit-report.md ] && cat pip-audit-report.md || echo "no report"
+            echo '```'
+            echo "### Trivy (CRITICAL/HIGH)"
+            echo '```'
+            [ -f trivy-report.txt ] && cat trivy-report.txt || echo "no report"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-reports
+          path: |
+            pip-audit-report.md
+            trivy-report.txt
+          if-no-files-found: ignore
 
   architecture-guard:
     runs-on: ubuntu-latest
