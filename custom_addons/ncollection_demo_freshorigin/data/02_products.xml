@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Categories -->
+    <record id="category_juices" model="product.category">
+        <field name="name">Fresh Juices</field>
+    </record>
+
+    <record id="category_smoothies" model="product.category">
+        <field name="name">Smoothies</field>
+    </record>
+
+    <record id="category_packaging" model="product.category">
+        <field name="name">Packaging &amp; Bottles</field>
+    </record>
+
+    <!-- Products -->
+    <record id="product_orange_juice" model="product.template">
+        <field name="name">Orange Juice 500ml</field>
+        <field name="categ_id" ref="category_juices"/>
+        <field name="type">consu</field>
+        <field name="is_storable">True</field>
+        <field name="list_price">12.0</field>
+        <field name="standard_price">4.5</field>
+        <field name="default_code">FO-JUI-OR-500</field>
+    </record>
+
+    <record id="product_green_juice" model="product.template">
+        <field name="name">Green Detox Juice 500ml</field>
+        <field name="categ_id" ref="category_juices"/>
+        <field name="type">consu</field>
+        <field name="is_storable">True</field>
+        <field name="list_price">18.0</field>
+        <field name="standard_price">7.0</field>
+        <field name="default_code">FO-JUI-GR-500</field>
+    </record>
+
+    <record id="product_apple_juice" model="product.template">
+        <field name="name">Apple &amp; Ginger Juice 500ml</field>
+        <field name="categ_id" ref="category_juices"/>
+        <field name="type">consu</field>
+        <field name="is_storable">True</field>
+        <field name="list_price">14.0</field>
+        <field name="standard_price">5.5</field>
+        <field name="default_code">FO-JUI-AP-500</field>
+    </record>
+
+    <record id="product_berry_smoothie" model="product.template">
+        <field name="name">Mixed Berry Smoothie 350ml</field>
+        <field name="categ_id" ref="category_smoothies"/>
+        <field name="type">consu</field>
+        <field name="is_storable">True</field>
+        <field name="list_price">16.0</field>
+        <field name="standard_price">6.5</field>
+        <field name="default_code">FO-SMO-BE-350</field>
+    </record>
+
+    <record id="product_banana_smoothie" model="product.template">
+        <field name="name">Banana Date Smoothie 350ml</field>
+        <field name="categ_id" ref="category_smoothies"/>
+        <field name="type">consu</field>
+        <field name="is_storable">True</field>
+        <field name="list_price">15.0</field>
+        <field name="standard_price">5.5</field>
+        <field name="default_code">FO-SMO-BA-350</field>
+    </record>
+
+    <record id="product_glass_bottle_500" model="product.template">
+        <field name="name">Glass Bottle 500ml (empty)</field>
+        <field name="categ_id" ref="category_packaging"/>
+        <field name="type">consu</field>
+        <field name="is_storable">True</field>
+        <field name="list_price">2.5</field>
+        <field name="standard_price">1.2</field>
+        <field name="default_code">FO-PKG-GB-500</field>
+    </record>
+
+    <record id="product_delivery_service" model="product.template">
+        <field name="name">Same-Day Delivery</field>
+        <field name="type">service</field>
+        <field name="list_price">25.0</field>
+        <field name="standard_price">0.0</field>
+        <field name="default_code">FO-SVC-DEL</field>
+    </record>
+
+</odoo>

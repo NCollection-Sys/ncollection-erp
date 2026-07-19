@@ -10,6 +10,28 @@ is in `CLAUDE.md` (auto-loaded); deep docs live in `docs/markdown/`.
 
 Issue number provided as argument: "$ARGUMENTS"
 
+## Global Architecture Rules (always active)
+
+These rules override all other instructions.
+
+1. The architecture documents are authoritative:
+   - `DELIVERABLE_1_SYSTEM_DESIGN.md`
+   - `ARCHITECTURE_DATA_PLATFORM.md`
+   - `ARCHITECTURE_SECURITY.md`
+
+   Never redesign, replace, or contradict an architectural decision from these documents unless the GitHub issue explicitly requires it or the user approves.
+
+2. Extend before replacing.
+   Prefer extending existing modules and code over rewriting or replacing them.
+   Large refactors outside the issue scope require explicit approval.
+
+3. Never introduce new architectural dependencies (especially OCA modules, infrastructure components, or external services) unless:
+   - they already exist in the architecture documents, or
+   - the user explicitly approves them.
+
+4. Treat completed milestones as stable.
+   Do not redesign or replace completed infrastructure, modules, or architecture unless the issue explicitly requests it.
+
 ## Phase 1 — Identify
 
 If the argument above is empty, ask the user exactly one question — the GitHub
@@ -91,7 +113,17 @@ With the gate passed, assemble working context:
 ## Phase 5 — Plan gate
 
 Present a mini implementation plan: ordered steps, files to create/modify,
+Before asking for approval, explain briefly how the implementation preserves:
+
+- Two-layer architecture
+- Database-per-tenant isolation
+- Security architecture
+- Existing project architecture
+
+If any architectural assumption changes, STOP and ask before implementation.
+
 test approach, risks. **Wait for explicit user approval before any edit.**
+
 
 ## Phase 6 — Execute, verify, ship
 
@@ -111,6 +143,13 @@ test approach, risks. **Wait for explicit user approval before any edit.**
 5. Watch all four CI checks (`lint`, `architecture-guard`, `test`, `build`)
    to completion. Fix failures on the same branch. **Never merge your own PR**
    — hand it to the user for review.
+   Before completing the task, verify that:
+
+- No architectural decision was unintentionally changed.
+- No dependency was added without approval.
+- Existing completed milestones continue to work.
+- The implementation stays within the issue scope.
+
 6. Wrap up with: (a) an acceptance-criteria table with evidence per row,
    (b) anything deliberately not done, and (c) **the issues this unblocks** —
    `gh issue list --repo NCollection-Sys/ncollection-erp --state open --limit 300 --json number,title,body --jq '.[] | select(.body | test("\\*\\*Dependencies\\*\\*:.*<ID>")) | "#\(.number) \(.title)"'`
@@ -127,3 +166,9 @@ test approach, risks. **Wait for explicit user approval before any edit.**
   `type='jsonrpc'`; `res.users` groups field is `group_ids`; views use
   `<list>` not `<tree>`, no `attrs=`; the `X-Odoo-Database` header makes Odoo
   skip the session cookie — only send it on session-less public calls.
+
+- Never modify project planning or architecture documentation unless the GitHub issue explicitly targets documentation.
+
+- Never execute destructive database operations (SQL, module state manipulation, uninstalling modules, deleting databases, or changing installed modules) unless the issue explicitly requires it and the user approves.
+
+- If implementation requires changing the documented architecture, STOP and ask for approval before writing any code.

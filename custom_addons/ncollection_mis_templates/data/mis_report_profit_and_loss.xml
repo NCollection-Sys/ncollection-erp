@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Profit & Loss template (UAE chart of accounts, 6-digit codes) -->
+    <record id="mis_report_pl" model="mis.report">
+        <field name="name">Profit &amp; Loss</field>
+    </record>
+
+    <!-- ============ INCOME ============ -->
+    <record id="pl_kpi_revenue" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">revenue</field>
+        <field name="description">Sales Revenue</field>
+        <field name="sequence">10</field>
+        <field name="auto_expand_accounts">True</field>
+    </record>
+    <record id="pl_kpi_revenue_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_revenue"/>
+        <field name="name">-crdp[4%]</field>
+    </record>
+
+    <record id="pl_kpi_other_income" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">other_income</field>
+        <field name="description">Other Operating Income</field>
+        <field name="sequence">20</field>
+        <field name="auto_expand_accounts">True</field>
+    </record>
+    <record id="pl_kpi_other_income_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_other_income"/>
+        <field name="name">-crdp[7%]</field>
+    </record>
+
+    <record id="pl_kpi_total_income" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">total_income</field>
+        <field name="description">TOTAL INCOME</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="pl_kpi_total_income_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_total_income"/>
+        <field name="name">revenue + other_income</field>
+    </record>
+
+    <!-- ============ COST OF GOODS SOLD ============ -->
+    <record id="pl_kpi_cogs" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">cogs</field>
+        <field name="description">Cost of Goods Sold</field>
+        <field name="sequence">40</field>
+        <field name="auto_expand_accounts">True</field>
+    </record>
+    <record id="pl_kpi_cogs_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_cogs"/>
+        <field name="name">debp[5%]</field>
+    </record>
+
+    <record id="pl_kpi_gross_profit" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">gross_profit</field>
+        <field name="description">GROSS PROFIT</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="pl_kpi_gross_profit_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_gross_profit"/>
+        <field name="name">total_income - cogs</field>
+    </record>
+
+    <!-- ============ OPERATING EXPENSES ============ -->
+    <record id="pl_kpi_op_expenses" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">operating_expenses</field>
+        <field name="description">Operating Expenses</field>
+        <field name="sequence">60</field>
+        <field name="auto_expand_accounts">True</field>
+    </record>
+    <record id="pl_kpi_op_expenses_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_op_expenses"/>
+        <field name="name">debp[6%, 8%]</field>
+    </record>
+
+    <record id="pl_kpi_operating_profit" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">operating_profit</field>
+        <field name="description">OPERATING PROFIT</field>
+        <field name="sequence">70</field>
+    </record>
+    <record id="pl_kpi_operating_profit_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_operating_profit"/>
+        <field name="name">gross_profit - operating_expenses</field>
+    </record>
+
+    <!-- ============ NET PROFIT ============ -->
+    <record id="pl_kpi_net_profit" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_pl"/>
+        <field name="name">net_profit</field>
+        <field name="description">NET PROFIT</field>
+        <field name="sequence">80</field>
+    </record>
+    <record id="pl_kpi_net_profit_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="pl_kpi_net_profit"/>
+        <field name="name">operating_profit</field>
+    </record>
+
+</odoo>

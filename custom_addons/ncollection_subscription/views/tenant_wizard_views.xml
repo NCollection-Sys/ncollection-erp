@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ncollection_tenant_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.wizard.form</field>
+        <field name="model">ncollection.tenant.wizard</field>
+        <field name="arch" type="xml">
+            <form string="New Organization">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>New Organization Onboarding</h1>
+                    </div>
+                    <notebook>
+                        <page string="Organization Information" name="company">
+                            <group>
+                                <group string="Organization">
+                                    <field name="company_name" placeholder="e.g. Fresh Origin"/>
+                                    <field name="database_name" placeholder="e.g. fresh_origin"/>
+                                    <field name="subdomain" placeholder="e.g. freshorigin"/>
+                                </group>
+                                <group string="Contact">
+                                    <field name="contact_name"/>
+                                    <field name="email" widget="email"/>
+                                    <field name="phone" widget="phone"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Subscription" name="subscription">
+                            <group>
+                                <group string="Plan">
+                                    <field name="plan_id"/>
+                                    <field name="billing_cycle" widget="radio"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Modules" name="modules">
+                            <p class="text-muted">
+                                Select the modules to provision for this organization. Defaults are pre-selected.
+                            </p>
+                            <field name="module_ids" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="technical_name"/>
+                                    <field name="category"/>
+                                    <field name="is_default" widget="boolean_toggle" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_create_tenant"
+                            string="Create Organization"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ncollection_tenant_wizard" model="ir.actions.act_window">
+        <field name="name">New Organization</field>
+        <field name="res_model">ncollection.tenant.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_ncollection_tenant_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

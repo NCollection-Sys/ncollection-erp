@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Departments -->
+    <record id="department_production" model="hr.department">
+        <field name="name">Production</field>
+    </record>
+
+    <record id="department_sales" model="hr.department">
+        <field name="name">Sales &amp; Customer Success</field>
+    </record>
+
+    <record id="department_operations" model="hr.department">
+        <field name="name">Operations &amp; Logistics</field>
+    </record>
+
+    <record id="department_finance" model="hr.department">
+        <field name="name">Finance &amp; Administration</field>
+    </record>
+
+    <!-- Job Positions -->
+    <record id="job_production_manager" model="hr.job">
+        <field name="name">Production Manager</field>
+        <field name="department_id" ref="department_production"/>
+        <field name="no_of_recruitment">1</field>
+    </record>
+
+    <record id="job_juice_specialist" model="hr.job">
+        <field name="name">Juice Specialist</field>
+        <field name="department_id" ref="department_production"/>
+        <field name="no_of_recruitment">2</field>
+    </record>
+
+    <record id="job_account_executive" model="hr.job">
+        <field name="name">Account Executive</field>
+        <field name="department_id" ref="department_sales"/>
+        <field name="no_of_recruitment">2</field>
+    </record>
+
+    <record id="job_logistics_coordinator" model="hr.job">
+        <field name="name">Logistics Coordinator</field>
+        <field name="department_id" ref="department_operations"/>
+        <field name="no_of_recruitment">1</field>
+    </record>
+
+    <record id="job_finance_analyst" model="hr.job">
+        <field name="name">Finance Analyst</field>
+        <field name="department_id" ref="department_finance"/>
+        <field name="no_of_recruitment">1</field>
+    </record>
+
+    <!-- Employees -->
+    <record id="employee_layla" model="hr.employee">
+        <field name="name">Layla Al Khatib</field>
+        <field name="job_title">Chief Executive Officer</field>
+        <field name="department_id" ref="department_operations"/>
+        <field name="work_email">layla@freshorigin.example</field>
+        <field name="work_phone">+971 50 555 7788</field>
+    </record>
+
+    <record id="employee_omar" model="hr.employee">
+        <field name="name">Omar Hassan</field>
+        <field name="job_title">Production Manager</field>
+        <field name="department_id" ref="department_production"/>
+        <field name="job_id" ref="job_production_manager"/>
+        <field name="work_email">omar@freshorigin.example</field>
+        <field name="work_phone">+971 50 555 7811</field>
+    </record>
+
+    <record id="employee_sara" model="hr.employee">
+        <field name="name">Sara Mahmoud</field>
+        <field name="job_title">Senior Account Executive</field>
+        <field name="department_id" ref="department_sales"/>
+        <field name="job_id" ref="job_account_executive"/>
+        <field name="work_email">sara@freshorigin.example</field>
+        <field name="work_phone">+971 50 555 7822</field>
+    </record>
+
+    <record id="employee_yousef" model="hr.employee">
+        <field name="name">Yousef Khalil</field>
+        <field name="job_title">Logistics Coordinator</field>
+        <field name="department_id" ref="department_operations"/>
+        <field name="job_id" ref="job_logistics_coordinator"/>
+        <field name="work_email">yousef@freshorigin.example</field>
+        <field name="work_phone">+971 50 555 7833</field>
+    </record>
+
+    <record id="employee_nadia" model="hr.employee">
+        <field name="name">Nadia Rahman</field>
+        <field name="job_title">Juice Specialist</field>
+        <field name="department_id" ref="department_production"/>
+        <field name="job_id" ref="job_juice_specialist"/>
+        <field name="work_email">nadia@freshorigin.example</field>
+    </record>
+
+    <record id="employee_fadi" model="hr.employee">
+        <field name="name">Fadi Younes</field>
+        <field name="job_title">Finance Analyst</field>
+        <field name="department_id" ref="department_finance"/>
+        <field name="job_id" ref="job_finance_analyst"/>
+        <field name="work_email">fadi@freshorigin.example</field>
+    </record>
+
+</odoo>
