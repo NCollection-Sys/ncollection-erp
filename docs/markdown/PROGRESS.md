@@ -14,7 +14,7 @@
 
 | Phase | Done | Total | % |
 |---|---|---|---|
-| Phase 1 — Customer Workspace | 8 | 21 | 38% |
+| Phase 1 — Customer Workspace | 11 | 21 | 52% |
 | Phase 2 — SaaS Automation | 0 | 18 | 0% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **8** | **100** | **8%** |
+| **Total** | **11** | **100** | **11%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -38,8 +38,8 @@
 | P1-T06 | DB Routing Engine & Multi-DB Verification | DEV-1 | P1-T03 | [#7](https://github.com/NCollection-Sys/ncollection-erp/issues/7) | ✅ done | 2026-07-19 |
 | P1-T07 | Tenant & Subscription Model Enhancements | DEV-2 | P1-T01 | [#8](https://github.com/NCollection-Sys/ncollection-erp/issues/8) | ✅ done | 2026-07-19 |
 | P1-T08 | Tenant Role Definitions | DEV-2 | P1-T01 | [#9](https://github.com/NCollection-Sys/ncollection-erp/issues/9) | ✅ done | 2026-07-19 |
-| P1-T09 | Module Visibility Engine (Menus) | DEV-2 | P1-T07 | [#10](https://github.com/NCollection-Sys/ncollection-erp/issues/10) | 🔨 open |  |
-| P1-T10 | License Enforcement at ORM & RPC Layer | DEV-2 | P1-T09 | [#11](https://github.com/NCollection-Sys/ncollection-erp/issues/11) | 🔨 open |  |
+| P1-T09 | Module Visibility Engine (Menus) | DEV-2 | P1-T07 | [#10](https://github.com/NCollection-Sys/ncollection-erp/issues/10) | ✅ done | 2026-07-19 |
+| P1-T10 | License Enforcement at ORM & RPC Layer | DEV-2 | P1-T09 | [#11](https://github.com/NCollection-Sys/ncollection-erp/issues/11) | ✅ done | 2026-07-19 |
 | P1-T11 | Apps & Settings Menu Stripping | DEV-2 | P1-T08 | [#12](https://github.com/NCollection-Sys/ncollection-erp/issues/12) | 🔨 open |  |
 | P1-T12 | Owner Workspace Settings & User Management | DEV-3 | P1-T08, P1-T11 | [#13](https://github.com/NCollection-Sys/ncollection-erp/issues/13) | 🔨 open |  |
 | P1-T13 | Web Client Branding Completion | DEV-3 | None | [#14](https://github.com/NCollection-Sys/ncollection-erp/issues/14) | 🔨 open |  |
@@ -48,7 +48,7 @@
 | P1-T16 | Dynamic Tenant Branding | DEV-3 | P1-T06, P1-T13 | [#17](https://github.com/NCollection-Sys/ncollection-erp/issues/17) | 🔨 open |  |
 | P1-T17 | Customer Workspace Dashboard | DEV-3 | P1-T01 | [#18](https://github.com/NCollection-Sys/ncollection-erp/issues/18) | 🔨 open |  |
 | P1-T18 | Email Template Branding | DEV-2 | P1-T13 | [#19](https://github.com/NCollection-Sys/ncollection-erp/issues/19) | 🔨 open |  |
-| P1-T19 | Authentication Hardening (OCA-First) | DEV-1 | P1-T06 | [#20](https://github.com/NCollection-Sys/ncollection-erp/issues/20) | 🔨 open |  |
+| P1-T19 | Authentication Hardening (OCA-First) | DEV-1 | P1-T06 | [#20](https://github.com/NCollection-Sys/ncollection-erp/issues/20) | ✅ done | 2026-07-19 |
 | P1-T20 | E2E Test Framework (Playwright) | DEV-3 | P1-T05, P1-T06 | [#21](https://github.com/NCollection-Sys/ncollection-erp/issues/21) | 🔨 open |  |
 | P1-T21 | Phase 1 Integration Testing & Security Audit | DEV-1 | P1-T06, P1-T10, P1-T11, P1-T12, P1-T14, P1-T15, P1-T16, P1-T17, P1-T18, P1-T19, P1-T20 | [#22](https://github.com/NCollection-Sys/ncollection-erp/issues/22) | 🔨 open |  |
 
