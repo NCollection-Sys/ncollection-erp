@@ -1,6 +1,7 @@
 import uuid
 
 from odoo import fields, models
+from odoo.exceptions import ValidationError
 
 
 class Tenant(models.Model):
@@ -8,6 +9,14 @@ class Tenant(models.Model):
     _description = 'NCollection Tenant Company'
     _order = 'company_name asc'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+
+    # Guarded lifecycle: current status -> statuses allowed to move to.
+    _ALLOWED_TRANSITIONS = {
+        'trial': {'active', 'expired'},
+        'active': {'suspended', 'expired'},
+        'suspended': {'active', 'expired'},
+        'expired': set(),  # terminal (reactivation is a business decision, not a model default)
+    }
 
     company_name = fields.Char(required=True, tracking=True)
     tenant_uuid = fields.Char(
@@ -68,3 +77,40 @@ class Tenant(models.Model):
     _sql_constraints = [
         ('tenant_uuid_unique', 'unique(tenant_uuid)', 'The tenant UUID must be unique.'),
     ]
+
+    # ------------------------------------------------------------------
+    # Guarded lifecycle transitions
+    # ------------------------------------------------------------------
+    def _transition(self, new_status):
+        for tenant in self:
+            allowed = self._ALLOWED_TRANSITIONS.get(tenant.status, set())
+            if new_status not in allowed:
+                raise ValidationError(
+                    self.env._(
+                        'Invalid tenant transition: %(current)s -> %(new)s '
+                        '(tenant "%(name)s").',
+                        current=tenant.status, new=new_status, name=tenant.company_name,
+                    )
+                )
+        self.write({'status': new_status})
+
+    def action_activate(self):
+        """trial/suspended -> active."""
+        self._transition('active')
+
+    def action_suspend(self):
+        """active -> suspended."""
+        self._transition('suspended')
+
+    def action_expire(self):
+        """trial/active/suspended -> expired (terminal)."""
+        self._transition('expired')
+
+    # ------------------------------------------------------------------
+    # Chatter
+    # ------------------------------------------------------------------
+    def _track_subtype(self, init_values):
+        self.ensure_one()
+        if 'status' in init_values:
+            return self.env.ref('ncollection_subscription.mt_tenant_status')
+        return super()._track_subtype(init_values)

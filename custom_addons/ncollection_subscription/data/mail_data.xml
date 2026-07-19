@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="mt_subscription_status" model="mail.message.subtype">
+        <field name="name">Subscription Status Changed</field>
+        <field name="res_model">ncollection.subscription</field>
+        <field name="default" eval="True"/>
+        <field name="description">Subscription status changed</field>
+    </record>
+
+    <record id="mt_tenant_status" model="mail.message.subtype">
+        <field name="name">Tenant Status Changed</field>
+        <field name="res_model">ncollection.tenant</field>
+        <field name="default" eval="True"/>
+        <field name="description">Tenant status changed</field>
+    </record>
+
+</odoo>
