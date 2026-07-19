@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Hardened auth defaults (P1-T19), applied via set_param because some
+         keys (base.login_cooldown_*) already exist in a fresh database —
+         a <record> would violate ir_config_parameter_key_uniq. noupdate:
+         runs at install only, so module upgrades never clobber per-tenant
+         tuning of these same keys. -->
+    <data noupdate="1">
+
+        <!-- Odoo CORE login cooldown = the app-layer brute-force lockout.
+             After N failed logins, further attempts are refused for the
+             cooldown duration. (OCA auth_brute_force is dead upstream —
+             absent from every branch >= 12.0; this core mechanism is the
+             documented minimal equivalent. Set _after to 0 to disable.) -->
+        <function model="ir.config_parameter" name="set_param">
+            <value>base.login_cooldown_after</value>
+            <value>5</value>
+        </function>
+        <function model="ir.config_parameter" name="set_param">
+            <value>base.login_cooldown_duration</value>
+            <value>300</value>
+        </function>
+
+        <!-- OCA auth_session_timeout: log out inactive sessions after 2h.
+             Per-tenant configurable via this same parameter. -->
+        <function model="ir.config_parameter" name="set_param">
+            <value>inactive_session_time_out_delay</value>
+            <value>7200</value>
+        </function>
+
+    </data>
+</odoo>
