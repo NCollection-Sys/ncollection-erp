@@ -10,7 +10,6 @@
     'data': [
         'security/role_groups.xml',
         'security/ir.model.access.csv',
-        'security/menu_restrictions.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,

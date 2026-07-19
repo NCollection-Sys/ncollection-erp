@@ -36,21 +36,9 @@ class TestMenuStripping(TransactionCase):
             "group_ids": [(4, cls.env.ref("ncollection_core.group_role_sales").id)],
         })
 
-    # ---------------- menu group restriction ----------------
-
-    def test_apps_menu_restricted_to_owner_group(self):
-        groups = self.apps_menu.group_ids
-        self.assertEqual(
-            groups, self.env.ref("ncollection_core.group_role_owner"),
-            "Apps menu must be restricted to the Owner role only",
-        )
-
-    def test_settings_menu_restricted_to_owner_group(self):
-        groups = self.settings_menu.group_ids
-        self.assertEqual(
-            groups, self.env.ref("ncollection_core.group_role_owner"),
-            "Settings menu must be restricted to the Owner role only",
-        )
+    # ---------------- Owner-only menu visibility ----------------
+    # Stripping is enforced dynamically in _visible_menu_ids (robust against
+    # module installs reprocessing core menuitems), not via static group_ids.
 
     def test_sales_user_sees_neither_menu(self):
         visible = self.env["ir.ui.menu"].with_user(self.sales)._visible_menu_ids()
@@ -61,6 +49,19 @@ class TestMenuStripping(TransactionCase):
         visible = self.env["ir.ui.menu"].with_user(self.owner)._visible_menu_ids()
         self.assertIn(self.apps_menu.id, visible)
         self.assertIn(self.settings_menu.id, visible)
+
+    def test_owner_only_menu_ids_empty_for_owner(self):
+        owner_hidden = self.env["ir.ui.menu"].with_user(
+            self.owner
+        )._ncollection_owner_only_menu_ids()
+        self.assertEqual(owner_hidden, set())
+
+    def test_owner_only_menu_ids_nonempty_for_sales(self):
+        sales_hidden = self.env["ir.ui.menu"].with_user(
+            self.sales
+        )._ncollection_owner_only_menu_ids()
+        self.assertIn(self.apps_menu.id, sales_hidden)
+        self.assertIn(self.settings_menu.id, sales_hidden)
 
     # ---------------- settings ORM mirror (Rule 4) ----------------
 

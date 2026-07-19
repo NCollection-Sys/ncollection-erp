@@ -54,13 +54,53 @@ if not SIGNATURE_OK:  # pragma: no cover
 class IrUiMenu(models.Model):
     _inherit = 'ir.ui.menu'
 
+    # Owner-only top menus (P1-T11). Hidden dynamically here rather than by
+    # static group_ids on the menu records, because installing other modules
+    # reprocesses these core menuitems and wipes static group changes (the
+    # Apps menu in particular). Request-time subtraction is immune to that.
+    _OWNER_ONLY_MENUS = ('base.menu_management', 'base.menu_administration')
+
     @api.model
     def _visible_menu_ids(self, debug=False):
         visible = super()._visible_menu_ids(debug=debug)
         if not SIGNATURE_OK:
             return visible
         blocked = self._ncollection_blocked_menu_ids()
-        return visible - blocked if blocked else visible
+        if blocked:
+            visible = visible - blocked
+        owner_only = self._ncollection_owner_only_menu_ids()
+        if owner_only:
+            visible = visible - owner_only
+        return visible
+
+    @api.model
+    def _ncollection_owner_only_menu_ids(self):
+        """Apps/Settings menu subtrees to hide from non-Owner users.
+
+        Empty for the Owner, the superuser, and when no Owner role exists
+        (fail-open). Covers each menu's whole subtree via parent_path.
+        """
+        user = self.env.user
+        if self.env.su or user._is_superuser():
+            return set()
+        if user.has_group('ncollection_core.group_role_owner'):
+            return set()
+        roots = self.sudo().browse([
+            m.id for xmlid in self._OWNER_ONLY_MENUS
+            if (m := self.env.ref(xmlid, raise_if_not_found=False))
+        ])
+        if not roots:
+            return set()
+        # Each root + its whole subtree (parent_path prefix match). A
+        # targeted =like per root avoids loading every menu in the DB.
+        menu_ids = set(roots.ids)
+        Menu = self.sudo().with_context(active_test=False)
+        for root in roots:
+            if root.parent_path:
+                menu_ids.update(
+                    Menu.search([('parent_path', '=like', root.parent_path + '%')]).ids
+                )
+        return menu_ids
 
     # ------------------------------------------------------------------
     # Blocking computation (split for testability)
