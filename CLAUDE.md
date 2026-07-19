@@ -106,6 +106,7 @@ STOP and ask before changing the architecture.
 - `SPRINT_SCHEDULE.md` — parallelization / sprint grid.
 - `ARCHITECTURE_DATA_PLATFORM.md` · `ARCHITECTURE_SECURITY.md` — backend & security deep-dives.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
+- `BRANCH_PROTECTION.md` — required CI checks + 1-approval policy for `develop`/`main`.
 - `PRD.md` · `DELIVERABLE_2_TIMELINE_AND_TOOLING.md` · `PLANNING_REVIEW.md` — product & planning.
 
 Architecture priority (highest first)
