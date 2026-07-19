@@ -18,9 +18,14 @@ class TestAuthHardening(TransactionCase):
         cls.user = cls.env['res.users'].create({
             'name': 'Auth Test User',
             'login': 'auth_test_user',
+            # _action_reset_password refuses users without an email address.
+            'email': 'auth_test_user@example.com',
             'password': 'CorrectHorse!42',
             'group_ids': [(6, 0, [cls.env.ref('base.group_user').id])],
         })
+        # _check_credentials verifies the stored hash at SQL level — the
+        # freshly created user must be flushed or the check reads nothing.
+        cls.env.flush_all()
 
     # ---- audit log events ------------------------------------------------
 

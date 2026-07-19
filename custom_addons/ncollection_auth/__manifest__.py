@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=manifest-required-author
+# (C8101 wants 'Odoo Community Association (OCA)' as author; this is a
+#  proprietary NCollection module, not an OCA submission.)
 {
     'name': 'NCollection Auth Hardening',
     'version': '19.0.1.0.0',
@@ -14,6 +17,4 @@
         'security/ir.model.access.csv',
         'data/auth_params.xml',
     ],
-    'installable': True,
-    'auto_install': False,
 }

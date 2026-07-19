@@ -70,6 +70,11 @@ class NcollectionAuthLog(models.Model):
         with self.env.registry.cursor() as cr:
             env = api.Environment(cr, SUPERUSER_ID, {})
             env['ncollection.auth.log'].create(vals)
+            # Explicit: a real Cursor also commits on clean exit, but the
+            # TestCursor used under the test framework rolls its savepoint
+            # back on exit unless committed — without this, failure rows
+            # vanish in tests while working in production.
+            cr.commit()
 
     @api.model
     def _capture_cleanup_for_tests(self, login):
