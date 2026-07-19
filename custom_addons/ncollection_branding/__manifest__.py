@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection corporate branding: logo, colors, favicon',
     'description': """
@@ -18,7 +18,9 @@ Applies NCollection corporate identity across the Odoo backend:
     'depends': ['web', 'mail'],
     'data': [
         'views/webclient_templates.xml',
+        'views/mail_layout_templates.xml',
         'data/res_company_data.xml',
+        'data/system_parameters.xml',
     ],
     'assets': {
         'web.assets_backend': [
