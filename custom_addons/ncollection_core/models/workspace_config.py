@@ -33,6 +33,11 @@ class WorkspaceConfig(models.Model):
              'active, suspended, expired). Deliberately a free Char: the '
              'tenant addon must not couple to platform-layer enums.',
     )
+    max_users = fields.Integer(
+        help='Maximum number of ACTIVE internal users allowed by the plan, '
+             'pushed by the platform (P2-T01/P2-T03 contract, like the other '
+             'fields here). 0 or unset = unlimited (fail-open).',
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -59,6 +64,12 @@ class WorkspaceConfig(models.Model):
         result = super().unlink()
         self.env.registry.clear_cache()
         return result
+
+    @api.model
+    def get_max_users(self):
+        """Plan's max active internal users; 0 = unlimited."""
+        config = self.sudo().get_config()
+        return config.max_users if config else 0
 
     @api.model
     def get_config(self):
