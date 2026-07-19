@@ -3,3 +3,4 @@
 # (P1-T08 roles, P1-T09 workspace config, P1-T10 license enforcement).
 from . import workspace_config
 from . import ir_ui_menu
+from . import license_enforcement
