@@ -7,6 +7,7 @@
 #  The base docker-compose.yml already gives you the dev config
 #  (config/odoo.conf: list_db=True, workers=0), the source bind mount, and the
 #  host DB port. This override adds:
+#    - Nginx reverse proxy on :80 (*.localhost, edge security) — ticket P1-T03
 #    - pgAdmin4 web UI (browse the DB at http://localhost:5050)
 #    - debug-level Odoo logging
 # ============================================================================
@@ -16,13 +17,30 @@ services:
     # Verbose logging + Odoo dev conveniences (auto-reload of assets, etc.).
     command: odoo --log-level=debug --dev=reload,qweb,xml
 
+  # Edge reverse proxy (P1-T03). Dev = *.localhost over plain HTTP; the dev
+  # server block routes the realtime bus to Odoo :8069 (dev runs workers=0).
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: ncollection-nginx
+    depends_on:
+      odoo:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d/ncollection.dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+    restart: unless-stopped
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: ncollection-pgadmin
     depends_on:
       - db
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ncollection.local}
+      # .local is a reserved TLD pgAdmin's email validator rejects (crash-loop);
+      # use a normal TLD. Dev-only login, not a real mailbox.
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ncollection.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
