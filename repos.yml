@@ -1,0 +1,67 @@
+# ============================================================================
+#  OCA dependency pin list (ticket P1-T04) — the single source of truth for
+#  every external addon repo this platform consumes.
+# ============================================================================
+#  Regenerate ./oca/ from these pins (identical on any machine, CI included):
+#      make oca            # installs git-aggregator into .oca-venv and runs it
+#
+#  Update workflow (documented in docs/markdown/OCA_DEPENDENCIES.md):
+#      1. bump the commit hash on ONE repo below
+#      2. make oca && make restart  -> smoke-test locally
+#      3. PR -> CI green -> 1 review -> merge
+#
+#  Rules:
+#  - Pin EXACT commit hashes, never bare branch names (branches move; pins don't).
+#  - One block per repo so a whole repo can be dropped by deleting its block.
+#  - SUNSET notes mark tactical bootstraps that native ncollection_* modules
+#    will replace — keep those blocks easy to delete.
+#
+#  Pins resolved 2026-07-19 from each repo's 19.0 branch HEAD. The previously
+#  vendored copies were an unpinned snapshot of the same branches one day
+#  earlier (account_financial_report 19.0.0.0.13 -> .15 + new i18n; no other
+#  consumed-module code delta — diff-verified before de-vendoring).
+# ============================================================================
+
+# --- Financial reporting (SUNSET: #117 [F2-T07] — retired when native
+# --- ncollection_account_reports reaches parity. Consumed: account_financial_report)
+./oca/account-financial-reporting:
+  remotes:
+    oca: https://github.com/OCA/account-financial-reporting.git
+  merges:
+    - oca aa34bf33fc96fbae7fb5a2b9609b807b4e20514c
+  target: oca aggregated
+
+# --- MIS Builder (SUNSET: #117 [F2-T07]. Consumed: mis_builder,
+# --- mis_builder_budget; mis_builder_demo for demo DBs. Consumer:
+# --- ncollection_mis_templates)
+./oca/mis-builder:
+  remotes:
+    oca: https://github.com/OCA/mis-builder.git
+  merges:
+    - oca dbd6a021261cff7932e28d2fa6df991a1193dd93
+  target: oca aggregated
+
+# --- Reporting engine (Consumed: report_xlsx, report_xlsx_helper — XLSX
+# --- rendering used by the financial reports)
+./oca/reporting-engine:
+  remotes:
+    oca: https://github.com/OCA/reporting-engine.git
+  merges:
+    - oca 6692523980cbc57d414935311d7f7bf1c834edc6
+  target: oca aggregated
+
+# --- Server tools (Consumed: auditlog — audit trail, wired at P8-T05)
+./oca/server-tools:
+  remotes:
+    oca: https://github.com/OCA/server-tools.git
+  merges:
+    - oca 0a561ff188d0e2a51442a825ed55ce8ae6103c5e
+  target: oca aggregated
+
+# --- Server UX (Consumed: date_range — dependency of mis_builder)
+./oca/server-ux:
+  remotes:
+    oca: https://github.com/OCA/server-ux.git
+  merges:
+    - oca 1372e6489daa3a639d7542f3dcd60af640fb294b
+  target: oca aggregated

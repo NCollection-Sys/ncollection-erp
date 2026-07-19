@@ -37,6 +37,9 @@ services:
     volumes:
       - odoo_data:/var/lib/odoo
       - ./custom_addons:/mnt/extra-addons
+      # OCA addon repos (P1-T04): ./oca is GENERATED from repos.yml pins —
+      # run `make oca` after a fresh clone (CI aggregates the same pins).
+      - ./oca:/mnt/oca-addons:ro
       # Base mounts the DEV config (config/odoo.conf: list_db=True, workers=0)
       # so a plain `docker compose up` gives a working localhost dev stack.
       # The production multi-tenant config is config/odoo.prod.conf, selected
