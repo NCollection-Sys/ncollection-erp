@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Core',
-    'version': '19.0.1.3.0',
+    'version': '19.0.1.4.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -10,6 +10,7 @@
     'data': [
         'security/role_groups.xml',
         'security/ir.model.access.csv',
+        'security/menu_restrictions.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
