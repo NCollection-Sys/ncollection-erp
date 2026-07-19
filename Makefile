@@ -27,9 +27,15 @@ ODOO_DB_ARGS = --db_host=db --db_user=$(DB_USER) --db_password=$(DB_PASSWORD)
 COMPOSE_FILES ?= -f docker-compose.yml -f docker-compose.dev.yml
 COMPOSE       ?= docker compose $(COMPOSE_FILES)
 
+# Opt-in routing-verification stack (P1-T06): base + dev + the routing overlay
+# (db_filter=^%d$, list_db=False). Used only by the `routing-*` targets — it does
+# NOT affect `make up`.
+ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml
+
 .DEFAULT_GOAL := help
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
-        bootstrap createdb dropdb install upgrade demo
+        bootstrap createdb dropdb install upgrade demo \
+        routing-up routing-verify routing-down routing-clean
 
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
@@ -95,3 +101,16 @@ upgrade: ## Upgrade a module after editing it:  make upgrade m=<module> [db=...]
 ## ---- Demo (separate React prototype, NOT the Odoo product) ----
 demo: ## Run the standalone React demo UI on :5173
 	cd demo && npm install && npm run dev
+
+## ---- Routing verification (P1-T06, opt-in — does NOT change `make up`) ----
+routing-up: ## Start the routing stack (db_filter=^%d$ ON) to prove subdomain->DB routing
+	$(ROUTING_COMPOSE) up -d
+
+routing-verify: ## Create clienta/clientb/admin test DBs and run the isolation proof
+	./scripts/routing/verify_routing.sh
+
+routing-down: ## Stop the routing stack (keeps the test DBs; back to a normal `make up`)
+	$(ROUTING_COMPOSE) down
+
+routing-clean: ## Drop the clienta/clientb/admin test databases (destructive)
+	@for d in clienta clientb admin; do $(COMPOSE) exec db dropdb -U $(DB_USER) --if-exists $$d; done
