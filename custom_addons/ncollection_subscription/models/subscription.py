@@ -48,7 +48,6 @@ class Subscription(models.Model):
     )
     days_remaining = fields.Integer(
         compute='_compute_days_remaining',
-        string='Days Remaining',
         help='Days until end_date. 0 when there is no end date or it has passed.',
     )
 

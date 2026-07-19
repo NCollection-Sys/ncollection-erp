@@ -32,10 +32,17 @@ jobs:
       - name: Run flake8
         run: flake8 custom_addons/
 
-      # pylint-odoo currently reports 42 pre-existing findings across the
+      # pylint-odoo currently reports 60 pre-existing findings across the
       # addons (missing README.rst, superfluous/deprecated manifest keys,
       # redundant `string=` attrs — measured directly, see
-      # docs/markdown/PLANNING_REVIEW.md backlog). Rather than a blanket
+      # docs/markdown/PLANNING_REVIEW.md backlog). Baseline history:
+      #   42 → 60 (2026-07-19): PR #132 merged main into develop bringing
+      #   the demo-sprint addons (tenant_wizard, module, dashboard,
+      #   provisioning_job, mis_templates, demo_freshorigin) whose W8113/
+      #   C8113 debt was never counted — lint only runs on PRs, so the
+      #   first PR after that merge inherited the bill (see PR #133).
+      #   Paying this down is backlog work, not per-PR work.
+      # Rather than a blanket
       # continue-on-error (which would hide a PR introducing brand-new
       # findings just as easily as it hides the old ones), this fails ONLY
       # if the finding count goes above the current baseline — so new
@@ -44,7 +51,7 @@ jobs:
       # finding fails the job.
       - name: Run pylint-odoo (fails only on NEW findings beyond baseline)
         run: |
-          PYLINT_BASELINE=42
+          PYLINT_BASELINE=60
           set +e
           pylint --load-plugins=pylint_odoo -d all -e odoolint custom_addons/ | tee pylint.log
           COUNT=$(grep -cE ": [CWEF][0-9]{4}: " pylint.log)
