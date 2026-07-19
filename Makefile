@@ -32,9 +32,13 @@ COMPOSE       ?= docker compose $(COMPOSE_FILES)
 # NOT affect `make up`.
 ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml
 
+# OCA addon repos (P1-T04): ./oca/ is GENERATED from the pins in repos.yml —
+# run `make oca` after a fresh clone or whenever repos.yml changes.
+OCA_VENV := .oca-venv
+
 .DEFAULT_GOAL := help
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
-        bootstrap createdb dropdb install upgrade demo \
+        bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean
 
 help: ## Show this help
@@ -46,7 +50,14 @@ help: ## Show this help
 
 ## ---- Stack lifecycle ----
 up: ## Start the dev stack (Odoo :8069, Nginx edge :80, pgAdmin :5050)
+	@test -d oca/mis-builder || (echo "ERROR: ./oca/ is empty — run 'make oca' first (aggregates the pinned OCA repos from repos.yml)."; exit 1)
 	$(COMPOSE) up -d
+
+oca: ## Aggregate the pinned OCA addon repos from repos.yml into ./oca/
+	@test -x $(OCA_VENV)/bin/gitaggregate || \
+		(python3 -m venv $(OCA_VENV) && $(OCA_VENV)/bin/pip -q install 'git-aggregator==4.1')
+	$(OCA_VENV)/bin/gitaggregate -c repos.yml -j 3
+	@echo "OCA repos aggregated. Apply with: make restart"
 
 down: ## Stop and remove containers (keeps data volumes)
 	$(COMPOSE) down

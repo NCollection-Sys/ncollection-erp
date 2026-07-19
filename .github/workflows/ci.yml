@@ -99,6 +99,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ./oca is GENERATED (P1-T04): aggregate the pinned OCA repos from
+      # repos.yml so the test container resolves the exact same code as every
+      # dev machine (that is the whole point of the pin list).
+      - name: Aggregate pinned OCA repos
+        run: |
+          pip install 'git-aggregator==4.1'
+          gitaggregate -c repos.yml -j 3
+
       # The `postgres` service container above is published to the runner's
       # localhost via `ports: 5432:5432` (this is how GitHub Actions service
       # containers work for non-containerized jobs — see
@@ -119,12 +127,14 @@ jobs:
             --network host \
             -e HOST=localhost -e USER=odoo -e PASSWORD=odoo \
             -v "${{ github.workspace }}/custom_addons:/mnt/extra-addons" \
+            -v "${{ github.workspace }}/oca:/mnt/oca-addons" \
             odoo:19 \
             odoo --db_host=localhost --db_user=odoo --db_password=odoo \
+                 --addons-path=/mnt/extra-addons,/mnt/oca-addons/account-financial-reporting,/mnt/oca-addons/mis-builder,/mnt/oca-addons/reporting-engine,/mnt/oca-addons/server-tools,/mnt/oca-addons/server-ux,/usr/lib/python3/dist-packages/odoo/addons \
                  -d ci_test \
-                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas \
+                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_mis_templates \
                  --test-enable \
-                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas \
+                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_mis_templates \
                  --stop-after-init --log-level=test \
             2>&1 | tee odoo-test.log
           test "${PIPESTATUS[0]}" -eq 0
@@ -138,6 +148,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      # Base compose mounts ./oca (P1-T04); without aggregation Docker would
+      # auto-create it empty and Odoo would hard-fail on the missing
+      # per-repo addons_path entries.
+      - name: Aggregate pinned OCA repos
+        run: |
+          pip install 'git-aggregator==4.1'
+          gitaggregate -c repos.yml -j 3
 
       - name: Build and start stack
         run: docker compose up -d
