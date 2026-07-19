@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Pre-fill main company name with NCollection on install (noupdate so users can change it freely afterwards) -->
+    <!--
+        Company defaults on install (noupdate is NOT set: these are branding
+        defaults the tenant may override afterwards from Settings).
+
+        The email_*_color fields are consumed by Odoo's mail notification
+        layout for the action-button and accent colours (they default to
+        Odoo purple #875A7B otherwise). (logo for the branded email header is embedded in the
+        mail layout template as inline base64.)
+    -->
     <record id="base.main_company" model="res.company">
         <field name="name">NCollection</field>
+        <field name="email">noreply@ncollection.com</field>
+        <field name="website">https://ncollection.com</field>
+        <field name="email_primary_color">#FFFFFF</field>
+        <field name="email_secondary_color">#1F5F8F</field>
     </record>
 </odoo>
