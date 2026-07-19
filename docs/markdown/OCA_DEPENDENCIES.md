@@ -21,6 +21,7 @@ OCA repo, because the pins are commit hashes, not branch names.
 | `OCA/reporting-engine` | 19.0 | `report_xlsx`, `report_xlsx_helper` | XLSX rendering for the reports above | with #117 |
 | `OCA/server-tools` | 19.0 | `auditlog` | audit trail (wired at **P8-T05**) | keep |
 | `OCA/server-ux` | 19.0 | `date_range` | dependency of `mis_builder` | keep |
+| `OCA/server-auth` | 19.0 | `auth_session_timeout` | `ncollection_auth` (P1-T19 session timeout) | keep |
 
 Exact hashes live in `repos.yml` (one block per repo — delete the block to drop the repo).
 
@@ -52,3 +53,12 @@ includes accounting. Nothing installs OCA modules into the admin DB.
   `ncollection_*` modules replace them (**#117**). Keep their blocks in `repos.yml`
   trivially deletable; do not grow new dependencies on them without checking the
   architecture first (Standing Rule 5).
+- **Brute-force lockout (P1-T19)**: OCA `auth_brute_force` was evaluated and found
+  **dead upstream** — it does not exist on any `OCA/server-auth` branch ≥ 12.0
+  (an Odoo ≤ 11-era module). Porting a decade-old auth monkey-patch would be
+  high-risk custom security code. The documented minimal equivalent is **Odoo
+  core's native login cooldown** (`base.login_cooldown_after` /
+  `base.login_cooldown_duration`, live-verified at `res.users._on_login_cooldown`),
+  armed by `ncollection_auth` and paired with the independent Nginx edge
+  `limit_req` (P1-T03) — the two layers ARCHITECTURE_SECURITY.md §6 requires.
+  Feature flag: `base.login_cooldown_after = 0` disables the app layer.

@@ -65,3 +65,14 @@
   merges:
     - oca 1372e6489daa3a639d7542f3dcd60af640fb294b
   target: oca aggregated
+
+# --- Server auth (P1-T19. Consumed: auth_session_timeout — configurable
+# --- inactivity logout. NOTE: auth_brute_force does NOT exist on any OCA
+# --- branch >=12.0 — brute-force lockout uses Odoo core's native login
+# --- cooldown instead; decision recorded in docs/markdown/OCA_DEPENDENCIES.md)
+./oca/server-auth:
+  remotes:
+    oca: https://github.com/OCA/server-auth.git
+  merges:
+    - oca 58213a5b4eef5f2b8e6ff4e6c46e4b928ad833ba
+  target: oca aggregated

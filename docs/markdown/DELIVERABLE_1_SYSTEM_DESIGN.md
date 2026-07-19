@@ -238,6 +238,7 @@ log_handler = :INFO,werkzeug:WARNING
 | `ncollection_subscription` | ✅ | ❌ | Tenants, plans, subscriptions, provisioning jobs — platform staff only |
 | `ncollection_saas` | ✅ | ❌ | Provisioning automation, billing, domains — platform staff only |
 | `ncollection_core` | ❌ | ✅ | Roles, workspace config, module visibility & license enforcement |
+| `ncollection_auth` | ✅ | ✅ | Auth hardening everywhere (P1-T19): audit log, core login-cooldown defaults, OCA session timeout |
 | `ncollection_branding` | ✅ | ✅ | White-label everywhere |
 | `ncollection_uae` | ❌ | ✅ | VAT, CoA, currency — per tenant (plan-dependent) |
 | `ncollection_ai` (Phase 5) | ❌ | ✅ | Gateway config is platform-side; widget/context run per tenant |
