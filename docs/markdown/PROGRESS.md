@@ -14,7 +14,7 @@
 
 | Phase | Done | Total | % |
 |---|---|---|---|
-| Phase 1 — Customer Workspace | 7 | 21 | 33% |
+| Phase 1 — Customer Workspace | 8 | 21 | 38% |
 | Phase 2 — SaaS Automation | 0 | 18 | 0% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **7** | **100** | **7%** |
+| **Total** | **8** | **100** | **8%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -33,7 +33,7 @@
 | P1-T01 | Addon Skeleton & Test Scaffolding | DEV-2 | None | [#2](https://github.com/NCollection-Sys/ncollection-erp/issues/2) (+1 dup) | ✅ done | 2026-07-16 |
 | P1-T02 | Multi-Tenant Odoo Configuration & Secrets | DEV-1 | None | [#3](https://github.com/NCollection-Sys/ncollection-erp/issues/3) | ✅ done | 2026-07-18 |
 | P1-T03 | Nginx Reverse Proxy & TLS | DEV-1 | P1-T02 | [#4](https://github.com/NCollection-Sys/ncollection-erp/issues/4) | ✅ done | 2026-07-19 |
-| P1-T04 | OCA Dependency Management | DEV-1 | None | [#5](https://github.com/NCollection-Sys/ncollection-erp/issues/5) | 🔨 open |  |
+| P1-T04 | OCA Dependency Management | DEV-1 | None | [#5](https://github.com/NCollection-Sys/ncollection-erp/issues/5) | ✅ done | 2026-07-19 |
 | P1-T05 | CI Pipeline Enhancement | DEV-1 | P1-T01, P1-T04 | [#6](https://github.com/NCollection-Sys/ncollection-erp/issues/6) | 🔨 open |  |
 | P1-T06 | DB Routing Engine & Multi-DB Verification | DEV-1 | P1-T03 | [#7](https://github.com/NCollection-Sys/ncollection-erp/issues/7) | ✅ done | 2026-07-19 |
 | P1-T07 | Tenant & Subscription Model Enhancements | DEV-2 | P1-T01 | [#8](https://github.com/NCollection-Sys/ncollection-erp/issues/8) | ✅ done | 2026-07-19 |
