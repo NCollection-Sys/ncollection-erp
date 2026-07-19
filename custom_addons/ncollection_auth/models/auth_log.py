@@ -70,17 +70,8 @@ class NcollectionAuthLog(models.Model):
         with self.env.registry.cursor() as cr:
             env = api.Environment(cr, SUPERUSER_ID, {})
             env['ncollection.auth.log'].create(vals)
-            # Explicit: a real Cursor also commits on clean exit, but the
-            # TestCursor used under the test framework rolls its savepoint
-            # back on exit unless committed — without this, failure rows
-            # vanish in tests while working in production.
-            cr.commit()
-
-    @api.model
-    def _capture_cleanup_for_tests(self, login):
-        """Remove isolated-cursor rows created by tests. Isolated writes commit
-        outside the test transaction, so the rollback cannot clean them —
-        this deletes them the same way they were written. Test helper only."""
-        with self.env.registry.cursor() as cr:
-            env = api.Environment(cr, SUPERUSER_ID, {})
-            env['ncollection.auth.log'].search([('login', '=', login)]).unlink()
+            # Explicit commit on OUR OWN cursor — the sanctioned exception to
+            # the never-commit rule (OCA contribution guide: committing is
+            # legitimate on a cursor you created yourself). Required so the
+            # row survives the caller's rollback.
+            cr.commit()  # pylint: disable=invalid-commit

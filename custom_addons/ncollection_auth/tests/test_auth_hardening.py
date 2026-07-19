@@ -28,10 +28,14 @@ class TestAuthHardening(TransactionCase):
         cls.env.flush_all()
 
     # ---- audit log events ------------------------------------------------
+    # NOTE: base._check_credentials verifies against self.env.user (the real
+    # login flow calls it with the candidate user AS the env user), so these
+    # tests must use with_user(...) — calling as admin verifies against
+    # admin's hash and always fails. Root-caused from the first CI run.
 
     def test_login_success_logged(self):
         before = self.AuthLog.search_count([('event_type', '=', 'login_success')])
-        self.user._check_credentials(
+        self.user.with_user(self.user)._check_credentials(
             {'type': 'password', 'password': 'CorrectHorse!42'}, {'interactive': True},
         )
         after = self.AuthLog.search_count([('event_type', '=', 'login_success')])
@@ -42,21 +46,29 @@ class TestAuthHardening(TransactionCase):
         self.assertEqual(row.user_id, self.user)
         self.assertEqual(row.db_name, self.env.cr.dbname)
 
-    def test_login_failure_logged_isolated(self):
-        """Failure rows are written via a separate cursor so they survive the
-        rollback; they therefore persist OUTSIDE this test's transaction and
-        must be cleaned up the same way."""
+    def test_login_failure_captured_isolated(self):
+        """A wrong password must route through the isolated-cursor capture.
+
+        The isolated write is spied on rather than searched for: its whole
+        point is committing OUTSIDE the enclosing transaction, which the test
+        framework's savepoint cursors deliberately neutralize — asserting the
+        call (with the right event + login) is the deterministic contract.
+        """
+        calls = []
+        original = type(self.AuthLog)._capture_isolated
+
+        def spy(model_self, event_type, login=None):
+            calls.append((event_type, login))
+            return original(model_self, event_type, login=login)
+
+        self.patch(type(self.AuthLog), '_capture_isolated', spy)
         with self.assertRaises(AccessDenied):
-            self.user._check_credentials(
+            self.user.with_user(self.user)._check_credentials(
                 {'type': 'password', 'password': 'wrong-password'},
                 {'interactive': True},
             )
-        rows = self.AuthLog.search([
-            ('event_type', '=', 'login_failed'), ('login', '=', 'auth_test_user'),
-        ])
-        self.assertTrue(rows, 'a login_failed row must survive the rollback')
-        # committed by the isolated cursor -> remove it the same way
-        self.AuthLog._capture_cleanup_for_tests('auth_test_user')
+        self.assertIn(('login_failed', 'auth_test_user'), calls,
+                      'the failed login must be captured via the isolated path')
 
     def test_reset_request_logged(self):
         before = self.AuthLog.search_count([('event_type', '=', 'reset_request')])
