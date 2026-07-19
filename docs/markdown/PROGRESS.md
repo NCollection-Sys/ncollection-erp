@@ -14,7 +14,7 @@
 
 | Phase | Done | Total | % |
 |---|---|---|---|
-| Phase 1 — Customer Workspace | 6 | 21 | 29% |
+| Phase 1 — Customer Workspace | 7 | 21 | 33% |
 | Phase 2 — SaaS Automation | 0 | 18 | 0% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **6** | **100** | **6%** |
+| **Total** | **7** | **100** | **7%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -44,7 +44,7 @@
 | P1-T12 | Owner Workspace Settings & User Management | DEV-3 | P1-T08, P1-T11 | [#13](https://github.com/NCollection-Sys/ncollection-erp/issues/13) | 🔨 open |  |
 | P1-T13 | Web Client Branding Completion | DEV-3 | None | [#14](https://github.com/NCollection-Sys/ncollection-erp/issues/14) | 🔨 open |  |
 | P1-T14 | Login Page Redesign | DEV-3 | P1-T13 | [#15](https://github.com/NCollection-Sys/ncollection-erp/issues/15) | 🔨 open |  |
-| P1-T15 | Public URL Rewriting (Scoped) | DEV-1 | P1-T03 | [#16](https://github.com/NCollection-Sys/ncollection-erp/issues/16) | 🔨 open |  |
+| P1-T15 | Public URL Rewriting (Scoped) | DEV-1 | P1-T03 | [#16](https://github.com/NCollection-Sys/ncollection-erp/issues/16) | ✅ done | 2026-07-19 |
 | P1-T16 | Dynamic Tenant Branding | DEV-3 | P1-T06, P1-T13 | [#17](https://github.com/NCollection-Sys/ncollection-erp/issues/17) | 🔨 open |  |
 | P1-T17 | Customer Workspace Dashboard | DEV-3 | P1-T01 | [#18](https://github.com/NCollection-Sys/ncollection-erp/issues/18) | 🔨 open |  |
 | P1-T18 | Email Template Branding | DEV-2 | P1-T13 | [#19](https://github.com/NCollection-Sys/ncollection-erp/issues/19) | 🔨 open |  |
