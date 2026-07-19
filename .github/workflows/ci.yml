@@ -100,7 +100,9 @@ jobs:
           fi
 
       - name: Trivy (filesystem vulnerability + secret scan)
-        uses: aquasecurity/trivy-action@0.28.0
+        # Pinned to the immutable commit SHA of v0.36.0 (the scanner action
+        # itself is a supply-chain surface — pin it, don't float a tag).
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
           scan-ref: .
