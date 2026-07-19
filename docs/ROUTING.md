@@ -83,10 +83,51 @@ no selector.
 | Login on `clienta` appears to work on `clientb` | **isolation breach** — stop and investigate | this must never happen; treat as a SEV1 (ARCHITECTURE_SECURITY §5) |
 | `make routing-verify` can't reach the edge | routing stack not up | run `make routing-up` first |
 
+## Public URL policy (ticket P1-T15)
+
+White-labeling rule: **"odoo" must not appear in public-facing URLs** (naked domain,
+login, password reset, portal, website). Implemented at the edge in
+`nginx/snippets/public-urls.conf`, included by **both** the dev and prod server blocks.
+
+### The decision boundary (accepted trade-off — do not "improve" this)
+
+Odoo 19's JavaScript router **hardcodes** internal `/odoo/...` backend paths. Rewriting
+them at the edge causes endless routing bugs on every upgrade. Therefore:
+
+| Surface | Policy |
+|---|---|
+| Public entry `/` (no website module) | Odoo answers `303 → /odoo`; the edge rewrites that Location to **`/web`** (scoped `proxy_redirect` on `location = /` only) |
+| `/web/login`, `/web/reset_password`, `/my` | already clean — no "odoo" in these URLs, nothing to do |
+| **Backend `/odoo/...`** | **stays as-is** — internal, hardcoded by the JS router; accepted |
+| `/web/login?redirect=/odoo` after deliberately visiting `/odoo` anonymously | accepted — the user typed the backend path themselves |
+
+Flow effects of the `location = /` rewrite (all verified live on Odoo 19):
+- **Anonymous prospect**: `/` → `/web` → `303 /web/login?redirect=%2Fweb%3F` — login page,
+  **zero "odoo" in the whole chain**. ✅
+- **Authenticated user**: `/` → `/web` → `200`, straight into the backend web client.
+  (Why not `/web/login`? Odoo 19 does **not** bounce an authenticated visitor off the bare
+  login page — it only redirects when a `?redirect=` param is present, and using
+  `?redirect=/odoo` would leak "odoo" right back into the URL.)
+- **Future website tenants**: with the website module installed, `/` returns `200` and the
+  `proxy_redirect` is a **no-op**. The block is inert — do not remove it, do not "fix" it.
+
+### Public aliases (301s)
+
+Marketing-friendly short URLs owned by the edge (none exist as Odoo routes — verified 404
+before claiming them):
+
+| Alias | → Target |
+|---|---|
+| `/login` | `/web/login` |
+| `/signup` | `/web/signup` |
+| `/reset` | `/web/reset_password` |
+| `/portal` | `/my` |
+
 ## Scope
 
 This ticket is the **foundational, repeatable proof + the dev enablement + this document**.
 The *automated* isolation test suite that runs on every PR (all 7 guarantees) is **P1-T20**;
 the network port-scan / URL-probing security audit is **P1-T21**. Public URL rewriting
-(hiding `odoo` from public URLs) is **P1-T15** and will extend this file. Routing itself is a
-**native Odoo feature** configured via `db_filter` — no OCA module is involved (Rule 2).
+(hiding `odoo` from public URLs) is **P1-T15** — its policy and boundary are the section
+above; it is pure Nginx infrastructure with **no OCA module** involved (Rule 2). Routing
+itself is a **native Odoo feature** configured via `db_filter` — no OCA module (Rule 2).
