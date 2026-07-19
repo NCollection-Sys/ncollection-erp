@@ -11,6 +11,7 @@ Usage:
     python github_issue_sync.py --phase 1       # only Phase 1 tasks
     python github_issue_sync.py --limit 5       # only the first N tasks
     python github_issue_sync.py --yes           # skip prompts (use with care)
+    python github_issue_sync.py --report        # regenerate docs/markdown/PROGRESS.md from live issue state
 
 Requirements: `gh` CLI authenticated against the repository.
 Safe to re-run: tasks whose "[Px-Tyy]" title prefix already exists are skipped.
@@ -21,9 +22,11 @@ import json
 import re
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 DOC_PATH = Path(__file__).resolve().parent.parent / "docs" / "markdown" / "DELIVERABLE_1_SYSTEM_DESIGN.md"
+PROGRESS_PATH = Path(__file__).resolve().parent.parent / "docs" / "markdown" / "PROGRESS.md"
 
 # ==========================================
 # 1. MAP DEVELOPERS TO GITHUB USERNAMES
@@ -208,6 +211,107 @@ def create_github_issue(task: dict, dry_run: bool = False) -> bool:
     return False
 
 
+def fetch_issue_states() -> dict[str, list[dict]]:
+    """Map each '[Px-Tyy]' task ID to the GitHub issue(s) carrying it.
+
+    One `gh` call (state=all). A task may map to zero issues (not synced yet)
+    or more than one (duplicate) — the report surfaces both.
+    """
+    result = run_gh(["issue", "list", "--state", "all", "--limit", "1000",
+                     "--json", "number,title,state,closedAt,url"])
+    by_task: dict[str, list[dict]] = {}
+    if result.returncode != 0:
+        print("⚠️ Could not list issues — cannot build PROGRESS.md.")
+        return by_task
+    for issue in json.loads(result.stdout or "[]"):
+        m = re.match(r"\[(P\d+-T\d+)\]", issue["title"])
+        if m:
+            by_task.setdefault(m.group(1), []).append(issue)
+    return by_task
+
+
+def _cell(text: str) -> str:
+    """Escape pipes so a value never breaks the markdown table."""
+    return text.replace("|", "\\|")
+
+
+def _task_status(issues: list[dict]) -> tuple[str, str, str]:
+    """Return (status_label, issue_cell, closed_date) for one task's issue(s)."""
+    if not issues:
+        return "⚪ no issue", "—", ""
+    closed = [i for i in issues if i["state"] == "CLOSED"]
+    chosen = min(closed or issues, key=lambda i: i["number"])
+    dup = f" (+{len(issues) - 1} dup)" if len(issues) > 1 else ""
+    cell = f"[#{chosen['number']}]({chosen['url']}){dup}"
+    if closed:
+        return "✅ done", cell, (chosen.get("closedAt") or "")[:10]
+    return "🔨 open", cell, ""
+
+
+def generate_progress_report() -> None:
+    """Write docs/markdown/PROGRESS.md — a git-tracked mirror of issue state.
+
+    Source of tasks: DELIVERABLE_1_SYSTEM_DESIGN.md. Source of status: GitHub.
+    Deterministic given the same tasks + issue states (only the sync date and
+    real state changes move), so `git diff` after a re-run shows real progress.
+    """
+    tasks = parse_markdown_tasks()
+    by_task = fetch_issue_states()
+    phases = sorted({t["phase"] for t in tasks}, key=int)
+
+    def phase_name(ph: str) -> str:
+        return MILESTONES[ph].split(": ", 1)[1]
+
+    out: list[str] = [
+        "# NCollection ERP — Progress Tracker",
+        "",
+        "> **Second source of truth for \"what's done.\"** Mirrors GitHub issue state",
+        "> so progress survives even if GitHub is unavailable. **Generated — do not",
+        "> hand-edit.** Regenerate after merges/closes:",
+        ">",
+        "> ```bash",
+        "> python scripts/github_issue_sync.py --report",
+        "> ```",
+        ">",
+        "> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues ·"
+        f" Last synced: {date.today().isoformat()}",
+        "",
+        "## Scoreboard",
+        "",
+        "| Phase | Done | Total | % |",
+        "|---|---|---|---|",
+    ]
+
+    grand_done = grand_total = 0
+    for ph in phases:
+        pts = [t for t in tasks if t["phase"] == ph]
+        done = sum(1 for t in pts
+                   if any(i["state"] == "CLOSED" for i in by_task.get(t["id"], [])))
+        grand_done += done
+        grand_total += len(pts)
+        pct = round(100 * done / len(pts)) if pts else 0
+        out.append(f"| Phase {ph} — {phase_name(ph)} | {done} | {len(pts)} | {pct}% |")
+    gpct = round(100 * grand_done / grand_total) if grand_total else 0
+    out.append(f"| **Total** | **{grand_done}** | **{grand_total}** | **{gpct}%** |")
+    out.append("")
+
+    for ph in phases:
+        pts = [t for t in tasks if t["phase"] == ph]
+        out.append(f"## Phase {ph} — {phase_name(ph)}")
+        out.append("")
+        out.append("| Task | Name | Dev | Deps | Issue | Status | Closed |")
+        out.append("|---|---|---|---|---|---|---|")
+        for t in pts:
+            status, cell, closed = _task_status(by_task.get(t["id"], []))
+            deps = _cell(t["dependencies"] or "None")
+            out.append(f"| {t['id']} | {_cell(t['name'])} | {t['assignee']} | "
+                       f"{deps} | {cell} | {status} | {closed} |")
+        out.append("")
+
+    PROGRESS_PATH.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"✅ Wrote {PROGRESS_PATH.name} — {grand_done}/{grand_total} tasks done.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -215,7 +319,13 @@ def main() -> None:
     parser.add_argument("--phase", type=str, help="only tasks of this phase number")
     parser.add_argument("--limit", type=int, help="only the first N tasks")
     parser.add_argument("--yes", action="store_true", help="skip confirmation prompts")
+    parser.add_argument("--report", action="store_true",
+                        help="regenerate docs/markdown/PROGRESS.md from issue state and exit")
     args = parser.parse_args()
+
+    if args.report:
+        generate_progress_report()
+        return
 
     print(f"Parsing tasks from {DOC_PATH.name} ...")
     tasks = parse_markdown_tasks()
