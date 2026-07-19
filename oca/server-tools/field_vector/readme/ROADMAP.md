@@ -1,2 +1,0 @@
-- allows the use of specific operators into domain filters to search for similar vectors.
-- dedicated widget to display the vector in a more user-friendly way.
