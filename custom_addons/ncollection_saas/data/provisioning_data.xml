@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Dedicated queue_job channel for provisioning. The runner container
+             sets this channel's capacity via its [queue_job] config (see
+             docs/markdown/PROVISIONING.md). Isolating the channel keeps heavy
+             tenant creation off any other job traffic. -->
+        <record id="channel_provisioning" model="queue.job.channel">
+            <field name="name">provisioning</field>
+            <field name="parent_id" ref="queue_job.channel_root"/>
+        </record>
+
+        <!-- Per-hour provisioning quota (SECURITY §11 — resource exhaustion /
+             DB-creation DoS). Tenant-tunable; 0 disables the cap. -->
+        <record id="param_provisioning_quota" model="ir.config_parameter">
+            <field name="key">ncollection_saas.provisioning_quota_per_hour</field>
+            <field name="value">20</field>
+        </record>
+
+    </data>
+</odoo>

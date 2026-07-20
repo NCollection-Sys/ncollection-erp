@@ -1,13 +1,20 @@
+# pylint: disable=manifest-required-author
+# (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'category': 'Services/SaaS',
-    'summary': 'SaaS Administration Dashboard and Provisioning Engine',
+    'summary': 'SaaS provisioning engine + admin (P2-T01)',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
-    'depends': ['ncollection_subscription'],
-    'data': [],
-    'installable': True,
-    'auto_install': False,
+    # ncollection_subscription: owns the tenant/plan/provisioning.job models we
+    #   drive. ncollection_branding: installed into every tenant DB. queue_job:
+    #   OCA async runner (repos.yml, pinned) that runs provisioning OFF the HTTP
+    #   workers — the isolation guarantee (ARCHITECTURE_DATA_PLATFORM §10).
+    'depends': ['ncollection_subscription', 'ncollection_branding', 'queue_job'],
+    'data': [
+        'data/provisioning_data.xml',
+        'views/provisioning_job_views.xml',
+    ],
 }
