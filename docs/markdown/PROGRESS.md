@@ -14,7 +14,7 @@
 
 | Phase | Done | Total | % |
 |---|---|---|---|
-| Phase 1 — Customer Workspace | 16 | 21 | 76% |
+| Phase 1 — Customer Workspace | 17 | 21 | 81% |
 | Phase 2 — SaaS Automation | 1 | 18 | 6% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **17** | **100** | **17%** |
+| **Total** | **18** | **100** | **18%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -49,7 +49,7 @@
 | P1-T17 | Customer Workspace Dashboard | DEV-3 | P1-T01 | [#18](https://github.com/NCollection-Sys/ncollection-erp/issues/18) | 🔨 open |  |
 | P1-T18 | Email Template Branding | DEV-2 | P1-T13 | [#19](https://github.com/NCollection-Sys/ncollection-erp/issues/19) | ✅ done | 2026-07-19 |
 | P1-T19 | Authentication Hardening (OCA-First) | DEV-1 | P1-T06 | [#20](https://github.com/NCollection-Sys/ncollection-erp/issues/20) | ✅ done | 2026-07-19 |
-| P1-T20 | E2E Test Framework (Playwright) | DEV-3 | P1-T05, P1-T06 | [#21](https://github.com/NCollection-Sys/ncollection-erp/issues/21) | 🔨 open |  |
+| P1-T20 | E2E Test Framework (Playwright) | DEV-3 | P1-T05, P1-T06 | [#21](https://github.com/NCollection-Sys/ncollection-erp/issues/21) | ✅ done | 2026-07-20 |
 | P1-T21 | Phase 1 Integration Testing & Security Audit | DEV-1 | P1-T06, P1-T10, P1-T11, P1-T12, P1-T14, P1-T15, P1-T16, P1-T17, P1-T18, P1-T19, P1-T20 | [#22](https://github.com/NCollection-Sys/ncollection-erp/issues/22) | 🔨 open |  |
 
 ## Phase 2 — SaaS Automation
