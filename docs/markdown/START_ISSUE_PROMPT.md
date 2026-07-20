@@ -55,14 +55,37 @@ ARCHITECTURE_DATA_PLATFORM.md; demo porting → demo/README.md). Restate scope, 
 criteria as a checklist, files in scope, and out-of-scope. Ask about anything ambiguous.
 
 PHASE 5 — PLAN GATE
-Give me a mini plan (steps, files, tests, risks). Wait for my explicit approval.
+Give me a mini plan (steps, files, tests, risks). It must ALSO include:
+ - a BLAST-RADIUS table: which already-shipped work could this touch (scripts, compose,
+   nginx, workflows, fixture DBs, shared addons)? "None — new files only" is fine if true.
+ - a ROLLBACK plan: how to undo this cleanly after merge.
+Wait for my explicit approval.
 
 PHASE 6 — EXECUTE + SHIP
-Branch feature/<N>-<task-id> off develop. Small verified commits. Before pushing run:
-flake8 custom_addons/ ; python3 scripts/ci/architecture_guard.py --base origin/develop ;
-(and cd demo && npx tsc --noEmit if demo/ changed). Open a PR to develop titled
-"[<ID>] <name>" with test evidence and "Closes #<N>". Watch the 4 CI checks. Do NOT merge
-your own PR. Finish by listing the issues this one unblocks as next candidates.
+Branch feature/<N>-<task-id> off develop. Small verified commits. Run `make hooks-install`
+once, then the pre-push hook runs the fast gates (flake8, shellcheck, invariants.py,
+architecture_guard.py); add `cd demo && npx tsc --noEmit` if demo/ changed. THEN run
+`make verify-all` (routing + provisioning + e2e) — not just your own lane's suite; if you
+touched shared infra or a verification script, show the OTHER suites still passing.
+Open a PR to develop titled "[<ID>] <name>" with verify-all evidence, an explicit
+"What this does NOT cover" section, a rollback note, and "Closes #<N>".
+NOTE: "Closes #<N>" does NOT auto-close here — GitHub only auto-closes from the DEFAULT
+branch (main) and we merge to develop. The issue must be closed BY HAND in Phase 7.
+Watch the CI checks: lint, architecture-guard, test, build, verify (security-scan is
+advisory). Do NOT merge your own PR. Finish by listing the issues this one unblocks.
+NOTE: green CI does not block a bad merge — branch protection is unavailable on this
+GitHub plan (verified 403). See docs/markdown/BRANCH_PROTECTION.md.
+
+PHASE 7 — AFTER THE MERGE (I merge, not you)
+1. Close the issue BY HAND (gh issue close <N> --comment "Completed in PR #<pr>…") —
+   the Phase-2 dependency gate treats CLOSED as COMPLETED, so leaving it open blocks
+   every dependent task.
+2. Watch the canary: merging to develop triggers canary.yml. If it files a
+   `broken-develop` issue, that is the top priority — fix forward or revert.
+3. Refresh the tracker: python3 scripts/github_issue_sync.py --report (GENERATED — never
+   hand-edit; commit only if a task status actually changed, not a date-only diff).
+4. If this fixed a regression, add an entry to docs/markdown/REGRESSIONS.md:
+   symptom → root cause → the guard that now prevents recurrence.
 
 GUARDRAILS: one issue per chat; never touch other issues; no scope creep (propose
 follow-up issues instead); no secrets in git. Odoo 19: routes are type='jsonrpc';
