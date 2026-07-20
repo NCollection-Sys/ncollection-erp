@@ -36,13 +36,10 @@ SKIP_PARTS = {"oca", "node_modules", ".git", "playwright-report", "test-results"
 # deliberately isolated into another PR. Each entry MUST name the follow-up, and
 # the fixing PR MUST delete its entry (leaving it behind re-hides the bug).
 KNOWN_PENDING: list[tuple[str, str, str]] = [
-    (
-        "docker-compose.yml",
-        "pg_isready -U ${DB_USER:-odoo}",
-        "F2 — fixed in PR-2 (issue #151 follow-up). Isolated because this healthcheck "
-        "gates `depends_on: service_healthy`; a slip stops the whole stack booting, so "
-        "it ships alone behind a full down/up proof.",
-    ),
+    # Empty, and it should stay that way. An entry here is a bug we have chosen to
+    # ship — it must name its follow-up, and the fixing PR must delete its own entry
+    # (leaving it behind re-hides the bug the guard exists to catch).
+    # Last cleared: R-003, the pg_isready healthcheck (issue #157).
 ]
 
 
