@@ -15,9 +15,13 @@ Applies NCollection corporate identity across the Odoo backend:
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
-    'depends': ['web', 'mail'],
+    # base_setup: the Settings "About" view; http_routing: branded error
+    # pages. Both are auto-installed core addons, always present.
+    'depends': ['web', 'mail', 'base_setup', 'http_routing'],
     'data': [
         'views/webclient_templates.xml',
+        'views/res_config_settings_views.xml',
+        'views/http_error_templates.xml',
         'views/mail_layout_templates.xml',
         'data/res_company_data.xml',
         'data/system_parameters.xml',

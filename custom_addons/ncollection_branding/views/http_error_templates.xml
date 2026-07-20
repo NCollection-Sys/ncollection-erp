@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Branded HTTP error pages (P1-T13).
+
+        http_routing renders these for frontend requests; the page chrome
+        (logo, colors) already flows from web.frontend_layout + the company
+        logo, so we brand the copy and the 404 illustration.
+
+        NOTE (recon-verified): http_routing.500 deliberately loads NO asset
+        bundles or theme (it must render on a broken cursor), so it is NOT
+        inherited here with asset-dependent content — its default is a plain
+        neutral page with no Odoo wordmark in the body. Backend (/odoo)
+        errors surface as OWL dialogs, branded in static/src/js.
+    -->
+
+    <!-- 404: swap the html_editor-routed Odoo illustration for our logo
+         (also removes the dependency on the html_editor module's shape
+         route, which a lean tenant may not have installed). -->
+    <template id="http_404_branded" inherit_id="http_routing.404"
+              name="NCollection 404">
+        <xpath expr="//img[contains(@src, '404.svg')]" position="replace">
+            <img class="img img-fluid mx-auto"
+                 src="/ncollection_branding/static/src/img/logo.png"
+                 alt="NCollection" style="max-height: 90px; width: auto;"/>
+        </xpath>
+        <xpath expr="//p[a[@href='/contactus']]" position="replace">
+            <p><b>Don't panic.</b> If you think this is a mistake, please contact your workspace administrator.</p>
+        </xpath>
+    </template>
+
+    <!-- Generic 4xx fallback: keep the copy, no Odoo strings present —
+         inherited only to future-proof branding hooks. -->
+    <template id="http_4xx_branded" inherit_id="http_routing.4xx"
+              name="NCollection 4xx">
+        <xpath expr="//h1" position="attributes">
+            <attribute name="class">mt-5 o_ncollection_error_title</attribute>
+        </xpath>
+    </template>
+
+</odoo>
