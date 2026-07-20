@@ -47,8 +47,14 @@ no(){ echo "  ❌ FAIL: $1"; fail=$((fail + 1)); }
 hr(){ echo "----------------------------------------------------------------------"; }
 
 # --- database setup (idempotent) --------------------------------------------
+# NOTE: `-d postgres` is REQUIRED. psql with no -d defaults the target database
+# to the USERNAME ("odoo"), which does not exist here — so the query always died
+# with `FATAL: database "odoo" does not exist`, db_exists() always returned
+# false, and this "idempotent" setup silently re-created every test DB on every
+# run. Always pass an explicit -d to psql/pg_isready (enforced by
+# scripts/ci/invariants.py).
 db_exists(){
-  "${COMPOSE[@]}" exec -T db psql -U "$DB_USER" -tAc \
+  "${COMPOSE[@]}" exec -T db psql -U "$DB_USER" -d postgres -tAc \
     "SELECT 1 FROM pg_database WHERE datname='$1'" 2>/dev/null | grep -q 1
 }
 

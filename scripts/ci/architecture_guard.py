@@ -211,7 +211,24 @@ def main() -> int:
         print(f"\n{len(findings)} violation(s). Fix or justify in the PR description, then re-run.")
         return 1
 
+    # Be explicit about the empty case. A local pre-commit run legitimately sees
+    # 0 files (untracked files are not in `git diff`), and a bare "clean" there
+    # reads like a passing review when nothing was actually inspected.
+    if not paths:
+        print(
+            f"architecture-guard: nothing to check — 0 changed files vs {args.base}.\n"
+            "  NOTE: untracked files are NOT diffed. If you expected coverage here, "
+            "commit them first."
+        )
+        return 0
+
     print(f"architecture-guard: clean ({len(paths)} file(s) checked).")
+    print(
+        "  scope: secrets + XML syntax on every changed file; menu/license gate + "
+        "two-layer separation on custom_addons/ only.\n"
+        "  infra surfaces (shell, compose, workflows) are covered by "
+        "scripts/ci/invariants.py."
+    )
     return 0
 
 

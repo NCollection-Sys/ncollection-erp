@@ -56,10 +56,12 @@ jobs:
       - name: Start the routing stack (db_filter ON, workers=0)
         run: docker compose up -d
 
+      # Service name via compose (not a hardcoded container name) so a non-default
+      # COMPOSE_PROJECT_NAME still resolves — enforced by scripts/ci/invariants.py.
       - name: Wait for Odoo to become healthy
         run: |
           for _ in $(seq 1 40); do
-            if docker exec ncollection-odoo curl -sf http://localhost:8069/web/health >/dev/null 2>&1; then
+            if docker compose exec -T odoo curl -sf http://localhost:8069/web/health >/dev/null 2>&1; then
               echo "Odoo is up."
               exit 0
             fi

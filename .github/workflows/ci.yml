@@ -40,6 +40,25 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libxml2-utils
           find custom_addons -name '*.xml' -print0 | xargs -0 -r xmllint --noout
 
+      # Shell scripts had NO linting in CI until now — yet that is exactly where
+      # our real infra bugs lived (a psql call missing -d silently disabled the
+      # routing suite's idempotency). CLAUDE.md mandated shellcheck locally; CI
+      # now enforces it, closing the promise-vs-enforcement drift.
+      - name: Run shellcheck
+        run: |
+          command -v shellcheck >/dev/null || {
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends shellcheck
+          }
+          find . -name '*.sh' -not -path './oca/*' -not -path '*/node_modules/*' -print0 \
+            | xargs -0 -r shellcheck
+
+      # Infrastructure invariants — companion to architecture-guard (which covers
+      # the addon surface). Each rule encodes a bug we actually diagnosed; see
+      # scripts/ci/invariants.py for the provenance of each one.
+      - name: Run invariants guard
+        run: python scripts/ci/invariants.py
+
       # pylint-odoo currently reports 60 pre-existing findings across the
       # addons (missing README.rst, superfluous/deprecated manifest keys,
       # redundant `string=` attrs — measured directly, see

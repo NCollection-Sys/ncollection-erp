@@ -39,7 +39,8 @@ OCA_VENV := .oca-venv
 .DEFAULT_GOAL := help
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
-        routing-up routing-verify routing-down routing-clean
+        routing-up routing-verify routing-down routing-clean \
+        provisioning-verify e2e-verify verify-all
 
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
@@ -123,5 +124,26 @@ routing-verify: ## Create clienta/clientb/admin test DBs and run the isolation p
 routing-down: ## Stop the routing stack (keeps the test DBs; back to a normal `make up`)
 	$(ROUTING_COMPOSE) down
 
-routing-clean: ## Drop the clienta/clientb/admin test databases (destructive)
+routing-clean: ## Drop the ROUTING fixture DBs clienta/clientb/admin (destructive)
 	@for d in clienta clientb admin; do $(COMPOSE) exec db dropdb -U $(DB_USER) --if-exists $$d; done
+
+## ---- Cross-suite verification --------------------------------------------
+# A ticket that only proves its OWN lane cannot see a cross-suite regression.
+# `verify-all` runs every guarantee we have against one running stack, and is
+# the gate to run before merging ANY change — not just the lane you touched.
+# Requires the routing stack up: `make routing-up`.
+provisioning-verify: ## Run the P2-T01 provisioning proof (create -> login-ready, forced-failure -> rollback)
+	./custom_addons/ncollection_saas/scripts/provisioning/verify_provisioning.sh
+
+e2e-verify: ## Set up the e2e tenants and run the Playwright suite
+	bash e2e/scripts/setup_e2e_tenants.sh
+	cd e2e && npm ci && npx playwright install chromium && npx playwright test
+
+verify-all: ## Run EVERY verification suite (routing + provisioning + e2e) — pre-merge gate
+	@echo "==> [1/3] routing & isolation (P1-T06)"
+	@$(MAKE) --no-print-directory routing-verify
+	@echo "==> [2/3] provisioning (P2-T01)"
+	@$(MAKE) --no-print-directory provisioning-verify
+	@echo "==> [3/3] end-to-end guarantees (P1-T20)"
+	@$(MAKE) --no-print-directory e2e-verify
+	@echo "✅ verify-all: every suite green."

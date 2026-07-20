@@ -19,7 +19,16 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."   # repo root
 
-DC=(docker compose)
+# This suite requires the ROUTING stack: base (db+odoo) + dev (the nginx edge)
+# + routing (db_filter=^%d$). `docker compose` alone loads ONLY the base file,
+# which does not define `nginx` — so service lookups like `ps -q nginx` fail.
+# Honour a caller-supplied COMPOSE_FILE (CI sets it); otherwise default to the
+# exact trio `make routing-up` starts.
+if [ -n "${COMPOSE_FILE:-}" ]; then
+  DC=(docker compose)
+else
+  DC=(docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.routing.yml)
+fi
 DBARGS=(--db_host=db --db_user=odoo --db_password=odoo)
 ADMIN_PW="${E2E_ADMIN_PW:-admin}"
 
@@ -101,13 +110,48 @@ done
 # License enforcement + menu visibility are @ormcache'd per process; the config
 # and users were written from separate `odoo shell` processes, so restart the
 # server (and reload nginx onto odoo's fresh IP) to guarantee a clean state.
+#
+# These restarts are LOAD-BEARING: if one silently fails, the suite runs against a
+# stale @ormcache and reports confusing results. So they FAIL LOUD — never `|| true`
+# on a step whose success we depend on. Container IDs are derived from compose
+# rather than hardcoded, so a non-default COMPOSE_PROJECT_NAME still works.
 echo "  • refreshing caches (restart odoo + nginx)…"
-docker restart ncollection-odoo >/dev/null 2>&1 || true
+
+cid(){ "${DC[@]}" ps -q "$1"; }
+
+odoo_cid="$(cid odoo)"
+nginx_cid="$(cid nginx)"
+[ -n "$odoo_cid" ] || {
+  echo "ERROR: no running 'odoo' service container. Start the stack first: make routing-up" >&2; exit 1; }
+[ -n "$nginx_cid" ] || {
+  echo "ERROR: no running 'nginx' service container. Start the stack first: make routing-up" >&2; exit 1; }
+
+docker restart "$odoo_cid" >/dev/null || {
+  echo "ERROR: failed to restart odoo ($odoo_cid) — enforcement caches would be stale." >&2; exit 1; }
+
+odoo_ready=0
 for _ in $(seq 1 30); do
-  docker exec ncollection-odoo curl -sf http://localhost:8069/web/health >/dev/null 2>&1 && break
+  if docker exec "$odoo_cid" curl -sf http://localhost:8069/web/health >/dev/null 2>&1; then
+    odoo_ready=1; break
+  fi
   sleep 2
 done
-docker restart ncollection-nginx >/dev/null 2>&1 || true
-sleep 3
+[ "$odoo_ready" = 1 ] || {
+  echo "ERROR: odoo did not become healthy within 60s of restart — aborting." >&2
+  "${DC[@]}" logs --tail=50 odoo >&2
+  exit 1; }
+
+docker restart "$nginx_cid" >/dev/null || {
+  echo "ERROR: failed to restart nginx ($nginx_cid) — it may hold a stale odoo IP." >&2; exit 1; }
+
+# Deterministic edge readiness (no blind sleep): any HTTP answer on :80 means
+# nginx is serving again. Tenant-agnostic on purpose.
+edge_ready=0
+for _ in $(seq 1 15); do
+  if curl -s -o /dev/null http://localhost/ 2>/dev/null; then edge_ready=1; break; fi
+  sleep 1
+done
+[ "$edge_ready" = 1 ] || {
+  echo "ERROR: the nginx edge did not answer on :80 within 15s of restart." >&2; exit 1; }
 
 echo "✅ E2E tenants ready: clienta (Pro) · clientb (Basic) · admin"
