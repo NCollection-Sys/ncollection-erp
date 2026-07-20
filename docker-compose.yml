@@ -16,7 +16,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo}"]
+      # `-d` is REQUIRED: pg_isready with no -d targets a database named after the
+      # USER ("odoo"), which does not exist here — so every probe logged
+      # `FATAL: database "odoo" does not exist` every 10s forever. The check still
+      # passed (it only needs the server to answer), so it was pure log noise
+      # hiding real errors. See REGRESSIONS.md R-003 / invariants.py rule R1.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${DB_NAME:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5

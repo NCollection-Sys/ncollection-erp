@@ -64,19 +64,25 @@ the bug fails the guard with a precise message.
 
 ---
 
-## R-003 — `pg_isready` healthcheck FATAL spam ⚠️ STILL OPEN
+## R-003 — `pg_isready` healthcheck FATAL spam ✅ FIXED
 
-**Symptom.** `ncollection-db` logs `FATAL: database "odoo" does not exist` every 10 seconds.
+**Symptom.** `ncollection-db` logged `FATAL: database "odoo" does not exist` every 10 seconds,
+forever. Harmless in itself, but constant false errors train you to ignore the database log —
+which is where a real failure would appear.
 
-**Root cause.** Same trap as R-002: the healthcheck is `pg_isready -U ${DB_USER:-odoo}` with no
-`-d`. Cosmetic only — `pg_isready` needs just a *response* to confirm liveness, so the
-container stays healthy.
+**Root cause.** Same trap as R-002: the healthcheck was `pg_isready -U ${DB_USER:-odoo}` with
+no `-d`, so every probe asked for a database named after the *user*. Cosmetic only —
+`pg_isready` needs just a *response* to confirm liveness, so the container stayed healthy and
+nothing appeared broken.
 
-**Status.** **Not yet fixed.** It is registered in `KNOWN_PENDING` in `invariants.py` rather
-than silently exempted, so the guard stays honest about it. The fix is one line
-(`-d ${DB_NAME:-postgres}`) but it edits the healthcheck that gates
-`depends_on: service_healthy` — a slip there stops the whole stack booting — so it needs its
-own change with a full `down`→`up` proof.
+**Guard.** `invariants.py` R1 (the same rule that catches R-002) — it had this entry
+registered in `KNOWN_PENDING` rather than silently exempted, which is what kept it visible
+until it was fixed. That entry is now deleted, and `KNOWN_PENDING` is empty.
+
+**Why it shipped alone.** This healthcheck gates `depends_on: db: condition: service_healthy`
+for the odoo service, so a syntax slip stops the entire stack booting. It was isolated behind
+a full `down` → `up` proof (never `-v`, which would destroy the postgres volume): odoo must
+still reach healthy through the dependency gate, and the db log must stay clean.
 
 ---
 
@@ -223,6 +229,8 @@ here, and any document claiming otherwise is wrong.
 
 | Item | Why no guard yet | Owner |
 |---|---|---|
-| **R-003** `pg_isready` healthcheck | One-line fix, but it gates `depends_on: service_healthy`; needs its own change with a full `down`→`up` proof | DEV-1 |
 | **F8** — E2E gates `clientb` by access-denial, not `menuVisible`, so a P1-T09 *menu-hiding* regression would slip | Depends on the menu-root behaviour for group-holding users | DEV-2 |
 | **R-011** enforcement | Requires a paid GitHub plan | Omar |
+
+`KNOWN_PENDING` in `scripts/ci/invariants.py` is currently **empty** — no known violation is
+being shipped. If an entry appears there, it belongs in this table too.
