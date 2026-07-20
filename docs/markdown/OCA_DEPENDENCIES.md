@@ -22,6 +22,7 @@ OCA repo, because the pins are commit hashes, not branch names.
 | `OCA/server-tools` | 19.0 | `auditlog` | audit trail (wired at **P8-T05**) | keep |
 | `OCA/server-ux` | 19.0 | `date_range` | dependency of `mis_builder` | keep |
 | `OCA/server-auth` | 19.0 | `auth_session_timeout` | `ncollection_auth` (P1-T19 session timeout) | keep |
+| `OCA/queue` | 19.0 (pinned `ebb87ea4`) | `queue_job` | `ncollection_saas` provisioning runner (P2-T01) | keep |
 
 Exact hashes live in `repos.yml` (one block per repo — delete the block to drop the repo).
 
@@ -53,6 +54,15 @@ includes accounting. Nothing installs OCA modules into the admin DB.
   `ncollection_*` modules replace them (**#117**). Keep their blocks in `repos.yml`
   trivially deletable; do not grow new dependencies on them without checking the
   architecture first (Standing Rule 5).
+- **queue_job pin (P2-T01)**: `OCA/queue` is pinned to `ebb87ea4`, **not** 19.0 HEAD. The
+  next commit adds `openupgradelib` to `queue_job`'s `external_dependencies` — a package
+  imported only by the 18.0→19.0 migration scripts (dead code for a fresh-19 platform) that
+  would nonetheless block install on the stock `odoo:19` image, forcing a custom Dockerfile.
+  Pinning at `ebb87ea4` keeps the stock image. The only other skipped code commit removes a
+  multi-db monkey patch; our provisioning runner uses `queue_job` on the **single admin DB**
+  (jobs shell out to build tenant DBs), so its cross-db behavior is never exercised —
+  verified: `queue_job` installs and functions at this pin. Bump deliberately (and add
+  `openupgradelib` to the image) only if a newer `queue_job` feature is ever needed.
 - **Brute-force lockout (P1-T19)**: OCA `auth_brute_force` was evaluated and found
   **dead upstream** — it does not exist on any `OCA/server-auth` branch ≥ 12.0
   (an Odoo ≤ 11-era module). Porting a decade-old auth monkey-patch would be

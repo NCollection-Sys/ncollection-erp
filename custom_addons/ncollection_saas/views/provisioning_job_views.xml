@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add the provisioning trigger buttons to the job form (P2-T01). -->
+    <record id="view_provisioning_job_form_engine" model="ir.ui.view">
+        <field name="name">ncollection.provisioning.job.form.engine</field>
+        <field name="model">ncollection.provisioning.job</field>
+        <field name="inherit_id"
+               ref="ncollection_subscription.view_ncollection_provisioning_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='status']" position="before">
+                <!-- Async (queue_job runner, off the HTTP workers) -->
+                <button name="action_run" type="object" string="Provision"
+                        class="btn-primary"
+                        invisible="status not in ('queued', 'failed')"/>
+                <!-- Inline (manual/debug — same engine, no queue) -->
+                <button name="action_run_sync" type="object" string="Provision (inline)"
+                        invisible="status not in ('queued', 'failed')"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

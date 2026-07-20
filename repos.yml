@@ -76,3 +76,21 @@
   merges:
     - oca 58213a5b4eef5f2b8e6ff4e6c46e4b928ad833ba
   target: oca aggregated
+
+# --- Queue (P2-T01. Consumed: queue_job — async job runner for the isolated
+# --- provisioning engine; runs heavy tenant creation OFF the HTTP workers.
+# --- PIN NOTE: deliberately pinned to ebb87ea4 (not 19.0 HEAD). The next
+# --- commit (d9436328) adds `openupgradelib` to external_dependencies, which
+# --- is imported ONLY by the 18.0->19.0 migration scripts (dead code for a
+# --- fresh-19 platform) yet would block install on the stock odoo:19 image.
+# --- Pinning here keeps the stock image (no custom Dockerfile). The only other
+# --- skipped code commit removes a multi-db monkey patch; our runner uses
+# --- queue_job on the SINGLE admin DB (jobs shell out to build tenant DBs), so
+# --- queue_job's cross-db behavior is never exercised — verified installs +
+# --- functions on our stack. See docs/markdown/OCA_DEPENDENCIES.md.)
+./oca/queue:
+  remotes:
+    oca: https://github.com/OCA/queue.git
+  merges:
+    - oca ebb87ea4e2e0f1838e3b6646a94ac0d6fcb6cf10
+  target: oca aggregated
