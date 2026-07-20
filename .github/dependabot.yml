@@ -1,0 +1,97 @@
+# Dependabot — automated dependency updates (INFRA-02).
+#
+# Why this exists: the @playwright/test advisory GHSA-7mvr-c777-76hp (high) was
+# found by running `npm audit` BY HAND during a review. That is not a control —
+# it only worked because someone happened to look. Dependabot files security
+# advisories automatically, and keeps the floating base images honest.
+#
+# Noise control: weekly, with minor+patch GROUPED into a single PR per ecosystem
+# so a normal week is a handful of PRs, not dozens. Major bumps stay ungrouped
+# on purpose — they can break things and deserve individual review. Security
+# advisories bypass the schedule and are raised immediately.
+#
+# Ecosystems chosen deliberately:
+#   - docker-compose (NOT docker): this repo has no Dockerfiles; every image
+#     reference lives in docker-compose*.yml, which is a separate ecosystem.
+#   - no pip entry: there is no requirements.txt / pyproject.toml yet. Add one
+#     when there is.
+version: 2
+
+updates:
+  # ---- GitHub Actions -------------------------------------------------------
+  # Actions are pinned to commit SHAs for supply-chain safety, which makes them
+  # invisible to humans; Dependabot is what keeps SHA pins from going stale.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # ---- Container images (docker-compose*.yml) -------------------------------
+  # Directly targets the floating tags flagged in the audit:
+  # certbot/certbot:latest and dpage/pgadmin4:latest, plus odoo:19 / postgres:16
+  # / nginx:1.27-alpine, which all move underneath us today.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+    labels:
+      - dependencies
+      - infra
+    groups:
+      images-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # ---- E2E test harness -----------------------------------------------------
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+    labels:
+      - dependencies
+      - e2e
+    groups:
+      e2e-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # ---- Standalone React demo prototype --------------------------------------
+  # Not shipped (design reference only), so keep its noise floor low: grouped,
+  # and majors are not chased.
+  - package-ecosystem: npm
+    directory: /demo
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+    labels:
+      - dependencies
+      - demo
+    groups:
+      demo-minor-patch:
+        update-types:
+          - minor
+          - patch
