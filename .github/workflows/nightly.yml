@@ -1,0 +1,85 @@
+name: Nightly Drift Check
+
+# Catches breakage that arrives with NO commit of ours.
+#
+# The stack floats on moving tags (`odoo:19`, `postgres:16`, `nginx:1.27-alpine`,
+# and `:latest` for certbot/pgadmin). An upstream rebuild can therefore break the
+# platform overnight while every PR was green — the literal "but it worked
+# yesterday" failure. This runs the full suite on a schedule so drift surfaces on
+# its own, attributable to upstream rather than to whoever pushes next.
+#
+# NOTE: GitHub runs scheduled workflows from the DEFAULT branch (main), so this
+# file only takes effect once it reaches main — and it passes ref: develop
+# explicitly, otherwise it would silently verify main instead of our active
+# integration branch.
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: ./.github/workflows/verify.yml
+    with:
+      ref: develop
+
+  report:
+    needs: verify
+    if: ${{ always() && needs.verify.result == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: File or update the drift issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          today="$(date -u +%Y-%m-%d)"
+
+          body=$(cat <<EOF
+          **The nightly verification of \`develop\` failed ($today UTC).**
+
+          No commit of ours triggered this run, so the likely causes are, in order:
+
+          1. **Upstream image drift** — \`odoo:19\`, \`postgres:16\`, \`nginx:1.27-alpine\`,
+             \`certbot/certbot:latest\` or \`dpage/pgadmin4:latest\` moved underneath us.
+          2. An OCA pin in \`repos.yml\` resolving differently.
+          3. A genuine regression on develop that the canary already reported.
+
+          Failing run: $RUN_URL
+
+          Reproduce locally:
+          \`\`\`bash
+          docker compose pull
+          make routing-up
+          make verify-all
+          \`\`\`
+          EOF
+          )
+
+          gh label create nightly-drift \
+            --repo "$REPO" \
+            --color FBCA04 \
+            --description "Nightly verification failed with no change of ours — suspect upstream drift" \
+            --force >/dev/null 2>&1 || true
+
+          existing=$(gh issue list --repo "$REPO" --label nightly-drift --state open \
+                       --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            echo "drift already tracked in #$existing — commenting instead of duplicating."
+            gh issue comment "$existing" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" \
+              --title "🌙 Nightly drift check failed ($today)" \
+              --label nightly-drift \
+              --body "$body"
+          fi
