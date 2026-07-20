@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Browser title -->
+    <!-- Browser title + favicon (existing, P1-T16 groundwork) -->
     <template id="layout" inherit_id="web.layout" name="NCollection Browser Title">
         <xpath expr="//head/title" position="replace">
             <title>NCollection ERP</title>
@@ -9,6 +9,50 @@
         <!-- Favicon -->
         <xpath expr="//head/link[@rel='shortcut icon']" position="attributes">
             <attribute name="href">/ncollection_branding/static/src/img/favicon.ico</attribute>
+        </xpath>
+    </template>
+
+    <!-- ================= P1-T13: white-label completion ================= -->
+
+    <!-- Backend bootstrap metadata: Odoo-purple theme-color and the Odoo iOS
+         touch icon leak the brand on mobile/PWA surfaces. -->
+    <template id="webclient_bootstrap_branded" inherit_id="web.webclient_bootstrap"
+              name="NCollection Bootstrap Branding">
+        <xpath expr="//meta[@name='theme-color']" position="attributes">
+            <attribute name="content">#17375E</attribute>
+        </xpath>
+        <xpath expr="//link[@rel='apple-touch-icon']" position="attributes">
+            <attribute name="href">/ncollection_branding/static/src/img/apple-touch-icon.png</attribute>
+        </xpath>
+    </template>
+
+    <!-- Login page footer: remove "Powered by Odoo" and the DB-manager link
+         (the manager is 403'd at Nginx + list_db=False anyway, P1-T11). -->
+    <template id="login_layout_branded" inherit_id="web.login_layout"
+              name="NCollection Login Footer">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace">
+            <span class="text-muted">NCollection ERP</span>
+        </xpath>
+        <xpath expr="//a[@href='/web/database/manager']" position="replace"/>
+    </template>
+
+    <!-- Portal/report "Powered by Odoo" badge. -->
+    <template id="brand_promotion_message_branded" inherit_id="web.brand_promotion_message"
+              name="NCollection Brand Promotion">
+        <xpath expr="//t[@t-out]" position="replace">
+            <a target="_blank" href="https://ncollection.com" class="badge text-bg-light">NCollection ERP</a>
+        </xpath>
+    </template>
+
+    <!-- Offline (PWA) page: Odoo icon + "Odoo will load..." copy. -->
+    <template id="webclient_offline_branded" inherit_id="web.webclient_offline"
+              name="NCollection Offline Page">
+        <xpath expr="//div[hasclass('card')]/img" position="replace">
+            <img src="/ncollection_branding/static/src/img/logo.png" alt="NCollection logo"
+                 style="max-height:60px; width:auto;"/>
+        </xpath>
+        <xpath expr="//div[hasclass('card')]/p" position="replace">
+            <p>Check your network connection and come back here. NCollection ERP will load as soon as you're back online.</p>
         </xpath>
     </template>
 
