@@ -7,7 +7,7 @@ test.describe('tenant session isolation (P1-T06 guarantee)', () => {
   // since cookies are host-scoped). The stronger cross-session rejection is
   // proven at the server layer below.
   test('browser: the backend requires a per-tenant session (redirects to login)', async ({ page }) => {
-    await page.goto(`${TENANTS.clientb}/web`, { waitUntil: 'commit' });
+    await page.goto(`${TENANTS.e2eclientb}/web`, { waitUntil: 'commit' });
     await page.waitForURL((url) => url.pathname.startsWith('/web/login'), { timeout: 30_000 });
   });
 
@@ -16,17 +16,17 @@ test.describe('tenant session isolation (P1-T06 guarantee)', () => {
   // check #3.)
   test('server: a session is DB-scoped and rejected on the other tenant (both ways)', async ({ playwright }) => {
     const a = await playwright.request.newContext({ ignoreHTTPSErrors: true });
-    await authenticate(a, 'clienta', 'clienta');
+    await authenticate(a, 'e2eclienta');
     const sidA = await sessionId(a);
     expect(sidA, 'clienta must issue a session').toBeTruthy();
-    const aOnB = await getSessionInfo(a, 'clientb', sidA);
+    const aOnB = await getSessionInfo(a, 'e2eclientb', sidA);
     expect(aOnB.result?.uid ?? null, 'clienta session must be invalid on clientb').toBeNull();
     await a.dispose();
 
     const b = await playwright.request.newContext({ ignoreHTTPSErrors: true });
-    await authenticate(b, 'clientb', 'clientb');
+    await authenticate(b, 'e2eclientb');
     const sidB = await sessionId(b);
-    const bOnA = await getSessionInfo(b, 'clienta', sidB);
+    const bOnA = await getSessionInfo(b, 'e2eclienta', sidB);
     expect(bOnA.result?.uid ?? null, 'clientb session must be invalid on clienta').toBeNull();
     await b.dispose();
   });

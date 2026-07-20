@@ -5,7 +5,7 @@ import {
 } from '@playwright/test';
 import { TENANTS, authenticate, callKw, login, TenantKey } from './tenants';
 
-const TENANT_KEYS: TenantKey[] = ['clienta', 'clientb'];
+const TENANT_KEYS: TenantKey[] = ['e2eclienta', 'e2eclientb'];
 
 /**
  * Warm the stack before the suite so tests are deterministic:
@@ -18,7 +18,7 @@ const TENANT_KEYS: TenantKey[] = ['clienta', 'clientb'];
 export default async function globalSetup(): Promise<void> {
   const probe = await playwrightRequest.newContext({ ignoreHTTPSErrors: true });
   try {
-    const res = await probe.get(`${TENANTS.clienta}/web/login`, { timeout: 20_000 });
+    const res = await probe.get(`${TENANTS.e2eclienta}/web/login`, { timeout: 20_000 });
     if (!res.ok()) throw new Error(`clienta.localhost/web/login -> ${res.status()}`);
   } catch (err) {
     await probe.dispose();
@@ -56,6 +56,6 @@ export default async function globalSetup(): Promise<void> {
 }
 
 async function primeRpc(c: APIRequestContext, tenant: TenantKey): Promise<void> {
-  await authenticate(c, tenant, tenant, 'biz', 'demo1234');
+  await authenticate(c, tenant, 'biz', 'demo1234');
   await callKw(c, tenant, 'ir.ui.menu', 'load_menus', [false]);
 }

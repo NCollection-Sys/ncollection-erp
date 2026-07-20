@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
 
@@ -50,8 +50,11 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y --no-install-recommends shellcheck
           }
-          find . -name '*.sh' -not -path './oca/*' -not -path '*/node_modules/*' -print0 \
-            | xargs -0 -r shellcheck
+          # .githooks/* are shell too but carry no .sh extension — include them.
+          {
+            find . -name '*.sh' -not -path './oca/*' -not -path '*/node_modules/*'
+            find .githooks -type f 2>/dev/null || true
+          } | xargs -r shellcheck
 
       # Infrastructure invariants — companion to architecture-guard (which covers
       # the addon surface). Each rule encodes a bug we actually diagnosed; see
@@ -100,10 +103,10 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
 
@@ -148,7 +151,7 @@ jobs:
 
       - name: Upload scan artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: security-scan-reports
           path: |
@@ -160,12 +163,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0  # architecture_guard.py diffs against origin/develop
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
 
@@ -191,7 +194,7 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # ./oca is GENERATED (P1-T04): aggregate the pinned OCA repos from
       # repos.yml so the test container resolves the exact same code as every
@@ -241,7 +244,7 @@ jobs:
     needs: [lint, architecture-guard, test]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # Base compose mounts ./oca (P1-T04); without aggregation Docker would
       # auto-create it empty and Odoo would hard-fail on the missing

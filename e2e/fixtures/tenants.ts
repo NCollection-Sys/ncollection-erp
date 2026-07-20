@@ -1,10 +1,19 @@
 import { APIRequestContext, Page, expect } from '@playwright/test';
 
-/** Per-tenant base URLs (routed by db_filter through the Nginx edge). */
+/**
+ * Per-tenant base URLs (routed by db_filter through the Nginx edge).
+ *
+ * FIXTURE NAMESPACE — the `e2e*` prefix is deliberate. The P1-T06 routing proof
+ * owns `clienta`/`clientb`/`admin`, and `make routing-clean` drops those; sharing
+ * one namespace meant either suite could destroy the other's fixtures. The names
+ * must stay ALPHANUMERIC: `db_filter=^%d$` routes a subdomain to the database of
+ * the SAME name, underscores are invalid in hostnames, and hyphens would need
+ * Postgres quoting. Tenant key === subdomain === database name, always.
+ */
 export const TENANTS = {
-  clienta: 'http://clienta.localhost',
-  clientb: 'http://clientb.localhost',
-  admin: 'http://admin.localhost',
+  e2eclienta: 'http://e2eclienta.localhost',
+  e2eclientb: 'http://e2eclientb.localhost',
+  e2eadmin: 'http://e2eadmin.localhost',
 } as const;
 export type TenantKey = keyof typeof TENANTS;
 
@@ -50,12 +59,18 @@ export async function expectLoggedOut(page: Page, tenant: TenantKey): Promise<vo
 
 // ---- JSON-RPC helpers (server-side guarantees) ----------------------------
 
+/**
+ * Authenticate against a tenant. `db` defaults to the tenant key because under
+ * `db_filter=^%d$` they are always the same value — passing both invites them to
+ * drift apart. It stays overridable so a test can deliberately send a MISMATCHED
+ * database and assert the edge refuses it (the P1-T06 check-2 scenario).
+ */
 export async function authenticate(
   request: APIRequestContext,
   tenant: TenantKey,
-  db: string,
   loginName = 'admin',
   password = 'admin',
+  db: string = tenant,
 ) {
   return request.post(`${TENANTS[tenant]}/web/session/authenticate`, {
     headers: { 'Content-Type': 'application/json' },

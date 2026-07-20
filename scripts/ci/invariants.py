@@ -125,6 +125,8 @@ def collect(explicit: list[str] | None) -> list[Path]:
     for pattern in ("*.sh", "docker-compose*.yml", "Makefile"):
         found.extend(REPO_ROOT.rglob(pattern))
     found.extend((REPO_ROOT / ".github" / "workflows").glob("*.yml"))
+    # Git hooks are shell too, and carry no .sh extension — guard them as well.
+    found.extend(p for p in (REPO_ROOT / ".githooks").glob("*") if p.is_file())
     return sorted({p for p in found if in_scope(p)})
 
 
@@ -138,7 +140,8 @@ def scan(path: Path, findings: list[str]) -> None:
     is_makefile = path.name == "Makefile"
     is_workflow = ".github/workflows" in rel
     is_compose = path.name.startswith("docker-compose")
-    is_shell = path.suffix == ".sh"
+    # .githooks/* are shell scripts without a .sh extension.
+    is_shell = path.suffix == ".sh" or rel.startswith(".githooks/")
 
     for lineno, line in enumerate(text.splitlines(), 1):
         stripped = line.strip()

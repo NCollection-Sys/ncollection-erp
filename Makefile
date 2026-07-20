@@ -39,8 +39,8 @@ OCA_VENV := .oca-venv
 .DEFAULT_GOAL := help
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
-        routing-up routing-verify routing-down routing-clean \
-        provisioning-verify e2e-verify verify-all
+        routing-up routing-verify routing-down routing-clean e2e-clean \
+        provisioning-verify e2e-verify verify-all hooks-install doctor
 
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
@@ -97,8 +97,18 @@ createdb: ## Create and initialize an empty Odoo database (db=...)
 	$(COMPOSE) exec odoo odoo -d $(db) -i base --stop-after-init $(ODOO_DB_ARGS)
 	$(COMPOSE) restart odoo
 
+# Odoo keeps pooled connections open, so a bare `dropdb` fails with
+# "database is being accessed by other users" — which made every *-clean target
+# silently do nothing. Terminate live sessions first, exactly as the
+# drop_db() helpers in our verification scripts already do.
+define drop_database
+$(COMPOSE) exec -T db psql -U $(DB_USER) -d postgres -c \
+  "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$(1)'" >/dev/null 2>&1 || true; \
+$(COMPOSE) exec -T db dropdb -U $(DB_USER) --if-exists $(1)
+endef
+
 dropdb: ## Drop the target database (db=...) — destructive
-	$(COMPOSE) exec db dropdb -U $(DB_USER) --if-exists $(db)
+	@$(call drop_database,$(db))
 
 install: ## Install a module into the target db:  make install m=<module> [db=...]
 	@test -n "$(m)" || (echo "Usage: make install m=<module> [db=$(db)]"; exit 1)
@@ -124,8 +134,15 @@ routing-verify: ## Create clienta/clientb/admin test DBs and run the isolation p
 routing-down: ## Stop the routing stack (keeps the test DBs; back to a normal `make up`)
 	$(ROUTING_COMPOSE) down
 
+# FIXTURE NAMESPACES — each suite owns its own DB prefix and may only drop its
+# own. routing: clienta/clientb/admin · e2e: e2e* · provisioning: prov*.
+# They used to share one namespace, so either suite could destroy the other's
+# fixtures; the split makes that structurally impossible.
 routing-clean: ## Drop the ROUTING fixture DBs clienta/clientb/admin (destructive)
-	@for d in clienta clientb admin; do $(COMPOSE) exec db dropdb -U $(DB_USER) --if-exists $$d; done
+	@for d in clienta clientb admin; do $(call drop_database,$$d); done
+
+e2e-clean: ## Drop the E2E fixture DBs e2eclienta/e2eclientb/e2eadmin (destructive)
+	@for d in e2eclienta e2eclientb e2eadmin; do $(call drop_database,$$d); done
 
 ## ---- Cross-suite verification --------------------------------------------
 # A ticket that only proves its OWN lane cannot see a cross-suite regression.
@@ -138,6 +155,15 @@ provisioning-verify: ## Run the P2-T01 provisioning proof (create -> login-ready
 e2e-verify: ## Set up the e2e tenants and run the Playwright suite
 	bash e2e/scripts/setup_e2e_tenants.sh
 	cd e2e && npm ci && npx playwright install chromium && npx playwright test
+
+## ---- Developer environment -------------------------------------------------
+hooks-install: ## Enable the repo's git hooks (fast gates run on pre-push)
+	@git config core.hooksPath .githooks
+	@chmod +x .githooks/* 2>/dev/null || true
+	@echo "✅ hooks enabled (core.hooksPath=.githooks). Bypass once with: git push --no-verify"
+
+doctor: ## Diagnose the local dev environment ("why doesn't this work on my machine?")
+	@bash scripts/dev/doctor.sh
 
 verify-all: ## Run EVERY verification suite (routing + provisioning + e2e) — pre-merge gate
 	@echo "==> [1/3] routing & isolation (P1-T06)"
