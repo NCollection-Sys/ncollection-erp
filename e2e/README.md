@@ -12,22 +12,40 @@ and continuously enforces the platform's core guarantees:
 | Owner-only menus (admin sees Settings, regular user doesn't) | `roles.spec.ts` | P1-T11 |
 | No "Odoo" brand string in the public entry URL | `branding.spec.ts` | P1-T14/T15 |
 
-The suite targets tenants by subdomain — `clienta.localhost` / `clientb.localhost` /
-`admin.localhost` — each routed to its **own** database by `db_filter` at the Nginx edge.
+The suite targets tenants by subdomain — `e2eclienta.localhost` / `e2eclientb.localhost` /
+`e2eadmin.localhost` — each routed to its **own** database by `db_filter` at the Nginx edge.
 There is **no `baseURL`** on purpose: cross-subdomain behaviour is the whole point.
 
 ## The two tenants (different plans → divergent behaviour)
 
 | Tenant | Plan | Installed | `allowed_module_names` | Sales app |
 |---|---|---|---|---|
-| `clienta` | Pro | `crm`, `sale` | `crm,sale` | visible + usable |
-| `clientb` | Basic | `crm`, `sale` | `crm` | installed but **hidden + access-blocked** |
-| `admin` | — | `base` | — | platform / routing target |
+| `e2eclienta` | Pro | `crm`, `sale` | `crm,sale` | visible + usable |
+| `e2eclientb` | Basic | `crm`, `sale` | `crm` | installed but **hidden + access-blocked** |
+| `e2eadmin` | — | `base` | — | platform / routing target |
 
-`clientb` has `sale` **installed but unlicensed**, which is exactly what P1-T09 (menu
+`e2eclientb` has `sale` **installed but unlicensed**, which is exactly what P1-T09 (menu
 hidden) and P1-T10 (access blocked) enforce. Both tenants also get a non-system business
 user **`biz` / `demo1234`** holding the Sales groups — enforcement is bypassed for system
 users (the Owner/admin), so the journeys probe as `biz` to exercise the *plan* gate.
+
+### Fixture namespace — why the `e2e` prefix
+
+Each suite owns its own database prefix and may only drop its own:
+
+| Suite | Owns | Cleanup target |
+|---|---|---|
+| Routing proof (P1-T06) | `clienta` · `clientb` · `admin` | `make routing-clean` |
+| E2E (this suite) | `e2eclienta` · `e2eclientb` · `e2eadmin` | `make e2e-clean` |
+| Provisioning (P2-T01) | `prov*` | — |
+
+These suites previously shared one namespace, so running either could silently destroy the
+other's fixtures (and `make routing-clean` wiped the e2e tenants outright). The prefix makes
+that impossible rather than merely documented.
+
+Names must stay **alphanumeric**: `db_filter=^%d$` routes a subdomain to the database of the
+same name, underscores are invalid in hostnames, and hyphens would need Postgres quoting. So
+tenant key === subdomain === database name, always.
 
 ## Run it locally
 
@@ -35,7 +53,7 @@ Prerequisites: Docker (the dev stack), Node 20+, and the aggregated OCA tree.
 
 ```bash
 # 0. one-time: *.localhost must resolve to loopback (Chromium + Node both honour /etc/hosts)
-echo "127.0.0.1 clienta.localhost clientb.localhost admin.localhost" | sudo tee -a /etc/hosts
+echo "127.0.0.1 e2eclienta.localhost e2eclientb.localhost e2eadmin.localhost" | sudo tee -a /etc/hosts
 
 # 1. bring up the routing overlay (db_filter ON, workers=0) and create the tenants
 make oca                         # aggregate pinned OCA repos (first run only)
@@ -96,7 +114,7 @@ The Playwright report + traces upload as an artifact on failure. Hard cap 15 min
 
 ## Regression net (proven)
 
-The suite goes **red** when a guarantee is removed — e.g. granting `clientb` the `sale`
+The suite goes **red** when a guarantee is removed — e.g. granting `e2eclientb` the `sale`
 license (`allowed_module_names = "crm,sale"`) reddens `license.spec` and `visibility.spec`;
 removing `db_filter` reddens `isolation.spec`. That is the point: it fails loudly on a
 deliberate isolation/visibility regression.

@@ -7,14 +7,20 @@
 #  (db_filter ON): `make routing-up`. Reuses the P1-T06 setup pattern.
 #
 #  Both install the SAME modules (crm + sale); they differ only in the licensed
-#  set (allowed_module_names) — so clientb has `sale` INSTALLED but UNLICENSED,
+#  set (allowed_module_names) — so e2eclientb has `sale` INSTALLED but UNLICENSED,
 #  which is exactly what P1-T09 (menu hidden) and P1-T10 (access blocked) enforce.
-#    clienta  = Pro   plan: allowed = "crm,sale"   (Sales visible + usable)
-#    clientb  = Basic plan: allowed = "crm"         (Sales installed, hidden+blocked)
-#    admin    = platform DB (routing target)
+#    e2eclienta = Pro   plan: allowed = "crm,sale"  (Sales visible + usable)
+#    e2eclientb = Basic plan: allowed = "crm"       (Sales installed, hidden+blocked)
+#    e2eadmin   = platform DB (routing target)
+#
+#  FIXTURE NAMESPACE — these names are deliberately prefixed `e2e*`. The P1-T06
+#  routing proof owns clienta/clientb/admin and `make routing-clean` drops those.
+#  Sharing one namespace across two suites meant either could destroy the other's
+#  fixtures; the prefix makes that structurally impossible. The names must stay
+#  ALPHANUMERIC: db_filter=^%d$ maps a subdomain to the DB of the same name, and
+#  underscores are invalid in hostnames while hyphens need Postgres quoting.
 #
 #  Admin login for every tenant: admin / $E2E_ADMIN_PW (default "admin").
-#  clienta also gets role users:  sales@clienta / acct@clienta  (pw demo1234).
 # ============================================================================
 set -euo pipefail
 cd "$(dirname "$0")/../.."   # repo root
@@ -69,26 +75,26 @@ PY
 }
 
 echo "Setting up E2E tenants…"
-create_tenant clienta "base,ncollection_core,ncollection_branding,crm,sale" "crm,sale"
-create_tenant clientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
+create_tenant e2eclienta "base,ncollection_core,ncollection_branding,crm,sale" "crm,sale"
+create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
 
-# admin platform DB (minimal — a routing target for the admin.localhost journey).
-if db_exists admin; then
-  echo "  • admin exists — skip create"
+# platform DB (minimal — a routing target for the e2eadmin.localhost journey).
+if db_exists e2eadmin; then
+  echo "  • e2eadmin exists — skip create"
 else
-  echo "  • creating admin (base)…"
-  "${DC[@]}" exec -T odoo odoo -d admin -i base --without-demo=True --no-http \
+  echo "  • creating e2eadmin (base)…"
+  "${DC[@]}" exec -T odoo odoo -d e2eadmin -i base --without-demo=True --no-http \
     --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
 fi
 
 # A non-system "business" user with the standard Sales groups on BOTH tenants
 # (login: biz / demo1234). Enforcement is bypassed for system users (the
 # Owner/admin), so the journeys probe as `biz`: it HAS the Sales groups, so
-# Sales is gated purely by the plan license — visible on clienta (licensed),
-# hidden + access-denied on clientb (unlicensed). Owner-only menus (Settings)
+# Sales is gated purely by the plan license — visible on e2eclienta (licensed),
+# hidden + access-denied on e2eclientb (unlicensed). Owner-only menus (Settings)
 # stay hidden from `biz` and visible to admin (the role/owner spot check).
 echo "  • seeding business user 'biz' (Sales groups, non-system) on both tenants…"
-for t in clienta clientb; do
+for t in e2eclienta e2eclientb; do
   "${DC[@]}" exec -T odoo odoo shell -d "$t" --no-http --log-level=error "${DBARGS[@]}" \
     >/dev/null 2>&1 <<'PY'
 Users = env['res.users']
@@ -154,4 +160,4 @@ done
 [ "$edge_ready" = 1 ] || {
   echo "ERROR: the nginx edge did not answer on :80 within 15s of restart." >&2; exit 1; }
 
-echo "✅ E2E tenants ready: clienta (Pro) · clientb (Basic) · admin"
+echo "✅ E2E tenants ready: e2eclienta (Pro) · e2eclientb (Basic) · e2eadmin"
