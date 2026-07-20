@@ -89,9 +89,26 @@ explicitly: "No task-specific architecture constraint beyond the standard rules 
 6. Small, incremental commits. Never generate an entire module in one shot —
    build it the way a human would: model → security → views → tests.
 7. Every new model/field that touches money, PII, or tenant identity gets a test.
-8. Before finishing: run `flake8 custom_addons/` and
-   `python scripts/ci/architecture_guard.py --base origin/develop` locally —
-   fix anything they catch before opening the PR, don't rely on CI to find it first.
+8. Before finishing: run `make hooks-install` once (the pre-push hook then runs
+   flake8 · shellcheck · `invariants.py` · `architecture_guard.py` for you), and
+   run **`make verify-all`** — routing + provisioning + e2e, not just your own
+   lane. Don't rely on CI to find it first; CI here cannot block a merge anyway.
+9. Postgres CLI tools need an explicit `-d`. `psql`/`pg_isready` default the
+   target database to the *username*; the role is `odoo` and no such database
+   exists, so a missing `-d` fails with `FATAL: database "odoo" does not exist`.
+   This silently disabled the routing suite's idempotency for weeks
+   (REGRESSIONS.md R-002). `dropdb`/`createdb` are fine — they default to the
+   `postgres` maintenance database.
+10. Never `|| true` on a state-changing step you later depend on. Fail loud with
+    an actionable message (R-005).
+11. Derive container IDs via `docker compose ps -q <service>`; never hardcode
+    `ncollection-*` names (R-006).
+12. Verification scripts must be idempotent **and prove it** — run twice, the
+    second run must be a no-op (R-002).
+13. Fixture databases are namespaced per suite and you may only drop your own:
+    routing owns `clienta`/`clientb`/`admin`, e2e owns `e2e*`, provisioning owns
+    `prov*`. Names stay alphanumeric — `db_filter=^%d$` maps a subdomain to the
+    database of the same name (R-004).
 
 ## Definition of Done (for this specific task)
 <Paste the Acceptance criteria from the task table row here again, as an explicit
@@ -100,11 +117,20 @@ likely to get lost if only stated once.>
 - [ ] <acceptance criterion 1>
 - [ ] <acceptance criterion 2>
 - [ ] ...
-- [ ] `flake8` clean
-- [ ] `architecture_guard.py` clean (or violations justified in PR description)
+- [ ] `flake8` · `shellcheck` · `invariants.py` · `architecture_guard.py` clean
+      (or violations justified in the PR description)
 - [ ] Tests added/updated and passing locally
+- [ ] **`make verify-all` green** — routing + provisioning + e2e, not just this
+      task's own lane (evidence pasted in the PR, not just asserted)
+- [ ] **Blast radius stated**: which already-shipped work this could touch
+- [ ] **"What this does NOT cover" stated** — an undeclared gap reads as coverage
+- [ ] **Rollback plan** stated
+- [ ] If this fixed a regression: entry added to `docs/markdown/REGRESSIONS.md`
+      (symptom → root cause → the guard that prevents recurrence)
 - [ ] PR opened against `develop`, title `[P#-T##] <Task Name>`, description
       references this task ID and links any relevant doc sections used
+- [ ] After merge: issue closed **by hand** (`Closes #<N>` does not fire on a
+      `develop` merge), and the canary checked for a `broken-develop` issue
 
 ## What NOT to do
 - Do not start work on any other task ID in this conversation.
