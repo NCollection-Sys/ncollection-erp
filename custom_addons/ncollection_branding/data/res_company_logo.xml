@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!--
+        Seed the main company logo with the NCollection mark so the login card
+        (and the backend company logo) renders NCollection branding instead of
+        Odoo's default placeholder (P1-T14 acceptance item 2 — the login card
+        img reads /web/binary/company_logo).
+
+        noupdate="1" on purpose: this applies ONCE at install. It must NOT
+        re-seed on module upgrade, because P1-T16 (Dynamic Tenant Branding) and
+        the provisioning flow let a tenant Owner upload their own logo — a
+        non-noupdate record would clobber that on every upgrade. Kept in a
+        separate file from res_company_data.xml (which is intentionally
+        updatable for the email colour defaults).
+    -->
+    <record id="base.main_company" model="res.company">
+        <field name="logo" type="base64" file="ncollection_branding/static/src/img/logo.png"/>
+    </record>
+</odoo>

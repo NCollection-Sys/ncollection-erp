@@ -1,0 +1,320 @@
+// =============================================================================
+// NCollection login redesign (P1-T14)
+//
+// Split-screen login/reset/signup styling, scoped entirely under `.o_nc_login`
+// so it cannot leak into other frontend pages that also load
+// web.assets_frontend. Ported from the demo reference (demo/src/pages/login.css
+// + tokens.css) — see docs/markdown/DELIVERABLE_1_SYSTEM_DESIGN.md P1-T14.
+//
+// Colours are declared as SCSS variables in ONE place here. P1-T16 (Dynamic
+// Tenant Branding) will later swap the tenant-overridable ones for `--nc-*`
+// CSS custom properties + a per-tenant login background; keeping them
+// centralised now keeps that refactor cheap. The dark brand-panel colours are
+// deliberately theme-invariant (they sit on a fixed dark gradient).
+// =============================================================================
+
+// Palette shared with the rest of the addon (theme_colors.scss).
+$ncollection-primary: #1F5F8F;
+$ncollection-primary-strong: #184C72;
+$ncollection-secondary: #2D7AB7;
+$ncollection-silver: #C0C7D1;
+$ncollection-bg: #F7F9FC;
+$ncollection-text: #0F172A;
+
+// Login-specific tokens (demo parity; not yet in the shared palette).
+$nc-login-text-muted: #5A6B83;
+$nc-login-text-faint: #8896A8;
+$nc-login-bg-elevated: #FFFFFF;
+$nc-login-danger: #B4453C;
+$nc-login-danger-soft: #FBE9E7;
+$nc-login-info-soft: #E7F1FA;
+$nc-login-radius: 6px;
+
+// Brand-panel (dark, theme-invariant) tokens.
+$nc-brand-grad-a: #245E8B;
+$nc-brand-grad-b: #16344F;
+$nc-brand-grad-c: #0D2033;
+$nc-brand-grad-d: #0A1926;
+$nc-brand-text: #EAF2FA;
+$nc-brand-text-soft: #A9C4DC;
+$nc-brand-text-point: #CADCEC;
+$nc-brand-check: #7FD3A8;
+$nc-brand-glow: rgba(45, 122, 183, 0.5);
+
+// ---- Full-bleed grid frame ---------------------------------------------------
+// login_layout keeps the page inside #wrapwrap > main; strip its default
+// spacing so the split screen reaches every edge.
+.o_nc_login {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+
+    // Neutralise Bootstrap/Odoo container gutters that would box the grid in.
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+// ---- Left: branded marketing panel ------------------------------------------
+.o_nc_login__brand {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(120% 90% at 15% 10%, $nc-brand-grad-a 0%, transparent 55%),
+        linear-gradient(155deg, $nc-brand-grad-b 0%, $nc-brand-grad-c 55%, $nc-brand-grad-d 100%);
+    color: $nc-brand-text;
+    padding: 56px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.o_nc_login__brand-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    max-width: 460px;
+    margin-top: 8px;
+}
+
+.o_nc_login__wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+}
+
+.o_nc_login__wordmark-text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: #F2F6FB;
+}
+
+.o_nc_login__wordmark-suffix {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8FB6D6;
+}
+
+.o_nc_login__brand-copy {
+    h1 {
+        font-size: 2.3rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 1.12;
+        margin-bottom: 16px;
+    }
+
+    p {
+        font-size: 1.02rem;
+        color: $nc-brand-text-soft;
+        line-height: 1.55;
+        max-width: 40ch;
+        margin-bottom: 0;
+    }
+}
+
+.o_nc_login__points {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 0.95rem;
+        color: $nc-brand-text-point;
+    }
+
+    svg {
+        color: $nc-brand-check;
+        flex-shrink: 0;
+    }
+}
+
+.o_nc_login__glow {
+    position: absolute;
+    inset-inline-end: -120px;
+    bottom: -140px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, $nc-brand-glow, transparent 65%);
+    filter: blur(20px);
+}
+
+// ---- Right: form side --------------------------------------------------------
+.o_nc_login__form-side {
+    background: $ncollection-bg;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    position: relative;
+}
+
+.o_nc_login__card {
+    width: 100%;
+    max-width: 400px;
+}
+
+.o_nc_login__card-logo {
+    // Only shown on mobile (see breakpoint); the brand panel carries the
+    // logo on desktop. Uses the per-tenant company logo binary.
+    display: none;
+    margin-bottom: 28px;
+
+    img {
+        max-height: 54px;
+        max-width: 100%;
+        width: auto;
+    }
+}
+
+.o_nc_login__heading {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: $ncollection-text;
+    margin: 0;
+}
+
+.o_nc_login__sub {
+    margin: 6px 0 0;
+    color: $nc-login-text-muted;
+    font-size: 0.95rem;
+}
+
+// Odoo renders the login form as Bootstrap markup; restyle in place (no markup
+// change) so all functional classes/attributes are preserved.
+.o_nc_login__card {
+    .oe_login_form,
+    .oe_reset_password_form,
+    .oe_signup_form {
+        margin-top: 28px;
+    }
+
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: $nc-login-text-muted;
+        margin-bottom: 6px;
+    }
+
+    .form-control {
+        padding: 9px 12px;
+        border-radius: $nc-login-radius;
+        border: 1px solid $ncollection-silver;
+        background: $nc-login-bg-elevated;
+        transition: border-color 0.15s, box-shadow 0.15s;
+
+        &:focus {
+            outline: none;
+            border-color: $ncollection-secondary;
+            box-shadow: 0 0 0 3px $nc-login-info-soft;
+        }
+    }
+
+    // Password reveal + database "Select" adornments keep the input-group edge.
+    .input-group .o_show_password,
+    .input-group .btn {
+        border-radius: 0 $nc-login-radius $nc-login-radius 0;
+    }
+
+    .btn-primary {
+        background-color: $ncollection-primary;
+        border-color: $ncollection-primary;
+        border-radius: $nc-login-radius;
+        padding: 9px 16px;
+        font-size: 0.875rem;
+        font-weight: 600;
+
+        &:hover,
+        &:focus {
+            background-color: $ncollection-primary-strong;
+            border-color: $ncollection-primary-strong;
+        }
+    }
+
+    // Error / status banners → soft demo styling.
+    .alert-danger {
+        background: $nc-login-danger-soft;
+        color: $nc-login-danger;
+        border: 1px solid rgba($nc-login-danger, 0.25);
+        border-radius: $nc-login-radius;
+        padding: 10px 13px;
+        font-size: 0.86rem;
+        font-weight: 550;
+    }
+
+    // "Forgot password?" sits beside the Password label (justify-content-between).
+    .o_nc_login__forgot {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: $ncollection-primary;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    // Native signup / oauth helper links.
+    .oe_login_buttons .btn-link {
+        color: $ncollection-secondary;
+    }
+}
+
+.o_nc_login__footer {
+    position: absolute;
+    bottom: 24px;
+    font-size: 0.8rem;
+    color: $nc-login-text-faint;
+    text-align: center;
+    width: 100%;
+    padding: 0 24px;
+}
+
+// ---- Responsive: collapse to a single centered column ------------------------
+// Brand panel hides; the per-tenant logo appears centered above the form.
+@media (max-width: 860px) {
+    .o_nc_login {
+        grid-template-columns: 1fr;
+    }
+
+    .o_nc_login__brand {
+        display: none;
+    }
+
+    .o_nc_login__card-logo {
+        display: flex;
+        justify-content: center;
+    }
+
+    .o_nc_login__heading,
+    .o_nc_login__sub {
+        text-align: center;
+    }
+}
+
+// Narrow phones (≤360px): tighten the form-side padding so the 400px card
+// never forces a horizontal scrollbar at the 320px acceptance width.
+@media (max-width: 360px) {
+    .o_nc_login__form-side {
+        padding: 32px 16px;
+    }
+}

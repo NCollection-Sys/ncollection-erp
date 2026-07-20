@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Login page redesign (P1-T14) — TEMPLATE ONLY, never the auth controller
+        (preserves Odoo's CSRF token + session security; pinned by
+        ARCHITECTURE_SECURITY.md §6). Two inheritances:
+
+          1. login_layout_split (inherit web.login_layout, priority 20)
+             Replaces the centred 300px card with the split-screen frame
+             (brand panel + form side). Runs AFTER ncollection_branding
+             .login_layout_branded (priority 16, P1-T13 footer de-Odoo-ing) so
+             that override still matches its anchors first. Because
+             auth_signup.reset_password and auth_signup.signup also t-call
+             web.login_layout, this frame styles those pages too.
+
+          2. login_form_branded (inherit web.login, priority 40)
+             Runs AFTER auth_signup.login (16, injects the reset/signup links)
+             and auth_passkey (32) so their nodes exist: adds the heading/sub
+             and relabels the native "Reset Password" link to "Forgot
+             password?" — keeping its reset_password_enabled guard, keep_query()
+             and the CSRF-bearing form untouched.
+
+        Remember-Me is intentionally NOT rendered: Odoo 19 has no native
+        remember-me and its session cookie already persists ~7 days
+        unconditionally, so a functional toggle would require auth-controller
+        changes (forbidden here). A cosmetic checkbox would be misleading UI.
+        See the PR description for the recorded deviation.
+    -->
+
+    <!-- 1 — split-screen layout frame -->
+    <template id="login_layout_split" inherit_id="web.login_layout" priority="20"
+              name="NCollection Login Split Layout">
+        <xpath expr="//div[hasclass('container')]" position="replace">
+            <div class="o_nc_login">
+                <!-- Left: NCollection product brand panel (fixed brand identity). -->
+                <aside class="o_nc_login__brand">
+                    <div class="o_nc_login__brand-inner">
+                        <span class="o_nc_login__wordmark">
+                            <svg width="40" height="40" viewBox="0 0 44 44" role="img" aria-label="NCollection">
+                                <defs>
+                                    <linearGradient id="nc_login_logo_g" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0" stop-color="#2d7ab7"/>
+                                        <stop offset="1" stop-color="#1f5f8f"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect x="0" y="0" width="44" height="44" rx="11" fill="url(#nc_login_logo_g)"/>
+                                <path d="M13 31V13.5c0-.4.5-.6.8-.3L31 30.5" fill="none"
+                                      stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+                                <path d="M13 13v18M31 13v18" fill="none" stroke="#ffffff"
+                                      stroke-width="3.4" stroke-linecap="round" opacity="0.92"/>
+                                <circle cx="33.5" cy="11" r="3" fill="#c6ddf0"/>
+                            </svg>
+                            <span class="o_nc_login__wordmark-text">NCollection<span
+                                class="o_nc_login__wordmark-suffix">ERP</span></span>
+                        </span>
+                        <div class="o_nc_login__brand-copy">
+                            <h1>The unified business platform for GCC companies.</h1>
+                            <p>Sales, inventory, invoicing, and people — one workspace, your brand,
+                               running on infrastructure built for the region.</p>
+                        </div>
+                        <ul class="o_nc_login__points">
+                            <li>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                                     stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 6 9 17l-5-5"/>
+                                </svg>
+                                <span>VAT &amp; TRN-ready invoicing</span>
+                            </li>
+                            <li>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                                     stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 6 9 17l-5-5"/>
+                                </svg>
+                                <span>Role-based access for every team</span>
+                            </li>
+                            <li>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                                     stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 6 9 17l-5-5"/>
+                                </svg>
+                                <span>Fully white-labeled to your company</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="o_nc_login__glow" aria-hidden="true"/>
+                </aside>
+
+                <!-- Right: form side. The card logo (mobile only) uses the
+                     per-tenant company logo binary — subdomain→database routing
+                     means each tenant DB serves its own logo (acceptance item 7). -->
+                <main class="o_nc_login__form-side">
+                    <div class="o_nc_login__card">
+                        <div class="o_nc_login__card-logo">
+                            <img t-attf-src="/web/binary/company_logo{{ '?dbname='+db if db else '' }}"
+                                 alt="NCollection" loading="lazy"/>
+                        </div>
+                        <t t-out="0"/>
+                    </div>
+                    <div class="o_nc_login__footer" t-if="not disable_footer">
+                        © <t t-out="datetime.date.today().year"/> NCollection. All rights reserved.
+                    </div>
+                </main>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 2 — form heading + Forgot-password relabel -->
+    <template id="login_form_branded" inherit_id="web.login" priority="40"
+              name="NCollection Login Form">
+        <!-- Heading/sub at the top of the login card (login page only — the
+             reset/signup pages are separate templates and don't carry this
+             #oe_structure_login_top node). Anchored on the id because the form
+             itself uses t-attf-class (no static class for hasclass() to match). -->
+        <xpath expr="//div[@id='oe_structure_login_top']" position="before">
+            <div class="o_nc_login__intro">
+                <h1 class="o_nc_login__heading">Sign in to your workspace</h1>
+                <p class="o_nc_login__sub">Welcome back. Please enter your details.</p>
+            </div>
+        </xpath>
+        <!-- Relabel the reset link injected by auth_signup.login; keep its
+             guard, keep_query() and tabindex. auth_signup writes it with
+             t-attf-href (no static href), so it is matched by its unique
+             tabindex='1' rather than by href. -->
+        <xpath expr="//a[@tabindex='1']" position="replace">
+            <a t-if="reset_password_enabled" class="o_nc_login__forgot" tabindex="1"
+               t-attf-href="/web/reset_password?{{ keep_query() }}">Forgot password?</a>
+        </xpath>
+    </template>
+
+</odoo>
