@@ -7,3 +7,4 @@ from . import test_license_enforcement
 from . import test_menu_stripping
 from . import test_workspace_settings
 from . import test_dashboard
+from . import test_workspace_appearance

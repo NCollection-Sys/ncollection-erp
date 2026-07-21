@@ -1,16 +1,22 @@
 {
     'name': 'NCollection Core',
-    'version': '19.0.1.7.0',
+    'version': '19.0.1.8.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
-    'depends': ['base', 'web'],
+    # ncollection_branding (P1-T16): the Workspace Appearance page edits the
+    # res.company nc_* branding fields defined by ncollection_branding. Per the
+    # DELIVERABLE_1 §2.5 matrix branding ships in every tenant DB where core
+    # lives, so the edge is core -> branding (branding stays installable
+    # standalone in the admin DB, so the reverse would break its admin install).
+    'depends': ['base', 'web', 'ncollection_branding'],
     'data': [
         'security/role_groups.xml',
         'security/ir.model.access.csv',
         'views/workspace_settings_views.xml',
+        'views/workspace_appearance_views.xml',
         'views/dashboard_action.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in
