@@ -7,3 +7,5 @@ from . import ir_ui_menu
 from . import license_enforcement
 from . import ir_http
 from . import res_users
+# P1-T17 customer dashboard — self-contained subtree, see dashboard/__init__.py
+from . import dashboard

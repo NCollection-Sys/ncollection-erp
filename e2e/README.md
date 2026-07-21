@@ -86,6 +86,25 @@ specs are deterministic.
 4. No arbitrary `waitForTimeout`. Use Playwright auto-waiting and server-redirect waits
    (see `login()` / `expectLoggedOut()` for the pattern).
 
+## Gotcha — the login endpoint is rate limited
+
+The edge throttles `location = /web/login` to **10 r/m** (`limit_req zone=login burst=10`,
+P1-T03, `nginx/conf.d/ncollection.dev.conf`), and that zone covers the **form GET as well as
+the auth POST**.
+
+Symptom when you exceed it: a journey hangs and dies on a 60-second
+`page.waitForURL` timeout. The real cause is invisible in the test output — the page is an
+nginx **`429 Too Many Requests`** body. Check the Playwright `error-context.md` attachment if a
+login times out for no obvious reason. Re-running the suite several times in quick succession
+is enough to trip it.
+
+So: **use `loginViaRpc()` unless the login form itself is what you are testing.** It
+authenticates over `/web/session/authenticate` (not throttled) on the page's own request
+context, which shares the browser cookie jar — same session, no pressure on the scarce
+endpoint. Only `auth.spec.ts` should spend the budget on real form logins.
+
+Restarting the nginx container resets the counters if you get stuck.
+
 ## Runtime contract — the websocket port (read before touching the stack)
 
 Odoo serves the realtime **bus** on a port that depends on worker mode:

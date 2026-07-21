@@ -1,0 +1,102 @@
+// Customer Workspace Dashboard (P1-T17).
+//
+// Ported from the prototype: demo/src/pages/pages.css (.nc-kpi-grid) and
+// demo/src/components/ui/ui.css (.nc-kpi). The prototype's own comment notes
+// the tile is "the visual descendant of the Odoo .o_ncollection_kpi_card", so
+// porting it back keeps this consistent with the existing SaaS dashboard.
+//
+// Every colour is read through a --nc-* custom property WITH a fallback. The
+// fallbacks are the NCollection defaults from demo/src/theme/tokens.css, so the
+// dashboard looks right today; when P1-T16 (#17) writes per-tenant values onto
+// :root, these tiles pick up the tenant's brand automatically with no change
+// here. That is the whole "charts render with the tenant's brand colors"
+// acceptance criterion, satisfied by construction rather than by a hard-coded
+// palette.
+
+.nc-dashboard {
+    padding: 20px;
+
+    &__header {
+        margin-bottom: 20px;
+    }
+
+    &__title {
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--nc-text, #0f172a);
+    }
+
+    &__subtitle {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--nc-text-muted, #64748b);
+    }
+
+    &__status {
+        padding: 24px;
+        border-radius: var(--nc-radius, 10px);
+        background: var(--nc-surface, #ffffff);
+        border: 1px solid var(--nc-border, #e2e8f0);
+        color: var(--nc-text-muted, #64748b);
+        font-size: 14px;
+
+        &--error {
+            border-color: var(--nc-danger, #b4453c);
+            color: var(--nc-danger, #b4453c);
+        }
+    }
+}
+
+// 4 across on desktop, 2 on tablet, 1 on phone — the prototype's breakpoints.
+.nc-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+
+    @media (max-width: 1180px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 560px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.nc-kpi-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 18px 20px;
+    background: var(--nc-surface, #ffffff);
+    border: 1px solid var(--nc-border, #e2e8f0);
+    // Logical property, so the accent flips automatically under RTL (P3-T08).
+    border-inline-start: 4px solid var(--nc-primary, #1f5f8f);
+    border-radius: var(--nc-radius, 10px);
+    box-shadow: var(--nc-shadow, 0 1px 3px rgba(15, 23, 42, 0.08));
+
+    &__label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--nc-text-muted, #64748b);
+    }
+
+    &__value {
+        font-size: 26px;
+        font-weight: 600;
+        line-height: 1.1;
+        color: var(--nc-text, #0f172a);
+        // Tabular figures keep digits from jittering as values refresh.
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__sub {
+        font-size: 12px;
+        color: var(--nc-text-muted, #64748b);
+    }
+}

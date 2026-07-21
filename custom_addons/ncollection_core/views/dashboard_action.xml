@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Customer Workspace Dashboard action + menu (P1-T17).
+
+    The menu is a ROOT menu owned by ncollection_core, which is safe with
+    respect to P1-T09 license filtering: _ncollection_blocked_module_names()
+    skips any module whose name starts with "ncollection_", so this landing
+    page stays visible whatever the plan's allowed_module_names contains.
+    That is intended — every tenant lands here, on every plan.
+
+    Role gating happens inside the payload (ncollection.dashboard.data), not on
+    this menu: all roles may open the dashboard, they just receive different
+    widgets.
+-->
+<odoo>
+
+    <record id="action_ncollection_dashboard" model="ir.actions.client">
+        <field name="name">Dashboard</field>
+        <field name="tag">ncollection_core.dashboard</field>
+    </record>
+
+    <!-- sequence 1: the landing page sorts ahead of the ERP apps. -->
+    <menuitem id="menu_ncollection_dashboard_root"
+              name="Dashboard"
+              action="action_ncollection_dashboard"
+              sequence="1"/>
+
+</odoo>
