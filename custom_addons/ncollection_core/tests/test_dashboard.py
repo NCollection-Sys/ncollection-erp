@@ -11,6 +11,8 @@ The two properties worth protecting here are the ones that would fail silently:
    dashboard without Sales or Accounting installed.
 """
 
+from odoo import api
+from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
 from odoo.addons.ncollection_core.models.dashboard import dashboard_data as dash
@@ -127,6 +129,54 @@ class TestDashboardRoleGating(TransactionCase):
             self.assertEqual(widget["group"], dash.GROUP_PERSONAL)
             self.assertIsInstance(widget["value"], int)
             self.assertTrue(widget["label"])
+
+    def test_widget_is_dropped_when_the_plan_denies_the_model(self):
+        """A licence denial must remove the widget, not break the page.
+
+        This is not hypothetical. On a Basic-plan tenant `sale.order` IS in the
+        registry, so an availability check alone passes — but P1-T10 raises
+        AccessError ("The 'sale.order' feature is not included in your
+        NCollection plan") the moment a regular user reads it. Without this
+        catch the dashboard would 500 for precisely the users licensing is
+        meant to constrain.
+        """
+        user = self._user_with_role("ncollection_core.group_role_owner")
+        service = self.Dashboard.with_user(user)
+
+        def _denied(inner_self):
+            # Mirrors the real P1-T10 message; translated via env, which is the
+            # Odoo 19 idiom the linter enforces (odoo/odoo#174844).
+            raise AccessError(
+                inner_self.env._("The 'x.y' feature is not included in your NCollection plan.")
+            )
+
+        specs = [dict(service._provider_specs()[0], compute="_compute_denied", model=None)]
+        model_cls = type(service)
+        model_cls._compute_denied = api.model(_denied)
+        try:
+            with self._patched_specs(service, specs):
+                payload = service.get_dashboard_payload()
+        finally:
+            del model_cls._compute_denied
+
+        self.assertEqual(
+            payload["widgets"], [],
+            "a licence-denied widget must be omitted from the payload",
+        )
+        # The page still renders: the rest of the payload survives one bad tile.
+        self.assertIn("meta", payload)
+
+    def test_model_readable_is_false_for_an_absent_model(self):
+        """The availability probe answers False rather than raising."""
+        self.assertFalse(self.Dashboard._model_readable("module.that.is.not.installed"))
+
+    def test_quick_actions_respect_role_and_availability(self):
+        """Quick actions never offer an app the user cannot reach."""
+        user = self._user_with_role("ncollection_core.group_role_employee")
+        payload = self.Dashboard.with_user(user).get_dashboard_payload()
+        # Employee holds only 'personal'; every quick action is pipeline,
+        # financial or operations, so none may be offered.
+        self.assertEqual(payload["actions"], [])
 
     # -- helpers ------------------------------------------------------------
 
