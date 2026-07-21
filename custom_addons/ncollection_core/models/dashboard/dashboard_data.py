@@ -35,7 +35,7 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 
-from odoo import _, api, models
+from odoo import api, models
 from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
@@ -146,49 +146,49 @@ class NCollectionDashboardData(models.AbstractModel):
         return [
             {
                 'key': 'sales_this_month', 'type': TYPE_KPI, 'group': GROUP_PIPELINE,
-                'label': _('Sales This Month'), 'icon': 'sales',
+                'label': self.env._('Sales This Month'), 'icon': 'sales',
                 'model': 'sale.order', 'compute': '_compute_sales_this_month',
             },
             # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard (FPA §7).
             # Aggregation only; no financial business logic belongs here.
             {
                 'key': 'receivables', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL,
-                'label': _('Receivables'), 'icon': 'invoicing',
+                'label': self.env._('Receivables'), 'icon': 'invoicing',
                 'model': 'account.move.line', 'compute': '_compute_receivables',
             },
             # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard (FPA §7).
             {
                 'key': 'payables', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL,
-                'label': _('Payables'), 'icon': 'wallet',
+                'label': self.env._('Payables'), 'icon': 'wallet',
                 'model': 'account.move.line', 'compute': '_compute_payables',
             },
             # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard (FPA §7).
             {
                 'key': 'cash_bank', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL,
-                'label': _('Cash & Bank'), 'icon': 'wallet',
+                'label': self.env._('Cash & Bank'), 'icon': 'wallet',
                 'model': 'account.move.line', 'compute': '_compute_cash_bank',
             },
             {
                 'key': 'open_activities', 'type': TYPE_KPI, 'group': GROUP_PERSONAL,
-                'label': _('Open Activities'), 'icon': 'activity',
+                'label': self.env._('Open Activities'), 'icon': 'activity',
                 'model': 'mail.activity', 'compute': '_compute_open_activities',
             },
             # Absent in Community (no approvals app) — a real, honest example of
             # a widget that simply does not render on a tenant lacking the app.
             {
                 'key': 'pending_approvals', 'type': TYPE_KPI, 'group': GROUP_OPERATIONS,
-                'label': _('Pending Approvals'), 'icon': 'check',
+                'label': self.env._('Pending Approvals'), 'icon': 'check',
                 'model': 'approval.request', 'compute': '_compute_pending_approvals',
             },
             # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard (FPA §7).
             {
                 'key': 'revenue_6m', 'type': TYPE_CHART, 'group': GROUP_FINANCIAL,
-                'label': _('Revenue (last 6 months)'), 'chart': 'line',
+                'label': self.env._('Revenue (last 6 months)'), 'chart': 'line',
                 'model': 'account.move.line', 'compute': '_compute_revenue_6m',
             },
             {
                 'key': 'top_customers', 'type': TYPE_CHART, 'group': GROUP_PIPELINE,
-                'label': _('Top Customers'), 'chart': 'bar',
+                'label': self.env._('Top Customers'), 'chart': 'bar',
                 'model': 'sale.order', 'compute': '_compute_top_customers',
             },
         ]
@@ -221,7 +221,7 @@ class NCollectionDashboardData(models.AbstractModel):
         trend = ((current - previous) / previous * 100.0) if previous else None
         return {
             'value': current, 'format': 'currency', 'trend': trend,
-            'sub': _('vs last month'),
+            'sub': self.env._('vs last month'),
         }
 
     @api.model
@@ -240,7 +240,7 @@ class NCollectionDashboardData(models.AbstractModel):
         # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard.
         return {
             'value': self._residual_by_account_type('asset_receivable'),
-            'format': 'currency', 'sub': _('Open invoices'),
+            'format': 'currency', 'sub': self.env._('Open invoices'),
         }
 
     @api.model
@@ -248,7 +248,7 @@ class NCollectionDashboardData(models.AbstractModel):
         # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard.
         return {
             'value': self._residual_by_account_type('liability_payable'),
-            'format': 'currency', 'sub': _('Open bills'),
+            'format': 'currency', 'sub': self.env._('Open bills'),
         }
 
     @api.model
@@ -259,17 +259,17 @@ class NCollectionDashboardData(models.AbstractModel):
             [('journal_id.type', 'in', ('bank', 'cash')), ('parent_state', '=', 'posted')],
             'balance:sum',
         )
-        return {'value': total, 'format': 'currency', 'sub': _('Across cash & bank journals')}
+        return {'value': total, 'format': 'currency', 'sub': self.env._('Across cash & bank journals')}
 
     @api.model
     def _compute_open_activities(self):
         count = self.env['mail.activity'].search_count([('user_id', '=', self.env.uid)])
-        return {'value': count, 'format': 'integer', 'sub': _('Assigned to you')}
+        return {'value': count, 'format': 'integer', 'sub': self.env._('Assigned to you')}
 
     @api.model
     def _compute_pending_approvals(self):
         count = self.env['approval.request'].search_count([('request_status', '=', 'pending')])
-        return {'value': count, 'format': 'integer', 'sub': _('Awaiting sign-off')}
+        return {'value': count, 'format': 'integer', 'sub': self.env._('Awaiting sign-off')}
 
     # -- chart computations -------------------------------------------------
 
@@ -309,7 +309,7 @@ class NCollectionDashboardData(models.AbstractModel):
             limit=5, order='amount_total:sum desc',
         )
         return {
-            'labels': [partner.display_name if partner else _('Unknown') for partner, _total in rows],
+            'labels': [partner.display_name if partner else self.env._('Unknown') for partner, _total in rows],
             'data': [total or 0.0 for _partner, total in rows],
             'format': 'currency',
         }
@@ -328,7 +328,7 @@ class NCollectionDashboardData(models.AbstractModel):
             action = self.env.ref(spec['action'], raise_if_not_found=False)
             if not action:
                 continue
-            actions.append({'key': spec['key'], 'label': _(spec['label']), 'action_id': action.id})
+            actions.append({'key': spec['key'], 'label': self.env._(spec['label']), 'action_id': action.id})
         return actions
 
     # -- payload ------------------------------------------------------------

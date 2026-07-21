@@ -143,8 +143,12 @@ class TestDashboardRoleGating(TransactionCase):
         user = self._user_with_role("ncollection_core.group_role_owner")
         service = self.Dashboard.with_user(user)
 
-        def _denied(_self):
-            raise AccessError("The 'x.y' feature is not included in your NCollection plan.")
+        def _denied(inner_self):
+            # Mirrors the real P1-T10 message; translated via env, which is the
+            # Odoo 19 idiom the linter enforces (odoo/odoo#174844).
+            raise AccessError(
+                inner_self.env._("The 'x.y' feature is not included in your NCollection plan.")
+            )
 
         specs = [dict(service._provider_specs()[0], compute="_compute_denied", model=None)]
         model_cls = type(service)
