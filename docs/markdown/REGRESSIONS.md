@@ -23,6 +23,7 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Post-merge canary | `.github/workflows/canary.yml` | push to `develop` |
 | Nightly drift check | `.github/workflows/nightly.yml` | cron (once on `main`) |
 | Dependency/CVE watch | `.github/dependabot.yml` | weekly + advisories |
+| Stale module dependencies across all DBs | `scripts/dev/doctor.sh` | `make doctor` |
 | Fixture namespace separation | `Makefile`, `e2e/` | structural |
 
 ---
@@ -222,6 +223,34 @@ nightly catches upstream drift. See `BRANCH_PROTECTION.md`.
 
 **Real fix.** A paid plan (Team). Until then, no amount of tooling makes a merge blockable
 here, and any document claiming otherwise is wrong.
+
+---
+
+## R-012 — A module's dependency grew, and existing databases never got it
+
+**Symptom.** `ncollection_branding` silently stopped loading on the `ncollection` database.
+The dashboard and branding were simply absent, and the only signal was **one** line at startup:
+
+```
+ERROR odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['ncollection_branding']
+```
+
+It was reported as "the application is fundamentally broken". It was one module on one database.
+
+**Root cause.** `ncollection_branding` gained `http_routing` as a dependency during P1-T14.
+**Odoo does not retroactively install newly-declared dependencies into existing databases** —
+only an upgrade (`-u`) does. `ncollection` had been bootstrapped *before* that manifest change,
+so it kept the old dependency set; `e2eclienta`, created *after*, was fine.
+
+This is not specific to that module. **Every** database created before any `depends` grows drifts
+the same way, and the failure is near-invisible.
+
+**Guard.** `make doctor` now scans every database for installed modules whose declared
+dependencies are not installed, naming the database, the module, the missing dependency, and the
+exact `make upgrade` command. Proven twice: it caught the real `ncollection` defect before the
+fix, and flagged a deliberately broken throwaway database.
+
+**Remediation when it fires:** `make upgrade m=<module> db=<database>`.
 
 ---
 

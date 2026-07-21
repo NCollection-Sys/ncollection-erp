@@ -83,6 +83,47 @@ else
   warn "shellcheck not found (pre-push will skip it; CI still enforces)" "brew install shellcheck"
 fi
 
+# --- 8. Stale module dependencies (REGRESSIONS.md R-012) --------------------
+# Odoo does NOT retroactively install newly-declared dependencies into existing
+# databases — only an upgrade does. So when a module's `depends` grows, every
+# database created before that change silently keeps the old dependency set and
+# the module stops loading. The only signal is one line at startup:
+#
+#   ERROR odoo.modules.loading: Some modules are not loaded ... ['x']
+#
+# which is trivially missed. This asks Postgres directly, per database, and
+# prints the exact command that repairs each hit.
+# Container id comes from compose, never a hardcoded name — a non-default
+# COMPOSE_PROJECT_NAME would otherwise silently skip this whole check.
+db_cid="$(docker compose -f docker-compose.yml -f docker-compose.dev.yml ps -q db 2>/dev/null)"
+if [ -n "$db_cid" ]; then
+  stale_total=0
+  dbs="$(docker exec "$db_cid" psql -U odoo -d postgres -tAc \
+        "SELECT datname FROM pg_database WHERE datistemplate=false AND datname <> 'postgres' ORDER BY 1" 2>/dev/null)"
+  for db in $dbs; do
+    # An installed module whose declared dependency is not itself installed.
+    rows="$(docker exec "$db_cid" psql -U odoo -d "$db" -tAc "
+      SELECT m.name || ' -> ' || d.name
+      FROM ir_module_module m
+      JOIN ir_module_module_dependency d ON d.module_id = m.id
+      JOIN ir_module_module dep ON dep.name = d.name
+      WHERE m.state = 'installed' AND dep.state <> 'installed'
+      ORDER BY 1" 2>/dev/null)"
+    for row in $(printf '%s\n' "$rows" | tr -d ' ' | grep -v '^$'); do
+      mod="${row%%->*}"
+      missing="${row##*->}"
+      bad "db '$db': '$mod' is installed but its dependency '$missing' is NOT" \
+          "make upgrade m=$mod db=$db"
+      stale_total=$((stale_total + 1))
+    done
+  done
+  if [ "$stale_total" -eq 0 ]; then
+    ok "no stale module dependencies in any database"
+  fi
+else
+  warn "database container not running — skipped the stale-dependency scan" "make routing-up"
+fi
+
 echo
 if [ "$blockers" -gt 0 ]; then
   echo "✗ $blockers blocker(s) — fix those first."
