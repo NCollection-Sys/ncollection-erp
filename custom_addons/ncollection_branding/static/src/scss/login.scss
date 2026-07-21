@@ -6,11 +6,12 @@
 // web.assets_frontend. Ported from the demo reference (demo/src/pages/login.css
 // + tokens.css) — see docs/markdown/DELIVERABLE_1_SYSTEM_DESIGN.md P1-T14.
 //
-// Colours are declared as SCSS variables in ONE place here. P1-T16 (Dynamic
-// Tenant Branding) will later swap the tenant-overridable ones for `--nc-*`
-// CSS custom properties + a per-tenant login background; keeping them
-// centralised now keeps that refactor cheap. The dark brand-panel colours are
-// deliberately theme-invariant (they sit on a fixed dark gradient).
+// Colours are declared as SCSS variables here as the NCollection DEFAULTS.
+// P1-T16 (Dynamic Tenant Branding) made the tenant-overridable ones consume
+// `var(--nc-*, <default>)`, overridden at runtime by the per-tenant :root block
+// injected from res.company (views/branding_theme_templates.xml), plus an
+// optional per-tenant login background layered onto the brand panel. The dark
+// brand-panel foreground colours remain theme-invariant (fixed dark gradient).
 // =============================================================================
 
 // Palette shared with the rest of the addon (theme_colors.scss).
@@ -59,9 +60,17 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
 .o_nc_login__brand {
     position: relative;
     overflow: hidden;
-    background:
+    // Optional per-tenant login background (P1-T16) layers on top of the
+    // theme-invariant brand gradient. --nc-login-bg is emitted only when the
+    // tenant uploaded an image (res.company.nc_login_background); otherwise the
+    // `none` fallback keeps the default gradient visible.
+    background-color: $nc-brand-grad-c;
+    background-image:
+        var(--nc-login-bg, none),
         radial-gradient(120% 90% at 15% 10%, $nc-brand-grad-a 0%, transparent 55%),
         linear-gradient(155deg, $nc-brand-grad-b 0%, $nc-brand-grad-c 55%, $nc-brand-grad-d 100%);
+    background-size: cover;
+    background-position: center;
     color: $nc-brand-text;
     padding: 56px 60px;
     display: flex;
@@ -158,7 +167,7 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
 
 // ---- Right: form side --------------------------------------------------------
 .o_nc_login__form-side {
-    background: $ncollection-bg;
+    background: var(--nc-bg, #{$ncollection-bg});
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -189,7 +198,7 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
     font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-    color: $ncollection-text;
+    color: var(--nc-text, #{$ncollection-text});
     margin: 0;
 }
 
@@ -224,7 +233,7 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
 
         &:focus {
             outline: none;
-            border-color: $ncollection-secondary;
+            border-color: var(--nc-secondary, #{$ncollection-secondary});
             box-shadow: 0 0 0 3px $nc-login-info-soft;
         }
     }
@@ -236,8 +245,8 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
     }
 
     .btn-primary {
-        background-color: $ncollection-primary;
-        border-color: $ncollection-primary;
+        background-color: var(--nc-primary, #{$ncollection-primary});
+        border-color: var(--nc-primary, #{$ncollection-primary});
         border-radius: $nc-login-radius;
         padding: 9px 16px;
         font-size: 0.875rem;
@@ -245,8 +254,8 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
 
         &:hover,
         &:focus {
-            background-color: $ncollection-primary-strong;
-            border-color: $ncollection-primary-strong;
+            background-color: var(--nc-primary-strong, #{$ncollection-primary-strong});
+            border-color: var(--nc-primary-strong, #{$ncollection-primary-strong});
         }
     }
 
@@ -265,7 +274,7 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
     .o_nc_login__forgot {
         font-weight: 600;
         font-size: 0.85rem;
-        color: $ncollection-primary;
+        color: var(--nc-primary, #{$ncollection-primary});
         text-decoration: none;
 
         &:hover {
@@ -275,7 +284,7 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
 
     // Native signup / oauth helper links.
     .oe_login_buttons .btn-link {
-        color: $ncollection-secondary;
+        color: var(--nc-secondary, #{$ncollection-secondary});
     }
 }
 

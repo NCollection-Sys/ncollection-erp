@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Per-tenant CSS custom properties (P1-T16).
+
+        Database-per-tenant means the active company IS the tenant, so we emit a
+        tiny :root block reading the res.company nc_ colour fields into the head
+        of every page. The SCSS (theme_colors.scss, login.scss) consumes these
+        tokens via CSS var() with an NCollection-default fallback, so an
+        unset/empty value simply falls back to the NCollection palette.
+
+        Security: the colour values are constrained to strict 6-digit hex at the
+        ORM layer (models/res_company.py), so nothing that could break out of a
+        CSS declaration can ever be stored or emitted here.
+    -->
+
+    <!-- Colour tokens: injected on EVERY web.layout render (backend web client
+         and the login/frontend layouts, which t-call web.frontend_layout ->
+         web.layout). -->
+    <template id="theme_css_vars" inherit_id="web.layout"
+              name="NCollection Per-Tenant Theme Variables">
+        <xpath expr="//head" position="inside">
+            <t t-if="request and request.env and request.env.company">
+                <t t-set="nc_company" t-value="request.env.company"/>
+                <style type="text/css" id="nc_tenant_theme">:root {
+                    <t t-if="nc_company.nc_primary_color">--nc-primary: <t t-esc="nc_company.nc_primary_color"/>;</t>
+                    <t t-if="nc_company.nc_secondary_color">--nc-secondary: <t t-esc="nc_company.nc_secondary_color"/>;</t>
+                    <t t-if="nc_company.nc_sidebar_color">--nc-sidebar-bg: <t t-esc="nc_company.nc_sidebar_color"/>;
+                    --nc-sidebar-active: <t t-esc="nc_company.nc_primary_color or nc_company.nc_sidebar_color"/>;</t>
+                }</style>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Login background image: only on the login/reset/signup pages, which
+         share web.login_layout. Emitted as a separate token so the (potentially
+         large) image never rides on every backend page. -->
+    <template id="theme_login_background" inherit_id="web.login_layout"
+              name="NCollection Per-Tenant Login Background">
+        <xpath expr="." position="inside">
+            <t t-if="request and request.env and request.env.company and request.env.company.nc_login_background">
+                <style type="text/css" id="nc_tenant_login_bg">:root {
+                    --nc-login-bg: url(/web/image/res.company/<t t-esc="request.env.company.id"/>/nc_login_background);
+                }</style>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>
