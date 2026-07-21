@@ -41,6 +41,35 @@ export async function login(
   ]);
 }
 
+/**
+ * Authenticate a browser page WITHOUT spending the login endpoint's budget.
+ *
+ * The edge throttles `location = /web/login` to 10 r/m (P1-T03,
+ * nginx/conf.d/ncollection.dev.conf) and that zone covers the form GET as well
+ * as the auth POST. A suite that form-logs-in for every journey runs out and
+ * starts collecting opaque 60s timeouts whose real cause is a 429 page.
+ *
+ * `page.request` shares the browser context's cookie jar, so authenticating
+ * over JSON-RPC leaves the page logged in for subsequent navigation — same
+ * result, no pressure on the throttled endpoint. Use `login()` when the point
+ * of the test IS the login form; use this when you just need a session.
+ */
+export async function loginViaRpc(
+  page: Page,
+  tenant: TenantKey,
+  loginName = 'admin',
+  password = 'admin',
+): Promise<void> {
+  const res = await page.request.post(`${TENANTS[tenant]}/web/session/authenticate`, {
+    headers: { 'Content-Type': 'application/json' },
+    data: { jsonrpc: '2.0', method: 'call', params: { db: tenant, login: loginName, password } },
+  });
+  const body = await res.json();
+  if (!body.result?.uid) {
+    throw new Error(`RPC login failed for ${loginName}@${tenant}: ${JSON.stringify(body).slice(0, 300)}`);
+  }
+}
+
 export async function logout(page: Page, tenant: TenantKey): Promise<void> {
   await page.goto(`${TENANTS[tenant]}/web/session/logout`, { waitUntil: 'domcontentloaded' });
 }
