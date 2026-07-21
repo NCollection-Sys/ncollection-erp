@@ -254,12 +254,20 @@ class NCollectionDashboardData(models.AbstractModel):
     @api.model
     def _compute_cash_bank(self):
         # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard.
+        #
+        # Filter on the ACCOUNT type, not the journal. Every journal entry
+        # balances, so summing all lines of the bank/cash journals always nets
+        # to exactly 0: an opening balance of 250k posts +250k to the bank
+        # account and -250k to equity, and BOTH lines carry that journal. Only
+        # the cash/bank ledger accounts represent money actually held.
+        # Found by seeding real data — an empty tenant reports 0 either way,
+        # so the bug was invisible until INFRA-07.
         total = self._sum(
             'account.move.line',
-            [('journal_id.type', 'in', ('bank', 'cash')), ('parent_state', '=', 'posted')],
+            [('account_id.account_type', '=', 'asset_cash'), ('parent_state', '=', 'posted')],
             'balance:sum',
         )
-        return {'value': total, 'format': 'currency', 'sub': self.env._('Across cash & bank journals')}
+        return {'value': total, 'format': 'currency', 'sub': self.env._('Across cash & bank accounts')}
 
     @api.model
     def _compute_open_activities(self):

@@ -40,7 +40,8 @@ OCA_VENV := .oca-venv
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
-        provisioning-verify e2e-verify verify-all hooks-install doctor
+        provisioning-verify e2e-verify verify-all hooks-install doctor \
+        demo-tenant demo-clean
 
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
@@ -155,6 +156,17 @@ provisioning-verify: ## Run the P2-T01 provisioning proof (create -> login-ready
 e2e-verify: ## Set up the e2e tenants and run the Playwright suite
 	bash e2e/scripts/setup_e2e_tenants.sh
 	cd e2e && npm ci && npx playwright install chromium && npx playwright test
+
+## ---- Demo tenant -----------------------------------------------------------
+# A populated workspace to actually look at. Provisioned THROUGH the P2-T01
+# engine (same path a real signup takes), then seeded with curated GCC data.
+# The engine is never modified: --without-demo=True still holds, so no paying
+# customer can receive Odoo demo data. Requires `make routing-up`.
+demo-tenant: ## Build/refresh the populated demo tenant (REBUILD=1 to start clean)
+	@bash scripts/demo/build_demo_tenant.sh
+
+demo-clean: ## Drop the demo tenant + platform DB (destructive)
+	@for d in albarari ncplatform; do $(call drop_database,$$d); done
 
 ## ---- Developer environment -------------------------------------------------
 hooks-install: ## Enable the repo's git hooks (fast gates run on pre-push)

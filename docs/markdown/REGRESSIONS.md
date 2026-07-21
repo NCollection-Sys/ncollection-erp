@@ -254,12 +254,63 @@ fix, and flagged a deliberately broken throwaway database.
 
 ---
 
+## R-013 — `cash_bank` always read zero, and empty data hid it
+
+**Symptom.** The dashboard's Cash & Bank tile showed `0` on a tenant that
+demonstrably held 250,000 in the bank.
+
+**Root cause.** The provider summed **every line in the bank/cash journals**.
+Every journal entry balances, so that total is *always* exactly zero: an opening
+balance posts +250k to the bank account and −250k to equity, and **both lines
+carry the bank journal**. The correct measure is the balance of the cash/bank
+**ledger accounts** (`account_type = 'asset_cash'`).
+
+**Why it survived review, unit tests and CI.** Every tenant was empty. An empty
+tenant returns `0` under the wrong query *and* the right one, so the tile looked
+correct everywhere it was checked. It only became visible the moment real data
+existed.
+
+**Guard.** The demo tenant (`make demo-tenant`, `docs/markdown/DEMO_TENANT.md`)
+now carries posted bank entries, so this widget is exercised against real figures.
+The broader lesson is recorded rather than automated: **a KPI that reads 0 on
+empty data is not evidence that it works.** Widgets are only meaningfully verified
+against a populated tenant.
+
+---
+
+## R-014 — Provisioned tenants get roles that grant no app access ⚠️ OPEN
+
+**Symptom.** On a freshly provisioned tenant, an Accountant logs in to an empty
+dashboard. The role resolves the `financial` widget group correctly, but every
+financial widget is dropped because reading `account.move.line` is denied.
+
+**Root cause.** `ncollection_core.hooks._sync_role_implications()` links the
+NCollection roles to the underlying Odoo app groups
+(Accountant → `account.group_account_user`, Sales →
+`sales_team.group_sale_salesman`, …). It runs from `post_init_hook` and
+deliberately **skips modules that are not installed yet**. The provisioning engine
+installs `ncollection_core` alongside `sale`/`account` in a **single** `-i`
+command, so when core's hook fires those groups may not exist — and nothing
+re-runs it afterwards. `hooks.py` states the contract explicitly: *"re-run
+`_sync_role_implications` after any module install/uninstall."*
+
+Confirmed live: re-running it on the demo tenant linked 5 implications, and the
+Accountant and Sales dashboards immediately populated.
+
+**Status.** **Not fixed.** The demo seed calls the sync so the demo is correct,
+but **every real provisioned tenant has the same defect**. The fix belongs in the
+P2-T01 engine (re-run the sync after module installation), which was explicitly
+out of scope for INFRA-07. Needs its own ticket.
+
+---
+
 ## Open items without a guard
 
 | Item | Why no guard yet | Owner |
 |---|---|---|
 | **F8** — E2E gates `e2eclientb` by access-denial, not `menuVisible`, so a P1-T09 *menu-hiding* regression would slip | Depends on the menu-root behaviour for group-holding users | DEV-2 |
 | **R-011** enforcement | Requires a paid GitHub plan | Omar |
+| **R-014** provisioned tenants get roles with no app access | Fix belongs in the P2-T01 engine (re-run `_sync_role_implications` after install); out of scope for INFRA-07 | DEV-1 |
 
 `KNOWN_PENDING` in `scripts/ci/invariants.py` is currently **empty** — no known violation is
 being shipped. If an entry appears there, it belongs in this table too.
