@@ -106,7 +106,7 @@ explicitly: "No task-specific architecture constraint beyond the standard rules 
 12. Verification scripts must be idempotent **and prove it** — run twice, the
     second run must be a no-op (R-002).
 13. Fixture databases are namespaced per suite and you may only drop your own:
-    routing owns `clienta`/`clientb`/`admin`, e2e owns `e2e*`, provisioning owns
+    routing owns `rt*`, e2e owns `e2e*`, provisioning owns
     `prov*`. Names stay alphanumeric — `db_filter=^%d$` maps a subdomain to the
     database of the same name (R-004).
 
@@ -191,15 +191,15 @@ implement a check that requires a network call or heavy query per request.
 - Repo: /Users/omaressam/Documents/ERP_Sys/ncollection-erp
 - Branch: `feature/p1-t10-orm-license-enforcement` off `develop`
 - Local stack: `docker compose up`, two test tenant DBs already exist locally
-  (`clienta` = Starter plan, `clientb` = Enterprise — see P1-T06 setup notes)
+  (`rtclienta` = Starter plan, `rtclientb` = Enterprise — see P1-T06 setup notes)
 - Secrets needed: none
 
 ## Standing Rules
 [... verbatim block from the template above ...]
 
 ## Definition of Done
-- [ ] RPC calls against unlicensed models denied for Starter tenant (`clienta`)
-- [ ] Same calls allowed for Enterprise tenant (`clientb`)
+- [ ] RPC calls against unlicensed models denied for Starter tenant (`rtclienta`)
+- [ ] Same calls allowed for Enterprise tenant (`rtclientb`)
 - [ ] Branded "not in your plan" error surfaces in UI instead of raw AccessError
 - [ ] Measured overhead < 5ms/request (include the measurement method in the PR)
 - [ ] flake8 clean

@@ -128,18 +128,18 @@ demo: ## Run the standalone React demo UI on :5173
 routing-up: ## Start the routing stack (db_filter=^%d$ ON) to prove subdomain->DB routing
 	$(ROUTING_COMPOSE) up -d
 
-routing-verify: ## Create clienta/clientb/admin test DBs and run the isolation proof
+routing-verify: ## Create rtclienta/rtclientb/rtadmin test DBs and run the isolation proof
 	./scripts/routing/verify_routing.sh
 
 routing-down: ## Stop the routing stack (keeps the test DBs; back to a normal `make up`)
 	$(ROUTING_COMPOSE) down
 
 # FIXTURE NAMESPACES — each suite owns its own DB prefix and may only drop its
-# own. routing: clienta/clientb/admin · e2e: e2e* · provisioning: prov*.
+# own. routing: rt* · e2e: e2e* · provisioning: prov*.
 # They used to share one namespace, so either suite could destroy the other's
 # fixtures; the split makes that structurally impossible.
-routing-clean: ## Drop the ROUTING fixture DBs clienta/clientb/admin (destructive)
-	@for d in clienta clientb admin; do $(call drop_database,$$d); done
+routing-clean: ## Drop the ROUTING fixture DBs rtclienta/rtclientb/rtadmin (destructive)
+	@for d in rtclienta rtclientb rtadmin; do $(call drop_database,$$d); done
 
 e2e-clean: ## Drop the E2E fixture DBs e2eclienta/e2eclientb/e2eadmin (destructive)
 	@for d in e2eclienta e2eclientb e2eadmin; do $(call drop_database,$$d); done

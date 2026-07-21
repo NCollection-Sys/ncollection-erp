@@ -40,11 +40,18 @@ block as-is** (`nginx/conf.d/ncollection.dev.conf`, `server_name .localhost`). Y
 
 ## Verify it locally
 
+> **Naming:** the examples above use `clienta.ncollectionerp.com` because that is what a real
+> customer subdomain looks like in production. The **local test fixtures** are deliberately
+> prefixed `rt*` (`rtclienta`, `rtclientb`, `rtadmin`) so nobody mistakes a routing-proof
+> artifact for a workspace — they contain only `base`, by design. Each suite owns its own
+> fixture namespace: routing `rt*`, e2e `e2e*`, provisioning `prov*`.
+
+
 ```bash
 make routing-up        # base + dev + routing overlay (db_filter ON, list_db OFF)
-make routing-verify    # creates clienta/clientb/admin, runs the isolation proof
+make routing-verify    # creates rtclienta/rtclientb/rtadmin, runs the isolation proof
 make routing-down      # stop the routing stack (keeps the test DBs)
-make routing-clean     # drop the clienta/clientb/admin test DBs (destructive)
+make routing-clean     # drop the rtclienta/rtclientb/rtadmin test DBs (destructive)
 ```
 
 `make routing-verify` (`scripts/routing/verify_routing.sh`) needs **no sudo and no
@@ -53,9 +60,9 @@ It proves four things and exits non-zero on any failure:
 
 | # | Check | How |
 |---|---|---|
-| 1 | each subdomain reaches **only** its own DB | authenticates on `clienta.localhost`, confirms session DB = `clienta` **and** reads that DB's unique company marker (`CLIENTA CO`) |
-| 2 | `db_filter` **rejects** a mismatched DB | `clienta.localhost` + `db=clientb` → no session granted |
-| 3 | sessions are **DB-scoped** (no leak) | a `clienta` cookie is unauthenticated on `clientb` — and the reverse |
+| 1 | each subdomain reaches **only** its own DB | authenticates on `rtclienta.localhost`, confirms session DB = `rtclienta` **and** reads that DB's unique company marker (`RTCLIENTA CO`) |
+| 2 | `db_filter` **rejects** a mismatched DB | `rtclienta.localhost` + `db=rtclientb` → no session granted |
+| 3 | sessions are **DB-scoped** (no leak) | an `rtclienta` cookie is unauthenticated on `rtclientb` — and the reverse |
 | 4 | the DB selector is **unreachable** | `/web/database/manager`, `/selector`, `/list` → `403` at the edge |
 
 ### Optional: browser testing with `/etc/hosts`
@@ -64,12 +71,12 @@ For a manual click-through (not required — the script needs neither), add thes
 `/etc/hosts` (this needs `sudo`; the script never edits it for you):
 
 ```
-127.0.0.1   clienta.localhost
-127.0.0.1   clientb.localhost
-127.0.0.1   admin.localhost
+127.0.0.1   rtclienta.localhost
+127.0.0.1   rtclientb.localhost
+127.0.0.1   rtadmin.localhost
 ```
 
-Then visit `http://clienta.localhost` — Odoo goes straight into the `clienta` database with
+Then visit `http://rtclienta.localhost` — Odoo goes straight into the `rtclienta` database with
 no selector.
 
 ## Troubleshooting
@@ -77,10 +84,10 @@ no selector.
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Any host shows the **database selector** | routing overlay not active (default dev keeps `list_db=True`) | `make routing-up` (adds `--no-database-list --db-filter=^%d$`) |
-| `clienta.localhost` opens the **wrong / no** DB | `Host` not forwarded, or `db_filter` typo | confirm `docker inspect ncollection-odoo` shows `--db-filter=^%d$` (single `$`); Nginx must send `Host $host` |
+| `rtclienta.localhost` opens the **wrong / no** DB | `Host` not forwarded, or `db_filter` typo | confirm `docker inspect ncollection-odoo` shows `--db-filter=^%d$` (single `$`); Nginx must send `Host $host` |
 | **502 Bad Gateway** | Nginx upstream wrong / Odoo down | check `docker compose ... ps`; the bus/HTTP upstream must point at `odoo:8069` in dev |
 | **No live chat / notifications** | websocket routed to the wrong port | dev bus is on **8069** (workers=0); prod on **8072** (gevent) — see `nginx/README.md` |
-| Login on `clienta` appears to work on `clientb` | **isolation breach** — stop and investigate | this must never happen; treat as a SEV1 (ARCHITECTURE_SECURITY §5) |
+| Login on `rtclienta` appears to work on `rtclientb` | **isolation breach** — stop and investigate | this must never happen; treat as a SEV1 (ARCHITECTURE_SECURITY §5) |
 | `make routing-verify` can't reach the edge | routing stack not up | run `make routing-up` first |
 
 ## Public URL policy (ticket P1-T15)

@@ -123,7 +123,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 
 | Suite | Owns | Cleanup |
 |---|---|---|
-| Routing proof (P1-T06) | `clienta` · `clientb` · `admin` | `make routing-clean` |
+| Routing proof (P1-T06) | `rtclienta` · `rtclientb` · `rtadmin` | `make routing-clean` |
 | E2E (P1-T20) | `e2eclienta` · `e2eclientb` · `e2eadmin` | `make e2e-clean` |
 | Provisioning (P2-T01) | `prov*` | — |
 
