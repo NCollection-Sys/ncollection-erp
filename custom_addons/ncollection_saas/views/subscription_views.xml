@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P2-T02: give the subscription form an "Activate" action. The base
+        lifecycle (ncollection_subscription) exposes only a statusbar, so
+        draft->active was previously unreachable from the UI. The button calls
+        action_activate, which the SaaS layer overrides to auto-provision the
+        tenant — so activation is the single click that yields a working tenant.
+        The button lives here (not in the subscription module) because the
+        provisioning behaviour it drives is a SaaS-layer concern.
+    -->
+    <record id="view_subscription_form_saas" model="ir.ui.view">
+        <field name="name">ncollection.subscription.form.saas</field>
+        <field name="model">ncollection.subscription</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_subscription_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_activate" type="object" string="Activate"
+                        class="btn-primary" invisible="status != 'draft'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
