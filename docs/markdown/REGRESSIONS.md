@@ -278,7 +278,7 @@ against a populated tenant.
 
 ---
 
-## R-014 — Provisioned tenants get roles that grant no app access ⚠️ OPEN
+## R-014 — Provisioned tenants get roles that grant no app access ✅ FIXED (P2-T02)
 
 **Symptom.** On a freshly provisioned tenant, an Accountant logs in to an empty
 dashboard. The role resolves the `financial` widget group correctly, but every
@@ -297,10 +297,18 @@ re-runs it afterwards. `hooks.py` states the contract explicitly: *"re-run
 Confirmed live: re-running it on the demo tenant linked 5 implications, and the
 Accountant and Sales dashboards immediately populated.
 
-**Status.** **Not fixed.** The demo seed calls the sync so the demo is correct,
-but **every real provisioned tenant has the same defect**. The fix belongs in the
-P2-T01 engine (re-run the sync after module installation), which was explicitly
-out of scope for INFRA-07. Needs its own ticket.
+**Status.** **Fixed in P2-T02.** The provisioning seed
+(`custom_addons/ncollection_saas/scripts/provisioning/seed_tenant.py`) now
+re-runs `ncollection_core.hooks._sync_role_implications(env)` inside the tenant
+DB **after** the plan's modules are installed, so the role→app-group links that
+core's `post_init_hook` had to skip are established. Idempotent (safe if it was
+already linked).
+
+**Guard.** `custom_addons/ncollection_saas/scripts/provisioning/verify_provisioning.sh`
+provisions a tenant whose plan includes `account` and asserts the Accountant
+role implies `account.group_account_user` post-install ("R-014" assertion). It
+runs in `make verify-all` (the local heavy proof; CI installs modules in a
+single pass and cannot exercise the two-step provisioning path).
 
 ---
 
@@ -310,7 +318,6 @@ out of scope for INFRA-07. Needs its own ticket.
 |---|---|---|
 | **F8** — E2E gates `e2eclientb` by access-denial, not `menuVisible`, so a P1-T09 *menu-hiding* regression would slip | Depends on the menu-root behaviour for group-holding users | DEV-2 |
 | **R-011** enforcement | Requires a paid GitHub plan | Omar |
-| **R-014** provisioned tenants get roles with no app access | Fix belongs in the P2-T01 engine (re-run `_sync_role_implications` after install); out of scope for INFRA-07 | DEV-1 |
 
 `KNOWN_PENDING` in `scripts/ci/invariants.py` is currently **empty** — no known violation is
 being shipped. If an entry appears there, it belongs in this table too.
