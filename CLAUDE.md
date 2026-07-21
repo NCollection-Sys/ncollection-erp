@@ -149,6 +149,8 @@ So tenant key === subdomain === database name, always.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
 - `BRANCH_PROTECTION.md` — required CI checks + 1-approval policy, and why none of it is
   **enforceable** on the current GitHub plan (verified 403) — read before assuming CI blocks.
+- `DEMO_TENANT.md` — the populated **Al Barari Trading** workspace (`make demo-tenant`):
+  what it seeds, which login shows which role, and how to rebuild it.
 - `REGRESSIONS.md` — the regression ledger: symptom → root cause → the guard that now
   prevents recurrence. **A regression is not closed until a guard exists.**
 - `PRD.md` · `DELIVERABLE_2_TIMELINE_AND_TOOLING.md` · `PLANNING_REVIEW.md` — product & planning.
