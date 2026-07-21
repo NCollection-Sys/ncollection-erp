@@ -53,7 +53,7 @@ modelling. A guard that cries wolf gets ignored, so this one stays documentation
 ## R-002 — "Idempotent" routing setup rebuilt every database, every run
 
 **Symptom.** `verify_routing.sh` printed *"Setting up test databases (idempotent)…"* and then
-re-created `clienta`/`clientb`/`admin` on **every** invocation, wasting minutes and churning
+re-created the routing fixtures (then named `clienta`/`clientb`/`admin`) on **every** invocation, wasting minutes and churning
 fixtures. Undetected for weeks.
 
 **Root cause.** `db_exists()` ran `psql -U odoo` with **no `-d`**. Postgres CLI tools default
@@ -100,7 +100,7 @@ shared mutable global state across test suites.
 
 | Suite | Owns | Cleanup |
 |---|---|---|
-| Routing (P1-T06) | `clienta` · `clientb` · `admin` | `make routing-clean` |
+| Routing (P1-T06) | `rtclienta` · `rtclientb` · `rtadmin` | `make routing-clean` |
 | E2E (P1-T20) | `e2eclienta` · `e2eclientb` · `e2eadmin` | `make e2e-clean` |
 | Provisioning (P2-T01) | `prov*` | — |
 
@@ -258,7 +258,7 @@ fix, and flagged a deliberately broken throwaway database.
 
 | Item | Why no guard yet | Owner |
 |---|---|---|
-| **F8** — E2E gates `clientb` by access-denial, not `menuVisible`, so a P1-T09 *menu-hiding* regression would slip | Depends on the menu-root behaviour for group-holding users | DEV-2 |
+| **F8** — E2E gates `e2eclientb` by access-denial, not `menuVisible`, so a P1-T09 *menu-hiding* regression would slip | Depends on the menu-root behaviour for group-holding users | DEV-2 |
 | **R-011** enforcement | Requires a paid GitHub plan | Omar |
 
 `KNOWN_PENDING` in `scripts/ci/invariants.py` is currently **empty** — no known violation is

@@ -68,12 +68,12 @@ jobs:
           pip install 'git-aggregator==4.1'
           gitaggregate -c repos.yml -j 3
 
-      # Both fixture namespaces: routing owns clienta/clientb/admin, e2e owns
+      # Both fixture namespaces: routing owns rt*, e2e owns
       # e2e*. verify_routing.sh uses curl --resolve, but Chromium needs real
       # resolution for the e2e hosts.
       - name: Map fixture hostnames to 127.0.0.1
         run: |
-          echo "127.0.0.1 clienta.localhost clientb.localhost admin.localhost" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 rtclienta.localhost rtclientb.localhost rtadmin.localhost" | sudo tee -a /etc/hosts
           echo "127.0.0.1 e2eclienta.localhost e2eclientb.localhost e2eadmin.localhost" | sudo tee -a /etc/hosts
 
       - name: Start the routing stack (db_filter ON, workers=0)

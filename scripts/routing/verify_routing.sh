@@ -29,14 +29,14 @@ DB_PASSWORD="${DB_PASSWORD:-odoo}"
 ODOO_DB_ARGS=(--db_host=db --db_user="$DB_USER" --db_password="$DB_PASSWORD")
 ADMIN_LOGIN="admin"
 ADMIN_PW="admin"                 # dev-only test credential (never prod)
-TENANTS=(clienta clientb admin)
+TENANTS=(rtclienta rtclientb rtadmin)
 
 # Per-tenant data marker (bash 3.2 on macOS has no associative arrays — use a fn).
 marker_for(){
   case "$1" in
-    clienta) echo "CLIENTA CO" ;;
-    clientb) echo "CLIENTB CO" ;;
-    admin)   echo "ADMIN CO" ;;
+    rtclienta) echo "RTCLIENTA CO" ;;
+    rtclientb) echo "RTCLIENTB CO" ;;
+    rtadmin) echo "RTADMIN CO" ;;
     *)       echo "UNKNOWN CO" ;;
   esac
 }
@@ -121,7 +121,7 @@ SESSION_BODY='{"jsonrpc":"2.0","method":"call","params":{}}'
 
 check_each_subdomain_reaches_only_its_db(){
   echo "CHECK 1 — each subdomain reaches ONLY its own database"
-  for db in clienta clientb; do
+  for db in rtclienta rtclientb; do
     local jar; jar="$(mktemp)"
     local resp; resp="$(authenticate "$db" "$db" "$jar")"
     local uid; uid="$(echo "$resp" | j_uid)"
@@ -141,12 +141,12 @@ check_each_subdomain_reaches_only_its_db(){
 check_db_filter_rejects_mismatch(){
   echo "CHECK 2 — db_filter rejects a mismatched database on the wrong host"
   local jar; jar="$(mktemp)"
-  local resp; resp="$(authenticate clienta clientb "$jar")"   # ask clientb on clienta host
+  local resp; resp="$(authenticate rtclienta rtclientb "$jar")"   # ask rtclientb on rtclienta host
   local uid; uid="$(echo "$resp" | j_uid)"
   if [ -z "$uid" ] || [ "$uid" = "None" ]; then
-    ok "clienta.localhost refused db=clientb (no session granted)"
+    ok "rtclienta.localhost refused db=rtclientb (no session granted)"
   else
-    no "clienta.localhost GRANTED db=clientb (uid=$uid) — isolation breach!"
+    no "rtclienta.localhost GRANTED db=rtclientb (uid=$uid) — isolation breach!"
   fi
   rm -f "$jar"
   hr
@@ -155,21 +155,21 @@ check_db_filter_rejects_mismatch(){
 check_session_isolation(){
   echo "CHECK 3 — sessions are DB-scoped and do not leak across tenants"
   local ja jb; ja="$(mktemp)"; jb="$(mktemp)"
-  authenticate clienta clienta "$ja" >/dev/null
-  authenticate clientb clientb "$jb" >/dev/null
-  # clienta cookie used on clientb -> must be unauthenticated, and vice-versa.
+  authenticate rtclienta rtclienta "$ja" >/dev/null
+  authenticate rtclientb rtclientb "$jb" >/dev/null
+  # rtclienta cookie used on rtclientb -> must be unauthenticated, and vice-versa.
   local u_ab u_ba
-  u_ab="$(rpc_with_cookie clientb "$ja" /web/session/get_session_info "$SESSION_BODY" | j_uid)"
-  u_ba="$(rpc_with_cookie clienta "$jb" /web/session/get_session_info "$SESSION_BODY" | j_uid)"
+  u_ab="$(rpc_with_cookie rtclientb "$ja" /web/session/get_session_info "$SESSION_BODY" | j_uid)"
+  u_ba="$(rpc_with_cookie rtclienta "$jb" /web/session/get_session_info "$SESSION_BODY" | j_uid)"
   if { [ -z "$u_ab" ] || [ "$u_ab" = "None" ] || [ "$u_ab" = "False" ]; }; then
-    ok "clienta session is NOT valid on clientb (uid='$u_ab')"
+    ok "rtclienta session is NOT valid on rtclientb (uid='$u_ab')"
   else
-    no "clienta session LEAKED to clientb (uid=$u_ab) — isolation breach!"
+    no "rtclienta session LEAKED to rtclientb (uid=$u_ab) — isolation breach!"
   fi
   if { [ -z "$u_ba" ] || [ "$u_ba" = "None" ] || [ "$u_ba" = "False" ]; }; then
-    ok "clientb session is NOT valid on clienta (uid='$u_ba')"
+    ok "rtclientb session is NOT valid on rtclienta (uid='$u_ba')"
   else
-    no "clientb session LEAKED to clienta (uid=$u_ba) — isolation breach!"
+    no "rtclientb session LEAKED to rtclienta (uid=$u_ba) — isolation breach!"
   fi
   rm -f "$ja" "$jb"
   hr
@@ -178,11 +178,11 @@ check_session_isolation(){
 check_selector_unreachable(){
   echo "CHECK 4 — the database selector/manager is unreachable (edge block)"
   for path in /web/database/manager /web/database/selector /web/database/list; do
-    local code; code="$(http_code clienta "$path")"
+    local code; code="$(http_code rtclienta "$path")"
     if [ "$code" = "403" ]; then
-      ok "clienta.localhost$path -> 403"
+      ok "rtclienta.localhost$path -> 403"
     else
-      no "clienta.localhost$path -> $code (expected 403)"
+      no "rtclienta.localhost$path -> $code (expected 403)"
     fi
   done
   hr
@@ -192,7 +192,7 @@ check_selector_unreachable(){
 echo "======================================================================"
 echo " P1-T06 routing & isolation proof  (edge:127.0.0.1:80, db_filter=^%d\$)"
 echo "======================================================================"
-if ! curl -s -o /dev/null --resolve "clienta.localhost:80:127.0.0.1" http://clienta.localhost/web/health; then
+if ! curl -s -o /dev/null --resolve "rtclienta.localhost:80:127.0.0.1" http://rtclienta.localhost/web/health; then
   echo "ERROR: edge not reachable on :80. Run 'make routing-up' first." >&2
   exit 2
 fi

@@ -59,14 +59,14 @@ fi
 # Both suites address tenants by subdomain; without resolution every browser
 # journey fails in a confusing way.
 unresolved=""
-for host in clienta.localhost e2eclienta.localhost; do
+for host in rtclienta.localhost e2eclienta.localhost; do
   getent hosts "$host" >/dev/null 2>&1 || ping -c1 -W1 "$host" >/dev/null 2>&1 || unresolved="$unresolved $host"
 done
 if [ -z "$unresolved" ]; then
   ok "*.localhost fixture hostnames resolve"
 else
   warn "these do not resolve:$unresolved" \
-       "add to /etc/hosts: 127.0.0.1 clienta.localhost clientb.localhost admin.localhost e2eclienta.localhost e2eclientb.localhost e2eadmin.localhost"
+       "add to /etc/hosts: 127.0.0.1 rtclienta.localhost rtclientb.localhost rtadmin.localhost e2eclienta.localhost e2eclientb.localhost e2eadmin.localhost"
 fi
 
 # --- 7. Lint tooling (used by the pre-push hook and CI) ----------------------

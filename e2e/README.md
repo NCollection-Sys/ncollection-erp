@@ -35,7 +35,7 @@ Each suite owns its own database prefix and may only drop its own:
 
 | Suite | Owns | Cleanup target |
 |---|---|---|
-| Routing proof (P1-T06) | `clienta` · `clientb` · `admin` | `make routing-clean` |
+| Routing proof (P1-T06) | `rtclienta` · `rtclientb` · `rtadmin` | `make routing-clean` |
 | E2E (this suite) | `e2eclienta` · `e2eclientb` · `e2eadmin` | `make e2e-clean` |
 | Provisioning (P2-T01) | `prov*` | — |
 

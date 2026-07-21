@@ -2,7 +2,7 @@
 #  Routing-verification overlay  (ticket P1-T06 — OPT-IN, dev only)
 # ============================================================================
 #  Layer this ON TOP of base + dev to turn on real subdomain->database routing
-#  locally, so `clienta.localhost -> DB clienta` can be PROVEN:
+#  locally, so `rtclienta.localhost -> DB rtclienta` can be PROVEN:
 #
 #    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
 #                   -f docker-compose.routing.yml up -d

@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import { authenticate, menuVisible, callKw } from '../fixtures/tenants';
 
 // P1-T09/T10 per-plan module gating: `biz` holds the Sales groups, so on the Pro
-// plan (clienta, licensed) the Sales app is present and usable, while on the
-// Basic plan (clientb, unlicensed) the module is gated — access is denied.
+// plan (e2eclienta, licensed) the Sales app is present and usable, while on the
+// Basic plan (e2eclientb, unlicensed) the module is gated — access is denied.
 test.describe('module gating per plan (P1-T09/T10)', () => {
   test('Pro plan exposes Sales; Basic plan gates it', async ({ playwright }) => {
     const a = await playwright.request.newContext({ ignoreHTTPSErrors: true });

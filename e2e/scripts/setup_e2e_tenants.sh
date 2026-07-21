@@ -14,7 +14,7 @@
 #    e2eadmin   = platform DB (routing target)
 #
 #  FIXTURE NAMESPACE — these names are deliberately prefixed `e2e*`. The P1-T06
-#  routing proof owns clienta/clientb/admin and `make routing-clean` drops those.
+#  routing proof owns rtclienta/rtclientb/rtadmin and `make routing-clean` drops those.
 #  Sharing one namespace across two suites meant either could destroy the other's
 #  fixtures; the prefix makes that structurally impossible. The names must stay
 #  ALPHANUMERIC: db_filter=^%d$ maps a subdomain to the DB of the same name, and

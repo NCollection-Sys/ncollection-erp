@@ -18,16 +18,16 @@ test.describe('tenant session isolation (P1-T06 guarantee)', () => {
     const a = await playwright.request.newContext({ ignoreHTTPSErrors: true });
     await authenticate(a, 'e2eclienta');
     const sidA = await sessionId(a);
-    expect(sidA, 'clienta must issue a session').toBeTruthy();
+    expect(sidA, 'e2eclienta must issue a session').toBeTruthy();
     const aOnB = await getSessionInfo(a, 'e2eclientb', sidA);
-    expect(aOnB.result?.uid ?? null, 'clienta session must be invalid on clientb').toBeNull();
+    expect(aOnB.result?.uid ?? null, 'e2eclienta session must be invalid on e2eclientb').toBeNull();
     await a.dispose();
 
     const b = await playwright.request.newContext({ ignoreHTTPSErrors: true });
     await authenticate(b, 'e2eclientb');
     const sidB = await sessionId(b);
     const bOnA = await getSessionInfo(b, 'e2eclienta', sidB);
-    expect(bOnA.result?.uid ?? null, 'clientb session must be invalid on clienta').toBeNull();
+    expect(bOnA.result?.uid ?? null, 'e2eclientb session must be invalid on e2eclienta').toBeNull();
     await b.dispose();
   });
 });
