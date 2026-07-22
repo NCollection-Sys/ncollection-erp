@@ -2,9 +2,9 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    'version': '19.0.3.0.0',
+    'version': '19.0.4.0.0',
     'category': 'Services/SaaS',
-    'summary': 'SaaS provisioning engine + auto-provisioning pipeline (P2-T01/T02)',
+    'summary': 'SaaS provisioning + auto-provisioning + config sync (P2-T01/T02/T03)',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
@@ -15,6 +15,7 @@
     'depends': ['ncollection_subscription', 'ncollection_branding', 'queue_job'],
     'data': [
         'data/provisioning_data.xml',
+        'data/config_sync_data.xml',
         'views/provisioning_job_views.xml',
         'views/subscription_views.xml',
     ],
