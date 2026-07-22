@@ -23,8 +23,8 @@
             <t t-if="request and request.env and request.env.company">
                 <t t-set="nc_company" t-value="request.env.company"/>
                 <style type="text/css" id="nc_tenant_theme">:root {
-                    <t t-if="nc_company.nc_primary_color">--nc-primary: <t t-esc="nc_company.nc_primary_color"/>;</t>
-                    <t t-if="nc_company.nc_secondary_color">--nc-secondary: <t t-esc="nc_company.nc_secondary_color"/>;</t>
+                    <t t-if="nc_company.nc_primary_color">--nc-color-primary: <t t-esc="nc_company.nc_primary_color"/>;</t>
+                    <t t-if="nc_company.nc_secondary_color">--nc-color-secondary: <t t-esc="nc_company.nc_secondary_color"/>;</t>
                     <t t-if="nc_company.nc_sidebar_color">--nc-sidebar-bg: <t t-esc="nc_company.nc_sidebar_color"/>;
                     --nc-sidebar-active: <t t-esc="nc_company.nc_primary_color or nc_company.nc_sidebar_color"/>;</t>
                 }</style>
