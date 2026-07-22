@@ -32,7 +32,7 @@ services:
   # workers=4/gevent). Needs the wildcard cert issued BEFORE first start
   # (nginx won't boot without it) — see nginx/README.md.
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.31-alpine
     container_name: ncollection-nginx
     depends_on:
       odoo:

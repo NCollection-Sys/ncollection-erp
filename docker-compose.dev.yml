@@ -20,7 +20,7 @@ services:
   # Edge reverse proxy (P1-T03). Dev = *.localhost over plain HTTP; the dev
   # server block routes the realtime bus to Odoo :8069 (dev runs workers=0).
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.31-alpine
     container_name: ncollection-nginx
     depends_on:
       odoo:
