@@ -35,10 +35,10 @@ tq(){ "${DC[@]}" exec -T db psql -U odoo -d "$1" -tAc "$2" 2>/dev/null | tr -d '
 echo "== cleanup any prior run =="
 drop_db provclient; drop_db provfail
 
-echo "== HAPPY PATH: provision 'provclient' (plan module: crm) =="
+echo "== HAPPY PATH: provision 'provclient' (plan modules: crm, account) =="
 "${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http --log-level=warn "${DBARGS[@]}" <<'PY' 2>/dev/null
 plan = env['ncollection.subscription.plan'].create({
-    'name': 'Prov Plan', 'code': 'PROV', 'allowed_module_names': 'crm', 'max_users': 3})
+    'name': 'Prov Plan', 'code': 'PROV', 'allowed_module_names': 'crm, account', 'max_users': 3})
 tenant = env['ncollection.tenant'].create({
     'company_name': 'Prov Co', 'database_name': 'provclient',
     'email': 'owner@prov.example', 'plan_id': plan.id, 'status': 'trial'})
@@ -60,6 +60,16 @@ db_exists provclient && ok "database 'provclient' created" || no "database not c
   && ok "workspace.config projection written (plan_code=PROV)" || no "workspace config missing"
 [ "$(tq provclient "SELECT login FROM res_users WHERE login='owner@prov.example'")" = "owner@prov.example" ] \
   && ok "tenant admin seeded (login set from tenant email)" || no "admin not seeded"
+# R-014 guard: the seed re-runs _sync_role_implications AFTER the plan modules
+# install, so the Accountant role must now imply account.group_account_user
+# (core's post_init_hook alone links nothing — account did not exist yet).
+[ "$(tq provclient "SELECT COUNT(*) FROM res_groups_implied_rel r \
+  JOIN ir_model_data role ON role.model='res.groups' AND role.module='ncollection_core' \
+    AND role.name='group_role_accountant' AND role.res_id=r.gid \
+  JOIN ir_model_data acc ON acc.model='res.groups' AND acc.module='account' \
+    AND acc.name='group_account_user' AND acc.res_id=r.hid")" = "1" ] \
+  && ok "R-014: Accountant role linked to account.group_account_user post-install" \
+  || no "R-014: accountant role NOT linked to the account group"
 hr
 
 echo "== ROLLBACK: DB created then a step fails -> must drop the half-built DB =="
