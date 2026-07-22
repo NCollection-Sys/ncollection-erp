@@ -102,10 +102,14 @@ $nc-primitive-series-5:    #13CD3C;
     --nc-chart-4: #{$nc-primitive-series-4};
     --nc-chart-5: #{$nc-primitive-series-5};
 
-    // ---- Back-compat aliases (retained one release — UI-T01 migration) ------
+    // ---- Back-compat aliases (temporary compatibility layer — UI-T01) -------
     // Old flat token names → canonical, so any lingering var(--nc-<old>) still
-    // resolves. The two injected colours alias to the canonical name WITH the
-    // NCollection default baked in, so an unset tenant still yields a colour.
+    // resolves. Removal is tied to PROJECT MATURITY, not a fixed release: drop
+    // these once the whole frontend has migrated to the canonical tokens (after
+    // the UI-T02 component library and any remaining UI migrations) — verify
+    // with `git grep "var(--nc-primary"` returning nothing. The two injected
+    // colours alias to the canonical name WITH the NCollection default baked
+    // in, so an unset tenant still yields a colour.
     --nc-primary:        var(--nc-color-primary, #{$nc-primitive-blue-600});
     --nc-primary-strong: var(--nc-color-primary-strong);
     --nc-secondary:      var(--nc-color-secondary, #{$nc-primitive-blue-500});
