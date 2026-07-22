@@ -6,6 +6,8 @@ on each renewal, applies UAE VAT 5%, prorates mid-cycle upgrades, and tracks
 payment status back onto the subscription. Uses Odoo's accounting engine
 (FINANCIAL_PLATFORM_ARCHITECTURE §4/§5) — never a custom invoice model.
 """
+from dateutil.relativedelta import relativedelta
+
 from odoo import api, fields, models
 
 
@@ -87,7 +89,7 @@ class Subscription(models.Model):
         period_start — the 'exactly one invoice' acceptance)."""
         self.ensure_one()
         if not self.plan_id:
-            return self.env['account.move']
+            return self.env['account.move']  # arch-guard: admin-db-billing
         existing = self.invoice_ids.filtered(
             lambda m: m.move_type == 'out_invoice' and m.nc_period_start == period_start)
         if existing:
@@ -100,24 +102,36 @@ class Subscription(models.Model):
         self.ensure_one()
         today = fields.Date.context_today(self)
         if not self.end_date or self.end_date <= today:
-            return self.env['account.move']
-        cycle_start = self.start_date or today
-        total_days = (self.end_date - cycle_start).days or 1
-        remaining = (self.end_date - today).days
+            return self.env['account.move']  # arch-guard: admin-db-billing
+        # Prorate over the CURRENT period only. The period runs one billing
+        # cycle back from end_date — deriving it from start_date would span
+        # every renewed cycle and shrink the daily rate after a renewal.
+        delta = relativedelta(years=1) if self.billing_cycle == 'yearly' else relativedelta(months=1)
+        period_start = self.end_date - delta
+        total_days = (self.end_date - period_start).days or 1
+        # Clamp to [0, total_days] so we never bill more than one full period's
+        # difference (e.g. an upgrade before the renewed period has started).
+        remaining = max(0, min((self.end_date - today).days, total_days))
         diff = self._nc_period_amount(new_plan) - self._nc_period_amount(old_plan)
         prorated = diff * remaining / total_days
         if prorated <= 0:  # only charge upgrades; downgrades adjust at renewal
-            return self.env['account.move']
+            return self.env['account.move']  # arch-guard: admin-db-billing
         return self._nc_create_invoice(prorated, today, self.end_date, 'proration')
 
     def _nc_create_invoice(self, amount, period_start, period_end, reason):
         """Build + post one customer invoice via Odoo's accounting engine."""
         self.ensure_one()
         company = self.env.company
+        # Ensure AED here, not only in post_init: the chart template loads via a
+        # deferred precommit that resets the company currency to the template's
+        # default (USD), so a currency switch done in the hook is clobbered.
+        # At first-invoice time the registry is loaded and the chart is settled,
+        # so this takes — and it is a no-op on every later invoice.
+        company._nc_ensure_currency()
         partner = self.tenant_id._nc_ensure_partner()
         product = company._nc_billing_product()
         tax = company._nc_billing_tax()
-        move = self.env['account.move'].create({
+        move = self.env['account.move'].create({  # arch-guard: admin-db-billing
             'move_type': 'out_invoice',
             'partner_id': partner.id,
             'invoice_date': fields.Date.context_today(self),
