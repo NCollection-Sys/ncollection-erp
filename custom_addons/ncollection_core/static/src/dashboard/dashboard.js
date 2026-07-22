@@ -134,8 +134,8 @@ export class NcDashboard extends Component {
     }
 
     _renderChart(canvas, widget) {
-        const primary = brandColor("--nc-primary", "#1f5f8f");
-        const secondary = brandColor("--nc-secondary", "#2d7ab7");
+        const primary = brandColor("--nc-color-primary", "#1f5f8f");
+        const secondary = brandColor("--nc-color-secondary", "#2d7ab7");
         const isLine = widget.chart === "line";
 
         this._charts.push(

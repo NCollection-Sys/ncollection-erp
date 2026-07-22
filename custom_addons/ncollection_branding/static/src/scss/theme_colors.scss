@@ -13,32 +13,32 @@ $ncollection-background: #F7F9FC;
 $ncollection-text: #0F172A;
 
 body {
-    background-color: var(--nc-bg, #{$ncollection-background});
+    background-color: var(--nc-surface-bg, #{$ncollection-background});
     color: var(--nc-text, #{$ncollection-text});
 }
 
 .o_main_navbar {
-    background-color: var(--nc-primary, #{$ncollection-primary}) !important;
+    background-color: var(--nc-color-primary, #{$ncollection-primary}) !important;
 }
 
 a {
-    color: var(--nc-secondary, #{$ncollection-secondary});
+    color: var(--nc-color-secondary, #{$ncollection-secondary});
 }
 
 .btn-primary {
-    background-color: var(--nc-secondary, #{$ncollection-secondary});
-    border-color: var(--nc-secondary, #{$ncollection-secondary});
+    background-color: var(--nc-color-secondary, #{$ncollection-secondary});
+    border-color: var(--nc-color-secondary, #{$ncollection-secondary});
 }
 
 .btn-primary:hover {
-    background-color: var(--nc-primary, #{$ncollection-primary});
-    border-color: var(--nc-primary, #{$ncollection-primary});
+    background-color: var(--nc-color-primary, #{$ncollection-primary});
+    border-color: var(--nc-color-primary, #{$ncollection-primary});
 }
 
 /* Login page (legacy .o_login_page selectors; the P1-T14 redesign lives in
    login.scss under .o_nc_login). Kept token-driven for consistency. */
 .o_login_page .card {
-    border-color: var(--nc-silver, #{$ncollection-silver});
+    border-color: var(--nc-color-neutral, #{$ncollection-silver});
 }
 
 .ncollection_login_logo {
@@ -51,10 +51,10 @@ a {
 }
 
 .o_login_page .btn-primary {
-    background-color: var(--nc-primary, #{$ncollection-primary});
-    border-color: var(--nc-primary, #{$ncollection-primary});
+    background-color: var(--nc-color-primary, #{$ncollection-primary});
+    border-color: var(--nc-color-primary, #{$ncollection-primary});
 }
 
 .o_login_page a {
-    color: var(--nc-secondary, #{$ncollection-secondary});
+    color: var(--nc-color-secondary, #{$ncollection-secondary});
 }

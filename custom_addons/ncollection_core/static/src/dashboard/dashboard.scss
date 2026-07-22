@@ -46,15 +46,15 @@
 
     &__status {
         padding: 24px;
-        border-radius: var(--nc-radius, 10px);
-        background: var(--nc-surface, #ffffff);
-        border: 1px solid var(--nc-border, #e2e8f0);
+        border-radius: var(--nc-radius-md, 10px);
+        background: var(--nc-surface-raised, #ffffff);
+        border: 1px solid var(--nc-surface-border, #e2e8f0);
         color: var(--nc-text-muted, #64748b);
         font-size: 14px;
 
         &--error {
-            border-color: var(--nc-danger, #b4453c);
-            color: var(--nc-danger, #b4453c);
+            border-color: var(--nc-status-error, #b4453c);
+            color: var(--nc-status-error, #b4453c);
         }
     }
 }
@@ -82,12 +82,12 @@
     gap: 10px;
     min-width: 0;
     padding: 18px 20px;
-    background: var(--nc-surface, #ffffff);
-    border: 1px solid var(--nc-border, #e2e8f0);
+    background: var(--nc-surface-raised, #ffffff);
+    border: 1px solid var(--nc-surface-border, #e2e8f0);
     // Logical property, so the accent flips automatically under RTL (P3-T08).
-    border-inline-start: 4px solid var(--nc-primary, #1f5f8f);
-    border-radius: var(--nc-radius, 10px);
-    box-shadow: var(--nc-shadow, 0 1px 3px rgba(15, 23, 42, 0.08));
+    border-inline-start: 4px solid var(--nc-color-primary, #1f5f8f);
+    border-radius: var(--nc-radius-md, 10px);
+    box-shadow: var(--nc-shadow-card, 0 1px 3px rgba(15, 23, 42, 0.08));
 
     &__label {
         font-size: 11px;
@@ -122,11 +122,11 @@
     font-variant-numeric: tabular-nums;
 
     &--up {
-        color: var(--nc-success, #2e7d5b);
+        color: var(--nc-status-success, #2e7d5b);
     }
 
     &--down {
-        color: var(--nc-danger, #b4453c);
+        color: var(--nc-status-error, #b4453c);
     }
 }
 
@@ -145,10 +145,10 @@
 
 .nc-chart-card {
     padding: 18px 20px;
-    background: var(--nc-surface, #ffffff);
-    border: 1px solid var(--nc-border, #e2e8f0);
-    border-radius: var(--nc-radius, 10px);
-    box-shadow: var(--nc-shadow, 0 1px 3px rgba(15, 23, 42, 0.08));
+    background: var(--nc-surface-raised, #ffffff);
+    border: 1px solid var(--nc-surface-border, #e2e8f0);
+    border-radius: var(--nc-radius-md, 10px);
+    box-shadow: var(--nc-shadow-card, 0 1px 3px rgba(15, 23, 42, 0.08));
     min-width: 0;
 
     &__title {
