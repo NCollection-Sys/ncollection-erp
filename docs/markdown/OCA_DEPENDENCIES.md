@@ -72,3 +72,23 @@ includes accounting. Nothing installs OCA modules into the admin DB.
   armed by `ncollection_auth` and paired with the independent Nginx edge
   `limit_req` (P1-T03) — the two layers ARCHITECTURE_SECURITY.md §6 requires.
   Feature flag: `base.login_cooldown_after = 0` disables the app layer.
+
+## P2-T11 Billing Engine — build on core `account` + `l10n_ae` (no OCA subscription module)
+
+- **OCA options evaluated**: `OCA/contract` (`contract`, `contract_sale`, `product_contract`)
+  and the recurring-invoicing family. These are mature, but they model **tenant-facing**
+  recurring *contracts* with their own contract objects, recurrence engines, and analytic
+  plumbing — a large surface aimed at billing a company's OWN customers inside a tenant ERP.
+- **Decision — build a thin native layer** (`ncollection_saas`: `billing.py` + the
+  `account.move` link) on Odoo **core `account`** for invoicing and core **`l10n_ae`** for
+  the UAE chart / AED / 5% VAT. Rationale:
+  1. **Scope fit**: our subscriptions already exist (`ncollection.subscription`,
+     P2-T09). We need "activate/renew → one posted invoice + 5% VAT," not a second
+     recurring-contract model. Adopting `OCA/contract` would duplicate the lifecycle we own.
+  2. **Two-layer separation (Rule 3)**: billing lives in the **admin DB** only. A thin layer
+     over core `account` keeps that boundary auditable (every admin-DB `account.move` line is
+     annotated `# arch-guard: admin-db-billing`); a heavy contract engine would blur it.
+  3. **No new pinned dependency (Rule 5)**: `account` + `l10n_ae` ship with `odoo:19` — zero
+     additions to `repos.yml`. `OCA/contract` is not currently pinned and would pull a new repo.
+- **Revisit if**: dunning, usage-metered billing, or multi-line contract terms enter scope
+  (P2-T13 Stripe / later) — re-evaluate `OCA/contract` then, per Rule 5 (check architecture first).
