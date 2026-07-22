@@ -57,8 +57,9 @@ class TestComponentLibrary(TransactionCase):
         action = self.env.ref("ncollection_branding.action_component_playground")
         self.assertEqual(action.tag, "ncollection_branding.component_playground")
         menu = self.env.ref("ncollection_branding.menu_component_playground")
-        # dev/QA surface — admin only, never a tenant-user menu
-        self.assertIn(self.env.ref("base.group_system"), menu.groups_id)
+        # dev/QA surface — admin only, never a tenant-user menu.
+        # ir.ui.menu groups field is group_ids in Odoo 19 (renamed from groups_id).
+        self.assertIn(self.env.ref("base.group_system"), menu.group_ids)
 
     def test_all_components_have_templates(self):
         xml = _read(os.path.join(_COMP_DIR, "components.xml"))
