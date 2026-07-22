@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:16
+    image: postgres:18
     container_name: ncollection-db
     environment:
       POSTGRES_DB: ${DB_NAME:-postgres}
