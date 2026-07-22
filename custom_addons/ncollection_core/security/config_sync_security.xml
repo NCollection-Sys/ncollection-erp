@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            Least-privilege group for the platform config-sync service account
+            (P2-T03). ARCHITECTURE_SECURITY §11 requires the config-sync account
+            be "scoped to ncollection.workspace.config writes" — NOT a system
+            admin (which would be a skeleton key). The dedicated service user
+            created by provisioning is placed in this group; the ir.model.access
+            row grants it read+write on ncollection.workspace.config ONLY (no
+            create/unlink — the singleton is created once by provisioning).
+        -->
+        <record id="group_config_sync" model="res.groups">
+            <field name="name">NCollection Config Sync (service)</field>
+            <field name="comment">Non-interactive platform service account: may
+                write the workspace configuration projection pushed by the SaaS
+                platform. Not for human users.</field>
+        </record>
+    </data>
+</odoo>
