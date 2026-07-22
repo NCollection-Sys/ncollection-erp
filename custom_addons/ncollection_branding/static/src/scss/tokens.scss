@@ -37,6 +37,8 @@ $nc-primitive-ink-900:     #0F172A;
 $nc-primitive-ink-500:     #64748B;
 $nc-primitive-green-600:   #2E7D5B;
 $nc-primitive-red-600:     #B4453C;
+$nc-primitive-amber-600:   #B7791F;
+$nc-primitive-info-600:    #2563C9;
 // Categorical series palette (the reference's data-viz hues) — chart tier.
 $nc-primitive-series-2:    #8145CD;
 $nc-primitive-series-3:    #CD45A2;
@@ -55,6 +57,8 @@ $nc-primitive-series-5:    #13CD3C;
     --nc-text-muted:           #{$nc-primitive-ink-500};
     --nc-status-success:       #{$nc-primitive-green-600};
     --nc-status-error:         #{$nc-primitive-red-600};
+    --nc-status-warning:       #{$nc-primitive-amber-600};
+    --nc-status-info:          #{$nc-primitive-info-600};
     --nc-radius-md:            10px;
     --nc-shadow-card:          0 1px 3px rgba(15, 23, 42, 0.08);
 

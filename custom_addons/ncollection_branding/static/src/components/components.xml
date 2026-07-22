@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    NCollection shared component library templates (UI-T02 / #129).
+    Every class in components.js has its template here. Markup is minimal and
+    token-styled (components.scss); no colours/radii live in the markup.
+-->
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_branding.NcKpiCard">
+        <div class="nc-kpi-card" t-att-class="{ 'nc-kpi-card--accent': props.accent }">
+            <div class="nc-kpi-card__label"><t t-esc="props.label"/></div>
+            <div class="nc-kpi-card__value"><t t-esc="props.value"/></div>
+            <div class="nc-kpi-card__sub" t-if="props.trend or props.sub">
+                <span t-if="props.trend" t-att-class="trendClass" t-esc="props.trend.value"/>
+                <span t-if="props.sub"><t t-esc="props.sub"/></span>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="ncollection_branding.NcSectionCard">
+        <div class="nc-section-card">
+            <div class="nc-section-card__title" t-if="props.title"><t t-esc="props.title"/></div>
+            <div class="nc-section-card__body">
+                <t t-slot="default"/>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="ncollection_branding.NcBadge">
+        <span class="nc-badge" t-att-class="'nc-badge--' + props.variant">
+            <t t-esc="props.label"/>
+        </span>
+    </t>
+
+    <t t-name="ncollection_branding.NcQuickActionCard">
+        <button class="nc-quick-action" type="button" t-on-click="onClick">
+            <i t-if="props.icon" class="fa" t-att-class="props.icon" role="img" aria-hidden="true"/>
+            <span class="nc-quick-action__label"><t t-esc="props.label"/></span>
+        </button>
+    </t>
+
+    <t t-name="ncollection_branding.NcChartWrapper">
+        <div class="nc-chart-card">
+            <div class="nc-chart-card__title" t-if="props.title"><t t-esc="props.title"/></div>
+            <div class="nc-chart-card__canvas">
+                <t t-slot="default"/>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="ncollection_branding.NcEmptyState">
+        <div class="nc-empty-state">
+            <i class="fa nc-empty-state__icon" t-att-class="props.icon" role="img" aria-hidden="true"/>
+            <div class="nc-empty-state__title"><t t-esc="props.title"/></div>
+            <div class="nc-empty-state__desc" t-if="props.description"><t t-esc="props.description"/></div>
+            <div class="nc-empty-state__action" t-if="props.slots and props.slots.action">
+                <t t-slot="action"/>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="ncollection_branding.NcLoadingSkeleton">
+        <div class="nc-skeleton" t-att-class="'nc-skeleton--' + props.variant" aria-hidden="true">
+            <div t-foreach="range" t-as="i" t-key="i" class="nc-skeleton__block"/>
+        </div>
+    </t>
+
+</templates>

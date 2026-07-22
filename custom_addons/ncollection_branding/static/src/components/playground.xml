@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Component library playground template (UI-T02 / #129). Renders each library
+    component with sample props for visual review and the render-acceptance test.
+-->
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_branding.ComponentPlayground">
+        <div class="o_content nc-playground">
+            <h1 class="nc-playground__heading">NCollection Component Library</h1>
+
+            <section class="nc-playground__section">
+                <h2>KPI cards</h2>
+                <div class="nc-playground__grid">
+                    <NcKpiCard label="'Revenue this month'" value="'AED 128,400'"
+                               trend="{ value: '+4.2%', dir: 'up' }" sub="'vs last month'"/>
+                    <NcKpiCard label="'Receivables'" value="'AED 42,100'"
+                               trend="{ value: '-1.1%', dir: 'down' }" sub="'vs last month'"/>
+                    <NcKpiCard label="'Open activities'" value="'17'" accent="false"/>
+                </div>
+            </section>
+
+            <section class="nc-playground__section">
+                <h2>Badges</h2>
+                <div class="nc-playground__row">
+                    <NcBadge label="'Active'" variant="'success'"/>
+                    <NcBadge label="'Overdue'" variant="'error'"/>
+                    <NcBadge label="'Pending'" variant="'warning'"/>
+                    <NcBadge label="'Draft'" variant="'info'"/>
+                    <NcBadge label="'Archived'" variant="'neutral'"/>
+                </div>
+            </section>
+
+            <section class="nc-playground__section">
+                <h2>Quick actions</h2>
+                <div class="nc-playground__row">
+                    <NcQuickActionCard label="'New Quotation'" icon="'fa-plus'" onClick="() => this.noop()"/>
+                    <NcQuickActionCard label="'New Invoice'" icon="'fa-file-text-o'" onClick="() => this.noop()"/>
+                </div>
+            </section>
+
+            <section class="nc-playground__section">
+                <h2>Section &amp; chart cards</h2>
+                <div class="nc-playground__grid">
+                    <NcSectionCard title="'Section card'">
+                        <p>Any content composes inside a section card via the default slot.</p>
+                    </NcSectionCard>
+                    <NcChartWrapper title="'Chart wrapper'">
+                        <canvas class="nc-chart"/>
+                    </NcChartWrapper>
+                </div>
+            </section>
+
+            <section class="nc-playground__section">
+                <h2>Empty state</h2>
+                <NcSectionCard>
+                    <NcEmptyState title="'Nothing here yet'"
+                                  description="'Create your first record to see it listed here.'"
+                                  icon="'fa-inbox'">
+                        <t t-set-slot="action">
+                            <NcQuickActionCard label="'Create'" icon="'fa-plus'" onClick="() => this.noop()"/>
+                        </t>
+                    </NcEmptyState>
+                </NcSectionCard>
+            </section>
+
+            <section class="nc-playground__section">
+                <h2>Loading skeletons</h2>
+                <div class="nc-playground__grid">
+                    <NcSectionCard title="'Text skeleton'">
+                        <NcLoadingSkeleton lines="4"/>
+                    </NcSectionCard>
+                    <NcSectionCard title="'Card skeleton'">
+                        <NcLoadingSkeleton variant="'card'" lines="1"/>
+                    </NcSectionCard>
+                </div>
+            </section>
+        </div>
+    </t>
+
+</templates>

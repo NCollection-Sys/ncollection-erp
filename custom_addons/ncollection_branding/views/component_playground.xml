@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Component library playground (UI-T02 / #129) — a dev/QA surface, NOT a
+    tenant-user feature. Gated to base.group_system so only the system admin
+    sees the menu; the client action renders the library components with sample
+    props for visual review and the render-acceptance HttpCase.
+-->
+<odoo>
+
+    <record id="action_component_playground" model="ir.actions.client">
+        <field name="name">Component Library</field>
+        <field name="tag">ncollection_branding.component_playground</field>
+    </record>
+
+    <menuitem id="menu_component_playground"
+              name="Component Library"
+              action="action_component_playground"
+              groups="base.group_system"
+              sequence="900"/>
+
+</odoo>

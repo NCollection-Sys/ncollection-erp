@@ -1,0 +1,210 @@
+// =============================================================================
+// NCollection shared component library styles (UI-T02 / #129).
+//
+// TOKENS ONLY: every colour, radius, shadow, space and font value is a bare
+// var(--nc-*) with NO hard-coded fallback. The UI-T01 :root layer (tokens.scss,
+// loaded first in the bundle) guarantees the tokens resolve; the four injected
+// colour tokens are always present at runtime (res.company defaults them). This
+// is what makes tenant branding + future dark mode flow through with zero edits
+// here, and it is enforced by tests/test_component_library.py.
+// =============================================================================
+
+// ---- KPI card ---------------------------------------------------------------
+.nc-kpi-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--nc-space-2);
+    min-width: 0;
+    padding: var(--nc-space-5);
+    background: var(--nc-surface-raised);
+    border: 1px solid var(--nc-surface-border);
+    border-radius: var(--nc-radius-md);
+    box-shadow: var(--nc-shadow-card);
+
+    // Logical property so the accent flips under RTL (§21 / P3-T08).
+    &--accent {
+        border-inline-start: 4px solid var(--nc-color-primary);
+    }
+
+    &__label {
+        font-size: var(--nc-font-size-xs);
+        font-weight: var(--nc-font-weight-semibold);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--nc-text-muted);
+    }
+
+    &__value {
+        font-size: var(--nc-font-size-2xl);
+        font-weight: var(--nc-font-weight-semibold);
+        line-height: 1.1;
+        color: var(--nc-text);
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__sub {
+        display: flex;
+        align-items: center;
+        gap: var(--nc-space-2);
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+    }
+}
+
+// Trend chip — meaning is semantic (growth/decline), never brand colour.
+.nc-trend {
+    font-weight: var(--nc-font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+
+    &--up { color: var(--nc-status-success); }
+    &--down { color: var(--nc-status-error); }
+}
+
+// ---- Section card + chart wrapper -------------------------------------------
+.nc-section-card,
+.nc-chart-card {
+    padding: var(--nc-space-5);
+    background: var(--nc-surface-raised);
+    border: 1px solid var(--nc-surface-border);
+    border-radius: var(--nc-radius-md);
+    box-shadow: var(--nc-shadow-card);
+    min-width: 0;
+}
+
+.nc-section-card__title,
+.nc-chart-card__title {
+    font-size: var(--nc-font-size-sm);
+    font-weight: var(--nc-font-weight-semibold);
+    margin-bottom: var(--nc-space-3);
+    color: var(--nc-text);
+}
+
+// Bounded parent so a maintainAspectRatio:false canvas cannot grow unbounded.
+.nc-chart-card__canvas {
+    position: relative;
+    height: 240px;
+}
+
+// ---- Badge ------------------------------------------------------------------
+.nc-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--nc-space-2);
+    border-radius: var(--nc-radius-sm);
+    font-size: var(--nc-font-size-xs);
+    font-weight: var(--nc-font-weight-semibold);
+    line-height: 1.5;
+
+    // Soft tint from the semantic colour via color-mix — no separate "soft"
+    // token, no hard-coded hex, and it tracks dark mode automatically.
+    &--success {
+        color: var(--nc-status-success);
+        background: color-mix(in srgb, var(--nc-status-success) 12%, transparent);
+    }
+    &--error {
+        color: var(--nc-status-error);
+        background: color-mix(in srgb, var(--nc-status-error) 12%, transparent);
+    }
+    &--warning {
+        color: var(--nc-status-warning);
+        background: color-mix(in srgb, var(--nc-status-warning) 12%, transparent);
+    }
+    &--info {
+        color: var(--nc-status-info);
+        background: color-mix(in srgb, var(--nc-status-info) 12%, transparent);
+    }
+    &--neutral {
+        color: var(--nc-text-muted);
+        background: color-mix(in srgb, var(--nc-text-muted) 12%, transparent);
+    }
+}
+
+// ---- Quick-action -----------------------------------------------------------
+.nc-quick-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--nc-space-2);
+    padding: var(--nc-space-2) var(--nc-space-4);
+    background: var(--nc-surface-raised);
+    border: 1px solid var(--nc-surface-border);
+    border-radius: var(--nc-radius-sm);
+    color: var(--nc-text);
+    font-size: var(--nc-font-size-sm);
+    font-weight: var(--nc-font-weight-medium);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        border-color: var(--nc-color-primary);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: var(--nc-focus-ring);
+    }
+
+    .fa { color: var(--nc-color-primary); }
+}
+
+// ---- Empty state ------------------------------------------------------------
+.nc-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--nc-space-2);
+    padding: var(--nc-space-8) var(--nc-space-5);
+    color: var(--nc-text-muted);
+
+    &__icon {
+        font-size: var(--nc-font-size-2xl);
+        color: var(--nc-surface-border);
+        margin-bottom: var(--nc-space-2);
+    }
+
+    &__title {
+        font-size: var(--nc-font-size-lg);
+        font-weight: var(--nc-font-weight-semibold);
+        color: var(--nc-text);
+    }
+
+    &__desc {
+        font-size: var(--nc-font-size-sm);
+        max-width: 42ch;
+    }
+
+    &__action {
+        margin-top: var(--nc-space-3);
+    }
+}
+
+// ---- Loading skeleton -------------------------------------------------------
+.nc-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nc-space-3);
+
+    &__block {
+        height: 14px;
+        border-radius: var(--nc-radius-sm);
+        background: var(--nc-surface-border);
+        animation: nc-skeleton-pulse 1.4s ease-in-out infinite;
+    }
+
+    // Card variant: taller blocks that read as loading cards.
+    &--card &__block {
+        height: 96px;
+        border-radius: var(--nc-radius-md);
+    }
+}
+
+@keyframes nc-skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+// §23: respect reduced-motion — freeze the shimmer.
+@media (prefers-reduced-motion: reduce) {
+    .nc-skeleton__block { animation: none; }
+}

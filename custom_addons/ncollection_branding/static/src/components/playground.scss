@@ -1,0 +1,42 @@
+// Playground layout only (UI-T02 / #129) — a dev/QA surface. Tokens-only, and
+// scoped under .nc-playground so it never leaks into real screens. Grid class
+// is playground-local to avoid clashing with the core dashboard's own grids.
+.nc-playground {
+    padding: var(--nc-space-6);
+
+    &__heading {
+        font-size: var(--nc-font-size-xl);
+        font-weight: var(--nc-font-weight-bold);
+        color: var(--nc-text);
+        margin-bottom: var(--nc-space-5);
+    }
+
+    &__section {
+        margin-bottom: var(--nc-space-8);
+
+        h2 {
+            font-size: var(--nc-font-size-md);
+            font-weight: var(--nc-font-weight-semibold);
+            color: var(--nc-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: var(--nc-space-4);
+        }
+    }
+
+    &__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--nc-space-4);
+
+        @media (max-width: 1180px) { grid-template-columns: repeat(2, 1fr); }
+        @media (max-width: 560px) { grid-template-columns: 1fr; }
+    }
+
+    &__row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--nc-space-3);
+        align-items: center;
+    }
+}
