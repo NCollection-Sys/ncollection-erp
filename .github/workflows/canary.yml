@@ -1,0 +1,116 @@
+name: Develop Canary
+
+# THE compensating control for having no branch protection.
+#
+# Verified constraint: this is a GitHub Free org private repo, so
+# `branches/develop/protection` and `/rulesets` both return HTTP 403
+# ("Upgrade to GitHub Pro or make this repository public"). Required status
+# checks are therefore IMPOSSIBLE — any PR can be merged red.
+#
+# Since we cannot PREVENT a bad merge, we detect one fast: this re-runs the full
+# verification suite against develop after every merge and, on failure, files a
+# `broken-develop` issue naming the commit and author. Detection in ~12 minutes
+# instead of "whenever someone next trips over it".
+#
+# Delete this workflow only if the org upgrades and real branch protection is
+# switched on (see docs/markdown/BRANCH_PROTECTION.md).
+on:
+  push:
+    branches:
+      - develop
+  # Lets us prove the auto-issue path works without breaking develop for real.
+  workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: 'Force the suite to fail, to test the auto-issue path'
+        type: boolean
+        default: false
+
+concurrency:
+  group: canary-${{ github.ref }}
+  cancel-in-progress: false # every merged state must be verified
+
+jobs:
+  verify:
+    # Reuses the exact PR suite — one definition, no drift.
+    if: ${{ !inputs.simulate_failure }}
+    uses: ./.github/workflows/verify.yml
+
+  # Only runs when explicitly asked to simulate, so the alerting path is
+  # testable on demand without ever red-flagging a healthy develop.
+  simulate:
+    if: ${{ inputs.simulate_failure }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deliberate failure (auto-issue path test)
+        run: |
+          echo "::error::simulated failure — exercising the broken-develop alert path"
+          exit 1
+
+  report:
+    needs: [verify, simulate]
+    # always() so this evaluates even though one of the two jobs above is always
+    # skipped; then act only if something actually failed.
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: File or update the broken-develop issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          short="${SHA:0:9}"
+          subject="$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message' | head -1)"
+
+          body=$(cat <<EOF
+          **develop is failing verification.**
+
+          | | |
+          |---|---|
+          | Commit | \`$short\` — $subject |
+          | Pushed by | @$ACTOR |
+          | Failing run | $RUN_URL |
+
+          Because this repo has no branch protection (GitHub Free private repos cannot
+          enable it), CI could not block this. Treat a red develop as the top priority:
+          fix forward or revert \`$short\` before merging anything else.
+
+          Reproduce locally:
+          \`\`\`bash
+          make routing-up
+          make verify-all
+          \`\`\`
+          EOF
+          )
+
+          # Idempotent: ensure the label exists before using it.
+          gh label create broken-develop \
+            --repo "$REPO" \
+            --color B60205 \
+            --description "develop is failing verification — fix before merging anything else" \
+            --force >/dev/null 2>&1 || true
+
+          existing=$(gh issue list --repo "$REPO" --label broken-develop --state open \
+                       --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            echo "develop already flagged in #$existing — commenting instead of duplicating."
+            gh issue comment "$existing" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" \
+              --title "🔴 develop is broken by $short" \
+              --label broken-develop \
+              --body "$body" \
+              --assignee "$ACTOR" \
+              || gh issue create --repo "$REPO" \
+                   --title "🔴 develop is broken by $short" \
+                   --label broken-develop \
+                   --body "$body"
+          fi

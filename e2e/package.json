@@ -1,0 +1,18 @@
+{
+  "name": "ncollection-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "NCollection ERP end-to-end tests (Playwright) — P1-T20",
+  "scripts": {
+    "setup": "bash scripts/setup_e2e_tenants.sh",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "typecheck": "tsc --noEmit",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.1",
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2"
+  }
+}

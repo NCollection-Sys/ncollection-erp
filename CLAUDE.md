@@ -78,11 +78,26 @@ frontend/backend deploy — it's a monolith.
 5. OCA-first for mature infrastructure and security concerns.
   Business features that become part of the NCollection product should gradually migrate to native ncollection_* modules according to the project roadmap.
   Never introduce a new OCA dependency without checking the project architecture first.
-6. Small incremental commits, each verified. Run local gates before pushing:
-   `flake8 custom_addons/` + `scripts/ci/architecture_guard.py --base origin/develop`
-   (+ `cd demo && npx tsc --noEmit` if `demo/` changed).
+6. Small incremental commits, each verified. Run `make hooks-install` **once** and the
+   pre-push hook runs the fast gates for you (flake8 · shellcheck · `invariants.py` ·
+   `architecture_guard.py`). Add `cd demo && npx tsc --noEmit` if `demo/` changed.
 7. No secrets in git; dev creds live in `.env` (gitignored; template `.env.example`).
 8. The architecture documents are authoritative.
+9. **Postgres CLI tools need an explicit `-d`.** `psql` and `pg_isready` default the target
+   database to the *username* — the role here is `odoo` and no such database exists, so a
+   missing `-d` fails silently-ish with `FATAL: database "odoo" does not exist`. This
+   disabled the routing suite's idempotency for weeks (REGRESSIONS.md R-002).
+   `dropdb`/`createdb` are fine without it — they default to the `postgres` maintenance db.
+10. **Never `|| true` on a state-changing step you later depend on.** Fail loud with an
+    actionable message. A swallowed restart failure once printed "✅ ready" over a stale
+    cache (R-005).
+11. **Derive container IDs** via `docker compose ps -q <service>`; never hardcode
+    `ncollection-*` names — they break under a non-default `COMPOSE_PROJECT_NAME` (R-006).
+12. **Verification scripts must be idempotent *and prove it*** — run twice; the second run
+    must be a no-op. Claiming idempotency in an echo is not evidence (R-002).
+13. **Before merging, run `make verify-all`** — routing + provisioning + e2e — not just the
+    suite for your own lane. A ticket that proves only its own lane cannot see a cross-suite
+    regression, which is exactly how breakage stayed invisible.
 If a requested implementation appears to conflict with
 DELIVERABLE_1_SYSTEM_DESIGN.md,
 ARCHITECTURE_DATA_PLATFORM.md,
@@ -99,6 +114,32 @@ STOP and ask before changing the architecture.
 ## Make cheat-sheet (`make help` for all)
 `up` `down` `restart` `logs` `ps` · `bootstrap db=<db>` · `install m=<mod> db=<db>` ·
 `upgrade m=<mod> db=<db>` · `psql db=<db>` · `shell` · `demo` (runs the React app).
+**First run:** `make hooks-install` (pre-push gates) · `make doctor` (diagnose the env).
+**Before merging:** `make verify-all` (routing + provisioning + e2e).
+
+## Test fixture ownership (do not cross the streams)
+Each suite owns a database namespace and may **only** drop its own. These used to be
+shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.md R-004).
+
+| Suite | Owns | Cleanup |
+|---|---|---|
+| Routing proof (P1-T06) | `rtclienta` · `rtclientb` · `rtadmin` | `make routing-clean` |
+| E2E (P1-T20) | `e2eclienta` · `e2eclientb` · `e2eadmin` | `make e2e-clean` |
+| Provisioning (P2-T01) | `prov*` | — |
+
+Fixture names must be **alphanumeric**: `db_filter=^%d$` routes a subdomain to the database
+of the same name, underscores are invalid in hostnames, hyphens need Postgres quoting.
+So tenant key === subdomain === database name, always.
+
+## What a green check does NOT mean
+- **`architecture-guard`** checks secrets on every changed file and XML on every `.xml`, but
+  its two-layer/Odoo-syntax rules are scoped to `custom_addons/`. Infra surfaces (shell,
+  compose, workflows) are covered by `scripts/ci/invariants.py` instead. It also reports
+  `0 file(s)` legitimately on a local pre-commit run — untracked files are not in `git diff`.
+- **CI cannot block a merge here.** Branch protection is unavailable on GitHub Free private
+  repos (verified: HTTP 403), so a red PR is merge-able. `canary.yml` re-verifies `develop`
+  after every merge and files a `broken-develop` issue — that is **detection, not a gate**.
+  Treat such an issue as top priority. See `docs/markdown/BRANCH_PROTECTION.md`.
 
 ## Docs index (`docs/markdown/`, PDFs in `docs/pdf/`)
 - `LOCAL_DEV_AND_ARCHITECTURE.md` — onboarding + runtime + workflow (start here for setup).
@@ -106,6 +147,12 @@ STOP and ask before changing the architecture.
 - `SPRINT_SCHEDULE.md` — parallelization / sprint grid.
 - `ARCHITECTURE_DATA_PLATFORM.md` · `ARCHITECTURE_SECURITY.md` — backend & security deep-dives.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
+- `BRANCH_PROTECTION.md` — required CI checks + 1-approval policy, and why none of it is
+  **enforceable** on the current GitHub plan (verified 403) — read before assuming CI blocks.
+- `DEMO_TENANT.md` — the populated **Al Barari Trading** workspace (`make demo-tenant`):
+  what it seeds, which login shows which role, and how to rebuild it.
+- `REGRESSIONS.md` — the regression ledger: symptom → root cause → the guard that now
+  prevents recurrence. **A regression is not closed until a guard exists.**
 - `PRD.md` · `DELIVERABLE_2_TIMELINE_AND_TOOLING.md` · `PLANNING_REVIEW.md` — product & planning.
 
 Architecture priority (highest first)

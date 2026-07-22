@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            Nightly workspace-config reconciliation (P2-T03; ARCHITECTURE_SECURITY
+            §11/§12 — "nightly reconciliation detects tampering/drift"). Re-pushes
+            the desired config to every ready tenant, healing any drift a live
+            sync missed or a tenant-side edit introduced. Idempotent; runs off
+            the HTTP workers via the provisioning queue channel.
+        -->
+        <record id="cron_config_reconcile" model="ir.cron">
+            <field name="name">NCollection: reconcile tenant workspace configs</field>
+            <field name="model_id" ref="model_ncollection_tenant"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_reconcile_config()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Loopback base URL the config-sync client posts to (non-secret;
+             the bearer key lives in the secrets store / .env, never here). -->
+        <record id="param_internal_base_url" model="ir.config_parameter">
+            <field name="key">ncollection_saas.internal_base_url</field>
+            <field name="value">http://localhost:8069</field>
+        </record>
+    </data>
+</odoo>

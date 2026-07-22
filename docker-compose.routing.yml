@@ -1,0 +1,28 @@
+# ============================================================================
+#  Routing-verification overlay  (ticket P1-T06 — OPT-IN, dev only)
+# ============================================================================
+#  Layer this ON TOP of base + dev to turn on real subdomain->database routing
+#  locally, so `rtclienta.localhost -> DB rtclienta` can be PROVEN:
+#
+#    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+#                   -f docker-compose.routing.yml up -d
+#    (or: make routing-up)
+#
+#  It reuses the T03 dev Nginx block as-is (nginx/conf.d/ncollection.dev.conf
+#  already routes *.localhost and forwards `Host`). The ONLY thing it changes is
+#  Odoo's command, switching on the multi-tenant filter that the permissive
+#  default dev stack deliberately leaves off:
+#    - db_filter = ^%d$   -> route each request to the DB named after its
+#                            subdomain (%d = first hostname component).
+#    - list_db  = False   -> hide the database selector entirely.
+#    - proxy_mode = True  -> trust Nginx's forwarded Host/scheme.
+#
+#  `make up` (base + dev) is UNCHANGED and stays permissive (list_db=True) for
+#  everyday work — this overlay is only for the routing proof (see docs/ROUTING.md).
+#
+#  NOTE: `$$` escapes compose interpolation so Odoo receives a literal `$`.
+# ============================================================================
+services:
+
+  odoo:
+    command: ["odoo", "--db-filter=^%d$$", "--no-database-list", "--proxy-mode", "--log-level=info"]

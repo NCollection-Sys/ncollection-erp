@@ -1,0 +1,192 @@
+name: NCollection ERP Verify
+
+# Cross-suite verification (INFRA-02). Supersedes the old e2e-only workflow.
+#
+# A ticket that proves only its OWN lane cannot see a cross-suite regression —
+# which is exactly how breakage between routing and e2e stayed invisible. This
+# job brings up ONE stack and runs every guarantee against it.
+#
+# Suites run with continue-on-error so a single failure does not mask the rest:
+# you get the COMPLETE picture per run, and a final gate step fails the job.
+#
+# NOTE — the P2-T01 provisioning proof is deliberately NOT here. It documents
+# itself as "local; heavy — not a CI test", and needs a platform DB with
+# ncollection_saas installed. `make verify-all` runs it locally; overriding that
+# decision here would blow the time budget for little marginal signal.
+#
+# Reusable: `workflow_call` lets canary.yml (post-merge) and nightly.yml reuse
+# this exact suite instead of duplicating it — one definition, three triggers.
+on:
+  pull_request:
+    branches:
+      - develop
+  workflow_call:
+    inputs:
+      ref:
+        description: >-
+          Git ref to verify. Needed because GitHub runs scheduled workflows from
+          the DEFAULT branch (main), so the nightly must ask for develop
+          explicitly. Empty = checkout's default (correct for PRs).
+        type: string
+        required: false
+        default: ''
+
+concurrency:
+  # Supersede stale runs on a PR, but NEVER cancel a canary/nightly run: every
+  # merged state must actually get verified.
+  group: verify-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Routing overlay = base + dev + routing. Odoo runs workers=0 here, so the
+      # realtime bus stays on :8069 and matches the dev Nginx /websocket route.
+      # See e2e/README.md — running workers>0 without repointing Nginx to :8072
+      # breaks the web client.
+      COMPOSE_FILE: docker-compose.yml:docker-compose.dev.yml:docker-compose.routing.yml
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Empty on pull_request (checkout picks the merge ref itself); the
+          # nightly passes 'develop' so it does not silently verify main.
+          ref: ${{ inputs.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      # ./oca is GENERATED (P1-T04): the base compose mounts it, so the stack
+      # will not boot without it.
+      - name: Aggregate pinned OCA repos
+        run: |
+          pip install 'git-aggregator==4.1'
+          gitaggregate -c repos.yml -j 3
+
+      # Both fixture namespaces: routing owns rt*, e2e owns
+      # e2e*. verify_routing.sh uses curl --resolve, but Chromium needs real
+      # resolution for the e2e hosts.
+      - name: Map fixture hostnames to 127.0.0.1
+        run: |
+          echo "127.0.0.1 rtclienta.localhost rtclientb.localhost rtadmin.localhost" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 e2eclienta.localhost e2eclientb.localhost e2eadmin.localhost" | sudo tee -a /etc/hosts
+
+      - name: Start the routing stack (db_filter ON, workers=0)
+        run: docker compose up -d
+
+      - name: Wait for Odoo to become healthy
+        run: |
+          for _ in $(seq 1 40); do
+            if docker compose exec -T odoo curl -sf http://localhost:8069/web/health >/dev/null 2>&1; then
+              echo "Odoo is up."
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Odoo did not become healthy in time."
+          docker compose logs odoo
+          exit 1
+
+      # ---- Suite 1: routing & tenant isolation (P1-T06) ----------------------
+      - name: Routing & isolation proof
+        id: routing
+        continue-on-error: true
+        run: ./scripts/routing/verify_routing.sh
+
+      # ---- Suite 2: end-to-end platform guarantees (P1-T20) ------------------
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: npm ci
+
+      # Type errors catch hallucinated/renamed API signatures before they reach
+      # review — cheap gate, high value on an AI-assisted codebase.
+      - name: E2E typecheck
+        id: typecheck
+        continue-on-error: true
+        working-directory: e2e
+        run: npm run typecheck
+
+      - name: Install Playwright (chromium)
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      # ORDERING MATTERS: this step restarts Odoo, which also clears the
+      # saturation left behind by the routing suite above. Odoo runs workers=0
+      # here (single-threaded), so running the browser journeys straight after
+      # the routing suite WITHOUT this restart makes logins time out — measured,
+      # not theoretical. Do not reorder these two steps.
+      - name: Set up E2E tenants
+        id: e2esetup
+        continue-on-error: true
+        run: bash e2e/scripts/setup_e2e_tenants.sh
+
+      - name: E2E suite
+        id: e2e
+        continue-on-error: true
+        working-directory: e2e
+        run: npx playwright test
+
+      # ---- Report + gate ----------------------------------------------------
+      - name: Results summary
+        if: always()
+        run: |
+          {
+            echo "## Verification results"
+            echo ""
+            echo "| Suite | Result |"
+            echo "|---|---|"
+            echo "| Routing & isolation (P1-T06) | ${{ steps.routing.outcome }} |"
+            echo "| E2E typecheck | ${{ steps.typecheck.outcome }} |"
+            echo "| E2E tenant setup | ${{ steps.e2esetup.outcome }} |"
+            echo "| E2E guarantees (P1-T20) | ${{ steps.e2e.outcome }} |"
+            echo ""
+            echo "_Provisioning (P2-T01) runs locally via \`make verify-all\` — it is documented as not a CI test._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Gate — fail if any suite failed
+        if: always()
+        run: |
+          rc=0
+          for pair in \
+            "routing:${{ steps.routing.outcome }}" \
+            "typecheck:${{ steps.typecheck.outcome }}" \
+            "e2e-setup:${{ steps.e2esetup.outcome }}" \
+            "e2e:${{ steps.e2e.outcome }}"; do
+            name="${pair%%:*}"; outcome="${pair##*:}"
+            if [ "$outcome" != "success" ]; then
+              echo "::error::suite '$name' did not pass (outcome: $outcome)"
+              rc=1
+            fi
+          done
+          exit "$rc"
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Dump Odoo logs on failure
+        if: failure()
+        run: docker compose logs --tail=200 odoo || true
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

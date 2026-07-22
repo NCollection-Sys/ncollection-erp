@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        The 8 standard NCollection tenant roles (P1-T08).
+
+        DESIGN RULES (see docs/ROLE_MATRIX.md for the full matrix + rationale):
+        - This file contains ZERO references to groups of optional ERP modules
+          (sales_team, stock, hr, account). Provisioning installs only the
+          plan's modules (ARCHITECTURE_SECURITY §4 Ring 3), so those groups
+          may not exist on a given tenant DB. Cross-module implications are
+          linked at runtime by hooks._sync_role_implications(), which skips
+          absent modules and is re-run by provisioning/config sync
+          (P2-T01 / P2-T03 contract).
+        - Only base.* implications are safe to declare here: base is always
+          installed.
+        - Roles are additive checkboxes (no exclusive selection), so one user
+          can hold e.g. Manager + Sales. Escalation is audited by the
+          transitive-closure test in tests/test_roles.py against the
+          ROLE_MATRIX allowlist.
+    -->
+
+    <record id="module_category_ncollection_roles" model="ir.module.category">
+        <field name="name">NCollection Roles</field>
+        <field name="description">Standard tenant workspace roles for NCollection ERP.</field>
+        <field name="sequence">1</field>
+    </record>
+
+    <!-- Odoo 19: groups are organized by res.groups.privilege (category_id was
+         removed from res.groups). One privilege = one selector on the user form;
+         our roles are additive, so they share a privilege for grouping only. -->
+    <record id="privilege_ncollection_roles" model="res.groups.privilege">
+        <field name="name">NCollection Roles</field>
+        <field name="description">Standard tenant workspace roles.</field>
+        <field name="sequence">1</field>
+        <field name="category_id" ref="module_category_ncollection_roles"/>
+    </record>
+
+    <!-- Employee: self-service only. The floor every other role stands on. -->
+    <record id="group_role_employee" model="res.groups">
+        <field name="name">Employee</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Self-service only: own documents, own timesheets/leaves where installed. No configuration access.</field>
+    </record>
+
+    <!-- Sales: pipeline + quotations. Cross-module implication linked at runtime. -->
+    <record id="group_role_sales" model="res.groups">
+        <field name="name">Sales</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('group_role_employee'))]"/>
+        <field name="comment">Salesperson: own leads, quotations and sales orders. Implies sales_team.group_sale_salesman when Sales is installed (runtime-linked).</field>
+    </record>
+
+    <!-- Warehouse: stock operations. Cross-module implication linked at runtime. -->
+    <record id="group_role_warehouse" model="res.groups">
+        <field name="name">Warehouse</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('group_role_employee'))]"/>
+        <field name="comment">Warehouse user: receipts, deliveries, internal transfers. Implies stock.group_stock_user when Inventory is installed (runtime-linked).</field>
+    </record>
+
+    <!-- HR: employee administration. Cross-module implication linked at runtime. -->
+    <record id="group_role_hr" model="res.groups">
+        <field name="name">HR</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('group_role_employee'))]"/>
+        <field name="comment">HR officer: employee records, departments, contracts scope. Implies hr.group_hr_user when HR is installed (runtime-linked).</field>
+    </record>
+
+    <!-- Accountant: full accounting features. Cross-module implication linked at runtime. -->
+    <record id="group_role_accountant" model="res.groups">
+        <field name="name">Accountant</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('group_role_employee'))]"/>
+        <field name="comment">Accountant: invoices, bills, payments, journals, reports. Implies account.group_account_user when Invoicing/Accounting is installed (runtime-linked).</field>
+    </record>
+
+    <!-- Manager: department-level oversight across installed operational modules. -->
+    <record id="group_role_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('group_role_employee'))]"/>
+        <field name="comment">Department manager: operational oversight (all-documents visibility in operational modules, runtime-linked). No financial configuration, no Settings.</field>
+    </record>
+
+    <!-- CEO: sees everything, financials read-only. -->
+    <record id="group_role_ceo" model="res.groups">
+        <field name="name">CEO</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('group_role_manager'))]"/>
+        <field name="comment">Executive: all installed modules, financials READ-ONLY (implies account.group_account_readonly, never group_account_user; runtime-linked). No Settings.</field>
+    </record>
+
+    <!-- Owner: full workspace control including billing. -->
+    <record id="group_role_owner" model="res.groups">
+        <field name="name">Owner</field>
+        <field name="privilege_id" ref="privilege_ncollection_roles"/>
+        <field name="implied_ids" eval="[(4, ref('group_role_ceo')), (4, ref('base.group_system'))]"/>
+        <field name="comment">Workspace owner: full control including billing, user management and Settings (base.group_system; the dangerous surface is stripped by P1-T11). Financial WRITE access via runtime-linked account.group_account_user, overriding CEO's read-only.</field>
+    </record>
+
+</odoo>

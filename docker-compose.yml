@@ -16,7 +16,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo}"]
+      # `-d` is REQUIRED: pg_isready with no -d targets a database named after the
+      # USER ("odoo"), which does not exist here — so every probe logged
+      # `FATAL: database "odoo" does not exist` every 10s forever. The check still
+      # passed (it only needs the server to answer), so it was pure log noise
+      # hiding real errors. See REGRESSIONS.md R-003 / invariants.py rule R1.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${DB_NAME:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,10 +38,17 @@ services:
       HOST: db
       USER: ${DB_USER:-odoo}
       PASSWORD: ${DB_PASSWORD:-odoo}
+      # Config-sync service-account bearer key (P2-T03). Read from .env; the
+      # platform uses it to push plan changes into tenant DBs. Empty by default
+      # (config sync then fails soft + logs).
+      NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
     restart: always
     volumes:
       - odoo_data:/var/lib/odoo
       - ./custom_addons:/mnt/extra-addons
+      # OCA addon repos (P1-T04): ./oca is GENERATED from repos.yml pins —
+      # run `make oca` after a fresh clone (CI aggregates the same pins).
+      - ./oca:/mnt/oca-addons:ro
       # Base mounts the DEV config (config/odoo.conf: list_db=True, workers=0)
       # so a plain `docker compose up` gives a working localhost dev stack.
       # The production multi-tenant config is config/odoo.prod.conf, selected

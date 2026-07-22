@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Workspace Appearance (P1-T16) — the Owner-facing page for per-tenant
+        branding, nested in the P1-T12 Workspace Settings menu.
+
+        The nc_* colour / login-background fields live on res.company and are
+        defined by ncollection_branding (which also injects the runtime CSS
+        variables and owns the theming SCSS). ncollection_core therefore depends
+        on ncollection_branding: per the DELIVERABLE_1 §2.5 install matrix
+        branding ships in every tenant DB where core lives, and branding must
+        stay installable standalone in the admin DB (so the edge is core ->
+        branding, never the reverse). Owner-only via the gated parent menu; the
+        strict-hex validation is enforced at the ORM in
+        ncollection_branding/models/res_company.py (Standing Rule 4/7).
+    -->
+
+    <record id="view_workspace_appearance_form" model="ir.ui.view">
+        <field name="name">ncollection.workspace.appearance.form</field>
+        <field name="model">res.company</field>
+        <field name="arch" type="xml">
+            <form string="Workspace Appearance">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Workspace Appearance</h1>
+                    </div>
+                    <group>
+                        <group string="Brand Colours">
+                            <field name="nc_primary_color" placeholder="#1F5F8F"/>
+                            <field name="nc_secondary_color" placeholder="#2D7AB7"/>
+                            <field name="nc_sidebar_color" placeholder="#12233A"/>
+                        </group>
+                        <group string="Login Screen">
+                            <field name="nc_login_background" widget="image"
+                                   class="oe_avatar" options="{'size': [0, 180]}"/>
+                        </group>
+                    </group>
+                    <p class="text-muted">
+                        Colours use 6-digit hex (for example #1F5F8F). Changes apply
+                        on the next page reload. Leave a colour empty to use the
+                        NCollection default.
+                    </p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Server action opening the CURRENT company's appearance form (an
+         act_window with no res_id would open a blank new-company form) —
+         mirrors action_workspace_company. -->
+    <record id="action_workspace_appearance" model="ir.actions.server">
+        <field name="name">Appearance</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Appearance',
+    'res_model': 'res.company',
+    'res_id': env.company.id,
+    'view_mode': 'form',
+    'views': [(env.ref('ncollection_core.view_workspace_appearance_form').id, 'form')],
+    'target': 'current',
+}
+        </field>
+    </record>
+
+    <menuitem id="menu_workspace_appearance"
+              name="Appearance"
+              parent="menu_workspace_settings_root"
+              action="action_workspace_appearance"
+              sequence="40"/>
+
+</odoo>

@@ -1,44 +1,44 @@
-// NCollection brand color palette
+// NCollection brand color palette (P1-T13 base; P1-T16 per-tenant tokens).
+//
+// The $ncollection-* SCSS variables are the NCollection DEFAULTS. Tenant-
+// overridable surfaces consume them through var(--nc-*, <default>): the
+// per-tenant :root{--nc-*} block injected by views/branding_theme_templates.xml
+// (from res.company.nc_*) overrides the token at runtime, and an unset tenant
+// value falls back to the default baked in here. Colours are strict-hex
+// validated at the ORM layer, so the injected values are always safe.
 $ncollection-primary: #1F5F8F;
 $ncollection-secondary: #2D7AB7;
 $ncollection-silver: #C0C7D1;
 $ncollection-background: #F7F9FC;
 $ncollection-text: #0F172A;
 
-:root {
-    --ncollection-primary: #{$ncollection-primary};
-    --ncollection-secondary: #{$ncollection-secondary};
-    --ncollection-silver: #{$ncollection-silver};
-    --ncollection-background: #{$ncollection-background};
-    --ncollection-text: #{$ncollection-text};
-}
-
 body {
-    background-color: var(--ncollection-background);
-    color: var(--ncollection-text);
+    background-color: var(--nc-bg, #{$ncollection-background});
+    color: var(--nc-text, #{$ncollection-text});
 }
 
 .o_main_navbar {
-    background-color: $ncollection-primary !important;
+    background-color: var(--nc-primary, #{$ncollection-primary}) !important;
 }
 
 a {
-    color: $ncollection-secondary;
+    color: var(--nc-secondary, #{$ncollection-secondary});
 }
 
 .btn-primary {
-    background-color: $ncollection-secondary;
-    border-color: $ncollection-secondary;
+    background-color: var(--nc-secondary, #{$ncollection-secondary});
+    border-color: var(--nc-secondary, #{$ncollection-secondary});
 }
 
 .btn-primary:hover {
-    background-color: $ncollection-primary;
-    border-color: $ncollection-primary;
+    background-color: var(--nc-primary, #{$ncollection-primary});
+    border-color: var(--nc-primary, #{$ncollection-primary});
 }
 
-/* Login page */
+/* Login page (legacy .o_login_page selectors; the P1-T14 redesign lives in
+   login.scss under .o_nc_login). Kept token-driven for consistency. */
 .o_login_page .card {
-    border-color: $ncollection-silver;
+    border-color: var(--nc-silver, #{$ncollection-silver});
 }
 
 .ncollection_login_logo {
@@ -51,10 +51,10 @@ a {
 }
 
 .o_login_page .btn-primary {
-    background-color: $ncollection-primary;
-    border-color: $ncollection-primary;
+    background-color: var(--nc-primary, #{$ncollection-primary});
+    border-color: var(--nc-primary, #{$ncollection-primary});
 }
 
 .o_login_page a {
-    color: $ncollection-secondary;
+    color: var(--nc-secondary, #{$ncollection-secondary});
 }

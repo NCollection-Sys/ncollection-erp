@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# ============================================================================
+#  pre-push — the FAST gates, locally, before anything reaches GitHub
+# ============================================================================
+#  Install with:  make hooks-install
+#  Bypass with:   git push --no-verify
+#
+#  Deliberately fast (target < 10s): lint + static guards only. The heavy suites
+#  (routing, e2e, provisioning) stay in `make verify-all` and CI — a hook that
+#  takes minutes is a hook people delete.
+#
+#  Missing tools WARN rather than block. Failing someone's push because a
+#  linter is not installed teaches them to use --no-verify permanently, which
+#  costs more than the check was worth.
+# ============================================================================
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)" || exit 0
+
+fail=0
+skipped=0
+
+report() { printf '  %-24s %s\n' "$1" "$2"; }
+
+run_gate() { # run_gate <label> <cmd...>
+  local label="$1"; shift
+  local out
+  if out="$("$@" 2>&1)"; then
+    report "$label" "ok"
+  else
+    report "$label" "FAILED"
+    printf '%s\n' "$out" | sed 's/^/      /'
+    fail=1
+  fi
+}
+
+# flake8 is often a user-site install that is not on PATH (verified on this
+# machine), so probe a few plausible entry points before giving up.
+find_flake8() {
+  if python3 -m flake8 --version >/dev/null 2>&1; then echo "python3 -m flake8"; return 0; fi
+  if command -v flake8 >/dev/null 2>&1; then echo "flake8"; return 0; fi
+  local candidate
+  for candidate in "$HOME"/Library/Python/*/bin/flake8; do
+    [ -x "$candidate" ] && { echo "$candidate"; return 0; }
+  done
+  return 1
+}
+
+echo "pre-push gates:"
+
+if f8="$(find_flake8)"; then
+  # shellcheck disable=SC2086  # intentional word-split: may be "python3 -m flake8"
+  run_gate "flake8" $f8 custom_addons/ scripts/
+else
+  report "flake8" "skipped (not installed)"; skipped=1
+fi
+
+if command -v shellcheck >/dev/null 2>&1; then
+  # Plain word-splitting rather than `mapfile`: macOS ships bash 3.2, where
+  # mapfile does not exist. Our .sh paths contain no spaces.
+  sh_files="$(git ls-files '*.sh')"
+  if [ -n "$sh_files" ]; then
+    # shellcheck disable=SC2086  # intentional split into separate file args
+    run_gate "shellcheck" shellcheck $sh_files
+  else
+    report "shellcheck" "ok (no .sh files)"
+  fi
+else
+  report "shellcheck" "skipped (not installed)"; skipped=1
+fi
+
+run_gate "invariants"        python3 scripts/ci/invariants.py
+run_gate "architecture-guard" python3 scripts/ci/architecture_guard.py --base origin/develop
+
+if [ "$fail" -ne 0 ]; then
+  cat >&2 <<'MSG'
+
+push blocked by the gates above. CI runs these too, so pushing would just fail
+slower. Fix them, or bypass deliberately with:  git push --no-verify
+MSG
+  exit 1
+fi
+
+[ "$skipped" -ne 0 ] && echo "  (some gates skipped — CI still enforces them)"
+echo "  all good."
+exit 0

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Owner Workspace Settings (P1-T12) — the safe replacement for the raw
+        Settings menu that P1-T11 strips. Owner-only via menu groups (our own
+        menu records, stable) mirrored at ORM by the wizard ACL and the
+        Owner guard inside res.users.action_ncollection_deactivate.
+
+        UI per UI_UX_ARCHITECTURE.md: forms §11 (grouped fields, plain
+        labels), modals §19 (wizard footer: one primary + cancel), tokens
+        §3-§8 via the global ncollection_branding theme. Raw res.groups is
+        never rendered anywhere below.
+    -->
+
+    <!-- ============ Users (simplified list — no groups exposed) ============ -->
+    <record id="view_workspace_users_list" model="ir.ui.view">
+        <field name="name">ncollection.workspace.users.list</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <list string="Workspace Users" create="false" edit="false" delete="false"
+                  decoration-muted="not active">
+                <field name="name"/>
+                <field name="login" string="Email"/>
+                <field name="active" column_invisible="1"/>
+                <button name="action_ncollection_deactivate" type="object"
+                        string="Deactivate" icon="fa-user-times"
+                        invisible="not active"
+                        confirm="Deactivate this user? They will no longer be able to log in."/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_workspace_users" model="ir.actions.act_window">
+        <field name="name">Users</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_workspace_users_list"/>
+        <field name="domain">[('share', '=', False)]</field>
+        <field name="context">{'active_test': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Invite your first team member</p>
+            <p>Use "Invite User" to add teammates with a predefined role.</p>
+        </field>
+    </record>
+
+    <!-- ============ Invite wizard ============ -->
+    <record id="view_user_invite_form" model="ir.ui.view">
+        <field name="name">ncollection.user.invite.form</field>
+        <field name="model">ncollection.user.invite</field>
+        <field name="arch" type="xml">
+            <form string="Invite User">
+                <sheet>
+                    <group>
+                        <field name="name" placeholder="e.g. Sara Mahmoud"/>
+                        <field name="email" placeholder="e.g. sara@yourcompany.com"/>
+                        <field name="role" widget="radio"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_invite" string="Send Invitation"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_user_invite" model="ir.actions.act_window">
+        <field name="name">Invite User</field>
+        <field name="res_model">ncollection.user.invite</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_user_invite_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ============ Company info (simplified — no technical tabs) ============ -->
+    <record id="view_workspace_company_form" model="ir.ui.view">
+        <field name="name">ncollection.workspace.company.form</field>
+        <field name="model">res.company</field>
+        <field name="arch" type="xml">
+            <form string="Company Information">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Company Name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identity">
+                            <field name="logo" widget="image" class="oe_avatar"/>
+                            <field name="vat" string="TRN"/>
+                        </group>
+                        <group string="Contact">
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="website" widget="url"/>
+                        </group>
+                    </group>
+                    <group string="Address">
+                        <group>
+                            <field name="street" placeholder="Street"/>
+                            <field name="street2" placeholder="Street 2"/>
+                            <field name="city" placeholder="City"/>
+                        </group>
+                        <group>
+                            <field name="state_id" placeholder="Emirate / State"/>
+                            <field name="zip" placeholder="ZIP"/>
+                            <field name="country_id" placeholder="Country"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Server action: open the CURRENT company's form (an act_window with
+         no res_id would open a blank new-company form). -->
+    <record id="action_workspace_company" model="ir.actions.server">
+        <field name="name">Company</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Company',
+    'res_model': 'res.company',
+    'res_id': env.company.id,
+    'view_mode': 'form',
+    'views': [(env.ref('ncollection_core.view_workspace_company_form').id, 'form')],
+    'target': 'current',
+}
+        </field>
+    </record>
+
+    <!-- ============ Menus (Owner-only) ============ -->
+    <menuitem id="menu_workspace_settings_root"
+              name="Workspace Settings"
+              sequence="540"
+              groups="ncollection_core.group_role_owner"/>
+
+    <menuitem id="menu_workspace_users"
+              name="Users"
+              parent="menu_workspace_settings_root"
+              action="action_workspace_users"
+              sequence="10"/>
+
+    <menuitem id="menu_workspace_invite"
+              name="Invite User"
+              parent="menu_workspace_settings_root"
+              action="action_user_invite"
+              sequence="20"/>
+
+    <menuitem id="menu_workspace_company"
+              name="Company"
+              parent="menu_workspace_settings_root"
+              action="action_workspace_company"
+              sequence="30"/>
+
+</odoo>

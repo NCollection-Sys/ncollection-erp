@@ -112,8 +112,16 @@ With the gate passed, assemble working context:
 
 ## Phase 5 — Plan gate
 
-Present a mini implementation plan: ordered steps, files to create/modify,
-Before asking for approval, explain briefly how the implementation preserves:
+Present a mini implementation plan: ordered steps, files to create/modify, test
+approach, risks. It MUST also include:
+
+- **A blast-radius table** — which ALREADY-SHIPPED work could this touch?
+  Scripts, compose files, nginx configs, workflows, fixture databases, shared
+  addons. "None — new files only" is a fine answer when it is true. Cross-suite
+  breakage stayed invisible for weeks precisely because nobody was asked this.
+- **A rollback plan** — how to undo this cleanly if it misbehaves after merge.
+
+Then explain briefly how the implementation preserves:
 
 - Two-layer architecture
 - Database-per-tenant isolation
@@ -122,7 +130,7 @@ Before asking for approval, explain briefly how the implementation preserves:
 
 If any architectural assumption changes, STOP and ask before implementation.
 
-test approach, risks. **Wait for explicit user approval before any edit.**
+**Wait for explicit user approval before any edit.**
 
 
 ## Phase 6 — Execute, verify, ship
@@ -132,17 +140,29 @@ test approach, risks. **Wait for explicit user approval before any edit.**
 2. Work in small, reviewable commits: `<type>: <summary>` with `Refs #<N>` in
    bodies. Verify each piece as it lands (install/upgrade the module, run the
    app, run tests) — never batch unverified work.
-3. **Local gates before every push** (CI mirrors these; catch failures here):
-   - `python3 -m flake8 custom_addons/`
-   - `python3 scripts/ci/architecture_guard.py --base origin/develop`
-   - if `demo/` was touched: `cd demo && npx tsc --noEmit`
+3. **Local gates before every push.** Run `make hooks-install` once and the
+   pre-push hook runs the fast ones for you (flake8 · shellcheck ·
+   `invariants.py` · `architecture_guard.py`). Add `cd demo && npx tsc --noEmit`
+   if `demo/` changed.
+   **Then run `make verify-all`** (routing + provisioning + e2e) — NOT just the
+   suite for your own lane. A ticket that proves only its own lane cannot see a
+   cross-suite regression. If you touched shared infra or a verification script,
+   show the OTHER suites still passing.
 4. Push and open the PR: base `develop`, title `[<ID>] <Task Name>`, body with
-   what/why, test evidence per acceptance criterion, and **`Closes #<N>`**
-   (plan issues auto-close on merge — this keeps future dependency checks
-   truthful). Include any recorded override from Phase 3.
-5. Watch all four CI checks (`lint`, `architecture-guard`, `test`, `build`)
-   to completion. Fix failures on the same branch. **Never merge your own PR**
-   — hand it to the user for review.
+   what/why, `make verify-all` evidence per acceptance criterion, an explicit
+   **"What this does NOT cover"** section (an undeclared gap reads as coverage),
+   a rollback note, and **`Closes #<N>`**. Include any Phase-3 override.
+   ⚠️ `Closes #<N>` does **NOT** auto-close here: GitHub only auto-closes from
+   the DEFAULT branch (`main`), and we merge to `develop`. The keyword is for
+   traceability; the issue must be closed BY HAND after merge (see Phase 7).
+   Getting this wrong silently breaks the "closed issue = completed task"
+   convention every dependency gate relies on.
+5. Watch the CI checks to completion — `lint`, `architecture-guard`, `test`,
+   `build`, `verify` (cross-suite). `security-scan` is advisory, not blocking.
+   Fix failures on the same branch. **Never merge your own PR** — hand it to the
+   user for review.
+   ⚠️ Green CI does NOT block a bad merge here: branch protection is unavailable
+   on this GitHub plan (verified 403). See `docs/markdown/BRANCH_PROTECTION.md`.
    Before completing the task, verify that:
 
 - No architectural decision was unintentionally changed.
@@ -154,6 +174,27 @@ test approach, risks. **Wait for explicit user approval before any edit.**
    (b) anything deliberately not done, and (c) **the issues this unblocks** —
    `gh issue list --repo NCollection-Sys/ncollection-erp --state open --limit 300 --json number,title,body --jq '.[] | select(.body | test("\\*\\*Dependencies\\*\\*:.*<ID>")) | "#\(.number) \(.title)"'`
    — suggest them as the next `/solve-issue` candidates.
+
+## Phase 7 — After the merge (do not skip)
+
+The user merges, not you. Once they have:
+
+1. **Close the issue by hand** — `gh issue close <N> --comment "Completed in PR
+   #<pr> (merged to develop, commit <sha>)."` `Closes #<N>` does not fire on a
+   `develop` merge (see Phase 6.4), and the dependency gate in Phase 2 treats a
+   CLOSED issue as a COMPLETED task. Leaving it open silently blocks every task
+   that depends on it.
+2. **Watch the canary.** Merging to `develop` triggers `canary.yml`, which
+   re-runs the full suite. If it files a `broken-develop` issue, that is now the
+   top priority — fix forward or revert before anything else is merged. A green
+   canary means "develop was healthy 12 minutes ago", not "the merge was gated".
+3. **Refresh the tracker** — `python3 scripts/github_issue_sync.py --report`.
+   It is GENERATED; never hand-edit it. Commit only if a task's status actually
+   changed (a date-only diff is churn — discard it).
+4. **If this fixed a regression**, add an entry to `docs/markdown/REGRESSIONS.md`:
+   symptom → root cause → **the guard that now prevents recurrence**. A
+   regression is not closed until a guard exists, or until it is written down why
+   one cannot be built.
 
 ## Guardrails (always)
 

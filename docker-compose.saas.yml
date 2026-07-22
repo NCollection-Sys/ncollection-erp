@@ -1,0 +1,56 @@
+# ============================================================================
+#  Provisioning runner overlay  (ticket P2-T01 — OPT-IN)
+# ============================================================================
+#  The isolated satellite that runs OCA queue_job's jobrunner in its OWN,
+#  resource-limited container, so heavy tenant provisioning (CREATE DATABASE +
+#  module installs) NEVER shares a process with the HTTP workers serving live
+#  tenants (ARCHITECTURE_DATA_PLATFORM §10, ARCHITECTURE_SECURITY §11).
+#
+#  Layer it on top of base (+ dev or prod):
+#    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+#                   -f docker-compose.saas.yml up -d provisioning-runner
+#
+#  It is OPT-IN: `make up` and CI never start it. The engine itself is a plain
+#  method (`action_run_sync` / the "Provision (inline)" button), so it can be
+#  exercised WITHOUT this container — the container only adds the async,
+#  off-the-HTTP-workers execution that matters in production.
+#
+#  PLATFORM_DB defaults to `ncollection`; set it in .env for another admin DB.
+# ============================================================================
+services:
+
+  provisioning-runner:
+    image: odoo:19
+    container_name: ncollection-provisioning-runner
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # DB connection (same as the odoo service; entrypoint injects db args).
+      HOST: db
+      USER: ${DB_USER:-odoo}
+      PASSWORD: ${DB_PASSWORD:-odoo}
+      # queue_job channel capacity — the dedicated 'provisioning' sub-channel
+      # gets 2 concurrent slots; keep the root default low.
+      ODOO_QUEUE_JOB_CHANNELS: root:1,root.provisioning:2
+      # Config-sync bearer key (P2-T03): the reconcile cron + queued live syncs
+      # run here, so the runner needs the same key as the odoo service.
+      NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+    # --load starts the queue_job jobrunner thread; --db-filter pins the runner
+    # to the single admin/platform DB (it never watches tenant DBs). It shells
+    # out (odoo subprocess) to build tenant DBs — never a cross-DB ORM call.
+    command: >
+      odoo -c /etc/odoo/odoo.conf
+           --load=base,web,queue_job
+           --workers=2 --max-cron-threads=1
+           --db-filter=^${PLATFORM_DB:-ncollection}$$
+    volumes:
+      - ./custom_addons:/mnt/extra-addons:ro
+      - ./oca:/mnt/oca-addons:ro
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - odoo_data:/var/lib/odoo
+    # Resource caps: heavy but bounded, so a provisioning spike can never starve
+    # the interactive stack (SECURITY §11 — resource exhaustion).
+    mem_limit: 1500m
+    cpus: 1.0
+    restart: unless-stopped

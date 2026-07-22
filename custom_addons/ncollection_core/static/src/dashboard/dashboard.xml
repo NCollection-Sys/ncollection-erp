@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Customer Workspace Dashboard templates (P1-T17).
+    Markup mirrors demo/src/pages/Dashboard.tsx: header + quick actions, a KPI
+    grid, then the charts row. Widgets arrive pre-filtered by the server (role,
+    installation and licence); this template only renders what it is handed.
+-->
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_core.Dashboard">
+        <div class="o_content nc-dashboard">
+
+            <div class="nc-dashboard__header">
+                <div>
+                    <h1 class="nc-dashboard__title">
+                        Welcome back<t t-if="firstName">, <t t-esc="firstName"/></t>
+                    </h1>
+                    <p class="nc-dashboard__subtitle" t-if="state.meta.company_name">
+                        <t t-esc="state.meta.company_name"/>
+                    </p>
+                </div>
+                <!-- Only actions for apps this tenant has AND licenses. -->
+                <div class="nc-dashboard__actions" t-if="state.actions.length">
+                    <button t-foreach="state.actions" t-as="quick" t-key="quick.key"
+                            class="btn btn-secondary nc-quick-action"
+                            t-on-click="() => this.onQuickAction(quick.action_id)">
+                        <t t-esc="quick.label"/>
+                    </button>
+                </div>
+            </div>
+
+            <div t-if="state.loading" class="nc-dashboard__status">
+                Loading your dashboard…
+            </div>
+
+            <div t-elif="state.failed" class="nc-dashboard__status nc-dashboard__status--error">
+                The dashboard could not be loaded. Please refresh the page.
+            </div>
+
+            <!--
+                An empty widget list is a legitimate state, not an error: a role
+                may grant nothing, or the tenant's plan may not include the apps
+                these widgets read.
+            -->
+            <div t-elif="!state.widgets.length" class="nc-dashboard__status">
+                No dashboard widgets are available for your role yet.
+            </div>
+
+            <t t-else="">
+                <div class="nc-kpi-grid" t-if="kpis.length">
+                    <t t-foreach="kpis" t-as="widget" t-key="widget.key">
+                        <t t-call="ncollection_core.DashboardKpiCard"/>
+                    </t>
+                </div>
+
+                <!-- One ref on the container: t-ref inside a t-foreach would
+                     only ever yield the last canvas. The component walks these
+                     children on mount and pairs each canvas to its widget by
+                     data-key. -->
+                <div class="nc-chart-grid" t-ref="charts" t-if="charts.length">
+                    <t t-foreach="charts" t-as="widget" t-key="widget.key">
+                        <t t-call="ncollection_core.DashboardChartCard"/>
+                    </t>
+                </div>
+            </t>
+
+        </div>
+    </t>
+
+    <t t-name="ncollection_core.DashboardKpiCard">
+        <div class="nc-kpi-card" t-att-data-widget="widget.key">
+            <div class="nc-kpi-card__label"><t t-esc="widget.label"/></div>
+            <div class="nc-kpi-card__value"><t t-esc="formatValue(widget)"/></div>
+            <div class="nc-kpi-card__sub">
+                <span t-if="formatTrend(widget)"
+                      class="nc-trend"
+                      t-att-class="trendClass(widget)"
+                      t-esc="formatTrend(widget)"/>
+                <span t-if="widget.sub"><t t-esc="widget.sub"/></span>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="ncollection_core.DashboardChartCard">
+        <div class="nc-chart-card" t-att-data-widget="widget.key">
+            <div class="nc-chart-card__title"><t t-esc="widget.label"/></div>
+            <div class="nc-chart-card__canvas">
+                <!-- Chart.js draws here once mounted; paired by data-key. -->
+                <canvas class="nc-chart" t-att-data-key="widget.key"/>
+            </div>
+        </div>
+    </t>
+
+</templates>

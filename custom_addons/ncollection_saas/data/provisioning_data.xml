@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Dedicated queue_job channel for provisioning. The runner container
+             sets this channel's capacity via its [queue_job] config (see
+             docs/markdown/PROVISIONING.md). Isolating the channel keeps heavy
+             tenant creation off any other job traffic. -->
+        <record id="channel_provisioning" model="queue.job.channel">
+            <field name="name">provisioning</field>
+            <field name="parent_id" ref="queue_job.channel_root"/>
+        </record>
+
+        <!-- Per-hour provisioning quota (SECURITY §11 — resource exhaustion /
+             DB-creation DoS). Tenant-tunable; 0 disables the cap. -->
+        <record id="param_provisioning_quota" model="ir.config_parameter">
+            <field name="key">ncollection_saas.provisioning_quota_per_hour</field>
+            <field name="value">20</field>
+        </record>
+
+        <!-- Portal-URL template for a provisioned tenant. {db} is substituted
+             with the tenant database/subdomain. Dev routes by subdomain on
+             localhost; P2-T06 productionises real domains + SSL. -->
+        <record id="param_portal_url_template" model="ir.config_parameter">
+            <field name="key">ncollection_saas.portal_url_template</field>
+            <field name="value">http://{db}.localhost:8069</field>
+        </record>
+
+        <!-- Welcome email (P2-T02): sent when a tenant becomes login-ready.
+             Rendered through the P1-T18 branded notification layout
+             (email_layout_xmlid at send time). Carries the workspace URL and
+             the first-login password-setup link (ctx.nc_setup_url, computed in
+             the tenant DB). Never carries a credential (SECURITY §6/§11). -->
+        <record id="mail_template_tenant_welcome" model="mail.template">
+            <field name="name">Tenant Welcome</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
+            <field name="subject">Your {{ object.company_name }} workspace is ready</field>
+            <field name="email_from">{{ (object.create_uid.company_id.email or user.company_id.email) }}</field>
+            <field name="email_to">{{ object.email }}</field>
+            <field name="body_html" type="html">
+                <div style="margin:0;padding:0;">
+                    <p>Hi <t t-out="object.contact_name or object.company_name or ''"/>,</p>
+                    <p>Your NCollection workspace for
+                        <strong t-out="object.company_name or ''"/> is ready.</p>
+                    <p>
+                        <a t-att-href="object.portal_url"
+                           t-att-style="'background:%s;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;' % (object.create_uid.company_id.email_secondary_color or '#1F5F8F')">
+                            Open your workspace
+                        </a>
+                    </p>
+                    <p t-if="ctx.get('nc_setup_url')">
+                        To get started, set your password here:
+                        <a t-att-href="ctx.get('nc_setup_url')" t-out="ctx.get('nc_setup_url')"/>
+                    </p>
+                    <p t-else="">
+                        On the login page, use “Forgot password?” to set your password.
+                    </p>
+                    <p>Workspace address: <t t-out="object.portal_url or ''"/></p>
+                </div>
+            </field>
+            <field name="lang">{{ object.env.user.lang }}</field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
