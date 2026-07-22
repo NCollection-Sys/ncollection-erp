@@ -62,7 +62,8 @@ class TestDynamicBrandingHttp(HttpCase):
         res = self.url_open("/odoo")
         self.assertEqual(res.status_code, 200)
         self.assertIn("nc_tenant_theme", res.text)
-        self.assertIn("--nc-primary: #AB12CD", res.text)
+        # canonical --nc-<category>-<name> token (UI-T01/#128)
+        self.assertIn("--nc-color-primary: #AB12CD", res.text)
 
     def test_login_injects_tenant_css_vars(self):
         """The public login page also carries the :root block (colours theme
@@ -72,4 +73,5 @@ class TestDynamicBrandingHttp(HttpCase):
         res = self.url_open("/web/login")
         self.assertEqual(res.status_code, 200)
         self.assertIn("nc_tenant_theme", res.text)
-        self.assertIn("--nc-secondary: #33EE99", res.text)
+        # canonical --nc-<category>-<name> token (UI-T01/#128)
+        self.assertIn("--nc-color-secondary: #33EE99", res.text)
