@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Public checkout pages (P2-T16). Rendered via web.frontend_layout (loads
+        web.assets_frontend => tokens.scss + checkout.scss + checkout.js) so we
+        get the branded design tokens without pulling in the heavy `website`
+        module. NCollection-branded, zero Odoo references, bilingual-ready copy.
+    -->
+
+    <!-- ===================== Pricing ===================== -->
+    <template id="checkout_pricing" name="NCollection Pricing">
+        <t t-call="web.frontend_layout">
+            <t t-set="title">Pricing — NCollection</t>
+            <div class="nc-checkout" data-nc-checkout="pricing">
+                <header class="nc-checkout__head">
+                    <h1>Pick a plan. Get your ERP in minutes.</h1>
+                    <p>Start a free 14-day trial — no card required.</p>
+                    <div class="nc-checkout__toggle">
+                        <button type="button" class="nc-checkout__toggle-btn is-active" data-cycle="monthly">Monthly</button>
+                        <button type="button" class="nc-checkout__toggle-btn" data-cycle="yearly">Yearly</button>
+                    </div>
+                </header>
+                <div class="nc-checkout__plans">
+                    <t t-foreach="plans" t-as="plan" t-key="plan.id">
+                        <div class="nc-checkout__plan">
+                            <h2 t-esc="plan.name"/>
+                            <div class="nc-checkout__price">
+                                <span class="nc-checkout__amount"
+                                      t-att-data-monthly="plan.monthly_price"
+                                      t-att-data-yearly="plan.yearly_price"
+                                      t-esc="'%.0f' % plan.monthly_price"/>
+                                <span class="nc-checkout__per">/ mo</span>
+                            </div>
+                            <p class="nc-checkout__desc" t-esc="plan.description or ''"/>
+                            <a class="nc-checkout__cta"
+                               t-attf-href="/nc/checkout?plan={{ plan.code }}&amp;cycle=monthly"
+                               t-att-data-plan="plan.code">Start free trial</a>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ===================== Registration form ===================== -->
+    <template id="checkout_form" name="NCollection Checkout">
+        <t t-call="web.frontend_layout">
+            <t t-set="title">Create your workspace — NCollection</t>
+            <div class="nc-checkout" data-nc-checkout="form"
+                 t-att-data-recaptcha-site-key="recaptcha_site_key or ''">
+                <div class="nc-checkout__card">
+                    <h1>Create your workspace</h1>
+                    <p class="nc-checkout__sub">14-day free trial of the
+                        <strong t-esc="selected_plan.name"/> plan.</p>
+
+                    <form class="nc-checkout__form" data-nc-form="register">
+                        <input type="hidden" name="plan" t-att-value="selected_plan.code"/>
+                        <input type="hidden" name="cycle" t-att-value="billing_cycle"/>
+
+                        <label>Company name
+                            <input type="text" name="company" required="required" autocomplete="organization"/>
+                        </label>
+                        <label>Your name
+                            <input type="text" name="contact" autocomplete="name"/>
+                        </label>
+                        <label>Work email
+                            <input type="email" name="email" required="required" autocomplete="email"/>
+                        </label>
+                        <label>Workspace address
+                            <span class="nc-checkout__subdomain">
+                                <input type="text" name="subdomain" required="required"
+                                       autocomplete="off" spellcheck="false"/>
+                                <span class="nc-checkout__subdomain-suffix">.ncollectionerp.com</span>
+                            </span>
+                            <small class="nc-checkout__hint" data-nc-availability=""></small>
+                        </label>
+
+                        <t t-if="recaptcha_site_key">
+                            <div class="g-recaptcha" t-att-data-sitekey="recaptcha_site_key"></div>
+                            <script src="https://www.google.com/recaptcha/api.js" async="async" defer="defer"></script>
+                        </t>
+
+                        <button type="submit" class="nc-checkout__cta" data-nc-submit="">
+                            Create my workspace
+                        </button>
+                        <p class="nc-checkout__error" data-nc-error="" role="alert"></p>
+                    </form>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ===================== "Being prepared" progress ===================== -->
+    <template id="checkout_pending" name="NCollection Provisioning Progress">
+        <t t-call="web.frontend_layout">
+            <t t-set="title">Preparing your workspace — NCollection</t>
+            <div class="nc-checkout" data-nc-checkout="pending"
+                 t-att-data-tenant-uuid="tenant_uuid">
+                <div class="nc-checkout__card nc-checkout__card--center">
+                    <div class="nc-checkout__spinner" data-nc-spinner=""></div>
+                    <h1 data-nc-pending-title="">Check your email</h1>
+                    <p class="nc-checkout__sub" data-nc-pending-msg="">
+                        We sent a confirmation link to verify your email. Your workspace
+                        <strong t-esc="company_name"/> starts building the moment you confirm.
+                    </p>
+                    <a class="nc-checkout__cta nc-checkout__cta--hidden" data-nc-login="" href="#">
+                        Open my workspace
+                    </a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ===================== Invalid/expired verify token ===================== -->
+    <template id="checkout_verify_invalid" name="NCollection Verify Invalid">
+        <t t-call="web.frontend_layout">
+            <t t-set="title">Link expired — NCollection</t>
+            <div class="nc-checkout" data-nc-checkout="invalid">
+                <div class="nc-checkout__card nc-checkout__card--center">
+                    <h1>This link is no longer valid</h1>
+                    <p class="nc-checkout__sub">The confirmation link is invalid or has already
+                        been used. You can start again from the pricing page.</p>
+                    <a class="nc-checkout__cta" href="/pricing">Back to pricing</a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

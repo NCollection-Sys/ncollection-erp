@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    'version': '19.0.4.0.0',
+    'version': '19.0.5.0.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync (P2-T01/T02/T03)',
     'author': 'NCollection',
@@ -16,7 +16,18 @@
     'data': [
         'data/provisioning_data.xml',
         'data/config_sync_data.xml',
+        'data/checkout_data.xml',
         'views/provisioning_job_views.xml',
         'views/subscription_views.xml',
+        'views/checkout_templates.xml',
     ],
+    'assets': {
+        # Public checkout pages render via web.frontend_layout; ship their
+        # behaviour + styling on the frontend bundle (tokens.scss loads there
+        # too, from ncollection_branding).
+        'web.assets_frontend': [
+            'ncollection_saas/static/src/checkout/checkout.scss',
+            'ncollection_saas/static/src/checkout/checkout.js',
+        ],
+    },
 }
