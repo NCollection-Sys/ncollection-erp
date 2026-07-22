@@ -8,14 +8,14 @@
 > python scripts/github_issue_sync.py --report
 > ```
 >
-> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-07-21
+> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-07-22
 
 ## Scoreboard
 
 | Phase | Done | Total | % |
 |---|---|---|---|
-| Phase 1 — Customer Workspace | 19 | 21 | 90% |
-| Phase 2 — SaaS Automation | 1 | 18 | 6% |
+| Phase 1 — Customer Workspace | 21 | 21 | 100% |
+| Phase 2 — SaaS Automation | 3 | 18 | 17% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
 | Phase 5 — AI Platform | 0 | 7 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **20** | **100** | **20%** |
+| **Total** | **24** | **100** | **24%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -45,20 +45,20 @@
 | P1-T13 | Web Client Branding Completion | DEV-3 | None | [#14](https://github.com/NCollection-Sys/ncollection-erp/issues/14) | ✅ done | 2026-07-20 |
 | P1-T14 | Login Page Redesign | DEV-3 | P1-T13 | [#15](https://github.com/NCollection-Sys/ncollection-erp/issues/15) | ✅ done | 2026-07-20 |
 | P1-T15 | Public URL Rewriting (Scoped) | DEV-1 | P1-T03 | [#16](https://github.com/NCollection-Sys/ncollection-erp/issues/16) | ✅ done | 2026-07-19 |
-| P1-T16 | Dynamic Tenant Branding | DEV-3 | P1-T06, P1-T13 | [#17](https://github.com/NCollection-Sys/ncollection-erp/issues/17) | 🔨 open |  |
+| P1-T16 | Dynamic Tenant Branding | DEV-3 | P1-T06, P1-T13 | [#17](https://github.com/NCollection-Sys/ncollection-erp/issues/17) | ✅ done | 2026-07-21 |
 | P1-T17 | Customer Workspace Dashboard | DEV-3 | P1-T01 | [#18](https://github.com/NCollection-Sys/ncollection-erp/issues/18) | ✅ done | 2026-07-21 |
 | P1-T18 | Email Template Branding | DEV-2 | P1-T13 | [#19](https://github.com/NCollection-Sys/ncollection-erp/issues/19) | ✅ done | 2026-07-19 |
 | P1-T19 | Authentication Hardening (OCA-First) | DEV-1 | P1-T06 | [#20](https://github.com/NCollection-Sys/ncollection-erp/issues/20) | ✅ done | 2026-07-19 |
 | P1-T20 | E2E Test Framework (Playwright) | DEV-3 | P1-T05, P1-T06 | [#21](https://github.com/NCollection-Sys/ncollection-erp/issues/21) | ✅ done | 2026-07-20 |
-| P1-T21 | Phase 1 Integration Testing & Security Audit | DEV-1 | P1-T06, P1-T10, P1-T11, P1-T12, P1-T14, P1-T15, P1-T16, P1-T17, P1-T18, P1-T19, P1-T20 | [#22](https://github.com/NCollection-Sys/ncollection-erp/issues/22) | 🔨 open |  |
+| P1-T21 | Phase 1 Integration Testing & Security Audit | DEV-1 | P1-T06, P1-T10, P1-T11, P1-T12, P1-T14, P1-T15, P1-T16, P1-T17, P1-T18, P1-T19, P1-T20 | [#22](https://github.com/NCollection-Sys/ncollection-erp/issues/22) | ✅ done | 2026-07-22 |
 
 ## Phase 2 — SaaS Automation
 
 | Task | Name | Dev | Deps | Issue | Status | Closed |
 |---|---|---|---|---|---|---|
 | P2-T01 | Dedicated Provisioning Runner & Engine Core | DEV-1 | P1-T07 | [#23](https://github.com/NCollection-Sys/ncollection-erp/issues/23) | ✅ done | 2026-07-20 |
-| P2-T02 | Auto-Provisioning Pipeline | DEV-1 | P2-T01 | [#24](https://github.com/NCollection-Sys/ncollection-erp/issues/24) | 🔨 open |  |
-| P2-T03 | Workspace Config Sync & Plan Change Propagation | DEV-2 | P2-T02 | [#25](https://github.com/NCollection-Sys/ncollection-erp/issues/25) | 🔨 open |  |
+| P2-T02 | Auto-Provisioning Pipeline | DEV-1 | P2-T01 | [#24](https://github.com/NCollection-Sys/ncollection-erp/issues/24) | ✅ done | 2026-07-22 |
+| P2-T03 | Workspace Config Sync & Plan Change Propagation | DEV-2 | P2-T02 | [#25](https://github.com/NCollection-Sys/ncollection-erp/issues/25) | ✅ done | 2026-07-22 |
 | P2-T04 | PITR & WAL Archiving (pgBackRest) | DEV-1 | P1-T02 | [#26](https://github.com/NCollection-Sys/ncollection-erp/issues/26) | 🔨 open |  |
 | P2-T05 | Tenant Backup Manager & Restore Drills | DEV-1 | P2-T04 | [#27](https://github.com/NCollection-Sys/ncollection-erp/issues/27) | 🔨 open |  |
 | P2-T06 | Domain & SSL Automation | DEV-1 | P1-T06 | [#28](https://github.com/NCollection-Sys/ncollection-erp/issues/28) | 🔨 open |  |
