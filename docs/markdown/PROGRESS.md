@@ -15,7 +15,7 @@
 | Phase | Done | Total | % |
 |---|---|---|---|
 | Phase 1 — Customer Workspace | 21 | 21 | 100% |
-| Phase 2 — SaaS Automation | 7 | 18 | 39% |
+| Phase 2 — SaaS Automation | 8 | 18 | 44% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
 | Phase 5 — AI Platform | 0 | 7 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **28** | **100** | **28%** |
+| **Total** | **29** | **100** | **29%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -63,7 +63,7 @@
 | P2-T05 | Tenant Backup Manager & Restore Drills | DEV-1 | P2-T04 | [#27](https://github.com/NCollection-Sys/ncollection-erp/issues/27) | 🔨 open |  |
 | P2-T06 | Domain & SSL Automation | DEV-1 | P1-T06 | [#28](https://github.com/NCollection-Sys/ncollection-erp/issues/28) | ✅ done | 2026-07-22 |
 | P2-T07 | Staging Environment & Continuous Deployment | DEV-1 | P1-T05 | [#29](https://github.com/NCollection-Sys/ncollection-erp/issues/29) | ✅ done | 2026-07-22 |
-| P2-T08 | Production Server Hardening | DEV-1 | P2-T07 | [#30](https://github.com/NCollection-Sys/ncollection-erp/issues/30) | 🔨 open |  |
+| P2-T08 | Production Server Hardening | DEV-1 | P2-T07 | [#30](https://github.com/NCollection-Sys/ncollection-erp/issues/30) | ✅ done | 2026-07-22 |
 | P2-T09 | Connection Pooling Topology (PgBouncer) | DEV-1 | P2-T07 | [#31](https://github.com/NCollection-Sys/ncollection-erp/issues/31) | 🔨 open |  |
 | P2-T10 | Platform Uptime Monitoring & Alerting | DEV-1 | P2-T07 | [#32](https://github.com/NCollection-Sys/ncollection-erp/issues/32) | 🔨 open |  |
 | P2-T11 | Billing Engine | DEV-2 | P1-T07 | [#33](https://github.com/NCollection-Sys/ncollection-erp/issues/33) | ✅ done | 2026-07-22 |
