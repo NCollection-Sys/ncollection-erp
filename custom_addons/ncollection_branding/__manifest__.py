@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.4.0',
+    'version': '19.0.1.5.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection corporate branding: logo, colors, favicon',
     'description': """
@@ -33,11 +33,16 @@ Applies NCollection corporate identity across the Odoo backend:
     ],
     'assets': {
         'web.assets_backend': [
+            # tokens.scss FIRST: the design-system token layer (:root semantic
+            # tokens + back-compat aliases, UI-T01/#128) that every other sheet
+            # consumes via var(--nc-*).
+            'ncollection_branding/static/src/scss/tokens.scss',
             'ncollection_branding/static/src/scss/theme_colors.scss',
             'ncollection_branding/static/src/js/white_label.js',
             'ncollection_branding/static/src/xml/error_dialogs_patch.xml',
         ],
         'web.assets_frontend': [
+            'ncollection_branding/static/src/scss/tokens.scss',
             'ncollection_branding/static/src/scss/theme_colors.scss',
             'ncollection_branding/static/src/scss/login.scss',
         ],

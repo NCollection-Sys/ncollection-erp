@@ -1,0 +1,68 @@
+// =============================================================================
+// NCollection design-system token layer (UI-T01 / #128)
+//
+// Canonical taxonomy is recorded in GitHub issue #128 ("UI Architecture
+// Decisions"). Three tiers:
+//   * PRIMITIVE — raw values, compile-time SCSS only, never used by components.
+//   * SEMANTIC  — the CSS custom properties on :root below; the ONLY themeable
+//                 layer. Per-tenant runtime overrides (branding_theme_templates)
+//                 and any future dark mode reassign SEMANTIC tokens, never
+//                 primitives and never component rules.
+//   * COMPONENT — optional, declared by a component referencing a semantic token.
+//
+// Naming: --nc-<category>-<name>, category in
+//   color | sidebar | surface | text | status | radius | shadow.
+//
+// Injection determinism: the four tenant-INJECTED tokens
+// (--nc-color-primary, --nc-color-secondary, --nc-sidebar-bg, --nc-sidebar-active)
+// are deliberately given NO :root default here. The runtime :root block is then
+// their only :root declaration, so a tenant value always wins regardless of
+// asset/inline source order. Components carry the NCollection default as the
+// var() fallback for those four. Every non-injected token gets a :root default,
+// giving dark mode a single override point.
+// =============================================================================
+
+// ---- Tier 1: primitive palette (compile-time only) --------------------------
+$nc-primitive-blue-700:    #184C72;
+$nc-primitive-blue-600:    #1F5F8F;
+$nc-primitive-blue-500:    #2D7AB7;
+$nc-primitive-neutral-300: #C0C7D1;
+$nc-primitive-surface-50:  #F7F9FC;
+$nc-primitive-white:       #FFFFFF;
+$nc-primitive-border-200:  #E2E8F0;
+$nc-primitive-ink-900:     #0F172A;
+$nc-primitive-ink-500:     #64748B;
+$nc-primitive-green-600:   #2E7D5B;
+$nc-primitive-red-600:     #B4453C;
+
+// ---- Tier 2: semantic tokens (:root) ----------------------------------------
+:root {
+    // Non-injected semantic defaults — single override point for dark mode.
+    --nc-color-primary-strong: #{$nc-primitive-blue-700};
+    --nc-color-neutral:        #{$nc-primitive-neutral-300};
+    --nc-surface-bg:           #{$nc-primitive-surface-50};
+    --nc-surface-raised:       #{$nc-primitive-white};
+    --nc-surface-border:       #{$nc-primitive-border-200};
+    --nc-text:                 #{$nc-primitive-ink-900};
+    --nc-text-muted:           #{$nc-primitive-ink-500};
+    --nc-status-success:       #{$nc-primitive-green-600};
+    --nc-status-error:         #{$nc-primitive-red-600};
+    --nc-radius-md:            10px;
+    --nc-shadow-card:          0 1px 3px rgba(15, 23, 42, 0.08);
+
+    // ---- Back-compat aliases (retained one release — UI-T01 migration) ------
+    // Old flat token names → canonical, so any lingering var(--nc-<old>) still
+    // resolves. The two injected colours alias to the canonical name WITH the
+    // NCollection default baked in, so an unset tenant still yields a colour.
+    --nc-primary:        var(--nc-color-primary, #{$nc-primitive-blue-600});
+    --nc-primary-strong: var(--nc-color-primary-strong);
+    --nc-secondary:      var(--nc-color-secondary, #{$nc-primitive-blue-500});
+    --nc-silver:         var(--nc-color-neutral);
+    --nc-bg:             var(--nc-surface-bg);
+    --nc-surface:        var(--nc-surface-raised);
+    --nc-border:         var(--nc-surface-border);
+    --nc-radius:         var(--nc-radius-md);
+    --nc-shadow:         var(--nc-shadow-card);
+    --nc-success:        var(--nc-status-success);
+    --nc-danger:         var(--nc-status-error);
+}
