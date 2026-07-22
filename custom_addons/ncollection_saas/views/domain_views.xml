@@ -58,16 +58,18 @@
             <search>
                 <field name="fqdn"/>
                 <field name="tenant_id"/>
-                <filter name="expiring" string="Expiring / Expired"
-                        domain="[('ssl_expiry', '&lt;=', (context_today() + relativedelta(days=14)).strftime('%Y-%m-%d'))]"/>
                 <filter name="custom" string="Custom Domains"
                         domain="[('domain_type', '=', 'custom')]"/>
-                <group expand="0" string="Group By">
-                    <filter name="group_type" string="Type"
-                            context="{'group_by': 'domain_type'}"/>
-                    <filter name="group_status" string="SSL Status"
-                            context="{'group_by': 'ssl_status'}"/>
-                </group>
+                <filter name="subdomain" string="Subdomains"
+                        domain="[('domain_type', '=', 'subdomain')]"/>
+                <separator/>
+                <!-- ssl_expiry is stored, so this filter is DB-evaluable
+                     (ssl_status is a live compute and cannot be filtered on). -->
+                <filter name="expiring" string="Expiring within 14 days"
+                        domain="[('ssl_expiry', '!=', False), ('ssl_expiry', '&lt;=', (context_today() + relativedelta(days=14)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="group_type" string="Group by Type"
+                        context="{'group_by': 'domain_type'}"/>
             </search>
         </field>
     </record>
