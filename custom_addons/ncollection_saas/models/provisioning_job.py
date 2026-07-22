@@ -178,7 +178,6 @@ class ProvisioningJob(models.Model):
         """
         tenant = self.tenant_id
         plan = tenant.plan_id
-        sub = tenant.subscription_id
         with open(SEED_SCRIPT, encoding='utf-8') as fh:
             script = fh.read()
         env_vars = os.environ.copy()
@@ -188,7 +187,11 @@ class ProvisioningJob(models.Model):
             'NC_ALLOWED_MODULES': plan.allowed_module_names if plan else '',
             'NC_PLAN_CODE': plan.code if plan else '',
             'NC_MAX_USERS': str(plan.max_users if plan else 1),
-            'NC_SUB_STATUS': (sub.status if sub else 'active') or 'active',
+            # Project the TENANT status (trial/active/suspended/expired) — the
+            # effective access state P2-T03's sync + interstitial key on, and the
+            # only enum that carries 'suspended'. Keeps the initial seed and the
+            # ongoing config sync consistent (no first-reconcile drift).
+            'NC_SUB_STATUS': tenant.status or 'active',
             'NC_PORTAL_URL': tenant.portal_url or self._portal_url(db),
         })
         # `shell` MUST be the first argument (odoo <subcommand> <options>).

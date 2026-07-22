@@ -33,6 +33,9 @@ services:
       # queue_job channel capacity — the dedicated 'provisioning' sub-channel
       # gets 2 concurrent slots; keep the root default low.
       ODOO_QUEUE_JOB_CHANNELS: root:1,root.provisioning:2
+      # Config-sync bearer key (P2-T03): the reconcile cron + queued live syncs
+      # run here, so the runner needs the same key as the odoo service.
+      NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
     # --load starts the queue_job jobrunner thread; --db-filter pins the runner
     # to the single admin/platform DB (it never watches tenant DBs). It shells
     # out (odoo subprocess) to build tenant DBs — never a cross-DB ORM call.

@@ -25,6 +25,24 @@ class Subscription(models.Model):
             sub._trigger_provisioning()
         return res
 
+    def write(self, vals):
+        """A plan change on a subscription (upgrade/downgrade) propagates to the
+        tenant: it keeps tenant.plan_id (the config source of truth, matching
+        the provisioning seed) in step, then pushes the new module set / limits
+        into the tenant workspace (P2-T03)."""
+        res = super().write(vals)
+        if 'plan_id' in vals:
+            to_sync = self.env['ncollection.tenant']
+            for sub in self:
+                tenant = sub.tenant_id
+                # only the tenant's CURRENT subscription drives its plan
+                if tenant and tenant.subscription_id == sub and tenant.plan_id != sub.plan_id:
+                    tenant.plan_id = sub.plan_id
+                if tenant:
+                    to_sync |= tenant
+            to_sync._config_sync_enqueue()
+        return res
+
     def _trigger_provisioning(self):
         """Create + enqueue a provisioning job for this subscription's tenant.
 

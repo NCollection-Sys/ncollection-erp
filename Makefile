@@ -40,7 +40,7 @@ OCA_VENV := .oca-venv
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
-        provisioning-verify e2e-verify verify-all hooks-install doctor \
+        provisioning-verify config-sync-verify e2e-verify verify-all hooks-install doctor \
         demo-tenant demo-clean
 
 help: ## Show this help
@@ -153,6 +153,9 @@ e2e-clean: ## Drop the E2E fixture DBs e2eclienta/e2eclientb/e2eadmin (destructi
 provisioning-verify: ## Run the P2-T01 provisioning proof (create -> login-ready, forced-failure -> rollback)
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_provisioning.sh
 
+config-sync-verify: ## Run the P2-T03 config-sync proof (provision -> plan change -> suspend -> reconcile)
+	./custom_addons/ncollection_saas/scripts/provisioning/verify_config_sync.sh
+
 e2e-verify: ## Set up the e2e tenants and run the Playwright suite
 	bash e2e/scripts/setup_e2e_tenants.sh
 	cd e2e && npm ci && npx playwright install chromium && npx playwright test
@@ -177,11 +180,13 @@ hooks-install: ## Enable the repo's git hooks (fast gates run on pre-push)
 doctor: ## Diagnose the local dev environment ("why doesn't this work on my machine?")
 	@bash scripts/dev/doctor.sh
 
-verify-all: ## Run EVERY verification suite (routing + provisioning + e2e) — pre-merge gate
-	@echo "==> [1/3] routing & isolation (P1-T06)"
+verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + e2e) — pre-merge gate
+	@echo "==> [1/4] routing & isolation (P1-T06)"
 	@$(MAKE) --no-print-directory routing-verify
-	@echo "==> [2/3] provisioning (P2-T01)"
+	@echo "==> [2/4] provisioning (P2-T01)"
 	@$(MAKE) --no-print-directory provisioning-verify
-	@echo "==> [3/3] end-to-end guarantees (P1-T20)"
+	@echo "==> [3/4] config sync (P2-T03)"
+	@$(MAKE) --no-print-directory config-sync-verify
+	@echo "==> [4/4] end-to-end guarantees (P1-T20)"
 	@$(MAKE) --no-print-directory e2e-verify
 	@echo "✅ verify-all: every suite green."

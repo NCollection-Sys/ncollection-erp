@@ -38,6 +38,10 @@ services:
       HOST: db
       USER: ${DB_USER:-odoo}
       PASSWORD: ${DB_PASSWORD:-odoo}
+      # Config-sync service-account bearer key (P2-T03). Read from .env; the
+      # platform uses it to push plan changes into tenant DBs. Empty by default
+      # (config sync then fails soft + logs).
+      NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
     restart: always
     volumes:
       - odoo_data:/var/lib/odoo

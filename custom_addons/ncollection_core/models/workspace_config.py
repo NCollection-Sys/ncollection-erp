@@ -11,7 +11,14 @@ the same record.
 """
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
+
+# The only fields the platform config-sync channel (P2-T03) may push. Any other
+# key in an inbound sync payload is rejected — the RPC service account can write
+# nothing else on this model, and this method is its single entry point.
+_SYNCABLE_FIELDS = frozenset({
+    'allowed_module_names', 'plan_code', 'subscription_status', 'max_users',
+})
 
 
 class WorkspaceConfig(models.Model):
@@ -75,6 +82,34 @@ class WorkspaceConfig(models.Model):
     def get_config(self):
         """Return the singleton config record (empty recordset if absent)."""
         return self.search([], limit=1)
+
+    @api.model
+    def sync_from_platform(self, vals):
+        """Single entry point for the platform config-sync channel (P2-T03).
+
+        Called over json2/bearer by the dedicated, workspace.config-scoped
+        service account. Whitelists the pushable fields (so even a compromised
+        service account cannot write anything unexpected on this model), then
+        updates the singleton — whose write() clears the tenant registry cache,
+        so menu visibility + license enforcement recompute within the SLA.
+        Returns a small status dict (json2-serialisable) for the caller to log.
+        """
+        if not isinstance(vals, dict):
+            raise UserError(self.env._("sync_from_platform expects a dict of values."))
+        rejected = set(vals) - _SYNCABLE_FIELDS
+        if rejected:
+            raise UserError(self.env._(
+                "Refusing to sync non-whitelisted field(s): %s", ', '.join(sorted(rejected))))
+        config = self.get_config()
+        if not config:
+            # The singleton is created once by provisioning; the write-scoped
+            # sync account cannot create it. Surface loudly so the platform logs
+            # it and the reconcile/seed path repairs it.
+            raise UserError(self.env._(
+                "No workspace configuration exists to sync into (not provisioned?)."))
+        config.write({k: vals[k] for k in vals})
+        return {'ok': True, 'plan_code': config.plan_code,
+                'subscription_status': config.subscription_status}
 
     def get_allowed_module_list(self):
         """Parse allowed_module_names into a clean, de-duplicated list.

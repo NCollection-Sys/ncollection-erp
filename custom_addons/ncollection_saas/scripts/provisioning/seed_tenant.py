@@ -68,6 +68,36 @@ else:
 from odoo.addons.ncollection_core.hooks import _sync_role_implications  # noqa: E402
 _sync_role_implications(env)  # noqa: F821
 
+# 5. Config-sync service account (P2-T03). A dedicated, non-interactive user
+#    scoped to ncollection.workspace.config writes (group_config_sync — NOT a
+#    system admin) that the platform authenticates as over json2/bearer to push
+#    plan changes. The SHARED bearer key lives in the platform secrets store
+#    (.env, NC_CONFIG_SYNC_KEY); here we store only its HASH, so the tenant DB
+#    never holds the usable credential. Idempotent (safe on re-seed/reconcile).
+from odoo.addons.base.models.res_users import (  # noqa: E402
+    KEY_CRYPT_CONTEXT, INDEX_SIZE)
+sync_key = os.environ.get('NC_CONFIG_SYNC_KEY')
+sync_group = env.ref('ncollection_core.group_config_sync')  # noqa: F821
+svc = env['res.users'].sudo().search([('login', '=', 'config-sync@ncollection.internal')], limit=1)  # noqa: F821
+if not svc:
+    svc = env['res.users'].sudo().create({  # noqa: F821
+        'name': 'Config Sync (platform)',
+        'login': 'config-sync@ncollection.internal',
+        'password': secrets.token_urlsafe(32),  # unused (bearer only); unguessable
+        'group_ids': [(6, 0, [env.ref('base.group_user').id, sync_group.id])],  # noqa: F821
+    })
+else:
+    svc.write({'group_ids': [(4, sync_group.id)]})
+if sync_key:
+    env.cr.execute(  # noqa: F821
+        "DELETE FROM res_users_apikeys WHERE user_id=%s AND name='config-sync'", (svc.id,))
+    env.cr.execute(  # noqa: F821
+        "INSERT INTO res_users_apikeys (name,user_id,scope,index,key,create_date) "
+        "VALUES (%s,%s,NULL,%s,%s, now())",
+        ('config-sync', svc.id, sync_key[:INDEX_SIZE], KEY_CRYPT_CONTEXT.hash(sync_key)))
+else:
+    print("SEED_WARN NC_CONFIG_SYNC_KEY not set — config-sync key not provisioned")
+
 env.cr.commit()  # noqa: F821
 
 # Reset URL for the welcome email (valid in THIS tenant DB). auth_signup builds

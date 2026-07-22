@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Core',
-    'version': '19.0.1.8.0',
+    'version': '19.0.1.9.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -14,9 +14,11 @@
     'depends': ['base', 'web', 'ncollection_branding'],
     'data': [
         'security/role_groups.xml',
+        'security/config_sync_security.xml',
         'security/ir.model.access.csv',
         'views/workspace_settings_views.xml',
         'views/workspace_appearance_views.xml',
+        'views/subscription_blocked_templates.xml',
         'views/dashboard_action.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in
