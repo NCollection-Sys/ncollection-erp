@@ -351,6 +351,15 @@ class ProvisioningJob(models.Model):
         if tenant.status == 'trial':
             tenant.action_activate()
         tenant._send_welcome_email(setup_url)
+        # Track the tenant's platform subdomain + wildcard-cert expiry (P2-T06).
+        # Best-effort: a hiccup here must not fail a good provision — the weekly
+        # reconciliation cron (_cron_scan_ssl_expiry) backfills any record missed.
+        try:
+            self.env['ncollection.domain']._sync_for_tenant(tenant)
+        except Exception:  # pylint: disable=broad-except
+            _logger.warning(
+                "Domain record sync failed for tenant '%s' "
+                "(will self-heal via the weekly cron).", db, exc_info=True)
         self._append_log(self.env._("DONE — tenant database is login-ready."))
 
     def _mark_failed(self):

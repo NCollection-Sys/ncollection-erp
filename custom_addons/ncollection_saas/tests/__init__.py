@@ -4,3 +4,4 @@ from . import test_provisioning
 from . import test_pipeline
 from . import test_config_sync
 from . import test_checkout
+from . import test_domain

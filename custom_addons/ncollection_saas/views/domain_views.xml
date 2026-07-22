@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ncollection_domain_tree" model="ir.ui.view">
+        <field name="name">ncollection.domain.list</field>
+        <field name="model">ncollection.domain</field>
+        <field name="arch" type="xml">
+            <list string="Domains"
+                  decoration-danger="ssl_status == 'expired'"
+                  decoration-warning="ssl_status == 'expiring'"
+                  decoration-muted="ssl_status == 'unknown'">
+                <field name="fqdn"/>
+                <field name="tenant_id"/>
+                <field name="domain_type"/>
+                <field name="is_wildcard"/>
+                <field name="ssl_expiry"/>
+                <field name="ssl_status" widget="badge"
+                       decoration-success="ssl_status == 'valid'"
+                       decoration-warning="ssl_status == 'expiring'"
+                       decoration-danger="ssl_status == 'expired'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ncollection_domain_form" model="ir.ui.view">
+        <field name="name">ncollection.domain.form</field>
+        <field name="model">ncollection.domain</field>
+        <field name="arch" type="xml">
+            <form string="Domain">
+                <sheet>
+                    <group>
+                        <group string="Domain">
+                            <field name="fqdn"/>
+                            <field name="tenant_id"/>
+                            <field name="domain_type"/>
+                            <field name="is_wildcard"/>
+                        </group>
+                        <group string="SSL Certificate">
+                            <field name="ssl_status" widget="badge"
+                                   decoration-success="ssl_status == 'valid'"
+                                   decoration-warning="ssl_status == 'expiring'"
+                                   decoration-danger="ssl_status == 'expired'"/>
+                            <field name="ssl_expiry"/>
+                            <field name="last_alert_date"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ncollection_domain_search" model="ir.ui.view">
+        <field name="name">ncollection.domain.search</field>
+        <field name="model">ncollection.domain</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="fqdn"/>
+                <field name="tenant_id"/>
+                <filter name="expiring" string="Expiring / Expired"
+                        domain="[('ssl_expiry', '&lt;=', (context_today() + relativedelta(days=14)).strftime('%Y-%m-%d'))]"/>
+                <filter name="custom" string="Custom Domains"
+                        domain="[('domain_type', '=', 'custom')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_type" string="Type"
+                            context="{'group_by': 'domain_type'}"/>
+                    <filter name="group_status" string="SSL Status"
+                            context="{'group_by': 'ssl_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ncollection_domain" model="ir.actions.act_window">
+        <field name="name">Domains &amp; SSL</field>
+        <field name="res_model">ncollection.domain</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No tenant domains yet
+            </p>
+            <p>
+                A domain record is created for every provisioned tenant. Platform
+                subdomains ride the wildcard certificate automatically.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_ncollection_saas_domains"
+              name="Domains &amp; SSL"
+              parent="ncollection_subscription.menu_ncollection_saas_root"
+              action="action_ncollection_domain"
+              sequence="60"/>
+
+</odoo>

@@ -14,12 +14,15 @@
     #   workers — the isolation guarantee (ARCHITECTURE_DATA_PLATFORM §10).
     'depends': ['ncollection_subscription', 'ncollection_branding', 'queue_job'],
     'data': [
+        'security/ir.model.access.csv',
         'data/provisioning_data.xml',
         'data/config_sync_data.xml',
         'data/checkout_data.xml',
+        'data/domain_data.xml',
         'views/provisioning_job_views.xml',
         'views/subscription_views.xml',
         'views/checkout_templates.xml',
+        'views/domain_views.xml',
     ],
     'assets': {
         # Public checkout pages render via web.frontend_layout; ship their
