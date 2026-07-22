@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Public checkout pages (P2-T16). Rendered via web.frontend_layout (loads
-        web.assets_frontend => tokens.scss + checkout.scss + checkout.js) so we
-        get the branded design tokens without pulling in the heavy `website`
-        module. NCollection-branded, zero Odoo references, bilingual-ready copy.
+        Public checkout pages (P2-T16). A self-contained layout that pulls in
+        web.assets_frontend (=> tokens.scss + checkout.scss + checkout.js) WITHOUT
+        the website/portal footer machinery (web.frontend_layout's portal
+        language selector needs website context we don't provide). NCollection-
+        branded, zero Odoo references, bilingual-ready copy.
     -->
+
+    <!-- ===================== Standalone layout ===================== -->
+    <template id="checkout_layout" name="NCollection Checkout Layout">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title><t t-esc="title or 'NCollection'"/></title>
+                <t t-call-assets="web.assets_frontend" t-js="false"/>
+            </head>
+            <body>
+                <t t-out="0"/>
+                <t t-call-assets="web.assets_frontend" t-css="false"/>
+            </body>
+        </html>
+    </template>
 
     <!-- ===================== Pricing ===================== -->
     <template id="checkout_pricing" name="NCollection Pricing">
-        <t t-call="web.frontend_layout">
+        <t t-call="ncollection_saas.checkout_layout">
             <t t-set="title">Pricing — NCollection</t>
             <div class="nc-checkout" data-nc-checkout="pricing">
                 <header class="nc-checkout__head">
@@ -28,7 +45,7 @@
                                 <span class="nc-checkout__amount"
                                       t-att-data-monthly="plan.monthly_price"
                                       t-att-data-yearly="plan.yearly_price"
-                                      t-esc="'%.0f' % plan.monthly_price"/>
+                                      t-esc="'%.0f' % (plan.monthly_price or 0.0)"/>
                                 <span class="nc-checkout__per">/ mo</span>
                             </div>
                             <p class="nc-checkout__desc" t-esc="plan.description or ''"/>
@@ -44,7 +61,7 @@
 
     <!-- ===================== Registration form ===================== -->
     <template id="checkout_form" name="NCollection Checkout">
-        <t t-call="web.frontend_layout">
+        <t t-call="ncollection_saas.checkout_layout">
             <t t-set="title">Create your workspace — NCollection</t>
             <div class="nc-checkout" data-nc-checkout="form"
                  t-att-data-recaptcha-site-key="recaptcha_site_key or ''">
@@ -92,7 +109,7 @@
 
     <!-- ===================== "Being prepared" progress ===================== -->
     <template id="checkout_pending" name="NCollection Provisioning Progress">
-        <t t-call="web.frontend_layout">
+        <t t-call="ncollection_saas.checkout_layout">
             <t t-set="title">Preparing your workspace — NCollection</t>
             <div class="nc-checkout" data-nc-checkout="pending"
                  t-att-data-tenant-uuid="tenant_uuid">
@@ -113,7 +130,7 @@
 
     <!-- ===================== Invalid/expired verify token ===================== -->
     <template id="checkout_verify_invalid" name="NCollection Verify Invalid">
-        <t t-call="web.frontend_layout">
+        <t t-call="ncollection_saas.checkout_layout">
             <t t-set="title">Link expired — NCollection</t>
             <div class="nc-checkout" data-nc-checkout="invalid">
                 <div class="nc-checkout__card nc-checkout__card--center">

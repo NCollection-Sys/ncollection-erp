@@ -29,8 +29,10 @@ class TestCheckoutModel(TransactionCase):
     def test_subdomain_availability(self):
         with patch('%s._database_exists' % ENGINE, return_value=False):
             self.assertTrue(self.Tenant._nc_subdomain_availability('acme123')[0])
-            # invalid grammar
-            for bad in ('Acme', 'a', '1abc', 'a-b', 'a b'):
+            # input is normalised (lower-cased) first, so 'Acme' -> 'acme' is valid
+            self.assertTrue(self.Tenant._nc_subdomain_availability('Acme')[0])
+            # invalid grammar (too short, digit-start, illegal chars)
+            for bad in ('a', 'ab', '1abc', 'a-b', 'a b'):
                 ok, reason = self.Tenant._nc_subdomain_availability(bad)
                 self.assertFalse(ok)
                 self.assertEqual(reason, 'invalid')
