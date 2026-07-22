@@ -1,0 +1,14 @@
+# ============================================================================
+#  NCollection ERP — fail2ban SSH jail  (ticket P2-T08)
+# ============================================================================
+#  Installed by scripts/deploy/harden.sh to:
+#      /etc/fail2ban/jail.d/ncollection-sshd.local
+#  Ubuntu 24.04 logs sshd to the journal, so the jail reads the systemd backend.
+# ============================================================================
+[sshd]
+enabled  = true
+backend  = systemd
+mode     = aggressive
+maxretry = 4
+findtime = 10m
+bantime  = 1h
