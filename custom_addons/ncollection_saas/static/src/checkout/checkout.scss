@@ -1,0 +1,154 @@
+// Public checkout styling (P2-T16). Scoped under .nc-checkout; tokens-driven
+// via the UI-T01 --nc-* layer (tokens.scss is in web.assets_frontend too), so
+// it inherits NCollection branding automatically.
+.nc-checkout {
+    min-height: 100vh;
+    background: var(--nc-surface-bg);
+    color: var(--nc-text);
+    padding: var(--nc-space-8) var(--nc-space-5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    h1 { font-size: var(--nc-font-size-2xl); font-weight: var(--nc-font-weight-bold); }
+
+    &__head {
+        text-align: center;
+        max-width: 640px;
+        margin-bottom: var(--nc-space-8);
+    }
+
+    &__sub { color: var(--nc-text-muted); }
+
+    // Monthly/yearly toggle
+    &__toggle {
+        display: inline-flex;
+        margin-top: var(--nc-space-5);
+        border: 1px solid var(--nc-surface-border);
+        border-radius: var(--nc-radius-md);
+        overflow: hidden;
+    }
+    &__toggle-btn {
+        border: 0;
+        background: var(--nc-surface-raised);
+        color: var(--nc-text-muted);
+        padding: var(--nc-space-2) var(--nc-space-5);
+        cursor: pointer;
+        font-weight: var(--nc-font-weight-medium);
+
+        &.is-active { background: var(--nc-color-primary); color: #fff; }
+    }
+
+    // Plan grid
+    &__plans {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(220px, 1fr));
+        gap: var(--nc-space-5);
+        width: 100%;
+        max-width: 960px;
+
+        @media (max-width: 900px) { grid-template-columns: 1fr; }
+    }
+    &__plan {
+        background: var(--nc-surface-raised);
+        border: 1px solid var(--nc-surface-border);
+        border-radius: var(--nc-radius-lg);
+        box-shadow: var(--nc-shadow-card);
+        padding: var(--nc-space-6);
+        display: flex;
+        flex-direction: column;
+        gap: var(--nc-space-3);
+    }
+    &__price { display: flex; align-items: baseline; gap: var(--nc-space-2); }
+    &__amount { font-size: var(--nc-font-size-2xl); font-weight: var(--nc-font-weight-bold); }
+    &__per { color: var(--nc-text-muted); }
+    &__desc { color: var(--nc-text-muted); font-size: var(--nc-font-size-sm); flex: 1; }
+
+    // Card (form + status)
+    &__card {
+        background: var(--nc-surface-raised);
+        border: 1px solid var(--nc-surface-border);
+        border-radius: var(--nc-radius-lg);
+        box-shadow: var(--nc-shadow-card);
+        padding: var(--nc-space-8);
+        width: 100%;
+        max-width: 460px;
+
+        &--center { text-align: center; }
+    }
+
+    // Form
+    &__form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--nc-space-4);
+        margin-top: var(--nc-space-5);
+
+        label { display: flex; flex-direction: column; gap: var(--nc-space-1);
+                font-size: var(--nc-font-size-sm); font-weight: var(--nc-font-weight-medium); }
+
+        input {
+            padding: var(--nc-space-2) var(--nc-space-3);
+            border: 1px solid var(--nc-surface-border);
+            border-radius: var(--nc-radius-sm);
+            background: var(--nc-surface-raised);
+            color: var(--nc-text);
+            font-size: var(--nc-font-size-md);
+
+            &:focus { outline: none; box-shadow: var(--nc-focus-ring); border-color: var(--nc-color-primary); }
+        }
+    }
+    &__subdomain { display: flex; align-items: stretch;
+        input { flex: 1; border-radius: var(--nc-radius-sm) 0 0 var(--nc-radius-sm); } }
+    &__subdomain-suffix {
+        display: flex; align-items: center;
+        padding: 0 var(--nc-space-3);
+        background: var(--nc-surface-bg);
+        border: 1px solid var(--nc-surface-border);
+        border-inline-start: 0;
+        border-radius: 0 var(--nc-radius-sm) var(--nc-radius-sm) 0;
+        color: var(--nc-text-muted);
+        font-size: var(--nc-font-size-sm);
+    }
+    &__hint {
+        font-size: var(--nc-font-size-xs);
+        &.is-ok { color: var(--nc-status-success); }
+        &.is-bad { color: var(--nc-status-error); }
+    }
+    &__error { color: var(--nc-status-error); font-size: var(--nc-font-size-sm); min-height: 1em; }
+
+    // CTA button/link
+    &__cta {
+        display: inline-block;
+        text-align: center;
+        padding: var(--nc-space-3) var(--nc-space-5);
+        background: var(--nc-color-primary);
+        color: #fff;
+        border: 0;
+        border-radius: var(--nc-radius-sm);
+        font-weight: var(--nc-font-weight-semibold);
+        text-decoration: none;
+        cursor: pointer;
+
+        &--hidden { display: none; }
+        &:focus-visible { outline: none; box-shadow: var(--nc-focus-ring); }
+    }
+
+    // Spinner
+    &__spinner {
+        width: 44px; height: 44px; margin: 0 auto var(--nc-space-5);
+        border: 4px solid var(--nc-surface-border);
+        border-top-color: var(--nc-color-primary);
+        border-radius: 50%;
+        animation: nc-checkout-spin 0.9s linear infinite;
+
+        &.is-done { border-top-color: var(--nc-status-success); animation: none; }
+        &.is-error { border-top-color: var(--nc-status-error); animation: none; }
+    }
+}
+
+@keyframes nc-checkout-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .nc-checkout__spinner { animation: none; }
+}

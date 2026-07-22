@@ -4,3 +4,4 @@ from . import provisioning_job
 from . import tenant
 from . import subscription
 from . import config_sync
+from . import checkout

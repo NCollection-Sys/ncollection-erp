@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Public checkout (P2-T16) data:
+        - config-parameter defaults for the abuse controls (§11). reCAPTCHA keys
+          are intentionally EMPTY: unset => captcha is skipped (dev/CI); set a
+          secret in production to enforce it. Quotas ship with safe defaults.
+        - the branded email-verification template.
+        noupdate="1": operators may retune these without a module upgrade
+        overwriting their values.
+    -->
+    <data noupdate="1">
+        <record id="ir_config_trial_quota_per_ip" model="ir.config_parameter">
+            <field name="key">ncollection_saas.trial_quota_per_ip</field>
+            <field name="value">3</field>
+        </record>
+        <record id="ir_config_trial_quota_per_email" model="ir.config_parameter">
+            <field name="key">ncollection_saas.trial_quota_per_email</field>
+            <field name="value">2</field>
+        </record>
+        <record id="ir_config_trial_quota_window" model="ir.config_parameter">
+            <field name="key">ncollection_saas.trial_quota_window_hours</field>
+            <field name="value">24</field>
+        </record>
+        <record id="ir_config_recaptcha_secret" model="ir.config_parameter">
+            <field name="key">ncollection_saas.recaptcha_secret</field>
+            <field name="value"></field>
+        </record>
+        <record id="ir_config_recaptcha_site_key" model="ir.config_parameter">
+            <field name="key">ncollection_saas.recaptcha_site_key</field>
+            <field name="value"></field>
+        </record>
+
+        <record id="mail_template_checkout_verify" model="mail.template">
+            <field name="name">NCollection: Verify your workspace email</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
+            <field name="subject">Confirm your email to create {{ object.company_name }}</field>
+            <field name="email_from">{{ (object.env.company.email or 'noreply@ncollection.com') }}</field>
+            <field name="email_to">{{ object.email }}</field>
+            <field name="body_html" type="html">
+                <div style="font-family:Arial,sans-serif;color:#0F172A;">
+                    <p>Hi <t t-out="object.contact_name or object.company_name"/>,</p>
+                    <p>Thanks for choosing NCollection. Confirm your email to start
+                       provisioning your workspace <strong t-out="object.database_name"/>.</p>
+                    <p>
+                        <a t-attf-href="{{ object.get_base_url() }}/nc/checkout/verify/{{ object.checkout_token }}"
+                           style="display:inline-block;padding:10px 18px;background:#1F5F8F;color:#fff;
+                                  text-decoration:none;border-radius:6px;">Confirm &amp; create my workspace</a>
+                    </p>
+                    <p style="color:#64748B;font-size:13px;">If you didn't request this, you can ignore this email.</p>
+                </div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+    </data>
+</odoo>
