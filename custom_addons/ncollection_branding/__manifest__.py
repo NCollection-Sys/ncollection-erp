@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.5.0',
+    'version': '19.0.1.6.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection corporate branding: logo, colors, favicon',
     'description': """
@@ -24,6 +24,7 @@ Applies NCollection corporate identity across the Odoo backend:
         'views/webclient_templates.xml',
         'views/login_templates.xml',
         'views/branding_theme_templates.xml',
+        'views/component_playground.xml',
         'views/res_config_settings_views.xml',
         'views/http_error_templates.xml',
         'views/mail_layout_templates.xml',
@@ -38,6 +39,13 @@ Applies NCollection corporate identity across the Odoo backend:
             # consumes via var(--nc-*).
             'ncollection_branding/static/src/scss/tokens.scss',
             'ncollection_branding/static/src/scss/theme_colors.scss',
+            # Shared OWL component library (UI-T02/#129) + its dev playground.
+            'ncollection_branding/static/src/components/components.scss',
+            'ncollection_branding/static/src/components/playground.scss',
+            'ncollection_branding/static/src/components/components.js',
+            'ncollection_branding/static/src/components/components.xml',
+            'ncollection_branding/static/src/components/playground.js',
+            'ncollection_branding/static/src/components/playground.xml',
             'ncollection_branding/static/src/js/white_label.js',
             'ncollection_branding/static/src/xml/error_dialogs_patch.xml',
         ],
