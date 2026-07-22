@@ -19,10 +19,13 @@ class Subscription(models.Model):
     _inherit = 'ncollection.subscription'
 
     def action_activate(self):
-        """draft -> active, then auto-provision the tenant if it has no DB yet."""
+        """draft -> active, then auto-provision the tenant and bill the first
+        period (P2-T11). Billing is idempotent, so a re-activation attempt never
+        double-invoices."""
         res = super().action_activate()
         for sub in self:
             sub._trigger_provisioning()
+            sub._bill_on_activation()
         return res
 
     def write(self, vals):
@@ -30,6 +33,9 @@ class Subscription(models.Model):
         tenant: it keeps tenant.plan_id (the config source of truth, matching
         the provisioning seed) in step, then pushes the new module set / limits
         into the tenant workspace (P2-T03)."""
+        # Capture the pre-change plan so a mid-cycle upgrade can be prorated
+        # (P2-T11) after super() has applied the new plan.
+        old_plans = {sub.id: sub.plan_id for sub in self} if 'plan_id' in vals else {}
         res = super().write(vals)
         if 'plan_id' in vals:
             to_sync = self.env['ncollection.tenant']
@@ -40,6 +46,9 @@ class Subscription(models.Model):
                     tenant.plan_id = sub.plan_id
                 if tenant:
                     to_sync |= tenant
+                old_plan = old_plans.get(sub.id)
+                if old_plan and old_plan != sub.plan_id and sub.status == 'active':
+                    sub._create_proration_invoice(old_plan)
             to_sync._config_sync_enqueue()
         return res
 

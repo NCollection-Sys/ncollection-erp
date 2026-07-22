@@ -12,7 +12,7 @@ import logging
 import re
 import unicodedata
 
-from odoo import models
+from odoo import fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -34,6 +34,13 @@ _GENERATED_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 
 class Tenant(models.Model):
     _inherit = 'ncollection.tenant'
+
+    # The tenant's customer record in the ADMIN DB — the res.partner the
+    # platform invoices for this tenant's subscription (P2-T11). This is the
+    # platform's OWN admin-DB billing contact, never a tenant-DB partner.
+    partner_id = fields.Many2one(  # arch-guard: admin-db-billing
+        'res.partner', string='Billing Contact', copy=False,
+        help='Customer record billed for this tenant\'s subscription (admin DB).')
 
     # ---- database-name generation (P2-T02 point 1) -----------------------
 
