@@ -35,11 +35,19 @@ _COMPONENT_STYLES = ("components.scss", "playground.scss")
 
 _HEX_RE = re.compile(r"#[0-9a-fA-F]{3,8}\b")
 _RADIUS_PX_RE = re.compile(r"border-radius:\s*[^;]*\d+px")
+# SCSS comments — stripped before scanning so issue refs like "#129" in a
+# header comment are not mistaken for a hex colour.
+_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
+_LINE_COMMENT_RE = re.compile(r"//[^\n]*")
 
 
 def _read(path):
     with open(path, encoding="utf-8") as fh:
         return fh.read()
+
+
+def _strip_comments(scss):
+    return _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", scss))
 
 
 @tagged("post_install", "-at_install")
@@ -64,7 +72,7 @@ class TestComponentLibrary(TransactionCase):
         """Acceptance: zero hard-coded colours/radii in components. Every colour
         is a var(--nc-*) or a color-mix() of one; every radius is a token."""
         for fname in _COMPONENT_STYLES:
-            src = _read(os.path.join(_COMP_DIR, fname))
+            src = _strip_comments(_read(os.path.join(_COMP_DIR, fname)))
             hexes = _HEX_RE.findall(src)
             self.assertFalse(
                 hexes, "%s has hard-coded hex colour(s) %s — use a --nc-* token"
