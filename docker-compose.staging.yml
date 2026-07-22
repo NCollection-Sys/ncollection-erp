@@ -1,0 +1,38 @@
+# ============================================================================
+#  Staging override  (ticket P2-T07)
+# ============================================================================
+#  Turns the bind-mounted dev stack into an IMMUTABLE, registry-image deploy:
+#      docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+#
+#  Differences from the base (dev) stack:
+#    - odoo runs the baked image ghcr.io/ncollection-sys/ncollection-erp:<tag>
+#      (built by the deploy-staging workflow) instead of `odoo:19` + bind mount,
+#    - odoo drops ALL working-copy bind mounts (addons, OCA, config are baked)
+#      and keeps only the filestore volume,
+#    - odoo runs the multi-tenant PRODUCTION config (db_filter, workers=4),
+#    - Postgres is NOT exposed to the host.
+#
+#  The nginx + wildcard-TLS edge for *.staging.ncollectionerp.com is deliberately
+#  OUT OF SCOPE here — that is ticket P2-T06 (Domain & SSL Automation). Until it
+#  lands, staging answers on the host's :8069 (firewall-restricted per the
+#  runbook), and the deploy smoke test hits Odoo's own /web/health route.
+#  See docs/markdown/RUNBOOK_STAGING.md.
+# ============================================================================
+services:
+
+  db:
+    # Never expose Postgres publicly on staging (same posture as prod).
+    ports: !reset []
+
+  odoo:
+    # The tagged artifact built + pushed by .github/workflows/deploy-staging.yml.
+    # IMAGE_TAG is the immutable per-commit tag (sha-<gitsha>); defaults to the
+    # moving `develop` tag for a manual `up` on the server.
+    image: ghcr.io/ncollection-sys/ncollection-erp:${IMAGE_TAG:-develop}
+    # Multi-tenant production config (baked into the image at the same path).
+    command: odoo -c /etc/odoo/odoo.prod.conf
+    # Drop the dev bind mounts entirely — addons, OCA and the prod config are
+    # all baked. Keep only the persistent filestore.
+    volumes: !override
+      - odoo_data:/var/lib/odoo
+    restart: unless-stopped

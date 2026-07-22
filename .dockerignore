@@ -1,0 +1,36 @@
+# Keep the build context small and deterministic. We bake only what the app
+# needs at runtime: custom_addons, the aggregated ./oca tree, config/.
+# Everything below is either irrelevant to the running image or must never be
+# baked (secrets, VCS metadata, the React prototype, docs).
+
+.git
+.github
+.githooks
+.gitignore
+.dockerignore
+
+# Secrets & local env — MUST NOT enter the image.
+.env
+.env.*
+!.env.example
+
+# The standalone React prototype is never deployed (CLAUDE.md).
+demo
+
+# Docs, planning, CI-only scripting: not needed at runtime.
+docs
+scripts/ci
+scripts/audit
+scripts/routing
+scripts/demo
+
+# git-aggregator leaves per-repo .git dirs under ./oca — don't bloat the image.
+oca/**/.git
+
+# Python / tooling noise.
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.venv
+.oca-venv
+*.md
