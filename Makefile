@@ -41,7 +41,7 @@ OCA_VENV := .oca-venv
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
         provisioning-verify config-sync-verify e2e-verify verify-all hooks-install doctor \
-        demo-tenant demo-clean
+        demo-tenant demo-clean staging-config staging-build
 
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
@@ -60,6 +60,14 @@ oca: ## Aggregate the pinned OCA addon repos from repos.yml into ./oca/
 		(python3 -m venv $(OCA_VENV) && $(OCA_VENV)/bin/pip -q install 'git-aggregator==4.1')
 	$(OCA_VENV)/bin/gitaggregate -c repos.yml -j 3
 	@echo "OCA repos aggregated. Apply with: make restart"
+
+## ---- Staging / CD (P2-T07) ----
+staging-config: ## Validate the merged staging compose config (docker-compose.yml + .staging.yml)
+	docker compose -f docker-compose.yml -f docker-compose.staging.yml config -q && echo "✅ staging compose valid"
+
+staging-build: ## Build the deployable image locally (run 'make oca' first). Tag: :local
+	@test -d oca/mis-builder || (echo "ERROR: ./oca/ is empty — run 'make oca' first."; exit 1)
+	docker build -t ghcr.io/ncollection-sys/ncollection-erp:local .
 
 down: ## Stop and remove containers (keeps data volumes)
 	$(COMPOSE) down
