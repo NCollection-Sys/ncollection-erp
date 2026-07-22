@@ -120,8 +120,41 @@ if [ -n "$db_cid" ]; then
   if [ "$stale_total" -eq 0 ]; then
     ok "no stale module dependencies in any database"
   fi
+
+  # --- 9. Stale module SCHEMA (installed version behind the code) ------------
+  # Check 8 catches a MISSING dependency (the module will not load). This catches
+  # the OTHER half of R-012: a module whose installed version is behind its code
+  # manifest, so its new fields were never migrated. That is what made ncplatform
+  # throw `column res_company.nc_primary_color does not exist` — the branding code
+  # had the field, that database's schema did not, because Odoo migrates a schema
+  # only on upgrade. Scoped to our ncollection_* modules (the ones whose versions
+  # bump during development); severity WARN, since the module still loads and
+  # throwaway fixtures should not fail the whole check.
+  drift_total=0
+  for manifest in custom_addons/ncollection_*/__manifest__.py; do
+    [ -f "$manifest" ] || continue
+    mod="$(basename "$(dirname "$manifest")")"
+    code_ver="$(grep -E "['\"]version['\"]" "$manifest" | grep -oE '[0-9]+(\.[0-9]+)+' | head -1)"
+    [ -n "$code_ver" ] || continue
+    for db in $dbs; do
+      db_ver="$(docker exec "$db_cid" psql -U odoo -d "$db" -tAc \
+        "SELECT latest_version FROM ir_module_module WHERE name='$mod' AND state='installed'" \
+        2>/dev/null | tr -d ' ')"
+      [ -n "$db_ver" ] || continue  # module not installed in this database
+      [ "$db_ver" = "$code_ver" ] && continue
+      # Only flag when the CODE is newer (a real "needs upgrade"); ignore the
+      # theoretical reverse.
+      newest="$(printf '%s\n%s\n' "$db_ver" "$code_ver" | sort -V | tail -1)"
+      if [ "$newest" = "$code_ver" ]; then
+        warn "db '$db': '$mod' installed at $db_ver but code is $code_ver (schema behind)" \
+             "make upgrade m=$mod db=$db"
+        drift_total=$((drift_total + 1))
+      fi
+    done
+  done
+  [ "$drift_total" -eq 0 ] && ok "no ncollection_* module is behind its code version"
 else
-  warn "database container not running — skipped the stale-dependency scan" "make routing-up"
+  warn "database container not running — skipped the stale-dependency + schema scans" "make routing-up"
 fi
 
 echo

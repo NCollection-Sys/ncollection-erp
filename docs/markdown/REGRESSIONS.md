@@ -23,7 +23,7 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Post-merge canary | `.github/workflows/canary.yml` | push to `develop` |
 | Nightly drift check | `.github/workflows/nightly.yml` | cron (once on `main`) |
 | Dependency/CVE watch | `.github/dependabot.yml` | weekly + advisories |
-| Stale module dependencies across all DBs | `scripts/dev/doctor.sh` | `make doctor` |
+| Stale module dependencies + modules behind their code version, across all DBs | `scripts/dev/doctor.sh` | `make doctor` |
 | Fixture namespace separation | `Makefile`, `e2e/` | structural |
 
 ---
@@ -251,6 +251,23 @@ exact `make upgrade` command. Proven twice: it caught the real `ncollection` def
 fix, and flagged a deliberately broken throwaway database.
 
 **Remediation when it fires:** `make upgrade m=<module> db=<database>`.
+
+### R-012b — the other half: a module's *schema* falls behind its code (INFRA-08)
+
+The dependency check above is only one way an existing database drifts. The other is a module
+whose installed **version** is behind the code, so its *new fields* were never migrated — because
+Odoo migrates a schema only on upgrade, for the same reason it does not backfill dependencies.
+
+**Symptom.** Provisioning threw `column res_company.nc_primary_color does not exist`. The local
+`ncplatform` had `ncollection_branding` at `19.0.1.3.0` while the code (after P1-T16) was
+`19.0.1.4.0`; the new colour fields existed in code but not in that database's schema. It looked
+like a code regression; it was a stale local database.
+
+**Guard.** `make doctor` also compares each `ncollection_*` module's installed `latest_version`
+against `custom_addons/<mod>/__manifest__.py` and warns (advisory, not a blocker — the module
+still loads) when a database is behind, with the `make upgrade` fix. Proven both ways: it flagged
+real drift across several databases, and the specific line cleared after the recommended upgrade.
+Scoped to our modules; core/OCA manifests live in the container and rarely bump mid-development.
 
 ---
 
