@@ -1,0 +1,115 @@
+name: Deploy to Staging
+
+# CD (P2-T07): on every merge to develop, build the app image, push it to GHCR,
+# deploy it to the staging server over SSH, smoke-test, and notify Discord.
+#
+# SAFE BEFORE STAGING EXISTS: the first step checks for the staging secrets and,
+# if they are absent, the whole job no-ops with a green result. So this workflow
+# can merge and sit dormant until you provision the VPS and add the secrets
+# (docs/markdown/RUNBOOK_STAGING.md) — it never red-spams develop in the meantime.
+on:
+  push:
+    branches: [develop]
+
+# One staging deploy at a time; never interrupt an in-flight deploy.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+# GITHUB_TOKEN needs packages:write to push to GHCR.
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check whether staging is configured
+        id: preflight
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+        run: |
+          if [ -z "$STAGING_HOST" ] || [ -z "$STAGING_SSH_KEY" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Staging is not configured yet (missing STAGING_HOST / STAGING_SSH_KEY). Skipping deploy — see docs/markdown/RUNBOOK_STAGING.md."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.preflight.outputs.configured == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Compute image name and tags
+        if: steps.preflight.outputs.configured == 'true'
+        id: image
+        run: |
+          repo_lc="$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')"
+          echo "image=ghcr.io/$repo_lc" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      # ./oca is generated from repos.yml (P1-T04) — aggregate before the build
+      # so the Dockerfile's `COPY oca` has the exact pinned OCA tree.
+      - name: Aggregate pinned OCA repos
+        if: steps.preflight.outputs.configured == 'true'
+        run: |
+          pip install 'git-aggregator==4.1'
+          gitaggregate -c repos.yml -j 3
+
+      - name: Log in to GHCR
+        if: steps.preflight.outputs.configured == 'true'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push image
+        if: steps.preflight.outputs.configured == 'true'
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          SHA_TAG: ${{ steps.image.outputs.sha_tag }}
+        run: |
+          docker build -t "$IMAGE:$SHA_TAG" -t "$IMAGE:develop" .
+          docker push "$IMAGE:$SHA_TAG"
+          docker push "$IMAGE:develop"
+
+      # Sync the server checkout to this commit (compose files, scripts), then
+      # deploy the immutable per-commit image tag. deploy.sh smoke-tests itself.
+      - name: Deploy to staging over SSH
+        if: steps.preflight.outputs.configured == 'true'
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_SSH_USER }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          SHA_TAG: ${{ steps.image.outputs.sha_tag }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$STAGING_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$STAGING_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes "${STAGING_USER:-deploy}@$STAGING_HOST" \
+            "cd /opt/ncollection \
+               && git fetch --quiet origin develop \
+               && git reset --hard --quiet origin/develop \
+               && IMAGE_TAG=$SHA_TAG ./scripts/deploy/deploy.sh"
+
+      - name: Notify Discord — success
+        if: steps.preflight.outputs.configured == 'true' && success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          SHA_TAG: ${{ steps.image.outputs.sha_tag }}
+        run: |
+          [ -z "$DISCORD_WEBHOOK" ] && exit 0
+          curl -fsS -X POST "$DISCORD_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{\"content\": \"✅ Staging deployed: \`$SHA_TAG\` (${GITHUB_SHA::12}) on develop.\"}"
+
+      - name: Notify Discord — failure
+        if: steps.preflight.outputs.configured == 'true' && failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          [ -z "$DISCORD_WEBHOOK" ] && exit 0
+          curl -fsS -X POST "$DISCORD_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{\"content\": \"❌ Staging deploy FAILED for ${GITHUB_SHA::12} on develop — see GitHub Actions. Recover with scripts/deploy/rollback.sh.\"}"
