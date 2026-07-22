@@ -21,6 +21,4 @@
     # template if none), the 5% VAT tax, and the subscription product — the
     # prerequisites for admin-DB invoicing.
     'post_init_hook': 'post_init_hook',
-    'installable': True,
-    'auto_install': False,
 }
