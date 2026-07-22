@@ -229,9 +229,9 @@ jobs:
             odoo --db_host=localhost --db_user=odoo --db_password=odoo \
                  --addons-path=/mnt/extra-addons,/mnt/oca-addons/account-financial-reporting,/mnt/oca-addons/mis-builder,/mnt/oca-addons/reporting-engine,/mnt/oca-addons/queue,/mnt/oca-addons/server-auth,/mnt/oca-addons/server-tools,/mnt/oca-addons/server-ux,/usr/lib/python3/dist-packages/odoo/addons \
                  -d ci_test \
-                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_mis_templates,ncollection_auth \
+                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth \
                  --test-enable \
-                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_mis_templates,/ncollection_auth \
+                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth \
                  --stop-after-init --log-level=test \
             2>&1 | tee odoo-test.log
           test "${PIPESTATUS[0]}" -eq 0

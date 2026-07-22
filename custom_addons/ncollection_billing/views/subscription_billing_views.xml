@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Billing surface on the subscription form (P2-T11): payment status +
+         an invoices smart button. Admin-only, same as the base view. -->
+    <record id="view_ncollection_subscription_form_billing" model="ir.ui.view">
+        <field name="name">ncollection.subscription.form.billing</field>
+        <field name="model">ncollection.subscription</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_subscription_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='status']" position="after">
+                <field name="payment_status" widget="badge"/>
+            </xpath>
+            <xpath expr="//div[@class='oe_title']" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_view_invoices" type="object"
+                            class="oe_stat_button" icon="fa-file-text-o">
+                        <field name="invoice_count" widget="statinfo" string="Invoices"/>
+                    </button>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
