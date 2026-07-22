@@ -158,10 +158,39 @@ The CSP in `snippets/security-headers.conf` is deliberately **Odoo-compatible**
 Tightening it (nonces, dropping `unsafe-*`) is a later hardening pass — do not
 tighten blindly or the backend white-screens.
 
+## Custom tenant domains (P2-T06)
+
+Platform **subdomains** (`<db>.ncollectionerp.com`) need **zero** work here —
+they ride the wildcard block above and the `*.ncollectionerp.com` cert. The
+platform just tracks them (`ncollection.domain`, auto-created on provisioning)
+and a weekly cron alerts 14 days before the cert expires.
+
+A tenant's **own** domain (e.g. `erp.acme.com`) is onboarded per domain:
+
+```bash
+# 1. Issue a per-domain cert (HTTP-01; the :80 block serves the challenge):
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec certbot \
+  certbot certonly --webroot -w /var/www/certbot -d erp.acme.com
+# 2. Render the server block from the Jinja2 template into the include dir:
+sed 's/{{ fqdn }}/erp.acme.com/g' nginx/templates/tenant-custom-domain.conf.j2 \
+  > nginx/conf.d/tenants/erp.acme.com.conf
+# 3. Validate + graceful reload:
+./scripts/deploy/nginx-reload.sh
+```
+
+> **Deferred live-wiring:** activating `conf.d/tenants/` requires mounting that
+> dir into the nginx container (a prod-compose change) — intentionally not done
+> yet, since no custom domain exists. The template + reload script + tracking
+> model ship now as the scaffolding; the compose mount + first real custom
+> domain are a follow-up. Odoo never reloads nginx itself (that needs the Docker
+> socket, restricted by **P2-T08**) — the reload stays host-side.
+
 ## OCA / reuse decision (Standing Rule 5)
 
 Nginx is **infrastructure**, not an Odoo module — there is no OCA addon to
 reuse here. The config follows Odoo's own reference reverse-proxy guidance
 (upstreams, `proxy_mode` headers, the 8072 longpolling/websocket split). The
 app-layer brute-force lockout is the OCA `auth_brute_force` module, scoped
-separately to **P1-T19**.
+separately to **P1-T19**. Domain/SSL **automation** (P2-T06) is likewise
+infra-specific to this nginx+certbot topology — no OCA module manages external
+server blocks; the `ncollection.domain` tracking model is custom, by design.
