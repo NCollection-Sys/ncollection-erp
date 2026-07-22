@@ -227,8 +227,11 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
     .form-control {
         padding: 9px 12px;
         border-radius: $nc-login-radius;
-        border: 1px solid $ncollection-silver;
-        background: $nc-login-bg-elevated;
+        // Token defaults equal the previous hardcoded values (#C0C7D1 / #FFFFFF)
+        // — identical in light mode, but now a dark theme reskins the input by
+        // reassigning the semantic token, no edit here (UI-T01 dark-readiness).
+        border: 1px solid var(--nc-color-neutral, #{$ncollection-silver});
+        background: var(--nc-surface-raised, #{$nc-login-bg-elevated});
         transition: border-color 0.15s, box-shadow 0.15s;
 
         &:focus {

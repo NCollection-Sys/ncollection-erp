@@ -11,7 +11,10 @@
 //   * COMPONENT — optional, declared by a component referencing a semantic token.
 //
 // Naming: --nc-<category>-<name>, category in
-//   color | sidebar | surface | text | status | radius | shadow.
+//   color | sidebar | surface | text | status | radius | shadow | space |
+//   font | focus | chart. (Stacking/z-index is deliberately NOT a category:
+//   Odoo owns the web-client stacking context and its overlay service; our
+//   components mount through it rather than inventing a competing z-scale.)
 //
 // Injection determinism: the four tenant-INJECTED tokens
 // (--nc-color-primary, --nc-color-secondary, --nc-sidebar-bg, --nc-sidebar-active)
@@ -34,6 +37,11 @@ $nc-primitive-ink-900:     #0F172A;
 $nc-primitive-ink-500:     #64748B;
 $nc-primitive-green-600:   #2E7D5B;
 $nc-primitive-red-600:     #B4453C;
+// Categorical series palette (the reference's data-viz hues) — chart tier.
+$nc-primitive-series-2:    #8145CD;
+$nc-primitive-series-3:    #CD45A2;
+$nc-primitive-series-4:    #FB2B76;
+$nc-primitive-series-5:    #13CD3C;
 
 // ---- Tier 2: semantic tokens (:root) ----------------------------------------
 :root {
@@ -49,6 +57,46 @@ $nc-primitive-red-600:     #B4453C;
     --nc-status-error:         #{$nc-primitive-red-600};
     --nc-radius-md:            10px;
     --nc-shadow-card:          0 1px 3px rgba(15, 23, 42, 0.08);
+
+    // ---- Component-scale tokens (frozen vocabulary; consumed by #129) --------
+    // Nothing references these yet, so they change no existing screen; they
+    // exist so the OWL component library adds components, never new token
+    // CATEGORIES. Spacing scale, 4px base (matches the dashboard's 16/20px).
+    --nc-space-1: 4px;
+    --nc-space-2: 8px;
+    --nc-space-3: 12px;
+    --nc-space-4: 16px;
+    --nc-space-5: 20px;
+    --nc-space-6: 24px;
+    --nc-space-8: 32px;
+    // Radius + elevation scales (…-md / …-card already defined above).
+    --nc-radius-sm: 6px;
+    --nc-radius-lg: 16px;
+    --nc-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --nc-shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.12);
+    // Typography. Family stays a system stack until the reference face (Gilroy)
+    // is licensed — swap this ONE value then, no component edits. Deliberately
+    // NOT applied to <body> here (that would restyle every existing screen).
+    --nc-font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --nc-font-size-xs: 11px;
+    --nc-font-size-sm: 13px;
+    --nc-font-size-md: 14px;
+    --nc-font-size-lg: 18px;
+    --nc-font-size-xl: 22px;
+    --nc-font-size-2xl: 26px;
+    --nc-font-weight-regular: 400;
+    --nc-font-weight-medium: 500;
+    --nc-font-weight-semibold: 600;
+    --nc-font-weight-bold: 700;
+    // Accessibility (§23): a single focus-ring override point.
+    --nc-focus-ring: 0 0 0 3px rgba(31, 95, 143, 0.35);
+    // Chart categorical series (§16). series-1 tracks the tenant primary so a
+    // single-series chart stays on-brand; 2–5 are fixed accent hues.
+    --nc-chart-1: var(--nc-color-primary, #{$nc-primitive-blue-600});
+    --nc-chart-2: #{$nc-primitive-series-2};
+    --nc-chart-3: #{$nc-primitive-series-3};
+    --nc-chart-4: #{$nc-primitive-series-4};
+    --nc-chart-5: #{$nc-primitive-series-5};
 
     // ---- Back-compat aliases (retained one release — UI-T01 migration) ------
     // Old flat token names → canonical, so any lingering var(--nc-<old>) still
