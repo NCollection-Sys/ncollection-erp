@@ -18,6 +18,8 @@
     # No new models — only extensions of account.move / subscription / tenant /
     # res.company — so no new ir.model.access rows are required.
     'data': [
+        'data/mail_templates.xml',
+        'data/lifecycle_cron.xml',
         'views/subscription_billing_views.xml',
     ],
     # Ensures the platform company has a Chart of Accounts (loads Odoo's generic
