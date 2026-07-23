@@ -120,6 +120,11 @@ approach, risks. It MUST also include:
   addons. "None — new files only" is a fine answer when it is true. Cross-suite
   breakage stayed invisible for weeks precisely because nobody was asked this.
 - **A rollback plan** — how to undo this cleanly if it misbehaves after merge.
+- **OCA-first check (Rule 2/5)** — when the ticket could reuse an existing OCA
+  module or needs a new dependency, delegate the survey to the **`oca-scout`**
+  subagent and record its REUSE / ADOPT / BUILD-CUSTOM recommendation (with the
+  architecture-check result) in the plan. Never propose a new OCA dependency
+  without it.
 
 Then explain briefly how the implementation preserves:
 
@@ -147,7 +152,21 @@ If any architectural assumption changes, STOP and ask before implementation.
    **Then run `make verify-all`** (routing + provisioning + e2e) — NOT just the
    suite for your own lane. A ticket that proves only its own lane cannot see a
    cross-suite regression. If you touched shared infra or a verification script,
-   show the OTHER suites still passing.
+   show the OTHER suites still passing. This gate MAY be delegated to the
+   **`verify-runner`** subagent (run it in the background while you finish the
+   write-up) — it runs `make verify-all` and reports per-suite pass/fail.
+
+   **Delegate review before the PR (parallel subagents).** Once the code is
+   written and the local gates pass, fan out review IN PARALLEL and address every
+   CRITICAL/HIGH before opening the PR:
+   - **`code-reviewer`** — always (general quality/security).
+   - **`odoo-reviewer`** + **`tenant-isolation-auditor`** — whenever `custom_addons/**`
+     changed (Odoo-19 conventions, two-layer/db-per-tenant isolation).
+   - **`security-reviewer`** — when auth, user input, secrets, or payments are touched.
+
+   Relay each verdict and fix findings on the branch. The workers ADVISE only —
+   you (the orchestrator) still own the commits, the PR, and (never) the merge.
+   For a large or high-risk diff, prefer `/code-review ultra` instead.
 4. Push and open the PR: base `develop`, title `[<ID>] <Task Name>`, body with
    what/why, `make verify-all` evidence per acceptance criterion, an explicit
    **"What this does NOT cover"** section (an undeclared gap reads as coverage),
