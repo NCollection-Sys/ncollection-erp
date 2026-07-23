@@ -34,3 +34,11 @@ class AccountMove(models.Model):
             '(NCollection billing idempotency).',
         ),
     ]
+
+    def nc_payment_link(self):
+        """Portal URL where the customer pays this subscription invoice online
+        (P2-T13). It reuses Odoo's native portal payment page — armed once the
+        Stripe provider is enabled and portal payment is on — so it can be
+        embedded in renewal/dunning emails (P2-T14)."""
+        self.ensure_one()
+        return self.get_portal_url()

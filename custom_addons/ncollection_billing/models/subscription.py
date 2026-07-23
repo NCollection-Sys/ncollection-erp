@@ -6,9 +6,13 @@ on each renewal, applies UAE VAT 5%, prorates mid-cycle upgrades, and tracks
 payment status back onto the subscription. Uses Odoo's accounting engine
 (FINANCIAL_PLATFORM_ARCHITECTURE §4/§5) — never a custom invoice model.
 """
+import logging
+
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class Subscription(models.Model):
@@ -152,6 +156,38 @@ class Subscription(models.Model):
         })
         move.action_post()
         return move
+
+    # ---- payment collection (P2-T13) -------------------------------------
+
+    def _nc_apply_payment(self, invoice):
+        """A subscription invoice has been paid: extend the subscription to
+        cover the paid period and reactivate a lapsed one.
+
+        Extend-to-cover (end_date = max(end_date, period_end)) is idempotent and
+        never double-counts against the period already granted at activation —
+        paying the purchase invoice is a no-op on the date, paying a renewal
+        invoice pushes the end out. A payment on an expired/suspended/trial
+        subscription reactivates it (grace recovery / trial conversion)."""
+        self.ensure_one()
+        period_end = invoice.nc_period_end
+        if period_end and (not self.end_date or period_end > self.end_date):
+            self.end_date = period_end
+        if self.status in ('expired', 'suspended', 'trial'):
+            self.action_reactivate()
+        self.message_post(body=self.env._(
+            'Payment received for invoice %(inv)s — subscription active through %(end)s.',
+            inv=invoice.name, end=self.end_date or '-'))
+
+    def _nc_on_payment_failed(self, transaction):
+        """A payment attempt failed. P2-T13 records it (chatter) and leaves a
+        seam for the P2-T14 dunning scheduler; payment_status already surfaces
+        an unpaid, past-due invoice as 'overdue'."""
+        self.ensure_one()
+        _logger.info("Payment failed for subscription %s (transaction %s, state %s)",
+                     self.name, transaction.reference, transaction.state)
+        self.message_post(body=self.env._(
+            'Payment attempt failed for this subscription (transaction %(ref)s, %(state)s).',
+            ref=transaction.reference, state=transaction.state))
 
     def action_view_invoices(self):
         self.ensure_one()
