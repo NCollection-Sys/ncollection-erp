@@ -97,12 +97,24 @@ class Subscription(models.Model):
     # ---- transition notices (P2-T17) -------------------------------------
 
     def action_expire(self):
+        """Expire the subscription, THEN email the tenant an 'expired' notice.
+
+        SIDE EFFECT — every call to this transition queues a lifecycle email to
+        the tenant (capped to one lifecycle email per tenant per day by
+        _nc_send_lifecycle_mail). This includes programmatic callers: the daily
+        sweep (_nc_expire_due) and any admin/bulk expiry will each generate one
+        email per subscription. Intended, but be aware before calling in a loop."""
         res = super().action_expire()
         for sub in self:
             sub._nc_send_lifecycle_mail('mail_template_expired')
         return res
 
     def action_suspend(self):
+        """Suspend the subscription, THEN email the tenant a 'suspended' notice.
+
+        SIDE EFFECT — like action_expire above, every call queues a (daily-de-
+        duped) lifecycle email to the tenant, including the daily sweep
+        (_nc_suspend_after_grace) and any admin/bulk suspension."""
         res = super().action_suspend()
         for sub in self:
             sub._nc_send_lifecycle_mail('mail_template_suspended')
