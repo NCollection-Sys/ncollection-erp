@@ -18,11 +18,65 @@ _logger = logging.getLogger(__name__)
 class Subscription(models.Model):
     _inherit = 'ncollection.subscription'
 
+    # Subscription status -> the tenant lifecycle status that mirrors it. The
+    # tenant status is what config-sync projects into the tenant DB, where the
+    # P2-T03 interstitial gates access — so the subscription lifecycle must
+    # drive it. 'trial' needs no tenant move (the tenant is already 'trial').
+    _TENANT_STATUS_METHOD = {
+        'active': 'action_activate',
+        'suspended': 'action_suspend',
+        'expired': 'action_expire',
+    }
+
+    def _drive_tenant_status(self, target):
+        """Move the tenant lifecycle to mirror the subscription, going through
+        the tenant's own guarded transition (which enqueues config-sync so the
+        interstitial updates). Fail-soft: a tenant-state guard never blocks the
+        subscription transition."""
+        self.ensure_one()
+        tenant = self.tenant_id
+        if not tenant or tenant.status == target:
+            return
+        method = self._TENANT_STATUS_METHOD.get(target)
+        if method and target in tenant._ALLOWED_TRANSITIONS.get(tenant.status, set()):
+            getattr(tenant, method)()
+
     def action_activate(self):
-        """draft -> active, then auto-provision the tenant if it has no DB yet."""
+        """draft/trial -> active: auto-provision the tenant, then mirror the
+        tenant to 'active' (also the trial-conversion path)."""
         res = super().action_activate()
         for sub in self:
             sub._trigger_provisioning()
+            sub._drive_tenant_status('active')
+        return res
+
+    def action_start_trial(self):
+        """draft -> trial: provision so the trial has full plan access; no
+        invoice is raised (billing does not hook the trial)."""
+        res = super().action_start_trial()
+        for sub in self:
+            sub._trigger_provisioning()
+        return res
+
+    def action_suspend(self):
+        """-> suspended: block tenant access via the P2-T03 interstitial."""
+        res = super().action_suspend()
+        for sub in self:
+            sub._drive_tenant_status('suspended')
+        return res
+
+    def action_reactivate(self):
+        """-> active: restore tenant access (reactivation, incl. during grace)."""
+        res = super().action_reactivate()
+        for sub in self:
+            sub._drive_tenant_status('active')
+        return res
+
+    def action_terminate(self):
+        """-> terminated: project a terminal, access-blocked tenant."""
+        res = super().action_terminate()
+        for sub in self:
+            sub._drive_tenant_status('expired')
         return res
 
     def write(self, vals):

@@ -101,7 +101,10 @@ class CheckoutController(http.Controller):
 
         # --- create tenant + DRAFT subscription (no provisioning yet) ---
         today = fields.Date.context_today(request.env.user)
-        trial_end = fields.Date.add(today, days=TRIAL_DAYS)
+        # Trial length is plan-driven (P2-T12); fall back to the module default
+        # when a plan sets no trial_days, preserving prior checkout behaviour.
+        trial_days = plan_rec.trial_days or TRIAL_DAYS
+        trial_end = fields.Date.add(today, days=trial_days)
         tenant = Tenant.create({
             'company_name': company,
             'contact_name': contact,
