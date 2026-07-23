@@ -6,7 +6,8 @@ __pycache__/
 # Local environment (never commit real secrets — see .env.example)
 .env
 
-backup/
+# Root-level backup output dir only — must NOT swallow scripts/backup/ (P2-T04).
+/backup/
 *.zip
 
 .vscode/
