@@ -1,9 +1,9 @@
 # pylint: disable=manifest-required-author
 {
     'name': 'NCollection Billing',
-    'version': '19.0.2.0.0',
+    'version': '19.0.3.0.0',
     'category': 'Services/SaaS',
-    'summary': 'Subscription billing — invoices, UAE VAT, proration, Stripe collection (P2-T11/T13)',
+    'summary': 'Subscription billing — invoices, UAE VAT, proration, Stripe, lifecycle emails (P2-T11/T13/T17)',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
@@ -19,6 +19,7 @@
     # res.company — so no new ir.model.access rows are required.
     'data': [
         'data/mail_templates.xml',
+        'data/lifecycle_mail_templates.xml',
         'data/lifecycle_cron.xml',
         'views/subscription_billing_views.xml',
     ],
