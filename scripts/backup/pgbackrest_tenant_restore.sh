@@ -19,8 +19,10 @@ TARGET_TIME="${2:-}"
 OUT="${3:-/tmp/${TENANT}_pitr.dump}"
 SCRATCH="/tmp/tenant_pitr_scratch"
 PORT="5433"
-[ -n "$TENANT" ] && [ -n "$TARGET_TIME" ] || {
-  echo "usage: $0 <tenant_db> '<YYYY-MM-DD HH:MM:SS+TZ>' [out.dump]" >&2; exit 1; }
+if [ -z "$TENANT" ] || [ -z "$TARGET_TIME" ]; then
+  echo "usage: $0 <tenant_db> '<YYYY-MM-DD HH:MM:SS+TZ>' [out.dump]" >&2
+  exit 1
+fi
 
 DC=(docker compose -f docker-compose.yml -f docker-compose.backup.yml)
 
