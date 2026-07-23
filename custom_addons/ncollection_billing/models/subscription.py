@@ -256,15 +256,19 @@ class Subscription(models.Model):
         step is idempotent (per-subscription trackers + guarded transitions), so
         re-running on the same day changes nothing."""
         today = today or fields.Date.context_today(self)
+        # Put the sweep's date on the context so every email queued during it —
+        # recurring reminders AND the transitions it triggers — de-dups on this
+        # (possibly simulated) day.
+        sweep = self.with_context(nc_lifecycle_today=today)
         # Transitions first: their notices (expired/suspended) take the day's
         # single lifecycle-email slot ahead of recurring warnings/dunning (P2-T17).
-        self._nc_sweep_trials(today)
-        self._nc_expire_due(today)
-        self._nc_suspend_after_grace(today)
+        sweep._nc_sweep_trials(today)
+        sweep._nc_expire_due(today)
+        sweep._nc_suspend_after_grace(today)
         # Then the recurring reminders.
-        self._nc_send_trial_ending_warnings(today)
-        self._nc_send_expiry_warnings(today)
-        self._nc_run_dunning(today)
+        sweep._nc_send_trial_ending_warnings(today)
+        sweep._nc_send_expiry_warnings(today)
+        sweep._nc_run_dunning(today)
 
     def _nc_active_with_end(self, today):
         return self.search([('status', '=', 'active'), ('end_date', '!=', False)])
@@ -379,7 +383,11 @@ class Subscription(models.Model):
             'ncollection_billing.%s' % template_xmlid, raise_if_not_found=False)
         if not template or not self.tenant_id.email:
             return False
-        today = fields.Date.context_today(self)
+        # The de-dup date follows the LIFECYCLE clock: the daily sweep injects
+        # its `today` via context so a simulated-clock run (and any transition it
+        # triggers) de-dups on the simulated day, not the real one. Direct
+        # transition calls outside a sweep fall back to the real date.
+        today = self.env.context.get('nc_lifecycle_today') or fields.Date.context_today(self)
         if self._nc_lifecycle_mail_sent_today(today):
             return False
         try:
