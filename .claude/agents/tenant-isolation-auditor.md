@@ -4,7 +4,9 @@ description: >
   Audits a diff for multi-tenant isolation breaks in the NCollection SaaS platform:
   cross-DB ORM/SQL, two-layer violations, unmirrored access controls, fixture/db-name
   hazards. The highest-severity reviewer — an isolation break is a cross-tenant data
-  leak. Read-only; reports CRITICAL findings with evidence.
+  leak. Read-only; reports CRITICAL findings with evidence. MUST BE USED
+  PROACTIVELY and AUTOMATICALLY on any diff touching platform addons, provisioning,
+  config-sync, or routing — invoked without being asked.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---

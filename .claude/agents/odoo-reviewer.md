@@ -3,8 +3,9 @@ name: odoo-reviewer
 description: >
   Reviews NCollection Odoo 19 addon changes against the project's Standing Rules —
   Odoo 19 syntax, two-layer separation, license/menu mirroring, db-per-tenant safety,
-  no core modification. Read-only (reports findings; never edits). USE after any
-  change under custom_addons/, before opening a PR.
+  no core modification. Read-only (reports findings; never edits). MUST BE USED
+  PROACTIVELY and AUTOMATICALLY — the orchestrator invokes it without being asked
+  after ANY change under custom_addons/ and before every PR.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---

@@ -5,7 +5,8 @@ description: >
   surveys OCA repos, GitHub, and Odoo docs for existing solutions, checks the
   project's architecture before proposing any new dependency, and returns a
   build-vs-reuse recommendation with justification. Read/search only — proposes,
-  never installs.
+  never installs. Use PROACTIVELY and AUTOMATICALLY whenever a ticket could reuse
+  an OCA module or needs a new dependency — invoked without being asked.
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
 model: sonnet
 ---

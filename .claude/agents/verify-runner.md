@@ -3,8 +3,9 @@ name: verify-runner
 description: >
   Runs the NCollection cross-suite verification (make verify-all: routing +
   provisioning + config-sync + e2e) and reports per-suite pass/fail with evidence.
-  Mechanical runner — it executes and reports; it does NOT fix failures. Ideal to
-  run in the background before a merge (CLAUDE.md Rule 13).
+  Mechanical runner — it executes and reports; it does NOT fix failures. Use
+  PROACTIVELY and AUTOMATICALLY in the background before every PR/merge
+  (CLAUDE.md Rule 13) — invoked without being asked.
 tools: ["Bash", "Read"]
 model: haiku
 ---
