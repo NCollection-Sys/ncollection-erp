@@ -15,7 +15,7 @@
 | Phase | Done | Total | % |
 |---|---|---|---|
 | Phase 1 — Customer Workspace | 21 | 21 | 100% |
-| Phase 2 — SaaS Automation | 9 | 18 | 50% |
+| Phase 2 — SaaS Automation | 10 | 18 | 56% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
 | Phase 5 — AI Platform | 0 | 7 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **30** | **100** | **30%** |
+| **Total** | **31** | **100** | **31%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -59,7 +59,7 @@
 | P2-T01 | Dedicated Provisioning Runner & Engine Core | DEV-1 | P1-T07 | [#23](https://github.com/NCollection-Sys/ncollection-erp/issues/23) | ✅ done | 2026-07-20 |
 | P2-T02 | Auto-Provisioning Pipeline | DEV-1 | P2-T01 | [#24](https://github.com/NCollection-Sys/ncollection-erp/issues/24) | ✅ done | 2026-07-22 |
 | P2-T03 | Workspace Config Sync & Plan Change Propagation | DEV-2 | P2-T02 | [#25](https://github.com/NCollection-Sys/ncollection-erp/issues/25) | ✅ done | 2026-07-22 |
-| P2-T04 | PITR & WAL Archiving (pgBackRest) | DEV-1 | P1-T02 | [#26](https://github.com/NCollection-Sys/ncollection-erp/issues/26) | 🔨 open |  |
+| P2-T04 | PITR & WAL Archiving (pgBackRest) | DEV-1 | P1-T02 | [#26](https://github.com/NCollection-Sys/ncollection-erp/issues/26) | ✅ done | 2026-07-23 |
 | P2-T05 | Tenant Backup Manager & Restore Drills | DEV-1 | P2-T04 | [#27](https://github.com/NCollection-Sys/ncollection-erp/issues/27) | 🔨 open |  |
 | P2-T06 | Domain & SSL Automation | DEV-1 | P1-T06 | [#28](https://github.com/NCollection-Sys/ncollection-erp/issues/28) | ✅ done | 2026-07-22 |
 | P2-T07 | Staging Environment & Continuous Deployment | DEV-1 | P1-T05 | [#29](https://github.com/NCollection-Sys/ncollection-erp/issues/29) | ✅ done | 2026-07-22 |
