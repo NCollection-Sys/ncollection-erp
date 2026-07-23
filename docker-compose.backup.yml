@@ -1,0 +1,52 @@
+# ============================================================================
+#  PITR / WAL-archiving overlay  (ticket P2-T04 — ARCHITECTURE_DATA_PLATFORM §5)
+# ============================================================================
+#  Swaps the db image for postgres:16 + pgBackRest and turns on continuous WAL
+#  archiving. Layer it on the PROD stack (or locally to rehearse):
+#
+#     export PGBACKREST_REPO1_CIPHER_PASS=...      # REQUIRED (aes-256-cbc)
+#     docker compose -f docker-compose.yml -f docker-compose.backup.yml up -d db
+#     ./scripts/backup/pgbackrest_stanza.sh        # one-time: create the stanza
+#
+#  Dev/base is untouched (plain postgres:16, no archiving). Full deploy +
+#  restore drills: docs/markdown/RUNBOOK_BACKUP_PITR.md.
+#
+#  ⚠️ archive_mode is a postmaster setting (set at start, needs a restart to
+#  change). If the cipher pass or S3 creds are wrong, archive_command FAILS and
+#  WAL accumulates in pg_wal — wal_lag_check.sh alerts before that bites.
+# ============================================================================
+services:
+
+  db:
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    image: ncollection-postgres:16-pgbackrest
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest --stanza=ncollection archive-push %p
+      - -c
+      - archive_timeout=60
+      - -c
+      - wal_level=replica
+    # Prod S3/B2 repo settings (PGBACKREST_REPO1_TYPE=s3, PGBACKREST_REPO1_S3_*)
+    # come from .env — env_file passes ONLY the keys actually present, so an
+    # unset var is never exported as empty (pgBackRest rejects empty options).
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # aes-256-cbc passphrase — REQUIRED. Empty here (secret unset) fails loud,
+      # which is correct: the encrypted repo must not run without its key.
+      PGBACKREST_REPO1_CIPHER_PASS: ${PGBACKREST_REPO1_CIPHER_PASS:-}
+    volumes:
+      - ./config/pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      - pgbackrest_repo:/var/lib/pgbackrest
+      - pgbackrest_spool:/var/spool/pgbackrest
+
+volumes:
+  pgbackrest_repo:
+  pgbackrest_spool:
