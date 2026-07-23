@@ -1,0 +1,7 @@
+;; PgBouncer auth file (P2-T09) — TEMPLATE.
+;; Copy to userlist.txt (gitignored) with the REAL Postgres role + password:
+;;     printf '"%s" "%s"\n' "$DB_USER" "$DB_PASSWORD" > config/pgbouncer/userlist.txt
+;;     chmod 600 config/pgbouncer/userlist.txt
+;; A plaintext password here lets PgBouncer negotiate scram-sha-256 to both the
+;; client (Odoo) and the Postgres 16 server. Never commit the real file.
+"odoo" "odoo"

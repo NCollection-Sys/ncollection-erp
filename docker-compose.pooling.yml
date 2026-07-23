@@ -1,0 +1,75 @@
+# ============================================================================
+#  Connection-pooling overlay  (ticket P2-T09 — ARCHITECTURE_DATA_PLATFORM §4.2)
+# ============================================================================
+#  Implements the split topology: Odoo HTTP workers go through PgBouncer
+#  (transaction pooling); the realtime bus, cron and the queue_job runner stay
+#  DIRECT on Postgres (LISTEN/NOTIFY + long sessions break under transaction
+#  pooling). Layer it on the PROD stack — it is the standard prod topology:
+#
+#      docker compose -f docker-compose.yml \
+#                     -f docker-compose.prod.yml \
+#                     -f docker-compose.pooling.yml up -d
+#
+#  (The prod nginx `odoo_bus` upstream points at the odoo-bus service below, so
+#  prod always layers this overlay.) Dev/base is unchanged — no pooling in dev.
+#
+#  Before first start, generate the gitignored auth file from .env:
+#      printf '"%s" "%s"\n' "${DB_USER:-odoo}" "${DB_PASSWORD:-odoo}" \
+#          > config/pgbouncer/userlist.txt && chmod 600 config/pgbouncer/userlist.txt
+# ============================================================================
+services:
+
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.24.1-p1
+    container_name: ncollection-pgbouncer
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./config/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    restart: unless-stopped
+
+  # HTTP workers → PgBouncer. Cron disabled here (it runs on odoo-bus, direct).
+  # Overrides the base/prod `odoo` service: same image + prod config, just a
+  # different DB target (pgbouncer:6432) and no cron.
+  odoo:
+    environment:
+      HOST: pgbouncer
+      PORT: 6432
+    command: odoo -c /etc/odoo/odoo.prod.conf --max-cron-threads=0
+    depends_on:
+      db:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+
+  # Realtime bus (8072) + cron → DIRECT to Postgres. --workers=1 is enough to
+  # spawn the gevent bus worker on 8072; its lone HTTP worker is unused (nginx
+  # routes only /websocket + /longpolling here). The queue_job runner
+  # (docker-compose.saas.yml) is likewise direct — together they are every
+  # session-dependent path §4.2 keeps off the pool.
+  odoo-bus:
+    image: odoo:19
+    container_name: ncollection-odoo-bus
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      USER: ${DB_USER:-odoo}
+      PASSWORD: ${DB_PASSWORD:-odoo}
+      NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+    command: odoo -c /etc/odoo/odoo.prod.conf --workers=1 --max-cron-threads=1
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - ./custom_addons:/mnt/extra-addons
+      - ./oca:/mnt/oca-addons:ro
+      - ./config/odoo.prod.conf:/etc/odoo/odoo.prod.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8069/web/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
