@@ -86,3 +86,17 @@ includes accounting. Nothing installs OCA modules into the admin DB.
   no custom gateway. Signature/timestamp/amount are enforced by core; idempotency is ours.
 - **Regional gateways (PayTabs, Tap)** for *tenant* invoices are **P6-T01** — they'll reuse this
   same Odoo payment-provider pattern, and OCA/community providers are re-evaluated there.
+
+## P2-T14 Expiration & Dunning Scheduler — build custom (no OCA/Enterprise module)
+
+- **OCA / core options evaluated**: subscription **dunning** (advance-warning + retry emails + timed
+  expiry/suspension) is an **Odoo Enterprise** feature (`sale_subscription`) — not in Community — and
+  `OCA/contract` models tenant-facing recurring contracts, not our SaaS platform lifecycle.
+- **Decision — build a small admin-DB cron** on our own `ncollection.subscription`. A single daily
+  `ir.cron` (`_cron_lifecycle_sweep`, clock-injectable for simulated tests) drives advance-warning
+  emails, trial expiry, expiry after end_date+48h, suspension after the grace window, and the dunning
+  reminder schedule — each idempotent via per-subscription trackers. It reuses the P2-T12 guarded
+  transitions (suspension still projects to the tenant through the SaaS override) and the P2-T13
+  payment surface (`payment_status`, portal pay link). No OCA dependency, no Enterprise module.
+- **Auto-charge retry** (silently re-billing a stored card) is deferred — it needs saved payment
+  tokens (not set up in P2-T13); the dunning here is the scheduled reminder-email cadence.

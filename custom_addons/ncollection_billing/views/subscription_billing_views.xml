@@ -18,6 +18,15 @@
                     </button>
                 </div>
             </xpath>
+            <!-- Scheduler bookkeeping (P2-T14), developer-mode only: which
+                 advance-warning / dunning steps have already fired. -->
+            <xpath expr="//sheet" position="inside">
+                <group string="Lifecycle Scheduler" name="nc_scheduler_info"
+                       groups="base.group_no_one">
+                    <field name="nc_warnings_sent" readonly="1"/>
+                    <field name="nc_dunning_sent" readonly="1"/>
+                </group>
+            </xpath>
         </field>
     </record>
 </odoo>

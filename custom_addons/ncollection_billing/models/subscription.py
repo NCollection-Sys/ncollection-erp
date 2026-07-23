@@ -29,6 +29,11 @@ class Subscription(models.Model):
         ],
         compute='_compute_payment_status', store=True, default='no_invoice', tracking=True,
     )
+    # Lifecycle-scheduler bookkeeping (P2-T14): which advance-warning thresholds
+    # and dunning steps have already fired, so each fires exactly once per
+    # subscription across daily cron runs. CSV of integers (e.g. "30,14").
+    nc_warnings_sent = fields.Char(copy=False, default='')
+    nc_dunning_sent = fields.Char(copy=False, default='')
 
     def _compute_invoice_count(self):
         for sub in self:
@@ -188,6 +193,112 @@ class Subscription(models.Model):
         self.message_post(body=self.env._(
             'Payment attempt failed for this subscription (transaction %(ref)s, %(state)s).',
             ref=transaction.reference, state=transaction.state))
+
+    # ---- lifecycle & dunning scheduler (P2-T14) --------------------------
+
+    # Advance-warning thresholds (days before expiry) and dunning steps (days
+    # after the invoice fell due). Each fires exactly once per subscription.
+    _WARNING_DAYS = (30, 14, 7, 1)
+    _DUNNING_DAYS = (1, 3, 7)
+    _EXPIRY_BUFFER_DAYS = 2   # 48h safety buffer after end_date before expiring
+
+    @staticmethod
+    def _nc_parse_sent(csv_value):
+        return {int(x) for x in (csv_value or '').split(',') if x.strip()}
+
+    def _nc_mark_sent(self, field, day):
+        sent = self._nc_parse_sent(self[field])
+        sent.add(day)
+        self[field] = ','.join(str(d) for d in sorted(sent))
+
+    @api.model
+    def _cron_lifecycle_sweep(self, today=None):
+        """Daily lifecycle + dunning sweep. `today` is injectable so tests drive
+        it on a simulated clock; the ir.cron calls it with the real date. Every
+        step is idempotent (per-subscription trackers + guarded transitions), so
+        re-running on the same day changes nothing."""
+        today = today or fields.Date.context_today(self)
+        self._nc_send_expiry_warnings(today)
+        self._nc_sweep_trials(today)
+        self._nc_expire_due(today)
+        self._nc_suspend_after_grace(today)
+        self._nc_run_dunning(today)
+
+    def _nc_active_with_end(self, today):
+        return self.search([('status', '=', 'active'), ('end_date', '!=', False)])
+
+    def _nc_send_expiry_warnings(self, today):
+        """Email the most-urgent not-yet-sent threshold for each active sub."""
+        for sub in self._nc_active_with_end(today):
+            days_left = (sub.end_date - today).days
+            if days_left < 0:
+                continue
+            sent = sub._nc_parse_sent(sub.nc_warnings_sent)
+            for threshold in sorted(self._WARNING_DAYS):   # most urgent first
+                if days_left <= threshold and threshold not in sent:
+                    sub._nc_send_lifecycle_mail('mail_template_expiry_warning', days_left=days_left)
+                    sub._nc_mark_sent('nc_warnings_sent', threshold)
+                    sub.message_post(body=sub.env._(
+                        'Expiry warning sent (%(d)s days before expiry).', d=threshold))
+                    break
+
+    def _nc_sweep_trials(self, today):
+        """Expire trials past their trial_end_date (trial -> expired). Done here
+        against the injected `today` rather than the base _process_trial_expiry,
+        which reads the real date and so cannot be driven on a simulated clock."""
+        for sub in self.search([('status', '=', 'trial'), ('trial_end_date', '!=', False)]):
+            if sub.trial_end_date <= today:
+                sub.action_expire()
+
+    def _nc_expire_due(self, today):
+        """active -> expired once today is past end_date + the 48h buffer."""
+        for sub in self.search([('status', '=', 'active'), ('end_date', '!=', False)]):
+            if today >= sub.end_date + relativedelta(days=self._EXPIRY_BUFFER_DAYS):
+                sub.action_expire()
+
+    def _nc_suspend_after_grace(self, today):
+        """expired -> suspended once today is past the grace window."""
+        for sub in self.search([('status', '=', 'expired'), ('grace_end_date', '!=', False)]):
+            if today > sub.grace_end_date:
+                sub.action_suspend()
+
+    def _nc_run_dunning(self, today):
+        """Send dunning reminders on the retry schedule for overdue subscriptions
+        — one email per step, keyed off the oldest past-due invoice's due date."""
+        for sub in self.search([('payment_status', '=', 'overdue')]):
+            due = sub._nc_oldest_overdue_due_date()
+            if not due:
+                continue
+            days_over = (today - due).days
+            sent = sub._nc_parse_sent(sub.nc_dunning_sent)
+            for step in sorted(self._DUNNING_DAYS):
+                if days_over >= step and step not in sent:
+                    sub._nc_send_lifecycle_mail('mail_template_dunning', days_over=days_over)
+                    sub._nc_mark_sent('nc_dunning_sent', step)
+                    sub.message_post(body=sub.env._(
+                        'Dunning reminder sent (%(d)s days overdue).', d=step))
+                    break
+
+    def _nc_oldest_overdue_due_date(self):
+        self.ensure_one()
+        overdue = self.invoice_ids.filtered(
+            lambda m: m.state == 'posted' and m.move_type == 'out_invoice'
+            and m.payment_state == 'not_paid' and m.invoice_date_due)
+        return min(overdue.mapped('invoice_date_due')) if overdue else False
+
+    def _nc_send_lifecycle_mail(self, template_xmlid, **ctx):
+        """Queue a lifecycle email to the tenant, never letting mail transport
+        break the sweep (dev has no SMTP → a queued mail.mail row)."""
+        self.ensure_one()
+        template = self.env.ref(
+            'ncollection_billing.%s' % template_xmlid, raise_if_not_found=False)
+        if not template or not self.tenant_id.email:
+            return
+        try:
+            template.with_context(**ctx).send_mail(self.id, force_send=False)
+        except Exception:  # noqa: BLE001 - transport must never break the sweep
+            _logger.warning("Lifecycle mail %s could not be queued for subscription %s",
+                            template_xmlid, self.id, exc_info=True)
 
     def action_view_invoices(self):
         self.ensure_one()
