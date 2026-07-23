@@ -43,7 +43,7 @@ class NcollectionBackup(models.Model):
 
     name = fields.Char(compute='_compute_name', store=True)
     tenant_id = fields.Many2one(
-        'ncollection.tenant', string='Tenant', required=True,
+        'ncollection.tenant', required=True,
         ondelete='cascade', tracking=True)
     database_name = fields.Char(related='tenant_id.database_name', store=True)
     backup_type = fields.Selection(
@@ -175,11 +175,15 @@ class NcollectionBackup(models.Model):
     def _cron_prune(self):
         """Enforce 7 daily / 4 weekly / 12 monthly per tenant; delete the file
         and the record for anything beyond the window."""
-        tenants = self.search([]).mapped('tenant_id')
-        for tenant in tenants:
+        # Distinct tenants that HAVE backups (read_group avoids scanning every
+        # record with a bare search([])).
+        groups = self.read_group(
+            [('status', '=', 'done')], ['tenant_id'], ['tenant_id'])
+        tenant_ids = [g['tenant_id'][0] for g in groups if g['tenant_id']]
+        for tenant_id in tenant_ids:
             for btype, keep in _RETENTION.items():
                 recs = self.search([
-                    ('tenant_id', '=', tenant.id), ('backup_type', '=', btype),
+                    ('tenant_id', '=', tenant_id), ('backup_type', '=', btype),
                     ('status', '=', 'done')], order='create_date desc')
                 for rec in recs[keep:]:
                     rec._delete_file()

@@ -17,7 +17,7 @@ class BackupRestoreWizard(models.TransientModel):
     _description = 'Restore Tenant Backup to a Scratch Database'
 
     backup_id = fields.Many2one(
-        'ncollection.backup', string='Backup', required=True,
+        'ncollection.backup', required=True,
         domain=[('status', '=', 'done'), ('file_path', '!=', False)])
     target_db = fields.Char(
         string='Restore Into (scratch DB)', required=True,
