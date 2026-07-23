@@ -72,3 +72,17 @@ includes accounting. Nothing installs OCA modules into the admin DB.
   armed by `ncollection_auth` and paired with the independent Nginx edge
   `limit_req` (P1-T03) — the two layers ARCHITECTURE_SECURITY.md §6 requires.
   Feature flag: `base.login_cooldown_after = 0` disables the app layer.
+
+## P2-T13 Subscription Payment (Stripe) — use Odoo core `payment_stripe` (no OCA/custom gateway)
+
+- **OCA options evaluated**: `OCA/payment` provider modules. Odoo Community already ships a
+  first-party, maintained **`payment_stripe`** provider plus the `payment` / `account_payment`
+  framework (hosted checkout, signature-verified webhook, invoice reconciliation, tokenization).
+- **Decision — configure Odoo core, build nothing.** DELIVERABLE_1 P2-T13 is explicit: *"Configure
+  Odoo's built-in `payment_stripe` provider… do NOT build a gateway from scratch."* We add
+  `payment_stripe` to `ncollection_billing`'s depends, configure the seeded provider in **TEST mode
+  from env secrets**, and hook payment confirmation to extend the subscription
+  (`payment.transaction._post_process` → `nc_subscription_id._nc_apply_payment`). No OCA dependency,
+  no custom gateway. Signature/timestamp/amount are enforced by core; idempotency is ours.
+- **Regional gateways (PayTabs, Tap)** for *tenant* invoices are **P6-T01** — they'll reuse this
+  same Odoo payment-provider pattern, and OCA/community providers are re-evaluated there.
