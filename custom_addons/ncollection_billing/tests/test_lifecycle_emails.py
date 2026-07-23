@@ -103,3 +103,19 @@ class TestLifecycleEmails(TransactionCase):
         emails = self.env['mail.mail'].search([
             ('model', '=', 'ncollection.subscription'), ('res_id', '=', sub.id)])
         self.assertEqual(len(emails), 1, "a tenant must not receive two lifecycle emails the same day")
+
+    def test_suppressed_reminder_is_delayed_not_dropped(self):
+        # An expiry warning is due today (7 days left), but a payment-failed
+        # email occupies the day's single slot first. The warning must NOT be
+        # marked sent, and must be delivered on the next eligible day.
+        day1 = self.today
+        sub = self._sub(status='active', end_date=fields.Date.add(day1, days=7))
+        sub._nc_on_payment_failed(SimpleNamespace(reference='TX', state='error'))
+        self.Sub._cron_lifecycle_sweep(today=day1)
+        self.assertEqual(sub.nc_warnings_sent, '',
+                         "a suppressed warning must not be marked sent")
+        # next day: no competing email -> the warning sends and is marked
+        self.Sub._cron_lifecycle_sweep(today=fields.Date.add(day1, days=1))
+        self.assertEqual(sub.nc_warnings_sent, '7',
+                         "the delayed warning must be delivered the next eligible day")
+        self.assertTrue(any('expires soon' in (s or '').lower() for s in self._mail_subjects(sub)))

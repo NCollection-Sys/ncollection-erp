@@ -278,10 +278,12 @@ class Subscription(models.Model):
             sent = sub._nc_parse_sent(sub.nc_warnings_sent)
             for threshold in sorted(self._WARNING_DAYS):   # most urgent first
                 if days_left <= threshold and threshold not in sent:
-                    sub._nc_send_lifecycle_mail('mail_template_expiry_warning', days_left=days_left)
-                    sub._nc_mark_sent('nc_warnings_sent', threshold)
-                    sub.message_post(body=sub.env._(
-                        'Expiry warning sent (%(d)s days before expiry).', d=threshold))
+                    # One attempt per sweep (break regardless); mark only on a
+                    # real send so a de-dup-suppressed warning retries next day.
+                    if sub._nc_send_lifecycle_mail('mail_template_expiry_warning', days_left=days_left):
+                        sub._nc_mark_sent('nc_warnings_sent', threshold)
+                        sub.message_post(body=sub.env._(
+                            'Expiry warning sent (%(d)s days before expiry).', d=threshold))
                     break
 
     def _nc_send_trial_ending_warnings(self, today):
@@ -291,9 +293,10 @@ class Subscription(models.Model):
                                 ('nc_trial_ending_sent', '=', False)]):
             days_left = (sub.trial_end_date - today).days
             if 0 <= days_left <= self._TRIAL_ENDING_DAYS:
-                sub._nc_send_lifecycle_mail('mail_template_trial_ending', days_left=days_left)
-                sub.nc_trial_ending_sent = True
-                sub.message_post(body=sub.env._('Trial-ending reminder sent.'))
+                # Mark only on a real send so a suppressed reminder retries.
+                if sub._nc_send_lifecycle_mail('mail_template_trial_ending', days_left=days_left):
+                    sub.nc_trial_ending_sent = True
+                    sub.message_post(body=sub.env._('Trial-ending reminder sent.'))
 
     def _nc_sweep_trials(self, today):
         """Expire trials past their trial_end_date (trial -> expired). Done here
@@ -326,10 +329,11 @@ class Subscription(models.Model):
             sent = sub._nc_parse_sent(sub.nc_dunning_sent)
             for step in sorted(self._DUNNING_DAYS):
                 if days_over >= step and step not in sent:
-                    sub._nc_send_lifecycle_mail('mail_template_dunning', days_over=days_over)
-                    sub._nc_mark_sent('nc_dunning_sent', step)
-                    sub.message_post(body=sub.env._(
-                        'Dunning reminder sent (%(d)s days overdue).', d=step))
+                    # Mark only on a real send so a suppressed reminder retries.
+                    if sub._nc_send_lifecycle_mail('mail_template_dunning', days_over=days_over):
+                        sub._nc_mark_sent('nc_dunning_sent', step)
+                        sub.message_post(body=sub.env._(
+                            'Dunning reminder sent (%(d)s days overdue).', d=step))
                     break
 
     def _nc_oldest_overdue_due_date(self):
@@ -360,6 +364,13 @@ class Subscription(models.Model):
         per day (P2-T17 de-dup) — never letting mail transport break the caller
         (dev has no SMTP → a queued mail.mail row).
 
+        Returns True only if an email was actually queued; False when it was
+        suppressed by the daily de-dup, the recipient/template is missing, or
+        transport failed. Recurring callers (warnings, dunning, trial-ending)
+        use this so they mark their trackers ONLY on a real send — a suppressed
+        reminder stays unsent and is retried on the next eligible day (delay,
+        not drop). Event-driven transition notices ignore the result.
+
         Callers are ordered so genuine TRANSITION notices (expired, suspended,
         payment, plan change) run before recurring warnings/dunning in a sweep,
         so the more important message wins the day's single slot."""
@@ -367,17 +378,19 @@ class Subscription(models.Model):
         template = self.env.ref(
             'ncollection_billing.%s' % template_xmlid, raise_if_not_found=False)
         if not template or not self.tenant_id.email:
-            return
+            return False
         today = fields.Date.context_today(self)
         if self._nc_lifecycle_mail_sent_today(today):
-            return
+            return False
         try:
             template.with_context(**ctx).send_mail(
                 self.id, email_layout_xmlid=self._LIFECYCLE_LAYOUT, force_send=False)
             self.nc_last_lifecycle_mail_date = today
+            return True
         except Exception:  # noqa: BLE001 - transport must never break the sweep
             _logger.warning("Lifecycle mail %s could not be queued for subscription %s",
                             template_xmlid, self.id, exc_info=True)
+            return False
 
     def action_view_invoices(self):
         self.ensure_one()
