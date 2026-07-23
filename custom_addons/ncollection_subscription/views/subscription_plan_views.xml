@@ -44,6 +44,10 @@
                             <field name="max_companies"/>
                             <field name="active"/>
                         </group>
+                        <group string="Lifecycle">
+                            <field name="trial_days"/>
+                            <field name="grace_days"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="Description">

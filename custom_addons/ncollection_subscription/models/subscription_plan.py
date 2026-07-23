@@ -13,6 +13,12 @@ class SubscriptionPlan(models.Model):
     yearly_price = fields.Monetary(string='Yearly Price')
     max_users = fields.Integer(string='Max Users', default=1)
     max_companies = fields.Integer(string='Max Companies', default=1)
+    trial_days = fields.Integer(
+        default=0,
+        help='Length of the free trial for this plan, in days (0 = no trial).')
+    grace_days = fields.Integer(
+        default=15,
+        help='Days after expiry during which access continues before suspension.')
     active = fields.Boolean(default=True)
     description = fields.Text()
     # Comma-separated technical module names (e.g. "crm,sale,stock").
@@ -43,6 +49,14 @@ class SubscriptionPlan(models.Model):
             if plan.max_users <= 0:
                 raise ValidationError(
                     self.env._('Max Users must be strictly positive (plan "%s").', plan.name)
+                )
+
+    @api.constrains('trial_days', 'grace_days')
+    def _check_trial_grace_days(self):
+        for plan in self:
+            if plan.trial_days < 0 or plan.grace_days < 0:
+                raise ValidationError(
+                    self.env._('Trial Days and Grace Days cannot be negative (plan "%s").', plan.name)
                 )
 
     def get_allowed_module_list(self):
