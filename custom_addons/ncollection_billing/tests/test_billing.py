@@ -112,6 +112,22 @@ class TestBilling(TransactionCase):
         self.assertLessEqual(prorations[:1].amount_untaxed, 200.0 + 1.0,
                              "proration must not exceed one full period's difference (~200)")
 
+    # ---- trial billing (P2-T12) ------------------------------------------
+
+    def test_trial_start_raises_no_invoice(self):
+        sub = self._new_sub()
+        sub.action_start_trial()
+        self.assertEqual(sub.status, 'trial')
+        self.assertEqual(sub.invoice_count, 0, "a trial start must not raise an invoice")
+
+    def test_trial_conversion_invoices(self):
+        sub = self._new_sub()
+        sub.action_start_trial()
+        sub.action_activate()   # trial -> active = conversion
+        invoices = sub.invoice_ids.filtered(lambda m: m.move_type == 'out_invoice')
+        self.assertEqual(len(invoices), 1, "converting a trial to active bills one invoice")
+        self.assertEqual(invoices.amount_total, 105.0)   # 100 + 5% VAT
+
     def test_downgrade_raises_no_invoice(self):
         sub = self._new_sub(status='active', plan=self.plan_pro)
         before = sub.invoice_count
