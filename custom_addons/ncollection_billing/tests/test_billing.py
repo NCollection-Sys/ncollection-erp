@@ -96,3 +96,70 @@ class TestBilling(TransactionCase):
         self.assertTrue(prorations, "a mid-cycle upgrade must raise a proration invoice")
         # full remaining cycle: (300 - 100) prorated over the whole period ~= 200
         self.assertAlmostEqual(prorations[:1].amount_untaxed, 200.0, delta=10.0)
+
+    def test_proration_denominator_stable_after_renewal(self):
+        # After a renewal the period is one cycle, not (start..extended-end):
+        # a same-day upgrade must still bill at most one full period's diff (~200),
+        # never a multiple of it (the pre-fix bug spanned every renewed cycle).
+        sub = self._new_sub(status='active')
+        sub.action_renew()  # extends end_date by a cycle; start_date unchanged
+        sub.write({'plan_id': self.plan_pro.id})
+        prorations = sub.invoice_ids.filtered(
+            lambda m: 'proration' in (m.invoice_line_ids[:1].name or ''))
+        self.assertTrue(prorations, "upgrade after renewal must raise a proration invoice")
+        # With the tighter (single-cycle) denominator, only the [0, total_days]
+        # clamp keeps this from billing a multiple of the period difference.
+        self.assertLessEqual(prorations[:1].amount_untaxed, 200.0 + 1.0,
+                             "proration must not exceed one full period's difference (~200)")
+
+    def test_downgrade_raises_no_invoice(self):
+        sub = self._new_sub(status='active', plan=self.plan_pro)
+        before = sub.invoice_count
+        sub.write({'plan_id': self.plan.id})   # pro -> starter = downgrade
+        self.assertEqual(sub.invoice_count, before,
+                         "a downgrade must not raise an immediate invoice")
+
+    # ---- currency / pricing ----------------------------------------------
+
+    def test_invoice_currency_is_aed(self):
+        sub = self._new_sub()
+        sub.action_activate()
+        inv = sub.invoice_ids.filtered(lambda m: m.move_type == 'out_invoice')
+        self.assertEqual(inv.currency_id.name, 'AED',
+                         "UAE-VAT invoices must be billed in AED, not the USD default")
+
+    def test_yearly_cycle_uses_yearly_price(self):
+        sub = self._new_sub(billing_cycle='yearly')
+        sub.action_activate()
+        inv = sub.invoice_ids.filtered(lambda m: m.move_type == 'out_invoice')
+        self.assertEqual(inv.amount_untaxed, 1000.0, "yearly cycle bills yearly_price")
+        self.assertEqual(inv.amount_tax, 50.0)       # 5% of 1000
+
+    # ---- payment status paths --------------------------------------------
+
+    def test_partner_reused_across_invoices(self):
+        sub = self._new_sub()
+        sub.action_activate()
+        sub.action_renew()
+        partners = sub.invoice_ids.mapped('partner_id')
+        self.assertEqual(len(partners), 1, "all invoices bill the same tenant partner")
+        self.assertEqual(partners, self.tenant.partner_id)
+
+    def test_overdue_when_due_date_passed(self):
+        sub = self._new_sub()
+        sub.action_activate()
+        inv = sub.invoice_ids.filtered(lambda m: m.move_type == 'out_invoice')
+        # force the invoice past due while unpaid
+        inv.invoice_date_due = fields.Date.subtract(
+            fields.Date.context_today(self.env.user), days=1)
+        sub.invalidate_recordset(['payment_status'])
+        self.assertEqual(sub.payment_status, 'overdue')
+
+    def test_paid_status_after_payment(self):
+        sub = self._new_sub()
+        sub.action_activate()
+        inv = sub.invoice_ids.filtered(lambda m: m.move_type == 'out_invoice')
+        self.env['account.payment.register'].with_context(
+            active_model='account.move', active_ids=inv.ids,
+        ).create({}).action_create_payments()
+        self.assertEqual(sub.payment_status, 'paid')

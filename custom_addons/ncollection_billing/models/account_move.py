@@ -19,3 +19,18 @@ class AccountMove(models.Model):
     # The billed period — also the idempotency key ("exactly one per period").
     nc_period_start = fields.Date(string='NC Period Start', copy=False)
     nc_period_end = fields.Date(string='NC Period End', copy=False)
+
+    # DB-level idempotency: a subscription can hold at most one invoice per
+    # period_start. This is what actually guarantees "exactly one invoice per
+    # period" under concurrent/duplicate lifecycle calls — the in-Python check
+    # in subscription._nc_bill_period is the fast path, this is the backstop.
+    # Postgres treats NULLs as distinct, so ordinary non-subscription invoices
+    # (both columns NULL) never collide.
+    _sql_constraints = [
+        (
+            'nc_billing_period_uniq',
+            'unique(nc_subscription_id, nc_period_start)',
+            'A subscription can only be invoiced once per billing period '
+            '(NCollection billing idempotency).',
+        ),
+    ]

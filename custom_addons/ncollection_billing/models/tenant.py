@@ -18,7 +18,7 @@ class Tenant(models.Model):
         """Return the tenant's billing partner, creating it once if needed."""
         self.ensure_one()
         if not self.partner_id:
-            self.partner_id = self.env['res.partner'].create({
+            self.partner_id = self.env['res.partner'].create({  # arch-guard: admin-db-billing
                 'name': self.company_name,
                 'email': self.email or False,
                 'company_type': 'company',

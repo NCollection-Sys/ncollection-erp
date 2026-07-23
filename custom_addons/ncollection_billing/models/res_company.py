@@ -16,15 +16,34 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     def _nc_ensure_billing_setup(self):
-        """Idempotently ensure a Chart of Accounts + VAT tax + billing product."""
+        """Idempotently ensure a Chart of Accounts + AED currency + VAT tax + product."""
         self.ensure_one()
         if not self.chart_template:
             # Odoo 19 loads chart templates in code; the generic template ships
-            # with `account`, so no localization module is needed.
+            # with `account`, so no localization module is needed. (The full UAE
+            # chart of accounts is a separate Phase-3 deliverable — P3-T05.)
             self.env['account.chart.template'].try_loading(
                 _GENERIC_CHART, company=self, install_demo=False)
+        self._nc_ensure_currency()
         self._nc_billing_tax()
         self._nc_billing_product()
+
+    def _nc_ensure_currency(self):
+        """Bill in AED. Subscription invoices carry UAE VAT 5%, so the platform
+        company must transact in AED — not the generic template's USD default.
+        Odoo forbids changing a company's currency once it has journal entries,
+        so only switch a still-empty company; a no-op once set."""
+        self.ensure_one()
+        aed = self.env.ref('base.AED', raise_if_not_found=False)
+        if not aed or self.currency_id == aed:
+            return
+        has_entries = self.env['account.move.line'].sudo().search_count(  # arch-guard: admin-db-billing
+            [('company_id', '=', self.id)], limit=1)
+        if has_entries:
+            return  # currency is locked once accounting has started
+        if not aed.active:
+            aed.active = True
+        self.currency_id = aed
 
     def _nc_billing_tax(self):
         """The 5% UAE VAT sales tax for subscription invoices."""
@@ -43,7 +62,7 @@ class ResCompany(models.Model):
 
     def _nc_billing_product(self):
         """The service product every subscription invoice line points at."""
-        Product = self.env['product.product']
+        Product = self.env['product.product']  # arch-guard: admin-db-billing
         product = Product.search([('default_code', '=', _BILLING_PRODUCT_CODE)], limit=1)
         if not product:
             product = Product.create({

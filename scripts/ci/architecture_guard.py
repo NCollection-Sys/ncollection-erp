@@ -66,7 +66,7 @@ ORM_ENFORCEMENT_HINTS = ("check_access_rights", "ir.rule", "_check_company", "Ac
 # DELIVERABLE_1 §7. List is not exhaustive (see LIMITATIONS in the module
 # docstring) — covers the highest-traffic tenant models.
 # ---------------------------------------------------------------------------
-PLATFORM_ADDONS = {"ncollection_saas", "ncollection_subscription"}
+PLATFORM_ADDONS = {"ncollection_saas", "ncollection_subscription", "ncollection_billing"}
 TENANT_MODELS = (
     "sale.order", "stock.move", "account.move", "purchase.order",
     "res.partner", "account.move.line", "crm.lead", "hr.employee",
@@ -152,16 +152,31 @@ def check_menu_license_gate(path: Path, text: str, changed_paths: set[Path], fin
         )
 
 
+# Scoped escape hatch. The two-layer rule forbids platform code from reaching
+# into a *tenant* database's ERP models. It does NOT forbid the platform from
+# using its OWN Odoo models in the ADMIN DB — e.g. billing its tenants for their
+# subscriptions with account.move (DELIVERABLE_1 §2.5 places "billing" in the
+# admin DB). The regex can't tell the two apart, so a line may opt out with this
+# exact trailing marker — and ONLY that line. Every other tenant-model reference,
+# and every UNANNOTATED account.move, still fails. A reviewer must confirm each
+# annotated line is genuine admin-DB own-data (never a tenant DB).
+ADMIN_DB_MARKER = "# arch-guard: admin-db-billing"
+
+
 def check_two_layer_separation(path: Path, text: str, findings: list[str]) -> None:
     addon = addon_of(path)
     if addon not in PLATFORM_ADDONS or path.suffix != ".py":
         return
     for i, line in enumerate(text.splitlines(), 1):
+        if ADMIN_DB_MARKER in line:
+            continue  # explicitly-annotated admin-DB own-data line (see above)
         if any(hint in line for hint in TENANT_MODEL_HINTS):
             findings.append(
                 f"{path}:{i}: platform-layer addon '{addon}' directly references a "
                 f"tenant ERP model — cross-layer access must go through RPC/JSON-RPC, "
-                f"not direct ORM calls into a tenant database (two-layer separation rule)."
+                f"not direct ORM calls into a tenant database (two-layer separation rule). "
+                f"If this is the platform's OWN admin-DB data (e.g. subscription "
+                f"billing), append '{ADMIN_DB_MARKER}' to the line."
             )
 
 
