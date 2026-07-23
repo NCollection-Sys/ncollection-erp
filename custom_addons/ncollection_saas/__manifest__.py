@@ -19,10 +19,12 @@
         'data/config_sync_data.xml',
         'data/checkout_data.xml',
         'data/domain_data.xml',
+        'data/backup_data.xml',
         'views/provisioning_job_views.xml',
         'views/subscription_views.xml',
         'views/checkout_templates.xml',
         'views/domain_views.xml',
+        'views/backup_views.xml',
     ],
     'assets': {
         # Public checkout pages render via web.frontend_layout; ship their

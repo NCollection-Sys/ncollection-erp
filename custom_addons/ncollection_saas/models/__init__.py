@@ -6,3 +6,4 @@ from . import subscription
 from . import config_sync
 from . import checkout
 from . import domain
+from . import backup

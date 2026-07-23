@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ==== restore wizard (defined first: the backup form references its action) ==== -->
+    <record id="view_ncollection_backup_restore_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.backup.restore.wizard.form</field>
+        <field name="model">ncollection.backup.restore.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Restore Backup">
+                <group>
+                    <field name="backup_id"/>
+                    <field name="target_db"/>
+                </group>
+                <p class="text-muted">
+                    Restores into a scratch/staging database — never a live tenant.
+                </p>
+                <footer>
+                    <button name="action_restore" type="object"
+                            string="Restore" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ncollection_backup_restore_wizard" model="ir.actions.act_window">
+        <field name="name">Restore Backup</field>
+        <field name="res_model">ncollection.backup.restore.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ==== ncollection.backup ==== -->
+    <record id="view_ncollection_backup_tree" model="ir.ui.view">
+        <field name="name">ncollection.backup.list</field>
+        <field name="model">ncollection.backup</field>
+        <field name="arch" type="xml">
+            <list string="Tenant Backups"
+                  decoration-success="status == 'done'"
+                  decoration-warning="status == 'running'"
+                  decoration-danger="status == 'failed'"
+                  decoration-muted="status == 'pending'">
+                <field name="database_name"/>
+                <field name="backup_type"/>
+                <field name="file_size" widget="integer"/>
+                <field name="started_at"/>
+                <field name="completed_at"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'done'"
+                       decoration-warning="status == 'running'"
+                       decoration-danger="status == 'failed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ncollection_backup_form" model="ir.ui.view">
+        <field name="name">ncollection.backup.form</field>
+        <field name="model">ncollection.backup</field>
+        <field name="arch" type="xml">
+            <form string="Tenant Backup">
+                <header>
+                    <button name="%(action_ncollection_backup_restore_wizard)d"
+                            type="action" string="Restore…" class="btn-primary"
+                            invisible="status != 'done'"
+                            context="{'default_backup_id': id}"/>
+                    <field name="status" widget="statusbar"
+                           statusbar_visible="pending,running,done,failed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Backup">
+                            <field name="tenant_id"/>
+                            <field name="database_name"/>
+                            <field name="backup_type"/>
+                        </group>
+                        <group string="Result">
+                            <field name="file_size"/>
+                            <field name="file_path"/>
+                            <field name="started_at"/>
+                            <field name="completed_at"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Error" invisible="status != 'failed'">
+                            <field name="error_log"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ncollection_backup_search" model="ir.ui.view">
+        <field name="name">ncollection.backup.search</field>
+        <field name="model">ncollection.backup</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="database_name"/>
+                <field name="tenant_id"/>
+                <filter name="failed" string="Failed" domain="[('status', '=', 'failed')]"/>
+                <filter name="done" string="Done" domain="[('status', '=', 'done')]"/>
+                <separator/>
+                <filter name="group_type" string="Group by Type"
+                        context="{'group_by': 'backup_type'}"/>
+                <filter name="group_status" string="Group by Status"
+                        context="{'group_by': 'status'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ncollection_backup" model="ir.actions.act_window">
+        <field name="name">Tenant Backups</field>
+        <field name="res_model">ncollection.backup</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tenant backups yet</p>
+            <p>Nightly per-tenant backups appear here once the schedule runs.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_ncollection_saas_backups"
+              name="Tenant Backups"
+              parent="ncollection_subscription.menu_ncollection_saas_root"
+              action="action_ncollection_backup"
+              sequence="70"/>
+
+</odoo>
