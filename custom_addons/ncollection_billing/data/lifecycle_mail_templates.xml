@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            P2-T17 transactional email set, completing the lifecycle mails on the
+            P1-T18 branded layout (applied at send time via email_layout_xmlid in
+            _nc_send_lifecycle_mail). Sent to the tenant's billing contact, at
+            most one per tenant per day (de-dup in the send helper). Welcome
+            (P2-T02), expiry-warning + dunning (P2-T14) already exist.
+        -->
+
+        <record id="mail_template_trial_ending" model="mail.template">
+            <field name="name">NCollection: Trial Ending Soon</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
+            <field name="subject">Your NCollection trial ends soon</field>
+            <field name="email_to">{{ object.tenant_id.email or '' }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Hello <t t-out="object.tenant_id.company_name or ''"/>,</p>
+                    <p>Your free trial of the <strong><t t-out="object.plan_id.name or ''"/></strong>
+                       plan ends on <t t-out="object.trial_end_date or ''"/>
+                       <t t-if="ctx.get('days_left') is not None">(in <t t-out="ctx.get('days_left')"/> days)</t>.</p>
+                    <p>Add a payment method to keep your workspace running without interruption.</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_expired" model="mail.template">
+            <field name="name">NCollection: Subscription Expired</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
+            <field name="subject">Your NCollection subscription has expired</field>
+            <field name="email_to">{{ object.tenant_id.email or '' }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Hello <t t-out="object.tenant_id.company_name or ''"/>,</p>
+                    <p>Your <strong><t t-out="object.plan_id.name or ''"/></strong> subscription has
+                       expired. You are within the grace period — renew now to restore full access
+                       before your workspace is suspended.</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_suspended" model="mail.template">
+            <field name="name">NCollection: Subscription Suspended</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
+            <field name="subject">Your NCollection workspace has been suspended</field>
+            <field name="email_to">{{ object.tenant_id.email or '' }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Hello <t t-out="object.tenant_id.company_name or ''"/>,</p>
+                    <p>Your workspace has been suspended after the grace period ended. Your data is
+                       safe. Settle the outstanding balance to reactivate your
+                       <strong><t t-out="object.plan_id.name or ''"/></strong> subscription.</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_payment_received" model="mail.template">
+            <field name="name">NCollection: Payment Received</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
+            <field name="subject">Payment received — thank you</field>
+            <field name="email_to">{{ object.tenant_id.email or '' }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Hello <t t-out="object.tenant_id.company_name or ''"/>,</p>
+                    <p>We received your payment<t t-if="ctx.get('invoice_name')"> for invoice
+                       <strong><t t-out="ctx.get('invoice_name')"/></strong></t>. Your
+                       <strong><t t-out="object.plan_id.name or ''"/></strong> subscription is active
+                       through <t t-out="object.end_date or ''"/>. Thank you.</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_payment_failed" model="mail.template">
+            <field name="name">NCollection: Payment Failed</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
+            <field name="subject">We couldn't process your payment</field>
+            <field name="email_to">{{ object.tenant_id.email or '' }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Hello <t t-out="object.tenant_id.company_name or ''"/>,</p>
+                    <p>We were unable to process a payment for your
+                       <strong><t t-out="object.plan_id.name or ''"/></strong> subscription. Please
+                       update your payment method and try again to avoid any interruption.</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_plan_change" model="mail.template">
+            <field name="name">NCollection: Plan Change Confirmation</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
+            <field name="subject">Your NCollection plan has changed</field>
+            <field name="email_to">{{ object.tenant_id.email or '' }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Hello <t t-out="object.tenant_id.company_name or ''"/>,</p>
+                    <p>Your subscription plan has been changed<t t-if="ctx.get('old_plan')"> from
+                       <strong><t t-out="ctx.get('old_plan')"/></strong></t> to
+                       <strong><t t-out="ctx.get('new_plan') or object.plan_id.name or ''"/></strong>.
+                       Any price difference is prorated on your next invoice.</p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>
