@@ -42,6 +42,13 @@ services:
       # platform uses it to push plan changes into tenant DBs. Empty by default
       # (config sync then fails soft + logs).
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+      # Stripe test-mode keys (P2-T13). Read from .env; ncollection_billing
+      # configures the admin-DB Stripe provider from these. Empty by default,
+      # so online payment simply stays disabled (never a half-configured
+      # provider). NEVER commit real keys — .env is gitignored.
+      NC_STRIPE_SECRET_KEY: ${NC_STRIPE_SECRET_KEY:-}
+      NC_STRIPE_PUBLISHABLE_KEY: ${NC_STRIPE_PUBLISHABLE_KEY:-}
+      NC_STRIPE_WEBHOOK_SECRET: ${NC_STRIPE_WEBHOOK_SECRET:-}
     restart: always
     volumes:
       - odoo_data:/var/lib/odoo
