@@ -194,3 +194,23 @@ Optimize for:
 - long-term architecture
 
 Always preserve existing architectural decisions unless explicitly instructed otherwise.
+
+## AI agents (auto-invoked — the user never names them)
+
+Project subagents live in `.claude/agents/`. The orchestrator invokes them
+**proactively and automatically**, without being asked, at these triggers:
+
+| Trigger | Auto-run (in parallel) |
+|---|---|
+| After editing `custom_addons/**`, before any PR | `code-reviewer` + `odoo-reviewer` + `tenant-isolation-auditor` (+ `security-reviewer` when auth / user input / secrets / payments are touched) |
+| Before every merge (Rule 13) | `verify-runner` (cross-suite gate, background) |
+| Any OCA / new-dependency decision | `oca-scout` (REUSE / ADOPT / BUILD) |
+| After a CI failure, a fixed regression, or at session wrap-up | `self-improver` (proposes harness improvements as a PR) |
+
+Address every CRITICAL/HIGH finding before pushing. For a large or high-risk diff,
+prefer `/code-review ultra`.
+
+**Self-improvement guardrail (binding):** every agent — `self-improver` included —
+**PROPOSES via a PR and NEVER auto-merges.** Branch protection is unavailable on this
+GitHub plan (403), so the `canary` + human review are the only safety net; an agent
+that merged its own work would remove it. **Workers advise; the human merges.**
