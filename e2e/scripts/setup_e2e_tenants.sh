@@ -105,6 +105,15 @@ Plan = env['ncollection.subscription.plan']
 vals = {'name': 'E2E Starter', 'code': 'E2ESTARTER', 'allowed_module_names': 'crm', 'max_users': 3}
 plan = Plan.search([('code', '=', 'E2ESTARTER')], limit=1)
 plan.write(vals) if plan else Plan.create(vals)
+# Purge stale checkout trial tenants so repeated local runs stay under the per-IP
+# trial quota (3/24h) — a leaked trial from an interrupted run would otherwise make
+# the register journey fail with quota_exceeded (#214-E). CI is unaffected (fresh db).
+Tenant = env['ncollection.tenant'].sudo()
+trials = Tenant.search([('status', '=', 'trial'), ('checkout_source_ip', '!=', False)])
+# subscriptions first: subscription.tenant_id is ondelete=restrict, so a tenant
+# cannot be unlinked while a subscription still points at it.
+env['ncollection.subscription'].sudo().search([('tenant_id', 'in', trials.ids)]).unlink()
+trials.unlink()
 env.cr.commit()
 print('E2EADMIN_SEED_OK')
 PY

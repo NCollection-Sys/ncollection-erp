@@ -36,6 +36,12 @@ RESERVED_DB_NAMES = frozenset(
 # name, and underscores are invalid in hostnames, so an underscore name is unroutable
 # under db_filter=^%d$ (#211). Matches checkout.SUBDOMAIN_RE / tenant._GENERATED_NAME_RE.
 DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
+# A PERMISSIVE variant for the DESTRUCTIVE cleanup guards only (retry-sweep +
+# rollback). Those must be able to drop a database THIS engine could have created —
+# including a legacy underscore name left by a job from before DB_NAME_RE was
+# tightened (#211). Validation stays strict via DB_NAME_RE; cleanup must not strand
+# a zombie DB just because the format rule got stricter after that DB was created (#214).
+_CLEANUP_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,62}$')
 
 # Always installed into a tenant DB (base + license/config + branding).
 CORE_TENANT_MODULES = ('base', 'ncollection_core', 'ncollection_branding')
@@ -102,7 +108,7 @@ class ProvisioningJob(models.Model):
         self.tenant_id.database_status = 'provisioning'
         created = False
         try:
-            if retry and DB_NAME_RE.match(db or '') and self._database_exists(db):
+            if retry and self._safe_to_drop(db):
                 # This job failed before and left a database behind (rollback
                 # could not complete). It is this job's own DB — drop it so the
                 # retry starts from a clean slate.
@@ -211,6 +217,17 @@ class ProvisioningJob(models.Model):
                 return line[len('SEED_SETUP_URL='):].strip() or None
         return None
 
+    def _safe_to_drop(self, db):
+        """Destructive-cleanup gate. Only ever drop a name that (a) this engine
+        could have created, (b) is NOT a reserved word or the platform DB itself,
+        and (c) actually exists. The reserved/self-db exclusion is load-bearing for
+        the retry-sweep, which runs BEFORE _validate_db_name: a job manually created
+        with database_name == the platform DB must never let a retry drop it."""
+        return bool(
+            db and _CLEANUP_NAME_RE.match(db)
+            and db not in RESERVED_DB_NAMES and db != self.env.cr.dbname
+            and self._database_exists(db))
+
     def _rollback(self, db, created):
         """Drop the half-provisioned DB — but ONLY if this run created it.
 
@@ -223,7 +240,7 @@ class ProvisioningJob(models.Model):
         if not created:
             return
         try:
-            if DB_NAME_RE.match(db or '') and self._database_exists(db):
+            if self._safe_to_drop(db):
                 self._drop_database(db)
                 self._append_log(self.env._("Rolled back: dropped database '%s'.", db))
         except Exception as exc:  # noqa: BLE001

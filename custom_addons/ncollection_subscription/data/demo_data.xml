@@ -35,7 +35,7 @@
     <!-- Tenants -->
     <record id="demo_tenant_abc_trading" model="ncollection.tenant">
         <field name="company_name">ABC Trading LLC</field>
-        <field name="database_name">abc_trading</field>
+        <field name="database_name">abctrading</field>
         <field name="domain">abctrading.ncollection.com</field>
         <field name="contact_name">Ahmed Al Mansoori</field>
         <field name="email">ahmed@abctrading.example</field>
@@ -46,7 +46,7 @@
 
     <record id="demo_tenant_dubai_food" model="ncollection.tenant">
         <field name="company_name">Dubai Food Industries</field>
-        <field name="database_name">dubai_food</field>
+        <field name="database_name">dubaifood</field>
         <field name="domain">dubaifood.ncollection.com</field>
         <field name="contact_name">Fatima Al Suwaidi</field>
         <field name="email">fatima@dubaifood.example</field>
@@ -57,7 +57,7 @@
 
     <record id="demo_tenant_emirates_logistics" model="ncollection.tenant">
         <field name="company_name">Emirates Logistics</field>
-        <field name="database_name">emirates_logistics</field>
+        <field name="database_name">emirateslogistics</field>
         <field name="domain">emirateslogistics.ncollection.com</field>
         <field name="contact_name">Khalid Al Marri</field>
         <field name="email">khalid@emirateslogistics.example</field>

@@ -39,7 +39,13 @@
                     </div>
                     <group>
                         <group string="Tenant Information">
-                            <field name="database_name"/>
+                            <!-- The name IS the tenant's database + subdomain identity.
+                                 Read-only while provisioning or once ready (immutable — see
+                                 the ORM mirror in ncollection_saas Tenant.write, #214-G);
+                                 still editable when not_provisioned or after an error, so an
+                                 admin can correct it and retry. -->
+                            <field name="database_name"
+                                   readonly="database_status in ('provisioning', 'ready')"/>
                             <field name="database_status" widget="badge"
                                    decoration-success="database_status == 'ready'"
                                    decoration-info="database_status == 'provisioning'"
