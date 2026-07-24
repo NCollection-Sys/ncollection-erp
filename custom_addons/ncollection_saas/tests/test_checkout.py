@@ -133,3 +133,22 @@ class TestCheckoutHttp(HttpCase):
         })
         self.assertFalse(result.get('success'))
         self.assertEqual(result.get('error'), 'subdomain_reserved')
+
+    def test_status_login_url_uses_base_domain_not_localhost(self):
+        """#210: a ready tenant's login_url must be built from the canonical
+        ncollection_saas.base_domain param (seeded 'ncollectionerp.com'), NOT the
+        orphan 'tenant_base_domain' key that nothing seeds and so fell back to
+        'localhost' in every environment including production."""
+        tenant = self.env['ncollection.tenant'].sudo().create({
+            'company_name': 'Ready Co', 'database_name': 'readyco',
+            'plan_id': self.plan.id, 'database_status': 'ready',
+        })
+        res = self._rpc('/nc/checkout/status', {'tenant_uuid': tenant.tenant_uuid})
+        self.assertEqual(res['status'], 'ready')
+        self.assertEqual(res['login_url'], 'https://readyco.ncollectionerp.com/odoo')
+        self.assertNotIn('localhost', res['login_url'])
+        # an explicit deployment override is still honoured
+        self.env['ir.config_parameter'].sudo().set_param(
+            'ncollection_saas.base_domain', 'tenants.example.com')
+        res2 = self._rpc('/nc/checkout/status', {'tenant_uuid': tenant.tenant_uuid})
+        self.assertEqual(res2['login_url'], 'https://readyco.tenants.example.com/odoo')
