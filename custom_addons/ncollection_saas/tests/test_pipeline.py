@@ -10,7 +10,7 @@ scripts/provisioning/verify_provisioning.sh (evidence in the PR).
 """
 from unittest.mock import patch
 
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 ENGINE = 'odoo.addons.ncollection_saas.models.provisioning_job.ProvisioningJob'
@@ -68,6 +68,20 @@ class TestAutoProvisioningPipeline(TransactionCase):
         with patch('%s._database_exists' % ENGINE,
                    side_effect=lambda db: db == 'acme'):
             self.assertEqual(tenant._generate_database_name('Acme'), 'acme2')
+
+    def test_validate_db_name_rejects_underscore(self):
+        """#211: a subdomain label can't contain an underscore (invalid in a
+        hostname), so an underscore name is unroutable under db_filter=^%d$ —
+        provisioning must reject it at validation, not create an unreachable DB."""
+        tenant = self._make_tenant('Underscore Co')
+        job = self.env['ncollection.provisioning.job'].create({
+            'tenant_id': tenant.id, 'database_name': 'bad_name'})
+        for bad in ('bad_name', 'Upper', 'a-b', 'ab', '1abc'):
+            with self.assertRaises(ValidationError):
+                job._validate_db_name(bad)
+        # a clean alphanumeric name passes the format + reserved gates
+        with patch('%s._database_exists' % ENGINE, return_value=False):
+            job._validate_db_name('cleanname')  # must not raise
 
     def test_ensure_database_name_idempotent(self):
         tenant = self._make_tenant('Acme', database_name='acme')

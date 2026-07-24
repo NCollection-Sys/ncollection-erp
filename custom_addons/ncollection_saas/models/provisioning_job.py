@@ -31,8 +31,11 @@ _logger = logging.getLogger(__name__)
 RESERVED_DB_NAMES = frozenset(
     {'admin', 'www', 'staging', 'api', 'postgres', 'template0', 'template1'}
 )
-# lowercase, starts with a letter, 3–63 chars — also a safe SQL identifier.
-DB_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,62}$')
+# lowercase alphanumeric, starts with a letter, 3–63 chars — a safe SQL identifier
+# AND a valid subdomain label. NO underscore: tenant key === subdomain === database
+# name, and underscores are invalid in hostnames, so an underscore name is unroutable
+# under db_filter=^%d$ (#211). Matches checkout.SUBDOMAIN_RE / tenant._GENERATED_NAME_RE.
+DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 
 # Always installed into a tenant DB (base + license/config + branding).
 CORE_TENANT_MODULES = ('base', 'ncollection_core', 'ncollection_branding')
@@ -139,7 +142,7 @@ class ProvisioningJob(models.Model):
         """Reject injection / overwrite / reserved names before any side effect."""
         if not db or not DB_NAME_RE.match(db):
             raise ValidationError(self.env._(
-                "Invalid database name '%s': must match ^[a-z][a-z0-9_]{2,62}$.", db))
+                "Invalid database name '%s': must match ^[a-z][a-z0-9]{2,62}$.", db))
         if db in RESERVED_DB_NAMES or db == self.env.cr.dbname:
             # Never let a tenant name collide with a reserved word or the
             # platform DB itself (the platform DB is not in the static reserved

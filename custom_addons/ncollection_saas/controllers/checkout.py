@@ -18,7 +18,13 @@ from odoo.http import request
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 TRIAL_DAYS = 14
-_BASE_DOMAIN_PARAM = 'ncollection_saas.tenant_base_domain'
+# The canonical base domain param, shared with the domain layer + config-sync
+# (models/domain.py, models/config_sync.py) and seeded to 'ncollectionerp.com' in
+# data/domain_data.xml. This previously read an orphan 'tenant_base_domain' key
+# that nothing seeds, so the customer login URL fell back to 'localhost' in every
+# environment including production (#210). Keep this in sync with those two.
+_BASE_DOMAIN_PARAM = 'ncollection_saas.base_domain'
+_DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
 
 
 class CheckoutController(http.Controller):
@@ -140,6 +146,6 @@ class CheckoutController(http.Controller):
         result = {'status': tenant.database_status, 'verified': tenant.checkout_email_verified}
         if tenant.database_status == 'ready':
             base_domain = request.env['ir.config_parameter'].sudo().get_param(
-                _BASE_DOMAIN_PARAM, 'localhost')
+                _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN)
             result['login_url'] = 'https://%s.%s/odoo' % (tenant.database_name, base_domain)
         return result
