@@ -8,14 +8,14 @@
 > python scripts/github_issue_sync.py --report
 > ```
 >
-> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-07-23
+> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-07-25
 
 ## Scoreboard
 
 | Phase | Done | Total | % |
 |---|---|---|---|
 | Phase 1 — Customer Workspace | 21 | 21 | 100% |
-| Phase 2 — SaaS Automation | 14 | 18 | 78% |
+| Phase 2 — SaaS Automation | 17 | 18 | 94% |
 | Phase 3 — ERP + UAE Localization | 0 | 13 | 0% |
 | Phase 4 — Executive Dashboards | 0 | 4 | 0% |
 | Phase 5 — AI Platform | 0 | 7 | 0% |
@@ -24,7 +24,7 @@
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 0 | 9 | 0% |
-| **Total** | **35** | **100** | **35%** |
+| **Total** | **38** | **100** | **38%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -69,11 +69,11 @@
 | P2-T11 | Billing Engine | DEV-2 | P1-T07 | [#33](https://github.com/NCollection-Sys/ncollection-erp/issues/33) | ✅ done | 2026-07-22 |
 | P2-T12 | Subscription Lifecycle & Trial Support | DEV-2 | P2-T11 | [#34](https://github.com/NCollection-Sys/ncollection-erp/issues/34) | ✅ done | 2026-07-23 |
 | P2-T13 | Subscription Payment Collection (Stripe) | DEV-2 | P2-T11 | [#35](https://github.com/NCollection-Sys/ncollection-erp/issues/35) | ✅ done | 2026-07-23 |
-| P2-T14 | Expiration & Dunning Scheduler | DEV-2 | P2-T12 | [#36](https://github.com/NCollection-Sys/ncollection-erp/issues/36) | 🔨 open |  |
+| P2-T14 | Expiration & Dunning Scheduler | DEV-2 | P2-T12 | [#36](https://github.com/NCollection-Sys/ncollection-erp/issues/36) | ✅ done | 2026-07-23 |
 | P2-T15 | SaaS Admin Dashboard Enhancement | DEV-2 | P1-T07 | [#37](https://github.com/NCollection-Sys/ncollection-erp/issues/37) | 🔨 open |  |
 | P2-T16 | Self-Service Onboarding & Public Checkout | DEV-3 | P1-T13 | [#38](https://github.com/NCollection-Sys/ncollection-erp/issues/38) | ✅ done | 2026-07-22 |
-| P2-T17 | Email Automation System | DEV-3 | P1-T18, P2-T14 | [#39](https://github.com/NCollection-Sys/ncollection-erp/issues/39) | 🔨 open |  |
-| P2-T18 | Phase 2 Integration & E2E Suite Expansion | DEV-1 | P2-T02, P2-T03, P2-T05, P2-T06, P2-T13, P2-T16, P2-T17 | [#40](https://github.com/NCollection-Sys/ncollection-erp/issues/40) | 🔨 open |  |
+| P2-T17 | Email Automation System | DEV-3 | P1-T18, P2-T14 | [#39](https://github.com/NCollection-Sys/ncollection-erp/issues/39) | ✅ done | 2026-07-23 |
+| P2-T18 | Phase 2 Integration & E2E Suite Expansion | DEV-1 | P2-T02, P2-T03, P2-T05, P2-T06, P2-T13, P2-T16, P2-T17 | [#40](https://github.com/NCollection-Sys/ncollection-erp/issues/40) | ✅ done | 2026-07-24 |
 
 ## Phase 3 — ERP + UAE Localization
 
