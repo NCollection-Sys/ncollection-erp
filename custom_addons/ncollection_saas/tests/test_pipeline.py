@@ -83,6 +83,52 @@ class TestAutoProvisioningPipeline(TransactionCase):
         with patch('%s._database_exists' % ENGINE, return_value=False):
             job._validate_db_name('cleanname')  # must not raise
 
+    def test_cleanup_sweeps_legacy_underscore_db(self):
+        """#214-H: DB_NAME_RE was tightened (no underscore) for validation, but the
+        rollback/retry cleanup must still be able to DROP a legacy underscore-named
+        zombie DB created before the tighten — otherwise it would leak forever."""
+        from ..models import provisioning_job as pj
+        self.assertIsNone(pj.DB_NAME_RE.match('legacy_name'))       # validator rejects it
+        self.assertTrue(pj._CLEANUP_NAME_RE.match('legacy_name'))   # cleanup still accepts it
+        tenant = self._make_tenant('Legacy Co')
+        job = self.env['ncollection.provisioning.job'].create({
+            'tenant_id': tenant.id, 'database_name': 'legacy_name'})
+        with patch('%s._database_exists' % ENGINE, return_value=True), \
+                patch('%s._drop_database' % ENGINE) as drop:
+            job._rollback('legacy_name', created=True)
+        drop.assert_called_once_with('legacy_name')
+        # ...but the destructive cleanup NEVER targets the platform DB or a reserved
+        # name, even though both pass the name-format check — the retry-sweep runs
+        # before _validate_db_name, so this exclusion is the real guard (#214-H).
+        self.assertFalse(job._safe_to_drop(self.env.cr.dbname))  # the platform DB
+        self.assertFalse(job._safe_to_drop('postgres'))          # a reserved name
+
+    def test_retry_sweep_never_drops_platform_or_reserved_db(self):
+        """#214-H (CRITICAL): the retry-sweep runs BEFORE _validate_db_name, so a
+        FAILED job whose database_name is the platform DB must never let a retry
+        drop it. Exercises the real run path, not just _safe_to_drop in isolation."""
+        tenant = self._make_tenant('Platform Collision Co')
+        job = self.env['ncollection.provisioning.job'].create({
+            'tenant_id': tenant.id, 'database_name': self.env.cr.dbname, 'status': 'failed'})
+        with patch('%s._database_exists' % ENGINE, return_value=True), \
+                patch('%s._drop_database' % ENGINE) as drop:
+            # run_provisioning catches + persists the ValidationError (never re-raises),
+            # so this returns normally; the point is the sweep never dropped anything.
+            job.action_run_sync()
+        drop.assert_not_called()
+
+    def test_ready_tenant_database_name_is_immutable(self):
+        """#214-G: the ORM mirror of the form readonly. A provisioned (ready) tenant's
+        database_name cannot be changed via write/RPC (it is the live DB + subdomain);
+        a not_provisioned tenant's still can (the generate/heal path)."""
+        ready = self._make_tenant('Immutable Co', database_name='immutableco',
+                                  database_status='ready')
+        with self.assertRaises(ValidationError):
+            ready.database_name = 'renamed'
+        draft = self._make_tenant('Draft Co', database_name='draftco')  # not_provisioned
+        draft.database_name = 'draftco2'  # allowed while not provisioned
+        self.assertEqual(draft.database_name, 'draftco2')
+
     def test_ensure_database_name_idempotent(self):
         tenant = self._make_tenant('Acme', database_name='acme')
         with patch('%s._database_exists' % ENGINE, return_value=False):

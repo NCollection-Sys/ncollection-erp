@@ -13,8 +13,14 @@ import re
 import unicodedata
 
 from odoo import models
+from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
+
+# database_status states in which the tenant's Postgres DB exists (or is being
+# built), so its name is fixed. The name IS the DB + subdomain identity
+# (tenant key === subdomain === database name under db_filter=^%d$).
+_NAME_LOCKED_STATES = ('provisioning', 'ready')
 
 # Names a generated tenant DB must never take: reserved words + the fixture
 # namespaces owned by the routing/e2e/provisioning verification suites (whose
@@ -34,6 +40,24 @@ _GENERATED_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 
 class Tenant(models.Model):
     _inherit = 'ncollection.tenant'
+
+    def write(self, vals):
+        """Enforce database_name immutability once the DB exists — the ORM mirror
+        of the form's read-only rule (Rule 4: a UI restriction is never the
+        substance of authorization). Blocked while provisioning or ready; still
+        free when not_provisioned or after an error (the generate/heal path). The
+        name IS the live database + subdomain, so changing it here would orphan the
+        real database and break db_filter routing."""
+        if 'database_name' in vals:
+            for tenant in self:
+                if (tenant.database_status in _NAME_LOCKED_STATES
+                        and vals['database_name'] != tenant.database_name):
+                    raise ValidationError(self.env._(
+                        "The database name of a provisioned tenant is immutable — it "
+                        "is the live database and subdomain (tenant %s). Changing it "
+                        "would orphan the database and break routing.",
+                        tenant.database_name or tenant.company_name))
+        return super().write(vals)
 
     # ---- database-name generation (P2-T02 point 1) -----------------------
 
