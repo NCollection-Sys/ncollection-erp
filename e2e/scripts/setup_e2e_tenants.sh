@@ -78,14 +78,30 @@ echo "Setting up E2E tenants…"
 create_tenant e2eclienta "base,ncollection_core,ncollection_branding,crm,sale" "crm,sale"
 create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
 
-# platform DB (minimal — a routing target for the e2eadmin.localhost journey).
-if db_exists e2eadmin; then
-  echo "  • e2eadmin exists — skip create"
-else
+# platform DB — the SaaS platform stack (checkout routes + plans) so the
+# e2eadmin.localhost public-checkout journey (P2-T18/T16) has real endpoints.
+if ! db_exists e2eadmin; then
   echo "  • creating e2eadmin (base)…"
   "${DC[@]}" exec -T odoo odoo -d e2eadmin -i base --without-demo=True --no-http \
     --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
 fi
+if ! "${DC[@]}" exec -T db psql -U odoo -d e2eadmin -tAc \
+     "SELECT 1 FROM ir_module_module WHERE name='ncollection_saas' AND state='installed'" \
+     2>/dev/null | grep -q 1; then
+  echo "  • installing platform stack (ncollection_saas) on e2eadmin…"
+  "${DC[@]}" exec -T odoo odoo -d e2eadmin -i ncollection_saas --without-demo=True --no-http \
+    --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
+fi
+# Deterministic admin creds + a checkout plan (idempotent) for the register journey.
+"${DC[@]}" exec -T odoo odoo shell -d e2eadmin --no-http --log-level=error "${DBARGS[@]}" \
+  >/dev/null 2>&1 <<PY
+env.ref('base.user_admin').write({'login': 'admin', 'password': '${ADMIN_PW}'})
+Plan = env['ncollection.subscription.plan']
+if not Plan.search([('code', '=', 'E2ESTARTER')], limit=1):
+    Plan.create({'name': 'E2E Starter', 'code': 'E2ESTARTER',
+                 'allowed_module_names': 'crm', 'max_users': 3})
+env.cr.commit()
+PY
 
 # A non-system "business" user with the standard Sales groups on BOTH tenants
 # (login: biz / demo1234). Enforcement is bypassed for system users (the
