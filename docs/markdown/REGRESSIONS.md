@@ -25,6 +25,7 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Dependency/CVE watch | `.github/dependabot.yml` | weekly + advisories |
 | Stale module dependencies + modules behind their code version, across all DBs | `scripts/dev/doctor.sh` | `make doctor` |
 | Fixture namespace separation | `Makefile`, `e2e/` | structural |
+| Config-sync push carries `Host: <db>.<base-domain>` (db_filter routing) | `ncollection_saas/tests/test_config_sync.py` + `.../scripts/provisioning/verify_config_sync.sh` | CI `test` + `make verify-all` |
 
 ---
 
@@ -326,6 +327,52 @@ provisions a tenant whose plan includes `account` and asserts the Accountant
 role implies `account.group_account_user` post-install ("R-014" assertion). It
 runs in `make verify-all` (the local heavy proof; CI installs modules in a
 single pass and cannot exercise the two-step provisioning path).
+
+---
+
+## R-015 — Config-sync push 404s under `db_filter=^%d$`; every tenant sync silently no-ops ✅ FIXED (P2-T18)
+
+**Symptom.** During the Phase-2 gate (`make verify-all`), `verify_config_sync.sh`
+regressed to 3/7: the service-account checks passed but every push-dependent check
+failed — "module set not propagated", "max_users not propagated", "suspension not
+propagated", "reconcile did NOT heal". The odoo log showed the loopback push
+returning `POST /json/2/ncollection.workspace.config/sync_from_platform HTTP/1.1"
+404`. CI stayed green throughout, and the same script had passed when P2-T03 merged.
+
+**Root cause.** `config_sync._config_sync_push` posts to
+`ncollection_saas.internal_base_url` (`http://localhost:8069`) with header
+`X-Odoo-Database: <db>`, trusting the header to select the tenant DB. It does not:
+under `db_filter=^%d$` (the routing stack **and** the documented production config),
+Odoo filters the DB by the request **Host** — `odoo/http.py:db_filter()` derives
+`domain = Host.partition('.')[0]`, so `Host: localhost` compiles `^localhost$`, which
+matches no tenant. `X-Odoo-Database` does **not** bypass this — it is itself passed
+through `db_filter([header], host=Host)` (`http.py` ~L1837). With no DB selected, the
+`/json/2/<model>/<method>` model route cannot resolve → 404 → the push soft-fails and
+the sync silently no-ops. Proven empirically: same endpoint, `Host: localhost` → 404,
+`Host: <db>.localhost` → 401 (DB + route resolved, only bearer auth differs).
+
+It stayed invisible on two blind spots at once: (1) the unit tests
+`patch('requests.post')` — they assert the URL/bearer/`X-Odoo-Database` but never make
+a real round-trip, so `db_filter` was never exercised; (2) `verify_config_sync.sh` had
+only ever been validated standalone on the plain dev stack, where `db_filter` is off
+and `localhost` resolves. **Left unfixed this ships broken config-sync to production:**
+under `db_filter=^%d$` the loopback push would 404 for *every* tenant, so plan changes,
+suspensions, and the nightly reconcile would never reach any workspace.
+
+**Status.** **Fixed in P2-T18.** `_config_sync_push` now sends
+`Host: <db>.<base_domain>` (reusing `ncollection_saas.base_domain`, the same param the
+domain layer uses), so `db_filter`'s `^%d$` selects the tenant DB. DNS-free: the request
+still connects to the loopback IP:port from `internal_base_url`; only the presented
+virtual host changes. Env-agnostic: `^%d$` keys on the first Host label, so it works
+whether `base_domain` is `localhost` (dev) or `ncollectionerp.com` (prod).
+
+**Guard.** Two, at both layers: (1) `test_config_sync.py::test_push_builds_bearer_request`
+now asserts the push `Host` header equals `<db>.<base-domain>` (CI `test`); a revert to
+`localhost` fails the unit suite. (2) `verify_config_sync.sh` runs inside
+`make verify-all` while the routing overlay's `db_filter=^%d$` is active, exercising the
+**real** cross-DB json2 round-trip end-to-end — a Host/db_filter regression fails loudly
+there. (CI's `verify.yml` runs routing + e2e only; config-sync + provisioning remain the
+local heavy proof, so `make verify-all` before merge is the enforcement point — Rule 13.)
 
 ---
 

@@ -29,6 +29,15 @@ _SYNC_KEY_ENV = 'NC_CONFIG_SYNC_KEY'
 # Non-secret loopback base URL for the local Odoo (overridable per deployment).
 _BASE_URL_PARAM = 'ncollection_saas.internal_base_url'
 _DEFAULT_BASE_URL = 'http://localhost:8069'
+# Base domain tenant subdomains hang off (<db>.<base-domain>). The loopback push
+# targets a fixed IP:port, but the RECEIVING Odoo routes the DB by Host under
+# db_filter=^%d$ (production + the routing stack) — so the request MUST present
+# `Host: <db>.<base-domain>` or the tenant DB is rejected (no DB selected -> 404,
+# and the sync silently no-ops). X-Odoo-Database does NOT bypass db_filter: it is
+# itself filtered by the request Host (odoo/http.py). Same param the domain layer
+# uses; only the first Host label matters to ^%d$, so the value is env-agnostic.
+_BASE_DOMAIN_PARAM = 'ncollection_saas.base_domain'
+_DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
 _SYNC_ENDPOINT = '/json/2/ncollection.workspace.config/sync_from_platform'
 _SYNC_CHANNEL = 'root.provisioning'
 _RPC_TIMEOUT = 30
@@ -91,10 +100,17 @@ class TenantConfigSync(models.Model):
             return False
         base = self.env['ir.config_parameter'].sudo().get_param(
             _BASE_URL_PARAM, _DEFAULT_BASE_URL)
+        base_domain = (self.env['ir.config_parameter'].sudo().get_param(
+            _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN) or '').strip().lower()
         try:
             resp = requests.post(
                 base + _SYNC_ENDPOINT,
                 headers={
+                    # Loopback connects to a fixed IP:port, but the receiver
+                    # selects the DB by Host under db_filter=^%d$ — present the
+                    # tenant subdomain so ITS db (not 'localhost') is chosen.
+                    # X-Odoo-Database must agree (it, too, is Host-filtered).
+                    'Host': '%s.%s' % (db, base_domain),
                     'Authorization': 'Bearer %s' % key,
                     'X-Odoo-Database': db,
                     'Content-Type': 'application/json',
