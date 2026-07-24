@@ -106,6 +106,11 @@ class TestConfigSync(TransactionCase):
         self.assertTrue(args[0].endswith('/json/2/ncollection.workspace.config/sync_from_platform'))
         self.assertEqual(kwargs['headers']['Authorization'], 'Bearer secret-key')
         self.assertEqual(kwargs['headers']['X-Odoo-Database'], 'acme')
+        # The Host MUST carry the tenant subdomain: the receiver routes the DB by
+        # Host under db_filter=^%d$, so `localhost` would select no DB -> 404 and
+        # the sync would silently no-op (REGRESSIONS.md R-015). base_domain param
+        # defaults to ncollectionerp.com (data/domain_data.xml).
+        self.assertEqual(kwargs['headers']['Host'], 'acme.ncollectionerp.com')
 
     def test_push_without_key_is_soft_fail(self):
         tenant = self._tenant(database_name='acme')

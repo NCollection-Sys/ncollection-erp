@@ -78,14 +78,41 @@ echo "Setting up E2E tenants…"
 create_tenant e2eclienta "base,ncollection_core,ncollection_branding,crm,sale" "crm,sale"
 create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
 
-# platform DB (minimal — a routing target for the e2eadmin.localhost journey).
-if db_exists e2eadmin; then
-  echo "  • e2eadmin exists — skip create"
-else
+# platform DB — the SaaS platform stack (checkout routes + plans) so the
+# e2eadmin.localhost public-checkout journey (P2-T18/T16) has real endpoints.
+if ! db_exists e2eadmin; then
   echo "  • creating e2eadmin (base)…"
   "${DC[@]}" exec -T odoo odoo -d e2eadmin -i base --without-demo=True --no-http \
     --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
 fi
+if ! "${DC[@]}" exec -T db psql -U odoo -d e2eadmin -tAc \
+     "SELECT 1 FROM ir_module_module WHERE name='ncollection_saas' AND state='installed'" \
+     2>/dev/null | grep -q 1; then
+  echo "  • installing platform stack (ncollection_saas) on e2eadmin…"
+  "${DC[@]}" exec -T odoo odoo -d e2eadmin -i ncollection_saas --without-demo=True --no-http \
+    --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
+fi
+# Deterministic admin creds + a checkout plan (write-or-create) for the register
+# journey. `odoo shell` is a REPL: an exception in the piped script does NOT set a
+# non-zero exit, so `set -e` can't see a failed Plan.create()/missing ref. Print a
+# sentinel on success and grep for it — a silent seed failure would otherwise
+# surface downstream as a confusing invalid_plan/quota_exceeded test error instead
+# of a clear setup failure (fail loud, Rule 10). Write-or-create keeps an already
+# seeded e2eadmin's plan values current, matching create_tenant's config seed above.
+seed_out="$("${DC[@]}" exec -T odoo odoo shell -d e2eadmin --no-http --log-level=error "${DBARGS[@]}" 2>&1 <<PY
+env.ref('base.user_admin').write({'login': 'admin', 'password': '${ADMIN_PW}'})
+Plan = env['ncollection.subscription.plan']
+vals = {'name': 'E2E Starter', 'code': 'E2ESTARTER', 'allowed_module_names': 'crm', 'max_users': 3}
+plan = Plan.search([('code', '=', 'E2ESTARTER')], limit=1)
+plan.write(vals) if plan else Plan.create(vals)
+env.cr.commit()
+print('E2EADMIN_SEED_OK')
+PY
+)"
+echo "$seed_out" | grep -q 'E2EADMIN_SEED_OK' || {
+  echo "ERROR: e2eadmin seed (admin creds + E2ESTARTER plan) failed — checkout journeys depend on it:" >&2
+  echo "$seed_out" >&2
+  exit 1; }
 
 # A non-system "business" user with the standard Sales groups on BOTH tenants
 # (login: biz / demo1234). Enforcement is bypassed for system users (the
