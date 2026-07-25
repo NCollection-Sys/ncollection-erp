@@ -43,8 +43,13 @@ DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 # a zombie DB just because the format rule got stricter after that DB was created (#214).
 _CLEANUP_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,62}$')
 
-# Always installed into a tenant DB (base + license/config + branding).
-CORE_TENANT_MODULES = ('base', 'ncollection_core', 'ncollection_branding')
+# Always installed into a tenant DB (base + license/config + branding + auth
+# hardening). ncollection_auth (P1-T19) gives every tenant the idle-session-timeout
+# logout + the ncollection.auth.log login-audit trail by default — baseline security,
+# not a paid tier (#178). Forward-only: existing tenants are backfilled via #218.
+# Its deps (auth_signup, auth_session_timeout, web) are pulled automatically by Odoo
+# and are already on the addons path (OCA server-auth).
+CORE_TENANT_MODULES = ('base', 'ncollection_core', 'ncollection_branding', 'ncollection_auth')
 
 QUOTA_PARAM = 'ncollection_saas.provisioning_quota_per_hour'
 DEFAULT_QUOTA = 20
