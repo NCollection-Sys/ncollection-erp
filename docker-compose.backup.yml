@@ -23,7 +23,16 @@ services:
       dockerfile: docker/postgres/Dockerfile
     image: ncollection-postgres:16-pgbackrest
     command:
+      # `command` FULLY REPLACES across compose files (never merges), so this
+      # overlay must itself carry the tuned config_file (P3-T02) — otherwise
+      # `-f docker-compose.yml -f docker-compose.backup.yml` would silently drop
+      # the §9 tuning + pg_stat_statements + slow-query logging and fall back to
+      # stock postgres defaults. config_file gives the dev-safe template values;
+      # a real prod PITR host (base+prod+backup) that wants the full RAM sizing
+      # adds `-c shared_buffers=8GB -c effective_cache_size=24GB` here too.
       - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
       - -c
       - archive_mode=on
       - -c

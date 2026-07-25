@@ -18,6 +18,23 @@ services:
   db:
     # Do NOT expose Postgres to the host in production.
     ports: !reset []
+    # Parallel-query DSM segments use /dev/shm (default 64MB); a 16-vCPU box
+    # will pick parallel plans, so give it room to avoid "could not resize
+    # shared memory segment" under load. (shared_buffers itself uses mmap, not
+    # /dev/shm — this is only for the parallel-worker DSM.)
+    shm_size: 1gb
+    # Prod host sizing (P3-T02). The base file mounts + selects the tuned
+    # postgresql.conf (dev-safe RAM values); here we override ONLY the two
+    # host-RAM-dependent knobs for the 32 GB prod box (CX52): shared_buffers
+    # 25% = 8GB, effective_cache_size 75% = 24GB, plus a larger WAL ceiling.
+    # Command-line `-c` wins over the config file, so everything else stays as
+    # the committed template. Base already mounts the conf (volumes merge).
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c shared_buffers=8GB
+      -c effective_cache_size=24GB
+      -c max_wal_size=4GB
 
   odoo:
     # Select the multi-tenant production config (mounted below). The image
