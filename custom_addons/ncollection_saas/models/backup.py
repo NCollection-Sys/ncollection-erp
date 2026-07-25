@@ -208,6 +208,17 @@ class NcollectionBackup(models.Model):
         if not rec:
             return False
         target = 'drill_%s' % (rec.database_name or 'tenant')
+        # Safety (P3-T12 / ISO-2): the unattended drill dropdb+createdb's `target`.
+        # Never let it clobber a LIVE tenant DB — mirror the interactive wizard's
+        # guard (BackupRestoreWizard.action_restore). If a tenant somehow owns
+        # this name, skip + alert rather than destroy a real tenant's database.
+        if self.env['ncollection.tenant'].sudo().search_count(
+                [('database_name', '=', target)]):
+            rec.message_post(body=self.env._(
+                "Restore drill SKIPPED: scratch name '%s' collides with a live "
+                "tenant database — refusing to overwrite it.", target))
+            rec._alert_failure()
+            return False
         try:
             rec.restore_to(target)
             rec.message_post(body=self.env._(
