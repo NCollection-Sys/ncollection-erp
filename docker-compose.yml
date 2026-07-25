@@ -8,6 +8,10 @@ services:
       POSTGRES_USER: ${DB_USER:-odoo}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-odoo}
     restart: always
+    # Tuned multi-tenant config (P3-T02, ARCHITECTURE_DATA_PLATFORM §9). `-c` on
+    # the command line still wins over the file, so the prod overlay
+    # (docker-compose.prod.yml) overrides only the host-RAM-dependent knobs.
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     ports:
       # Host 5433 -> container 5432, so a local Postgres install (which
       # normally owns host 5432) never conflicts. Connect pgAdmin4 /
@@ -15,6 +19,7 @@ services:
       - "${DB_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./config/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     healthcheck:
       # `-d` is REQUIRED: pg_isready with no -d targets a database named after the
       # USER ("odoo"), which does not exist here — so every probe logged
