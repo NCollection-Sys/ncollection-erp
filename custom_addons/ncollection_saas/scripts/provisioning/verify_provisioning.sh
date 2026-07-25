@@ -56,6 +56,11 @@ db_exists provclient && ok "database 'provclient' created" || no "database not c
   && ok "plan module 'crm' installed in tenant DB" || no "crm not installed"
 [ "$(tq provclient "SELECT state FROM ir_module_module WHERE name='ncollection_core'")" = "installed" ] \
   && ok "ncollection_core installed" || no "core not installed"
+# #178: every tenant gets auth hardening by default (idle-session timeout + auth log).
+[ "$(tq provclient "SELECT state FROM ir_module_module WHERE name='ncollection_auth'")" = "installed" ] \
+  && ok "ncollection_auth installed (idle-timeout + login audit, #178)" || no "ncollection_auth not installed"
+[ "$(tq provclient "SELECT state FROM ir_module_module WHERE name='auth_session_timeout'")" = "installed" ] \
+  && ok "auth_session_timeout (OCA dep) auto-installed" || no "auth_session_timeout not installed"
 [ "$(tq provclient "SELECT plan_code FROM ncollection_workspace_config LIMIT 1")" = "PROV" ] \
   && ok "workspace.config projection written (plan_code=PROV)" || no "workspace config missing"
 [ "$(tq provclient "SELECT login FROM res_users WHERE login='owner@prov.example'")" = "owner@prov.example" ] \

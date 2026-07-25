@@ -41,6 +41,15 @@ class TestAutoProvisioningPipeline(TransactionCase):
             'status': status,
         })
 
+    # ---- default tenant module set (#178) --------------------------------
+
+    def test_auth_hardening_in_default_tenant_modules(self):
+        """#178: every provisioned tenant gets ncollection_auth (idle-session
+        timeout + the auth-log audit trail) by default — baseline security, so it
+        must stay in the always-installed set."""
+        from ..models import provisioning_job as pj
+        self.assertIn('ncollection_auth', pj.CORE_TENANT_MODULES)
+
     # ---- DB-name generation (point 1) ------------------------------------
 
     def test_slugify_is_routable(self):
