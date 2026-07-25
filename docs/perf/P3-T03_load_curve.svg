@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" font-family="system-ui,sans-serif">
+<rect width="720" height="380" fill="#0e1116"/>
+<text x="64" y="24" fill="#e8eaf0" font-size="15" font-weight="700">P3-T03 load curve — read p95 &amp; throughput vs concurrent users</text>
+<rect x="64" y="40" width="592" height="284" fill="#151a21" stroke="#2a313c"/>
+<line x1="64" y1="324.0" x2="656" y2="324.0" stroke="#222831"/>
+<text x="56" y="328.0" fill="#8b93a1" font-size="11" text-anchor="end">0</text>
+<line x1="64" y1="267.2" x2="656" y2="267.2" stroke="#222831"/>
+<text x="56" y="271.2" fill="#8b93a1" font-size="11" text-anchor="end">115</text>
+<line x1="64" y1="210.4" x2="656" y2="210.4" stroke="#222831"/>
+<text x="56" y="214.4" fill="#8b93a1" font-size="11" text-anchor="end">230</text>
+<line x1="64" y1="153.6" x2="656" y2="153.6" stroke="#222831"/>
+<text x="56" y="157.6" fill="#8b93a1" font-size="11" text-anchor="end">345</text>
+<line x1="64" y1="96.8" x2="656" y2="96.8" stroke="#222831"/>
+<text x="56" y="100.8" fill="#8b93a1" font-size="11" text-anchor="end">460</text>
+<line x1="64" y1="40.0" x2="656" y2="40.0" stroke="#222831"/>
+<text x="56" y="44.0" fill="#8b93a1" font-size="11" text-anchor="end">575</text>
+<text x="126.6" y="342.0" fill="#8b93a1" font-size="11" text-anchor="middle">5</text>
+<text x="251.9" y="342.0" fill="#8b93a1" font-size="11" text-anchor="middle">15</text>
+<text x="439.9" y="342.0" fill="#8b93a1" font-size="11" text-anchor="middle">30</text>
+<text x="627.8" y="342.0" fill="#8b93a1" font-size="11" text-anchor="middle">45</text>
+<text x="360" y="366" fill="#a9b1bd" font-size="12" text-anchor="middle">concurrent virtual users (across 3 tenants)</text>
+<text x="18" y="182" fill="#5fd6e3" font-size="12" text-anchor="middle" transform="rotate(-90 18 182)">read p95 (ms)</text>
+<text x="704" y="182" fill="#e0a83e" font-size="12" text-anchor="middle" transform="rotate(90 704 182)">throughput (req/s)</text>
+<line x1="64" y1="77.0" x2="656" y2="77.0" stroke="#ef6f88" stroke-dasharray="5 4"/>
+<text x="650" y="71.0" fill="#ef6f88" font-size="11" text-anchor="end">500ms §9 budget</text>
+<polyline points="126.6,280.6 251.9,206.6 439.9,127.1 627.8,87.3" fill="none" stroke="#e0a83e" stroke-width="2.5"/>
+<circle cx="126.6" cy="280.6" r="3.5" fill="#e0a83e"/>
+<circle cx="251.9" cy="206.6" r="3.5" fill="#e0a83e"/>
+<circle cx="439.9" cy="127.1" r="3.5" fill="#e0a83e"/>
+<circle cx="627.8" cy="87.3" r="3.5" fill="#e0a83e"/>
+<polyline points="126.6,310.9 251.9,274.7 439.9,299.4 627.8,284.9" fill="none" stroke="#5fd6e3" stroke-width="2.5"/>
+<circle cx="126.6" cy="310.9" r="3.5" fill="#5fd6e3"/>
+<text x="126.6" y="301.9" fill="#cfe9ee" font-size="10" text-anchor="middle">27</text>
+<circle cx="251.9" cy="274.7" r="3.5" fill="#5fd6e3"/>
+<text x="251.9" y="265.7" fill="#cfe9ee" font-size="10" text-anchor="middle">100</text>
+<circle cx="439.9" cy="299.4" r="3.5" fill="#5fd6e3"/>
+<text x="439.9" y="290.4" fill="#cfe9ee" font-size="10" text-anchor="middle">50</text>
+<circle cx="627.8" cy="284.9" r="3.5" fill="#5fd6e3"/>
+<text x="627.8" y="275.9" fill="#cfe9ee" font-size="10" text-anchor="middle">79</text>
+</svg>

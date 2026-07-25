@@ -27,3 +27,6 @@ postgres_data/
 # PgBouncer auth file (P2-T09) — holds the real DB password. Generated from
 # .env per deployment; only the .example template is committed.
 config/pgbouncer/userlist.txt
+
+# P3-T03 load-test run artifacts (regenerable)
+scripts/perf/results/

@@ -40,6 +40,7 @@ OCA_VENV := .oca-venv
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
+        load-test load-test-clean \
         provisioning-verify config-sync-verify e2e-verify verify-all hooks-install doctor \
         demo-tenant demo-clean staging-config staging-build
 
@@ -152,6 +153,12 @@ routing-clean: ## Drop the ROUTING fixture DBs rtclienta/rtclientb/rtadmin (dest
 
 e2e-clean: ## Drop the E2E fixture DBs e2eclienta/e2eclientb/e2eadmin (destructive)
 	@for d in e2eclienta e2eclientb e2eadmin; do $(call drop_database,$$d); done
+
+load-test: ## Run the P3-T03 k6 load test (sweep VUs across loadtesta/b/c) — see docs/perf/
+	./scripts/perf/run_load_test.sh
+
+load-test-clean: ## Drop the LOAD-TEST fixture DBs loadtesta/loadtestb/loadtestc (destructive)
+	@for d in loadtesta loadtestb loadtestc; do $(call drop_database,$$d); done
 
 ## ---- Cross-suite verification --------------------------------------------
 # A ticket that only proves its OWN lane cannot see a cross-suite regression.
