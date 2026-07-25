@@ -9,3 +9,4 @@ from . import test_workspace_settings
 from . import test_dashboard
 from . import test_workspace_appearance
 from . import test_subscription_gate
+from . import test_auth_signup

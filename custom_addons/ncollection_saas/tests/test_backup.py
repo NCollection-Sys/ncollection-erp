@@ -99,6 +99,21 @@ class TestBackup(TransactionCase):
         with self.assertRaises(UserError):
             wiz.action_restore()
 
+    def test_restore_drill_skips_live_tenant_collision(self):
+        """ISO-2 (P3-T12): the UNATTENDED monthly drill dropdb+createdb's its
+        scratch target, so it must refuse to clobber a live tenant DB — the same
+        guard the interactive wizard has."""
+        src = self._tenant(database_name='victim')
+        backup = self.Backup.create({
+            'tenant_id': src.id, 'status': 'done', 'file_path': '/tmp/x.tar.enc'})
+        # A live tenant whose db name collides with the drill's scratch target.
+        self._tenant(database_name='drill_victim')
+        with patch.object(type(backup), 'restore_to') as restore, \
+                patch.object(type(backup), '_alert_failure') as alert:
+            self.Backup._cron_restore_drill()
+        restore.assert_not_called()          # never touched the live tenant DB
+        alert.assert_called_once()           # surfaced the collision instead
+
     def test_wizard_enqueues_restore_to_scratch(self):
         tenant = self._tenant(database_name='live2')
         backup = self.Backup.create({

@@ -40,7 +40,7 @@ OCA_VENV := .oca-venv
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
-        load-test load-test-clean \
+        load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify e2e-verify verify-all hooks-install doctor \
         demo-tenant demo-clean staging-config staging-build
 
@@ -153,6 +153,9 @@ routing-clean: ## Drop the ROUTING fixture DBs rtclienta/rtclientb/rtadmin (dest
 
 e2e-clean: ## Drop the E2E fixture DBs e2eclienta/e2eclientb/e2eadmin (destructive)
 	@for d in e2eclienta e2eclientb e2eadmin; do $(call drop_database,$$d); done
+
+security-assess: ## Run the P3-T12 pre-launch security assessment (needs routing-up) — see docs/markdown/SECURITY_ASSESSMENT_P3-T12.md
+	./scripts/audit/phase3_security_assessment.sh
 
 load-test: ## Run the P3-T03 k6 load test (sweep VUs across loadtesta/b/c) — see docs/perf/
 	./scripts/perf/run_load_test.sh

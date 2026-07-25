@@ -4,8 +4,16 @@
 DEMO SCOPE ONLY (Refs GitHub issue #103): this endpoint lets the React demo
 create a workspace user with no gatekeeping. The production signup flow is
 owned by P2-T16 (public checkout: rate limiting, email verification, trial
-quotas, CAPTCHA) and P1-T19 (auth hardening). Do NOT expose this endpoint on
-a production deployment as-is.
+quotas, CAPTCHA) and P1-T19 (auth hardening).
+
+SECURITY (P3-T12 / finding C-1): ncollection_core ships in EVERY tenant
+(CORE_TENANT_MODULES), so this route is reachable on every tenant subdomain.
+Left open it lets an unauthenticated caller create an Internal User in a live
+tenant's ERP (bypassing the Owner-only invite wizard, and the seat limit via
+sudo). It is therefore **DISABLED by default** (secure by absence) and only runs where
+`ncollection_core.public_signup_enabled` is explicitly enabled — which no
+provisioned tenant does. The demo/dev `ncollection` DB must enable it manually;
+that bootstrap wiring + the demo's `signup_disabled` handling are tracked in #226.
 """
 
 import logging
@@ -18,6 +26,9 @@ _logger = logging.getLogger(__name__)
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD_LENGTH = 8
+# Off unless explicitly enabled (secure by absence). Only the demo/dev DB sets it.
+SIGNUP_FLAG = 'ncollection_core.public_signup_enabled'
+_TRUTHY = ('true', '1', 'yes', 'on')
 
 
 class NCollectionAuthSignup(http.Controller):
@@ -30,7 +41,16 @@ class NCollectionAuthSignup(http.Controller):
         Returns ``{'success': True}`` or ``{'success': False, 'error': <code>}``
         where ``<code>`` is a stable key the frontend maps to a translated
         message: missing_fields | invalid_email | weak_password | email_exists.
+        Returns ``signup_disabled`` where the public-signup flag is off (default).
         """
+        enabled = (request.env['ir.config_parameter'].sudo()
+                   .get_param(SIGNUP_FLAG, 'False') or '').strip().lower()
+        if enabled not in _TRUTHY:
+            _logger.warning(
+                "Blocked public signup attempt (flag off) from %s",
+                request.httprequest.remote_addr)
+            return {'success': False, 'error': 'signup_disabled'}
+
         name = (name or '').strip()
         email = (email or '').strip().lower()
 
