@@ -6,13 +6,16 @@ allowed_module_names + status + limits into the tenant DB's
 ncollection.workspace.config so licensing (menus + ORM) tracks the plan within
 the minute. Mechanism (ARCHITECTURE_SECURITY §11): a platform-initiated json2
 call over loopback, authenticated with a dedicated, workspace.config-scoped
-service account (bearer API key from the secrets store / .env) — never a
-cross-DB SQL or ORM cursor (Rule 3). Every sync is logged; a nightly cron
-reconciles drift.
+service account whose bearer key is derived PER TENANT from a platform master
+(#212, see derive_tenant_key) — never a shared key, never a cross-DB SQL or ORM
+cursor (Rule 3). Every sync is logged; a nightly cron reconciles drift.
 
 Lives in ncollection_saas: only this layer may reach a tenant DB.
 """
 
+import base64
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -23,9 +26,29 @@ from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
-# .env / secrets-store key (never in git or the DB) — the shared bearer key of
-# the per-tenant config-sync service account.
+# .env / secrets-store key (never in git or the DB) — the platform MASTER key from
+# which each tenant's config-sync bearer key is derived (#212).
 _SYNC_KEY_ENV = 'NC_CONFIG_SYNC_KEY'
+# Domain-separation label for the key derivation (so the master can't be reused
+# verbatim for another purpose).
+_KDF_LABEL = b'nc-config-sync:'
+
+
+def derive_tenant_key(master: str, db: str) -> str:
+    """Per-tenant config-sync bearer key = HMAC-SHA256(master, label || db) (#212).
+
+    HMAC from a high-entropy master is a standard KDF: every tenant gets a UNIQUE,
+    one-way key, so a leaked/logged key authenticates against ONLY that tenant's DB
+    (its stored hash matches only this derivation) — never platform-wide. It is
+    deterministic, so the platform re-derives the exact key it seeded WITHOUT
+    storing any per-tenant secret; the master alone lives in the secrets store, and
+    rotating it rotates every tenant. Same helper is used by the provisioning seed
+    (to store the hash) and here (to present the bearer), so they can never drift.
+    """
+    mac = hmac.new(master.encode(), _KDF_LABEL + db.encode(), hashlib.sha256)
+    return base64.urlsafe_b64encode(mac.digest()).decode()
+
+
 # Non-secret loopback base URL for the local Odoo (overridable per deployment).
 _BASE_URL_PARAM = 'ncollection_saas.internal_base_url'
 _DEFAULT_BASE_URL = 'http://localhost:8069'
@@ -92,8 +115,8 @@ class TenantConfigSync(models.Model):
         """One platform->tenant config push over json2/bearer. Logged; never
         raises into the caller (a transport error must not break a lifecycle
         transaction — the nightly reconcile heals it)."""
-        key = os.environ.get(_SYNC_KEY_ENV)
-        if not key:
+        master = os.environ.get(_SYNC_KEY_ENV)
+        if not master:
             _logger.error(
                 "Config sync SKIPPED for %s: %s is not set (secrets store/.env).",
                 db, _SYNC_KEY_ENV)
@@ -103,6 +126,11 @@ class TenantConfigSync(models.Model):
         base_domain = (self.env['ir.config_parameter'].sudo().get_param(
             _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN) or '').strip().lower()
         try:
+            # Derived here as part of the push attempt. It is total on (str, str)
+            # — master is guarded non-empty above, db is the sanitized
+            # database_name — so it cannot raise in practice; keeping it inside
+            # the try keeps the whole attempt under one failure boundary.
+            key = derive_tenant_key(master, db)  # per-tenant bearer (#212)
             resp = requests.post(
                 base + _SYNC_ENDPOINT,
                 headers={

@@ -11,6 +11,8 @@ from unittest.mock import MagicMock, patch
 
 from odoo.tests import TransactionCase, tagged
 
+from ..models.config_sync import derive_tenant_key
+
 SYNC = 'odoo.addons.ncollection_saas.models.config_sync'
 
 
@@ -104,13 +106,37 @@ class TestConfigSync(TransactionCase):
         self.assertTrue(ok)
         args, kwargs = post.call_args
         self.assertTrue(args[0].endswith('/json/2/ncollection.workspace.config/sync_from_platform'))
-        self.assertEqual(kwargs['headers']['Authorization'], 'Bearer secret-key')
+        # #212: the bearer is the PER-TENANT derived key (HMAC of master + db name),
+        # never the raw master — so a leaked key is scoped to this one tenant.
+        self.assertEqual(kwargs['headers']['Authorization'],
+                         'Bearer %s' % derive_tenant_key('secret-key', 'acme'))
         self.assertEqual(kwargs['headers']['X-Odoo-Database'], 'acme')
         # The Host MUST carry the tenant subdomain: the receiver routes the DB by
         # Host under db_filter=^%d$, so `localhost` would select no DB -> 404 and
         # the sync would silently no-op (REGRESSIONS.md R-015). base_domain param
         # defaults to ncollectionerp.com (data/domain_data.xml).
         self.assertEqual(kwargs['headers']['Host'], 'acme.ncollectionerp.com')
+
+    def test_derive_tenant_key_is_per_tenant(self):
+        """#212: each tenant's bearer key is a unique, deterministic derivation of
+        the platform master, so a leaked key is scoped to one tenant, not all."""
+        master = 'master-secret'
+        self.assertEqual(derive_tenant_key(master, 'clienta'),
+                         derive_tenant_key(master, 'clienta'))       # deterministic
+        self.assertNotEqual(derive_tenant_key(master, 'clienta'),
+                            derive_tenant_key(master, 'clientb'))     # per-tenant
+        self.assertNotEqual(derive_tenant_key(master, 'clienta'), master)  # not the raw master
+
+    def test_derive_tenant_key_known_vector(self):
+        """#212: pin the EXACT byte-level formula with a golden vector. The seed
+        stores hash(derived) once at provisioning; the push re-derives on every
+        sync. If a refactor silently changes the label/algorithm/encoding, both
+        sides still agree with each other and every same-function test stays green
+        — but every ALREADY-provisioned tenant's stored hash stops matching and
+        config-sync 401s fleet-wide, visible only in prod logs. This frozen vector
+        makes such a change fail CI instead."""
+        self.assertEqual(derive_tenant_key('master-secret', 'clienta'),
+                         'uyQCg5mY0QhZMWuDN5JK0mTwCu0C7pujjoRb0uV-4Ng=')
 
     def test_push_without_key_is_soft_fail(self):
         tenant = self._tenant(database_name='acme')

@@ -68,7 +68,7 @@
 This is the crucial insight: **the platform layer adds surfaces Odoo never had**, and they get dedicated controls (§11):
 
 1. **Provisioning engine** — creates databases and admin users programmatically; a flaw here mints attacker-controlled tenants or overwrites existing ones.
-2. **Config sync channel (P2-T03)** — a privileged cross-DB write path; its service account is one of the most powerful credentials in the system.
+2. **Config sync channel (P2-T03)** — a privileged cross-DB write path; its service account is one of the most powerful credentials in the system. The bearer keys are **derived per tenant** from a single platform master (#212), so a leaked/logged key authenticates only against its own tenant, not the whole fleet — the master is the powerful credential, and it never leaves the platform process (the provisioning engine derives each tenant's key and hands the tenant subprocess only the derived value, so the master never enters a tenant context). Re-keying already-provisioned tenants after a master rotation is tracked in #221.
 3. **Public checkout (P2-T16)** — unauthenticated form that triggers resource creation (DBs!) — DoS and abuse magnet.
 4. **License enforcement (P1-T10)** — enforcement code itself becomes a target; bugs here have direct revenue impact.
 5. **Payment webhooks (P2-T13/P6-T01)** — forged webhook = free subscriptions or falsely-paid invoices.
@@ -173,7 +173,7 @@ Provisioning installs **only** the plan's modules. What isn't installed cannot b
 | CI | GitHub Actions encrypted secrets; least scope; no secret ever echoed to logs |
 | Enterprise (P10-T04) | Vault-class store with rotation and access audit |
 
-**Inventory & rotation** (kept in `docs/RUNBOOK_SECURITY.md` — names only, never values): DB password · Odoo `admin_passwd` (master password — disabled/unset in production once provisioning no longer needs the DB-manager API) · config-sync service account · SMTP creds · B2/S3 keys · pgBackRest cipher key · Stripe/PayTabs keys + webhook signing secrets · LLM API keys · FCM server key. Rotation: quarterly for high-power secrets, immediately on any suspected exposure, and on any team change.
+**Inventory & rotation** (kept in `docs/RUNBOOK_SECURITY.md` — names only, never values): DB password · Odoo `admin_passwd` (master password — disabled/unset in production once provisioning no longer needs the DB-manager API) · config-sync **master key** (`NC_CONFIG_SYNC_KEY`; per-tenant bearer keys are derived from it, #212 — rotating it re-keys the fleet **going forward**, but each already-provisioned tenant stores a hash of its *old* derived key and must be re-keyed for pushes to keep authenticating; the automated re-key path is tracked in #221) · SMTP creds · B2/S3 keys · pgBackRest cipher key · Stripe/PayTabs keys + webhook signing secrets · LLM API keys · FCM server key. Rotation: quarterly for high-power secrets, immediately on any suspected exposure, and on any team change.
 
 **Blast-radius rule**: no satellite container gets a secret outside its job — the AI gateway holds LLM keys but no DB credentials; the backup agent holds B2 write keys but no payment secrets ([ARCHITECTURE_DATA_PLATFORM.md §10.4](ARCHITECTURE_DATA_PLATFORM.md)).
 
@@ -237,7 +237,7 @@ Controls for the surfaces vanilla Odoo doesn't have (§2.3):
 | Surface | Risks | Controls |
 |---------|-------|----------|
 | **Provisioning engine** (P2-T01/02) | DB-name injection, tenant overwrite, resource exhaustion, half-provisioned zombies | Strict name sanitization + reserved-word list + collision check; idempotent steps; rollback on failure; runner isolation (own container, direct DB conn, resource limits); provisioning quota per hour |
-| **Config sync channel** (P2-T03) | Its service account is a skeleton key for tenant configs | Dedicated account, scoped to `ncollection.workspace.config` writes; credentials in secrets store; every sync logged; nightly reconciliation detects tampering/drift |
+| **Config sync channel** (P2-T03) | Its service account is a skeleton key for tenant configs | Dedicated account, scoped to `ncollection.workspace.config` writes; **per-tenant bearer keys** derived from a platform master via `HMAC-SHA256(master, "nc-config-sync:" ‖ db-name)` (#212) — a leaked/logged key authenticates against only that one tenant, never platform-wide; only the master lives in the secrets store (nothing per-tenant is stored, keys are re-derived); every sync logged; nightly reconciliation detects tampering/drift |
 | **Public checkout** (P2-T16) | Mass fake signups → DB-creation DoS; subdomain squatting; injection via company fields | reCAPTCHA; rate limits; email verification before provisioning fires; reserved/offensive subdomain lists; full input validation; trial quotas per IP/email domain |
 | **License enforcement** (P1-T10) | Bypass = revenue loss + precedent of broken guarantees | Continuous E2E probes (Ring 2 verification, §4); enforcement code changes require 2 reviewers |
 | **Payment webhooks** (P2-T13/P6-T01) | Forged "paid" events, replay | Signature verification (Stripe signing secret / HMAC), timestamp tolerance, idempotency keys, amounts revalidated against the invoice — never trusted from the payload |

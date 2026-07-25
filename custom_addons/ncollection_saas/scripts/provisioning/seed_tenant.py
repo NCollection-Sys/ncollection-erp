@@ -71,12 +71,14 @@ _sync_role_implications(env)  # noqa: F821
 # 5. Config-sync service account (P2-T03). A dedicated, non-interactive user
 #    scoped to ncollection.workspace.config writes (group_config_sync — NOT a
 #    system admin) that the platform authenticates as over json2/bearer to push
-#    plan changes. The SHARED bearer key lives in the platform secrets store
-#    (.env, NC_CONFIG_SYNC_KEY); here we store only its HASH, so the tenant DB
-#    never holds the usable credential. Idempotent (safe on re-seed/reconcile).
+#    plan changes. The platform derives a PER-TENANT bearer key from its master
+#    (#212) and hands us only that derived value (NC_CONFIG_SYNC_TENANT_KEY) — the
+#    master never enters this tenant subprocess. We store only the key's HASH, so
+#    the tenant DB never holds the usable credential in the clear, and a leaked
+#    key is scoped to this one tenant. Idempotent (safe on re-seed/reconcile).
 from odoo.addons.base.models.res_users import (  # noqa: E402
     KEY_CRYPT_CONTEXT, INDEX_SIZE)
-sync_key = os.environ.get('NC_CONFIG_SYNC_KEY')
+tenant_key = os.environ.get('NC_CONFIG_SYNC_TENANT_KEY')
 sync_group = env.ref('ncollection_core.group_config_sync')  # noqa: F821
 svc = env['res.users'].sudo().search([('login', '=', 'config-sync@ncollection.internal')], limit=1)  # noqa: F821
 if not svc:
@@ -88,15 +90,15 @@ if not svc:
     })
 else:
     svc.write({'group_ids': [(4, sync_group.id)]})
-if sync_key:
+if tenant_key:
     env.cr.execute(  # noqa: F821
         "DELETE FROM res_users_apikeys WHERE user_id=%s AND name='config-sync'", (svc.id,))
     env.cr.execute(  # noqa: F821
         "INSERT INTO res_users_apikeys (name,user_id,scope,index,key,create_date) "
         "VALUES (%s,%s,NULL,%s,%s, now())",
-        ('config-sync', svc.id, sync_key[:INDEX_SIZE], KEY_CRYPT_CONTEXT.hash(sync_key)))
+        ('config-sync', svc.id, tenant_key[:INDEX_SIZE], KEY_CRYPT_CONTEXT.hash(tenant_key)))
 else:
-    print("SEED_WARN NC_CONFIG_SYNC_KEY not set — config-sync key not provisioned")
+    print("SEED_WARN NC_CONFIG_SYNC_TENANT_KEY not provided — config-sync key not provisioned")
 
 env.cr.commit()  # noqa: F821
 

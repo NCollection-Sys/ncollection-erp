@@ -25,7 +25,17 @@ from odoo import fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import config
 
+# Intra-package (platform-layer) import — the KDF + master env-var name live with
+# the config-sync push code. The PLATFORM derives each tenant's config-sync key and
+# hands only the derived value to the seed subprocess, so the master never enters
+# the tenant context and the seed needs no cross-package import (#212).
+from .config_sync import _SYNC_KEY_ENV, derive_tenant_key
+
 _logger = logging.getLogger(__name__)
+
+# The seed receives the already-derived per-tenant config-sync bearer under this
+# name (NOT the master). Keeps the master out of the tenant subprocess env (#212).
+_SEED_TENANT_KEY_ENV = 'NC_CONFIG_SYNC_TENANT_KEY'
 
 # Forbidden tenant DB / subdomain names (ARCHITECTURE_DATA_PLATFORM §2).
 RESERVED_DB_NAMES = frozenset(
@@ -195,6 +205,12 @@ class ProvisioningJob(models.Model):
         with open(SEED_SCRIPT, encoding='utf-8') as fh:
             script = fh.read()
         env_vars = os.environ.copy()
+        # #212: derive the per-tenant config-sync bearer HERE (platform side, where
+        # the master legitimately lives) and pass ONLY the derived value to the seed.
+        # Scrub the master from the subprocess env so it never enters the tenant
+        # context; the seed just stores the hash of what it is handed — no KDF, no
+        # cross-package import back into the platform addon.
+        master = env_vars.pop(_SYNC_KEY_ENV, None)
         env_vars.update({
             'NC_COMPANY': tenant.company_name or 'Tenant',
             'NC_ADMIN_EMAIL': tenant.email or '',
@@ -208,6 +224,8 @@ class ProvisioningJob(models.Model):
             'NC_SUB_STATUS': tenant.status or 'active',
             'NC_PORTAL_URL': tenant.portal_url or self._portal_url(db),
         })
+        if master:
+            env_vars[_SEED_TENANT_KEY_ENV] = derive_tenant_key(master, db)
         # `shell` MUST be the first argument (odoo <subcommand> <options>).
         cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
         out = self._run_subprocess(
