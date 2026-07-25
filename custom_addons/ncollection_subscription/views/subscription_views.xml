@@ -93,4 +93,38 @@
         </field>
     </record>
 
+    <!-- Revenue analytics (P2-T15): native graph (trend) + pivot (per-plan). -->
+    <record id="view_ncollection_subscription_graph" model="ir.ui.view">
+        <field name="name">ncollection.subscription.graph</field>
+        <field name="model">ncollection.subscription</field>
+        <field name="arch" type="xml">
+            <graph string="Revenue Trend" type="line" sample="1">
+                <field name="start_date" interval="month"/>
+                <field name="mrr" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_ncollection_subscription_pivot" model="ir.ui.view">
+        <field name="name">ncollection.subscription.pivot</field>
+        <field name="model">ncollection.subscription</field>
+        <field name="arch" type="xml">
+            <pivot string="Revenue by Plan" sample="1">
+                <field name="plan_id" type="row"/>
+                <field name="billing_cycle" type="col"/>
+                <field name="mrr" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_ncollection_revenue_analytics" model="ir.actions.act_window">
+        <field name="name">Revenue Analytics</field>
+        <field name="res_model">ncollection.subscription</field>
+        <field name="view_mode">graph,pivot</field>
+        <!-- Active subscriptions only: MRR is realized recurring revenue, so
+             draft/trial/cancelled/expired must not inflate the trend/breakdown
+             (matches the KPI card + SAAS_ADMIN_DASHBOARD.md). -->
+        <field name="domain">[('status', '=', 'active')]</field>
+    </record>
+
 </odoo>

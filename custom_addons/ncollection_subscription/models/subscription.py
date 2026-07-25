@@ -38,6 +38,13 @@ class Subscription(models.Model):
         default='monthly',
         required=True,
     )
+    # MRR (P2-T15): the plan price normalized to a monthly amount. Stored so the
+    # revenue graph/pivot can aggregate it natively. currency comes from the plan.
+    currency_id = fields.Many2one(
+        'res.currency', related='plan_id.currency_id', store=True, readonly=True)
+    mrr = fields.Monetary(
+        string='MRR', compute='_compute_mrr', store=True, currency_field='currency_id',
+        help='Monthly Recurring Revenue: plan price normalized to monthly.')
     status = fields.Selection(
         selection=[
             ('draft', 'Draft'),
@@ -83,6 +90,17 @@ class Subscription(models.Model):
                 sub.days_remaining = (sub.end_date - today).days
             else:
                 sub.days_remaining = 0
+
+    @api.depends('plan_id', 'plan_id.monthly_price', 'plan_id.yearly_price', 'billing_cycle')
+    def _compute_mrr(self):
+        for sub in self:
+            plan = sub.plan_id
+            if not plan:
+                sub.mrr = 0.0
+            elif sub.billing_cycle == 'yearly':
+                sub.mrr = (plan.yearly_price or 0.0) / 12.0
+            else:
+                sub.mrr = plan.monthly_price or 0.0
 
     @api.constrains('start_date', 'end_date')
     def _check_dates(self):

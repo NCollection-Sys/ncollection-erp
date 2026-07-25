@@ -29,6 +29,14 @@
         <field name="arch" type="xml">
             <form string="Tenant">
                 <header>
+                    <!-- Quick lifecycle actions (P2-T15). Shown only for valid
+                         transitions (see tenant._TRANSITIONS). -->
+                    <button name="action_activate" string="Activate" type="object"
+                            class="btn-primary" invisible="status not in ('trial', 'suspended')"/>
+                    <button name="action_suspend" string="Suspend" type="object"
+                            invisible="status != 'active'"/>
+                    <button name="action_expire" string="Expire" type="object"
+                            invisible="status not in ('trial', 'active', 'suspended')"/>
                     <field name="status" widget="statusbar" statusbar_visible="trial,active,suspended,expired"/>
                 </header>
                 <sheet>
