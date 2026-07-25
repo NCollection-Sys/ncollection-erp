@@ -6,8 +6,11 @@
         <field name="model">ncollection.subscription.dashboard</field>
         <field name="arch" type="xml">
             <form string="NCollection SaaS Dashboard" create="false" edit="false" delete="false">
+                <field name="currency_id" invisible="1"/>
                 <div class="o_ncollection_dashboard">
                     <h1 class="o_ncollection_dashboard_title">NCollection SaaS Overview</h1>
+
+                    <!-- OPERATIONS -->
                     <div class="o_ncollection_kpi_row">
                         <div class="o_ncollection_kpi_card">
                             <span class="o_ncollection_kpi_label">Total Tenants</span>
@@ -25,15 +28,73 @@
                             <span class="o_ncollection_kpi_label">Active Subscriptions</span>
                             <field name="active_subscriptions" class="o_ncollection_kpi_value" nolabel="1"/>
                         </div>
-                        <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Monthly Revenue</span>
+                    </div>
+
+                    <!-- REVENUE + GROWTH -->
+                    <div class="o_ncollection_kpi_row">
+                        <div class="o_ncollection_kpi_card o_ncollection_kpi_revenue">
+                            <span class="o_ncollection_kpi_label">MRR (monthly)</span>
                             <field name="monthly_revenue" widget="monetary" class="o_ncollection_kpi_value" nolabel="1"/>
-                            <field name="currency_id" invisible="1"/>
                         </div>
                         <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Expiring Soon (30 days)</span>
+                            <span class="o_ncollection_kpi_label">Trial Conversion</span>
+                            <field name="trial_conversion_rate" widget="percentage" class="o_ncollection_kpi_value" nolabel="1"/>
+                        </div>
+                        <div class="o_ncollection_kpi_card">
+                            <span class="o_ncollection_kpi_label">Churn</span>
+                            <field name="churn_rate" widget="percentage" class="o_ncollection_kpi_value" nolabel="1"/>
+                        </div>
+                        <div class="o_ncollection_kpi_card o_ncollection_kpi_alert">
+                            <span class="o_ncollection_kpi_label">Expiring ≤ 30 days</span>
                             <field name="expiring_soon" class="o_ncollection_kpi_value" nolabel="1"/>
                         </div>
+                    </div>
+
+                    <!-- OPERATIONAL ALERTS — the &lt;10s acceptance surface -->
+                    <div class="o_ncollection_monitors">
+                        <div class="o_ncollection_monitor_col">
+                            <h2 class="o_ncollection_section_title">⚠ Failed Provisioning</h2>
+                            <field name="failed_job_ids" nolabel="1" readonly="1">
+                                <list string="Failed Provisioning" create="false" decoration-danger="status == 'failed'">
+                                    <field name="database_name"/>
+                                    <field name="tenant_id"/>
+                                    <field name="status" widget="badge" decoration-danger="status == 'failed'"/>
+                                    <field name="created_at"/>
+                                </list>
+                            </field>
+                        </div>
+                        <div class="o_ncollection_monitor_col">
+                            <h2 class="o_ncollection_section_title">⏳ At-risk Subscriptions</h2>
+                            <field name="at_risk_subscription_ids" nolabel="1" readonly="1">
+                                <list string="At-risk Subscriptions" create="false"
+                                      decoration-danger="status == 'expired'"
+                                      decoration-warning="status in ('active', 'suspended')">
+                                    <field name="tenant_id"/>
+                                    <field name="plan_id"/>
+                                    <field name="status" widget="badge"
+                                           decoration-success="status == 'active'"
+                                           decoration-warning="status == 'suspended'"
+                                           decoration-danger="status == 'expired'"/>
+                                    <field name="end_date"/>
+                                </list>
+                            </field>
+                        </div>
+                    </div>
+
+                    <!-- STORAGE HEALTH -->
+                    <div class="o_ncollection_storage">
+                        <h2 class="o_ncollection_section_title">Storage Health</h2>
+                        <div class="o_ncollection_kpi_row">
+                            <div class="o_ncollection_kpi_card">
+                                <span class="o_ncollection_kpi_label">Databases</span>
+                                <field name="db_count" class="o_ncollection_kpi_value" nolabel="1"/>
+                            </div>
+                            <div class="o_ncollection_kpi_card">
+                                <span class="o_ncollection_kpi_label">Total Storage (MB)</span>
+                                <field name="db_storage_total_mb" class="o_ncollection_kpi_value" nolabel="1"/>
+                            </div>
+                        </div>
+                        <field name="db_storage_html" nolabel="1" readonly="1"/>
                     </div>
                 </div>
             </form>

@@ -4,6 +4,7 @@
     <menuitem id="menu_ncollection_saas_root"
               name="NCollection SaaS"
               sequence="10"
+              groups="ncollection_subscription.group_platform_admin"
               web_icon="ncollection_subscription,static/description/icon.png"/>
 
     <menuitem id="menu_ncollection_saas_dashboard"
@@ -29,6 +30,12 @@
               parent="menu_ncollection_saas_root"
               action="action_ncollection_subscription"
               sequence="40"/>
+
+    <menuitem id="menu_ncollection_saas_revenue"
+              name="Revenue Analytics"
+              parent="menu_ncollection_saas_root"
+              action="action_ncollection_revenue_analytics"
+              sequence="45"/>
 
     <menuitem id="menu_ncollection_saas_provisioning"
               name="Provisioning Queue"

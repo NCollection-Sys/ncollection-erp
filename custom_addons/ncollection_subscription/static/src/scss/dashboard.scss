@@ -1,51 +1,79 @@
-// NCollection brand colors (kept in sync with ncollection_branding)
-$ncollection-primary: #1F5F8F;
-$ncollection-secondary: #2D7AB7;
-$ncollection-silver: #C0C7D1;
-$ncollection-background: #F7F9FC;
-$ncollection-text: #0F172A;
+// NCollection SaaS admin dashboard (P2-T15).
+// Uses the design-system tokens from ncollection_branding (tokens.scss, UI-T01/#128).
+// Hex fallbacks keep it usable if the token layer is not loaded (e.g. the module
+// installed without ncollection_branding).
 
 .o_ncollection_dashboard {
-    padding: 24px;
-    background-color: $ncollection-background;
+    padding: var(--nc-space-6, 24px);
+    background-color: var(--nc-bg, #F7F9FC);
+    font-family: var(--nc-font-family, inherit);
 
     .o_ncollection_dashboard_title {
-        color: $ncollection-text;
-        font-weight: 600;
-        margin-bottom: 24px;
+        color: var(--nc-text, #0F172A);
+        font-weight: var(--nc-font-weight-semibold, 600);
+        margin-bottom: var(--nc-space-6, 24px);
+    }
+
+    .o_ncollection_section_title {
+        color: var(--nc-text, #0F172A);
+        font-size: var(--nc-font-size-lg, 1.15rem);
+        font-weight: var(--nc-font-weight-semibold, 600);
+        margin: var(--nc-space-6, 24px) 0 var(--nc-space-3, 12px);
     }
 
     .o_ncollection_kpi_row {
         display: flex;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: var(--nc-space-4, 16px);
+        margin-bottom: var(--nc-space-4, 16px);
     }
 
     .o_ncollection_kpi_card {
-        flex: 1 1 220px;
-        min-width: 200px;
+        flex: 1 1 200px;
+        min-width: 180px;
         background-color: #FFFFFF;
-        border: 1px solid $ncollection-silver;
-        border-left: 4px solid $ncollection-primary;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        border: 1px solid var(--nc-border, #C0C7D1);
+        border-left: 4px solid var(--nc-primary, #1F5F8F);
+        border-radius: var(--nc-radius, 10px);
+        padding: var(--nc-space-5, 20px);
+        box-shadow: var(--nc-shadow, 0 1px 3px rgba(15, 23, 42, 0.08));
+
+        &.o_ncollection_kpi_revenue { border-left-color: var(--nc-success, #16A34A); }
+        &.o_ncollection_kpi_alert   { border-left-color: var(--nc-danger, #DC2626); }
     }
 
     .o_ncollection_kpi_label {
         display: block;
-        font-size: 0.85rem;
-        font-weight: 600;
+        font-size: var(--nc-font-size-sm, 0.85rem);
+        font-weight: var(--nc-font-weight-semibold, 600);
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        color: $ncollection-secondary;
-        margin-bottom: 8px;
+        color: var(--nc-secondary, #2D7AB7);
+        margin-bottom: var(--nc-space-2, 8px);
     }
 
     .o_ncollection_kpi_value {
         display: block;
-        font-size: 2.25rem;
-        font-weight: 700;
-        color: $ncollection-text;
+        font-size: var(--nc-font-size-2xl, 2.25rem);
+        font-weight: var(--nc-font-weight-bold, 700);
+        color: var(--nc-text, #0F172A);
+    }
+
+    .o_ncollection_monitors {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--nc-space-4, 16px);
+
+        .o_ncollection_monitor_col {
+            flex: 1 1 380px;
+            min-width: 300px;
+        }
+    }
+
+    .o_ncollection_db_table {
+        background-color: #FFFFFF;
+        border: 1px solid var(--nc-border, #C0C7D1);
+        border-radius: var(--nc-radius, 10px);
+        overflow: hidden;
     }
 }

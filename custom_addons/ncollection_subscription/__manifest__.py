@@ -19,6 +19,7 @@ SaaS management platform for NCollection ERP administrators:
     'license': 'LGPL-3',
     'depends': ['base', 'mail'],
     'data': [
+        'security/saas_security.xml',
         'security/ir.model.access.csv',
         'data/mail_data.xml',
         'views/subscription_plan_views.xml',
