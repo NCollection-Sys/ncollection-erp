@@ -47,7 +47,7 @@ class TestConfigSync(TransactionCase):
     # ---- enqueue gating --------------------------------------------------
 
     def test_enqueue_only_ready_tenants(self):
-        ready = self._tenant(database_status='ready', database_name='r')
+        ready = self._tenant(database_status='ready', database_name='syncrdy')
         notready = self._tenant(database_status='not_provisioned', database_name=False)
         before = self.env['queue.job'].search_count([])
         (ready + notready)._config_sync_enqueue()
@@ -57,7 +57,7 @@ class TestConfigSync(TransactionCase):
     # ---- lifecycle + plan triggers --------------------------------------
 
     def test_tenant_status_action_enqueues(self):
-        tenant = self._tenant(status='active', database_status='ready', database_name='a')
+        tenant = self._tenant(status='active', database_status='ready', database_name='syncact')
         before = self.env['queue.job'].search_count([])
         tenant.action_suspend()
         self.assertEqual(self.env['queue.job'].search_count([]), before + 1,
@@ -66,7 +66,7 @@ class TestConfigSync(TransactionCase):
     def test_repeated_triggers_dedupe_per_tenant(self):
         # identity_key collapses rapid repeat triggers into ONE pending sync
         # (no redundant pushes for the same tenant).
-        tenant = self._tenant(status='active', database_status='ready', database_name='d')
+        tenant = self._tenant(status='active', database_status='ready', database_name='syncdedup')
         before = self.env['queue.job'].search_count([])
         tenant._config_sync_enqueue()
         tenant._config_sync_enqueue()
@@ -74,15 +74,15 @@ class TestConfigSync(TransactionCase):
                          "duplicate pending syncs for one tenant are de-duplicated")
 
     def test_plan_edit_fans_out_to_tenants(self):
-        self._tenant(database_status='ready', database_name='t1')
-        self._tenant(database_status='ready', database_name='t2')
+        self._tenant(database_status='ready', database_name='syncfana')
+        self._tenant(database_status='ready', database_name='syncfanb')
         before = self.env['queue.job'].search_count([])
         self.plan.write({'allowed_module_names': 'crm,sale,account'})
         self.assertEqual(self.env['queue.job'].search_count([]), before + 2,
                          "a plan edit fans out to both ready tenants")
 
     def test_subscription_plan_change_updates_tenant_and_enqueues(self):
-        tenant = self._tenant(database_status='ready', database_name='s')
+        tenant = self._tenant(database_status='ready', database_name='syncsub')
         sub = self.env['ncollection.subscription'].create({
             'name': 'SUB', 'tenant_id': tenant.id, 'plan_id': self.plan.id, 'status': 'draft'})
         tenant.subscription_id = sub.id
@@ -156,8 +156,8 @@ class TestConfigSync(TransactionCase):
     # ---- reconcile -------------------------------------------------------
 
     def test_reconcile_enqueues_ready_tenants(self):
-        self._tenant(database_status='ready', database_name='r1')
-        self._tenant(database_status='error', database_name='e1')  # not ready
+        self._tenant(database_status='ready', database_name='syncrecon')
+        self._tenant(database_status='error', database_name='e1')  # not ready (exempt)
         before = self.env['queue.job'].search_count([])
         self.env['ncollection.tenant']._cron_reconcile_config()
         self.assertGreaterEqual(self.env['queue.job'].search_count([]), before + 1)

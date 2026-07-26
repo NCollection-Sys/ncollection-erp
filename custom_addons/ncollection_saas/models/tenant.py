@@ -12,7 +12,7 @@ import logging
 import re
 import unicodedata
 
-from odoo import models
+from odoo import api, models
 from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
@@ -22,15 +22,32 @@ _logger = logging.getLogger(__name__)
 # (tenant key === subdomain === database name under db_filter=^%d$).
 _NAME_LOCKED_STATES = ('provisioning', 'ready')
 
-# Names a generated tenant DB must never take: reserved words + the fixture
-# namespaces owned by the routing/e2e/provisioning verification suites (whose
-# *-clean targets could later drop a same-named real tenant) + the demo/CI
-# databases. The live platform DB (env.cr.dbname) is added at runtime. The
-# generated name is ALSO strictly alphanumeric (no underscore) so it is a valid
-# subdomain — tenant key === subdomain === database name.
-_GENERATED_NAME_BLOCKLIST = frozenset({
-    'admin', 'www', 'staging', 'api', 'postgres', 'template0', 'template1',
-    'ncollection', 'ncollectiondemo', 'ncplatform', 'albarari', 'saastest', 'citest',
+# Names a tenant DB must never take — in two tiers:
+#
+# _RESERVED_PLATFORM_DB_NAMES — genuinely NON-tenant databases: the Postgres
+#   maintenance DBs, the platform control-plane / demo DBs, and reserved vanity
+#   subdomains. A tenant is HARD-blocked (ISO-1) from claiming one once it is
+#   provisioning/ready — a tenant named after the control DB could drive
+#   config-sync at the control plane. The live platform DB (env.cr.dbname) is
+#   added at runtime. These are never legitimate tenant workspaces.
+#
+# _GENERATED_NAME_BLOCKLIST — the reserved-platform set PLUS the per-suite
+#   tenant-fixture namespaces (routing/e2e/provisioning, whose *-clean targets
+#   could later drop a same-named real tenant) + the demo/CI tenants. ONLY the
+#   auto-generator avoids these, so a real customer's slug never lands on a
+#   fixture name. It is NOT a hard constraint: those suites legitimately CREATE
+#   tenants with these exact names (provclient, rtclienta, albarari …), so
+#   hard-blocking them here would break the very suites that own them.
+#
+# Generated names are ALSO strictly alphanumeric (no underscore) so they are
+# valid subdomains — tenant key === subdomain === database name.
+_RESERVED_PLATFORM_DB_NAMES = frozenset({
+    'admin', 'www', 'staging', 'api',
+    'postgres', 'template0', 'template1',
+    'ncollection', 'ncollectiondemo', 'ncplatform',
+})
+_GENERATED_NAME_BLOCKLIST = _RESERVED_PLATFORM_DB_NAMES | frozenset({
+    'albarari', 'saastest', 'citest',
     'rtclienta', 'rtclientb', 'rtadmin',
     'e2eclienta', 'e2eclientb', 'e2eadmin',
     'provclient', 'provfail',
@@ -47,17 +64,54 @@ class Tenant(models.Model):
         substance of authorization). Blocked while provisioning or ready; still
         free when not_provisioned or after an error (the generate/heal path). The
         name IS the live database + subdomain, so changing it here would orphan the
-        real database and break db_filter routing."""
+        real database and break db_filter routing.
+
+        ISO-1 (#225): also block when the SAME write flips status INTO a locked
+        state. The old guard read only the pre-write status, so a combined
+        write({'database_name': <victim>, 'database_status': 'ready'}) on a
+        not_provisioned record slipped through — the lever behind the cross-tenant
+        config-sync takeover. Evaluate the effective (post-write) status too."""
         if 'database_name' in vals:
+            new_status = vals.get('database_status')
             for tenant in self:
-                if (tenant.database_status in _NAME_LOCKED_STATES
-                        and vals['database_name'] != tenant.database_name):
+                locked = (tenant.database_status in _NAME_LOCKED_STATES
+                          or new_status in _NAME_LOCKED_STATES)
+                if locked and vals['database_name'] != tenant.database_name:
                     raise ValidationError(self.env._(
                         "The database name of a provisioned tenant is immutable — it "
                         "is the live database and subdomain (tenant %s). Changing it "
                         "would orphan the database and break routing.",
                         tenant.database_name or tenant.company_name))
         return super().write(vals)
+
+    @api.constrains('database_name', 'database_status')
+    def _check_locked_database_name(self):
+        """ISO-1 (#225): once a tenant is provisioning/ready its database_name IS
+        the live DB + subdomain (db_filter=^%d$), so enforce the FULL name policy
+        at the model layer — not just the checkout controller / provisioning
+        runtime. Fires on create AND write (a status-only flip to 'ready' or a
+        privileged create at 'ready' both reach here), closing the gaps where a
+        tenant could otherwise become routable with an unroutable/reserved name.
+        not_provisioned tenants stay exempt: the _ensure_database_name heal path
+        legitimately holds a raw name transiently, and a name on a DB-less tenant
+        is harmless. (Uniqueness itself is the DB-level UNIQUE constraint.)"""
+        reserved = _RESERVED_PLATFORM_DB_NAMES | {self.env.cr.dbname}
+        for tenant in self:
+            if tenant.database_status not in _NAME_LOCKED_STATES:
+                continue
+            name = tenant.database_name
+            if not name:
+                continue
+            if not _GENERATED_NAME_RE.match(name):
+                raise ValidationError(self.env._(
+                    "Invalid database name '%s' — it must be lowercase alphanumeric, "
+                    "start with a letter, and be 3–63 characters (no underscores, "
+                    "hyphens or path characters): it is the database name and the "
+                    "tenant subdomain.", name))
+            if name in reserved:
+                raise ValidationError(self.env._(
+                    "Database name '%s' is reserved (a platform or maintenance "
+                    "database) and cannot be assigned to a tenant.", name))
 
     # ---- database-name generation (P2-T02 point 1) -----------------------
 

@@ -10,8 +10,11 @@ scripts/provisioning/verify_provisioning.sh (evidence in the PR).
 """
 from unittest.mock import patch
 
+from psycopg2 import IntegrityError
+
 from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
+from odoo.tools import mute_logger
 
 ENGINE = 'odoo.addons.ncollection_saas.models.provisioning_job.ProvisioningJob'
 
@@ -137,6 +140,46 @@ class TestAutoProvisioningPipeline(TransactionCase):
         draft = self._make_tenant('Draft Co', database_name='draftco')  # not_provisioned
         draft.database_name = 'draftco2'  # allowed while not provisioned
         self.assertEqual(draft.database_name, 'draftco2')
+
+    def test_iso1_combined_name_and_ready_write_blocked(self):
+        """ISO-1 (#225): the takeover lever — a SINGLE write that flips a
+        not_provisioned record's status to 'ready' WHILE pointing its
+        database_name at a victim's DB. The old guard read the pre-write status
+        and let it through; the fixed guard evaluates the post-write status."""
+        self._make_tenant('Victim', database_name='victimtenant',
+                          database_status='ready')
+        attacker = self._make_tenant('Attacker', database_name='attackerco')
+        with self.assertRaises(ValidationError):
+            attacker.write({'database_name': 'victimtenant',
+                            'database_status': 'ready'})
+
+    def test_iso1_invalid_grammar_at_ready_rejected(self):
+        """ISO-1 (#225): a tenant cannot become provisioning/ready holding an
+        out-of-grammar (unroutable) database_name — closing the status-only-flip
+        and privileged-create gaps. not_provisioned stays exempt (heal path)."""
+        self._make_tenant('Draft', database_name='draft_underscore')  # ok while draft
+        with self.assertRaises(ValidationError):
+            self._make_tenant('Bad', database_name='ready_underscore',
+                              database_status='ready')
+
+    def test_iso1_reserved_name_at_ready_rejected(self):
+        """ISO-1 (#225): a ready tenant cannot claim a reserved platform/
+        maintenance DB name (e.g. the control-plane DB), even though it is valid
+        grammar — that is the config-sync-to-control-plane vector. Per-suite
+        tenant fixtures (provclient, rtclienta …) are NOT hard-blocked: the
+        suites legitimately own them (only the auto-generator avoids them)."""
+        with self.assertRaises(ValidationError):
+            self._make_tenant('Reserved', database_name='ncplatform',
+                              database_status='ready')
+
+    def test_iso1_duplicate_database_name_rejected(self):
+        """ISO-1 (#225): two tenants can never share a database_name (its DB
+        identity), so a second record can't be pointed at a live tenant's DB."""
+        self._make_tenant('First', database_name='sharedname')
+        with mute_logger('odoo.sql_db'), self.assertRaises(IntegrityError):
+            with self.env.cr.savepoint():
+                self._make_tenant('Second', database_name='sharedname')
+                self.env.flush_all()
 
     def test_ensure_database_name_idempotent(self):
         tenant = self._make_tenant('Acme', database_name='acme')

@@ -74,9 +74,20 @@ class Tenant(models.Model):
     provisioning_job_ids = fields.One2many('ncollection.provisioning.job', 'tenant_id', string='Provisioning Jobs')
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        ('tenant_uuid_unique', 'unique(tenant_uuid)', 'The tenant UUID must be unique.'),
-    ]
+    # Odoo 19 dropped `_sql_constraints` (silently ignored) — use models.Constraint.
+    _tenant_uuid_unique = models.Constraint(
+        'unique(tenant_uuid)',
+        'The tenant UUID must be unique.',
+    )
+    # ISO-1 (#225): database_name IS the tenant's Postgres DB identity. Two records
+    # sharing it let one tenant's config-sync push (bearer derived purely from the
+    # name) land on ANOTHER tenant's DB — a cross-tenant takeover. Enforce
+    # uniqueness at the DB level. Unnamed tenants are exempt (empty -> NULL, and
+    # Postgres UNIQUE allows multiple NULLs).
+    _database_name_unique = models.Constraint(
+        'unique(database_name)',
+        'That database name is already assigned to another tenant.',
+    )
 
     # ------------------------------------------------------------------
     # Guarded lifecycle transitions
