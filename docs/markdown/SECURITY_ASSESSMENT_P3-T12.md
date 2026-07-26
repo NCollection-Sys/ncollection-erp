@@ -13,11 +13,15 @@ red-team exists to surface. Remediation status:
 | Finding | Severity | Status |
 |---|---|---|
 | **C-1** public self-signup enabled in every tenant | 🔴 CRITICAL | ✅ **fixed in this PR** |
-| **ISO-1** cross-tenant config-sync takeover via `database_name` | 🔴 CRITICAL | 🔧 **tracked in #225 — BLOCKS P3-T13** |
+| **ISO-1** cross-tenant config-sync takeover via `database_name` | 🔴 CRITICAL | ✅ **closed in #225** — `UNIQUE(database_name)` + write-guard fix + model-level grammar/blocklist guard (auditor-proven vs ORM + raw SQL); residual status-transition/ownership defense-in-depth → #228 |
 | **H-1** no edge rate-limit on checkout; reCAPTCHA off | 🟠 HIGH | ✅ **fixed in this PR** (+ reCAPTCHA = P3-T13 gate) |
 | **ISO-2** restore-drill can clobber a live tenant DB | 🟠 HIGH | ✅ **fixed in this PR** |
 
-**Go-live is NOT clear until #225 (ISO-1) merges.** P3-T12 delivers the
+**The ISO-1 takeover is closed by #225** (the load-bearing `UNIQUE(database_name)`
+constraint makes it physically impossible for two records to claim one DB — proven
+against ORM create/write and raw SQL). Remaining ISO-1 items (a status-transition
+guard + a now-redundant config-sync ownership check) are **defense-in-depth in
+#228**, not go-live blockers. P3-T12 delivers the
 assessment + three of the four crit/high fixes; ISO-1 is a substantial platform-
 model change (unique constraint + migration + `@api.constrains` + config-sync
 ownership) that gets its own focused, reviewed PR — a blocking input to the
@@ -101,16 +105,20 @@ QWeb escaping clean (no `t-raw`); reCAPTCHA fails-closed when configured;
 
 ## 5. Tenant isolation
 
-**ISO-1 (CRITICAL, → #225, blocks P3-T13).** A lesser-privileged *Platform Admin*
-can point a `not_provisioned` tenant record at **another tenant's `database_name`**
-and drive config-sync to it (suspend the victim's users / revoke their apps).
-Root causes: no uniqueness constraint on `database_name`; no model-level
-`@api.constrains` on its format (only checkout + provisioning-runtime); the
-immutability guard reads the *pre-write* `database_status` so a combined
-`write({database_name, database_status:'ready'})` bypasses it; and config-sync
-derives the bearer purely from the db-name string with no ownership check. Full
-chain + fix direction in **#225** (unique constraint + migration, `@api.constrains`,
-fixed write-guard, restricted status transitions, config-sync ownership check).
+**ISO-1 (CRITICAL, CLOSED in #225).** A lesser-privileged *Platform Admin* could
+point a `not_provisioned` tenant record at **another tenant's `database_name`** and
+drive config-sync to it (suspend the victim's users / revoke their apps). Root
+causes: no uniqueness constraint on `database_name`; the immutability guard read the
+*pre-write* `database_status` so a combined `write({database_name,
+database_status:'ready'})` bypassed it; and config-sync derives the bearer purely
+from the db-name string. **Closed in #225** by a `UNIQUE(database_name)` constraint
+(via Odoo-19 `models.Constraint`) + a write-guard that now evaluates the post-write
+status + a model-level `@api.constrains` enforcing the db-name grammar and the
+reserved/blocklist + platform-db-name policy at provisioning/ready (on create and
+write) + a pre-migration nulling invalid names — the isolation auditor confirmed the
+unique constraint holds against ORM create/write AND raw SQL, so the takeover is
+structurally impossible. A status-transition guard + a (now-redundant) config-sync
+ownership check remain as defense-in-depth in **#228**.
 
 **ISO-2 (HIGH, FIXED).** The unattended monthly `_cron_restore_drill`
 (`backup.py`) did `dropdb`/`createdb` on `drill_<name>` with no live-tenant
@@ -130,11 +138,13 @@ no cross-DB ORM/SQL cursor (Rule 3) — every `psycopg2`/`env.cr` use is either 
 ## 6. Deferred to P3-T13 (production-dependent)
 
 SSL Labs grade-A (live TLS endpoint); restore drill on production infra; on-call
-rotation + breach-notification tree; end-to-end rate-limit load test on prod;
-**and #225 (ISO-1) must merge before go-live.**
+rotation + breach-notification tree; end-to-end rate-limit load test on prod.
+(ISO-1 defense-in-depth → #228, non-blocking.)
 
 ## 7. Sign-off
 
-Pre-production assessment complete. Three of four crit/high remediated here with
-regression tests; **ISO-1 (#225) is the one blocking item for P3-T13.** Re-run
-`make security-assess` + `make verify-all` and confirm #225 merged before go-live.
+Pre-production assessment complete. **All four crit/high remediated** — C-1/H-1/ISO-2
+in the P3-T12 PR, **ISO-1 closed in #225** (its takeover is structurally impossible
+via the `UNIQUE(database_name)` constraint). Remaining go-live items are the
+production-dependent §6 list; ISO-1 defense-in-depth is tracked non-blocking in #228.
+Re-run `make security-assess` + `make verify-all` before go-live.

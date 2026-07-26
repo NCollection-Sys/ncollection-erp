@@ -63,7 +63,7 @@ class TestBackup(TransactionCase):
     # ---- nightly fan-out + typing ---------------------------------------
 
     def test_nightly_backs_up_each_ready_tenant(self):
-        ready = self._tenant(database_name='r1')
+        ready = self._tenant(database_name='bkprdy')
         self._tenant(database_name=False, database_status='not_provisioned')
         with patch.object(type(self.Backup), '_enqueue'):  # don't touch the queue
             self.Backup._cron_nightly_backups()
@@ -106,8 +106,11 @@ class TestBackup(TransactionCase):
         src = self._tenant(database_name='victim')
         backup = self.Backup.create({
             'tenant_id': src.id, 'status': 'done', 'file_path': '/tmp/x.tar.enc'})
-        # A live tenant whose db name collides with the drill's scratch target.
-        self._tenant(database_name='drill_victim')
+        # A tenant whose db name collides with the drill's scratch target. It is
+        # not_provisioned because the drill_<x> prefix contains an underscore (the
+        # ISO-1 grammar guard forbids underscores at ready) — the collision guard
+        # searches by name regardless of status, so this still exercises it.
+        self._tenant(database_name='drill_victim', database_status='not_provisioned')
         with patch.object(type(backup), 'restore_to') as restore, \
                 patch.object(type(backup), '_alert_failure') as alert:
             self.Backup._cron_restore_drill()
