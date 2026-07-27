@@ -429,6 +429,10 @@ Provides business extensions around Odoo Accounting without replacing the accoun
 ### Depends On
 
 - account
+- ncollection_core — home of `ncollection.workspace.config` + the Ring-2 license
+  enforcer (#11) that the Subscription Restrictions responsibility reads. Ships
+  in every tenant (CORE_TENANT_MODULES), so it adds no new footprint. (Added
+  F1-T01/#109.)
 
 ---
 
