@@ -23,7 +23,7 @@ class TestCheckoutModel(TransactionCase):
         super().setUpClass()
         cls.Tenant = cls.env['ncollection.tenant']
         cls.plan = cls.env['ncollection.subscription.plan'].create({
-            'name': 'Starter', 'code': 'STARTER', 'monthly_price': 49, 'max_users': 5,
+            'name': 'Starter', 'code': 'CHKSTARTER', 'monthly_price': 49, 'max_users': 5,
         })
 
     def test_subdomain_availability(self):
@@ -95,7 +95,7 @@ class TestCheckoutHttp(HttpCase):
     def setUp(self):
         super().setUp()
         self.plan = self.env['ncollection.subscription.plan'].create({
-            'name': 'Starter', 'code': 'STARTER', 'monthly_price': 49,
+            'name': 'Starter', 'code': 'CHKSTARTER', 'monthly_price': 49,
             'yearly_price': 490, 'max_users': 5, 'description': 'For small teams',
         })
 
@@ -115,7 +115,7 @@ class TestCheckoutHttp(HttpCase):
     def test_register_creates_unverified_tenant_without_provisioning(self):
         result = self._rpc('/nc/checkout/register', {
             'company': 'Stranger LLC', 'contact': 'Sam', 'email': 'sam@stranger.example',
-            'subdomain': 'strangerllc', 'plan': 'STARTER', 'cycle': 'monthly',
+            'subdomain': 'strangerllc', 'plan': 'CHKSTARTER', 'cycle': 'monthly',
         })
         self.assertTrue(result.get('success'), result)
         tenant = self.env['ncollection.tenant'].sudo().search(
@@ -129,7 +129,7 @@ class TestCheckoutHttp(HttpCase):
 
     def test_register_rejects_reserved_subdomain(self):
         result = self._rpc('/nc/checkout/register', {
-            'company': 'X', 'email': 'x@x.example', 'subdomain': 'admin', 'plan': 'STARTER',
+            'company': 'X', 'email': 'x@x.example', 'subdomain': 'admin', 'plan': 'CHKSTARTER',
         })
         self.assertFalse(result.get('success'))
         self.assertEqual(result.get('error'), 'subdomain_reserved')

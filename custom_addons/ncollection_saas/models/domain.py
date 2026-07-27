@@ -75,10 +75,11 @@ class NcollectionDomain(models.Model):
         help="When the expiry alert last fired — throttles the weekly cron.")
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        ('fqdn_uniq', 'unique(fqdn)',
-         'A domain record for this FQDN already exists.'),
-    ]
+    # Odoo 19 silently ignores `_sql_constraints` — use models.Constraint so
+    # the unique index is actually created (constraint name ncollection_domain_fqdn_uniq).
+    _fqdn_uniq = models.Constraint(
+        'unique(fqdn)',
+        'A domain record for this FQDN already exists.')
 
     # ---- computed status -------------------------------------------------
 

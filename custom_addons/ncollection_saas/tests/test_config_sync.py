@@ -25,7 +25,7 @@ class TestConfigSync(TransactionCase):
         cls.env['ir.config_parameter'].sudo().set_param(
             'ncollection_saas.provisioning_quota_per_hour', '0')
         cls.plan = cls.env['ncollection.subscription.plan'].create({
-            'name': 'Growth', 'code': 'GROWTH',
+            'name': 'Growth', 'code': 'SYNCGROWTH',
             'allowed_module_names': 'crm,sale', 'max_users': 10})
 
     def _tenant(self, **kw):
@@ -40,7 +40,7 @@ class TestConfigSync(TransactionCase):
         tenant = self._tenant(status='suspended')
         vals = tenant._config_sync_vals()
         self.assertEqual(vals, {
-            'allowed_module_names': 'crm,sale', 'plan_code': 'GROWTH',
+            'allowed_module_names': 'crm,sale', 'plan_code': 'SYNCGROWTH',
             'subscription_status': 'suspended', 'max_users': 10,
         })
 

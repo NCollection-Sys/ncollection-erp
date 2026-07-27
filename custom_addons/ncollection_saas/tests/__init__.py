@@ -7,3 +7,5 @@ from . import test_checkout
 from . import test_domain
 from . import test_backup
 from . import test_lifecycle_effects
+
+from . import test_sql_constraints

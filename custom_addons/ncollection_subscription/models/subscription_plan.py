@@ -78,6 +78,7 @@ class SubscriptionPlan(models.Model):
                 result.append(name)
         return result
 
-    _sql_constraints = [
-        ('code_unique', 'unique(code)', 'The plan code must be unique.'),
-    ]
+    # Odoo 19 silently ignores `_sql_constraints` — use models.Constraint so the
+    # unique index is actually created (constraint ncollection_subscription_plan_code_unique).
+    _code_unique = models.Constraint(
+        'unique(code)', 'The plan code must be unique.')

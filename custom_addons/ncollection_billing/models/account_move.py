@@ -26,14 +26,13 @@ class AccountMove(models.Model):
     # in subscription._nc_bill_period is the fast path, this is the backstop.
     # Postgres treats NULLs as distinct, so ordinary non-subscription invoices
     # (both columns NULL) never collide.
-    _sql_constraints = [
-        (
-            'nc_billing_period_uniq',
-            'unique(nc_subscription_id, nc_period_start)',
-            'A subscription can only be invoiced once per billing period '
-            '(NCollection billing idempotency).',
-        ),
-    ]
+    # Odoo 19 silently ignores the old `_sql_constraints = [...]` list (see
+    # orm/model_classes.py) — declare via models.Constraint so the unique index
+    # is actually created. Constraint name = account_move_nc_billing_period_uniq.
+    _nc_billing_period_uniq = models.Constraint(
+        'unique(nc_subscription_id, nc_period_start)',
+        'A subscription can only be invoiced once per billing period '
+        '(NCollection billing idempotency).')
 
     def nc_payment_link(self):
         """Portal URL where the customer pays this subscription invoice online

@@ -28,7 +28,7 @@ class TestDomain(TransactionCase):
         params.set_param('ncollection_saas.provisioning_quota_per_hour', '0')
         params.set_param('ncollection_saas.base_domain', 'ncollectionerp.com')
         cls.plan = cls.env['ncollection.subscription.plan'].create({
-            'name': 'Growth', 'code': 'GROWTH',
+            'name': 'Growth', 'code': 'DOMGROWTH',
             'allowed_module_names': 'crm', 'max_users': 5})
         cls.Domain = cls.env['ncollection.domain']
 

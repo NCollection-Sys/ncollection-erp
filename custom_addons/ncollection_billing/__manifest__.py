@@ -1,7 +1,7 @@
 # pylint: disable=manifest-required-author
 {
     'name': 'NCollection Billing',
-    'version': '19.0.3.0.0',
+    'version': '19.0.3.1.0',
     'category': 'Services/SaaS',
     'summary': 'Subscription billing — invoices, UAE VAT, proration, Stripe, lifecycle emails (P2-T11/T13/T17)',
     'author': 'NCollection',
