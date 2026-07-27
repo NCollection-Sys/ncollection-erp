@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_fta_compliance_item_list" model="ir.ui.view">
+        <field name="name">ncollection.fta.compliance.item.list</field>
+        <field name="model">ncollection.fta.compliance.item</field>
+        <field name="arch" type="xml">
+            <list string="UAE FTA Compliance" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state == 'pending'"
+                       decoration-muted="state == 'not_applicable'"/>
+                <field name="note" optional="hide"/>
+                <field name="key" optional="hide" readonly="1"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fta_compliance_item_form" model="ir.ui.view">
+        <field name="name">ncollection.fta.compliance.item.form</field>
+        <field name="model">ncollection.fta.compliance.item</field>
+        <field name="arch" type="xml">
+            <form string="UAE FTA Compliance Item">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="state"/>
+                        <field name="key" readonly="1"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fta_compliance_item" model="ir.actions.act_window">
+        <field name="name">UAE FTA Compliance</field>
+        <field name="res_model">ncollection.fta.compliance.item</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">Track this company's UAE FTA readiness.</p>
+            <p>These items are seeded automatically and updated as VAT, chart of
+               accounts and FTA-compliant invoicing are configured.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_fta_compliance"
+              name="UAE FTA Compliance"
+              parent="account.menu_finance_configuration"
+              action="action_fta_compliance_item"
+              groups="account.group_account_manager"
+              sequence="100"/>
+
+</odoo>

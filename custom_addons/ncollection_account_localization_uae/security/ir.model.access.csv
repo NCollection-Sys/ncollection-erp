@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fta_compliance_item_manager,ncollection.fta.compliance.item.manager,model_ncollection_fta_compliance_item,account.group_account_manager,1,1,1,1
