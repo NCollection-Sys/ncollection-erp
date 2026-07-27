@@ -62,7 +62,7 @@ jobs:
       - name: Run invariants guard
         run: python scripts/ci/invariants.py
 
-      # pylint-odoo currently reports 60 pre-existing findings across the
+      # pylint-odoo currently reports 61 pre-existing findings across the
       # addons (missing README.rst, superfluous/deprecated manifest keys,
       # redundant `string=` attrs — measured directly, see
       # docs/markdown/PLANNING_REVIEW.md backlog). Baseline history:
@@ -72,6 +72,12 @@ jobs:
       #   C8113 debt was never counted — lint only runs on PRs, so the
       #   first PR after that merge inherited the bill (see PR #133).
       #   Paying this down is backlog work, not per-PR work.
+      #   60 → 61 (2026-07-27): F1-T01 (#109) adds ncollection_account_core.
+      #   Its manifest trips the one unavoidable manifest-required-author
+      #   (C8101) finding every ncollection_* manifest already has — we are a
+      #   proprietary project, not OCA. The 3 superfluous manifest-key
+      #   findings were AVOIDED by omitting installable/application/auto_install
+      #   (all Odoo defaults), so this bumps the count by exactly 1.
       # Rather than a blanket
       # continue-on-error (which would hide a PR introducing brand-new
       # findings just as easily as it hides the old ones), this fails ONLY
@@ -81,7 +87,7 @@ jobs:
       # finding fails the job.
       - name: Run pylint-odoo (fails only on NEW findings beyond baseline)
         run: |
-          PYLINT_BASELINE=60
+          PYLINT_BASELINE=61
           set +e
           pylint --load-plugins=pylint_odoo -d all -e odoolint custom_addons/ | tee pylint.log
           COUNT=$(grep -cE ": [CWEF][0-9]{4}: " pylint.log)
@@ -229,9 +235,9 @@ jobs:
             odoo --db_host=localhost --db_user=odoo --db_password=odoo \
                  --addons-path=/mnt/extra-addons,/mnt/oca-addons/account-financial-reporting,/mnt/oca-addons/mis-builder,/mnt/oca-addons/reporting-engine,/mnt/oca-addons/queue,/mnt/oca-addons/server-auth,/mnt/oca-addons/server-tools,/mnt/oca-addons/server-ux,/usr/lib/python3/dist-packages/odoo/addons \
                  -d ci_test \
-                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth \
+                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth,ncollection_account_core \
                  --test-enable \
-                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth \
+                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth,/ncollection_account_core \
                  --stop-after-init --log-level=test \
             2>&1 | tee odoo-test.log
           test "${PIPESTATUS[0]}" -eq 0
