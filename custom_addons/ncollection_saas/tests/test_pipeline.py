@@ -28,7 +28,7 @@ class TestAutoProvisioningPipeline(TransactionCase):
         cls.env['ir.config_parameter'].sudo().set_param(
             'ncollection_saas.provisioning_quota_per_hour', '0')  # never block in tests
         cls.plan = cls.env['ncollection.subscription.plan'].create({
-            'name': 'Growth', 'code': 'GROWTH',
+            'name': 'Growth', 'code': 'PIPEGROWTH',
             'allowed_module_names': 'crm, sale', 'max_users': 10,
         })
 

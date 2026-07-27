@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    'version': '19.0.5.0.0',
+    'version': '19.0.5.1.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync (P2-T01/T02/T03)',
     'author': 'NCollection',

@@ -24,7 +24,7 @@ class TestBackup(TransactionCase):
         cls.env['ir.config_parameter'].sudo().set_param(
             'ncollection_saas.provisioning_quota_per_hour', '0')
         cls.plan = cls.env['ncollection.subscription.plan'].create({
-            'name': 'Growth', 'code': 'GROWTH', 'allowed_module_names': 'crm'})
+            'name': 'Growth', 'code': 'BKPGROWTH', 'allowed_module_names': 'crm'})
         cls.Backup = cls.env['ncollection.backup']
 
     def _tenant(self, **kw):
