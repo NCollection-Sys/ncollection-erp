@@ -74,15 +74,25 @@ Acceptance proven by ``tests/test_uae_vat.py`` against the **default company**
 above): it lands on the ``'ae'`` chart with 5% VAT, and a posted sale credits 5%
 VAT to a real tax account.
 
-CoA verification + the full invoice→payment→reconciliation cycle stay with
-**#45 (P3-T05)**; this ticket delivers the VAT setup.
+CoA verification + the full invoice→payment→reconciliation cycle are delivered
+by **#45 (P3-T05)**, below; this ticket delivers the VAT setup.
+
+UAE Chart of Accounts (P3-T05)
+==============================
+
+The UAE CoA is Odoo's official ``l10n_ae`` chart (installed by the ``'ae'``
+template applied in P3-T04) — the CoA *mechanism* stays Odoo-owned (FPA §6), so
+this ticket **reuses and verifies** it rather than hand-authoring a bespoke
+chart. ``tests/test_uae_coa.py`` asserts the CoA is present (receivable/payable,
+income and expense accounts); separately, that the 5% VAT is linked to its VAT
+(output) account; and proves the acceptance end-to-end: a
+``customer invoice (5% VAT) → post → register payment → reconcile`` cycle where
+revenue, VAT output, the receivable and the payment's liquidity leg each post to
+the correct account and the receivable reconciles to a zero residual.
 
 Deferred (not in this ticket)
 =============================
 
-- **UAE CoA verification + full accounting cycle** → #45 (P3-T05). The ``'ae'``
-  template already installs the CoA here; #45 owns its structural verification
-  and the sale→invoice→payment→reconcile proof.
 - **AED / multi-currency** → #46 (P3-T06); **bilingual FTA invoices** → #49
   (P3-T09).
 - Arabic reports/documents → later localization work.
