@@ -81,6 +81,9 @@ jobs:
       #   61 → 62 (2026-07-27): F5-T01 (#126) adds
       #   ncollection_account_localization_uae — same single unavoidable
       #   manifest-required-author (C8101); +1.
+      #   62 → 55 (2026-07-28): #226 removes the dead, never-loaded
+      #   ncollection.tenant.wizard (a demo-sprint addon called out above),
+      #   paying down the 7 W8113/C8113 findings it carried.
       # Rather than a blanket
       # continue-on-error (which would hide a PR introducing brand-new
       # findings just as easily as it hides the old ones), this fails ONLY
@@ -90,7 +93,7 @@ jobs:
       # finding fails the job.
       - name: Run pylint-odoo (fails only on NEW findings beyond baseline)
         run: |
-          PYLINT_BASELINE=62
+          PYLINT_BASELINE=55
           set +e
           pylint --load-plugins=pylint_odoo -d all -e odoolint custom_addons/ | tee pylint.log
           COUNT=$(grep -cE ": [CWEF][0-9]{4}: " pylint.log)

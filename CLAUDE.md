@@ -126,6 +126,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Routing proof (P1-T06) | `rtclienta` · `rtclientb` · `rtadmin` | `make routing-clean` |
 | E2E (P1-T20) | `e2eclienta` · `e2eclientb` · `e2eadmin` | `make e2e-clean` |
 | Provisioning (P2-T01) | `prov*` | — |
+| Load test (P3-T03) | `loadtesta` · `loadtestb` · `loadtestc` | `make load-test-clean` |
 
 Fixture names must be **alphanumeric**: `db_filter=^%d$` routes a subdomain to the database
 of the same name, underscores are invalid in hostnames, hyphens need Postgres quoting.
