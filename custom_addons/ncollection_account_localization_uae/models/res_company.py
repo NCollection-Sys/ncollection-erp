@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Per-company FTA readiness rollup + auto-seeding (F5-T01)."""
+"""Per-company FTA readiness rollup + auto-seeding (F5-T01) + UAE VAT
+localization application (P3-T04)."""
+import logging
+
 from odoo import api, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class ResCompany(models.Model):
@@ -32,3 +37,57 @@ class ResCompany(models.Model):
         for company in companies:
             Item._ensure_for_company(company)
         return companies
+
+    def _nc_apply_uae_localization(self):
+        """Set up UAE VAT on each company by loading Odoo's official 'ae' chart
+        template (P3-T04).
+
+        The 'ae' template (l10n_ae) OWNS the mechanism — chart of accounts,
+        5% standard / 0% zero-rated / exempt taxes, tax groups and the
+        domestic/GCC/international fiscal positions — and wires the company's
+        default sale/purchase taxes to it. We only trigger the load; we don't
+        redefine any of it (FPA §7: mechanisms stay Odoo-owned).
+
+        Idempotent + fail-soft, so it is safe to call from post_init /
+        provisioning:
+          - skips a company that already has a chart of accounts loaded
+            (``chart_template`` set) — never clobbers existing accounting;
+          - never raises: a localization failure must not break module install
+            or tenant provisioning (house style, like the mail/seed hooks).
+        """
+        ChartTemplate = self.env['account.chart.template']
+        for company in self:
+            # Skip a company already on a REAL localization. 'generic_coa' is
+            # Odoo's placeholder fallback (see below) — treat it as "not
+            # localized" so a company that got the generic chart is still
+            # upgraded to the UAE one. (Assumption: this module is UAE-specific,
+            # so any company in a tenant where it is installed is a UAE company —
+            # db-per-tenant means one company; try_loading also sets country=AE.)
+            if company.chart_template and company.chart_template != 'generic_coa':
+                _logger.info(
+                    "Company %s (%s) already on chart '%s' — leaving it as is; "
+                    "UAE VAT not forced.",
+                    company.id, company.name, company.chart_template)
+                continue
+            try:
+                with self.env.cr.savepoint():
+                    ChartTemplate.try_loading('ae', company, install_demo=False)
+                # Odoo core's `account` install schedules a DEFERRED
+                # try_loading('generic_coa') on registry._auto_install_template,
+                # consumed in ir.module _register_hook AFTER every post_init hook
+                # has run — it would otherwise UNLINK the 'ae' chart we just
+                # loaded and replace it with the generic 15% placeholder. Cancel
+                # that pending fallback now that the correct chart is in place.
+                # (registry-GLOBAL: Odoo only keeps the single last-scheduled
+                # closure, for the one company it targeted — safe to cancel under
+                # db-per-tenant / one company per DB.)
+                if hasattr(self.env.registry, '_auto_install_template'):
+                    del self.env.registry._auto_install_template
+            except Exception:  # noqa: BLE001 - must never break install/provisioning
+                # savepoint rolled the partial load back, so the company stays on
+                # no/placeholder chart and remains RETRYABLE (the generic fallback,
+                # if still pending, provides basic accounting — some > none).
+                _logger.error(
+                    "Could not apply the UAE 'ae' chart template to company %s "
+                    "(%s) — UAE VAT is NOT set up; rolled back, retryable.",
+                    company.id, company.name, exc_info=True)
