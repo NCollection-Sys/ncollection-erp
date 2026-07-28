@@ -24,6 +24,7 @@
     // the i18n layer lands in P3-T08).
     const ERRORS = {
         missing_fields: "Please fill in the required fields.",
+        field_too_long: "That entry is too long — please shorten it.",
         invalid_email: "That email address looks invalid.",
         captcha_failed: "Captcha check failed — please try again.",
         subdomain_invalid: "Use 3–63 letters/numbers, starting with a letter.",

@@ -166,6 +166,14 @@ class TestCheckoutHttp(HttpCase):
         self.assertFalse(result.get('success'))
         self.assertEqual(result.get('error'), 'field_too_long')
 
+    def test_register_accepts_exactly_max_length(self):
+        # the cap is `> 200`, so exactly 200 chars must be ACCEPTED (boundary).
+        result = self._rpc('/nc/checkout/register', {
+            'company': 'C' * 200, 'contact': 'N' * 200, 'email': 'ok@x.example',
+            'subdomain': 'boundaryco', 'plan': 'CHKSTARTER',
+        })
+        self.assertNotEqual(result.get('error'), 'field_too_long', result)
+
     def test_status_login_url_uses_base_domain_not_localhost(self):
         """#210: a ready tenant's login_url must be built from the canonical
         ncollection_saas.base_domain param (seeded 'ncollectionerp.com'), NOT the

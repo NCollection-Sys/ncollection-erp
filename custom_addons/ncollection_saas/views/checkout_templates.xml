@@ -75,13 +75,13 @@
                         <input type="hidden" name="cycle" t-att-value="billing_cycle"/>
 
                         <label>Company name
-                            <input type="text" name="company" required="required" autocomplete="organization"/>
+                            <input type="text" name="company" required="required" maxlength="200" autocomplete="organization"/>
                         </label>
                         <label>Your name
-                            <input type="text" name="contact" autocomplete="name"/>
+                            <input type="text" name="contact" maxlength="200" autocomplete="name"/>
                         </label>
                         <label>Work email
-                            <input type="email" name="email" required="required" autocomplete="email"/>
+                            <input type="email" name="email" required="required" maxlength="200" autocomplete="email"/>
                         </label>
                         <label>Workspace address
                             <span class="nc-checkout__subdomain">

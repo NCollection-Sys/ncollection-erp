@@ -109,6 +109,16 @@ plan.write(vals) if plan else Plan.create(vals)
 # trial quota (3/24h) — a leaked trial from an interrupted run would otherwise make
 # the register journey fail with quota_exceeded (#214-E). CI is unaffected (fresh db).
 Tenant = env['ncollection.tenant'].sudo()
+# Register the e2e client tenants in the platform registry so the public checkout
+# availability endpoint — registry-based since #226 (it no longer opens a psycopg2
+# probe per call) — reports their subdomains as taken. In production the platform
+# always holds a tenant record for each provisioned DB; this fixture previously
+# created the physical DBs only and relied on that per-call probe.
+_e2e_plan = Plan.search([('code', '=', 'E2ESTARTER')], limit=1)
+for _db in ('e2eclienta', 'e2eclientb'):
+    if not Tenant.search([('database_name', '=', _db)], limit=1):
+        Tenant.create({'company_name': _db, 'database_name': _db,
+                       'plan_id': _e2e_plan.id, 'database_status': 'ready'})
 trials = Tenant.search([('status', '=', 'trial'), ('checkout_source_ip', '!=', False)])
 # subscriptions first: subscription.tenant_id is ondelete=restrict, so a tenant
 # cannot be unlinked while a subscription still points at it.

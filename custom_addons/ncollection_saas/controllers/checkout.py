@@ -79,8 +79,11 @@ class CheckoutController(http.Controller):
     @http.route('/nc/checkout/availability', type='jsonrpc', auth='public', methods=['POST'])
     def availability(self, subdomain=None, **kw):
         # deep=False: this public endpoint is hammered, so it stops at the tenant
-        # registry (cheap ORM) and skips the per-call psycopg2 probe (#226 M-1).
-        # register() below runs the authoritative deep check before provisioning.
+        # registry (cheap ORM) and skips the per-call psycopg2 probe — the
+        # connection-churn half of #226 M-1. Per-request RATE capping stays the
+        # nginx edge's job (the 'onboard' zone, from P3-T12 H-1); we don't add a
+        # duplicate app-level counter here. register() below runs the
+        # authoritative deep check before provisioning.
         available, reason = request.env['ncollection.tenant'].sudo()._nc_subdomain_availability(
             subdomain, deep=False)
         return {'available': available, 'reason': reason}
