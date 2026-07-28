@@ -17,6 +17,9 @@ from odoo import fields, http
 from odoo.http import request
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+# Defensive length cap on the free-text checkout fields before Tenant.create()
+# (#226 M-3) — they are unbounded Char otherwise.
+_MAX_FIELD_LEN = 200
 TRIAL_DAYS = 14
 # The canonical base domain param, shared with the domain layer + config-sync
 # (models/domain.py, models/config_sync.py) and seeded to 'ncollectionerp.com' in
@@ -75,7 +78,14 @@ class CheckoutController(http.Controller):
 
     @http.route('/nc/checkout/availability', type='jsonrpc', auth='public', methods=['POST'])
     def availability(self, subdomain=None, **kw):
-        available, reason = request.env['ncollection.tenant'].sudo()._nc_subdomain_availability(subdomain)
+        # deep=False: this public endpoint is hammered, so it stops at the tenant
+        # registry (cheap ORM) and skips the per-call psycopg2 probe — the
+        # connection-churn half of #226 M-1. Per-request RATE capping stays the
+        # nginx edge's job (the 'onboard' zone, from P3-T12 H-1); we don't add a
+        # duplicate app-level counter here. register() below runs the
+        # authoritative deep check before provisioning.
+        available, reason = request.env['ncollection.tenant'].sudo()._nc_subdomain_availability(
+            subdomain, deep=False)
         return {'available': available, 'reason': reason}
 
     @http.route('/nc/checkout/register', type='jsonrpc', auth='public', methods=['POST'])
@@ -91,6 +101,9 @@ class CheckoutController(http.Controller):
         # --- validation (stable error keys the UI translates) ---
         if not company or not email:
             return {'success': False, 'error': 'missing_fields'}
+        if (len(company) > _MAX_FIELD_LEN or len(contact) > _MAX_FIELD_LEN
+                or len(email) > _MAX_FIELD_LEN):
+            return {'success': False, 'error': 'field_too_long'}
         if not EMAIL_RE.match(email):
             return {'success': False, 'error': 'invalid_email'}
         if not Tenant._nc_verify_recaptcha(recaptcha_token, source_ip):

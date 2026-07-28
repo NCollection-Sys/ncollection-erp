@@ -63,21 +63,32 @@ class TenantCheckout(models.Model):
     def _nc_normalize_subdomain(raw):
         return (raw or '').strip().lower()
 
-    def _nc_subdomain_availability(self, subdomain):
+    def _nc_subdomain_availability(self, subdomain, deep=True):
         """Return (available: bool, reason: str). reason in
-        {'', 'invalid', 'reserved', 'taken'} — a stable key the UI translates."""
+        {'', 'invalid', 'reserved', 'taken'} — a stable key the UI translates.
+
+        ``deep`` (default True) also probes the physical database cluster for an
+        orphan DB — authoritative, used at register time. The public
+        ``/nc/checkout/availability`` endpoint calls it with ``deep=False`` so a
+        best-effort UX check stops at the tenant registry (a cheap ORM query) and
+        never opens a psycopg2 connection per request: that endpoint is hammered,
+        and the physical probe (``_database_exists``) opened a fresh connection
+        every call (#226 M-1). register() still runs the full ``deep`` check, so
+        an orphan-DB collision is caught authoritatively before provisioning.
+        """
         subdomain = self._nc_normalize_subdomain(subdomain)
         if not SUBDOMAIN_RE.match(subdomain):
             return False, 'invalid'
         if subdomain in RESERVED_SUBDOMAINS or subdomain in OFFENSIVE_SUBDOMAINS:
             return False, 'reserved'
-        # Collision space: an existing tenant, the live platform DB, or any
-        # database already in the cluster (a half-provisioned or foreign DB).
+        # Collision space: an existing tenant, the live platform DB, or (deep
+        # only) any database already in the cluster (a half-provisioned or
+        # foreign DB).
         if subdomain == self.env.cr.dbname:
             return False, 'taken'
         if self.sudo().search_count([('database_name', '=', subdomain)]):
             return False, 'taken'
-        if self.env['ncollection.provisioning.job'].sudo()._database_exists(subdomain):
+        if deep and self.env['ncollection.provisioning.job'].sudo()._database_exists(subdomain):
             return False, 'taken'
         return True, ''
 

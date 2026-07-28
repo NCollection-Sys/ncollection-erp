@@ -48,6 +48,29 @@ class TestCheckoutModel(TransactionCase):
             self.assertFalse(ok)
             self.assertEqual(reason, 'taken')
 
+    def test_availability_deep_flag_gates_physical_probe(self):
+        # #226 M-1: the public availability endpoint (deep=False) must NOT open a
+        # psycopg2 connection per call; the authoritative register path (deep=True)
+        # still consults the physical DB probe.
+        with patch('%s._database_exists' % ENGINE, return_value=False) as probe:
+            ok, _ = self.Tenant._nc_subdomain_availability('freeone', deep=False)
+            self.assertTrue(ok)
+            probe.assert_not_called()
+            ok2, _ = self.Tenant._nc_subdomain_availability('freeone', deep=True)
+            self.assertTrue(ok2)
+            probe.assert_called()
+
+    def test_availability_shallow_still_flags_registry_taken(self):
+        # a name taken in the tenant registry resolves without any DB probe,
+        # even in the shallow (public) mode.
+        self.Tenant.create({'company_name': 'Reg Co', 'database_name': 'regtaken',
+                            'plan_id': self.plan.id})
+        with patch('%s._database_exists' % ENGINE) as probe:
+            ok, reason = self.Tenant._nc_subdomain_availability('regtaken', deep=False)
+            self.assertFalse(ok)
+            self.assertEqual(reason, 'taken')
+            probe.assert_not_called()
+
     def test_recaptcha_skipped_when_unset(self):
         # no secret configured (default) => verification is skipped
         self.env['ir.config_parameter'].sudo().set_param('ncollection_saas.recaptcha_secret', '')
@@ -133,6 +156,23 @@ class TestCheckoutHttp(HttpCase):
         })
         self.assertFalse(result.get('success'))
         self.assertEqual(result.get('error'), 'subdomain_reserved')
+
+    def test_register_rejects_overlong_free_text(self):
+        # #226 M-3: a defensive length cap on the unbounded free-text fields.
+        result = self._rpc('/nc/checkout/register', {
+            'company': 'X' * 201, 'email': 'x@x.example', 'subdomain': 'longco',
+            'plan': 'CHKSTARTER',
+        })
+        self.assertFalse(result.get('success'))
+        self.assertEqual(result.get('error'), 'field_too_long')
+
+    def test_register_accepts_exactly_max_length(self):
+        # the cap is `> 200`, so exactly 200 chars must be ACCEPTED (boundary).
+        result = self._rpc('/nc/checkout/register', {
+            'company': 'C' * 200, 'contact': 'N' * 200, 'email': 'ok@x.example',
+            'subdomain': 'boundaryco', 'plan': 'CHKSTARTER',
+        })
+        self.assertNotEqual(result.get('error'), 'field_too_long', result)
 
     def test_status_login_url_uses_base_domain_not_localhost(self):
         """#210: a ready tenant's login_url must be built from the canonical
