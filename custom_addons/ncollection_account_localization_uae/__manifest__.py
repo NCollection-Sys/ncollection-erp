@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection UAE Localization',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Accounting/Localizations',
     'summary': 'UAE localization scaffold: TRN validation + FTA compliance '
                'tracking; the home for the NCollection UAE VAT/CoA/invoice work',
@@ -33,6 +33,7 @@
         'security/ir.model.access.csv',
         'security/fta_compliance_security.xml',
         'views/fta_compliance_views.xml',
+        'views/report_invoice.xml',
     ],
     # Seeds the standard FTA items for existing companies; new companies get
     # theirs via res.company.create.

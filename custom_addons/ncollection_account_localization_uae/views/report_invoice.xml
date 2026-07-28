@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- P3-T09: tenant brand accent on the UAE tax invoice.
+
+         The supplier LOGO already renders via web.external_layout
+         (res.company.logo, seeded by ncollection_branding), so it needs no
+         change here. This adds the tenant's primary brand COLOUR as a thin
+         header rule above the invoice's information block — the "colours" half
+         of the P1-T16 branding integration, scoped to the invoice.
+
+         Inherits the base account.report_invoice_document: the UAE document
+         (l10n_ae -> l10n_gcc_report_invoice_document) is a primary inherit of
+         that base, so this accent flows through to the UAE invoice too. Guarded
+         to UAE companies so non-UAE invoices are untouched. nc_primary_color is
+         a validated hex (ncollection_branding._check_nc_brand_colors), so the
+         style interpolation carries no injection surface. -->
+    <template id="report_invoice_document_nc_uae_brand"
+              inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@id='informations']" position="before">
+            <div name="nc_uae_brand_rule"
+                 t-if="o.company_id.country_id.code == 'AE' and o.company_id.nc_primary_color"
+                 t-attf-style="border-top: 3px solid {{o.company_id.nc_primary_color}}; margin-bottom: 12px;"/>
+        </xpath>
+    </template>
+
+</odoo>

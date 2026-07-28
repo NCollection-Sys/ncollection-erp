@@ -39,14 +39,18 @@ class ResCompany(models.Model):
         return companies
 
     def _nc_apply_uae_localization(self):
-        """Set up UAE VAT on each company by loading Odoo's official 'ae' chart
-        template (P3-T04).
+        """Set up UAE localization on each company: load Odoo's official 'ae'
+        chart template (P3-T04) and enable bilingual UAE tax invoices (P3-T09).
 
-        The 'ae' template (l10n_ae) OWNS the mechanism — chart of accounts,
-        5% standard / 0% zero-rated / exempt taxes, tax groups and the
+        The 'ae' template (l10n_ae) OWNS the accounting mechanism — chart of
+        accounts, 5% standard / 0% zero-rated / exempt taxes, tax groups and the
         domestic/GCC/international fiscal positions — and wires the company's
         default sale/purchase taxes to it. We only trigger the load; we don't
         redefine any of it (FPA §7: mechanisms stay Odoo-owned).
+
+        For invoices, we flip on l10n_gcc's dual-language layout and activate
+        Arabic so the tax invoice renders bilingual Arabic/English (the layout
+        itself is Odoo-owned, l10n_ae/l10n_gcc).
 
         Idempotent + fail-soft, so it is safe to call from post_init /
         provisioning:
@@ -55,6 +59,7 @@ class ResCompany(models.Model):
           - never raises: a localization failure must not break module install
             or tenant provisioning (house style, like the mail/seed hooks).
         """
+        self._nc_enable_bilingual_invoices()
         ChartTemplate = self.env['account.chart.template']
         for company in self:
             # Skip a company already on a REAL localization. 'generic_coa' is
@@ -91,3 +96,29 @@ class ResCompany(models.Model):
                     "Could not apply the UAE 'ae' chart template to company %s "
                     "(%s) — UAE VAT is NOT set up; rolled back, retryable.",
                     company.id, company.name, exc_info=True)
+
+    def _nc_enable_bilingual_invoices(self):
+        """Turn on the bilingual Arabic/English tax-invoice layout for these
+        companies (P3-T09).
+
+        The layout itself is Odoo-owned (``l10n_ae`` → ``l10n_gcc_invoice``); it
+        renders the Arabic column only when BOTH are true:
+          - the company's ``l10n_gcc_dual_language_invoice`` flag is set, and
+          - Arabic (``ar_001``) is an ACTIVE language.
+        We flip both on here so a UAE tenant's invoices are bilingual out of the
+        box. Fail-soft: a missing field / language must never break install or
+        provisioning (same contract as the chart load above).
+
+        (Broader Arabic/RTL enablement is P3-T08's remit; here we only need the
+        secondary language active so the invoice's Arabic column renders.)
+        """
+        if 'l10n_gcc_dual_language_invoice' in self._fields:
+            self.filtered(
+                lambda c: not c.l10n_gcc_dual_language_invoice
+            ).l10n_gcc_dual_language_invoice = True
+        try:
+            self.env['res.lang']._activate_lang('ar_001')
+        except Exception:  # noqa: BLE001 - must never break install/provisioning
+            _logger.warning(
+                "Could not activate Arabic (ar_001); UAE invoices will render "
+                "English-only until Arabic is enabled.", exc_info=True)
