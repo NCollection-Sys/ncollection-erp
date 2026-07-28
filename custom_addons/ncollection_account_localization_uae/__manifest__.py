@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection UAE Localization',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Localizations',
     'summary': 'UAE localization scaffold: TRN validation + FTA compliance '
                'tracking; the home for the NCollection UAE VAT/CoA/invoice work',
@@ -22,11 +22,13 @@
     #                                  consistent (mirrors the family layering).
     #   - base_vat                   : Odoo's VAT-check dispatch; we add check_vat_ae
     #                                  to it (extend, don't replace) for the UAE TRN.
-    # NOTE: l10n_ae (Odoo's UAE CoA/tax templates, in the image) is deliberately
-    # NOT a dependency here — the "mechanisms stay Odoo-owned" data/templates get
-    # wired in by #44/#45 (oca-scout survey on #126), keeping this scaffold's
-    # footprint matched to its actual deliverables.
-    'depends': ['account', 'ncollection_account_core', 'base_vat'],
+    #   - l10n_ae                     : Odoo's official UAE localization — the 'ae'
+    #                                  chart template (5%/0%/exempt VAT, tax groups,
+    #                                  fiscal positions, CoA). P3-T04 REUSES this
+    #                                  Odoo-owned mechanism and applies it to the
+    #                                  tenant company at install (hooks.py /
+    #                                  res_company._nc_apply_uae_localization).
+    'depends': ['account', 'ncollection_account_core', 'base_vat', 'l10n_ae'],
     'data': [
         'security/ir.model.access.csv',
         'security/fta_compliance_security.xml',
