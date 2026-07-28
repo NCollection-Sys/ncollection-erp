@@ -120,7 +120,10 @@ class ProvisioningJob(models.Model):
         retry = self.status == 'failed'
         db = self.database_name
         self._set_status('running', self.env._("Provisioning started for database '%s'.", db))
-        self.tenant_id.database_status = 'provisioning'
+        # nc_provisioning: authorises the guarded 'provisioning'/'ready' database
+        # status transitions (ncollection.tenant._nc_guard_db_status, #228).
+        self.tenant_id.with_context(nc_provisioning=True).write(
+            {'database_status': 'provisioning'})
         created = False
         try:
             if retry and self._safe_to_drop(db):
@@ -383,7 +386,8 @@ class ProvisioningJob(models.Model):
         db = self.database_name
         self.write({'status': 'done', 'completed_at': fields.Datetime.now()})
         tenant = self.tenant_id
-        tenant.write({
+        # nc_provisioning: authorises the guarded 'ready' transition (#228).
+        tenant.with_context(nc_provisioning=True).write({
             'database_status': 'ready',
             'portal_url': tenant.portal_url or self._portal_url(db),
         })

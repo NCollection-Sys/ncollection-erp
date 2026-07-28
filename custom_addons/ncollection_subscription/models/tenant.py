@@ -1,6 +1,6 @@
 import uuid
 
-from odoo import fields, models
+from odoo import SUPERUSER_ID, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -88,6 +88,34 @@ class Tenant(models.Model):
         'unique(database_name)',
         'That database name is already assigned to another tenant.',
     )
+
+    # ------------------------------------------------------------------
+    # database_status transition guard (ISO-1 defense-in-depth, #228)
+    # ------------------------------------------------------------------
+    # Only the provisioning ENGINE (which sets the `nc_provisioning` context) or a
+    # superuser may move a tenant into 'provisioning'/'ready'. A
+    # group_platform_admin has write access to ncollection.tenant and could
+    # otherwise flip database_status='ready' by hand — the status config-sync keys
+    # its cross-DB push on. Harmless today (the unique(database_name) constraint
+    # means a record can only point at its OWN db), but a cleaner boundary than
+    # "any writer with the group". Superuser/SUPERUSER_ID (migrations, tests,
+    # shell, sudo'd flows) stay allowed.
+    _NC_ENGINE_ONLY_DB_STATUSES = ('provisioning', 'ready')
+
+    # Guards the WRITE (transition) path only — the vector the assessment names
+    # ("a group_platform_admin can still write database_status='ready'"). Creates
+    # aren't guarded: only base.group_system / superuser can create a tenant, and
+    # every real create uses the 'not_provisioned' default (checkout) or runs as
+    # superuser (tests/seed) — there is no non-super create-to-'ready' flow.
+    def write(self, vals):
+        status = vals.get('database_status')
+        if (status in self._NC_ENGINE_ONLY_DB_STATUSES
+                and self.env.uid != SUPERUSER_ID and not self.env.su
+                and not self.env.context.get('nc_provisioning')):
+            raise ValidationError(self.env._(
+                "Only the provisioning engine may set a tenant's database status "
+                "to '%(status)s'.", status=status))
+        return super().write(vals)
 
     # ------------------------------------------------------------------
     # Guarded lifecycle transitions
