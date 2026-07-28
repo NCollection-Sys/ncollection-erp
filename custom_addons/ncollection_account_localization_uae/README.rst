@@ -153,11 +153,14 @@ Deferred (not in this ticket)
 =============================
 
 - **Automated exchange-rate freshness** (a live provider for floating currencies)
-  → its own infra follow-up: the seeded pegs cover the fixed-peg currencies with
-  no external calls, and the obvious OCA candidate (``OCA/currency``'s ECB
-  provider) cannot produce AED or GCC rates at all. Adopting a live feed is an
-  infra decision (repos.yml pin, provisioning, per-tenant cron vs centralized
-  fetch, tenant-DB egress) that belongs in a scoped ticket.
+  → tracked in **#236**: the seeded pegs cover the fixed-peg currencies with no
+  external calls, and the obvious OCA candidate (``OCA/currency``'s ECB provider)
+  cannot produce AED or GCC rates at all. Adopting a live feed is an infra
+  decision (repos.yml pin, provisioning, per-tenant cron vs centralized fetch,
+  tenant-DB egress) that belongs in a scoped ticket. **Note for that follow-up:**
+  ``_nc_setup_uae_currencies``'s idempotency guard skips a currency that already
+  has *any* rate row for the root company, so a daily-rate writer must add its
+  own dated rows rather than re-calling this helper.
 - Arabic/RTL UI enablement → #48 (P3-T08); e-invoicing QR → later.
 
 Dependencies

@@ -26,6 +26,9 @@ _UAE_CURRENCY_USD_PEG = {
     'KWD': 3.26,             # basket peg (indicative)
     'EUR': 1.08,             # floating (indicative)
 }
+# Currencies whose seeded rate is a non-authoritative snapshot (basket/floating)
+# rather than a fixed peg — logged so provisioning shows they need refreshing.
+_UAE_INDICATIVE_CURRENCIES = frozenset({'KWD', 'EUR'})
 
 
 class ResCompany(models.Model):
@@ -161,14 +164,21 @@ class ResCompany(models.Model):
           - enable the multi-currency UI group;
           - set AED rounding to the fils (0.01);
           - seed the fixed USD/AED peg rates (and GCC pegs) as
-            ``res.currency.rate`` rows scoped to each company.
+            ``res.currency.rate`` rows scoped to each company's MAIN (root)
+            company — Odoo rejects rates on a branch company
+            (``res.currency.rate._check_company_id``) and only reads the root
+            company's rate at conversion time (``_get_rates`` filters on
+            ``(False, root_id)``).
 
         The AED/USD peg is fixed (``_AED_PER_USD``), so a USD invoice converts to
         AED deterministically with no external rate feed. Automated freshness for
-        floating currencies is a deferred follow-up (see README).
+        floating currencies is a deferred follow-up (README / #236).
 
-        Idempotent (skips currencies already rated for the company) and
-        fail-soft: a currency hiccup must never break install/provisioning.
+        Idempotent (skips a currency already rated for the root company) and
+        fail-soft: every risky step runs in its OWN savepoint, so a single
+        failure can neither poison the transaction nor starve the rest of the
+        batch — the regression contract ``_nc_apply_uae_localization`` already
+        keeps (a swallowed error without a savepoint aborts the whole cursor).
         """
         Currency = self.env['res.currency'].with_context(active_test=False)
         codes = ['AED'] + list(_UAE_CURRENCY_USD_PEG)
@@ -176,40 +186,66 @@ class ResCompany(models.Model):
         by_code = {c.name: c for c in currencies}
         Rate = self.env['res.currency.rate']
         rate_date = fields.Date.to_date(_UAE_PEG_RATE_DATE)
+
+        # DB-global step (activate currencies, AED rounding, multi-currency
+        # group), in its own savepoint so a failure leaves the cursor usable.
         try:
-            # DB-global: activate the currencies, AED rounding, multi-currency UI
-            currencies.filtered(lambda c: not c.active).write({'active': True})
-            aed = by_code.get('AED')
-            if aed and aed.rounding != 0.01:
-                aed.rounding = 0.01
-            self._nc_enable_multi_currency_group()
-            # per-company: seed the fixed peg rates (units of the currency per
-            # 1 AED), only where the company has no rate for that currency yet
-            for company in self:
-                for code, usd_per_unit in _UAE_CURRENCY_USD_PEG.items():
-                    cur = by_code.get(code)
-                    if not cur or Rate.search_count([
-                            ('currency_id', '=', cur.id),
-                            ('company_id', '=', company.id)]):
-                        continue
-                    Rate.create({
-                        'currency_id': cur.id,
-                        'company_id': company.id,
-                        'name': rate_date,
-                        'rate': 1.0 / (usd_per_unit * _AED_PER_USD),
-                    })
+            with self.env.cr.savepoint():
+                currencies.filtered(lambda c: not c.active).write(
+                    {'active': True})
+                aed = by_code.get('AED')
+                if aed and aed.rounding != 0.01:
+                    aed.rounding = 0.01
+                self._nc_enable_multi_currency_group()
         except Exception:  # noqa: BLE001 - must never break install/provisioning
             _logger.warning(
-                "UAE currency setup incomplete for company(ies) %s — "
-                "foreign-currency invoicing may need manual currency/rate setup.",
-                self.ids, exc_info=True)
+                "UAE currency activation/rounding/multi-currency group failed; "
+                "foreign-currency invoicing may need manual setup.", exc_info=True)
+
+        # Per-company peg rates, scoped to the ROOT company, each in its own
+        # savepoint so one bad row cannot poison the batch or abort a bulk
+        # migration transaction.
+        for company in self:
+            root_id = company.root_id.id
+            for code, usd_per_unit in _UAE_CURRENCY_USD_PEG.items():
+                cur = by_code.get(code)
+                if not cur or Rate.search_count([
+                        ('currency_id', '=', cur.id),
+                        ('company_id', '=', root_id)]):
+                    continue
+                try:
+                    with self.env.cr.savepoint():
+                        Rate.create({
+                            'currency_id': cur.id,
+                            'company_id': root_id,
+                            'name': rate_date,
+                            'rate': 1.0 / (usd_per_unit * _AED_PER_USD),
+                        })
+                    if code in _UAE_INDICATIVE_CURRENCIES:
+                        _logger.info(
+                            "Seeded INDICATIVE %s peg for company %s "
+                            "(floating/basket — refresh via #236).",
+                            code, root_id)
+                except Exception:  # noqa: BLE001
+                    _logger.warning(
+                        "UAE peg-rate seed failed for company %s / %s; set it "
+                        "manually.", root_id, code, exc_info=True)
 
     def _nc_enable_multi_currency_group(self):
         """Grant the multi-currency UI group so users can invoice in a foreign
         currency (the ORM already allows it; this is the Settings toggle's
-        effect). Idempotent + fail-soft."""
+        effect).
+
+        Odoo core also auto-grants this when a second currency is activated
+        (``res.currency._toggle_group_multi_currency``); we call core's own
+        ``_apply_group`` explicitly so the group is guaranteed even when the
+        currencies were already active (no ``active`` change to trigger core).
+        ``_apply_group`` is itself idempotent.
+        """
         group_mc = self.env.ref('base.group_multi_currency',
                                 raise_if_not_found=False)
         group_user = self.env.ref('base.group_user', raise_if_not_found=False)
-        if group_mc and group_user and group_mc not in group_user.implied_ids:
-            group_user.sudo().write({'implied_ids': [(4, group_mc.id)]})
+        if group_mc and group_user and group_mc not in group_user.all_implied_ids:
+            group_user.sudo()._apply_group(group_mc.sudo())
+            _logger.info(
+                "Enabled multi-currency (group_multi_currency) for UAE tenant.")
