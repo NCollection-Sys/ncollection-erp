@@ -12,16 +12,18 @@ The layout itself is **Odoo-owned** (`account.report_invoice_document` →
 **tenant brand accent** (P1-T16, invoice-scoped). Nothing about the FTA layout
 is re-authored here.
 
-Sample invoice under test: a posted `out_invoice`, supplier + customer both with
-a 15-digit TRN, one line at AED 100 + 5% VAT — rendered via
-`ir.actions.report._render_qweb_html('account.account_invoices', …)` in
-`tests/test_uae_invoice.py`.
+Sample invoice under test: a posted `out_invoice`, supplier + a **VAT-registered
+(company) recipient** both with a 15-digit TRN, one line at AED 100 + 5% VAT —
+rendered via `ir.actions.report._render_qweb_html('account.account_invoices', …)`
+in `tests/test_uae_invoice.py`. The registered recipient is what makes l10n_ae
+render the **full** tax invoice (`_l10n_ae_is_simplified` is false for a company
+recipient), not the simplified one — the test asserts `"Simplified"` is absent.
 
 | # | FTA requirement (Art. 59(1)) | Satisfied by | Evidence |
 |---|------------------------------|--------------|----------|
 | 1 | The words **"Tax Invoice"** clearly displayed | `l10n_ae`/`l10n_gcc` report title | `test_invoice_pdf_has_uae_fta_elements` asserts `"Tax Invoice"` |
 | 2 | Supplier **name, address and TRN** | `web.external_layout` company header + `l10n_ae` TRN block (`company.vat`) | same test asserts `company.vat` (TRN) renders |
-| 3 | Recipient **name, address and TRN** (where registered) | partner block; `l10n_gcc` renders the customer TRN | customer created with `vat='1000…011'`; partner block renders |
+| 3 | Recipient **name, address and TRN** (where registered) | partner block; `l10n_gcc` renders the customer TRN | `test_invoice_pdf_has_uae_fta_elements` asserts `invoice.partner_id.vat` (recipient TRN) renders |
 | 4 | **Sequential number** uniquely identifying the document | `account.move.name` (Odoo journal sequence) | same test asserts `invoice.name` renders |
 | 5 | **Date of issue** | `invoice_date` in the info block | rendered in `#informations` |
 | 6 | **Date of supply**, if different | `l10n_gcc` "Delivery Date" field | field present in the GCC layout |
@@ -35,12 +37,16 @@ a 15-digit TRN, one line at AED 100 + 5% VAT — rendered via
 
 ## How the bilingual layout is switched on
 
-`res.company._nc_apply_uae_localization()` (post-init / provisioning) calls
-`_nc_enable_bilingual_invoices()`, which — fail-soft — sets each company's
-`l10n_gcc_dual_language_invoice = True` and activates Arabic (`ar_001`). The GCC
-layout renders its Arabic column only when **both** hold. Broader Arabic/RTL UI
-enablement is **P3-T08**'s remit; here we activate the language solely so the
-invoice's Arabic column renders.
+The GCC layout renders its Arabic column only when **both** hold: the company's
+`l10n_gcc_dual_language_invoice` flag is set **and** Arabic (`ar_001`) is active.
+
+- `res.company._nc_apply_uae_localization()` calls `_nc_enable_bilingual_invoices()`
+  on each company it localizes, which sets the **flag** (idempotent, fail-soft).
+  For **existing** tenants, `migrations/19.0.1.2.0/post-migrate.py` sets it on
+  upgrade (post-init hooks don't fire on `-u`).
+- **Arabic** is already active: `l10n_gcc_invoice` (a hard transitive dependency,
+  installed before us) activates `ar_001` globally in its own `post_init` hook,
+  so we don't re-activate it here. Broader Arabic/RTL UI enablement is **P3-T08**.
 
 ## Deliberately out of scope (documented gaps)
 

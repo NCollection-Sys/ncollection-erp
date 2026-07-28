@@ -48,9 +48,10 @@ class ResCompany(models.Model):
         default sale/purchase taxes to it. We only trigger the load; we don't
         redefine any of it (FPA §7: mechanisms stay Odoo-owned).
 
-        For invoices, we flip on l10n_gcc's dual-language layout and activate
-        Arabic so the tax invoice renders bilingual Arabic/English (the layout
-        itself is Odoo-owned, l10n_ae/l10n_gcc).
+        For invoices, we flip on l10n_gcc's dual-language layout so the tax
+        invoice renders bilingual Arabic/English (the layout itself is
+        Odoo-owned, l10n_ae/l10n_gcc) — but only on a company we actually
+        localize here, mirroring the chart guard below.
 
         Idempotent + fail-soft, so it is safe to call from post_init /
         provisioning:
@@ -59,7 +60,6 @@ class ResCompany(models.Model):
           - never raises: a localization failure must not break module install
             or tenant provisioning (house style, like the mail/seed hooks).
         """
-        self._nc_enable_bilingual_invoices()
         ChartTemplate = self.env['account.chart.template']
         for company in self:
             # Skip a company already on a REAL localization. 'generic_coa' is
@@ -88,6 +88,10 @@ class ResCompany(models.Model):
                 # db-per-tenant / one company per DB.)
                 if hasattr(self.env.registry, '_auto_install_template'):
                     del self.env.registry._auto_install_template
+                # Now that this company is a UAE (l10n_ae) company, turn on the
+                # bilingual tax-invoice layout for it (P3-T09). Gated to a
+                # company we actually localized, mirroring the skip above.
+                company._nc_enable_bilingual_invoices()
             except Exception:  # noqa: BLE001 - must never break install/provisioning
                 # savepoint rolled the partial load back, so the company stays on
                 # no/placeholder chart and remains RETRYABLE (the generic fallback,
@@ -105,20 +109,18 @@ class ResCompany(models.Model):
         renders the Arabic column only when BOTH are true:
           - the company's ``l10n_gcc_dual_language_invoice`` flag is set, and
           - Arabic (``ar_001``) is an ACTIVE language.
-        We flip both on here so a UAE tenant's invoices are bilingual out of the
-        box. Fail-soft: a missing field / language must never break install or
-        provisioning (same contract as the chart load above).
+        We only flip the per-company flag here: ``l10n_gcc_invoice`` (a hard
+        transitive dependency, installed before us) already activates Arabic
+        globally in its own ``post_init`` hook
+        (``_activate_and_install_lang('ar_001')``), so the language condition is
+        met by the time this runs. Broader Arabic/RTL UI enablement is P3-T08.
 
-        (Broader Arabic/RTL enablement is P3-T08's remit; here we only need the
-        secondary language active so the invoice's Arabic column renders.)
+        Idempotent: only writes companies that don't already have the flag.
         """
+        # Defense-in-depth: the field comes from l10n_gcc_invoice (a hard dep, so
+        # always present when this module is installed); the guard just keeps this
+        # inert should that dependency chain ever be relaxed.
         if 'l10n_gcc_dual_language_invoice' in self._fields:
             self.filtered(
                 lambda c: not c.l10n_gcc_dual_language_invoice
             ).l10n_gcc_dual_language_invoice = True
-        try:
-            self.env['res.lang']._activate_lang('ar_001')
-        except Exception:  # noqa: BLE001 - must never break install/provisioning
-            _logger.warning(
-                "Could not activate Arabic (ar_001); UAE invoices will render "
-                "English-only until Arabic is enabled.", exc_info=True)

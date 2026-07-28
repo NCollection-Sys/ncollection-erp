@@ -24,11 +24,20 @@
     #                                  to it (extend, don't replace) for the UAE TRN.
     #   - l10n_ae                     : Odoo's official UAE localization — the 'ae'
     #                                  chart template (5%/0%/exempt VAT, tax groups,
-    #                                  fiscal positions, CoA). P3-T04 REUSES this
-    #                                  Odoo-owned mechanism and applies it to the
-    #                                  tenant company at install (hooks.py /
+    #                                  fiscal positions, CoA) and the bilingual
+    #                                  l10n_gcc tax-invoice document. P3-T04 REUSES
+    #                                  this Odoo-owned mechanism and applies it to
+    #                                  the tenant company at install (hooks.py /
     #                                  res_company._nc_apply_uae_localization).
-    'depends': ['account', 'ncollection_account_core', 'base_vat', 'l10n_ae'],
+    #   - ncollection_branding       : provides res.company.nc_primary_color, which
+    #                                  the UAE invoice brand accent renders
+    #                                  (views/report_invoice.xml, P3-T09). Declared
+    #                                  explicitly because we reference the field
+    #                                  directly — don't lean on the transitive graph.
+    'depends': [
+        'account', 'ncollection_account_core', 'ncollection_branding',
+        'base_vat', 'l10n_ae',
+    ],
     'data': [
         'security/ir.model.access.csv',
         'security/fta_compliance_security.xml',

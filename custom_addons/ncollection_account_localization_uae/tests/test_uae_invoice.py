@@ -30,8 +30,12 @@ class TestUaeInvoicePdf(TransactionCase):
             self.env.context, allowed_company_ids=self.company.ids))
         product = env['product.product'].create({
             'name': 'UAE Widget', 'list_price': 100.0})
+        # a VAT-REGISTERED (company) recipient — l10n_ae renders the FULL tax
+        # invoice for these; a person/consumer would get the SIMPLIFIED one
+        # (l10n_ae._l10n_ae_is_simplified = not commercial_partner.is_company).
         partner = env['res.partner'].create({
-            'name': 'UAE Customer', 'vat': '100000000000011',
+            'name': 'UAE Customer', 'company_type': 'company',
+            'vat': '100000000000011',
             'country_id': self.env.ref('base.ae').id})
         invoice = env['account.move'].create({
             'move_type': 'out_invoice', 'company_id': self.company.id,
@@ -56,14 +60,26 @@ class TestUaeInvoicePdf(TransactionCase):
         invoice = self._posted_invoice()
         html = self._render(invoice)
         self.assertIn('Tax Invoice', html, "the UAE 'Tax Invoice' title must render")
+        self.assertNotIn('Simplified', html,
+                         "a registered (company) recipient gets the FULL tax "
+                         "invoice, not the simplified one")
         self.assertIn(self.company.vat, html, "the supplier TRN must appear")
+        self.assertIn(invoice.partner_id.vat, html,
+                      "the registered recipient's TRN must appear (full tax invoice)")
         self.assertIn('VAT', html, "the VAT summary must appear")
         self.assertIn(invoice.name, html, "the sequential invoice number must appear")
 
     def test_invoice_pdf_is_bilingual(self):
         html = self._render(self._posted_invoice())
-        self.assertTrue(any('؀' <= ch <= 'ۿ' for ch in html),
-                        "the invoice must render Arabic (bilingual AR/EN layout)")
+        # assert SPECIFIC Arabic labels from the l10n_gcc/l10n_ae bilingual
+        # layout, not merely "any Arabic codepoint anywhere": the Arabic
+        # 'Description' and 'VAT amount' column headers prove the bilingual
+        # tax-invoice table actually rendered.
+        self.assertIn('الوصف', html,
+                      "the Arabic 'Description' column header must render")
+        self.assertIn('مبلغ الضريبة', html,
+                      "the Arabic 'VAT amount' column header must render "
+                      "(bilingual tax-invoice layout)")
 
     def test_invoice_pdf_carries_tenant_brand_colour(self):
         html = self._render(self._posted_invoice())

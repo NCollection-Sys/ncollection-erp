@@ -19,7 +19,7 @@
               inherit_id="account.report_invoice_document">
         <xpath expr="//div[@id='informations']" position="before">
             <div name="nc_uae_brand_rule"
-                 t-if="o.company_id.country_id.code == 'AE' and o.company_id.nc_primary_color"
+                 t-if="o.company_id.country_code == 'AE' and o.company_id.nc_primary_color"
                  t-attf-style="border-top: 3px solid {{o.company_id.nc_primary_color}}; margin-bottom: 12px;"/>
         </xpath>
     </template>

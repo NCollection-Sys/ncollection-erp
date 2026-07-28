@@ -99,10 +99,12 @@ tax invoice); the layout *mechanism* stays Odoo-owned. This ticket makes it
 render for NCollection tenants and adds the tenant brand:
 
 - ``res.company._nc_enable_bilingual_invoices`` (called from
-  ``_nc_apply_uae_localization``) flips on ``l10n_gcc_dual_language_invoice`` and
-  activates Arabic (``ar_001``) — the two conditions the GCC layout needs to
-  render its Arabic column — so a UAE tenant's invoices are **bilingual out of
-  the box**. Fail-soft (a missing field/language never breaks provisioning).
+  ``_nc_apply_uae_localization`` for each company it localizes) flips on
+  ``l10n_gcc_dual_language_invoice`` — one of the two conditions the GCC layout
+  needs; the other, Arabic (``ar_001``) being active, is already handled by
+  ``l10n_gcc_invoice``'s own install hook (a hard dependency). Existing tenants
+  get the flag on upgrade via ``migrations/19.0.1.2.0/post-migrate.py`` (post-init
+  hooks don't fire on ``-u``). Fail-soft, idempotent.
 - ``views/report_invoice.xml`` adds the tenant **brand accent** (a thin rule in
   ``res.company.nc_primary_color``) above the invoice info block — the "colours"
   half of the P1-T16 branding integration, scoped to UAE invoices. The supplier
@@ -130,7 +132,9 @@ Dependencies
 ============
 
 ``account`` · ``ncollection_account_core`` (the financial base + shared mixin,
-F1-T01) · ``base_vat`` (Odoo's VAT-check dispatch, which ``check_vat_ae``
-extends) · ``l10n_ae`` (Odoo's official UAE chart template — the VAT/CoA
-mechanism P3-T04 applies). All Odoo-core or already-present — no new OCA
+F1-T01) · ``ncollection_branding`` (provides ``res.company.nc_primary_color``,
+rendered as the invoice brand accent — P3-T09) · ``base_vat`` (Odoo's VAT-check
+dispatch, which ``check_vat_ae`` extends) · ``l10n_ae`` (Odoo's official UAE
+chart template + the bilingual l10n_gcc tax-invoice document — the VAT/CoA/invoice
+mechanism P3-T04/T09 apply). All Odoo-core or already-present — no new OCA
 dependency.
