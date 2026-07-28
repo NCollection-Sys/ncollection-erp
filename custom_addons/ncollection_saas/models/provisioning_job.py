@@ -120,7 +120,10 @@ class ProvisioningJob(models.Model):
         retry = self.status == 'failed'
         db = self.database_name
         self._set_status('running', self.env._("Provisioning started for database '%s'.", db))
-        self.tenant_id.database_status = 'provisioning'
+        # sudo(): authorises the guarded 'provisioning'/'ready' status transitions
+        # (ncollection.tenant, #228). env.su is not RPC-spoofable, unlike a context
+        # key — the engine is trusted platform code.
+        self.tenant_id.sudo().write({'database_status': 'provisioning'})
         created = False
         try:
             if retry and self._safe_to_drop(db):
@@ -383,7 +386,8 @@ class ProvisioningJob(models.Model):
         db = self.database_name
         self.write({'status': 'done', 'completed_at': fields.Datetime.now()})
         tenant = self.tenant_id
-        tenant.write({
+        # sudo(): authorises the guarded 'ready' transition (#228, not RPC-spoofable).
+        tenant.sudo().write({
             'database_status': 'ready',
             'portal_url': tenant.portal_url or self._portal_url(db),
         })
