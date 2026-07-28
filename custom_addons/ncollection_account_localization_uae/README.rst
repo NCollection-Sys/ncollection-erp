@@ -122,10 +122,45 @@ Broader Arabic/RTL UI enablement is **P3-T08**; per-invoice foreign-currency →
 AED conversion lands with multi-currency (**#46**). See the checklist's
 "out of scope" for the documented gaps (RC statement, simplified/thermal, QR).
 
+AED & multi-currency (P3-T06)
+=============================
+
+AED is already the company currency (loaded by the ``'ae'`` chart, P3-T04) and
+Odoo core OWNS the currency/conversion engine — untouched. This ticket adds only
+the localization data, in ``res.company._nc_setup_uae_currencies`` (called from
+``_nc_apply_uae_localization`` for each company it localizes):
+
+- **activate** the preloaded currencies — USD, EUR + the GCC set (SAR, KWD, BHD,
+  QAR, OMR);
+- **enable multi-currency** (grants ``base.group_multi_currency`` so users can
+  invoice in a foreign currency — the ORM already allows it);
+- **seed fixed peg rates** as ``res.currency.rate`` rows scoped to the company:
+  the UAE dirham is pegged to the US dollar at **3.6725**, so a foreign-currency
+  invoice converts to AED deterministically with **no external rate feed**. The
+  GCC pegs (SAR/QAR/OMR/BHD) are exact central-bank pegs; KWD (basket) and EUR
+  (floating) are seeded as indicative starting points;
+- set **AED rounding** to the fils (0.01).
+
+Idempotent (skips a currency already rated for the company) and fail-soft.
+Existing tenants get the setup on upgrade via
+``migrations/19.0.1.3.0/post-migrate.py`` (post-init hooks don't fire on ``-u``).
+
+Acceptance proven by ``tests/test_uae_currency.py``: a **USD invoice posts with
+the correct AED conversion** (100 USD → 367.25 AED at the 3.6725 peg), the GCC
+currencies are active, multi-currency is on, and AED rounds to the fils.
+
 Deferred (not in this ticket)
 =============================
 
-- **AED / multi-currency** → #46 (P3-T06).
+- **Automated exchange-rate freshness** (a live provider for floating currencies)
+  → tracked in **#236**: the seeded pegs cover the fixed-peg currencies with no
+  external calls, and the obvious OCA candidate (``OCA/currency``'s ECB provider)
+  cannot produce AED or GCC rates at all. Adopting a live feed is an infra
+  decision (repos.yml pin, provisioning, per-tenant cron vs centralized fetch,
+  tenant-DB egress) that belongs in a scoped ticket. **Note for that follow-up:**
+  ``_nc_setup_uae_currencies``'s idempotency guard skips a currency that already
+  has *any* rate row for the root company, so a daily-rate writer must add its
+  own dated rows rather than re-calling this helper.
 - Arabic/RTL UI enablement → #48 (P3-T08); e-invoicing QR → later.
 
 Dependencies
