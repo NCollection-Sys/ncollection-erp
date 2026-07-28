@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection UAE Localization',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Accounting/Localizations',
     'summary': 'UAE localization scaffold: TRN validation + FTA compliance '
                'tracking; the home for the NCollection UAE VAT/CoA/invoice work',
@@ -24,15 +24,25 @@
     #                                  to it (extend, don't replace) for the UAE TRN.
     #   - l10n_ae                     : Odoo's official UAE localization — the 'ae'
     #                                  chart template (5%/0%/exempt VAT, tax groups,
-    #                                  fiscal positions, CoA). P3-T04 REUSES this
-    #                                  Odoo-owned mechanism and applies it to the
-    #                                  tenant company at install (hooks.py /
+    #                                  fiscal positions, CoA) and the bilingual
+    #                                  l10n_gcc tax-invoice document. P3-T04 REUSES
+    #                                  this Odoo-owned mechanism and applies it to
+    #                                  the tenant company at install (hooks.py /
     #                                  res_company._nc_apply_uae_localization).
-    'depends': ['account', 'ncollection_account_core', 'base_vat', 'l10n_ae'],
+    #   - ncollection_branding       : provides res.company.nc_primary_color, which
+    #                                  the UAE invoice brand accent renders
+    #                                  (views/report_invoice.xml, P3-T09). Declared
+    #                                  explicitly because we reference the field
+    #                                  directly — don't lean on the transitive graph.
+    'depends': [
+        'account', 'ncollection_account_core', 'ncollection_branding',
+        'base_vat', 'l10n_ae',
+    ],
     'data': [
         'security/ir.model.access.csv',
         'security/fta_compliance_security.xml',
         'views/fta_compliance_views.xml',
+        'views/report_invoice.xml',
     ],
     # Seeds the standard FTA items for existing companies; new companies get
     # theirs via res.company.create.

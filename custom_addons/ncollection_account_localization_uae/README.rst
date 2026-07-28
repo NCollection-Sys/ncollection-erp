@@ -90,18 +90,51 @@ income and expense accounts); separately, that the 5% VAT is linked to its VAT
 revenue, VAT output, the receivable and the payment's liquidity leg each post to
 the correct account and the receivable reconciles to a zero residual.
 
+UAE tax invoice (P3-T09)
+========================
+
+The UAE FTA tax invoice — bilingual Arabic/English, TRN and per-line VAT — is
+Odoo's own ``l10n_ae`` document (a primary inherit of ``l10n_gcc_invoice``'s GCC
+tax invoice); the layout *mechanism* stays Odoo-owned. This ticket makes it
+render for NCollection tenants and adds the tenant brand:
+
+- ``res.company._nc_enable_bilingual_invoices`` (called from
+  ``_nc_apply_uae_localization`` for each company it localizes) flips on
+  ``l10n_gcc_dual_language_invoice`` — one of the two conditions the GCC layout
+  needs; the other, Arabic (``ar_001``) being active, is already handled by
+  ``l10n_gcc_invoice``'s own install hook (a hard dependency). Existing tenants
+  get the flag on upgrade via ``migrations/19.0.1.2.0/post-migrate.py`` (post-init
+  hooks don't fire on ``-u``). Fail-soft, idempotent.
+- ``views/report_invoice.xml`` adds the tenant **brand accent** (a thin rule in
+  ``res.company.nc_primary_color``) above the invoice info block — the "colours"
+  half of the P1-T16 branding integration, scoped to UAE invoices. The supplier
+  **logo** already renders via ``web.external_layout``. ``nc_primary_color`` is a
+  validated hex (``ncollection_branding._check_nc_brand_colors``) — no injection
+  surface in the style interpolation.
+
+The full FTA requirement-by-requirement mapping (Cabinet Decision 52 of 2017,
+Art. 59) with the test proving each element is in ``UAE_TAX_INVOICE_CHECKLIST.md``.
+Acceptance is proven by ``tests/test_uae_invoice.py``: the rendered document
+carries the ``"Tax Invoice"`` title, supplier TRN, per-line VAT and sequential
+number; renders Arabic (bilingual); and carries the tenant brand colour.
+
+Broader Arabic/RTL UI enablement is **P3-T08**; per-invoice foreign-currency →
+AED conversion lands with multi-currency (**#46**). See the checklist's
+"out of scope" for the documented gaps (RC statement, simplified/thermal, QR).
+
 Deferred (not in this ticket)
 =============================
 
-- **AED / multi-currency** → #46 (P3-T06); **bilingual FTA invoices** → #49
-  (P3-T09).
-- Arabic reports/documents → later localization work.
+- **AED / multi-currency** → #46 (P3-T06).
+- Arabic/RTL UI enablement → #48 (P3-T08); e-invoicing QR → later.
 
 Dependencies
 ============
 
 ``account`` · ``ncollection_account_core`` (the financial base + shared mixin,
-F1-T01) · ``base_vat`` (Odoo's VAT-check dispatch, which ``check_vat_ae``
-extends) · ``l10n_ae`` (Odoo's official UAE chart template — the VAT/CoA
-mechanism P3-T04 applies). All Odoo-core or already-present — no new OCA
+F1-T01) · ``ncollection_branding`` (provides ``res.company.nc_primary_color``,
+rendered as the invoice brand accent — P3-T09) · ``base_vat`` (Odoo's VAT-check
+dispatch, which ``check_vat_ae`` extends) · ``l10n_ae`` (Odoo's official UAE
+chart template + the bilingual l10n_gcc tax-invoice document — the VAT/CoA/invoice
+mechanism P3-T04/T09 apply). All Odoo-core or already-present — no new OCA
 dependency.
