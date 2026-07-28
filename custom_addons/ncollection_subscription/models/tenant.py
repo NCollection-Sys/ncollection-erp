@@ -1,6 +1,6 @@
 import uuid
 
-from odoo import SUPERUSER_ID, fields, models
+from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -92,29 +92,38 @@ class Tenant(models.Model):
     # ------------------------------------------------------------------
     # database_status transition guard (ISO-1 defense-in-depth, #228)
     # ------------------------------------------------------------------
-    # Only the provisioning ENGINE (which sets the `nc_provisioning` context) or a
-    # superuser may move a tenant into 'provisioning'/'ready'. A
-    # group_platform_admin has write access to ncollection.tenant and could
-    # otherwise flip database_status='ready' by hand — the status config-sync keys
-    # its cross-DB push on. Harmless today (the unique(database_name) constraint
-    # means a record can only point at its OWN db), but a cleaner boundary than
-    # "any writer with the group". Superuser/SUPERUSER_ID (migrations, tests,
-    # shell, sudo'd flows) stay allowed.
+    # Only a superuser / SUPERUSER_ID may move a tenant into 'provisioning'/'ready'
+    # — the provisioning engine authorises its own transitions with sudo() (see
+    # provisioning_job), which sets env.su. A group_platform_admin has write access
+    # to ncollection.tenant and could otherwise flip database_status='ready' by
+    # hand — the status config-sync keys its cross-DB push on. Harmless today (the
+    # unique(database_name) constraint means a record can only point at its OWN
+    # db), but a cleaner boundary.
+    #
+    # Authorisation is gated ONLY on env.su / env.uid == SUPERUSER_ID, NEVER on a
+    # context key: env.context is fully client-controlled on every RPC path
+    # (/web/dataset/call_kw, execute_kw merge the caller's context verbatim), so a
+    # context flag would be trivially forgeable by the very actor this guards
+    # (#228 review). env.su / SUPERUSER_ID are interpreter-level and not
+    # RPC-spoofable. Both write() AND create() are guarded — base.group_system
+    # (a real non-super admin) has create rights on this model too.
     _NC_ENGINE_ONLY_DB_STATUSES = ('provisioning', 'ready')
 
-    # Guards the WRITE (transition) path only — the vector the assessment names
-    # ("a group_platform_admin can still write database_status='ready'"). Creates
-    # aren't guarded: only base.group_system / superuser can create a tenant, and
-    # every real create uses the 'not_provisioned' default (checkout) or runs as
-    # superuser (tests/seed) — there is no non-super create-to-'ready' flow.
-    def write(self, vals):
-        status = vals.get('database_status')
+    def _nc_check_engine_only_status(self, status):
         if (status in self._NC_ENGINE_ONLY_DB_STATUSES
-                and self.env.uid != SUPERUSER_ID and not self.env.su
-                and not self.env.context.get('nc_provisioning')):
+                and self.env.uid != SUPERUSER_ID and not self.env.su):
             raise ValidationError(self.env._(
                 "Only the provisioning engine may set a tenant's database status "
                 "to '%(status)s'.", status=status))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._nc_check_engine_only_status(vals.get('database_status'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._nc_check_engine_only_status(vals.get('database_status'))
         return super().write(vals)
 
     # ------------------------------------------------------------------

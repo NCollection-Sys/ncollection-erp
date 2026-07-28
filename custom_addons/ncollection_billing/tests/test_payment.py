@@ -87,7 +87,10 @@ class TestSubscriptionPaymentFlow(AccountPaymentCommon):
         cls.plan = cls.env['ncollection.subscription.plan'].create({
             'name': 'Flow Plan', 'code': 'FLOW_PLAN',
             'monthly_price': 100.0, 'yearly_price': 1000.0, 'max_users': 5})
-        cls.tenant = cls.env['ncollection.tenant'].create({
+        # sudo(): this base (AccountPaymentCommon) runs as a non-super user, and a
+        # 'ready' database_status is engine-only (#228 guard). A real 'ready'
+        # tenant is only ever set by the provisioning engine (sudo) — mirror that.
+        cls.tenant = cls.env['ncollection.tenant'].sudo().create({
             'company_name': 'Flow Co', 'database_name': 'flowco',
             'email': 'owner@flowco.example', 'plan_id': cls.plan.id,
             'status': 'active', 'database_status': 'ready'})
