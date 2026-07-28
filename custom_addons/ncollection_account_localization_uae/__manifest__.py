@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection UAE Localization',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'category': 'Accounting/Localizations',
     'summary': 'UAE localization scaffold: TRN validation + FTA compliance '
                'tracking; the home for the NCollection UAE VAT/CoA/invoice work',
