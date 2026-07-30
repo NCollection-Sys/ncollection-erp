@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ==== ncollection.fleet.migration ==== -->
+    <record id="view_ncollection_fleet_migration_list" model="ir.ui.view">
+        <field name="name">ncollection.fleet.migration.list</field>
+        <field name="model">ncollection.fleet.migration</field>
+        <field name="arch" type="xml">
+            <list string="Fleet Migrations"
+                  decoration-success="state == 'done'"
+                  decoration-info="state in ('canary', 'rolling')"
+                  decoration-danger="state in ('failed', 'canary_failed')"
+                  decoration-muted="state in ('draft', 'cancelled')">
+                <field name="name"/>
+                <field name="module_names"/>
+                <field name="target_count" string="Targets"/>
+                <field name="done_count" string="Done"/>
+                <field name="failed_count" string="Failed"/>
+                <field name="dry_run" widget="boolean_toggle"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state in ('canary', 'rolling')"
+                       decoration-danger="state in ('failed', 'canary_failed')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ncollection_fleet_migration_form" model="ir.ui.view">
+        <field name="name">ncollection.fleet.migration.form</field>
+        <field name="model">ncollection.fleet.migration</field>
+        <field name="arch" type="xml">
+            <form string="Fleet Migration">
+                <header>
+                    <button name="action_start" type="object" string="Start (queued)"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_run_sync" type="object" string="Run now (inline)"
+                            invisible="state != 'draft'"
+                            confirm="Run the whole fleet migration inline now?"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            invisible="state in ('draft', 'done', 'failed', 'cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,canary,rolling,done"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Upgrade">
+                            <field name="name"/>
+                            <field name="module_names" placeholder="ncollection_core,ncollection_branding"/>
+                            <field name="wave_size"/>
+                            <field name="dry_run"/>
+                            <field name="auto_restore"/>
+                        </group>
+                        <group string="Progress">
+                            <field name="current_wave"/>
+                            <field name="target_count"/>
+                            <field name="done_count"/>
+                            <field name="failed_count"/>
+                        </group>
+                    </group>
+                    <group string="Canary Tenants (verification gate)">
+                        <field name="canary_tenant_ids" nolabel="1"
+                               widget="many2many_tags"
+                               readonly="state != 'draft'"/>
+                    </group>
+                    <notebook>
+                        <page string="Targets">
+                            <field name="line_ids" readonly="1">
+                                <list decoration-success="state == 'done'"
+                                      decoration-info="state in ('snapshotting', 'upgrading', 'probing')"
+                                      decoration-danger="state == 'failed'"
+                                      decoration-warning="state == 'restored'"
+                                      decoration-muted="state in ('pending', 'skipped')">
+                                    <field name="wave"/>
+                                    <field name="database_name"/>
+                                    <field name="backup_id"/>
+                                    <field name="started_at"/>
+                                    <field name="finished_at"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="message" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Audit Log">
+                            <field name="log" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ncollection_fleet_migration_search" model="ir.ui.view">
+        <field name="name">ncollection.fleet.migration.search</field>
+        <field name="model">ncollection.fleet.migration</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="module_names"/>
+                <filter name="in_flight" string="In flight"
+                        domain="[('state', 'in', ('canary', 'rolling'))]"/>
+                <filter name="failed" string="Failed"
+                        domain="[('state', 'in', ('failed', 'canary_failed'))]"/>
+                <separator/>
+                <filter name="group_state" string="Group by Status"
+                        context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ncollection_fleet_migration" model="ir.actions.act_window">
+        <field name="name">Fleet Migrations</field>
+        <field name="res_model">ncollection.fleet.migration</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No fleet migrations yet</p>
+            <p>Roll a shared-addon upgrade across every tenant database with a
+               canary gate, per-tenant snapshots, and failure isolation.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_ncollection_saas_fleet_migration"
+              name="Fleet Migrations"
+              parent="ncollection_subscription.menu_ncollection_saas_root"
+              action="action_ncollection_fleet_migration"
+              sequence="75"/>
+
+</odoo>
