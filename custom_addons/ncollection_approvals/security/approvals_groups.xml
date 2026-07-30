@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- P3-T07: the two purchase-approval roles. The SO threshold approval
+         reuses the native Sales Manager group (sales_team.group_sale_manager),
+         so no new group is created for it. -->
+    <record id="module_category_approvals" model="ir.module.category">
+        <field name="name">Approvals</field>
+        <field name="sequence">100</field>
+    </record>
+
+    <!-- Odoo 19: the module category lives on res.groups.privilege; the group
+         points at it via privilege_id (category_id was removed from res.groups). -->
+    <record id="privilege_purchase_approvals" model="res.groups.privilege">
+        <field name="name">Purchase Approvals</field>
+        <field name="category_id" ref="module_category_approvals"/>
+    </record>
+
+    <record id="group_approval_purchase_department" model="res.groups">
+        <field name="name">Purchase Approver: Department</field>
+        <field name="privilege_id" ref="privilege_purchase_approvals"/>
+        <field name="comment">First-level (department) approver in the two-level
+            purchase approval workflow (P3-T07).</field>
+    </record>
+
+    <record id="group_approval_purchase_finance" model="res.groups">
+        <field name="name">Purchase Approver: Finance</field>
+        <field name="privilege_id" ref="privilege_purchase_approvals"/>
+        <field name="comment">Second-level (finance) approver in the two-level
+            purchase approval workflow (P3-T07).</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_purchase_order_form_nc_approval" model="ir.ui.view">
+        <field name="name">purchase.order.form.nc.approval</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="nc_approval_required" invisible="1"/>
+                <button name="action_request_approval" type="object"
+                        string="Request Approval" class="btn-primary"
+                        invisible="not nc_approval_required or approval_state not in ('none', 'rejected')"/>
+                <button name="action_approve_department" type="object"
+                        string="Approve (Department)" class="btn-primary"
+                        invisible="approval_state != 'pending_department'"
+                        groups="ncollection_approvals.group_approval_purchase_department"/>
+                <button name="action_approve_finance" type="object"
+                        string="Approve (Finance)" class="btn-primary"
+                        invisible="approval_state != 'pending_finance'"
+                        groups="ncollection_approvals.group_approval_purchase_finance"/>
+                <button name="action_reject" type="object" string="Reject"
+                        invisible="approval_state not in ('pending_department', 'pending_finance')"
+                        groups="ncollection_approvals.group_approval_purchase_department,ncollection_approvals.group_approval_purchase_finance"/>
+                <field name="approval_state" widget="badge"
+                       invisible="approval_state == 'none'"
+                       decoration-warning="approval_state in ('pending_department', 'pending_finance')"
+                       decoration-success="approval_state == 'approved'"
+                       decoration-danger="approval_state == 'rejected'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
