@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<!--
+    Balance Sheet template (P3-T10 go-live fix).
 
-    <!-- Balance Sheet template (UAE chart of accounts, 6-digit codes) -->
+    Grouping is by account_type (Odoo-core selection, identical across every
+    chart including l10n_ae), NOT by hardcoded code prefixes — so it reconciles
+    to the GL on the UAE CoA (P3-T05) rather than a generic numbering. `bale`
+    = ending balance (a balance sheet is cumulative, not a period movement).
+    Liability/equity/earnings are credit-normal, so their signed balance is
+    negated to present positive figures; with Current Year Earnings included,
+    TOTAL ASSETS == TOTAL LIABILITIES & EQUITY to the penny.
+
+    NOT noupdate: this is a platform-owned template whose corrections must reach
+    existing tenants on upgrade (the module is a tactical bootstrap, sunset by
+    ncollection_account_reports / #117).
+-->
+<odoo>
+
     <record id="mis_report_bs" model="mis.report">
         <field name="name">Balance Sheet</field>
     </record>
@@ -16,7 +30,7 @@
     </record>
     <record id="bs_kpi_current_assets_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_current_assets"/>
-        <field name="name">balp[1000%, 1010%, 1020%, 1030%, 1040%]</field>
+        <field name="name">bale[][('account_id.account_type', 'in', ('asset_receivable', 'asset_cash', 'asset_current', 'asset_prepayments'))]</field>
     </record>
 
     <record id="bs_kpi_fixed_assets" model="mis.report.kpi">
@@ -28,7 +42,7 @@
     </record>
     <record id="bs_kpi_fixed_assets_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_fixed_assets"/>
-        <field name="name">balp[1001%, 1050%, 1060%, 1070%, 1080%, 1090%]</field>
+        <field name="name">bale[][('account_id.account_type', 'in', ('asset_non_current', 'asset_fixed'))]</field>
     </record>
 
     <record id="bs_kpi_total_assets" model="mis.report.kpi">
@@ -52,7 +66,7 @@
     </record>
     <record id="bs_kpi_current_liab_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_current_liab"/>
-        <field name="name">balp[2000%, 2010%, 2020%]</field>
+        <field name="name">-bale[][('account_id.account_type', 'in', ('liability_payable', 'liability_credit_card', 'liability_current'))]</field>
     </record>
 
     <record id="bs_kpi_long_term_liab" model="mis.report.kpi">
@@ -64,7 +78,7 @@
     </record>
     <record id="bs_kpi_long_term_liab_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_long_term_liab"/>
-        <field name="name">balp[2030%, 2040%, 2050%]</field>
+        <field name="name">-bale[][('account_id.account_type', '=', 'liability_non_current')]</field>
     </record>
 
     <record id="bs_kpi_total_liab" model="mis.report.kpi">
@@ -88,7 +102,21 @@
     </record>
     <record id="bs_kpi_equity_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_equity"/>
-        <field name="name">balp[3%]</field>
+        <field name="name">-bale[][('account_id.account_type', 'in', ('equity', 'equity_unaffected'))]</field>
+    </record>
+
+    <!-- Current-year result (income - expense, cumulative). Without this a
+         balance sheet never balances mid-year, because the year's P&amp;L is not
+         posted to an equity account until year-end closing. -->
+    <record id="bs_kpi_current_earnings" model="mis.report.kpi">
+        <field name="report_id" ref="mis_report_bs"/>
+        <field name="name">current_year_earnings</field>
+        <field name="description">Current Year Earnings</field>
+        <field name="sequence">85</field>
+    </record>
+    <record id="bs_kpi_current_earnings_expr" model="mis.report.kpi.expression">
+        <field name="kpi_id" ref="bs_kpi_current_earnings"/>
+        <field name="name">-bale[][('account_id.account_type', 'in', ('income', 'income_other', 'expense', 'expense_direct_cost', 'expense_depreciation'))]</field>
     </record>
 
     <record id="bs_kpi_total_liab_eq" model="mis.report.kpi">
@@ -99,7 +127,7 @@
     </record>
     <record id="bs_kpi_total_liab_eq_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_total_liab_eq"/>
-        <field name="name">total_liabilities + equity</field>
+        <field name="name">total_liabilities + equity + current_year_earnings</field>
     </record>
 
 </odoo>

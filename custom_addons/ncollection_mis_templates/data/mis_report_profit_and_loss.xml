@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<!--
+    Profit & Loss template (P3-T10 go-live fix).
 
-    <!-- Profit & Loss template (UAE chart of accounts, 6-digit codes) -->
+    Grouped by account_type (Odoo-core, chart-agnostic) so it reconciles to the
+    GL on the UAE CoA (P3-T05), not a generic code numbering. `balp` = period
+    variation (a P&L is a flow over the period). Income is credit-normal, so its
+    signed balance is negated to present positive revenue; expenses are
+    debit-normal and presented as-is.
+
+    NOT noupdate: platform-owned template whose corrections must reach existing
+    tenants on upgrade (tactical bootstrap, sunset by #117).
+-->
+<odoo>
+
     <record id="mis_report_pl" model="mis.report">
         <field name="name">Profit &amp; Loss</field>
     </record>
@@ -16,7 +27,7 @@
     </record>
     <record id="pl_kpi_revenue_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="pl_kpi_revenue"/>
-        <field name="name">-crdp[4%]</field>
+        <field name="name">-balp[][('account_id.account_type', '=', 'income')]</field>
     </record>
 
     <record id="pl_kpi_other_income" model="mis.report.kpi">
@@ -28,7 +39,7 @@
     </record>
     <record id="pl_kpi_other_income_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="pl_kpi_other_income"/>
-        <field name="name">-crdp[7%]</field>
+        <field name="name">-balp[][('account_id.account_type', '=', 'income_other')]</field>
     </record>
 
     <record id="pl_kpi_total_income" model="mis.report.kpi">
@@ -52,7 +63,7 @@
     </record>
     <record id="pl_kpi_cogs_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="pl_kpi_cogs"/>
-        <field name="name">debp[5%]</field>
+        <field name="name">balp[][('account_id.account_type', '=', 'expense_direct_cost')]</field>
     </record>
 
     <record id="pl_kpi_gross_profit" model="mis.report.kpi">
@@ -76,7 +87,7 @@
     </record>
     <record id="pl_kpi_op_expenses_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="pl_kpi_op_expenses"/>
-        <field name="name">debp[6%, 8%]</field>
+        <field name="name">balp[][('account_id.account_type', 'in', ('expense', 'expense_depreciation'))]</field>
     </record>
 
     <record id="pl_kpi_operating_profit" model="mis.report.kpi">
