@@ -1,0 +1,251 @@
+# Arabic (ar_001) translation of ncollection_core.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_core\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "Your plan allows a maximum of %(limit)s users and you already have %(count)s. Upgrade your subscription to add more users."
+msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين ولديك بالفعل %(count)s. قم بترقية اشتراكك لإضافة المزيد من المستخدمين."
+
+msgid "Only the workspace Owner can deactivate users."
+msgstr "يمكن لمالك مساحة العمل وحده إلغاء تفعيل المستخدمين."
+
+msgid "You cannot deactivate your own account."
+msgstr "لا يمكنك إلغاء تفعيل حسابك الخاص."
+
+msgid "You cannot deactivate the last workspace Owner."
+msgstr "لا يمكنك إلغاء تفعيل آخر مالك لمساحة العمل."
+
+msgid "Allowed Modules"
+msgstr "الوحدات المسموح بها"
+
+msgid "Only one workspace configuration record may exist per tenant database."
+msgstr "لا يجوز وجود أكثر من سجل واحد لإعدادات مساحة العمل لكل قاعدة بيانات مستأجر."
+
+msgid "Employee"
+msgstr "موظف"
+
+msgid "Sales"
+msgstr "المبيعات"
+
+msgid "Warehouse"
+msgstr "المستودع"
+
+msgid "HR"
+msgstr "الموارد البشرية"
+
+msgid "Accountant"
+msgstr "محاسب"
+
+msgid "Manager"
+msgstr "مدير"
+
+msgid "CEO"
+msgstr "الرئيس التنفيذي"
+
+msgid "Owner"
+msgstr "المالك"
+
+msgid "Full Name"
+msgstr "الاسم الكامل"
+
+msgid "Please enter a valid email address."
+msgstr "يُرجى إدخال عنوان بريد إلكتروني صالح."
+
+msgid "Your plan allows a maximum of %(limit)s users. Upgrade your subscription to invite more."
+msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين. قم بترقية اشتراكك لدعوة المزيد."
+
+msgid "User invited"
+msgstr "تمت دعوة المستخدم"
+
+msgid "%(name)s was added with the %(role)s role."
+msgstr "تمت إضافة %(name)s بالدور %(role)s."
+
+msgid "New Quotation"
+msgstr "عرض سعر جديد"
+
+msgid "New Invoice"
+msgstr "فاتورة جديدة"
+
+msgid "New Purchase Order"
+msgstr "أمر شراء جديد"
+
+msgid "Sales This Month"
+msgstr "المبيعات هذا الشهر"
+
+msgid "Receivables"
+msgstr "الذمم المدينة"
+
+msgid "Payables"
+msgstr "الذمم الدائنة"
+
+msgid "Cash & Bank"
+msgstr "النقد والبنك"
+
+msgid "Open Activities"
+msgstr "الأنشطة المفتوحة"
+
+msgid "Pending Approvals"
+msgstr "الموافقات المعلقة"
+
+msgid "Revenue (last 6 months)"
+msgstr "الإيرادات (آخر 6 أشهر)"
+
+msgid "Top Customers"
+msgstr "أبرز العملاء"
+
+msgid "vs last month"
+msgstr "مقارنةً بالشهر الماضي"
+
+msgid "Open invoices"
+msgstr "الفواتير المفتوحة"
+
+msgid "Open bills"
+msgstr "فواتير الموردين المفتوحة"
+
+msgid "Across cash & bank accounts"
+msgstr "عبر حسابات النقد والبنك"
+
+msgid "Assigned to you"
+msgstr "المسندة إليك"
+
+msgid "Awaiting sign-off"
+msgstr "بانتظار الاعتماد"
+
+msgid "Unknown"
+msgstr "غير معروف"
+
+msgid "Workspace Users"
+msgstr "مستخدمو مساحة العمل"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Deactivate"
+msgstr "إلغاء التفعيل"
+
+msgid "Deactivate this user? They will no longer be able to log in."
+msgstr "هل تريد إلغاء تفعيل هذا المستخدم؟ لن يتمكن بعد ذلك من تسجيل الدخول."
+
+msgid "Users"
+msgstr "المستخدمون"
+
+msgid "Invite your first team member"
+msgstr "ادعُ أول عضو في فريقك"
+
+msgid "Use \"Invite User\" to add teammates with a predefined role."
+msgstr "استخدم \"دعوة مستخدم\" لإضافة أعضاء الفريق بدور محدد مسبقًا."
+
+msgid "Invite User"
+msgstr "دعوة مستخدم"
+
+msgid "Send Invitation"
+msgstr "إرسال الدعوة"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Company Information"
+msgstr "معلومات الشركة"
+
+msgid "Company Name"
+msgstr "اسم الشركة"
+
+msgid "Identity"
+msgstr "الهوية"
+
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+msgid "TRN"
+msgstr "الرقم الضريبي"
+
+msgid "Address"
+msgstr "العنوان"
+
+msgid "Street"
+msgstr "الشارع"
+
+msgid "Street 2"
+msgstr "الشارع 2"
+
+msgid "City"
+msgstr "المدينة"
+
+msgid "Emirate / State"
+msgstr "الإمارة / الولاية"
+
+msgid "ZIP"
+msgstr "الرمز البريدي"
+
+msgid "Country"
+msgstr "الدولة"
+
+msgid "Company"
+msgstr "الشركة"
+
+msgid "Workspace Settings"
+msgstr "إعدادات مساحة العمل"
+
+msgid "Workspace Appearance"
+msgstr "مظهر مساحة العمل"
+
+msgid "Brand Colours"
+msgstr "ألوان العلامة التجارية"
+
+msgid "Login Screen"
+msgstr "شاشة تسجيل الدخول"
+
+msgid "Colours use 6-digit hex (for example #1F5F8F). Changes apply on the next page reload. Leave a colour empty to use the NCollection default."
+msgstr "تُستخدم الألوان بصيغة سداسية عشرية من 6 خانات (على سبيل المثال ‎#1F5F8F). تُطبَّق التغييرات عند إعادة تحميل الصفحة التالية. اترك اللون فارغًا لاستخدام الإعداد الافتراضي لـ NCollection."
+
+msgid "Appearance"
+msgstr "المظهر"
+
+msgid "Dashboard"
+msgstr "لوحة المعلومات"
+
+msgid "Workspace paused — NCollection"
+msgstr "مساحة العمل متوقفة مؤقتًا — NCollection"
+
+msgid "Your subscription has expired"
+msgstr "انتهت صلاحية اشتراكك"
+
+msgid "Your workspace is paused"
+msgstr "مساحة عملك متوقفة مؤقتًا"
+
+msgid "Please renew to restore access — your data is safe."
+msgstr "يُرجى التجديد لاستعادة الوصول — بياناتك آمنة."
+
+msgid "Renew subscription"
+msgstr "تجديد الاشتراك"
+
+msgid "Log out"
+msgstr "تسجيل الخروج"
+
+msgid "Welcome back"
+msgstr "مرحبًا بعودتك"
+
+msgid "Loading your dashboard…"
+msgstr "جارٍ تحميل لوحة المعلومات…"
+
+msgid "The dashboard could not be loaded. Please refresh the page."
+msgstr "تعذّر تحميل لوحة المعلومات. يُرجى إعادة تحميل الصفحة."
+
+msgid "No dashboard widgets are available for your role yet."
+msgstr "لا تتوفر أي أدوات في لوحة المعلومات لدورك حتى الآن."
+
+msgid "NCollection Roles"
+msgstr "أدوار NCollection"
+
+msgid "Standard tenant workspace roles for NCollection ERP."
+msgstr "أدوار مساحة عمل المستأجر القياسية لنظام NCollection ERP."
+
+msgid "Standard tenant workspace roles."
+msgstr "أدوار مساحة عمل المستأجر القياسية."

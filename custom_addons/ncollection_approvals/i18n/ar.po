@@ -1,0 +1,170 @@
+# Arabic (ar_001) translation of ncollection_approvals.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_approvals\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "Countries"
+msgstr "الدول"
+
+msgid "States/Regions"
+msgstr "الولايات/المناطق"
+
+msgid "Salesperson"
+msgstr "مندوب المبيعات"
+
+msgid "Leads in this territory are assigned to this salesperson."
+msgstr "يتم إسناد العملاء المحتملين في هذه المنطقة إلى مندوب المبيعات هذا."
+
+msgid "Sales Team"
+msgstr "فريق المبيعات"
+
+msgid "Territory"
+msgstr "المنطقة"
+
+msgid "New lead assigned: %s"
+msgstr "تم إسناد عميل محتمل جديد: %s"
+
+msgid "Auto-assigned from territory '%s'."
+msgstr "تم الإسناد تلقائياً من المنطقة '%s'."
+
+msgid "Not Required"
+msgstr "غير مطلوب"
+
+msgid "Pending Department"
+msgstr "قيد موافقة القسم"
+
+msgid "Pending Finance"
+msgstr "قيد موافقة المالية"
+
+msgid "Approved"
+msgstr "معتمد"
+
+msgid "Rejected"
+msgstr "مرفوض"
+
+msgid "Approval"
+msgstr "موافقة"
+
+msgid "Approval Required"
+msgstr "الموافقة مطلوبة"
+
+msgid "Approved Amount"
+msgstr "المبلغ المعتمد"
+
+msgid "This purchase order's total (%(total)s) exceeds the approval threshold."
+msgstr "يتجاوز إجمالي أمر الشراء هذا (%(total)s) حد الموافقة."
+
+msgid "Only a %s approver may act on this purchase order."
+msgstr "يمكن فقط لمعتمِد %s اتخاذ إجراء بشأن أمر الشراء هذا."
+
+msgid "Only a finance approver may set a purchase order to Approved."
+msgstr "يمكن فقط لمعتمِد المالية تعيين أمر الشراء إلى معتمد."
+
+msgid "Only a department approver may advance a purchase order to finance approval."
+msgstr "يمكن فقط لمعتمِد القسم تمرير أمر الشراء إلى موافقة المالية."
+
+msgid "Order total increased beyond the approved amount; approval was reset and must be requested again."
+msgstr "ارتفع إجمالي الأمر بما يتجاوز المبلغ المعتمد؛ تمت إعادة تعيين الموافقة ويجب طلبها من جديد."
+
+msgid "Department approval: purchase order %s"
+msgstr "موافقة القسم: أمر الشراء %s"
+
+msgid "Finance approval: purchase order %s"
+msgstr "موافقة المالية: أمر الشراء %s"
+
+msgid "Department approval granted."
+msgstr "تم منح موافقة القسم."
+
+msgid "Finance approval granted."
+msgstr "تم منح موافقة المالية."
+
+msgid "Only a department or finance approver may reject this order."
+msgstr "يمكن فقط لمعتمِد القسم أو المالية رفض هذا الأمر."
+
+msgid "Approval rejected."
+msgstr "تم رفض الموافقة."
+
+msgid "These purchase orders exceed the approval threshold and need two-level approval before confirmation (use 'Request Approval'): %s"
+msgstr "تتجاوز أوامر الشراء هذه حد الموافقة وتحتاج إلى موافقة من مستويين قبل التأكيد (استخدم 'طلب الموافقة'): %s"
+
+msgid "Sale Approval Threshold"
+msgstr "حد موافقة البيع"
+
+msgid "Sale orders above this total require manager approval before they can be confirmed. Set to 0 to disable the gate."
+msgstr "تتطلب أوامر البيع التي تتجاوز هذا الإجمالي موافقة المدير قبل أن يمكن تأكيدها. اضبطه على 0 لتعطيل البوابة."
+
+msgid "Purchase Approval Threshold"
+msgstr "حد موافقة الشراء"
+
+msgid "Purchase orders above this total require two-level (department, then finance) approval before confirmation. Set to 0 to disable."
+msgstr "تتطلب أوامر الشراء التي تتجاوز هذا الإجمالي موافقة من مستويين (القسم ثم المالية) قبل التأكيد. اضبطه على 0 للتعطيل."
+
+msgid "To Approve"
+msgstr "بانتظار الموافقة"
+
+msgid "Only a Sales Manager may approve sale orders."
+msgstr "يمكن فقط لمدير المبيعات اعتماد أوامر البيع."
+
+msgid "Approve sale order %s"
+msgstr "اعتماد أمر البيع %s"
+
+msgid "This order's total (%(total)s) exceeds the approval threshold and needs Sales Manager approval."
+msgstr "يتجاوز إجمالي هذا الأمر (%(total)s) حد الموافقة ويحتاج إلى موافقة مدير المبيعات."
+
+msgid "Approval granted."
+msgstr "تم منح الموافقة."
+
+msgid "These sale orders exceed the approval threshold and need Sales Manager approval before confirmation (use 'Request Approval'): %s"
+msgstr "تتجاوز أوامر البيع هذه حد الموافقة وتحتاج إلى موافقة مدير المبيعات قبل التأكيد (استخدم 'طلب الموافقة'): %s"
+
+msgid "Lead Territories"
+msgstr "مناطق العملاء المحتملين"
+
+msgid "Define a territory"
+msgstr "تعريف منطقة"
+
+msgid "Leads whose state or country matches a territory are auto-assigned to its salesperson (state before country; rules ordered by sequence)."
+msgstr "يتم إسناد العملاء المحتملين الذين تتطابق ولايتهم أو دولتهم مع منطقة تلقائياً إلى مندوب مبيعاتها (الولاية قبل الدولة؛ القواعد مرتبة حسب التسلسل)."
+
+msgid "Request Approval"
+msgstr "طلب الموافقة"
+
+msgid "Approve (Department)"
+msgstr "اعتماد (القسم)"
+
+msgid "Approve (Finance)"
+msgstr "اعتماد (المالية)"
+
+msgid "Reject"
+msgstr "رفض"
+
+msgid "Approve"
+msgstr "اعتماد"
+
+msgid "Approval Thresholds"
+msgstr "حدود الموافقة"
+
+msgid "Approvals"
+msgstr "الموافقات"
+
+msgid "Purchase Approvals"
+msgstr "موافقات الشراء"
+
+msgid "Purchase Approver: Department"
+msgstr "معتمِد الشراء: القسم"
+
+msgid "First-level (department) approver in the two-level purchase approval workflow (P3-T07)."
+msgstr "المعتمِد من المستوى الأول (القسم) في سير موافقات الشراء من مستويين (P3-T07)."
+
+msgid "Purchase Approver: Finance"
+msgstr "معتمِد الشراء: المالية"
+
+msgid "Second-level (finance) approver in the two-level purchase approval workflow (P3-T07)."
+msgstr "المعتمِد من المستوى الثاني (المالية) في سير موافقات الشراء من مستويين (P3-T07)."

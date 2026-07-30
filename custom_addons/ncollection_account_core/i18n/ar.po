@@ -1,0 +1,19 @@
+# Arabic (ar_001) translation of ncollection_account_core.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_core\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid ""
+"The '%s' feature is not included in your NCollection plan. Upgrade your "
+"subscription to unlock it."
+msgstr ""
+"الميزة '%s' غير متضمّنة في خطة NCollection الخاصة بك. قم بترقية اشتراكك "
+"لإتاحتها."

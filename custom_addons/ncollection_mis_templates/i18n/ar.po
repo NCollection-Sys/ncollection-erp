@@ -1,0 +1,80 @@
+# Arabic (ar_001) translation of ncollection_mis_templates.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_mis_templates\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "Balance Sheet"
+msgstr "الميزانية العمومية"
+
+msgid "Current Assets"
+msgstr "الأصول المتداولة"
+
+msgid "Fixed & Other Assets"
+msgstr "الأصول الثابتة والأصول الأخرى"
+
+msgid "TOTAL ASSETS"
+msgstr "إجمالي الأصول"
+
+msgid "Current Liabilities"
+msgstr "الخصوم المتداولة"
+
+msgid "Long-Term Liabilities"
+msgstr "الخصوم طويلة الأجل"
+
+msgid "TOTAL LIABILITIES"
+msgstr "إجمالي الخصوم"
+
+msgid "Equity"
+msgstr "حقوق الملكية"
+
+msgid "TOTAL LIABILITIES & EQUITY"
+msgstr "إجمالي الخصوم وحقوق الملكية"
+
+msgid "Profit & Loss"
+msgstr "الأرباح والخسائر"
+
+msgid "Sales Revenue"
+msgstr "إيرادات المبيعات"
+
+msgid "Other Operating Income"
+msgstr "إيرادات تشغيلية أخرى"
+
+msgid "TOTAL INCOME"
+msgstr "إجمالي الإيرادات"
+
+msgid "Cost of Goods Sold"
+msgstr "تكلفة البضاعة المباعة"
+
+msgid "GROSS PROFIT"
+msgstr "إجمالي الربح"
+
+msgid "Operating Expenses"
+msgstr "المصروفات التشغيلية"
+
+msgid "OPERATING PROFIT"
+msgstr "الربح التشغيلي"
+
+msgid "NET PROFIT"
+msgstr "صافي الربح"
+
+msgid "Balance Sheet — Current Period"
+msgstr "الميزانية العمومية — الفترة الحالية"
+
+msgid "Actual"
+msgstr "الفعلي"
+
+msgid "Profit & Loss — Current Month"
+msgstr "الأرباح والخسائر — الشهر الحالي"
+
+msgid "This Month"
+msgstr "هذا الشهر"
+
+msgid "Previous Month"
+msgstr "الشهر السابق"

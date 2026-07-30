@@ -1,0 +1,128 @@
+# Arabic (ar_001) translation of ncollection_billing.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_billing\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "NC Subscription Advanced"
+msgstr "اشتراك NC المتقدم"
+
+msgid "Billing Contact"
+msgstr "جهة اتصال الفوترة"
+
+msgid "The customer record this tenant is invoiced against (admin DB)."
+msgstr "سجل العميل الذي تُصدَر عليه فواتير هذا المستأجر (قاعدة بيانات المسؤول)."
+
+msgid "NC Subscription"
+msgstr "اشتراك NC"
+
+msgid "NC Tenant"
+msgstr "مستأجر NC"
+
+msgid "NC Period Start"
+msgstr "بداية فترة NC"
+
+msgid "NC Period End"
+msgstr "نهاية فترة NC"
+
+msgid "A subscription can only be invoiced once per billing period (NCollection billing idempotency)."
+msgstr "لا يمكن إصدار فاتورة للاشتراك سوى مرة واحدة لكل فترة فوترة (عدم تكرارية فوترة NCollection)."
+
+msgid "Invoices"
+msgstr "الفواتير"
+
+msgid "No Invoice"
+msgstr "لا توجد فاتورة"
+
+msgid "Invoiced"
+msgstr "تمت الفوترة"
+
+msgid "Paid"
+msgstr "مدفوع"
+
+msgid "Overdue"
+msgstr "متأخر السداد"
+
+msgid "Payment received for invoice %(inv)s — subscription active through %(end)s."
+msgstr "تم استلام الدفع للفاتورة %(inv)s — الاشتراك نشط حتى %(end)s."
+
+msgid "Payment attempt failed for this subscription (transaction %(ref)s, %(state)s)."
+msgstr "فشلت محاولة الدفع لهذا الاشتراك (المعاملة %(ref)s، %(state)s)."
+
+msgid "Expiry warning sent (%(d)s days before expiry)."
+msgstr "تم إرسال تحذير انتهاء الصلاحية (%(d)s أيام قبل انتهاء الصلاحية)."
+
+msgid "Trial-ending reminder sent."
+msgstr "تم إرسال تذكير بانتهاء الفترة التجريبية."
+
+msgid "Dunning reminder sent (%(d)s days overdue)."
+msgstr "تم إرسال تذكير مطالبات السداد (%(d)s أيام تأخير)."
+
+msgid "Lifecycle Scheduler"
+msgstr "مُجدوِل دورة الحياة"
+
+msgid "NCollection: Subscription Expiry Warning"
+msgstr "NCollection: تحذير انتهاء صلاحية الاشتراك"
+
+msgid "Your NCollection subscription expires soon ({{ object.days_remaining }} days)"
+msgstr "تنتهي صلاحية اشتراكك في NCollection قريباً ({{ object.days_remaining }} أيام)"
+
+msgid "Please renew to avoid any interruption to your workspace."
+msgstr "يرجى التجديد لتجنب أي انقطاع في مساحة عملك."
+
+msgid "NCollection: Subscription Payment Reminder"
+msgstr "NCollection: تذكير بدفع الاشتراك"
+
+msgid "Payment overdue for your NCollection subscription"
+msgstr "دفعة متأخرة لاشتراكك في NCollection"
+
+msgid "Please settle the outstanding invoice to keep your workspace active."
+msgstr "يرجى تسوية الفاتورة المستحقة للحفاظ على نشاط مساحة عملك."
+
+msgid "NCollection: Trial Ending Soon"
+msgstr "NCollection: الفترة التجريبية تنتهي قريباً"
+
+msgid "Your NCollection trial ends soon"
+msgstr "تنتهي فترتك التجريبية في NCollection قريباً"
+
+msgid "Add a payment method to keep your workspace running without interruption."
+msgstr "أضف طريقة دفع للحفاظ على تشغيل مساحة عملك دون انقطاع."
+
+msgid "NCollection: Subscription Expired"
+msgstr "NCollection: انتهت صلاحية الاشتراك"
+
+msgid "Your NCollection subscription has expired"
+msgstr "انتهت صلاحية اشتراكك في NCollection"
+
+msgid "NCollection: Subscription Suspended"
+msgstr "NCollection: تم تعليق الاشتراك"
+
+msgid "Your NCollection workspace has been suspended"
+msgstr "تم تعليق مساحة عملك في NCollection"
+
+msgid "NCollection: Payment Received"
+msgstr "NCollection: تم استلام الدفع"
+
+msgid "Payment received — thank you"
+msgstr "تم استلام الدفع — شكراً لك"
+
+msgid "NCollection: Payment Failed"
+msgstr "NCollection: فشل الدفع"
+
+msgid "We couldn't process your payment"
+msgstr "لم نتمكن من معالجة دفعتك"
+
+msgid "NCollection: Plan Change Confirmation"
+msgstr "NCollection: تأكيد تغيير الخطة"
+
+msgid "Your NCollection plan has changed"
+msgstr "تم تغيير خطتك في NCollection"
+
+msgid "NCollection: subscription lifecycle & dunning sweep"
+msgstr "NCollection: دورة حياة الاشتراك وجولة مطالبات السداد"

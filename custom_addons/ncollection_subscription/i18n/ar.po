@@ -1,0 +1,443 @@
+# Arabic (ar_001) translation of ncollection_subscription.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_subscription\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "Technical Name"
+msgstr "الاسم التقني"
+
+msgid "Core"
+msgstr "أساسي"
+
+msgid "Sales"
+msgstr "المبيعات"
+
+msgid "Finance"
+msgstr "المالية"
+
+msgid "Inventory"
+msgstr "المخزون"
+
+msgid "HR"
+msgstr "الموارد البشرية"
+
+msgid "Manufacturing"
+msgstr "التصنيع"
+
+msgid "Services"
+msgstr "الخدمات"
+
+msgid "Marketing"
+msgstr "التسويق"
+
+msgid "Other"
+msgstr "أخرى"
+
+msgid "Icon"
+msgstr "الأيقونة"
+
+msgid "FontAwesome icon class (e.g. fa-cube, fa-cog, fa-shopping-cart)."
+msgstr "فئة أيقونة FontAwesome (مثل fa-cube أو fa-cog أو fa-shopping-cart)."
+
+msgid "Default"
+msgstr "افتراضي"
+
+msgid "When checked, this module is pre-selected for new tenants."
+msgstr "عند التحديد، يتم اختيار هذه الوحدة مسبقًا للمستأجرين الجدد."
+
+msgid "Tenants"
+msgstr "المستأجرون"
+
+msgid "The technical name must be unique."
+msgstr "يجب أن يكون الاسم التقني فريدًا."
+
+msgid "Database Name"
+msgstr "اسم قاعدة البيانات"
+
+msgid "Queued"
+msgstr "في قائمة الانتظار"
+
+msgid "Running"
+msgstr "قيد التشغيل"
+
+msgid "Done"
+msgstr "تم"
+
+msgid "Failed"
+msgstr "فشل"
+
+msgid "Created At"
+msgstr "تاريخ الإنشاء"
+
+msgid "Completed At"
+msgstr "تاريخ الإكمال"
+
+msgid "Log"
+msgstr "السجل"
+
+msgid "Failed Provisioning"
+msgstr "تجهيز فاشل"
+
+msgid "At-risk Subscriptions"
+msgstr "الاشتراكات المعرّضة للخطر"
+
+msgid "Total Storage (MB)"
+msgstr "إجمالي التخزين (ميغابايت)"
+
+msgid "Plan"
+msgstr "الخطة"
+
+msgid "Monthly"
+msgstr "شهري"
+
+msgid "Yearly"
+msgstr "سنوي"
+
+msgid "MRR"
+msgstr "الإيراد الشهري المتكرر"
+
+msgid "Monthly Recurring Revenue: plan price normalized to monthly."
+msgstr "الإيراد الشهري المتكرر: سعر الخطة مُطبَّع على أساس شهري."
+
+msgid "Draft"
+msgstr "مسودة"
+
+msgid "Trial"
+msgstr "فترة تجريبية"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Expired"
+msgstr "منتهي الصلاحية"
+
+msgid "Suspended"
+msgstr "معلّق"
+
+msgid "Cancelled"
+msgstr "ملغى"
+
+msgid "Terminated"
+msgstr "منهى"
+
+msgid "When the trial ends. Set by action_start_trial from the plan trial_days; a trial past this date is converted or expired."
+msgstr "موعد انتهاء الفترة التجريبية. يتم تعيينه بواسطة action_start_trial من قيمة trial_days في الخطة؛ الفترة التجريبية التي تتجاوز هذا التاريخ يتم تحويلها أو تنتهي صلاحيتها."
+
+msgid "End of the post-expiry grace window (end_date + plan grace_days). During grace the subscription is expired but access continues; suspension only happens after this date (fired by P2-T14)."
+msgstr "نهاية فترة السماح بعد انتهاء الصلاحية (end_date + قيمة grace_days في الخطة). خلال فترة السماح يكون الاشتراك منتهي الصلاحية لكن يستمر الوصول؛ ولا يحدث التعليق إلا بعد هذا التاريخ (يتم تشغيله بواسطة P2-T14)."
+
+msgid "Days until end_date. 0 when there is no end date or it has passed."
+msgstr "الأيام المتبقية حتى end_date. تكون 0 عند عدم وجود تاريخ انتهاء أو عند انقضائه."
+
+msgid "End date must be after start date (subscription \"%s\")."
+msgstr "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء (الاشتراك \"%s\")."
+
+msgid "Invalid subscription transition: %(current)s -> %(new)s (subscription \"%(name)s\")."
+msgstr "انتقال اشتراك غير صالح: %(current)s ← %(new)s (الاشتراك \"%(name)s\")."
+
+msgid "Invalid subscription transition: cannot renew from %(current)s (subscription \"%(name)s\")."
+msgstr "انتقال اشتراك غير صالح: لا يمكن التجديد من %(current)s (الاشتراك \"%(name)s\")."
+
+msgid "Monthly Price"
+msgstr "السعر الشهري"
+
+msgid "Yearly Price"
+msgstr "السعر السنوي"
+
+msgid "Max Users"
+msgstr "الحد الأقصى للمستخدمين"
+
+msgid "Max Companies"
+msgstr "الحد الأقصى للشركات"
+
+msgid "Length of the free trial for this plan, in days (0 = no trial)."
+msgstr "مدة الفترة التجريبية المجانية لهذه الخطة، بالأيام (0 = بدون فترة تجريبية)."
+
+msgid "Days after expiry during which access continues before suspension."
+msgstr "عدد الأيام بعد انتهاء الصلاحية التي يستمر خلالها الوصول قبل التعليق."
+
+msgid "Allowed Modules"
+msgstr "الوحدات المسموح بها"
+
+msgid "Subscriptions"
+msgstr "الاشتراكات"
+
+msgid "Max Users must be strictly positive (plan \"%s\")."
+msgstr "يجب أن يكون الحد الأقصى للمستخدمين موجبًا تمامًا (الخطة \"%s\")."
+
+msgid "Trial Days and Grace Days cannot be negative (plan \"%s\")."
+msgstr "لا يمكن أن تكون أيام الفترة التجريبية وأيام السماح سالبة (الخطة \"%s\")."
+
+msgid "The plan code must be unique."
+msgstr "يجب أن يكون رمز الخطة فريدًا."
+
+msgid "Tenant UUID"
+msgstr "معرّف المستأجر الفريد (UUID)"
+
+msgid "Not Provisioned"
+msgstr "غير مُجهّز"
+
+msgid "Provisioning"
+msgstr "التجهيز"
+
+msgid "Ready"
+msgstr "جاهز"
+
+msgid "Error"
+msgstr "خطأ"
+
+msgid "Database Status"
+msgstr "حالة قاعدة البيانات"
+
+msgid "Trial End Date"
+msgstr "تاريخ انتهاء الفترة التجريبية"
+
+msgid "Portal URL"
+msgstr "رابط البوابة"
+
+msgid "Signup"
+msgstr "التسجيل"
+
+msgid "Setup"
+msgstr "الإعداد"
+
+msgid "Training"
+msgstr "التدريب"
+
+msgid "Go Live"
+msgstr "الإطلاق"
+
+msgid "Completed"
+msgstr "مكتمل"
+
+msgid "Onboarding Stage"
+msgstr "مرحلة التهيئة"
+
+msgid "Domain / Subdomain"
+msgstr "النطاق / النطاق الفرعي"
+
+msgid "Contact Name"
+msgstr "اسم جهة الاتصال"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Phone"
+msgstr "الهاتف"
+
+msgid "Subscription Plan"
+msgstr "خطة الاشتراك"
+
+msgid "Current Subscription"
+msgstr "الاشتراك الحالي"
+
+msgid "Provisioning Jobs"
+msgstr "مهام التجهيز"
+
+msgid "The tenant UUID must be unique."
+msgstr "يجب أن يكون معرّف المستأجر الفريد (UUID) فريدًا."
+
+msgid "That database name is already assigned to another tenant."
+msgstr "اسم قاعدة البيانات هذا مُخصّص بالفعل لمستأجر آخر."
+
+msgid "Only the provisioning engine may set a tenant's database status to '%(status)s'."
+msgstr "لا يجوز إلا لمحرك التجهيز تعيين حالة قاعدة بيانات المستأجر إلى '%(status)s'."
+
+msgid "Invalid tenant transition: %(current)s -> %(new)s (tenant \"%(name)s\")."
+msgstr "انتقال مستأجر غير صالح: %(current)s ← %(new)s (المستأجر \"%(name)s\")."
+
+msgid "Modules"
+msgstr "الوحدات"
+
+msgid "Module"
+msgstr "الوحدة"
+
+msgid "Catalog"
+msgstr "الكتالوج"
+
+msgid "Adoption"
+msgstr "الاعتماد"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "tenants"
+msgstr "المستأجرون"
+
+msgid "Catalog the modules your SaaS platform offers"
+msgstr "فهرسة الوحدات التي تقدّمها منصة SaaS الخاصة بك"
+
+msgid "Modules can be selected per tenant and tracked by provisioning jobs."
+msgstr "يمكن اختيار الوحدات لكل مستأجر وتتبعها من خلال مهام التجهيز."
+
+msgid "Provisioning Queue"
+msgstr "قائمة انتظار التجهيز"
+
+msgid "Provisioning Job"
+msgstr "مهمة التجهيز"
+
+msgid "Job Details"
+msgstr "تفاصيل المهمة"
+
+msgid "Timing"
+msgstr "التوقيت"
+
+msgid "No provisioning jobs yet"
+msgstr "لا توجد مهام تجهيز بعد"
+
+msgid "Jobs appear here when a new tenant database is queued for provisioning."
+msgstr "تظهر المهام هنا عندما توضع قاعدة بيانات مستأجر جديد في قائمة انتظار التجهيز."
+
+msgid "Subscription Plans"
+msgstr "خطط الاشتراك"
+
+msgid "Pricing"
+msgstr "التسعير"
+
+msgid "Limits"
+msgstr "الحدود"
+
+msgid "Lifecycle"
+msgstr "دورة الحياة"
+
+msgid "Create your first subscription plan"
+msgstr "أنشئ خطة اشتراكك الأولى"
+
+msgid "Define pricing tiers such as Starter, Growth and Enterprise."
+msgstr "حدّد مستويات التسعير مثل Starter وGrowth وEnterprise."
+
+msgid "NCollection SaaS Dashboard"
+msgstr "لوحة معلومات NCollection SaaS"
+
+msgid "NCollection SaaS Overview"
+msgstr "نظرة عامة على NCollection SaaS"
+
+msgid "Total Tenants"
+msgstr "إجمالي المستأجرين"
+
+msgid "Active Tenants"
+msgstr "المستأجرون النشطون"
+
+msgid "Trial Accounts"
+msgstr "الحسابات التجريبية"
+
+msgid "Active Subscriptions"
+msgstr "الاشتراكات النشطة"
+
+msgid "MRR (monthly)"
+msgstr "الإيراد الشهري المتكرر (شهري)"
+
+msgid "Trial Conversion"
+msgstr "تحويل الفترة التجريبية"
+
+msgid "Churn"
+msgstr "معدل التسرّب"
+
+msgid "Expiring ≤ 30 days"
+msgstr "تنتهي خلال ≤ 30 يومًا"
+
+msgid "Storage Health"
+msgstr "حالة التخزين"
+
+msgid "Databases"
+msgstr "قواعد البيانات"
+
+msgid "Dashboard"
+msgstr "لوحة المعلومات"
+
+msgid "NCollection SaaS"
+msgstr "NCollection SaaS"
+
+msgid "Revenue Analytics"
+msgstr "تحليلات الإيرادات"
+
+msgid "Subscription"
+msgstr "اشتراك"
+
+msgid "Start Trial"
+msgstr "بدء الفترة التجريبية"
+
+msgid "Activate"
+msgstr "تفعيل"
+
+msgid "Renew"
+msgstr "تجديد"
+
+msgid "Suspend"
+msgstr "تعليق"
+
+msgid "Reactivate"
+msgstr "إعادة التفعيل"
+
+msgid "Terminate"
+msgstr "إنهاء"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Subscription Details"
+msgstr "تفاصيل الاشتراك"
+
+msgid "Validity"
+msgstr "الصلاحية"
+
+msgid "Create your first subscription"
+msgstr "أنشئ اشتراكك الأول"
+
+msgid "Link a tenant to a subscription plan and billing cycle."
+msgstr "اربط مستأجرًا بخطة اشتراك ودورة فوترة."
+
+msgid "Revenue Trend"
+msgstr "اتجاه الإيرادات"
+
+msgid "Revenue by Plan"
+msgstr "الإيرادات حسب الخطة"
+
+msgid "Tenant"
+msgstr "مستأجر"
+
+msgid "Expire"
+msgstr "إنهاء الصلاحية"
+
+msgid "Tenant Information"
+msgstr "معلومات المستأجر"
+
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+msgid "Add your first tenant company"
+msgstr "أضف شركة المستأجر الأولى"
+
+msgid "Tenants represent client companies using NCollection ERP."
+msgstr "يمثّل المستأجرون الشركات العميلة التي تستخدم NCollection ERP."
+
+msgid "Subscription Status Changed"
+msgstr "تغيّرت حالة الاشتراك"
+
+msgid "Subscription status changed"
+msgstr "تغيّرت حالة الاشتراك"
+
+msgid "Tenant Status Changed"
+msgstr "تغيّرت حالة المستأجر"
+
+msgid "Tenant status changed"
+msgstr "تغيّرت حالة المستأجر"
+
+msgid "Platform"
+msgstr "المنصة"
+
+msgid "Platform Admin"
+msgstr "مسؤول المنصة"
+
+msgid "⚠ Failed Provisioning"
+msgstr "⚠ تجهيز فاشل"
+
+msgid "⏳ At-risk Subscriptions"
+msgstr "⏳ الاشتراكات المعرّضة للخطر"

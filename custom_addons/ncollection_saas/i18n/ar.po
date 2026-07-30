@@ -1,0 +1,500 @@
+# Arabic (ar_001) translation of ncollection_saas.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_saas\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "Tenant Backup"
+msgstr "النسخة الاحتياطية للمستأجر"
+
+msgid "Daily"
+msgstr "يومي"
+
+msgid "Weekly"
+msgstr "أسبوعي"
+
+msgid "Monthly"
+msgstr "شهري"
+
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+msgid "Running"
+msgstr "قيد التشغيل"
+
+msgid "Done"
+msgstr "تم"
+
+msgid "Failed"
+msgstr "فشل"
+
+msgid "Backup File"
+msgstr "ملف النسخة الاحتياطية"
+
+msgid "Size (bytes)"
+msgstr "الحجم (بايت)"
+
+msgid "Restore drill SKIPPED: scratch name '%s' collides with a live tenant database — refusing to overwrite it."
+msgstr "تم تخطّي تدريب الاستعادة: يتعارض الاسم المؤقت '%s' مع قاعدة بيانات مستأجر مباشرة — رفض الكتابة فوقها."
+
+msgid "Restore drill OK: %(file)s restored to scratch DB %(db)s."
+msgstr "نجح تدريب الاستعادة: تمت استعادة %(file)s إلى قاعدة البيانات المؤقتة %(db)s."
+
+msgid "Restore drill FAILED: %s"
+msgstr "فشل تدريب الاستعادة: %s"
+
+msgid "Tenant backup FAILED for %(db)s (%(type)s)."
+msgstr "فشلت النسخة الاحتياطية للمستأجر لقاعدة البيانات %(db)s (%(type)s)."
+
+msgid "Investigate backup failure: %s"
+msgstr "تحقّق من فشل النسخة الاحتياطية: %s"
+
+msgid "Tenant Domain & SSL Certificate"
+msgstr "نطاق المستأجر وشهادة SSL"
+
+msgid "Domain (FQDN)"
+msgstr "النطاق (FQDN)"
+
+msgid "Fully-qualified hostname, e.g. acme.ncollectionerp.com."
+msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.ncollectionerp.com."
+
+msgid "Tenant"
+msgstr "مستأجر"
+
+msgid "Platform Subdomain"
+msgstr "النطاق الفرعي للمنصّة"
+
+msgid "Custom Domain"
+msgstr "نطاق مخصّص"
+
+msgid "Rides Wildcard Cert"
+msgstr "يستخدم شهادة البدل (Wildcard)"
+
+msgid "SSL Expiry"
+msgstr "انتهاء صلاحية SSL"
+
+msgid "Valid"
+msgstr "صالحة"
+
+msgid "Expiring Soon"
+msgstr "على وشك الانتهاء"
+
+msgid "Expired"
+msgstr "منتهي الصلاحية"
+
+msgid "Unknown"
+msgstr "غير معروف"
+
+msgid "SSL Status"
+msgstr "حالة SSL"
+
+msgid "Last Expiry Alert"
+msgstr "آخر تنبيه انتهاء صلاحية"
+
+msgid "When the expiry alert last fired — throttles the weekly cron."
+msgstr "وقت إطلاق تنبيه انتهاء الصلاحية آخر مرة — يضبط وتيرة المهمة المجدولة الأسبوعية."
+
+msgid "A domain record for this FQDN already exists."
+msgstr "يوجد بالفعل سجلّ نطاق لهذا الـ FQDN."
+
+msgid "SSL certificate for %(fqdn)s is %(label)s (expiry: %(expiry)s)."
+msgstr "شهادة SSL للنطاق %(fqdn)s هي %(label)s (انتهاء الصلاحية: %(expiry)s)."
+
+msgid "Renew SSL: %s"
+msgstr "تجديد SSL: %s"
+
+msgid "Tenant Fleet Migration"
+msgstr "ترحيل أسطول المستأجرين"
+
+msgid "Comma-separated technical module names to upgrade (odoo -u) across every ready tenant."
+msgstr "أسماء الوحدات التقنية مفصولة بفواصل لترقيتها (odoo -u) عبر كل مستأجر جاهز."
+
+msgid "Tenants per rolling wave after the canary passes."
+msgstr "عدد المستأجرين لكل موجة تدريجية بعد نجاح الاختبار التجريبي (canary)."
+
+msgid "Canary Tenants"
+msgstr "المستأجرون التجريبيون (Canary)"
+
+msgid "Upgraded first; the fleet rolls out only if ALL canaries pass."
+msgstr "تتم ترقيتهم أولاً؛ لا يُطرح الأسطول إلا إذا نجح جميع المستأجرين التجريبيين (canaries)."
+
+msgid "Log the intended upgrade for every tenant without touching any database."
+msgstr "سجّل الترقية المقصودة لكل مستأجر دون المساس بأي قاعدة بيانات."
+
+msgid "Auto-restore on failure"
+msgstr "استعادة تلقائية عند الفشل"
+
+msgid "Draft"
+msgstr "مسودة"
+
+msgid "Canary Running"
+msgstr "الاختبار التجريبي قيد التشغيل"
+
+msgid "Canary Failed"
+msgstr "فشل الاختبار التجريبي"
+
+msgid "Rolling Out"
+msgstr "قيد الطرح"
+
+msgid "Cancelled"
+msgstr "ملغى"
+
+msgid "Targets"
+msgstr "الأهداف"
+
+msgid "Fleet migration %s"
+msgstr "ترحيل الأسطول %s"
+
+msgid "Specify at least one module to upgrade."
+msgstr "حدّد وحدة واحدة على الأقل لترقيتها."
+
+msgid "Invalid module name '%s'."
+msgstr "اسم وحدة غير صالح '%s'."
+
+msgid "Wave size must be at least 1."
+msgstr "يجب أن يكون حجم الموجة 1 على الأقل."
+
+msgid "Select at least one canary tenant — it is the verification gate."
+msgstr "اختر مستأجراً تجريبياً واحداً على الأقل — فهو بوابة التحقق."
+
+msgid "None of the selected canary tenants are 'ready'."
+msgstr "لا يوجد أي من المستأجرين التجريبيين المحدّدين في حالة 'جاهز'."
+
+msgid "Prepared: %(c)s canary + %(o)s fleet tenant(s)."
+msgstr "تم التحضير: %(c)s تجريبي + %(o)s من مستأجري الأسطول."
+
+msgid "This migration has already been started."
+msgstr "لقد بدأ هذا الترحيل بالفعل."
+
+msgid "Canary failed — fleet rollout halted."
+msgstr "فشل الاختبار التجريبي — توقّف طرح الأسطول."
+
+msgid "Fleet migration complete (%s)."
+msgstr "اكتمل ترحيل الأسطول (%s)."
+
+msgid "Migration cancelled by %s."
+msgstr "تم إلغاء الترحيل بواسطة %s."
+
+msgid "Tenant Fleet Migration Target"
+msgstr "هدف ترحيل أسطول المستأجرين"
+
+msgid "0 = canary; 1..N = rolling waves."
+msgstr "0 = تجريبي؛ 1..N = موجات تدريجية."
+
+msgid "Snapshotting"
+msgstr "التقاط اللقطة"
+
+msgid "Upgrading"
+msgstr "قيد الترقية"
+
+msgid "Probing"
+msgstr "الفحص"
+
+msgid "Restored"
+msgstr "تمت الاستعادة"
+
+msgid "Skipped (dry-run)"
+msgstr "تم التخطّي (تشغيل تجريبي)"
+
+msgid "Pre-upgrade snapshot for rollback."
+msgstr "لقطة ما قبل الترقية للتراجع."
+
+msgid "Migration cancelled before this tenant ran."
+msgstr "تم إلغاء الترحيل قبل تشغيل هذا المستأجر."
+
+msgid "Refused: %s"
+msgstr "مرفوض: %s"
+
+msgid "Upgrading: %s"
+msgstr "قيد الترقية: %s"
+
+msgid "Upgrade OK."
+msgstr "نجحت الترقية."
+
+msgid "module upgrade"
+msgstr "ترقية الوحدة"
+
+msgid "smoke probe"
+msgstr "فحص أولي (smoke)"
+
+msgid "Provision tenant DB '%s'"
+msgstr "تجهيز قاعدة بيانات المستأجر '%s'"
+
+msgid "Job for database '%s' is already done; refusing to re-run."
+msgstr "مهمة قاعدة البيانات '%s' منتهية بالفعل؛ رفض إعادة التشغيل."
+
+msgid "Provisioning started for database '%s'."
+msgstr "بدأ التجهيز لقاعدة البيانات '%s'."
+
+msgid "Retry: cleared the database left by a previous failed run."
+msgstr "إعادة المحاولة: تم مسح قاعدة البيانات المتبقّية من تشغيل فاشل سابق."
+
+msgid "Name validated."
+msgstr "تم التحقق من الاسم."
+
+msgid "Database created; modules installed: %s"
+msgstr "تم إنشاء قاعدة البيانات؛ الوحدات المثبّتة: %s"
+
+msgid "Tenant seeded: admin (forced reset), workspace config, branding."
+msgstr "تمت تهيئة المستأجر: المسؤول (إعادة تعيين إجبارية)، إعدادات مساحة العمل، الهوية البصرية."
+
+msgid "Invalid database name '%s': must match ^[a-z][a-z0-9]{2,62}$."
+msgstr "اسم قاعدة بيانات غير صالح '%s': يجب أن يطابق ^[a-z][a-z0-9]{2,62}$."
+
+msgid "Database name '%s' is reserved."
+msgstr "اسم قاعدة البيانات '%s' محجوز."
+
+msgid "Database '%s' already exists (collision)."
+msgstr "قاعدة البيانات '%s' موجودة بالفعل (تعارض)."
+
+msgid "database init"
+msgstr "تهيئة قاعدة البيانات"
+
+msgid "tenant seed"
+msgstr "تهيئة المستأجر"
+
+msgid "Rolled back: dropped database '%s'."
+msgstr "تم التراجع: حُذفت قاعدة البيانات '%s'."
+
+msgid "FAILED: %s"
+msgstr "فشل: %s"
+
+msgid "Provisioning quota exceeded: %(n)s jobs in the last hour (limit %(limit)s)."
+msgstr "تم تجاوز حصة التجهيز: %(n)s مهمة في الساعة الأخيرة (الحد %(limit)s)."
+
+msgid "DONE — tenant database is login-ready."
+msgstr "تم — قاعدة بيانات المستأجر جاهزة لتسجيل الدخول."
+
+msgid "The database name of a provisioned tenant is immutable — it is the live database and subdomain (tenant %s). Changing it would orphan the database and break routing."
+msgstr "اسم قاعدة البيانات لمستأجر مُجهَّز غير قابل للتغيير — فهو قاعدة البيانات المباشرة والنطاق الفرعي (المستأجر %s). تغييره سيؤدي إلى تيتيم قاعدة البيانات وتعطيل التوجيه."
+
+msgid "Database name '%s' is reserved (a platform or maintenance database) and cannot be assigned to a tenant."
+msgstr "اسم قاعدة البيانات '%s' محجوز (قاعدة بيانات منصّة أو صيانة) ولا يمكن تخصيصه لمستأجر."
+
+msgid "Provisioning FAILED for tenant %(name)s (database '%(db)s'). Latest job log:\n%(log)s"
+msgstr "فشل التجهيز للمستأجر %(name)s (قاعدة البيانات '%(db)s'). آخر سجلّ للمهمة:\n%(log)s"
+
+msgid "Tenant provisioning failed: %s"
+msgstr "فشل تجهيز المستأجر: %s"
+
+msgid "Restore Tenant Backup to a Scratch Database"
+msgstr "استعادة النسخة الاحتياطية للمستأجر إلى قاعدة بيانات مؤقتة"
+
+msgid "Restore Into (scratch DB)"
+msgstr "الاستعادة إلى (قاعدة بيانات مؤقتة)"
+
+msgid "A NON-live database name. The restore refuses to overwrite an existing tenant's database."
+msgstr "اسم قاعدة بيانات غير مباشرة. ترفض الاستعادة الكتابة فوق قاعدة بيانات مستأجر قائم."
+
+msgid "'%s' is a live tenant database. Choose a scratch/staging name — restores never overwrite a live tenant."
+msgstr "'%s' هي قاعدة بيانات مستأجر مباشرة. اختر اسماً مؤقتاً/تجريبياً — لا تكتب الاستعادة أبداً فوق مستأجر مباشر."
+
+msgid "Restore of %(src)s into %(db)s queued."
+msgstr "تمت جدولة استعادة %(src)s إلى %(db)s."
+
+msgid "Provision"
+msgstr "تجهيز"
+
+msgid "Provision (inline)"
+msgstr "تجهيز (مباشر)"
+
+msgid "Activate"
+msgstr "تفعيل"
+
+msgid "Domains"
+msgstr "النطاقات"
+
+msgid "Domain"
+msgstr "النطاق"
+
+msgid "SSL Certificate"
+msgstr "شهادة SSL"
+
+msgid "Custom Domains"
+msgstr "النطاقات المخصّصة"
+
+msgid "Subdomains"
+msgstr "النطاقات الفرعية"
+
+msgid "Expiring within 14 days"
+msgstr "ستنتهي خلال 14 يوماً"
+
+msgid "Group by Type"
+msgstr "تجميع حسب النوع"
+
+msgid "Domains & SSL"
+msgstr "النطاقات و SSL"
+
+msgid "No tenant domains yet"
+msgstr "لا توجد نطاقات مستأجرين بعد"
+
+msgid "Restore Backup"
+msgstr "استعادة النسخة الاحتياطية"
+
+msgid "Restores into a scratch/staging database — never a live tenant."
+msgstr "تتم الاستعادة إلى قاعدة بيانات مؤقتة/تجريبية — وليس إلى مستأجر مباشر أبداً."
+
+msgid "Restore"
+msgstr "استعادة"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Tenant Backups"
+msgstr "النسخ الاحتياطية للمستأجرين"
+
+msgid "Restore…"
+msgstr "استعادة…"
+
+msgid "Backup"
+msgstr "نسخة احتياطية"
+
+msgid "Result"
+msgstr "النتيجة"
+
+msgid "Error"
+msgstr "خطأ"
+
+msgid "Group by Status"
+msgstr "تجميع حسب الحالة"
+
+msgid "No tenant backups yet"
+msgstr "لا توجد نسخ احتياطية للمستأجرين بعد"
+
+msgid "Nightly per-tenant backups appear here once the schedule runs."
+msgstr "تظهر النسخ الاحتياطية الليلية لكل مستأجر هنا بمجرد تشغيل الجدول."
+
+msgid "Fleet Migrations"
+msgstr "ترحيلات الأسطول"
+
+msgid "Fleet Migration"
+msgstr "ترحيل الأسطول"
+
+msgid "Start (queued)"
+msgstr "بدء (في قائمة الانتظار)"
+
+msgid "Run now (inline)"
+msgstr "التشغيل الآن (مباشر)"
+
+msgid "Run the whole fleet migration inline now?"
+msgstr "هل تريد تشغيل ترحيل الأسطول بالكامل مباشرة الآن؟"
+
+msgid "Upgrade"
+msgstr "ترقية"
+
+msgid "Progress"
+msgstr "التقدّم"
+
+msgid "Canary Tenants (verification gate)"
+msgstr "المستأجرون التجريبيون (بوابة التحقق)"
+
+msgid "Audit Log"
+msgstr "سجلّ التدقيق"
+
+msgid "In flight"
+msgstr "قيد التنفيذ"
+
+msgid "No fleet migrations yet"
+msgstr "لا توجد ترحيلات أسطول بعد"
+
+msgid "Pricing — NCollection"
+msgstr "التسعير — NCollection"
+
+msgid "Pick a plan. Get your ERP in minutes."
+msgstr "اختر خطة. احصل على نظام تخطيط موارد المؤسسات خلال دقائق."
+
+msgid "Start a free 14-day trial — no card required."
+msgstr "ابدأ فترة تجريبية مجانية لمدة 14 يوماً — دون الحاجة إلى بطاقة."
+
+msgid "/ mo"
+msgstr "/ شهرياً"
+
+msgid "Start free trial"
+msgstr "ابدأ الفترة التجريبية المجانية"
+
+msgid "Create your workspace — NCollection"
+msgstr "أنشئ مساحة عملك — NCollection"
+
+msgid "Create your workspace"
+msgstr "أنشئ مساحة عملك"
+
+msgid "Company name"
+msgstr "اسم الشركة"
+
+msgid "Your name"
+msgstr "اسمك"
+
+msgid "Work email"
+msgstr "البريد الإلكتروني للعمل"
+
+msgid "Workspace address"
+msgstr "عنوان مساحة العمل"
+
+msgid "Create my workspace"
+msgstr "أنشئ مساحة عملي"
+
+msgid "Preparing your workspace — NCollection"
+msgstr "جارٍ تحضير مساحة عملك — NCollection"
+
+msgid "Check your email"
+msgstr "تحقّق من بريدك الإلكتروني"
+
+msgid "Open my workspace"
+msgstr "افتح مساحة عملي"
+
+msgid "Link expired — NCollection"
+msgstr "انتهت صلاحية الرابط — NCollection"
+
+msgid "This link is no longer valid"
+msgstr "لم يعد هذا الرابط صالحاً"
+
+msgid "Back to pricing"
+msgstr "العودة إلى التسعير"
+
+msgid "NCollection: Verify your workspace email"
+msgstr "NCollection: تحقّق من البريد الإلكتروني لمساحة عملك"
+
+msgid "Tenant Welcome"
+msgstr "ترحيب بالمستأجر"
+
+msgid "Open your workspace"
+msgstr "افتح مساحة عملك"
+
+msgid "To get started, set your password here:"
+msgstr "للبدء، عيّن كلمة المرور الخاصة بك هنا:"
+
+msgid "Workspace address:"
+msgstr "عنوان مساحة العمل:"
+
+msgid "NCollection: reconcile tenant workspace configs"
+msgstr "NCollection: مطابقة إعدادات مساحات عمل المستأجرين"
+
+msgid "NCollection: scan tenant domains & SSL expiry"
+msgstr "NCollection: فحص نطاقات المستأجرين وانتهاء صلاحية SSL"
+
+msgid "NCollection: nightly tenant backups"
+msgstr "NCollection: النسخ الاحتياطية الليلية للمستأجرين"
+
+msgid "NCollection: prune old tenant backups"
+msgstr "NCollection: تقليم النسخ الاحتياطية القديمة للمستأجرين"
+
+msgid "NCollection: monthly restore drill"
+msgstr "NCollection: تدريب الاستعادة الشهري"
+
+msgid "NCollection: advance fleet migrations"
+msgstr "NCollection: دفع ترحيلات الأسطول"
+
+msgid "Platform"
+msgstr "المنصّة"
+
+msgid "Platform Admin"
+msgstr "مسؤول المنصّة"
+
+msgid "NCollection platform staff: the SaaS-admin dashboard, tenants, subscriptions, plans and the provisioning queue."
+msgstr "موظفو منصّة NCollection: لوحة معلومات مسؤول SaaS، والمستأجرون، والاشتراكات، والخطط، وقائمة انتظار التجهيز."
