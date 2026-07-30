@@ -2,7 +2,7 @@
 NCollection Account Core
 =======================
 
-**Task:** F1-T01 · **Architecture:** ``FINANCIAL_PLATFORM_ARCHITECTURE.md`` §7
+**Task:** F1-T01, F1-T02 · **Architecture:** ``FINANCIAL_PLATFORM_ARCHITECTURE.md`` §4/§6/§7
 
 The thin base layer between Odoo's ``account`` engine and the rest of the
 NCollection financial platform (``ncollection_account_reports``, ``_dashboard``,
@@ -75,6 +75,53 @@ responsibility. This scaffold ships the mixin (the load-bearing piece) and
 downstream module that needs a real setting — building the settings group now,
 with no consumer, would be speculative surface. When that consumer arrives it
 drops a block into ``res.config.settings``; nothing here has to change.
+
+Accounting engine baseline + boundary (F1-T02)
+==============================================
+
+"**Odoo owns accounting. NCollection owns the business experience.**"
+(FPA §4/§6). This module codifies that boundary two ways.
+
+Baseline config (applied at provisioning)
+-----------------------------------------
+
+On install, ``post_init_hook`` (``hooks.py``) calls
+``res.company._nc_apply_accounting_baseline()``, which sets the company's
+fiscal-year end to the NCollection baseline — **31 December** (the calendar
+year, the UAE standard) — on Odoo's own native ``fiscalyear_last_day`` /
+``fiscalyear_last_month`` fields. Idempotent and fail-soft (its own savepoint),
+so it can never break tenant provisioning.
+
+What it does **not** touch, on purpose:
+
+- **Journals** — created by the chart of accounts (Odoo / ``l10n_ae``, #45). We
+  never create or redefine journals.
+- **Lock dates** (``fiscalyear_lock_date``, ``tax_lock_date``,
+  ``sale_lock_date``, ``purchase_lock_date``) — left **operator-controlled**.
+  Auto-locking a fresh tenant's open periods would be wrong; closing periods is
+  an accountant's decision, exposed through Odoo's own Settings.
+
+Engine-boundary guard (a test that bites)
+-----------------------------------------
+
+``tests/test_engine_boundary.py`` fails CI if **any** ``ncollection_*`` module
+overrides a core posting / tax / reconcile **computation** method on the engine:
+
+===================  ==================================================
+Model                Guarded methods (must not be overridden)
+===================  ==================================================
+``account.move``     ``_post`` · ``_compute_tax_totals`` · ``_reverse_moves``
+``account.move.line``  ``_compute_balance`` · ``_compute_amount_currency``
+``account.tax``      ``compute_all`` · ``_compute_amount``
+``account.payment``  ``_synchronize_to_moves``
+===================  ==================================================
+
+Allowed, and encouraged, is the opposite: **extend** the engine with new fields
+or **new** methods, and wrap workflow entry points (``action_post``,
+``button_draft`` …) via ``super()`` — NCollection legitimately owns approval
+chains, notifications and closing workflows (FPA §6). Only reimplementing the
+computation is forbidden; crossing that line needs explicit architectural
+approval (FPA §6).
 
 Dependencies
 ============
