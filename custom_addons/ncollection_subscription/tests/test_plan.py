@@ -37,3 +37,14 @@ class TestSubscriptionPlan(TransactionCase):
     def test_allowed_module_list_empty(self):
         plan = self._plan(code="TST-E")
         self.assertEqual(plan.get_allowed_module_list(), [])
+
+    def test_enterprise_plan_provisions_financial_stack(self):
+        # P3-T01: a provisioned Enterprise tenant must get the interim OCA
+        # financial reports, so the Enterprise plan's module set includes them —
+        # the engine's _module_list installs get_allowed_module_list().
+        plan = self.env.ref("ncollection_subscription.demo_plan_enterprise")
+        modules = plan.get_allowed_module_list()
+        for m in ("account", "account_financial_report", "ncollection_mis_templates"):
+            self.assertIn(
+                m, modules,
+                "the Enterprise plan must provision %s (Trial Balance / reports)" % m)
