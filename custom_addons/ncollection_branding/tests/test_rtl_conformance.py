@@ -14,8 +14,9 @@ import re
 
 from odoo.tests import TransactionCase, tagged
 
-# custom_addons/ncollection_branding/tests -> custom_addons
-_ADDONS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+# .../<addons>/ncollection_branding/tests/<this file> -> <addons>
+# dirname x3: file -> tests -> ncollection_branding -> <addons>
+_ADDONS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Physical, direction-breaking declarations. Their logical replacements:
 #   margin/padding/border-left|right  -> *-inline-start|end
