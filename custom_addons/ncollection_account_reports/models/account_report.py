@@ -106,7 +106,10 @@ class NcollectionAccountReport(models.AbstractModel):
         AML = self.env['account.move.line']
         base = self._nc_filter_domain()
         fy_from = self.company_id.compute_fiscalyear_dates(self.date_from)['date_from']
-        Account = self.env['account.account']
+        # active_test=False: an ARCHIVED account can still carry a balance —
+        # dropping it here would silently zero its opening (its move lines still
+        # surface via the period query, so the row would show a wrong opening).
+        Account = self.env['account.account'].with_context(active_test=False)
         accounts = Account.search(Account._check_company_domain(self.company_id))
         carry = accounts.filtered('include_initial_balance')   # balance-sheet
         reset = accounts - carry                               # P&L + current-year earnings
@@ -125,6 +128,20 @@ class NcollectionAccountReport(models.AbstractModel):
                 groupby=['account_id'], aggregates=['balance:sum']):
             if account:
                 opening[account.id] = bal
+        # Affectation of results: PRIOR fiscal years' net P&L rolls into the
+        # current-year-earnings (equity_unaffected) account's opening. Odoo
+        # computes this rather than posting it, so without it the opening trial
+        # balance would not balance. Mirrors OCA account_financial_report's
+        # _get_pl_initial_balance (sum of reset-account balances before fy_from).
+        unaffected = accounts.filtered(
+            lambda a: a.account_type == 'equity_unaffected')[:1]
+        if unaffected:
+            pl_prior = sum(
+                bal for _account, bal in AML._read_group(
+                    base + [('date', '<', fy_from), ('account_id', 'in', reset.ids)],
+                    groupby=['account_id'], aggregates=['balance:sum']))
+            if pl_prior:
+                opening[unaffected.id] = opening.get(unaffected.id, 0.0) + pl_prior
         return opening
 
     # ---- report contract (concrete reports override) --------------------

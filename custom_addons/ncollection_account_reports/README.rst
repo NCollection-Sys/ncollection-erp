@@ -72,11 +72,15 @@ carry-forward flag, ``account.account.include_initial_balance``: **balance-sheet
 accounts** (flag True) carry all prior activity; **P&L accounts AND the auto
 current-year-earnings account** (flag False) reset at the fiscal-year start. We
 read that flag rather than hand-maintain an ``account_type`` list, so future
-localisation types are classified correctly for free. The fiscal-year boundary
-comes from ``res.company.compute_fiscalyear_dates()`` — Odoo's own calendar. A
-report period must lie within one fiscal year (``_nc_assert_single_fiscal_year``
-raises otherwise) — spanning a boundary can't reset P&L cleanly, and a hard error
-beats a silently wrong number.
+localisation types are classified correctly for free (archived accounts are kept
+via ``active_test=False`` — they can still carry a balance). Prior fiscal years'
+net P&L rolls into the current-year-earnings (``equity_unaffected``) account's
+opening — the **affectation of results** — so the opening column balances, exactly
+as OCA ``account_financial_report`` computes it. The fiscal-year boundary comes
+from ``res.company.compute_fiscalyear_dates()`` — Odoo's own calendar. A report
+period must lie within one fiscal year (``_nc_assert_single_fiscal_year`` raises
+otherwise) — spanning a boundary can't reset P&L cleanly, and a hard error beats
+a silently wrong number.
 
 **Trial Balance** (``…trial.balance``) — per account: Opening · Debit · Credit ·
 **Closing = Opening + Debit − Credit**, closed by a balanced Total row. Its own

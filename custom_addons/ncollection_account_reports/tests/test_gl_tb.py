@@ -170,6 +170,40 @@ class TestGeneralLedgerTrialBalance(AccountTestInvoicingCommon):
         # prior-year P&L activity must NOT carry into the current-year opening
         self.assertAlmostEqual(opening.get(other_exp.id, 0.0), 0.0)
 
+    def test_opening_included_for_archived_account(self):
+        # An ARCHIVED balance-sheet account still carries its prior balance —
+        # the account partition must include it (active_test=False), or its
+        # opening would be silently dropped to 0 while its row still shows.
+        acct = self.env['account.account'].create({
+            'name': 'Old Bank', 'code': 'OLDBK1', 'account_type': 'asset_cash',
+            'company_ids': [(6, 0, self.env.company.ids)]})
+        move = self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': self.journal.id,
+            'date': date(2025, 12, 31),               # prior fiscal year
+            'line_ids': [
+                (0, 0, {'account_id': acct.id, 'debit': 40.0, 'credit': 0.0}),
+                (0, 0, {'account_id': self.revenue.id, 'debit': 0.0, 'credit': 40.0}),
+            ]})
+        move.action_post()
+        acct.write({'active': False})                 # archived, still carries
+        opening = self._tb()._nc_opening_balances()
+        self.assertAlmostEqual(opening.get(acct.id, 0.0), 40.0)   # carried, not dropped
+
+    def test_tb_opening_balances_to_zero_via_unaffected_earnings(self):
+        # Prior fiscal years' net P&L rolls into the current-year-earnings
+        # (equity_unaffected) account's opening — the affectation of results —
+        # so the trial balance's OPENING column balances (Σ = 0), matching OCA
+        # account_financial_report. Without it the opening would be off by the
+        # prior P&L.
+        cye = self.env['account.account'].search(
+            [('account_type', '=', 'equity_unaffected')], limit=1)
+        self.assertTrue(cye, "test chart has a current-year-earnings account")
+        rows = [r for r in self._tb()._nc_compute_lines() if r['account_id']]
+        self.assertAlmostEqual(sum(r['opening_balance'] for r in rows), 0.0)
+        by_acc = {r['account_id']: r for r in rows}
+        # setUpClass posted prior-year Cr revenue 100 → -100 net P&L rolled in
+        self.assertAlmostEqual(by_acc[cye.id]['opening_balance'], -100.0)
+
     # ---- a report period must stay within one fiscal year --------------
 
     def test_report_rejects_multi_fiscal_year_period(self):
@@ -197,3 +231,26 @@ class TestGeneralLedgerTrialBalance(AccountTestInvoicingCommon):
         # …nor download my GL export attachment
         with self.assertRaises(AccessError):
             self.env['ir.attachment'].browse(att_id).with_user(other).datas
+
+    def test_gl_multiple_period_lines_ordered_by_date(self):
+        # Several in-period entries for ONE account, inserted OUT of date order:
+        # the one-pass grouping must still render them by date with a correct
+        # cumulative running balance across all of them.
+        for day, amount in [(20, 10.0), (5, 30.0), (12, 20.0)]:   # 20th, 5th, 12th
+            mv = self.env['account.move'].create({
+                'move_type': 'entry', 'journal_id': self.journal.id,
+                'date': date(2026, 3, day),
+                'line_ids': [
+                    (0, 0, {'account_id': self.receivable.id, 'debit': amount, 'credit': 0.0}),
+                    (0, 0, {'account_id': self.revenue.id, 'debit': 0.0, 'credit': amount}),
+                ]})
+            mv.action_post()
+        gl = self._gl()
+        rows = [r for r in gl._nc_gl_rows()
+                if r['account_id'] == self.receivable.id and not r['is_initial']]
+        dates = [r['date'] for r in rows]
+        self.assertEqual(dates, sorted(dates))   # rendered in date order, not insertion
+        running = gl._nc_opening_balances().get(self.receivable.id, 0.0)
+        for r in rows:                            # running balance stays cumulative
+            running += r['debit'] - r['credit']
+            self.assertAlmostEqual(r['running_balance'], running)
