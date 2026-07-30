@@ -6,6 +6,7 @@ import base64
 from datetime import date
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import tagged
 
 
@@ -145,3 +146,54 @@ class TestGeneralLedgerTrialBalance(AccountTestInvoicingCommon):
             'login': 'nc_gl_other', 'name': 'Other',
             'group_ids': [(6, 0, [self.env.ref('account.group_account_readonly').id])]})
         self.assertFalse(GLLine.with_user(other).search([]))
+
+    # ---- opening classification: delegate to Odoo, don't hand-roll ------
+
+    def test_opening_resets_for_other_expense_type(self):
+        # 'expense_other' is an income-statement type Odoo resets each fiscal
+        # year (include_initial_balance=False). A hand-rolled account_type
+        # allowlist that omitted it wrongly carried its prior-year balance into
+        # the opening — this proves we follow Odoo's own classification instead.
+        other_exp = self.env['account.account'].create({
+            'name': 'FX Loss', 'code': 'FXL001', 'account_type': 'expense_other',
+            'company_ids': [(6, 0, self.env.company.ids)]})
+        self.assertFalse(other_exp.include_initial_balance)   # Odoo: resets each FY
+        move = self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': self.journal.id,
+            'date': date(2025, 12, 31),                       # prior fiscal year
+            'line_ids': [
+                (0, 0, {'account_id': other_exp.id, 'debit': 70.0, 'credit': 0.0}),
+                (0, 0, {'account_id': self.receivable.id, 'debit': 0.0, 'credit': 70.0}),
+            ]})
+        move.action_post()
+        opening = self._tb()._nc_opening_balances()
+        # prior-year P&L activity must NOT carry into the current-year opening
+        self.assertAlmostEqual(opening.get(other_exp.id, 0.0), 0.0)
+
+    # ---- a report period must stay within one fiscal year --------------
+
+    def test_report_rejects_multi_fiscal_year_period(self):
+        wiz = self.TB.create({
+            'date_from': date(2025, 6, 1), 'date_to': date(2026, 6, 1),
+            'target_move': 'posted'})   # crosses the 2025→2026 FY boundary
+        with self.assertRaises(UserError):
+            wiz._nc_compute_lines()
+
+    # ---- isolation: the wizard run + its export are private ------------
+
+    def test_gl_run_and_export_are_private_per_user(self):
+        # The drill-down pivot and the XLSX attachment (the F2-T01 IDOR class)
+        # both hinge on another user being unable to read MY report run.
+        gl = self._gl()
+        gl.action_view()
+        xlsx = gl.action_export_xlsx()
+        att_id = int(xlsx['url'].split('/web/content/')[1].split('?')[0])
+        other = self.env['res.users'].create({
+            'login': 'nc_gl_reader', 'name': 'Reader',
+            'group_ids': [(6, 0, [self.env.ref('account.group_account_readonly').id])]})
+        # cannot read my GL wizard record (blocks the drill-down pivot)…
+        with self.assertRaises(AccessError):
+            gl.with_user(other).date_from
+        # …nor download my GL export attachment
+        with self.assertRaises(AccessError):
+            self.env['ir.attachment'].browse(att_id).with_user(other).datas

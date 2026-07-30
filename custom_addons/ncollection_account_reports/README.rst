@@ -61,15 +61,22 @@ Reporting → NCollection Reports → Account Balances (reference).*
 F2-T02 reports: General Ledger + Trial Balance
 ==============================================
 
-Two native production reports on the engine, both driven purely from
-``account.move.line`` aggregates (Odoo owns the numbers). *Accounting →
-Reporting → NCollection Reports → {Trial Balance, General Ledger}.*
+Two native production reports on the engine, both computed from
+``account.move.line`` (Odoo owns the numbers) — the Trial Balance via
+``_read_group`` aggregates, the General Ledger over the line detail it lists.
+*Accounting → Reporting → NCollection Reports → {Trial Balance, General Ledger}.*
 
 **Opening balance (shared, ``_nc_opening_balances()``)** — the accounting-correct
-opening used by BOTH reports: **P&L accounts** (income/expense) count only from
-the fiscal-year start (they reset each year); **balance-sheet accounts** carry
-all prior activity. The fiscal-year boundary comes from
-``res.company.compute_fiscalyear_dates()`` — Odoo's own calendar, not a guess.
+opening used by BOTH reports. Accounts are partitioned by Odoo's own
+carry-forward flag, ``account.account.include_initial_balance``: **balance-sheet
+accounts** (flag True) carry all prior activity; **P&L accounts AND the auto
+current-year-earnings account** (flag False) reset at the fiscal-year start. We
+read that flag rather than hand-maintain an ``account_type`` list, so future
+localisation types are classified correctly for free. The fiscal-year boundary
+comes from ``res.company.compute_fiscalyear_dates()`` — Odoo's own calendar. A
+report period must lie within one fiscal year (``_nc_assert_single_fiscal_year``
+raises otherwise) — spanning a boundary can't reset P&L cleanly, and a hard error
+beats a silently wrong number.
 
 **Trial Balance** (``…trial.balance``) — per account: Opening · Debit · Credit ·
 **Closing = Opening + Debit − Credit**, closed by a balanced Total row. Its own

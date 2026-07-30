@@ -154,7 +154,7 @@
                 <field name="currency_id" column_invisible="1"/>
                 <field name="is_initial" column_invisible="1"/>
                 <button name="action_drill_down" type="object" string="Journal Items"
-                        icon="fa-search-plus"/>
+                        icon="fa-search-plus" invisible="is_initial"/>
             </list>
         </field>
     </record>

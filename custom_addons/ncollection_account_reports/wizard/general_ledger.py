@@ -78,12 +78,13 @@ class NcollectionGeneralLedger(models.TransientModel):
         self.ensure_one()
         AML = self.env['account.move.line']
         opening = self._nc_opening_balances()
+        # Already ordered by (account_id, date, id) — one pass groups AND keeps
+        # date order per account (no recordset unions, no per-account re-sort).
         period = AML.search(
             self._nc_move_line_domain(), order='account_id, date, id')
         by_account = {}
         for line in period:
-            by_account.setdefault(line.account_id.id, AML.browse())
-            by_account[line.account_id.id] |= line
+            by_account.setdefault(line.account_id.id, []).append(line)
 
         account_ids = set(opening) | set(by_account)
         accounts = self.env['account.account'].browse(
@@ -97,8 +98,7 @@ class NcollectionGeneralLedger(models.TransientModel):
                 'date': False, 'move_name': '', 'journal_id': False,
                 'journal_name': '', 'partner_id': False, 'partner_name': '',
                 'debit': 0.0, 'credit': 0.0, 'running_balance': running})
-            for line in by_account.get(account.id, AML.browse()).sorted(
-                    lambda ml: (ml.date, ml.id)):
+            for line in by_account.get(account.id, []):
                 running += line.balance
                 rows.append({
                     'is_initial': False, 'account_id': account.id,
@@ -140,6 +140,10 @@ class NcollectionGeneralLedger(models.TransientModel):
             'name': self._nc_report_title(),
             'res_model': 'ncollection.account.report.gl.line',
             'view_mode': 'list',
+            # Pin the list view explicitly (like the base engine) — don't rely on
+            # this model having exactly one list view.
+            'views': [(self.env.ref(
+                'ncollection_account_reports.view_report_gl_line_list').id, 'list')],
             'domain': [('id', 'in', created.ids)],
             'target': 'current',
         }

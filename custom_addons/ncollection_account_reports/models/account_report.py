@@ -25,14 +25,6 @@ try:
 except ImportError:  # pragma: no cover - xlsxwriter ships with Odoo 19
     xlsxwriter = None
 
-# Odoo 19 income/expense account_type keys — P&L accounts reset each fiscal
-# year (opening counts only from the FY start); everything else is a
-# balance-sheet account that carries prior activity. Used by TB + GL opening.
-PL_ACCOUNT_TYPES = (
-    'income', 'income_other',
-    'expense', 'expense_depreciation', 'expense_direct_cost',
-)
-
 
 class NcollectionAccountReport(models.AbstractModel):
     _name = 'ncollection.account.report'
@@ -82,27 +74,54 @@ class NcollectionAccountReport(models.AbstractModel):
         return self._nc_filter_domain(account=account, partner=partner) + [
             ('date', '>=', self.date_from), ('date', '<=', self.date_to)]
 
+    def _nc_assert_single_fiscal_year(self):
+        """A report period must lie within ONE fiscal year. The opening logic
+        resets P&L accounts at the fiscal-year start, which is only well-defined
+        for a single-FY period; spanning a boundary would silently mix two years'
+        P&L activity. For a financial report a hard error beats a wrong number."""
+        self.ensure_one()
+        fy_from = self.company_id.compute_fiscalyear_dates(self.date_from)['date_from']
+        fy_to = self.company_id.compute_fiscalyear_dates(self.date_to)['date_from']
+        if fy_from != fy_to:
+            raise UserError(self.env._(
+                "The report period must fall within a single fiscal year — the "
+                "From/To range crosses a fiscal-year boundary. Run one report "
+                "per fiscal year."))
+
     def _nc_opening_balances(self):
         """``{account_id: opening balance at date_from}`` — the accounting-correct
-        opening used by BOTH the Trial Balance and the General Ledger: P&L
-        accounts count only from the fiscal-year start (they reset each year),
-        balance-sheet accounts carry all prior activity. Computed from
-        ``account.move.line`` aggregates — Odoo owns the numbers. Assumes a
-        period within one fiscal year (the standard report case)."""
+        opening used by BOTH the Trial Balance and the General Ledger.
+
+        Accounts are partitioned by Odoo's OWN carry-forward flag
+        (``account.account.include_initial_balance``): it is True for
+        balance-sheet accounts, which carry ALL prior activity, and False for
+        P&L income/expense accounts AND the auto current-year-earnings account
+        (``equity_unaffected``), which reset at the fiscal-year start. We read
+        that flag directly rather than hand-maintain an ``account_type``
+        allowlist — Odoo owns the classification (FPA §6), so future
+        localisation types (e.g. ``expense_other``) are handled for free.
+        Assumes a single-fiscal-year period (guarded above)."""
         self.ensure_one()
+        self._nc_assert_single_fiscal_year()
         AML = self.env['account.move.line']
         base = self._nc_filter_domain()
         fy_from = self.company_id.compute_fiscalyear_dates(self.date_from)['date_from']
+        Account = self.env['account.account']
+        accounts = Account.search(Account._check_company_domain(self.company_id))
+        carry = accounts.filtered('include_initial_balance')   # balance-sheet
+        reset = accounts - carry                               # P&L + current-year earnings
         opening = {}
+        # Balance-sheet accounts: all activity before the report start date.
         for account, bal in AML._read_group(
                 base + [('date', '<', self.date_from),
-                        ('account_id.account_type', 'not in', PL_ACCOUNT_TYPES)],
+                        ('account_id', 'in', carry.ids)],
                 groupby=['account_id'], aggregates=['balance:sum']):
             if account:
                 opening[account.id] = bal
+        # P&L + current-year-earnings: only the current fiscal year to date.
         for account, bal in AML._read_group(
                 base + [('date', '>=', fy_from), ('date', '<', self.date_from),
-                        ('account_id.account_type', 'in', PL_ACCOUNT_TYPES)],
+                        ('account_id', 'in', reset.ids)],
                 groupby=['account_id'], aggregates=['balance:sum']):
             if account:
                 opening[account.id] = bal
