@@ -34,8 +34,9 @@ class TestMisReconciliation(TransactionCase):
         Account = cls.env['account.account']
 
         def acc(*types):
-            return Account.search(
-                [('account_type', 'in', types), ('company_id', '=', cls.company.id)], limit=1)
+            # Odoo 19: account.account is multi-company (no company_id field);
+            # searching by type is enough for a single-company test.
+            return Account.search([('account_type', 'in', types)], limit=1)
 
         cls.cash = acc('asset_cash', 'asset_current')
         cls.income = acc('income')
