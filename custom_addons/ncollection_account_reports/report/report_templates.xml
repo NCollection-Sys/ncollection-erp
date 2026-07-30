@@ -13,6 +13,29 @@
         <field name="print_report_name">object._nc_report_title()</field>
     </record>
 
+    <!-- F2-T02: per-model report actions. Each needs a UNIQUE report_name —
+         Odoo resolves a report by report_name (the Export-PDF client path AND
+         _render_qweb_html), so sharing one name across actions is ambiguous and
+         renders every wizard against the FIRST action's model. Each action
+         therefore points at a thin wrapper template that t-calls the shared body. -->
+    <record id="action_report_trial_balance" model="ir.actions.report">
+        <field name="name">Trial Balance</field>
+        <field name="model">ncollection.account.report.trial.balance</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_trial_balance</field>
+        <field name="report_file">ncollection_account_reports.report_trial_balance</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <record id="action_report_general_ledger" model="ir.actions.report">
+        <field name="name">General Ledger</field>
+        <field name="model">ncollection.account.report.general.ledger</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_general_ledger</field>
+        <field name="report_file">ncollection_account_reports.report_general_ledger</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
     <template id="report_financial">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
@@ -55,6 +78,16 @@
                 </t>
             </t>
         </t>
+    </template>
+
+    <!-- Thin per-report wrappers: give each action a UNIQUE report_name while
+         reusing the generic body above (docs/o come from the render context). -->
+    <template id="report_trial_balance">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <template id="report_general_ledger">
+        <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 
 </odoo>

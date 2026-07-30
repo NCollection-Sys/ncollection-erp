@@ -47,14 +47,13 @@ class NcollectionAccountReport(models.AbstractModel):
 
     # ---- filters -> account.move.line domain ----------------------------
 
-    def _nc_move_line_domain(self, account=None, partner=None):
-        """The base journal-item domain for the current filters. Pass ``account``
-        and/or ``partner`` to scope it to one account/partner (drill-down)."""
+    def _nc_filter_domain(self, account=None, partner=None):
+        """Common NON-date journal-item filters (company, posted/all, journals,
+        accounts, partners). Date range is added by the caller — the period,
+        opening and closing aggregates each need a different one."""
         self.ensure_one()
         domain = [
             ('company_id', '=', self.company_id.id),
-            ('date', '>=', self.date_from),
-            ('date', '<=', self.date_to),
             ('display_type', 'not in', ('line_section', 'line_note')),
         ]
         domain.append(('parent_state', '=', 'posted') if self.target_move == 'posted'
@@ -68,6 +67,82 @@ class NcollectionAccountReport(models.AbstractModel):
         if partners:
             domain.append(('partner_id', 'in', partners.ids))
         return domain
+
+    def _nc_move_line_domain(self, account=None, partner=None):
+        """The PERIOD journal-item domain: the common filters + [date_from,
+        date_to]. Pass ``account``/``partner`` to scope it (drill-down)."""
+        return self._nc_filter_domain(account=account, partner=partner) + [
+            ('date', '>=', self.date_from), ('date', '<=', self.date_to)]
+
+    def _nc_assert_single_fiscal_year(self):
+        """A report period must lie within ONE fiscal year. The opening logic
+        resets P&L accounts at the fiscal-year start, which is only well-defined
+        for a single-FY period; spanning a boundary would silently mix two years'
+        P&L activity. For a financial report a hard error beats a wrong number."""
+        self.ensure_one()
+        fy_from = self.company_id.compute_fiscalyear_dates(self.date_from)['date_from']
+        fy_to = self.company_id.compute_fiscalyear_dates(self.date_to)['date_from']
+        if fy_from != fy_to:
+            raise UserError(self.env._(
+                "The report period must fall within a single fiscal year — the "
+                "From/To range crosses a fiscal-year boundary. Run one report "
+                "per fiscal year."))
+
+    def _nc_opening_balances(self):
+        """``{account_id: opening balance at date_from}`` — the accounting-correct
+        opening used by BOTH the Trial Balance and the General Ledger.
+
+        Accounts are partitioned by Odoo's OWN carry-forward flag
+        (``account.account.include_initial_balance``): it is True for
+        balance-sheet accounts, which carry ALL prior activity, and False for
+        P&L income/expense accounts AND the auto current-year-earnings account
+        (``equity_unaffected``), which reset at the fiscal-year start. We read
+        that flag directly rather than hand-maintain an ``account_type``
+        allowlist — Odoo owns the classification (FPA §6), so future
+        localisation types (e.g. ``expense_other``) are handled for free.
+        Assumes a single-fiscal-year period (guarded above)."""
+        self.ensure_one()
+        self._nc_assert_single_fiscal_year()
+        AML = self.env['account.move.line']
+        base = self._nc_filter_domain()
+        fy_from = self.company_id.compute_fiscalyear_dates(self.date_from)['date_from']
+        # active_test=False: an ARCHIVED account can still carry a balance —
+        # dropping it here would silently zero its opening (its move lines still
+        # surface via the period query, so the row would show a wrong opening).
+        Account = self.env['account.account'].with_context(active_test=False)
+        accounts = Account.search(Account._check_company_domain(self.company_id))
+        carry = accounts.filtered('include_initial_balance')   # balance-sheet
+        reset = accounts - carry                               # P&L + current-year earnings
+        opening = {}
+        # Balance-sheet accounts: all activity before the report start date.
+        for account, bal in AML._read_group(
+                base + [('date', '<', self.date_from),
+                        ('account_id', 'in', carry.ids)],
+                groupby=['account_id'], aggregates=['balance:sum']):
+            if account:
+                opening[account.id] = bal
+        # P&L + current-year-earnings: only the current fiscal year to date.
+        for account, bal in AML._read_group(
+                base + [('date', '>=', fy_from), ('date', '<', self.date_from),
+                        ('account_id', 'in', reset.ids)],
+                groupby=['account_id'], aggregates=['balance:sum']):
+            if account:
+                opening[account.id] = bal
+        # Affectation of results: PRIOR fiscal years' net P&L rolls into the
+        # current-year-earnings (equity_unaffected) account's opening. Odoo
+        # computes this rather than posting it, so without it the opening trial
+        # balance would not balance. Mirrors OCA account_financial_report's
+        # _get_pl_initial_balance (sum of reset-account balances before fy_from).
+        unaffected = accounts.filtered(
+            lambda a: a.account_type == 'equity_unaffected')[:1]
+        if unaffected:
+            pl_prior = sum(
+                bal for _account, bal in AML._read_group(
+                    base + [('date', '<', fy_from), ('account_id', 'in', reset.ids)],
+                    groupby=['account_id'], aggregates=['balance:sum']))
+            if pl_prior:
+                opening[unaffected.id] = opening.get(unaffected.id, 0.0) + pl_prior
+        return opening
 
     # ---- report contract (concrete reports override) --------------------
 
@@ -104,6 +179,8 @@ class NcollectionAccountReport(models.AbstractModel):
             'debit': row.get('debit', 0.0),
             'credit': row.get('credit', 0.0),
             'balance': row.get('balance', 0.0),
+            'opening_balance': row.get('opening_balance', 0.0),
+            'closing_balance': row.get('closing_balance', 0.0),
             'level': row.get('level', 0),
             'currency_id': currency_id,
         } for row in self._nc_compute_lines()])
@@ -112,17 +189,27 @@ class NcollectionAccountReport(models.AbstractModel):
             'name': self._nc_report_title(),
             'res_model': 'ncollection.account.report.line',
             'view_mode': 'list',
+            'views': [(self.env.ref(self._nc_list_view_ref()).id, 'list')],
             'domain': [('id', 'in', created.ids)],
             'target': 'current',
         }
 
+    def _nc_list_view_ref(self):
+        """Xmlid of the list view for the on-screen results. Reports with extra
+        columns (e.g. Trial Balance's opening/closing) override this."""
+        return 'ncollection_account_reports.view_report_line_list'
+
     # ---- PDF (native qweb-pdf) ------------------------------------------
+
+    def _nc_report_action_ref(self):
+        """Xmlid of this report's ir.actions.report (all share the generic
+        ``report_financial`` template but need a per-model action)."""
+        return 'ncollection_account_reports.action_report_financial'
 
     def action_export_pdf(self):
         self.ensure_one()
-        return self.env.ref(
-            'ncollection_account_reports.action_report_financial'
-        ).report_action(self, config=False)
+        return self.env.ref(self._nc_report_action_ref()).report_action(
+            self, config=False)
 
     # ---- XLSX (xlsxwriter — no OCA dep) ---------------------------------
 

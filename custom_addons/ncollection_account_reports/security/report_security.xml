@@ -20,5 +20,24 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- F2-T02: same per-user scoping for the GL/TB report runs + GL lines. -->
+        <record id="rule_report_trial_balance_own" model="ir.rule">
+            <field name="name">Trial Balance runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_trial_balance"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_general_ledger_own" model="ir.rule">
+            <field name="name">General Ledger runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_general_ledger"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_gl_line_own" model="ir.rule">
+            <field name="name">General Ledger lines: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_gl_line"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>

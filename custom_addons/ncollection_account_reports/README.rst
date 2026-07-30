@@ -2,7 +2,8 @@
 NCollection Account Reports
 ==========================
 
-**Task:** F2-T01 · **Architecture:** ``FINANCIAL_PLATFORM_ARCHITECTURE.md`` §7/§10
+**Tasks:** F2-T01 (engine) · F2-T02 (General Ledger + Trial Balance) ·
+**Architecture:** ``FINANCIAL_PLATFORM_ARCHITECTURE.md`` §7/§10
 
 The native financial **report engine** — the permanent replacement for the OCA
 tactical reporting bootstrap (ADR #15), retired fleet-wide by F2-T07 (#117) once
@@ -57,10 +58,56 @@ debit/credit/balance summary — ships as the reference that proves the engine
 end-to-end (filters → list → drill-down → PDF → XLSX, < 2s). *Accounting →
 Reporting → NCollection Reports → Account Balances (reference).*
 
+F2-T02 reports: General Ledger + Trial Balance
+==============================================
+
+Two native production reports on the engine, both computed from
+``account.move.line`` (Odoo owns the numbers) — the Trial Balance via
+``_read_group`` aggregates, the General Ledger over the line detail it lists.
+*Accounting → Reporting → NCollection Reports → {Trial Balance, General Ledger}.*
+
+**Opening balance (shared, ``_nc_opening_balances()``)** — the accounting-correct
+opening used by BOTH reports. Accounts are partitioned by Odoo's own
+carry-forward flag, ``account.account.include_initial_balance``: **balance-sheet
+accounts** (flag True) carry all prior activity; **P&L accounts AND the auto
+current-year-earnings account** (flag False) reset at the fiscal-year start. We
+read that flag rather than hand-maintain an ``account_type`` list, so future
+localisation types are classified correctly for free (archived accounts are kept
+via ``active_test=False`` — they can still carry a balance). Prior fiscal years'
+net P&L rolls into the current-year-earnings (``equity_unaffected``) account's
+opening — the **affectation of results** — so the opening column balances, exactly
+as OCA ``account_financial_report`` computes it. The fiscal-year boundary comes
+from ``res.company.compute_fiscalyear_dates()`` — Odoo's own calendar. A report
+period must lie within one fiscal year (``_nc_assert_single_fiscal_year`` raises
+otherwise) — spanning a boundary can't reset P&L cleanly, and a hard error beats
+a silently wrong number.
+
+**Trial Balance** (``…trial.balance``) — per account: Opening · Debit · Credit ·
+**Closing = Opening + Debit − Credit**, closed by a balanced Total row. Its own
+list view adds the opening/closing columns to the shared line model.
+
+**General Ledger** (``…general.ledger``) — per account, an *opening* row
+(``is_initial``) carrying the opening balance, then the period's journal items in
+date order with a **cumulative running balance**. Uses its own transient line
+model (``…gl.line``: date / entry / journal / partner / running balance) with
+per-line drill-down scoped to that line's account. Both reports' line models are
+**per-user** (``ir.rule`` on ``create_uid``) — one user never sees another's run.
+
+**The acceptance — reconciliation:** the TB *Closing* per account equals the GL
+*ending running balance* per account (``test_gl_tb.py`` proves it for a
+balance-sheet and a P&L account across a fiscal-year boundary).
+
+Each report has its **own** ``ir.actions.report`` with a **unique**
+``report_name`` (thin wrapper template ``t-call``-ing the shared body) and its own
+``_nc_report_action_ref()``. Sharing one ``report_name`` is ambiguous — Odoo
+resolves reports by name, so every wizard would render against the first action's
+model. Add a report → add its wrapper template + override.
+
 What this does NOT own
 ======================
 
-- The **reports** themselves (GL, TB, BS, P&L …) — those are F2-T02+ on this engine.
+- More **reports** (Balance Sheet, P&L, Partner Ledger, Aged …) — later F2 tasks
+  on this engine. GL + Trial Balance ship here (F2-T02).
 - Any **accounting logic** — posting, tax, reconciliation stay Odoo's (FPA §6);
   the engine reads via ``_read_group``, one aggregate query (the < 2s target).
 - Dashboards / KPIs — ``ncollection_account_dashboard`` / ``_analytics``.
