@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_lead_territory_manager,ncollection.lead.territory.manager,model_ncollection_lead_territory,sales_team.group_sale_manager,1,1,1,1
+access_lead_territory_user,ncollection.lead.territory.user,model_ncollection_lead_territory,sales_team.group_sale_salesman,1,0,0,0
