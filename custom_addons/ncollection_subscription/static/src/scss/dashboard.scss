@@ -33,13 +33,15 @@
         min-width: 180px;
         background-color: #FFFFFF;
         border: 1px solid var(--nc-border, #C0C7D1);
-        border-left: 4px solid var(--nc-primary, #1F5F8F);
+        // Logical property so the accent bar flips to the right edge under RTL
+        // (Arabic) automatically — P3-T08 RTL audit.
+        border-inline-start: 4px solid var(--nc-primary, #1F5F8F);
         border-radius: var(--nc-radius, 10px);
         padding: var(--nc-space-5, 20px);
         box-shadow: var(--nc-shadow, 0 1px 3px rgba(15, 23, 42, 0.08));
 
-        &.o_ncollection_kpi_revenue { border-left-color: var(--nc-success, #16A34A); }
-        &.o_ncollection_kpi_alert   { border-left-color: var(--nc-danger, #DC2626); }
+        &.o_ncollection_kpi_revenue { border-inline-start-color: var(--nc-success, #16A34A); }
+        &.o_ncollection_kpi_alert   { border-inline-start-color: var(--nc-danger, #DC2626); }
     }
 
     .o_ncollection_kpi_label {

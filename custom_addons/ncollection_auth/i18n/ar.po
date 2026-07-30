@@ -1,0 +1,32 @@
+# Arabic (ar_001) translation of ncollection_auth.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_auth\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_auth
+msgid "Login success"
+msgstr "نجاح تسجيل الدخول"
+
+#. module: ncollection_auth
+msgid "Login failed"
+msgstr "فشل تسجيل الدخول"
+
+#. module: ncollection_auth
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+#. module: ncollection_auth
+msgid "Password reset requested"
+msgstr "تم طلب إعادة تعيين كلمة المرور"
+
+#. module: ncollection_auth
+msgid "Password reset completed"
+msgstr "تم إكمال إعادة تعيين كلمة المرور"

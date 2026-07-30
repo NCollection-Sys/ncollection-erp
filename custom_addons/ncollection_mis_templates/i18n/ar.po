@@ -1,0 +1,103 @@
+# Arabic (ar_001) translation of ncollection_mis_templates.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_mis_templates\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_mis_templates
+msgid "Balance Sheet"
+msgstr "الميزانية العمومية"
+
+#. module: ncollection_mis_templates
+msgid "Current Assets"
+msgstr "الأصول المتداولة"
+
+#. module: ncollection_mis_templates
+msgid "Fixed & Other Assets"
+msgstr "الأصول الثابتة والأصول الأخرى"
+
+#. module: ncollection_mis_templates
+msgid "TOTAL ASSETS"
+msgstr "إجمالي الأصول"
+
+#. module: ncollection_mis_templates
+msgid "Current Liabilities"
+msgstr "الخصوم المتداولة"
+
+#. module: ncollection_mis_templates
+msgid "Long-Term Liabilities"
+msgstr "الخصوم طويلة الأجل"
+
+#. module: ncollection_mis_templates
+msgid "TOTAL LIABILITIES"
+msgstr "إجمالي الخصوم"
+
+#. module: ncollection_mis_templates
+msgid "Equity"
+msgstr "حقوق الملكية"
+
+#. module: ncollection_mis_templates
+msgid "TOTAL LIABILITIES & EQUITY"
+msgstr "إجمالي الخصوم وحقوق الملكية"
+
+#. module: ncollection_mis_templates
+msgid "Profit & Loss"
+msgstr "الأرباح والخسائر"
+
+#. module: ncollection_mis_templates
+msgid "Sales Revenue"
+msgstr "إيرادات المبيعات"
+
+#. module: ncollection_mis_templates
+msgid "Other Operating Income"
+msgstr "إيرادات تشغيلية أخرى"
+
+#. module: ncollection_mis_templates
+msgid "TOTAL INCOME"
+msgstr "إجمالي الإيرادات"
+
+#. module: ncollection_mis_templates
+msgid "Cost of Goods Sold"
+msgstr "تكلفة البضاعة المباعة"
+
+#. module: ncollection_mis_templates
+msgid "GROSS PROFIT"
+msgstr "إجمالي الربح"
+
+#. module: ncollection_mis_templates
+msgid "Operating Expenses"
+msgstr "المصروفات التشغيلية"
+
+#. module: ncollection_mis_templates
+msgid "OPERATING PROFIT"
+msgstr "الربح التشغيلي"
+
+#. module: ncollection_mis_templates
+msgid "NET PROFIT"
+msgstr "صافي الربح"
+
+#. module: ncollection_mis_templates
+msgid "Balance Sheet — Current Period"
+msgstr "الميزانية العمومية — الفترة الحالية"
+
+#. module: ncollection_mis_templates
+msgid "Actual"
+msgstr "الفعلي"
+
+#. module: ncollection_mis_templates
+msgid "Profit & Loss — Current Month"
+msgstr "الأرباح والخسائر — الشهر الحالي"
+
+#. module: ncollection_mis_templates
+msgid "This Month"
+msgstr "هذا الشهر"
+
+#. module: ncollection_mis_templates
+msgid "Previous Month"
+msgstr "الشهر السابق"

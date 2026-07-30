@@ -1,0 +1,331 @@
+# Arabic (ar_001) translation of ncollection_core.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_core\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_core
+msgid "Your plan allows a maximum of %(limit)s users and you already have %(count)s. Upgrade your subscription to add more users."
+msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين ولديك بالفعل %(count)s. قم بترقية اشتراكك لإضافة المزيد من المستخدمين."
+
+#. module: ncollection_core
+msgid "Only the workspace Owner can deactivate users."
+msgstr "يمكن لمالك مساحة العمل وحده إلغاء تفعيل المستخدمين."
+
+#. module: ncollection_core
+msgid "You cannot deactivate your own account."
+msgstr "لا يمكنك إلغاء تفعيل حسابك الخاص."
+
+#. module: ncollection_core
+msgid "You cannot deactivate the last workspace Owner."
+msgstr "لا يمكنك إلغاء تفعيل آخر مالك لمساحة العمل."
+
+#. module: ncollection_core
+msgid "Allowed Modules"
+msgstr "الوحدات المسموح بها"
+
+#. module: ncollection_core
+msgid "Only one workspace configuration record may exist per tenant database."
+msgstr "لا يجوز وجود أكثر من سجل واحد لإعدادات مساحة العمل لكل قاعدة بيانات مستأجر."
+
+#. module: ncollection_core
+msgid "Employee"
+msgstr "موظف"
+
+#. module: ncollection_core
+msgid "Sales"
+msgstr "المبيعات"
+
+#. module: ncollection_core
+msgid "Warehouse"
+msgstr "المستودع"
+
+#. module: ncollection_core
+msgid "HR"
+msgstr "الموارد البشرية"
+
+#. module: ncollection_core
+msgid "Accountant"
+msgstr "محاسب"
+
+#. module: ncollection_core
+msgid "Manager"
+msgstr "مدير"
+
+#. module: ncollection_core
+msgid "CEO"
+msgstr "الرئيس التنفيذي"
+
+#. module: ncollection_core
+msgid "Owner"
+msgstr "المالك"
+
+#. module: ncollection_core
+msgid "Full Name"
+msgstr "الاسم الكامل"
+
+#. module: ncollection_core
+msgid "Please enter a valid email address."
+msgstr "يُرجى إدخال عنوان بريد إلكتروني صالح."
+
+#. module: ncollection_core
+msgid "Your plan allows a maximum of %(limit)s users. Upgrade your subscription to invite more."
+msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين. قم بترقية اشتراكك لدعوة المزيد."
+
+#. module: ncollection_core
+msgid "User invited"
+msgstr "تمت دعوة المستخدم"
+
+#. module: ncollection_core
+msgid "%(name)s was added with the %(role)s role."
+msgstr "تمت إضافة %(name)s بالدور %(role)s."
+
+#. module: ncollection_core
+msgid "New Quotation"
+msgstr "عرض سعر جديد"
+
+#. module: ncollection_core
+msgid "New Invoice"
+msgstr "فاتورة جديدة"
+
+#. module: ncollection_core
+msgid "New Purchase Order"
+msgstr "أمر شراء جديد"
+
+#. module: ncollection_core
+msgid "Sales This Month"
+msgstr "المبيعات هذا الشهر"
+
+#. module: ncollection_core
+msgid "Receivables"
+msgstr "الذمم المدينة"
+
+#. module: ncollection_core
+msgid "Payables"
+msgstr "الذمم الدائنة"
+
+#. module: ncollection_core
+msgid "Cash & Bank"
+msgstr "النقد والبنك"
+
+#. module: ncollection_core
+msgid "Open Activities"
+msgstr "الأنشطة المفتوحة"
+
+#. module: ncollection_core
+msgid "Pending Approvals"
+msgstr "الموافقات المعلقة"
+
+#. module: ncollection_core
+msgid "Revenue (last 6 months)"
+msgstr "الإيرادات (آخر 6 أشهر)"
+
+#. module: ncollection_core
+msgid "Top Customers"
+msgstr "أبرز العملاء"
+
+#. module: ncollection_core
+msgid "vs last month"
+msgstr "مقارنةً بالشهر الماضي"
+
+#. module: ncollection_core
+msgid "Open invoices"
+msgstr "الفواتير المفتوحة"
+
+#. module: ncollection_core
+msgid "Open bills"
+msgstr "فواتير الموردين المفتوحة"
+
+#. module: ncollection_core
+msgid "Across cash & bank accounts"
+msgstr "عبر حسابات النقد والبنك"
+
+#. module: ncollection_core
+msgid "Assigned to you"
+msgstr "المسندة إليك"
+
+#. module: ncollection_core
+msgid "Awaiting sign-off"
+msgstr "بانتظار الاعتماد"
+
+#. module: ncollection_core
+msgid "Unknown"
+msgstr "غير معروف"
+
+#. module: ncollection_core
+msgid "Workspace Users"
+msgstr "مستخدمو مساحة العمل"
+
+#. module: ncollection_core
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+#. module: ncollection_core
+msgid "Deactivate"
+msgstr "إلغاء التفعيل"
+
+#. module: ncollection_core
+msgid "Deactivate this user? They will no longer be able to log in."
+msgstr "هل تريد إلغاء تفعيل هذا المستخدم؟ لن يتمكن بعد ذلك من تسجيل الدخول."
+
+#. module: ncollection_core
+msgid "Users"
+msgstr "المستخدمون"
+
+#. module: ncollection_core
+msgid "Invite your first team member"
+msgstr "ادعُ أول عضو في فريقك"
+
+#. module: ncollection_core
+msgid "Use \"Invite User\" to add teammates with a predefined role."
+msgstr "استخدم \"دعوة مستخدم\" لإضافة أعضاء الفريق بدور محدد مسبقًا."
+
+#. module: ncollection_core
+msgid "Invite User"
+msgstr "دعوة مستخدم"
+
+#. module: ncollection_core
+msgid "Send Invitation"
+msgstr "إرسال الدعوة"
+
+#. module: ncollection_core
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_core
+msgid "Company Information"
+msgstr "معلومات الشركة"
+
+#. module: ncollection_core
+msgid "Company Name"
+msgstr "اسم الشركة"
+
+#. module: ncollection_core
+msgid "Identity"
+msgstr "الهوية"
+
+#. module: ncollection_core
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+#. module: ncollection_core
+msgid "TRN"
+msgstr "الرقم الضريبي"
+
+#. module: ncollection_core
+msgid "Address"
+msgstr "العنوان"
+
+#. module: ncollection_core
+msgid "Street"
+msgstr "الشارع"
+
+#. module: ncollection_core
+msgid "Street 2"
+msgstr "الشارع 2"
+
+#. module: ncollection_core
+msgid "City"
+msgstr "المدينة"
+
+#. module: ncollection_core
+msgid "Emirate / State"
+msgstr "الإمارة / الولاية"
+
+#. module: ncollection_core
+msgid "ZIP"
+msgstr "الرمز البريدي"
+
+#. module: ncollection_core
+msgid "Country"
+msgstr "الدولة"
+
+#. module: ncollection_core
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_core
+msgid "Workspace Settings"
+msgstr "إعدادات مساحة العمل"
+
+#. module: ncollection_core
+msgid "Workspace Appearance"
+msgstr "مظهر مساحة العمل"
+
+#. module: ncollection_core
+msgid "Brand Colours"
+msgstr "ألوان العلامة التجارية"
+
+#. module: ncollection_core
+msgid "Login Screen"
+msgstr "شاشة تسجيل الدخول"
+
+#. module: ncollection_core
+msgid "Colours use 6-digit hex (for example #1F5F8F). Changes apply on the next page reload. Leave a colour empty to use the NCollection default."
+msgstr "تُستخدم الألوان بصيغة سداسية عشرية من 6 خانات (على سبيل المثال ‎#1F5F8F). تُطبَّق التغييرات عند إعادة تحميل الصفحة التالية. اترك اللون فارغًا لاستخدام الإعداد الافتراضي لـ NCollection."
+
+#. module: ncollection_core
+msgid "Appearance"
+msgstr "المظهر"
+
+#. module: ncollection_core
+msgid "Dashboard"
+msgstr "لوحة المعلومات"
+
+#. module: ncollection_core
+msgid "Workspace paused — NCollection"
+msgstr "مساحة العمل متوقفة مؤقتًا — NCollection"
+
+#. module: ncollection_core
+msgid "Your subscription has expired"
+msgstr "انتهت صلاحية اشتراكك"
+
+#. module: ncollection_core
+msgid "Your workspace is paused"
+msgstr "مساحة عملك متوقفة مؤقتًا"
+
+#. module: ncollection_core
+msgid "Please renew to restore access — your data is safe."
+msgstr "يُرجى التجديد لاستعادة الوصول — بياناتك آمنة."
+
+#. module: ncollection_core
+msgid "Renew subscription"
+msgstr "تجديد الاشتراك"
+
+#. module: ncollection_core
+msgid "Log out"
+msgstr "تسجيل الخروج"
+
+#. module: ncollection_core
+msgid "Welcome back"
+msgstr "مرحبًا بعودتك"
+
+#. module: ncollection_core
+msgid "Loading your dashboard…"
+msgstr "جارٍ تحميل لوحة المعلومات…"
+
+#. module: ncollection_core
+msgid "The dashboard could not be loaded. Please refresh the page."
+msgstr "تعذّر تحميل لوحة المعلومات. يُرجى إعادة تحميل الصفحة."
+
+#. module: ncollection_core
+msgid "No dashboard widgets are available for your role yet."
+msgstr "لا تتوفر أي أدوات في لوحة المعلومات لدورك حتى الآن."
+
+#. module: ncollection_core
+msgid "NCollection Roles"
+msgstr "أدوار NCollection"
+
+#. module: ncollection_core
+msgid "Standard tenant workspace roles for NCollection ERP."
+msgstr "أدوار مساحة عمل المستأجر القياسية لنظام NCollection ERP."
+
+#. module: ncollection_core
+msgid "Standard tenant workspace roles."
+msgstr "أدوار مساحة عمل المستأجر القياسية."

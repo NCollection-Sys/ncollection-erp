@@ -1,0 +1,87 @@
+# Arabic (ar_001) translation of ncollection_account_localization_uae.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_localization_uae\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_account_localization_uae
+msgid "TRN registered with the FTA"
+msgstr "رقم التسجيل الضريبي (TRN) مسجّل لدى الهيئة الاتحادية للضرائب"
+
+#. module: ncollection_account_localization_uae
+msgid "VAT tax period configured"
+msgstr "تم تكوين الفترة الضريبية لضريبة القيمة المضافة"
+
+#. module: ncollection_account_localization_uae
+msgid "VAT return filing schedule set"
+msgstr "تم تحديد جدول تقديم الإقرارات الضريبية لضريبة القيمة المضافة"
+
+#. module: ncollection_account_localization_uae
+msgid "Tax invoices meet FTA format (TRN + VAT breakdown)"
+msgstr "الفواتير الضريبية مطابقة لصيغة الهيئة الاتحادية للضرائب (رقم التسجيل الضريبي + تفصيل ضريبة القيمة المضافة)"
+
+#. module: ncollection_account_localization_uae
+msgid "E-invoicing readiness (structured data / QR)"
+msgstr "الجاهزية للفوترة الإلكترونية (بيانات منظمة / رمز الاستجابة السريعة)"
+
+#. module: ncollection_account_localization_uae
+msgid "Stable technical identifier for the requirement (used for idempotent seeding)."
+msgstr "معرّف تقني ثابت للمتطلب (يُستخدم للتعبئة الأولية غير المكرّرة)."
+
+#. module: ncollection_account_localization_uae
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+#. module: ncollection_account_localization_uae
+msgid "Done"
+msgstr "تم"
+
+#. module: ncollection_account_localization_uae
+msgid "Not applicable"
+msgstr "غير قابل للتطبيق"
+
+#. module: ncollection_account_localization_uae
+msgid "This FTA compliance item already exists for this company."
+msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب هذا موجود بالفعل لهذه الشركة."
+
+#. module: ncollection_account_localization_uae
+msgid "FTA Compliance Items"
+msgstr "عناصر الامتثال للهيئة الاتحادية للضرائب"
+
+#. module: ncollection_account_localization_uae
+msgid "FTA Readiness %"
+msgstr "نسبة الجاهزية للهيئة الاتحادية للضرائب %"
+
+#. module: ncollection_account_localization_uae
+msgid "Percentage of applicable UAE FTA compliance items marked done (items marked \"not applicable\" are excluded from the base)."
+msgstr "النسبة المئوية لعناصر الامتثال المطبّقة للهيئة الاتحادية للضرائب في الإمارات المُعلّمة كمكتملة (تُستثنى العناصر المُعلّمة \"غير قابل للتطبيق\" من الأساس)."
+
+#. module: ncollection_account_localization_uae
+msgid "UAE FTA Compliance"
+msgstr "الامتثال للهيئة الاتحادية للضرائب في الإمارات"
+
+#. module: ncollection_account_localization_uae
+msgid "UAE FTA Compliance Item"
+msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب في الإمارات"
+
+#. module: ncollection_account_localization_uae
+msgid "Notes"
+msgstr "ملاحظات"
+
+#. module: ncollection_account_localization_uae
+msgid "Track this company's UAE FTA readiness."
+msgstr "تتبّع جاهزية هذه الشركة للامتثال للهيئة الاتحادية للضرائب في الإمارات."
+
+#. module: ncollection_account_localization_uae
+msgid "These items are seeded automatically and updated as VAT, chart of accounts and FTA-compliant invoicing are configured."
+msgstr "تتم تعبئة هذه العناصر تلقائياً وتُحدَّث عند تكوين ضريبة القيمة المضافة وشجرة الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
+
+#. module: ncollection_account_localization_uae
+msgid "FTA compliance item: per-company"
+msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب: لكل شركة"

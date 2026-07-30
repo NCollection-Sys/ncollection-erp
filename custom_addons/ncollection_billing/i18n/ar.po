@@ -1,0 +1,167 @@
+# Arabic (ar_001) translation of ncollection_billing.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_billing\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_billing
+msgid "NC Subscription Advanced"
+msgstr "اشتراك NC المتقدم"
+
+#. module: ncollection_billing
+msgid "Billing Contact"
+msgstr "جهة اتصال الفوترة"
+
+#. module: ncollection_billing
+msgid "The customer record this tenant is invoiced against (admin DB)."
+msgstr "سجل العميل الذي تُصدَر عليه فواتير هذا المستأجر (قاعدة بيانات المسؤول)."
+
+#. module: ncollection_billing
+msgid "NC Subscription"
+msgstr "اشتراك NC"
+
+#. module: ncollection_billing
+msgid "NC Tenant"
+msgstr "مستأجر NC"
+
+#. module: ncollection_billing
+msgid "NC Period Start"
+msgstr "بداية فترة NC"
+
+#. module: ncollection_billing
+msgid "NC Period End"
+msgstr "نهاية فترة NC"
+
+#. module: ncollection_billing
+msgid "A subscription can only be invoiced once per billing period (NCollection billing idempotency)."
+msgstr "لا يمكن إصدار فاتورة للاشتراك سوى مرة واحدة لكل فترة فوترة (عدم تكرارية فوترة NCollection)."
+
+#. module: ncollection_billing
+msgid "Invoices"
+msgstr "الفواتير"
+
+#. module: ncollection_billing
+msgid "No Invoice"
+msgstr "لا توجد فاتورة"
+
+#. module: ncollection_billing
+msgid "Invoiced"
+msgstr "تمت الفوترة"
+
+#. module: ncollection_billing
+msgid "Paid"
+msgstr "مدفوع"
+
+#. module: ncollection_billing
+msgid "Overdue"
+msgstr "متأخر السداد"
+
+#. module: ncollection_billing
+msgid "Payment received for invoice %(inv)s — subscription active through %(end)s."
+msgstr "تم استلام الدفع للفاتورة %(inv)s — الاشتراك نشط حتى %(end)s."
+
+#. module: ncollection_billing
+msgid "Payment attempt failed for this subscription (transaction %(ref)s, %(state)s)."
+msgstr "فشلت محاولة الدفع لهذا الاشتراك (المعاملة %(ref)s، %(state)s)."
+
+#. module: ncollection_billing
+msgid "Expiry warning sent (%(d)s days before expiry)."
+msgstr "تم إرسال تحذير انتهاء الصلاحية (%(d)s أيام قبل انتهاء الصلاحية)."
+
+#. module: ncollection_billing
+msgid "Trial-ending reminder sent."
+msgstr "تم إرسال تذكير بانتهاء الفترة التجريبية."
+
+#. module: ncollection_billing
+msgid "Dunning reminder sent (%(d)s days overdue)."
+msgstr "تم إرسال تذكير مطالبات السداد (%(d)s أيام تأخير)."
+
+#. module: ncollection_billing
+msgid "Lifecycle Scheduler"
+msgstr "مُجدوِل دورة الحياة"
+
+#. module: ncollection_billing
+msgid "NCollection: Subscription Expiry Warning"
+msgstr "NCollection: تحذير انتهاء صلاحية الاشتراك"
+
+#. module: ncollection_billing
+msgid "Your NCollection subscription expires soon ({{ object.days_remaining }} days)"
+msgstr "تنتهي صلاحية اشتراكك في NCollection قريباً ({{ object.days_remaining }} أيام)"
+
+#. module: ncollection_billing
+msgid "Please renew to avoid any interruption to your workspace."
+msgstr "يرجى التجديد لتجنب أي انقطاع في مساحة عملك."
+
+#. module: ncollection_billing
+msgid "NCollection: Subscription Payment Reminder"
+msgstr "NCollection: تذكير بدفع الاشتراك"
+
+#. module: ncollection_billing
+msgid "Payment overdue for your NCollection subscription"
+msgstr "دفعة متأخرة لاشتراكك في NCollection"
+
+#. module: ncollection_billing
+msgid "Please settle the outstanding invoice to keep your workspace active."
+msgstr "يرجى تسوية الفاتورة المستحقة للحفاظ على نشاط مساحة عملك."
+
+#. module: ncollection_billing
+msgid "NCollection: Trial Ending Soon"
+msgstr "NCollection: الفترة التجريبية تنتهي قريباً"
+
+#. module: ncollection_billing
+msgid "Your NCollection trial ends soon"
+msgstr "تنتهي فترتك التجريبية في NCollection قريباً"
+
+#. module: ncollection_billing
+msgid "Add a payment method to keep your workspace running without interruption."
+msgstr "أضف طريقة دفع للحفاظ على تشغيل مساحة عملك دون انقطاع."
+
+#. module: ncollection_billing
+msgid "NCollection: Subscription Expired"
+msgstr "NCollection: انتهت صلاحية الاشتراك"
+
+#. module: ncollection_billing
+msgid "Your NCollection subscription has expired"
+msgstr "انتهت صلاحية اشتراكك في NCollection"
+
+#. module: ncollection_billing
+msgid "NCollection: Subscription Suspended"
+msgstr "NCollection: تم تعليق الاشتراك"
+
+#. module: ncollection_billing
+msgid "Your NCollection workspace has been suspended"
+msgstr "تم تعليق مساحة عملك في NCollection"
+
+#. module: ncollection_billing
+msgid "NCollection: Payment Received"
+msgstr "NCollection: تم استلام الدفع"
+
+#. module: ncollection_billing
+msgid "Payment received — thank you"
+msgstr "تم استلام الدفع — شكراً لك"
+
+#. module: ncollection_billing
+msgid "NCollection: Payment Failed"
+msgstr "NCollection: فشل الدفع"
+
+#. module: ncollection_billing
+msgid "We couldn't process your payment"
+msgstr "لم نتمكن من معالجة دفعتك"
+
+#. module: ncollection_billing
+msgid "NCollection: Plan Change Confirmation"
+msgstr "NCollection: تأكيد تغيير الخطة"
+
+#. module: ncollection_billing
+msgid "Your NCollection plan has changed"
+msgstr "تم تغيير خطتك في NCollection"
+
+#. module: ncollection_billing
+msgid "NCollection: subscription lifecycle & dunning sweep"
+msgstr "NCollection: دورة حياة الاشتراك وجولة مطالبات السداد"

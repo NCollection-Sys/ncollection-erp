@@ -5,3 +5,5 @@ from . import test_login_branding
 from . import test_dynamic_branding
 from . import test_design_tokens
 from . import test_component_library
+from . import test_rtl_conformance
+from . import test_translations
