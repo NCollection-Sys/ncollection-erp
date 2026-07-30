@@ -15,7 +15,7 @@ import logging
 import re
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -155,10 +155,19 @@ class FleetMigration(models.Model):
 
     # ---- synchronous run (manual button / tests) -------------------------
 
+    def _final_state(self):
+        """'failed' if any tenant is still in a failed state at completion,
+        else 'done' (a headline signal — per-line counts carry the detail)."""
+        self.ensure_one()
+        return 'failed' if self.line_ids.filtered(
+            lambda line: line.state == 'failed') else 'done'
+
     def action_run_sync(self):
         """Run the whole migration inline: canary wave → gate → rolling waves.
         Used by the manual button and the tests; production uses action_start."""
         self.ensure_one()
+        if self.state != 'draft':
+            raise UserError(self.env._("This migration has already been started."))
         self._prepare()
         self.write({'state': 'canary', 'current_wave': 0})
         for line in self._wave_lines(0):
@@ -172,9 +181,10 @@ class FleetMigration(models.Model):
             self.current_wave = wave
             for line in self._wave_lines(wave):
                 line.run_line()
-        self.write({'state': 'done'})
-        self._log(self.env._("Fleet migration complete."), post=True)
-        return True
+        final = self._final_state()
+        self.write({'state': final})
+        self._log(self.env._("Fleet migration complete (%s).", final), post=True)
+        return final == 'done'
 
     # ---- asynchronous run (production, via queue_job) --------------------
 
@@ -182,6 +192,8 @@ class FleetMigration(models.Model):
         """Kick off off the HTTP workers: enqueue the canary wave; _cron_advance
         drives the gate and the subsequent waves."""
         self.ensure_one()
+        if self.state != 'draft':
+            raise UserError(self.env._("This migration has already been started."))
         self._prepare()
         self.write({'state': 'canary', 'current_wave': 0})
         self._enqueue_wave(0)
@@ -204,6 +216,12 @@ class FleetMigration(models.Model):
 
     def _advance(self):
         self.ensure_one()
+        # Serialise concurrent advances of this migration (the cron singleton +
+        # a manual call could still race this read-check-write, which gates a
+        # destructive drop+restore) — take an explicit row lock.
+        self.env.cr.execute(
+            "SELECT id FROM ncollection_fleet_migration WHERE id = %s FOR UPDATE",
+            (self.id,))
         if self.state == 'canary':
             if not self._wave_terminal(0):
                 return
@@ -221,8 +239,9 @@ class FleetMigration(models.Model):
                 self.write({'current_wave': nxt})
                 self._enqueue_wave(nxt)
             else:
-                self.write({'state': 'done'})
-                self._log(self.env._("Fleet migration complete."), post=True)
+                final = self._final_state()
+                self.write({'state': final})
+                self._log(self.env._("Fleet migration complete (%s).", final), post=True)
 
     # ---- cancel + audit --------------------------------------------------
 

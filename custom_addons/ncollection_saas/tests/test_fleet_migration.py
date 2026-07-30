@@ -10,7 +10,15 @@ import contextlib
 from unittest.mock import patch
 
 from odoo.addons.ncollection_saas.models.backup import NcollectionBackup
-from odoo.addons.ncollection_saas.models.saas_subprocess import SaasSubprocessMixin
+from odoo.addons.ncollection_saas.models.provisioning_job import (
+    DB_NAME_RE as PJ_DB_NAME_RE,
+    RESERVED_DB_NAMES as PJ_RESERVED,
+)
+from odoo.addons.ncollection_saas.models.saas_subprocess import (
+    DB_NAME_RE as SS_DB_NAME_RE,
+    RESERVED_DB_NAMES as SS_RESERVED,
+    SaasSubprocessMixin,
+)
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
@@ -49,9 +57,13 @@ class TestFleetMigration(TransactionCase):
         return migration.line_ids.filtered(lambda line: line.tenant_id == tenant)
 
     @contextlib.contextmanager
-    def _mocked(self, fail_dbs=(), run_calls=None, restore_calls=None, drop_calls=None):
+    def _mocked(
+        self, fail_dbs=(), run_calls=None, restore_calls=None,
+        drop_calls=None, restore_fail=False,
+    ):
         """Stub every external side effect: the odoo subprocess, the snapshot,
-        and the drop/restore. `fail_dbs` makes the `-u` step raise for those DBs."""
+        and the drop/restore. `fail_dbs` makes the `-u` step raise for those DBs;
+        `restore_fail` makes the restore raise (worst-case path)."""
         def _run(_self, cmd, label, stdin=None, env=None, timeout=None):
             db = cmd[cmd.index('-d') + 1] if '-d' in cmd else '?'
             if run_calls is not None:
@@ -70,6 +82,8 @@ class TestFleetMigration(TransactionCase):
         def _restore_to(_self, target_db):
             if restore_calls is not None:
                 restore_calls.append(target_db)
+            if restore_fail:
+                raise RuntimeError("simulated restore failure on %s" % target_db)
             return target_db
 
         def _drop(_self, db):
@@ -117,25 +131,108 @@ class TestFleetMigration(TransactionCase):
         with self._mocked(fail_dbs={self.t2.database_name},
                           restore_calls=restores, drop_calls=drops):
             migration.action_run_sync()
-        # the run completes past the failed tenant
+        # the run completes past the failed tenant (restored, not failed)
         self.assertEqual(migration.state, 'done')
         self.assertEqual(self._line(migration, self.t2).state, 'restored')
         self.assertIn(self.t2.database_name, drops)     # dropped
         self.assertIn(self.t2.database_name, restores)  # then restored from snapshot
+        # restored to its pre-upgrade state → the tenant stays healthy
+        self.assertEqual(self.t2.database_status, 'ready')
         # its neighbours upgraded fine
         self.assertEqual(self._line(migration, self.t1).state, 'done')
         self.assertEqual(self._line(migration, self.t3).state, 'done')
 
-    def test_failure_without_auto_restore_flags_and_keeps_snapshot(self):
+    def test_failure_without_auto_restore_flags_tenant_error(self):
         migration = self._migration(auto_restore=False)
         restores = []
         with self._mocked(fail_dbs={self.t2.database_name}, restore_calls=restores):
             migration.action_run_sync()
-        self.assertEqual(migration.state, 'done')
+        # a real per-tenant failure makes the whole run's headline 'failed'
+        self.assertEqual(migration.state, 'failed')
         line = self._line(migration, self.t2)
         self.assertEqual(line.state, 'failed')
         self.assertEqual(restores, [])          # nothing was restored automatically
         self.assertTrue(line.backup_id)         # snapshot kept for a manual restore
+        # the tenant is flagged so config-sync/backup/checkout stop trusting it
+        self.assertEqual(self.t2.database_status, 'error')
+        # the neighbours still succeeded
+        self.assertEqual(self._line(migration, self.t1).state, 'done')
+
+    def test_restore_failure_flags_error_and_alerts(self):
+        # worst case: upgrade fails, auto-restore is ON, but the restore ALSO
+        # fails -> the DB may be gone; flag 'error' + raise an activity.
+        migration = self._migration()
+        before = len(migration.activity_ids)
+        with self._mocked(fail_dbs={self.t2.database_name}, restore_fail=True):
+            migration.action_run_sync()
+        self.assertEqual(self._line(migration, self.t2).state, 'failed')
+        self.assertEqual(self.t2.database_status, 'error')
+        self.assertGreater(len(migration.activity_ids), before)  # manual-recovery todo
+        # the run still finished past it
+        self.assertEqual(migration.state, 'failed')
+        self.assertEqual(self._line(migration, self.t3).state, 'done')
+
+    def test_failure_surfaces_to_chatter(self):
+        migration = self._migration(auto_restore=False)
+        before = len(migration.message_ids)
+        with self._mocked(fail_dbs={self.t2.database_name}):
+            migration.action_run_sync()
+        self.assertGreater(len(migration.message_ids), before)
+
+    def test_cancel_skips_not_yet_run_tenants(self):
+        # Cancel must stop tenants that a worker picks up after cancellation.
+        migration = self._migration()
+        migration._prepare()
+        migration.action_cancel()
+        self.assertEqual(migration.state, 'cancelled')
+        run = []
+        with patch.object(SaasSubprocessMixin, '_run_odoo_subprocess',
+                          lambda *a, **k: run.append(1) or ''):
+            self._line(migration, self.t1).run_line()
+        self.assertEqual(self._line(migration, self.t1).state, 'skipped')
+        self.assertEqual(run, [])  # no subprocess ran for a cancelled migration
+
+    def test_advance_waits_for_an_incomplete_wave(self):
+        migration = self._migration()
+        migration._prepare()
+        migration.write({'state': 'canary', 'current_wave': 0})
+        # canary lines are still pending → the gate must not open the fleet
+        enqueued = []
+        with patch.object(type(migration), '_enqueue_wave',
+                          lambda self, wave: enqueued.append(wave)):
+            migration._advance()
+        self.assertEqual(migration.state, 'canary')
+        self.assertEqual(enqueued, [])
+
+    def test_async_gate_progresses_wave_by_wave_to_done(self):
+        migration = self._migration(wave_size=1)  # t1/t2/t3 → waves 1,2,3
+        with self._mocked():
+            # simulate the queue worker: enqueuing a wave runs its lines inline.
+            def _fake_enqueue(mig, wave):
+                for line in mig._wave_lines(wave):
+                    line.run_line()
+            with patch.object(type(migration), '_enqueue_wave', _fake_enqueue):
+                migration.action_start()                 # runs the canary
+                for _ in range(10):
+                    if migration.state in ('done', 'failed', 'canary_failed'):
+                        break
+                    self.env['ncollection.fleet.migration']._cron_advance()
+        self.assertEqual(migration.state, 'done')
+        for tenant in (self.canary, self.t1, self.t2, self.t3):
+            self.assertEqual(self._line(migration, tenant).state, 'done')
+
+    def test_double_start_is_rejected(self):
+        migration = self._migration()
+        with self._mocked():
+            migration.action_run_sync()
+        with self.assertRaises(UserError):
+            migration.action_run_sync()          # already started
+
+    def test_db_name_guard_matches_provisioning(self):
+        # The mixin copies these safety constants from provisioning_job; guard
+        # against silent drift (a reserved name added to one copy only).
+        self.assertEqual(SS_DB_NAME_RE.pattern, PJ_DB_NAME_RE.pattern)
+        self.assertEqual(SS_RESERVED, PJ_RESERVED)
 
     def test_dry_run_touches_no_database(self):
         migration = self._migration(dry_run=True)

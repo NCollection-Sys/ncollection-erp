@@ -87,15 +87,6 @@ class SaasSubprocessMixin(models.AbstractModel):
         }
         return {k: v for k, v in params.items() if v not in (False, None, '')}
 
-    def _database_exists(self, db):
-        conn = psycopg2.connect(**self._db_conn_params('postgres'))
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db,))
-            return cur.fetchone() is not None
-        finally:
-            conn.close()
-
     def _drop_database(self, db):
         """DROP DATABASE (FORCE) via a maintenance connection. The caller MUST
         have passed the name through _assert_safe_db_name first."""

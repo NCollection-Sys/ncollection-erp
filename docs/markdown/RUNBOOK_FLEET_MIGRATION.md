@@ -61,10 +61,24 @@ hand if needed); **ON** once you trust the upgrade.
 
 ## Manual rollback (auto_restore OFF, or a canary failure)
 
-1. Open the failed line → its **Backup** (`backup_id`) is the pre-upgrade snapshot.
-2. `docs`: restore it over the tenant DB (drop + `tenant_restore.sh <file> <db>`),
-   or use the backup's **Restore…** wizard against the tenant DB name.
-3. Re-investigate the module change before re-running.
+A failed line **flags its tenant `database_status = error`** and keeps the
+pre-upgrade snapshot on its `backup_id`. To restore it in place:
+
+1. Open the failed line → note its **Backup** (`backup_id`) file and the tenant's
+   `database_name`.
+2. Restore the snapshot **in place** with the restore script — it terminates
+   connections, drops, and recreates the DB (exactly what `_restore` does
+   internally):
+   ```bash
+   docker compose exec odoo bash \
+     /mnt/extra-addons/ncollection_saas/scripts/backup/tenant_restore.sh \
+     <snapshot_file> <tenant_db>
+   ```
+   > ⚠️ Do **not** use the backup **Restore…** wizard here — it deliberately
+   > refuses any live-tenant name (it restores to scratch/staging DBs only).
+   > In-place tenant recovery is the shell path above.
+3. Once healthy, set the tenant's `database_status` back to `ready` (Settings →
+   the tenant record) and re-investigate the module change before re-running.
 
 ## Safety properties
 
