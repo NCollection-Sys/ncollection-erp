@@ -28,6 +28,10 @@ class TestPurchaseApproval(TransactionCase):
             'group_ids': [(6, 0, [
                 po_user,
                 cls.env.ref('ncollection_approvals.group_approval_purchase_finance').id])]})
+        # A plain purchase user with neither approver group.
+        cls.buyer = cls.env['res.users'].create({
+            'login': 'nc_po_buyer', 'name': 'PO Buyer',
+            'group_ids': [(6, 0, [po_user])]})
 
     def _po(self, qty):
         return self.env['purchase.order'].create({
@@ -40,6 +44,7 @@ class TestPurchaseApproval(TransactionCase):
 
     def test_below_threshold_confirms_directly(self):
         po = self._po(1)  # 100 < 1000
+        self.assertFalse(po._nc_needs_approval())
         po.button_confirm()
         self.assertEqual(po.state, 'purchase')
 
@@ -63,3 +68,39 @@ class TestPurchaseApproval(TransactionCase):
         self.assertEqual(po.approval_state, 'approved')
         po.button_confirm()
         self.assertEqual(po.state, 'purchase')
+
+    def test_rejected_po_stays_blocked(self):
+        po = self._po(20)  # 2000 > 1000
+        po.action_request_approval()
+        po.with_user(self.dept).action_reject()
+        self.assertEqual(po.approval_state, 'rejected')
+        with self.assertRaises(UserError):
+            po.button_confirm()
+
+    def test_forged_approval_state_is_blocked(self):
+        # The #228 state-write guard: a plain purchase user (no approver group)
+        # cannot set the confirm-affecting states directly over RPC.
+        po = self._po(20)
+        with self.assertRaises(AccessError):
+            po.with_user(self.buyer).write({'approval_state': 'approved'})
+        # a department approver still cannot jump straight to 'approved'
+        with self.assertRaises(AccessError):
+            po.with_user(self.dept).write({'approval_state': 'approved'})
+        # nor can a plain user skip the department step
+        with self.assertRaises(AccessError):
+            po.with_user(self.buyer).write({'approval_state': 'pending_finance'})
+
+    def test_approval_voided_when_order_grows(self):
+        po = self._po(20)  # 2000
+        po.action_request_approval()
+        po.with_user(self.dept).action_approve_department()
+        po.with_user(self.finance).action_approve_finance()
+        self.assertEqual(po.approval_state, 'approved')
+        po.write({'order_line': [(0, 0, {
+            'product_id': self.product.id, 'name': 'PO Widget',
+            'product_qty': 20, 'price_unit': 100.0,
+            'product_uom_id': self.product.uom_id.id,
+            'date_planned': fields.Datetime.now()})]})  # +2000 -> 4000
+        self.assertEqual(po.approval_state, 'none')
+        with self.assertRaises(UserError):
+            po.button_confirm()

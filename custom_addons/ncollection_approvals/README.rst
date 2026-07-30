@@ -34,6 +34,26 @@ then **finance** approval (``pending_department`` → ``pending_finance`` →
 are the module's own groups (``group_approval_purchase_department`` /
 ``…_finance``); each approve action is ORM-gated on its group.
 
+.. note::
+   Odoo core also ships a native purchase double-validation
+   (*Settings → Purchase → Purchase Order Approval*, ``po_double_validation`` /
+   ``po_double_validation_amount``). This module's gate runs **before**
+   ``super().button_confirm()``, so enabling both stacks two independent
+   approvals (the native one lands the PO in Odoo's own ``to approve`` state
+   afterwards). Pick one — either this module's two-level flow **or** the native
+   one — not both.
+
+Guard against stale approvals
+=============================
+
+An approval only covers the amount it was granted for. If order lines are edited
+after approval so the total grows past the approved amount, the approval is
+**voided** (state reset, an audit note posted) and must be requested again —
+approving a small order then inflating it cannot slip past the gate. Every
+approve/reject/confirm gate is enforced at the ORM layer, not only via the
+button ``groups=`` (Rule 4/7; the #228 state-write lesson): ``approval_state``
+itself is guarded on ``write``/``create`` so it cannot be forged over RPC.
+
 CRM territory-based lead assignment
 ===================================
 
@@ -41,8 +61,17 @@ CRM territory-based lead assignment
 (and team). A lead created **without** an explicit salesperson is auto-assigned
 to the first matching territory (state before country; rules ordered by
 sequence) and the assignee gets a notification activity. An explicit salesperson
-is never overridden. Odoo 19 core also ships native domain-based assignment on
-``crm.team.member``; this is the lighter, ticket-prescribed custom mechanism.
+is never overridden. A rule that constrains **states** is matched via the state
+tier only — it never becomes a country-wide catch-all for other states. The
+assignment write runs under ``sudo`` (system routing), so a low-privileged
+creator cannot block it. Odoo 19 core also ships native domain-based assignment
+on ``crm.team.member``; this is the lighter, ticket-prescribed custom mechanism.
+
+.. note::
+   Territory rules are **not** company-scoped. In a tenant database configured
+   with multiple ``res.company`` records, a rule applies across all companies in
+   that DB. This assumes the common single-company-per-tenant setup; per-company
+   territories are a tracked follow-up.
 
 Configuration
 =============

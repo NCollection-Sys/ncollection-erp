@@ -9,7 +9,7 @@
                 <field name="nc_approval_required" invisible="1"/>
                 <button name="action_request_approval" type="object"
                         string="Request Approval" class="btn-primary"
-                        invisible="not nc_approval_required or approval_state != 'none'"/>
+                        invisible="not nc_approval_required or approval_state not in ('none', 'rejected')"/>
                 <button name="action_approve_department" type="object"
                         string="Approve (Department)" class="btn-primary"
                         invisible="approval_state != 'pending_department'"

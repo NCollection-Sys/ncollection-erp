@@ -14,8 +14,10 @@
     # oca-scout confirmed BUILD over OCA tier-validation (a days-old 19.0 port,
     # not vendored, and the architecture prescribes this custom shape).
     #   - sale / purchase / crm : the tenant-side ERP models we extend.
+    #   - sales_team            : the sale-manager/salesman groups we gate on
+    #                             (transitive via sale/crm, declared explicitly).
     #   - mail                  : mail.activity + mail.thread (the approval task).
-    'depends': ['sale', 'purchase', 'crm', 'mail'],
+    'depends': ['sales_team', 'sale', 'purchase', 'crm', 'mail'],
     'data': [
         'security/approvals_groups.xml',
         'security/ir.model.access.csv',

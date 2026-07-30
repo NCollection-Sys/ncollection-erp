@@ -32,7 +32,12 @@ class CrmLead(models.Model):
             if rule:
                 return rule
         if self.country_id:
-            rule = Territory.search([('country_ids', 'in', self.country_id.id)], limit=1)
+            # Country tier: only rules that are NOT state-specific. A rule that
+            # constrains states is matched via the state tier alone, so it never
+            # silently becomes a country-wide catch-all for other states.
+            rule = Territory.search([
+                ('country_ids', 'in', self.country_id.id),
+                ('state_ids', '=', False)], limit=1)
             if rule:
                 return rule
         return Territory.browse()
@@ -47,8 +52,12 @@ class CrmLead(models.Model):
         vals = {'nc_territory_id': rule.id, 'user_id': rule.user_id.id}
         if rule.team_id:
             vals['team_id'] = rule.team_id.id
-        self.write(vals)
-        self.activity_schedule(
+        # System routing: write under sudo so a low-privileged creator (who may
+        # lack write access to a lead core has already assigned to someone else)
+        # cannot block it. Values come only from manager-owned territory rules.
+        lead = self.sudo()
+        lead.write(vals)
+        lead.activity_schedule(
             _TODO_ACT,
             summary=self.env._("New lead assigned: %s", self.name or ''),
             note=self.env._("Auto-assigned from territory '%s'.", rule.name),
