@@ -201,13 +201,15 @@ hooks-install: ## Enable the repo's git hooks (fast gates run on pre-push)
 doctor: ## Diagnose the local dev environment ("why doesn't this work on my machine?")
 	@bash scripts/dev/doctor.sh
 
-verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + e2e) — pre-merge gate
-	@echo "==> [1/4] routing & isolation (P1-T06)"
+verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + financial-bootstrap + e2e) — pre-merge gate
+	@echo "==> [1/5] routing & isolation (P1-T06)"
 	@$(MAKE) --no-print-directory routing-verify
-	@echo "==> [2/4] provisioning (P2-T01)"
+	@echo "==> [2/5] provisioning (P2-T01)"
 	@$(MAKE) --no-print-directory provisioning-verify
-	@echo "==> [3/4] config sync (P2-T03)"
+	@echo "==> [3/5] config sync (P2-T03)"
 	@$(MAKE) --no-print-directory config-sync-verify
-	@echo "==> [4/4] end-to-end guarantees (P1-T20)"
+	@echo "==> [4/5] financial bootstrap (P3-T01)"
+	@$(MAKE) --no-print-directory financial-bootstrap-verify
+	@echo "==> [5/5] end-to-end guarantees (P1-T20)"
 	@$(MAKE) --no-print-directory e2e-verify
 	@echo "✅ verify-all: every suite green."

@@ -31,6 +31,9 @@ hr(){ echo "--------------------------------------------------------------------
 drop_db(){ "${DC[@]}" exec -T db psql -U odoo -d postgres -c \
     "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$1' AND pid<>pg_backend_pid()" >/dev/null 2>&1 || true
   "${DC[@]}" exec -T db dropdb -U odoo --if-exists "$1" >/dev/null 2>&1 || true; }
+# Always drop the fixture DB on exit — including the install-failure path below,
+# so a crashed run never leaves a half-built 'fintest' behind (Rule 12).
+trap 'drop_db "$DB"' EXIT
 
 echo "P3-T01 — OCA financial bootstrap proof (DB: $DB)"
 hr
@@ -58,7 +61,11 @@ out="$("${DC[@]}" exec -T odoo odoo shell -d "$DB" --no-http --log-level=error "
 company = env.ref('base.main_company')
 env = env(context=dict(env.context, allowed_company_ids=company.ids))
 Account = env['account.account']
-accs = Account.search([('company_ids', 'in', company.ids)], limit=2)
+accs = Account.search(
+    [('company_ids', 'in', company.ids),
+     ('account_type', 'in', ['asset_current', 'income', 'expense', 'liability_current'])],
+    limit=2)
+assert len(accs) >= 2, 'expected >= 2 postable accounts in the UAE chart'
 journal = env['account.journal'].search(
     [('type', '=', 'general'), ('company_id', '=', company.id)], limit=1)
 move = env['account.move'].create({
@@ -71,7 +78,7 @@ move.action_post()
 wiz = env['trial.balance.report.wizard'].create({
     'date_from': '2026-01-01', 'date_to': '2026-12-31', 'target_move': 'posted',
     'hide_account_at_0': False, 'show_hierarchy': False, 'company_id': company.id,
-    'account_ids': False, 'fy_start_date': '2026-01-01', 'show_partner_details': False})
+    'account_ids': False, 'show_partner_details': False})
 data = wiz._prepare_report_data()
 res = env['report.account_financial_report.trial_balance']._get_report_values(wiz, data)
 assert res and res.get('trial_balance'), 'Trial Balance returned no data'
@@ -84,5 +91,5 @@ echo "$out" | grep -q 'TRIALBALANCE_OK' \
 
 hr
 echo "SUMMARY: $pass passed, $fail failed."
-drop_db "$DB"
+# (the EXIT trap drops "$DB")
 [ "$fail" -eq 0 ] && echo "✅ Financial bootstrap verified (install + Trial Balance on UAE data)." || exit 1
