@@ -9,6 +9,12 @@ platform is built); only these exact engine-computation entry points are
 guarded. Workflow hooks (``action_post``, ``button_draft`` …) are deliberately
 NOT guarded — NCollection legitimately owns approval chains / notifications that
 wrap them via ``super()``.
+
+Scope note: this covers the idiomatic override path (``_inherit`` + redefining
+the method) — how essentially all real overrides are written. A deliberate
+monkeypatch (``AccountMove._post = fn`` on the core class itself) would not show
+up in the ncollection MRO and would slip past; that is already a gross
+convention violation review catches elsewhere, out of scope for this guard.
 """
 from odoo.tests import TransactionCase, tagged
 
@@ -18,7 +24,8 @@ from odoo.tests import TransactionCase, tagged
 # for a DIFFERENT override, since each is matched per (model, method).
 _FORBIDDEN = {
     'account.move': {'_post', '_compute_tax_totals', '_reverse_moves'},
-    'account.move.line': {'_compute_balance', '_compute_amount_currency'},
+    'account.move.line': {'_compute_balance', '_compute_amount_currency',
+                          'reconcile'},
     'account.tax': {'compute_all'},
     'account.payment': {'_synchronize_to_moves'},
 }

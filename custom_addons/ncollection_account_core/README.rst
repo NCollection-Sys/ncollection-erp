@@ -107,14 +107,20 @@ Engine-boundary guard (a test that bites)
 ``tests/test_engine_boundary.py`` fails CI if **any** ``ncollection_*`` module
 overrides a core posting / tax / reconcile **computation** method on the engine:
 
-===================  ==================================================
-Model                Guarded methods (must not be overridden)
-===================  ==================================================
-``account.move``     ``_post`` · ``_compute_tax_totals`` · ``_reverse_moves``
-``account.move.line``  ``_compute_balance`` · ``_compute_amount_currency``
-``account.tax``      ``compute_all`` · ``_compute_amount``
-``account.payment``  ``_synchronize_to_moves``
-===================  ==================================================
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Model
+     - Guarded methods (must not be overridden)
+   * - ``account.move``
+     - ``_post`` · ``_compute_tax_totals`` · ``_reverse_moves``
+   * - ``account.move.line``
+     - ``_compute_balance`` · ``_compute_amount_currency`` · ``reconcile``
+   * - ``account.tax``
+     - ``compute_all``
+   * - ``account.payment``
+     - ``_synchronize_to_moves``
 
 Allowed, and encouraged, is the opposite: **extend** the engine with new fields
 or **new** methods, and wrap workflow entry points (``action_post``,
