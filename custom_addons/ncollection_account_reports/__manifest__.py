@@ -19,6 +19,7 @@
     'depends': ['account', 'ncollection_account_core'],
     'data': [
         'security/ir.model.access.csv',
+        'security/report_security.xml',
         'report/report_templates.xml',
         'views/account_report_views.xml',
     ],

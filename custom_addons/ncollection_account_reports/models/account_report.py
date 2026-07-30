@@ -47,9 +47,9 @@ class NcollectionAccountReport(models.AbstractModel):
 
     # ---- filters -> account.move.line domain ----------------------------
 
-    def _nc_move_line_domain(self, account=None):
+    def _nc_move_line_domain(self, account=None, partner=None):
         """The base journal-item domain for the current filters. Pass ``account``
-        to scope it to one account (used by drill-down)."""
+        and/or ``partner`` to scope it to one account/partner (drill-down)."""
         self.ensure_one()
         domain = [
             ('company_id', '=', self.company_id.id),
@@ -61,11 +61,12 @@ class NcollectionAccountReport(models.AbstractModel):
                       else ('parent_state', 'in', ('posted', 'draft')))
         if self.journal_ids:
             domain.append(('journal_id', 'in', self.journal_ids.ids))
-        if self.partner_ids:
-            domain.append(('partner_id', 'in', self.partner_ids.ids))
         accounts = account or self.account_ids
         if accounts:
             domain.append(('account_id', 'in', accounts.ids))
+        partners = partner or self.partner_ids
+        if partners:
+            domain.append(('partner_id', 'in', partners.ids))
         return domain
 
     # ---- report contract (concrete reports override) --------------------
@@ -87,21 +88,25 @@ class NcollectionAccountReport(models.AbstractModel):
     def action_view(self):
         self.ensure_one()
         Line = self.env['ncollection.account.report.line']
-        # Clear this user's previous run (transient, but keep the list clean).
-        Line.search([('report_model', '=', self._name)]).unlink()
-        created = Line
-        for row in self._nc_compute_lines():
-            created |= Line.create({
-                'report_model': self._name,
-                'report_res_id': self.id,
-                'account_id': row.get('account_id') or False,
-                'label': row.get('label') or '',
-                'debit': row.get('debit', 0.0),
-                'credit': row.get('credit', 0.0),
-                'balance': row.get('balance', 0.0),
-                'level': row.get('level', 0),
-                'currency_id': self.company_id.currency_id.id,
-            })
+        # Clear only THIS user's previous run (the ir.rule already scopes the
+        # search to create_uid; the explicit filter is belt-and-suspenders).
+        Line.search([('report_model', '=', self._name),
+                     ('create_uid', '=', self.env.uid)]).unlink()
+        currency_id = self.company_id.currency_id.id
+        # One batched create — preserves compute order (the list _order='id'
+        # renders it identically to PDF/XLSX) and stays a single insert.
+        created = Line.create([{
+            'report_model': self._name,
+            'report_res_id': self.id,
+            'account_id': row.get('account_id') or False,
+            'partner_id': row.get('partner_id') or False,
+            'label': row.get('label') or '',
+            'debit': row.get('debit', 0.0),
+            'credit': row.get('credit', 0.0),
+            'balance': row.get('balance', 0.0),
+            'level': row.get('level', 0),
+            'currency_id': currency_id,
+        } for row in self._nc_compute_lines()])
         return {
             'type': 'ir.actions.act_window',
             'name': self._nc_report_title(),
@@ -116,7 +121,8 @@ class NcollectionAccountReport(models.AbstractModel):
     def action_export_pdf(self):
         self.ensure_one()
         return self.env.ref(
-            'ncollection_account_reports.action_report_financial').report_action(self)
+            'ncollection_account_reports.action_report_financial'
+        ).report_action(self, config=False)
 
     # ---- XLSX (xlsxwriter — no OCA dep) ---------------------------------
 
@@ -141,6 +147,14 @@ class NcollectionAccountReport(models.AbstractModel):
             'target': 'self',
         }
 
+    def _nc_sheet_name(self):
+        """Excel forbids : \\ / ? * [ ] in sheet names and caps them at 31 chars.
+        Every F2-T02+ report inherits this, so sanitise once here."""
+        title = self._nc_report_title()
+        for ch in ':\\/?*[]':
+            title = title.replace(ch, ' ')
+        return (title.strip() or 'Report')[:31]
+
     def _nc_build_xlsx(self):
         """Render the report to an XLSX workbook (base64 bytes)."""
         self.ensure_one()
@@ -148,7 +162,7 @@ class NcollectionAccountReport(models.AbstractModel):
         lines = self._nc_compute_lines()
         stream = io.BytesIO()
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
-        sheet = book.add_worksheet(self._nc_report_title()[:31])
+        sheet = book.add_worksheet(self._nc_sheet_name())
         f_title = book.add_format({'bold': True, 'font_size': 14})
         f_head = book.add_format({'bold': True, 'bottom': 1, 'bg_color': '#F2F2F2'})
         f_money = book.add_format({'num_format': '#,##0.00'})

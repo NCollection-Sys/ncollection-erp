@@ -10,7 +10,8 @@
                 <sheet>
                     <group>
                         <group string="Period">
-                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
                             <field name="date_from"/>
                             <field name="date_to"/>
                             <field name="target_move"/>
@@ -45,15 +46,18 @@
         <field name="name">ncollection.account.report.line.list</field>
         <field name="model">ncollection.account.report.line</field>
         <field name="arch" type="xml">
-            <list string="Report" create="false" delete="false" default_order="level, id">
+            <list string="Report" create="false" delete="false" default_order="id"
+                  decoration-bf="level == 0">
                 <field name="label"/>
                 <field name="debit" sum="Debit"/>
                 <field name="credit" sum="Credit"/>
                 <field name="balance" sum="Balance"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="account_id" column_invisible="1"/>
+                <field name="partner_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
                 <button name="action_drill_down" type="object" string="Journal Items"
-                        icon="fa-search-plus" invisible="not account_id"/>
+                        icon="fa-search-plus" invisible="not account_id and not partner_id"/>
             </list>
         </field>
     </record>

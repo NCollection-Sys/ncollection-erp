@@ -38,9 +38,16 @@ A concrete report subclasses it and implements two methods::
             # one aggregate _read_group over _nc_move_line_domain() -> rows
             ...
 
-Everything else — filters UI, the list view, PDF, XLSX, drill-down — comes from
-the engine for free. This is how F2-T02+ (General Ledger, Trial Balance, Balance
-Sheet, P&L, Partner Ledger, Aged, VAT, Executive) plug in.
+PDF and XLSX render generically from ``_nc_columns()``. The **on-screen native
+list** (`ncollection.account.report.line`) covers the common financial-report
+shape — ``account_id`` / ``partner_id`` / ``label`` / ``debit`` / ``credit`` /
+``balance`` / ``level`` — which fits GL, Trial Balance, Partner Ledger and Aged
+(drill-down works by account *and* partner). A report with a fundamentally
+different shape (e.g. a hierarchical single-amount Balance Sheet / P&L) reuses
+the engine's filters, compute contract, PDF, XLSX and drill-down, but provides
+its own list presentation. ``level`` is a *render* hint (indent/bold), never a
+sort key — rows always render in ``_nc_compute_lines()`` order across all three
+channels (``_order = 'id'``).
 
 Reference report
 ================

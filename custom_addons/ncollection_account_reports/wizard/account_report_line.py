@@ -12,11 +12,17 @@ from odoo.exceptions import UserError
 class NcollectionAccountReportLine(models.TransientModel):
     _name = 'ncollection.account.report.line'
     _description = 'NCollection Financial Report Line'
-    _order = 'level, id'
+    # id order == the order _nc_compute_lines() produced (and PDF/XLSX render) —
+    # so all three channels agree. 'level' is for rendering (indent/bold), NEVER
+    # a sort key (that would bucket hierarchical reports by level).
+    _order = 'id'
 
-    report_model = fields.Char(required=True)   # the wizard model that produced it
-    report_res_id = fields.Integer()            # the wizard record id (for drill-down)
-    account_id = fields.Many2one('account.account')
+    # readonly: action_drill_down does a dynamic self.env[report_model] dispatch,
+    # so these must not be user-writable (defensive, alongside the create_uid rule).
+    report_model = fields.Char(required=True, readonly=True)   # producing wizard model
+    report_res_id = fields.Integer(readonly=True)              # producing wizard id
+    account_id = fields.Many2one('account.account', readonly=True)
+    partner_id = fields.Many2one('res.partner', readonly=True)  # partner-report drill-down
     label = fields.Char(string='Account')
     debit = fields.Monetary(currency_field='currency_id')
     credit = fields.Monetary(currency_field='currency_id')
@@ -37,6 +43,7 @@ class NcollectionAccountReportLine(models.TransientModel):
             'name': self.env._("Journal Items — %s", self.label or ''),
             'res_model': 'account.move.line',
             'view_mode': 'list,form',
-            'domain': wizard._nc_move_line_domain(account=self.account_id),
+            'domain': wizard._nc_move_line_domain(
+                account=self.account_id, partner=self.partner_id),
             'target': 'current',
         }

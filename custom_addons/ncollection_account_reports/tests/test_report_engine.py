@@ -73,6 +73,17 @@ class TestReportEngine(AccountTestInvoicingCommon):
         accounts = {row['account_id'] for row in lines if row['account_id']}
         self.assertEqual(accounts, {self.receivable.id})
 
+    def test_report_lines_are_private_per_user(self):
+        # A user's report run is private: another accounting user must not see
+        # (nor be able to clear) it — the create_uid ir.rule (isolation fix).
+        self._wizard().action_view()
+        Line = self.env['ncollection.account.report.line']
+        self.assertTrue(Line.search([]))
+        other = self.env['res.users'].create({
+            'login': 'nc_rpt_other', 'name': 'Other Accountant',
+            'group_ids': [(6, 0, [self.env.ref('account.group_account_readonly').id])]})
+        self.assertFalse(Line.with_user(other).search([]))
+
     # ---- on-screen list + drill-down ------------------------------------
 
     def test_action_view_creates_line_records(self):
@@ -111,17 +122,50 @@ class TestReportEngine(AccountTestInvoicingCommon):
 
     # ---- performance (acceptance: < 2s) ---------------------------------
 
+    def test_row_order_is_consistent_total_last(self):
+        # id order == compute order == PDF/XLSX order: the Total row renders LAST,
+        # never sorted to the top by level (the render-consistency fix).
+        action = self._wizard().action_view()
+        lines = self.env['ncollection.account.report.line'].browse(
+            action['domain'][0][2]).sorted('id')
+        self.assertEqual(lines[-1].level, 0)
+        self.assertEqual(lines[-1].label, 'Total')
+        self.assertTrue(all(line.level == 1 for line in lines[:-1]))
+
+    def test_action_view_replaces_previous_run(self):
+        wizard = self._wizard()
+        wizard.action_view()
+        after_first = self.env['ncollection.account.report.line'].search_count([])
+        wizard.action_view()
+        after_second = self.env['ncollection.account.report.line'].search_count([])
+        self.assertEqual(after_first, after_second)  # replaced, not accumulated
+
+    def test_journal_filter_scopes_the_report(self):
+        bank = self.company_data['default_journal_bank']
+        lines = self._wizard(journal_ids=[(6, 0, [bank.id])])._nc_compute_lines()
+        self.assertFalse([row for row in lines if row['account_id']])  # entries are in misc
+
+    def test_export_action_wrappers(self):
+        wizard = self._wizard()
+        xlsx = wizard.action_export_xlsx()
+        self.assertEqual(xlsx['type'], 'ir.actions.act_url')
+        self.assertIn('/web/content/', xlsx['url'])
+        pdf = wizard.action_export_pdf()
+        self.assertEqual(pdf['type'], 'ir.actions.report')
+
     def test_reference_report_under_2s(self):
-        # a wider dataset: one balanced move with many lines. The compute is a
-        # single aggregate _read_group, so it stays well under the 2s target.
-        lines = []
-        for _i in range(60):
-            lines.append((0, 0, {'account_id': self.receivable.id, 'debit': 10.0}))
-            lines.append((0, 0, {'account_id': self.revenue.id, 'credit': 10.0}))
+        # A wider dataset across several accounts; time the WHOLE action_view
+        # (aggregate compute + batched materialize), not just the compute.
+        extra_accounts = self.env['account.account'].create([{
+            'name': 'Perf %s' % i, 'code': 'PERF%03d' % i, 'account_type': 'expense',
+        } for i in range(20)])
+        move_lines = [(0, 0, {'account_id': self.revenue.id, 'credit': 20 * 10.0})]
+        for acc in extra_accounts:
+            move_lines.append((0, 0, {'account_id': acc.id, 'debit': 10.0}))
         self.env['account.move'].create({
             'move_type': 'entry', 'journal_id': self.misc_journal.id,
-            'date': fields.Date.today(), 'line_ids': lines}).action_post()
+            'date': fields.Date.today(), 'line_ids': move_lines}).action_post()
         started = time.time()
-        result = self._wizard()._nc_compute_lines()
+        action = self._wizard().action_view()
         self.assertLess(time.time() - started, 2.0)
-        self.assertTrue(result)
+        self.assertTrue(action['domain'][0][2])
