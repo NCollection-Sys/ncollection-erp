@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
-               'restriction hooks and common mixins for the '
-               'ncollection_account_* family',
+               'restriction hooks, common mixins and the accounting engine '
+               'baseline + boundary guard for the ncollection_account_* family',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
@@ -21,6 +21,11 @@
     #                       needs core installed. core ships in every tenant
     #                       (CORE_TENANT_MODULES), so this adds no new footprint.
     'depends': ['account', 'ncollection_core'],
+    # F1-T02: codify the fiscal-year baseline (31 Dec) on the tenant company at
+    # provisioning via a post_init hook (hooks.py -> res.company). It only sets
+    # Odoo's own native fields — no fiscal-year model, no posting/tax logic
+    # (FPA §4/§6). The engine-boundary guard lives in tests/test_engine_boundary.
+    'post_init_hook': 'post_init_hook',
     # Scaffold: the load-bearing deliverable is the shared AbstractModel mixin
     # (models/account_mixin.py). It is abstract (no records) and there is no
     # concrete model yet, so there is deliberately no security/ir.model.access
