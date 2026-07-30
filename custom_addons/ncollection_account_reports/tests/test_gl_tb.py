@@ -1,0 +1,147 @@
+# -*- coding: utf-8 -*-
+"""F2-T02: General Ledger + Trial Balance — running balance, FY-aware
+opening/closing, and the acceptance that **TB closing reconciles with GL**.
+"""
+import base64
+from datetime import date
+
+from odoo.addons.account.tests.common import AccountTestInvoicingCommon
+from odoo.tests import tagged
+
+
+@tagged('post_install', '-at_install')
+class TestGeneralLedgerTrialBalance(AccountTestInvoicingCommon):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.GL = cls.env['ncollection.account.report.general.ledger']
+        cls.TB = cls.env['ncollection.account.report.trial.balance']
+        cls.receivable = cls.company_data['default_account_receivable']   # balance sheet
+        cls.revenue = cls.company_data['default_account_revenue']         # P&L
+        cls.journal = cls.company_data['default_journal_misc']
+
+        def entry(day, amount):
+            move = cls.env['account.move'].create({
+                'move_type': 'entry', 'journal_id': cls.journal.id, 'date': day,
+                'line_ids': [
+                    (0, 0, {'account_id': cls.receivable.id, 'debit': amount, 'credit': 0.0}),
+                    (0, 0, {'account_id': cls.revenue.id, 'debit': 0.0, 'credit': amount}),
+                ]})
+            move.action_post()
+            return move
+
+        # Prior fiscal year (2025): Dr receivable 100 / Cr revenue 100.
+        entry(date(2025, 12, 31), 100.0)
+        # Current fiscal year (2026), inside the reporting period.
+        entry(date(2026, 6, 15), 1000.0)
+        cls.date_from = date(2026, 1, 1)
+        cls.date_to = date(2026, 12, 31)
+
+    def _tb(self):
+        return self.TB.create({
+            'date_from': self.date_from, 'date_to': self.date_to,
+            'target_move': 'posted'})
+
+    def _gl(self):
+        return self.GL.create({
+            'date_from': self.date_from, 'date_to': self.date_to,
+            'target_move': 'posted'})
+
+    # ---- Trial Balance: FY-aware opening/closing ------------------------
+
+    def test_tb_opening_resets_for_pl_carries_for_bs(self):
+        rows = {r['account_id']: r for r in self._tb()._nc_compute_lines()
+                if r['account_id']}
+        # balance-sheet (receivable): prior-year 100 CARRIES into opening
+        self.assertAlmostEqual(rows[self.receivable.id]['opening_balance'], 100.0)
+        # P&L (revenue): prior-year entry is EXCLUDED — opening resets to 0 at FY start
+        self.assertAlmostEqual(rows[self.revenue.id]['opening_balance'], 0.0)
+
+    def test_tb_closing_equals_opening_plus_movements(self):
+        rows = {r['account_id']: r for r in self._tb()._nc_compute_lines()
+                if r['account_id']}
+        rec = rows[self.receivable.id]
+        self.assertAlmostEqual(rec['closing_balance'],
+                               rec['opening_balance'] + rec['debit'] - rec['credit'])
+        self.assertAlmostEqual(rec['closing_balance'], 1100.0)   # 100 + 1000
+        self.assertAlmostEqual(rows[self.revenue.id]['closing_balance'], -1000.0)
+
+    def test_tb_total_row_debits_equal_credits(self):
+        total = self._tb()._nc_compute_lines()[-1]
+        self.assertFalse(total['account_id'])
+        self.assertAlmostEqual(total['debit'], total['credit'])   # balanced books
+
+    # ---- General Ledger: running balance + opening rows -----------------
+
+    def test_gl_running_balance_starts_at_opening(self):
+        rows = self._gl()._nc_gl_rows()
+        # each account opens with an is_initial row carrying its opening balance
+        rec_open = next(r for r in rows
+                        if r['account_id'] == self.receivable.id and r['is_initial'])
+        self.assertAlmostEqual(rec_open['running_balance'], 100.0)
+        rev_open = next(r for r in rows
+                        if r['account_id'] == self.revenue.id and r['is_initial'])
+        self.assertAlmostEqual(rev_open['running_balance'], 0.0)
+
+    def test_gl_running_balance_accumulates(self):
+        rows = self._gl()._nc_gl_rows()
+        rec_rows = [r for r in rows if r['account_id'] == self.receivable.id]
+        # last row's running balance == opening + movements
+        self.assertAlmostEqual(rec_rows[-1]['running_balance'], 1100.0)
+
+    # ---- the acceptance: TB closing RECONCILES with GL ------------------
+
+    def test_tb_closing_reconciles_with_gl_ending_balance(self):
+        tb_rows = {r['account_id']: r for r in self._tb()._nc_compute_lines()
+                   if r['account_id']}
+        gl_rows = self._gl()._nc_gl_rows()
+        # GL ending running balance per account = the last row for that account
+        gl_ending = {}
+        for row in gl_rows:
+            if row['account_id']:
+                gl_ending[row['account_id']] = row['running_balance']
+        for account_id, tb in tb_rows.items():
+            self.assertAlmostEqual(
+                tb['closing_balance'], gl_ending[account_id],
+                msg="TB closing must equal GL ending balance for account %s" % account_id)
+
+    # ---- filters + drill-down + exports --------------------------------
+
+    def test_gl_drill_down_is_account_scoped(self):
+        gl = self._gl()
+        gl.action_view()
+        line = self.env['ncollection.account.report.gl.line'].search([
+            ('account_id', '=', self.receivable.id), ('is_initial', '=', False)], limit=1)
+        action = line.action_drill_down()
+        self.assertEqual(action['res_model'], 'account.move.line')
+        self.assertIn(('account_id', 'in', self.receivable.ids), action['domain'])
+
+    def test_gl_journal_filter(self):
+        bank = self.company_data['default_journal_bank']
+        rows = self._gl().create({
+            'date_from': self.date_from, 'date_to': self.date_to,
+            'journal_ids': [(6, 0, [bank.id])]})._nc_gl_rows()
+        # no bank-journal movement -> only opening rows (no period items)
+        self.assertFalse([r for r in rows if not r['is_initial']])
+
+    def test_exports_pdf_and_xlsx(self):
+        for wizard in (self._tb(), self._gl()):
+            report = self.env.ref(wizard._nc_report_action_ref())
+            # Pass the report RECORD (not report_name): _get_report resolves a
+            # record directly to its own model, so each wizard renders against
+            # its own model — the shared-name ambiguity that browsed every wizard
+            # against the reference model would otherwise raise MissingError.
+            html, out_type = report._render_qweb_html(report, wizard.ids)
+            self.assertEqual(out_type, 'html')
+            self.assertTrue(html)
+            self.assertEqual(base64.b64decode(wizard._nc_build_xlsx())[:2], b'PK')
+
+    def test_gl_lines_are_private_per_user(self):
+        self._gl().action_view()
+        GLLine = self.env['ncollection.account.report.gl.line']
+        self.assertTrue(GLLine.search([]))
+        other = self.env['res.users'].create({
+            'login': 'nc_gl_other', 'name': 'Other',
+            'group_ids': [(6, 0, [self.env.ref('account.group_account_readonly').id])]})
+        self.assertFalse(GLLine.with_user(other).search([]))

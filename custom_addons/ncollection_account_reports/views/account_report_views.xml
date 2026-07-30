@@ -48,7 +48,7 @@
         <field name="arch" type="xml">
             <list string="Report" create="false" delete="false" default_order="id"
                   decoration-bf="level == 0">
-                <field name="label"/>
+                <field name="label" string="Account"/>
                 <field name="debit" sum="Debit"/>
                 <field name="credit" sum="Credit"/>
                 <field name="balance" sum="Balance"/>
@@ -71,5 +71,134 @@
               parent="menu_ncollection_account_reports"
               action="action_report_reference"
               sequence="10"/>
+
+    <!-- ==== F2-T02: Trial Balance ==== -->
+    <record id="view_report_line_tb_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.tb.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Trial Balance" create="false" delete="false"
+                  default_order="id" decoration-bf="level == 0">
+                <field name="label" string="Account"/>
+                <field name="opening_balance" sum="Opening"/>
+                <field name="debit" sum="Debit"/>
+                <field name="credit" sum="Credit"/>
+                <field name="closing_balance" sum="Closing"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="account_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+                <button name="action_drill_down" type="object" string="Journal Items"
+                        icon="fa-search-plus" invisible="not account_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_trial_balance_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.trial.balance.form</field>
+        <field name="model">ncollection.account.report.trial.balance</field>
+        <field name="arch" type="xml">
+            <form string="Trial Balance">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_trial_balance_wizard" model="ir.actions.act_window">
+        <field name="name">Trial Balance</field>
+        <field name="res_model">ncollection.account.report.trial.balance</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_trial_balance" name="Trial Balance"
+              parent="menu_ncollection_account_reports"
+              action="action_report_trial_balance_wizard" sequence="20"/>
+
+    <!-- ==== F2-T02: General Ledger ==== -->
+    <record id="view_report_gl_line_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.gl.line.list</field>
+        <field name="model">ncollection.account.report.gl.line</field>
+        <field name="arch" type="xml">
+            <list string="General Ledger" create="false" delete="false"
+                  default_order="id" decoration-bf="is_initial">
+                <field name="account_id"/>
+                <field name="date"/>
+                <field name="move_name"/>
+                <field name="journal_id"/>
+                <field name="partner_id"/>
+                <field name="label" string="Label"/>
+                <field name="debit" sum="Debit"/>
+                <field name="credit" sum="Credit"/>
+                <field name="running_balance"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="is_initial" column_invisible="1"/>
+                <button name="action_drill_down" type="object" string="Journal Items"
+                        icon="fa-search-plus"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_general_ledger_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.general.ledger.form</field>
+        <field name="model">ncollection.account.report.general.ledger</field>
+        <field name="arch" type="xml">
+            <form string="General Ledger">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_general_ledger_wizard" model="ir.actions.act_window">
+        <field name="name">General Ledger</field>
+        <field name="res_model">ncollection.account.report.general.ledger</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_general_ledger" name="General Ledger"
+              parent="menu_ncollection_account_reports"
+              action="action_report_general_ledger_wizard" sequence="30"/>
 
 </odoo>

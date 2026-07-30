@@ -25,6 +25,14 @@ try:
 except ImportError:  # pragma: no cover - xlsxwriter ships with Odoo 19
     xlsxwriter = None
 
+# Odoo 19 income/expense account_type keys — P&L accounts reset each fiscal
+# year (opening counts only from the FY start); everything else is a
+# balance-sheet account that carries prior activity. Used by TB + GL opening.
+PL_ACCOUNT_TYPES = (
+    'income', 'income_other',
+    'expense', 'expense_depreciation', 'expense_direct_cost',
+)
+
 
 class NcollectionAccountReport(models.AbstractModel):
     _name = 'ncollection.account.report'
@@ -47,14 +55,13 @@ class NcollectionAccountReport(models.AbstractModel):
 
     # ---- filters -> account.move.line domain ----------------------------
 
-    def _nc_move_line_domain(self, account=None, partner=None):
-        """The base journal-item domain for the current filters. Pass ``account``
-        and/or ``partner`` to scope it to one account/partner (drill-down)."""
+    def _nc_filter_domain(self, account=None, partner=None):
+        """Common NON-date journal-item filters (company, posted/all, journals,
+        accounts, partners). Date range is added by the caller — the period,
+        opening and closing aggregates each need a different one."""
         self.ensure_one()
         domain = [
             ('company_id', '=', self.company_id.id),
-            ('date', '>=', self.date_from),
-            ('date', '<=', self.date_to),
             ('display_type', 'not in', ('line_section', 'line_note')),
         ]
         domain.append(('parent_state', '=', 'posted') if self.target_move == 'posted'
@@ -68,6 +75,38 @@ class NcollectionAccountReport(models.AbstractModel):
         if partners:
             domain.append(('partner_id', 'in', partners.ids))
         return domain
+
+    def _nc_move_line_domain(self, account=None, partner=None):
+        """The PERIOD journal-item domain: the common filters + [date_from,
+        date_to]. Pass ``account``/``partner`` to scope it (drill-down)."""
+        return self._nc_filter_domain(account=account, partner=partner) + [
+            ('date', '>=', self.date_from), ('date', '<=', self.date_to)]
+
+    def _nc_opening_balances(self):
+        """``{account_id: opening balance at date_from}`` — the accounting-correct
+        opening used by BOTH the Trial Balance and the General Ledger: P&L
+        accounts count only from the fiscal-year start (they reset each year),
+        balance-sheet accounts carry all prior activity. Computed from
+        ``account.move.line`` aggregates — Odoo owns the numbers. Assumes a
+        period within one fiscal year (the standard report case)."""
+        self.ensure_one()
+        AML = self.env['account.move.line']
+        base = self._nc_filter_domain()
+        fy_from = self.company_id.compute_fiscalyear_dates(self.date_from)['date_from']
+        opening = {}
+        for account, bal in AML._read_group(
+                base + [('date', '<', self.date_from),
+                        ('account_id.account_type', 'not in', PL_ACCOUNT_TYPES)],
+                groupby=['account_id'], aggregates=['balance:sum']):
+            if account:
+                opening[account.id] = bal
+        for account, bal in AML._read_group(
+                base + [('date', '>=', fy_from), ('date', '<', self.date_from),
+                        ('account_id.account_type', 'in', PL_ACCOUNT_TYPES)],
+                groupby=['account_id'], aggregates=['balance:sum']):
+            if account:
+                opening[account.id] = bal
+        return opening
 
     # ---- report contract (concrete reports override) --------------------
 
@@ -104,6 +143,8 @@ class NcollectionAccountReport(models.AbstractModel):
             'debit': row.get('debit', 0.0),
             'credit': row.get('credit', 0.0),
             'balance': row.get('balance', 0.0),
+            'opening_balance': row.get('opening_balance', 0.0),
+            'closing_balance': row.get('closing_balance', 0.0),
             'level': row.get('level', 0),
             'currency_id': currency_id,
         } for row in self._nc_compute_lines()])
@@ -112,17 +153,27 @@ class NcollectionAccountReport(models.AbstractModel):
             'name': self._nc_report_title(),
             'res_model': 'ncollection.account.report.line',
             'view_mode': 'list',
+            'views': [(self.env.ref(self._nc_list_view_ref()).id, 'list')],
             'domain': [('id', 'in', created.ids)],
             'target': 'current',
         }
 
+    def _nc_list_view_ref(self):
+        """Xmlid of the list view for the on-screen results. Reports with extra
+        columns (e.g. Trial Balance's opening/closing) override this."""
+        return 'ncollection_account_reports.view_report_line_list'
+
     # ---- PDF (native qweb-pdf) ------------------------------------------
+
+    def _nc_report_action_ref(self):
+        """Xmlid of this report's ir.actions.report (all share the generic
+        ``report_financial`` template but need a per-model action)."""
+        return 'ncollection_account_reports.action_report_financial'
 
     def action_export_pdf(self):
         self.ensure_one()
-        return self.env.ref(
-            'ncollection_account_reports.action_report_financial'
-        ).report_action(self, config=False)
+        return self.env.ref(self._nc_report_action_ref()).report_action(
+            self, config=False)
 
     # ---- XLSX (xlsxwriter — no OCA dep) ---------------------------------
 

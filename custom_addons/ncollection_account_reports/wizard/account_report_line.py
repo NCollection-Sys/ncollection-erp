@@ -23,10 +23,13 @@ class NcollectionAccountReportLine(models.TransientModel):
     report_res_id = fields.Integer(readonly=True)              # producing wizard id
     account_id = fields.Many2one('account.account', readonly=True)
     partner_id = fields.Many2one('res.partner', readonly=True)  # partner-report drill-down
-    label = fields.Char(string='Account')
+    label = fields.Char()  # views set their own header ("Account"/"Label")
     debit = fields.Monetary(currency_field='currency_id')
     credit = fields.Monetary(currency_field='currency_id')
     balance = fields.Monetary(currency_field='currency_id')
+    # Opening/closing are used by the Trial Balance (nullable for other reports).
+    opening_balance = fields.Monetary(currency_field='currency_id')
+    closing_balance = fields.Monetary(currency_field='currency_id')
     currency_id = fields.Many2one('res.currency')
     level = fields.Integer(default=0)
 
