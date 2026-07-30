@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_report_reference,ncollection.account.report.reference,model_ncollection_account_report_reference,account.group_account_readonly,1,1,1,1
+access_nc_report_line,ncollection.account.report.line,model_ncollection_account_report_line,account.group_account_readonly,1,1,1,1
