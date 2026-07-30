@@ -572,11 +572,11 @@ msgstr "تغيّرت حالة المستأجر"
 
 #. module: ncollection_subscription
 msgid "Platform"
-msgstr "المنصة"
+msgstr "المنصّة"
 
 #. module: ncollection_subscription
 msgid "Platform Admin"
-msgstr "مسؤول المنصة"
+msgstr "مسؤول المنصّة"
 
 #. module: ncollection_subscription
 msgid "⚠ Failed Provisioning"
