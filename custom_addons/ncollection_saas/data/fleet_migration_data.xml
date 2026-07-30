@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- P3-T14: drive in-flight fleet migrations forward. When a wave is
+             fully terminal it gates the canary and enqueues the next wave, off
+             the HTTP workers. Idle no-op when nothing is in flight. -->
+        <record id="cron_fleet_migration_advance" model="ir.cron">
+            <field name="name">NCollection: advance fleet migrations</field>
+            <field name="model_id" ref="model_ncollection_fleet_migration"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_advance()</field>
+            <field name="interval_number">2</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

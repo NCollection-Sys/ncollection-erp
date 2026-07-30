@@ -2,3 +2,5 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_ncollection_domain_admin,ncollection.domain.admin,model_ncollection_domain,base.group_system,1,1,1,1
 access_ncollection_backup_admin,ncollection.backup.admin,model_ncollection_backup,base.group_system,1,1,1,1
 access_ncollection_backup_restore_wizard_admin,ncollection.backup.restore.wizard.admin,model_ncollection_backup_restore_wizard,base.group_system,1,1,1,1
+access_ncollection_fleet_migration_admin,ncollection.fleet.migration.admin,model_ncollection_fleet_migration,base.group_system,1,1,1,1
+access_ncollection_fleet_migration_line_admin,ncollection.fleet.migration.line.admin,model_ncollection_fleet_migration_line,base.group_system,1,1,1,1
