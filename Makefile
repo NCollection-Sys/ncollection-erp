@@ -41,7 +41,7 @@ OCA_VENV := .oca-venv
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
         load-test load-test-clean security-assess \
-        provisioning-verify config-sync-verify e2e-verify verify-all hooks-install doctor \
+        provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
         demo-tenant demo-clean staging-config staging-build
 
 help: ## Show this help
@@ -173,6 +173,9 @@ provisioning-verify: ## Run the P2-T01 provisioning proof (create -> login-ready
 
 config-sync-verify: ## Run the P2-T03 config-sync proof (provision -> plan change -> suspend -> reconcile)
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_config_sync.sh
+
+financial-bootstrap-verify: ## Run the P3-T01 proof (Enterprise financial set installs -> Trial Balance runs on UAE data)
+	./custom_addons/ncollection_saas/scripts/provisioning/verify_financial_bootstrap.sh
 
 e2e-verify: ## Set up the e2e tenants and run the Playwright suite
 	bash e2e/scripts/setup_e2e_tenants.sh

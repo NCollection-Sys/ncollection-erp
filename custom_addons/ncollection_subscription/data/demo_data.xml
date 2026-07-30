@@ -30,6 +30,13 @@
         <field name="max_users">100</field>
         <field name="max_companies">10</field>
         <field name="description">Full-scale plan for large organizations with multiple subsidiaries.</field>
+        <!-- P3-T01 (interim OCA financial bootstrap): the Enterprise plan
+             provisions the accounting stack + OCA reports so a fresh tenant can
+             run a Trial Balance / GL / BS-P&L immediately. account_financial_report
+             (Trial Balance, GL, aged balance) + ncollection_mis_templates (pulls
+             mis_builder -> interim Balance Sheet / P&L). Each retires as its native
+             F2 equivalent reaches parity (#117 F2-T07). -->
+        <field name="allowed_module_names">account,account_financial_report,ncollection_mis_templates</field>
     </record>
 
     <!-- Tenants -->
