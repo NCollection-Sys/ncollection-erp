@@ -11,10 +11,11 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
-# --- res.company brand fields ---
+#. module: ncollection_branding
 msgid "Primary Colour"
 msgstr "اللون الأساسي"
 
+#. module: ncollection_branding
 msgid ""
 "Primary brand colour — drives the navbar and primary buttons. 6-digit hex, "
 "e.g. #1F5F8F. Leave empty for the NCollection default."
@@ -23,24 +24,31 @@ msgstr ""
 "سداسي عشري من 6 خانات، مثل #1F5F8F. اتركه فارغًا لاستخدام لون NCollection "
 "الافتراضي."
 
+#. module: ncollection_branding
 msgid "Secondary Colour"
 msgstr "اللون الثانوي"
 
+#. module: ncollection_branding
 msgid "Secondary/accent colour — links and highlights. 6-digit hex."
 msgstr "اللون الثانوي/التمييزي — الروابط والعناصر المميّزة. رمز سداسي عشري من 6 خانات."
 
+#. module: ncollection_branding
 msgid "Sidebar Colour"
 msgstr "لون الشريط الجانبي"
 
+#. module: ncollection_branding
 msgid "Sidebar/side-navigation background colour. 6-digit hex."
 msgstr "لون خلفية الشريط الجانبي. رمز سداسي عشري من 6 خانات."
 
+#. module: ncollection_branding
 msgid "Login Background"
 msgstr "خلفية تسجيل الدخول"
 
+#. module: ncollection_branding
 msgid "Optional full-page background image for the login screen."
 msgstr "صورة خلفية اختيارية بملء الصفحة لشاشة تسجيل الدخول."
 
+#. module: ncollection_branding
 msgid ""
 "%(value)r is not a valid colour for '%(field)s'. Use a 6-digit hex colour "
 "such as #1F5F8F."
@@ -48,10 +56,11 @@ msgstr ""
 "%(value)r ليس لونًا صالحًا لـ '%(field)s'. استخدم لونًا سداسيًا عشريًا من 6 "
 "خانات مثل #1F5F8F."
 
-# --- login page ---
+#. module: ncollection_branding
 msgid "The unified business platform for GCC companies."
 msgstr "منصّة الأعمال الموحّدة لشركات دول مجلس التعاون الخليجي."
 
+#. module: ncollection_branding
 msgid ""
 "Sales, inventory, invoicing, and people — one workspace, your brand, running "
 "on infrastructure built for the region."
@@ -59,25 +68,31 @@ msgstr ""
 "المبيعات والمخزون والفوترة والموظفون — مساحة عمل واحدة بعلامتك التجارية، تعمل "
 "على بنية تحتية مصمَّمة للمنطقة."
 
+#. module: ncollection_branding
 msgid "VAT & TRN-ready invoicing"
 msgstr "فوترة جاهزة لضريبة القيمة المضافة ورقم التسجيل الضريبي"
 
+#. module: ncollection_branding
 msgid "Role-based access for every team"
 msgstr "صلاحيات وصول قائمة على الأدوار لكل فريق"
 
+#. module: ncollection_branding
 msgid "Fully white-labeled to your company"
 msgstr "علامة بيضاء بالكامل لشركتك"
 
+#. module: ncollection_branding
 msgid "Sign in to your workspace"
 msgstr "سجّل الدخول إلى مساحة عملك"
 
+#. module: ncollection_branding
 msgid "Welcome back. Please enter your details."
 msgstr "مرحبًا بعودتك. الرجاء إدخال بياناتك."
 
+#. module: ncollection_branding
 msgid "Forgot password?"
 msgstr "هل نسيت كلمة المرور؟"
 
-# --- offline / errors / settings ---
+#. module: ncollection_branding
 msgid ""
 "Check your network connection and come back here. NCollection ERP will load "
 "as soon as you're back online."
@@ -85,6 +100,7 @@ msgstr ""
 "تحقّق من اتصالك بالشبكة وعُد إلى هنا. سيتم تحميل NCollection ERP بمجرّد عودتك "
 "للاتصال."
 
+#. module: ncollection_branding
 msgid ""
 "Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the "
 "source distribution)."
@@ -92,27 +108,34 @@ msgstr ""
 "مبني على تقنية مفتوحة المصدر (GNU LGPL v3 — راجع docs/LEGAL.md في توزيعة "
 "الكود المصدري)."
 
+#. module: ncollection_branding
 msgid "NCollection ERP Session Expired"
 msgstr "انتهت جلسة NCollection ERP"
 
-# --- component playground (developer tool) ---
+#. module: ncollection_branding
 msgid "Component Library"
 msgstr "مكتبة المكوّنات"
 
+#. module: ncollection_branding
 msgid "KPI cards"
 msgstr "بطاقات مؤشّرات الأداء"
 
+#. module: ncollection_branding
 msgid "Badges"
 msgstr "الشارات"
 
+#. module: ncollection_branding
 msgid "Quick actions"
 msgstr "إجراءات سريعة"
 
+#. module: ncollection_branding
 msgid "Empty state"
 msgstr "حالة فارغة"
 
+#. module: ncollection_branding
 msgid "Loading skeletons"
 msgstr "هياكل التحميل"
 
+#. module: ncollection_branding
 msgid "Any content composes inside a section card via the default slot."
 msgstr "يمكن تركيب أي محتوى داخل بطاقة القسم عبر الفتحة الافتراضية."

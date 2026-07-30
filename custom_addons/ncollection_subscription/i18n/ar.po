@@ -10,434 +10,578 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
+#. module: ncollection_subscription
 msgid "Technical Name"
 msgstr "الاسم التقني"
 
+#. module: ncollection_subscription
 msgid "Core"
 msgstr "أساسي"
 
+#. module: ncollection_subscription
 msgid "Sales"
 msgstr "المبيعات"
 
+#. module: ncollection_subscription
 msgid "Finance"
 msgstr "المالية"
 
+#. module: ncollection_subscription
 msgid "Inventory"
 msgstr "المخزون"
 
+#. module: ncollection_subscription
 msgid "HR"
 msgstr "الموارد البشرية"
 
+#. module: ncollection_subscription
 msgid "Manufacturing"
 msgstr "التصنيع"
 
+#. module: ncollection_subscription
 msgid "Services"
 msgstr "الخدمات"
 
+#. module: ncollection_subscription
 msgid "Marketing"
 msgstr "التسويق"
 
+#. module: ncollection_subscription
 msgid "Other"
 msgstr "أخرى"
 
+#. module: ncollection_subscription
 msgid "Icon"
 msgstr "الأيقونة"
 
+#. module: ncollection_subscription
 msgid "FontAwesome icon class (e.g. fa-cube, fa-cog, fa-shopping-cart)."
 msgstr "فئة أيقونة FontAwesome (مثل fa-cube أو fa-cog أو fa-shopping-cart)."
 
+#. module: ncollection_subscription
 msgid "Default"
 msgstr "افتراضي"
 
+#. module: ncollection_subscription
 msgid "When checked, this module is pre-selected for new tenants."
 msgstr "عند التحديد، يتم اختيار هذه الوحدة مسبقًا للمستأجرين الجدد."
 
+#. module: ncollection_subscription
 msgid "Tenants"
 msgstr "المستأجرون"
 
+#. module: ncollection_subscription
 msgid "The technical name must be unique."
 msgstr "يجب أن يكون الاسم التقني فريدًا."
 
+#. module: ncollection_subscription
 msgid "Database Name"
 msgstr "اسم قاعدة البيانات"
 
+#. module: ncollection_subscription
 msgid "Queued"
 msgstr "في قائمة الانتظار"
 
+#. module: ncollection_subscription
 msgid "Running"
 msgstr "قيد التشغيل"
 
+#. module: ncollection_subscription
 msgid "Done"
 msgstr "تم"
 
+#. module: ncollection_subscription
 msgid "Failed"
 msgstr "فشل"
 
+#. module: ncollection_subscription
 msgid "Created At"
 msgstr "تاريخ الإنشاء"
 
+#. module: ncollection_subscription
 msgid "Completed At"
 msgstr "تاريخ الإكمال"
 
+#. module: ncollection_subscription
 msgid "Log"
 msgstr "السجل"
 
+#. module: ncollection_subscription
 msgid "Failed Provisioning"
 msgstr "تجهيز فاشل"
 
+#. module: ncollection_subscription
 msgid "At-risk Subscriptions"
 msgstr "الاشتراكات المعرّضة للخطر"
 
+#. module: ncollection_subscription
 msgid "Total Storage (MB)"
 msgstr "إجمالي التخزين (ميغابايت)"
 
+#. module: ncollection_subscription
 msgid "Plan"
 msgstr "الخطة"
 
+#. module: ncollection_subscription
 msgid "Monthly"
 msgstr "شهري"
 
+#. module: ncollection_subscription
 msgid "Yearly"
 msgstr "سنوي"
 
+#. module: ncollection_subscription
 msgid "MRR"
 msgstr "الإيراد الشهري المتكرر"
 
+#. module: ncollection_subscription
 msgid "Monthly Recurring Revenue: plan price normalized to monthly."
 msgstr "الإيراد الشهري المتكرر: سعر الخطة مُطبَّع على أساس شهري."
 
+#. module: ncollection_subscription
 msgid "Draft"
 msgstr "مسودة"
 
+#. module: ncollection_subscription
 msgid "Trial"
 msgstr "فترة تجريبية"
 
+#. module: ncollection_subscription
 msgid "Active"
 msgstr "نشط"
 
+#. module: ncollection_subscription
 msgid "Expired"
 msgstr "منتهي الصلاحية"
 
+#. module: ncollection_subscription
 msgid "Suspended"
 msgstr "معلّق"
 
+#. module: ncollection_subscription
 msgid "Cancelled"
 msgstr "ملغى"
 
+#. module: ncollection_subscription
 msgid "Terminated"
 msgstr "منهى"
 
+#. module: ncollection_subscription
 msgid "When the trial ends. Set by action_start_trial from the plan trial_days; a trial past this date is converted or expired."
 msgstr "موعد انتهاء الفترة التجريبية. يتم تعيينه بواسطة action_start_trial من قيمة trial_days في الخطة؛ الفترة التجريبية التي تتجاوز هذا التاريخ يتم تحويلها أو تنتهي صلاحيتها."
 
+#. module: ncollection_subscription
 msgid "End of the post-expiry grace window (end_date + plan grace_days). During grace the subscription is expired but access continues; suspension only happens after this date (fired by P2-T14)."
 msgstr "نهاية فترة السماح بعد انتهاء الصلاحية (end_date + قيمة grace_days في الخطة). خلال فترة السماح يكون الاشتراك منتهي الصلاحية لكن يستمر الوصول؛ ولا يحدث التعليق إلا بعد هذا التاريخ (يتم تشغيله بواسطة P2-T14)."
 
+#. module: ncollection_subscription
 msgid "Days until end_date. 0 when there is no end date or it has passed."
 msgstr "الأيام المتبقية حتى end_date. تكون 0 عند عدم وجود تاريخ انتهاء أو عند انقضائه."
 
+#. module: ncollection_subscription
 msgid "End date must be after start date (subscription \"%s\")."
 msgstr "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء (الاشتراك \"%s\")."
 
+#. module: ncollection_subscription
 msgid "Invalid subscription transition: %(current)s -> %(new)s (subscription \"%(name)s\")."
 msgstr "انتقال اشتراك غير صالح: %(current)s ← %(new)s (الاشتراك \"%(name)s\")."
 
+#. module: ncollection_subscription
 msgid "Invalid subscription transition: cannot renew from %(current)s (subscription \"%(name)s\")."
 msgstr "انتقال اشتراك غير صالح: لا يمكن التجديد من %(current)s (الاشتراك \"%(name)s\")."
 
+#. module: ncollection_subscription
 msgid "Monthly Price"
 msgstr "السعر الشهري"
 
+#. module: ncollection_subscription
 msgid "Yearly Price"
 msgstr "السعر السنوي"
 
+#. module: ncollection_subscription
 msgid "Max Users"
 msgstr "الحد الأقصى للمستخدمين"
 
+#. module: ncollection_subscription
 msgid "Max Companies"
 msgstr "الحد الأقصى للشركات"
 
+#. module: ncollection_subscription
 msgid "Length of the free trial for this plan, in days (0 = no trial)."
 msgstr "مدة الفترة التجريبية المجانية لهذه الخطة، بالأيام (0 = بدون فترة تجريبية)."
 
+#. module: ncollection_subscription
 msgid "Days after expiry during which access continues before suspension."
 msgstr "عدد الأيام بعد انتهاء الصلاحية التي يستمر خلالها الوصول قبل التعليق."
 
+#. module: ncollection_subscription
 msgid "Allowed Modules"
 msgstr "الوحدات المسموح بها"
 
+#. module: ncollection_subscription
 msgid "Subscriptions"
 msgstr "الاشتراكات"
 
+#. module: ncollection_subscription
 msgid "Max Users must be strictly positive (plan \"%s\")."
 msgstr "يجب أن يكون الحد الأقصى للمستخدمين موجبًا تمامًا (الخطة \"%s\")."
 
+#. module: ncollection_subscription
 msgid "Trial Days and Grace Days cannot be negative (plan \"%s\")."
 msgstr "لا يمكن أن تكون أيام الفترة التجريبية وأيام السماح سالبة (الخطة \"%s\")."
 
+#. module: ncollection_subscription
 msgid "The plan code must be unique."
 msgstr "يجب أن يكون رمز الخطة فريدًا."
 
+#. module: ncollection_subscription
 msgid "Tenant UUID"
 msgstr "معرّف المستأجر الفريد (UUID)"
 
+#. module: ncollection_subscription
 msgid "Not Provisioned"
 msgstr "غير مُجهّز"
 
+#. module: ncollection_subscription
 msgid "Provisioning"
 msgstr "التجهيز"
 
+#. module: ncollection_subscription
 msgid "Ready"
 msgstr "جاهز"
 
+#. module: ncollection_subscription
 msgid "Error"
 msgstr "خطأ"
 
+#. module: ncollection_subscription
 msgid "Database Status"
 msgstr "حالة قاعدة البيانات"
 
+#. module: ncollection_subscription
 msgid "Trial End Date"
 msgstr "تاريخ انتهاء الفترة التجريبية"
 
+#. module: ncollection_subscription
 msgid "Portal URL"
 msgstr "رابط البوابة"
 
+#. module: ncollection_subscription
 msgid "Signup"
 msgstr "التسجيل"
 
+#. module: ncollection_subscription
 msgid "Setup"
 msgstr "الإعداد"
 
+#. module: ncollection_subscription
 msgid "Training"
 msgstr "التدريب"
 
+#. module: ncollection_subscription
 msgid "Go Live"
 msgstr "الإطلاق"
 
+#. module: ncollection_subscription
 msgid "Completed"
 msgstr "مكتمل"
 
+#. module: ncollection_subscription
 msgid "Onboarding Stage"
 msgstr "مرحلة التهيئة"
 
+#. module: ncollection_subscription
 msgid "Domain / Subdomain"
 msgstr "النطاق / النطاق الفرعي"
 
+#. module: ncollection_subscription
 msgid "Contact Name"
 msgstr "اسم جهة الاتصال"
 
+#. module: ncollection_subscription
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
+#. module: ncollection_subscription
 msgid "Phone"
 msgstr "الهاتف"
 
+#. module: ncollection_subscription
 msgid "Subscription Plan"
 msgstr "خطة الاشتراك"
 
+#. module: ncollection_subscription
 msgid "Current Subscription"
 msgstr "الاشتراك الحالي"
 
+#. module: ncollection_subscription
 msgid "Provisioning Jobs"
 msgstr "مهام التجهيز"
 
+#. module: ncollection_subscription
 msgid "The tenant UUID must be unique."
 msgstr "يجب أن يكون معرّف المستأجر الفريد (UUID) فريدًا."
 
+#. module: ncollection_subscription
 msgid "That database name is already assigned to another tenant."
 msgstr "اسم قاعدة البيانات هذا مُخصّص بالفعل لمستأجر آخر."
 
+#. module: ncollection_subscription
 msgid "Only the provisioning engine may set a tenant's database status to '%(status)s'."
 msgstr "لا يجوز إلا لمحرك التجهيز تعيين حالة قاعدة بيانات المستأجر إلى '%(status)s'."
 
+#. module: ncollection_subscription
 msgid "Invalid tenant transition: %(current)s -> %(new)s (tenant \"%(name)s\")."
 msgstr "انتقال مستأجر غير صالح: %(current)s ← %(new)s (المستأجر \"%(name)s\")."
 
+#. module: ncollection_subscription
 msgid "Modules"
 msgstr "الوحدات"
 
+#. module: ncollection_subscription
 msgid "Module"
 msgstr "الوحدة"
 
+#. module: ncollection_subscription
 msgid "Catalog"
 msgstr "الكتالوج"
 
+#. module: ncollection_subscription
 msgid "Adoption"
 msgstr "الاعتماد"
 
+#. module: ncollection_subscription
 msgid "Description"
 msgstr "الوصف"
 
+#. module: ncollection_subscription
 msgid "tenants"
 msgstr "المستأجرون"
 
+#. module: ncollection_subscription
 msgid "Catalog the modules your SaaS platform offers"
 msgstr "فهرسة الوحدات التي تقدّمها منصة SaaS الخاصة بك"
 
+#. module: ncollection_subscription
 msgid "Modules can be selected per tenant and tracked by provisioning jobs."
 msgstr "يمكن اختيار الوحدات لكل مستأجر وتتبعها من خلال مهام التجهيز."
 
+#. module: ncollection_subscription
 msgid "Provisioning Queue"
 msgstr "قائمة انتظار التجهيز"
 
+#. module: ncollection_subscription
 msgid "Provisioning Job"
 msgstr "مهمة التجهيز"
 
+#. module: ncollection_subscription
 msgid "Job Details"
 msgstr "تفاصيل المهمة"
 
+#. module: ncollection_subscription
 msgid "Timing"
 msgstr "التوقيت"
 
+#. module: ncollection_subscription
 msgid "No provisioning jobs yet"
 msgstr "لا توجد مهام تجهيز بعد"
 
+#. module: ncollection_subscription
 msgid "Jobs appear here when a new tenant database is queued for provisioning."
 msgstr "تظهر المهام هنا عندما توضع قاعدة بيانات مستأجر جديد في قائمة انتظار التجهيز."
 
+#. module: ncollection_subscription
 msgid "Subscription Plans"
 msgstr "خطط الاشتراك"
 
+#. module: ncollection_subscription
 msgid "Pricing"
 msgstr "التسعير"
 
+#. module: ncollection_subscription
 msgid "Limits"
 msgstr "الحدود"
 
+#. module: ncollection_subscription
 msgid "Lifecycle"
 msgstr "دورة الحياة"
 
+#. module: ncollection_subscription
 msgid "Create your first subscription plan"
 msgstr "أنشئ خطة اشتراكك الأولى"
 
+#. module: ncollection_subscription
 msgid "Define pricing tiers such as Starter, Growth and Enterprise."
 msgstr "حدّد مستويات التسعير مثل Starter وGrowth وEnterprise."
 
+#. module: ncollection_subscription
 msgid "NCollection SaaS Dashboard"
 msgstr "لوحة معلومات NCollection SaaS"
 
+#. module: ncollection_subscription
 msgid "NCollection SaaS Overview"
 msgstr "نظرة عامة على NCollection SaaS"
 
+#. module: ncollection_subscription
 msgid "Total Tenants"
 msgstr "إجمالي المستأجرين"
 
+#. module: ncollection_subscription
 msgid "Active Tenants"
 msgstr "المستأجرون النشطون"
 
+#. module: ncollection_subscription
 msgid "Trial Accounts"
 msgstr "الحسابات التجريبية"
 
+#. module: ncollection_subscription
 msgid "Active Subscriptions"
 msgstr "الاشتراكات النشطة"
 
+#. module: ncollection_subscription
 msgid "MRR (monthly)"
 msgstr "الإيراد الشهري المتكرر (شهري)"
 
+#. module: ncollection_subscription
 msgid "Trial Conversion"
 msgstr "تحويل الفترة التجريبية"
 
+#. module: ncollection_subscription
 msgid "Churn"
 msgstr "معدل التسرّب"
 
+#. module: ncollection_subscription
 msgid "Expiring ≤ 30 days"
 msgstr "تنتهي خلال ≤ 30 يومًا"
 
+#. module: ncollection_subscription
 msgid "Storage Health"
 msgstr "حالة التخزين"
 
+#. module: ncollection_subscription
 msgid "Databases"
 msgstr "قواعد البيانات"
 
+#. module: ncollection_subscription
 msgid "Dashboard"
 msgstr "لوحة المعلومات"
 
+#. module: ncollection_subscription
 msgid "NCollection SaaS"
 msgstr "NCollection SaaS"
 
+#. module: ncollection_subscription
 msgid "Revenue Analytics"
 msgstr "تحليلات الإيرادات"
 
+#. module: ncollection_subscription
 msgid "Subscription"
 msgstr "اشتراك"
 
+#. module: ncollection_subscription
 msgid "Start Trial"
 msgstr "بدء الفترة التجريبية"
 
+#. module: ncollection_subscription
 msgid "Activate"
 msgstr "تفعيل"
 
+#. module: ncollection_subscription
 msgid "Renew"
 msgstr "تجديد"
 
+#. module: ncollection_subscription
 msgid "Suspend"
 msgstr "تعليق"
 
+#. module: ncollection_subscription
 msgid "Reactivate"
 msgstr "إعادة التفعيل"
 
+#. module: ncollection_subscription
 msgid "Terminate"
 msgstr "إنهاء"
 
+#. module: ncollection_subscription
 msgid "Cancel"
 msgstr "إلغاء"
 
+#. module: ncollection_subscription
 msgid "Subscription Details"
 msgstr "تفاصيل الاشتراك"
 
+#. module: ncollection_subscription
 msgid "Validity"
 msgstr "الصلاحية"
 
+#. module: ncollection_subscription
 msgid "Create your first subscription"
 msgstr "أنشئ اشتراكك الأول"
 
+#. module: ncollection_subscription
 msgid "Link a tenant to a subscription plan and billing cycle."
 msgstr "اربط مستأجرًا بخطة اشتراك ودورة فوترة."
 
+#. module: ncollection_subscription
 msgid "Revenue Trend"
 msgstr "اتجاه الإيرادات"
 
+#. module: ncollection_subscription
 msgid "Revenue by Plan"
 msgstr "الإيرادات حسب الخطة"
 
+#. module: ncollection_subscription
 msgid "Tenant"
 msgstr "مستأجر"
 
+#. module: ncollection_subscription
 msgid "Expire"
 msgstr "إنهاء الصلاحية"
 
+#. module: ncollection_subscription
 msgid "Tenant Information"
 msgstr "معلومات المستأجر"
 
+#. module: ncollection_subscription
 msgid "Contact"
 msgstr "جهة الاتصال"
 
+#. module: ncollection_subscription
 msgid "Add your first tenant company"
 msgstr "أضف شركة المستأجر الأولى"
 
+#. module: ncollection_subscription
 msgid "Tenants represent client companies using NCollection ERP."
 msgstr "يمثّل المستأجرون الشركات العميلة التي تستخدم NCollection ERP."
 
+#. module: ncollection_subscription
 msgid "Subscription Status Changed"
 msgstr "تغيّرت حالة الاشتراك"
 
+#. module: ncollection_subscription
 msgid "Subscription status changed"
 msgstr "تغيّرت حالة الاشتراك"
 
+#. module: ncollection_subscription
 msgid "Tenant Status Changed"
 msgstr "تغيّرت حالة المستأجر"
 
+#. module: ncollection_subscription
 msgid "Tenant status changed"
 msgstr "تغيّرت حالة المستأجر"
 
+#. module: ncollection_subscription
 msgid "Platform"
 msgstr "المنصة"
 
+#. module: ncollection_subscription
 msgid "Platform Admin"
 msgstr "مسؤول المنصة"
 
+#. module: ncollection_subscription
 msgid "⚠ Failed Provisioning"
 msgstr "⚠ تجهيز فاشل"
 
+#. module: ncollection_subscription
 msgid "⏳ At-risk Subscriptions"
 msgstr "⏳ الاشتراكات المعرّضة للخطر"
