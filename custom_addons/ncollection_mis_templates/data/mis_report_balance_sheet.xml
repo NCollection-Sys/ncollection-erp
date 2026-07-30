@@ -7,7 +7,7 @@
     to the GL on the UAE CoA (P3-T05) rather than a generic numbering. `bale`
     = ending balance (a balance sheet is cumulative, not a period movement).
     Liability/equity/earnings are credit-normal, so their signed balance is
-    negated to present positive figures; with Current Year Earnings included,
+    negated to present positive figures; with Accumulated Earnings included,
     TOTAL ASSETS == TOTAL LIABILITIES & EQUITY to the penny.
 
     NOT noupdate: this is a platform-owned template whose corrections must reach
@@ -105,13 +105,18 @@
         <field name="name">-bale[][('account_id.account_type', 'in', ('equity', 'equity_unaffected'))]</field>
     </record>
 
-    <!-- Current-year result (income - expense, cumulative). Without this a
-         balance sheet never balances mid-year, because the year's P&amp;L is not
-         posted to an equity account until year-end closing. -->
+    <!-- Accumulated (unclosed) P&amp;L result: income - expense, CUMULATIVE
+         (bale, life-to-date). Without this the sheet never balances, because
+         Odoo does not post the P&amp;L result to an equity account until year-end
+         closing. Labelled "Accumulated Earnings", NOT "Current Year Earnings":
+         since P&amp;L accounts are not auto-zeroed at year-end, across multiple
+         unclosed years this holds current + prior unclosed earnings. The
+         reconciliation is exact regardless; fiscal-year-aware split (current
+         vs retained) is deferred to ncollection_account_reports (#117). -->
     <record id="bs_kpi_current_earnings" model="mis.report.kpi">
         <field name="report_id" ref="mis_report_bs"/>
-        <field name="name">current_year_earnings</field>
-        <field name="description">Current Year Earnings</field>
+        <field name="name">accumulated_earnings</field>
+        <field name="description">Accumulated Earnings</field>
         <field name="sequence">85</field>
     </record>
     <record id="bs_kpi_current_earnings_expr" model="mis.report.kpi.expression">
@@ -127,7 +132,7 @@
     </record>
     <record id="bs_kpi_total_liab_eq_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_total_liab_eq"/>
-        <field name="name">total_liabilities + equity + current_year_earnings</field>
+        <field name="name">total_liabilities + equity + accumulated_earnings</field>
     </record>
 
 </odoo>
