@@ -10,3 +10,5 @@ from . import subscription_gate
 from . import res_users
 # P1-T17 customer dashboard — self-contained subtree, see dashboard/__init__.py
 from . import dashboard
+# P4-T01 aggregation engine — self-contained subtree, see aggregation/__init__.py
+from . import aggregation
