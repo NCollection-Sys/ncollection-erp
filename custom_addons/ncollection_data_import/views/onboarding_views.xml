@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_data_import_onboarding_form" model="ir.ui.view">
+        <field name="name">ncollection.data.import.onboarding.form</field>
+        <field name="model">ncollection.data.import.onboarding</field>
+        <field name="arch" type="xml">
+            <form string="Tenant Data Import">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Import your data</h1>
+                        <p class="text-muted">
+                            A guided path over Odoo's own importer. Recommended order —
+                            each step can reference the ones before it:
+                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>.
+                        </p>
+                    </div>
+                    <group>
+                        <field name="entity"/>
+                    </group>
+                    <div>
+                        <button name="action_download_template" type="object"
+                                string="⬇ Download template" class="btn-secondary"/>
+                        <button name="action_open_import" type="object"
+                                string="Open Odoo import →" class="btn-primary"/>
+                    </div>
+                    <separator string="Check a file before importing (optional)"/>
+                    <p class="text-muted">
+                        Upload a filled-in CSV to dry-run it: no data is written, and any
+                        problems are reported per row in plain language.
+                    </p>
+                    <group>
+                        <field name="data_file" filename="data_fname"/>
+                        <field name="data_fname" invisible="1"/>
+                    </group>
+                    <button name="action_validate" type="object"
+                            string="Validate file" class="btn-secondary"
+                            invisible="not data_file"/>
+                    <field name="result_html" readonly="1"/>
+                </sheet>
+                <footer>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_data_import_onboarding" model="ir.actions.act_window">
+        <field name="name">Import Tenant Data</field>
+        <field name="res_model">ncollection.data.import.onboarding</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_data_import_root"
+              name="Data Import"
+              parent="base.menu_administration"
+              groups="base.group_system"
+              sequence="95"/>
+    <menuitem id="menu_data_import_onboarding"
+              name="Import Tenant Data"
+              parent="menu_data_import_root"
+              action="action_data_import_onboarding"
+              groups="base.group_system"
+              sequence="10"/>
+
+</odoo>
