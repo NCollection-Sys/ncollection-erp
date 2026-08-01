@@ -105,9 +105,22 @@ class NcollectionAuthLog(models.Model):
         """
         raw = self.env['ir.config_parameter'].sudo().get_param(
             RETENTION_PARAM, DEFAULT_RETENTION_DAYS)
+        # Logged AND raised, deliberately. Raising is what makes the run show as
+        # failed in Scheduled Actions, but Odoo core deactivates a cron after 5
+        # failures spanning 7 days (ir_cron._update_failure_count), so a
+        # misconfiguration left unfixed eventually switches the purge OFF. That
+        # is the lesser evil — refusing to delete beats deleting on a guessed
+        # window — but it must not be invisible, so the log line gives
+        # monitoring a second, independent channel that does not depend on
+        # anyone watching the in-tenant Discuss notification.
         try:
             days = int(raw)
         except (TypeError, ValueError, OverflowError):
+            _logger.error(
+                "Auth-log retention misconfigured: %s = %r is not a whole "
+                "number of days. No rows deleted; the purge will keep failing "
+                "and Odoo will deactivate it after repeated failures.",
+                RETENTION_PARAM, raw)
             raise UserError(self.env._(
                 "Auth-log retention is misconfigured: %(param)s is %(value)r, "
                 "which is not a whole number of days. No rows were deleted. "
@@ -151,18 +164,48 @@ class NcollectionAuthLog(models.Model):
             return 0
 
         deadline = fields.Datetime.now() - timedelta(days=days)
+        # Odoo REFUSES a commit from inside a test ("Cannot commit or rollback a
+        # cursor from inside a test"), so the per-batch commit is gated on
+        # actually running under a cron. ir.cron puts cron_id in the context —
+        # the same signal ir.autovacuum uses to authorise itself. Outside a cron
+        # (tests, an odoo shell call) the sweep simply runs in one transaction,
+        # which is what a test wants anyway.
+        under_cron = bool(self.env.context.get('cron_id'))
         total = 0
+        capped = True
         for _batch in range(GC_MAX_BATCHES):
             rows = self.sudo().search(
                 [('create_date', '<', deadline)],
                 limit=GC_CHUNK_SIZE, order='create_date asc')
             if not rows:
+                capped = False
                 break
             count = len(rows)
             rows.unlink()
             total += count
+            # Commit per batch. Without this the chunking is theatre: all
+            # GC_MAX_BATCHES * GC_CHUNK_SIZE deletes stay in ONE transaction
+            # (ir.cron commits once, after the job method returns), so the lock
+            # and WAL footprint match a single unbounded DELETE — exactly what
+            # the chunking above claims to avoid. _commit_progress also reports
+            # progress to the cron scheduler as it goes.
+            if under_cron:
+                self.env['ir.cron']._commit_progress(processed=count)
             if count < GC_CHUNK_SIZE:
+                capped = False
                 break
+
+        if capped:
+            # Distinguishable in the log from "drained the backlog". The case
+            # for a NAMED cron over @api.autovacuum is that an auditor can point
+            # at it, which fails if a multi-day backlog looks identical to a
+            # clean sweep.
+            _logger.warning(
+                "Auth-log retention hit its per-run cap of %s rows (%s batches "
+                "of %s); rows older than %s day(s) remain and will be collected "
+                "by the next run.",
+                GC_MAX_BATCHES * GC_CHUNK_SIZE, GC_MAX_BATCHES,
+                GC_CHUNK_SIZE, days)
 
         # Logged unconditionally, including the zero case: the audit story for
         # a retention policy is "it ran and here is what it did", and a silent
