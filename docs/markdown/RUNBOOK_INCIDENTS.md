@@ -23,8 +23,11 @@ pressure: *what do I do right now?*
 | **SEV-3** | Minor / cosmetic, no data risk | one report wrong, a non-critical cron failing | next business day | on resolve |
 
 > A **cross-tenant isolation break is always SEV-1**, even for one record — it is
-> the platform's cardinal risk ([ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md),
-> [REGRESSIONS.md](REGRESSIONS.md) R-004). Isolate first, investigate second.
+> the platform's cardinal risk ([ARCHITECTURE_SECURITY.md](ARCHITECTURE_SECURITY.md)).
+> It is prevented by design — database-per-tenant plus the `tenant-isolation-auditor`
+> review gate — so there is **no post-mortem guard for a *live* leak yet**. If one
+> occurs: isolate first, investigate second, and add the guard that would have
+> caught it to [REGRESSIONS.md](REGRESSIONS.md).
 
 ## Roles (small team — one person may wear several)
 

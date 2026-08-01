@@ -33,13 +33,15 @@ pass=0
 fail=0
 ok(){   echo "  ✅ PASS: $1"; pass=$((pass + 1)); }
 no(){   echo "  ❌ FAIL: $1"; fail=$((fail + 1)); }
+skip(){ echo "  ⏳ SKIPPED ($2): $1"; }   # uncounted — a check we couldn't run
 todo(){ echo "  ⏳ MANUAL (operator must confirm on production): $1"; }
 hr(){ echo "----------------------------------------------------------------------"; }
 
 # A file exists and is non-empty.
 have_file(){ [ -s "$1" ]; }
-# A script exists and is executable.
-have_exec(){ [ -x "$1" ]; }
+# A script exists, is non-empty AND executable (an emptied stub with the +x bit
+# still preserved must NOT pass — that is exactly the accident this gate catches).
+have_exec(){ [ -s "$1" ] && [ -x "$1" ]; }
 # A Makefile target is defined.
 have_target(){ grep -qE "^$1:" Makefile 2>/dev/null; }
 
@@ -56,11 +58,13 @@ hr; echo "B. Rollback rehearsable (checklist: 'rollback procedure rehearsed')"; 
 if have_exec scripts/deploy/rollback.sh; then
   ok "rollback.sh runnable"
   if command -v shellcheck >/dev/null 2>&1; then
-    if shellcheck -S error scripts/deploy/rollback.sh >/dev/null 2>&1; then
-      ok "rollback.sh passes shellcheck (no errors)"
+    if shellcheck scripts/deploy/rollback.sh >/dev/null 2>&1; then
+      ok "rollback.sh passes shellcheck"
     else
-      no "rollback.sh has shellcheck errors — fix before rehearsing"
+      no "rollback.sh has shellcheck findings — fix before rehearsing"
     fi
+  else
+    skip "rollback.sh shellcheck" "shellcheck not installed — CI enforces it on every *.sh"
   fi
 else
   no "rollback.sh missing — cannot rehearse rollback"
@@ -91,7 +95,10 @@ if have_target verify-all; then ok "'make verify-all' target defined (full regre
 if have_file docs/markdown/PHASE1_REGRESSION_CHECKLIST.md; then ok "regression checklist present"; else no "regression checklist MISSING"; fi
 if have_file docs/markdown/GO_LIVE_CHECKLIST.md; then ok "go-live checklist present"; else no "GO_LIVE_CHECKLIST.md MISSING"; fi
 if have_file .env.example; then ok ".env.example present"; else no ".env.example MISSING"; fi
-if git check-ignore .env >/dev/null 2>&1; then ok ".env is gitignored (no secrets in git)"; else no ".env NOT gitignored"; fi
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  skip ".env gitignore check" "not inside a git working tree"
+elif git check-ignore .env >/dev/null 2>&1; then ok ".env is gitignored (no secrets in git)"
+else no ".env NOT gitignored"; fi
 
 hr; echo "F. MANUAL go-live steps — real infrastructure, operator-only"; hr
 todo "Deploy the production server + run scripts/deploy/deploy.sh (first prod deploy)"
