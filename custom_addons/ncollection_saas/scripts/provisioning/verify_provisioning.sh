@@ -32,8 +32,27 @@ drop_db(){ "${DC[@]}" exec -T db psql -U odoo -d postgres -c \
   "${DC[@]}" exec -T db psql -U odoo -d postgres -c "DROP DATABASE IF EXISTS $1" >/dev/null 2>&1 || true; }
 tq(){ "${DC[@]}" exec -T db psql -U odoo -d "$1" -tAc "$2" 2>/dev/null | tr -d ' '; }
 
+# Remove THIS script's fixture rows from the PLATFORM DB (plans PROV/FAIL, the
+# provclient/provfail tenants + their jobs). Idempotency (Rule 12): without this
+# a re-run collides on the unique plan code 'PROV'. ORM unlink (not raw psql) so
+# FK/ondelete cascades are respected; jobs -> tenants -> plans is FK-safe; an
+# empty search is a no-op, so this is itself idempotent. Fails loud (no
+# `|| true`, Rule 10) — a broken platform DB must not be papered over.
+platform_cleanup(){
+  "${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http --log-level=warn "${DBARGS[@]}" <<'PY' 2>/dev/null
+env['ncollection.provisioning.job'].search(
+    [('database_name', 'in', ['provclient', 'provfail'])]).unlink()
+env['ncollection.tenant'].search(
+    [('database_name', 'in', ['provclient', 'provfail'])]).unlink()
+env['ncollection.subscription.plan'].search(
+    [('code', 'in', ['PROV', 'FAIL'])]).unlink()
+env.cr.commit()
+PY
+}
+
 echo "== cleanup any prior run =="
 drop_db provclient; drop_db provfail
+platform_cleanup
 
 echo "== HAPPY PATH: provision 'provclient' (plan modules: crm, account) =="
 "${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http --log-level=warn "${DBARGS[@]}" <<'PY' 2>/dev/null
@@ -106,6 +125,7 @@ hr
 
 echo "== cleanup =="
 drop_db provclient; drop_db provfail
+platform_cleanup
 echo "SUMMARY: ${pass} passed, ${fail} failed."
 [ "$fail" -eq 0 ] && echo "✅ Provisioning engine verified (create + rollback)." || echo "❌ FAILURES above."
 exit "$([ "$fail" -eq 0 ] && echo 0 || echo 1)"
