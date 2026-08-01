@@ -208,6 +208,27 @@ class TestLicenseEnforcement(TransactionCase):
                 self.user).check_access("read")
         self.assertIn("NCollection plan", str(cm.exception))
 
+    def test_derivation_error_fails_open(self):
+        """A crash anywhere in the blocked-set derivation must DISABLE
+        enforcement (fail-open), never brick the tenant with 500s (#240)."""
+        self._set_plan("crm")
+        with patch.object(type(self.Menu), "_ncollection_compute_blocked_access",
+                          side_effect=RuntimeError("boom")):
+            self.env.registry.clear_cache()
+            self.assertEqual(self.Menu._ncollection_blocked_namespaces_cached(), frozenset())
+            self.assertEqual(self.Menu._ncollection_blocked_models_cached(), frozenset())
+            # enforcement disabled -> a normally-gateable access is NOT denied
+            self.env["res.partner"].with_user(self.user).check_access("read")
+        self.env.registry.clear_cache()  # restore real derivation for later tests
+
+    def test_blocked_module_names_error_fails_open(self):
+        """A crash in _ncollection_blocked_module_names (e.g. the dependency
+        walk) also fails open -> empty set, not a raised 500 (#240)."""
+        self._set_plan("crm")
+        with patch.object(type(self.Menu), "_ncollection_expand_dependencies",
+                          side_effect=RuntimeError("boom")):
+            self.assertEqual(self.Menu.sudo()._ncollection_blocked_module_names(), set())
+
     # ---------------- performance budget ----------------
 
     def test_overhead_under_budget(self):

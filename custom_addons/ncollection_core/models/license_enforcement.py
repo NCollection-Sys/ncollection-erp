@@ -68,17 +68,6 @@ def _make_license_error(model_name):
 class LicenseEnforcementMixin(models.AbstractModel):
     _inherit = 'base'
 
-    @api.model
-    def _ncollection_blocked_namespaces(self):
-        """Frozenset of model-name namespace prefixes to deny.
-
-        Cached on the registry; the cache is cleared whenever
-        ncollection.workspace.config changes (create/write/unlink call
-        env.registry.clear_cache(), P1-T09), so plan changes take effect
-        without a restart. Fail-open: empty set when no config / no list.
-        """
-        return self.env['ir.ui.menu']._ncollection_blocked_namespaces_cached()
-
     def _check_access(self, operation):
         result = super()._check_access(operation)
         if result is not None:
@@ -109,22 +98,26 @@ class IrUiMenuLicenseCache(models.Model):
 
     @api.model
     @tools.ormcache()
-    def _ncollection_blocked_namespaces_cached(self):
-        return self._ncollection_blocked_access()[0]
+    def _ncollection_blocked_access_cached(self):
+        """``(blocked_namespaces, blocked_models)`` — the single cached compute
+        (invalidated only on a plan change, not per request). The two accessors
+        below slice it, so the pipeline runs ONCE per cache clear."""
+        return self._ncollection_blocked_access()
 
     @api.model
-    @tools.ormcache()
+    def _ncollection_blocked_namespaces_cached(self):
+        return self._ncollection_blocked_access_cached()[0]
+
+    @api.model
     def _ncollection_blocked_models_cached(self):
-        return self._ncollection_blocked_access()[1]
+        return self._ncollection_blocked_access_cached()[1]
 
     @api.model
     def _ncollection_blocked_access(self):
         """``(blocked_namespaces, blocked_models)`` for Ring 2.
 
         FAIL-OPEN: any error returns empty sets — an unenforced license beats a
-        bricked tenant (the module's governing principle). The two ormcache'd
-        accessors above call this; on a cache clear it computes twice (cheap,
-        amortised — invalidated only on a plan change, not per request)."""
+        bricked tenant (the module's governing principle)."""
         try:
             return self._ncollection_compute_blocked_access()
         except Exception:  # pragma: no cover - defensive fail-open
@@ -174,9 +167,9 @@ class IrUiMenuLicenseCache(models.Model):
         #     account_financial_report's `account.age.report.configuration` under
         #     the licensed `account` namespace (#240). Exact ownership → no
         #     over-block: `account.move` (owned by `account`) is never gated.
-        models = frozenset(
+        blocked_model_names = frozenset(
             name for name, mods in model_owners.items()
             if mods <= blocked_modules
             and name.split('.', 1)[0] not in namespaces
             and blockable(name.split('.', 1)[0]))
-        return namespaces, models
+        return namespaces, blocked_model_names
