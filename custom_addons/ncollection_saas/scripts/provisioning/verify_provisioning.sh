@@ -18,6 +18,16 @@ set -euo pipefail
 cd "$(dirname "$0")/../../../.."   # repo root
 
 PLATFORM_DB="${PLATFORM_DB:-saastest}"
+# Safety: this script DELETES fixture rows (plans PROV/FAIL, provclient/provfail
+# tenants) from the platform DB. Unlike tenant db_names, the plan codes have no
+# reserved-code registry, so refuse to run unless PLATFORM_DB is obviously a test
+# DB — a guard against PLATFORM_DB ever being pointed at real/shared platform data.
+case "$PLATFORM_DB" in
+  *test*) ;;
+  *) echo "REFUSING: PLATFORM_DB='$PLATFORM_DB' is not a recognized test database " \
+          "(expected a name containing 'test', e.g. saastest). This script deletes " \
+          "platform fixture rows and must never run against real data." >&2; exit 1;;
+esac
 DC=(docker compose)
 DBARGS=(--db_host=db --db_user=odoo --db_password=odoo)
 pass=0; fail=0
@@ -36,18 +46,29 @@ tq(){ "${DC[@]}" exec -T db psql -U odoo -d "$1" -tAc "$2" 2>/dev/null | tr -d '
 # provclient/provfail tenants + their jobs). Idempotency (Rule 12): without this
 # a re-run collides on the unique plan code 'PROV'. ORM unlink (not raw psql) so
 # FK/ondelete cascades are respected; jobs -> tenants -> plans is FK-safe; an
-# empty search is a no-op, so this is itself idempotent. Fails loud (no
-# `|| true`, Rule 10) — a broken platform DB must not be papered over.
+# empty search is a no-op, so this is itself idempotent.
+#   - active_test=False: an ARCHIVED leftover row is hidden from a plain search
+#     but STILL collides on the unique code — search all so cleanup can't miss it.
+#   - output is captured and printed ONLY on failure: quiet on success, but a
+#     real cleanup failure fails loud with its traceback (Rule 10), since (unlike
+#     the happy/rollback blocks) nothing else probes this step's result.
 platform_cleanup(){
-  "${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http --log-level=warn "${DBARGS[@]}" <<'PY' 2>/dev/null
-env['ncollection.provisioning.job'].search(
+  local out
+  if ! out=$("${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http \
+             --log-level=warn "${DBARGS[@]}" 2>&1 <<'PY'
+env['ncollection.provisioning.job'].with_context(active_test=False).search(
     [('database_name', 'in', ['provclient', 'provfail'])]).unlink()
-env['ncollection.tenant'].search(
+env['ncollection.tenant'].with_context(active_test=False).search(
     [('database_name', 'in', ['provclient', 'provfail'])]).unlink()
-env['ncollection.subscription.plan'].search(
+env['ncollection.subscription.plan'].with_context(active_test=False).search(
     [('code', 'in', ['PROV', 'FAIL'])]).unlink()
 env.cr.commit()
 PY
+  ); then
+    echo "❌ platform_cleanup FAILED (platform DB '$PLATFORM_DB'):" >&2
+    echo "$out" | tail -30 >&2
+    return 1
+  fi
 }
 
 echo "== cleanup any prior run =="
