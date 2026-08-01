@@ -137,6 +137,12 @@ class NcollectionDataImportOnboarding(models.TransientModel):
     def _dry_run(self):
         """Run base_import in dryrun mode; return (messages, created_count)."""
         raw = base64.b64decode(self.data_file)
+        # Cheap size guard BEFORE the full parse (parse_preview reads every row):
+        # reject an oversize upload without paying for chardet + a full CSV parse.
+        if raw.count(b'\n') > MAX_VALIDATE_ROWS:
+            return ([{'type': 'error', 'message': self.env._(
+                "This file is too large to validate here. Import it on Odoo's own "
+                "import screen, which loads large files in batches.")}], 0)
         model = ENTITY_MODEL[self.entity]
         ctx = dict(self.env.context, **ENTITY_CONTEXT.get(self.entity, {}))
         Import = self.env['base_import.import'].with_context(**ctx)
@@ -144,7 +150,11 @@ class NcollectionDataImportOnboarding(models.TransientModel):
             'res_model': model, 'file': raw, 'file_type': 'text/csv',
             'file_name': self.data_fname or 'import.csv',
         })
-        preview = record.parse_preview(IMPORT_OPTS)
+        # dict(IMPORT_OPTS) per call: base_import._read_csv MUTATES its options
+        # arg in place (stamps the detected 'encoding'), so never hand it the
+        # shared constant — that would leak one file's guessed encoding into
+        # every later validation in the worker.
+        preview = record.parse_preview(dict(IMPORT_OPTS))
         if preview.get('error'):
             return ([{'type': 'error', 'message': preview['error']}], 0)
         headers = preview.get('headers') or []
@@ -152,28 +162,23 @@ class NcollectionDataImportOnboarding(models.TransientModel):
         # Pre-flight checks base_import itself does NOT make on a dry run.
         preflight = self._preflight(raw, columns)
         if any(m['type'] == 'error' for m in preflight):
-            # A duplicate/oversize file would corrupt or hang the real import —
+            # A duplicate-id file would silently merge rows on the real import —
             # stop here and report it rather than green-lighting the file.
             return (preflight, 0)
-        result = record.execute_import(columns, headers, IMPORT_OPTS, dryrun=True)
+        result = record.execute_import(columns, headers, dict(IMPORT_OPTS), dryrun=True)
         # execute_import returns ids=False (not a list) when rows fail — guard it.
         return (preflight + (result.get('messages') or []),
                 len(result.get('ids') or []))
 
     def _preflight(self, raw, columns):
-        """Row-level checks base_import misses on a dry run: an oversize file, a
-        left-in id placeholder, and a DUPLICATED id/.id upsert key — the last
-        silently merges rows onto one record (data loss) with no error."""
+        """Row-level checks base_import misses on a dry run: a left-in id
+        placeholder and a DUPLICATED id/.id upsert key — the latter silently
+        merges rows onto one record (data loss) with no error."""
         messages = []
         try:
             rows = list(csv.reader(io.StringIO(raw.decode('utf-8-sig'))))[1:]
         except (UnicodeDecodeError, csv.Error):
             return messages  # let base_import report a malformed file
-        if len(rows) > MAX_VALIDATE_ROWS:
-            return [{'type': 'error', 'message': self.env._(
-                "This file has %(n)s rows — too many to validate here. Import it "
-                "on Odoo's own import screen, which loads large files in batches.",
-                n=len(rows))}]
         key_col = next((i for i, c in enumerate(columns) if c in ('id', '.id')), None)
         if key_col is None:
             return messages

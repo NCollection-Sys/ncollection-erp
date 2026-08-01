@@ -51,11 +51,13 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
         rec = self.env['base_import.import'].with_context(**ctx).create({
             'res_model': model, 'file': csv_bytes,
             'file_type': 'text/csv', 'file_name': (entity or model) + '.csv'})
-        preview = rec.parse_preview(IMPORT_OPTS)
+        # dict(IMPORT_OPTS) per call — base_import mutates its options arg
+        # in place (see wizard._dry_run), so never share the constant object.
+        preview = rec.parse_preview(dict(IMPORT_OPTS))
         self.assertFalse(preview.get('error'), preview.get('error'))
         columns = self.Onboarding._map_columns(
             preview['headers'], preview.get('matches') or {})
-        return rec.execute_import(columns, preview['headers'], IMPORT_OPTS, dryrun=dryrun)
+        return rec.execute_import(columns, preview['headers'], dict(IMPORT_OPTS), dryrun=dryrun)
 
     def _validate(self, entity, csv_bytes):
         wiz = self.Onboarding.create({
@@ -121,7 +123,7 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
             rec = self.env['base_import.import'].create({
                 'res_model': model, 'file': self._template_bytes(entity),
                 'file_type': 'text/csv', 'file_name': entity + '.csv'})
-            preview = rec.parse_preview(IMPORT_OPTS)
+            preview = rec.parse_preview(dict(IMPORT_OPTS))
             self.assertFalse(preview.get('error'), "%s: %s" % (entity, preview.get('error')))
             columns = self.Onboarding._map_columns(
                 preview['headers'], preview.get('matches') or {})
@@ -131,6 +133,14 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
 
     def test_validate_good_file_reports_success(self):
         self.assertIn('Looks good', self._validate('products', self._template_bytes('products')))
+
+    def test_validate_does_not_mutate_shared_options(self):
+        # base_import stamps the detected 'encoding' INTO its options dict; the
+        # wizard must pass a copy, or one file's guessed encoding leaks into every
+        # later validation in the worker. Assert the shared constant stays clean.
+        self.assertNotIn('encoding', IMPORT_OPTS)
+        self._validate('customers', self._template_bytes('customers'))
+        self.assertNotIn('encoding', IMPORT_OPTS)
 
     def test_validate_bad_file_reports_friendly_error(self):
         bad = ('product_id,location_id,inventory_quantity\n'
