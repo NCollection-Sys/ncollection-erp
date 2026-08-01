@@ -42,7 +42,7 @@ OCA_VENV := .oca-venv
         routing-up routing-verify routing-down routing-clean e2e-clean \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
-        demo-tenant demo-clean staging-config staging-build
+        demo-tenant demo-clean staging-config staging-build go-live-check
 
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
@@ -69,6 +69,9 @@ staging-config: ## Validate the merged staging compose config (docker-compose.ym
 staging-build: ## Build the deployable image locally (run 'make oca' first). Tag: :local
 	@test -d oca/mis-builder || (echo "ERROR: ./oca/ is empty — run 'make oca' first."; exit 1)
 	docker build -t ghcr.io/ncollection-sys/ncollection-erp:local .
+
+go-live-check: ## P3-T13 go-live readiness preflight (verifies automated gate items; lists manual ones)
+	./scripts/deploy/go_live_check.sh
 
 down: ## Stop and remove containers (keeps data volumes)
 	$(COMPOSE) down
