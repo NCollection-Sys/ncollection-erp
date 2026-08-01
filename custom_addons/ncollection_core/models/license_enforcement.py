@@ -106,9 +106,37 @@ class IrUiMenuLicenseCache(models.Model):
     @tools.ormcache()
     def _ncollection_blocked_namespaces_cached(self):
         blocked_modules = self.sudo()._ncollection_blocked_module_names()
+        if not blocked_modules:
+            return frozenset()
         namespaces = set()
+        # (1) module-name prefix — the original derivation (correct when a
+        #     module's models share its name, crm -> crm.lead; also drives the
+        #     synthetic-module tests). Kept for backward compatibility.
         for name in blocked_modules:
-            ns = name.split('.', 1)[0]
-            if ns not in NEVER_BLOCKED_NAMESPACES and not ns.startswith('ncollection'):
+            namespaces.add(name.split('.', 1)[0])
+        # (2) model-namespaces EXCLUSIVE to blocked modules (#240). A menu-nested
+        #     module's name differs from its models' namespace (mis_builder ->
+        #     `mis.report`, account_financial_report -> `trial.balance...`), so the
+        #     name prefix alone never matches at the ORM layer. Add such a
+        #     namespace ONLY if EVERY module defining a model in it is blocked —
+        #     otherwise it is SHARED with a licensed/core module (e.g. the
+        #     `report.*` PDF models, defined by dozens of modules) and blocking it
+        #     would deny licensed features (fail-closed). Exclusive-ownership keeps
+        #     it precise and self-correcting: a future allowed module owning the
+        #     namespace removes it from the blocked set automatically.
+        rows = self.env['ir.model.data'].sudo().search_read(
+            [('model', '=', 'ir.model')], ['module', 'res_id'])
+        model_name = {
+            m.id: m.model for m in self.env['ir.model'].sudo().browse(
+                [r['res_id'] for r in rows]).exists()}
+        owners = {}
+        for r in rows:
+            name = model_name.get(r['res_id'])
+            if name:
+                owners.setdefault(name.split('.', 1)[0], set()).add(r['module'])
+        for ns, mods in owners.items():
+            if mods <= blocked_modules:
                 namespaces.add(ns)
-        return frozenset(namespaces)
+        return frozenset(
+            ns for ns in namespaces
+            if ns not in NEVER_BLOCKED_NAMESPACES and not ns.startswith('ncollection'))

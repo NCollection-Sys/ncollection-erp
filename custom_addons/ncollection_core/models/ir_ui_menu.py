@@ -31,6 +31,15 @@ _logger = logging.getLogger(__name__)
 MENU_MODULE_WHITELIST = {'base', 'web', 'mail', 'bus'}
 NCOLLECTION_PREFIX = 'ncollection_'
 
+# Modules whose menus mount UNDER another app's menu (no root menu of their own),
+# so the root-menu-owner candidate derivation below cannot see them (#240). List
+# them explicitly so a downgraded tenant actually loses them via BOTH rings; the
+# blocked/allowed filter still applies, so a plan that DOES license them keeps
+# them. These are the OCA financial-report modules plan-gated by P3-T01 (retired
+# fleet-wide at F2-T07). Add a module here if it nests all its menus under
+# another app AND must be plan-gated.
+MENU_NESTED_GATED_MODULES = {'account_financial_report', 'mis_builder'}
+
 # P1-T09 risk note: _visible_menu_ids is an Odoo-internal method. Pin the
 # exact Odoo 19 signature and refuse to filter if upstream drifts.
 _EXPECTED_PARAMS = ('self', 'debug')
@@ -126,7 +135,10 @@ class IrUiMenu(models.Model):
             [('model', '=', 'ir.ui.menu'), ('res_id', 'in', root_menus.ids)],
             ['module'],
         )
-        candidates = {d['module'] for d in data}
+        # Candidates = root-menu owners PLUS the known menu-nested modules that
+        # own no root menu of their own (#240) — the filter below still exempts
+        # anything the plan allows / the whitelist / ncollection_*.
+        candidates = {d['module'] for d in data} | MENU_NESTED_GATED_MODULES
         return {
             name for name in candidates
             if name not in MENU_MODULE_WHITELIST
@@ -148,21 +160,23 @@ class IrUiMenu(models.Model):
         if not blocked_modules:
             return set()
 
-        root_menus = self.sudo().with_context(active_test=False).search(
-            [('parent_id', '=', False)]
-        )
+        # Menus OWNED by a blocked module — root OR nested (#240). A root-menu
+        # module hides its whole app tree; a menu-nested module (whose menus live
+        # under another app's menu, e.g. account_financial_report under account)
+        # hides only its own items + their descendants, leaving the host app menu
+        # visible. This is why the search is NOT restricted to parent_id=False.
         data = self.env['ir.model.data'].sudo().search_read(
-            [('model', '=', 'ir.ui.menu'), ('res_id', 'in', root_menus.ids),
-             ('module', 'in', list(blocked_modules))],
+            [('model', '=', 'ir.ui.menu'), ('module', 'in', list(blocked_modules))],
             ['res_id'],
         )
-        blocked_roots = self.sudo().browse([d['res_id'] for d in data])
-        if not blocked_roots:
+        owned = self.sudo().with_context(active_test=False).browse(
+            [d['res_id'] for d in data]).exists()
+        if not owned:
             return set()
 
-        prefixes = tuple(root.parent_path for root in blocked_roots if root.parent_path)
+        prefixes = tuple(m.parent_path for m in owned if m.parent_path)
         if not prefixes:
-            return set(blocked_roots.ids)
+            return set(owned.ids)
         all_menus = self.sudo().with_context(active_test=False).search_read(
             [], ['parent_path'],
         )

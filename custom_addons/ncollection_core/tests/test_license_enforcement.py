@@ -124,6 +124,58 @@ class TestLicenseEnforcement(TransactionCase):
         )
         self.env["res.partner"].with_user(self.user).check_access("read")
 
+    # ---------------- #240: menu-nested modules ----------------
+
+    def test_nested_modules_are_blockable_candidates(self):
+        """#240: account_financial_report / mis_builder nest their menus under
+        the account app (no root menu of their own), so root-menu-owner
+        derivation never gated them. They are explicit candidates now — blocked
+        when the plan omits them, kept when the plan licenses them. (Works
+        without the modules installed: they're a static gated set.)"""
+        self._set_plan("crm,sale,account")  # neither licensed (a downgrade)
+        blocked = self.Menu.sudo()._ncollection_blocked_module_names()
+        self.assertIn("account_financial_report", blocked)
+        self.assertIn("mis_builder", blocked)
+        self._set_plan("account,mis_builder,account_financial_report")  # licensed
+        blocked = self.Menu.sudo()._ncollection_blocked_module_names()
+        self.assertNotIn("account_financial_report", blocked)
+        self.assertNotIn("mis_builder", blocked)
+
+    def test_downgrade_gates_mis_builder_by_actual_namespace(self):
+        """#240: a blocked menu-nested module must map to its ACTUAL model
+        namespace (mis_builder -> `mis`, Ring 2) — NOT the module name — and its
+        nested menus must hide (Ring 1). Runs for real wherever mis_builder is
+        installed (CI installs it via ncollection_mis_templates)."""
+        if "mis.report" not in self.env:
+            self.skipTest("mis_builder not installed in this run")
+        self._set_plan("account")  # downgrade: mis_builder not licensed
+        # Ring 2: 'mis' is derived from the mis.report model, not the module name
+        self.assertIn(
+            "mis", self.Menu.sudo()._ncollection_blocked_namespaces_cached())
+        # Ring 1: mis_builder's (nested) menus are hidden
+        hidden = self.Menu.sudo()._ncollection_blocked_menu_ids()
+        menu_md = self.env["ir.model.data"].sudo().search(
+            [("model", "=", "ir.ui.menu"), ("module", "=", "mis_builder")], limit=1)
+        self.assertTrue(menu_md, "mis_builder owns at least one menu")
+        self.assertIn(menu_md.res_id, hidden)
+        # re-licensing clears the gate (no permanent block)
+        self._set_plan("account,mis_builder")
+        self.assertNotIn(
+            "mis", self.Menu.sudo()._ncollection_blocked_namespaces_cached())
+
+    def test_shared_infra_namespace_is_not_overblocked(self):
+        """#240 over-block guard: a menu-nested module ALSO defines models in
+        SHARED namespaces (mis_builder/account_financial_report both define
+        `report.*` PDF models). Blocking `report` would deny every module's PDF
+        rendering (fail-closed). Only namespaces EXCLUSIVELY owned by blocked
+        modules are gated."""
+        if "mis.report" not in self.env:
+            self.skipTest("mis_builder not installed in this run")
+        self._set_plan("account")  # mis_builder blocked
+        blocked = self.Menu.sudo()._ncollection_blocked_namespaces_cached()
+        self.assertIn("mis", blocked)        # exclusive to mis_builder -> gated
+        self.assertNotIn("report", blocked)  # shared PDF infra -> NEVER gated
+
     # ---------------- performance budget ----------------
 
     def test_overhead_under_budget(self):
