@@ -15,6 +15,7 @@ from unittest.mock import patch
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
+from odoo.addons.ncollection_core.models import ir_ui_menu as iuim
 from odoo.addons.ncollection_core.models import license_enforcement as le
 
 
@@ -123,6 +124,128 @@ class TestLicenseEnforcement(TransactionCase):
             self.Menu._ncollection_blocked_namespaces_cached(), frozenset()
         )
         self.env["res.partner"].with_user(self.user).check_access("read")
+
+    # ---------------- #240: menu-nested modules ----------------
+
+    def test_nested_modules_are_blockable_candidates(self):
+        """#240: account_financial_report / mis_builder nest their menus under
+        the account app (no root menu of their own), so root-menu-owner
+        derivation never gated them. They are explicit candidates now — blocked
+        when the plan omits them, kept when the plan licenses them. (Works
+        without the modules installed: they're a static gated set.)"""
+        self._set_plan("crm,sale,account")  # neither licensed (a downgrade)
+        blocked = self.Menu.sudo()._ncollection_blocked_module_names()
+        self.assertIn("account_financial_report", blocked)
+        self.assertIn("mis_builder", blocked)
+        self._set_plan("account,mis_builder,account_financial_report")  # licensed
+        blocked = self.Menu.sudo()._ncollection_blocked_module_names()
+        self.assertNotIn("account_financial_report", blocked)
+        self.assertNotIn("mis_builder", blocked)
+
+    def test_downgrade_gates_mis_builder_by_actual_namespace(self):
+        """#240: a blocked menu-nested module must map to its ACTUAL model
+        namespace (mis_builder -> `mis`, Ring 2) — NOT the module name — and its
+        nested menus must hide (Ring 1). Runs for real wherever mis_builder is
+        installed (CI installs it via ncollection_mis_templates)."""
+        if "mis.report" not in self.env:
+            self.skipTest("mis_builder not installed in this run")
+        self._set_plan("account")  # downgrade: mis_builder not licensed
+        # Ring 2: 'mis' is derived from the mis.report model, not the module name
+        self.assertIn(
+            "mis", self.Menu.sudo()._ncollection_blocked_namespaces_cached())
+        # Ring 1: mis_builder's (nested) menus are hidden
+        hidden = self.Menu.sudo()._ncollection_blocked_menu_ids()
+        menu_md = self.env["ir.model.data"].sudo().search(
+            [("model", "=", "ir.ui.menu"), ("module", "=", "mis_builder")], limit=1)
+        self.assertTrue(menu_md, "mis_builder owns at least one menu")
+        self.assertIn(menu_md.res_id, hidden)
+        # re-licensing clears the gate (no permanent block)
+        self._set_plan("account,mis_builder")
+        self.assertNotIn(
+            "mis", self.Menu.sudo()._ncollection_blocked_namespaces_cached())
+
+    def test_shared_infra_namespace_is_not_overblocked(self):
+        """#240 over-block guard: a menu-nested module ALSO defines models in
+        SHARED namespaces (mis_builder/account_financial_report both define
+        `report.*` PDF models). Blocking `report` would deny every module's PDF
+        rendering (fail-closed). Only namespaces EXCLUSIVELY owned by blocked
+        modules are gated."""
+        if "mis.report" not in self.env:
+            self.skipTest("mis_builder not installed in this run")
+        self._set_plan("account")  # mis_builder blocked
+        blocked = self.Menu.sudo()._ncollection_blocked_namespaces_cached()
+        self.assertIn("mis", blocked)        # exclusive to mis_builder -> gated
+        self.assertNotIn("report", blocked)  # shared PDF infra -> NEVER gated
+
+    def test_enterprise_wrapper_module_does_not_block_its_dependency(self):
+        """#240 regression: the Enterprise plan licenses mis_builder via the
+        WRAPPER `ncollection_mis_templates` (the literal in the plan), not
+        `mis_builder` itself. The dependency closure must keep mis_builder
+        licensed — else EVERY Enterprise tenant would lose MIS reporting."""
+        if "mis.report" not in self.env:
+            self.skipTest("mis_builder not installed in this run")
+        # the real Enterprise allowed_module_names value (wrapper, not mis_builder)
+        self._set_plan("account,account_financial_report,ncollection_mis_templates")
+        blocked = self.Menu.sudo()._ncollection_blocked_module_names()
+        self.assertNotIn("mis_builder", blocked)  # licensed via the wrapper's deps
+        self.assertNotIn("mis", self.Menu.sudo()._ncollection_blocked_namespaces_cached())
+
+    def test_downgrade_gates_afr_model_in_shared_namespace(self):
+        """#240 (isolation+security HIGH): account_financial_report defines
+        `account.age.report.configuration` in the SHARED `account` namespace, so
+        namespace gating can't touch it (blocking `account` would break core
+        Accounting). Model-level gating denies it on downgrade while leaving core
+        `account.move` licensed."""
+        if "account.age.report.configuration" not in self.env:
+            self.skipTest("account_financial_report not installed in this run")
+        self._set_plan("account")  # account licensed, account_financial_report not
+        blocked_models = self.Menu.sudo()._ncollection_blocked_models_cached()
+        self.assertIn("account.age.report.configuration", blocked_models)
+        self.assertNotIn("account.move", blocked_models)  # core account NOT gated
+        # the AFR model carries base.group_user ACL, so a non-system user passes
+        # core's check and hits OUR license denial:
+        with self.assertRaises(AccessError) as cm:
+            self.env["account.age.report.configuration"].with_user(
+                self.user).check_access("read")
+        self.assertIn("NCollection plan", str(cm.exception))
+
+    def test_derivation_error_fails_open(self):
+        """A crash anywhere in the blocked-set derivation must DISABLE
+        enforcement (fail-open), never brick the tenant with 500s (#240).
+
+        The fail-open path logs CRITICAL *with a traceback* (exc_info) — real
+        diagnostics for a silently-disabled license. assertLogs both proves that
+        log fired AND disables propagation for its duration, so the expected
+        traceback never reaches the shared odoo-test.log; otherwise the CI
+        'no traceback in log' gate would flag our own intentional traceback.
+        """
+        self._set_plan("crm")
+        with patch.object(type(self.Menu), "_ncollection_compute_blocked_access",
+                          side_effect=RuntimeError("boom")):
+            self.env.registry.clear_cache()
+            with self.assertLogs(le._logger, level="CRITICAL"):
+                # first (uncached) call triggers the compute -> raises -> logs;
+                # the empty result is cached, so later calls are silent hits.
+                self.assertEqual(
+                    self.Menu._ncollection_blocked_namespaces_cached(), frozenset())
+            self.assertEqual(self.Menu._ncollection_blocked_models_cached(), frozenset())
+            # enforcement disabled -> a normally-gateable access is NOT denied
+            self.env["res.partner"].with_user(self.user).check_access("read")
+        self.env.registry.clear_cache()  # restore real derivation for later tests
+
+    def test_blocked_module_names_error_fails_open(self):
+        """A crash in _ncollection_blocked_module_names (e.g. the dependency
+        walk) also fails open -> empty set, not a raised 500 (#240).
+
+        assertLogs captures the expected CRITICAL+traceback (see the sibling
+        test) so it stays out of the shared log and the CI gate stays honest.
+        """
+        self._set_plan("crm")
+        with patch.object(type(self.Menu), "_ncollection_expand_dependencies",
+                          side_effect=RuntimeError("boom")):
+            with self.assertLogs(iuim._logger, level="CRITICAL"):
+                self.assertEqual(
+                    self.Menu.sudo()._ncollection_blocked_module_names(), set())
 
     # ---------------- performance budget ----------------
 

@@ -31,6 +31,15 @@ _logger = logging.getLogger(__name__)
 MENU_MODULE_WHITELIST = {'base', 'web', 'mail', 'bus'}
 NCOLLECTION_PREFIX = 'ncollection_'
 
+# Modules whose menus mount UNDER another app's menu (no root menu of their own),
+# so the root-menu-owner candidate derivation below cannot see them (#240). List
+# them explicitly so a downgraded tenant actually loses them via BOTH rings; the
+# blocked/allowed filter still applies, so a plan that DOES license them keeps
+# them. These are the OCA financial-report modules plan-gated by P3-T01 (retired
+# fleet-wide at F2-T07). Add a module here if it nests all its menus under
+# another app AND must be plan-gated.
+MENU_NESTED_GATED_MODULES = {'account_financial_report', 'mis_builder'}
+
 # P1-T09 risk note: _visible_menu_ids is an Odoo-internal method. Pin the
 # exact Odoo 19 signature and refuse to filter if upstream drifts.
 _EXPECTED_PARAMS = ('self', 'debug')
@@ -109,30 +118,61 @@ class IrUiMenu(models.Model):
     def _ncollection_blocked_module_names(self):
         """Module names whose menu trees must be hidden.
 
-        Fail-open: empty set when there is no config or no allowed list.
+        Fail-open: empty set on no config / no allowed list / any error.
         """
-        config = self.env['ncollection.workspace.config'].sudo().get_config()
-        if not config:
-            return set()
-        allowed = set(config.get_allowed_module_list())
-        if not allowed:
+        try:
+            config = self.env['ncollection.workspace.config'].sudo().get_config()
+            if not config:
+                return set()
+            allowed = set(config.get_allowed_module_list())
+            if not allowed:
+                return set()
+            # A plan lists FEATURE modules; a feature that pulls an OCA module in
+            # as a DEPENDENCY licenses that dependency too — e.g. the Enterprise
+            # plan lists `ncollection_mis_templates`, which depends on
+            # `mis_builder`, so `mis_builder` is licensed even though it is not
+            # named literally. Expand `allowed` to its dependency closure so a
+            # dependency is never gated out from under the feature that needs it.
+            allowed = self._ncollection_expand_dependencies(allowed)
+
+            # Candidate modules = owners of root menus' xml-ids PLUS the known
+            # menu-nested modules that own no root menu of their own (#240) — the
+            # filter below still exempts the allowed closure / whitelist / ncollection_*.
+            root_menus = self.sudo().with_context(active_test=False).search(
+                [('parent_id', '=', False)]
+            )
+            data = self.env['ir.model.data'].sudo().search_read(
+                [('model', '=', 'ir.ui.menu'), ('res_id', 'in', root_menus.ids)],
+                ['module'],
+            )
+            candidates = {d['module'] for d in data} | MENU_NESTED_GATED_MODULES
+            return {
+                name for name in candidates
+                if name not in MENU_MODULE_WHITELIST
+                and not name.startswith(NCOLLECTION_PREFIX)
+                and name not in allowed
+            }
+        except Exception:  # pragma: no cover - defensive fail-open
+            _logger.critical(
+                "License blocked-module derivation failed — menu/ORM gating "
+                "DISABLED (fail-open). ncollection_core/models/ir_ui_menu.py.",
+                exc_info=True)
             return set()
 
-        # Candidate modules = owners of root menus' xml-ids.
-        root_menus = self.sudo().with_context(active_test=False).search(
-            [('parent_id', '=', False)]
-        )
-        data = self.env['ir.model.data'].sudo().search_read(
-            [('model', '=', 'ir.ui.menu'), ('res_id', 'in', root_menus.ids)],
-            ['module'],
-        )
-        candidates = {d['module'] for d in data}
-        return {
-            name for name in candidates
-            if name not in MENU_MODULE_WHITELIST
-            and not name.startswith(NCOLLECTION_PREFIX)
-            and name not in allowed
-        }
+    @api.model
+    def _ncollection_expand_dependencies(self, module_names):
+        """Transitive dependency closure of ``module_names`` via
+        ir.module.module — licensing a wrapper module licenses everything it
+        depends on (so an OCA dependency is not gated out from under it)."""
+        Module = self.env['ir.module.module'].sudo()
+        result = set(module_names)
+        frontier = set(module_names)
+        while frontier:
+            deps = set(Module.search(
+                [('name', 'in', list(frontier))]).mapped('dependencies_id.name'))
+            frontier = deps - result
+            result |= frontier
+        return result
 
     @api.model
     def _ncollection_blocked_menu_ids(self, blocked_modules=None):
@@ -148,21 +188,23 @@ class IrUiMenu(models.Model):
         if not blocked_modules:
             return set()
 
-        root_menus = self.sudo().with_context(active_test=False).search(
-            [('parent_id', '=', False)]
-        )
+        # Menus OWNED by a blocked module — root OR nested (#240). A root-menu
+        # module hides its whole app tree; a menu-nested module (whose menus live
+        # under another app's menu, e.g. account_financial_report under account)
+        # hides only its own items + their descendants, leaving the host app menu
+        # visible. This is why the search is NOT restricted to parent_id=False.
         data = self.env['ir.model.data'].sudo().search_read(
-            [('model', '=', 'ir.ui.menu'), ('res_id', 'in', root_menus.ids),
-             ('module', 'in', list(blocked_modules))],
+            [('model', '=', 'ir.ui.menu'), ('module', 'in', list(blocked_modules))],
             ['res_id'],
         )
-        blocked_roots = self.sudo().browse([d['res_id'] for d in data])
-        if not blocked_roots:
+        owned = self.sudo().with_context(active_test=False).browse(
+            [d['res_id'] for d in data]).exists()
+        if not owned:
             return set()
 
-        prefixes = tuple(root.parent_path for root in blocked_roots if root.parent_path)
+        prefixes = tuple(m.parent_path for m in owned if m.parent_path)
         if not prefixes:
-            return set(blocked_roots.ids)
+            return set(owned.ids)
         all_menus = self.sudo().with_context(active_test=False).search_read(
             [], ['parent_path'],
         )

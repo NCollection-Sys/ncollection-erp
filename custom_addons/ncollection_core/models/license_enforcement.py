@@ -68,17 +68,6 @@ def _make_license_error(model_name):
 class LicenseEnforcementMixin(models.AbstractModel):
     _inherit = 'base'
 
-    @api.model
-    def _ncollection_blocked_namespaces(self):
-        """Frozenset of model-name namespace prefixes to deny.
-
-        Cached on the registry; the cache is cleared whenever
-        ncollection.workspace.config changes (create/write/unlink call
-        env.registry.clear_cache(), P1-T09), so plan changes take effect
-        without a restart. Fail-open: empty set when no config / no list.
-        """
-        return self.env['ir.ui.menu']._ncollection_blocked_namespaces_cached()
-
     def _check_access(self, operation):
         result = super()._check_access(operation)
         if result is not None:
@@ -87,11 +76,16 @@ class LicenseEnforcementMixin(models.AbstractModel):
             return None
         if self.env.su or self.env.user._is_system():
             return None
-        blocked = self._ncollection_blocked_namespaces()
-        if not blocked:
+        Menu = self.env['ir.ui.menu']
+        blocked_ns = Menu._ncollection_blocked_namespaces_cached()
+        blocked_models = Menu._ncollection_blocked_models_cached()
+        if not blocked_ns and not blocked_models:
             return None
-        namespace = self._name.split('.', 1)[0]
-        if namespace in blocked:
+        # Deny by exclusive-namespace (mis.*, trial.*) OR by exact model — the
+        # latter catches a blocked module's models that live in a SHARED
+        # namespace (account_financial_report's `account.age.report.configuration`
+        # under the licensed `account` namespace, #240).
+        if self._name.split('.', 1)[0] in blocked_ns or self._name in blocked_models:
             return self, functools.partial(_make_license_error, self._name)
         return None
 
@@ -104,11 +98,78 @@ class IrUiMenuLicenseCache(models.Model):
 
     @api.model
     @tools.ormcache()
+    def _ncollection_blocked_access_cached(self):
+        """``(blocked_namespaces, blocked_models)`` — the single cached compute
+        (invalidated only on a plan change, not per request). The two accessors
+        below slice it, so the pipeline runs ONCE per cache clear."""
+        return self._ncollection_blocked_access()
+
+    @api.model
     def _ncollection_blocked_namespaces_cached(self):
+        return self._ncollection_blocked_access_cached()[0]
+
+    @api.model
+    def _ncollection_blocked_models_cached(self):
+        return self._ncollection_blocked_access_cached()[1]
+
+    @api.model
+    def _ncollection_blocked_access(self):
+        """``(blocked_namespaces, blocked_models)`` for Ring 2.
+
+        FAIL-OPEN: any error returns empty sets — an unenforced license beats a
+        bricked tenant (the module's governing principle)."""
+        try:
+            return self._ncollection_compute_blocked_access()
+        except Exception:  # pragma: no cover - defensive fail-open
+            _logger.critical(
+                "License blocked-set derivation failed — ORM enforcement DISABLED "
+                "(fail-open). ncollection_core/models/license_enforcement.py.",
+                exc_info=True)
+            return frozenset(), frozenset()
+
+    @api.model
+    def _ncollection_compute_blocked_access(self):
         blocked_modules = self.sudo()._ncollection_blocked_module_names()
+        if not blocked_modules:
+            return frozenset(), frozenset()
+        # One scan of every DEFINED model → its namespace + exact name, keyed by
+        # owning module(s). ir.model rows are ~thousands; amortised by ormcache.
+        rows = self.env['ir.model.data'].sudo().search_read(
+            [('model', '=', 'ir.model')], ['module', 'res_id'])
+        model_name = {
+            m.id: m.model for m in self.env['ir.model'].sudo().browse(
+                [r['res_id'] for r in rows]).exists()}
+        ns_owners, model_owners = {}, {}
+        for r in rows:
+            name = model_name.get(r['res_id'])
+            if not name:
+                continue
+            ns_owners.setdefault(name.split('.', 1)[0], set()).add(r['module'])
+            model_owners.setdefault(name, set()).add(r['module'])
+
+        def blockable(token):
+            return token not in NEVER_BLOCKED_NAMESPACES and not token.startswith('ncollection')
+
         namespaces = set()
+        # (1) module-name prefix — original derivation (crm -> crm.lead; also
+        #     drives the synthetic-module tests).
         for name in blocked_modules:
-            ns = name.split('.', 1)[0]
-            if ns not in NEVER_BLOCKED_NAMESPACES and not ns.startswith('ncollection'):
+            namespaces.add(name.split('.', 1)[0])
+        # (2) namespaces EXCLUSIVELY owned by blocked modules (mis, trial). A
+        #     shared namespace (`report.*`, defined by dozens of modules) is NOT
+        #     added, so licensed features aren't denied (fail-closed).
+        for ns, mods in ns_owners.items():
+            if mods <= blocked_modules:
                 namespaces.add(ns)
-        return frozenset(namespaces)
+        namespaces = frozenset(ns for ns in namespaces if blockable(ns))
+        # (3) exact models EXCLUSIVELY owned by blocked modules whose namespace is
+        #     NOT already namespace-blocked — the shared-namespace models, e.g.
+        #     account_financial_report's `account.age.report.configuration` under
+        #     the licensed `account` namespace (#240). Exact ownership → no
+        #     over-block: `account.move` (owned by `account`) is never gated.
+        blocked_model_names = frozenset(
+            name for name, mods in model_owners.items()
+            if mods <= blocked_modules
+            and name.split('.', 1)[0] not in namespaces
+            and blockable(name.split('.', 1)[0]))
+        return namespaces, blocked_model_names
