@@ -132,6 +132,26 @@ class NCollectionAggregationEngine(models.AbstractModel):
         domain = spec.get('domain')
         if domain is not None and not isinstance(domain, (list, tuple)):
             return 'spec %r "domain" is not a list' % key
+
+        # `order` is validated here rather than left to _read_group, because
+        # _read_group raises ValueError for a bad term and the fail-open handler
+        # below would turn that developer error into a silent empty tile. Found
+        # exactly that way: the benchmark's own 'price_total desc' (missing the
+        # ':sum') dropped a whole spec and reported only "SKIP".
+        order = spec.get('order')
+        if order is not None:
+            if not isinstance(order, str):
+                return 'spec %r "order" is not a string' % key
+            sortable = set(aggregates) | set(groupby)
+            for term in order.split(','):
+                field = term.strip().split(' ')[0]
+                if field and field not in sortable:
+                    return (
+                        'spec %r orders by %r, which is neither one of its '
+                        'aggregates %r nor one of its groupby terms %r '
+                        '(an aggregate needs its suffix, e.g. "amount:sum desc")'
+                        % (key, field, list(aggregates), list(groupby))
+                    )
         return None
 
     # ------------------------------------------------------------------

@@ -57,6 +57,32 @@ class TestAggregationEngine(TransactionCase):
             "domain": [], "aggregates": ["__count"],
         }))
 
+    def test_bad_order_term_is_rejected_at_validation(self):
+        """A malformed `order` must fail LOUDLY at validation.
+
+        Regression: `_read_group` raises ValueError for an order term missing
+        its aggregate suffix ('amount desc' instead of 'amount:sum desc'), and
+        the fail-open handler swallowed it — the caller got an empty tile and
+        the benchmark reported a passing budget for a query that never ran.
+        Validation now names the mistake instead.
+        """
+        error = self.Engine._validate_spec({
+            "key": "top", "model": "res.partner",
+            "groupby": ["parent_id"], "aggregates": ["id:count"],
+            "order": "id desc",
+        })
+        self.assertIsNotNone(error, "bad order term must be rejected")
+        self.assertIn("orders by", error)
+
+    def test_valid_order_term_passes_validation(self):
+        for order in ("id:count desc", "parent_id", "id:count desc, parent_id"):
+            with self.subTest(order=order):
+                self.assertIsNone(self.Engine._validate_spec({
+                    "key": "top", "model": "res.partner",
+                    "groupby": ["parent_id"], "aggregates": ["id:count"],
+                    "order": order,
+                }))
+
     # -- soft dependencies --------------------------------------------------
 
     def test_absent_model_is_dropped(self):

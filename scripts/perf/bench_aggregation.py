@@ -7,9 +7,13 @@ Run inside an Odoo shell against a seeded ``agg*`` database:
         --db_user=odoo --db_password=odoo --no-http \\
         < scripts/perf/bench_aggregation.py
 
-Emits a table to stdout and writes ``scripts/perf/results/aggregation.json`` so
-a regression is a diff, not a memory. The budget is
-ARCHITECTURE_DATA_PLATFORM line 267: dashboard endpoints < 500ms.
+Emits a table plus a JSON block on stdout; ``run_aggregation_bench.sh`` captures
+it into ``scripts/perf/results/aggregation.json`` so a regression is a diff, not
+a memory. The budget is ARCHITECTURE_DATA_PLATFORM line 267: dashboard endpoints
+< 500ms.
+
+A spec that gets DROPPED (absent model, unlicensed, or malformed) fails the run.
+It must never be possible to report a passing budget for a query that never ran.
 
 **What this measures and what it does not.** Every number is single-process,
 cold vs warm cache, on the dev box. It answers "is the aggregation path within
@@ -74,7 +78,7 @@ def _specs():
             'domain': [],
             'groupby': ['order_partner_id'],
             'aggregates': ['price_total:sum'],
-            'order': 'price_total desc',
+            'order': 'price_total:sum desc',
             'limit': 10,
         },
         {
@@ -116,9 +120,19 @@ def run(env):
             elapsed, result = _time_call(engine, spec, use_cache=False)
             cold.append(elapsed)
         if result is None:
+            # A dropped spec FAILS the run. It used to leave all_pass True,
+            # so the harness once reported "ALL WITHIN BUDGET" while one of
+            # the five shapes had never executed (a bad `order` term silently
+            # dropped it). A benchmark that passes without measuring is worse
+            # than no benchmark.
+            reason = engine._validate_spec(spec) or (
+                'model not installed/licensed, or the read failed — see the '
+                'server log for the dropped-spec traceback')
             print('%-24s %12s %12s %10s %8s'
-                  % (spec['key'], 'n/a', 'n/a', 'n/a', 'SKIP'))
-            results[spec['key']] = {'skipped': True}
+                  % (spec['key'], 'n/a', 'n/a', 'n/a', 'DROPPED'))
+            print('   ^ %s' % reason)
+            results[spec['key']] = {'dropped': True, 'reason': reason}
+            all_pass = False
             continue
 
         # Warm: first call populates, the rest must hit.
