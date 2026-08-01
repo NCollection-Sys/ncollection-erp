@@ -238,13 +238,21 @@ class NCollectionKpi(models.Model):
         directly in a domain. It is group-gated behind ``hr.group_hr_user``,
         so a user without HR rights gets None here rather than a wrong number.
         """
-        departures = self._single({
-            'key': 'kpi:turnover_departures',
-            'model': 'hr.employee',
-            'domain': [('departure_date', '>=', start),
-                       ('departure_date', '<', end)],
-            'aggregates': ['__count'],
-        })
+        # active_test=False is REQUIRED here, not just for the headcount below.
+        # Odoo archives an employee when they leave, so the default active-only
+        # filter excludes every departure — this query would find nothing and
+        # the KPI would report 0.0 turnover forever, on every tenant, as a
+        # confident number. Caught by test_turnover_matches_a_hand_calculated_roster;
+        # the earlier tautological version of that test agreed with the bug.
+        departures = self._single_ctx(
+            {'active_test': False},
+            {
+                'key': 'kpi:turnover_departures',
+                'model': 'hr.employee',
+                'domain': [('departure_date', '>=', start),
+                           ('departure_date', '<', end)],
+                'aggregates': ['__count'],
+            })
         if departures is None:
             return None
 

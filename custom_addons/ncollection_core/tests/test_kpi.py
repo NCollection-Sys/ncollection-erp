@@ -220,87 +220,258 @@ class TestAverageDealSize(TransactionCase):
 
 @tagged("post_install", "-at_install")
 class TestEmployeeTurnover(TransactionCase):
-    """Hand-calculated fixtures. Skips where `hr` is not installed."""
+    """Real records, literal expected values.
+
+    An earlier version of this class was TAUTOLOGICAL: it built `expected` by
+    calling `_headcount_at` — the very helper under test — so a wrong domain
+    would have agreed with itself and passed. It proved only that a division
+    works. These tests build a roster with known dates and assert the number a
+    person would compute on paper.
+    """
 
     def setUp(self):
         super().setUp()
         if "hr.employee" not in self.env:
             self.skipTest("hr is not installed on this database")
         self.kpi = self.env.ref("ncollection_core.kpi_employee_turnover")
+        # Installing `hr` creates an employee for the admin user, and its
+        # create_date lands inside these windows — which silently shifted the
+        # denominator and made the first run of these tests report 1/4 where
+        # 1/3.5 was expected.
+        #
+        # Rather than DELETE those rows (an earlier attempt did, and wrecked the
+        # test database badly enough to uninstall every module), push their hire
+        # date past every window used here. `create_date < moment` then excludes
+        # them from any headcount, and with no departure_date they contribute no
+        # departures either. Non-destructive, and rolled back with the test.
+        existing = self.env["hr.employee"].with_context(
+            active_test=False).search([])
+        if existing:
+            self.env.cr.execute(
+                "UPDATE hr_employee SET create_date = %s WHERE id IN %s",
+                ("2099-01-01", tuple(existing.ids)))
+            existing.invalidate_recordset(["create_date"])
 
-    def test_turnover_is_departures_over_average_headcount(self):
-        """Defined as: departures / ((headcount_start + headcount_end) / 2) * 100.
+    def _employee(self, name, hired, departed=None):  # noqa: D401
+        """An employee hired on a date, optionally departed on another.
 
-        The fixture is asserted against the formula rather than a literal, so
-        the test still describes the KPI if the seed data changes.
+        `create_date` is an auto-set magic column, so the hire signal is
+        backdated with SQL — the same technique the auth-log retention tests
+        use, and the only way to set it.
         """
-        start, end = date(2026, 1, 1), date(2027, 1, 1)
-        departures = self.kpi._single({
-            "key": "probe:departures", "model": "hr.employee",
-            "domain": [("departure_date", ">=", start),
-                       ("departure_date", "<", end)],
-            "aggregates": ["__count"],
-        })
-        if departures is None:
-            self.skipTest("hr.employee not readable for this user")
-        headcount_start = self.kpi._headcount_at(start)
-        headcount_end = self.kpi._headcount_at(end)
-        average = (headcount_start + headcount_end) / 2.0
+        employee = self.env["hr.employee"].create({"name": name})
+        if departed:
+            employee.departure_date = departed
+            employee.active = False
+        self.env.cr.execute(
+            "UPDATE hr_employee SET create_date = %s WHERE id = %s",
+            (hired, employee.id))
+        employee.invalidate_recordset(["create_date"])
+        return employee
 
-        value = self.kpi._compute_employee_turnover(start, end)
-        expected = 0.0 if not average else (departures[0] or 0) / average * 100.0
-        self.assertAlmostEqual(value, expected, places=6)
+    def _turnover(self):
+        return self.kpi._compute_employee_turnover(
+            date(2026, 1, 1), date(2027, 1, 1))
+
+    def test_turnover_matches_a_hand_calculated_roster(self):
+        """Four hired in 2025, one leaves in 2026.
+
+            headcount(2026-01-01) = 4   (all hired, none gone)
+            headcount(2027-01-01) = 3   (one departed 2026-03-15)
+            average headcount     = (4 + 3) / 2 = 3.5
+            departures in 2026    = 1
+            turnover              = 1 / 3.5 * 100 = 28.571...%
+        """
+        for name in ("Ada", "Grace", "Katherine"):
+            self._employee(name, hired="2025-06-01")
+        self._employee("Departed One", hired="2025-06-01", departed="2026-03-15")
+
+        self.assertAlmostEqual(self._turnover(), 1 / 3.5 * 100, places=6)
+
+    def test_a_hire_after_the_window_does_not_inflate_headcount(self):
+        """Someone hired in 2027 was not staff during 2026.
+
+            headcount(2026-01-01) = 2, headcount(2027-01-01) = 1
+            average = 1.5, departures = 1  ->  1 / 1.5 * 100 = 66.67%
+        The 2027 hire must not appear in either headcount.
+        """
+        self._employee("Stayer", hired="2025-01-01")
+        self._employee("Leaver", hired="2025-01-01", departed="2026-07-01")
+        self._employee("Future Hire", hired="2027-06-01")
+
+        self.assertAlmostEqual(self._turnover(), 1 / 1.5 * 100, places=6)
+
+    def test_a_departure_outside_the_window_is_not_counted(self):
+        """Leaving in 2025 is not a 2026 departure.
+
+            headcount(2026-01-01) = 1 (the leaver was already gone)
+            headcount(2027-01-01) = 1
+            departures in 2026 = 0  ->  0%
+        """
+        self._employee("Stayer", hired="2024-01-01")
+        self._employee("Old Leaver", hired="2024-01-01", departed="2025-05-05")
+
+        self.assertAlmostEqual(self._turnover(), 0.0, places=6)
+
+    def test_departed_employees_still_count_toward_headcount(self):
+        """Odoo archives an employee on departure.
+
+        Without `active_test=False` the archived leaver would vanish from
+        headcount(2026-01-01), making the denominator 1 instead of 2 and
+        DOUBLING the reported turnover. This test is the guard on that.
+
+            headcount(2026-01-01) = 2 (leaver still employed on 1 Jan)
+            headcount(2027-01-01) = 1
+            average = 1.5, departures = 1  ->  66.67%, not 100%
+        """
+        self._employee("Stayer", hired="2025-01-01")
+        self._employee("Leaver", hired="2025-01-01", departed="2026-06-30")
+
+        value = self._turnover()
+        self.assertAlmostEqual(value, 1 / 1.5 * 100, places=6)
+        self.assertNotAlmostEqual(
+            value, 100.0, places=6,
+            msg="archived leaver was excluded from headcount")
+
+    def test_bulk_imported_roster_shares_a_create_date(self):
+        """The documented weak spot, pinned so it cannot regress silently.
+
+        `create_date` stands in for a hire date. A tenant migrating its roster
+        stamps every employee with import day, so any window that STARTS before
+        the import sees a headcount of 0. The KPI then reports 0.0 rather than a
+        confidently wrong percentage — that is the behaviour being locked in.
+        """
+        self._employee("Imported A", hired="2026-09-01")
+        self._employee("Imported B", hired="2026-09-01", departed="2026-10-01")
+
+        value = self.kpi._compute_employee_turnover(
+            date(2026, 1, 1), date(2026, 6, 1))
+        self.assertEqual(
+            value, 0.0,
+            "a window entirely before the import must yield 0, not a guess")
 
     def test_zero_headcount_is_zero_not_a_division_error(self):
-        """An empty company must not raise; the window predates any hire."""
-        value = self.kpi._compute_employee_turnover(
-            date(1990, 1, 1), date(1991, 1, 1))
-        self.assertEqual(value, 0.0)
+        self.assertEqual(
+            self.kpi._compute_employee_turnover(
+                date(1990, 1, 1), date(1991, 1, 1)),
+            0.0)
 
 
 @tagged("post_install", "-at_install")
 class TestInventoryTurnover(TransactionCase):
-    """Hand-calculated fixtures. Skips where `stock` is not installed."""
+    """Real stock records, literal expected values.
+
+    Also previously tautological — it re-ran the implementation's own domains
+    to build `expected`. Now it creates known quantities and asserts the ratio
+    a person would compute.
+    """
 
     def setUp(self):
         super().setUp()
         if "stock.quant" not in self.env:
             self.skipTest("stock is not installed on this database")
         self.kpi = self.env.ref("ncollection_core.kpi_inventory_turnover")
+        self.product = self.env["product.product"].create({
+            "name": "KPI turnover widget",
+            "is_storable": True,
+        })
+        self.stock_loc = self.env.ref("stock.stock_location_stock")
+        self.customer_loc = self.env.ref("stock.stock_location_customers")
+        # Any pre-existing internal stock would land in the denominator, since
+        # the KPI sums on-hand across ALL internal locations. Zero it rather
+        # than unlink it — quants are referenced elsewhere and deleting them is
+        # a heavier hammer than a fixture needs.
+        self.env["stock.quant"].search(
+            [("location_id.usage", "=", "internal")]).quantity = 0.0
 
-    def test_turnover_is_shipped_over_on_hand_by_quantity(self):
-        """QUANTITY-based, not COGS-based.
+    def _on_hand(self, quantity):
+        """SET on-hand to an exact figure. Call AFTER creating moves.
 
-        The textbook ratio uses COGS, which is a financial figure owned by
-        ncollection_account_analytics (#120). The 2026-07-19 split kept this
-        KPI operational, so it must compute without an accounting model.
+        A `state='done'` move decrements the source quant, so seeding on-hand
+        first and shipping afterwards left the denominator at 100 - 999 and the
+        KPI returned a NEGATIVE ratio on the first run. Forcing the quant last
+        makes the denominator exactly what the test claims it is.
         """
-        start, end = date(2026, 1, 1), date(2026, 4, 1)
-        shipped = self.kpi._single({
-            "key": "probe:shipped", "model": "stock.move",
-            "domain": [("state", "=", "done"),
-                       ("location_dest_id.usage", "=", "customer"),
-                       ("date", ">=", start), ("date", "<", end)],
-            "aggregates": ["quantity:sum"],
-        })
-        on_hand = self.kpi._single({
-            "key": "probe:on_hand", "model": "stock.quant",
-            "domain": [("location_id.usage", "=", "internal")],
-            "aggregates": ["quantity:sum"],
-        })
-        if shipped is None or on_hand is None:
-            self.skipTest("stock models not readable for this user")
+        # Zero every internal quant first. The KPI sums on-hand across ALL
+        # internal locations, so a move that lands stock in another internal
+        # bay (an internal transfer) would otherwise inflate the denominator —
+        # which is exactly how test_internal_transfers_are_not_shipments first
+        # read 10/600 instead of 10/100.
+        self.env["stock.quant"].search(
+            [("location_id.usage", "=", "internal")]).quantity = 0.0
+        quant = self.env["stock.quant"].search([
+            ("product_id", "=", self.product.id),
+            ("location_id", "=", self.stock_loc.id),
+        ], limit=1)
+        if quant:
+            quant.quantity = quantity
+        else:
+            self.env["stock.quant"].create({
+                "product_id": self.product.id,
+                "location_id": self.stock_loc.id,
+                "quantity": quantity,
+            })
 
-        value = self.kpi._compute_inventory_turnover(start, end)
-        available = on_hand[0] or 0.0
-        expected = 0.0 if not available else (shipped[0] or 0.0) / available
-        self.assertAlmostEqual(value, expected, places=6)
+    def _shipped(self, quantity, when):
+        """A completed outbound move of a known quantity on a known date."""
+        move = self.env["stock.move"].create({
+            "product_id": self.product.id,
+            "product_uom_qty": quantity,
+            "quantity": quantity,
+            "location_id": self.stock_loc.id,
+            "location_dest_id": self.customer_loc.id,
+            "state": "done",
+        })
+        self.env.cr.execute(
+            "UPDATE stock_move SET date = %s WHERE id = %s", (when, move.id))
+        move.invalidate_recordset(["date"])
+        return move
+
+    def _turnover(self):
+        return self.kpi._compute_inventory_turnover(
+            date(2026, 1, 1), date(2026, 4, 1))
+
+    def test_turnover_matches_hand_calculated_quantities(self):
+        """Shipped 30 + 20 = 50 units against 200 on hand -> 0.25 turns.
+
+        Quantity-based, never COGS — the financial variant belongs to #120.
+        """
+        self._shipped(30.0, "2026-01-15 10:00:00")
+        self._shipped(20.0, "2026-03-20 10:00:00")
+        self._on_hand(200.0)
+
+        self.assertAlmostEqual(self._turnover(), (30.0 + 20.0) / 200.0, places=6)
+
+    def test_moves_outside_the_window_are_excluded(self):
+        """1 April belongs to the next quarter — the window is half-open."""
+        self._shipped(10.0, "2026-02-01 10:00:00")
+        self._shipped(999.0, "2026-04-01 00:00:00")
+        self._on_hand(100.0)
+
+        self.assertAlmostEqual(self._turnover(), 10.0 / 100.0, places=6)
+
+    def test_internal_transfers_are_not_shipments(self):
+        """Only moves whose destination is a CUSTOMER count as shipped.
+
+        Moving stock between two internal locations is not turnover; counting
+        it would let warehouse reorganisation inflate the number.
+        """
+        self._shipped(10.0, "2026-02-01 10:00:00")
+        internal = self.env["stock.location"].create({
+            "name": "KPI probe bay", "usage": "internal",
+            "location_id": self.stock_loc.id,
+        })
+        self.env["stock.move"].create({
+            "product_id": self.product.id,
+            "product_uom_qty": 500.0, "quantity": 500.0,
+            "location_id": self.stock_loc.id,
+            "location_dest_id": internal.id,
+            "state": "done",
+        })
+        self._on_hand(100.0)
+
+        self.assertAlmostEqual(self._turnover(), 10.0 / 100.0, places=6)
 
     def test_no_stock_on_hand_is_zero_not_a_division_error(self):
-        """Guarding the denominator: an empty warehouse must not raise."""
-        self.patch(type(self.kpi), "_single",
-                   lambda self, spec: (0.0,))
-        self.assertEqual(
-            self.kpi._compute_inventory_turnover(
-                date(2026, 1, 1), date(2026, 4, 1)),
-            0.0)
+        self.patch(type(self.kpi), "_single", lambda self, spec: (0.0,))
+        self.assertEqual(self._turnover(), 0.0)

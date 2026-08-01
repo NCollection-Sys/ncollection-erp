@@ -13,6 +13,7 @@ a cross-user data leak inside a tenant.
 from odoo.tests import TransactionCase, tagged
 
 from odoo.addons.ncollection_core.models.aggregation import cache as agg_cache
+from odoo.addons.ncollection_core.models.aggregation import version as agg_version
 from odoo.addons.ncollection_core.models.aggregation.version import (
     AGGREGATION_SOURCE_MODELS,
 )
@@ -244,6 +245,49 @@ class TestAggregationCache(TransactionCase):
             ("MUTATED", 999), second["rows"],
             "caller mutation leaked into the cached entry",
         )
+
+    # -- rollback safety (#55) ----------------------------------------------
+
+    def test_a_write_advances_the_process_counter(self):
+        """The process counter exists because the DB one is transactional."""
+        before = agg_version._process_versions.get("res.partner", 0)
+        self.env["res.partner"].create({"name": "process counter probe"})
+        self.assertGreater(
+            agg_version._process_versions.get("res.partner", 0), before,
+            "a write to a tracked model must advance the process counter")
+
+    def test_a_write_changes_the_cache_key_within_the_snapshot_ttl(self):
+        """The regression test for the bug #55 surfaced.
+
+        The DB counter is rolled back by TransactionCase, so across tests the
+        key could repeat while the data differed — one test was served its
+        predecessor's numbers. Equally important, the version snapshot is TTL'd:
+        the FIRST attempt at the fix merged the process counter inside that
+        cached read, so a write stayed invisible for up to a second and the bug
+        survived. This test deliberately does NOT clear _version_snapshots, so
+        it fails if the merge ever moves back behind the TTL.
+        """
+        spec = self._spec()
+        key_before = agg_cache.make_key(
+            self.env, spec, agg_cache.versions_for(self.env))
+
+        self.env["res.partner"].create({"name": "key rotation probe"})
+
+        key_after = agg_cache.make_key(
+            self.env, spec, agg_cache.versions_for(self.env))
+        self.assertNotEqual(
+            key_before, key_after,
+            "a write must change the cache key immediately, not after the "
+            "version snapshot's TTL expires")
+
+    def test_versions_carry_both_halves(self):
+        """Each entry is (db, process) — neither half subsumes the other."""
+        self.env["res.partner"].create({"name": "versions shape probe"})
+        versions = agg_cache.versions_for(self.env)
+        self.assertIn("res.partner", versions)
+        value = versions["res.partner"]
+        self.assertIsInstance(value, tuple)
+        self.assertEqual(len(value), 2, "expected (db_version, process_version)")
 
     # -- bounded size -------------------------------------------------------
 

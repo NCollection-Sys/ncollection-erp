@@ -124,13 +124,13 @@ class NCollectionAggregationVersion(models.Model):
             _process_versions[model_name] = next(_process_seq)
 
     @api.model
-    def _process_version(self, model_name):
-        with _process_lock:
-            return _process_versions.get(model_name, 0)
-
-    @api.model
     def _merge_process_versions(self, db_versions):
         """Combine the DB counter with the process one, per model.
+
+        Lock ordering note: ``cache.py``'s ``_lock`` may be held while calling
+        this, which then takes ``_process_lock``. That direction is the only one
+        used anywhere — nothing in this module ever reaches back into the cache
+        module's lock — so there is no cycle. Keep it that way.
 
         The value becomes a ``(db, process)`` pair rather than an int. Both
         halves matter and neither subsumes the other: the DB half invalidates
