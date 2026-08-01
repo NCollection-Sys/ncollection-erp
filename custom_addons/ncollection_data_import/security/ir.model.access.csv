@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_data_import_onboarding,ncollection.data.import.onboarding,model_ncollection_data_import_onboarding,base.group_system,1,1,1,1
