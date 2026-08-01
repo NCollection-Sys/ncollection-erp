@@ -79,6 +79,78 @@ class TestAggregationCache(TransactionCase):
             "across users inside a tenant",
         )
 
+    def test_cache_is_keyed_by_company(self):
+        """Switching active company must change the key (CRITICAL regression).
+
+        Multi-company security is row-level via ir.rule domains reading
+        `allowed_company_ids`, so the SAME uid legitimately sees different
+        numbers per active company. The first version of make_key omitted this
+        and would have served Company A's receivables on Company B's dashboard
+        for up to the 300s TTL — silently, no exception, no log.
+        """
+        company_a = self.env.company
+        company_b = self.env["res.company"].create({"name": "P4T01 Company B"})
+        versions = agg_cache.versions_for(self.env)
+
+        key_a = agg_cache.make_key(
+            self.env(context={"allowed_company_ids": [company_a.id]}),
+            self._spec(), versions)
+        key_b = agg_cache.make_key(
+            self.env(context={"allowed_company_ids": [company_b.id]}),
+            self._spec(), versions)
+        key_both = agg_cache.make_key(
+            self.env(context={
+                "allowed_company_ids": [company_a.id, company_b.id]}),
+            self._spec(), versions)
+
+        self.assertNotEqual(key_a, key_b, "active company must change the key")
+        self.assertNotEqual(
+            key_a, key_both,
+            "a multi-company selection must not collide with a single company")
+
+    def test_cache_key_ignores_company_ordering(self):
+        """[A, B] and [B, A] are the same scope — must not halve the hit rate."""
+        company_a = self.env.company
+        company_b = self.env["res.company"].create({"name": "P4T01 Company C"})
+        versions = agg_cache.versions_for(self.env)
+        ordered = agg_cache.make_key(
+            self.env(context={
+                "allowed_company_ids": [company_a.id, company_b.id]}),
+            self._spec(), versions)
+        reversed_ = agg_cache.make_key(
+            self.env(context={
+                "allowed_company_ids": [company_b.id, company_a.id]}),
+            self._spec(), versions)
+        self.assertEqual(ordered, reversed_)
+
+    def test_cache_is_keyed_by_result_changing_context(self):
+        """lang / tz / active_test all change _read_group's answer."""
+        versions = agg_cache.versions_for(self.env)
+        base = agg_cache.make_key(self.env, self._spec(), versions)
+        for key, value in (
+            ("lang", "ar_001"),
+            ("tz", "Asia/Dubai"),
+            ("active_test", False),
+        ):
+            with self.subTest(context_key=key):
+                self.assertNotEqual(
+                    base,
+                    agg_cache.make_key(
+                        self.env(context=dict(self.env.context, **{key: value})),
+                        self._spec(), versions),
+                    "%s changes the query result but not the key" % key,
+                )
+
+    def test_cache_key_ignores_per_request_context_noise(self):
+        """Irrelevant context keys must not shred the hit rate."""
+        versions = agg_cache.versions_for(self.env)
+        base = agg_cache.make_key(self.env, self._spec(), versions)
+        noisy = agg_cache.make_key(
+            self.env(context=dict(self.env.context, params={"action": 42},
+                                  bin_size=True)),
+            self._spec(), versions)
+        self.assertEqual(base, noisy)
+
     def test_cache_is_keyed_by_database(self):
         """Entries must never be reachable from another tenant's database."""
         versions = agg_cache.versions_for(self.env)

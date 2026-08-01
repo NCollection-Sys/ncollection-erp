@@ -12,14 +12,20 @@ derived from ``sale.order`` becomes unreachable in every worker at once. This is
 what makes a per-process dict safe across workers: entries are never *wrong*,
 only ever *unreachable*, and unreachable entries age out of the LRU.
 
-**The security-critical part of the key.** ``uid`` is in the cache key. Odoo
-record rules and P1-T10 Ring 2 both make an aggregate user-dependent: the same
-spec legitimately yields different numbers for different users, and serving one
-user's figure to another is a data leak, not a stale-cache annoyance. Keying by
-the user's *group set* would give a better hit rate, but record rules can be
-per-user (``user_id = uid`` domains are routine), so groups are not a sufficient
-proxy. Per-uid is the deliberately conservative choice; ``test_cache_is_keyed_by_user``
-locks it in.
+**The security-critical part of the key.** ``uid`` AND a context fingerprint are
+both in the cache key. Odoo record rules and P1-T10 Ring 2 make an aggregate
+user-dependent: the same spec legitimately yields different numbers for
+different users, and serving one user's figure to another is a data leak, not a
+stale-cache annoyance. Keying by the user's *group set* would give a better hit
+rate, but record rules can be per-user (``user_id = uid`` domains are routine),
+so groups are not a sufficient proxy.
+
+``uid`` alone is **not** sufficient either. Multi-company security is row-level
+through ``ir.rule`` domains reading ``allowed_company_ids``, so one user
+switching active company keeps the same uid while their legitimate result
+changes completely — the first version of this file keyed without it and would
+have served Company A's receivables on Company B's dashboard for up to the TTL.
+See ``context_fingerprint``; ``test_cache_is_keyed_by_company`` locks it in.
 
 **Bounded size.** The dict is capped and evicts oldest-first. An aggregation
 cache with no ceiling is a memory leak with extra steps — dashboards generate
@@ -87,18 +93,55 @@ def versions_for(env, ttl=VERSION_TTL):
     return versions
 
 
+def context_fingerprint(env):
+    """The parts of the context that change what ``_read_group`` returns.
+
+    Keying on ``uid`` alone is NOT enough, and the gap is a silent wrong-number
+    bug rather than a stale-data one:
+
+    * ``allowed_company_ids`` — Odoo's multi-company security is row-level via
+      ``ir.rule`` domains like ``[('company_id', 'in', company_ids)]``, where
+      ``company_ids`` comes from ``env.companies`` (itself derived from this
+      context key). A user who belongs to two companies and flips the company
+      switcher keeps the same ``uid``, so without this the SAME key would serve
+      Company A's receivables on Company B's dashboard. Every model in
+      ``AGGREGATION_SOURCE_MODELS`` is company-scoped this way.
+    * ``active_test`` — decides whether archived rows are counted.
+    * ``tz`` — changes bucket boundaries for ``groupby: ['date:month']``.
+    * ``lang`` — changes the ``display_name`` that ``_flatten_cell`` bakes into
+      a cached row.
+
+    Projected explicitly rather than hashing the whole context: the full context
+    carries per-request noise (``params``, ``bin_size``) that would shred the
+    hit rate without affecting the result.
+    """
+    context = env.context
+    companies = context.get('allowed_company_ids')
+    if not companies:
+        # env.company is the single active company when no explicit list is set.
+        companies = [env.company.id] if env.company else []
+    return {
+        'companies': tuple(sorted(companies)),
+        'lang': context.get('lang'),
+        'tz': context.get('tz'),
+        'active_test': context.get('active_test', True),
+    }
+
+
 def make_key(env, spec, versions):
-    """Cache key for ``spec`` as seen by the current user.
+    """Cache key for ``spec`` as seen by the current user, in this context.
 
     Includes, in order: database (never share across tenants), user (record
-    rules and Ring 2 make results user-dependent), the spec itself, and the
-    version of the spec's source model (the invalidation signal).
+    rules and Ring 2 make results user-dependent), superuser flag, the context
+    fingerprint above, the spec itself, and the version of the spec's source
+    model (the invalidation signal).
     """
     model_name = spec.get('model')
     return _digest({
         'db': env.cr.dbname,
         'uid': env.uid,
         'su': bool(env.su),
+        'ctx': context_fingerprint(env),
         'spec': spec,
         'version': versions.get(model_name, 0),
     })
@@ -132,20 +175,20 @@ def put(key, value):
         _cache[key] = (now, value)
 
 
-def clear(db_name=None):
-    """Drop cached entries. Used by tests and by an explicit flush.
+def clear():
+    """Drop every cached entry in THIS process. Used by tests and manual flush.
 
-    ``db_name`` is accepted for symmetry with the version snapshots; entries are
-    keyed by an opaque digest that already includes the database, so a targeted
-    purge would mean tracking key provenance. Clearing everything in this process
-    is correct (never wrong, only colder) and keeps the structure simple.
+    Deliberately takes no ``db_name``: entries are keyed by an opaque digest, so
+    a per-tenant purge would require tracking key provenance. An earlier draft
+    accepted ``db_name`` and ignored it for entries while honouring it for
+    snapshots — a footgun for anyone later building a per-tenant "flush my
+    cache" action on that signature, since it would silently cold every other
+    tenant sharing the worker. Global-only is over-invalidation: never wrong,
+    only colder.
     """
     with _lock:
         _cache.clear()
-        if db_name is None:
-            _version_snapshots.clear()
-        else:
-            _version_snapshots.pop(db_name, None)
+        _version_snapshots.clear()
 
 
 def stats():

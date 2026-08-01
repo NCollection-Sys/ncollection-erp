@@ -105,13 +105,38 @@ performance regression on a security-critical path. Hence a private cache.
 
 **Never call bare `registry.clear_cache()` from aggregation code.**
 
-### The cache key includes `uid`
+### The cache key includes `uid` **and a context fingerprint**
 
 Record rules and Ring 2 both make an aggregate user-dependent, so a shared entry
 would serve one user's figures to another — a data leak inside a tenant, not a
 staleness annoyance. Keying by group set would hit more often, but per-user
 record rules (`user_id = uid` domains are routine) make groups an unsound proxy.
 Locked in by `test_cache_is_keyed_by_user`.
+
+**`uid` alone is not enough.** Multi-company security in Odoo is row-level,
+through `ir.rule` domains like `[('company_id', 'in', company_ids)]` where
+`company_ids` derives from `allowed_company_ids` in the context. One user
+switching active company keeps the same `uid` while their legitimate result
+changes entirely. The first version of this cache omitted company scope and
+would have served Company A's receivables on Company B's dashboard for up to the
+300s TTL — silently. Caught in review before merge.
+
+So the key also folds in `context_fingerprint(env)`:
+
+| Context key | Why it changes the answer |
+|---|---|
+| `allowed_company_ids` | row-level company `ir.rule` filtering |
+| `active_test` | whether archived rows are counted |
+| `tz` | bucket boundaries for `groupby: ['date:month']` |
+| `lang` | translated `display_name` baked into cached rows |
+
+Company ids are sorted, so `[A, B]` and `[B, A]` share an entry. Per-request
+noise (`params`, `bin_size`) is deliberately excluded — hashing the whole context
+would shred the hit rate without affecting correctness.
+
+**If you add a spec whose result depends on some other context key, add that key
+to `context_fingerprint` in the same PR.** Locked in by
+`test_cache_is_keyed_by_company` and `test_cache_is_keyed_by_result_changing_context`.
 
 ### Tracked models
 
