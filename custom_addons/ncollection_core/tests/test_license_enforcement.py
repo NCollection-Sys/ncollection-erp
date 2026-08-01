@@ -15,6 +15,7 @@ from unittest.mock import patch
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
+from odoo.addons.ncollection_core.models import ir_ui_menu as iuim
 from odoo.addons.ncollection_core.models import license_enforcement as le
 
 
@@ -210,12 +211,23 @@ class TestLicenseEnforcement(TransactionCase):
 
     def test_derivation_error_fails_open(self):
         """A crash anywhere in the blocked-set derivation must DISABLE
-        enforcement (fail-open), never brick the tenant with 500s (#240)."""
+        enforcement (fail-open), never brick the tenant with 500s (#240).
+
+        The fail-open path logs CRITICAL *with a traceback* (exc_info) — real
+        diagnostics for a silently-disabled license. assertLogs both proves that
+        log fired AND disables propagation for its duration, so the expected
+        traceback never reaches the shared odoo-test.log; otherwise the CI
+        'no traceback in log' gate would flag our own intentional traceback.
+        """
         self._set_plan("crm")
         with patch.object(type(self.Menu), "_ncollection_compute_blocked_access",
                           side_effect=RuntimeError("boom")):
             self.env.registry.clear_cache()
-            self.assertEqual(self.Menu._ncollection_blocked_namespaces_cached(), frozenset())
+            with self.assertLogs(le._logger, level="CRITICAL"):
+                # first (uncached) call triggers the compute -> raises -> logs;
+                # the empty result is cached, so later calls are silent hits.
+                self.assertEqual(
+                    self.Menu._ncollection_blocked_namespaces_cached(), frozenset())
             self.assertEqual(self.Menu._ncollection_blocked_models_cached(), frozenset())
             # enforcement disabled -> a normally-gateable access is NOT denied
             self.env["res.partner"].with_user(self.user).check_access("read")
@@ -223,11 +235,17 @@ class TestLicenseEnforcement(TransactionCase):
 
     def test_blocked_module_names_error_fails_open(self):
         """A crash in _ncollection_blocked_module_names (e.g. the dependency
-        walk) also fails open -> empty set, not a raised 500 (#240)."""
+        walk) also fails open -> empty set, not a raised 500 (#240).
+
+        assertLogs captures the expected CRITICAL+traceback (see the sibling
+        test) so it stays out of the shared log and the CI gate stays honest.
+        """
         self._set_plan("crm")
         with patch.object(type(self.Menu), "_ncollection_expand_dependencies",
                           side_effect=RuntimeError("boom")):
-            self.assertEqual(self.Menu.sudo()._ncollection_blocked_module_names(), set())
+            with self.assertLogs(iuim._logger, level="CRITICAL"):
+                self.assertEqual(
+                    self.Menu.sudo()._ncollection_blocked_module_names(), set())
 
     # ---------------- performance budget ----------------
 
