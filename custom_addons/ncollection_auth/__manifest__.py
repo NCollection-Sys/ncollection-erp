@@ -16,5 +16,6 @@
     'data': [
         'security/ir.model.access.csv',
         'data/auth_params.xml',
+        'data/auth_cron.xml',
     ],
 }
