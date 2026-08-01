@@ -110,24 +110,31 @@ class TestAggregationEngine(TransactionCase):
     # -- Ring 2 inheritance -------------------------------------------------
 
     def test_unreadable_model_is_dropped(self):
-        """A model raising AccessError on read is dropped (rule 2).
+        """A model the readability probe rejects is dropped (rule 2).
 
-        Simulated by patching the probe rather than by building a whole
-        unlicensed tenant: the contract under test is "AccessError means drop",
-        and P1-T10 owns the question of when AccessError is raised.
+        Simulated by patching the probe rather than building a whole unlicensed
+        tenant: the contract under test is "not readable means drop", and
+        P1-T10 owns the question of when AccessError is raised.
         """
-        engine = self.Engine
-
-        def _deny(model_name):
-            raise AccessError("denied by plan")
-
-        self.patch(type(engine), "_model_available", lambda self, m: True)
-        self.patch(type(engine), "_read_group_uncached",
-                   lambda self, *a, **kw: _deny(a[0]))
-        # _model_readable does its own probe; make that deny too.
-        self.patch(type(engine), "_model_readable", lambda self, m: False)
-        self.assertIsNone(engine.aggregate({
+        self.patch(type(self.Engine), "_model_readable", lambda self, m: False)
+        self.assertIsNone(self.Engine.aggregate({
             "key": "denied", "model": "res.partner",
+            "aggregates": ["__count"],
+        }))
+
+    def test_access_error_during_read_group_is_dropped(self):
+        """Ring 2 can also deny at read_group time, past the cheap probe.
+
+        A separate branch from the one above: `_model_readable` succeeds on a
+        `search([], limit=1)` while a record rule still denies the aggregate
+        itself. Both must drop rather than raise.
+        """
+        def _deny(self, *args, **kwargs):
+            raise AccessError(self.env._('denied by plan'))
+
+        self.patch(type(self.Engine), "_read_group_uncached", _deny)
+        self.assertIsNone(self.Engine.aggregate({
+            "key": "denied_late", "model": "res.partner",
             "aggregates": ["__count"],
         }))
 
