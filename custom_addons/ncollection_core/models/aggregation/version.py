@@ -37,12 +37,32 @@ cached result is bounded by TTL instead of invalidated on write — see
 write-accurate aggregation over it.
 """
 
+import itertools
 import logging
+import threading
 
 from odoo import api, fields, models
 from odoo.tools import sql
 
 _logger = logging.getLogger(__name__)
+
+# Process-local write counter, merged into the cache key alongside the DB one.
+#
+# The DB counter alone is not sufficient, and #55 (the engine's first external
+# consumer) is what exposed it: a counter row is transactional, so a ROLLBACK
+# un-bumps it. Under TransactionCase — which rolls back after every test — the
+# next test issues the same spec, computes the same cache key, and is served the
+# PREVIOUS test's numbers. Two of #55's fixture tests failed exactly that way,
+# each returning its predecessor's answer.
+#
+# This counter never rolls back, so a key can never be reused after a write in
+# this process. Cost is over-invalidation when a transaction aborts (an entry
+# becomes unreachable although its data never changed) — colder, never wrong,
+# which is the correct direction for a cache. The DB counter still carries
+# invalidation ACROSS workers; this one closes the same-process gap.
+_process_versions = {}
+_process_seq = itertools.count(1)
+_process_lock = threading.Lock()
 
 # Source models whose writes invalidate cached aggregations. Scoped to the four
 # domains P4-T01 names (sale, account, stock, hr) plus the cross-domain models
@@ -93,6 +113,39 @@ class NCollectionAggregationVersion(models.Model):
     # ------------------------------------------------------------------
 
     @api.model
+    def _bump_process(self, model_name):
+        """Advance this model's PROCESS-local counter. Never rolls back.
+
+        Deliberately outside the transaction: that is the whole point. See the
+        module header for why the DB counter alone lets a rolled-back test serve
+        its predecessor's cached numbers.
+        """
+        with _process_lock:
+            _process_versions[model_name] = next(_process_seq)
+
+    @api.model
+    def _process_version(self, model_name):
+        with _process_lock:
+            return _process_versions.get(model_name, 0)
+
+    @api.model
+    def _merge_process_versions(self, db_versions):
+        """Combine the DB counter with the process one, per model.
+
+        The value becomes a ``(db, process)`` pair rather than an int. Both
+        halves matter and neither subsumes the other: the DB half invalidates
+        across workers, the process half cannot be undone by a rollback. A
+        model that has only ever been written in this process still gets an
+        entry, which is what makes a test's first write invalidate correctly.
+        """
+        with _process_lock:
+            names = set(db_versions) | set(_process_versions)
+            return {
+                name: (db_versions.get(name, 0), _process_versions.get(name, 0))
+                for name in names
+            }
+
+    @api.model
     def _bump(self, model_name):
         """Increment ``model_name``'s counter. Never raises into a write.
 
@@ -121,6 +174,7 @@ class NCollectionAggregationVersion(models.Model):
         to — reopening the exact hole this is here to close. Neither method
         touches ORM-cached field state, so the flush buys nothing.
         """
+        self._bump_process(model_name)
         try:
             with self.env.cr.savepoint(flush=False):
                 self.env.cr.execute("""
