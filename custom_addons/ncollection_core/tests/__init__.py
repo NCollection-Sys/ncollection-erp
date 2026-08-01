@@ -11,3 +11,4 @@ from . import test_workspace_appearance
 from . import test_subscription_gate
 from . import test_auth_signup
 from . import test_aggregation_engine
+from . import test_aggregation_cache

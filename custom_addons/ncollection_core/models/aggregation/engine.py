@@ -31,14 +31,19 @@ Four rules shape this module:
    number means. Financial specs carry a HANDOFF marker like the P1-T17
    providers do.
 
-The caching layer lands in the next commit; every read here is uncached so the
-correctness of the aggregation path can be tested on its own.
+Caching is two-tier and version-keyed — see ``cache.py`` and ``version.py``. The
+short version: a per-process dict keyed partly by the source model's write
+counter, so a write to ``sale.order`` makes every entry derived from it
+unreachable in every worker at once, without touching the ``default`` ormcache
+group that P1-T10's Ring 2 cache lives in.
 """
 
 import logging
 
 from odoo import api, models
 from odoo.exceptions import AccessError, UserError
+
+from . import cache as agg_cache
 
 _logger = logging.getLogger(__name__)
 
@@ -147,6 +152,10 @@ class NCollectionAggregationEngine(models.AbstractModel):
           ``groupby``    list of groupby specs (default ``[]``)
           ``aggregates`` list like ``['amount_total:sum']`` (default ``[]``)
           ``limit`` / ``offset`` / ``order`` passed through to ``_read_group``
+          ``cache``      bool, set False to force a live read (default True)
+
+        The result carries ``cached`` so a consumer (and the benchmark harness)
+        can tell a hit from a miss without timing it.
         """
         error = self._validate_spec(spec)
         if error:
@@ -158,6 +167,23 @@ class NCollectionAggregationEngine(models.AbstractModel):
             # Not an error: the expected outcome on a tenant whose plan omits
             # this app, or for a user Ring 2 denies.
             return None
+
+        use_cache = spec.get('cache', True)
+        cache_key = None
+        if use_cache:
+            try:
+                versions = agg_cache.versions_for(self.env)
+                cache_key = agg_cache.make_key(self.env, spec, versions)
+                cached = agg_cache.get(cache_key)
+                if cached is not None:
+                    return {'key': spec['key'], 'rows': cached, 'cached': True}
+            except Exception:  # pragma: no cover - defensive fail-open
+                # A broken cache must degrade to a slow answer, never to no
+                # answer. Fall through to the live read with caching disabled.
+                _logger.exception(
+                    'Aggregation cache lookup failed for %r — reading live.',
+                    spec.get('key'))
+                cache_key = None
 
         try:
             rows = self._read_group_uncached(
@@ -179,7 +205,11 @@ class NCollectionAggregationEngine(models.AbstractModel):
                 spec.get('key'), model_name)
             return None
 
-        return {'key': spec['key'], 'rows': rows}
+        if cache_key is not None:
+            # Success-only: a dropped or failed spec never reaches here, so the
+            # cache can never memoise an error into a permanent-looking result.
+            agg_cache.put(cache_key, rows)
+        return {'key': spec['key'], 'rows': rows, 'cached': False}
 
     @api.model
     def aggregate_many(self, specs):
