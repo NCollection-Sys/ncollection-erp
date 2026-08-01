@@ -86,18 +86,36 @@ def _digest(payload):
 
 
 def versions_for(env, ttl=VERSION_TTL):
-    """Version snapshot for this database, re-read at most every ``ttl``."""
+    """Version snapshot for this database.
+
+    Two halves, and only one of them is TTL'd:
+
+    * the DB counters are re-read at most every ``ttl`` — they cost a query, and
+      the window bounds how long another worker's write goes unnoticed here;
+    * the PROCESS counters are merged in **fresh on every call**, because they
+      are an in-memory dict and TTLing them would be all cost and no benefit.
+
+    That distinction is load-bearing, not tidiness. Caching the merged result
+    for a second meant a write in THIS process stayed invisible for up to a
+    second — which under ``TransactionCase`` (many tests inside one second, each
+    rolled back) served one test its predecessor's numbers. #55's fixture tests
+    caught it; the first attempt at this fix merged inside the TTL'd read and
+    did not work for exactly that reason.
+    """
     db_name = env.cr.dbname
     now = time.monotonic()
+    Version = env['ncollection.aggregation.version'].sudo()
+
     with _lock:
         cached = _version_snapshots.get(db_name)
         if cached and (now - cached[0]) < ttl:
-            return cached[1]
+            return Version._merge_process_versions(cached[1])
+
     # Read outside the lock: this touches the DB and must not serialise workers.
-    versions = env['ncollection.aggregation.version'].sudo()._versions()
+    db_versions = Version._versions()
     with _lock:
-        _version_snapshots[db_name] = (now, versions)
-    return versions
+        _version_snapshots[db_name] = (now, db_versions)
+    return Version._merge_process_versions(db_versions)
 
 
 def context_fingerprint(env):

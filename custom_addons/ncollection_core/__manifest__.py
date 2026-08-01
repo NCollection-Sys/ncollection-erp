@@ -20,6 +20,7 @@
         'views/workspace_appearance_views.xml',
         'views/subscription_blocked_templates.xml',
         'views/dashboard_action.xml',
+        'data/kpi_data.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in
     # 'depends': the dashboard reads sale/account/crm through SOFT checks

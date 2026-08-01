@@ -12,3 +12,5 @@ from . import res_users
 from . import dashboard
 # P4-T01 aggregation engine — self-contained subtree, see aggregation/__init__.py
 from . import aggregation
+# P4-T02 operational KPIs — self-contained subtree, see kpi/__init__.py
+from . import kpi

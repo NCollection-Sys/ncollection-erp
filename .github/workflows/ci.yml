@@ -232,6 +232,12 @@ jobs:
       # VM's network namespace (and therefore does reach the published
       # port). CONFIRMED WORKING by the first live run (PR #104).
       #
+      # `hr` is installed even though NO ncollection addon depends on it.
+      # ncollection_core's KPI tests (P4-T02) cover employee turnover, which
+      # needs hr.employee; without hr present those tests call skipTest and
+      # CI reports green having never run them. A skipped test is not a
+      # passing test. sale and stock already arrive transitively via
+      # ncollection_approvals and ncollection_data_import.
       # --test-tags scopes the test run to OUR modules. Without it,
       # --test-enable also runs Odoo core's own suite (base, web, …), and
       # core's CLI self-tests (test_cli) fail inside this container —
@@ -247,7 +253,7 @@ jobs:
             odoo --db_host=localhost --db_user=odoo --db_password=odoo \
                  --addons-path=/mnt/extra-addons,/mnt/oca-addons/account-financial-reporting,/mnt/oca-addons/mis-builder,/mnt/oca-addons/reporting-engine,/mnt/oca-addons/queue,/mnt/oca-addons/server-auth,/mnt/oca-addons/server-tools,/mnt/oca-addons/server-ux,/usr/lib/python3/dist-packages/odoo/addons \
                  -d ci_test \
-                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth,ncollection_account_core,ncollection_account_localization_uae,ncollection_approvals,ncollection_account_reports,ncollection_data_import,account_financial_report \
+                 -i hr,ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth,ncollection_account_core,ncollection_account_localization_uae,ncollection_approvals,ncollection_account_reports,ncollection_data_import,account_financial_report \
                  --test-enable \
                  --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth,/ncollection_account_core,/ncollection_account_localization_uae,/ncollection_approvals,/ncollection_account_reports,/ncollection_data_import \
                  --stop-after-init --log-level=test \
