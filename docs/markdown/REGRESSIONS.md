@@ -376,6 +376,29 @@ local heavy proof, so `make verify-all` before merge is the enforcement point �
 
 ---
 
+## R-016 — `verify_provisioning.sh` left platform fixtures → 2nd consecutive run collided ✅ FIXED (#256)
+
+**Symptom.** Running `make verify-all` (or `make provisioning-verify`) twice back-to-back:
+the first run passed, the second failed with `duplicate key value violates unique constraint
+"ncollection_subscription_plan_code_unique" … (code)=(PROV)`. The cross-suite gate was not
+safely re-runnable, so a red 2nd run was a red herring unrelated to the change under test.
+Surfaced by the `verify-runner` idempotency double-run during PR #255.
+
+**Root cause.** The proof dropped its tenant DBs (`provclient`/`provfail`) but never removed
+the rows it `create()`s in the **platform DB** — the `PROV`/`FAIL` subscription plans, the two
+tenants, and their jobs. The next run's `create({'code': 'PROV'})` collided on the unique
+code. A Rule-12 violation, same class as R-002.
+
+**Guard.** `platform_cleanup()` in `verify_provisioning.sh` ORM-unlinks jobs → tenants → plans
+scoped to `provclient`/`provfail` + `code IN ('PROV','FAIL')`, at startup (self-heals a prior
+aborted run) and end — with `active_test=False` (an archived leftover still collides), a
+`PLATFORM_DB` test-DB guard (it deletes rows, so it refuses a non-test DB), and loud-fail on
+error (Rule 10). Proven: the script and `make verify-all` each ran twice green. The
+verify-runner idempotency double-run (run twice; second = no-op) remains the standing
+detection for this whole class.
+
+---
+
 ## Open items without a guard
 
 | Item | Why no guard yet | Owner |
