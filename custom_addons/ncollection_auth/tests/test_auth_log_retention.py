@@ -17,10 +17,12 @@ possible, and freezing the clock would test the mock rather than the query.
 from datetime import timedelta
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
 from odoo.addons.ncollection_auth.models.auth_log import (
     DEFAULT_RETENTION_DAYS,
+    MIN_RETENTION_DAYS,
     RETENTION_PARAM,
 )
 
@@ -70,13 +72,18 @@ class TestAuthLogRetention(TransactionCase):
         self.assertTrue(fresh.exists(), "today's row must be kept")
 
     def test_a_shorter_window_purges_more(self):
-        """The window is actually read, not hardcoded."""
-        self.Param.set_param(RETENTION_PARAM, 7)
-        recent = self._make_log(age_days=30, login="thirty@ncollection.test")
+        """The window is actually read, not hardcoded at the default.
+
+        Uses 60 days rather than something tighter because MIN_RETENTION_DAYS
+        refuses anything under 30 — a row that would survive the 180-day
+        default must still be purged under a legitimately shorter one.
+        """
+        self.Param.set_param(RETENTION_PARAM, 60)
+        recent = self._make_log(age_days=90, login="ninety@ncollection.test")
         self.Log._gc_auth_log()
         self.assertFalse(
             recent.exists(),
-            "a 30-day-old row must be purged under a 7-day window",
+            "a 90-day-old row must be purged under a 60-day window",
         )
 
     # -- the off switch -----------------------------------------------------
@@ -101,15 +108,55 @@ class TestAuthLogRetention(TransactionCase):
         self.Param.search([("key", "=", RETENTION_PARAM)]).unlink()
         self.assertEqual(self.Log._retention_days(), DEFAULT_RETENTION_DAYS)
 
-    def test_garbage_param_falls_back_to_the_default(self):
-        """Garbage must NOT read as 0.
+    def test_garbage_param_refuses_to_run_and_deletes_nothing(self):
+        """An unparseable value must not be guessed at.
 
-        Treating an unparseable value as zero would disable the purge — a
-        retention policy silently switched off by a typo is the exact failure
-        this ticket exists to prevent.
+        Falling back to the 180-day default was the original behaviour and it
+        was wrong for a DESTRUCTIVE job: an operator typing "3,650" for a
+        ten-year mandate would have had it silently replaced by a much SHORTER
+        window, and the purge would then delete exactly the data they meant to
+        keep. Errors must not cause unintended state change.
         """
         self.Param.set_param(RETENTION_PARAM, "not-a-number")
-        self.assertEqual(self.Log._retention_days(), DEFAULT_RETENTION_DAYS)
+        ancient = self._make_log(age_days=9999, login="garbage@ncollection.test")
+        with self.assertRaises(UserError):
+            self.Log._gc_auth_log()
+        self.assertTrue(ancient.exists(), "nothing may be deleted on bad config")
+
+    def test_float_string_is_refused_not_truncated(self):
+        """"180.5" is not a whole number of days — refuse rather than guess."""
+        self.Param.set_param(RETENTION_PARAM, "180.5")
+        with self.assertRaises(UserError):
+            self.Log._retention_days()
+
+    # -- the floor ----------------------------------------------------------
+
+    def test_window_below_the_floor_is_refused(self):
+        """A tiny positive window is refused, not clamped (anti-forensics).
+
+        Before this purge existed the ACL made the table append-only at the
+        app layer (perm_unlink=0 for everyone, base.group_system included), so
+        this cron is the FIRST application path that can delete audit rows.
+        ir.config_parameter keeps no history, so setting the window to 1,
+        letting it purge, and setting it back to 180 would erase evidence of an
+        intrusion with no record the value ever changed. Clamping would still
+        delete; refusing preserves the evidence.
+        """
+        self.Param.set_param(RETENTION_PARAM, 1)
+        ancient = self._make_log(age_days=9999, login="floor@ncollection.test")
+        with self.assertRaises(UserError):
+            self.Log._gc_auth_log()
+        self.assertTrue(ancient.exists(), "a 1-day window must delete nothing")
+
+    def test_the_floor_itself_is_allowed(self):
+        """The boundary is inclusive — MIN_RETENTION_DAYS is a valid setting."""
+        self.Param.set_param(RETENTION_PARAM, MIN_RETENTION_DAYS)
+        self.assertEqual(self.Log._retention_days(), MIN_RETENTION_DAYS)
+
+    def test_zero_is_still_allowed_below_the_floor(self):
+        """0 means "deliberately disabled" and must not trip the floor."""
+        self.Param.set_param(RETENTION_PARAM, 0)
+        self.assertEqual(self.Log._retention_days(), 0)
 
     def test_purge_is_idempotent(self):
         """A second run over an already-clean window is a no-op."""

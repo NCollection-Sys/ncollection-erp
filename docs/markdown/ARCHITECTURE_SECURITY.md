@@ -154,6 +154,7 @@ Provisioning installs **only** the plan's modules. What isn't installed cannot b
 | CSRF | Odoo built-in tokens; login template overrides touch the template ONLY, never controller logic | P1-T14 |
 | Auth audit | `ncollection.auth.log`: success/failure/logout/reset with IP, UA, DB | P1-T19 |
 | Auth-log retention | Rows purged after `ncollection_auth.log_retention_days` (default **180**) by the daily `ir.cron` "NCollection: auth log retention purge"; `<= 0` disables. Tunable per tenant | #219 |
+| Auth-log purge guardrail | The purge is the **only** application-level path that can delete audit rows (the ACL is read-only for everyone, `perm_unlink=0`). A positive window below **30 days** is *refused*, not applied, and an unparseable value raises rather than falling back — `ir.config_parameter` keeps no history, so "set to 1, purge, set back" would otherwise erase intrusion evidence untraceably | #219 |
 | Password policy | Odoo password policy params; provisioning forces reset of the initial admin password | P2-T01 |
 | Password reset | Odoo's flow verified: time-limited, single-use tokens; reset emails branded | P1-T19 / P1-T18 |
 | Debug/dev mode | Blocked for non-Owner; `?debug=` param neutralized | P1-T11 |

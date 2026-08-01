@@ -15,6 +15,7 @@ import logging
 from datetime import timedelta
 
 from odoo import SUPERUSER_ID, api, fields, models
+from odoo.exceptions import UserError
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -25,6 +26,25 @@ _logger = logging.getLogger(__name__)
 # scaled that from one demo tenant to every provisioned one.
 RETENTION_PARAM = 'ncollection_auth.log_retention_days'
 DEFAULT_RETENTION_DAYS = 180
+
+# Floor on any POSITIVE retention window. Before this purge existed, the ACL
+# (ir.model.access.csv) granted base.group_system READ ONLY — perm_write,
+# perm_create and perm_unlink are all 0, i.e. the table was append-only at the
+# application layer and only OS/DB-shell access could remove a row. This cron is
+# therefore the FIRST app-level deletion path into the auth audit trail, gated
+# only by whoever can edit a system parameter.
+#
+# ir.config_parameter carries no audit trail of its own (write_uid/write_date
+# are overwritten by the next write), so setting the window to 1, letting the
+# purge run, and setting it back to 180 would erase the evidence of an intrusion
+# and leave no record that the value ever changed — a textbook anti-forensics
+# move against the very log meant to catch account compromise.
+#
+# A positive value below this floor is treated as a misconfiguration and REFUSED
+# rather than clamped: clamping still deletes (just less), whereas refusing
+# preserves the evidence under both the fat-finger and the malicious reading.
+# Lowering this floor is a deliberate, reviewable code change.
+MIN_RETENTION_DAYS = 30
 
 # Deleted oldest-first in chunks rather than one statement: on a tenant that has
 # been logging for a long time the first run could otherwise hold a very large
@@ -69,22 +89,43 @@ class NcollectionAuthLog(models.Model):
     def _retention_days(self):
         """Configured retention window in days. 0 or less means DISABLED.
 
-        Reading through ir.config_parameter (rather than a module constant)
-        is what makes the window tunable per tenant without a code change —
-        the same pattern the module's other hardening knobs already use.
-        A non-numeric value falls back to the default and says so loudly:
-        silently treating garbage as "0" would disable the purge, and a
-        retention policy that quietly stops running is worse than none.
+        Reading through ir.config_parameter (rather than a module constant) is
+        what makes the window tunable per tenant without a code change — the
+        same pattern the module's other hardening knobs already use.
+
+        Raises ``UserError`` on an unusable value rather than guessing. An
+        earlier version fell back to the 180-day default on a parse failure,
+        which is the wrong direction for a DESTRUCTIVE operation: an operator
+        setting "3,650" for a ten-year mandate would have had the typo silently
+        replaced by a much SHORTER window, and the job would then have deleted
+        exactly the data they were trying to keep. Errors must not cause
+        unintended state change. Raising also makes the run show as failed in
+        Settings > Technical > Scheduled Actions instead of logging a line
+        nobody tails.
         """
         raw = self.env['ir.config_parameter'].sudo().get_param(
             RETENTION_PARAM, DEFAULT_RETENTION_DAYS)
         try:
-            return int(raw)
-        except (TypeError, ValueError):
-            _logger.warning(
-                "%s is %r, which is not a number — falling back to %s days.",
-                RETENTION_PARAM, raw, DEFAULT_RETENTION_DAYS)
-            return DEFAULT_RETENTION_DAYS
+            days = int(raw)
+        except (TypeError, ValueError, OverflowError):
+            raise UserError(self.env._(
+                "Auth-log retention is misconfigured: %(param)s is %(value)r, "
+                "which is not a whole number of days. No rows were deleted. "
+                "Set it to a positive number of days (minimum %(minimum)s), "
+                "or to 0 to disable the purge.",
+                param=RETENTION_PARAM, value=raw, minimum=MIN_RETENTION_DAYS,
+            )) from None
+
+        if 0 < days < MIN_RETENTION_DAYS:
+            raise UserError(self.env._(
+                "Auth-log retention is set to %(days)s day(s), below the "
+                "%(minimum)s-day minimum. No rows were deleted. This log is the "
+                "audit trail for account compromise, so an unusually short "
+                "window is refused rather than applied. Use 0 to disable the "
+                "purge deliberately.",
+                days=days, minimum=MIN_RETENTION_DAYS,
+            ))
+        return days
 
     @api.model
     def _gc_auth_log(self):
