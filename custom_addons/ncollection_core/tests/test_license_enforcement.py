@@ -176,6 +176,38 @@ class TestLicenseEnforcement(TransactionCase):
         self.assertIn("mis", blocked)        # exclusive to mis_builder -> gated
         self.assertNotIn("report", blocked)  # shared PDF infra -> NEVER gated
 
+    def test_enterprise_wrapper_module_does_not_block_its_dependency(self):
+        """#240 regression: the Enterprise plan licenses mis_builder via the
+        WRAPPER `ncollection_mis_templates` (the literal in the plan), not
+        `mis_builder` itself. The dependency closure must keep mis_builder
+        licensed — else EVERY Enterprise tenant would lose MIS reporting."""
+        if "mis.report" not in self.env:
+            self.skipTest("mis_builder not installed in this run")
+        # the real Enterprise allowed_module_names value (wrapper, not mis_builder)
+        self._set_plan("account,account_financial_report,ncollection_mis_templates")
+        blocked = self.Menu.sudo()._ncollection_blocked_module_names()
+        self.assertNotIn("mis_builder", blocked)  # licensed via the wrapper's deps
+        self.assertNotIn("mis", self.Menu.sudo()._ncollection_blocked_namespaces_cached())
+
+    def test_downgrade_gates_afr_model_in_shared_namespace(self):
+        """#240 (isolation+security HIGH): account_financial_report defines
+        `account.age.report.configuration` in the SHARED `account` namespace, so
+        namespace gating can't touch it (blocking `account` would break core
+        Accounting). Model-level gating denies it on downgrade while leaving core
+        `account.move` licensed."""
+        if "account.age.report.configuration" not in self.env:
+            self.skipTest("account_financial_report not installed in this run")
+        self._set_plan("account")  # account licensed, account_financial_report not
+        blocked_models = self.Menu.sudo()._ncollection_blocked_models_cached()
+        self.assertIn("account.age.report.configuration", blocked_models)
+        self.assertNotIn("account.move", blocked_models)  # core account NOT gated
+        # the AFR model carries base.group_user ACL, so a non-system user passes
+        # core's check and hits OUR license denial:
+        with self.assertRaises(AccessError) as cm:
+            self.env["account.age.report.configuration"].with_user(
+                self.user).check_access("read")
+        self.assertIn("NCollection plan", str(cm.exception))
+
     # ---------------- performance budget ----------------
 
     def test_overhead_under_budget(self):
