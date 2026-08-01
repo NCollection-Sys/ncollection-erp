@@ -14,7 +14,7 @@ hand-calculated fixtures exactly, and an admin-authored-code surface a
 self-service tenant should not have. See the PR for the full survey.
 """
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 BAND_STATES = [
@@ -58,7 +58,7 @@ class NCollectionKpiThreshold(models.Model):
         for band in self:
             if (band.has_min and band.has_max
                     and band.value_min >= band.value_max):
-                raise ValidationError(_(
+                raise ValidationError(self.env._(
                     "Threshold band %(name)s covers no values: its minimum "
                     "(%(minimum)s) is not below its maximum (%(maximum)s). "
                     "Leave a bound unset to make the band open-ended.",
