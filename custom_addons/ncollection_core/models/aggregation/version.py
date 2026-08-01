@@ -40,6 +40,7 @@ write-accurate aggregation over it.
 import logging
 
 from odoo import api, fields, models
+from odoo.tools import sql
 
 _logger = logging.getLogger(__name__)
 
@@ -107,9 +108,21 @@ class NCollectionAggregationVersion(models.Model):
         handler would convert a bump failure into a broken request, which is
         the exact opposite of its intent. (Found the hard way: the first run of
         these tests cascaded four unrelated failures from one bad statement.)
+
+        ``flush=False`` is equally load-bearing. The default ``savepoint()``
+        returns a ``_FlushingSavepoint``, which calls ``cr.flush()`` BEFORE
+        issuing SAVEPOINT and again on a clean exit. Two costs, both real:
+        this method runs inside every create/write/unlink on the hottest models
+        in the ERP, so a full ORM flush of the entire pending transaction here
+        would defeat Odoo's own write batching — while the docstring above
+        claims the opposite. And the pre-SAVEPOINT flush happens OUTSIDE the
+        savepoint, so if that flush raises (an unrelated dirty field failing a
+        constraint) the transaction is poisoned with no savepoint to roll back
+        to — reopening the exact hole this is here to close. Neither method
+        touches ORM-cached field state, so the flush buys nothing.
         """
         try:
-            with self.env.cr.savepoint():
+            with self.env.cr.savepoint(flush=False):
                 self.env.cr.execute("""
                 INSERT INTO ncollection_aggregation_version
                             (model_name, version, create_uid, create_date,
@@ -119,7 +132,14 @@ class NCollectionAggregationVersion(models.Model):
                     ON CONFLICT (model_name)
                       DO UPDATE SET version = ncollection_aggregation_version.version + 1,
                                     write_date = now() AT TIME ZONE 'UTC'
-                """, (model_name, self.env.uid or 1, self.env.uid or 1))
+                """, (
+                    model_name,
+                    # uid falls back to 1 (__system__) only where env.uid is
+                    # unset (early boot / raw cursor). The counter's VALUE is
+                    # what matters here; create_uid is audit garnish.
+                    self.env.uid or 1,
+                    self.env.uid or 1,
+                ))
         except Exception:  # pragma: no cover - defensive: never break a write
             _logger.exception(
                 'Aggregation version bump failed for %s — cached aggregations '
@@ -134,11 +154,13 @@ class NCollectionAggregationVersion(models.Model):
         rows. Cheap enough to call per aggregation, and the cache layer wraps it
         in a short TTL anyway.
 
-        Savepointed for the same reason as ``_bump``: a failing SELECT poisons
-        the transaction just as thoroughly as a failing INSERT.
+        Savepointed (and non-flushing) for the same reasons as ``_bump``: a
+        failing SELECT poisons the transaction just as thoroughly as a failing
+        INSERT, and a flushing savepoint would both cost a full ORM flush and
+        leave the pre-SAVEPOINT flush outside the protected region.
         """
         try:
-            with self.env.cr.savepoint():
+            with self.env.cr.savepoint(flush=False):
                 self.env.cr.execute(
                     "SELECT model_name, version "
                     "FROM ncollection_aggregation_version")
@@ -162,8 +184,19 @@ class AggregationInvalidationHook(models.AbstractModel):
     _inherit = 'base'
 
     def _nc_bump_aggregation_version(self):
-        if self._name in AGGREGATION_SOURCE_MODELS:
-            self.env['ncollection.aggregation.version']._bump(self._name)
+        if self._name not in AGGREGATION_SOURCE_MODELS:
+            return
+        # `_inherit = 'base'` takes effect the moment these classes load, which
+        # is BEFORE _auto_init() creates our table on a fresh database. Tracked
+        # models get written during provisioning (`odoo -i base,sale,account…`,
+        # demo data, other modules' installs) inside that window. The savepoint
+        # would absorb the UndefinedTable safely, but _bump's fail-open handler
+        # logs a full traceback each time — hundreds of them on a demo-data
+        # install, which is exactly how a real error gets buried. Skip cheaply
+        # until the table exists.
+        if not sql.table_exists(self.env.cr, 'ncollection_aggregation_version'):
+            return
+        self.env['ncollection.aggregation.version']._bump(self._name)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -173,7 +206,11 @@ class AggregationInvalidationHook(models.AbstractModel):
 
     def write(self, vals):
         result = super().write(vals)
-        self._nc_bump_aggregation_version()
+        # `record.write({})` is a real pattern in Odoo core (triggering recompute
+        # chains), and it changes no data — bumping would spend a savepoint and
+        # an UPSERT to invalidate caches that are still perfectly valid.
+        if vals:
+            self._nc_bump_aggregation_version()
         return result
 
     def unlink(self):

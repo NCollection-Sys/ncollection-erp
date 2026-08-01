@@ -152,22 +152,28 @@ class TestAggregationCache(TransactionCase):
         self.assertEqual(base, noisy)
 
     def test_cache_is_keyed_by_database(self):
-        """Entries must never be reachable from another tenant's database."""
+        """Entries must never be reachable from another tenant's database.
+
+        This drives the REAL make_key() against a patched dbname. An earlier
+        version hand-built two payload dicts and hashed them with _digest()
+        directly, which only proved that a hash function distinguishes
+        different inputs — it would have kept passing if someone deleted
+        'db' from make_key() entirely.
+        """
         versions = agg_cache.versions_for(self.env)
-        key = agg_cache.make_key(self.env, self._spec(), versions)
-        other_key = agg_cache.make_key(self.env, self._spec(), versions)
-        self.assertEqual(key, other_key, "same db+user+spec must be stable")
-        # The db name is inside the digest input; changing it must change the key.
-        import json
-        from odoo.addons.ncollection_core.models.aggregation.cache import _digest
-        same = _digest({"db": self.env.cr.dbname, "uid": self.env.uid,
-                        "su": bool(self.env.su), "spec": self._spec(),
-                        "version": 0})
-        different = _digest({"db": "some_other_tenant", "uid": self.env.uid,
-                             "su": bool(self.env.su), "spec": self._spec(),
-                             "version": 0})
-        self.assertNotEqual(same, different)
-        self.assertTrue(json)  # keep the import meaningful to linters
+        key_here = agg_cache.make_key(self.env, self._spec(), versions)
+        self.assertEqual(
+            key_here, agg_cache.make_key(self.env, self._spec(), versions),
+            "same db+user+context+spec must be stable")
+
+        # dbname is set per INSTANCE in Cursor.__init__, not on the class.
+        self.patch(self.env.cr, "dbname", "some_other_tenant")
+        key_elsewhere = agg_cache.make_key(self.env, self._spec(), versions)
+        self.assertNotEqual(
+            key_here, key_elsewhere,
+            "the database must be part of the cache key — otherwise one "
+            "tenant's aggregate is reachable from another's",
+        )
 
     # -- invalidation -------------------------------------------------------
 
@@ -216,6 +222,27 @@ class TestAggregationCache(TransactionCase):
         self.assertEqual(
             Version._versions().get("res.currency", 0), before,
             "an untracked model must not create version churn",
+        )
+
+    # -- returned rows are the caller's, not the cache's --------------------
+
+    def test_mutating_returned_rows_does_not_corrupt_the_cache(self):
+        """A consumer sorting or appending must not rewrite the cached entry.
+
+        #55/#56/#57 are dashboards — exactly the consumers likely to sort rows
+        or append a totals line for display. Handing back the stored list would
+        let one request silently corrupt every other request on that key until
+        the TTL expires, with no exception and no log.
+        """
+        first = self.Engine.aggregate(self._spec())
+        first["rows"].append(("MUTATED", 999))
+        first["rows"].reverse()
+
+        second = self.Engine.aggregate(self._spec())
+        self.assertTrue(second["cached"], "expected the second call to hit")
+        self.assertNotIn(
+            ("MUTATED", 999), second["rows"],
+            "caller mutation leaked into the cached entry",
         )
 
     # -- bounded size -------------------------------------------------------

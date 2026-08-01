@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 """Two-tier aggregation cache (P4-T01).
 
-Tier 1 — a per-process dict, microsecond reads. The pattern is lifted from
+Tier 1 — a per-process dict. The dict lookup itself is sub-microsecond, but note
+what a caller actually pays on a hit: ``engine.aggregate()`` runs a live
+``_model_readable()`` licensing probe (~0.2ms) BEFORE consulting the cache, on
+every call, so a warm call costs roughly that probe rather than the dict. That
+ordering is deliberate and must not be "optimised" away — it is what makes a plan
+downgrade take effect synchronously, since a licence change is not a source-model
+write and therefore bumps no version counter. Reordering for speed would reopen
+the stale-cache licence bypass. The pattern is otherwise lifted from
 ``ncollection_subscription/models/dashboard.py`` (module-level dict, monotonic
 clock, success-only caching), which already carries an expensive infra read in
 production.
@@ -148,7 +155,15 @@ def make_key(env, spec, versions):
 
 
 def get(key):
-    """Cached value, or None when absent or expired."""
+    """Cached value, or None when absent or expired.
+
+    Returns a COPY. Handing back the stored list would let one caller's
+    ``rows.sort()`` or ``rows.append(total_row)`` silently rewrite the entry for
+    every other request on that key until the TTL expires — cross-request data
+    corruption with no exception and no log, which is the one failure class this
+    module exists to prevent. The dashboards in #55/#56/#57 are exactly the
+    consumers likely to sort or annotate rows for display.
+    """
     now = time.monotonic()
     with _lock:
         entry = _cache.get(key)
@@ -158,7 +173,7 @@ def get(key):
         if (now - stored_at) >= DEFAULT_TTL:
             _cache.pop(key, None)
             return None
-        return value
+        return list(value)
 
 
 def put(key, value):

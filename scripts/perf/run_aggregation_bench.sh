@@ -84,7 +84,10 @@ fi
 
 # Fail loud on a blown budget. Never '|| true' a gate you then report on (R-005).
 if grep -q '"all_within_budget": false' "${RESULTS_FILE}"; then
-  echo "FAIL: at least one aggregation exceeded the ${BUDGET_MS:-500}ms budget." >&2
+  # Budget lives in bench_aggregation.py (BUDGET_MS); read it back from the
+# results rather than duplicating it in a shell variable that can drift.
+  budget="$(python3 -c "import json;print(json.load(open('${RESULTS_FILE}'))['budget_ms'])")"
+  echo "FAIL: at least one aggregation exceeded the ${budget}ms budget." >&2
   exit 1
 fi
 echo "==> PASS: every aggregation within budget"

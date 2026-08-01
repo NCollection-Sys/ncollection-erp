@@ -228,7 +228,14 @@ class NCollectionAggregationEngine(models.AbstractModel):
         if cache_key is not None:
             # Success-only: a dropped or failed spec never reaches here, so the
             # cache can never memoise an error into a permanent-looking result.
-            agg_cache.put(cache_key, rows)
+            #
+            # Store a COPY. `cache.get()` copies on the way out, but that only
+            # protects hits — on this path (a miss) the caller would otherwise
+            # walk away holding the very list the cache now owns, and their
+            # first `rows.sort()` would rewrite the entry for everyone else.
+            # Caught by test_mutating_returned_rows_does_not_corrupt_the_cache,
+            # which mutates the result of the FIRST (uncached) call.
+            agg_cache.put(cache_key, list(rows))
         return {'key': spec['key'], 'rows': rows, 'cached': False}
 
     @api.model
@@ -269,11 +276,22 @@ class NCollectionAggregationEngine(models.AbstractModel):
 
     @api.model
     def _flatten_cell(self, cell):
-        """Reduce a ``_read_group`` cell to inert, serialisable data."""
+        """Reduce a ``_read_group`` cell to inert, serialisable data.
+
+        A grouped many2one always flattens to a SINGLE shape — ``(id, label)``
+        — including the null group. Odoo returns an EMPTY RECORDSET (not
+        ``False``) for records with no value in the grouped field, and an
+        earlier version passed that through as ``[]``: falsy, so it happened to
+        work for callers testing truthiness, but it exploded for anyone doing
+        ``group_id, label = cell``. One shape means consumers can always unpack.
+        """
         if isinstance(cell, models.BaseModel):
-            # A grouped many2one: keep identity AND label so a consumer never
-            # has to re-read the record (which would defeat the cache).
+            # Keep identity AND label so a consumer never has to re-read the
+            # record, which would defeat the cache.
             if len(cell) == 1:
                 return (cell.id, cell.display_name)
+            if not cell:
+                # The null group: "records with no value for this field".
+                return (False, '')
             return [(record.id, record.display_name) for record in cell]
         return cell

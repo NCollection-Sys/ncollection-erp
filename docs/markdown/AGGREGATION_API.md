@@ -105,6 +105,23 @@ performance regression on a security-critical path. Hence a private cache.
 
 **Never call bare `registry.clear_cache()` from aggregation code.**
 
+### Every call pays one live licensing probe — on purpose
+
+`aggregate()` runs `_model_readable()` (a real `search([], limit=1)`, ~0.2ms)
+**before** consulting the cache, on every call, hit or miss. So a "cache hit" is
+not free: it costs roughly that probe, not the sub-microsecond dict lookup.
+
+This is deliberate and **must not be optimised by moving the probe after the
+cache lookup**. A plan downgrade is not a source-model write, so it bumps no
+version counter; the live probe is what makes Ring 2 enforcement take effect
+synchronously on an otherwise-warm cache. Reordering would reopen a stale-cache
+licence bypass.
+
+### Rows returned to you are yours
+
+`aggregate()` hands back a copy. Sort it, append to it, reverse it — the cached
+entry is unaffected.
+
 ### The cache key includes `uid` **and a context fingerprint**
 
 Record rules and Ring 2 both make an aggregate user-dependent, so a shared entry

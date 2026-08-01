@@ -174,3 +174,28 @@ class TestAggregationEngine(TransactionCase):
         self.assertEqual(len(first_cell), 2, "expected (id, display_name)")
         self.assertIsInstance(first_cell[0], int)
         self.assertIsInstance(first_cell[1], str)
+
+    def test_null_many2one_group_has_the_same_shape_as_a_real_group(self):
+        """The null group must also be a 2-tuple, so consumers can unpack.
+
+        Odoo returns an EMPTY RECORDSET (not False) for records with no value
+        in the grouped field. An earlier version passed that straight through
+        as [], which is falsy — so truthiness checks happened to work while
+        `group, label = cell` raised ValueError. The domain here deliberately
+        INCLUDES parentless partners, which the sibling test excludes.
+        """
+        self.env["res.partner"].create({"name": "P4T01 orphan probe"})
+        result = self.Engine.aggregate({
+            "key": "by_parent_all", "model": "res.partner",
+            "domain": [], "groupby": ["parent_id"], "aggregates": ["__count"],
+        })
+        self.assertIsNotNone(result)
+        null_cells = [row[0] for row in result["rows"] if not row[0][0]]
+        self.assertTrue(
+            null_cells, "expected a null parent_id group in the results")
+        for cell in null_cells:
+            self.assertIsInstance(cell, tuple)
+            # The property that matters: unpacking never raises.
+            group_id, label = cell
+            self.assertFalse(group_id)
+            self.assertIsInstance(label, str)
