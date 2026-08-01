@@ -2,7 +2,7 @@
 """P3-T11: the tenant onboarding import toolkit.
 
 Proves the acceptance — "the full template set imports into a fresh tenant
-without developer help" — by importing the SHIPPED templates through the real
+without developer help" — by driving the SHIPPED templates through the real
 ``base_import`` path (the same path the native UI uses) and asserting the
 records land, opening stock applies to on-hand, and opening balances produce a
 balanced opening move. The toolkit only guides + validates; Odoo core imports.
@@ -12,15 +12,10 @@ import base64
 from odoo import tools
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.addons.ncollection_data_import.wizard.onboarding import (
-    ENTITY_CONTEXT, nc_friendly_error)
+    ENTITY_CONTEXT, IMPORT_OPTS, nc_friendly_error)
 from odoo.tests import tagged
 
 TEMPLATE = 'ncollection_data_import/data/templates/%s.csv'
-IMPORT_OPTS = {
-    'quoting': '"', 'separator': ',', 'has_headers': True, 'advanced': True,
-    'keep_matches': False, 'float_thousand_separator': ',',
-    'float_decimal_separator': '.',
-}
 
 
 @tagged('post_install', '-at_install')
@@ -30,12 +25,17 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
     def setUpClass(cls):
         super().setUpClass()
         cls.Onboarding = cls.env['ncollection.data.import.onboarding']
-        # Every tenant with inventory has a warehouse; ensure the test company does.
+        # A real provisioned tenant's first warehouse is code "WH" → its stock
+        # location is "WH/Stock" (what the shipped opening_stock.csv references).
+        # The accounting test company uses a different code, so normalise it to
+        # "WH" here to mirror a real fresh tenant.
         cls.warehouse = cls.env['stock.warehouse'].search(
             [('company_id', '=', cls.env.company.id)], limit=1)
         if not cls.warehouse:
             cls.warehouse = cls.env['stock.warehouse'].create({
                 'name': 'Main', 'code': 'WH', 'company_id': cls.env.company.id})
+        elif cls.warehouse.code != 'WH':
+            cls.warehouse.code = 'WH'
         cls.stock_loc = cls.warehouse.lot_stock_id
 
     # ---- helpers --------------------------------------------------------
@@ -57,7 +57,14 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
             preview['headers'], preview.get('matches') or {})
         return rec.execute_import(columns, preview['headers'], IMPORT_OPTS, dryrun=dryrun)
 
-    # ---- the five templates import ------------------------------------
+    def _validate(self, entity, csv_bytes):
+        wiz = self.Onboarding.create({
+            'entity': entity, 'data_file': base64.b64encode(csv_bytes),
+            'data_fname': entity + '.csv'})
+        wiz.action_validate()
+        return wiz.result_html or ''
+
+    # ---- the shipped templates import ---------------------------------
 
     def test_products_template_imports(self):
         res = self._do_import('product.template', self._template_bytes('products'), 'products')
@@ -77,22 +84,21 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
         supp = self.env['res.partner'].search([('name', '=', 'Gulf Office Supplies FZE')])
         self.assertTrue(supp.supplier_rank >= 1)
 
-    def test_opening_stock_imports_and_applies_to_on_hand(self):
-        # products first (opening stock references them)
+    def test_shipped_opening_stock_imports_and_applies(self):
+        # the LITERAL shipped files: products first, then opening_stock (which
+        # references those products by name + the WH/Stock location).
         self._do_import('product.template', self._template_bytes('products'), 'products')
-        paper = self.env['product.product'].search([('default_code', '=', 'PAP-A4-BOX')], limit=1)
-        # build the opening-stock file against THIS company's real stock location
-        csv = ("product_id,location_id,inventory_quantity\n"
-               '"%s","%s",120\n' % (paper.name, self.stock_loc.complete_name)).encode()
-        res = self._do_import('stock.quant', csv, 'opening_stock')
+        self.assertEqual(self.stock_loc.complete_name, 'WH/Stock')
+        res = self._do_import('stock.quant', self._template_bytes('opening_stock'), 'opening_stock')
         self.assertFalse([m for m in res['messages'] if m['type'] == 'error'], res['messages'])
         quants = self.env['stock.quant'].browse(res['ids'])
-        # import records the COUNTED qty; applying it (the native next step) moves
-        # it to on-hand — prove the full opening-stock flow.
         quants.with_context(**ENTITY_CONTEXT['opening_stock']).action_apply_inventory()
+        paper = self.env['product.product'].search([('default_code', '=', 'PAP-A4-BOX')], limit=1)
         self.assertAlmostEqual(paper.qty_available, 120.0)
 
     def test_opening_balances_import_produces_balanced_move(self):
+        # the mechanism, keyed by database id (the shipped file documents the
+        # external-id export-then-reimport flow it can't hardcode).
         recv = self.company_data['default_account_receivable']
         pay = self.company_data['default_account_payable']
         csv = (".id,opening_debit,opening_credit\n"
@@ -104,8 +110,6 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
         self.assertTrue(move, "an opening move was created")
         self.assertAlmostEqual(sum(move.line_ids.mapped('debit')),
                                sum(move.line_ids.mapped('credit')))  # Dr == Cr
-
-    # ---- shipped templates are well-formed ----------------------------
 
     def test_all_shipped_templates_map_to_real_fields(self):
         expected = {
@@ -121,31 +125,35 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
             self.assertFalse(preview.get('error'), "%s: %s" % (entity, preview.get('error')))
             columns = self.Onboarding._map_columns(
                 preview['headers'], preview.get('matches') or {})
-            # every column maps to a field (no stray unmapped header) — a
-            # template with a typo'd header would leave a False here
             self.assertTrue(all(columns), "%s unmapped columns: %s" % (entity, columns))
 
     # ---- validation + friendly errors (the acceptance clause) ---------
 
     def test_validate_good_file_reports_success(self):
-        wiz = self.Onboarding.create({
-            'entity': 'products',
-            'data_file': base64.b64encode(self._template_bytes('products')),
-            'data_fname': 'products.csv'})
-        wiz.action_validate()
-        self.assertIn('Looks good', wiz.result_html)
+        self.assertIn('Looks good', self._validate('products', self._template_bytes('products')))
 
     def test_validate_bad_file_reports_friendly_error(self):
-        # opening stock pointing at a location that doesn't exist → base_import
-        # "no matching record" → rephrased for a non-technical admin
-        bad = ("product_id,location_id,inventory_quantity\n"
+        bad = ('product_id,location_id,inventory_quantity\n'
                '"Nope","No/Such/Location",5\n').encode()
-        wiz = self.Onboarding.create({
-            'entity': 'opening_stock',
-            'data_file': base64.b64encode(bad), 'data_fname': 'bad.csv'})
-        wiz.action_validate()
-        self.assertIn('issue', wiz.result_html.lower())
-        self.assertNotIn('Looks good', wiz.result_html)
+        html = self._validate('opening_stock', bad)
+        self.assertIn('issue', html.lower())
+        self.assertNotIn('Looks good', html)
+
+    def test_shipped_opening_balances_placeholder_is_caught_not_greenlit(self):
+        # THE regression the reviewer found: the shipped opening_balances.csv must
+        # NOT validate as "Looks good" — its placeholder External IDs would (if
+        # left in) collapse rows onto one account. The pre-flight flags it.
+        html = self._validate('opening_balances', self._template_bytes('opening_balances'))
+        self.assertNotIn('Looks good', html)
+        self.assertIn('placeholder', html.lower())
+
+    def test_duplicate_external_id_is_flagged(self):
+        dup = ("id,opening_debit,opening_credit\n"
+               "myco.acc_x,100,0\n"
+               "myco.acc_x,0,100\n").encode()   # same id twice → silent merge
+        html = self._validate('opening_balances', dup)
+        self.assertNotIn('Looks good', html)
+        self.assertIn('overwrite each other', html.lower())
 
     def test_friendly_error_translates_common_cases(self):
         self.assertIn("doesn't match", nc_friendly_error("No matching record found for X"))
@@ -162,8 +170,7 @@ class TestTenantDataImport(AccountTestInvoicingCommon):
 
     def test_open_import_targets_the_right_model(self):
         wiz = self.Onboarding.create({'entity': 'opening_balances'})
-        action = wiz.action_open_import()
-        self.assertEqual(action['res_model'], 'account.account')
+        self.assertEqual(wiz.action_open_import()['res_model'], 'account.account')
         wiz.entity = 'opening_stock'
         action = wiz.action_open_import()
         self.assertEqual(action['res_model'], 'stock.quant')

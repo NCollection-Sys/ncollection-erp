@@ -10,6 +10,8 @@ CSV parsing, column mapping, create-vs-update, the self-balancing opening move
 Odoo Community core.
 """
 import base64
+import csv
+import io
 
 from odoo import fields, models, tools
 from odoo.exceptions import UserError
@@ -31,11 +33,23 @@ ENTITY_CONTEXT = {
     'opening_stock': {'inventory_mode': True},
 }
 
-# The recommended import ORDER (dependencies first): accounts + products must
-# exist before opening balances / opening stock can reference them.
-ENTITY_SEQUENCE = [
-    'products', 'customers', 'suppliers', 'opening_stock', 'opening_balances',
-]
+# base_import options shared by the wizard's dry-run and the tests (one source
+# of truth so they can't drift). CSV, comma-separated, first row is the header.
+IMPORT_OPTS = {
+    'quoting': '"', 'separator': ',', 'has_headers': True, 'advanced': True,
+    'keep_matches': False, 'float_thousand_separator': ',',
+    'float_decimal_separator': '.',
+}
+
+# The placeholder text shipped in opening_balances.csv's External-ID column — the
+# admin must replace it from a Chart of Accounts export. Flagged pre-flight so a
+# left-in placeholder never reaches base_import (where identical ids silently
+# collapse rows onto one account).
+ID_PLACEHOLDER = 'REPLACE_WITH'
+
+# Guard against a huge accidental upload tying up a web worker on the synchronous
+# validation dry-run (the real import screen batches; this is a pre-check).
+MAX_VALIDATE_ROWS = 5000
 
 
 def nc_friendly_error(message):
@@ -49,7 +63,7 @@ def nc_friendly_error(message):
                 "(e.g. a product, account or location name/code that isn't "
                 "spelled exactly as it exists). Fix the spelling, or import that "
                 "item first. — Details: %s" % message)
-    if 'missing required' in low or 'required' in low and 'value' in low:
+    if 'missing required' in low or ('required' in low and 'value' in low):
         return ("A required column is empty in this row. Fill every required "
                 "column, then re-validate. — Details: %s" % message)
     if 'already exists' in low or 'duplicate' in low or 'unique' in low:
@@ -122,35 +136,69 @@ class NcollectionDataImportOnboarding(models.TransientModel):
 
     def _dry_run(self):
         """Run base_import in dryrun mode; return (messages, created_count)."""
+        raw = base64.b64decode(self.data_file)
         model = ENTITY_MODEL[self.entity]
         ctx = dict(self.env.context, **ENTITY_CONTEXT.get(self.entity, {}))
         Import = self.env['base_import.import'].with_context(**ctx)
         record = Import.create({
-            'res_model': model,
-            'file': base64.b64decode(self.data_file),
-            'file_type': 'text/csv',
+            'res_model': model, 'file': raw, 'file_type': 'text/csv',
             'file_name': self.data_fname or 'import.csv',
         })
-        options = {
-            'quoting': '"', 'separator': ',', 'has_headers': True,
-            'advanced': True, 'keep_matches': False,
-            'float_thousand_separator': ',', 'float_decimal_separator': '.',
-        }
-        preview = record.parse_preview(options)
+        preview = record.parse_preview(IMPORT_OPTS)
         if preview.get('error'):
             return ([{'type': 'error', 'message': preview['error']}], 0)
         headers = preview.get('headers') or []
         columns = self._map_columns(headers, preview.get('matches') or {})
-        result = record.execute_import(columns, headers, options, dryrun=True)
+        # Pre-flight checks base_import itself does NOT make on a dry run.
+        preflight = self._preflight(raw, columns)
+        if any(m['type'] == 'error' for m in preflight):
+            # A duplicate/oversize file would corrupt or hang the real import —
+            # stop here and report it rather than green-lighting the file.
+            return (preflight, 0)
+        result = record.execute_import(columns, headers, IMPORT_OPTS, dryrun=True)
         # execute_import returns ids=False (not a list) when rows fail — guard it.
-        return (result.get('messages') or [], len(result.get('ids') or []))
+        return (preflight + (result.get('messages') or []),
+                len(result.get('ids') or []))
+
+    def _preflight(self, raw, columns):
+        """Row-level checks base_import misses on a dry run: an oversize file, a
+        left-in id placeholder, and a DUPLICATED id/.id upsert key — the last
+        silently merges rows onto one record (data loss) with no error."""
+        messages = []
+        try:
+            rows = list(csv.reader(io.StringIO(raw.decode('utf-8-sig'))))[1:]
+        except (UnicodeDecodeError, csv.Error):
+            return messages  # let base_import report a malformed file
+        if len(rows) > MAX_VALIDATE_ROWS:
+            return [{'type': 'error', 'message': self.env._(
+                "This file has %(n)s rows — too many to validate here. Import it "
+                "on Odoo's own import screen, which loads large files in batches.",
+                n=len(rows))}]
+        key_col = next((i for i, c in enumerate(columns) if c in ('id', '.id')), None)
+        if key_col is None:
+            return messages
+        keys = [r[key_col].strip() for r in rows
+                if len(r) > key_col and r[key_col].strip()]
+        if any(ID_PLACEHOLDER in k for k in keys):
+            messages.append({'type': 'error', 'message': self.env._(
+                "The External ID column still contains the placeholder text. "
+                "Export your Chart of Accounts first to get each account's real "
+                "External ID, then paste them in (one distinct ID per row).")})
+        dupes = sorted({k for k in keys if keys.count(k) > 1})
+        if dupes:
+            messages.append({'type': 'error', 'message': self.env._(
+                "Some rows share the same External ID (%(ids)s). Each row must "
+                "point to a DIFFERENT record — rows with the same ID overwrite "
+                "each other instead of creating/updating separately.",
+                ids=', '.join(dupes))})
+        return messages
 
     @staticmethod
     def _map_columns(headers, matches):
         """Turn parse_preview's auto-detected ``matches`` into the field list
-        execute_import expects. base_import does NOT auto-map the special
-        ``id`` / ``.id`` update keys, so map those literally — otherwise an
-        update-by-external-id file is mistaken for a create and fails."""
+        execute_import expects. base_import auto-maps a plain ``id`` header, but
+        NOT the database-id key ``.id`` — map that literally, else an
+        update-by-database-id file is mistaken for a create and fails."""
         columns = []
         for idx, header in enumerate(headers):
             match = matches.get(idx) or matches.get(str(idx))
