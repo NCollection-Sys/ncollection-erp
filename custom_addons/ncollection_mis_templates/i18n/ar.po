@@ -101,3 +101,7 @@ msgstr "هذا الشهر"
 #. module: ncollection_mis_templates
 msgid "Previous Month"
 msgstr "الشهر السابق"
+
+#. module: ncollection_mis_templates
+msgid "Accumulated Earnings"
+msgstr "الأرباح المتراكمة"
