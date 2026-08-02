@@ -53,7 +53,23 @@ drop_db(){ "${DC[@]}" exec -T db psql -U odoo -d postgres -c \
 create_tenant(){
   local db="$1" modules="$2" allowed="$3"
   if tenant_provisioned "$db"; then
-    echo "  • $db already provisioned — skip create"
+    # A reused fixture still has YESTERDAY's schema. Skipping the upgrade is
+    # how a model change turns into "column ... does not exist" from deep
+    # inside a seed script — which is exactly how #264 broke this suite twice
+    # (four new columns, then a fifth on the review commit). Upgrade only the
+    # ncollection_* modules: they are what drifts, and re-upgrading crm/sale
+    # every run would cost minutes for nothing.
+    local nc_modules
+    nc_modules="$(printf '%s' "$modules" | tr ',' '\n' | grep '^ncollection_' \
+      | tr '\n' ',' | sed 's/,$//')"
+    echo "  • $db already provisioned — upgrading ${nc_modules}"
+    if ! "${DC[@]}" exec -T odoo odoo -d "$db" -u "$nc_modules" --without-demo=True \
+         --no-http --stop-after-init "${DBARGS[@]}" >"/tmp/e2e_upgrade_$db.log" 2>&1; then
+      echo "ERROR: upgrading $nc_modules on $db failed — fixture is stale and" >&2
+      echo "       cannot be used. Re-run with 'make e2e-clean' to rebuild." >&2
+      tail -20 "/tmp/e2e_upgrade_$db.log" >&2
+      exit 1
+    fi
   else
     echo "  • (re)creating $db (modules: $modules) — this takes a minute…"
     drop_db "$db"
@@ -91,6 +107,17 @@ if ! "${DC[@]}" exec -T db psql -U odoo -d e2eadmin -tAc \
   echo "  • installing platform stack (ncollection_saas) on e2eadmin…"
   "${DC[@]}" exec -T odoo odoo -d e2eadmin -i ncollection_saas --without-demo=True --no-http \
     --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
+else
+  # Same staleness trap as create_tenant above. e2eadmin is the PLATFORM db, so
+  # it holds ncollection.tenant — every field added to that model lands here.
+  echo "  • upgrading platform stack (ncollection_saas) on e2eadmin…"
+  if ! "${DC[@]}" exec -T odoo odoo -d e2eadmin -u ncollection_saas --without-demo=True \
+       --no-http --stop-after-init "${DBARGS[@]}" >/tmp/e2e_upgrade_e2eadmin.log 2>&1; then
+    echo "ERROR: upgrading ncollection_saas on e2eadmin failed — fixture is stale." >&2
+    echo "       Re-run with 'make e2e-clean' to rebuild." >&2
+    tail -20 /tmp/e2e_upgrade_e2eadmin.log >&2
+    exit 1
+  fi
 fi
 # Deterministic admin creds + a checkout plan (write-or-create) for the register
 # journey. `odoo shell` is a REPL: an exception in the piped script does NOT set a
