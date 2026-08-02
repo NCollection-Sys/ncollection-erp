@@ -82,7 +82,16 @@ FINDING_RE=": [CWEF][0-9]{4}: "
 allow_missing=0
 [ "${1:-}" = "--allow-missing" ] && allow_missing=1
 
-cd "$(git rev-parse --show-toplevel)" || exit 0
+# `cd "" || exit 0` does NOT work: when git rev-parse fails the substitution is
+# empty, and `cd ""` returns 0 in bash while leaving the cwd unchanged — so the
+# fallback never fires and the script lints whatever happens to be here. Outside
+# a repo that produced "1 findings (baseline 54)" and EXIT 0: a PASS having
+# linted nothing. Resolve first, then check.
+if ! repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || [ -z "$repo_root" ]; then
+  echo "pylint-odoo: not inside a git repository — refusing to guess a target." >&2
+  exit 2
+fi
+cd "$repo_root" || { echo "pylint-odoo: cannot enter $repo_root" >&2; exit 2; }
 
 # pylint is frequently a user-site install that is not on PATH (the same reason
 # .githooks/pre-push probes for flake8), so try the plausible entry points
@@ -112,8 +121,13 @@ fi
 
 # The plugin is a separate package from pylint itself; without it the run would
 # succeed and report ZERO odoolint findings — a false green that would silently
-# disable this gate. Check for it explicitly.
-if ! python3 -c "import pylint_odoo" >/dev/null 2>&1; then
+# disable this gate. Probe through the SAME pylint we are about to invoke (a
+# bare `python3 -c "import pylint_odoo"` can answer for a DIFFERENT interpreter
+# than a pipx/pyenv `pylint` binary), by asking whether an odoolint check is
+# actually enabled. ~0.3s.
+# shellcheck disable=SC2086  # intentional word-split: may be "python3 -m pylint"
+if ! $pylint_cmd --load-plugins=pylint_odoo --list-msgs-enabled 2>/dev/null \
+     | grep -q "C8101"; then
   if [ "$allow_missing" -eq 1 ]; then
     echo "pylint installed, plugin pylint_odoo is not"
     exit 3
@@ -123,17 +137,47 @@ if ! python3 -c "import pylint_odoo" >/dev/null 2>&1; then
   exit 2
 fi
 
-log="$(mktemp)"
+if ! log="$(mktemp)" || [ -z "$log" ]; then
+  echo "pylint-odoo: mktemp failed — cannot capture output." >&2
+  exit 2
+fi
 # shellcheck disable=SC2064  # expand $log now, at trap-set time, on purpose
 trap "rm -f '$log'" EXIT
 
 # `-d all -e odoolint` = disable everything, enable only the Odoo checks.
-# pylint exits non-zero when it reports ANY message, so its status carries no
-# pass/fail meaning for us — the count below is the signal.
 # shellcheck disable=SC2086  # intentional word-split: may be "python3 -m pylint"
 $pylint_cmd --load-plugins=pylint_odoo -d all -e odoolint "$PYLINT_TARGET" > "$log" 2>&1
+status=$?
+
+# pylint's status is bit-encoded: 1 fatal, 2 error, 4 warning, 8 refactor,
+# 16 convention, 32 usage error. A normal findings run here returns 28
+# (4|8|16), so a non-zero status does NOT mean failure — but bit 1 (pylint
+# itself died) and 32 (we invoked it wrongly) do, and BOTH can emit zero
+# lines matching FINDING_RE, which would otherwise score as "0 findings" and
+# PASS. Verified: a bad flag exits 32 with no matching output.
+if [ $((status & 1)) -ne 0 ] || [ "$status" -eq 32 ]; then
+  echo "pylint-odoo: pylint exited $status (fatal/usage) — NOT a clean run:" >&2
+  cat "$log" >&2
+  exit 2
+fi
+
+# A completely empty log means pylint never produced anything — a redirect that
+# failed, a killed process. Trusting the grep then reports a confident zero.
+if [ ! -s "$log" ]; then
+  echo "pylint-odoo: no output captured — refusing to report a pass." >&2
+  exit 2
+fi
 
 count="$(grep -cE "$FINDING_RE" "$log" || true)"
+
+# `grep -c` on an unreadable file prints nothing, leaving count EMPTY rather
+# than 0; `[ "" -gt N ]` then errors and, with -e off, execution falls through
+# to the success path. That is a PASS with no lint behind it (R-005's shape).
+case "$count" in
+  ''|*[!0-9]*)
+    echo "pylint-odoo: could not parse a finding count — refusing to pass." >&2
+    exit 2 ;;
+esac
 
 if [ "$count" -gt "$PYLINT_BASELINE" ]; then
   echo "pylint-odoo: $count findings (baseline $PYLINT_BASELINE) — NEW findings introduced:" >&2
@@ -143,5 +187,12 @@ if [ "$count" -gt "$PYLINT_BASELINE" ]; then
   exit 1
 fi
 
+# CI parity: the block this replaced piped through `tee`, so the full report
+# streamed into the job log on every run and the standing debt could be read
+# straight from CI. Keep that in CI mode; the hook stays terse (one line) since
+# a developer can run this script directly.
+if [ "$allow_missing" -eq 0 ]; then
+  grep -E "$FINDING_RE" "$log" || true
+fi
 echo "pylint-odoo: $count findings (baseline $PYLINT_BASELINE)"
 exit 0
