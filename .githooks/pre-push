@@ -71,6 +71,24 @@ fi
 run_gate "invariants"        python3 scripts/ci/invariants.py
 run_gate "architecture-guard" python3 scripts/ci/architecture_guard.py --base origin/develop
 
+# pylint-odoo (#267). The SAME script CI's lint job runs, so the baseline, the
+# invocation, the scanned tree and the finding-count pattern cannot drift
+# between here and CI. ~2.4s — about what the other four cost combined, inside
+# the <10s budget promised at the top of this file.
+#
+# Not run through run_gate: that helper reports any exit 0 as "ok" and swallows
+# the output, so a SKIP would render as a PASS — a gate that never ran, shown as
+# a gate that succeeded. The script exits 3 for skipped precisely so this can
+# tell the difference, matching how flake8/shellcheck report above.
+pylint_out="$(bash scripts/ci/pylint_gate.sh --allow-missing 2>&1)"
+case "$?" in
+  0) report "pylint-odoo" "${pylint_out#pylint-odoo: }" ;;
+  3) report "pylint-odoo" "skipped ($pylint_out)"; skipped=1 ;;
+  *) report "pylint-odoo" "FAILED"
+     printf '%s\n' "$pylint_out" | sed 's/^/      /'
+     fail=1 ;;
+esac
+
 if [ "$fail" -ne 0 ]; then
   cat >&2 <<'MSG'
 

@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# ============================================================================
+#  pylint_gate.sh — the pylint-odoo gate, in ONE place (#267)
+# ============================================================================
+#  Called by BOTH:
+#    .githooks/pre-push        (with --allow-missing)
+#    .github/workflows/ci.yml  (lint job, no flag)
+#
+#  It used to live inline in ci.yml only, which made pylint-odoo the one gate a
+#  developer could not run before pushing. Every finding it added was discovered
+#  ~30s into CI, after a push and a wait — three tickets in one day paid that
+#  toll (#219, #55, #264).
+#
+#  Copying the check into the hook would have duplicated FOUR things that can
+#  drift independently: the baseline number, the pylint invocation, the
+#  finding-count regex, and the comparison. So the whole gate moved here and
+#  both callers invoke it. One definition — same reasoning as #243 and #221.
+#
+#  Usage:
+#    scripts/ci/pylint_gate.sh                  # CI: missing pylint is an ERROR
+#    scripts/ci/pylint_gate.sh --allow-missing  # hook: missing pylint SKIPS
+#
+#  Exit codes:
+#    0  pass (count <= baseline)
+#    1  findings exceed baseline
+#    2  tool missing and --allow-missing was NOT given (CI: a broken image)
+#    3  SKIPPED — tool missing under --allow-missing
+#
+#  3 is distinct from 0 on purpose. The hook's run_gate helper swallows output
+#  on success, so a skip that exited 0 would be reported as "ok" — a gate that
+#  never ran, displayed as a gate that passed. That is the precise false-green
+#  this repo keeps getting bitten by, so a skip gets its own code and the hook
+#  renders it as "skipped".
+# ============================================================================
+set -uo pipefail
+
+# ---------------------------------------------------------------------------
+#  THE BASELINE
+# ---------------------------------------------------------------------------
+#  pylint-odoo reports pre-existing findings across the addons (missing
+#  README.rst, superfluous/deprecated manifest keys, redundant `string=` attrs).
+#  Rather than a blanket continue-on-error — which would hide a PR introducing
+#  BRAND-NEW findings just as easily as it hides the old ones — the gate fails
+#  only when the count goes ABOVE this number. New violations still fail; old
+#  debt does not. Once the backlog is paid down, delete the baseline and the
+#  comparison so any finding fails.
+#
+#  History (moved here from ci.yml by #267, where it had already split across
+#  two comment sites — the value and its provenance now live together):
+#    42 → 60 (2026-07-19): PR #132 merged main into develop, bringing the
+#      demo-sprint addons (tenant_wizard, module, dashboard, provisioning_job,
+#      mis_templates, demo_freshorigin) whose W8113/C8113 debt was never
+#      counted — lint only runs on PRs, so the first PR after that merge
+#      inherited the bill (PR #133). Paying it down is backlog, not per-PR work.
+#    60 → 61 (2026-07-27): F1-T01 (#109) adds ncollection_account_core. Its
+#      manifest trips the one unavoidable manifest-required-author (C8101) that
+#      every ncollection_* manifest has — we are proprietary, not OCA. The 3
+#      superfluous manifest-key findings were AVOIDED by omitting
+#      installable/application/auto_install (all Odoo defaults), so +1 exactly.
+#    61 → 62 (2026-07-27): F5-T01 (#126) adds
+#      ncollection_account_localization_uae — same single C8101; +1.
+#    62 → 55 (2026-07-28): #226 removes the dead, never-loaded
+#      ncollection.tenant.wizard, paying down the 7 W8113/C8113 it carried.
+#    55 → 56 (2026-07-30): P3-T07 (#47) adds ncollection_approvals — C8101; +1.
+#    56 → 57 (2026-08-01): P3-T11 (#51) adds ncollection_data_import — C8101;
+#      the 3 superfluous manifest-key findings were AVOIDED; +1.
+#    57 → 54 (2026-08-02, #221): the 3 print-used findings in seed_tenant.py
+#      were never debt. That script's STDOUT is the platform's only channel for
+#      reading a subprocess result, so print IS the interface; it now carries a
+#      file-level disable with that reason, as does the #221 re-key script.
+#      Lowered rather than raised, so 3 units of unused slack cannot silently
+#      absorb a future REAL finding.
+# ---------------------------------------------------------------------------
+PYLINT_BASELINE=54
+
+# The scanned tree and the finding-count pattern. Both callers MUST use the
+# same ones or the two environments would count differently — the subtlest way
+# this gate could drift while still looking green.
+PYLINT_TARGET="custom_addons/"
+FINDING_RE=": [CWEF][0-9]{4}: "
+
+allow_missing=0
+[ "${1:-}" = "--allow-missing" ] && allow_missing=1
+
+cd "$(git rev-parse --show-toplevel)" || exit 0
+
+# pylint is frequently a user-site install that is not on PATH (the same reason
+# .githooks/pre-push probes for flake8), so try the plausible entry points
+# before concluding it is absent.
+find_pylint() {
+  if python3 -m pylint --version >/dev/null 2>&1; then
+    echo "python3 -m pylint"; return 0
+  fi
+  if command -v pylint >/dev/null 2>&1; then
+    echo "pylint"; return 0
+  fi
+  local candidate
+  for candidate in "$HOME"/Library/Python/*/bin/pylint; do
+    [ -x "$candidate" ] && { echo "$candidate"; return 0; }
+  done
+  return 1
+}
+
+if ! pylint_cmd="$(find_pylint)"; then
+  if [ "$allow_missing" -eq 1 ]; then
+    echo "not installed"
+    exit 3
+  fi
+  echo "pylint-odoo: NOT INSTALLED — required here (CI installs it in the lint job)." >&2
+  exit 2
+fi
+
+# The plugin is a separate package from pylint itself; without it the run would
+# succeed and report ZERO odoolint findings — a false green that would silently
+# disable this gate. Check for it explicitly.
+if ! python3 -c "import pylint_odoo" >/dev/null 2>&1; then
+  if [ "$allow_missing" -eq 1 ]; then
+    echo "pylint installed, plugin pylint_odoo is not"
+    exit 3
+  fi
+  echo "pylint-odoo: plugin pylint_odoo is not importable — refusing to report a" >&2
+  echo "             false pass (it would find 0 odoolint issues without it)." >&2
+  exit 2
+fi
+
+log="$(mktemp)"
+# shellcheck disable=SC2064  # expand $log now, at trap-set time, on purpose
+trap "rm -f '$log'" EXIT
+
+# `-d all -e odoolint` = disable everything, enable only the Odoo checks.
+# pylint exits non-zero when it reports ANY message, so its status carries no
+# pass/fail meaning for us — the count below is the signal.
+# shellcheck disable=SC2086  # intentional word-split: may be "python3 -m pylint"
+$pylint_cmd --load-plugins=pylint_odoo -d all -e odoolint "$PYLINT_TARGET" > "$log" 2>&1
+
+count="$(grep -cE "$FINDING_RE" "$log" || true)"
+
+if [ "$count" -gt "$PYLINT_BASELINE" ]; then
+  echo "pylint-odoo: $count findings (baseline $PYLINT_BASELINE) — NEW findings introduced:" >&2
+  # Show only the findings, not pylint's score banner — the developer needs the
+  # lines they have to fix, not the whole report.
+  grep -E "$FINDING_RE" "$log" >&2 || true
+  exit 1
+fi
+
+echo "pylint-odoo: $count findings (baseline $PYLINT_BASELINE)"
+exit 0
