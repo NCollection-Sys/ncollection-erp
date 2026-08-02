@@ -13,6 +13,7 @@
                   decoration-muted="state in ('draft', 'cancelled')">
                 <field name="name"/>
                 <field name="module_names"/>
+                <field name="operation" widget="badge" decoration-warning="operation == 'install'"/>
                 <field name="target_count" string="Targets"/>
                 <field name="done_count" string="Done"/>
                 <field name="failed_count" string="Failed"/>
@@ -46,6 +47,9 @@
                         <group string="Upgrade">
                             <field name="name"/>
                             <field name="module_names" placeholder="ncollection_core,ncollection_branding"/>
+                            <!-- Not interchangeable: -u only touches modules the
+                                 tenant HAS, -i only ones it lacks (#218). -->
+                            <field name="operation"/>
                             <field name="wave_size"/>
                             <field name="dry_run"/>
                             <field name="auto_restore"/>

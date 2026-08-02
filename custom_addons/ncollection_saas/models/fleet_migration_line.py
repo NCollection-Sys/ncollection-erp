@@ -1,11 +1,28 @@
 # -*- coding: utf-8 -*-
 """Per-tenant target of a fleet migration — the isolated-subprocess engine.
 
-Each line upgrades ONE tenant DB in an isolated ``odoo -u`` subprocess (never a
-cross-DB ORM cursor), after a pre-upgrade snapshot, then smoke-probes it. Any
+Each line acts on ONE tenant DB in an isolated ``odoo`` subprocess (never a
+cross-DB ORM cursor), after a pre-change snapshot, then smoke-probes it. Any
 failure is caught HERE (failure isolation): the line is flagged, the tenant is
 marked ``error`` in the registry, and — per the migration's ``auto_restore``
-flag — its pre-upgrade snapshot is restored in place; the wave continues.
+flag — its pre-change snapshot is restored in place; the wave continues.
+
+**Two operations, and they are NOT interchangeable** (#218). Verified against
+``odoo/modules/loading.py``:
+
+    if install_modules:   # -i
+        Module.search([('state', '=', 'uninstalled'), ...])
+    if upgrade_modules:   # -u
+        Module.search([('state', 'in', ('installed', 'to upgrade')), ...])
+
+So ``-u`` acts ONLY on modules the tenant already has — it cannot add one, and
+on a tenant lacking the module it is a silent no-op. ``-i`` acts ONLY on
+uninstalled ones, which makes it inherently idempotent: re-running cannot
+reinstall or disturb a tenant that already has the module.
+
+That asymmetry is why #218 (backfill ``ncollection_auth`` onto tenants
+provisioned before #178) could not be done with the upgrade path, and why the
+install path needs no "already installed?" bookkeeping of its own.
 """
 import logging
 
@@ -33,12 +50,15 @@ class FleetMigrationLine(models.Model):
     state = fields.Selection([
         ('pending', 'Pending'),
         ('snapshotting', 'Snapshotting'),
-        ('upgrading', 'Upgrading'),
+        # Key kept as 'upgrading' so no data migration is needed; the LABEL is
+        # operation-neutral because this state now also covers an install (#218).
+        ('upgrading', 'Applying'),
         ('probing', 'Probing'),
         ('done', 'Done'),
         ('failed', 'Failed'),
         ('restored', 'Restored'),
-        ('skipped', 'Skipped (dry-run)'),
+        # Now two causes: a dry run, or an install whose modules are all present.
+        ('skipped', 'Skipped'),
     ], default='pending', required=True)
     backup_id = fields.Many2one(
         'ncollection.backup', readonly=True,
@@ -69,20 +89,37 @@ class FleetMigrationLine(models.Model):
             # NOT flagged 'error'.
             self._mark('failed', self.env._("Refused: %s", exc))
             return
+        install = migration.operation == 'install'
         if migration.dry_run:
+            # Names the flag it would actually run. Saying "-u" on an install
+            # dry-run would misreport the one thing the operator is checking.
             self._mark('skipped', self.env._(
-                "DRY-RUN: would run `odoo -u %(m)s` on %(db)s.",
-                m=','.join(modules), db=db))
+                "DRY-RUN: would run `odoo %(flag)s %(m)s` on %(db)s.",
+                flag='-i' if install else '-u', m=','.join(modules), db=db))
             return
         self.write({'started_at': fields.Datetime.now()})
         try:
+            # Install only: skip tenants that already have every module, BEFORE
+            # snapshotting. On a backfill most of the fleet is already fine, and
+            # a full backup each is a lot of disk and time for a no-op.
+            if install and self._already_satisfied(db, modules):
+                self._mark('skipped', self.env._(
+                    "Already installed: %s. Nothing to do.", ','.join(modules)))
+                return
             self._snapshot()
-            self._mark('upgrading', self.env._("Upgrading: %s", ','.join(modules)),
+            # Distinct whole strings per operation rather than capitalising a
+            # translated fragment: .capitalize() on translated output is locale-
+            # blind, and it silently changed the UPGRADE path's wording, which
+            # the manifest promises is unchanged. This keeps upgrade byte-identical.
+            self._mark('upgrading',
+                       self.env._("Installing: %s", ','.join(modules)) if install
+                       else self.env._("Upgrading: %s", ','.join(modules)),
                        stamp=False)
-            self._upgrade(db, modules)
+            self._apply(db, modules)
             self._mark('probing', self.env._("Smoke probe…"), stamp=False)
             self._probe(db, modules)
-            self._mark('done', self.env._("Upgrade OK."))
+            self._mark('done', self.env._("Install OK.") if install
+                       else self.env._("Upgrade OK."))
         except Exception as exc:                    # noqa: BLE001 — isolate the failure
             self._safe_handle_failure(db, exc)
 
@@ -110,11 +147,75 @@ class FleetMigrationLine(models.Model):
                 "Pre-upgrade snapshot failed: %s", backup.error_log or '?'))
         self.backup_id = backup.id
 
-    def _upgrade(self, db, modules):
+    def _apply(self, db, modules):
+        """Run the migration's operation against this tenant.
+
+        ``-i`` and ``-u`` are the ONLY difference between install and upgrade;
+        the snapshot, probe, failure isolation and restore paths are shared, so
+        there is no second engine to keep in step.
+        """
+        flag = '-i' if self.migration_id.operation == 'install' else '-u'
         cmd = ['odoo'] + self._odoo_conn_args(db) + [
-            '-u', ','.join(modules),
+            flag, ','.join(modules),
             '--stop-after-init', '--no-http', '--max-cron-threads=0']
-        self._run_odoo_subprocess(cmd, self.env._("module upgrade"))
+        self._run_odoo_subprocess(cmd, self._operation_label())
+
+    def _operation_label(self):
+        """Step name for the subprocess failure message ("Step X failed").
+
+        Lower-case on purpose: _run_odoo_subprocess embeds it mid-sentence.
+        The line's own status messages use whole translatable strings instead
+        of transforming this one.
+        """
+        return (self.env._("module install")
+                if self.migration_id.operation == 'install'
+                else self.env._("module upgrade"))
+
+    def _already_satisfied(self, db, modules):
+        """True when every requested module is ALREADY installed here.
+
+        Only meaningful for an install run. ``-i`` would be a harmless no-op
+        anyway (it selects only ``uninstalled`` modules), but reaching it means
+        first taking a FULL BACKUP of a tenant that needs nothing — on a
+        backfill, that is most of the fleet. Checking first turns those into a
+        cheap skip.
+
+        Reported as SKIPPED, never as failed: 'this tenant already has it' is
+        the expected outcome for most of a backfill, and a run that scores it as
+        a failure trains the operator to ignore the summary (#221).
+
+        **Never raises.** This is a READ. If the probe itself fails — a timeout,
+        a busy server, a transient connection blip — letting that propagate would
+        reach ``_handle_failure``, which finds no ``backup_id`` (nothing has been
+        snapshotted yet) and so calls ``_flag_tenant_error()``, marking a tenant
+        that NOTHING TOUCHED as ``error`` and taking it out of config-sync,
+        backup and checkout. A failed read must not do that. We return False
+        instead and let the install proceed: if the tenant really is unreachable
+        the install fails too, and THAT failure legitimately flags it, because by
+        then a write was attempted.
+        """
+        script = (
+            "mods = env['ir.module.module'].search([('name', 'in', %r)])\n"
+            "have = mods.filtered(lambda m: m.state == 'installed').mapped('name')\n"
+            "print('NC_HAVE=%%s' %% ','.join(sorted(have)))\n" % (list(modules),)
+        )
+        cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
+        try:
+            out = self._run_odoo_subprocess(
+                cmd, self.env._("module state check"), stdin=script)
+        except Exception as exc:                    # noqa: BLE001 - a read, see above
+            _logger.warning(
+                "Fleet: module state check failed for %s (%s); proceeding with "
+                "the install, which is idempotent.", db, exc)
+            return False
+        for line in reversed((out or '').splitlines()):
+            if line.strip().startswith('NC_HAVE='):
+                have = {m for m in line.strip()[len('NC_HAVE='):].split(',') if m}
+                return set(modules).issubset(have)
+        # No marker: do NOT assume "already installed" — that would silently skip
+        # a tenant the backfill exists to fix. Fall through and let the install
+        # run; -i is idempotent, so the cost of being wrong this way is nil.
+        return False
 
     def _probe(self, db, modules):
         """Smoke probe: the upgraded modules are actually ``installed`` AND a

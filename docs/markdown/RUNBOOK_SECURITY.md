@@ -117,7 +117,63 @@ off and goes quiet. **Odoo does not re-enable it when the cause is fixed.**
 synced since this check shipped, or its config-sync push is failing (check the
 Config Sync column, #264). A tenant that legitimately lacks `ncollection_auth`
 (provisioned before #178) reports the job as not installed, which is not a
-fault — #218 is the ticket that backfills those.
+fault — run the backfill below to fix it.
+
+## Backfilling `ncollection_auth` onto older tenants (#218)
+
+#178 added `ncollection_auth` to `CORE_TENANT_MODULES`, so **new** tenants get
+the login-audit trail (`ncollection.auth.log`) and the idle-session timeout by
+default. That fix was forward-only: tenants provisioned **before** it do not
+have the module and never will on their own. Those tenants have **no
+application-level record of who logged in**, and #219's retention purge has
+nothing to purge.
+
+Not an emergency — the nginx edge rate-limit already covers brute force on every
+tenant — but it is a real gap, and it is cheapest to close before the fleet grows.
+
+### Why this uses the fleet migration and not a script
+
+`odoo -u` **cannot install a module.** Verified in `odoo/modules/loading.py`:
+`-u` selects only modules whose state is `installed`/`to upgrade`, `-i` only
+`uninstalled` ones. A backfill attempted with an upgrade run would report
+success having installed nothing.
+
+So the fleet migration gained an **operation** field. Install runs get the same
+machinery an upgrade gets — pre-change snapshot, canary, rolling waves, smoke
+probe, auto-restore on failure — which is exactly the "backup checkpoint,
+off-peak, deliberate" handling a live-tenant change needs.
+
+`-i` is also inherently idempotent (it only acts on uninstalled modules), so a
+re-run cannot disturb a tenant that already has the module.
+
+### The run
+
+*SaaS Admin → Fleet Migrations → New*
+
+| Field | Value |
+|---|---|
+| Modules | `ncollection_auth` |
+| **Operation** | **Install (odoo -i)** — the default is Upgrade, which would do nothing here |
+| Canary tenants | pick one low-risk tenant |
+| Dry run | **on for the first pass** |
+| Auto-restore on failure | leave **on** |
+
+1. **Dry run first.** Every line goes `skipped` with the exact command. Confirm
+   it says `-i`, not `-u`.
+2. Turn dry-run off and **Start**. The canary runs alone; the fleet rolls out
+   only if it passes.
+3. Read the lines. Three outcomes:
+   - **Done** — installed and smoke-probed.
+   - **Skipped** — *"Already installed"*. Expected for most of the fleet on a
+     backfill, and **not** a failure; these are checked before any snapshot is
+     taken, so they cost nothing.
+   - **Failed** — auto-restored from its snapshot if that flag is on. Read the
+     line message; the tenant is flagged `error` in the registry.
+4. Confirm afterwards in the tenant list: **Required Jobs** should stop reporting
+   the auth-log purge as not installed.
+
+Run it off-peak. Each non-skipped tenant takes a full backup first, which is
+disk and time.
 
 ## Rotating the config-sync master key (#221)
 
