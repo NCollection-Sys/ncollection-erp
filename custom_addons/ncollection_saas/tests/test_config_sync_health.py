@@ -351,6 +351,37 @@ class TestConfigSyncHealth(TransactionCase):
         self.tenant.invalidate_recordset()
         self.assertEqual(self.tenant.config_sync_state, 'ok')
 
+    def test_an_oversized_body_cannot_HIDE_a_degraded_job(self):
+        """Padding the response must not silently preserve a stale 'ok'.
+
+        The cap makes the self-report unreadable, so a tenant could try to
+        suppress its own compliance-job health by always answering oversized.
+        _record_cron_health treats an absent report as 'unknown' rather than
+        healthy, so the suppression is VISIBLE. That is the property that makes
+        skipping the report an acceptable response to an oversized body.
+
+        (Against a genuinely hostile tenant the self-report was never an
+        attestation anyway — it could simply lie. This is about the signal not
+        being silently frozen at its last good value.)
+        """
+        healthy = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': True}}}).encode()
+        self.assertTrue(self._push(_StreamedResponse(200, healthy)))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(
+            self.tenant.cron_health_state, 'ok',
+            "precondition: the signal must actually read 'ok' first, or the "
+            "assertion below cannot tell 'reset to unknown' from 'left stale'")
+
+        resp = _StreamedResponse(200, b'p' * (2 * _MAX_RESPONSE_BYTES))
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertNotEqual(
+            self.tenant.cron_health_state, 'ok',
+            "an oversized body must not leave the health signal reading 'ok'")
+
     def test_a_normal_body_is_still_parsed_and_reported(self):
         """The cap must not break the #262 required-job self-report."""
         body = json.dumps({'required_crons': {
