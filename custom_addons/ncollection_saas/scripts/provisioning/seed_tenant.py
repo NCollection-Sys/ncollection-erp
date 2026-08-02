@@ -76,27 +76,17 @@ _sync_role_implications(env)  # noqa: F821
 #    master never enters this tenant subprocess. We store only the key's HASH, so
 #    the tenant DB never holds the usable credential in the clear, and a leaked
 #    key is scoped to this one tenant. Idempotent (safe on re-seed/reconcile).
-from odoo.addons.base.models.res_users import (  # noqa: E402
-    KEY_CRYPT_CONTEXT, INDEX_SIZE)
+#
+#    The account lookup + the apikey write itself live in
+#    ncollection.config.sync.key (ncollection_core), so provisioning and the #221
+#    re-key job share ONE definition of a security-critical write instead of two
+#    copies that can silently diverge. create_user=True because at provisioning,
+#    creating the service account IS the job; the re-key deliberately passes
+#    False so it can never conjure one into a tenant that never had it.
 tenant_key = os.environ.get('NC_CONFIG_SYNC_TENANT_KEY')
-sync_group = env.ref('ncollection_core.group_config_sync')  # noqa: F821
-svc = env['res.users'].sudo().search([('login', '=', 'config-sync@ncollection.internal')], limit=1)  # noqa: F821
-if not svc:
-    svc = env['res.users'].sudo().create({  # noqa: F821
-        'name': 'Config Sync (platform)',
-        'login': 'config-sync@ncollection.internal',
-        'password': secrets.token_urlsafe(32),  # unused (bearer only); unguessable
-        'group_ids': [(6, 0, [env.ref('base.group_user').id, sync_group.id])],  # noqa: F821
-    })
-else:
-    svc.write({'group_ids': [(4, sync_group.id)]})
 if tenant_key:
-    env.cr.execute(  # noqa: F821
-        "DELETE FROM res_users_apikeys WHERE user_id=%s AND name='config-sync'", (svc.id,))
-    env.cr.execute(  # noqa: F821
-        "INSERT INTO res_users_apikeys (name,user_id,scope,index,key,create_date) "
-        "VALUES (%s,%s,NULL,%s,%s, now())",
-        ('config-sync', svc.id, tenant_key[:INDEX_SIZE], KEY_CRYPT_CONTEXT.hash(tenant_key)))
+    env['ncollection.config.sync.key']._install_key(  # noqa: F821
+        tenant_key, create_user=True)
 else:
     print("SEED_WARN NC_CONFIG_SYNC_TENANT_KEY not provided — config-sync key not provisioned")
 

@@ -29,6 +29,8 @@
         'views/provisioning_job_views.xml',
         'views/subscription_views.xml',
         'views/config_sync_views.xml',
+        # after config_sync_views: inherits view_tenant_form_config_sync
+        'views/config_sync_rekey_views.xml',
         'views/checkout_templates.xml',
         'views/domain_views.xml',
         'views/backup_views.xml',

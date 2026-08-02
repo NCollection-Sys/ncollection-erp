@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Config-sync key re-key / rotation (#221).
+
+        Two entry points, both landing on the same code path:
+          * the form button  — one tenant, the leaked-key response;
+          * the list action  — the whole ready fleet, after a master rotation.
+
+        Both are gated on base.group_system, the group every other destructive
+        tenant-touching operation in this layer already uses (backup, restore,
+        fleet migration). The gate is MIRRORED at the ORM in
+        config_sync_rekey._rekey_assert_allowed — a groups= attribute only hides
+        a button, it does not stop an RPC call (Rule 4).
+    -->
+
+    <record id="view_tenant_form_config_sync_rekey" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form.config.sync.rekey</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_saas.view_tenant_form_config_sync"/>
+        <field name="arch" type="xml">
+            <field name="config_sync_state" position="before">
+                <button name="action_rekey_config_sync" type="object"
+                        string="Re-key config sync"
+                        groups="base.group_system"
+                        confirm="Replace this tenant's config-sync key with a freshly derived one, then verify it with a live push. The current key stops working immediately."
+                        invisible="database_status != 'ready'"/>
+            </field>
+        </field>
+    </record>
+
+    <!--
+        Fleet-wide rotation. A server action rather than a list button so it is
+        reachable from the cog menu without selecting records: the method
+        deliberately ignores the selection and targets EVERY ready tenant, because
+        an operator rotating the master must not silently re-key only the page
+        they happened to be looking at.
+    -->
+    <record id="action_tenant_rekey_config_sync_fleet" model="ir.actions.server">
+        <field name="name">Re-key config sync (all ready tenants)</field>
+        <field name="model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
+        <field name="binding_model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
+        <field name="binding_view_types">list</field>
+        <!-- Odoo 19 renamed ir.actions.server.groups_id -> group_ids, the same
+             plural rename as res.users.groups_id -> group_ids. The old name
+             fails at load with "Invalid field 'groups_id'". -->
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_rekey_config_sync_fleet()</field>
+    </record>
+
+</odoo>
