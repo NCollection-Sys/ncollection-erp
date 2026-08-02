@@ -13,3 +13,4 @@ from . import test_auth_signup
 from . import test_aggregation_engine
 from . import test_aggregation_cache
 from . import test_kpi
+from . import test_config_sync_key

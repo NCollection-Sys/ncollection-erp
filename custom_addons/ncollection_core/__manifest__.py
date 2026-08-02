@@ -1,6 +1,9 @@
 {
     'name': 'NCollection Core',
-    'version': '19.0.1.9.0',
+    # 1.10.0 (#221): tenant-side config-sync credential installer
+    # (ncollection.config.sync.key) — THE single definition of the apikey write,
+    # shared by the provisioning seed and the re-key job.
+    'version': '19.0.1.10.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',

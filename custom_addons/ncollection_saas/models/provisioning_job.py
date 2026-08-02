@@ -26,14 +26,11 @@ from odoo.exceptions import UserError, ValidationError
 # the config-sync push code. The PLATFORM derives each tenant's config-sync key and
 # hands only the derived value to the seed subprocess, so the master never enters
 # the tenant context and the seed needs no cross-package import (#212).
-from .config_sync import _SYNC_KEY_ENV, derive_tenant_key
+from .config_sync import _SYNC_KEY_ENV, _TENANT_KEY_ENV, derive_tenant_key
 from .saas_subprocess import DB_NAME_RE, RESERVED_DB_NAMES
 
 _logger = logging.getLogger(__name__)
 
-# The seed receives the already-derived per-tenant config-sync bearer under this
-# name (NOT the master). Keeps the master out of the tenant subprocess env (#212).
-_SEED_TENANT_KEY_ENV = 'NC_CONFIG_SYNC_TENANT_KEY'
 
 # DB_NAME_RE (strict: lowercase alphanumeric, letter-initial, 3–63 chars, NO
 # underscore) and RESERVED_DB_NAMES (ARCHITECTURE_DATA_PLATFORM §2) are imported
@@ -259,7 +256,7 @@ class ProvisioningJob(models.Model):
             'NC_PORTAL_URL': tenant.portal_url or self._portal_url(db),
         })
         if master:
-            env_vars[_SEED_TENANT_KEY_ENV] = derive_tenant_key(master, db)
+            env_vars[_TENANT_KEY_ENV] = derive_tenant_key(master, db)
         # `shell` MUST be the first argument (odoo <subcommand> <options>).
         cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
         out = self._run_odoo_subprocess(

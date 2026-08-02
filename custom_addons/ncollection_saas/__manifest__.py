@@ -2,11 +2,11 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    # Patch bump: #243 is a behaviour-neutral refactor (provisioning inherits the
-    # subprocess mixin). No schema, view, or data change — Python alone takes
-    # effect on server restart, not on -u — so this is traceability, not a
-    # migration signal.
-    'version': '19.0.6.1.0',
+    # 6.2.0 (#221): config-sync key re-key / rotation — a new inherited model, a
+    # new view file registered in `data`, and a new server action. Unlike the
+    # 6.1.0 bump (a behaviour-neutral refactor), this one DOES ship new data
+    # records, so `-u` is what installs them.
+    'version': '19.0.6.2.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',
@@ -29,6 +29,8 @@
         'views/provisioning_job_views.xml',
         'views/subscription_views.xml',
         'views/config_sync_views.xml',
+        # after config_sync_views: inherits view_tenant_form_config_sync
+        'views/config_sync_rekey_views.xml',
         'views/checkout_templates.xml',
         'views/domain_views.xml',
         'views/backup_views.xml',

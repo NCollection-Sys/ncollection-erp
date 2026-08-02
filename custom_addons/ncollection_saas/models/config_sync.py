@@ -30,6 +30,11 @@ _logger = logging.getLogger(__name__)
 # .env / secrets-store key (never in git or the DB) — the platform MASTER key from
 # which each tenant's config-sync bearer key is derived (#212).
 _SYNC_KEY_ENV = 'NC_CONFIG_SYNC_KEY'
+# The env var under which the ALREADY-DERIVED per-tenant key is handed to a
+# tenant subprocess. Lives here beside the master's name, and is imported by both
+# writers (provisioning's seed and the #221 re-key) so the two can never disagree
+# about what the tenant-side script reads.
+_TENANT_KEY_ENV = 'NC_CONFIG_SYNC_TENANT_KEY'
 # Domain-separation label for the key derivation (so the master can't be reused
 # verbatim for another purpose).
 _KDF_LABEL = b'nc-config-sync:'

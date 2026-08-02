@@ -8,6 +8,9 @@ from . import license_enforcement
 from . import ir_http
 from . import subscription_gate
 from . import res_users
+# Tenant-side config-sync credential installer — shared by the provisioning seed
+# and the #221 re-key job so the security-critical apikey write has ONE home.
+from . import config_sync_key
 # P1-T17 customer dashboard — self-contained subtree, see dashboard/__init__.py
 from . import dashboard
 # P4-T01 aggregation engine — self-contained subtree, see aggregation/__init__.py
