@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=print-used
+# print IS the interface here, not debug output: this script runs inside an
+# `odoo shell` subprocess and its STDOUT is the only channel back to the
+# platform, which parses these lines. A logger would write into the TENANT's
+# Odoo log, where nothing reads it, and the caller would see no result at all.
 """Config-sync re-key script (#221) — executed by `odoo shell -d <tenant_db>` in
 an ISOLATED subprocess from the platform (never a cross-DB ORM/SQL call, Rule 3).
 
