@@ -340,7 +340,12 @@ class TestRequiredCronHealth(TransactionCase):
     # -- alerting -----------------------------------------------------------
 
     def test_degradation_opens_exactly_one_todo(self):
-        """The nightly reconcile must not stack a to-do per run."""
+        """The nightly reconcile must not stack a to-do per run.
+
+        Note this passes via the OUTER transition gate — calls 2 and 3 never
+        reach _alert_cron_health. The INNER dedup guard is covered by
+        test_alert_is_idempotent_when_called_directly below.
+        """
         for _ in range(3):
             self.tenant._record_cron_health(self._report(active=False))
         todos = self.tenant.activity_ids.filtered(
@@ -393,6 +398,76 @@ class TestRequiredCronHealth(TransactionCase):
                 ok = self.tenant._config_sync_push('cronhealth', {})
         self.assertTrue(ok)
         self.assertEqual(self.tenant.cron_health_state, 'unknown')
+
+    def test_alert_is_idempotent_when_called_directly(self):
+        """Covers the INNER dedup guard, which the transition gate hides.
+
+        Without this, deleting the guard inside _alert_cron_health would not
+        fail a single test.
+        """
+        self.tenant._alert_cron_health('first')
+        first = self.tenant.cron_health_activity_id
+        self.tenant._alert_cron_health('second')
+        self.assertEqual(
+            self.tenant.cron_health_activity_id, first,
+            "a second alert must not open a second to-do")
+
+    def test_recovery_through_unknown_still_closes_the_todo(self):
+        """degraded -> unknown -> ok. The path that left a to-do open forever.
+
+        An unreadable response body flips the state to 'unknown', so on the
+        eventual recovery `previous` is 'unknown', not 'degraded'. Closing only
+        on degraded->ok therefore left the to-do open, and a stale to-do makes
+        the NEXT real incident look already-reported — the exact trap #264's
+        review caught, reappearing in this parallel implementation.
+        """
+        self.tenant._record_cron_health(self._report(active=False))
+        self.assertTrue(self.tenant.cron_health_activity_id)
+
+        self.tenant._record_cron_health(None)          # unreadable body
+        self.assertEqual(self.tenant.cron_health_state, 'unknown')
+
+        self.tenant._record_cron_health(self._report())  # healthy again
+        self.assertEqual(self.tenant.cron_health_state, 'ok')
+        self.assertFalse(
+            self.tenant.cron_health_activity_id,
+            "recovery must close the to-do regardless of the path taken")
+
+    def test_a_probe_error_is_not_healthy(self):
+        """The tenant could not answer — that is 'unknown', never 'ok'.
+
+        The tenant ships an `error` flag when its own probe raises. It was
+        previously computed, sent over the wire, and never consulted, so an
+        errored probe resolved to 'healthy'.
+        """
+        self.tenant._record_cron_health(
+            {self.CRON: {'installed': False, 'active': False, 'error': True}})
+        self.assertEqual(self.tenant.cron_health_state, 'unknown')
+        self.assertIn('could not read', self.tenant.cron_health_detail.lower())
+
+    def test_a_malformed_job_name_is_ignored_not_rendered(self):
+        """The report is TENANT-CONTROLLED input.
+
+        A compromised tenant could stuff fabricated or oversized job names that
+        would otherwise land in the platform's admin UI and chatter. Anything
+        that is not a plausible xml-id is dropped.
+        """
+        self.tenant._record_cron_health({
+            '<script>alert(1)</script>': {'installed': True, 'active': False},
+            'x' * 500: {'installed': True, 'active': False},
+        })
+        self.assertEqual(
+            self.tenant.cron_health_state, 'unknown',
+            "nothing plausible was reported, so the state is unknown")
+        self.assertNotIn('script', (self.tenant.cron_health_detail or '').lower())
+
+    def test_an_absurd_number_of_entries_is_capped(self):
+        """Bounded belief: a tenant cannot flood the platform record."""
+        flood = {'mod%d.cron_x' % i: {'installed': True, 'active': False}
+                 for i in range(500)}
+        self.tenant._record_cron_health(flood)
+        self.assertEqual(self.tenant.cron_health_state, 'degraded')
+        self.assertLessEqual(len(self.tenant.cron_health_detail), 255)
 
     # -- the contract that must not break ----------------------------------
 

@@ -147,8 +147,12 @@ class WorkspaceConfig(models.Model):
         health probe that can break a config push would be worse than the gap
         it reports.
         """
+        # Overridable from context so a test can force the unresolvable case
+        # without depending on which modules happen to be installed on the
+        # database it runs against.
+        xml_ids = self.env.context.get('_nc_required_crons') or REQUIRED_CRON_XMLIDS
         report = {}
-        for xml_id in REQUIRED_CRON_XMLIDS:
+        for xml_id in xml_ids:
             try:
                 cron = self.env.ref(xml_id, raise_if_not_found=False)
                 if not cron:

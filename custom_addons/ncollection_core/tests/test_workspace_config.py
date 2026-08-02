@@ -70,17 +70,29 @@ class TestRequiredCronSelfReport(TransactionCase):
             self.assertIn('installed', info)
             self.assertIn('active', info)
 
-    def test_absent_module_reports_not_installed_rather_than_raising(self):
-        """ncollection_core must not depend on ncollection_auth.
+    def test_an_unresolvable_cron_reports_not_installed_rather_than_raising(self):
+        """An xml-id that resolves to nothing must read as 'not installed'.
 
-        On a database without it, env.ref() finds nothing — that has to read as
-        'not installed', not as an error and not as a disabled job.
+        ncollection_core must not depend on ncollection_auth, so on a tenant
+        without it env.ref() finds nothing — that is a legitimate state (#218
+        backfills those), not an error and not a disabled job.
+
+        Uses a SYNTHETIC xml-id rather than checking whether ncollection_auth
+        happens to be installed. The earlier version guarded its assertions
+        behind `if 'ncollection_auth' not in ..._installed()`, and CI installs
+        ncollection_auth alongside ncollection_core — so in the one place it
+        mattered the condition was always False and the test asserted nothing
+        while reporting green.
         """
-        report = self.Cfg._required_cron_health()
-        entry = report['ncollection_auth.cron_gc_auth_log']
-        if 'ncollection_auth' not in self.env['ir.module.module']._installed():
-            self.assertFalse(entry['installed'])
-            self.assertFalse(entry['active'])
+        report = self.Cfg.with_context(
+            _nc_required_crons=('ncollection_nonexistent.cron_nope',)
+        )._required_cron_health()
+        entry = report['ncollection_nonexistent.cron_nope']
+        self.assertFalse(entry['installed'],
+                         "an unresolvable xml-id is 'not installed'")
+        self.assertFalse(entry['active'])
+        self.assertNotIn('error', entry,
+                         "a missing module is not an error condition")
 
     def test_report_reflects_the_live_active_flag(self):
         cron = self.env.ref('ncollection_auth.cron_gc_auth_log',
