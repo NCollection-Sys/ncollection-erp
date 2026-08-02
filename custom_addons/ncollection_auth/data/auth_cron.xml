@@ -29,10 +29,21 @@
             <field name="model_id" ref="ncollection_auth.model_ncollection_auth_log"/>
             <field name="state">code</field>
             <!-- Both stages, minimise FIRST: a row must be stripped before it
-                 is eligible to be deleted, and running the purge first would
-                 be harmless but leaves a needless day of full PII on rows the
-                 same job is about to minimise anyway (#261). -->
-            <field name="code">model._minimise_auth_log()
+                 is eligible to be deleted, and running the purge first leaves a
+                 needless day of full PII on rows the same job is about to
+                 minimise anyway (#261).
+
+                 The stages are FAILURE-ISOLATED. As one uninterrupted script, a
+                 transient fault in stage 1 — a lock timeout, the first-run salt
+                 race — would silently skip stage 2 for that run, even though
+                 deletion has its own independently validated preconditions and
+                 is the stage with a compliance deadline. Coupling their
+                 availability buys nothing: a genuinely broken configuration
+                 fails stage 2 on its own checks regardless. -->
+            <field name="code">try:
+    model._minimise_auth_log()
+except Exception:
+    log("auth-log minimisation failed; running the purge anyway", level="error")
 model._gc_auth_log()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>

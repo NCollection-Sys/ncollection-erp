@@ -16,7 +16,10 @@ possible, and freezing the clock would test the mock rather than the query.
 
 from datetime import timedelta
 
+from unittest.mock import patch
+
 from odoo import fields
+from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
@@ -65,7 +68,8 @@ class TestAuthLogRetention(TransactionCase):
         a row past retention is MINIMISED, and only a row past the skeleton
         window is removed. This drives the skeleton window directly.
         """
-        self.Param.set_param(SKELETON_PARAM, 180)
+        self.Param.set_param(RETENTION_PARAM, 30)   # distinct: pins that
+        self.Param.set_param(SKELETON_PARAM, 180)  # gc reads SKELETON
         stale = self._make_log(age_days=400, login="stale@ncollection.test")
         edge_old = self._make_log(age_days=181, login="edge_old@ncollection.test")
         edge_new = self._make_log(age_days=179, login="edge_new@ncollection.test")
@@ -173,7 +177,8 @@ class TestAuthLogRetention(TransactionCase):
 
     def test_purge_is_idempotent(self):
         """A second run over an already-clean window is a no-op."""
-        self.Param.set_param(SKELETON_PARAM, 180)
+        self.Param.set_param(RETENTION_PARAM, 30)   # distinct: pins that
+        self.Param.set_param(SKELETON_PARAM, 180)  # gc reads SKELETON
         self._make_log(age_days=400)
         first = self.Log._gc_auth_log()
         second = self.Log._gc_auth_log()
@@ -276,7 +281,7 @@ class TestAuthLogRetention(TransactionCase):
         old_row = self._make_log(age_days=9999, login="coherent@ncollection.test")
         with self.assertRaises(UserError) as ctx:
             self.Log._gc_auth_log()
-        self.assertIn("shorter than", str(ctx.exception))
+        self.assertIn("flat delete wearing two stages", str(ctx.exception))
         self.assertTrue(old_row.exists(), "nothing may be deleted when refusing")
 
     def test_a_garbage_skeleton_window_refuses_rather_than_guessing(self):
@@ -288,14 +293,132 @@ class TestAuthLogRetention(TransactionCase):
 
     def test_the_cron_runs_BOTH_stages(self):
         """A cron that only purged would delete un-minimised rows at 400 days
-        having never stripped them at 180 — the PII would simply live longer
-        than before, which is the opposite of the intent."""
+        having never stripped them at 180 — the PII would live LONGER than
+        before, the opposite of the intent.
+
+        Executes the cron's own code and asserts on ROW STATE. The first version
+        of this test only checked that the substrings appeared in `cron.code`, in
+        order — which passes with stage 1 commented out, moved into a dead
+        string, or wrapped in `if False:`. That is the ninth test in this repo
+        found to pass against a broken implementation, so this one runs the
+        thing.
+        """
+        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 400)
+        to_minimise = self._make_log(age_days=200, login="mid@ncollection.test")
+        to_delete = self._make_log(age_days=500, login="old@ncollection.test")
+        untouched = self._make_log(age_days=10, login="new@ncollection.test")
+
         cron = self.env.ref("ncollection_auth.cron_gc_auth_log")
-        self.assertIn("_minimise_auth_log", cron.code)
-        self.assertIn("_gc_auth_log", cron.code)
-        self.assertLess(cron.code.index("_minimise_auth_log"),
-                        cron.code.index("_gc_auth_log"),
-                        "minimise must run before purge")
+        # safe_eval the cron's real code with the same globals ir.cron provides,
+        # so a broken `code` field fails HERE rather than silently in production.
+        safe_eval(cron.code.strip(), {
+            # No cron_id: it would make _commit_progress call cr.commit(),
+            # which Odoo forbids inside a test (#219's own guard).
+            'model': self.Log,
+            'env': self.env,
+            'log': lambda *a, **k: None,
+        }, mode="exec")
+
+        for row in (to_minimise, to_delete, untouched):
+            row.invalidate_recordset()
+        self.assertFalse(to_delete.exists(), "stage 2 did not delete")
+        self.assertTrue(to_minimise.exists(), "stage 1 row must survive")
+        self.assertFalse(to_minimise.ip_address, "stage 1 did not run")
+        self.assertTrue(to_minimise.login.startswith(DIGEST_PREFIX))
+        self.assertEqual(untouched.ip_address, "203.0.113.7", "in-window row touched")
+
+    def test_the_purge_still_runs_when_minimisation_fails(self):
+        """Deletion has its own deadline and its own validated preconditions. A
+        transient stage-1 fault must not silently skip it for that run."""
+        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 400)
+        doomed = self._make_log(age_days=500, login="purge@ncollection.test")
+
+        cron = self.env.ref("ncollection_auth.cron_gc_auth_log")
+
+        def _boom():
+            raise RuntimeError("simulated stage-1 fault")
+
+        model = self.Log
+        with patch.object(type(model), "_minimise_auth_log", staticmethod(_boom)):
+            safe_eval(cron.code.strip(), {
+                'model': model, 'env': self.env,
+                'log': lambda *a, **k: None,
+            }, mode="exec")
+
+        doomed.invalidate_recordset()
+        self.assertFalse(doomed.exists(),
+                         "stage 1 failing must not suppress stage 2")
+
+    # -- the two windows must stay coherent (regression cover) -------------
+
+    def test_a_tiny_skeleton_is_refused_even_when_minimisation_is_off(self):
+        """The floor must NOT depend on retention being enabled.
+
+        The first version only compared skeleton against retention, so with
+        retention disabled — a documented, legitimate state — skeleton could be
+        set to 1 and delete day-old rows carrying FULL raw PII. That reopened
+        the MIN_RETENTION_DAYS anti-forensics floor this module documents at
+        length, reachable in two parameter writes by exactly the actor the floor
+        exists to constrain.
+        """
+        self.Param.set_param(RETENTION_PARAM, 0)      # minimisation disabled
+        self.Param.set_param(SKELETON_PARAM, 1)
+        fresh_pii = self._make_log(age_days=5, login="evidence@ncollection.test")
+
+        with self.assertRaises(UserError) as ctx:
+            self.Log._gc_auth_log()
+
+        self.assertIn("floor", str(ctx.exception))
+        self.assertTrue(fresh_pii.exists(), "5-day-old evidence must survive")
+        fresh_pii.invalidate_recordset()
+        self.assertEqual(fresh_pii.ip_address, "203.0.113.7")
+
+    def test_a_skeleton_equal_to_retention_is_refused(self):
+        """`skeleton == retention` means minimise and delete on the same day —
+        the flat delete #261 replaces, with every individual guard technically
+        satisfied. The rule is a GAP, not merely non-inversion."""
+        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 180)   # equal -> zero-day skeleton
+        with self.assertRaises(UserError) as ctx:
+            self.Log._gc_auth_log()
+        self.assertIn("flat delete wearing two stages", str(ctx.exception))
+
+    def test_an_upgraded_tenant_with_a_long_retention_still_purges(self):
+        """The upgrade path. The new param lives in <data noupdate="1">, which
+        Odoo skips on `-u`, so an existing tenant has no row for it. A tenant
+        that had raised retention above the 400 default would then get
+        skeleton(400) < retention, the guard would refuse on EVERY cron run, and
+        Odoo deactivates a cron after 5 failures — silently switching off the
+        delete stage on exactly the tenants that care most about retention.
+
+        migrations/19.0.1.2.0/post-migrate.py seeds max(default, retention).
+        This pins the outcome that migration must produce.
+        """
+        self.Param.search([("key", "=", SKELETON_PARAM)]).unlink()
+        self.Param.set_param(RETENTION_PARAM, 500)
+        # Exactly what migrations/19.0.1.2.0/post-migrate.py writes —
+        # max(default, retention + floor). An earlier version of this test
+        # mirrored max(default, retention), which yields skeleton == retention
+        # for retention >= 400: a zero-day skeleton the coherence rule refuses.
+        # That caught a real bug in the migration, not in the test.
+        self.Param.set_param(SKELETON_PARAM, max(400, 500 + MIN_RETENTION_DAYS))
+
+        ancient = self._make_log(age_days=9999, login="upgraded@ncollection.test")
+        self.Log._gc_auth_log()          # must NOT raise
+        self.assertFalse(ancient.exists())
+
+    def test_a_login_containing_the_marker_is_still_minimised(self):
+        """`not like` wraps its value in %...%, so the original domain asked
+        "does not CONTAIN sha256:" while the marker is a PREFIX. A login with
+        that substring anywhere would have been skipped forever."""
+        self.Param.set_param(RETENTION_PARAM, 180)
+        row = self._make_log(age_days=200, login="user+sha256:x@ncollection.test")
+        self.Log._minimise_auth_log()
+        row.invalidate_recordset()
+        self.assertTrue(row.login.startswith(DIGEST_PREFIX))
+        self.assertNotIn("@ncollection.test", row.login)
 
     # -- the wiring ---------------------------------------------------------
 
@@ -340,7 +463,8 @@ class TestAuthLogRetention(TransactionCase):
         exit are all exercised cheaply.
         """
         self.patch(auth_log, "GC_CHUNK_SIZE", 3)
-        self.Param.set_param(SKELETON_PARAM, 180)
+        self.Param.set_param(RETENTION_PARAM, 30)   # distinct: pins that
+        self.Param.set_param(SKELETON_PARAM, 180)  # gc reads SKELETON
         stale = [
             self._make_log(age_days=300 + n, login="batch%d@ncollection.test" % n)
             for n in range(7)
@@ -362,7 +486,8 @@ class TestAuthLogRetention(TransactionCase):
         """
         self.patch(auth_log, "GC_CHUNK_SIZE", 2)
         self.patch(auth_log, "GC_MAX_BATCHES", 2)
-        self.Param.set_param(SKELETON_PARAM, 180)
+        self.Param.set_param(RETENTION_PARAM, 30)   # distinct: pins that
+        self.Param.set_param(SKELETON_PARAM, 180)  # gc reads SKELETON
         stale = [
             self._make_log(age_days=300 + n, login="cap%d@ncollection.test" % n)
             for n in range(6)
@@ -381,7 +506,8 @@ class TestAuthLogRetention(TransactionCase):
         """Ordering matters when the cap bites: drop the oldest PII first."""
         self.patch(auth_log, "GC_CHUNK_SIZE", 1)
         self.patch(auth_log, "GC_MAX_BATCHES", 1)
-        self.Param.set_param(SKELETON_PARAM, 180)
+        self.Param.set_param(RETENTION_PARAM, 30)   # distinct: pins that
+        self.Param.set_param(SKELETON_PARAM, 180)  # gc reads SKELETON
         older = self._make_log(age_days=900, login="older@ncollection.test")
         newer = self._make_log(age_days=400, login="newer@ncollection.test")
 

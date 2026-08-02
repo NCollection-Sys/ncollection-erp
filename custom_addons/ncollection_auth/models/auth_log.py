@@ -81,11 +81,20 @@ DEFAULT_SKELETON_DAYS = 400
 # ip_address and user_agent and stopped there; leaving `login` would have made
 # the minimisation cosmetic.
 #
-# It is DIGESTED rather than nulled because it is also the only record of WHICH
-# account was targeted when the attempt failed against a non-existent user
-# (user_id is null there). Nulling it makes credential stuffing against invented
-# addresses invisible; digesting keeps "these 400 failures all hit one account"
-# without storing anyone's address.
+# It is DIGESTED rather than nulled because on the two most investigation-
+# relevant event types it is the ONLY record of which account was involved:
+# `_capture_isolated('login_failed', login=...)` and
+# `_capture('reset_complete', login=...)` both pass no `user`, so those rows
+# carry `login` with user_id NULL. Nulling it would erase the subject of a
+# failed-login or completed-reset event entirely; digesting keeps "these 400
+# failures all hit one account" without storing anyone's address.
+#
+# (An earlier version of this comment justified the digest by pointing at
+# attempts against NON-EXISTENT users. That was wrong: res.users._login raises
+# AccessDenied before _check_credentials when the user does not exist, so no row
+# is written at all for that case — the hook never fires. Credential stuffing
+# against invented addresses is invisible to this table either way, which is a
+# real gap but a different one.)
 #
 # The prefix doubles as the already-minimised marker, so the sweep needs no new
 # column and is naturally idempotent (Rule 12).
@@ -202,17 +211,69 @@ class NcollectionAuthLog(models.Model):
         try:
             days = int(str(raw).strip())
         except (TypeError, ValueError) as exc:
+            # Logged AND raised, matching _retention_days: the log line is a
+            # second channel that does not depend on anyone watching an
+            # in-tenant notification.
+            _logger.error(
+                "Auth-log purge REFUSED: %s is not a whole number (%r).",
+                SKELETON_PARAM, raw)
             raise UserError(self.env._(
                 "%(param)s is not a whole number of days (%(value)r). Refusing "
                 "to run: a purge that cannot read its own window must not guess.",
                 param=SKELETON_PARAM, value=raw)) from exc
-        retention = self._retention_days()
-        if days > 0 and 0 < retention and days < retention:
+
+        # An INDEPENDENT floor, checked before the coherence rule and NOT
+        # conditional on retention.
+        #
+        # The first version only compared skeleton against retention, which is
+        # void whenever retention <= 0 — and retention 0 is a documented,
+        # legitimate way to disable stage 1. That left `retention=0,
+        # skeleton=1` accepted: a straight regression of the MIN_RETENTION_DAYS
+        # anti-forensics floor this module documents at length, reachable in two
+        # parameter writes instead of one, by exactly the actor that floor
+        # exists to constrain. Deletion is the irreversible stage; it needs its
+        # own floor, not a relative one.
+        if 0 < days < MIN_RETENTION_DAYS:
+            _logger.error(
+                "Auth-log purge REFUSED: %s = %s is below the %s-day floor.",
+                SKELETON_PARAM, days, MIN_RETENTION_DAYS)
             raise UserError(self.env._(
-                "%(sk)s (%(sv)s) is shorter than %(rt)s (%(rv)s). That would "
-                "delete rows before they are minimised, turning the two-stage "
-                "policy back into a flat delete. Refusing.",
-                sk=SKELETON_PARAM, sv=days, rt=RETENTION_PARAM, rv=retention))
+                "%(param)s is %(value)s day(s), below the %(minimum)s-day floor. "
+                "Refusing: a window this short is how an audit trail gets erased "
+                "and made to look like routine retention. Lowering the floor is a "
+                "deliberate, reviewable code change.",
+                param=SKELETON_PARAM, value=days, minimum=MIN_RETENTION_DAYS))
+
+        retention = self._retention_days()
+        if days > 0 and retention > 0:
+            # A GAP, not just non-inversion. `skeleton == retention` passed the
+            # original strict `<` test while meaning "minimise and delete on the
+            # same day" — i.e. exactly the flat delete #261 exists to replace,
+            # with every individual guard technically satisfied and no error. The
+            # skeleton has to actually exist for long enough to be evidence.
+            if days - retention < MIN_RETENTION_DAYS:
+                _logger.error(
+                    "Auth-log purge REFUSED: %s (%s) leaves only %s day(s) of "
+                    "skeleton after %s (%s).",
+                    SKELETON_PARAM, days, days - retention,
+                    RETENTION_PARAM, retention)
+                raise UserError(self.env._(
+                    "%(sk)s (%(sv)s) leaves only %(gap)s day(s) of minimised "
+                    "history after %(rt)s (%(rv)s) — less than the %(minimum)s-day "
+                    "minimum. A skeleton that short is a flat delete wearing two "
+                    "stages. Refusing.",
+                    sk=SKELETON_PARAM, sv=days, gap=days - retention,
+                    rt=RETENTION_PARAM, rv=retention, minimum=MIN_RETENTION_DAYS))
+        elif days > 0 and retention <= 0:
+            # The mirror-image misconfiguration, and it is silent: minimisation
+            # off + deletion on means FULL raw ip/user-agent/login is kept right
+            # up to the delete boundary — precisely the "keep a year of PII"
+            # alternative this design rejected. Not refused (disabling stage 1 is
+            # a documented, legitimate choice) but it must not pass unremarked.
+            _logger.warning(
+                "Auth-log: minimisation is DISABLED (%s = %s) while the purge "
+                "keeps rows for %s days — full IP/user-agent/login are retained "
+                "for that whole window.", RETENTION_PARAM, retention, days)
         return days
 
     @api.model
@@ -262,6 +323,7 @@ class NcollectionAuthLog(models.Model):
         deadline = fields.Datetime.now() - timedelta(days=days)
         under_cron = bool(self.env.context.get('cron_id'))
         total = 0
+        capped = True
         for _batch in range(GC_MAX_BATCHES):
             rows = self.sudo().search([
                 ('create_date', '<', deadline),
@@ -269,9 +331,16 @@ class NcollectionAuthLog(models.Model):
                 ('ip_address', '!=', False),
                 ('user_agent', '!=', False),
                 '&', ('login', '!=', False),
-                ('login', 'not like', DIGEST_PREFIX + '%'),
+                # `not =like`, NOT `not like`: Odoo wraps a `like` value in
+                # %...% (need_wildcard = '=' not in operator, orm/fields.py),
+                # which made this "does not CONTAIN sha256:" — a substring test,
+                # while the marker is a prefix. Idempotency survived either way,
+                # but a login containing 'sha256:' anywhere would have been
+                # skipped forever.
+                ('login', 'not =like', DIGEST_PREFIX + '%'),
             ], limit=GC_CHUNK_SIZE, order='create_date asc')
             if not rows:
+                capped = False
                 break
             for row in rows:
                 vals = {'ip_address': False, 'user_agent': False}
@@ -282,11 +351,19 @@ class NcollectionAuthLog(models.Model):
             if under_cron:
                 self.env['ir.cron']._commit_progress(processed=len(rows))
             if len(rows) < GC_CHUNK_SIZE:
+                capped = False
                 break
 
         if total:
             _logger.info("Auth-log minimised %s row(s) older than %s days.",
                          total, days)
+        if capped:
+            # Mirrors _gc_auth_log's warning, for the same reason: without it a
+            # multi-day backlog looks identical to a clean sweep, while rows
+            # keep their full PII past the window they were promised.
+            _logger.warning(
+                "Auth-log minimisation hit its per-run cap (%s rows); a backlog "
+                "remains and will be picked up by the next run.", total)
         return total
 
     def _gc_auth_log(self):

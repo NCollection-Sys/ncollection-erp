@@ -5,7 +5,12 @@
 {
     'name': 'NCollection Auth Hardening',
     # 1.2.0 (#261): auth-log retention becomes two-stage — minimise at 180d,
-    # delete at 400d. New ir.config_parameter, so `-u` is what applies it.
+    # delete at 400d. The new parameter is seeded by migrations/19.0.1.2.0/,
+    # NOT by the data file: its <function> lives in <data noupdate="1">, and
+    # Odoo skips those on upgrade (convert.py _tag_function: `if self.noupdate
+    # and self.mode != 'init': return`). An earlier version of this comment
+    # claimed `-u` applies it — it does not, and a tenant with a customised
+    # retention above 400 would have had the purge refuse on every run.
     'version': '19.0.1.2.0',
     'category': 'Hidden',
     'summary': 'Authentication audit log + hardened login/session defaults (P1-T19)',
