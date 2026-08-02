@@ -38,7 +38,13 @@ class SaasSubprocessMixin(models.AbstractModel):
 
     def _assert_safe_db_name(self, db):
         """Reject anything that is not a known-safe tenant DB identifier before it
-        reaches a subprocess arg or a DROP — injection / self-target guard."""
+        reaches a subprocess arg or a DROP — injection / self-target guard.
+
+        Deliberately does NOT check existence: callers of this guard (fleet
+        migration) operate on databases that must already exist. Provisioning's
+        ``_validate_db_name`` adds that check because it CREATES — see the note
+        there (#243).
+        """
         if not db or not DB_NAME_RE.match(db):
             raise ValidationError(self.env._(
                 "Unsafe database name '%s' (must match ^[a-z][a-z0-9]{2,62}$).", db))

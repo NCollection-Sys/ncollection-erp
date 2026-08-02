@@ -10,13 +10,9 @@ import contextlib
 from unittest.mock import patch
 
 from odoo.addons.ncollection_saas.models.backup import NcollectionBackup
-from odoo.addons.ncollection_saas.models.provisioning_job import (
-    DB_NAME_RE as PJ_DB_NAME_RE,
-    RESERVED_DB_NAMES as PJ_RESERVED,
-)
 from odoo.addons.ncollection_saas.models.saas_subprocess import (
-    DB_NAME_RE as SS_DB_NAME_RE,
-    RESERVED_DB_NAMES as SS_RESERVED,
+    DB_NAME_RE,
+    RESERVED_DB_NAMES,
     SaasSubprocessMixin,
 )
 from odoo.exceptions import AccessError, UserError, ValidationError
@@ -228,11 +224,48 @@ class TestFleetMigration(TransactionCase):
         with self.assertRaises(UserError):
             migration.action_run_sync()          # already started
 
-    def test_db_name_guard_matches_provisioning(self):
-        # The mixin copies these safety constants from provisioning_job; guard
-        # against silent drift (a reserved name added to one copy only).
-        self.assertEqual(SS_DB_NAME_RE.pattern, PJ_DB_NAME_RE.pattern)
-        self.assertEqual(SS_RESERVED, PJ_RESERVED)
+    def test_provisioning_shares_the_mixins_safety_constants(self):
+        """One definition, not two copies kept in step by a test.
+
+        This replaces test_db_name_guard_matches_provisioning, which asserted
+        that provisioning's OWN copies of DB_NAME_RE / RESERVED_DB_NAMES equalled
+        the mixin's. Those copies are gone (#243), so equality is now structural
+        rather than something a test has to police — asserting identity is what
+        proves the duplication is actually absent, not merely synchronised.
+        """
+        # Relative import: pylint-odoo W8150 flags an absolute
+        # odoo.addons.<own module> import from inside the same module.
+        from ..models import provisioning_job as pj
+        self.assertIs(pj.DB_NAME_RE, DB_NAME_RE)
+        self.assertIs(pj.RESERVED_DB_NAMES, RESERVED_DB_NAMES)
+
+    def test_provisioning_now_carries_the_mixin(self):
+        """The refactor's actual claim: the helpers come from the mixin."""
+        job = self.env['ncollection.provisioning.job']
+        self.assertIn('ncollection.saas.subprocess.mixin', job._inherit)
+        for helper in ('_odoo_conn_args', '_run_odoo_subprocess',
+                       '_db_conn_params', '_drop_database',
+                       '_assert_safe_db_name'):
+            self.assertTrue(hasattr(job, helper),
+                            "provisioning lost %s in the refactor" % helper)
+
+    def test_the_two_name_guards_differ_on_existence_deliberately(self):
+        """The one thing that must NOT be unified (#243).
+
+        Provisioning CREATES a database, so an existing name is a collision it
+        must reject. The mixin's guard is used by fleet migration, which
+        UPGRADES databases that must ALREADY exist. Merging them silently breaks
+        one caller or the other — provisioning would build over a live tenant
+        DB, or a migration would refuse every real target. Neither is loud, so
+        it is pinned here.
+        """
+        job = self.env['ncollection.provisioning.job']
+        with patch.object(type(job), '_database_exists', return_value=True):
+            # The mixin's guard accepts an existing database...
+            job._assert_safe_db_name('existingtenant')
+            # ...while provisioning's rejects it as a collision.
+            with self.assertRaises(ValidationError):
+                job._validate_db_name('existingtenant')
 
     def test_dry_run_touches_no_database(self):
         migration = self._migration(dry_run=True)

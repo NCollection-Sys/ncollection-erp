@@ -15,21 +15,19 @@ Isolation (ARCHITECTURE_DATA_PLATFORM §10, ARCHITECTURE_SECURITY §11):
 import logging
 import os
 import re
-import subprocess
 from datetime import timedelta
 
 import psycopg2
-from psycopg2 import sql
 
 from odoo import fields, models
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import config
 
 # Intra-package (platform-layer) import — the KDF + master env-var name live with
 # the config-sync push code. The PLATFORM derives each tenant's config-sync key and
 # hands only the derived value to the seed subprocess, so the master never enters
 # the tenant context and the seed needs no cross-package import (#212).
 from .config_sync import _SYNC_KEY_ENV, derive_tenant_key
+from .saas_subprocess import DB_NAME_RE, RESERVED_DB_NAMES
 
 _logger = logging.getLogger(__name__)
 
@@ -38,14 +36,10 @@ _logger = logging.getLogger(__name__)
 _SEED_TENANT_KEY_ENV = 'NC_CONFIG_SYNC_TENANT_KEY'
 
 # Forbidden tenant DB / subdomain names (ARCHITECTURE_DATA_PLATFORM §2).
-RESERVED_DB_NAMES = frozenset(
-    {'admin', 'www', 'staging', 'api', 'postgres', 'template0', 'template1'}
-)
 # lowercase alphanumeric, starts with a letter, 3–63 chars — a safe SQL identifier
 # AND a valid subdomain label. NO underscore: tenant key === subdomain === database
 # name, and underscores are invalid in hostnames, so an underscore name is unroutable
 # under db_filter=^%d$ (#211). Matches checkout.SUBDOMAIN_RE / tenant._GENERATED_NAME_RE.
-DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 # A PERMISSIVE variant for the DESTRUCTIVE cleanup guards only (retry-sweep +
 # rollback). Those must be able to drop a database THIS engine could have created —
 # including a legacy underscore name left by a job from before DB_NAME_RE was
@@ -71,7 +65,17 @@ SUBPROCESS_TIMEOUT = 1800  # 30 min hard cap per odoo subprocess
 
 
 class ProvisioningJob(models.Model):
-    _inherit = 'ncollection.provisioning.job'
+    # The subprocess mixin carries the isolated-odoo + maintenance-DB
+    # primitives (#243). Before this, provisioning kept its own copies and a
+    # guard-test policed the two for drift; one definition removes the class of
+    # bug the guard existed for.
+    # _name is explicit because _inherit is a LIST: with a bare string Odoo
+    # infers the model from it, but a list is ambiguous and the class stops
+    # contributing to ncollection.provisioning.job — which surfaced as
+    # "action_run is not a valid action" when its own view loaded.
+    _name = 'ncollection.provisioning.job'
+    _inherit = ['ncollection.provisioning.job',
+                'ncollection.saas.subprocess.mixin']
 
     # ---- entry points ----------------------------------------------------
 
@@ -163,7 +167,23 @@ class ProvisioningJob(models.Model):
     # ---- steps -----------------------------------------------------------
 
     def _validate_db_name(self, db):
-        """Reject injection / overwrite / reserved names before any side effect."""
+        """Reject injection / overwrite / reserved names before any side effect.
+
+        DELIBERATELY NOT the mixin's ``_assert_safe_db_name`` (#243). They look
+        like duplicates and encode OPPOSITE requirements about existence:
+
+          * this one CREATES a database, so an existing name is a collision and
+            must be rejected (the ``_database_exists`` check below);
+          * the mixin's guard is used by fleet migration, which UPGRADES
+            databases that must ALREADY exist — rejecting them would refuse
+            every real target.
+
+        Unifying them silently breaks one caller or the other, and neither
+        failure is loud: provisioning would build over a live tenant DB, or a
+        fleet migration would refuse to run. The shared parts (the regex, the
+        reserved set, the subprocess and maintenance-DB helpers) ARE unified —
+        it is only this existence rule that differs.
+        """
         if not db or not DB_NAME_RE.match(db):
             raise ValidationError(self.env._(
                 "Invalid database name '%s': must match ^[a-z][a-z0-9]{2,62}$.", db))
@@ -192,7 +212,7 @@ class ProvisioningJob(models.Model):
             '--without-demo=True', '--stop-after-init', '--no-http',
             '--max-cron-threads=0',
         ]
-        self._run_subprocess(cmd, self.env._("database init"))
+        self._run_odoo_subprocess(cmd, self.env._("database init"))
 
     def _seed_tenant(self, db):
         """Seed admin (forced reset) + workspace.config + branding via odoo shell.
@@ -231,7 +251,7 @@ class ProvisioningJob(models.Model):
             env_vars[_SEED_TENANT_KEY_ENV] = derive_tenant_key(master, db)
         # `shell` MUST be the first argument (odoo <subcommand> <options>).
         cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
-        out = self._run_subprocess(
+        out = self._run_odoo_subprocess(
             cmd, self.env._("tenant seed"), stdin=script, env=env_vars)
         return self._parse_setup_url(out)
 
@@ -287,66 +307,12 @@ class ProvisioningJob(models.Model):
 
     # ---- infrastructure helpers -----------------------------------------
 
-    def _odoo_conn_args(self, db):
-        """Config + DB connection flags shared by the init and shell subprocesses.
-
-        The rcfile carries addons_path; the DB host/user/password are injected
-        by the docker entrypoint as env vars for the MAIN process only, so a
-        spawned `odoo` would otherwise fall back to a local socket. We pass them
-        explicitly from the running config. Callers prepend `odoo` (+ optional
-        `shell` subcommand) and append their own options.
-        """
-        args = []
-        if config.rcfile:
-            args += ['-c', config.rcfile]
-        args += ['-d', db]
-        for flag, key, default in (
-            ('--db_host', 'db_host', 'db'),
-            ('--db_port', 'db_port', '5432'),
-            ('--db_user', 'db_user', 'odoo'),
-            ('--db_password', 'db_password', 'odoo'),
-        ):
-            value = config[key] or default
-            args.append('%s=%s' % (flag, value))
-        return args
-
-    def _run_subprocess(self, cmd, label, stdin=None, env=None):
-        result = subprocess.run(
-            cmd, input=stdin, env=env, capture_output=True, text=True,
-            timeout=SUBPROCESS_TIMEOUT, check=False,
-        )
-        if result.returncode != 0:
-            tail = (result.stderr or result.stdout or '')[-2000:]
-            raise UserError(self.env._(
-                "Step %(label)s failed (exit %(code)s):\n%(out)s",
-                label=label, code=result.returncode, out=tail))
-        return result.stdout or ''
-
-    def _db_conn_params(self, dbname):
-        params = {
-            'dbname': dbname,
-            'host': config['db_host'] or 'db',
-            'port': config['db_port'] or 5432,
-            'user': config['db_user'] or 'odoo',
-            'password': config['db_password'] or 'odoo',
-        }
-        return {k: v for k, v in params.items() if v not in (False, None, '')}
-
     def _database_exists(self, db):
         conn = psycopg2.connect(**self._db_conn_params('postgres'))
         try:
             cur = conn.cursor()
             cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db,))
             return cur.fetchone() is not None
-        finally:
-            conn.close()
-
-    def _drop_database(self, db):
-        conn = psycopg2.connect(**self._db_conn_params('postgres'))
-        conn.autocommit = True
-        try:
-            conn.cursor().execute(
-                sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(db)))
         finally:
             conn.close()
 
