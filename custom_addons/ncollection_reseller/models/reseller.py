@@ -32,7 +32,7 @@ class Reseller(models.Model):
     name = fields.Char(required=True, tracking=True)
     active = fields.Boolean(default=True)
     partner_id = fields.Many2one(
-        'res.partner', string='Partner', required=True, tracking=True,
+        'res.partner', required=True, tracking=True,
         help="The business partner (admin DB) this reseller account belongs to.")
     user_id = fields.Many2one(
         'res.users', string='Portal Login',

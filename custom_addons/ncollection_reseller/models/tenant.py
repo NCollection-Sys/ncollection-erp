@@ -17,7 +17,7 @@ class Tenant(models.Model):
     _inherit = 'ncollection.tenant'
 
     reseller_id = fields.Many2one(
-        'ncollection.reseller', string='Reseller', ondelete='restrict',
+        'ncollection.reseller', ondelete='restrict',
         tracking=True, index=True,
         help="The white-label reseller that provisioned this sub-tenant. "
              "Empty for direct (non-reseller) tenants — the standard checkout "

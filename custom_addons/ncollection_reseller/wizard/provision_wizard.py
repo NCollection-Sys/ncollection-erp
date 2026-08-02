@@ -15,12 +15,12 @@ class ResellerProvisionWizard(models.TransientModel):
     _description = 'Provision Sub-Tenant Wizard'
 
     reseller_id = fields.Many2one(
-        'ncollection.reseller', string='Reseller', required=True,
+        'ncollection.reseller', required=True,
         default=lambda self: self.env.context.get('active_id'))
     company_name = fields.Char(required=True)
     subdomain = fields.Char(string='Workspace Address', required=True)
     plan_id = fields.Many2one(
-        'ncollection.subscription.plan', string='Plan', required=True,
+        'ncollection.subscription.plan', required=True,
         domain=[('active', '=', True)])
     email = fields.Char(string='Contact Email')
     contact_name = fields.Char(string='Contact Name')

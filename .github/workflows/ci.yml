@@ -105,7 +105,11 @@ jobs:
           # an explicit file-level disable with the reason, as does the #221 re-key
           # script. Lowering the baseline rather than raising it keeps the 3 units
           # of slack from silently absorbing a future REAL finding.
-          PYLINT_BASELINE=54
+          # 55 (#101): the new ncollection_reseller module carries the one
+          # unavoidable manifest-required-author (OCA) finding every NCollection
+          # module has — its other boilerplate findings (README, superfluous
+          # keys, redundant field strings, wizard layout) were all cleaned up.
+          PYLINT_BASELINE=55
           set +e
           pylint --load-plugins=pylint_odoo -d all -e odoolint custom_addons/ | tee pylint.log
           COUNT=$(grep -cE ": [CWEF][0-9]{4}: " pylint.log)

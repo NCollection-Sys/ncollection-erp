@@ -18,8 +18,8 @@ class ResellerRevenueShare(models.Model):
     _auto = False
     _order = 'reseller_id'
 
-    reseller_id = fields.Many2one('ncollection.reseller', string='Reseller', readonly=True)
-    currency_id = fields.Many2one('res.currency', string='Currency', readonly=True)
+    reseller_id = fields.Many2one('ncollection.reseller', readonly=True)
+    currency_id = fields.Many2one('res.currency', readonly=True)
     subtenant_count = fields.Integer(string='Sub-Tenants', readonly=True)
     total_mrr = fields.Monetary(
         string='Total MRR', readonly=True, currency_field='currency_id')
