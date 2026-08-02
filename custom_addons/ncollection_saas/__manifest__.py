@@ -2,7 +2,11 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    'version': '19.0.6.0.0',
+    # Patch bump: #243 is a behaviour-neutral refactor (provisioning inherits the
+    # subprocess mixin). No schema, view, or data change — Python alone takes
+    # effect on server restart, not on -u — so this is traceability, not a
+    # migration signal.
+    'version': '19.0.6.1.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

@@ -8,9 +8,15 @@ connection. Both the provisioning engine (P2-T01) and the fleet migration
 orchestrator (P3-T14) need the same primitives; this abstract mixin is their
 shared, canonical home.
 
-``provisioning_job.py`` predates this mixin and keeps its own copies for now;
-unifying it onto this mixin is a tracked follow-up — deliberately kept out of
-P3-T14 so shipped, isolation-critical provisioning code is not touched here.
+``provisioning_job.py`` originally kept its own copies — P3-T14 deliberately did
+not touch shipped, isolation-critical provisioning code — and a guard-test policed
+the two sets for drift. #243 removed that duplication: provisioning now inherits
+this mixin, so the definitions below are the ONLY ones.
+
+The one thing NOT unified is the database-name existence rule. See
+``_assert_safe_db_name`` below and ``provisioning_job._validate_db_name``: they
+encode opposite requirements (upgrade an existing DB vs. create a new one), so
+merging them would silently break one caller.
 """
 import logging
 import re
@@ -25,7 +31,9 @@ from odoo.tools import config
 
 _logger = logging.getLogger(__name__)
 
-# A safe SQL identifier AND a valid subdomain label (mirrors provisioning_job).
+# A safe SQL identifier AND a valid subdomain label. THE definition since #243 —
+# provisioning imports these rather than keeping a second copy, so the injection
+# allowlist cannot drift. Do not re-declare them elsewhere.
 DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 RESERVED_DB_NAMES = frozenset(
     {'admin', 'www', 'staging', 'api', 'postgres', 'template0', 'template1'})

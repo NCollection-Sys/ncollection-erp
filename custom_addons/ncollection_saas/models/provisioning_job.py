@@ -81,10 +81,9 @@ class ProvisioningJob(models.Model):
     # silently define a brand-new, empty model instead of extending
     # ncollection.provisioning.job. It surfaced as "action_run is not a valid
     # action" when the view loaded, not as an import error.
-    # Odoo core appears to omit _name with a list (e.g. _inherit = ['res.partner',
-    # 'mail.thread']) only because ResPartner happens to derive 'res.partner' —
-    # the names coincide there. Ours do not: 'provisioning.job' is not
-    # 'ncollection.provisioning.job'. Do not copy the core idiom here.
+    # Odoo core follows the same rule: mail/models/res_partner.py declares
+    # _name = 'res.partner' explicitly even though _inherit[0] is 'res.partner'.
+    # With a LIST _inherit, always set _name — there is no exception.
     _name = 'ncollection.provisioning.job'
     _inherit = ['ncollection.provisioning.job',
                 'ncollection.saas.subprocess.mixin']
