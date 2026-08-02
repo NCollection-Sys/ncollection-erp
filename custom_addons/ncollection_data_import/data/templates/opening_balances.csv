@@ -1,0 +1,3 @@
+id,code,name,opening_debit,opening_credit
+__export__.REPLACE_WITH_YOUR_BANK_ACCOUNT_ID,1010,"Bank",25000.00,0.00
+__export__.REPLACE_WITH_YOUR_PAYABLE_ACCOUNT_ID,2010,"Accounts Payable",0.00,25000.00

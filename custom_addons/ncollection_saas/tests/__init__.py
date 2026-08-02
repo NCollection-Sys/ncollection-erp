@@ -10,3 +10,5 @@ from . import test_fleet_migration
 from . import test_lifecycle_effects
 
 from . import test_sql_constraints
+from . import test_config_sync_health
+from . import test_config_sync_rekey

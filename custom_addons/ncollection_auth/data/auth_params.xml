@@ -28,5 +28,16 @@
             <value>7200</value>
         </function>
 
+        <!-- Auth-log retention window in days (#219). ncollection.auth.log
+             stores ip_address + user_agent (PII) on every auth event, and
+             #178 put that on every provisioned tenant — so the table needs a
+             storage-limitation policy for a LIVE tenant, not just deletion at
+             offboarding. Purged by the cron in data/auth_cron.xml.
+             Set to 0 (or any value <= 0) to DISABLE the purge entirely. -->
+        <function model="ir.config_parameter" name="set_param">
+            <value>ncollection_auth.log_retention_days</value>
+            <value>180</value>
+        </function>
+
     </data>
 </odoo>

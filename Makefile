@@ -166,6 +166,12 @@ load-test: ## Run the P3-T03 k6 load test (sweep VUs across loadtesta/b/c) — s
 load-test-clean: ## Drop the LOAD-TEST fixture DBs loadtesta/loadtestb/loadtestc (destructive)
 	@for d in loadtesta loadtestb loadtestc; do $(call drop_database,$$d); done
 
+agg-bench: ## Run the P4-T01 aggregation query-budget benchmark (100k rows, <500ms) — rows=AGG_BENCH_ROWS
+	./scripts/perf/run_aggregation_bench.sh
+
+agg-clean: ## Drop the AGGREGATION-BENCH fixture DB aggbench (destructive)
+	@for d in aggbench; do $(call drop_database,$$d); done
+
 ## ---- Cross-suite verification --------------------------------------------
 # A ticket that only proves its OWN lane cannot see a cross-suite regression.
 # `verify-all` runs every guarantee we have against one running stack, and is

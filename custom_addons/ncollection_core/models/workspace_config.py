@@ -10,12 +10,31 @@ see models/ir_ui_menu.py). Ring 2 (ORM enforcement, P1-T10) will consume
 the same record.
 """
 
+import logging
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 # The only fields the platform config-sync channel (P2-T03) may push. Any other
 # key in an inbound sync payload is rejected — the RPC service account can write
 # nothing else on this model, and this method is its single entry point.
+# Tenant-side crons the PLATFORM depends on staying alive (#262).
+#
+# Odoo deactivates a cron by itself after MIN_FAILURE_COUNT_BEFORE_DEACTIVATION
+# (5) failures spanning MIN_DELTA_BEFORE_DEACTIVATION (7 days) — verified in
+# odoo/addons/base/models/ir_cron.py. So a misconfigured compliance job does not
+# just fail loudly, it eventually switches ITSELF OFF and goes quiet. A tenant
+# module cannot see the fleet, so the tenant reports and the platform watches.
+#
+# Referenced by xml-id and resolved softly: ncollection_core must not depend on
+# ncollection_auth (a tenant may legitimately not have it yet — see #218), so an
+# unresolvable id means "not installed", which is NOT a fault.
+REQUIRED_CRON_XMLIDS = (
+    'ncollection_auth.cron_gc_auth_log',
+)
+
 _SYNCABLE_FIELDS = frozenset({
     'allowed_module_names', 'plan_code', 'subscription_status', 'max_users',
 })
@@ -134,7 +153,45 @@ class WorkspaceConfig(models.Model):
         if brand:
             self._nc_apply_pushed_branding(brand)
         return {'ok': True, 'plan_code': config.plan_code,
-                'subscription_status': config.subscription_status}
+                'subscription_status': config.subscription_status,
+                'required_crons': self._required_cron_health()}
+
+    @api.model
+    def _required_cron_health(self):
+        """Self-report on the crons the platform requires (#262).
+
+        Rides the config-sync RESPONSE rather than adding an endpoint or a
+        second nightly fleet pass: the reconcile already visits every ready
+        tenant, and a tenant reporting on ITSELF keeps Rule 3 intact — the
+        platform never queries a tenant model.
+
+        Shape: ``{xml_id: {'installed': bool, 'active': bool}}``.
+        ``installed=False`` means the owning module is absent, which is a
+        legitimate state for a tenant provisioned before the module existed
+        (#218) — the platform must not treat it as a fault. Never raises: a
+        health probe that can break a config push would be worse than the gap
+        it reports.
+        """
+        # Overridable from context so a test can force the unresolvable case
+        # without depending on which modules happen to be installed on the
+        # database it runs against.
+        xml_ids = self.env.context.get('_nc_required_crons') or REQUIRED_CRON_XMLIDS
+        report = {}
+        for xml_id in xml_ids:
+            try:
+                cron = self.env.ref(xml_id, raise_if_not_found=False)
+                if not cron:
+                    report[xml_id] = {'installed': False, 'active': False}
+                else:
+                    report[xml_id] = {'installed': True,
+                                      'active': bool(cron.sudo().active)}
+            except Exception:  # pragma: no cover - defensive
+                _logger.exception(
+                    "Could not read required cron %s for the health report.",
+                    xml_id)
+                report[xml_id] = {'installed': False, 'active': False,
+                                  'error': True}
+        return report
 
     def _nc_apply_pushed_branding(self, brand):
         """Apply a platform-pushed reseller brand onto the tenant company (P10-T09).

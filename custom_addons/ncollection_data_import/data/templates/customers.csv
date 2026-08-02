@@ -1,0 +1,3 @@
+name,is_company,customer_rank,email,phone,street,city,vat
+"Al Barari Trading LLC",1,1,billing@albarari.example,+971 4 000 0000,"Sheikh Zayed Road","Dubai",
+"Fatima Al Nuaimi",0,1,fatima@example.com,+971 50 000 0000,,"Abu Dhabi",

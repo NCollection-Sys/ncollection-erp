@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Config-sync health on the tenant surfaces (#264).
+
+        The point of the ticket: "which tenants are out of sync right now?"
+        must be answerable at a glance, not by grepping Odoo logs on the VPS.
+        P2-T10's log_watcher does alert on ERROR lines, but a generic "Odoo
+        logged 3 ERROR lines in the last 5m" names no tenant and cannot be
+        queried — and it only looks at a 5-minute window, while the reconcile
+        that retries is ~24h apart.
+
+        Extends the ncollection_subscription views rather than replacing them
+        (Rule 2), because ncollection_saas is what owns the sync behaviour.
+    -->
+
+    <record id="view_tenant_tree_config_sync" model="ir.ui.view">
+        <field name="name">ncollection.tenant.tree.config.sync</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_tree"/>
+        <field name="arch" type="xml">
+            <field name="status" position="after">
+                <!-- optional: quiet in the common case, loud when it matters -->
+                <field name="config_sync_state" widget="badge"
+                       optional="show"
+                       decoration-success="config_sync_state == 'ok'"
+                       decoration-warning="config_sync_state == 'transient'"
+                       decoration-danger="config_sync_state == 'permanent'"/>
+                <field name="config_sync_last_ok" optional="hide"/>
+                <field name="cron_health_state" widget="badge" optional="hide"
+                       decoration-success="cron_health_state == 'ok'"
+                       decoration-danger="cron_health_state == 'degraded'"
+                       decoration-muted="cron_health_state == 'unknown'"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_tenant_form_config_sync" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form.config.sync</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_form"/>
+        <field name="arch" type="xml">
+            <field name="database_status" position="after">
+                <field name="config_sync_state" widget="badge"
+                       decoration-success="config_sync_state == 'ok'"
+                       decoration-warning="config_sync_state == 'transient'"
+                       decoration-danger="config_sync_state == 'permanent'"/>
+                <field name="config_sync_last_ok"/>
+                <field name="config_sync_failure_count"
+                       invisible="config_sync_state == 'ok'"/>
+                <field name="config_sync_last_error"
+                       invisible="config_sync_state == 'ok'"/>
+                <field name="cron_health_state" widget="badge"
+                       decoration-success="cron_health_state == 'ok'"
+                       decoration-danger="cron_health_state == 'degraded'"
+                       decoration-muted="cron_health_state == 'unknown'"/>
+                <field name="cron_health_detail"
+                       invisible="cron_health_state != 'degraded'"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- A disabled compliance job is the thing you most want to find fast. -->
+    <record id="filter_tenant_cron_degraded" model="ir.filters">
+        <field name="name">Required job disabled</field>
+        <field name="model_id">ncollection.tenant</field>
+        <field name="domain">[('cron_health_state', '=', 'degraded')]</field>
+    </record>
+
+    <!-- "Show me only the broken ones" without writing a domain by hand. -->
+    <record id="filter_tenant_config_sync_broken" model="ir.filters">
+        <field name="name">Config sync needs attention</field>
+        <field name="model_id">ncollection.tenant</field>
+        <field name="domain">[('config_sync_state', '=', 'permanent')]</field>
+        <!-- Odoo 19 renamed ir.filters.user_id -> user_ids (Many2many), the
+             same plural rename as groups_id -> group_ids. Left unset, which
+             means "shared with every user" — the intent here. -->
+    </record>
+
+</odoo>

@@ -4,7 +4,7 @@
 #  proprietary NCollection module, not an OCA submission.)
 {
     'name': 'NCollection Auth Hardening',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Hidden',
     'summary': 'Authentication audit log + hardened login/session defaults (P1-T19)',
     'author': 'NCollection',
@@ -16,5 +16,6 @@
     'data': [
         'security/ir.model.access.csv',
         'data/auth_params.xml',
+        'data/auth_cron.xml',
     ],
 }

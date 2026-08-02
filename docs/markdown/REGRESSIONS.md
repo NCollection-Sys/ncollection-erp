@@ -18,6 +18,7 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | `invariants.py` R2 — no `\|\| true` on state-changing docker commands | same | CI `lint` + pre-push |
 | `invariants.py` R3 — no hardcoded container names | same | CI `lint` + pre-push |
 | `shellcheck` over every `*.sh` and `.githooks/*` | `.github/workflows/ci.yml` | CI `lint` + pre-push |
+| e2e fixtures upgraded on reuse (schema drift) | `e2e/scripts/setup_e2e_tenants.sh` | `make e2e-verify` (local only — CI builds fresh DBs) |
 | `architecture_guard.py` — addon architecture, secrets, XML | `scripts/ci/architecture_guard.py` | CI + pre-push |
 | Cross-suite `verify` job | `.github/workflows/verify.yml` | CI on every PR |
 | Post-merge canary | `.github/workflows/canary.yml` | push to `develop` |
@@ -373,6 +374,64 @@ now asserts the push `Host` header equals `<db>.<base-domain>` (CI `test`); a re
 **real** cross-DB json2 round-trip end-to-end — a Host/db_filter regression fails loudly
 there. (CI's `verify.yml` runs routing + e2e only; config-sync + provisioning remain the
 local heavy proof, so `make verify-all` before merge is the enforcement point — Rule 13.)
+
+---
+
+## R-016 — `verify_provisioning.sh` left platform fixtures → 2nd consecutive run collided ✅ FIXED (#256)
+
+**Symptom.** Running `make verify-all` (or `make provisioning-verify`) twice back-to-back:
+the first run passed, the second failed with `duplicate key value violates unique constraint
+"ncollection_subscription_plan_code_unique" … (code)=(PROV)`. The cross-suite gate was not
+safely re-runnable, so a red 2nd run was a red herring unrelated to the change under test.
+Surfaced by the `verify-runner` idempotency double-run during PR #255.
+
+**Root cause.** The proof dropped its tenant DBs (`provclient`/`provfail`) but never removed
+the rows it `create()`s in the **platform DB** — the `PROV`/`FAIL` subscription plans, the two
+tenants, and their jobs. The next run's `create({'code': 'PROV'})` collided on the unique
+code. A Rule-12 violation, same class as R-002.
+
+**Guard.** `platform_cleanup()` in `verify_provisioning.sh` ORM-unlinks jobs → tenants → plans
+scoped to `provclient`/`provfail` + `code IN ('PROV','FAIL')`, at startup (self-heals a prior
+aborted run) and end — with `active_test=False` (an archived leftover still collides), a
+`PLATFORM_DB` test-DB guard (it deletes rows, so it refuses a non-test DB), and loud-fail on
+error (Rule 10). Proven: the script and `make verify-all` each ran twice green. The
+verify-runner idempotency double-run (run twice; second = no-op) remains the standing
+detection for this whole class.
+
+---
+
+## R-017 — Reused e2e fixtures kept yesterday's schema; every model change broke `verify-all` locally ✅ FIXED (#264)
+
+**Symptom.** After a branch added fields to `ncollection.tenant`, `make verify-all` failed at
+the e2e stage with
+
+```
+psycopg2.errors.UndefinedColumn: column ncollection_tenant.config_sync_activity_id does not exist
+```
+
+raised from inside `setup_e2e_tenants.sh`'s seed block — whose output goes to `/dev/null`, so
+the visible failure was a bare `make: *** [e2e-verify] Error 1` with no cause. It bit twice on
+the same branch: once for the four fields the feature commit added, then again for the fifth
+that the review commit added.
+
+**Root cause.** `create_tenant()` skipped creation when a fixture already existed
+(`tenant_provisioned` → "skip create") and the `e2eadmin` block skipped install when
+`ncollection_saas` was already installed — but **neither ever ran `odoo -u`**. A reused fixture
+therefore keeps the schema it was built with, while the code under test has moved on. Same
+class as R-012 (a module's dependency grew and existing databases never got it): state that is
+reused across runs must be *reconciled*, not assumed current.
+
+**Why CI never caught it.** The `test` and `verify` jobs build fresh databases every run, so
+the reuse path does not exist there. This was structurally invisible to CI and hit only local
+runs — i.e. every developer, right after pulling a schema change.
+
+**Guard.** Both reuse paths in `e2e/scripts/setup_e2e_tenants.sh` now run `odoo -u` on the
+`ncollection_*` modules before seeding (derived from the module list already passed in; crm/sale
+are not re-upgraded, since they do not drift), and both **fail loud** with the log tail and a
+pointer to `make e2e-clean` instead of `>/dev/null 2>&1` (Rule 10 — a swallowed failure here is
+what made the original symptom unreadable). Proven rather than asserted: `config_sync_activity_id`
+was dropped from `e2eadmin` by hand (5 `config_sync*` columns → 4), the script re-run, and it
+exited 0 having healed all three fixtures back to 5.
 
 ---
 

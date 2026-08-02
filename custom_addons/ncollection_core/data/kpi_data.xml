@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            The three OPERATIONAL KPIs (P4-T02 / #55). The financial three
+            (Revenue Growth %, DSO, Gross Margin %) belong to
+            ncollection_account_analytics (#120) per the 2026-07-19 split and
+            FINANCIAL_PLATFORM_ARCHITECTURE's "Financial KPIs" ownership.
+
+            noupdate: targets and threshold bands are exactly the kind of thing
+            a tenant tunes to its own business, and a module upgrade must not
+            reset that. The seeded numbers below are STARTING POINTS, not
+            benchmarks — an inventory turnover that is healthy for a grocer is
+            alarming for a jeweller.
+        -->
+
+        <record id="kpi_avg_deal_size" model="ncollection.kpi">
+            <field name="key">avg_deal_size</field>
+            <field name="name">Average Deal Size</field>
+            <field name="sequence">10</field>
+            <field name="unit">currency</field>
+            <field name="period_type">month</field>
+            <field name="target_value">0.0</field>
+        </record>
+
+        <record id="kpi_employee_turnover" model="ncollection.kpi">
+            <field name="key">employee_turnover</field>
+            <field name="name">Employee Turnover</field>
+            <field name="sequence">20</field>
+            <field name="unit">percent</field>
+            <field name="period_type">year</field>
+            <field name="target_value">10.0</field>
+        </record>
+
+        <!-- Turnover bands: lower is better, so the good band is the low one.
+             Half-open [min, max) — see kpi_threshold.py. -->
+        <record id="kpi_turnover_band_good" model="ncollection.kpi.threshold">
+            <field name="kpi_id" ref="kpi_employee_turnover"/>
+            <field name="sequence">10</field>
+            <field name="name">Healthy</field>
+            <field name="state">good</field>
+            <field name="value_min">0.0</field>
+            <field name="value_max">10.0</field>
+        </record>
+        <record id="kpi_turnover_band_warning" model="ncollection.kpi.threshold">
+            <field name="kpi_id" ref="kpi_employee_turnover"/>
+            <field name="sequence">20</field>
+            <field name="name">Elevated</field>
+            <field name="state">warning</field>
+            <field name="value_min">10.0</field>
+            <field name="value_max">20.0</field>
+        </record>
+        <record id="kpi_turnover_band_bad" model="ncollection.kpi.threshold">
+            <field name="kpi_id" ref="kpi_employee_turnover"/>
+            <field name="sequence">30</field>
+            <field name="name">Critical</field>
+            <field name="state">bad</field>
+            <field name="value_min">20.0</field>
+            <!-- unbounded above -->
+            <field name="has_max" eval="False"/>
+        </record>
+
+        <record id="kpi_inventory_turnover" model="ncollection.kpi">
+            <field name="key">inventory_turnover</field>
+            <field name="name">Inventory Turnover</field>
+            <field name="sequence">30</field>
+            <field name="unit">ratio</field>
+            <field name="period_type">quarter</field>
+            <field name="target_value">1.0</field>
+        </record>
+
+    </data>
+</odoo>

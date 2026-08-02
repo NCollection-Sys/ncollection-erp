@@ -90,6 +90,103 @@ only when all are ✅:
 - [ ] Postgres **not** reachable from outside (`5432`/`5433` closed)
 - [ ] `.env` is mode `600`, owned by the deploy user
 
+## Required tenant-side jobs — what to do when one is reported disabled (#262)
+
+The SaaS-admin tenant list has a **Required Jobs** state. `A required job is off`
+means a tenant reported that a job the platform depends on is no longer enabled.
+Today that is the auth-log retention purge (`ncollection_auth.cron_gc_auth_log`,
+#219), which deletes PII past the retention window.
+
+**It is usually a symptom, not sabotage.** Odoo deactivates a cron by itself
+after 5 consecutive failures spanning 7 days
+(`MIN_FAILURE_COUNT_BEFORE_DEACTIVATION` / `MIN_DELTA_BEFORE_DEACTIVATION` in
+`odoo/addons/base/models/ir_cron.py`). So a job that was failing — most often a
+misconfigured `ncollection_auth.log_retention_days` — eventually switches itself
+off and goes quiet. **Odoo does not re-enable it when the cause is fixed.**
+
+1. Read the tenant's chatter: the to-do names the job and the tenant DB.
+2. Fix the cause first. For the retention purge that is nearly always the
+   parameter — a value below the 30-day floor, or non-numeric, both of which
+   make the job raise by design (see the auth-log retention rows above).
+3. Re-enable by hand in the tenant DB: *Settings → Technical → Scheduled
+   Actions → "NCollection: auth log retention purge" → Active*.
+4. The next config-sync push clears the state and closes the to-do
+   automatically. The nightly reconcile does this within 24h; no action needed.
+
+`Not reported` is **not** the same as healthy — it means the tenant has not
+synced since this check shipped, or its config-sync push is failing (check the
+Config Sync column, #264). A tenant that legitimately lacks `ncollection_auth`
+(provisioned before #178) reports the job as not installed, which is not a
+fault — #218 is the ticket that backfills those.
+
+## Rotating the config-sync master key (#221)
+
+`NC_CONFIG_SYNC_KEY` is the platform master. Every tenant's config-sync bearer is
+`HMAC-SHA256(master, "nc-config-sync:" || db)` (#212), and each tenant DB stores
+only that derived key's **hash**, written at provisioning.
+
+**So rotating the master breaks every tenant at once** until they are re-keyed —
+the platform starts presenting keys derived from the new master while each tenant
+still holds the hash of the old one. Every push returns 401.
+
+That failure is quiet by design: `_config_sync_push` never raises, so a lifecycle
+transaction cannot be broken by a transport fault. The consequence is what makes
+this urgent — config sync is what propagates `action_suspend` / `action_expire` /
+plan downgrades into each tenant's `ncollection.workspace.config`, which P1-T10
+licence enforcement reads. **A suspended subscription silently fails to lock a
+stale-keyed tenant's workspace.** The customer keeps working.
+
+### The rotation
+
+1. **Rotate the master** in the secrets store / `.env`, then restart Odoo so the
+   new value is in the platform process environment.
+   ```bash
+   # .env  (mode 600, deploy user)
+   NC_CONFIG_SYNC_KEY=<new high-entropy value>
+   docker compose up -d --force-recreate odoo
+   ```
+2. **Re-key the fleet.** *SaaS Admin → Tenants → (cog) "Re-key config sync (all
+   ready tenants)"*. It targets every `ready` tenant regardless of what is
+   selected — deliberately, so a rotation cannot silently cover only the page you
+   were looking at. Requires Settings-administrator rights, enforced at the ORM
+   and not just on the button.
+3. **Read the summary.** Three outcomes, and the difference matters:
+   - **re-keyed** — key replaced *and* a live verification push authenticated.
+   - **skipped** — no config-sync account (see below). Reported, not alarmed;
+     these do not keep the summary from going green, because there is nothing
+     to rotate.
+   - **failed** — makes the summary a sticky warning naming the databases.
+     **Failed tenants still hold the OLD key.** The rotation is not complete
+     until that list is empty.
+
+   Green therefore means "nothing failed", with any skips stated explicitly.
+4. **Confirm independently** in the tenant list: the **Config Sync** column
+   (#264) should read `ok` for every tenant, with a fresh *Last OK*.
+
+Steps 3–4 are not ceremony. The re-key job does not report success on a written
+key — only on a key that then authenticated — precisely so "the job said OK" and
+"the fleet works" cannot diverge.
+
+### Revoking one leaked tenant key
+
+Same operation, one record: open the tenant and press **Re-key config sync** on
+the form. Re-deriving replaces the row, so the leaked key stops authenticating
+immediately. Nothing else about the tenant is touched — this is not a re-seed,
+and the tenant's admin, password and company name are left alone.
+
+### When a tenant reports `REKEY_SKIPPED_NO_ACCOUNT`
+
+That tenant has no `config-sync@ncollection.internal` account — it predates
+P2-T03. This is **not** an error, and the job deliberately will not create one:
+conjuring a platform-writable account into a tenant that never had one is a
+privilege change, not a key rotation. Provision it deliberately instead.
+
+### If the master is lost
+
+There is no recovery path from the tenant side — the stored hashes are one-way
+and per-tenant. Set a new master and re-key the fleet (steps 1–4). Until then,
+config sync is down for every tenant and plan changes will not propagate.
+
 ## Out of scope (own tickets / future)
 
 - SSL Labs A grade + headers audit → **P3-T12** · OWASP probing → **P3-T12**

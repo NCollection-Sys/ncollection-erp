@@ -86,6 +86,10 @@ jobs:
       #   paying down the 7 W8113/C8113 findings it carried.
       #   55 → 56 (2026-07-30): P3-T07 (#47) adds ncollection_approvals — the
       #   single unavoidable manifest-required-author (C8101); +1.
+      #   56 → 57 (2026-08-01): P3-T11 (#51) adds ncollection_data_import — the
+      #   single unavoidable manifest-required-author (C8101); the 3 superfluous
+      #   manifest-key findings were AVOIDED (installable/application/assets
+      #   omitted), so +1.
       # Rather than a blanket
       # continue-on-error (which would hide a PR introducing brand-new
       # findings just as easily as it hides the old ones), this fails ONLY
@@ -95,7 +99,13 @@ jobs:
       # finding fails the job.
       - name: Run pylint-odoo (fails only on NEW findings beyond baseline)
         run: |
-          PYLINT_BASELINE=56
+          # 57 -> 54 (#221): the 3 print-used findings in seed_tenant.py were
+          # never debt. That script's STDOUT is the platform's only channel for
+          # reading a subprocess result, so print is the interface; it now carries
+          # an explicit file-level disable with the reason, as does the #221 re-key
+          # script. Lowering the baseline rather than raising it keeps the 3 units
+          # of slack from silently absorbing a future REAL finding.
+          PYLINT_BASELINE=54
           set +e
           pylint --load-plugins=pylint_odoo -d all -e odoolint custom_addons/ | tee pylint.log
           COUNT=$(grep -cE ": [CWEF][0-9]{4}: " pylint.log)
@@ -228,6 +238,12 @@ jobs:
       # VM's network namespace (and therefore does reach the published
       # port). CONFIRMED WORKING by the first live run (PR #104).
       #
+      # `hr` is installed even though NO ncollection addon depends on it.
+      # ncollection_core's KPI tests (P4-T02) cover employee turnover, which
+      # needs hr.employee; without hr present those tests call skipTest and
+      # CI reports green having never run them. A skipped test is not a
+      # passing test. sale and stock already arrive transitively via
+      # ncollection_approvals and ncollection_data_import.
       # --test-tags scopes the test run to OUR modules. Without it,
       # --test-enable also runs Odoo core's own suite (base, web, …), and
       # core's CLI self-tests (test_cli) fail inside this container —
@@ -243,9 +259,9 @@ jobs:
             odoo --db_host=localhost --db_user=odoo --db_password=odoo \
                  --addons-path=/mnt/extra-addons,/mnt/oca-addons/account-financial-reporting,/mnt/oca-addons/mis-builder,/mnt/oca-addons/reporting-engine,/mnt/oca-addons/queue,/mnt/oca-addons/server-auth,/mnt/oca-addons/server-tools,/mnt/oca-addons/server-ux,/usr/lib/python3/dist-packages/odoo/addons \
                  -d ci_test \
-                 -i ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth,ncollection_account_core,ncollection_account_localization_uae,ncollection_approvals,ncollection_account_reports \
+                 -i hr,ncollection_core,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth,ncollection_account_core,ncollection_account_localization_uae,ncollection_approvals,ncollection_account_reports,ncollection_data_import,account_financial_report \
                  --test-enable \
-                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth,/ncollection_account_core,/ncollection_account_localization_uae,/ncollection_approvals,/ncollection_account_reports \
+                 --test-tags /ncollection_core,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth,/ncollection_account_core,/ncollection_account_localization_uae,/ncollection_approvals,/ncollection_account_reports,/ncollection_data_import \
                  --stop-after-init --log-level=test \
             2>&1 | tee odoo-test.log
           test "${PIPESTATUS[0]}" -eq 0

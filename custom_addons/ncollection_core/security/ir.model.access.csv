@@ -3,3 +3,9 @@ access_workspace_config_user,ncollection.workspace.config.user,model_ncollection
 access_workspace_config_system,ncollection.workspace.config.system,model_ncollection_workspace_config,base.group_system,1,1,1,1
 access_workspace_config_sync,ncollection.workspace.config.sync,model_ncollection_workspace_config,ncollection_core.group_config_sync,1,1,0,0
 access_user_invite_owner,ncollection.user.invite.owner,model_ncollection_user_invite,ncollection_core.group_role_owner,1,1,1,1
+access_aggregation_version_user,ncollection.aggregation.version.user,model_ncollection_aggregation_version,base.group_user,1,0,0,0
+access_aggregation_version_system,ncollection.aggregation.version.system,model_ncollection_aggregation_version,base.group_system,1,1,1,1
+access_kpi_user,ncollection.kpi.user,model_ncollection_kpi,base.group_user,1,0,0,0
+access_kpi_system,ncollection.kpi.system,model_ncollection_kpi,base.group_system,1,1,1,1
+access_kpi_threshold_user,ncollection.kpi.threshold.user,model_ncollection_kpi_threshold,base.group_user,1,0,0,0
+access_kpi_threshold_system,ncollection.kpi.threshold.system,model_ncollection_kpi_threshold,base.group_system,1,1,1,1

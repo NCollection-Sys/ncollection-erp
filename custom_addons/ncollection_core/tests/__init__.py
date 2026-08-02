@@ -10,4 +10,8 @@ from . import test_dashboard
 from . import test_workspace_appearance
 from . import test_subscription_gate
 from . import test_auth_signup
+from . import test_aggregation_engine
+from . import test_aggregation_cache
+from . import test_kpi
+from . import test_config_sync_key
 from . import test_reseller_branding_apply

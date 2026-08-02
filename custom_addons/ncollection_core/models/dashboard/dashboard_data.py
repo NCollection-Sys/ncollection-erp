@@ -196,11 +196,28 @@ class NCollectionDashboardData(models.AbstractModel):
     # -- KPI computations ---------------------------------------------------
 
     @api.model
+    def _engine(self):
+        """The P4-T01 aggregation engine — the single choke point (§9)."""
+        return self.env['ncollection.aggregation.engine']
+
+    @api.model
     def _sum(self, model_name, domain, aggregate):
-        """Single-number aggregate. `_read_group` returns [(value,)], and that
-        value is False (not 0) when nothing matched."""
-        rows = self.env[model_name]._read_group(domain, [], [aggregate])
-        return (rows[0][0] or 0.0) if rows else 0.0
+        """Single-number aggregate, routed through the P4-T01 engine.
+
+        Every KPI below funnels through here, so routing this one method puts
+        the whole dashboard behind the shared cache. The engine returns None
+        for an absent/unlicensed model, which collapses to 0.0 exactly as the
+        previous direct `_read_group` did when nothing matched.
+        """
+        result = self._engine().aggregate({
+            'key': 'dash:%s:%s' % (model_name, aggregate),
+            'model': model_name,
+            'domain': domain,
+            'aggregates': [aggregate],
+        })
+        if not result or not result['rows']:
+            return 0.0
+        return result['rows'][0][0] or 0.0
 
     @api.model
     def _compute_sales_this_month(self):
@@ -287,12 +304,16 @@ class NCollectionDashboardData(models.AbstractModel):
         # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard.
         today = date.today()
         start = today.replace(day=1) - relativedelta(months=5)
-        rows = self.env['account.move.line']._read_group(
-            [('account_id.account_type', '=', 'income'),
-             ('parent_state', '=', 'posted'),
-             ('date', '>=', start)],
-            ['date:month'], ['balance:sum'],
-        )
+        result = self._engine().aggregate({
+            'key': 'dash:revenue_6m',
+            'model': 'account.move.line',
+            'domain': [('account_id.account_type', '=', 'income'),
+                       ('parent_state', '=', 'posted'),
+                       ('date', '>=', start)],
+            'groupby': ['date:month'],
+            'aggregates': ['balance:sum'],
+        })
+        rows = result['rows'] if result else []
         # `date:month` yields a date (first of month) in the modern API, but
         # normalise defensively so a string key cannot silently zero the chart.
         by_month = {}
@@ -310,14 +331,25 @@ class NCollectionDashboardData(models.AbstractModel):
     def _compute_top_customers(self):
         """Top 5 customers by confirmed order value this year."""
         start = date.today().replace(month=1, day=1)
-        # Modern API groups to a RECORDSET, not an (id, name) tuple.
-        rows = self.env['sale.order']._read_group(
-            [('state', '=', 'sale'), ('date_order', '>=', start)],
-            ['partner_id'], ['amount_total:sum'],
-            limit=5, order='amount_total:sum desc',
-        )
+        # The modern ORM groups to a RECORDSET; the engine flattens that to an
+        # (id, display_name) tuple so the payload is cacheable inert data (a
+        # recordset would be bound to an environment that is gone by the next
+        # request). Hence the tuple unpacking here rather than `.display_name`.
+        result = self._engine().aggregate({
+            'key': 'dash:top_customers',
+            'model': 'sale.order',
+            'domain': [('state', '=', 'sale'), ('date_order', '>=', start)],
+            'groupby': ['partner_id'],
+            'aggregates': ['amount_total:sum'],
+            'limit': 5,
+            'order': 'amount_total:sum desc',
+        })
+        rows = result['rows'] if result else []
         return {
-            'labels': [partner.display_name if partner else self.env._('Unknown') for partner, _total in rows],
+            'labels': [
+                partner[1] if partner else self.env._('Unknown')
+                for partner, _total in rows
+            ],
             'data': [total or 0.0 for _partner, total in rows],
             'format': 'currency',
         }

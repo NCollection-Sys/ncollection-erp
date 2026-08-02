@@ -17,6 +17,10 @@ from odoo.tests import TransactionCase, tagged
 from odoo.tools import mute_logger
 
 ENGINE = 'odoo.addons.ncollection_saas.models.provisioning_job.ProvisioningJob'
+# _drop_database moved to the shared subprocess mixin (#243), so it must be
+# patched where it is now DEFINED — patching the concrete class raises
+# AttributeError once the method is inherited rather than declared.
+MIXIN = 'odoo.addons.ncollection_saas.models.saas_subprocess.SaasSubprocessMixin'
 
 
 @tagged('post_install', '-at_install')
@@ -106,7 +110,7 @@ class TestAutoProvisioningPipeline(TransactionCase):
         job = self.env['ncollection.provisioning.job'].create({
             'tenant_id': tenant.id, 'database_name': 'legacy_name'})
         with patch('%s._database_exists' % ENGINE, return_value=True), \
-                patch('%s._drop_database' % ENGINE) as drop:
+                patch('%s._drop_database' % MIXIN) as drop:
             job._rollback('legacy_name', created=True)
         drop.assert_called_once_with('legacy_name')
         # ...but the destructive cleanup NEVER targets the platform DB or a reserved
@@ -123,7 +127,7 @@ class TestAutoProvisioningPipeline(TransactionCase):
         job = self.env['ncollection.provisioning.job'].create({
             'tenant_id': tenant.id, 'database_name': self.env.cr.dbname, 'status': 'failed'})
         with patch('%s._database_exists' % ENGINE, return_value=True), \
-                patch('%s._drop_database' % ENGINE) as drop:
+                patch('%s._drop_database' % MIXIN) as drop:
             # run_provisioning catches + persists the ValidationError (never re-raises),
             # so this returns normally; the point is the sweep never dropped anything.
             job.action_run_sync()
@@ -245,11 +249,11 @@ class TestAutoProvisioningPipeline(TransactionCase):
     def test_rollback_only_drops_owned_db(self):
         job = self.env['ncollection.provisioning.job'].create({
             'tenant_id': self._make_tenant().id, 'database_name': 'acme'})
-        with patch('%s._drop_database' % ENGINE) as drop:
+        with patch('%s._drop_database' % MIXIN) as drop:
             job._rollback('acme', created=False)  # pre-existing DB -> never drop
             drop.assert_not_called()
         with patch('%s._database_exists' % ENGINE, return_value=True), \
-                patch('%s._drop_database' % ENGINE) as drop:
+                patch('%s._drop_database' % MIXIN) as drop:
             job._rollback('acme', created=True)   # our own half-DB -> drop
             drop.assert_called_once()
 
@@ -274,7 +278,7 @@ class TestAutoProvisioningPipeline(TransactionCase):
         with patch('%s._validate_db_name' % ENGINE), \
                 patch('%s._module_list' % ENGINE, return_value=['base']), \
                 patch('%s._run_odoo_init' % ENGINE, side_effect=UserError('boom')), \
-                patch('%s._drop_database' % ENGINE), \
+                patch('%s._drop_database' % MIXIN), \
                 patch('%s._database_exists' % ENGINE, return_value=True):
             # records the failure and returns falsy (no re-raise, so the
             # failure state survives the transaction)
