@@ -23,7 +23,7 @@ class ResellerProvisionWizard(models.TransientModel):
         'ncollection.subscription.plan', required=True,
         domain=[('active', '=', True)])
     email = fields.Char(string='Contact Email')
-    contact_name = fields.Char(string='Contact Name')
+    contact_name = fields.Char()
     billing_cycle = fields.Selection(
         [('monthly', 'Monthly'), ('yearly', 'Yearly')],
         default='monthly', required=True)
