@@ -25,6 +25,7 @@ provisioned before #178) could not be done with the upgrade path, and why the
 install path needs no "already installed?" bookkeeping of its own.
 """
 import logging
+import os
 
 from odoo import fields, models
 from odoo.exceptions import UserError
@@ -284,6 +285,93 @@ class FleetMigrationLine(models.Model):
         self._assert_safe_db_name(db)
         self._drop_database(db)
         self.backup_id.restore_to(db)
+
+    # ---- manual recovery (#244) ------------------------------------------
+
+    def action_restore_in_place(self):
+        """Roll ONE failed tenant back to its pre-upgrade snapshot, from the UI.
+
+        With ``auto_restore=OFF`` — the recommended setting for a first real
+        fleet migration — a failed tenant is flagged ``error`` and its snapshot
+        kept, but recovery was a shell command (``tenant_restore.sh``). The
+        backup Restore wizard cannot stand in: it refuses live tenant names by
+        design (scratch-only). So the line's own message promised a "manual
+        restore" the UI offered no way to perform (#244).
+
+        Same engine as auto-restore — ``_restore`` — so there is no second
+        recovery path to keep in step.
+        """
+        self.ensure_one()
+        self._restore_assert_allowed()
+        db = self.database_name
+        if self.state != 'failed':
+            raise UserError(self.env._(
+                "Only a FAILED line can be restored; this one is '%s'. Restoring "
+                "a tenant that upgraded successfully would roll back a good "
+                "upgrade.", self.state))
+        if not self.backup_id:
+            raise UserError(self.env._(
+                "No pre-upgrade snapshot on this line — nothing to restore from. "
+                "This line failed before the snapshot was taken, which also means "
+                "its database was never modified."))
+        self._assert_backup_restorable()
+
+        self._restore(db)
+        # 'ready' is gated by the engine-only status guard (tenant.py, #228),
+        # which authorises on env.su and deliberately NOT on a context key.
+        # This IS the engine performing a rollback it owns, so sudo() is the
+        # sanctioned path — the same one provisioning uses.
+        self.tenant_id.sudo().write({'database_status': 'ready'})
+        self._mark('restored', self.env._(
+            "Restored in place from snapshot %(b)s by %(user)s (manual).",
+            b=self.backup_id.name or '-', user=self.env.user.name))
+        return True
+
+    def _restore_assert_allowed(self):
+        """Mirror the button's ``groups=`` at the ORM (Rule 4).
+
+        A ``groups=`` attribute hides a button; it does not stop an RPC call.
+        This one DROPS A LIVE TENANT DATABASE, so the check has to exist where
+        the work happens.
+
+        ``base.group_system`` is not a fresh judgement call — it is what every
+        other destructive operation in this layer already gates on (backup,
+        restore, fleet migration; see ``security/ir.model.access.csv``). #245
+        tracks whether that whole layer should move to
+        ``group_platform_admin``; deciding it here would fork the convention
+        while that ticket is open.
+        """
+        if not self.env.user.has_group('base.group_system'):
+            raise UserError(self.env._(
+                "Restoring a tenant in place requires Settings administrator "
+                "rights."))
+
+    def _assert_backup_restorable(self):
+        """Refuse if the snapshot file is not actually on disk.
+
+        ``_restore`` DROPS the database before calling ``restore_to``, and
+        ``restore_to`` only checks that the ``file_path`` FIELD is set — not
+        that the file exists. Without this, one click destroys a live tenant and
+        discovers the backup is missing afterwards, leaving nothing to recover
+        from.
+
+        Deliberately here and NOT inside ``_restore``: auto-restore runs seconds
+        after its own snapshot, so the file is all but certain to be there, and
+        adding a check to that shipped path risks breaking automatic recovery
+        for no real gain (Rule 4). This button may be pressed days later, after
+        retention has swept the file — a completely different risk profile.
+        ``backup.py`` already uses ``os.path.isfile`` on this same field from
+        this same process, so the check is sound here.
+        """
+        path = self.backup_id.file_path
+        if not path or not os.path.isfile(path):
+            raise UserError(self.env._(
+                "Snapshot file for %(b)s is missing (%(p)s). REFUSING to "
+                "restore: the restore drops the live database first, so "
+                "proceeding would destroy '%(db)s' with nothing to put back. "
+                "Recover the file from off-box backup, or use PITR.",
+                b=self.backup_id.name or '-', p=path or 'no path recorded',
+                db=self.database_name))
 
     def _mark(self, state, message, stamp=True):
         vals = {'state': state, 'message': message}
