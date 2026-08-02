@@ -28,15 +28,36 @@
             <value>7200</value>
         </function>
 
-        <!-- Auth-log retention window in days (#219). ncollection.auth.log
-             stores ip_address + user_agent (PII) on every auth event, and
-             #178 put that on every provisioned tenant — so the table needs a
-             storage-limitation policy for a LIVE tenant, not just deletion at
-             offboarding. Purged by the cron in data/auth_cron.xml.
-             Set to 0 (or any value <= 0) to DISABLE the purge entirely. -->
+        <!-- STAGE 1 — minimise (#219 window, #261 semantics).
+             ncollection.auth.log stores ip_address + user_agent (PII) on every
+             auth event, and #178 put that on every provisioned tenant. At this
+             age those fields are dropped and `login` is replaced by a salted
+             digest; event_type, create_date and user_id remain, so the attack
+             PATTERN survives while the identifying detail does not.
+             Set to 0 (or <= 0) to DISABLE minimisation entirely. -->
         <function model="ir.config_parameter" name="set_param">
             <value>ncollection_auth.log_retention_days</value>
             <value>180</value>
+        </function>
+
+        <!-- STAGE 2 — hard delete (#261).
+             Breach studies put MEAN time-to-identify a compromise past 200
+             days, so #219's flat 180-day DELETE destroyed the login_failed
+             run-up and the login_success for the compromised session before
+             anyone looked. 400 clears that with margin for an investigation
+             that starts late, and covers an annual audit cycle.
+
+             The minimised skeleton keeps user_id, so it is PSEUDONYMOUS, not
+             anonymous — still personal data under PDPL, which is exactly why
+             it gets a window of its own instead of being kept forever.
+
+             Must be >= log_retention_days; a shorter value is REFUSED, not
+             clamped (it would delete rows before they were ever minimised).
+             Set to 0 (or <= 0) to keep skeletons indefinitely — read the
+             paragraph above before doing that. -->
+        <function model="ir.config_parameter" name="set_param">
+            <value>ncollection_auth.log_skeleton_days</value>
+            <value>400</value>
         </function>
 
     </data>
