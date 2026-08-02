@@ -48,25 +48,58 @@ class TestConfigSyncRekey(TransactionCase):
 
     # ---- access control (Rule 4: mirror the button at the ORM) -----------
 
-    def test_a_non_admin_cannot_rekey(self):
-        """The button carries groups=, but a groups= attribute only hides a
-        button — the method is still reachable over RPC, and it spawns
-        subprocesses against tenant databases."""
-        user = self.env['res.users'].create({
-            'name': 'Plain User', 'login': 'rekey-plain-user',
+    def _plain_user(self, login):
+        return self.env['res.users'].create({
+            'name': login, 'login': login,
             'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
         })
-        with self.assertRaises(UserError):
-            self.tenant.with_user(user).action_rekey_config_sync()
 
-    def test_a_non_admin_cannot_rekey_the_fleet(self):
-        user = self.env['res.users'].create({
-            'name': 'Plain User 2', 'login': 'rekey-plain-user-2',
-            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
-        })
-        with self.assertRaises(UserError):
+    # These assert on OUR guard's own message and call it directly. Two earlier
+    # versions of this test passed while the guard was deleted, for two different
+    # wrong reasons, and both were only found by removing the guard and watching
+    # them stay green:
+    #
+    #   1. without NC_CONFIG_SYNC_KEY set, a non-admin hits the "master is not
+    #      set" UserError first, so a bare assertRaises(UserError) is satisfied;
+    #   2. with it set, Odoo's OWN model ACL on ncollection.tenant rejects a
+    #      plain user first — and AccessError SUBCLASSES UserError, with a
+    #      message that also contains the word "administrator".
+    #
+    # So: invoke the guard directly (no records touched, no ACL in the way) and
+    # match a string only this guard produces.
+    def test_the_orm_guard_refuses_a_non_admin(self):
+        """The button carries groups=, but a groups= attribute only hides a
+        button — the method stays reachable over RPC, and it spawns subprocesses
+        against tenant databases (Rule 4)."""
+        user = self._plain_user('rekey-plain-user')
+        with self.assertRaises(UserError) as ctx:
             self.env['ncollection.tenant'].with_user(
-                user).action_rekey_config_sync_fleet()
+                user)._rekey_assert_allowed()
+        self.assertIn('Re-keying config-sync credentials', str(ctx.exception))
+
+    def test_the_orm_guard_admits_a_settings_admin(self):
+        """The other half: the guard must not block the operator it exists for.
+        A guard that refuses everyone would pass the test above and be useless."""
+        self.env['ncollection.tenant']._rekey_assert_allowed()
+
+    def test_both_entry_points_run_the_guard(self):
+        """The guard is only worth anything if every entry point calls it.
+
+        Patched to raise a sentinel so this fails if either action ever stops
+        consulting it — including the fleet action, which must check BEFORE its
+        search so a non-admin cannot learn whether ready tenants exist.
+        """
+        class _Sentinel(UserError):
+            pass
+
+        def _deny(_self):
+            raise _Sentinel('denied')
+
+        for action in ('action_rekey_config_sync',
+                       'action_rekey_config_sync_fleet'):
+            with patch('%s._rekey_assert_allowed' % REKEY, _deny):
+                with self.assertRaises(_Sentinel, msg=action):
+                    getattr(self.tenant, action)()
 
     # ---- refusing a misconfiguration ------------------------------------
 
