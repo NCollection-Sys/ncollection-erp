@@ -59,8 +59,7 @@ class TestResellerIsolation(TransactionCase):
                 company_name='Evil', subdomain='eviliso', plan=plan)
 
     def test_reseller_cannot_read_other_account(self):
-        other = self.res_b.with_user(self.user_a)
-        # Record rule filters it out of any read.
+        # Record rule filters reseller B out of any read done as reseller A.
         self.assertFalse(
             self.env['ncollection.reseller'].with_user(self.user_a).search(
                 [('id', '=', self.res_b.id)]))
