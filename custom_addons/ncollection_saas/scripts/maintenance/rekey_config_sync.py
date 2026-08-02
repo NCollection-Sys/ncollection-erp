@@ -54,4 +54,11 @@ except Exception as exc:  # noqa: BLE001 - the marker IS the error channel
     # old nor the new key — that would lock config-sync out permanently, which is
     # strictly worse than the stale key we started with.
     env.cr.rollback()  # noqa: F821
-    print('REKEY_ERR %s' % exc)
+    # Bounded on purpose. This string crosses into the platform's log AND the
+    # tenant's chatter. Nothing today can put key material in it (the length
+    # guard pre-empts the only CHECK constraint, and res_users_apikeys has no
+    # UNIQUE constraint whose violation DETAIL could echo an index fragment) —
+    # but a future schema change could, silently, with no test watching. The
+    # class name plus a truncated message keeps it debuggable without an
+    # unbounded channel out of the tenant.
+    print('REKEY_ERR %s: %.200s' % (type(exc).__name__, exc))

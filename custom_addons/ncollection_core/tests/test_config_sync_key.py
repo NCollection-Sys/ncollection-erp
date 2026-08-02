@@ -12,7 +12,7 @@ write the same string — it would be measuring the wrong thing entirely.
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.ncollection_core.models.config_sync_key import (
-    KEY_NAME, SERVICE_LOGIN)
+    KEY_NAME, SERVICE_LOGIN, SERVICE_XMLID)
 
 
 @tagged('post_install', '-at_install')
@@ -125,6 +125,74 @@ class TestConfigSyncKey(TransactionCase):
         self.assertFalse(self._authenticates(old),
                          "the OLD key still authenticates after a re-key")
         self.assertEqual(self._key_rows(), 1)
+
+    # ---- identity is anchored, not looked up by a mutable string ---------
+
+    def test_a_renamed_login_cannot_redirect_the_platform_credential(self):
+        """`login` is mutable by anyone with res.users write access in the
+        tenant. Resolving the service account by it meant the platform would
+        install its own bearer — and the config-sync group — onto whichever
+        account happened to hold that string. This pins the xmlid anchor.
+        """
+        self.installer._install_key('original-key-value', create_user=True)
+        real = self.env.ref(SERVICE_XMLID)
+
+        # Someone moves the login onto a different account. res_users_login_key
+        # is UNIQUE, so the rename must reach the DB before the new row can claim
+        # the string — flush, or the INSERT collides with the still-cached old
+        # value. (That constraint is also why this takes two writes, not one.)
+        real.sudo().write({'login': 'retired-config-sync@example.com'})
+        self.env.flush_all()
+        impostor = self.env['res.users'].sudo().create({
+            'name': 'Impostor', 'login': SERVICE_LOGIN,
+            'password': 'irrelevant-but-set',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
+        })
+
+        got = self.installer._install_key('replacement-key-value',
+                                          create_user=False)
+
+        self.assertEqual(got, real, "re-key followed the login, not the anchor")
+        self.assertNotIn(self.env.ref('ncollection_core.group_config_sync'),
+                         impostor.all_group_ids,
+                         "the impostor was granted the config-sync group")
+
+    def test_an_overprivileged_service_account_is_refused(self):
+        """If the anchored account has picked up rights beyond its minimum,
+        something changed it. Installing a live platform bearer on an account we
+        no longer recognise turns a local misconfiguration into a durable
+        credential — refuse and make a human look."""
+        self.installer._install_key('original-key-value', create_user=True)
+        user = self.env.ref(SERVICE_XMLID)
+        user.sudo().write(
+            {'group_ids': [(4, self.env.ref('base.group_system').id)]})
+
+        with self.assertRaises(ValueError) as ctx:
+            self.installer._install_key('replacement-key-value')
+        self.assertIn('unexpected groups', str(ctx.exception))
+
+    def test_revocation_clears_every_key_on_the_service_account(self):
+        """A revocation scoped by key NAME would leave a stray row under any
+        other name still authenticating as the service account — which is
+        exactly what a 'revoke the leaked key' operation must not do."""
+        self.installer._install_key('original-key-value', create_user=True)
+        user = self.env.ref(SERVICE_XMLID)
+        stray = 'a-stray-second-key'
+        from odoo.addons.base.models.res_users import (
+            KEY_CRYPT_CONTEXT, INDEX_SIZE)
+        self.env.cr.execute(
+            "INSERT INTO res_users_apikeys "
+            "(name,user_id,scope,index,key,create_date) "
+            "VALUES (%s,%s,NULL,%s,%s, now())",
+            ('some-other-key', user.id, stray[:INDEX_SIZE],
+             KEY_CRYPT_CONTEXT.hash(stray)))
+        self.assertTrue(self._authenticates(stray))
+
+        self.installer._install_key('replacement-key-value')
+
+        self.assertFalse(self._authenticates(stray),
+                         "a differently-named key survived the revocation")
+        self.assertTrue(self._authenticates('replacement-key-value'))
 
     def test_an_existing_account_regains_the_group(self):
         """Idempotent repair: a role sync or a manual edit could drop the group,

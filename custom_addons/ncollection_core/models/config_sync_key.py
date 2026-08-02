@@ -25,8 +25,15 @@ credential, and a leaked key authenticates against this ONE tenant.
 """
 
 import logging
+import secrets
 
 from odoo import api, models
+# `base` is installed in every Odoo database, so this coupling exists whether the
+# import sits here or inside the method — module scope just makes it visible.
+# res_users_apikeys.key/index are deliberately NOT ORM fields and Odoo's own
+# _generate() mints its own key rather than accepting one, so these constants
+# (and the raw SQL below) are the only way to install an externally-derived key.
+from odoo.addons.base.models.res_users import KEY_CRYPT_CONTEXT, INDEX_SIZE
 
 _logger = logging.getLogger(__name__)
 
@@ -34,6 +41,11 @@ _logger = logging.getLogger(__name__)
 # system admin — it carries group_config_sync, scoped to workspace.config writes.
 SERVICE_LOGIN = 'config-sync@ncollection.internal'
 SERVICE_NAME = 'Config Sync (platform)'
+# The IMMUTABLE anchor for that account. login can be renamed by anyone with
+# res.users write access in the tenant; an xmlid cannot be moved by editing a
+# user record, so the platform's credential stays bound to the account it was
+# issued for. Created on provisioning, and adopted for pre-existing accounts.
+SERVICE_XMLID = 'ncollection_core.user_config_sync_service'
 # res_users_apikeys.name — also the lookup key for replacing the row, so it must
 # stay stable across provisioning and re-key.
 KEY_NAME = 'config-sync'
@@ -52,11 +64,23 @@ class ConfigSyncKey(models.AbstractModel):
         predates config-sync" into "this tenant now has a platform-writable
         account", which is a privilege change disguised as a maintenance job.
         Provisioning passes ``create=True`` because creating it IS its job.
+
+        **Identity is anchored to an ir.model.data xmlid, not to the login.**
+        ``login`` is a mutable string that anyone with ``res.users`` write access
+        inside the tenant can move between accounts. Resolving by login meant the
+        platform would hand its credential — and the config-sync group — to
+        whichever account happened to hold that string at that moment. Even with
+        no attacker, an operator renaming the account silently redirects the
+        platform's own key onto a different user and reports success.
+
+        Accounts created before this anchor existed are ADOPTED on first sight:
+        found by login once, then pinned by xmlid so a later call cannot be
+        redirected.
         """
-        user = self.env['res.users'].sudo().search(
-            [('login', '=', SERVICE_LOGIN)], limit=1)
+        user = self._resolve_service_user()
         group = self.env.ref('ncollection_core.group_config_sync')
         if user:
+            self._assert_not_privileged(user, group)
             # Idempotent re-assert: an existing account must still carry the
             # group, in case a role sync or a manual edit dropped it.
             user.write({'group_ids': [(4, group.id)]})
@@ -65,13 +89,60 @@ class ConfigSyncKey(models.AbstractModel):
             return user
         # password: bearer-only account, but a NULL/known password would be an
         # unguarded login surface. Random and never disclosed.
-        import secrets  # noqa: PLC0415 - only needed on the creation path
-        return self.env['res.users'].sudo().create({
+        user = self.env['res.users'].sudo().create({
             'name': SERVICE_NAME,
             'login': SERVICE_LOGIN,
             'password': secrets.token_urlsafe(32),
             'group_ids': [(6, 0, [self.env.ref('base.group_user').id, group.id])],
         })
+        self._pin_service_user(user)
+        return user
+
+    @api.model
+    def _resolve_service_user(self):
+        """xmlid first; login only as a one-time adoption path."""
+        user = self.env.ref(SERVICE_XMLID, raise_if_not_found=False)
+        if user:
+            return user.sudo()
+        user = self.env['res.users'].sudo().search(
+            [('login', '=', SERVICE_LOGIN)], limit=1)
+        if user:
+            self._pin_service_user(user)
+        return user
+
+    @api.model
+    def _pin_service_user(self, user):
+        """Record the xmlid so identity stops depending on a mutable login."""
+        module, name = SERVICE_XMLID.split('.')
+        self.env['ir.model.data'].sudo().create({
+            'module': module, 'name': name,
+            'model': 'res.users', 'res_id': user.id, 'noupdate': True,
+        })
+
+    @api.model
+    def _assert_not_privileged(self, user, group):
+        """Refuse to install a platform credential on an over-privileged account.
+
+        The service account is deliberately minimal: ``base.group_user`` plus
+        ``group_config_sync``. If the account carrying our xmlid has picked up
+        anything else, something changed it — a manual edit, a role sync gone
+        wrong, or our identity being attached to a privileged user.
+
+        Worth doing even though the realistic ways to reach this state need
+        rights that could already write ``workspace.config`` directly: installing
+        a live, platform-issued bearer onto an account we no longer recognise
+        converts a local misconfiguration into a durable credential, and this
+        ticket exists precisely so every config-sync credential is accounted for.
+        """
+        allowed = self.env.ref('base.group_user') | group
+        # Direct assignments only. base.group_user implies a spread of technical
+        # groups on a normal install; inherited ones are not evidence of tampering.
+        unexpected = user.group_ids - allowed
+        if unexpected:
+            raise ValueError(
+                'config-sync service account %s carries unexpected groups (%s); '
+                'refusing to install a platform key on it'
+                % (user.login, ', '.join(unexpected.mapped('name'))))
 
     @api.model
     def _install_key(self, raw_key, create_user=False):
@@ -80,20 +151,22 @@ class ConfigSyncKey(models.AbstractModel):
         Returns the service user on success, or an empty recordset when there is
         no service account and ``create_user`` is False (the re-key case above).
 
-        DELETE-then-INSERT rather than UPDATE: the row is keyed by
-        ``(user_id, name)`` with no unique constraint, so an UPDATE could leave a
-        second, still-valid stale row behind — i.e. the old key would keep
-        authenticating after a rotation, which is the one thing a rotation exists
-        to prevent.
+        DELETE-then-INSERT rather than UPDATE: nothing constrains
+        ``(user_id, name)`` to be unique, so an UPDATE that missed a row would
+        leave the old key authenticating after a rotation — the one thing a
+        rotation exists to prevent.
+
+        The DELETE clears EVERY api key on the service account, not only the row
+        named ``config-sync``. This account is ours and is bearer-only, so it has
+        no legitimate second key; scoping the delete by name meant a stray row
+        under any other name would survive a "revoke the leaked key" rotation and
+        keep authenticating as the service account. A revocation must be total or
+        it is not a revocation.
 
         Idempotent: re-running with the same ``raw_key`` yields a DIFFERENT
         stored hash (the crypt context salts) but the SAME accepted credential.
         Assert on authentication, never on the stored bytes.
         """
-        # Imported lazily: these are Odoo internals, and importing them at module
-        # scope would couple every ncollection_core load to res_users' layout.
-        from odoo.addons.base.models.res_users import (  # noqa: PLC0415
-            KEY_CRYPT_CONTEXT, INDEX_SIZE)
         if not raw_key:
             raise ValueError('refusing to install an empty config-sync key')
         # res_users_apikeys carries CHECK (char_length(index) = 8), and `index` is
@@ -112,8 +185,7 @@ class ConfigSyncKey(models.AbstractModel):
                 SERVICE_LOGIN)
             return user
         self.env.cr.execute(
-            "DELETE FROM res_users_apikeys WHERE user_id=%s AND name=%s",
-            (user.id, KEY_NAME))
+            "DELETE FROM res_users_apikeys WHERE user_id=%s", (user.id,))
         self.env.cr.execute(
             "INSERT INTO res_users_apikeys (name,user_id,scope,index,key,create_date) "
             "VALUES (%s,%s,NULL,%s,%s, now())",
