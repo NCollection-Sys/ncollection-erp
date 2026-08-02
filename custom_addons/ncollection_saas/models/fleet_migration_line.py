@@ -107,15 +107,19 @@ class FleetMigrationLine(models.Model):
                     "Already installed: %s. Nothing to do.", ','.join(modules)))
                 return
             self._snapshot()
+            # Distinct whole strings per operation rather than capitalising a
+            # translated fragment: .capitalize() on translated output is locale-
+            # blind, and it silently changed the UPGRADE path's wording, which
+            # the manifest promises is unchanged. This keeps upgrade byte-identical.
             self._mark('upgrading',
-                       self.env._("%(label)s: %(m)s",
-                                  label=self._operation_label().capitalize(),
-                                  m=','.join(modules)),
+                       self.env._("Installing: %s", ','.join(modules)) if install
+                       else self.env._("Upgrading: %s", ','.join(modules)),
                        stamp=False)
             self._apply(db, modules)
             self._mark('probing', self.env._("Smoke probe…"), stamp=False)
             self._probe(db, modules)
-            self._mark('done', self.env._("%s OK.", self._operation_label()))
+            self._mark('done', self.env._("Install OK.") if install
+                       else self.env._("Upgrade OK."))
         except Exception as exc:                    # noqa: BLE001 — isolate the failure
             self._safe_handle_failure(db, exc)
 
@@ -157,6 +161,12 @@ class FleetMigrationLine(models.Model):
         self._run_odoo_subprocess(cmd, self._operation_label())
 
     def _operation_label(self):
+        """Step name for the subprocess failure message ("Step X failed").
+
+        Lower-case on purpose: _run_odoo_subprocess embeds it mid-sentence.
+        The line's own status messages use whole translatable strings instead
+        of transforming this one.
+        """
         return (self.env._("module install")
                 if self.migration_id.operation == 'install'
                 else self.env._("module upgrade"))
@@ -173,6 +183,16 @@ class FleetMigrationLine(models.Model):
         Reported as SKIPPED, never as failed: 'this tenant already has it' is
         the expected outcome for most of a backfill, and a run that scores it as
         a failure trains the operator to ignore the summary (#221).
+
+        **Never raises.** This is a READ. If the probe itself fails — a timeout,
+        a busy server, a transient connection blip — letting that propagate would
+        reach ``_handle_failure``, which finds no ``backup_id`` (nothing has been
+        snapshotted yet) and so calls ``_flag_tenant_error()``, marking a tenant
+        that NOTHING TOUCHED as ``error`` and taking it out of config-sync,
+        backup and checkout. A failed read must not do that. We return False
+        instead and let the install proceed: if the tenant really is unreachable
+        the install fails too, and THAT failure legitimately flags it, because by
+        then a write was attempted.
         """
         script = (
             "mods = env['ir.module.module'].search([('name', 'in', %r)])\n"
@@ -180,8 +200,14 @@ class FleetMigrationLine(models.Model):
             "print('NC_HAVE=%%s' %% ','.join(sorted(have)))\n" % (list(modules),)
         )
         cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
-        out = self._run_odoo_subprocess(
-            cmd, self.env._("module state check"), stdin=script)
+        try:
+            out = self._run_odoo_subprocess(
+                cmd, self.env._("module state check"), stdin=script)
+        except Exception as exc:                    # noqa: BLE001 - a read, see above
+            _logger.warning(
+                "Fleet: module state check failed for %s (%s); proceeding with "
+                "the install, which is idempotent.", db, exc)
+            return False
         for line in reversed((out or '').splitlines()):
             if line.strip().startswith('NC_HAVE='):
                 have = {m for m in line.strip()[len('NC_HAVE='):].split(',') if m}

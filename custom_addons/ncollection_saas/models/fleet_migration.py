@@ -98,7 +98,7 @@ class FleetMigration(models.Model):
         self.ensure_one()
         mods = [m.strip() for m in (self.module_names or '').split(',') if m.strip()]
         if not mods:
-            raise ValidationError(self.env._("Specify at least one module to upgrade."))
+            raise ValidationError(self.env._("Specify at least one module."))
         for module in mods:
             if not MODULE_NAME_RE.match(module):
                 raise ValidationError(self.env._("Invalid module name '%s'.", module))

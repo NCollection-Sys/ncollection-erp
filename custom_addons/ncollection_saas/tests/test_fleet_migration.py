@@ -17,6 +17,7 @@ from odoo.addons.ncollection_saas.models.saas_subprocess import (
 )
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
+from odoo.tools import mute_logger
 
 
 @tagged('post_install', '-at_install')
@@ -356,17 +357,72 @@ class TestFleetMigration(TransactionCase):
     def test_a_skip_is_not_counted_as_a_failure(self):
         """The #221 lesson at fleet level: on a backfill, 'already has it' is the
         EXPECTED outcome for most tenants. Scoring it as a failure would make the
-        run look catastrophic and train the operator to ignore the result."""
+        run look catastrophic and train the operator to ignore the result.
+
+        The first version of this test asserted ONLY failed_count == 0 and
+        state == 'done' — which a fleet that skipped nothing and installed
+        everywhere also produces, because _PASS_STATES already excluded
+        'skipped' before #218. It could not tell "correctly skipped" from "the
+        skip check never fired", so it would have passed with the whole feature
+        deleted. Both reviewers caught it independently. It now asserts on
+        evidence only the skip path can produce.
+        """
         migration = self._migration(operation='install',
                                     module_names='ncollection_auth')
         everyone = {db: {'ncollection_auth'}
                     for db in ('fleetcanary', 'fleetone', 'fleettwo', 'fleetthree')}
-        with self._mocked(installed=everyone):
+        cmds = []
+        with self._mocked(installed=everyone, cmds=cmds):
             migration.action_run_sync()
 
         self.assertEqual(migration.failed_count, 0,
                          "an all-skipped backfill was scored as failures")
         self.assertEqual(migration.state, 'done')
+        # Evidence the skip actually happened, not just that nothing failed:
+        self.assertTrue(migration.line_ids)
+        self.assertTrue(all(line.state == 'skipped' for line in migration.line_ids),
+                        "a tenant that already had the module was not skipped")
+        self.assertFalse(any(line.backup_id for line in migration.line_ids),
+                         "snapshotted tenants it then skipped")
+        self.assertEqual(self._flags(cmds), [],
+                         "an install subprocess ran for an already-satisfied fleet")
+
+    @mute_logger('odoo.addons.ncollection_saas.models.fleet_migration_line')
+    def test_a_failed_state_check_does_not_flag_a_healthy_tenant(self):
+        """A failed READ must not take a tenant out of service.
+
+        _already_satisfied runs BEFORE the snapshot, so if it raised, the generic
+        failure path found no backup_id and called _flag_tenant_error() —
+        marking a tenant that NOTHING had touched as 'error', which stops
+        config-sync, backup and checkout treating it as live. A probe timeout on
+        a busy server would have disabled a healthy tenant.
+
+        Now the check swallows its own failure and proceeds; the install is
+        idempotent, so the cost of being wrong is a no-op. If the tenant really
+        is unreachable the INSTALL fails, and that failure legitimately flags it
+        — by then a write was attempted.
+        """
+        migration = self._migration(operation='install',
+                                    module_names='ncollection_auth')
+
+        def _run(_self, cmd, label, stdin=None, env=None, timeout=None):
+            if 'NC_HAVE' in (stdin or ''):
+                raise UserError(_self.env._("simulated probe timeout"))
+            if 'shell' in cmd:
+                return 'NC_SMOKE_OK=True\n'
+            return ''
+
+        with patch.object(SaasSubprocessMixin, '_run_odoo_subprocess', _run), \
+                patch.object(NcollectionBackup, 'run_backup', lambda s: s.write(
+                    {'status': 'done', 'file_path': '/tmp/x.enc'})):
+            migration.action_run_sync()
+
+        for tenant in (self.canary, self.t1, self.t2, self.t3):
+            self.assertNotEqual(
+                tenant.database_status, 'error',
+                "a failed READ flagged an untouched tenant as error")
+            self.assertEqual(self._line(migration, tenant).state, 'done',
+                             "the install did not proceed after a failed probe")
 
     def test_an_install_dry_run_names_the_real_flag(self):
         """A dry run exists to show what WOULD happen. Reporting `-u` on an
