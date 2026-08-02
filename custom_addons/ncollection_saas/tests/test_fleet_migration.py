@@ -249,6 +249,20 @@ class TestFleetMigration(TransactionCase):
             self.assertTrue(hasattr(job, helper),
                             "provisioning lost %s in the refactor" % helper)
 
+    def test_the_mixin_did_not_spawn_a_stray_model(self):
+        """Pins the _name trap that this refactor walked into once.
+
+        MetaModel only defaults _name from _inherit when _inherit is a STRING.
+        With the list form and no explicit _name, ProvisioningJob would derive
+        'provisioning.job' from its CLASS name and quietly become a separate,
+        empty model — leaving ncollection.provisioning.job without action_run.
+        The failure showed up as a view error, far from the cause, so assert the
+        stray model's absence directly.
+        """
+        self.assertNotIn('provisioning.job', self.env.registry,
+                         "ProvisioningJob registered under its class-derived "
+                         "name — the explicit _name was lost")
+
     def test_the_two_name_guards_differ_on_existence_deliberately(self):
         """The one thing that must NOT be unified (#243).
 

@@ -35,16 +35,16 @@ _logger = logging.getLogger(__name__)
 # name (NOT the master). Keeps the master out of the tenant subprocess env (#212).
 _SEED_TENANT_KEY_ENV = 'NC_CONFIG_SYNC_TENANT_KEY'
 
-# Forbidden tenant DB / subdomain names (ARCHITECTURE_DATA_PLATFORM §2).
-# lowercase alphanumeric, starts with a letter, 3–63 chars — a safe SQL identifier
-# AND a valid subdomain label. NO underscore: tenant key === subdomain === database
-# name, and underscores are invalid in hostnames, so an underscore name is unroutable
-# under db_filter=^%d$ (#211). Matches checkout.SUBDOMAIN_RE / tenant._GENERATED_NAME_RE.
-# A PERMISSIVE variant for the DESTRUCTIVE cleanup guards only (retry-sweep +
-# rollback). Those must be able to drop a database THIS engine could have created —
-# including a legacy underscore name left by a job from before DB_NAME_RE was
-# tightened (#211). Validation stays strict via DB_NAME_RE; cleanup must not strand
-# a zombie DB just because the format rule got stricter after that DB was created (#214).
+# DB_NAME_RE (strict: lowercase alphanumeric, letter-initial, 3–63 chars, NO
+# underscore) and RESERVED_DB_NAMES (ARCHITECTURE_DATA_PLATFORM §2) are imported
+# from the mixin above — one definition, so the allowlist cannot drift (#243).
+#
+# _CLEANUP_NAME_RE is a PERMISSIVE variant that stays local because it is used by
+# the DESTRUCTIVE cleanup guards only (retry-sweep + rollback). Those must be able
+# to drop a database THIS engine could have created — including a legacy underscore
+# name left by a job from before DB_NAME_RE was tightened (#211). Validation stays
+# strict via DB_NAME_RE; cleanup must not strand a zombie DB just because the format
+# rule got stricter after that DB was created (#214).
 _CLEANUP_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,62}$')
 
 # Always installed into a tenant DB (base + license/config + branding + auth
@@ -61,7 +61,10 @@ PROVISION_CHANNEL = 'root.provisioning'
 SEED_SCRIPT = os.path.join(
     os.path.dirname(__file__), '..', 'scripts', 'provisioning', 'seed_tenant.py'
 )
-SUBPROCESS_TIMEOUT = 1800  # 30 min hard cap per odoo subprocess
+# NOTE: the 30-min subprocess cap now lives with the runner it belongs to,
+# saas_subprocess.SUBPROCESS_TIMEOUT. A copy left here would be read as
+# authoritative and edited by someone expecting it to take effect — which is
+# precisely the silent-divergence bug #243 exists to remove.
 
 
 class ProvisioningJob(models.Model):
@@ -69,10 +72,19 @@ class ProvisioningJob(models.Model):
     # primitives (#243). Before this, provisioning kept its own copies and a
     # guard-test policed the two for drift; one definition removes the class of
     # bug the guard existed for.
-    # _name is explicit because _inherit is a LIST: with a bare string Odoo
-    # infers the model from it, but a list is ambiguous and the class stops
-    # contributing to ncollection.provisioning.job — which surfaced as
-    # "action_run is not a valid action" when its own view loaded.
+    # _name is REQUIRED here, not decorative. odoo/models.py MetaModel.__new__
+    # only defaults _name to _inherit when _inherit is a STRING:
+    #     if _inherit and isinstance(_inherit, str):
+    #         attrs.setdefault('_name', _inherit)
+    # With a LIST and no _name it falls through to deriving the name from the
+    # CLASS name — ProvisioningJob -> 'provisioning.job' — so this class would
+    # silently define a brand-new, empty model instead of extending
+    # ncollection.provisioning.job. It surfaced as "action_run is not a valid
+    # action" when the view loaded, not as an import error.
+    # Odoo core appears to omit _name with a list (e.g. _inherit = ['res.partner',
+    # 'mail.thread']) only because ResPartner happens to derive 'res.partner' —
+    # the names coincide there. Ours do not: 'provisioning.job' is not
+    # 'ncollection.provisioning.job'. Do not copy the core idiom here.
     _name = 'ncollection.provisioning.job'
     _inherit = ['ncollection.provisioning.job',
                 'ncollection.saas.subprocess.mixin']
