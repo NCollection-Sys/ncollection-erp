@@ -23,6 +23,7 @@ from unittest.mock import patch
 import requests
 
 from odoo.tests import TransactionCase, tagged
+from odoo.tools import mute_logger
 
 
 class _Response:
@@ -220,6 +221,7 @@ class TestConfigSyncHealth(TransactionCase):
 
     # -- the contract that must not break ----------------------------------
 
+    @mute_logger('odoo.addons.ncollection_saas.models.config_sync')
     def test_recording_failure_never_breaks_the_push(self):
         """Observability that can break a suspension is worse than none.
 
@@ -240,8 +242,15 @@ class TestConfigSyncHealth(TransactionCase):
             result = self._push(_Response(200))
         self.assertTrue(result, "a recording fault must not fail the push")
 
+    @mute_logger('odoo.addons.ncollection_saas.models.config_sync')
     def test_recording_failure_never_breaks_a_FAILED_push_either(self):
-        """Same guard on the path that matters most — a real failure."""
+        """Same guard on the path that matters most — a real failure.
+
+        muted: the guard logs the traceback on purpose (a real bookkeeping
+        failure needs a stack trace), but CI has a separate step that fails the
+        build on any traceback in the log — "Odoo can exit 0 on some test
+        failures". Deliberate fault injection must not look like a real crash.
+        """
         original_write = type(self.tenant).write
 
         def _explode(self, vals):

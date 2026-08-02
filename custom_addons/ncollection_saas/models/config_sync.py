@@ -114,8 +114,7 @@ class TenantConfigSync(models.Model):
         readonly=True, copy=False, string='Config Sync Last OK',
         help="When config last reached this tenant successfully. Answers "
              "'how long has this been broken?' at a glance.")
-    config_sync_last_error = fields.Char(
-        readonly=True, copy=False, string='Config Sync Last Error')
+    config_sync_last_error = fields.Char(readonly=True, copy=False)
     config_sync_failure_count = fields.Integer(
         default=0, readonly=True, copy=False,
         string='Consecutive Sync Failures')
