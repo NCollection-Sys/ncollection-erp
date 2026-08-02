@@ -18,12 +18,15 @@ The properties worth protecting are the ones that fail quietly:
    is worse than no observability.
 """
 
+import json
 from unittest.mock import patch
 
 import requests
 
 from odoo.tests import TransactionCase, tagged
 from odoo.tools import mute_logger
+
+from odoo.addons.ncollection_saas.models.config_sync import _MAX_RESPONSE_BYTES
 
 
 class _Response:
@@ -46,6 +49,44 @@ class _Response:
 
 
 _UNREADABLE = object()
+
+
+class _CountingRaw:
+    """A urllib3-like .raw that records how many bytes were asked for (#278).
+
+    The point of the cap is that the platform never READS an oversized body —
+    not that it truncates one after loading it. Recording the requested size is
+    what tells those two apart; asserting on the parsed result alone cannot.
+    """
+
+    def __init__(self, payload_bytes):
+        self._data = payload_bytes
+        self.requested = None
+
+    # pylint: disable=method-required-super
+    # Not an Odoo model: this mimics urllib3's HTTPResponse.raw, whose API is
+    # read(). There is no base class to call up into.
+    def read(self, amt=None, decode_content=True):
+        self.requested = amt
+        return self._data[:amt] if amt is not None else self._data
+
+
+class _StreamedResponse:
+    """A stand-in that behaves like requests.Response(stream=True)."""
+
+    def __init__(self, status_code, payload_bytes, text=''):
+        self.status_code = status_code
+        self.text = text
+        self.raw = _CountingRaw(payload_bytes)
+        self.closed = False
+
+    def json(self):
+        raise AssertionError(
+            "json() must not be called on a streamed response — the bounded "
+            "read exists precisely to avoid it")
+
+    def close(self):
+        self.closed = True
 
 
 @tagged("post_install", "-at_install")
@@ -280,6 +321,66 @@ class TestConfigSyncHealth(TransactionCase):
         """The existing boolean contract is unchanged by the new bookkeeping."""
         self.assertFalse(self._push(_Response(500)))
         self.assertTrue(self._push(_Response(200)))
+
+    # -- bounded response read (#278) --------------------------------------
+
+    def test_the_platform_never_reads_more_than_the_cap(self):
+        """The cap must stop the READ, not truncate afterwards.
+
+        _RPC_TIMEOUT bounded how long we waited; nothing bounded how much we
+        read, and resp.json() on the SUCCESS path materialised the whole body.
+        A tenant could therefore size the control plane's allocation.
+        """
+        oversized = b'{"required_crons": {}}' + b'x' * (2 * _MAX_RESPONSE_BYTES)
+        resp = _StreamedResponse(200, oversized)
+
+        self.assertTrue(self._push(resp), "an oversized body must not fail the push")
+
+        self.assertIsNotNone(resp.raw.requested, "the body was never read bounded")
+        self.assertLessEqual(
+            resp.raw.requested, _MAX_RESPONSE_BYTES + 1,
+            "read more than the cap — the tenant sized the platform's read")
+        self.assertTrue(resp.closed, "stream=True leaks the connection unless closed")
+
+    def test_an_oversized_body_keeps_the_push_successful(self):
+        """The config WAS applied. Marking this failed would misreport a
+        suspension that actually landed — the no-raise contract #262 defends."""
+        resp = _StreamedResponse(200, b'y' * (2 * _MAX_RESPONSE_BYTES))
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.config_sync_state, 'ok')
+
+    def test_a_normal_body_is_still_parsed_and_reported(self):
+        """The cap must not break the #262 required-job self-report."""
+        body = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': False}}}).encode()
+        resp = _StreamedResponse(200, body)
+
+        self.assertTrue(self._push(resp))
+
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_health_state, 'degraded',
+                         "a streamed body must still feed the health report")
+
+    def test_an_error_body_excerpt_is_also_bounded(self):
+        """The old code sliced resp.text[:500] — which truncates the LOG LINE
+        after the whole body is in memory, and under stream=True would drain
+        the entire stream to build that string."""
+        resp = _StreamedResponse(500, b'z' * (2 * _MAX_RESPONSE_BYTES))
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertFalse(self._push(resp))
+        self.assertLessEqual(resp.raw.requested, _MAX_RESPONSE_BYTES + 1)
+        self.assertTrue(resp.closed)
+
+    def test_a_non_streamed_response_still_works(self):
+        """The fallback that keeps the existing contract. A response object
+        without .raw — a non-streamed Response, or any of the doubles this
+        suite already uses — must behave exactly as before."""
+        self.assertTrue(self._push(_Response(200, body={'required_crons': {}})))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.config_sync_state, 'ok')
 
 
 @tagged("post_install", "-at_install")

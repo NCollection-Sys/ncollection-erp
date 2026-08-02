@@ -70,6 +70,20 @@ _DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
 _SYNC_ENDPOINT = '/json/2/ncollection.workspace.config/sync_from_platform'
 _SYNC_CHANNEL = 'root.provisioning'
 _RPC_TIMEOUT = 30
+# Hard cap on how much of a TENANT's response the PLATFORM will read (#278).
+#
+# _RPC_TIMEOUT bounds how long we wait; nothing bounded how much we READ. The
+# expected body is the #262 required-job self-report — a handful of xmlids,
+# itself already capped at _MAX_REPORTED_CRONS = 32 — so 64 KB is generous by
+# orders of magnitude for anything legitimate.
+#
+# Without it, a tenant returning a multi-gigabyte body has the control plane
+# allocate all of it. That is the wrong direction for a two-layer architecture:
+# a tenant must not be able to influence platform resource use. Note the real
+# exposure was never resp.text[:500] on the error path (that slice truncates the
+# LOG LINE, after the whole body is already in memory) but resp.json() on the
+# SUCCESS path, which reads AND materialises the lot.
+_MAX_RESPONSE_BYTES = 64 * 1024
 
 # HTTP statuses that a retry can never heal (#264). A 401/403 means the tenant
 # rejected our bearer — a stale key hash, typically — so the nightly reconcile
@@ -434,6 +448,87 @@ class TenantConfigSync(models.Model):
 
     # ---- the json2/bearer client ----------------------------------------
 
+    def _read_bounded(self, resp):
+        """At most ``_MAX_RESPONSE_BYTES + 1`` bytes of the body (#278).
+
+        Returns the bytes read, or ``None`` when a bounded read is not possible
+        on this object. NEVER raises: the caller's contract is that reading the
+        body must not turn a successful push into a failure.
+
+        The ``None`` case is deliberate and load-bearing. A real streamed
+        ``requests.Response`` always exposes ``.raw``; a non-streamed one, or a
+        test double, does not. Falling back to the object's own accessors there
+        keeps the existing contract exactly as the suite defends it, while real
+        traffic — the only traffic a hostile tenant controls — goes through the
+        cap. Reading one byte past the cap is what lets the caller distinguish
+        "exactly at the limit" from "truncated".
+        """
+        raw = getattr(resp, 'raw', None)
+        if raw is None:
+            return None
+        try:
+            return raw.read(_MAX_RESPONSE_BYTES + 1, decode_content=True)
+        except Exception:       # noqa: BLE001 - see the contract above
+            return None
+
+    def _close_quietly(self, resp):
+        """Release the connection. stream=True holds it until the body is
+        consumed or the response is closed, and we deliberately stop reading
+        early on an oversized body — so closing is not optional. getattr
+        because a test double has no close(), and a missing stub method must
+        not break a config push."""
+        closer = getattr(resp, 'close', None)
+        if closer is None:
+            return
+        try:
+            closer()
+        except Exception:       # noqa: BLE001 - never break a push on cleanup
+            _logger.debug(
+                "Releasing the config-sync connection failed; the push itself "
+                "already completed.", exc_info=True)
+
+    def _error_excerpt(self, resp):
+        """A short, BOUNDED excerpt of a failure body for the log line.
+
+        The old code sliced ``resp.text[:500]``, which truncates the LOG LINE
+        after the whole body is already in memory — and with stream=True it
+        would drain the entire stream to build that string. Read bounded first,
+        slice second.
+        """
+        chunk = self._read_bounded(resp)
+        if chunk is None:
+            return (getattr(resp, 'text', '') or '')[:500]
+        return chunk[:500].decode('utf-8', 'replace')
+
+    def _bounded_payload(self, resp, db):
+        """The tenant's parsed self-report, or None. Bounded, never raises."""
+        chunk = self._read_bounded(resp)
+        if chunk is None:
+            # Not a streamed response — fall back to the object's own parser.
+            try:
+                return resp.json()
+            except Exception:   # noqa: BLE001
+                _logger.warning(
+                    "Config sync to %s returned an unreadable body; skipping "
+                    "the required-job health report.", db)
+                return None
+        if len(chunk) > _MAX_RESPONSE_BYTES:
+            # Honour the status code, discard the body. The config WAS applied;
+            # marking this a failure would misreport a suspension that landed.
+            _logger.warning(
+                "Config sync to %s returned more than %s bytes; body discarded "
+                "and the required-job health report skipped for this run. A "
+                "tenant cannot be allowed to size the platform's read.",
+                db, _MAX_RESPONSE_BYTES)
+            return None
+        try:
+            return json.loads(chunk.decode('utf-8', 'replace'))
+        except Exception:       # noqa: BLE001
+            _logger.warning(
+                "Config sync to %s returned an unreadable body; skipping the "
+                "required-job health report.", db)
+            return None
+
     def _config_sync_push(self, db, vals):
         """One platform->tenant config push over json2/bearer. Logged; never
         raises into the caller (a transport error must not break a lifecycle
@@ -481,6 +576,8 @@ class TenantConfigSync(models.Model):
                 },
                 data=json.dumps({'vals': vals}),
                 timeout=_RPC_TIMEOUT,
+                # Do not download the body on receipt — read it bounded, below.
+                stream=True,
             )
         except requests.RequestException as exc:
             _logger.error("Config sync to %s failed (transport): %s", db, exc)
@@ -495,7 +592,8 @@ class TenantConfigSync(models.Model):
                 "Config sync to %s failed (HTTP %s, %s): %s",
                 db, resp.status_code,
                 'PERMANENT - needs attention' if permanent else 'transient',
-                resp.text[:500])
+                self._error_excerpt(resp))
+            self._close_quietly(resp)
             self._config_sync_record(
                 'permanent' if permanent else 'transient',
                 "HTTP %s" % resp.status_code)
@@ -508,19 +606,15 @@ class TenantConfigSync(models.Model):
         # Parsing is wrapped: json2 returns the method result unwrapped, but a
         # malformed or truncated body must never turn a SUCCESSFUL config push
         # into a failure.
-        try:
-            payload = resp.json()
-        except Exception:
-            # Broad on purpose. The contract is that parsing must NEVER turn a
-            # SUCCESSFUL push into a failure, and the failure modes are not
-            # just malformed JSON: a truncated body, a proxy returning HTML, or
-            # any response object that does not implement .json(). Catching only
-            # ValueError was too narrow and broke seven existing tests the first
-            # time this ran — which is exactly the contract those tests defend.
-            _logger.warning(
-                "Config sync to %s returned an unreadable body; skipping the "
-                "required-job health report.", db)
-            payload = None
+        # Bounded read (#278). The contract is unchanged and still absolute:
+        # parsing must NEVER turn a SUCCESSFUL push into a failure. The failure
+        # modes are not just malformed JSON — a truncated body, a proxy
+        # returning HTML, an object without .json(), and now a body over the
+        # cap. Catching only ValueError was too narrow and broke seven existing
+        # tests the first time this ran, which is exactly the contract those
+        # tests defend. _bounded_payload absorbs all of it and returns None.
+        payload = self._bounded_payload(resp, db)
+        self._close_quietly(resp)
         self._record_cron_health(
             (payload or {}).get('required_crons')
             if isinstance(payload, dict) else None)
