@@ -27,11 +27,25 @@ from odoo.tools import mute_logger
 
 
 class _Response:
-    """Minimal stand-in for a requests response."""
+    """Minimal stand-in for a requests response.
 
-    def __init__(self, status_code, text=''):
+    Carries a json() body because the platform reads the tenant's
+    required-job self-report off the sync response (#262). A stub without it
+    exercised only the unreadable-body path.
+    """
+
+    def __init__(self, status_code, text='', body=None):
         self.status_code = status_code
         self.text = text
+        self._body = {'ok': True} if body is None else body
+
+    def json(self):
+        if self._body is _UNREADABLE:
+            raise ValueError('not json')
+        return self._body
+
+
+_UNREADABLE = object()
 
 
 @tagged("post_install", "-at_install")
@@ -266,3 +280,132 @@ class TestConfigSyncHealth(TransactionCase):
         """The existing boolean contract is unchanged by the new bookkeeping."""
         self.assertFalse(self._push(_Response(500)))
         self.assertTrue(self._push(_Response(200)))
+
+
+@tagged("post_install", "-at_install")
+class TestRequiredCronHealth(TransactionCase):
+    """The platform's view of tenant-side jobs it depends on (#262).
+
+    Odoo deactivates a cron by itself after 5 failures spanning 7 days, so a
+    compliance job does not merely fail — it eventually switches OFF and goes
+    quiet. A tenant module cannot see the fleet, so the tenant self-reports on
+    the config-sync response and the platform watches.
+
+    The distinction that matters most here: a job whose MODULE is not installed
+    is not a fault. A tenant provisioned before that module existed legitimately
+    lacks it (#218 backfills those), and alerting on it would be noise.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.tenant = cls.env['ncollection.tenant'].create({
+            'company_name': 'Cron Health Co',
+            'database_name': 'cronhealth',
+            'database_status': 'ready',
+        })
+
+    CRON = 'ncollection_auth.cron_gc_auth_log'
+
+    def _report(self, installed=True, active=True):
+        return {self.CRON: {'installed': installed, 'active': active}}
+
+    # -- classification -----------------------------------------------------
+
+    def test_enabled_job_is_healthy(self):
+        self.tenant._record_cron_health(self._report())
+        self.assertEqual(self.tenant.cron_health_state, 'ok')
+        self.assertFalse(self.tenant.cron_health_detail)
+
+    def test_disabled_job_is_degraded_and_named(self):
+        self.tenant._record_cron_health(self._report(active=False))
+        self.assertEqual(self.tenant.cron_health_state, 'degraded')
+        self.assertIn(self.CRON, self.tenant.cron_health_detail)
+
+    def test_absent_module_is_not_a_fault(self):
+        """Pre-#218 tenants legitimately lack the module — do not cry wolf."""
+        self.tenant._record_cron_health(self._report(installed=False, active=False))
+        self.assertEqual(
+            self.tenant.cron_health_state, 'ok',
+            "a job whose module is not installed must not read as degraded")
+
+    def test_missing_report_is_unknown_not_healthy(self):
+        """Silence is not health. An older tenant reports nothing."""
+        for absent in (None, {}, 'garbage', []):
+            with self.subTest(payload=absent):
+                self.tenant.cron_health_state = 'ok'
+                self.tenant._record_cron_health(absent)
+                self.assertEqual(self.tenant.cron_health_state, 'unknown')
+
+    # -- alerting -----------------------------------------------------------
+
+    def test_degradation_opens_exactly_one_todo(self):
+        """The nightly reconcile must not stack a to-do per run."""
+        for _ in range(3):
+            self.tenant._record_cron_health(self._report(active=False))
+        todos = self.tenant.activity_ids.filtered(
+            lambda a: a.summary and 'required job' in a.summary.lower())
+        self.assertEqual(len(todos), 1)
+
+    def test_recovery_closes_the_todo(self):
+        self.tenant._record_cron_health(self._report(active=False))
+        self.assertTrue(self.tenant.cron_health_activity_id)
+        self.tenant._record_cron_health(self._report())
+        self.assertFalse(
+            self.tenant.cron_health_activity_id,
+            "recovery must resolve the to-do, or the next incident is swallowed")
+
+    def test_a_new_degradation_after_recovery_opens_a_fresh_todo(self):
+        """Same trap #264 hit: a stale to-do must not absorb a new incident."""
+        self.tenant._record_cron_health(self._report(active=False))
+        first = self.tenant.cron_health_activity_id
+        self.tenant._record_cron_health(self._report())
+        self.tenant._record_cron_health(self._report(active=False))
+        second = self.tenant.cron_health_activity_id
+        self.assertTrue(second)
+        self.assertNotEqual(second, first)
+
+    # -- the seam between the two halves ------------------------------------
+
+    def test_health_is_read_off_a_real_push_response(self):
+        """The tenant's report has to survive the whole round trip.
+
+        Both halves are unit-tested separately, which is exactly how a seam
+        goes untested: the tenant builds `required_crons`, the platform parses
+        it off resp.json(). This drives a real _config_sync_push with a body
+        shaped like the tenant's actual return value.
+        """
+        body = {'ok': True, 'plan_code': 'X', 'subscription_status': 'active',
+                'required_crons': {self.CRON: {'installed': True,
+                                               'active': False}}}
+        with patch.dict('os.environ', {'NC_CONFIG_SYNC_KEY': 'k'}):
+            with patch('requests.post',
+                       return_value=_Response(200, body=body)):
+                ok = self.tenant._config_sync_push('cronhealth', {})
+        self.assertTrue(ok, "health reporting must not affect the push result")
+        self.assertEqual(self.tenant.cron_health_state, 'degraded')
+
+    def test_an_unreadable_body_does_not_fail_the_push(self):
+        """A proxy returning HTML must not break a successful config push."""
+        with patch.dict('os.environ', {'NC_CONFIG_SYNC_KEY': 'k'}):
+            with patch('requests.post',
+                       return_value=_Response(200, body=_UNREADABLE)):
+                ok = self.tenant._config_sync_push('cronhealth', {})
+        self.assertTrue(ok)
+        self.assertEqual(self.tenant.cron_health_state, 'unknown')
+
+    # -- the contract that must not break ----------------------------------
+
+    @mute_logger('odoo.addons.ncollection_saas.models.config_sync')
+    def test_recording_never_raises(self):
+        """A health probe must never break a config push."""
+        original_write = type(self.tenant).write
+
+        def _explode(self, vals):
+            if 'cron_health_state' in vals:
+                raise RuntimeError('health bookkeeping exploded')
+            return original_write(self, vals)
+
+        with patch.object(type(self.tenant), 'write', _explode):
+            self.tenant._record_cron_health(self._report(active=False))
+        # No exception escaped; that is the assertion.

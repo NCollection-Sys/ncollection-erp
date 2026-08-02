@@ -73,6 +73,12 @@ _RPC_TIMEOUT = 30
 # "needs a human" at the only moment that distinction matters.
 _PERMANENT_STATUSES = frozenset({401, 403})
 
+CRON_HEALTH_STATES = [
+    ('ok', 'Healthy'),
+    ('degraded', 'A required job is off'),
+    ('unknown', 'Not reported'),
+]
+
 SYNC_STATES = [
     ('ok', 'In sync'),
     ('transient', 'Retrying'),
@@ -118,6 +124,23 @@ class TenantConfigSync(models.Model):
     config_sync_failure_count = fields.Integer(
         default=0, readonly=True, copy=False,
         string='Consecutive Sync Failures')
+    # ---- required tenant-side cron health (#262) -------------------------
+    #
+    # Odoo deactivates a cron itself after 5 failures spanning 7 days, so a
+    # misconfigured compliance job (e.g. the auth-log retention purge, #219)
+    # eventually switches OFF and goes quiet. The tenant self-reports on the
+    # config-sync response; the platform is the only place that can see the
+    # whole fleet, so it is where the watching belongs.
+    cron_health_state = fields.Selection(
+        CRON_HEALTH_STATES, default='unknown', readonly=True, copy=False,
+        string='Required Jobs',
+        help="Whether the tenant-side jobs the platform depends on are still "
+             "enabled. 'Not reported' means this tenant has not synced since "
+             "the check shipped.")
+    cron_health_detail = fields.Char(readonly=True, copy=False)
+    cron_health_activity_id = fields.Many2one(
+        'mail.activity', readonly=True, copy=False, ondelete='set null',
+        string='Open Required-Job To-Do')
     config_sync_activity_id = fields.Many2one(
         'mail.activity', readonly=True, copy=False, ondelete='set null',
         string='Open Config-Sync To-Do',
@@ -226,6 +249,80 @@ class TenantConfigSync(models.Model):
             "Config sync recovered for %(db)s.", db=self.database_name))
         self.sudo().config_sync_activity_id = False
 
+    # ---- required-cron health (#262) -------------------------------------
+
+    def _record_cron_health(self, report):
+        """Record the tenant's self-report on required jobs. Never raises.
+
+        `report` is ``{xml_id: {'installed': bool, 'active': bool}}`` from the
+        tenant's sync response, or None when this tenant did not report (older
+        tenant code, or a body we could not parse).
+
+        A cron whose module is NOT installed is deliberately NOT a fault: a
+        tenant provisioned before that module existed legitimately lacks it,
+        and #218 is the ticket that backfills those. Alerting on it here would
+        be noise that trains people to ignore the signal.
+        """
+        try:
+            self.ensure_one()
+            if not isinstance(report, dict) or not report:
+                # Absent report != healthy. Say "unknown" rather than assume.
+                if self.cron_health_state != 'unknown':
+                    self.sudo().write({'cron_health_state': 'unknown'})
+                return
+
+            broken = [
+                xml_id for xml_id, info in report.items()
+                if isinstance(info, dict)
+                and info.get('installed') and not info.get('active')
+            ]
+            previous = self.cron_health_state
+            if broken:
+                detail = self.env._(
+                    "Disabled on the tenant: %(jobs)s", jobs=', '.join(sorted(broken)))
+                self.sudo().write({'cron_health_state': 'degraded',
+                                   'cron_health_detail': detail[:255]})
+                if previous != 'degraded':
+                    self._alert_cron_health(detail)
+                return
+
+            self.sudo().write({'cron_health_state': 'ok',
+                               'cron_health_detail': False})
+            if previous == 'degraded':
+                self.sudo().message_post(body=self.env._(
+                    "Required tenant jobs are enabled again on %(db)s.",
+                    db=self.database_name))
+                self._close_cron_health_activity()
+        except Exception:  # pragma: no cover - defensive: never break a push
+            _logger.exception(
+                "Could not record required-cron health for %s.",
+                self.database_name if self else '?')
+
+    def _alert_cron_health(self, detail):
+        """Chatter + one to-do, same convention as the config-sync alert."""
+        body = self.env._(
+            "A required job is DISABLED on %(db)s: %(detail)s\n\n"
+            "Odoo deactivates a cron by itself after repeated failures, so this "
+            "is usually a symptom rather than someone switching it off. The "
+            "job stays off until re-enabled by hand.",
+            db=self.database_name, detail=detail)
+        self.sudo().message_post(body=body)
+        open_todo = self.sudo().cron_health_activity_id
+        if open_todo and open_todo.exists():
+            return
+        activity = self.sudo().activity_schedule(
+            'mail.mail_activity_data_todo',
+            summary=self.env._("Re-enable required job: %s", self.database_name),
+            note=body)
+        self.sudo().cron_health_activity_id = activity
+
+    def _close_cron_health_activity(self):
+        activity = self.sudo().cron_health_activity_id
+        if activity and activity.exists():
+            activity.action_feedback(feedback=self.env._(
+                "Required jobs healthy again on %(db)s.", db=self.database_name))
+        self.sudo().cron_health_activity_id = False
+
     def _config_sync_alert(self, state, error):
         """Chatter + activity on the tenant, mirroring P2-T05's backup alert.
 
@@ -333,6 +430,26 @@ class TenantConfigSync(models.Model):
                      db, vals.get('plan_code'), vals.get('subscription_status'),
                      vals.get('allowed_module_names'))
         self._config_sync_record('ok')
+        # The tenant self-reports required-job health on this response (#262).
+        # Parsing is wrapped: json2 returns the method result unwrapped, but a
+        # malformed or truncated body must never turn a SUCCESSFUL config push
+        # into a failure.
+        try:
+            payload = resp.json()
+        except Exception:
+            # Broad on purpose. The contract is that parsing must NEVER turn a
+            # SUCCESSFUL push into a failure, and the failure modes are not
+            # just malformed JSON: a truncated body, a proxy returning HTML, or
+            # any response object that does not implement .json(). Catching only
+            # ValueError was too narrow and broke seven existing tests the first
+            # time this ran — which is exactly the contract those tests defend.
+            _logger.warning(
+                "Config sync to %s returned an unreadable body; skipping the "
+                "required-job health report.", db)
+            payload = None
+        self._record_cron_health(
+            (payload or {}).get('required_crons')
+            if isinstance(payload, dict) else None)
         return True
 
     # ---- lifecycle triggers (status → subscription_status projection) ----
