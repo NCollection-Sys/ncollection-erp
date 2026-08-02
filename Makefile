@@ -42,7 +42,7 @@ OCA_VENV := .oca-venv
         routing-up routing-verify routing-down routing-clean e2e-clean \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
-        demo-tenant demo-clean staging-config staging-build go-live-check
+        demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
@@ -209,6 +209,9 @@ hooks-install: ## Enable the repo's git hooks (fast gates run on pre-push)
 
 doctor: ## Diagnose the local dev environment ("why doesn't this work on my machine?")
 	@bash scripts/dev/doctor.sh
+
+stack-settled: ## Was db/odoo just (re)started? Sanity check before trusting a scary finding (R-018)
+	@bash scripts/dev/stack_settled.sh
 
 verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + financial-bootstrap + e2e) — pre-merge gate
 	@echo "==> [1/5] routing & isolation (P1-T06)"

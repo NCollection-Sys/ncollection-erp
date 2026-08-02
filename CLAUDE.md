@@ -98,6 +98,19 @@ frontend/backend deploy — it's a monolith.
 13. **Before merging, run `make verify-all`** — routing + provisioning + e2e — not just the
     suite for your own lane. A ticket that proves only its own lane cannot see a cross-suite
     regression, which is exactly how breakage stayed invisible.
+14. **Never mutate the shared dev stack while another agent may depend on it.** Background
+    agents share ONE Docker stack and ONE bind-mounted working tree — no isolation. An ad
+    hoc `docker compose up/down/restart` (outside a suite's own documented flow, e.g.
+    `e2e-verify`'s load-bearing odoo/nginx restart) or deliberately breaking a bind-mounted
+    file for a RED proof can land mid-flight under a *different*, concurrently-running
+    agent and produce a **false CRITICAL indistinguishable from a real one** — it already
+    has, twice, same day (R-018: a fabricated tenant-isolation breach, a phantom
+    provisioning error, neither reproduced on a clean re-run). Do such work **before**
+    fanning out background reviewers/`verify-runner`, never during. No agent may "fix" a
+    stack it doesn't own by restarting it — if it looks down or flaky, run
+    `scripts/dev/stack_settled.sh` and report what you see instead of guessing. Before
+    trusting a scary/CRITICAL finding, re-run whatever produced it once — R-018's false
+    positives both cleared on the very first retry.
 If a requested implementation appears to conflict with
 DELIVERABLE_1_SYSTEM_DESIGN.md,
 ARCHITECTURE_DATA_PLATFORM.md,
@@ -211,6 +224,12 @@ Project subagents live in `.claude/agents/`. The orchestrator invokes them
 
 Address every CRITICAL/HIGH finding before pushing. For a large or high-risk diff,
 prefer `/code-review ultra`.
+
+**Shared-stack guardrail (binding, Rule 14 / R-018):** background agents share one
+Docker stack and one bind-mounted tree — there is no isolation between them. Never
+restart/recreate the stack, or deliberately break a bind-mounted file, while other
+agents may be relying on it; do that before fanning out, not during. Any agent can
+sanity-check with `scripts/dev/stack_settled.sh` before trusting a scary finding.
 
 **Self-improvement guardrail (binding):** every agent — `self-improver` included —
 **PROPOSES via a PR and NEVER auto-merges.** Branch protection is unavailable on this
