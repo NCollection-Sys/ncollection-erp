@@ -11,7 +11,9 @@ cascaded to each sub-tenant's res.company through the config-sync RPC bridge
 import re
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
+
+_PLATFORM_ADMIN = 'ncollection_subscription.group_platform_admin'
 
 # Same strict 6-digit hex rule the tenant side enforces (ncollection_branding
 # res.company._check_nc_brand_colors). Validating here too means a bad colour is
@@ -69,6 +71,9 @@ class Reseller(models.Model):
     @api.depends('tenant_ids')
     def _compute_subtenant_count(self):
         # Grouped count so the form/list stays cheap with many resellers.
+        # _read_group returns the group key as a recordset; recordsets hash and
+        # compare by (model, id), so `counts.get(reseller)` below is a safe,
+        # deliberate lookup — do not "simplify" it to an id-keyed dict.
         counts = dict(self.env['ncollection.tenant']._read_group(
             [('reseller_id', 'in', self.ids)],
             groupby=['reseller_id'], aggregates=['__count']))
@@ -132,6 +137,16 @@ class Reseller(models.Model):
         sub-tenant comes up carrying partner branding end-to-end. Returns the
         created tenant."""
         self.ensure_one()
+        # ORM-level ownership gate (Rule 4/7). The wizard's readonly reseller_id
+        # is UI-only; a crafted RPC could call this on ANOTHER reseller's record
+        # (accessing self.id triggers no record rule). So verify server-side that
+        # a non-admin caller owns this reseller before any privileged work —
+        # otherwise reseller A could burn reseller B's quota / bill under B.
+        user = self.env.user
+        if not user.has_group(_PLATFORM_ADMIN) and self.sudo().user_id != user:
+            raise AccessError(self.env._(
+                "You may only provision sub-tenants under your own reseller "
+                "account."))
         # Provisioning is a privileged platform operation: a reseller user has
         # only read on tenants (record-rule scoped), so the create runs sudo.
         # The quota guard in tenant.create still fires (it counts by reseller
@@ -139,8 +154,14 @@ class Reseller(models.Model):
         # (reseller record rule), so this cannot provision under someone else.
         Tenant = self.env['ncollection.tenant'].sudo()
         Plan = self.env['ncollection.subscription.plan'].sudo()
-        plan_rec = plan if getattr(plan, '_name', None) == 'ncollection.subscription.plan' \
-            else Plan.search([('code', '=', plan), ('active', '=', True)], limit=1)
+        # Accept a plan recordset, an integer id, or a plan code.
+        if getattr(plan, '_name', None) == 'ncollection.subscription.plan':
+            plan_rec = plan
+        elif isinstance(plan, int):
+            plan_rec = Plan.browse(plan).exists()
+        else:
+            plan_rec = Plan.search(
+                [('code', '=', plan), ('active', '=', True)], limit=1)
         if not plan_rec:
             raise ValidationError(self.env._("Unknown or inactive plan."))
         subdomain = Tenant._nc_normalize_subdomain(subdomain) \

@@ -5,6 +5,7 @@ The highest-value check: a reseller must never see another reseller's tenants or
 account — enforced at the ORM (record rules), not merely hidden in the UI
 (Rule 4/7). We read as each reseller's own user, not as the test admin.
 """
+from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -47,6 +48,15 @@ class TestResellerIsolation(TransactionCase):
     def test_reseller_sees_only_own_account(self):
         seen = self.env['ncollection.reseller'].with_user(self.user_a).search([])
         self.assertEqual(seen, self.res_a)
+
+    def test_reseller_cannot_provision_under_other(self):
+        # ORM ownership gate: reseller A's user cannot provision a sub-tenant
+        # (and burn quota / bill) under reseller B, even by passing B's record.
+        plan = self.env['ncollection.subscription.plan'].create({
+            'name': 'IsoP', 'code': 'ISO-P', 'monthly_price': 10.0})
+        with self.assertRaises(AccessError):
+            self.res_b.with_user(self.user_a).provision_subtenant(
+                company_name='Evil', subdomain='eviliso', plan=plan)
 
     def test_reseller_cannot_read_other_account(self):
         other = self.res_b.with_user(self.user_a)

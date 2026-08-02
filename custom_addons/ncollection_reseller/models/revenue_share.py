@@ -28,17 +28,21 @@ class ResellerRevenueShare(models.Model):
         string='Share Owed (monthly)', readonly=True, currency_field='currency_id')
 
     def init(self):
-        # A SQL view: one row per reseller, summing the MRR of the active
-        # subscriptions of its sub-tenants and applying the reseller's share.
-        # Grouped in-DB so the report scales with resellers, not subscriptions.
+        # A SQL view: one row per reseller AND currency. Currency is in the
+        # GROUP BY (never MAX'd) so MRRs in different currencies are NEVER summed
+        # as raw numbers — a reseller with multi-currency sub-tenants gets one
+        # correct row per currency. subtenant_count is scoped to each row's
+        # currency group (tenants whose active subscription is in that currency;
+        # tenants with no active subscription fall in the NULL-currency row).
+        # ROW_NUMBER supplies the synthetic per-row id an _auto=False model needs.
         self.env.cr.execute(SQL(
             """
             CREATE OR REPLACE VIEW %s AS (
                 SELECT
-                    r.id                              AS id,
+                    ROW_NUMBER() OVER (ORDER BY r.id, s.currency_id) AS id,
                     r.id                              AS reseller_id,
                     r.revenue_share_pct               AS revenue_share_pct,
-                    MAX(s.currency_id)                AS currency_id,
+                    s.currency_id                     AS currency_id,
                     COUNT(DISTINCT t.id)              AS subtenant_count,
                     COALESCE(SUM(s.mrr), 0.0)         AS total_mrr,
                     COALESCE(SUM(s.mrr), 0.0) * r.revenue_share_pct / 100.0
@@ -49,7 +53,7 @@ class ResellerRevenueShare(models.Model):
                   LEFT JOIN ncollection_subscription s
                          ON s.tenant_id = t.id
                         AND s.status = 'active'
-                 GROUP BY r.id, r.revenue_share_pct
+                 GROUP BY r.id, r.revenue_share_pct, s.currency_id
             )
             """,
             SQL.identifier(self._table),

@@ -111,13 +111,12 @@ class WorkspaceConfig(models.Model):
         """
         if not isinstance(vals, dict):
             raise UserError(self.env._("sync_from_platform expects a dict of values."))
-        # Pull reseller brand keys out of the payload and apply them to the
-        # tenant company BEFORE the licensing whitelist — they are a separate,
-        # optional concern and must not trip the "non-whitelisted field" guard.
+        # Separate the optional reseller brand keys from the licensing payload
+        # up front so they don't trip the "non-whitelisted field" guard — but
+        # only APPLY them at the end, after every validation has passed, so no
+        # company row is written for a payload that then raises.
         vals = dict(vals)
         brand = {k: vals.pop(k) for k in list(vals) if k in _BRAND_APPLY_FIELDS}
-        if brand:
-            self._nc_apply_pushed_branding(brand)
         rejected = set(vals) - _SYNCABLE_FIELDS
         if rejected:
             raise UserError(self.env._(
@@ -130,6 +129,10 @@ class WorkspaceConfig(models.Model):
             raise UserError(self.env._(
                 "No workspace configuration exists to sync into (not provisioned?)."))
         config.write({k: vals[k] for k in vals})
+        # Validation passed — now cascade any reseller branding (last, so a
+        # rejected payload never leaves a written company row behind).
+        if brand:
+            self._nc_apply_pushed_branding(brand)
         return {'ok': True, 'plan_code': config.plan_code,
                 'subscription_status': config.subscription_status}
 
