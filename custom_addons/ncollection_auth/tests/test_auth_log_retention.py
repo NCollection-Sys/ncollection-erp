@@ -23,8 +23,10 @@ from odoo.tests import TransactionCase, tagged
 from odoo.addons.ncollection_auth.models import auth_log
 from odoo.addons.ncollection_auth.models.auth_log import (
     DEFAULT_RETENTION_DAYS,
+    DIGEST_PREFIX,
     MIN_RETENTION_DAYS,
     RETENTION_PARAM,
+    SKELETON_PARAM,
 )
 
 
@@ -57,8 +59,13 @@ class TestAuthLogRetention(TransactionCase):
     # -- the window ---------------------------------------------------------
 
     def test_rows_past_the_window_are_deleted_and_recent_rows_kept(self):
-        """The core contract, both halves asserted in one place."""
-        self.Param.set_param(RETENTION_PARAM, 180)
+        """The core contract of STAGE 2, both halves asserted in one place.
+
+        Since #261 deletion is gated by SKELETON_PARAM, not RETENTION_PARAM —
+        a row past retention is MINIMISED, and only a row past the skeleton
+        window is removed. This drives the skeleton window directly.
+        """
+        self.Param.set_param(SKELETON_PARAM, 180)
         stale = self._make_log(age_days=400, login="stale@ncollection.test")
         edge_old = self._make_log(age_days=181, login="edge_old@ncollection.test")
         edge_new = self._make_log(age_days=179, login="edge_new@ncollection.test")
@@ -76,10 +83,15 @@ class TestAuthLogRetention(TransactionCase):
         """The window is actually read, not hardcoded at the default.
 
         Uses 60 days rather than something tighter because MIN_RETENTION_DAYS
-        refuses anything under 30 — a row that would survive the 180-day
+        refuses anything under 30 — a row that would survive the 400-day
         default must still be purged under a legitimately shorter one.
+
+        BOTH windows move together: since #261 the skeleton window may not be
+        shorter than the retention window, so shrinking only the skeleton is a
+        refused misconfiguration, not a shorter policy.
         """
-        self.Param.set_param(RETENTION_PARAM, 60)
+        self.Param.set_param(RETENTION_PARAM, 30)
+        self.Param.set_param(SKELETON_PARAM, 60)
         recent = self._make_log(age_days=90, login="ninety@ncollection.test")
         self.Log._gc_auth_log()
         self.assertFalse(
@@ -91,13 +103,13 @@ class TestAuthLogRetention(TransactionCase):
 
     def test_zero_disables_the_purge(self):
         """`<= 0` means disabled — the documented escape hatch."""
-        self.Param.set_param(RETENTION_PARAM, 0)
+        self.Param.set_param(SKELETON_PARAM, 0)
         ancient = self._make_log(age_days=9999, login="ancient@ncollection.test")
         self.assertEqual(self.Log._gc_auth_log(), 0)
         self.assertTrue(ancient.exists(), "nothing may be deleted when disabled")
 
     def test_negative_disables_the_purge(self):
-        self.Param.set_param(RETENTION_PARAM, -1)
+        self.Param.set_param(SKELETON_PARAM, -1)
         ancient = self._make_log(age_days=9999, login="neg@ncollection.test")
         self.assertEqual(self.Log._gc_auth_log(), 0)
         self.assertTrue(ancient.exists())
@@ -161,12 +173,129 @@ class TestAuthLogRetention(TransactionCase):
 
     def test_purge_is_idempotent(self):
         """A second run over an already-clean window is a no-op."""
-        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 180)
         self._make_log(age_days=400)
         first = self.Log._gc_auth_log()
         second = self.Log._gc_auth_log()
         self.assertEqual(first, 1)
         self.assertEqual(second, 0, "re-running must delete nothing further")
+
+    # -- minimisation, stage 1 (#261) --------------------------------------
+
+    def test_a_row_past_retention_is_minimised_NOT_deleted(self):
+        """The whole behavioural change.
+
+        #219 hard-deleted at 180 days, which destroyed the login_failed run-up
+        and the login_success for a compromised session before the ~200-day
+        mean time-to-identify had elapsed. Now that row survives with its
+        identifying detail stripped.
+        """
+        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 400)
+        row = self._make_log(age_days=200, login="target@ncollection.test")
+
+        self.Log._minimise_auth_log()
+        row.invalidate_recordset()
+
+        self.assertTrue(row.exists(), "a row past retention must NOT be deleted")
+        self.assertFalse(row.ip_address, "ip_address must be dropped")
+        self.assertFalse(row.user_agent, "user_agent must be dropped")
+        self.assertTrue(row.login.startswith(DIGEST_PREFIX),
+                        "login must be digested, not left in the clear")
+        self.assertNotIn("target@ncollection.test", row.login)
+        # ...and the pattern evidence survives, which is the point.
+        self.assertEqual(row.event_type, "login_success")
+        self.assertTrue(row.create_date)
+
+    def test_a_row_inside_retention_is_untouched(self):
+        self.Param.set_param(RETENTION_PARAM, 180)
+        row = self._make_log(age_days=10, login="recent@ncollection.test")
+        self.Log._minimise_auth_log()
+        row.invalidate_recordset()
+        self.assertEqual(row.ip_address, "203.0.113.7")
+        self.assertEqual(row.login, "recent@ncollection.test")
+
+    def test_the_digest_is_stable_and_distinguishing(self):
+        """Two failures against the same account must still be linkable, and
+        two different accounts must not collide — otherwise the skeleton cannot
+        answer 'was one account targeted repeatedly?', which is why `login` is
+        digested rather than nulled."""
+        self.Param.set_param(RETENTION_PARAM, 180)
+        a1 = self._make_log(age_days=200, login="same@ncollection.test")
+        a2 = self._make_log(age_days=201, login="same@ncollection.test")
+        b1 = self._make_log(age_days=202, login="other@ncollection.test")
+
+        self.Log._minimise_auth_log()
+        for r in (a1, a2, b1):
+            r.invalidate_recordset()
+
+        self.assertEqual(a1.login, a2.login, "same account must digest alike")
+        self.assertNotEqual(a1.login, b1.login, "different accounts must differ")
+
+    def test_minimisation_is_idempotent(self):
+        """Rule 12. The second run must be a genuine no-op, not a re-digest of
+        an already-digested value — which would break the linkability above."""
+        self.Param.set_param(RETENTION_PARAM, 180)
+        row = self._make_log(age_days=200, login="idem@ncollection.test")
+
+        first = self.Log._minimise_auth_log()
+        row.invalidate_recordset()
+        digest = row.login
+        second = self.Log._minimise_auth_log()
+        row.invalidate_recordset()
+
+        self.assertEqual(first, 1)
+        self.assertEqual(second, 0, "a second sweep must select nothing")
+        self.assertEqual(row.login, digest, "the digest must not be re-digested")
+
+    def test_a_row_with_no_login_minimises_without_error(self):
+        """login is nullable — an event with no request context has none. The
+        sweep must still strip ip/user_agent rather than skip or raise."""
+        self.Param.set_param(RETENTION_PARAM, 180)
+        row = self._make_log(age_days=200, login=False)
+        self.Log._minimise_auth_log()
+        row.invalidate_recordset()
+        self.assertTrue(row.exists())
+        self.assertFalse(row.ip_address)
+
+    def test_zero_retention_disables_minimisation(self):
+        self.Param.set_param(RETENTION_PARAM, 0)
+        row = self._make_log(age_days=9999, login="off@ncollection.test")
+        self.assertEqual(self.Log._minimise_auth_log(), 0)
+        row.invalidate_recordset()
+        self.assertEqual(row.login, "off@ncollection.test")
+
+    # -- the two windows must stay coherent --------------------------------
+
+    def test_a_skeleton_window_shorter_than_retention_is_refused(self):
+        """Refused, not clamped — same reasoning as MIN_RETENTION_DAYS. A
+        skeleton shorter than retention deletes rows before they are ever
+        minimised, silently collapsing #261 back into #219's flat delete."""
+        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 90)
+        old_row = self._make_log(age_days=9999, login="coherent@ncollection.test")
+        with self.assertRaises(UserError) as ctx:
+            self.Log._gc_auth_log()
+        self.assertIn("shorter than", str(ctx.exception))
+        self.assertTrue(old_row.exists(), "nothing may be deleted when refusing")
+
+    def test_a_garbage_skeleton_window_refuses_rather_than_guessing(self):
+        self.Param.set_param(SKELETON_PARAM, "not-a-number")
+        old_row = self._make_log(age_days=9999, login="garbage@ncollection.test")
+        with self.assertRaises(UserError):
+            self.Log._gc_auth_log()
+        self.assertTrue(old_row.exists())
+
+    def test_the_cron_runs_BOTH_stages(self):
+        """A cron that only purged would delete un-minimised rows at 400 days
+        having never stripped them at 180 — the PII would simply live longer
+        than before, which is the opposite of the intent."""
+        cron = self.env.ref("ncollection_auth.cron_gc_auth_log")
+        self.assertIn("_minimise_auth_log", cron.code)
+        self.assertIn("_gc_auth_log", cron.code)
+        self.assertLess(cron.code.index("_minimise_auth_log"),
+                        cron.code.index("_gc_auth_log"),
+                        "minimise must run before purge")
 
     # -- the wiring ---------------------------------------------------------
 
@@ -211,7 +340,7 @@ class TestAuthLogRetention(TransactionCase):
         exit are all exercised cheaply.
         """
         self.patch(auth_log, "GC_CHUNK_SIZE", 3)
-        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 180)
         stale = [
             self._make_log(age_days=300 + n, login="batch%d@ncollection.test" % n)
             for n in range(7)
@@ -233,7 +362,7 @@ class TestAuthLogRetention(TransactionCase):
         """
         self.patch(auth_log, "GC_CHUNK_SIZE", 2)
         self.patch(auth_log, "GC_MAX_BATCHES", 2)
-        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 180)
         stale = [
             self._make_log(age_days=300 + n, login="cap%d@ncollection.test" % n)
             for n in range(6)
@@ -252,7 +381,7 @@ class TestAuthLogRetention(TransactionCase):
         """Ordering matters when the cap bites: drop the oldest PII first."""
         self.patch(auth_log, "GC_CHUNK_SIZE", 1)
         self.patch(auth_log, "GC_MAX_BATCHES", 1)
-        self.Param.set_param(RETENTION_PARAM, 180)
+        self.Param.set_param(SKELETON_PARAM, 180)
         older = self._make_log(age_days=900, login="older@ncollection.test")
         newer = self._make_log(age_days=400, login="newer@ncollection.test")
 

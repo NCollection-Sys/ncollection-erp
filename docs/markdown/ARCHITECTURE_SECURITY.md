@@ -153,7 +153,7 @@ Provisioning installs **only** the plan's modules. What isn't installed cannot b
 | Cookie flags | `Secure`, `HttpOnly`, `SameSite=Lax` — verified, not assumed | P1-T19 |
 | CSRF | Odoo built-in tokens; login template overrides touch the template ONLY, never controller logic | P1-T14 |
 | Auth audit | `ncollection.auth.log`: success/failure/logout/reset with IP, UA, DB | P1-T19 |
-| Auth-log retention | Rows purged after `ncollection_auth.log_retention_days` (default **180**) by the daily `ir.cron` "NCollection: auth log retention purge"; `<= 0` disables. Tunable per tenant | #219 |
+| Auth-log retention | **Two stages** (#261), both by the daily `ir.cron` "NCollection: auth log retention purge". **Minimise** at `ncollection_auth.log_retention_days` (default **180**): drop `ip_address` + `user_agent`, replace `login` with a salted digest, keep `event_type` + `create_date` + `user_id`. **Delete** at `ncollection_auth.log_skeleton_days` (default **400**). Either `<= 0` disables that stage; skeleton shorter than retention is refused. Tunable per tenant | #219, #261 |
 | Auth-log purge guardrail | The purge is the **only** application-level path that can delete audit rows (the ACL is read-only for everyone, `perm_unlink=0`). A positive window below **30 days** is *refused*, not applied, and an unparseable value raises rather than falling back — `ir.config_parameter` keeps no history, so "set to 1, purge, set back" would otherwise erase intrusion evidence untraceably | #219 |
 | Password policy | Odoo password policy params; provisioning forces reset of the initial admin password | P2-T01 |
 | Password reset | Odoo's flow verified: time-limited, single-use tokens; reset emails branded | P1-T19 / P1-T18 |
@@ -190,7 +190,7 @@ Provisioning installs **only** the plan's modules. What isn't installed cannot b
 | At rest (DB/filestore) | Encrypted VPS volumes (provider snapshots + LUKS where offered); field-level `pgcrypto` reserved for narrowly-scoped secrets (e.g. stored API tokens) — full at-rest DB encryption relies on volume + backup encryption |
 | Backups & WAL | pgBackRest repo cipher (AES-256) + encrypted tenant dumps; keys held outside the backup provider |
 | Deletion | Tenant offboarding = DB drop + filestore purge + backup expiry per retention + **certified deletion log** (P10-T07) |
-| Storage limitation (live tenant) | Offboarding deletion is not a retention policy. `ncollection.auth.log` holds IP + user-agent on every auth event, so rows are purged after `ncollection_auth.log_retention_days` (default 180) by a daily scheduled action — a **named** cron rather than an autovacuum hook, so the run is independently visible, timestamped and disableable as PDPL evidence (#219) |
+| Storage limitation (live tenant) | Offboarding deletion is not a retention policy. `ncollection.auth.log` holds IP + user-agent on every auth event, so it is **minimised** at 180 days and **deleted** at 400 (#261) by a daily scheduled action — a **named** cron rather than an autovacuum hook, so the run is independently visible, timestamped and disableable as PDPL evidence (#219).<br><br>The split exists because a flat 180-day delete satisfied storage limitation while defeating *security of processing*: breach studies put mean time-to-identify past **200 days**, so the `login_failed` run-up and the `login_success` for a compromised session were gone before anyone looked. Minimising keeps the pattern without the identifying detail.<br><br>**The minimised row is PSEUDONYMOUS, not anonymous** — `user_id` still points at a person, so it remains personal data and carries its own window rather than being kept indefinitely |
 
 Backups are treated as **a copy of the crown jewels stored off-site** — access to the B2 bucket is scoped to the backup agent's write-mostly key; restore-capable keys live in the secrets store, not on the server.
 
@@ -206,7 +206,7 @@ The UAE **Personal Data Protection Law (Federal Decree-Law No. 45 of 2021)** is 
 | Data subject rights (access/portability) | Tenant data export (full DB dump + filestore in open formats) | P10-T07 |
 | Right to erasure | Verified offboarding workflow with deletion certificate | P10-T07 |
 | Security of processing | This entire document; assessment evidence at P3-T12 |
-| Storage limitation | Row-level retention inside a live tenant, not only deletion at offboarding: auth-log PII purged after `ncollection_auth.log_retention_days` (default 180) by a named, independently auditable scheduled action | #219 |
+| Storage limitation | Row-level retention inside a live tenant, not only deletion at offboarding: auth-log PII **minimised** at `ncollection_auth.log_retention_days` (default 180) and the pseudonymous remainder **deleted** at `ncollection_auth.log_skeleton_days` (default 400), by a named, independently auditable scheduled action | #219, #261 |
 | Breach notification | Incident runbook includes notification decision tree + 72h clock | P3-T13 (`RUNBOOK_INCIDENTS.md`) |
 | Data residency (market expectation) | Region-aware placement — UAE tenants' data, filestore, and backups stay in-region | P10-T05 |
 | Records of processing | Documented data inventory per module | P10-T07 |

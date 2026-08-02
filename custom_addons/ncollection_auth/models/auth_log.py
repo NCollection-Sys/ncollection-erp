@@ -11,7 +11,9 @@ Design rules (ARCHITECTURE_SECURITY.md §6):
   (hooks write via sudo); mirrored in ir.model.access.csv (Rule 4).
 """
 
+import hashlib
 import logging
+import secrets
 from datetime import timedelta
 
 from odoo import SUPERUSER_ID, api, fields, models
@@ -45,6 +47,50 @@ DEFAULT_RETENTION_DAYS = 180
 # preserves the evidence under both the fat-finger and the malicious reading.
 # Lowering this floor is a deliberate, reviewable code change.
 MIN_RETENTION_DAYS = 30
+
+# ---------------------------------------------------------------------------
+#  Two-stage lifecycle (#261)
+# ---------------------------------------------------------------------------
+#  #219 shipped a single flat window: at RETENTION_PARAM days, hard-delete.
+#  Its own security review flagged the tension that creates. Breach studies
+#  (Verizon DBIR, IBM Cost of a Data Breach) put MEAN time-to-identify a
+#  compromise past 200 days — so a 180-day delete destroys the login_failed
+#  run-up AND the login_success for the compromised session before anyone
+#  looks. That defeats the audit trail's stated purpose while satisfying
+#  storage limitation: the wrong half of PDPL.
+#
+#  Raising the window instead would keep full IP + user-agent PII on every
+#  ordinary login for a year, which is worse on storage limitation and does
+#  nothing the minimised skeleton cannot do.
+#
+#  So: MINIMISE at RETENTION_PARAM, DELETE at SKELETON_PARAM.
+#    stage 1 (180d) — drop ip_address and user_agent, digest `login`; keep
+#                     event_type, create_date, user_id. The PATTERN survives,
+#                     the identifying detail does not.
+#    stage 2 (400d) — hard delete, as before.
+#
+#  The skeleton is PSEUDONYMOUS, NOT ANONYMOUS: user_id still points at a
+#  person, so those rows remain personal data under PDPL and need their own
+#  window. Anyone tempted to make stage 2 indefinite should read that twice —
+#  "we anonymised it" would be a false premise for that decision.
+SKELETON_PARAM = 'ncollection_auth.log_skeleton_days'
+DEFAULT_SKELETON_DAYS = 400
+
+# `login` is the raw string typed at the login form — an email address, and the
+# most directly identifying field on the row. #261's option 3 said to null
+# ip_address and user_agent and stopped there; leaving `login` would have made
+# the minimisation cosmetic.
+#
+# It is DIGESTED rather than nulled because it is also the only record of WHICH
+# account was targeted when the attempt failed against a non-existent user
+# (user_id is null there). Nulling it makes credential stuffing against invented
+# addresses invisible; digesting keeps "these 400 failures all hit one account"
+# without storing anyone's address.
+#
+# The prefix doubles as the already-minimised marker, so the sweep needs no new
+# column and is naturally idempotent (Rule 12).
+DIGEST_PREFIX = 'sha256:'
+DIGEST_SALT_PARAM = 'ncollection_auth.log_digest_salt'
 
 # Deleted oldest-first in chunks rather than one statement: on a tenant that has
 # been logging for a long time the first run could otherwise hold a very large
@@ -141,6 +187,108 @@ class NcollectionAuthLog(models.Model):
         return days
 
     @api.model
+    def _skeleton_days(self):
+        """Window after which a MINIMISED row is hard-deleted.
+
+        Must be >= the minimise window: a skeleton window shorter than the
+        retention window would delete rows before they were ever minimised,
+        silently collapsing the two-stage policy back into #219's single flat
+        delete — the exact behaviour #261 exists to replace. Refused, not
+        clamped, for the same reason MIN_RETENTION_DAYS is refused: clamping
+        still deletes, just differently than the operator believes.
+        """
+        raw = self.env['ir.config_parameter'].sudo().get_param(
+            SKELETON_PARAM, DEFAULT_SKELETON_DAYS)
+        try:
+            days = int(str(raw).strip())
+        except (TypeError, ValueError) as exc:
+            raise UserError(self.env._(
+                "%(param)s is not a whole number of days (%(value)r). Refusing "
+                "to run: a purge that cannot read its own window must not guess.",
+                param=SKELETON_PARAM, value=raw)) from exc
+        retention = self._retention_days()
+        if days > 0 and 0 < retention and days < retention:
+            raise UserError(self.env._(
+                "%(sk)s (%(sv)s) is shorter than %(rt)s (%(rv)s). That would "
+                "delete rows before they are minimised, turning the two-stage "
+                "policy back into a flat delete. Refusing.",
+                sk=SKELETON_PARAM, sv=days, rt=RETENTION_PARAM, rv=retention))
+        return days
+
+    @api.model
+    def _login_digest_salt(self):
+        """Per-tenant salt, generated once and kept.
+
+        Without a salt the digest of a common address is trivially recovered
+        from a precomputed table — the whole point is that the minimised row
+        stops naming a person. It does NOT defend against someone who already
+        holds DB access; it defends against the digest being casually
+        reversible.
+        """
+        params = self.env['ir.config_parameter'].sudo()
+        salt = params.get_param(DIGEST_SALT_PARAM)
+        if not salt:
+            salt = secrets.token_urlsafe(32)
+            params.set_param(DIGEST_SALT_PARAM, salt)
+        return salt
+
+    @api.model
+    def _login_digest(self, login):
+        """Stable, salted digest of a login. Same input -> same output within a
+        tenant, so 'repeatedly targeted' survives; across tenants it does not,
+        which is correct — these are separate databases."""
+        digest = hashlib.sha256(
+            ('%s|%s' % (self._login_digest_salt(), login)).encode()).hexdigest()
+        return '%s%s' % (DIGEST_PREFIX, digest)
+
+    def _minimise_auth_log(self):
+        """Stage 1: strip identifying detail from rows past the retention window.
+
+        Keeps event_type, create_date and user_id — enough to answer "when, how
+        often, which account" long after the IP and user-agent are gone.
+
+        Idempotent by construction (Rule 12): the domain selects only rows that
+        still HAVE something to strip, so a second run is a genuine no-op rather
+        than a rewrite. That is also why no `minimised` column is needed — the
+        DIGEST_PREFIX on `login` is the marker.
+        """
+        days = self._retention_days()
+        if days <= 0:
+            _logger.info(
+                "Auth-log minimisation is disabled (%s = %s).",
+                RETENTION_PARAM, days)
+            return 0
+
+        deadline = fields.Datetime.now() - timedelta(days=days)
+        under_cron = bool(self.env.context.get('cron_id'))
+        total = 0
+        for _batch in range(GC_MAX_BATCHES):
+            rows = self.sudo().search([
+                ('create_date', '<', deadline),
+                '|', '|',
+                ('ip_address', '!=', False),
+                ('user_agent', '!=', False),
+                '&', ('login', '!=', False),
+                ('login', 'not like', DIGEST_PREFIX + '%'),
+            ], limit=GC_CHUNK_SIZE, order='create_date asc')
+            if not rows:
+                break
+            for row in rows:
+                vals = {'ip_address': False, 'user_agent': False}
+                if row.login and not row.login.startswith(DIGEST_PREFIX):
+                    vals['login'] = self._login_digest(row.login)
+                row.write(vals)
+            total += len(rows)
+            if under_cron:
+                self.env['ir.cron']._commit_progress(processed=len(rows))
+            if len(rows) < GC_CHUNK_SIZE:
+                break
+
+        if total:
+            _logger.info("Auth-log minimised %s row(s) older than %s days.",
+                         total, days)
+        return total
+
     def _gc_auth_log(self):
         """Delete auth-log rows past the retention window. Returns the count.
 
@@ -152,15 +300,18 @@ class NcollectionAuthLog(models.Model):
         anonymously into Odoo's shared "Base: Auto-vacuum internal data" job
         alongside unrelated cleanup.
 
-        Deletes, rather than anonymises: the acceptance criteria say rows past
-        the window are *removed*. Anonymising (nulling ip_address/user_agent,
-        keeping event_type + timestamp) would preserve security analytics and
-        remains the obvious future variant if the policy changes.
+        Stage 2 of the two-stage lifecycle (#261). Deletes at SKELETON_PARAM,
+        not at RETENTION_PARAM — by the time a row reaches here it has already
+        been stripped to event_type + create_date + user_id by
+        _minimise_auth_log. #219's docstring called anonymising "the obvious
+        future variant if the policy changes"; #261 is that change, with the
+        correction that the skeleton is pseudonymous rather than anonymous and
+        therefore still needs a window of its own.
         """
-        days = self._retention_days()
+        days = self._skeleton_days()
         if days <= 0:
             _logger.info(
-                "Auth-log retention is disabled (%s = %s).", RETENTION_PARAM, days)
+                "Auth-log purge is disabled (%s = %s).", SKELETON_PARAM, days)
             return 0
 
         deadline = fields.Datetime.now() - timedelta(days=days)

@@ -2,9 +2,11 @@
 <odoo>
     <data noupdate="1">
         <!--
-            Daily auth-log retention purge (#219). Deletes ncollection.auth.log
-            rows older than the ncollection_auth.log_retention_days parameter
-            (data/auth_params.xml, default 180); <= 0 disables the purge.
+            Daily auth-log retention job (#219, two-stage since #261).
+            Stage 1 MINIMISES rows past log_retention_days (default 180):
+            ip_address and user_agent dropped, `login` digested.
+            Stage 2 DELETES rows past log_skeleton_days (default 400).
+            Either window <= 0 disables that stage on its own.
 
             A NAMED scheduled action, not an @api.autovacuum hook, on purpose:
             ncollection.auth.log holds ip_address + user_agent (PII), so under
@@ -26,7 +28,12 @@
             <field name="name">NCollection: auth log retention purge</field>
             <field name="model_id" ref="ncollection_auth.model_ncollection_auth_log"/>
             <field name="state">code</field>
-            <field name="code">model._gc_auth_log()</field>
+            <!-- Both stages, minimise FIRST: a row must be stripped before it
+                 is eligible to be deleted, and running the purge first would
+                 be harmless but leaves a needless day of full PII on rows the
+                 same job is about to minimise anyway (#261). -->
+            <field name="code">model._minimise_auth_log()
+model._gc_auth_log()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="active" eval="True"/>

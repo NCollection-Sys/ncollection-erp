@@ -4,7 +4,9 @@
 #  proprietary NCollection module, not an OCA submission.)
 {
     'name': 'NCollection Auth Hardening',
-    'version': '19.0.1.1.0',
+    # 1.2.0 (#261): auth-log retention becomes two-stage — minimise at 180d,
+    # delete at 400d. New ir.config_parameter, so `-u` is what applies it.
+    'version': '19.0.1.2.0',
     'category': 'Hidden',
     'summary': 'Authentication audit log + hardened login/session defaults (P1-T19)',
     'author': 'NCollection',
