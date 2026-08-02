@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_revenue_share_list" model="ir.ui.view">
+        <field name="name">ncollection.reseller.revenue.share.list</field>
+        <field name="model">ncollection.reseller.revenue.share</field>
+        <field name="arch" type="xml">
+            <list string="Revenue Share" create="false">
+                <field name="reseller_id"/>
+                <field name="subtenant_count"/>
+                <field name="total_mrr" widget="monetary"/>
+                <field name="revenue_share_pct"/>
+                <field name="share_amount" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_revenue_share" model="ir.actions.act_window">
+        <field name="name">Revenue Share</field>
+        <field name="res_model">ncollection.reseller.revenue.share</field>
+        <field name="view_mode">list</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ Reseller list ============ -->
+    <record id="view_reseller_list" model="ir.ui.view">
+        <field name="name">ncollection.reseller.list</field>
+        <field name="model">ncollection.reseller</field>
+        <field name="arch" type="xml">
+            <list string="Resellers">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="subtenant_count"/>
+                <field name="max_subtenants"/>
+                <field name="revenue_share_pct"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============ Reseller form ============ -->
+    <record id="view_reseller_form" model="ir.ui.view">
+        <field name="name">ncollection.reseller.form</field>
+        <field name="model">ncollection.reseller</field>
+        <field name="arch" type="xml">
+            <form string="Reseller">
+                <header>
+                    <button name="%(action_reseller_provision_wizard)d" type="action"
+                            string="Provision Sub-Tenant" class="btn-primary"
+                            context="{'default_reseller_id': id}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_subtenants" type="object"
+                                class="oe_stat_button" icon="fa-database">
+                            <field name="subtenant_count" widget="statinfo" string="Sub-Tenants"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Reseller name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Account">
+                            <field name="partner_id"/>
+                            <field name="user_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Quota &amp; Revenue">
+                            <field name="max_subtenants"/>
+                            <field name="revenue_share_pct"/>
+                        </group>
+                    </group>
+                    <group string="Brand (cascaded to sub-tenants)">
+                        <group>
+                            <field name="brand_primary_color" placeholder="#1F5F8F"/>
+                            <field name="brand_secondary_color" placeholder="#2D7AB7"/>
+                            <field name="brand_sidebar_color" placeholder="#12233A"/>
+                        </group>
+                        <group>
+                            <field name="brand_login_background" widget="image"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Sub-Tenants" name="subtenants">
+                            <field name="tenant_ids">
+                                <list>
+                                    <field name="company_name"/>
+                                    <field name="database_name"/>
+                                    <field name="status"/>
+                                    <field name="database_status"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_reseller" model="ir.actions.act_window">
+        <field name="name">Resellers</field>
+        <field name="res_model">ncollection.reseller</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ============ Provision wizard ============ -->
+    <record id="view_reseller_provision_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.reseller.provision.wizard.form</field>
+        <field name="model">ncollection.reseller.provision.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Provision Sub-Tenant">
+                <group>
+                    <field name="reseller_id" readonly="1"/>
+                    <field name="company_name"/>
+                    <field name="subdomain"/>
+                    <field name="plan_id"/>
+                    <field name="contact_name"/>
+                    <field name="email"/>
+                    <field name="billing_cycle"/>
+                </group>
+                <footer>
+                    <button name="action_provision" type="object"
+                            string="Provision" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_reseller_provision_wizard" model="ir.actions.act_window">
+        <field name="name">Provision Sub-Tenant</field>
+        <field name="res_model">ncollection.reseller.provision.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

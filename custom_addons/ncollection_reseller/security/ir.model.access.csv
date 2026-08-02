@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_reseller_admin,reseller.admin,model_ncollection_reseller,ncollection_subscription.group_platform_admin,1,1,1,1
+access_reseller_reseller,reseller.reseller,model_ncollection_reseller,group_reseller,1,0,0,0
+access_reseller_tenant_reseller,reseller.tenant.reseller,ncollection_subscription.model_ncollection_tenant,group_reseller,1,0,0,0
+access_revenue_share_admin,revenue.share.admin,model_ncollection_reseller_revenue_share,ncollection_subscription.group_platform_admin,1,0,0,0
+access_revenue_share_reseller,revenue.share.reseller,model_ncollection_reseller_revenue_share,group_reseller,1,0,0,0
+access_provision_wizard_admin,provision.wizard.admin,model_ncollection_reseller_provision_wizard,ncollection_subscription.group_platform_admin,1,1,1,1
+access_provision_wizard_reseller,provision.wizard.reseller,model_ncollection_reseller_provision_wizard,group_reseller,1,1,1,1
