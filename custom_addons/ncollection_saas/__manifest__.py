@@ -24,6 +24,7 @@
         'data/fleet_migration_data.xml',
         'views/provisioning_job_views.xml',
         'views/subscription_views.xml',
+        'views/config_sync_views.xml',
         'views/checkout_templates.xml',
         'views/domain_views.xml',
         'views/backup_views.xml',

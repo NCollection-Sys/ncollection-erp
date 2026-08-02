@@ -22,7 +22,7 @@ import os
 
 import requests
 
-from odoo import api, models
+from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -65,9 +65,50 @@ _SYNC_ENDPOINT = '/json/2/ncollection.workspace.config/sync_from_platform'
 _SYNC_CHANNEL = 'root.provisioning'
 _RPC_TIMEOUT = 30
 
+# HTTP statuses that a retry can never heal (#264). A 401/403 means the tenant
+# rejected our bearer — a stale key hash, typically — so the nightly reconcile
+# will retry forever without fixing anything. A timeout or a 5xx is the opposite:
+# transient by nature and exactly what the reconcile exists to heal. Logging both
+# identically, as this module did, made "will fix itself" indistinguishable from
+# "needs a human" at the only moment that distinction matters.
+_PERMANENT_STATUSES = frozenset({401, 403})
+
+SYNC_STATES = [
+    ('ok', 'In sync'),
+    ('transient', 'Retrying'),
+    ('permanent', 'Needs attention'),
+]
+
 
 class TenantConfigSync(models.Model):
     _inherit = 'ncollection.tenant'
+
+    # ---- config-sync health (#264) ---------------------------------------
+    #
+    # Why durable state and not just a log line: config-sync is what propagates
+    # action_suspend / action_expire / plan downgrades into the tenant's
+    # ncollection.workspace.config, which P1-T10 license enforcement reads. A
+    # push that fails means a SUSPENDED SUBSCRIPTION SILENTLY FAILS TO LOCK THE
+    # WORKSPACE — the customer keeps working. P2-T10's log_watcher does alert on
+    # ERROR lines, so this was never fully silent, but a generic "Odoo logged 3
+    # ERROR lines in the last 5m" cannot say WHICH tenant, cannot be queried,
+    # and misses anything outside its window. These fields make the failure
+    # attributable and answerable from the admin UI.
+
+    config_sync_state = fields.Selection(
+        SYNC_STATES, default='ok', readonly=True, tracking=True,
+        string='Config Sync', copy=False,
+        help="Whether the last platform->tenant config push succeeded. "
+             "'Needs attention' means the failure cannot heal itself.")
+    config_sync_last_ok = fields.Datetime(
+        readonly=True, copy=False, string='Config Sync Last OK',
+        help="When config last reached this tenant successfully. Answers "
+             "'how long has this been broken?' at a glance.")
+    config_sync_last_error = fields.Char(
+        readonly=True, copy=False, string='Config Sync Last Error')
+    config_sync_failure_count = fields.Integer(
+        default=0, readonly=True, copy=False,
+        string='Consecutive Sync Failures')
 
     # ---- desired state ---------------------------------------------------
 
@@ -109,6 +150,80 @@ class TenantConfigSync(models.Model):
             tenant._config_sync_push(tenant.database_name, tenant._config_sync_vals())
         return True
 
+    # ---- outcome recording + alerting (#264) -----------------------------
+
+    def _config_sync_record(self, state, error=None):
+        """Record a push outcome on the tenant. NEVER raises into the caller.
+
+        `_config_sync_push` promises not to break a lifecycle transaction, and
+        that promise has to survive this bookkeeping too — observability code
+        that can break a suspension is worse than no observability.
+        """
+        try:
+            self.ensure_one()
+            previous = self.config_sync_state
+            if state == 'ok':
+                vals = {
+                    'config_sync_state': 'ok',
+                    'config_sync_last_ok': fields.Datetime.now(),
+                    'config_sync_last_error': False,
+                    'config_sync_failure_count': 0,
+                }
+                self.sudo().write(vals)
+                if previous and previous != 'ok':
+                    self.sudo().message_post(body=self.env._(
+                        "Config sync RECOVERED for %(db)s.",
+                        db=self.database_name))
+                return
+
+            self.sudo().write({
+                'config_sync_state': state,
+                'config_sync_last_error': (error or '')[:255],
+                'config_sync_failure_count': self.config_sync_failure_count + 1,
+            })
+            # Alert on the TRANSITION, not on every retry. The nightly reconcile
+            # touches every ready tenant, so a permanent 401 would otherwise post
+            # a chatter message and open an activity every single night, forever
+            # — which trains everyone to ignore the channel.
+            escalated = previous != state and state == 'permanent'
+            if previous == 'ok' or escalated:
+                self._config_sync_alert(state, error)
+        except Exception:  # pragma: no cover - defensive: never break a push
+            _logger.exception(
+                "Could not record config-sync outcome for %s (state=%s).",
+                self.database_name if self else '?', state)
+
+    def _config_sync_alert(self, state, error):
+        """Chatter + activity on the tenant, mirroring P2-T05's backup alert.
+
+        Deliberately the SAME mechanism backup failures already use
+        (ncollection_saas/models/backup.py::_alert_failure) rather than a new
+        one: ncollection.tenant already carries mail.thread and
+        mail.activity.mixin, operators already watch this surface, and one
+        alerting convention beats two.
+        """
+        body = self.env._(
+            "Config sync FAILED for %(db)s (%(state)s): %(error)s",
+            db=self.database_name, state=state, error=error or 'unknown')
+        self.sudo().message_post(body=body)
+        if state != 'permanent':
+            # A transient failure is logged and tracked, but the nightly
+            # reconcile is expected to heal it — no human task for that.
+            return
+        # Never stack duplicate to-dos for the same unresolved problem.
+        existing = self.sudo().activity_ids.filtered(
+            lambda a: a.summary and 'config sync' in a.summary.lower())
+        if existing:
+            return
+        self.sudo().activity_schedule(
+            'mail.mail_activity_data_todo',
+            summary=self.env._("Investigate config sync: %s", self.database_name),
+            note=self.env._(
+                "%(body)s\n\nThis failure cannot heal itself — the nightly "
+                "reconcile will keep retrying without success until the cause "
+                "is fixed (typically a stale per-tenant key; see #221).",
+                body=body))
+
     # ---- the json2/bearer client ----------------------------------------
 
     def _config_sync_push(self, db, vals):
@@ -120,6 +235,8 @@ class TenantConfigSync(models.Model):
             _logger.error(
                 "Config sync SKIPPED for %s: %s is not set (secrets store/.env).",
                 db, _SYNC_KEY_ENV)
+            self._config_sync_record(
+                'permanent', "%s is not set" % _SYNC_KEY_ENV)
             return False
         base = self.env['ir.config_parameter'].sudo().get_param(
             _BASE_URL_PARAM, _DEFAULT_BASE_URL)
@@ -148,14 +265,26 @@ class TenantConfigSync(models.Model):
             )
         except requests.RequestException as exc:
             _logger.error("Config sync to %s failed (transport): %s", db, exc)
+            self._config_sync_record('transient', "transport: %s" % exc)
             return False
         if resp.status_code != 200:
-            _logger.error("Config sync to %s failed (HTTP %s): %s",
-                          db, resp.status_code, resp.text[:500])
+            permanent = resp.status_code in _PERMANENT_STATUSES
+            # The log line now names the tenant and says whether a retry can
+            # help, so P2-T10's generic ERROR watcher quotes something useful
+            # in its alert instead of "Odoo logged 3 ERROR lines".
+            _logger.error(
+                "Config sync to %s failed (HTTP %s, %s): %s",
+                db, resp.status_code,
+                'PERMANENT - needs attention' if permanent else 'transient',
+                resp.text[:500])
+            self._config_sync_record(
+                'permanent' if permanent else 'transient',
+                "HTTP %s" % resp.status_code)
             return False
         _logger.info("Config sync -> %s ok: plan=%s status=%s modules=%r",
                      db, vals.get('plan_code'), vals.get('subscription_status'),
                      vals.get('allowed_module_names'))
+        self._config_sync_record('ok')
         return True
 
     # ---- lifecycle triggers (status → subscription_status projection) ----
