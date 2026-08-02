@@ -55,19 +55,34 @@ class TestFleetMigration(TransactionCase):
     @contextlib.contextmanager
     def _mocked(
         self, fail_dbs=(), run_calls=None, restore_calls=None,
-        drop_calls=None, restore_fail=False,
+        drop_calls=None, restore_fail=False, installed=None, cmds=None,
     ):
         """Stub every external side effect: the odoo subprocess, the snapshot,
-        and the drop/restore. `fail_dbs` makes the `-u` step raise for those DBs;
-        `restore_fail` makes the restore raise (worst-case path)."""
+        and the drop/restore. `fail_dbs` makes the apply step raise for those
+        DBs; `restore_fail` makes the restore raise (worst-case path).
+
+        `installed` is {db: {module, ...}} — what the tenant ALREADY has, which
+        the install path's pre-check reads (#218). Default None means "the
+        state check returns no marker", which the engine treats as 'not
+        satisfied' and proceeds, so every pre-existing test is unaffected.
+        """
         def _run(_self, cmd, label, stdin=None, env=None, timeout=None):
             db = cmd[cmd.index('-d') + 1] if '-d' in cmd else '?'
+            if cmds is not None:
+                cmds.append(list(cmd))
             if run_calls is not None:
-                run_calls.append((db, 'shell' if 'shell' in cmd else 'upgrade'))
+                run_calls.append((db, 'shell' if 'shell' in cmd else 'apply'))
             if 'shell' in cmd:
+                # Two different shell scripts now use this path; answer the one
+                # actually asked for rather than always the smoke probe.
+                if 'NC_HAVE' in (stdin or ''):
+                    if installed is None:
+                        return ''            # no marker -> engine proceeds
+                    have = ','.join(sorted(installed.get(db, ())))
+                    return 'NC_HAVE=%s\n' % have
                 return 'NC_SMOKE_OK=True\n'
-            if '-u' in cmd and db in fail_dbs:
-                raise UserError(_self.env._("simulated upgrade failure on %s", db))
+            if ('-u' in cmd or '-i' in cmd) and db in fail_dbs:
+                raise UserError(_self.env._("simulated apply failure on %s", db))
             return ''
 
         def _run_backup(_self):
@@ -280,6 +295,106 @@ class TestFleetMigration(TransactionCase):
             # ...while provisioning's rejects it as a collision.
             with self.assertRaises(ValidationError):
                 job._validate_db_name('existingtenant')
+
+    # ---- install mode (#218) --------------------------------------------
+
+    @staticmethod
+    def _flags(cmds):
+        """The -i/-u flags that actually reached a subprocess."""
+        return [f for c in cmds for f in ('-i', '-u') if f in c]
+
+    def test_upgrade_mode_still_uses_dash_u(self):
+        """The regression guard. `operation` defaults to 'upgrade', so every
+        migration written before #218 must behave exactly as it did."""
+        migration = self._migration()
+        self.assertEqual(migration.operation, 'upgrade')
+        cmds = []
+        with self._mocked(cmds=cmds):
+            migration.action_run_sync()
+        self.assertTrue(self._flags(cmds))
+        self.assertEqual(set(self._flags(cmds)), {'-u'})
+
+    def test_install_mode_uses_dash_i(self):
+        """#218's whole point, asserted on the ACTUAL argv.
+
+        Verified against odoo/modules/loading.py: -u selects only modules whose
+        state is installed/to-upgrade, so on a tenant LACKING the module it is a
+        silent no-op. A backfill run with -u would report success having
+        installed nothing — the exact false-green this repo keeps hitting.
+        """
+        migration = self._migration(operation='install',
+                                    module_names='ncollection_auth')
+        cmds = []
+        with self._mocked(cmds=cmds):
+            migration.action_run_sync()
+        self.assertTrue(self._flags(cmds))
+        self.assertEqual(set(self._flags(cmds)), {'-i'})
+        self.assertNotIn('-u', [f for c in cmds for f in c])
+
+    def test_install_skips_a_tenant_that_already_has_the_module(self):
+        """And skips it BEFORE snapshotting.
+
+        -i is idempotent by itself (it selects only uninstalled modules), so
+        running it would be harmless — but reaching it means taking a FULL
+        BACKUP of a tenant that needs nothing. On a backfill that is most of the
+        fleet.
+        """
+        migration = self._migration(operation='install',
+                                    module_names='ncollection_auth')
+        already = {'fleetone': {'ncollection_auth'}}
+        cmds = []
+        with self._mocked(installed=already, cmds=cmds):
+            migration.action_run_sync()
+
+        done = self._line(migration, self.t1)
+        self.assertEqual(done.state, 'skipped')
+        self.assertFalse(done.backup_id, "snapshotted a tenant it then skipped")
+        self.assertIn('Already installed', done.message)
+        # ...and the tenants that DID need it were not skipped.
+        self.assertEqual(self._line(migration, self.t2).state, 'done')
+
+    def test_a_skip_is_not_counted_as_a_failure(self):
+        """The #221 lesson at fleet level: on a backfill, 'already has it' is the
+        EXPECTED outcome for most tenants. Scoring it as a failure would make the
+        run look catastrophic and train the operator to ignore the result."""
+        migration = self._migration(operation='install',
+                                    module_names='ncollection_auth')
+        everyone = {db: {'ncollection_auth'}
+                    for db in ('fleetcanary', 'fleetone', 'fleettwo', 'fleetthree')}
+        with self._mocked(installed=everyone):
+            migration.action_run_sync()
+
+        self.assertEqual(migration.failed_count, 0,
+                         "an all-skipped backfill was scored as failures")
+        self.assertEqual(migration.state, 'done')
+
+    def test_an_install_dry_run_names_the_real_flag(self):
+        """A dry run exists to show what WOULD happen. Reporting `-u` on an
+        install run misstates the single thing the operator is checking."""
+        migration = self._migration(operation='install', dry_run=True,
+                                    module_names='ncollection_auth')
+        with self._mocked():
+            migration.action_run_sync()
+        message = self._line(migration, self.t1).message
+        self.assertIn('-i', message)
+        self.assertNotIn('-u', message)
+
+    def test_an_unreadable_state_check_installs_rather_than_skipping(self):
+        """Fail SAFE, and in the right direction.
+
+        If the state check returns no marker we cannot tell whether the tenant
+        has the module. Assuming "already installed" would silently skip a tenant
+        the backfill exists to fix, and nothing would ever report it. Assuming
+        "missing" costs an idempotent no-op. Choose the cheap wrong answer.
+        """
+        migration = self._migration(operation='install',
+                                    module_names='ncollection_auth')
+        cmds = []
+        with self._mocked(installed=None, cmds=cmds):   # None -> no marker
+            migration.action_run_sync()
+        self.assertEqual(set(self._flags(cmds)), {'-i'},
+                         "an unreadable state check skipped the install")
+        self.assertEqual(self._line(migration, self.t1).state, 'done')
 
     def test_dry_run_touches_no_database(self):
         migration = self._migration(dry_run=True)
