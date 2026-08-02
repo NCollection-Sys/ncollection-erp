@@ -23,8 +23,9 @@
 #  Exit codes:
 #    0  pass (count <= baseline)
 #    1  findings exceed baseline
-#    2  tool missing and --allow-missing was NOT given (CI: a broken image)
-#    3  SKIPPED — tool missing under --allow-missing
+#    2  tool or plugin missing and --allow-missing was NOT given (CI: a broken
+#       image), or the run could not be trusted (see the guards below)
+#    3  SKIPPED — tool or plugin missing under --allow-missing
 #
 #  3 is distinct from 0 on purpose. The hook's run_gate helper swallows output
 #  on success, so a skip that exited 0 would be reported as "ok" — a gate that
@@ -119,24 +120,6 @@ if ! pylint_cmd="$(find_pylint)"; then
   exit 2
 fi
 
-# The plugin is a separate package from pylint itself; without it the run would
-# succeed and report ZERO odoolint findings — a false green that would silently
-# disable this gate. Probe through the SAME pylint we are about to invoke (a
-# bare `python3 -c "import pylint_odoo"` can answer for a DIFFERENT interpreter
-# than a pipx/pyenv `pylint` binary), by asking whether an odoolint check is
-# actually enabled. ~0.3s.
-# shellcheck disable=SC2086  # intentional word-split: may be "python3 -m pylint"
-if ! $pylint_cmd --load-plugins=pylint_odoo --list-msgs-enabled 2>/dev/null \
-     | grep -q "C8101"; then
-  if [ "$allow_missing" -eq 1 ]; then
-    echo "pylint installed, plugin pylint_odoo is not"
-    exit 3
-  fi
-  echo "pylint-odoo: plugin pylint_odoo is not importable — refusing to report a" >&2
-  echo "             false pass (it would find 0 odoolint issues without it)." >&2
-  exit 2
-fi
-
 if ! log="$(mktemp)" || [ -z "$log" ]; then
   echo "pylint-odoo: mktemp failed — cannot capture output." >&2
   exit 2
@@ -149,6 +132,34 @@ trap "rm -f '$log'" EXIT
 $pylint_cmd --load-plugins=pylint_odoo -d all -e odoolint "$PYLINT_TARGET" > "$log" 2>&1
 status=$?
 
+# Did the plugin actually load? pylint_odoo is a separate package from pylint,
+# and without it `-e odoolint` matches nothing: the run SUCCEEDS, reports ZERO
+# odoolint findings, and would score as a clean pass — silently disabling this
+# gate entirely.
+#
+# This reads the REAL run's own output rather than pre-flighting a separate
+# probe. An earlier version asked `--list-msgs-enabled | grep C8101`; it worked
+# under every local condition tried (same pylint 4.0.6 / pylint-odoo 10.0.8 as
+# CI, with and without pipefail, repeated runs) yet false-negatived in CI and
+# blocked the lint job. The cause was never reproduced — so the probe was
+# replaced with something that cannot have that class of bug: it checks the
+# thing we actually care about, in the run we actually performed, and needs no
+# second invocation.
+if grep -qE "bad-plugin-value|unknown-option-value" "$log"; then
+  if [ "$allow_missing" -eq 1 ]; then
+    echo "plugin pylint_odoo did not load"
+    exit 3
+  fi
+  echo "pylint-odoo: the pylint_odoo plugin did not load, so '-e odoolint' matched" >&2
+  echo "             nothing. Refusing to report a pass on a run that checked" >&2
+  echo "             nothing. Install it:  pip install pylint-odoo" >&2
+  grep -E "bad-plugin-value|unknown-option-value" "$log" >&2
+  exit 2
+fi
+
+# Ordered AFTER the plugin check on purpose: a failed plugin load also exits 32,
+# so checking status first would report it as a hard 'not a clean run' even in
+# hook mode, where a missing plugin must degrade to a skip (#267 item 1).
 # pylint's status is bit-encoded: 1 fatal, 2 error, 4 warning, 8 refactor,
 # 16 convention, 32 usage error. A normal findings run here returns 28
 # (4|8|16), so a non-zero status does NOT mean failure — but bit 1 (pylint
