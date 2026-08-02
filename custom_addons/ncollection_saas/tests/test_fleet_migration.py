@@ -7,6 +7,9 @@ are stubbed so the ORCHESTRATION logic is exercised deterministically without a
 real tenant database.
 """
 import contextlib
+import os
+import shutil
+import tempfile
 from unittest.mock import patch
 
 from odoo.addons.ncollection_saas.models.backup import NcollectionBackup
@@ -153,6 +156,205 @@ class TestFleetMigration(TransactionCase):
         # its neighbours upgraded fine
         self.assertEqual(self._line(migration, self.t1).state, 'done')
         self.assertEqual(self._line(migration, self.t3).state, 'done')
+
+    # ---- manual restore in place (#244) ----------------------------------
+
+    def _failed_line(self, with_file=True):
+        """A tenant left FAILED with its snapshot kept — exactly the state
+        `auto_restore=OFF` produces, which is what #244 exists to recover from.
+
+        Built by driving the real failure path rather than by writing states
+        directly, so the fixture cannot drift from what the engine actually
+        produces.
+        """
+        migration = self._migration(auto_restore=False)
+        with self._mocked(fail_dbs={self.t2.database_name}):
+            migration.action_run_sync()
+        line = self._line(migration, self.t2)
+        self.assertEqual(line.state, 'failed')          # fixture sanity
+        self.assertTrue(line.backup_id)
+        if with_file:
+            # The pre-flight checks the file is really on disk, so a happy-path
+            # test has to put one there — asserting on a path that does not
+            # exist would test the refusal, not the restore.
+            tmpdir = tempfile.mkdtemp()
+            self.addCleanup(shutil.rmtree, tmpdir, True)   # dir, not just file
+            path = os.path.join(tmpdir, 'snap.enc')
+            with open(path, 'wb') as fh:
+                fh.write(b'x')
+            line.backup_id.sudo().write({'file_path': path})
+        return migration, line
+
+    def test_restore_in_place_rolls_the_tenant_back(self):
+        migration, line = self._failed_line()
+        drops, restores = [], []
+        with self._mocked(drop_calls=drops, restore_calls=restores):
+            line.action_restore_in_place()
+
+        self.assertEqual(line.state, 'restored')
+        self.assertIn(self.t2.database_name, drops)
+        self.assertIn(self.t2.database_name, restores)
+        # The tenant was flagged 'error' by the failure; recovery must clear it,
+        # or config-sync/backup/checkout keep refusing to treat it as live.
+        self.assertEqual(self.t2.database_status, 'ready')
+        # Recorded where an operator will look (the run's audit log).
+        self.assertIn('Restored in place', migration.log)
+
+    @mute_logger('odoo.addons.ncollection_saas.models.fleet_migration_line')
+    def test_a_missing_snapshot_file_refuses_BEFORE_dropping(self):
+        """The whole reason this button needs a pre-flight.
+
+        `_restore` DROPS the database and only then calls `restore_to`, which
+        checks the file_path FIELD, not the file. Pressed days after the run,
+        with the file swept by retention, one click would destroy a live tenant
+        and leave nothing to put back.
+        """
+        _migration, line = self._failed_line(with_file=False)
+        drops, restores = [], []
+        with self._mocked(drop_calls=drops, restore_calls=restores):
+            # NOT assertRaises: if the guard is DELETED nothing raises, and
+            # assertRaises fails at __exit__ before the drops assertion below is
+            # ever reached — so the failure would read "UserError not raised"
+            # rather than naming the actual damage. Structured so the
+            # non-destruction check runs on every path.
+            try:
+                line.action_restore_in_place()
+                raised = None
+            except UserError as exc:
+                raised = exc
+
+        self.assertEqual(drops, [], "dropped the database despite refusing")
+        self.assertEqual(restores, [])
+        self.assertIsNotNone(raised, "did not refuse a missing snapshot")
+        self.assertIn('REFUSING', str(raised))
+        self.assertEqual(line.state, 'failed')          # untouched
+        self.assertEqual(self.t2.database_status, 'error')
+
+    @mute_logger('odoo.addons.ncollection_saas.models.fleet_migration_line')
+    def test_a_restore_that_fails_after_the_drop_is_not_silent(self):
+        """_drop_database commits on a SEPARATE autocommit connection, outside
+        the ORM transaction. So when restore_to fails the database is already
+        gone while the ORM rolls this method's writes back — leaving the line on
+        its stale message and nothing pointing anyone at a destroyed tenant.
+
+        The auto-restore path has handled this since P3-T14; the manual button
+        must too. Asserts the bookkeeping SURVIVES, which is the whole point:
+        an exception alone would be a toast nobody sees.
+        """
+        _migration, line = self._failed_line()
+        before = len(line.migration_id.activity_ids)
+        with self._mocked(restore_fail=True):
+            action = line.action_restore_in_place()
+
+        # Must NOT raise: raising rolls the ORM transaction back and discards
+        # every record below, leaving a vanishing toast as the only trace of a
+        # destroyed database. The operator gets a sticky danger notification and
+        # the bookkeeping SURVIVES.
+        self.assertEqual(action['params']['type'], 'danger')
+        self.assertTrue(action['params']['sticky'])
+
+        self.assertEqual(line.state, 'failed')
+        self.assertIn('RESTORE FAILED', line.message)
+        self.assertIn('may no longer exist', line.message)
+        self.assertEqual(self.t2.database_status, 'error')
+        self.assertGreater(len(line.migration_id.activity_ids), before,
+                           "no recovery to-do scheduled for a destroyed tenant")
+
+    def test_a_snapshot_from_another_tenant_is_refused(self):
+        """tenant_id, state and backup_id are three independently writable
+        fields with nothing binding them. Restoring across tenants would destroy
+        live data AND serve one tenant's data under another's database name."""
+        _migration, line = self._failed_line()
+        other = self.env['ncollection.backup'].create({
+            'tenant_id': self.t3.id, 'backup_type': 'daily'})
+        line.sudo().write({'backup_id': other.id})
+        drops = []
+        with self._mocked(drop_calls=drops):
+            with self.assertRaises(UserError) as ctx:
+                line.action_restore_in_place()
+        self.assertIn('REFUSING', str(ctx.exception))
+        self.assertEqual(drops, [], "dropped a database using another tenant's snapshot")
+
+    def test_an_empty_snapshot_file_is_refused(self):
+        """os.path.isfile passes a 0-byte file — a truncated write or a disk that
+        filled mid-backup. tenant_restore.sh would catch the empty result, but
+        only AFTER the drop."""
+        _migration, line = self._failed_line()
+        with open(line.backup_id.file_path, 'wb'):
+            pass                                    # truncate to 0 bytes
+        drops = []
+        with self._mocked(drop_calls=drops):
+            with self.assertRaises(UserError) as ctx:
+                line.action_restore_in_place()
+        self.assertIn('empty', str(ctx.exception))
+        self.assertEqual(drops, [])
+
+    def test_the_composed_action_refuses_a_non_admin(self):
+        """The unit test above pins _restore_assert_allowed in isolation; this
+        pins that action_restore_in_place actually CALLS it. Without this,
+        deleting the call would break no test in this file."""
+        _migration, line = self._failed_line()
+        called = []
+        with patch.object(type(line), '_restore_assert_allowed',
+                          lambda self: called.append(1)):
+            with self._mocked():
+                line.action_restore_in_place()
+        self.assertEqual(called, [1], "the action never consulted the guard")
+
+    def test_only_a_failed_line_can_be_restored(self):
+        """Restoring a line that SUCCEEDED would roll back a good upgrade."""
+        migration = self._migration()
+        with self._mocked():
+            migration.action_run_sync()
+        good = self._line(migration, self.t1)
+        self.assertEqual(good.state, 'done')            # fixture sanity
+        with self.assertRaises(UserError) as ctx:
+            good.action_restore_in_place()
+        self.assertIn('FAILED line', str(ctx.exception))
+
+    def test_a_line_with_no_snapshot_refuses(self):
+        """A line that failed BEFORE its snapshot has nothing to restore — and
+        its database was never modified, so there is nothing to undo either."""
+        migration = self._migration(auto_restore=False)
+        with self._mocked():
+            migration._prepare()
+        line = self._line(migration, self.t2)
+        line.write({'state': 'failed'})
+        self.assertFalse(line.backup_id)                # fixture sanity
+        with self.assertRaises(UserError) as ctx:
+            line.action_restore_in_place()
+        self.assertIn('nothing to restore', str(ctx.exception))
+
+    def test_the_orm_guard_refuses_a_non_admin(self):
+        """Rule 4. A groups= attribute hides a button; it does not stop an RPC
+        that DROPS A LIVE DATABASE.
+
+        Calls the guard directly and matches a string only it produces. A bare
+        assertRaises(UserError) here would be satisfied by Odoo's own model ACL
+        — AccessError subclasses UserError — so it would pass with this guard
+        deleted, which is how three tests on #221 fooled me.
+        """
+        user = self.env['res.users'].create({
+            'name': 'Plain', 'login': 'restore-plain-user',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
+        })
+        line = self.env['ncollection.fleet.migration.line']
+        with self.assertRaises(UserError) as ctx:
+            line.with_user(user)._restore_assert_allowed()
+        self.assertIn('Settings administrator', str(ctx.exception))
+
+    def test_the_orm_guard_admits_a_settings_admin(self):
+        """A guard that refused everyone would pass the test above and be
+        useless. Uses a REAL group_system user, not uid=1 — the superuser would
+        also satisfy a wrong implementation (env.su, _is_admin, or no check)."""
+        admin = self.env['res.users'].create({
+            'name': 'Settings Admin', 'login': 'restore-settings-admin',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref('base.group_system').id])],
+        })
+        self.assertNotEqual(admin.id, self.env.ref('base.user_root').id)
+        self.env['ncollection.fleet.migration.line'].with_user(
+            admin)._restore_assert_allowed()
 
     def test_failure_without_auto_restore_flags_tenant_error(self):
         migration = self._migration(auto_restore=False)

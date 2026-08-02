@@ -2,10 +2,9 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    # 6.3.0 (#218): fleet migration gains an `operation` mode (upgrade/install).
-    # New column + view fields, so `-u` is what applies it. Defaults to
-    # 'upgrade', which is byte-identical to the pre-#218 behaviour.
-    'version': '19.0.6.3.0',
+    # 6.4.0 (#244): 'Restore in place' action on a failed fleet-migration line —
+    # new method + a button in the line list, so `-u` applies the view change.
+    'version': '19.0.6.4.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

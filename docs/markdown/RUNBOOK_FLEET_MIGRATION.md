@@ -62,13 +62,36 @@ hand if needed); **ON** once you trust the upgrade.
 ## Manual rollback (auto_restore OFF, or a canary failure)
 
 A failed line **flags its tenant `database_status = error`** and keeps the
-pre-upgrade snapshot on its `backup_id`. To restore it in place:
+pre-upgrade snapshot on its `backup_id`.
+
+### The one-click path (#244)
+
+On the migration form → **Targets**, a failed line with a snapshot shows a
+**Restore in place** button (Settings administrators only). It runs the same
+`_restore` the automatic path uses — terminate connections, drop, recreate from
+the snapshot — then sets the tenant back to `ready` and marks the line
+`restored`, with the operator's name in the line message and the run's audit log.
+
+It **refuses** rather than proceed when:
+
+| Condition | Why |
+|---|---|
+| the line is not `failed` | restoring a successful line would roll back a good upgrade |
+| there is no `backup_id` | it failed before the snapshot, so its database was never modified — nothing to undo |
+| **the snapshot file is not on disk** | `_restore` **drops first**. Without this check, one click destroys a live tenant and only then finds the backup gone (retention may have swept it) |
+
+Everything written to the tenant since the snapshot is lost — that is what a
+rollback means. The button asks for confirmation.
+
+### The shell path (still valid)
+
+Use it when the button refuses for a reason you have resolved out-of-band —
+typically a snapshot recovered from off-box backup after retention swept the
+local file.
 
 1. Open the failed line → note its **Backup** (`backup_id`) file and the tenant's
    `database_name`.
-2. Restore the snapshot **in place** with the restore script — it terminates
-   connections, drops, and recreates the DB (exactly what `_restore` does
-   internally):
+2. Restore the snapshot **in place**:
    ```bash
    docker compose exec odoo bash \
      /mnt/extra-addons/ncollection_saas/scripts/backup/tenant_restore.sh \
@@ -76,9 +99,20 @@ pre-upgrade snapshot on its `backup_id`. To restore it in place:
    ```
    > ⚠️ Do **not** use the backup **Restore…** wizard here — it deliberately
    > refuses any live-tenant name (it restores to scratch/staging DBs only).
-   > In-place tenant recovery is the shell path above.
-3. Once healthy, set the tenant's `database_status` back to `ready` (Settings →
-   the tenant record) and re-investigate the module change before re-running.
+   > In-place tenant recovery is the shell path above, or the button.
+3. Then clear `database_status`. **You cannot do this by editing the tenant
+   record**: the ISO-1 guard (#228) restricts `provisioning`/`ready` to the
+   engine (`env.su`), so a Settings admin editing the field by hand is refused
+   with *"Only the provisioning engine may set a tenant's database status"*.
+   Use the **Restore in place** button (which holds `sudo()` legitimately), or
+   an `odoo shell`:
+   ```python
+   env['ncollection.tenant'].sudo().search(
+       [('database_name', '=', '<tenant_db>')]
+   ).write({'database_status': 'ready'})
+   ```
+
+Re-investigate the module change before re-running the migration.
 
 ## Safety properties
 

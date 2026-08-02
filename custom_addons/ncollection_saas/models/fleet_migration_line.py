@@ -25,6 +25,7 @@ provisioned before #178) could not be done with the upgrade path, and why the
 install path needs no "already installed?" bookkeeping of its own.
 """
 import logging
+import os
 
 from odoo import fields, models
 from odoo.exceptions import UserError
@@ -284,6 +285,198 @@ class FleetMigrationLine(models.Model):
         self._assert_safe_db_name(db)
         self._drop_database(db)
         self.backup_id.restore_to(db)
+
+    # ---- manual recovery (#244) ------------------------------------------
+
+    def action_restore_in_place(self):
+        """Roll ONE failed tenant back to its pre-upgrade snapshot, from the UI.
+
+        With ``auto_restore=OFF`` — the recommended setting for a first real
+        fleet migration — a failed tenant is flagged ``error`` and its snapshot
+        kept, but recovery was a shell command (``tenant_restore.sh``). The
+        backup Restore wizard cannot stand in: it refuses live tenant names by
+        design (scratch-only). So the line's own message promised a "manual
+        restore" the UI offered no way to perform (#244).
+
+        Same engine as auto-restore — ``_restore`` — so there is no second
+        recovery path to keep in step.
+        """
+        self.ensure_one()
+        self._restore_assert_allowed()
+        # Serialise: this is a read-check-write gating a destructive
+        # drop+restore, the same shape fleet_migration._advance already locks
+        # for. Without it two admins — or one double-click across two tabs —
+        # both read state='failed' before either writes 'restored', and BOTH
+        # run drop+restore against the same live database. The button's
+        # confirm= dialog only guards a single tab.
+        self.env.cr.execute(
+            "SELECT id FROM ncollection_fleet_migration_line WHERE id = %s "
+            "FOR UPDATE", (self.id,))
+        self.invalidate_recordset(['state'])   # re-read under the lock
+        db = self.database_name
+        if self.state != 'failed':
+            raise UserError(self.env._(
+                "Only a FAILED line can be restored; this one is '%s'. Restoring "
+                "a tenant that upgraded successfully would roll back a good "
+                "upgrade.", self.state))
+        if not self.backup_id:
+            raise UserError(self.env._(
+                "No pre-upgrade snapshot on this line — nothing to restore from. "
+                "This line failed before the snapshot was taken, which also means "
+                "its database was never modified."))
+        self._assert_backup_belongs_here()
+        self._assert_backup_restorable()
+
+        try:
+            self._restore(db)
+        except Exception as exc:                # noqa: BLE001 - see below
+            # _drop_database commits on a SEPARATE autocommit psycopg2
+            # connection, outside the ORM transaction. So if restore_to then
+            # fails, the ORM rolls this method's writes back but THE DATABASE IS
+            # ALREADY GONE. Letting the exception escape would leave the line on
+            # its stale pre-restore message, finished_at unstamped, and nothing
+            # anywhere pointing an operator at a destroyed tenant — the failure
+            # is a toast someone has to be watching for, or an RPC error nobody
+            # reads. The auto-restore path already handles exactly this
+            # (_handle_failure); the manual one must too.
+            self._flag_tenant_error()
+            self._mark('failed', self.env._(
+                "RESTORE FAILED after the database was dropped — '%(db)s' may no "
+                "longer exist. Manual recovery needed (off-box backup or PITR). "
+                "Attempted by %(user)s. %(err)s",
+                db=db, user=self.env.user.name, err=str(exc)[-1500:]))
+            self.migration_id.activity_schedule(
+                _TODO_ACT,
+                summary=self.env._(
+                    "Fleet migration: tenant %s needs manual recovery", db),
+                note=self.env._(
+                    "A manual restore-in-place of %(db)s dropped the database "
+                    "and then FAILED to restore it. Recover from off-box backup "
+                    "or PITR (see RUNBOOK_FLEET_MIGRATION).", db=db))
+            # Deliberately NOT re-raised. Raising rolls the ORM transaction
+            # back, which would discard everything just written — the tenant
+            # flag, the line message AND the to-do — leaving an error toast as
+            # the only trace of a destroyed database. _handle_failure does not
+            # re-raise for exactly this reason. Instead return a sticky warning
+            # so the operator gets a loud signal AND the record survives.
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': self.env._("Restore FAILED"),
+                    'message': self.env._(
+                        "The database '%(db)s' was dropped and the restore then "
+                        "failed. It may no longer exist — recover from off-box "
+                        "backup or PITR. A to-do has been scheduled.", db=db),
+                    'type': 'danger',
+                    'sticky': True,
+                },
+            }
+
+        # 'ready' is gated by the engine-only status guard (tenant.py, #228),
+        # which authorises on env.su and deliberately NOT on a context key.
+        # This IS the engine performing a rollback it owns, so sudo() is the
+        # sanctioned path — the same one provisioning uses.
+        self.tenant_id.sudo().write({'database_status': 'ready'})
+        self._mark('restored', self.env._(
+            "Restored in place from snapshot %(b)s by %(user)s (manual).",
+            b=self.backup_id.name or '-', user=self.env.user.name))
+        return True
+
+    def _assert_backup_belongs_here(self):
+        """The snapshot must be THIS tenant's.
+
+        ``tenant_id``, ``state`` and ``backup_id`` are three independently
+        writable fields with nothing binding them together, so a line can be
+        assembled — or edited — to point a healthy tenant's database at another
+        tenant's snapshot. Restoring across tenants would destroy live data AND
+        serve one tenant's data under another's database name.
+
+        This does not close the underlying hole: ``ncollection.backup.restore_to``
+        is a PUBLIC method and ``base.group_system`` has full write on that
+        model, so the same cross-tenant restore is reachable over RPC today
+        without this button at all. That is a pre-existing exposure worth its own
+        ticket. What this does is make THIS call site correct, which it should be
+        regardless of what sits underneath it.
+        """
+        backup_tenant = self.backup_id.tenant_id
+        if backup_tenant and backup_tenant != self.tenant_id:
+            raise UserError(self.env._(
+                "Snapshot %(b)s belongs to tenant '%(other)s', not '%(this)s'. "
+                "REFUSING: restoring it here would destroy this tenant's data "
+                "and serve another tenant's data under this database name.",
+                b=self.backup_id.name or '-',
+                other=backup_tenant.database_name or backup_tenant.display_name,
+                this=self.database_name))
+
+    def _restore_assert_allowed(self):
+        """Mirror the button's ``groups=`` at the ORM (Rule 4).
+
+        A ``groups=`` attribute hides a button; it does not stop an RPC call.
+        This one DROPS A LIVE TENANT DATABASE, so the check has to exist where
+        the work happens.
+
+        ``base.group_system`` is not a fresh judgement call — it is what every
+        other destructive operation in this layer already gates on (backup,
+        restore, fleet migration; see ``security/ir.model.access.csv``). #245
+        tracks whether that whole layer should move to
+        ``group_platform_admin``; deciding it here would fork the convention
+        while that ticket is open.
+        """
+        if not self.env.user.has_group('base.group_system'):
+            raise UserError(self.env._(
+                "Restoring a tenant in place requires Settings administrator "
+                "rights."))
+
+    def _assert_backup_restorable(self):
+        """Refuse if the snapshot file is not actually on disk.
+
+        ``_restore`` DROPS the database before calling ``restore_to``, and
+        ``restore_to`` only checks that the ``file_path`` FIELD is set — not
+        that the file exists. Without this, one click destroys a live tenant and
+        discovers the backup is missing afterwards, leaving nothing to recover
+        from.
+
+        Deliberately here and NOT inside ``_restore``: auto-restore runs seconds
+        after its own snapshot, so the file is all but certain to be there, and
+        adding a check to that shipped path risks breaking automatic recovery
+        for no real gain (Rule 4). This button may be pressed days later, after
+        retention has swept the file — a completely different risk profile.
+        ``backup.py`` uses ``os.path.isfile`` on this same field from this same
+        process — but only to decide whether to attempt ``os.remove`` during
+        retention cleanup, which is idempotent and harmless if wrong. Gating an
+        irreversible DROP is a different risk profile, so existence alone is not
+        enough: check size and readability too.
+
+        - **zero bytes** — a truncated write, a disk that filled mid-backup, or a
+          partial copy from off-box recovery all leave a real file that
+          ``isfile`` happily accepts.
+        - **unreadable** — ``isfile``/``stat`` need only search permission on the
+          parent directories, not read permission on the file, so a snapshot
+          owned by another user passes while ``pg_restore`` cannot open it.
+
+        ``tenant_restore.sh`` does independently verify the result (it counts
+        ``information_schema.tables`` and exits 1 on an empty database), but that
+        check happens AFTER the drop. Catching it here is what keeps the tenant.
+        """
+        path = self.backup_id.file_path
+        problem = None
+        if not path:
+            problem = self.env._("no path recorded")
+        elif not os.path.isfile(path):
+            problem = self.env._("file does not exist")
+        elif os.path.getsize(path) == 0:
+            problem = self.env._("file is empty (0 bytes)")
+        elif not os.access(path, os.R_OK):
+            problem = self.env._("file is not readable by this process")
+        if problem:
+            raise UserError(self.env._(
+                "Snapshot for %(b)s is unusable — %(why)s (%(p)s). REFUSING to "
+                "restore: the restore drops the live database first, so "
+                "proceeding would destroy '%(db)s' with nothing to put back. "
+                "Recover the file from off-box backup, or use PITR.",
+                b=self.backup_id.name or '-', why=problem,
+                p=path or '-', db=self.database_name))
 
     def _mark(self, state, message, stamp=True):
         vals = {'state': state, 'message': message}

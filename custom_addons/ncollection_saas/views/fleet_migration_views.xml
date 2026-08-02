@@ -81,6 +81,21 @@
                                     <field name="finished_at"/>
                                     <field name="state" widget="badge"/>
                                     <field name="message" optional="hide"/>
+                                    <!--
+                                        Manual recovery (#244). Only on a FAILED
+                                        line that still has its snapshot; the ORM
+                                        mirrors both conditions AND the group, so
+                                        this is convenience, not the control.
+                                        The action DROPS a live database, hence
+                                        the confirm.
+                                    -->
+                                    <button name="action_restore_in_place"
+                                            type="object"
+                                            string="Restore in place"
+                                            icon="fa-undo"
+                                            groups="base.group_system"
+                                            confirm="This DROPS the tenant's current database and restores its pre-upgrade snapshot in its place. Everything written since the snapshot is lost. Continue?"
+                                            invisible="state != 'failed' or not backup_id"/>
                                 </list>
                             </field>
                         </page>
