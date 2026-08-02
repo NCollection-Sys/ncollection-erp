@@ -27,6 +27,7 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Stale module dependencies + modules behind their code version, across all DBs | `scripts/dev/doctor.sh` | `make doctor` |
 | Fixture namespace separation | `Makefile`, `e2e/` | structural |
 | Config-sync push carries `Host: <db>.<base-domain>` (db_filter routing) | `ncollection_saas/tests/test_config_sync.py` + `.../scripts/provisioning/verify_config_sync.sh` | CI `test` + `make verify-all` |
+| Shared-stack races → false CRITICALs (R-018) | CLAUDE.md Rule 14, `scripts/dev/stack_settled.sh`, `.claude/agents/verify-runner.md` | agent convention + `verify-runner` retry-before-escalate |
 
 ---
 
@@ -432,6 +433,77 @@ pointer to `make e2e-clean` instead of `>/dev/null 2>&1` (Rule 10 — a swallowe
 what made the original symptom unreadable). Proven rather than asserted: `config_sync_activity_id`
 was dropped from `e2eadmin` by hand (5 `config_sync*` columns → 4), the script re-run, and it
 exited 0 having healed all three fixtures back to 5.
+
+---
+
+## R-018 — Background agents sharing one Docker stack produced two false CRITICALs in one session
+
+**Symptom.** Two unrelated incidents on the same day, both while background
+review/verify agents ran concurrently against the single shared dev stack:
+
+1. `verify-runner` reported 7 e2e failures including
+   `CRITICAL: e2eclienta session was valid (uid=2) on e2eclientb — isolation BREACHED`
+   — the single most serious class of finding this platform can produce.
+2. A concurrently-running `code-reviewer` installing a module hit
+   `Class ProvisioningJob has no _name → action_run is not a valid action`, could not
+   reproduce it in 3 retries, and reported it as a possible real defect it could not
+   explain.
+
+Neither was real. For (1): `develop` was equally broken *before* `make routing-up`
+(`clienta.localhost/web/login` → 303, e2e refused to start with "E2E stack not
+ready") and 12/12 green after; the feature branch was 12/12 green too. For (2): the
+error cleared once the concurrent RED-proof edit that had briefly broken the
+bind-mounted module was reverted.
+
+**Root cause.** Background agents share ONE working tree (bind-mounted live into the
+odoo container — see CLAUDE.md's runtime map) and ONE Docker Compose stack, with no
+isolation between them. In incident 1, `code-reviewer`'s own process notes record that
+it ran `docker compose up -d db odoo` to run tests of its own, recreating the odoo
+container while `verify-runner`'s e2e suite was mid-flight against that same server;
+the suite's requests landed on a half-started server (403s / a database-selector page)
+and the isolation assertions produced nonsense. In incident 2, a RED proof
+(deliberately deleting a line to prove a test fails) broke the bind-mounted module for
+~40 seconds; a different, concurrently-running `code-reviewer` installed the module in
+exactly that window.
+
+**Why it is dangerous, not just annoying.** A false CRITICAL reads exactly like a real
+one — the only way to tell them apart was 30+ minutes of manual disproof. That is the
+same "gate that cries wolf" failure mode this repo has already fixed in three other
+places (#221 skip-as-failure, #264 generic alerting, #267 CI-only lint gate).
+
+**Guard.**
+1. **Prevention (convention — CLAUDE.md Rule 14).** An ad hoc `docker compose
+   up/down/restart` (outside a suite's own documented flow, e.g. `e2e-verify`'s
+   load-bearing odoo/nginx restart), or deliberately breaking a bind-mounted file for a
+   RED proof, must happen **before** fanning out background reviewers/`verify-runner`,
+   never during. No agent may "fix" a shared stack it doesn't own by restarting it.
+2. **Detection (mechanical — `scripts/dev/stack_settled.sh`).** Read-only; reports
+   UNSETTLED if `db`/`odoo` show `Up <N> second…` in `docker compose ps` — i.e. one of
+   them was (re)started in roughly the last minute. Any agent can run it in ~2 seconds
+   before trusting a scary finding.
+3. **Retry-before-escalate (`verify-runner`).** On any suite FAIL — especially a
+   CRITICAL/isolation finding — re-run that ONE suite once before reporting it as real
+   (`.claude/agents/verify-runner.md`). Both false CRITICALs in this entry did not
+   reproduce on the very next clean run; a real regression will.
+
+**Guard deliberately NOT built: per-agent stack isolation.** Giving each background
+agent its own `COMPOSE_PROJECT_NAME`/compose project (or git worktree) was considered
+and rejected for now:
+- CLAUDE.md Rule 11 / R-006 already documents that hardcoded `ncollection-*` container
+  names break under a non-default project name — every script that shells out to
+  Docker would need a fresh audit to stay correct under N concurrent stacks, which is
+  a materially bigger change than the bug it would fix.
+- It multiplies Postgres/Odoo memory and boot time by the number of concurrent agents
+  on one dev machine, for a failure mode whose actual cause was an *avoidable* ad hoc
+  mutation, not a structural need for concurrent Docker access.
+- This repo's real workflow is one orchestrator fanning out short-lived, mostly
+  *read-only* reviewers against a platform that is *already* isolated per tenant at
+  the database layer (R-004's fixture namespacing). Duplicating that isolation again
+  at the Docker layer, for the harness itself, would be solving the same problem
+  twice for a much smaller payoff.
+
+If concurrent background agents doing real Docker *mutation* work (not just review)
+becomes routine rather than incidental, revisit this.
 
 ---
 
