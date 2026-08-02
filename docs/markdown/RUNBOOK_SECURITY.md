@@ -150,10 +150,16 @@ stale-keyed tenant's workspace.** The customer keeps working.
    selected — deliberately, so a rotation cannot silently cover only the page you
    were looking at. Requires Settings-administrator rights, enforced at the ORM
    and not just on the button.
-3. **Read the summary.** It is green only when **every** tenant re-keyed *and*
-   passed a live verification push. Any failure makes it a sticky warning naming
-   the failed databases. **Failed tenants still hold the OLD key** — the rotation
-   is not complete until that list is empty.
+3. **Read the summary.** Three outcomes, and the difference matters:
+   - **re-keyed** — key replaced *and* a live verification push authenticated.
+   - **skipped** — no config-sync account (see below). Reported, not alarmed;
+     these do not keep the summary from going green, because there is nothing
+     to rotate.
+   - **failed** — makes the summary a sticky warning naming the databases.
+     **Failed tenants still hold the OLD key.** The rotation is not complete
+     until that list is empty.
+
+   Green therefore means "nothing failed", with any skips stated explicitly.
 4. **Confirm independently** in the tenant list: the **Config Sync** column
    (#264) should read `ok` for every tenant, with a fresh *Last OK*.
 
