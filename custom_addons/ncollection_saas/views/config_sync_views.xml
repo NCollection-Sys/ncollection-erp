@@ -27,6 +27,10 @@
                        decoration-warning="config_sync_state == 'transient'"
                        decoration-danger="config_sync_state == 'permanent'"/>
                 <field name="config_sync_last_ok" optional="hide"/>
+                <field name="cron_health_state" widget="badge" optional="hide"
+                       decoration-success="cron_health_state == 'ok'"
+                       decoration-danger="cron_health_state == 'degraded'"
+                       decoration-muted="cron_health_state == 'unknown'"/>
             </field>
         </field>
     </record>
@@ -46,8 +50,21 @@
                        invisible="config_sync_state == 'ok'"/>
                 <field name="config_sync_last_error"
                        invisible="config_sync_state == 'ok'"/>
+                <field name="cron_health_state" widget="badge"
+                       decoration-success="cron_health_state == 'ok'"
+                       decoration-danger="cron_health_state == 'degraded'"
+                       decoration-muted="cron_health_state == 'unknown'"/>
+                <field name="cron_health_detail"
+                       invisible="cron_health_state != 'degraded'"/>
             </field>
         </field>
+    </record>
+
+    <!-- A disabled compliance job is the thing you most want to find fast. -->
+    <record id="filter_tenant_cron_degraded" model="ir.filters">
+        <field name="name">Required job disabled</field>
+        <field name="model_id">ncollection.tenant</field>
+        <field name="domain">[('cron_health_state', '=', 'degraded')]</field>
     </record>
 
     <!-- "Show me only the broken ones" without writing a domain by hand. -->

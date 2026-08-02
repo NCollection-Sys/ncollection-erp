@@ -90,6 +90,35 @@ only when all are ✅:
 - [ ] Postgres **not** reachable from outside (`5432`/`5433` closed)
 - [ ] `.env` is mode `600`, owned by the deploy user
 
+## Required tenant-side jobs — what to do when one is reported disabled (#262)
+
+The SaaS-admin tenant list has a **Required Jobs** state. `A required job is off`
+means a tenant reported that a job the platform depends on is no longer enabled.
+Today that is the auth-log retention purge (`ncollection_auth.cron_gc_auth_log`,
+#219), which deletes PII past the retention window.
+
+**It is usually a symptom, not sabotage.** Odoo deactivates a cron by itself
+after 5 consecutive failures spanning 7 days
+(`MIN_FAILURE_COUNT_BEFORE_DEACTIVATION` / `MIN_DELTA_BEFORE_DEACTIVATION` in
+`odoo/addons/base/models/ir_cron.py`). So a job that was failing — most often a
+misconfigured `ncollection_auth.log_retention_days` — eventually switches itself
+off and goes quiet. **Odoo does not re-enable it when the cause is fixed.**
+
+1. Read the tenant's chatter: the to-do names the job and the tenant DB.
+2. Fix the cause first. For the retention purge that is nearly always the
+   parameter — a value below the 30-day floor, or non-numeric, both of which
+   make the job raise by design (see the auth-log retention rows above).
+3. Re-enable by hand in the tenant DB: *Settings → Technical → Scheduled
+   Actions → "NCollection: auth log retention purge" → Active*.
+4. The next config-sync push clears the state and closes the to-do
+   automatically. The nightly reconcile does this within 24h; no action needed.
+
+`Not reported` is **not** the same as healthy — it means the tenant has not
+synced since this check shipped, or its config-sync push is failing (check the
+Config Sync column, #264). A tenant that legitimately lacks `ncollection_auth`
+(provisioned before #178) reports the job as not installed, which is not a
+fault — #218 is the ticket that backfills those.
+
 ## Out of scope (own tickets / future)
 
 - SSL Labs A grade + headers audit → **P3-T12** · OWASP probing → **P3-T12**
