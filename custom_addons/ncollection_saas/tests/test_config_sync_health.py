@@ -39,7 +39,6 @@ class TestConfigSyncHealth(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.plan = cls.env['ncollection.subscription.plan'].search([], limit=1)
         cls.tenant = cls.env['ncollection.tenant'].create({
             'company_name': 'Sync Health Co',
             'database_name': 'synchealth',
@@ -119,7 +118,12 @@ class TestConfigSyncHealth(TransactionCase):
     # -- alerting cadence ---------------------------------------------------
 
     def test_permanent_failure_opens_exactly_one_activity(self):
-        """The nightly reconcile must not stack a to-do per attempt."""
+        """The nightly reconcile must not stack a to-do per attempt.
+
+        Note this passes via the OUTER transition gate, not the dedup guard:
+        calls 2-4 never reach _config_sync_alert at all. The dedup guard is
+        covered by test_a_new_incident_after_recovery_opens_a_fresh_todo below.
+        """
         for _ in range(4):
             self._push(_Response(401))
         activities = self.tenant.activity_ids.filtered(
@@ -147,6 +151,72 @@ class TestConfigSyncHealth(TransactionCase):
         self._push(_Response(401))
         self.assertEqual(self.tenant.config_sync_state, 'permanent')
         self.assertGreater(len(self.tenant.message_ids), before)
+
+    def test_recovery_closes_the_open_todo(self):
+        """A healed tenant must not leave an unresolved to-do behind."""
+        self._push(_Response(401))
+        self.assertTrue(self.tenant.config_sync_activity_id,
+                        "a permanent failure should open a to-do")
+        self._push(_Response(200))
+        self.assertFalse(
+            self.tenant.config_sync_activity_id,
+            "recovery must resolve the to-do, not leave it open forever")
+
+    def test_a_new_incident_after_recovery_opens_a_fresh_todo(self):
+        """The bug this ticket would otherwise have reintroduced.
+
+        permanent -> ok -> permanent. If recovery leaves the first to-do open,
+        the dedup guard treats the SECOND, genuinely new incident as already
+        reported: no fresh to-do, only a chatter line that is easy to miss.
+        The only actionable channel would silently swallow it — exactly the
+        failure mode #264 exists to prevent, one layer up.
+        """
+        self._push(_Response(401))
+        first = self.tenant.config_sync_activity_id
+        self.assertTrue(first)
+
+        self._push(_Response(200))          # recovered
+        self._push(_Response(401))          # a new, unrelated incident
+
+        second = self.tenant.config_sync_activity_id
+        self.assertTrue(
+            second, "a new incident after recovery must open its own to-do")
+        self.assertNotEqual(
+            second, first,
+            "the second incident must not be represented by the stale to-do")
+
+    def test_dedup_does_not_depend_on_the_summary_text(self):
+        """The guard keys on an explicit link, not a translated string.
+
+        An earlier version matched 'config sync' inside the activity summary —
+        which is passed through env._(), so on a non-English backoffice (an
+        Arabic one is entirely plausible for a GCC product) the match would
+        stop working and duplicates would stack.
+        """
+        self._push(_Response(401))
+        activity = self.tenant.config_sync_activity_id
+        self.assertTrue(activity)
+        activity.summary = "totally unrelated wording"
+
+        self._push(_Response(401))
+        self.assertEqual(
+            self.tenant.config_sync_activity_id, activity,
+            "dedup must still hold when the summary text changes")
+
+    def test_attribution_mismatch_is_refused(self):
+        """A push whose target db does not match the record it would record on.
+
+        Every call site passes them matched today, so this guards an invariant
+        rather than a live bug — but recording an outcome on the wrong tenant
+        would post chatter and open a to-do against an innocent customer.
+        """
+        with patch.dict('os.environ', {'NC_CONFIG_SYNC_KEY': 'k'}):
+            with patch('requests.post', return_value=_Response(200)) as post:
+                result = self.tenant._config_sync_push('someone-else', {})
+        self.assertFalse(result)
+        post.assert_not_called()
+        self.assertEqual(self.tenant.config_sync_state, 'ok',
+                         "no state should be recorded for a refused push")
 
     # -- the contract that must not break ----------------------------------
 

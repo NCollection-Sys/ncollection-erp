@@ -85,6 +85,12 @@ class TenantConfigSync(models.Model):
 
     # ---- config-sync health (#264) ---------------------------------------
     #
+    # Declared here rather than on the base model in ncollection_subscription
+    # because config sync is a SaaS-layer concern — the same reasoning
+    # checkout.py uses for its checkout_* fields. Odoo tracks field ownership
+    # per defining module, so uninstalling ncollection_saas drops these columns
+    # cleanly without touching the subscription module's own fields.
+    #
     # Why durable state and not just a log line: config-sync is what propagates
     # action_suspend / action_expire / plan downgrades into the tenant's
     # ncollection.workspace.config, which P1-T10 license enforcement reads. A
@@ -96,8 +102,12 @@ class TenantConfigSync(models.Model):
     # attributable and answerable from the admin UI.
 
     config_sync_state = fields.Selection(
-        SYNC_STATES, default='ok', readonly=True, tracking=True,
+        SYNC_STATES, default='ok', readonly=True,
         string='Config Sync', copy=False,
+        # No tracking=True: this model is a mail.thread, so tracking would
+        # auto-post a second chatter line for every transition on top of the
+        # explicit message_post below. backup.py's status field omits it for
+        # the same reason. Two entries per event trains operators to skim.
         help="Whether the last platform->tenant config push succeeded. "
              "'Needs attention' means the failure cannot heal itself.")
     config_sync_last_ok = fields.Datetime(
@@ -109,6 +119,13 @@ class TenantConfigSync(models.Model):
     config_sync_failure_count = fields.Integer(
         default=0, readonly=True, copy=False,
         string='Consecutive Sync Failures')
+    config_sync_activity_id = fields.Many2one(
+        'mail.activity', readonly=True, copy=False, ondelete='set null',
+        string='Open Config-Sync To-Do',
+        help="The unresolved config-sync to-do, if any. An explicit link "
+             "rather than searching activity summaries: the summary is "
+             "translated, so a substring match silently stops working on a "
+             "non-English backoffice.")
 
     # ---- desired state ---------------------------------------------------
 
@@ -174,6 +191,13 @@ class TenantConfigSync(models.Model):
                     self.sudo().message_post(body=self.env._(
                         "Config sync RECOVERED for %(db)s.",
                         db=self.database_name))
+                # Close the open to-do. Without this it lingers after recovery,
+                # and the guard in _config_sync_alert then treats a genuinely
+                # NEW failure weeks later as already-reported — no fresh to-do
+                # is opened and the only actionable channel goes quiet. That is
+                # the swallowed-failure mode this ticket exists to prevent,
+                # one layer up.
+                self._config_sync_close_activity()
                 return
 
             self.sudo().write({
@@ -193,6 +217,16 @@ class TenantConfigSync(models.Model):
                 "Could not record config-sync outcome for %s (state=%s).",
                 self.database_name if self else '?', state)
 
+    def _config_sync_close_activity(self):
+        """Resolve the open config-sync to-do, if there is one."""
+        activity = self.sudo().config_sync_activity_id
+        if not activity or not activity.exists():
+            self.sudo().config_sync_activity_id = False
+            return
+        activity.action_feedback(feedback=self.env._(
+            "Config sync recovered for %(db)s.", db=self.database_name))
+        self.sudo().config_sync_activity_id = False
+
     def _config_sync_alert(self, state, error):
         """Chatter + activity on the tenant, mirroring P2-T05's backup alert.
 
@@ -210,12 +244,15 @@ class TenantConfigSync(models.Model):
             # A transient failure is logged and tracked, but the nightly
             # reconcile is expected to heal it — no human task for that.
             return
-        # Never stack duplicate to-dos for the same unresolved problem.
-        existing = self.sudo().activity_ids.filtered(
-            lambda a: a.summary and 'config sync' in a.summary.lower())
-        if existing:
+        # Never stack duplicate to-dos for the same unresolved problem. Keyed
+        # on an explicit link, not a summary substring: the summary is
+        # translated, so a match on "config sync" silently stops working on an
+        # Arabic backoffice and starts stacking duplicates — and it could also
+        # be suppressed by any unrelated activity that happens to mention it.
+        open_todo = self.sudo().config_sync_activity_id
+        if open_todo and open_todo.exists():
             return
-        self.sudo().activity_schedule(
+        activity = self.sudo().activity_schedule(
             'mail.mail_activity_data_todo',
             summary=self.env._("Investigate config sync: %s", self.database_name),
             note=self.env._(
@@ -223,6 +260,7 @@ class TenantConfigSync(models.Model):
                 "reconcile will keep retrying without success until the cause "
                 "is fixed (typically a stale per-tenant key; see #221).",
                 body=body))
+        self.sudo().config_sync_activity_id = activity
 
     # ---- the json2/bearer client ----------------------------------------
 
@@ -230,6 +268,17 @@ class TenantConfigSync(models.Model):
         """One platform->tenant config push over json2/bearer. Logged; never
         raises into the caller (a transport error must not break a lifecycle
         transaction — the nightly reconcile heals it)."""
+        # The outcome is recorded on `self` while the push targets `db` (Host
+        # header + derived key). Every call site passes them matched, but the
+        # invariant was convention-only — and this ticket raises the stakes: a
+        # mismatch would now also post chatter and open a to-do on the WRONG
+        # tenant, i.e. a cross-tenant attribution bug wearing an audit trail.
+        if self and db and self.database_name and db != self.database_name:
+            _logger.error(
+                "Config sync attribution mismatch: pushing to %s while "
+                "recording on %s. Refusing.", db, self.database_name)
+            return False
+
         master = os.environ.get(_SYNC_KEY_ENV)
         if not master:
             _logger.error(
