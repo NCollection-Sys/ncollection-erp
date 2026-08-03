@@ -37,8 +37,14 @@ class FleetMigration(models.Model):
                        default=lambda self: self._default_name())
     module_names = fields.Char(
         required=True, tracking=True,
-        help="Comma-separated technical module names to upgrade (odoo -u) "
-             "across every ready tenant.")
+        help="Comma-separated technical module names to act on across every "
+             "ready tenant.")
+    operation = fields.Selection([
+        ('upgrade', 'Upgrade (odoo -u)'),
+        ('install', 'Install (odoo -i)'),
+    ], default='upgrade', required=True, tracking=True,
+        help="Upgrade acts on modules the tenant ALREADY has; install adds "
+             "modules it does not. They are not interchangeable — see below.")
     wave_size = fields.Integer(
         default=5, required=True,
         help="Tenants per rolling wave after the canary passes.")
@@ -92,7 +98,7 @@ class FleetMigration(models.Model):
         self.ensure_one()
         mods = [m.strip() for m in (self.module_names or '').split(',') if m.strip()]
         if not mods:
-            raise ValidationError(self.env._("Specify at least one module to upgrade."))
+            raise ValidationError(self.env._("Specify at least one module."))
         for module in mods:
             if not MODULE_NAME_RE.match(module):
                 raise ValidationError(self.env._("Invalid module name '%s'.", module))

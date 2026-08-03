@@ -30,3 +30,9 @@ config/pgbouncer/userlist.txt
 
 # P3-T03 load-test run artifacts (regenerable)
 scripts/perf/results/
+
+# macOS Finder metadata. Was TRACKED until #277, so every macOS checkout
+# showed a permanently dirty tree — which trains people to ignore git status,
+# and got it swept into a feature commit by a `git add -A` on #244.
+.DS_Store
+**/.DS_Store

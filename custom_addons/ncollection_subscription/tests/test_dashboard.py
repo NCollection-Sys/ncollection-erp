@@ -9,6 +9,8 @@ mirrored at the ORM, Rule 7).
 from datetime import timedelta
 from unittest.mock import patch
 
+import itertools
+
 from odoo import fields
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
@@ -16,6 +18,10 @@ from odoo.tests import TransactionCase, tagged
 
 @tagged('post_install', '-at_install')
 class TestSaasDashboard(TransactionCase):
+
+    # Monotonic across the whole class: unique by construction, no hashing,
+    # no modulo, and stable from run to run.
+    _db_seq = itertools.count(1)
 
     @classmethod
     def setUpClass(cls):
@@ -28,15 +34,50 @@ class TestSaasDashboard(TransactionCase):
     def _tenant(self, name, status='active', db=None):
         # database_status='ready' keeps a lifecycle change from triggering the
         # provisioning engine (subprocess) during the test.
+        #
+        # The name used to be `t%d % (abs(hash(name)) % 10000)`. Two faults in
+        # one expression (#276):
+        #   * str hashing is RANDOMISED per process (PYTHONHASHSEED), so the
+        #     same test produced a different database_name on every run --
+        #     the definition of an irreproducible fixture;
+        #   * folding it into 10000 buckets meant two distinct names could
+        #     land on the same one, and `unique(database_name)` (tenant.py:87)
+        #     then failed the create. Rare, order-independent, and impossible
+        #     to reproduce on demand -- which is exactly how it was reported.
+        # A counter is deterministic and collision-free by construction, so
+        # there is no probability left to argue about.
         return self.env['ncollection.tenant'].create({
             'company_name': name, 'plan_id': self.plan.id, 'status': status,
-            'database_status': 'ready', 'database_name': db or ('t%d' % (abs(hash(name)) % 10000))})
+            'database_status': 'ready',
+            'database_name': db or ('dash%d' % next(self._db_seq))})
 
     def _sub(self, tenant, status='active', cycle='monthly', end=None):
         return self.env['ncollection.subscription'].create({
             'name': 'S-%d' % tenant.id, 'tenant_id': tenant.id, 'plan_id': self.plan.id,
             'status': status, 'billing_cycle': cycle,
             'start_date': fields.Date.context_today(self.env.user), 'end_date': end})
+
+    def test_fixture_db_names_are_unique_and_stable(self):
+        """The guard for #276: fixture names must not be probabilistic.
+
+        The old helper derived database_name from `abs(hash(name)) % 10000`.
+        Python randomises str hashing per PROCESS, so the value moved every
+        run, and 10000 buckets meant two distinct names could collide and trip
+        `unique(database_name)`. It failed roughly one CI run in a few hundred
+        and never reproduced on demand.
+
+        Asserting "the last run happened to pass" would prove nothing. What is
+        assertable is the PROPERTY that replaced the gamble: consecutive
+        fixtures get distinct names, and none of them is hash-derived.
+        """
+        names = [self._tenant('Dup %d' % i).database_name for i in range(25)]
+        self.assertEqual(len(set(names)), len(names),
+                         "fixture database names collided: %s" % names)
+        for n in names:
+            self.assertRegex(
+                n, r'^[a-z][a-z0-9]*$',
+                "db names must stay alphanumeric — db_filter routes a "
+                "subdomain to the same-named database")
 
     def test_mrr_field_normalization(self):
         """subscription.mrr normalizes plan price to a monthly amount (the graph measure)."""

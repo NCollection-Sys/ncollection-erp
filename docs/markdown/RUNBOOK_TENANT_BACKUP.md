@@ -52,7 +52,21 @@ the image. Dev/test keeps a local copy under `/var/lib/odoo/backups/<db>/`.
 
 ## Notes
 
-- **Never overwrites a live tenant** — restores always target a scratch/staging DB.
+- **A live tenant DB can only be restored over by its OWN backup** (#275). The
+  rule is enforced in `ncollection.backup._assert_restore_target`, so it holds
+  for every caller including raw RPC — not just the UI:
+  - **restore wizard** → scratch/staging only; it refuses a live DB name;
+  - **monthly drill** → scratch only (`drill_<db>`);
+  - **in-place rollback** → allowed, and only with that tenant's own snapshot.
+    This is `action_restore_in_place` (#244) or the shell path — the recovery
+    route after a failed fleet migration.
+
+  > This bullet previously read *"Never overwrites a live tenant — restores
+  > always target a scratch/staging DB."* That became false when #244 added
+  > in-place rollback. It is called out rather than quietly corrected because
+  > this is the page an operator reads mid-incident, and the old wording invited
+  > either false confidence that no in-place restore can happen, or hesitation
+  > to use the recovery path that exists for exactly that moment.
 - **pg client vs server skew:** the odoo image's newer `pg_dump` emits
   `SET transaction_timeout` that the pinned postgres:16 server rejects harmlessly;
   the restore script judges success by the restored schema, not pg_restore's exit

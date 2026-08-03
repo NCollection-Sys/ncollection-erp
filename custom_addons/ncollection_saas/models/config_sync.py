@@ -20,6 +20,7 @@ import json
 import logging
 import re
 import os
+import time
 
 import requests
 
@@ -69,7 +70,55 @@ _BASE_DOMAIN_PARAM = 'ncollection_saas.base_domain'
 _DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
 _SYNC_ENDPOINT = '/json/2/ncollection.workspace.config/sync_from_platform'
 _SYNC_CHANNEL = 'root.provisioning'
+# requests' `timeout=` is the CONNECT timeout and the IDLE GAP between reads --
+# NOT a total duration. Every byte that arrives resets it, so a trickled body
+# is not bounded by it at all: measured at 9.03s against a 2.0s timeout (#283).
+# _RPC_DEADLINE below is the total-duration budget; this stays as the idle bound.
 _RPC_TIMEOUT = 30
+
+# Budget for reading one response body, checked BETWEEN chunks (#283).
+#
+# READ THIS BEFORE TRUSTING THE NUMBER. An earlier version of this comment
+# claimed the worst case was _RPC_DEADLINE plus one idle gap (~90s). That was
+# measured and found FALSE. raw.read(n) bottoms out in io.BufferedReader.read,
+# which LOOPS internally until it has n bytes or hits EOF; only each individual
+# recv() is bounded by the idle timeout, and every arriving byte resets it. So
+# one chunk read can block far past this deadline -- a tenant dribbling a byte
+# every ~29s holds a single 8 KiB read for ~8192 x 29s, on the order of days --
+# and the between-chunk check never gets to run. urllib3 2.0.7 here exposes no
+# read1(), so there is no pure-Python way to return after a single recv.
+#
+# What this deadline DOES bound: a body arriving in whole chunks separated by
+# gaps, which is the common misbehaving-proxy shape. What actually bounds the
+# fine-grained trickle is Odoo's worker limit (limit_time_real / _cron in
+# config/odoo.prod.conf). Do not quote a number here that the code cannot keep.
+_RPC_DEADLINE = 60
+
+# Read granularity. Small enough that the deadline is checked often; large
+# enough that a legitimate body costs one or two reads, not hundreds.
+_READ_CHUNK = 8 * 1024
+
+# Hard cap on how much of a TENANT's response the PLATFORM will read (#278).
+#
+# `timeout=` bounds idle gaps; nothing bounded how much we READ. The
+# expected body is the #262 required-job self-report — a handful of xmlids,
+# itself already capped at _MAX_REPORTED_CRONS = 32 — so 64 KB is generous by
+# orders of magnitude for anything legitimate.
+#
+# Without it, a tenant returning a multi-gigabyte body has the control plane
+# allocate all of it. That is the wrong direction for a two-layer architecture:
+# a tenant must not be able to influence platform resource use. Note the real
+# exposure was never resp.text[:500] on the error path (that slice truncates the
+# LOG LINE, after the whole body is already in memory) but resp.json() on the
+# SUCCESS path, which reads AND materialises the lot.
+_MAX_RESPONSE_BYTES = 64 * 1024
+
+# _read_bounded's "the bounded read itself failed" answer.
+# Deliberately NOT None -- None means "no bounded read is possible
+# here", which legitimately falls back to the response object's own
+# .json()/.text. Collapsing the two lets a tenant re-open the
+# unbounded path with a single lying Content-Encoding header.
+_READ_FAILED = object()
 
 # HTTP statuses that a retry can never heal (#264). A 401/403 means the tenant
 # rejected our bearer — a stale key hash, typically — so the nightly reconcile
@@ -92,6 +141,17 @@ _PERMANENT_STATUSES = frozenset({401, 403})
 # a plausible xml-id, a sane length, and a cap on how many we will believe.
 _XMLID_RE = re.compile(r'^[a-z0-9_]{1,64}\.[a-z0-9_]{1,64}$')
 _MAX_REPORTED_CRONS = 32
+
+# Consecutive syncs whose self-report we could not read before we escalate
+# (#283). The reconcile is nightly, so this is roughly N days of blindness.
+#
+# 'unknown' is NOT an alertable state on its own -- a tenant that has simply
+# never reported is legitimate (older code; #218 backfills those) and alerting
+# on it would be the noise #262 deliberately avoids. What IS alertable is that
+# state PERSISTING: three nights running means the platform has no idea whether
+# a compliance cron is alive, which is exactly the blindness #262 exists to
+# remove. Alert on crossing, once -- not nightly.
+_MAX_UNREPORTED_SYNCS = 3
 
 CRON_HEALTH_STATES = [
     ('ok', 'Healthy'),
@@ -160,6 +220,17 @@ class TenantConfigSync(models.Model):
              "be read, or it could not run the probe. It does NOT mean "
              "healthy.")
     cron_health_detail = fields.Char(readonly=True, copy=False)
+    cron_report_activity_id = fields.Many2one(
+        'mail.activity', readonly=True, copy=False, ondelete='set null',
+        string='Open Unreadable-Report To-Do',
+        help="The open to-do for a persistently unreadable self-report. "
+             "Separate from cron_health_activity_id on purpose: 'we cannot "
+             "SEE the jobs' and 'a job is DISABLED' need different actions, "
+             "and closing one must not resolve the other.")
+    cron_report_miss_count = fields.Integer(
+        readonly=True, copy=False, default=0,
+        help="Consecutive config-sync pushes whose required-job self-report "
+             "could not be read. Reset by the first readable report.")
     cron_health_activity_id = fields.Many2one(
         'mail.activity', readonly=True, copy=False, ondelete='set null',
         string='Open Required-Job To-Do')
@@ -301,7 +372,7 @@ class TenantConfigSync(models.Model):
 
     # ---- required-cron health (#262) -------------------------------------
 
-    def _record_cron_health(self, report):
+    def _record_cron_health(self, report, skip_reason=False):
         """Record the tenant's self-report on required jobs. Never raises.
 
         `report` is ``{xml_id: {'installed': bool, 'active': bool}}`` from the
@@ -317,9 +388,86 @@ class TenantConfigSync(models.Model):
             self.ensure_one()
             if not isinstance(report, dict) or not report:
                 # Absent report != healthy. Say "unknown" rather than assume.
-                if self.cron_health_state != 'unknown':
-                    self.sudo().write({'cron_health_state': 'unknown'})
+                #
+                # skip_reason separates the two ways a report goes missing. A
+                # tenant that never reported is legitimate (older code; #218
+                # backfills those). A tenant whose report we REFUSED to read is
+                # not, and must not look identical — otherwise padding every
+                # response freezes the signal at a bare 'unknown' forever with
+                # nothing on the record to say why (#278).
+                detail = (skip_reason or '')[:255] or False
+                # A missing report has TWO shapes and only one is a fault.
+                #
+                # skip_reason truthy  -> we could not READ the report. #283.
+                # skip_reason falsy   -> the body was read fine and simply
+                #                        carries no required_crons. That is a
+                #                        tenant provisioned before #262, which
+                #                        this module's own header calls
+                #                        legitimate and says must not alert.
+                #
+                # The first version counted BOTH, so every pre-#262 tenant --
+                # exactly the #218 backfill population -- would collect a miss
+                # every night and get a false "unreadable" to-do on the third.
+                # Reproduced independently by two reviewers.
+                #
+                # `or 0` is belt-and-braces, NOT a load-bearing guard: the ORM
+                # coerces a NULL Integer column to 0 before Python sees it, so
+                # `+ 1` cannot receive None through this path -- RED-proved by
+                # removing the `or 0` and watching the NULL test still pass.
+                # It is kept only against a future compute/store=False change.
+                vals = {}
+                misses = 0
+                if skip_reason:
+                    misses = (self.cron_report_miss_count or 0) + 1
+                    vals['cron_report_miss_count'] = misses
+                if (self.cron_health_state != 'unknown'
+                        or self.cron_health_detail != detail):
+                    vals['cron_health_state'] = 'unknown'
+                    vals['cron_health_detail'] = detail
+                if vals:
+                    self.sudo().write(vals)
+                # Alert once per incident, with the OPEN TO-DO as what
+                # suppresses the repeat -- not a strict `== threshold`.
+                #
+                # `==` looked equivalent and was worse: the counter is written
+                # before the alert and both sat under one try/except, so an
+                # alert that raised (no default activity user, a mail ACL, a
+                # broken follower) was swallowed with the counter already
+                # exactly at the threshold -- and that crossing's escalation
+                # was then gone for good, unable to fire again until a full
+                # reset and a fresh incident.
+                #
+                # ">= and no to-do open" is idempotent: a successful alert
+                # leaves the to-do open, suppressing the nightly repeat exactly
+                # as `==` did, while a FAILED alert is retried next sync.
+                if (misses >= _MAX_UNREPORTED_SYNCS
+                        and not self.cron_report_activity_id):
+                    try:
+                        self._alert_unreportable(misses, detail)
+                    except Exception:   # noqa: BLE001
+                        # Its own boundary: an alerting failure must not read
+                        # as the counter bookkeeping having failed.
+                        _logger.exception(
+                            "Could not raise the unreadable-report alert for "
+                            "%s; the miss count is recorded and the alert "
+                            "retries on the next sync.", self.database_name)
                 return
+
+            # We got a readable report. That clears the miss streak even if
+            # the report itself is bad news -- the streak counts "could not
+            # READ", not "jobs unhealthy". Doing this before the health
+            # branches below means every one of them gets the reset for free,
+            # rather than each having to remember (the bug shape #262's own
+            # recovery path had to fix one layer up).
+            if self.cron_report_miss_count:
+                if self.cron_report_miss_count >= _MAX_UNREPORTED_SYNCS:
+                    self.sudo().message_post(body=self.env._(
+                        "Required-job reporting RECOVERED for %(db)s.",
+                        db=self.database_name))
+                self.sudo().write({'cron_report_miss_count': 0})
+                self._health_close_activity(
+                    'cron_report_activity_id',
+                    self.env._("Self-report readable again."))
 
             # A job whose module is absent is NOT a fault (#218 backfills
             # those). A probe that ERRORED on the tenant is a different thing
@@ -383,6 +531,32 @@ class TenantConfigSync(models.Model):
                 "Could not record required-cron health for %s.",
                 self.database_name if self else '?')
 
+    def _alert_unreportable(self, misses, detail):
+        """A tenant has been unreadable for _MAX_UNREPORTED_SYNCS nights.
+
+        Deliberately its own alert rather than reusing _alert_cron_health: the
+        operator action is different. 'A required job is DISABLED' tells someone
+        to re-enable a cron. This says the platform cannot SEE the job at all,
+        which is a tenant-side or transport problem, and the required-job state
+        shown in the UI is stale rather than merely quiet.
+        """
+        body = self.env._(
+            "Config sync to %(db)s has returned an unreadable required-job "
+            "report %(n)s times in a row (%(detail)s).\n\n"
+            "The pushes themselves SUCCEEDED — the configuration is being "
+            "applied. What is missing is the tenant's self-report, so the "
+            "platform currently cannot tell whether that tenant's compliance "
+            "jobs are running. The job-health shown for it is stale, not "
+            "healthy.",
+            db=self.database_name, n=misses,
+            detail=detail or self.env._("no reason recorded"))
+        self.sudo().message_post(body=body)
+        self._health_open_activity(
+            'cron_report_activity_id',
+            self.env._("Required-job report unreadable: %s",
+                       self.database_name),
+            body)
+
     def _alert_cron_health(self, detail):
         """Chatter + one to-do, same convention as the config-sync alert."""
         body = self.env._(
@@ -434,6 +608,190 @@ class TenantConfigSync(models.Model):
 
     # ---- the json2/bearer client ----------------------------------------
 
+    @staticmethod
+    def _read_clock():
+        """Monotonic now, as a seam. A deadline test that really slept would
+        add _RPC_DEADLINE seconds to every CI run; patching time.monotonic
+        globally would also move Odoo's own clocks mid-test."""
+        return time.monotonic()
+
+    def _read_bounded(self, resp, db):
+        """At most ``_MAX_RESPONSE_BYTES + 1`` bytes of the body (#278).
+
+        Three distinct answers, and the distinction is the whole point:
+
+        * ``bytes`` — the bounded read succeeded;
+        * ``None`` — no bounded read is POSSIBLE on this object (it has no
+          usable ``.raw``). The caller may fall back to ``.json()``/``.text``,
+          which is what keeps non-streamed responses and the suite's own
+          doubles working exactly as before;
+        * ``_READ_FAILED`` — a bounded read was possible and FAILED. The caller
+          must NOT fall back, because ``.json()``/``.text`` on the same
+          response is precisely the unbounded read this ticket removes. A
+          tenant can reach here with one lying ``Content-Encoding`` header.
+
+        Collapsing the last two into ``None`` (the first version of this) let a
+        hostile tenant re-open the unbounded path for free.
+
+        NEVER raises: the caller's contract is that reading the body must not
+        turn a successful push into a failure.
+
+        Reading one byte past the cap is what lets the caller distinguish
+        "exactly at the limit" from "truncated".
+
+        SINGLE USE per response. This advances the stream and does not
+        memoize; calling it twice on one response reads twice and doubles the
+        effective cap. Every current caller is on a mutually exclusive branch.
+        """
+        raw = getattr(resp, 'raw', None)
+        if raw is None:
+            return None
+        deadline = self._read_clock() + _RPC_DEADLINE
+        buf = b''
+        try:
+            while len(buf) <= _MAX_RESPONSE_BYTES:
+                if self._read_clock() > deadline:
+                    # A trickled body never REACHES the byte cap, so the cap
+                    # alone cannot stop it -- only this can. Not falling back
+                    # is the same rule as _READ_FAILED below: .json()/.text
+                    # here would resume the very read we just gave up on.
+                    _logger.error(
+                        "Config sync to %s exceeded the %ss read deadline; "
+                        "abandoning the body. A tenant must not be able to "
+                        "hold a platform worker open.", db, _RPC_DEADLINE)
+                    return _READ_FAILED
+                part = raw.read(
+                    min(_READ_CHUNK, _MAX_RESPONSE_BYTES + 1 - len(buf)),
+                    decode_content=True)
+                if not isinstance(part, bytes):
+                    # Not a real stream (see the MagicMock note below). Bail
+                    # out rather than loop forever on a mock that never
+                    # empties; an empty buf means "no bounded read possible".
+                    return buf or None
+                if not part:
+                    break
+                buf += part
+            chunk = buf
+        except Exception:       # noqa: BLE001 - see the contract above
+            return _READ_FAILED
+        if not isinstance(chunk, bytes):
+            # A real .raw always yields bytes. A MagicMock auto-vivifies .raw
+            # AND .read(), so a plain MagicMock(status_code=..., text=...) —
+            # the idiom used throughout test_config_sync.py — took the streamed
+            # branch and produced a MagicMock repr where the failure body
+            # should be. Treat "not bytes" as "no bounded read possible" so
+            # those doubles fall back to .text and log the body again.
+            return None
+        return chunk
+
+    def _close_quietly(self, resp):
+        """Release the connection. stream=True holds it until the body is
+        consumed or the response is closed, and we deliberately stop reading
+        early on an oversized body — so closing is not optional. getattr
+        because a test double has no close(), and a missing stub method must
+        not break a config push."""
+        closer = getattr(resp, 'close', None)
+        if closer is None:
+            return
+        try:
+            closer()
+        except Exception:       # noqa: BLE001 - never break a push on cleanup
+            _logger.debug(
+                "Releasing the config-sync connection failed; the push itself "
+                "already completed.", exc_info=True)
+
+    @staticmethod
+    def _scrub_for_log(text):
+        """Neutralise control characters in tenant-controlled log text.
+
+        CWE-117. This excerpt is interpolated into the ERROR line that P2-T10's
+        log watcher PARSES, so an embedded newline lets a tenant forge whole
+        log records — including fake severities — inside our own stream. The
+        format template is a fixed literal owned by this module, so format-
+        string injection was never possible; line forging was.
+
+        Pre-existing (resp.text[:500] was equally unescaped), but this ticket
+        rewrites exactly this line, so it gets fixed here rather than deferred.
+        """
+        return ''.join(
+            c if c == ' ' or c.isprintable() else '\\x%02x' % ord(c)
+            for c in text)
+
+    def _error_excerpt(self, resp, db):
+        """A short, BOUNDED excerpt of a failure body for the log line.
+
+        The old code sliced ``resp.text[:500]``, which truncates the LOG LINE
+        after the whole body is already in memory — and with stream=True it
+        would drain the entire stream to build that string. Read bounded first,
+        slice second.
+        """
+        chunk = self._read_bounded(resp, db)
+        if chunk is _READ_FAILED:
+            # .text here would re-read the body with no bound at all.
+            return '<unreadable response body>'
+        if chunk is None:
+            # Guarded like _bounded_payload's .json() fallback. getattr only
+            # suppresses AttributeError; it does nothing about a .text property
+            # that RAISES — which is reachable on a half-broken stream.
+            try:
+                return self._scrub_for_log((resp.text or '')[:500])
+            except Exception:   # noqa: BLE001 - an excerpt is never worth
+                return '<unreadable response body>'   # breaking a push for
+        return self._scrub_for_log(chunk[:500].decode('utf-8', 'replace'))
+
+    def _bounded_payload(self, resp, db):
+        """The tenant's parsed self-report. Bounded, never raises.
+
+        Returns ``(payload, skip_reason)``. ``skip_reason`` is a short
+        operator-facing string when the self-report had to be abandoned, and
+        False when there is nothing to explain — it is what keeps "this tenant
+        never reported" (legitimate: older tenant code, #218 backfills those)
+        distinguishable from "this tenant's report was refused".
+        """
+        unreadable = self.env._("self-report unreadable")
+        chunk = self._read_bounded(resp, db)
+        if chunk is _READ_FAILED:
+            # .json() here would read the body with no bound at all.
+            _logger.warning(
+                "Config sync to %s: the bounded read failed; skipping the "
+                "required-job health report rather than re-reading the body "
+                "unbounded.", db)
+            return None, unreadable
+        if chunk is None:
+            # Not a streamed response — fall back to the object's own parser.
+            try:
+                return resp.json(), False
+            except Exception:   # noqa: BLE001
+                _logger.warning(
+                    "Config sync to %s returned an unreadable body; skipping "
+                    "the required-job health report.", db)
+                return None, unreadable
+        if len(chunk) > _MAX_RESPONSE_BYTES:
+            # Honour the status code, discard the body. The config WAS applied;
+            # marking this a failure would misreport a suspension that landed.
+            #
+            # ERROR, not warning, and deliberately: _MAX_REPORTED_CRONS entries
+            # of ~100 bytes means the cap is ~20x any legal body, so this is
+            # never innocent traffic. At warning level the skip was invisible —
+            # 'unknown' opens no to-do, and P2-T10's log_watcher only alerts on
+            # ERROR lines — which handed a tenant a free, repeatable way to
+            # suppress its own compliance-job signal by padding every response.
+            _logger.error(
+                "Config sync to %s returned more than %s bytes; body discarded "
+                "and the required-job health report skipped for this run. A "
+                "tenant cannot be allowed to size the platform's read.",
+                db, _MAX_RESPONSE_BYTES)
+            return None, self.env._(
+                "self-report discarded: response over %s bytes",
+                _MAX_RESPONSE_BYTES)
+        try:
+            return json.loads(chunk.decode('utf-8', 'replace')), False
+        except Exception:       # noqa: BLE001
+            _logger.warning(
+                "Config sync to %s returned an unreadable body; skipping the "
+                "required-job health report.", db)
+            return None, unreadable
+
     def _config_sync_push(self, db, vals):
         """One platform->tenant config push over json2/bearer. Logged; never
         raises into the caller (a transport error must not break a lifecycle
@@ -478,14 +836,40 @@ class TenantConfigSync(models.Model):
                     'Authorization': 'Bearer %s' % key,
                     'X-Odoo-Database': db,
                     'Content-Type': 'application/json',
+                    # This health payload has no business being
+                    # compressed, and a lying Content-Encoding is
+                    # what drives the decode path in _read_bounded.
+                    # Remove the trigger class at the source; a
+                    # tenant that ignores this still lands on
+                    # _READ_FAILED, never the unbounded fallback.
+                    'Accept-Encoding': 'identity',
                 },
                 data=json.dumps({'vals': vals}),
                 timeout=_RPC_TIMEOUT,
+                # This endpoint has no legitimate reason to redirect, and the
+                # default chases up to 30 hops -- each one its own timeout
+                # budget. requests strips Authorization on a cross-host hop but
+                # not our Host/X-Odoo-Database headers.
+                allow_redirects=False,
+                # Do not download the body on receipt — read it bounded, below.
+                stream=True,
             )
         except requests.RequestException as exc:
             _logger.error("Config sync to %s failed (transport): %s", db, exc)
             self._config_sync_record('transient', "transport: %s" % exc)
             return False
+        # try/finally, not two hand-placed close calls. stream=True holds the
+        # connection until the body is consumed or the response is closed, and
+        # we stop reading early by design — so release must be STRUCTURAL, not
+        # a convention every future helper has to remember to honour.
+        try:
+            return self._config_sync_finish(resp, db, vals)
+        finally:
+            self._close_quietly(resp)
+
+    def _config_sync_finish(self, resp, db, vals):
+        """Classify one response and record it. Connection close is the
+        caller's finally-block; this method only decides the outcome."""
         if resp.status_code != 200:
             permanent = resp.status_code in _PERMANENT_STATUSES
             # The log line now names the tenant and says whether a retry can
@@ -495,7 +879,7 @@ class TenantConfigSync(models.Model):
                 "Config sync to %s failed (HTTP %s, %s): %s",
                 db, resp.status_code,
                 'PERMANENT - needs attention' if permanent else 'transient',
-                resp.text[:500])
+                self._error_excerpt(resp, db))
             self._config_sync_record(
                 'permanent' if permanent else 'transient',
                 "HTTP %s" % resp.status_code)
@@ -508,22 +892,18 @@ class TenantConfigSync(models.Model):
         # Parsing is wrapped: json2 returns the method result unwrapped, but a
         # malformed or truncated body must never turn a SUCCESSFUL config push
         # into a failure.
-        try:
-            payload = resp.json()
-        except Exception:
-            # Broad on purpose. The contract is that parsing must NEVER turn a
-            # SUCCESSFUL push into a failure, and the failure modes are not
-            # just malformed JSON: a truncated body, a proxy returning HTML, or
-            # any response object that does not implement .json(). Catching only
-            # ValueError was too narrow and broke seven existing tests the first
-            # time this ran — which is exactly the contract those tests defend.
-            _logger.warning(
-                "Config sync to %s returned an unreadable body; skipping the "
-                "required-job health report.", db)
-            payload = None
+        # Bounded read (#278). The contract is unchanged and still absolute:
+        # parsing must NEVER turn a SUCCESSFUL push into a failure. The failure
+        # modes are not just malformed JSON — a truncated body, a proxy
+        # returning HTML, an object without .json(), and now a body over the
+        # cap. Catching only ValueError was too narrow and broke seven existing
+        # tests the first time this ran, which is exactly the contract those
+        # tests defend. _bounded_payload absorbs all of it and returns None.
+        payload, skip_reason = self._bounded_payload(resp, db)
         self._record_cron_health(
             (payload or {}).get('required_crons')
-            if isinstance(payload, dict) else None)
+            if isinstance(payload, dict) else None,
+            skip_reason=skip_reason)
         return True
 
     # ---- lifecycle triggers (status → subscription_status projection) ----

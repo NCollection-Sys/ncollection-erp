@@ -35,6 +35,28 @@ _logger = logging.getLogger(__name__)
 # provisioning imports these rather than keeping a second copy, so the injection
 # allowlist cannot drift. Do not re-declare them elsewhere.
 DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
+# Scratch/staging targets are deliberately LOOSER: they may contain '_'.
+#
+# The reason is COMPATIBILITY, nothing more. Both shipped scratch generators
+# emit an underscore -- backup.py's `drill_%s` and the restore wizard's
+# `restore_%s` -- so holding scratch targets to DB_NAME_RE would break the
+# nightly drill and the wizard's own default.
+#
+# An earlier version of this comment claimed the underscore also made such a
+# database "unreachable over HTTP by construction", because db_filter = ^%d$
+# and underscores are invalid in hostnames. THAT IS FALSE and was measured to
+# be false: nginx forwards an underscored Host verbatim (proxy.conf's
+# `proxy_set_header Host $host`, server_name `.localhost` / `.ncollectionerp.com`)
+# and odoo.http.db_filter regex-matches the label against EXISTING database
+# names with no charset validation. `curl -H 'Host: drill_acme.localhost'`
+# returns the same 303 as a real tenant. Do not re-derive that safety claim.
+#
+# So this regex buys no isolation over DB_NAME_RE -- it only keeps the existing
+# callers working while still blocking injection shapes, reserved names and the
+# platform database. Scratch databases holding restored tenant data ARE
+# network-reachable and are never cleaned up; that is a real exposure and is
+# tracked separately, not solved here.
+SCRATCH_DB_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,62}$')
 RESERVED_DB_NAMES = frozenset(
     {'admin', 'www', 'staging', 'api', 'postgres', 'template0', 'template1'})
 SUBPROCESS_TIMEOUT = 1800  # 30 min hard cap per odoo subprocess
@@ -56,9 +78,33 @@ class SaasSubprocessMixin(models.AbstractModel):
         if not db or not DB_NAME_RE.match(db):
             raise ValidationError(self.env._(
                 "Unsafe database name '%s' (must match ^[a-z][a-z0-9]{2,62}$).", db))
+        self._assert_not_reserved(db)
+
+    def _assert_not_reserved(self, db):
+        """Shared by both name guards. The constants were already centralised;
+        the CHECK was copy-pasted, so a future change could have landed in only
+        one of the two and left the other quietly permissive."""
         if db in RESERVED_DB_NAMES or db == self.env.cr.dbname:
             raise ValidationError(self.env._(
                 "Refusing to operate on reserved/platform database '%s'.", db))
+
+    def _assert_scratch_db_name(self, db):
+        """Reject anything unsafe as a SCRATCH restore/staging target (#275).
+
+        Same job as _assert_safe_db_name -- keep injection shapes, reserved
+        names and the platform's own database away from a dropdb/createdb --
+        but permits the '_' that scratch names use and that keeps them
+        unroutable under db_filter. See SCRATCH_DB_NAME_RE.
+
+        Purely LEXICAL on purpose. "is this a live tenant's database" needs the
+        tenant model and belongs to the caller that knows which tenant the
+        backup came from (ncollection.backup._assert_restore_target).
+        """
+        if not db or not SCRATCH_DB_NAME_RE.match(db):
+            raise ValidationError(self.env._(
+                "Unsafe scratch database name '%s' "
+                "(must match ^[a-z][a-z0-9_]{2,62}$).", db))
+        self._assert_not_reserved(db)
 
     def _odoo_conn_args(self, db):
         """`-c rcfile -d db --db_*` flags for a spawned odoo subprocess. The
@@ -102,8 +148,16 @@ class SaasSubprocessMixin(models.AbstractModel):
         return {k: v for k, v in params.items() if v not in (False, None, '')}
 
     def _drop_database(self, db):
-        """DROP DATABASE (FORCE) via a maintenance connection. The caller MUST
-        have passed the name through _assert_safe_db_name first."""
+        """DROP DATABASE (FORCE) via a maintenance connection.
+
+        The caller MUST have validated the name first, with whichever rule
+        matches the target's provenance: _assert_safe_db_name for a real
+        tenant database, _assert_scratch_db_name for a scratch/drill one.
+        Naming only the strict rule here was misleading -- it forbids the '_'
+        that every `drill_*`/`restore_*` target contains, so a reader
+        "correcting" a scratch caller to use it would break every such drop
+        (RED-proved on #287: swapping the validator fails 3 tests).
+        """
         conn = psycopg2.connect(**self._db_conn_params('postgres'))
         conn.autocommit = True
         try:

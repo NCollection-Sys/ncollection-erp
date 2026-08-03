@@ -27,6 +27,7 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Stale module dependencies + modules behind their code version, across all DBs | `scripts/dev/doctor.sh` | `make doctor` |
 | Fixture namespace separation | `Makefile`, `e2e/` | structural |
 | Config-sync push carries `Host: <db>.<base-domain>` (db_filter routing) | `ncollection_saas/tests/test_config_sync.py` + `.../scripts/provisioning/verify_config_sync.sh` | CI `test` + `make verify-all` |
+| Shared-stack races → false CRITICALs (R-018) | CLAUDE.md Rule 14, `scripts/dev/stack_settled.sh`, `.claude/agents/verify-runner.md` | agent convention + `verify-runner` retry-before-escalate |
 
 ---
 
@@ -432,6 +433,258 @@ pointer to `make e2e-clean` instead of `>/dev/null 2>&1` (Rule 10 — a swallowe
 what made the original symptom unreadable). Proven rather than asserted: `config_sync_activity_id`
 was dropped from `e2eadmin` by hand (5 `config_sync*` columns → 4), the script re-run, and it
 exited 0 having healed all three fixtures back to 5.
+
+---
+
+## R-022 — Five tests were written into the wrong class and never ran; the local command hid them, CI would not have ✅ FIXED (#286)
+
+**Symptom.** On #278 I added five tests to `test_config_sync_health.py`, placed them by mistake
+in `TestRequiredCronHealth` (which has no `_push` helper, so every one of them would have
+errored), and the suite reported
+
+```
+0 failed, 0 error(s) of 19 tests
+```
+
+Nineteen — exactly the count from *before* the five were added. I only noticed by comparing the
+collected count against the previous run.
+
+**The issue I filed for this blamed CI, and that was wrong.** #286 asserted "CI would not have
+caught it either". It would have. CI runs `--test-tags /ncollection_core,/ncollection_saas,…` —
+**module** scoped, no class — so the misplaced class *is* collected and the methods *do* run.
+
+Proven by planting a method that only works in the other class and running both forms against
+the same database:
+
+| Command | Tests | Planted method | Exit |
+|---|---|---|---|
+| `--test-tags /ncollection_saas:TestConfigSyncHealth` (what I ran) | 41 | never ran | 0 |
+| `--test-tags /ncollection_saas` (what CI runs) | 202 | **ERROR** | **1** |
+
+**Root cause.** Not a CI gap — a local habit. A **class-scoped** `--test-tags` filter silently
+excludes anything outside that class, so "0 failed" says nothing about code you just wrote into
+a neighbouring class. The narrower the filter, the more confident and the less informative the
+green.
+
+**Guard.** Two parts, because the honest fix is smaller than the issue implied:
+
+1. `architecture_guard.check_test_collectability` — every test class must carry a `@tagged`
+   whose phase a module-scoped run selects. It does **not** re-implement Odoo's tag algebra; it
+   defends the uniformity that makes CI's coverage true. All 77 classes currently use
+   `post_install, -at_install`; a class with no `@tagged`, tagged `-standard`, or tagged out of
+   both phases would run **nowhere** and no count would move. RED-proved against all three
+   shapes; the correct shape passes.
+2. The habit: **verify with the tag form CI uses** before believing a green run. A class filter
+   is for iterating, never for concluding.
+
+**What is NOT guarded.** Nothing here detects "you wrote a test in a class where it makes no
+sense" — CI does that, by running it and erroring. That is sufficient and was always sufficient.
+
+---
+
+## R-021 — Routing CHECK 2 reported "isolation breach" when the overlay simply was not enforcing ✅ FIXED (#263)
+
+**Symptom.** One `make verify-all` run failed the routing proof with
+
+```
+rtclienta.localhost GRANTED db=rtclientb (uid=2) — isolation breach!
+```
+
+That is the `db_filter=^%d$` check — the one whose failure mode reads as **cross-tenant
+access**. It never reproduced: four subsequent runs, including CI, were 8/8.
+
+**Root cause, now reproducible on demand.** CHECK 2 asks a host for another tenant's database
+and treats a granted session as a breach. That reading is only valid while `db_filter` is
+actually enforcing. Under the permissive base/dev config there is no filter, so the server
+grants **correctly** — and the check called it a breach.
+
+The trigger is narrower than the original guess. It is **not** "the overlay is down": the
+script's pre-existing edge probe already exits 2 in that case, because tearing the overlay down
+also removes nginx. The dangerous state is **nginx up while odoo runs WITHOUT `--db-filter`** —
+exactly what happens when someone recreates only the odoo container
+(`docker compose -f base -f dev up -d --no-deps odoo`) while the edge keeps running. The edge
+probe passes, because nginx answers in both modes.
+
+**Reproduced deliberately:** construct that state, run the old script → `❌ FAIL … isolation
+breach!`, exit 1, with no isolation bug anywhere. Run the new script on the identical stack →
+`REFUSING: the routing overlay is NOT active`, exit 2, zero FAIL lines.
+
+**Guard.** `assert_routing_overlay_active()` runs before any check and reads **pid 1's argv
+inside the odoo container** — the ground truth for what the server is actually running, unlike
+the declared `Config.Cmd` or the edge probe. It exits **2**, not 1, so "did not run" stays
+distinguishable from "a check failed", and the message names the fix (`make routing-up`) and
+prints the argv it saw. CHECK 2's own failure text now states that preconditions were asserted,
+so a future reader knows a breach reported there is real.
+
+**Cost, recorded because it is the lesson.** Producing the broken state deliberately meant
+recreating the odoo container. That left nginx holding a **stale upstream IP** (502), and the
+routing fixtures had to be rebuilt via `make routing-clean` + a re-run. Three consecutive
+"failures" in between were self-inflicted, not findings. This is R-018's hazard from the other
+side: the agent causing the churn is just as capable of misreading its own damage as a
+concurrent one is. `stack_settled.sh` correctly reported UNSETTLED throughout.
+
+**Follow-through.** `make routing-up` does not restart nginx, so any workflow that recreates
+odoo must restart nginx too, or the edge serves 502 against a perfectly healthy server.
+## R-020 — A test fixture derived its DB name from `hash()`, so CI failed at random ✅ FIXED (#276)
+
+**Symptom.** `TestSaasDashboard.test_mrr_field_normalization` errored intermittently in the
+`test` job — same 581 tests, same addon code, different outcome. PR #272 passed on identical
+addon code; a re-run of the failing branch passed. Postgres logged a
+`ncollection_subscription_plan_code_unique` violation one second earlier.
+
+**That Postgres line was a red herring** and it sent the original triage the wrong way. The
+issue guessed a shared plan-code collision. `DASHGROWTH` is used exactly once in the entire
+test suite — there is no cross-test plan-code clash. The failure was in `_tenant()`.
+
+**Root cause.** `test_dashboard.py`'s helper built the tenant name as:
+
+```python
+'database_name': db or ('t%d' % (abs(hash(name)) % 10000))
+```
+
+Two faults in one expression:
+
+* Python randomises **str** hashing per process (`PYTHONHASHSEED`), so the same test produced
+  a different `database_name` on every run — an irreproducible fixture by construction.
+* Folding into 10 000 buckets meant two distinct names could land on the same one, and
+  `unique(database_name)` (`ncollection_subscription/models/tenant.py:87`) then failed the
+  `create`. Order-independent, roughly one run in a few hundred, never reproducible on demand.
+
+**Why it resisted diagnosis.** Every property that makes a flake hard was present at once: the
+trigger is re-randomised each process, the symptom surfaces in a *different* test than the one
+that misbehaves, and an unrelated Postgres error appeared next to it in the log.
+
+**Guard.** The helper now uses a monotonic `itertools.count`, so names are unique **by
+construction** — no hashing, no modulo, nothing probabilistic left to argue about. Plus
+`test_fixture_db_names_are_unique_and_stable`, which asserts 25 consecutive fixtures get
+distinct, alphanumeric names. Asserting "the last run passed" would have proven nothing; the
+assertable thing is the property that replaced the gamble.
+
+**Proven, not argued.** A seed hunt was attempted first and was *wrong* — it split
+`'Expiring Co'` on whitespace, so a repeated `'Co'` token faked a collision. The real proof is
+narrowing the bucket to `% 4`: the collision then fires every run and takes out six tests,
+**including `test_mrr_field_normalization`** — the exact test CI reported. Restore the counter
+and all six pass.
+
+**Follow-through.** `hash()` appears in no other test fixture in the repo (checked). Fixture
+identity should be a counter or an explicit literal — never a hash, which is unstable across
+processes by design.
+
+---
+
+## R-019 — R-017's fix was applied to the e2e fixtures but not the PLATFORM db; the same schema drift killed `verify-all` again ✅ FIXED (#283)
+
+**Symptom.** On a branch whose only schema change was two added fields on `ncollection.tenant`,
+`make verify-all` failed:
+
+```
+psycopg2.errors.UndefinedColumn: column "cron_report_miss_count"
+of relation "ncollection_tenant" does not exist
+```
+
+Routing passed 8/8, **provisioning failed on its first tenant create**, and config-sync, financial
+bootstrap and e2e never ran at all. The failure looked like a defect in the branch. It was not:
+the code was correct and the database was stale.
+
+**Root cause.** `verify_provisioning.sh` and `verify_config_sync.sh` both run against a
+**persistent** platform database (`PLATFORM_DB`, default `saastest`) and **never upgraded the
+module on it**. The model gained a field; the database did not.
+
+This is **R-017 exactly** — reused state keeping the schema it was built with — and R-017's fix
+was real, but it was applied only to `e2e/scripts/setup_e2e_tenants.sh`. The identical reuse
+pattern in the two P2 verify scripts was left untouched, so the class of bug was closed for one
+suite and left open for two others. Nothing rediscovered it for months because no ticket in that
+window added a field to `ncollection.tenant`.
+
+**Why CI never caught it.** Same reason as R-017: the `test` and `verify` jobs build databases
+from scratch every run, so the reuse path does not exist there. It is structurally invisible to
+CI and hits only local runs — i.e. the Rule 13 gate every developer is required to run before
+merging. A gate that fails on legitimate work is a gate people learn to route around, which is
+the failure mode #221, #264 and #267 each fixed elsewhere.
+
+**Guard.** Both scripts now call `platform_schema_sync()` before doing anything else: it runs
+`odoo -d "$PLATFORM_DB" -u ncollection_saas --stop-after-init` and **exits 1 with an actionable
+message** if that upgrade fails (Rule 10 — a swallowed upgrade would print the suite's own
+"ready" over a stale schema, R-005's shape).
+
+Proven rather than asserted: `saastest` was left with the stale schema (0 of the 2 new columns),
+the script was run **without any manual repair**, its own new step healed the database, and the
+suite reported `10 passed, 0 failed`. Re-run immediately afterwards: `10 passed, 0 failed` again
+(Rule 12 — idempotent, and shown to be, not claimed).
+
+**Follow-through.** When a guard is written for reused state, check every other reuse site in the
+repo at the same time. R-017 fixed one of three.
+
+---
+
+## R-018 — Background agents sharing one Docker stack produced two false CRITICALs in one session
+
+**Symptom.** Two unrelated incidents on the same day, both while background
+review/verify agents ran concurrently against the single shared dev stack:
+
+1. `verify-runner` reported 7 e2e failures including
+   `CRITICAL: e2eclienta session was valid (uid=2) on e2eclientb — isolation BREACHED`
+   — the single most serious class of finding this platform can produce.
+2. A concurrently-running `code-reviewer` installing a module hit
+   `Class ProvisioningJob has no _name → action_run is not a valid action`, could not
+   reproduce it in 3 retries, and reported it as a possible real defect it could not
+   explain.
+
+Neither was real. For (1): `develop` was equally broken *before* `make routing-up`
+(`clienta.localhost/web/login` → 303, e2e refused to start with "E2E stack not
+ready") and 12/12 green after; the feature branch was 12/12 green too. For (2): the
+error cleared once the concurrent RED-proof edit that had briefly broken the
+bind-mounted module was reverted.
+
+**Root cause.** Background agents share ONE working tree (bind-mounted live into the
+odoo container — see CLAUDE.md's runtime map) and ONE Docker Compose stack, with no
+isolation between them. In incident 1, `code-reviewer`'s own process notes record that
+it ran `docker compose up -d db odoo` to run tests of its own, recreating the odoo
+container while `verify-runner`'s e2e suite was mid-flight against that same server;
+the suite's requests landed on a half-started server (403s / a database-selector page)
+and the isolation assertions produced nonsense. In incident 2, a RED proof
+(deliberately deleting a line to prove a test fails) broke the bind-mounted module for
+~40 seconds; a different, concurrently-running `code-reviewer` installed the module in
+exactly that window.
+
+**Why it is dangerous, not just annoying.** A false CRITICAL reads exactly like a real
+one — the only way to tell them apart was 30+ minutes of manual disproof. That is the
+same "gate that cries wolf" failure mode this repo has already fixed in three other
+places (#221 skip-as-failure, #264 generic alerting, #267 CI-only lint gate).
+
+**Guard.**
+1. **Prevention (convention — CLAUDE.md Rule 14).** An ad hoc `docker compose
+   up/down/restart` (outside a suite's own documented flow, e.g. `e2e-verify`'s
+   load-bearing odoo/nginx restart), or deliberately breaking a bind-mounted file for a
+   RED proof, must happen **before** fanning out background reviewers/`verify-runner`,
+   never during. No agent may "fix" a shared stack it doesn't own by restarting it.
+2. **Detection (mechanical — `scripts/dev/stack_settled.sh`).** Read-only; reports
+   UNSETTLED if `db`/`odoo` show `Up <N> second…` in `docker compose ps` — i.e. one of
+   them was (re)started in roughly the last minute. Any agent can run it in ~2 seconds
+   before trusting a scary finding.
+3. **Retry-before-escalate (`verify-runner`).** On any suite FAIL — especially a
+   CRITICAL/isolation finding — re-run that ONE suite once before reporting it as real
+   (`.claude/agents/verify-runner.md`). Both false CRITICALs in this entry did not
+   reproduce on the very next clean run; a real regression will.
+
+**Guard deliberately NOT built: per-agent stack isolation.** Giving each background
+agent its own `COMPOSE_PROJECT_NAME`/compose project (or git worktree) was considered
+and rejected for now:
+- CLAUDE.md Rule 11 / R-006 already documents that hardcoded `ncollection-*` container
+  names break under a non-default project name — every script that shells out to
+  Docker would need a fresh audit to stay correct under N concurrent stacks, which is
+  a materially bigger change than the bug it would fix.
+- It multiplies Postgres/Odoo memory and boot time by the number of concurrent agents
+  on one dev machine, for a failure mode whose actual cause was an *avoidable* ad hoc
+  mutation, not a structural need for concurrent Docker access.
+- This repo's real workflow is one orchestrator fanning out short-lived, mostly
+  *read-only* reviewers against a platform that is *already* isolated per tenant at
+  the database layer (R-004's fixture namespacing). Duplicating that isolation again
+  at the Docker layer, for the harness itself, would be solving the same problem
+  twice for a much smaller payoff.
+
+If concurrent background agents doing real Docker *mutation* work (not just review)
+becomes routine rather than incidental, revisit this.
 
 ---
 

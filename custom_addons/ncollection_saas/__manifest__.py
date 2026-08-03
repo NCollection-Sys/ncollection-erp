@@ -2,11 +2,17 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection SaaS Admin',
-    # 6.2.0 (#221): config-sync key re-key / rotation — a new inherited model, a
-    # new view file registered in `data`, and a new server action. Unlike the
-    # 6.1.0 bump (a behaviour-neutral refactor), this one DOES ship new data
-    # records, so `-u` is what installs them.
-    'version': '19.0.6.2.0',
+    # 6.4.0 (#244): 'Restore in place' action on a failed fleet-migration line —
+    # new method + a button in the line list, so `-u` applies the view change.
+    # Minor bump: #283 adds two real columns to ncollection.tenant
+    # (cron_report_miss_count, cron_report_activity_id), so `-u` is what
+    # applies it. Same convention as #218's new-column bump.
+    # Patch bump: #275 adds a guard inside ncollection.backup.restore_to.
+    # No schema change -- pure validation -- but a real behaviour change on the
+    # platform's most destructive primitive, so it gets traceability like #243's.
+    # Patch bump: #287 makes the restore drill drop its scratch database.
+    # Patch bump: #295 purges a deleted tenant's backup directory.
+    'version': '19.0.6.5.4',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',
