@@ -436,6 +436,52 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-021 — Routing CHECK 2 reported "isolation breach" when the overlay simply was not enforcing ✅ FIXED (#263)
+
+**Symptom.** One `make verify-all` run failed the routing proof with
+
+```
+rtclienta.localhost GRANTED db=rtclientb (uid=2) — isolation breach!
+```
+
+That is the `db_filter=^%d$` check — the one whose failure mode reads as **cross-tenant
+access**. It never reproduced: four subsequent runs, including CI, were 8/8.
+
+**Root cause, now reproducible on demand.** CHECK 2 asks a host for another tenant's database
+and treats a granted session as a breach. That reading is only valid while `db_filter` is
+actually enforcing. Under the permissive base/dev config there is no filter, so the server
+grants **correctly** — and the check called it a breach.
+
+The trigger is narrower than the original guess. It is **not** "the overlay is down": the
+script's pre-existing edge probe already exits 2 in that case, because tearing the overlay down
+also removes nginx. The dangerous state is **nginx up while odoo runs WITHOUT `--db-filter`** —
+exactly what happens when someone recreates only the odoo container
+(`docker compose -f base -f dev up -d --no-deps odoo`) while the edge keeps running. The edge
+probe passes, because nginx answers in both modes.
+
+**Reproduced deliberately:** construct that state, run the old script → `❌ FAIL … isolation
+breach!`, exit 1, with no isolation bug anywhere. Run the new script on the identical stack →
+`REFUSING: the routing overlay is NOT active`, exit 2, zero FAIL lines.
+
+**Guard.** `assert_routing_overlay_active()` runs before any check and reads **pid 1's argv
+inside the odoo container** — the ground truth for what the server is actually running, unlike
+the declared `Config.Cmd` or the edge probe. It exits **2**, not 1, so "did not run" stays
+distinguishable from "a check failed", and the message names the fix (`make routing-up`) and
+prints the argv it saw. CHECK 2's own failure text now states that preconditions were asserted,
+so a future reader knows a breach reported there is real.
+
+**Cost, recorded because it is the lesson.** Producing the broken state deliberately meant
+recreating the odoo container. That left nginx holding a **stale upstream IP** (502), and the
+routing fixtures had to be rebuilt via `make routing-clean` + a re-run. Three consecutive
+"failures" in between were self-inflicted, not findings. This is R-018's hazard from the other
+side: the agent causing the churn is just as capable of misreading its own damage as a
+concurrent one is. `stack_settled.sh` correctly reported UNSETTLED throughout.
+
+**Follow-through.** `make routing-up` does not restart nginx, so any workflow that recreates
+odoo must restart nginx too, or the edge serves 502 against a perfectly healthy server.
+
+---
+
 ## R-019 — R-017's fix was applied to the e2e fixtures but not the PLATFORM db; the same schema drift killed `verify-all` again ✅ FIXED (#283)
 
 **Symptom.** On a branch whose only schema change was two added fields on `ncollection.tenant`,
