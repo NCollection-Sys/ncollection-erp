@@ -16,6 +16,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 BACKUP = 'odoo.addons.ncollection_saas.models.backup'
+TENANT = 'odoo.addons.ncollection_saas.models.tenant'
 
 
 @tagged('post_install', '-at_install')
@@ -203,6 +204,183 @@ class TestBackup(TransactionCase):
             self.Backup._cron_restore_drill()
         self.assertEqual(seen, ['drill_acme'],
                          "the scratch-name validator was not the one used")
+
+    # -- recycled backup directories (#295) ---------------------------------
+
+    def _backup_root_with(self, *dbs):
+        """A temp backup root containing a dump for each named tenant."""
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, True)
+        for db in dbs:
+            d = os.path.join(root, db)
+            os.makedirs(d)
+            with open(os.path.join(d, 'x.tar.enc'), 'wb') as fh:
+                fh.write(b'dump')
+        env_patch = patch.dict('os.environ', {'NC_BACKUP_DIR': root})
+        env_patch.start()
+        self.addCleanup(env_patch.stop)
+        return root
+
+    def test_deleting_a_tenant_takes_its_backup_files_with_it(self):
+        """tenant_id is ondelete='cascade', so the ROWS went. The FILES stayed,
+        under a directory named after a REUSABLE name — so a later tenant given
+        that name inherited them, and #288's directory-keyed ownership check
+        would have accepted them as its own."""
+        root = self._backup_root_with('gonesoon')
+        tenant = self._tenant(database_name='gonesoon')
+        self.assertTrue(os.path.isdir(os.path.join(root, 'gonesoon')))
+
+        tenant.unlink()
+        # The purge is deferred to postcommit so an irreversible rmtree waits
+        # for the reversible DELETE to become durable. TransactionCase never
+        # commits, so drive the hook explicitly -- this IS the deferral, and a
+        # test that passed without it would be testing the old inline path.
+        self.env.cr.postcommit.run()
+
+        self.assertFalse(os.path.isdir(os.path.join(root, 'gonesoon')),
+                         "the deleted tenant's dumps are still on disk")
+
+    def test_a_traversal_NAME_is_refused_by_the_name_rule(self):
+        """First line of defence: the scratch-name regex rejects these before
+        any path is built. Kept separate from the containment test below --
+        merging them hid the fact that only ONE of the two guards was doing
+        the work."""
+        root = self._backup_root_with('victimco')
+        # Values ONLY the regex rejects. My first version used `..`/`.` —
+        # which realpath collapses, so the CONTAINMENT check caught them and
+        # deleting the regex left this test green. Uppercase, spaces, empty
+        # and too-short all resolve harmlessly INSIDE the root, so nothing
+        # but the name rule can refuse them.
+        for evil in ('ACME', 'a b', '', 'x', 'has.dot'):
+            with self.assertRaises(ValidationError):
+                self.Backup._purge_tenant_backup_dir(evil)
+        self.assertTrue(os.path.isdir(os.path.join(root, 'victimco')))
+
+    def test_a_SYMLINKED_tenant_dir_pointing_outside_the_root_is_refused(self):
+        """The containment assertion, isolated.
+
+        My first attempt at this asserted only on `..`-style names -- which the
+        NAME rule already rejects, so deleting the containment check left the
+        test green. It proved nothing. A name that PASSES the regex can still
+        resolve outside the root if the tenant directory is a SYMLINK, which is
+        a real operator move (park one tenant's dumps on a bigger volume).
+
+        rmtree is irreversible; this is the guard that must never be best
+        effort.
+        """
+        root = self._backup_root_with('innocent')
+        outside = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, outside, True)
+        canary = os.path.join(outside, 'someone-elses-data')
+        os.makedirs(canary)
+
+        os.symlink(outside, os.path.join(root, 'linked'))   # name is legal
+
+        with self.assertRaises(ValidationError):
+            self.Backup._purge_tenant_backup_dir('linked')
+        self.assertTrue(os.path.isdir(canary),
+                        "the purge followed a symlink out of the backup root")
+
+    def test_another_suites_namespace_is_NEVER_purged(self):
+        """New blast radius this ticket introduced, caught by the audit.
+
+        The fixture suites legitimately create REAL ncollection.tenant rows
+        named rtclienta/e2eclienta/provclient/albarari — tenant.py says so
+        explicitly. Keying the purge on string equality alone meant any record
+        squatting on one of those names would take that suite's dumps with it
+        when deleted. CLAUDE.md's ownership table is clear that each suite may
+        drop only its own, and the suites clean up via their own dropdb, never
+        through unlink().
+        """
+        root = self._backup_root_with('rtclienta', 'e2eclienta', 'provclient')
+        for db in ('rtclienta', 'e2eclienta', 'provclient'):
+            tenant = self._tenant(database_name=db)
+            tenant.unlink()
+            self.env.cr.postcommit.run()
+            self.assertTrue(
+                os.path.isdir(os.path.join(root, db)),
+                "deleted another suite's backups for '%s'" % db)
+
+    def test_the_purge_uses_the_STRICT_tenant_name_rule(self):
+        """Pins the validator choice, which the sibling #288 code makes
+        differently-looking but for the same kind of value. An underscored
+        name is a legal SCRATCH name and not a legal TENANT one; on an
+        irreversible delete the strict rule is the conservative reading."""
+        self._backup_root_with('legit')
+        with self.assertRaises(ValidationError):
+            self.Backup._purge_tenant_backup_dir('under_scored')
+
+    def test_a_recycled_name_is_refused_while_its_files_remain(self):
+        """The live cluster and the blocklist both miss this: dumps outlive the
+        tenant AND its database, so a freed name is not actually free."""
+        self._backup_root_with('acmetrading')
+        Tenant = self.env['ncollection.tenant']
+        with patch.object(
+                type(self.env['ncollection.provisioning.job']),
+                '_database_exists', return_value=False):
+            name = Tenant._generate_database_name('Acme Trading')
+        self.assertNotEqual(
+            name, 'acmetrading',
+            "handed out a name whose previous tenant's dumps are still there")
+        self.assertRegex(name, r'^[a-z][a-z0-9]{2,62}$')
+
+    def test_a_clean_name_is_still_handed_out(self):
+        """The new rejection must not make every name unavailable."""
+        self._backup_root_with('somebodyelse')
+        Tenant = self.env['ncollection.tenant']
+        with patch.object(
+                type(self.env['ncollection.provisioning.job']),
+                '_database_exists', return_value=False):
+            self.assertEqual(
+                Tenant._generate_database_name('Acme Trading'), 'acmetrading')
+
+    def test_a_failed_purge_does_not_block_the_delete(self):
+        """A filesystem that will not cooperate must not strand a tenant
+        record — but it must be LOUD, because a surviving directory is exactly
+        what makes a later name reuse dangerous."""
+        self._backup_root_with('stubborn')
+        tenant = self._tenant(database_name='stubborn')
+        with patch('shutil.rmtree', side_effect=OSError('read-only fs')), \
+                self.assertLogs(BACKUP, level='ERROR') as caught:
+            tenant.unlink()
+            self.env.cr.postcommit.run()
+        self.assertFalse(tenant.exists(), "the delete was blocked by cleanup")
+        self.assertIn('stubborn', '\n'.join(caught.output))
+
+    def test_the_purge_waits_for_the_delete_to_be_durable(self):
+        """rmtree has no undo; DELETE does.
+
+        Purging inline meant a rollback later in the SAME transaction brought
+        the tenant and its backup ROWS back while the FILES were already gone
+        — live records pointing at nothing. Deferring to postcommit makes the
+        irreversible half wait for the reversible half to commit.
+        """
+        root = self._backup_root_with('notyet')
+        tenant = self._tenant(database_name='notyet')
+
+        tenant.unlink()
+        self.assertTrue(
+            os.path.isdir(os.path.join(root, 'notyet')),
+            "files were destroyed before the delete was durable")
+
+        self.env.cr.postcommit.run()
+        self.assertFalse(os.path.isdir(os.path.join(root, 'notyet')))
+
+    def test_a_malformed_name_on_delete_is_logged_not_raised(self):
+        """A tenant in `error` can hold any string (write() unlocks the name
+        there). That reaches the scratch-name validator inside the purge and
+        raises ValidationError — which must be caught, or a delete would fail
+        for a reason unrelated to the delete."""
+        self._backup_root_with('legit')
+        tenant = self._tenant(database_name='legit')
+        tenant.database_status = 'error'
+        tenant.database_name = '..'
+
+        with self.assertLogs(TENANT, level='ERROR') as caught:
+            tenant.unlink()
+            self.env.cr.postcommit.run()
+        self.assertFalse(tenant.exists())
+        self.assertIn('could not', '\n'.join(caught.output).lower())
 
     def test_restore_drill_skips_live_tenant_collision(self):
         """ISO-2 (P3-T12): the UNATTENDED monthly drill dropdb+createdb's its
