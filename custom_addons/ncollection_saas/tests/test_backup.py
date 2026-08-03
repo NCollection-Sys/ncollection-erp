@@ -247,6 +247,39 @@ class TestBackup(TransactionCase):
                 backup.restore_to(mine.database_name)
             run.assert_not_called()
 
+    def test_an_UNSET_snapshot_cannot_be_written_either(self):
+        """The CRITICAL the audit reproduced, and the state my first pin
+        exempted.
+
+        create() legitimately stamps False for a tenant that is not
+        provisioned yet. The pin only raised when the current value was
+        truthy — so on exactly those records the snapshot could be written to
+        any string, including a live victim's real database name, while the
+        docstring promised "immutable once set".
+
+        My earlier test could never reach this branch: `_tenant()` defaults to
+        database_name='acme', so its snapshot was always truthy. The state a
+        guard exempts is the state its test must start from.
+        """
+        blank = self._tenant(database_name=False,
+                             database_status='not_provisioned')
+        backup = self.Backup.create({'tenant_id': blank.id, 'status': 'done'})
+        self.assertFalse(backup.database_name, "precondition: unset snapshot")
+
+        with self.assertRaises(ValidationError):
+            backup.write({'database_name': 'victimco'})
+
+    def test_a_copy_does_not_carry_a_stale_file_path(self):
+        """copy() re-derives the snapshot from the live tenant but would carry
+        file_path verbatim, producing a record whose file can never satisfy
+        its own ownership check. Copy nothing rather than copy a lie."""
+        tenant = self._tenant()
+        backup = self.Backup.create({
+            'tenant_id': tenant.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.tar.enc'
+                         % tenant.database_name})
+        self.assertFalse(backup.copy().file_path)
+
     def test_the_snapshot_cannot_be_rewritten_afterwards(self):
         """Pinning is the other half. Without it, derive-then-rewrite reaches
         the same place one write later."""

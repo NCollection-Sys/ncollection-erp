@@ -76,7 +76,11 @@ class NcollectionBackup(models.Model):
         selection=[('pending', 'Pending'), ('running', 'Running'),
                    ('done', 'Done'), ('failed', 'Failed')],
         default='pending', required=True, tracking=True)
-    file_path = fields.Char(string='Backup File', readonly=True)
+    # copy=False alongside database_name: a duplicate re-derives the snapshot
+    # from the (possibly renamed) live tenant while carrying the old path
+    # verbatim, producing a record whose file can never satisfy its own
+    # ownership check. Better to copy nothing than to copy a lie (#299).
+    file_path = fields.Char(string='Backup File', readonly=True, copy=False)
     file_size = fields.Integer(string='Size (bytes)', readonly=True)
     started_at = fields.Datetime(readonly=True)
     completed_at = fields.Datetime(readonly=True)
@@ -178,15 +182,26 @@ class NcollectionBackup(models.Model):
                         b=rec.name or rec.id,
                         t=rec.tenant_id.database_name or rec.tenant_id.display_name))
         if 'database_name' in vals:
-            for rec in self:
-                if (rec.database_name
-                        and vals['database_name'] != rec.database_name):
-                    raise ValidationError(self.env._(
-                        "A backup's tenant database name is stamped at "
-                        "creation and cannot be changed (snapshot '%s'). It is "
-                        "what the restore guard resolves the file's directory "
-                        "from, so rewriting it would let a restore claim "
-                        "another tenant's dump.", rec.database_name))
+            # UNCONDITIONAL. The first version only raised when the current
+            # snapshot was truthy -- and create() legitimately produces False
+            # for a tenant that is not provisioned yet, so a backup on such a
+            # tenant could have its snapshot written to ANY string, including a
+            # live victim's real database name. Reproduced in review.
+            #
+            # The docstring promised "immutable once set" while the code
+            # exempted exactly the state where nothing was set yet. A guard
+            # that lies about its own guarantee is worse than an absent one:
+            # the next reader trusts it, and _cron_restore_drill picks the
+            # newest done backup across ALL tenants with no tenant filter.
+            #
+            # Nothing legitimate needs this: create() stamps vals BEFORE
+            # super() and never routes through write().
+            raise ValidationError(self.env._(
+                "A backup's tenant database name is stamped at creation and "
+                "can never be written (snapshot %r). It is what the restore "
+                "guard resolves the file's directory from, so rewriting it "
+                "would let a restore claim another tenant's dump.",
+                self.database_name if len(self) == 1 else None))
         return super().write(vals)
 
     def _assert_restore_target(self, target_db):
@@ -261,6 +276,13 @@ class NcollectionBackup(models.Model):
         path alone. realpath() first: `..` segments and symlinks are exactly
         how a prefix test gets fooled.
         """
+        # DELIBERATE ASYMMETRY, do not "simplify" (#299). This guard keys on
+        # the SNAPSHOT while _assert_restore_target keys on the LIVE
+        # tenant_id.database_name. Making both agree looks like a tidy-up and
+        # is actually the vulnerability: after a rename frees a name and a NEW
+        # tenant takes it, only the live-value check refuses a restore that
+        # would destroy that new tenant's database. Audited explicitly.
+        #
         # The SNAPSHOT (#299), not tenant_id.database_name: the live value
         # follows a rename, the files do not. Keying on the live value made
         # every historical backup of a renamed tenant unrestorable. The
