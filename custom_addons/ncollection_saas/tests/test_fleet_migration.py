@@ -52,7 +52,8 @@ class TestFleetMigration(TransactionCase):
     def _snapshot_for(self, tenant):
         return self.env['ncollection.backup'].create({
             'tenant_id': tenant.id, 'backup_type': 'daily',
-            'status': 'done', 'file_path': '/tmp/snap.dump'})
+            'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/snap.dump' % tenant.database_name})
 
     def test_in_place_rollback_is_allowed_by_the_restore_guard(self):
         """`_restore` targets the tenant's OWN live database, which is exactly
@@ -134,7 +135,8 @@ class TestFleetMigration(TransactionCase):
         def _run_backup(_self):
             _self.write({
                 'status': 'done',
-                'file_path': '/tmp/%s.enc' % (_self.database_name or 'x')})
+                'file_path': '/var/lib/odoo/backups/%s/snap.enc'
+                             % (_self.database_name or 'x')})
 
         def _restore_to(_self, target_db):
             if restore_calls is not None:
@@ -219,9 +221,23 @@ class TestFleetMigration(TransactionCase):
             # The pre-flight checks the file is really on disk, so a happy-path
             # test has to put one there — asserting on a path that does not
             # exist would test the refusal, not the restore.
-            tmpdir = tempfile.mkdtemp()
-            self.addCleanup(shutil.rmtree, tmpdir, True)   # dir, not just file
-            path = os.path.join(tmpdir, 'snap.enc')
+            # Tenant-scoped, mirroring tenant_backup.sh's own
+            # `$BACKUP_DIR/$DB/<file>` layout, because #288 now refuses to
+            # restore a dump that does not sit under its own tenant's
+            # directory. NC_BACKUP_DIR is patched so the guard resolves the
+            # same root the fixture writes into.
+            tmproot = tempfile.mkdtemp()
+            self.addCleanup(shutil.rmtree, tmproot, True)   # dir, not just file
+            # ONE patcher: start it and register THAT object's stop. Two
+            # separate patch.dict() objects means the started one never stops,
+            # and the leaked NC_BACKUP_DIR then re-points the #288 guard for
+            # every later test in the class.
+            env_patch = patch.dict(os.environ, {'NC_BACKUP_DIR': tmproot})
+            env_patch.start()
+            self.addCleanup(env_patch.stop)
+            tenant_dir = os.path.join(tmproot, line.tenant_id.database_name)
+            os.makedirs(tenant_dir, exist_ok=True)
+            path = os.path.join(tenant_dir, 'snap.enc')
             with open(path, 'wb') as fh:
                 fh.write(b'x')
             line.backup_id.sudo().write({'file_path': path})
@@ -658,7 +674,9 @@ class TestFleetMigration(TransactionCase):
 
         with patch.object(SaasSubprocessMixin, '_run_odoo_subprocess', _run), \
                 patch.object(NcollectionBackup, 'run_backup', lambda s: s.write(
-                    {'status': 'done', 'file_path': '/tmp/x.enc'})):
+                    {'status': 'done',
+                     'file_path': '/var/lib/odoo/backups/%s/x.enc'
+                                  % (s.tenant_id.database_name or 'x')})):
             migration.action_run_sync()
 
         for tenant in (self.canary, self.t1, self.t2, self.t3):

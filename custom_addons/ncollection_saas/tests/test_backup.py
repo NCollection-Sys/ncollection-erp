@@ -7,6 +7,9 @@ the retention pyramid, and the restore-wizard safety guard. The real
 backup→restore-including-attachments round-trip is proven by
 scripts/backup/verify_tenant_backup.sh (evidence in the PR).
 """
+import os
+import shutil
+import tempfile
 from unittest.mock import MagicMock, patch
 
 from odoo.exceptions import UserError, ValidationError
@@ -93,7 +96,7 @@ class TestBackup(TransactionCase):
         tenant = self._tenant(database_name='live1')
         backup = self.Backup.create({
             'tenant_id': tenant.id, 'status': 'done',
-            'file_path': '/tmp/x.tar.enc'})
+            'file_path': '/var/lib/odoo/backups/acme/x.tar.enc'})
         wiz = self.env['ncollection.backup.restore.wizard'].create({
             'backup_id': backup.id, 'target_db': 'live1'})  # a LIVE tenant DB
         with self.assertRaises(UserError):
@@ -105,7 +108,8 @@ class TestBackup(TransactionCase):
         guard the interactive wizard has."""
         src = self._tenant(database_name='victim')
         backup = self.Backup.create({
-            'tenant_id': src.id, 'status': 'done', 'file_path': '/tmp/x.tar.enc'})
+            'tenant_id': src.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.tar.enc' % src.database_name})
         # A tenant whose db name collides with the drill's scratch target. It is
         # not_provisioned because the drill_<x> prefix contains an underscore (the
         # ISO-1 grammar guard forbids underscores at ready) — the collision guard
@@ -127,7 +131,8 @@ class TestBackup(TransactionCase):
     def _done_backup(self, tenant):
         return self.Backup.create({
             'tenant_id': tenant.id, 'backup_type': 'daily',
-            'status': 'done', 'file_path': '/tmp/x.dump'})
+            'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.dump' % tenant.database_name})
 
     def test_restoring_over_ANOTHER_live_tenant_is_refused(self):
         """The hole: one RPC drops a live tenant and serves someone else's
@@ -184,6 +189,137 @@ class TestBackup(TransactionCase):
                 backup.restore_to('victimco')
             run.assert_not_called()
 
+    def test_a_dump_from_ANOTHER_tenant_is_refused(self):
+        """#275 bound WHERE a restore lands. This binds WHAT gets restored.
+
+        Without it the same cross-tenant restore was one write away:
+        file_path's readonly is UI-only and unenforced over RPC, it is not
+        tracked, and the cipher passphrase is platform-wide so any tenant's
+        .enc decrypts. Point it at the victim's dump, restore "onto our own
+        tenant", and every ownership check above still passes.
+        """
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        mine = self._tenant()
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/stolen.tar.enc'
+                         % victim.database_name})
+
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to(mine.database_name)
+            run.assert_not_called()
+
+    def test_a_traversal_path_cannot_escape_the_tenant_directory(self):
+        """A prefix test is exactly what `..` and symlinks defeat, which is
+        why the guard resolves realpath() before comparing."""
+        mine = self._tenant()
+        for evil in ('/var/lib/odoo/backups/%s/../victimco/x.enc' % mine.database_name,
+                     '/var/lib/odoo/backups/%s/../../../etc/passwd' % mine.database_name):
+            backup = self.Backup.create({
+                'tenant_id': mine.id, 'status': 'done', 'file_path': evil})
+            with patch(BACKUP + '.subprocess.run') as run:
+                with self.assertRaises(ValidationError):
+                    backup.restore_to(mine.database_name)
+                run.assert_not_called()
+
+    def test_a_lookalike_sibling_directory_is_refused(self):
+        """`/backups/acme2/` must not satisfy a prefix test for tenant `acme`
+        — the reason the comparison appends os.sep instead of using
+        startswith on the bare root."""
+        mine = self._tenant(database_name='acme')
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/acme2/x.tar.enc'})
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to('acme')
+            run.assert_not_called()
+
+    def test_a_REAL_symlink_out_of_the_tenant_dir_is_refused(self):
+        """The other traversal tests only collapse `..` lexically — no file
+        need exist for that. This plants an actual symlink on disk, because
+        "realpath resolves it" was reasoning, not evidence.
+
+        The attack it models: write a symlink INSIDE your own backup
+        directory pointing at another tenant's dump. Every string check
+        passes — the path really is under your own directory.
+        """
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, True)
+        mine = self._tenant(database_name='minetenant')
+        victim_dir = os.path.join(root, 'victimco')
+        mine_dir = os.path.join(root, 'minetenant')
+        os.makedirs(victim_dir)
+        os.makedirs(mine_dir)
+        victim_dump = os.path.join(victim_dir, 'secret.tar.enc')
+        with open(victim_dump, 'wb') as fh:
+            fh.write(b'victim data')
+        lure = os.path.join(mine_dir, 'innocent.tar.enc')
+        os.symlink(victim_dump, lure)          # lives under MY directory
+
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done', 'file_path': lure})
+
+        env_patch = patch.dict('os.environ', {'NC_BACKUP_DIR': root})
+        env_patch.start()
+        self.addCleanup(env_patch.stop)
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to(mine.database_name)
+            run.assert_not_called()
+
+    def test_a_path_collapsing_database_name_cannot_widen_the_root(self):
+        """The CRITICAL the security review found in my own first version.
+
+        The guard built its root as join(BACKUP_ROOT, tenant.database_name)
+        and trusted that name verbatim. `_check_locked_database_name` only
+        enforces the format while database_status is 'provisioning' or
+        'ready', so a tenant sitting in 'not_provisioned' or 'error' can hold
+        ANY string. `.` collapses the root back to the whole backup
+        directory — every tenant's dump then satisfies the prefix test — and
+        `..` reaches higher still.
+
+        None of the four original RED proofs covered this, because every
+        fixture used a well-formed name. The lesson is not "add a case": it is
+        that a value must be validated where it is TRUSTED, not where it
+        happens to have been checked earlier under different conditions.
+        """
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        victim_dump = ('/var/lib/odoo/backups/%s/secret.tar.enc'
+                       % victim.database_name)
+
+        for evil in ('.', '..', 'x/../y'):
+            shadow = self.env['ncollection.tenant'].create({
+                'company_name': 'Shadow %s' % evil, 'plan_id': self.plan.id,
+                'status': 'active', 'database_status': 'not_provisioned',
+                'database_name': evil})
+            self.assertEqual(
+                shadow.database_name, evil,
+                "precondition: the model must actually accept this name, or "
+                "the test proves nothing about the guard")
+            backup = self.Backup.create({
+                'tenant_id': shadow.id, 'status': 'done',
+                'file_path': victim_dump})
+            with patch(BACKUP + '.subprocess.run') as run:
+                with self.assertRaises(ValidationError):
+                    backup.restore_to('restorescratch')
+                run.assert_not_called()
+
+    def test_the_guard_follows_NC_BACKUP_DIR(self):
+        """The script reads NC_BACKUP_DIR; if the guard hardcoded the default,
+        a redeployment would break every restore or silently stop checking."""
+        mine = self._tenant()
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'file_path': '/srv/dumps/%s/x.tar.enc' % mine.database_name})
+        with patch.dict('os.environ', {'NC_BACKUP_DIR': '/srv/dumps'}):
+            with patch(BACKUP + '.subprocess.run',
+                       return_value=self._mock_run()) as run:
+                self.assertEqual(backup.restore_to(mine.database_name),
+                                 mine.database_name)
+                run.assert_called()
+
     def test_in_place_restore_of_its_OWN_tenant_is_allowed(self):
         """#244's rollback restores a tenant's snapshot over that same tenant's
         live database. A guard that blocked this would break recovery — worse
@@ -234,7 +370,7 @@ class TestBackup(TransactionCase):
         tenant = self._tenant(database_name='live2')
         backup = self.Backup.create({
             'tenant_id': tenant.id, 'status': 'done',
-            'file_path': '/tmp/x.tar.enc'})
+            'file_path': '/var/lib/odoo/backups/live2/x.tar.enc'})
         wiz = self.env['ncollection.backup.restore.wizard'].create({
             'backup_id': backup.id, 'target_db': 'restore_live2'})
         with patch.object(type(backup), 'with_delay',

@@ -30,6 +30,13 @@ _RESTORE_SCRIPT = os.path.join(
 # Reuse the provisioning runner's channel so heavy backups never touch the HTTP
 # workers (ARCHITECTURE_DATA_PLATFORM §10).
 _BACKUP_CHANNEL = 'root.provisioning'
+# The backup root, kept in lockstep with tenant_backup.sh's own
+#   BACKUP_DIR="${NC_BACKUP_DIR:-/var/lib/odoo/backups}"
+# and its `work="$BACKUP_DIR/$DB"` layout. Read from the SAME env var so the
+# two cannot drift: if someone repoints the scripts, the guard follows (#288).
+_BACKUP_ROOT_ENV = 'NC_BACKUP_DIR'
+_DEFAULT_BACKUP_ROOT = '/var/lib/odoo/backups'
+
 _SUBPROCESS_TIMEOUT = 60 * 60  # 1 h — a large tenant dump can be slow
 
 # Retention pyramid (§5.1): keep the newest N of each type per tenant.
@@ -158,16 +165,12 @@ class NcollectionBackup(models.Model):
         were bypassable by not being a caller. The rule, in one line: a LIVE
         tenant database may be restored over ONLY by its own backup.
 
-        RESIDUAL, stated so nobody reads this guard as complete: `file_path`
-        is a plain stored Char whose `readonly=True` is UI-only and unenforced
-        over RPC, and it is not tracked. A base.group_system caller can point
-        it at ANOTHER tenant's .enc (the cipher passphrase is platform-wide, so
-        any dump decrypts) and then restore "onto its own tenant" -- passing
-        every check here. Same privilege bar as calling restore_to at all, and
-        pre-existing, but NOT closed by this method. Binding the file to the
-        record that produced it needs a tenant-scoped path check, which is
-        tracked separately. `tenant_id` IS pinned above, so the ownership the
-        exemption reads cannot be manufactured.
+        Both halves of ownership are now checked: WHERE it lands
+        (_assert_restore_target) and WHAT gets restored
+        (_assert_file_belongs_to_tenant, #288). Pinning only the target left
+        the identical blast radius one field over -- `file_path` is unenforced
+        over RPC and untracked, and the cipher passphrase is platform-wide, so
+        any tenant's dump decrypts.
 
         Two legitimate shapes, both preserved:
           * scratch/staging  -- the wizard and the nightly restore drill;
@@ -199,6 +202,54 @@ class NcollectionBackup(models.Model):
             # as reachable over HTTP (see SCRATCH_DB_NAME_RE).
             subproc._assert_scratch_db_name(target_db)
 
+    def _backup_root(self):
+        """The directory tenant_backup.sh writes into, read from the same env
+        var so a redeployment cannot move one without the other."""
+        return os.environ.get(_BACKUP_ROOT_ENV) or _DEFAULT_BACKUP_ROOT
+
+    def _assert_file_belongs_to_tenant(self):
+        """The dump about to be restored must be one THIS tenant produced.
+
+        Binding the target (_assert_restore_target) without binding the file
+        left the same cross-tenant restore one write away: `file_path` is a
+        plain stored Char, its `readonly=True` is UI-only and unenforced over
+        RPC, and it is not tracked -- so repointing it leaves no chatter trail
+        either. With one platform-wide cipher passphrase, any tenant's .enc
+        decrypts happily.
+
+        tenant_backup.sh already lays backups out per tenant
+        (`$BACKUP_DIR/$DB/<base>.tar.enc`), so ownership is checkable from the
+        path alone. realpath() first: `..` segments and symlinks are exactly
+        how a prefix test gets fooled.
+        """
+        db = self.tenant_id.sudo().database_name
+        if not db:
+            raise ValidationError(self.env._(
+                "Backup '%s' has no tenant database, so the file it points at "
+                "cannot be attributed to anyone. Refusing to restore it.",
+                self.name or self.id))
+        # Validate the name BEFORE using it as a path segment. The first
+        # version of this trusted database_name verbatim, and that was a
+        # CRITICAL: `_check_locked_database_name` only enforces the format
+        # while database_status is 'provisioning' or 'ready', so a tenant in
+        # 'not_provisioned' or 'error' can hold ANY string. `.` then makes
+        # os.path.join(root, db) realpath straight back to the backup ROOT, so
+        # every tenant's dump satisfies the prefix test; `..` reaches higher
+        # still. Same check target_db gets a few lines up -- the value was
+        # simply never run through it.
+        #
+        # Do NOT infer safety from lifecycle state. Check the value at the
+        # point it is about to be trusted as a path.
+        self.env['ncollection.saas.subprocess.mixin']._assert_safe_db_name(db)
+        root = os.path.realpath(os.path.join(self._backup_root(), db))
+        real = os.path.realpath(self.file_path)
+        if real != root and not real.startswith(root + os.sep):
+            raise ValidationError(self.env._(
+                "Backup file %(f)s does not belong to tenant '%(db)s' "
+                "(expected it under %(root)s). Restoring a dump this record "
+                "did not produce would serve another tenant's data.",
+                f=self.file_path, db=db, root=root))
+
     def restore_to(self, target_db):
         """Restore this backup into a scratch database, or in-place over this
         backup's OWN tenant. Public so the wizard + queue_job can call it --
@@ -210,6 +261,7 @@ class NcollectionBackup(models.Model):
         if not self.file_path:
             raise RuntimeError("Backup has no file to restore.")
         self._assert_restore_target(target_db)
+        self._assert_file_belongs_to_tenant()
         self._run_subprocess(['bash', _RESTORE_SCRIPT, self.file_path, target_db])
         return target_db
 
