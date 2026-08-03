@@ -436,6 +436,52 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-022 — Five tests were written into the wrong class and never ran; the local command hid them, CI would not have ✅ FIXED (#286)
+
+**Symptom.** On #278 I added five tests to `test_config_sync_health.py`, placed them by mistake
+in `TestRequiredCronHealth` (which has no `_push` helper, so every one of them would have
+errored), and the suite reported
+
+```
+0 failed, 0 error(s) of 19 tests
+```
+
+Nineteen — exactly the count from *before* the five were added. I only noticed by comparing the
+collected count against the previous run.
+
+**The issue I filed for this blamed CI, and that was wrong.** #286 asserted "CI would not have
+caught it either". It would have. CI runs `--test-tags /ncollection_core,/ncollection_saas,…` —
+**module** scoped, no class — so the misplaced class *is* collected and the methods *do* run.
+
+Proven by planting a method that only works in the other class and running both forms against
+the same database:
+
+| Command | Tests | Planted method | Exit |
+|---|---|---|---|
+| `--test-tags /ncollection_saas:TestConfigSyncHealth` (what I ran) | 41 | never ran | 0 |
+| `--test-tags /ncollection_saas` (what CI runs) | 202 | **ERROR** | **1** |
+
+**Root cause.** Not a CI gap — a local habit. A **class-scoped** `--test-tags` filter silently
+excludes anything outside that class, so "0 failed" says nothing about code you just wrote into
+a neighbouring class. The narrower the filter, the more confident and the less informative the
+green.
+
+**Guard.** Two parts, because the honest fix is smaller than the issue implied:
+
+1. `architecture_guard.check_test_collectability` — every test class must carry a `@tagged`
+   whose phase a module-scoped run selects. It does **not** re-implement Odoo's tag algebra; it
+   defends the uniformity that makes CI's coverage true. All 77 classes currently use
+   `post_install, -at_install`; a class with no `@tagged`, tagged `-standard`, or tagged out of
+   both phases would run **nowhere** and no count would move. RED-proved against all three
+   shapes; the correct shape passes.
+2. The habit: **verify with the tag form CI uses** before believing a green run. A class filter
+   is for iterating, never for concluding.
+
+**What is NOT guarded.** Nothing here detects "you wrote a test in a class where it makes no
+sense" — CI does that, by running it and erroring. That is sufficient and was always sufficient.
+
+---
+
 ## R-021 — Routing CHECK 2 reported "isolation breach" when the overlay simply was not enforcing ✅ FIXED (#263)
 
 **Symptom.** One `make verify-all` run failed the routing proof with
