@@ -205,6 +205,59 @@ class TestBackup(TransactionCase):
         self.assertEqual(seen, ['drill_acme'],
                          "the scratch-name validator was not the one used")
 
+    # -- the name snapshot (#299) -------------------------------------------
+
+    def test_renaming_a_tenant_keeps_its_backups_restorable(self):
+        """The bug: database_name was a stored RELATED field, so it followed a
+        rename. The files stayed under the old name while the guard computed
+        the root from the new one — every historical backup silently
+        unrestorable while looking healthy in the UI."""
+        tenant = self._tenant(database_name='oldname')
+        backup = self.Backup.create({
+            'tenant_id': tenant.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/oldname/x.tar.enc'})
+        self.assertEqual(backup.database_name, 'oldname')
+
+        # Reachable: the name unlocks outside provisioning/ready.
+        tenant.database_status = 'error'
+        tenant.database_name = 'newname'
+
+        self.assertEqual(
+            backup.database_name, 'oldname',
+            "the snapshot followed the rename — that is the bug")
+        with patch(BACKUP + '.subprocess.run',
+                   return_value=self._mock_run()) as run:
+            backup.restore_to('restore_oldname')
+            run.assert_called()
+
+    def test_a_supplied_database_name_is_ignored_on_create(self):
+        """Deriving is half the guard. Accepting a supplied value would make
+        the snapshot caller-chosen, and the write() pin would then merely
+        freeze an attacker's string in place — the #288 file_path shape."""
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        mine = self._tenant()
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'database_name': victim.database_name,      # ignored
+            'file_path': '/var/lib/odoo/backups/victimco/x.tar.enc'})
+
+        self.assertEqual(backup.database_name, mine.database_name)
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to(mine.database_name)
+            run.assert_not_called()
+
+    def test_the_snapshot_cannot_be_rewritten_afterwards(self):
+        """Pinning is the other half. Without it, derive-then-rewrite reaches
+        the same place one write later."""
+        mine = self._tenant()
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.tar.enc'
+                         % mine.database_name})
+        with self.assertRaises(ValidationError):
+            backup.write({'database_name': 'victimco'})
+
     # -- recycled backup directories (#295) ---------------------------------
 
     def _backup_root_with(self, *dbs):
