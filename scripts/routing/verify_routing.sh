@@ -147,6 +147,8 @@ check_db_filter_rejects_mismatch(){
     ok "rtclienta.localhost refused db=rtclientb (no session granted)"
   else
     no "rtclienta.localhost GRANTED db=rtclientb (uid=$uid) — isolation breach!"
+    echo "     (preconditions were asserted at startup: db_filter IS enforcing," >&2
+    echo "      so this is a real finding, not the #263 overlay-down false alarm)" >&2
   fi
   rm -f "$jar"
   hr
@@ -188,6 +190,50 @@ check_selector_unreachable(){
   hr
 }
 
+# --- preconditions ----------------------------------------------------------
+# CHECK 2 asks a host for ANOTHER tenant's database and calls a granted session
+# an isolation breach. That reading is only valid while db_filter is actually
+# enforcing. Under the permissive base/dev config there is no filter, so the
+# server GRANTS correctly -- and the check reported "isolation breach!" for what
+# was really "the overlay was not up" (#263).
+#
+# That is the worst possible false positive: it is the one check in the suite
+# whose failure mode reads as cross-tenant data access, so a false alarm here
+# teaches people to disbelieve the alarm that must be believed.
+#
+# The edge-reachability probe below is NOT sufficient -- nginx answers in both
+# modes. Ask the odoo PROCESS what it is actually running. pid 1's argv is the
+# ground truth: it reflects the real command including anything the entrypoint
+# added, unlike the declared Config.Cmd. Exit 2 (not 1) so "did not run" stays
+# distinguishable from "a check failed".
+assert_routing_overlay_active(){
+  local cid args
+  cid="$("${COMPOSE[@]}" ps -q odoo 2>/dev/null || true)"   # derive, never hardcode (R-006)
+  if [ -z "$cid" ]; then
+    echo "REFUSING: no odoo container is running. Run 'make routing-up' first." >&2
+    exit 2
+  fi
+  args="$(docker exec "$cid" ps -o args= -p 1 2>/dev/null | head -1 || true)"
+  if [ -z "$args" ]; then
+    echo "REFUSING: could not read the odoo process arguments, so the" >&2
+    echo "  db_filter precondition cannot be confirmed. Refusing to interpret" >&2
+    echo "  a granted session as an isolation breach on an unknown config." >&2
+    exit 2
+  fi
+  case "$args" in
+    *--db-filter=*) ;;
+    *)
+      echo "REFUSING: the routing overlay is NOT active -- odoo is running" >&2
+      echo "  WITHOUT --db-filter, so nothing is enforcing subdomain->DB" >&2
+      echo "  routing. CHECK 2 would report an 'isolation breach' that is" >&2
+      echo "  really a missing overlay (#263)." >&2
+      echo "  Fix: make routing-up" >&2
+      echo "  odoo argv: $args" >&2
+      exit 2 ;;
+  esac
+  echo "precondition OK: db_filter is enforcing (overlay active)"
+}
+
 # --- main -------------------------------------------------------------------
 echo "======================================================================"
 echo " P1-T06 routing & isolation proof  (edge:127.0.0.1:80, db_filter=^%d\$)"
@@ -197,6 +243,7 @@ if ! curl -s -o /dev/null --resolve "rtclienta.localhost:80:127.0.0.1" http://rt
   exit 2
 fi
 
+assert_routing_overlay_active
 setup_databases
 check_each_subdomain_reaches_only_its_db
 check_db_filter_rejects_mismatch
