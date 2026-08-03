@@ -148,8 +148,16 @@ class SaasSubprocessMixin(models.AbstractModel):
         return {k: v for k, v in params.items() if v not in (False, None, '')}
 
     def _drop_database(self, db):
-        """DROP DATABASE (FORCE) via a maintenance connection. The caller MUST
-        have passed the name through _assert_safe_db_name first."""
+        """DROP DATABASE (FORCE) via a maintenance connection.
+
+        The caller MUST have validated the name first, with whichever rule
+        matches the target's provenance: _assert_safe_db_name for a real
+        tenant database, _assert_scratch_db_name for a scratch/drill one.
+        Naming only the strict rule here was misleading -- it forbids the '_'
+        that every `drill_*`/`restore_*` target contains, so a reader
+        "correcting" a scratch caller to use it would break every such drop
+        (RED-proved on #287: swapping the validator fails 3 tests).
+        """
         conn = psycopg2.connect(**self._db_conn_params('postgres'))
         conn.autocommit = True
         try:

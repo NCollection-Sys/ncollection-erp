@@ -102,6 +102,108 @@ class TestBackup(TransactionCase):
         with self.assertRaises(UserError):
             wiz.action_restore()
 
+    def _drill_backup(self, db='acme'):
+        src = self._tenant(database_name=db)
+        return self.Backup.create({
+            'tenant_id': src.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.tar.enc' % db})
+
+    def test_the_drill_drops_its_scratch_database(self):
+        """It never did, and that left a full, reachable copy of tenant data
+        under a guessable name (#287). The drill's only job is proving the
+        backup restores — tenant_restore.sh decides that by counting tables —
+        so the database has answered its question by the time restore_to
+        returns."""
+        self._drill_backup()
+        dropped = []
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_drop_database',
+                             side_effect=lambda db: dropped.append(db)):
+            self.Backup._cron_restore_drill()
+        self.assertEqual(dropped, ['drill_acme'])
+
+    def test_a_FAILED_drill_still_drops_its_database(self):
+        """A half-restored copy is no less sensitive than a complete one, so
+        the drop lives in `finally`. Dropping costs diagnostic material —
+        a conscious trade, since the schema check already failed loudly and
+        the error is on the record."""
+        self._drill_backup()
+        dropped = []
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          side_effect=RuntimeError('pg_restore blew up')), \
+                patch.object(type(self.Backup), '_alert_failure'), \
+                patch.object(Mixin, '_drop_database',
+                             side_effect=lambda db: dropped.append(db)):
+            self.Backup._cron_restore_drill()
+        self.assertEqual(dropped, ['drill_acme'],
+                         "a failed drill leaked its scratch database")
+
+    def test_a_failing_DROP_is_LOUD_and_does_not_mask_the_drill_result(self):
+        """Cleanup must never become the verdict — and must never be silent.
+
+        The first version of this test asserted only that message_ids grew.
+        Review deleted the ERROR log entirely and it still passed, because the
+        chatter message is posted either way. The monitoring story (P2-T10
+        watches ERROR lines) rested on a line nothing checked.
+
+        It also asserts the CHATTER tells the truth. The first implementation
+        posted "then dropped" before the drop ran, so a failed cleanup left
+        the audit trail claiming the opposite of what happened — the leftover
+        reachable copy of tenant data hidden by the very record meant to
+        surface it.
+        """
+        backup = self._drill_backup()
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_drop_database',
+                             side_effect=OSError('postgres unreachable')), \
+                self.assertLogs(BACKUP, level='ERROR') as caught:
+            self.assertTrue(self.Backup._cron_restore_drill())
+
+        joined = '\n'.join(caught.output)
+        self.assertIn('drill_acme', joined,
+                      "the ERROR line must name the database left behind")
+
+        backup.invalidate_recordset()
+        body = backup.message_ids[0].body or ''
+        self.assertIn('NOT REMOVED', body,
+                      "chatter claimed the scratch copy was gone when it "
+                      "was not — the audit trail must not lie")
+
+    def test_a_successful_drop_is_reported_as_such(self):
+        """The other half: when it DOES get dropped, say so, so an operator
+        can tell the two apart without reading logs."""
+        backup = self._drill_backup()
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_drop_database'):
+            self.assertTrue(self.Backup._cron_restore_drill())
+        backup.invalidate_recordset()
+        body = backup.message_ids[0].body or ''
+        self.assertIn('scratch copy removed', body)
+        self.assertNotIn('NOT REMOVED', body)
+
+    def test_the_drop_uses_the_scratch_name_rule_not_the_strict_one(self):
+        """`drill_<db>` contains an underscore. _assert_safe_db_name forbids
+        that, so validating with it would reject every drop the drill makes —
+        and _drop_database's contract requires SOME validation first."""
+        self._drill_backup()
+        seen = []
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_assert_scratch_db_name',
+                             side_effect=lambda db: seen.append(db)), \
+                patch.object(Mixin, '_drop_database'):
+            self.Backup._cron_restore_drill()
+        self.assertEqual(seen, ['drill_acme'],
+                         "the scratch-name validator was not the one used")
+
     def test_restore_drill_skips_live_tenant_collision(self):
         """ISO-2 (P3-T12): the UNATTENDED monthly drill dropdb+createdb's its
         scratch target, so it must refuse to clobber a live tenant DB — the same
