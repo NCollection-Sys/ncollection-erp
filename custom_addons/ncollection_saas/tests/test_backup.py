@@ -269,6 +269,43 @@ class TestBackup(TransactionCase):
                 backup.restore_to(mine.database_name)
             run.assert_not_called()
 
+    def test_a_path_collapsing_database_name_cannot_widen_the_root(self):
+        """The CRITICAL the security review found in my own first version.
+
+        The guard built its root as join(BACKUP_ROOT, tenant.database_name)
+        and trusted that name verbatim. `_check_locked_database_name` only
+        enforces the format while database_status is 'provisioning' or
+        'ready', so a tenant sitting in 'not_provisioned' or 'error' can hold
+        ANY string. `.` collapses the root back to the whole backup
+        directory — every tenant's dump then satisfies the prefix test — and
+        `..` reaches higher still.
+
+        None of the four original RED proofs covered this, because every
+        fixture used a well-formed name. The lesson is not "add a case": it is
+        that a value must be validated where it is TRUSTED, not where it
+        happens to have been checked earlier under different conditions.
+        """
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        victim_dump = ('/var/lib/odoo/backups/%s/secret.tar.enc'
+                       % victim.database_name)
+
+        for evil in ('.', '..', 'x/../y'):
+            shadow = self.env['ncollection.tenant'].create({
+                'company_name': 'Shadow %s' % evil, 'plan_id': self.plan.id,
+                'status': 'active', 'database_status': 'not_provisioned',
+                'database_name': evil})
+            self.assertEqual(
+                shadow.database_name, evil,
+                "precondition: the model must actually accept this name, or "
+                "the test proves nothing about the guard")
+            backup = self.Backup.create({
+                'tenant_id': shadow.id, 'status': 'done',
+                'file_path': victim_dump})
+            with patch(BACKUP + '.subprocess.run') as run:
+                with self.assertRaises(ValidationError):
+                    backup.restore_to('restorescratch')
+                run.assert_not_called()
+
     def test_the_guard_follows_NC_BACKUP_DIR(self):
         """The script reads NC_BACKUP_DIR; if the guard hardcoded the default,
         a redeployment would break every restore or silently stop checking."""

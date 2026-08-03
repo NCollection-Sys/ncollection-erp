@@ -228,6 +228,19 @@ class NcollectionBackup(models.Model):
                 "Backup '%s' has no tenant database, so the file it points at "
                 "cannot be attributed to anyone. Refusing to restore it.",
                 self.name or self.id))
+        # Validate the name BEFORE using it as a path segment. The first
+        # version of this trusted database_name verbatim, and that was a
+        # CRITICAL: `_check_locked_database_name` only enforces the format
+        # while database_status is 'provisioning' or 'ready', so a tenant in
+        # 'not_provisioned' or 'error' can hold ANY string. `.` then makes
+        # os.path.join(root, db) realpath straight back to the backup ROOT, so
+        # every tenant's dump satisfies the prefix test; `..` reaches higher
+        # still. Same check target_db gets a few lines up -- the value was
+        # simply never run through it.
+        #
+        # Do NOT infer safety from lifecycle state. Check the value at the
+        # point it is about to be trusted as a path.
+        self.env['ncollection.saas.subprocess.mixin']._assert_safe_db_name(db)
         root = os.path.realpath(os.path.join(self._backup_root(), db))
         real = os.path.realpath(self.file_path)
         if real != root and not real.startswith(root + os.sep):
