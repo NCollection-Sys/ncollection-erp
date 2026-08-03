@@ -15,6 +15,7 @@ cursor (Rule 3).
 
 import logging
 import os
+import shutil
 import subprocess
 
 from odoo import api, fields, models
@@ -394,6 +395,66 @@ class NcollectionBackup(models.Model):
                 err=failure, scrap=scrap))
             rec._alert_failure()
         return True
+
+    @api.model
+    def _tenant_backup_dir(self, db):
+        """The directory tenant_backup.sh writes this tenant's dumps into."""
+        return os.path.join(self._backup_root(), db)
+
+    @api.model
+    def _tenant_backup_dir_exists(self, db):
+        """Does this name already carry backup files? Never raises -- name
+        generation must not fail because the filesystem is unreadable, and a
+        probe that cannot answer must not block provisioning."""
+        try:
+            return os.path.isdir(self._tenant_backup_dir(db))
+        except Exception:  # pylint: disable=broad-except
+            _logger.warning(
+                "Could not check for leftover backups under '%s'.", db)
+            return False
+
+    @api.model
+    def _purge_tenant_backup_dir(self, db):
+        """Delete a tenant's backup directory. Returns True when it is gone.
+
+        Called when a tenant is really deleted (#295). `tenant_id` is
+        ondelete='cascade', so removing a tenant already removes its backup
+        ROWS -- but nothing removed the FILES, and they sit under a directory
+        named after the tenant. `database_name` is reusable: it unlocks in
+        `not_provisioned`/`error` (deliberately -- see ncollection.tenant.write,
+        that is the generate/heal path) and `unique()` only constrains a point
+        in time. So a freed name handed to a NEW tenant came with the previous
+        tenant's dumps already sitting in "its" directory, and #288's ownership
+        check -- which keys on the directory name -- would have accepted them.
+
+        rmtree is irreversible, so the name is validated and the resolved path
+        is asserted to sit INSIDE the backup root before anything is removed.
+        A traversal or absolute-ish name must refuse, never delete.
+        """
+        subproc = self.env['ncollection.saas.subprocess.mixin']
+        subproc._assert_scratch_db_name(db)
+        root = os.path.realpath(self._backup_root())
+        target = os.path.realpath(self._tenant_backup_dir(db))
+        if target == root or not target.startswith(root + os.sep):
+            raise ValidationError(self.env._(
+                "Refusing to purge '%(t)s': it resolves outside the backup "
+                "root %(r)s. rmtree is irreversible, so an unattributable "
+                "path is never removed.", t=target, r=root))
+        if not os.path.isdir(target):
+            return True
+        try:
+            shutil.rmtree(target)
+            _logger.info("Purged backup directory %s for deleted tenant '%s'.",
+                         target, db)
+            return True
+        except OSError:
+            # Loud, not fatal: leaving files behind is the very condition this
+            # exists to prevent, and a caller mid-unlink cannot fix it.
+            _logger.error(
+                "Could not purge backup directory %s for deleted tenant '%s'. "
+                "Its dumps remain on disk and the name may later be reused; "
+                "remove it by hand.", target, db, exc_info=True)
+            return False
 
     def _drill_database_exists(self, db):
         """Did `db` exist before this drill started? Never raises -- an

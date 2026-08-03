@@ -84,6 +84,36 @@ class Tenant(models.Model):
                         tenant.database_name or tenant.company_name))
         return super().write(vals)
 
+    def unlink(self):
+        """Take the tenant's backup FILES with it (#295).
+
+        `ncollection.backup.tenant_id` is ondelete='cascade', so deleting a
+        tenant already removes its backup ROWS -- but the dumps stayed on disk,
+        under a directory named after `database_name`. That name is REUSABLE:
+        it unlocks in not_provisioned/error (deliberately, see write() above --
+        the generate/heal path) and `unique()` only holds at a point in time.
+        A freed name given to a NEW tenant therefore arrived with the previous
+        tenant's dumps already in "its" directory, and #288's ownership check
+        keys on exactly that directory name.
+
+        Collected BEFORE super(): once the rows are gone the names are too.
+        Purging never blocks the delete -- a filesystem that will not cooperate
+        must not strand a tenant record -- but it logs ERROR, which is the
+        signal P2-T10 watches.
+        """
+        Backup = self.env['ncollection.backup'].sudo()
+        names = [t.database_name for t in self if t.database_name]
+        res = super().unlink()
+        for db in names:
+            try:
+                Backup._purge_tenant_backup_dir(db)
+            except Exception:  # pylint: disable=broad-except
+                _logger.error(
+                    "Tenant '%s' was deleted but its backup directory could "
+                    "not be purged; the name must not be reused until it is.",
+                    db, exc_info=True)
+        return res
+
     @api.constrains('database_name', 'database_status')
     def _check_locked_database_name(self):
         """ISO-1 (#225): once a tenant is provisioning/ready its database_name IS
@@ -136,9 +166,19 @@ class Tenant(models.Model):
         base = self._slugify_db_name(company_name)
         blocked = _GENERATED_NAME_BLOCKLIST | {self.env.cr.dbname}
         Job = self.env['ncollection.provisioning.job']
+        Backup = self.env['ncollection.backup'].sudo()
         candidate = base
         suffix = 1
-        while candidate in blocked or Job._database_exists(candidate):
+        # Leftover BACKUP FILES are a third way a name is taken (#295).
+        # The live cluster and the blocklist both miss it: a previous tenant's
+        # dumps can outlive the tenant AND its database, and handing the name
+        # to someone new would seat them on top of another tenant's data --
+        # which #288's directory-keyed ownership check would then accept.
+        # _purge_tenant_backup_dir removes them on delete; this covers what is
+        # already on disk, and any purge that failed loudly.
+        while (candidate in blocked
+               or Job._database_exists(candidate)
+               or Backup._tenant_backup_dir_exists(candidate)):
             suffix += 1
             tail = str(suffix)
             candidate = '%s%s' % (base[:63 - len(tail)], tail)

@@ -11,7 +11,8 @@
     # No schema change -- pure validation -- but a real behaviour change on the
     # platform's most destructive primitive, so it gets traceability like #243's.
     # Patch bump: #287 makes the restore drill drop its scratch database.
-    'version': '19.0.6.5.3',
+    # Patch bump: #295 purges a deleted tenant's backup directory.
+    'version': '19.0.6.5.4',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',
