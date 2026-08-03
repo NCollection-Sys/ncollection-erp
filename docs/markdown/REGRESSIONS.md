@@ -479,6 +479,50 @@ concurrent one is. `stack_settled.sh` correctly reported UNSETTLED throughout.
 
 **Follow-through.** `make routing-up` does not restart nginx, so any workflow that recreates
 odoo must restart nginx too, or the edge serves 502 against a perfectly healthy server.
+## R-020 — A test fixture derived its DB name from `hash()`, so CI failed at random ✅ FIXED (#276)
+
+**Symptom.** `TestSaasDashboard.test_mrr_field_normalization` errored intermittently in the
+`test` job — same 581 tests, same addon code, different outcome. PR #272 passed on identical
+addon code; a re-run of the failing branch passed. Postgres logged a
+`ncollection_subscription_plan_code_unique` violation one second earlier.
+
+**That Postgres line was a red herring** and it sent the original triage the wrong way. The
+issue guessed a shared plan-code collision. `DASHGROWTH` is used exactly once in the entire
+test suite — there is no cross-test plan-code clash. The failure was in `_tenant()`.
+
+**Root cause.** `test_dashboard.py`'s helper built the tenant name as:
+
+```python
+'database_name': db or ('t%d' % (abs(hash(name)) % 10000))
+```
+
+Two faults in one expression:
+
+* Python randomises **str** hashing per process (`PYTHONHASHSEED`), so the same test produced
+  a different `database_name` on every run — an irreproducible fixture by construction.
+* Folding into 10 000 buckets meant two distinct names could land on the same one, and
+  `unique(database_name)` (`ncollection_subscription/models/tenant.py:87`) then failed the
+  `create`. Order-independent, roughly one run in a few hundred, never reproducible on demand.
+
+**Why it resisted diagnosis.** Every property that makes a flake hard was present at once: the
+trigger is re-randomised each process, the symptom surfaces in a *different* test than the one
+that misbehaves, and an unrelated Postgres error appeared next to it in the log.
+
+**Guard.** The helper now uses a monotonic `itertools.count`, so names are unique **by
+construction** — no hashing, no modulo, nothing probabilistic left to argue about. Plus
+`test_fixture_db_names_are_unique_and_stable`, which asserts 25 consecutive fixtures get
+distinct, alphanumeric names. Asserting "the last run passed" would have proven nothing; the
+assertable thing is the property that replaced the gamble.
+
+**Proven, not argued.** A seed hunt was attempted first and was *wrong* — it split
+`'Expiring Co'` on whitespace, so a repeated `'Co'` token faked a collision. The real proof is
+narrowing the bucket to `% 4`: the collision then fires every run and takes out six tests,
+**including `test_mrr_field_normalization`** — the exact test CI reported. Restore the counter
+and all six pass.
+
+**Follow-through.** `hash()` appears in no other test fixture in the repo (checked). Fixture
+identity should be a counter or an explicit literal — never a hash, which is unstable across
+processes by design.
 
 ---
 
