@@ -7,7 +7,10 @@
     # Minor bump: #283 adds two real columns to ncollection.tenant
     # (cron_report_miss_count, cron_report_activity_id), so `-u` is what
     # applies it. Same convention as #218's new-column bump.
-    'version': '19.0.6.5.0',
+    # Patch bump: #275 adds a guard inside ncollection.backup.restore_to.
+    # No schema change -- pure validation -- but a real behaviour change on the
+    # platform's most destructive primitive, so it gets traceability like #243's.
+    'version': '19.0.6.5.1',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

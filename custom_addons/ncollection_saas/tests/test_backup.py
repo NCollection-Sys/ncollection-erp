@@ -9,7 +9,7 @@ scripts/backup/verify_tenant_backup.sh (evidence in the PR).
 """
 from unittest.mock import MagicMock, patch
 
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 BACKUP = 'odoo.addons.ncollection_saas.models.backup'
@@ -116,6 +116,75 @@ class TestBackup(TransactionCase):
             self.Backup._cron_restore_drill()
         restore.assert_not_called()          # never touched the live tenant DB
         alert.assert_called_once()           # surfaced the collision instead
+
+    # -- restore target binding (#275) --------------------------------------
+    #
+    # restore_to drives pg_terminate_backend -> dropdb -> createdb. Every
+    # CALLER guarded it and the method itself did not, so the guards were
+    # bypassable simply by not being a caller (raw call_kw / json2 reach it
+    # directly). These tests pin the rule to the METHOD.
+
+    def _done_backup(self, tenant):
+        return self.Backup.create({
+            'tenant_id': tenant.id, 'backup_type': 'daily',
+            'status': 'done', 'file_path': '/tmp/x.dump'})
+
+    def test_restoring_over_ANOTHER_live_tenant_is_refused(self):
+        """The hole: one RPC drops a live tenant and serves someone else's
+        snapshot under its database name."""
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        backup = self._done_backup(self._tenant())
+
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to(victim.database_name)
+            run.assert_not_called()
+
+    def test_in_place_restore_of_its_OWN_tenant_is_allowed(self):
+        """#244's rollback restores a tenant's snapshot over that same tenant's
+        live database. A guard that blocked this would break recovery — worse
+        than the hole it closes."""
+        tenant = self._tenant()
+        backup = self._done_backup(tenant)
+
+        with patch(BACKUP + '.subprocess.run',
+                   return_value=self._mock_run()) as run:
+            self.assertEqual(backup.restore_to(tenant.database_name),
+                             tenant.database_name)
+            run.assert_called()
+
+    def test_a_scratch_name_with_an_underscore_is_allowed(self):
+        """Both shipped generators emit underscores — `drill_%s` and
+        `restore_%s`. The strict tenant rule forbids them, so applying it to
+        scratch targets would have broken the nightly drill and the wizard.
+
+        The underscore is also load-bearing: db_filter = ^%d$ means an
+        underscored name is unreachable by subdomain, so a restored copy of
+        another tenant's data stays off the network.
+        """
+        backup = self._done_backup(self._tenant())
+        for target in ('drill_acme', 'restore_acme'):
+            with patch(BACKUP + '.subprocess.run',
+                       return_value=self._mock_run()) as run:
+                self.assertEqual(backup.restore_to(target), target)
+                run.assert_called()
+
+    def test_reserved_and_platform_databases_are_refused(self):
+        backup = self._done_backup(self._tenant())
+        for target in ('postgres', 'template1', 'admin', self.env.cr.dbname):
+            with patch(BACKUP + '.subprocess.run') as run:
+                with self.assertRaises(ValidationError):
+                    backup.restore_to(target)
+                run.assert_not_called()
+
+    def test_injection_shaped_targets_are_refused(self):
+        """The target reaches a bash script argument and a dropdb."""
+        backup = self._done_backup(self._tenant())
+        for target in ('acme; rm -rf /', 'acme db', '../etc', 'ACME', '', 'a'):
+            with patch(BACKUP + '.subprocess.run') as run:
+                with self.assertRaises(ValidationError):
+                    backup.restore_to(target)
+                run.assert_not_called()
 
     def test_wizard_enqueues_restore_to_scratch(self):
         tenant = self._tenant(database_name='live2')

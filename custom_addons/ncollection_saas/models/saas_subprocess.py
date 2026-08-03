@@ -35,6 +35,15 @@ _logger = logging.getLogger(__name__)
 # provisioning imports these rather than keeping a second copy, so the injection
 # allowlist cannot drift. Do not re-declare them elsewhere.
 DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
+# Scratch/staging targets are deliberately LOOSER: they may contain '_'.
+#
+# That underscore is load-bearing, not sloppiness. db_filter = ^%d$ routes a
+# subdomain to the database of the same name, and underscores are invalid in
+# hostnames -- so 'restore_acme' is unreachable over HTTP BY CONSTRUCTION.
+# Tightening scratch names to DB_NAME_RE would make a restored copy of another
+# tenant's data routable by subdomain, turning a hardening change into a
+# cross-tenant exposure. Everything else DB_NAME_RE blocks is still blocked.
+SCRATCH_DB_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,62}$')
 RESERVED_DB_NAMES = frozenset(
     {'admin', 'www', 'staging', 'api', 'postgres', 'template0', 'template1'})
 SUBPROCESS_TIMEOUT = 1800  # 30 min hard cap per odoo subprocess
@@ -56,6 +65,26 @@ class SaasSubprocessMixin(models.AbstractModel):
         if not db or not DB_NAME_RE.match(db):
             raise ValidationError(self.env._(
                 "Unsafe database name '%s' (must match ^[a-z][a-z0-9]{2,62}$).", db))
+        if db in RESERVED_DB_NAMES or db == self.env.cr.dbname:
+            raise ValidationError(self.env._(
+                "Refusing to operate on reserved/platform database '%s'.", db))
+
+    def _assert_scratch_db_name(self, db):
+        """Reject anything unsafe as a SCRATCH restore/staging target (#275).
+
+        Same job as _assert_safe_db_name -- keep injection shapes, reserved
+        names and the platform's own database away from a dropdb/createdb --
+        but permits the '_' that scratch names use and that keeps them
+        unroutable under db_filter. See SCRATCH_DB_NAME_RE.
+
+        Purely LEXICAL on purpose. "is this a live tenant's database" needs the
+        tenant model and belongs to the caller that knows which tenant the
+        backup came from (ncollection.backup._assert_restore_target).
+        """
+        if not db or not SCRATCH_DB_NAME_RE.match(db):
+            raise ValidationError(self.env._(
+                "Unsafe scratch database name '%s' "
+                "(must match ^[a-z][a-z0-9_]{2,62}$).", db))
         if db in RESERVED_DB_NAMES or db == self.env.cr.dbname:
             raise ValidationError(self.env._(
                 "Refusing to operate on reserved/platform database '%s'.", db))

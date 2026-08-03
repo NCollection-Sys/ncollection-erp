@@ -18,6 +18,7 @@ import os
 import subprocess
 
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -116,12 +117,59 @@ class NcollectionBackup(models.Model):
             })
             self._alert_failure()
 
+    def _assert_restore_target(self, target_db):
+        """Refuse a restore that would destroy the wrong database (#275).
+
+        This method drives pg_terminate_backend -> dropdb -> createdb through
+        tenant_restore.sh. It is the platform's most destructive primitive and
+        it had NO guard: `restore_to` checked only that file_path was set, so
+        one RPC could drop a live tenant and serve ANOTHER tenant's snapshot
+        under its database name -- irreversible loss plus a cross-tenant
+        isolation break, the invariant Rule 3 and ARCHITECTURE_SECURITY exist
+        to protect.
+
+        Every caller had its own guard and the method had none, so the guards
+        were bypassable by not being a caller. The rule, in one line: a LIVE
+        tenant database may be restored over ONLY by its own backup.
+
+        Two legitimate shapes, both preserved:
+          * scratch/staging  -- the wizard and the nightly restore drill;
+          * in-place rollback of the backup's OWN tenant (#244).
+        """
+        subproc = self.env['ncollection.saas.subprocess.mixin']
+        own_db = self.tenant_id.sudo().database_name
+        # sudo: the check must not depend on the CALLER's record rules --
+        # invisibility must never read as permission. NOT independently tested,
+        # and honestly so: the ACL on this model is base.group_system, which
+        # sees every tenant, so today sudo() makes no observable difference.
+        # It is defence against a future record rule, not a proven guard, and a
+        # test asserting it would only be asserting the implementation.
+        clashes = self.env['ncollection.tenant'].sudo().search_count(
+            [('database_name', '=', target_db)])
+        if clashes and target_db != own_db:
+            raise ValidationError(self.env._(
+                "Refusing to restore backup of '%(src)s' over live tenant "
+                "database '%(dst)s'. A live tenant database may only be "
+                "restored over by its OWN backup; use a scratch name.",
+                src=own_db or '?', dst=target_db))
+        if target_db and target_db == own_db:
+            # Our own tenant: a routable name, so hold it to the strict rule.
+            subproc._assert_safe_db_name(target_db)
+        else:
+            # Scratch: '_' allowed, which is what keeps it unroutable.
+            subproc._assert_scratch_db_name(target_db)
+
     def restore_to(self, target_db):
-        """Restore this backup into a SCRATCH database (never a live tenant).
-        Public so the wizard + queue_job can call it. Returns the target."""
+        """Restore this backup into a scratch database, or in-place over this
+        backup's OWN tenant. Public so the wizard + queue_job can call it --
+        renaming it would break `with_delay(...).restore_to(...)`, since
+        queue_job persists the method NAME. The guard lives inside for that
+        reason: it then applies to every caller, including raw RPC. Returns
+        the target."""
         self.ensure_one()
         if not self.file_path:
             raise RuntimeError("Backup has no file to restore.")
+        self._assert_restore_target(target_db)
         self._run_subprocess(['bash', _RESTORE_SCRIPT, self.file_path, target_db])
         return target_db
 
