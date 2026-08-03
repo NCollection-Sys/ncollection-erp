@@ -70,6 +70,27 @@ _DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
 _SYNC_ENDPOINT = '/json/2/ncollection.workspace.config/sync_from_platform'
 _SYNC_CHANNEL = 'root.provisioning'
 _RPC_TIMEOUT = 30
+# Hard cap on how much of a TENANT's response the PLATFORM will read (#278).
+#
+# _RPC_TIMEOUT bounds how long we wait; nothing bounded how much we READ. The
+# expected body is the #262 required-job self-report — a handful of xmlids,
+# itself already capped at _MAX_REPORTED_CRONS = 32 — so 64 KB is generous by
+# orders of magnitude for anything legitimate.
+#
+# Without it, a tenant returning a multi-gigabyte body has the control plane
+# allocate all of it. That is the wrong direction for a two-layer architecture:
+# a tenant must not be able to influence platform resource use. Note the real
+# exposure was never resp.text[:500] on the error path (that slice truncates the
+# LOG LINE, after the whole body is already in memory) but resp.json() on the
+# SUCCESS path, which reads AND materialises the lot.
+_MAX_RESPONSE_BYTES = 64 * 1024
+
+# _read_bounded's "the bounded read itself failed" answer.
+# Deliberately NOT None -- None means "no bounded read is possible
+# here", which legitimately falls back to the response object's own
+# .json()/.text. Collapsing the two lets a tenant re-open the
+# unbounded path with a single lying Content-Encoding header.
+_READ_FAILED = object()
 
 # HTTP statuses that a retry can never heal (#264). A 401/403 means the tenant
 # rejected our bearer — a stale key hash, typically — so the nightly reconcile
@@ -301,7 +322,7 @@ class TenantConfigSync(models.Model):
 
     # ---- required-cron health (#262) -------------------------------------
 
-    def _record_cron_health(self, report):
+    def _record_cron_health(self, report, skip_reason=False):
         """Record the tenant's self-report on required jobs. Never raises.
 
         `report` is ``{xml_id: {'installed': bool, 'active': bool}}`` from the
@@ -317,8 +338,18 @@ class TenantConfigSync(models.Model):
             self.ensure_one()
             if not isinstance(report, dict) or not report:
                 # Absent report != healthy. Say "unknown" rather than assume.
-                if self.cron_health_state != 'unknown':
-                    self.sudo().write({'cron_health_state': 'unknown'})
+                #
+                # skip_reason separates the two ways a report goes missing. A
+                # tenant that never reported is legitimate (older code; #218
+                # backfills those). A tenant whose report we REFUSED to read is
+                # not, and must not look identical — otherwise padding every
+                # response freezes the signal at a bare 'unknown' forever with
+                # nothing on the record to say why (#278).
+                detail = (skip_reason or '')[:255] or False
+                if (self.cron_health_state != 'unknown'
+                        or self.cron_health_detail != detail):
+                    self.sudo().write({'cron_health_state': 'unknown',
+                                       'cron_health_detail': detail})
                 return
 
             # A job whose module is absent is NOT a fault (#218 backfills
@@ -434,6 +465,159 @@ class TenantConfigSync(models.Model):
 
     # ---- the json2/bearer client ----------------------------------------
 
+    def _read_bounded(self, resp):
+        """At most ``_MAX_RESPONSE_BYTES + 1`` bytes of the body (#278).
+
+        Three distinct answers, and the distinction is the whole point:
+
+        * ``bytes`` — the bounded read succeeded;
+        * ``None`` — no bounded read is POSSIBLE on this object (it has no
+          usable ``.raw``). The caller may fall back to ``.json()``/``.text``,
+          which is what keeps non-streamed responses and the suite's own
+          doubles working exactly as before;
+        * ``_READ_FAILED`` — a bounded read was possible and FAILED. The caller
+          must NOT fall back, because ``.json()``/``.text`` on the same
+          response is precisely the unbounded read this ticket removes. A
+          tenant can reach here with one lying ``Content-Encoding`` header.
+
+        Collapsing the last two into ``None`` (the first version of this) let a
+        hostile tenant re-open the unbounded path for free.
+
+        NEVER raises: the caller's contract is that reading the body must not
+        turn a successful push into a failure.
+
+        Reading one byte past the cap is what lets the caller distinguish
+        "exactly at the limit" from "truncated".
+
+        SINGLE USE per response. This advances the stream and does not
+        memoize; calling it twice on one response reads twice and doubles the
+        effective cap. Every current caller is on a mutually exclusive branch.
+        """
+        raw = getattr(resp, 'raw', None)
+        if raw is None:
+            return None
+        try:
+            chunk = raw.read(_MAX_RESPONSE_BYTES + 1, decode_content=True)
+        except Exception:       # noqa: BLE001 - see the contract above
+            return _READ_FAILED
+        if not isinstance(chunk, bytes):
+            # A real .raw always yields bytes. A MagicMock auto-vivifies .raw
+            # AND .read(), so a plain MagicMock(status_code=..., text=...) —
+            # the idiom used throughout test_config_sync.py — took the streamed
+            # branch and produced a MagicMock repr where the failure body
+            # should be. Treat "not bytes" as "no bounded read possible" so
+            # those doubles fall back to .text and log the body again.
+            return None
+        return chunk
+
+    def _close_quietly(self, resp):
+        """Release the connection. stream=True holds it until the body is
+        consumed or the response is closed, and we deliberately stop reading
+        early on an oversized body — so closing is not optional. getattr
+        because a test double has no close(), and a missing stub method must
+        not break a config push."""
+        closer = getattr(resp, 'close', None)
+        if closer is None:
+            return
+        try:
+            closer()
+        except Exception:       # noqa: BLE001 - never break a push on cleanup
+            _logger.debug(
+                "Releasing the config-sync connection failed; the push itself "
+                "already completed.", exc_info=True)
+
+    @staticmethod
+    def _scrub_for_log(text):
+        """Neutralise control characters in tenant-controlled log text.
+
+        CWE-117. This excerpt is interpolated into the ERROR line that P2-T10's
+        log watcher PARSES, so an embedded newline lets a tenant forge whole
+        log records — including fake severities — inside our own stream. The
+        format template is a fixed literal owned by this module, so format-
+        string injection was never possible; line forging was.
+
+        Pre-existing (resp.text[:500] was equally unescaped), but this ticket
+        rewrites exactly this line, so it gets fixed here rather than deferred.
+        """
+        return ''.join(
+            c if c == ' ' or c.isprintable() else '\\x%02x' % ord(c)
+            for c in text)
+
+    def _error_excerpt(self, resp):
+        """A short, BOUNDED excerpt of a failure body for the log line.
+
+        The old code sliced ``resp.text[:500]``, which truncates the LOG LINE
+        after the whole body is already in memory — and with stream=True it
+        would drain the entire stream to build that string. Read bounded first,
+        slice second.
+        """
+        chunk = self._read_bounded(resp)
+        if chunk is _READ_FAILED:
+            # .text here would re-read the body with no bound at all.
+            return '<unreadable response body>'
+        if chunk is None:
+            # Guarded like _bounded_payload's .json() fallback. getattr only
+            # suppresses AttributeError; it does nothing about a .text property
+            # that RAISES — which is reachable on a half-broken stream.
+            try:
+                return self._scrub_for_log((resp.text or '')[:500])
+            except Exception:   # noqa: BLE001 - an excerpt is never worth
+                return '<unreadable response body>'   # breaking a push for
+        return self._scrub_for_log(chunk[:500].decode('utf-8', 'replace'))
+
+    def _bounded_payload(self, resp, db):
+        """The tenant's parsed self-report. Bounded, never raises.
+
+        Returns ``(payload, skip_reason)``. ``skip_reason`` is a short
+        operator-facing string when the self-report had to be abandoned, and
+        False when there is nothing to explain — it is what keeps "this tenant
+        never reported" (legitimate: older tenant code, #218 backfills those)
+        distinguishable from "this tenant's report was refused".
+        """
+        unreadable = self.env._("self-report unreadable")
+        chunk = self._read_bounded(resp)
+        if chunk is _READ_FAILED:
+            # .json() here would read the body with no bound at all.
+            _logger.warning(
+                "Config sync to %s: the bounded read failed; skipping the "
+                "required-job health report rather than re-reading the body "
+                "unbounded.", db)
+            return None, unreadable
+        if chunk is None:
+            # Not a streamed response — fall back to the object's own parser.
+            try:
+                return resp.json(), False
+            except Exception:   # noqa: BLE001
+                _logger.warning(
+                    "Config sync to %s returned an unreadable body; skipping "
+                    "the required-job health report.", db)
+                return None, unreadable
+        if len(chunk) > _MAX_RESPONSE_BYTES:
+            # Honour the status code, discard the body. The config WAS applied;
+            # marking this a failure would misreport a suspension that landed.
+            #
+            # ERROR, not warning, and deliberately: _MAX_REPORTED_CRONS entries
+            # of ~100 bytes means the cap is ~20x any legal body, so this is
+            # never innocent traffic. At warning level the skip was invisible —
+            # 'unknown' opens no to-do, and P2-T10's log_watcher only alerts on
+            # ERROR lines — which handed a tenant a free, repeatable way to
+            # suppress its own compliance-job signal by padding every response.
+            _logger.error(
+                "Config sync to %s returned more than %s bytes; body discarded "
+                "and the required-job health report skipped for this run. A "
+                "tenant cannot be allowed to size the platform's read.",
+                db, _MAX_RESPONSE_BYTES)
+            return None, self.env._(
+                "self-report discarded: response over %s bytes",
+                _MAX_RESPONSE_BYTES)
+        try:
+            return json.loads(chunk.decode('utf-8', 'replace')), False
+        except Exception:       # noqa: BLE001
+            _logger.warning(
+                "Config sync to %s returned an unreadable body; skipping the "
+                "required-job health report.", db)
+            return None, unreadable
+
     def _config_sync_push(self, db, vals):
         """One platform->tenant config push over json2/bearer. Logged; never
         raises into the caller (a transport error must not break a lifecycle
@@ -478,14 +662,40 @@ class TenantConfigSync(models.Model):
                     'Authorization': 'Bearer %s' % key,
                     'X-Odoo-Database': db,
                     'Content-Type': 'application/json',
+                    # This health payload has no business being
+                    # compressed, and a lying Content-Encoding is
+                    # what drives the decode path in _read_bounded.
+                    # Remove the trigger class at the source; a
+                    # tenant that ignores this still lands on
+                    # _READ_FAILED, never the unbounded fallback.
+                    'Accept-Encoding': 'identity',
                 },
                 data=json.dumps({'vals': vals}),
                 timeout=_RPC_TIMEOUT,
+                # This endpoint has no legitimate reason to redirect, and the
+                # default chases up to 30 hops -- each one its own timeout
+                # budget. requests strips Authorization on a cross-host hop but
+                # not our Host/X-Odoo-Database headers.
+                allow_redirects=False,
+                # Do not download the body on receipt — read it bounded, below.
+                stream=True,
             )
         except requests.RequestException as exc:
             _logger.error("Config sync to %s failed (transport): %s", db, exc)
             self._config_sync_record('transient', "transport: %s" % exc)
             return False
+        # try/finally, not two hand-placed close calls. stream=True holds the
+        # connection until the body is consumed or the response is closed, and
+        # we stop reading early by design — so release must be STRUCTURAL, not
+        # a convention every future helper has to remember to honour.
+        try:
+            return self._config_sync_finish(resp, db, vals)
+        finally:
+            self._close_quietly(resp)
+
+    def _config_sync_finish(self, resp, db, vals):
+        """Classify one response and record it. Connection close is the
+        caller's finally-block; this method only decides the outcome."""
         if resp.status_code != 200:
             permanent = resp.status_code in _PERMANENT_STATUSES
             # The log line now names the tenant and says whether a retry can
@@ -495,7 +705,7 @@ class TenantConfigSync(models.Model):
                 "Config sync to %s failed (HTTP %s, %s): %s",
                 db, resp.status_code,
                 'PERMANENT - needs attention' if permanent else 'transient',
-                resp.text[:500])
+                self._error_excerpt(resp))
             self._config_sync_record(
                 'permanent' if permanent else 'transient',
                 "HTTP %s" % resp.status_code)
@@ -508,22 +718,18 @@ class TenantConfigSync(models.Model):
         # Parsing is wrapped: json2 returns the method result unwrapped, but a
         # malformed or truncated body must never turn a SUCCESSFUL config push
         # into a failure.
-        try:
-            payload = resp.json()
-        except Exception:
-            # Broad on purpose. The contract is that parsing must NEVER turn a
-            # SUCCESSFUL push into a failure, and the failure modes are not
-            # just malformed JSON: a truncated body, a proxy returning HTML, or
-            # any response object that does not implement .json(). Catching only
-            # ValueError was too narrow and broke seven existing tests the first
-            # time this ran — which is exactly the contract those tests defend.
-            _logger.warning(
-                "Config sync to %s returned an unreadable body; skipping the "
-                "required-job health report.", db)
-            payload = None
+        # Bounded read (#278). The contract is unchanged and still absolute:
+        # parsing must NEVER turn a SUCCESSFUL push into a failure. The failure
+        # modes are not just malformed JSON — a truncated body, a proxy
+        # returning HTML, an object without .json(), and now a body over the
+        # cap. Catching only ValueError was too narrow and broke seven existing
+        # tests the first time this ran, which is exactly the contract those
+        # tests defend. _bounded_payload absorbs all of it and returns None.
+        payload, skip_reason = self._bounded_payload(resp, db)
         self._record_cron_health(
             (payload or {}).get('required_crons')
-            if isinstance(payload, dict) else None)
+            if isinstance(payload, dict) else None,
+            skip_reason=skip_reason)
         return True
 
     # ---- lifecycle triggers (status → subscription_status projection) ----

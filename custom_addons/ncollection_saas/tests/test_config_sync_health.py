@@ -18,12 +18,18 @@ The properties worth protecting are the ones that fail quietly:
    is worse than no observability.
 """
 
-from unittest.mock import patch
+import gzip
+import io
+import json
+from unittest.mock import MagicMock, patch
 
 import requests
+from urllib3.response import HTTPResponse
 
 from odoo.tests import TransactionCase, tagged
 from odoo.tools import mute_logger
+
+from odoo.addons.ncollection_saas.models.config_sync import _MAX_RESPONSE_BYTES
 
 
 class _Response:
@@ -46,6 +52,94 @@ class _Response:
 
 
 _UNREADABLE = object()
+
+
+class _CountingRaw:
+    """A urllib3-like .raw that records how many bytes were asked for (#278).
+
+    The point of the cap is that the platform never READS an oversized body —
+    not that it truncates one after loading it. Recording the requested size is
+    what tells those two apart; asserting on the parsed result alone cannot.
+    """
+
+    def __init__(self, payload_bytes, raises=None):
+        self._data = payload_bytes
+        self._raises = raises
+        self.requested = None
+        self.calls = 0
+        self.returned = 0
+
+    # pylint: disable=method-required-super
+    # Not an Odoo model: this mimics urllib3's HTTPResponse.raw, whose API is
+    # read(). There is no base class to call up into.
+    def read(self, amt=None, decode_content=True):
+        self.calls += 1
+        self.requested = amt
+        if self._raises is not None:
+            raise self._raises
+        out = self._data[:amt] if amt is not None else self._data
+        self.returned += len(out)
+        return out
+
+
+class _StreamedResponse:
+    """A stand-in that behaves like requests.Response(stream=True)."""
+
+    def __init__(self, status_code, payload_bytes, text='', raises=None):
+        self.status_code = status_code
+        self._text = text
+        self.raw = _CountingRaw(payload_bytes, raises=raises)
+        self.closed = False
+        # RECORDED, not raised. Raising from json()/text looks like a stronger
+        # assertion but is a weaker one: _bounded_payload's fallback catches
+        # bare Exception, so an AssertionError raised here is swallowed and the
+        # test passes even though the fallback DID happen. Proven by breaking
+        # the sentinel and watching this test stay green. Record the access and
+        # assert on the flag instead.
+        self.json_called = False
+        self.text_read = False
+
+    @property
+    def text(self):
+        self.text_read = True
+        return self._text
+
+    def json(self):
+        self.json_called = True
+        return {}
+
+    def close(self):
+        self.closed = True
+
+
+class _RealGzipResponse:
+    """A response whose .raw is a REAL urllib3 HTTPResponse, gzip-encoded.
+
+    Every other double here hand-rolls .raw, so none of them exercise urllib3's
+    actual decompression. That is the one property the cap depends on and the
+    one nothing durable was checking: `raw.read(n, decode_content=True)` must
+    bound the DECOMPRESSED output, not the compressed read. If it bounded only
+    the compressed read, 64 KiB of gzip would inflate ~1000:1 and the cap would
+    be decorative. Measured five ways during review; this makes it a test, so a
+    urllib3 upgrade or a swapped HTTP client cannot silently take it away.
+    """
+
+    def __init__(self, status_code, payload_bytes):
+        self.compressed = gzip.compress(payload_bytes)
+        self.status_code = status_code
+        self.text = ''
+        self.raw = HTTPResponse(
+            body=io.BytesIO(self.compressed),
+            headers={'content-encoding': 'gzip'},
+            status=status_code, preload_content=False)
+        self.closed = False
+
+    def json(self):
+        raise AssertionError(
+            "json() must not be called on a streamed response")
+
+    def close(self):
+        self.closed = True
 
 
 @tagged("post_install", "-at_install")
@@ -280,6 +374,251 @@ class TestConfigSyncHealth(TransactionCase):
         """The existing boolean contract is unchanged by the new bookkeeping."""
         self.assertFalse(self._push(_Response(500)))
         self.assertTrue(self._push(_Response(200)))
+
+    # -- bounded response read (#278) --------------------------------------
+
+    def test_the_platform_never_reads_more_than_the_cap(self):
+        """The cap must stop the READ, not truncate afterwards.
+
+        _RPC_TIMEOUT bounded how long we waited; nothing bounded how much we
+        read, and resp.json() on the SUCCESS path materialised the whole body.
+        A tenant could therefore size the control plane's allocation.
+        """
+        oversized = b'{"required_crons": {}}' + b'x' * (2 * _MAX_RESPONSE_BYTES)
+        resp = _StreamedResponse(200, oversized)
+
+        self.assertTrue(self._push(resp), "an oversized body must not fail the push")
+
+        self.assertIsNotNone(resp.raw.requested, "the body was never read bounded")
+        self.assertLessEqual(
+            resp.raw.requested, _MAX_RESPONSE_BYTES + 1,
+            "read more than the cap — the tenant sized the platform's read")
+        # Per-call size alone is NOT the property. A loop that reads 4 KiB at a
+        # time with no cumulative budget satisfies every per-call assertion
+        # while materialising the whole body — demonstrated by review against
+        # this very test. The budget is TOTAL bytes, so assert the total.
+        self.assertEqual(
+            resp.raw.calls, 1,
+            "the bounded read must happen once; repeated reads have no "
+            "cumulative budget and defeat the cap")
+        self.assertLessEqual(
+            resp.raw.returned, _MAX_RESPONSE_BYTES + 1,
+            "cumulative bytes read exceeded the cap")
+        self.assertTrue(resp.closed, "stream=True leaks the connection unless closed")
+
+    def test_an_oversized_body_keeps_the_push_successful(self):
+        """The config WAS applied. Marking this failed would misreport a
+        suspension that actually landed — the no-raise contract #262 defends."""
+        resp = _StreamedResponse(200, b'y' * (2 * _MAX_RESPONSE_BYTES))
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.config_sync_state, 'ok')
+
+    def test_an_oversized_body_cannot_HIDE_a_degraded_job(self):
+        """Padding the response must not silently preserve a stale 'ok'.
+
+        The cap makes the self-report unreadable, so a tenant could try to
+        suppress its own compliance-job health by always answering oversized.
+        _record_cron_health treats an absent report as 'unknown' rather than
+        healthy, so the suppression is VISIBLE. That is the property that makes
+        skipping the report an acceptable response to an oversized body.
+
+        (Against a genuinely hostile tenant the self-report was never an
+        attestation anyway — it could simply lie. This is about the signal not
+        being silently frozen at its last good value.)
+        """
+        healthy = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': True}}}).encode()
+        self.assertTrue(self._push(_StreamedResponse(200, healthy)))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(
+            self.tenant.cron_health_state, 'ok',
+            "precondition: the signal must actually read 'ok' first, or the "
+            "assertion below cannot tell 'reset to unknown' from 'left stale'")
+
+        resp = _StreamedResponse(200, b'p' * (2 * _MAX_RESPONSE_BYTES))
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertNotEqual(
+            self.tenant.cron_health_state, 'ok',
+            "an oversized body must not leave the health signal reading 'ok'")
+
+    def test_a_normal_body_is_still_parsed_and_reported(self):
+        """The cap must not break the #262 required-job self-report."""
+        body = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': False}}}).encode()
+        resp = _StreamedResponse(200, body)
+
+        self.assertTrue(self._push(resp))
+
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_health_state, 'degraded',
+                         "a streamed body must still feed the health report")
+
+    def test_an_error_body_excerpt_is_also_bounded(self):
+        """The old code sliced resp.text[:500] — which truncates the LOG LINE
+        after the whole body is in memory, and under stream=True would drain
+        the entire stream to build that string."""
+        resp = _StreamedResponse(500, b'z' * (2 * _MAX_RESPONSE_BYTES))
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertFalse(self._push(resp))
+        self.assertLessEqual(resp.raw.requested, _MAX_RESPONSE_BYTES + 1)
+        self.assertTrue(resp.closed)
+
+    def test_the_cap_boundary_itself(self):
+        """The +1 read is the entire mechanism; test it AT the boundary.
+
+        Exactly `cap` bytes must parse normally. One byte more must be
+        discarded. Testing only at 2x cap never exercises the comparison.
+        """
+        body = {'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': True}}}
+        exact = json.dumps(body).encode()
+        exact += b' ' * (_MAX_RESPONSE_BYTES - len(exact))
+        self.assertEqual(len(exact), _MAX_RESPONSE_BYTES)
+
+        self.assertTrue(self._push(_StreamedResponse(200, exact)))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_health_state, 'ok',
+                         "a body of exactly the cap must still be parsed")
+
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(
+                _StreamedResponse(200, exact + b' ')))
+        self.tenant.invalidate_recordset()
+        self.assertNotEqual(self.tenant.cron_health_state, 'ok',
+                            "one byte past the cap must be discarded")
+
+    def test_a_failed_bounded_read_never_falls_back_to_the_whole_body(self):
+        """The hole review found: a lying Content-Encoding is enough.
+
+        A tenant answering `Content-Encoding: gzip` with a body that is not
+        gzip makes urllib3 raise on the first bounded read. If that collapses
+        to the same answer as "this response has no .raw", both callers reach
+        for .json()/.text -- the unbounded pre-#278 path, re-opened for free.
+
+        _StreamedResponse.json() raises AssertionError on purpose, so a
+        fallback here fails the test loudly rather than passing quietly.
+        """
+        boom = _StreamedResponse(
+            200, b'x' * 4096, text='THE-WHOLE-BODY',
+            raises=ValueError('DecodeError: not gzipped'))
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(boom), "must not break the push")
+        self.assertEqual(boom.raw.calls, 1)
+        self.assertEqual(
+            boom.raw.returned, 0,
+            "nothing was read bounded, so nothing may have been read at all")
+        self.assertFalse(
+            boom.json_called,
+            "fell back to resp.json() after a FAILED bounded read — that is "
+            "the unbounded pre-#278 path, reachable with one lying header")
+        self.assertFalse(
+            boom.text_read,
+            "fell back to resp.text after a FAILED bounded read")
+
+    def test_a_failed_read_on_the_error_path_does_not_read_text(self):
+        """Same hole, error path: resp.text would drain the whole stream."""
+        boom = _StreamedResponse(
+            500, b'x' * 4096, text='THE-WHOLE-BODY',
+            raises=ValueError('DecodeError: not gzipped'))
+        with self.assertLogs(
+                'odoo.addons.ncollection_saas.models.config_sync',
+                level='ERROR') as caught:
+            self.assertFalse(self._push(boom))
+        self.assertNotIn(
+            'THE-WHOLE-BODY', '\n'.join(caught.output),
+            "the excerpt fell back to .text, reading the body unbounded")
+        self.assertFalse(
+            boom.text_read,
+            "resp.text was touched at all — under stream=True that drains "
+            "the entire body, which is exactly what the cap prevents")
+
+    def test_a_mock_style_double_still_logs_the_real_body(self):
+        """MagicMock auto-vivifies .raw, so a plain MagicMock double took the
+        streamed branch and logged a MagicMock repr where the failure body
+        belongs. test_config_sync.py uses exactly this idiom throughout, and
+        its tests stayed green while the diagnostic line turned to garbage."""
+        resp = MagicMock(status_code=403, text='denied')
+        with self.assertLogs(
+                'odoo.addons.ncollection_saas.models.config_sync',
+                level='ERROR') as caught:
+            self.assertFalse(self._push(resp))
+        joined = '\n'.join(caught.output)
+        self.assertIn('denied', joined,
+                      "the failure body must still reach the log line")
+        self.assertNotIn('MagicMock', joined,
+                         "a mock repr leaked into the operator-facing log")
+
+    def test_a_real_gzip_body_is_decoded_and_still_parsed(self):
+        """Sanity half: the bounded read really does decompress.
+
+        Without this, the next test could pass simply because the platform
+        read raw gzip framing bytes and failed to parse them -- which would
+        look identical to a working cap.
+        """
+        body = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': False}}}).encode()
+        resp = _RealGzipResponse(200, body)
+        self.assertLess(len(resp.compressed), len(body) + 64)
+
+        self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(
+            self.tenant.cron_health_state, 'degraded',
+            "a gzip'd body must decode and still feed the health report")
+
+    def test_a_real_gzip_bomb_is_bounded_by_the_cap(self):
+        """The cap must bound the DECOMPRESSED output, through real urllib3.
+
+        8 MiB of decompressed padding from a few KiB on the wire. If the cap
+        bounded only the compressed read, this body would sail under it and
+        parse fine; the discard is the proof that the limit is applied after
+        decoding.
+        """
+        payload = (b'{"required_crons": {}, "pad": "'
+                   + b'A' * (8 * 1024 * 1024) + b'"}')
+        resp = _RealGzipResponse(200, payload)
+        self.assertLess(
+            len(resp.compressed), _MAX_RESPONSE_BYTES,
+            "precondition: the body must fit under the cap COMPRESSED, or "
+            "this proves nothing about where the cap is applied")
+
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp), "a bomb must not break the push")
+
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_health_state, 'unknown')
+        self.assertIn('discarded', self.tenant.cron_health_detail or '')
+
+    def test_a_forged_log_line_is_neutralised(self):
+        """CWE-117. This excerpt lands in the ERROR stream P2-T10 parses, so an
+        embedded newline lets a tenant forge whole log records inside ours."""
+        forged = (b'oops\n2026-01-01 00:00:00 999 ERROR nc odoo: '
+                  b'FAKE ALERT injected by the tenant')
+        resp = _StreamedResponse(500, forged)
+        with self.assertLogs(
+                'odoo.addons.ncollection_saas.models.config_sync',
+                level='ERROR') as caught:
+            self.assertFalse(self._push(resp))
+        joined = '\n'.join(caught.output)
+        self.assertIn('FAKE ALERT', joined, "the excerpt should still be shown")
+        self.assertNotIn('oops\n', joined,
+                         "a raw newline survived into the log stream")
+
+    def test_a_non_streamed_response_still_works(self):
+        """The fallback that keeps the existing contract. A response object
+        without .raw — a non-streamed Response, or any of the doubles this
+        suite already uses — must behave exactly as before."""
+        self.assertTrue(self._push(_Response(200, body={'required_crons': {}})))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.config_sync_state, 'ok')
 
 
 @tagged("post_install", "-at_install")
