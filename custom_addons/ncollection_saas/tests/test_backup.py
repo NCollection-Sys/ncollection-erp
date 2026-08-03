@@ -14,7 +14,6 @@ from unittest.mock import MagicMock, patch
 
 from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
-from odoo.tools import mute_logger
 
 BACKUP = 'odoo.addons.ncollection_saas.models.backup'
 
@@ -142,22 +141,52 @@ class TestBackup(TransactionCase):
         self.assertEqual(dropped, ['drill_acme'],
                          "a failed drill leaked its scratch database")
 
-    def test_a_failing_DROP_does_not_mask_the_drill_result(self):
-        """Cleanup must never become the verdict. If the drop itself throws,
-        the drill's own outcome is still what reaches the operator."""
+    def test_a_failing_DROP_is_LOUD_and_does_not_mask_the_drill_result(self):
+        """Cleanup must never become the verdict — and must never be silent.
+
+        The first version of this test asserted only that message_ids grew.
+        Review deleted the ERROR log entirely and it still passed, because the
+        chatter message is posted either way. The monitoring story (P2-T10
+        watches ERROR lines) rested on a line nothing checked.
+
+        It also asserts the CHATTER tells the truth. The first implementation
+        posted "then dropped" before the drop ran, so a failed cleanup left
+        the audit trail claiming the opposite of what happened — the leftover
+        reachable copy of tenant data hidden by the very record meant to
+        surface it.
+        """
         backup = self._drill_backup()
         Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
-        before = len(backup.message_ids)
         with patch.object(type(self.Backup), 'restore_to',
                           return_value='drill_acme'), \
                 patch.object(Mixin, '_drop_database',
                              side_effect=OSError('postgres unreachable')), \
-                mute_logger('odoo.addons.ncollection_saas.models.backup'):
+                self.assertLogs(BACKUP, level='ERROR') as caught:
+            self.assertTrue(self.Backup._cron_restore_drill())
+
+        joined = '\n'.join(caught.output)
+        self.assertIn('drill_acme', joined,
+                      "the ERROR line must name the database left behind")
+
+        backup.invalidate_recordset()
+        body = backup.message_ids[0].body or ''
+        self.assertIn('NOT REMOVED', body,
+                      "chatter claimed the scratch copy was gone when it "
+                      "was not — the audit trail must not lie")
+
+    def test_a_successful_drop_is_reported_as_such(self):
+        """The other half: when it DOES get dropped, say so, so an operator
+        can tell the two apart without reading logs."""
+        backup = self._drill_backup()
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_drop_database'):
             self.assertTrue(self.Backup._cron_restore_drill())
         backup.invalidate_recordset()
-        self.assertGreater(
-            len(backup.message_ids), before,
-            "the drill's own result was swallowed by a cleanup failure")
+        body = backup.message_ids[0].body or ''
+        self.assertIn('scratch copy removed', body)
+        self.assertNotIn('NOT REMOVED', body)
 
     def test_the_drop_uses_the_scratch_name_rule_not_the_strict_one(self):
         """`drill_<db>` contains an underscore. _assert_safe_db_name forbids

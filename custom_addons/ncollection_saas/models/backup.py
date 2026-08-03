@@ -359,19 +359,57 @@ class NcollectionBackup(models.Model):
                 "tenant database — refusing to overwrite it.", target))
             rec._alert_failure()
             return False
+        # Whether `target` existed BEFORE we touched anything decides what the
+        # cleanup is allowed to assume (#287). restore_to can raise before
+        # tenant_restore.sh ever reaches its dropdb/createdb -- a missing
+        # file_path, either ownership guard, or a timeout during decrypt -- and
+        # in that case this run created nothing.
+        pre_existing = rec._drill_database_exists(target)
+        failure = None
         try:
             rec.restore_to(target)
-            rec.message_post(body=self.env._(
-                "Restore drill OK: %(file)s restored to scratch DB %(db)s, "
-                "then dropped.", file=rec.file_path, db=target))
         except Exception as exc:  # pylint: disable=broad-except
-            rec.message_post(body=self.env._("Restore drill FAILED: %s", exc))
-            rec._alert_failure()
+            failure = exc
         finally:
-            rec._drop_drill_database(target)
+            dropped = rec._drop_drill_database(
+                target, pre_existing=pre_existing)
+
+        # Report AFTER the cleanup, never before. The first version posted
+        # "then dropped" inside the try, so a drop that later failed left the
+        # chatter -- the audit trail an operator actually reads -- asserting
+        # the opposite of what happened, with only a log line to contradict it.
+        # A leftover reachable copy of tenant data is precisely what this
+        # ticket exists to surface; the message must not hide it.
+        scrap = (self.env._("scratch copy removed") if dropped
+                 else self.env._(
+                     "SCRATCH COPY NOT REMOVED -- '%s' still exists and holds "
+                     "tenant data; drop it by hand", target))
+        if failure is None:
+            rec.message_post(body=self.env._(
+                "Restore drill OK: %(file)s restored to scratch DB %(db)s "
+                "(%(scrap)s).", file=rec.file_path, db=target, scrap=scrap))
+        else:
+            rec.message_post(body=self.env._(
+                "Restore drill FAILED: %(err)s (%(scrap)s).",
+                err=failure, scrap=scrap))
+            rec._alert_failure()
         return True
 
-    def _drop_drill_database(self, target):
+    def _drill_database_exists(self, db):
+        """Did `db` exist before this drill started? Never raises -- an
+        unanswerable probe must not stop the drill, and the caller treats
+        'unknown' as 'assume we created it', which is the safe default: it
+        drops, and dropping a drill_* database is never wrong for data safety.
+        """
+        try:
+            return self.env['ncollection.provisioning.job'].sudo(
+                )._database_exists(db)
+        except Exception:  # pylint: disable=broad-except
+            _logger.warning(
+                "Restore drill: could not check whether '%s' pre-existed.", db)
+            return False
+
+    def _drop_drill_database(self, target, pre_existing=False):
         """Delete the drill's scratch copy once it has served its purpose (#287).
 
         The drill exists to prove a backup RESTORES, and tenant_restore.sh
@@ -398,6 +436,10 @@ class NcollectionBackup(models.Model):
         is on the record, so the leftover database adds little that the chatter
         message does not.
 
+        Returns True when the database is gone, False when it survived --
+        the caller reports that in chatter, because "we dropped it" must never
+        be asserted before it is known.
+
         _assert_scratch_db_name, NOT _assert_safe_db_name: `_drop_database`
         requires the name be validated first, and the strict tenant rule
         forbids the '_' that every drill target contains. Naming the wrong
@@ -406,8 +448,22 @@ class NcollectionBackup(models.Model):
         subproc = self.env['ncollection.saas.subprocess.mixin']
         try:
             subproc._assert_scratch_db_name(target)
+            if pre_existing:
+                # Not ours: it was already there when this run began, so this
+                # run may have created nothing (restore_to can raise before
+                # the script's createdb). Dropping it anyway is still the
+                # right call for DATA SAFETY -- a drill_* database holds a
+                # tenant copy by definition and must not persist -- but say so
+                # at INFO, because the one realistic owner is an operator who
+                # restored a snapshot there by hand to investigate something.
+                _logger.info(
+                    "Restore drill: scratch database '%s' already existed "
+                    "before this run and is being reclaimed. If that was a "
+                    "manual investigation copy, use a name outside the "
+                    "drill_* namespace -- this cron owns it.", target)
             subproc._drop_database(target)
-        except Exception:   # noqa: BLE001
+            return True
+        except Exception:  # pylint: disable=broad-except
             # Never let cleanup mask the drill's own verdict. A drop that fails
             # is worth an ERROR line (P2-T10 watches those) but the restore
             # result -- success or the real failure -- is what the operator
@@ -416,6 +472,7 @@ class NcollectionBackup(models.Model):
                 "Restore drill: could not drop scratch database '%s'. It now "
                 "holds a copy of tenant data and is reachable by Host header; "
                 "drop it by hand.", target, exc_info=True)
+            return False
 
     # ---- alerting --------------------------------------------------------
 
