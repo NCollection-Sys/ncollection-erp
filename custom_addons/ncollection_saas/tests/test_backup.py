@@ -263,11 +263,23 @@ class TestBackup(TransactionCase):
         """
         blank = self._tenant(database_name=False,
                              database_status='not_provisioned')
-        backup = self.Backup.create({'tenant_id': blank.id, 'status': 'done'})
-        self.assertFalse(backup.database_name, "precondition: unset snapshot")
 
+        # The state is now UNREACHABLE rather than merely guarded: such a
+        # backup could never be taken (run_backup dumps database_name) nor
+        # restored (the guard has nothing to resolve), and it was the only
+        # state where the pin's earlier truthy check could be bypassed.
         with self.assertRaises(ValidationError):
-            backup.write({'database_name': 'victimco'})
+            self.Backup.create({'tenant_id': blank.id, 'status': 'done'})
+
+    def test_the_pin_is_unconditional_not_merely_truthy_guarded(self):
+        """Defence in depth behind the create() refusal above. The pin must
+        raise for ANY write, not only when the current value is set — that
+        exemption was the CRITICAL, and it must not creep back if the create
+        refusal is ever relaxed."""
+        tenant = self._tenant()
+        backup = self.Backup.create({'tenant_id': tenant.id, 'status': 'done'})
+        with self.assertRaises(ValidationError):
+            backup.write({'database_name': backup.database_name})
 
     def test_a_copy_does_not_carry_a_stale_file_path(self):
         """copy() re-derives the snapshot from the live tenant but would carry

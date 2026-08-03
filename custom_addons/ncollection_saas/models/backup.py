@@ -68,7 +68,7 @@ class NcollectionBackup(models.Model):
     # so this is DERIVED in create() and PINNED in write(). Both are needed:
     # deriving without pinning lets it be rewritten after the fact; pinning
     # without deriving just freezes a caller-supplied string.
-    database_name = fields.Char(readonly=True, copy=False, index=True)
+    database_name = fields.Char(readonly=True, copy=False)
     backup_type = fields.Selection(
         selection=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')],
         default='daily', required=True, tracking=True)
@@ -152,10 +152,29 @@ class NcollectionBackup(models.Model):
         on file_path.
         """
         Tenant = self.env['ncollection.tenant'].sudo()
+        out = []
         for vals in vals_list:
-            tenant = Tenant.browse(vals.get('tenant_id'))
-            vals['database_name'] = tenant.database_name if tenant else False
-        return super().create(vals_list)
+            vals = dict(vals)               # never mutate the caller's dict
+            tid = vals.get('tenant_id')
+            # Normalise before browse(): a Many2one sent as an x2many command
+            # tuple makes browse() raise a raw TypeError from inside create(),
+            # which is a worse failure than Odoo's own field validation.
+            tenant = Tenant.browse(tid) if isinstance(tid, int) else Tenant
+            if not tenant or not tenant.database_name:
+                # Refuse rather than stamp False. A backup with no snapshot can
+                # never be taken (run_backup dumps `database_name`) nor
+                # restored (the ownership guard has nothing to resolve), and it
+                # was the ONLY state in which the write-pin's earlier truthy
+                # check could be bypassed. Removing the state beats guarding
+                # it. No legitimate caller reaches here: the nightly cron
+                # filters ready + database_name != False, and fleet migration
+                # snapshots a tenant that is already ready.
+                raise ValidationError(self.env._(
+                    "Cannot create a backup for a tenant with no database "
+                    "name — it could never be taken or restored."))
+            vals['database_name'] = tenant.database_name
+            out.append(vals)
+        return super().create(out)
 
     def write(self, vals):
         """A snapshot's provenance is immutable once set (#275).
