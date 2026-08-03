@@ -93,7 +93,7 @@ class TestBackup(TransactionCase):
         tenant = self._tenant(database_name='live1')
         backup = self.Backup.create({
             'tenant_id': tenant.id, 'status': 'done',
-            'file_path': '/tmp/x.tar.enc'})
+            'file_path': '/var/lib/odoo/backups/acme/x.tar.enc'})
         wiz = self.env['ncollection.backup.restore.wizard'].create({
             'backup_id': backup.id, 'target_db': 'live1'})  # a LIVE tenant DB
         with self.assertRaises(UserError):
@@ -105,7 +105,8 @@ class TestBackup(TransactionCase):
         guard the interactive wizard has."""
         src = self._tenant(database_name='victim')
         backup = self.Backup.create({
-            'tenant_id': src.id, 'status': 'done', 'file_path': '/tmp/x.tar.enc'})
+            'tenant_id': src.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.tar.enc' % src.database_name})
         # A tenant whose db name collides with the drill's scratch target. It is
         # not_provisioned because the drill_<x> prefix contains an underscore (the
         # ISO-1 grammar guard forbids underscores at ready) — the collision guard
@@ -127,7 +128,8 @@ class TestBackup(TransactionCase):
     def _done_backup(self, tenant):
         return self.Backup.create({
             'tenant_id': tenant.id, 'backup_type': 'daily',
-            'status': 'done', 'file_path': '/tmp/x.dump'})
+            'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.dump' % tenant.database_name})
 
     def test_restoring_over_ANOTHER_live_tenant_is_refused(self):
         """The hole: one RPC drops a live tenant and serves someone else's
@@ -184,6 +186,67 @@ class TestBackup(TransactionCase):
                 backup.restore_to('victimco')
             run.assert_not_called()
 
+    def test_a_dump_from_ANOTHER_tenant_is_refused(self):
+        """#275 bound WHERE a restore lands. This binds WHAT gets restored.
+
+        Without it the same cross-tenant restore was one write away:
+        file_path's readonly is UI-only and unenforced over RPC, it is not
+        tracked, and the cipher passphrase is platform-wide so any tenant's
+        .enc decrypts. Point it at the victim's dump, restore "onto our own
+        tenant", and every ownership check above still passes.
+        """
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        mine = self._tenant()
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/stolen.tar.enc'
+                         % victim.database_name})
+
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to(mine.database_name)
+            run.assert_not_called()
+
+    def test_a_traversal_path_cannot_escape_the_tenant_directory(self):
+        """A prefix test is exactly what `..` and symlinks defeat, which is
+        why the guard resolves realpath() before comparing."""
+        mine = self._tenant()
+        for evil in ('/var/lib/odoo/backups/%s/../victimco/x.enc' % mine.database_name,
+                     '/var/lib/odoo/backups/%s/../../../etc/passwd' % mine.database_name):
+            backup = self.Backup.create({
+                'tenant_id': mine.id, 'status': 'done', 'file_path': evil})
+            with patch(BACKUP + '.subprocess.run') as run:
+                with self.assertRaises(ValidationError):
+                    backup.restore_to(mine.database_name)
+                run.assert_not_called()
+
+    def test_a_lookalike_sibling_directory_is_refused(self):
+        """`/backups/acme2/` must not satisfy a prefix test for tenant `acme`
+        — the reason the comparison appends os.sep instead of using
+        startswith on the bare root."""
+        mine = self._tenant(database_name='acme')
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/acme2/x.tar.enc'})
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to('acme')
+            run.assert_not_called()
+
+    def test_the_guard_follows_NC_BACKUP_DIR(self):
+        """The script reads NC_BACKUP_DIR; if the guard hardcoded the default,
+        a redeployment would break every restore or silently stop checking."""
+        mine = self._tenant()
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done',
+            'file_path': '/srv/dumps/%s/x.tar.enc' % mine.database_name})
+        with patch.dict('os.environ', {'NC_BACKUP_DIR': '/srv/dumps'}):
+            with patch(BACKUP + '.subprocess.run',
+                       return_value=self._mock_run()) as run:
+                self.assertEqual(backup.restore_to(mine.database_name),
+                                 mine.database_name)
+                run.assert_called()
+
     def test_in_place_restore_of_its_OWN_tenant_is_allowed(self):
         """#244's rollback restores a tenant's snapshot over that same tenant's
         live database. A guard that blocked this would break recovery — worse
@@ -234,7 +297,7 @@ class TestBackup(TransactionCase):
         tenant = self._tenant(database_name='live2')
         backup = self.Backup.create({
             'tenant_id': tenant.id, 'status': 'done',
-            'file_path': '/tmp/x.tar.enc'})
+            'file_path': '/var/lib/odoo/backups/live2/x.tar.enc'})
         wiz = self.env['ncollection.backup.restore.wizard'].create({
             'backup_id': backup.id, 'target_db': 'restore_live2'})
         with patch.object(type(backup), 'with_delay',
