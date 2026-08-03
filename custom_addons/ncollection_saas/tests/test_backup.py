@@ -281,6 +281,35 @@ class TestBackup(TransactionCase):
         self.assertTrue(os.path.isdir(canary),
                         "the purge followed a symlink out of the backup root")
 
+    def test_another_suites_namespace_is_NEVER_purged(self):
+        """New blast radius this ticket introduced, caught by the audit.
+
+        The fixture suites legitimately create REAL ncollection.tenant rows
+        named rtclienta/e2eclienta/provclient/albarari — tenant.py says so
+        explicitly. Keying the purge on string equality alone meant any record
+        squatting on one of those names would take that suite's dumps with it
+        when deleted. CLAUDE.md's ownership table is clear that each suite may
+        drop only its own, and the suites clean up via their own dropdb, never
+        through unlink().
+        """
+        root = self._backup_root_with('rtclienta', 'e2eclienta', 'provclient')
+        for db in ('rtclienta', 'e2eclienta', 'provclient'):
+            tenant = self._tenant(database_name=db)
+            tenant.unlink()
+            self.env.cr.postcommit.run()
+            self.assertTrue(
+                os.path.isdir(os.path.join(root, db)),
+                "deleted another suite's backups for '%s'" % db)
+
+    def test_the_purge_uses_the_STRICT_tenant_name_rule(self):
+        """Pins the validator choice, which the sibling #288 code makes
+        differently-looking but for the same kind of value. An underscored
+        name is a legal SCRATCH name and not a legal TENANT one; on an
+        irreversible delete the strict rule is the conservative reading."""
+        self._backup_root_with('legit')
+        with self.assertRaises(ValidationError):
+            self.Backup._purge_tenant_backup_dir('under_scored')
+
     def test_a_recycled_name_is_refused_while_its_files_remain(self):
         """The live cluster and the blocklist both miss this: dumps outlive the
         tenant AND its database, so a freed name is not actually free."""

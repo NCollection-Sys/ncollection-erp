@@ -432,7 +432,15 @@ class NcollectionBackup(models.Model):
         A traversal or absolute-ish name must refuse, never delete.
         """
         subproc = self.env['ncollection.saas.subprocess.mixin']
-        subproc._assert_scratch_db_name(db)
+        # The STRICT tenant rule, matching _assert_file_belongs_to_tenant --
+        # this is a tenant's own database_name, not a scratch target. The two
+        # sat on different rules for the same kind of value, which is how a
+        # reader ends up trusting the wrong one. Strict is also the
+        # conservative choice on an irreversible delete: a non-conforming name
+        # (possible on an unlocked not_provisioned/error tenant) is REFUSED
+        # and logged rather than deleted, and _tenant_backup_dir_exists still
+        # blocks that name from being handed out again.
+        subproc._assert_safe_db_name(db)
         root = os.path.realpath(self._backup_root())
         target = os.path.realpath(self._tenant_backup_dir(db))
         if target == root or not target.startswith(root + os.sep):

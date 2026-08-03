@@ -128,6 +128,19 @@ class Tenant(models.Model):
         handling, where an escaping exception would surface as an unrelated
         failure long after the delete succeeded.
         """
+        if db in _GENERATED_NAME_BLOCKLIST:
+            # Another suite's namespace. tenant.py documents that the fixture
+            # suites legitimately create REAL tenant rows under these names,
+            # and CLAUDE.md's ownership table says each suite may drop only
+            # its own. Nothing else ties "who is deleting" to "whose files",
+            # and this delete is irreversible -- so a record squatting on a
+            # reserved name must never take that namespace's dumps with it.
+            # The suites clean up via their own `dropdb`, never through here.
+            _logger.warning(
+                "Refusing to purge backups for '%s': that name belongs to a "
+                "reserved/fixture namespace, which this delete does not own.",
+                db)
+            return
         try:
             Backup._purge_tenant_backup_dir(db)
         except Exception:  # pylint: disable=broad-except
