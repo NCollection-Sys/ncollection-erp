@@ -7,6 +7,9 @@ the retention pyramid, and the restore-wizard safety guard. The real
 backup→restore-including-attachments round-trip is proven by
 scripts/backup/verify_tenant_backup.sh (evidence in the PR).
 """
+import os
+import shutil
+import tempfile
 from unittest.mock import MagicMock, patch
 
 from odoo.exceptions import UserError, ValidationError
@@ -231,6 +234,39 @@ class TestBackup(TransactionCase):
         with patch(BACKUP + '.subprocess.run') as run:
             with self.assertRaises(ValidationError):
                 backup.restore_to('acme')
+            run.assert_not_called()
+
+    def test_a_REAL_symlink_out_of_the_tenant_dir_is_refused(self):
+        """The other traversal tests only collapse `..` lexically — no file
+        need exist for that. This plants an actual symlink on disk, because
+        "realpath resolves it" was reasoning, not evidence.
+
+        The attack it models: write a symlink INSIDE your own backup
+        directory pointing at another tenant's dump. Every string check
+        passes — the path really is under your own directory.
+        """
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, True)
+        mine = self._tenant(database_name='minetenant')
+        victim_dir = os.path.join(root, 'victimco')
+        mine_dir = os.path.join(root, 'minetenant')
+        os.makedirs(victim_dir)
+        os.makedirs(mine_dir)
+        victim_dump = os.path.join(victim_dir, 'secret.tar.enc')
+        with open(victim_dump, 'wb') as fh:
+            fh.write(b'victim data')
+        lure = os.path.join(mine_dir, 'innocent.tar.enc')
+        os.symlink(victim_dump, lure)          # lives under MY directory
+
+        backup = self.Backup.create({
+            'tenant_id': mine.id, 'status': 'done', 'file_path': lure})
+
+        env_patch = patch.dict('os.environ', {'NC_BACKUP_DIR': root})
+        env_patch.start()
+        self.addCleanup(env_patch.stop)
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to(mine.database_name)
             run.assert_not_called()
 
     def test_the_guard_follows_NC_BACKUP_DIR(self):
