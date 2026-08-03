@@ -36,6 +36,7 @@ Exit code 0 = clean, 1 = violations found OR the diff could not be computed
 """
 
 import argparse
+import ast
 import re
 import subprocess
 import sys
@@ -198,6 +199,76 @@ def check_secrets(path: Path, text: str, findings: list[str]) -> None:
             break
 
 
+def check_test_collectability(path: Path, text: str, findings: list[str]) -> None:
+    """Every test class must be one CI's --test-tags actually selects (#286).
+
+    CI runs `--test-tags /ncollection_core,/ncollection_saas,...` — MODULE
+    scoped, no class. That is why a test method landing in the wrong class is
+    still caught: the class is collected, the method runs, it errors. Verified
+    by planting one and watching CI's tag form report it while a class-filtered
+    local run stayed silent at exit 0.
+
+    So this rule does NOT re-implement collection. It defends the property that
+    makes CI's coverage true in the first place: every test class carries a
+    @tagged whose PHASE the module-scoped run selects. Today all 77 classes use
+    `post_install, -at_install`. A class with no @tagged, or tagged out of both
+    phases, or marked -standard, would run NOWHERE and no count would move.
+
+    Deliberately narrow. Odoo's own tag algebra is richer than this; the point
+    is to catch drift away from a uniformity that currently holds, not to
+    model the resolver.
+    """
+    if path.suffix != ".py" or "/tests/" not in path.as_posix():
+        return
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return  # flake8 owns syntax; do not double-report
+
+    def is_test_case(node: ast.ClassDef) -> bool:
+        for b in node.bases:
+            name = b.id if isinstance(b, ast.Name) else getattr(b, "attr", "")
+            if name.endswith(("TransactionCase", "HttpCase", "SingleTransactionCase")):
+                return True
+        return False
+
+    def tag_args(node: ast.ClassDef) -> list[str] | None:
+        for d in node.decorator_list:
+            if isinstance(d, ast.Call) and getattr(d.func, "id", "") == "tagged":
+                return [a.value for a in d.args if isinstance(a, ast.Constant)
+                        and isinstance(a.value, str)]
+            if isinstance(d, ast.Name) and d.id == "tagged":
+                return []
+        return None
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef) or not is_test_case(node):
+            continue
+        methods = [n.name for n in node.body
+                   if isinstance(n, ast.FunctionDef) and n.name.startswith("test")]
+        if not methods:
+            continue
+        tags = tag_args(node)
+        if tags is None:
+            findings.append(
+                f"{path}:{node.lineno}: test class {node.name} has {len(methods)} "
+                f"test method(s) and no @tagged — every other test class in this "
+                f"repo declares one, and an untagged class silently changes which "
+                f"phase runs it (#286)")
+            continue
+        if "-standard" in tags:
+            findings.append(
+                f"{path}:{node.lineno}: test class {node.name} is tagged "
+                f"'-standard', so CI's --test-tags never selects it and its "
+                f"{len(methods)} test(s) run nowhere (#286)")
+            continue
+        if "post_install" not in tags and "at_install" not in tags:
+            findings.append(
+                f"{path}:{node.lineno}: test class {node.name} declares neither "
+                f"'post_install' nor 'at_install' ({tags!r}); it belongs to no "
+                f"run phase, so its {len(methods)} test(s) never execute (#286)")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", default="origin/main", help="git ref to diff against")
@@ -218,6 +289,7 @@ def main() -> int:
         check_menu_license_gate(path, text, path_set, findings)
         check_two_layer_separation(path, text, findings)
         check_secrets(path, text, findings)
+        check_test_collectability(path, text, findings)
 
     if findings:
         print("architecture-guard: violations found\n")
