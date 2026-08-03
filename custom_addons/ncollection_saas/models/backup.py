@@ -242,7 +242,7 @@ class NcollectionBackup(models.Model):
         # Do NOT infer safety from lifecycle state. Check the value at the
         # point it is about to be trusted as a path.
         self.env['ncollection.saas.subprocess.mixin']._assert_safe_db_name(db)
-        root = os.path.realpath(os.path.join(self._backup_root(), db))
+        root = os.path.realpath(self._tenant_backup_dir(db))
         real = os.path.realpath(self.file_path)
         if real != root and not real.startswith(root + os.sep):
             raise ValidationError(self.env._(

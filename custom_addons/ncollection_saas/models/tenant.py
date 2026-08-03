@@ -97,22 +97,44 @@ class Tenant(models.Model):
         keys on exactly that directory name.
 
         Collected BEFORE super(): once the rows are gone the names are too.
-        Purging never blocks the delete -- a filesystem that will not cooperate
-        must not strand a tenant record -- but it logs ERROR, which is the
+
+        Deferred to POSTCOMMIT, not run inline. rmtree has no undo, while a
+        DELETE does: Cursor.commit() runs postcommit.run() only after the SQL
+        commit succeeds, and rollback() calls postcommit.clear(). Purging
+        inline meant that if anything later in the SAME transaction raised --
+        another step in the same request, a queue_job that retries, a mail
+        side effect -- the tenant and its backup ROWS came back while the
+        FILES were already gone, leaving live records pointing at nothing.
+        Deferring makes the irreversible half wait for the reversible half to
+        become durable.
+
+        Purging never blocks the delete -- a filesystem that will not
+        cooperate must not strand a tenant record -- but it logs ERROR, the
         signal P2-T10 watches.
         """
         Backup = self.env['ncollection.backup'].sudo()
         names = [t.database_name for t in self if t.database_name]
         res = super().unlink()
         for db in names:
-            try:
-                Backup._purge_tenant_backup_dir(db)
-            except Exception:  # pylint: disable=broad-except
-                _logger.error(
-                    "Tenant '%s' was deleted but its backup directory could "
-                    "not be purged; the name must not be reused until it is.",
-                    db, exc_info=True)
+            self.env.cr.postcommit.add(
+                lambda db=db: self._purge_after_commit(Backup, db))
         return res
+
+    @api.model
+    def _purge_after_commit(self, Backup, db):
+        """Postcommit callback: the delete is durable, now remove the files.
+
+        Broad except on purpose -- this runs OUTSIDE the request's error
+        handling, where an escaping exception would surface as an unrelated
+        failure long after the delete succeeded.
+        """
+        try:
+            Backup._purge_tenant_backup_dir(db)
+        except Exception:  # pylint: disable=broad-except
+            _logger.error(
+                "Tenant '%s' was deleted but its backup directory could not "
+                "be purged; the name must not be reused until it is.",
+                db, exc_info=True)
 
     @api.constrains('database_name', 'database_status')
     def _check_locked_database_name(self):

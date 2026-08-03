@@ -16,6 +16,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 BACKUP = 'odoo.addons.ncollection_saas.models.backup'
+TENANT = 'odoo.addons.ncollection_saas.models.tenant'
 
 
 @tagged('post_install', '-at_install')
@@ -230,6 +231,11 @@ class TestBackup(TransactionCase):
         self.assertTrue(os.path.isdir(os.path.join(root, 'gonesoon')))
 
         tenant.unlink()
+        # The purge is deferred to postcommit so an irreversible rmtree waits
+        # for the reversible DELETE to become durable. TransactionCase never
+        # commits, so drive the hook explicitly -- this IS the deferral, and a
+        # test that passed without it would be testing the old inline path.
+        self.env.cr.postcommit.run()
 
         self.assertFalse(os.path.isdir(os.path.join(root, 'gonesoon')),
                          "the deleted tenant's dumps are still on disk")
@@ -240,7 +246,12 @@ class TestBackup(TransactionCase):
         merging them hid the fact that only ONE of the two guards was doing
         the work."""
         root = self._backup_root_with('victimco')
-        for evil in ('..', '.', 'x/../..'):
+        # Values ONLY the regex rejects. My first version used `..`/`.` —
+        # which realpath collapses, so the CONTAINMENT check caught them and
+        # deleting the regex left this test green. Uppercase, spaces, empty
+        # and too-short all resolve harmlessly INSIDE the root, so nothing
+        # but the name rule can refuse them.
+        for evil in ('ACME', 'a b', '', 'x', 'has.dot'):
             with self.assertRaises(ValidationError):
                 self.Backup._purge_tenant_backup_dir(evil)
         self.assertTrue(os.path.isdir(os.path.join(root, 'victimco')))
@@ -303,8 +314,44 @@ class TestBackup(TransactionCase):
         with patch('shutil.rmtree', side_effect=OSError('read-only fs')), \
                 self.assertLogs(BACKUP, level='ERROR') as caught:
             tenant.unlink()
+            self.env.cr.postcommit.run()
         self.assertFalse(tenant.exists(), "the delete was blocked by cleanup")
         self.assertIn('stubborn', '\n'.join(caught.output))
+
+    def test_the_purge_waits_for_the_delete_to_be_durable(self):
+        """rmtree has no undo; DELETE does.
+
+        Purging inline meant a rollback later in the SAME transaction brought
+        the tenant and its backup ROWS back while the FILES were already gone
+        — live records pointing at nothing. Deferring to postcommit makes the
+        irreversible half wait for the reversible half to commit.
+        """
+        root = self._backup_root_with('notyet')
+        tenant = self._tenant(database_name='notyet')
+
+        tenant.unlink()
+        self.assertTrue(
+            os.path.isdir(os.path.join(root, 'notyet')),
+            "files were destroyed before the delete was durable")
+
+        self.env.cr.postcommit.run()
+        self.assertFalse(os.path.isdir(os.path.join(root, 'notyet')))
+
+    def test_a_malformed_name_on_delete_is_logged_not_raised(self):
+        """A tenant in `error` can hold any string (write() unlocks the name
+        there). That reaches the scratch-name validator inside the purge and
+        raises ValidationError — which must be caught, or a delete would fail
+        for a reason unrelated to the delete."""
+        self._backup_root_with('legit')
+        tenant = self._tenant(database_name='legit')
+        tenant.database_status = 'error'
+        tenant.database_name = '..'
+
+        with self.assertLogs(TENANT, level='ERROR') as caught:
+            tenant.unlink()
+            self.env.cr.postcommit.run()
+        self.assertFalse(tenant.exists())
+        self.assertIn('could not', '\n'.join(caught.output).lower())
 
     def test_restore_drill_skips_live_tenant_collision(self):
         """ISO-2 (P3-T12): the UNATTENDED monthly drill dropdb+createdb's its
