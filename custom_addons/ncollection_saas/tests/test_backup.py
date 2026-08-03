@@ -140,6 +140,50 @@ class TestBackup(TransactionCase):
                 backup.restore_to(victim.database_name)
             run.assert_not_called()
 
+    def test_an_ARCHIVED_tenant_is_still_protected(self):
+        """The bypass the isolation audit found, and the one I got wrong.
+
+        `sudo()` bypasses ACLs and record rules — it does NOT bypass the
+        implicit `active = True` domain Odoo injects on any model with an
+        `active` field. Archiving a tenant is a one-click list action that
+        touches neither `database_name` nor the physical Postgres database, so
+        the row vanished from the clash check while its database stayed live
+        and reachable. Restoring another tenant's snapshot over it then
+        sailed through — the exact cross-tenant break this ticket closes.
+        """
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        victim.active = False
+        self.assertEqual(
+            self.env['ncollection.tenant'].sudo().search_count(
+                [('database_name', '=', 'victimco')]), 0,
+            "precondition: an archived tenant must be invisible to a plain "
+            "search, or this test proves nothing")
+
+        backup = self._done_backup(self._tenant())
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to('victimco')
+            run.assert_not_called()
+
+    def test_a_backup_cannot_be_repointed_at_another_tenant(self):
+        """The guard's "own tenant" exemption is only as good as tenant_id.
+
+        Without this, the whole binding was one write from useless: repoint the
+        snapshot at the victim, and restoring over the victim's live database
+        becomes "restoring over its own tenant". `database_name` is a stored
+        related field, so it follows silently and nothing downstream can tell.
+        """
+        victim = self._tenant(company_name='Victim', database_name='victimco')
+        backup = self._done_backup(self._tenant())
+
+        with self.assertRaises(ValidationError):
+            backup.write({'tenant_id': victim.id})
+
+        with patch(BACKUP + '.subprocess.run') as run:
+            with self.assertRaises(ValidationError):
+                backup.restore_to('victimco')
+            run.assert_not_called()
+
     def test_in_place_restore_of_its_OWN_tenant_is_allowed(self):
         """#244's rollback restores a tenant's snapshot over that same tenant's
         live database. A guard that blocked this would break recovery — worse

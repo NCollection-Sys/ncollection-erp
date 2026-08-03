@@ -117,6 +117,32 @@ class NcollectionBackup(models.Model):
             })
             self._alert_failure()
 
+    def write(self, vals):
+        """A snapshot's provenance is immutable once set (#275).
+
+        _assert_restore_target exempts "restoring over the backup's OWN
+        tenant". That exemption is only as trustworthy as tenant_id, which was
+        an ordinary writable Many2one -- and the caller needs write on this
+        model anyway. So the guard was one write from useless:
+
+            backup_of_A.write({'tenant_id': victim.id})
+            backup_of_A.restore_to(victim.database_name)   # now "its own"
+
+        Reassigning would also silently move `database_name` (related, stored),
+        so nothing downstream could tell. Pinning tenant_id gives the exemption
+        a fixed point to stand on.
+        """
+        if 'tenant_id' in vals:
+            for rec in self:
+                if rec.tenant_id and vals['tenant_id'] != rec.tenant_id.id:
+                    raise ValidationError(self.env._(
+                        "A backup's tenant cannot be reassigned. Snapshot "
+                        "'%(b)s' belongs to '%(t)s'; repointing it would let a "
+                        "restore claim another tenant's database as its own.",
+                        b=rec.name or rec.id,
+                        t=rec.tenant_id.database_name or rec.tenant_id.display_name))
+        return super().write(vals)
+
     def _assert_restore_target(self, target_db):
         """Refuse a restore that would destroy the wrong database (#275).
 
@@ -132,6 +158,17 @@ class NcollectionBackup(models.Model):
         were bypassable by not being a caller. The rule, in one line: a LIVE
         tenant database may be restored over ONLY by its own backup.
 
+        RESIDUAL, stated so nobody reads this guard as complete: `file_path`
+        is a plain stored Char whose `readonly=True` is UI-only and unenforced
+        over RPC, and it is not tracked. A base.group_system caller can point
+        it at ANOTHER tenant's .enc (the cipher passphrase is platform-wide, so
+        any dump decrypts) and then restore "onto its own tenant" -- passing
+        every check here. Same privilege bar as calling restore_to at all, and
+        pre-existing, but NOT closed by this method. Binding the file to the
+        record that produced it needs a tenant-scoped path check, which is
+        tracked separately. `tenant_id` IS pinned above, so the ownership the
+        exemption reads cannot be manufactured.
+
         Two legitimate shapes, both preserved:
           * scratch/staging  -- the wizard and the nightly restore drill;
           * in-place rollback of the backup's OWN tenant (#244).
@@ -144,8 +181,8 @@ class NcollectionBackup(models.Model):
         # sees every tenant, so today sudo() makes no observable difference.
         # It is defence against a future record rule, not a proven guard, and a
         # test asserting it would only be asserting the implementation.
-        clashes = self.env['ncollection.tenant'].sudo().search_count(
-            [('database_name', '=', target_db)])
+        clashes = self.env['ncollection.tenant'].sudo().with_context(
+            active_test=False).search_count([('database_name', '=', target_db)])
         if clashes and target_db != own_db:
             raise ValidationError(self.env._(
                 "Refusing to restore backup of '%(src)s' over live tenant "
@@ -153,10 +190,13 @@ class NcollectionBackup(models.Model):
                 "restored over by its OWN backup; use a scratch name.",
                 src=own_db or '?', dst=target_db))
         if target_db and target_db == own_db:
-            # Our own tenant: a routable name, so hold it to the strict rule.
+            # Our own tenant: hold it to the strict tenant rule, which
+            # provisioning's _validate_db_name already enforced on the way in.
             subproc._assert_safe_db_name(target_db)
         else:
-            # Scratch: '_' allowed, which is what keeps it unroutable.
+            # Scratch: '_' allowed purely so `drill_%s` and `restore_%s` keep
+            # working. It buys NO isolation -- an underscored database is just
+            # as reachable over HTTP (see SCRATCH_DB_NAME_RE).
             subproc._assert_scratch_db_name(target_db)
 
     def restore_to(self, target_db):
@@ -260,8 +300,8 @@ class NcollectionBackup(models.Model):
         # Never let it clobber a LIVE tenant DB — mirror the interactive wizard's
         # guard (BackupRestoreWizard.action_restore). If a tenant somehow owns
         # this name, skip + alert rather than destroy a real tenant's database.
-        if self.env['ncollection.tenant'].sudo().search_count(
-                [('database_name', '=', target)]):
+        if self.env['ncollection.tenant'].sudo().with_context(
+                active_test=False).search_count([('database_name', '=', target)]):
             rec.message_post(body=self.env._(
                 "Restore drill SKIPPED: scratch name '%s' collides with a live "
                 "tenant database — refusing to overwrite it.", target))

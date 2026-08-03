@@ -32,8 +32,11 @@ class BackupRestoreWizard(models.TransientModel):
     def action_restore(self):
         self.ensure_one()
         # Safety: never let a restore clobber a live tenant DB.
-        if self.env['ncollection.tenant'].sudo().search_count(
-                [('database_name', '=', self.target_db)]):
+        # active_test=False: an ARCHIVED tenant keeps its live database, and
+        # sudo() does not bypass Odoo's implicit `active = True` filter (#275).
+        if self.env['ncollection.tenant'].sudo().with_context(
+                active_test=False).search_count(
+                    [('database_name', '=', self.target_db)]):
             raise UserError(self.env._(
                 "'%s' is a live tenant database. Choose a scratch/staging name — "
                 "restores never overwrite a live tenant.", self.target_db))

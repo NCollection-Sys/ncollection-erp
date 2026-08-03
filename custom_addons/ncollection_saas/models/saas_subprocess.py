@@ -37,12 +37,25 @@ _logger = logging.getLogger(__name__)
 DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 # Scratch/staging targets are deliberately LOOSER: they may contain '_'.
 #
-# That underscore is load-bearing, not sloppiness. db_filter = ^%d$ routes a
-# subdomain to the database of the same name, and underscores are invalid in
-# hostnames -- so 'restore_acme' is unreachable over HTTP BY CONSTRUCTION.
-# Tightening scratch names to DB_NAME_RE would make a restored copy of another
-# tenant's data routable by subdomain, turning a hardening change into a
-# cross-tenant exposure. Everything else DB_NAME_RE blocks is still blocked.
+# The reason is COMPATIBILITY, nothing more. Both shipped scratch generators
+# emit an underscore -- backup.py's `drill_%s` and the restore wizard's
+# `restore_%s` -- so holding scratch targets to DB_NAME_RE would break the
+# nightly drill and the wizard's own default.
+#
+# An earlier version of this comment claimed the underscore also made such a
+# database "unreachable over HTTP by construction", because db_filter = ^%d$
+# and underscores are invalid in hostnames. THAT IS FALSE and was measured to
+# be false: nginx forwards an underscored Host verbatim (proxy.conf's
+# `proxy_set_header Host $host`, server_name `.localhost` / `.ncollectionerp.com`)
+# and odoo.http.db_filter regex-matches the label against EXISTING database
+# names with no charset validation. `curl -H 'Host: drill_acme.localhost'`
+# returns the same 303 as a real tenant. Do not re-derive that safety claim.
+#
+# So this regex buys no isolation over DB_NAME_RE -- it only keeps the existing
+# callers working while still blocking injection shapes, reserved names and the
+# platform database. Scratch databases holding restored tenant data ARE
+# network-reachable and are never cleaned up; that is a real exposure and is
+# tracked separately, not solved here.
 SCRATCH_DB_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,62}$')
 RESERVED_DB_NAMES = frozenset(
     {'admin', 'www', 'staging', 'api', 'postgres', 'template0', 'template1'})
@@ -65,6 +78,12 @@ class SaasSubprocessMixin(models.AbstractModel):
         if not db or not DB_NAME_RE.match(db):
             raise ValidationError(self.env._(
                 "Unsafe database name '%s' (must match ^[a-z][a-z0-9]{2,62}$).", db))
+        self._assert_not_reserved(db)
+
+    def _assert_not_reserved(self, db):
+        """Shared by both name guards. The constants were already centralised;
+        the CHECK was copy-pasted, so a future change could have landed in only
+        one of the two and left the other quietly permissive."""
         if db in RESERVED_DB_NAMES or db == self.env.cr.dbname:
             raise ValidationError(self.env._(
                 "Refusing to operate on reserved/platform database '%s'.", db))
@@ -85,9 +104,7 @@ class SaasSubprocessMixin(models.AbstractModel):
             raise ValidationError(self.env._(
                 "Unsafe scratch database name '%s' "
                 "(must match ^[a-z][a-z0-9_]{2,62}$).", db))
-        if db in RESERVED_DB_NAMES or db == self.env.cr.dbname:
-            raise ValidationError(self.env._(
-                "Refusing to operate on reserved/platform database '%s'.", db))
+        self._assert_not_reserved(db)
 
     def _odoo_conn_args(self, db):
         """`-c rcfile -d db --db_*` flags for a spawned odoo subprocess. The
