@@ -362,12 +362,60 @@ class NcollectionBackup(models.Model):
         try:
             rec.restore_to(target)
             rec.message_post(body=self.env._(
-                "Restore drill OK: %(file)s restored to scratch DB %(db)s.",
-                file=rec.file_path, db=target))
+                "Restore drill OK: %(file)s restored to scratch DB %(db)s, "
+                "then dropped.", file=rec.file_path, db=target))
         except Exception as exc:  # pylint: disable=broad-except
             rec.message_post(body=self.env._("Restore drill FAILED: %s", exc))
             rec._alert_failure()
+        finally:
+            rec._drop_drill_database(target)
         return True
+
+    def _drop_drill_database(self, target):
+        """Delete the drill's scratch copy once it has served its purpose (#287).
+
+        The drill exists to prove a backup RESTORES, and tenant_restore.sh
+        already decides that by counting tables in the public schema and
+        failing on zero. So the moment restore_to returns, the database has
+        answered the only question it was created to answer -- and what is
+        left behind is a full, unmanaged copy of one tenant's data.
+
+        It was never dropped. Three properties made that worse than a stray
+        database: the name is `drill_<the tenant's own public subdomain>`, so
+        it is guessable; the drill re-runs monthly, so it persists; and it is
+        REACHABLE -- db_filter matches the request Host against existing
+        database names with no charset validation, and nginx forwards an
+        underscored Host verbatim. Measured: a database that exists answers
+        differently from one that does not (500 vs 303), i.e. Odoo really does
+        route into it. Anyone reaching it meets a real login page whose working
+        credentials are that tenant's password hashes AT SNAPSHOT TIME --
+        including passwords rotated away from after an incident.
+
+        In `finally` deliberately: a FAILED drill can still leave a partially
+        restored database behind, and that copy is no less sensitive than a
+        successful one. Dropping it costs diagnostic material, which is a
+        conscious trade -- the schema check already failed loudly and the error
+        is on the record, so the leftover database adds little that the chatter
+        message does not.
+
+        _assert_scratch_db_name, NOT _assert_safe_db_name: `_drop_database`
+        requires the name be validated first, and the strict tenant rule
+        forbids the '_' that every drill target contains. Naming the wrong
+        validator here would either reject every drop or skip the check.
+        """
+        subproc = self.env['ncollection.saas.subprocess.mixin']
+        try:
+            subproc._assert_scratch_db_name(target)
+            subproc._drop_database(target)
+        except Exception:   # noqa: BLE001
+            # Never let cleanup mask the drill's own verdict. A drop that fails
+            # is worth an ERROR line (P2-T10 watches those) but the restore
+            # result -- success or the real failure -- is what the operator
+            # came for and must survive this block.
+            _logger.error(
+                "Restore drill: could not drop scratch database '%s'. It now "
+                "holds a copy of tenant data and is reachable by Host header; "
+                "drop it by hand.", target, exc_info=True)
 
     # ---- alerting --------------------------------------------------------
 

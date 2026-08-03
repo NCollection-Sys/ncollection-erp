@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, patch
 
 from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
+from odoo.tools import mute_logger
 
 BACKUP = 'odoo.addons.ncollection_saas.models.backup'
 
@@ -101,6 +102,78 @@ class TestBackup(TransactionCase):
             'backup_id': backup.id, 'target_db': 'live1'})  # a LIVE tenant DB
         with self.assertRaises(UserError):
             wiz.action_restore()
+
+    def _drill_backup(self, db='acme'):
+        src = self._tenant(database_name=db)
+        return self.Backup.create({
+            'tenant_id': src.id, 'status': 'done',
+            'file_path': '/var/lib/odoo/backups/%s/x.tar.enc' % db})
+
+    def test_the_drill_drops_its_scratch_database(self):
+        """It never did, and that left a full, reachable copy of tenant data
+        under a guessable name (#287). The drill's only job is proving the
+        backup restores — tenant_restore.sh decides that by counting tables —
+        so the database has answered its question by the time restore_to
+        returns."""
+        self._drill_backup()
+        dropped = []
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_drop_database',
+                             side_effect=lambda db: dropped.append(db)):
+            self.Backup._cron_restore_drill()
+        self.assertEqual(dropped, ['drill_acme'])
+
+    def test_a_FAILED_drill_still_drops_its_database(self):
+        """A half-restored copy is no less sensitive than a complete one, so
+        the drop lives in `finally`. Dropping costs diagnostic material —
+        a conscious trade, since the schema check already failed loudly and
+        the error is on the record."""
+        self._drill_backup()
+        dropped = []
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          side_effect=RuntimeError('pg_restore blew up')), \
+                patch.object(type(self.Backup), '_alert_failure'), \
+                patch.object(Mixin, '_drop_database',
+                             side_effect=lambda db: dropped.append(db)):
+            self.Backup._cron_restore_drill()
+        self.assertEqual(dropped, ['drill_acme'],
+                         "a failed drill leaked its scratch database")
+
+    def test_a_failing_DROP_does_not_mask_the_drill_result(self):
+        """Cleanup must never become the verdict. If the drop itself throws,
+        the drill's own outcome is still what reaches the operator."""
+        backup = self._drill_backup()
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        before = len(backup.message_ids)
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_drop_database',
+                             side_effect=OSError('postgres unreachable')), \
+                mute_logger('odoo.addons.ncollection_saas.models.backup'):
+            self.assertTrue(self.Backup._cron_restore_drill())
+        backup.invalidate_recordset()
+        self.assertGreater(
+            len(backup.message_ids), before,
+            "the drill's own result was swallowed by a cleanup failure")
+
+    def test_the_drop_uses_the_scratch_name_rule_not_the_strict_one(self):
+        """`drill_<db>` contains an underscore. _assert_safe_db_name forbids
+        that, so validating with it would reject every drop the drill makes —
+        and _drop_database's contract requires SOME validation first."""
+        self._drill_backup()
+        seen = []
+        Mixin = type(self.env['ncollection.saas.subprocess.mixin'])
+        with patch.object(type(self.Backup), 'restore_to',
+                          return_value='drill_acme'), \
+                patch.object(Mixin, '_assert_scratch_db_name',
+                             side_effect=lambda db: seen.append(db)), \
+                patch.object(Mixin, '_drop_database'):
+            self.Backup._cron_restore_drill()
+        self.assertEqual(seen, ['drill_acme'],
+                         "the scratch-name validator was not the one used")
 
     def test_restore_drill_skips_live_tenant_collision(self):
         """ISO-2 (P3-T12): the UNATTENDED monthly drill dropdb+createdb's its
