@@ -41,6 +41,48 @@ class TestFleetMigration(TransactionCase):
         cls.t2 = mk('fleettwo')
         cls.t3 = mk('fleetthree')
 
+    # ---- the in-place rollback path against the REAL guard (#275) --------
+    #
+    # Every other test here patches `restore_to` away, so none of them would
+    # notice if #275's guard started REFUSING the rollback. That is the one
+    # failure mode that matters most: a guard which breaks recovery is worse
+    # than the hole it closes. These two patch only the SUBPROCESS, so the
+    # real guard runs.
+
+    def _snapshot_for(self, tenant):
+        return self.env['ncollection.backup'].create({
+            'tenant_id': tenant.id, 'backup_type': 'daily',
+            'status': 'done', 'file_path': '/tmp/snap.dump'})
+
+    def test_in_place_rollback_is_allowed_by_the_restore_guard(self):
+        """`_restore` targets the tenant's OWN live database, which is exactly
+        what #275 refuses for anyone else's backup. It must still be allowed
+        for the tenant's own snapshot, or fleet-migration recovery is dead."""
+        migration = self._migration()
+        migration._prepare()
+        line = self._line(migration, self.t1)
+        line.backup_id = self._snapshot_for(self.t1).id
+
+        with patch.object(NcollectionBackup, '_run_subprocess',
+                          return_value='') as run, \
+                patch.object(type(line), '_drop_database', return_value=None):
+            line._restore(self.t1.database_name)
+            run.assert_called_once()
+
+    def test_rolling_back_with_ANOTHER_tenants_snapshot_is_refused(self):
+        """The same call with a foreign snapshot must be stopped by the model,
+        not merely by #244's call-site check — the model is what RPC reaches."""
+        migration = self._migration()
+        migration._prepare()
+        line = self._line(migration, self.t1)
+        line.backup_id = self._snapshot_for(self.t2).id   # t2's snapshot!
+
+        with patch.object(NcollectionBackup, '_run_subprocess') as run, \
+                patch.object(type(line), '_drop_database', return_value=None):
+            with self.assertRaises(ValidationError):
+                line._restore(self.t1.database_name)
+            run.assert_not_called()
+
     # ---- helpers ---------------------------------------------------------
 
     def _migration(self, **kw):

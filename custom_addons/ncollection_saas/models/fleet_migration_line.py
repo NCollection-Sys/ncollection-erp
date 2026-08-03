@@ -394,10 +394,16 @@ class FleetMigrationLine(models.Model):
 
         This does not close the underlying hole: ``ncollection.backup.restore_to``
         is a PUBLIC method and ``base.group_system`` has full write on that
-        model, so the same cross-tenant restore is reachable over RPC today
-        without this button at all. That is a pre-existing exposure worth its own
-        ticket. What this does is make THIS call site correct, which it should be
-        regardless of what sits underneath it.
+        model, so the same cross-tenant restore was reachable over RPC without
+        this button at all.
+
+        CLOSED by #275: ``restore_to`` now runs ``_assert_restore_target``, so
+        a live tenant database can only be restored over by its own backup, and
+        ``ncollection.backup.write`` refuses to repoint ``tenant_id`` (which
+        would otherwise have let a caller manufacture that ownership). This
+        check stays because it is still the RIGHT check at this call site, and
+        because it compares against the LINE's tenant -- a second, independent
+        source of truth from the one the model-level guard reads.
         """
         backup_tenant = self.backup_id.tenant_id
         if backup_tenant and backup_tenant != self.tenant_id:
