@@ -38,8 +38,10 @@ class BackupRestoreWizard(models.TransientModel):
                 active_test=False).search_count(
                     [('database_name', '=', self.target_db)]):
             raise UserError(self.env._(
-                "'%s' is a live tenant database. Choose a scratch/staging name — "
-                "restores never overwrite a live tenant.", self.target_db))
+                "'%s' is a live tenant database. Choose a scratch/staging "
+                "name — THIS WIZARD never overwrites a live tenant. (An "
+                "in-place rollback of a tenant's OWN snapshot is a different "
+                "path: action_restore_in_place, #244.)", self.target_db))
         self.backup_id.with_delay(
             channel=_BACKUP_CHANNEL,
             description="Restore '%s' -> '%s'" % (
