@@ -76,14 +76,22 @@ _SYNC_CHANNEL = 'root.provisioning'
 # _RPC_DEADLINE below is the total-duration budget; this stays as the idle bound.
 _RPC_TIMEOUT = 30
 
-# Total wall-clock budget for reading one response body (#283).
+# Budget for reading one response body, checked BETWEEN chunks (#283).
 #
-# Checked BETWEEN chunks, which is the honest limit of a pure-Python bound: a
-# single blocking raw.read() cannot be interrupted, so the true worst case is
-# _RPC_DEADLINE plus one _RPC_TIMEOUT idle gap. That turns an UNBOUNDED stall
-# into a bounded one; it is not a hard guarantee, and Odoo's limit_time_real on
-# the worker remains the backstop. A healthy push is milliseconds -- the body is
-# a handful of cron entries -- so 60s only ever fires on something pathological.
+# READ THIS BEFORE TRUSTING THE NUMBER. An earlier version of this comment
+# claimed the worst case was _RPC_DEADLINE plus one idle gap (~90s). That was
+# measured and found FALSE. raw.read(n) bottoms out in io.BufferedReader.read,
+# which LOOPS internally until it has n bytes or hits EOF; only each individual
+# recv() is bounded by the idle timeout, and every arriving byte resets it. So
+# one chunk read can block far past this deadline -- a tenant dribbling a byte
+# every ~29s holds a single 8 KiB read for ~8192 x 29s, on the order of days --
+# and the between-chunk check never gets to run. urllib3 2.0.7 here exposes no
+# read1(), so there is no pure-Python way to return after a single recv.
+#
+# What this deadline DOES bound: a body arriving in whole chunks separated by
+# gaps, which is the common misbehaving-proxy shape. What actually bounds the
+# fine-grained trickle is Odoo's worker limit (limit_time_real / _cron in
+# config/odoo.prod.conf). Do not quote a number here that the code cannot keep.
 _RPC_DEADLINE = 60
 
 # Read granularity. Small enough that the deadline is checked often; large
@@ -213,7 +221,8 @@ class TenantConfigSync(models.Model):
              "healthy.")
     cron_health_detail = fields.Char(readonly=True, copy=False)
     cron_report_activity_id = fields.Many2one(
-        'mail.activity', readonly=True, copy=False,
+        'mail.activity', readonly=True, copy=False, ondelete='set null',
+        string='Open Unreadable-Report To-Do',
         help="The open to-do for a persistently unreadable self-report. "
              "Separate from cron_health_activity_id on purpose: 'we cannot "
              "SEE the jobs' and 'a job is DISABLED' need different actions, "
@@ -387,20 +396,61 @@ class TenantConfigSync(models.Model):
                 # response freezes the signal at a bare 'unknown' forever with
                 # nothing on the record to say why (#278).
                 detail = (skip_reason or '')[:255] or False
-                misses = self.cron_report_miss_count + 1
-                vals = {'cron_report_miss_count': misses}
+                # A missing report has TWO shapes and only one is a fault.
+                #
+                # skip_reason truthy  -> we could not READ the report. #283.
+                # skip_reason falsy   -> the body was read fine and simply
+                #                        carries no required_crons. That is a
+                #                        tenant provisioned before #262, which
+                #                        this module's own header calls
+                #                        legitimate and says must not alert.
+                #
+                # The first version counted BOTH, so every pre-#262 tenant --
+                # exactly the #218 backfill population -- would collect a miss
+                # every night and get a false "unreadable" to-do on the third.
+                # Reproduced independently by two reviewers.
+                #
+                # `or 0` is belt-and-braces, NOT a load-bearing guard: the ORM
+                # coerces a NULL Integer column to 0 before Python sees it, so
+                # `+ 1` cannot receive None through this path -- RED-proved by
+                # removing the `or 0` and watching the NULL test still pass.
+                # It is kept only against a future compute/store=False change.
+                vals = {}
+                misses = 0
+                if skip_reason:
+                    misses = (self.cron_report_miss_count or 0) + 1
+                    vals['cron_report_miss_count'] = misses
                 if (self.cron_health_state != 'unknown'
                         or self.cron_health_detail != detail):
                     vals['cron_health_state'] = 'unknown'
                     vals['cron_health_detail'] = detail
-                self.sudo().write(vals)
-                # Alert on CROSSING, exactly once. The reconcile touches every
-                # ready tenant nightly, so alerting at >= threshold instead of
-                # == would re-post every night forever and train everyone to
-                # ignore the channel -- the failure mode _config_sync_record
-                # already guards against one layer up.
-                if misses == _MAX_UNREPORTED_SYNCS:
-                    self._alert_unreportable(misses, detail)
+                if vals:
+                    self.sudo().write(vals)
+                # Alert once per incident, with the OPEN TO-DO as what
+                # suppresses the repeat -- not a strict `== threshold`.
+                #
+                # `==` looked equivalent and was worse: the counter is written
+                # before the alert and both sat under one try/except, so an
+                # alert that raised (no default activity user, a mail ACL, a
+                # broken follower) was swallowed with the counter already
+                # exactly at the threshold -- and that crossing's escalation
+                # was then gone for good, unable to fire again until a full
+                # reset and a fresh incident.
+                #
+                # ">= and no to-do open" is idempotent: a successful alert
+                # leaves the to-do open, suppressing the nightly repeat exactly
+                # as `==` did, while a FAILED alert is retried next sync.
+                if (misses >= _MAX_UNREPORTED_SYNCS
+                        and not self.cron_report_activity_id):
+                    try:
+                        self._alert_unreportable(misses, detail)
+                    except Exception:   # noqa: BLE001
+                        # Its own boundary: an alerting failure must not read
+                        # as the counter bookkeeping having failed.
+                        _logger.exception(
+                            "Could not raise the unreadable-report alert for "
+                            "%s; the miss count is recorded and the alert "
+                            "retries on the next sync.", self.database_name)
                 return
 
             # We got a readable report. That clears the miss streak even if

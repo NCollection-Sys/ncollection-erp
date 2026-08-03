@@ -4,7 +4,10 @@
     'name': 'NCollection SaaS Admin',
     # 6.4.0 (#244): 'Restore in place' action on a failed fleet-migration line —
     # new method + a button in the line list, so `-u` applies the view change.
-    'version': '19.0.6.4.0',
+    # Minor bump: #283 adds two real columns to ncollection.tenant
+    # (cron_report_miss_count, cron_report_activity_id), so `-u` is what
+    # applies it. Same convention as #218's new-column bump.
+    'version': '19.0.6.5.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

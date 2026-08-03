@@ -661,6 +661,15 @@ class TestConfigSyncHealth(TransactionCase):
         self.assertLess(
             resp.raw.returned, len(resp.raw._data),
             "the whole body was read despite the deadline elapsing")
+        # "stopped somewhere before the end" is too weak: a loop checking the
+        # clock every OTHER iteration reads twice as much and still passes it.
+        # The claimed property is a check between EVERY chunk, so bound the
+        # reads -- the fake clock elapses on its 3rd reading, permitting at
+        # most two chunk reads.
+        self.assertLessEqual(
+            resp.raw.calls, 2,
+            "more chunk reads than the deadline schedule allows — the clock "
+            "is being checked less often than every chunk")
         self.assertTrue(resp.closed, "the connection was not released")
 
     def test_the_deadline_does_not_fire_on_a_healthy_push(self):
@@ -741,6 +750,49 @@ class TestConfigSyncHealth(TransactionCase):
         self.assertEqual(
             self._report_posts(), posts,
             "re-posted after crossing; the alert must fire once, not nightly")
+
+    def test_a_tenant_that_simply_never_reports_is_not_escalated(self):
+        """The regression two reviewers reproduced independently.
+
+        A missing report has two shapes. "We could not READ it" is #283's
+        fault condition. "The body read fine and carries no required_crons" is
+        a tenant provisioned before #262 — which this module's own header
+        calls legitimate and says must never alert, because #218 is what
+        backfills those.
+
+        Counting both meant every pre-#262 tenant collected a miss nightly and
+        got a false "unreadable" to-do on the third — self-inflicted alert
+        fatigue, in the exact channel this ticket exists to keep credible.
+        """
+        for _ in range(_MAX_UNREPORTED_SYNCS + 2):
+            self.tenant._record_cron_health(None, skip_reason=False)
+
+        self.tenant.invalidate_recordset()
+        self.assertEqual(
+            self.tenant.cron_report_miss_count, 0,
+            "a legitimate non-reporter was counted as a read failure")
+        self.assertFalse(self.tenant.cron_report_activity_id)
+        self.assertFalse(self._report_todos())
+        self.assertEqual(self.tenant.cron_health_state, 'unknown',
+                         "it is still 'not reported' — just not alertable")
+
+    def test_a_null_miss_count_from_an_upgrade_does_not_crash(self):
+        """A NULL column must not break a push.
+
+        What this actually locks in is Odoo's ORM coercion: a NULL Integer is
+        read as 0, so `+ 1` never sees None. Stated precisely because the first
+        version of this test was written believing it proved the `or 0` guard
+        in the model — it does not. Removing that guard leaves this test green,
+        which is exactly how it was caught.
+        """
+        self.env.cr.execute(
+            "UPDATE ncollection_tenant SET cron_report_miss_count = NULL "
+            "WHERE id = %s", (self.tenant.id,))
+        self.tenant.invalidate_recordset()
+
+        self.assertTrue(self._unreadable_push(), "a NULL counter broke a push")
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_report_miss_count, 1)
 
     def test_a_readable_report_clears_the_streak_and_the_todo(self):
         for _ in range(_MAX_UNREPORTED_SYNCS):

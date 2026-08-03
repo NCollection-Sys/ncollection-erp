@@ -42,6 +42,27 @@ drop_db(){ "${DC[@]}" exec -T db psql -U odoo -d postgres -c \
   "${DC[@]}" exec -T db psql -U odoo -d postgres -c "DROP DATABASE IF EXISTS $1" >/dev/null 2>&1 || true; }
 tq(){ "${DC[@]}" exec -T db psql -U odoo -d "$1" -tAc "$2" 2>/dev/null | tr -d ' '; }
 
+# --- keep the platform DB's schema in step with the code (#283) -------------
+# PLATFORM_DB is PERSISTENT and was never upgraded here, so the first commit to
+# add a model FIELD killed this suite with:
+#     psycopg2.errors.UndefinedColumn: column "..." does not exist
+# Routing passed, provisioning died on its first create, and the two suites
+# after it never ran. A Rule 13 gate that cannot survive a schema change is a
+# gate people learn to route around -- the failure mode #221/#264/#267 each
+# fixed elsewhere. Fail LOUD (Rule 10): a swallowed upgrade would print the
+# suite's own "ready" over a stale schema, which is R-005's exact shape.
+platform_schema_sync(){
+  echo "  syncing ${PLATFORM_DB} schema with the code (odoo -u ncollection_saas) ..."
+  if ! "${DC[@]}" exec -T odoo odoo -d "$PLATFORM_DB" -u ncollection_saas \
+       --stop-after-init --no-http --log-level=warn "${DBARGS[@]}" >/dev/null 2>&1; then
+    echo "REFUSING: could not upgrade ncollection_saas on '$PLATFORM_DB'." >&2
+    echo "  Running on a stale schema would report a code failure that is" >&2
+    echo "  really a setup problem. Fix the upgrade, then re-run." >&2
+    exit 1
+  fi
+}
+platform_schema_sync
+
 # Remove THIS script's fixture rows from the PLATFORM DB (plans PROV/FAIL, the
 # provclient/provfail tenants + their jobs). Idempotency (Rule 12): without this
 # a re-run collides on the unique plan code 'PROV'. ORM unlink (not raw psql) so

@@ -436,6 +436,51 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-019 — R-017's fix was applied to the e2e fixtures but not the PLATFORM db; the same schema drift killed `verify-all` again ✅ FIXED (#283)
+
+**Symptom.** On a branch whose only schema change was two added fields on `ncollection.tenant`,
+`make verify-all` failed:
+
+```
+psycopg2.errors.UndefinedColumn: column "cron_report_miss_count"
+of relation "ncollection_tenant" does not exist
+```
+
+Routing passed 8/8, **provisioning failed on its first tenant create**, and config-sync, financial
+bootstrap and e2e never ran at all. The failure looked like a defect in the branch. It was not:
+the code was correct and the database was stale.
+
+**Root cause.** `verify_provisioning.sh` and `verify_config_sync.sh` both run against a
+**persistent** platform database (`PLATFORM_DB`, default `saastest`) and **never upgraded the
+module on it**. The model gained a field; the database did not.
+
+This is **R-017 exactly** — reused state keeping the schema it was built with — and R-017's fix
+was real, but it was applied only to `e2e/scripts/setup_e2e_tenants.sh`. The identical reuse
+pattern in the two P2 verify scripts was left untouched, so the class of bug was closed for one
+suite and left open for two others. Nothing rediscovered it for months because no ticket in that
+window added a field to `ncollection.tenant`.
+
+**Why CI never caught it.** Same reason as R-017: the `test` and `verify` jobs build databases
+from scratch every run, so the reuse path does not exist there. It is structurally invisible to
+CI and hits only local runs — i.e. the Rule 13 gate every developer is required to run before
+merging. A gate that fails on legitimate work is a gate people learn to route around, which is
+the failure mode #221, #264 and #267 each fixed elsewhere.
+
+**Guard.** Both scripts now call `platform_schema_sync()` before doing anything else: it runs
+`odoo -d "$PLATFORM_DB" -u ncollection_saas --stop-after-init` and **exits 1 with an actionable
+message** if that upgrade fails (Rule 10 — a swallowed upgrade would print the suite's own
+"ready" over a stale schema, R-005's shape).
+
+Proven rather than asserted: `saastest` was left with the stale schema (0 of the 2 new columns),
+the script was run **without any manual repair**, its own new step healed the database, and the
+suite reported `10 passed, 0 failed`. Re-run immediately afterwards: `10 passed, 0 failed` again
+(Rule 12 — idempotent, and shown to be, not claimed).
+
+**Follow-through.** When a guard is written for reused state, check every other reuse site in the
+repo at the same time. R-017 fixed one of three.
+
+---
+
 ## R-018 — Background agents sharing one Docker stack produced two false CRITICALs in one session
 
 **Symptom.** Two unrelated incidents on the same day, both while background
