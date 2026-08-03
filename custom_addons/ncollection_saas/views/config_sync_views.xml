@@ -31,6 +31,12 @@
                        decoration-success="cron_health_state == 'ok'"
                        decoration-danger="cron_health_state == 'degraded'"
                        decoration-muted="cron_health_state == 'unknown'"/>
+                <!-- Without this, a tenant we have been unable to read for
+                     weeks renders identically to one provisioned yesterday:
+                     the same muted "Not reported" badge. The count is what
+                     tells those apart at a glance (#283). -->
+                <field name="cron_report_miss_count" optional="hide"
+                       decoration-danger="cron_report_miss_count >= 3"/>
             </field>
         </field>
     </record>
@@ -65,6 +71,16 @@
         <field name="name">Required job disabled</field>
         <field name="model_id">ncollection.tenant</field>
         <field name="domain">[('cron_health_state', '=', 'degraded')]</field>
+    </record>
+
+    <!-- 'degraded' is not the only bad state. A tenant whose self-report we
+         cannot READ never becomes 'degraded' at all: it sits at 'unknown',
+         which is styled exactly like a brand-new tenant, so the filter above
+         cannot see it. This is the one that surfaces it (#283). -->
+    <record id="filter_tenant_report_unreadable" model="ir.filters">
+        <field name="name">Required-job report unreadable</field>
+        <field name="model_id">ncollection.tenant</field>
+        <field name="domain">[('cron_report_miss_count', '>=', 3)]</field>
     </record>
 
     <!-- "Show me only the broken ones" without writing a domain by hand. -->

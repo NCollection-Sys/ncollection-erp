@@ -29,7 +29,12 @@ from urllib3.response import HTTPResponse
 from odoo.tests import TransactionCase, tagged
 from odoo.tools import mute_logger
 
-from odoo.addons.ncollection_saas.models.config_sync import _MAX_RESPONSE_BYTES
+from odoo.addons.ncollection_saas.models.config_sync import (
+    _MAX_RESPONSE_BYTES,
+    _MAX_UNREPORTED_SYNCS,
+    _READ_CHUNK,
+    _RPC_DEADLINE,
+)
 
 
 class _Response:
@@ -65,6 +70,7 @@ class _CountingRaw:
     def __init__(self, payload_bytes, raises=None):
         self._data = payload_bytes
         self._raises = raises
+        self._pos = 0
         self.requested = None
         self.calls = 0
         self.returned = 0
@@ -73,11 +79,17 @@ class _CountingRaw:
     # Not an Odoo model: this mimics urllib3's HTTPResponse.raw, whose API is
     # read(). There is no base class to call up into.
     def read(self, amt=None, decode_content=True):
+        # ADVANCES, like a real stream. The earlier version re-served the same
+        # slice on every call, which was harmless while the platform read once
+        # but makes any chunked reader loop forever -- it hung a RED proof for
+        # ten minutes before being spotted (#283).
         self.calls += 1
         self.requested = amt
         if self._raises is not None:
             raise self._raises
-        out = self._data[:amt] if amt is not None else self._data
+        end = len(self._data) if amt is None else self._pos + amt
+        out = self._data[self._pos:end]
+        self._pos = self._pos + len(out)
         self.returned += len(out)
         return out
 
@@ -397,13 +409,17 @@ class TestConfigSyncHealth(TransactionCase):
         # time with no cumulative budget satisfies every per-call assertion
         # while materialising the whole body — demonstrated by review against
         # this very test. The budget is TOTAL bytes, so assert the total.
-        self.assertEqual(
-            resp.raw.calls, 1,
-            "the bounded read must happen once; repeated reads have no "
-            "cumulative budget and defeat the cap")
+        # The read is chunked now (#283 needs a deadline check between
+        # chunks), so "exactly one call" is no longer the property -- the
+        # property was always the CUMULATIVE budget. Assert that, plus a call
+        # ceiling, so a runaway loop is still caught.
         self.assertLessEqual(
             resp.raw.returned, _MAX_RESPONSE_BYTES + 1,
             "cumulative bytes read exceeded the cap")
+        self.assertLessEqual(
+            resp.raw.calls,
+            (_MAX_RESPONSE_BYTES // _READ_CHUNK) + 3,
+            "far more reads than the cap can justify — a runaway loop")
         self.assertTrue(resp.closed, "stream=True leaks the connection unless closed")
 
     def test_an_oversized_body_keeps_the_push_successful(self):
@@ -611,6 +627,213 @@ class TestConfigSyncHealth(TransactionCase):
         self.assertIn('FAKE ALERT', joined, "the excerpt should still be shown")
         self.assertNotIn('oops\n', joined,
                          "a raw newline survived into the log stream")
+
+    # -- wall-clock deadline (#283) ----------------------------------------
+
+    def _fake_clock(self, *ticks):
+        """A monotonic stand-in returning `ticks` in order, last value sticky.
+
+        A test that really slept would add _RPC_DEADLINE seconds to CI, and
+        patching time.monotonic globally would move Odoo's own clocks mid-test.
+        """
+        seq = list(ticks)
+
+        def clock():
+            return seq.pop(0) if len(seq) > 1 else seq[0]
+        return clock
+
+    def test_a_trickled_body_is_abandoned_at_the_deadline(self):
+        """The byte cap cannot stop a trickle -- it never REACHES the cap.
+
+        requests' timeout= is the connect and per-idle-gap bound, not a total
+        duration: every byte that arrives resets it. Measured at 9.03s against
+        a 2.0s timeout. Only a wall-clock deadline stops this.
+        """
+        # Small chunks, so the body would take many reads to finish.
+        resp = _StreamedResponse(200, b'x' * (4 * _READ_CHUNK))
+        clock = self._fake_clock(0.0, 1.0, _RPC_DEADLINE + 1.0)
+
+        with patch.object(type(self.tenant), '_read_clock',
+                          staticmethod(clock)), \
+                mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp), "must not break the push")
+
+        self.assertLess(
+            resp.raw.returned, len(resp.raw._data),
+            "the whole body was read despite the deadline elapsing")
+        # "stopped somewhere before the end" is too weak: a loop checking the
+        # clock every OTHER iteration reads twice as much and still passes it.
+        # The claimed property is a check between EVERY chunk, so bound the
+        # reads -- the fake clock elapses on its 3rd reading, permitting at
+        # most two chunk reads.
+        self.assertLessEqual(
+            resp.raw.calls, 2,
+            "more chunk reads than the deadline schedule allows — the clock "
+            "is being checked less often than every chunk")
+        self.assertTrue(resp.closed, "the connection was not released")
+
+    def test_the_deadline_does_not_fire_on_a_healthy_push(self):
+        """A guard that fires on ordinary traffic is worse than none."""
+        body = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': True}}}).encode()
+        clock = self._fake_clock(0.0, 0.001, 0.002)
+        with patch.object(type(self.tenant), '_read_clock',
+                          staticmethod(clock)):
+            self.assertTrue(self._push(_StreamedResponse(200, body)))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_health_state, 'ok')
+
+    def test_an_abandoned_read_never_falls_back_to_the_whole_body(self):
+        """Giving up on the deadline then calling .json()/.text would resume
+        the very read we just abandoned."""
+        resp = _StreamedResponse(500, b'x' * (4 * _READ_CHUNK),
+                                 text='THE-WHOLE-BODY')
+        clock = self._fake_clock(0.0, _RPC_DEADLINE + 1.0)
+        with patch.object(type(self.tenant), '_read_clock',
+                          staticmethod(clock)), \
+                self.assertLogs(
+                    'odoo.addons.ncollection_saas.models.config_sync',
+                    level='ERROR') as caught:
+            self.assertFalse(self._push(resp))
+        joined = '\n'.join(caught.output)
+        # assertLogs(ERROR) alone proves nothing here: the HTTP 500 path logs
+        # an ERROR regardless. Name the deadline, or this test passes with the
+        # deadline check deleted.
+        self.assertIn('read deadline', joined,
+                      "the deadline never fired, so this proves nothing")
+        self.assertFalse(resp.text_read, "fell back to .text after giving up")
+        self.assertNotIn('THE-WHOLE-BODY', joined)
+
+    # -- escalation on repeated unreadable reports (#283) -------------------
+
+    def _unreadable_push(self):
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            return self._push(
+                _StreamedResponse(200, b'p' * (2 * _MAX_RESPONSE_BYTES)))
+
+    def _report_posts(self):
+        return len(self.tenant.message_ids.filtered(
+            lambda m: m.body and 'unreadable required-job' in m.body.lower()))
+
+    def _report_todos(self):
+        return self.tenant.activity_ids.filtered(
+            lambda a: a.summary and 'unreadable' in a.summary.lower())
+
+    def test_repeated_unreadable_reports_escalate_once(self):
+        """'unknown' opens no to-do and is styled like a fresh tenant, so a
+        tenant whose report is never readable was invisible forever -- exactly
+        the blindness #262 exists to remove."""
+        for _ in range(_MAX_UNREPORTED_SYNCS - 1):
+            self._unreadable_push()
+        self.tenant.invalidate_recordset()
+        self.assertFalse(
+            self._report_todos(),
+            "escalated before the threshold — a one-off blip must stay quiet")
+
+        self._unreadable_push()          # crosses
+        self.tenant.invalidate_recordset()
+        self.assertEqual(len(self._report_todos()), 1)
+
+        posts = self._report_posts()
+        self.assertEqual(posts, 1)
+
+        for _ in range(3):               # the nightly reconcile keeps running
+            self._unreadable_push()
+        self.tenant.invalidate_recordset()
+        self.assertEqual(len(self._report_todos()), 1)
+        # The to-do count alone CANNOT detect re-alerting: _health_open_activity
+        # already refuses to open a second one. Chatter is where nightly repeats
+        # actually show up, and posting every night is what trains people to
+        # ignore the channel. Proven: alerting at >= instead of == leaves the
+        # to-do assertion green and only this one fails.
+        self.assertEqual(
+            self._report_posts(), posts,
+            "re-posted after crossing; the alert must fire once, not nightly")
+
+    def test_a_tenant_that_simply_never_reports_is_not_escalated(self):
+        """The regression two reviewers reproduced independently.
+
+        A missing report has two shapes. "We could not READ it" is #283's
+        fault condition. "The body read fine and carries no required_crons" is
+        a tenant provisioned before #262 — which this module's own header
+        calls legitimate and says must never alert, because #218 is what
+        backfills those.
+
+        Counting both meant every pre-#262 tenant collected a miss nightly and
+        got a false "unreadable" to-do on the third — self-inflicted alert
+        fatigue, in the exact channel this ticket exists to keep credible.
+        """
+        for _ in range(_MAX_UNREPORTED_SYNCS + 2):
+            self.tenant._record_cron_health(None, skip_reason=False)
+
+        self.tenant.invalidate_recordset()
+        self.assertEqual(
+            self.tenant.cron_report_miss_count, 0,
+            "a legitimate non-reporter was counted as a read failure")
+        self.assertFalse(self.tenant.cron_report_activity_id)
+        self.assertFalse(self._report_todos())
+        self.assertEqual(self.tenant.cron_health_state, 'unknown',
+                         "it is still 'not reported' — just not alertable")
+
+    def test_a_null_miss_count_from_an_upgrade_does_not_crash(self):
+        """A NULL column must not break a push.
+
+        What this actually locks in is Odoo's ORM coercion: a NULL Integer is
+        read as 0, so `+ 1` never sees None. Stated precisely because the first
+        version of this test was written believing it proved the `or 0` guard
+        in the model — it does not. Removing that guard leaves this test green,
+        which is exactly how it was caught.
+        """
+        self.env.cr.execute(
+            "UPDATE ncollection_tenant SET cron_report_miss_count = NULL "
+            "WHERE id = %s", (self.tenant.id,))
+        self.tenant.invalidate_recordset()
+
+        self.assertTrue(self._unreadable_push(), "a NULL counter broke a push")
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_report_miss_count, 1)
+
+    def test_a_readable_report_clears_the_streak_and_the_todo(self):
+        for _ in range(_MAX_UNREPORTED_SYNCS):
+            self._unreadable_push()
+        self.tenant.invalidate_recordset()
+        self.assertEqual(len(self._report_todos()), 1)
+
+        good = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': True}}}).encode()
+        self.assertTrue(self._push(_StreamedResponse(200, good)))
+
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_report_miss_count, 0)
+        self.assertFalse(
+            self._report_todos().filtered(lambda a: not a.date_done),
+            "the to-do survived recovery — a stale to-do makes the NEXT "
+            "genuine incident look already-reported")
+
+    def test_a_degraded_report_still_clears_the_streak(self):
+        """The streak counts 'could not READ', not 'jobs unhealthy'. A
+        readable report saying a job is disabled is still a readable report."""
+        for _ in range(_MAX_UNREPORTED_SYNCS):
+            self._unreadable_push()
+        bad = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': False}}}).encode()
+        self.assertTrue(self._push(_StreamedResponse(200, bad)))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_report_miss_count, 0)
+        self.assertEqual(self.tenant.cron_health_state, 'degraded')
+
+    def test_the_unreadable_todo_is_not_the_disabled_job_todo(self):
+        """Two different operator actions. Closing one must not resolve the
+        other, which is why they have separate activity fields."""
+        for _ in range(_MAX_UNREPORTED_SYNCS):
+            self._unreadable_push()
+        self.tenant.invalidate_recordset()
+        self.assertTrue(self.tenant.cron_report_activity_id)
+        self.assertNotEqual(self.tenant.cron_report_activity_id,
+                            self.tenant.cron_health_activity_id)
 
     def test_a_non_streamed_response_still_works(self):
         """The fallback that keeps the existing contract. A response object
