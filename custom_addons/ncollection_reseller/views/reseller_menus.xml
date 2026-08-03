@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sub-tenant list scoped to the signed-in reseller by record rules. -->
+    <record id="action_reseller_subtenants" model="ir.actions.act_window">
+        <field name="name">My Sub-Tenants</field>
+        <field name="res_model">ncollection.tenant</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ============ Reseller portal root (partner-facing) ============ -->
+    <menuitem id="menu_reseller_root"
+              name="Reseller"
+              sequence="15"
+              groups="group_reseller"/>
+
+    <menuitem id="menu_reseller_subtenants"
+              name="Sub-Tenants"
+              parent="menu_reseller_root"
+              action="action_reseller_subtenants"
+              sequence="10"/>
+
+    <menuitem id="menu_reseller_revenue_share"
+              name="Revenue Share"
+              parent="menu_reseller_root"
+              action="action_revenue_share"
+              sequence="20"/>
+
+    <!-- ============ Fleet management (platform staff) ============ -->
+    <menuitem id="menu_saas_resellers"
+              name="Resellers"
+              parent="ncollection_subscription.menu_ncollection_saas_root"
+              action="action_reseller"
+              sequence="45"/>
+
+</odoo>

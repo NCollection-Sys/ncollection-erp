@@ -39,6 +39,21 @@ _SYNCABLE_FIELDS = frozenset({
     'allowed_module_names', 'plan_code', 'subscription_status', 'max_users',
 })
 
+# White-label reseller branding (P3/P10-T09): the platform may cascade a
+# reseller's brand onto the tenant's company alongside the licensing sync. These
+# keys are NOT stored on workspace.config — they are applied to res.company's
+# nc_* branding fields (owned by ncollection_branding, on which this module
+# already depends), then dropped before the licensing whitelist runs. Applied
+# override-if-default so a tenant that later customises its own theme is never
+# clobbered by a reconcile push. Same authenticated per-tenant channel + the same
+# res.company ORM write (so the hex ValidationError still guards CSS injection).
+_BRAND_APPLY_FIELDS = {
+    'brand_primary_color': 'nc_primary_color',
+    'brand_secondary_color': 'nc_secondary_color',
+    'brand_sidebar_color': 'nc_sidebar_color',
+    'brand_login_background': 'nc_login_background',
+}
+
 
 class WorkspaceConfig(models.Model):
     _name = 'ncollection.workspace.config'
@@ -115,6 +130,12 @@ class WorkspaceConfig(models.Model):
         """
         if not isinstance(vals, dict):
             raise UserError(self.env._("sync_from_platform expects a dict of values."))
+        # Separate the optional reseller brand keys from the licensing payload
+        # up front so they don't trip the "non-whitelisted field" guard — but
+        # only APPLY them at the end, after every validation has passed, so no
+        # company row is written for a payload that then raises.
+        vals = dict(vals)
+        brand = {k: vals.pop(k) for k in list(vals) if k in _BRAND_APPLY_FIELDS}
         rejected = set(vals) - _SYNCABLE_FIELDS
         if rejected:
             raise UserError(self.env._(
@@ -127,6 +148,10 @@ class WorkspaceConfig(models.Model):
             raise UserError(self.env._(
                 "No workspace configuration exists to sync into (not provisioned?)."))
         config.write({k: vals[k] for k in vals})
+        # Validation passed — now cascade any reseller branding (last, so a
+        # rejected payload never leaves a written company row behind).
+        if brand:
+            self._nc_apply_pushed_branding(brand)
         return {'ok': True, 'plan_code': config.plan_code,
                 'subscription_status': config.subscription_status,
                 'required_crons': self._required_cron_health()}
@@ -167,6 +192,40 @@ class WorkspaceConfig(models.Model):
                 report[xml_id] = {'installed': False, 'active': False,
                                   'error': True}
         return report
+
+    def _nc_apply_pushed_branding(self, brand):
+        """Apply a platform-pushed reseller brand onto the tenant company (P10-T09).
+
+        Override-if-default only: a brand value overwrites a company field solely
+        when that field still holds its NCollection default (or is empty), so a
+        tenant that has set its own colours keeps them across reconcile pushes.
+        The write goes through res.company's ORM, so nc_* hex validation still
+        rejects any malformed pushed colour (CSS-injection guard, Rule 4/7).
+        sudo() is deliberate: the config-sync service account is workspace.config-
+        scoped, but this cascade is platform-initiated and already trusted, same
+        as the licensing write above.
+        """
+        company = self.env.company
+        if not company:
+            return
+        Company = self.env['res.company']
+        targets = list(_BRAND_APPLY_FIELDS.values())
+        # Only fields branding actually declares (guards against a partial
+        # install where ncollection_branding's fields are absent).
+        targets = [t for t in targets if t in Company._fields]
+        if not targets:
+            return
+        defaults = Company.default_get(targets)
+        to_write = {}
+        for key, target in _BRAND_APPLY_FIELDS.items():
+            value = brand.get(key)
+            if not value or target not in targets:
+                continue
+            current = company[target]
+            if not current or current == defaults.get(target):
+                to_write[target] = value
+        if to_write:
+            company.sudo().write(to_write)
 
     def get_allowed_module_list(self):
         """Parse allowed_module_names into a clean, de-duplicated list.

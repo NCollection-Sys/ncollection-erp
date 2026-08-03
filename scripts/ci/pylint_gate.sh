@@ -71,8 +71,12 @@ set -uo pipefail
 #      file-level disable with that reason, as does the #221 re-key script.
 #      Lowered rather than raised, so 3 units of unused slack cannot silently
 #      absorb a future REAL finding.
+#    54 → 55 (2026-08-04, #101/P10-T09): adds ncollection_reseller — the one
+#      unavoidable manifest-required-author (C8101); the superfluous manifest
+#      keys, missing README, redundant field strings and wizard-in-models
+#      findings were all AVOIDED/cleaned up, so +1 exactly.
 # ---------------------------------------------------------------------------
-PYLINT_BASELINE=54
+PYLINT_BASELINE=55
 
 # The scanned tree and the finding-count pattern. Both callers MUST use the
 # same ones or the two environments would count differently — the subtlest way

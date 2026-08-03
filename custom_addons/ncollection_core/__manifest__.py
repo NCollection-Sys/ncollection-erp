@@ -3,7 +3,10 @@
     # 1.10.0 (#221): tenant-side config-sync credential installer
     # (ncollection.config.sync.key) — THE single definition of the apikey write,
     # shared by the provisioning seed and the re-key job.
-    'version': '19.0.1.10.0',
+    # 1.11.0 (#101/P10-T09): sync_from_platform also applies pushed reseller
+    # branding onto res.company (override-if-default). Both landed on 1.10.0
+    # independently; bumped to 1.11.0 to keep a single monotonic version.
+    'version': '19.0.1.11.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
