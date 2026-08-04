@@ -12,7 +12,9 @@
     # platform's most destructive primitive, so it gets traceability like #243's.
     # Patch bump: #287 makes the restore drill drop its scratch database.
     # Patch bump: #295 purges a deleted tenant's backup directory.
-    'version': '19.0.6.5.4',
+    # Minor bump: #299 turns backup.database_name from a stored RELATED field
+    # into a snapshot, so `-u` is what re-defines the column.
+    'version': '19.0.6.6.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

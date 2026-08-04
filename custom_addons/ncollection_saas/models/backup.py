@@ -54,7 +54,21 @@ class NcollectionBackup(models.Model):
     tenant_id = fields.Many2one(
         'ncollection.tenant', required=True,
         ondelete='cascade', tracking=True)
-    database_name = fields.Char(related='tenant_id.database_name', store=True)
+    # SNAPSHOT, not related (#299). As `related='tenant_id.database_name'` it
+    # FOLLOWED a tenant rename, so afterwards the guard computed this backup's
+    # root from the NEW name while its files stayed under the OLD one -- every
+    # historical backup silently unrestorable while looking healthy.
+    #
+    # Renaming is reachable: tenant.write() locks the name only while
+    # provisioning/ready and deliberately leaves it writable in
+    # not_provisioned/error, which is where a failed provisioning or fleet
+    # migration puts a tenant.
+    #
+    # readonly is UI-only and unenforced over RPC (the #288 file_path lesson),
+    # so this is DERIVED in create() and PINNED in write(). Both are needed:
+    # deriving without pinning lets it be rewritten after the fact; pinning
+    # without deriving just freezes a caller-supplied string.
+    database_name = fields.Char(readonly=True, copy=False)
     backup_type = fields.Selection(
         selection=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')],
         default='daily', required=True, tracking=True)
@@ -62,7 +76,11 @@ class NcollectionBackup(models.Model):
         selection=[('pending', 'Pending'), ('running', 'Running'),
                    ('done', 'Done'), ('failed', 'Failed')],
         default='pending', required=True, tracking=True)
-    file_path = fields.Char(string='Backup File', readonly=True)
+    # copy=False alongside database_name: a duplicate re-derives the snapshot
+    # from the (possibly renamed) live tenant while carrying the old path
+    # verbatim, producing a record whose file can never satisfy its own
+    # ownership check. Better to copy nothing than to copy a lie (#299).
+    file_path = fields.Char(string='Backup File', readonly=True, copy=False)
     file_size = fields.Integer(string='Size (bytes)', readonly=True)
     started_at = fields.Datetime(readonly=True)
     completed_at = fields.Datetime(readonly=True)
@@ -125,6 +143,39 @@ class NcollectionBackup(models.Model):
             })
             self._alert_failure()
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Stamp database_name from the tenant, ignoring any supplied value.
+
+        Accepting one would make the snapshot caller-chosen, and the write()
+        pin below would then merely freeze it -- the exact shape #288 closed
+        on file_path.
+        """
+        Tenant = self.env['ncollection.tenant'].sudo()
+        out = []
+        for vals in vals_list:
+            vals = dict(vals)               # never mutate the caller's dict
+            tid = vals.get('tenant_id')
+            # Normalise before browse(): a Many2one sent as an x2many command
+            # tuple makes browse() raise a raw TypeError from inside create(),
+            # which is a worse failure than Odoo's own field validation.
+            tenant = Tenant.browse(tid) if isinstance(tid, int) else Tenant
+            if not tenant or not tenant.database_name:
+                # Refuse rather than stamp False. A backup with no snapshot can
+                # never be taken (run_backup dumps `database_name`) nor
+                # restored (the ownership guard has nothing to resolve), and it
+                # was the ONLY state in which the write-pin's earlier truthy
+                # check could be bypassed. Removing the state beats guarding
+                # it. No legitimate caller reaches here: the nightly cron
+                # filters ready + database_name != False, and fleet migration
+                # snapshots a tenant that is already ready.
+                raise ValidationError(self.env._(
+                    "Cannot create a backup for a tenant with no database "
+                    "name — it could never be taken or restored."))
+            vals['database_name'] = tenant.database_name
+            out.append(vals)
+        return super().create(out)
+
     def write(self, vals):
         """A snapshot's provenance is immutable once set (#275).
 
@@ -149,6 +200,27 @@ class NcollectionBackup(models.Model):
                         "restore claim another tenant's database as its own.",
                         b=rec.name or rec.id,
                         t=rec.tenant_id.database_name or rec.tenant_id.display_name))
+        if 'database_name' in vals:
+            # UNCONDITIONAL. The first version only raised when the current
+            # snapshot was truthy -- and create() legitimately produces False
+            # for a tenant that is not provisioned yet, so a backup on such a
+            # tenant could have its snapshot written to ANY string, including a
+            # live victim's real database name. Reproduced in review.
+            #
+            # The docstring promised "immutable once set" while the code
+            # exempted exactly the state where nothing was set yet. A guard
+            # that lies about its own guarantee is worse than an absent one:
+            # the next reader trusts it, and _cron_restore_drill picks the
+            # newest done backup across ALL tenants with no tenant filter.
+            #
+            # Nothing legitimate needs this: create() stamps vals BEFORE
+            # super() and never routes through write().
+            raise ValidationError(self.env._(
+                "A backup's tenant database name is stamped at creation and "
+                "can never be written (snapshot %r). It is what the restore "
+                "guard resolves the file's directory from, so rewriting it "
+                "would let a restore claim another tenant's dump.",
+                self.database_name if len(self) == 1 else None))
         return super().write(vals)
 
     def _assert_restore_target(self, target_db):
@@ -223,7 +295,19 @@ class NcollectionBackup(models.Model):
         path alone. realpath() first: `..` segments and symlinks are exactly
         how a prefix test gets fooled.
         """
-        db = self.tenant_id.sudo().database_name
+        # DELIBERATE ASYMMETRY, do not "simplify" (#299). This guard keys on
+        # the SNAPSHOT while _assert_restore_target keys on the LIVE
+        # tenant_id.database_name. Making both agree looks like a tidy-up and
+        # is actually the vulnerability: after a rename frees a name and a NEW
+        # tenant takes it, only the live-value check refuses a restore that
+        # would destroy that new tenant's database. Audited explicitly.
+        #
+        # The SNAPSHOT (#299), not tenant_id.database_name: the live value
+        # follows a rename, the files do not. Keying on the live value made
+        # every historical backup of a renamed tenant unrestorable. The
+        # snapshot is derived at create and pinned in write, so it is no
+        # weaker a binding -- and unlike the live value, cannot be moved.
+        db = self.database_name
         if not db:
             raise ValidationError(self.env._(
                 "Backup '%s' has no tenant database, so the file it points at "
