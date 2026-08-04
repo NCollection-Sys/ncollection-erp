@@ -33,6 +33,7 @@ chose BUILD over ADOPT.
 """
 import logging
 import xml.etree.ElementTree as ET
+from xml.parsers import expat
 
 import requests
 
@@ -172,6 +173,38 @@ class NcExchangeRate(models.Model):
             resp.close()
 
     @api.model
+    def _assert_no_doctype(self, text):
+        """Raise ``ET.ParseError`` if the document declares a DOCTYPE.
+
+        A remote XML document needs no DTD to carry an exchange rate, and every
+        entity-expansion and external-entity attack requires one. Rejecting the
+        whole construct is therefore both complete and free — no new dependency,
+        nothing to keep in sync with a threat list.
+
+        Why this exists at all: the #308 security review tested the deployed
+        runtime (Python 3.12, libexpat 2.6.1) and found billion-laughs and XXE
+        already rejected — but ONLY because libexpat >= 2.4.0 rejects them, a
+        property nothing in this repo selects, pins, tests or documents. A base
+        image bump to an older/backported expat, or a later switch to lxml for
+        speed, removes that protection silently and no test notices. This makes
+        the control ours and explicit; ``test_ecb_rate.py`` fails if it goes.
+
+        Implemented as a small expat pre-scan because Python 3.12's C
+        ``ElementTree.XMLParser`` no longer exposes the underlying parser
+        (verified: it has no ``.parser`` attribute), so the handler cannot be
+        attached to the tree parse itself. The document is already capped at
+        _MAX_RESPONSE_BYTES, so scanning it twice is bounded and cheap for a
+        once-daily cron.
+        """
+        scanner = expat.ParserCreate()
+        scanner.StartDoctypeDeclHandler = self._reject_doctype
+        scanner.Parse(text, True)
+
+    @api.model
+    def _reject_doctype(self, *_args):
+        raise ET.ParseError("DOCTYPE declaration is not allowed")
+
+    @api.model
     def _parse_ecb_usd(self, text):
         """Return ``(date, usd_per_eur)`` from the ECB document, or ``None``.
 
@@ -182,8 +215,9 @@ class NcExchangeRate(models.Model):
         if not text:
             return None
         try:
+            self._assert_no_doctype(text)
             root = ET.fromstring(text)
-        except ET.ParseError as exc:
+        except (ET.ParseError, expat.ExpatError) as exc:
             _logger.warning("ECB document did not parse: %s", exc)
             return None
 

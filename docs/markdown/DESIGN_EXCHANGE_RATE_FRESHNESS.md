@@ -160,6 +160,38 @@ here so this record stays readable on its own; `ARCHITECTURE_SECURITY.md` is aut
 |---|---|---|
 | **Outbound rate fetch** (#236) | Hostile/oversized response from an external host; feed outage silently freezing rates; a stale rate treated as authoritative | Admin DB only — **no tenant DB makes outbound calls**; single allowlisted host (`www.ecb.europa.eu`); bounded read + wall-clock deadline reusing `config_sync.py`'s hardened patterns (#278/#283); rates written only via the platform→tenant config-sync channel with its per-tenant HMAC keys (#212); fetch failure leaves the previous rate intact and raises an alert rather than writing a zero/partial row |
 
+### XML parsing — the control is ours, not the runtime's (#309)
+
+The #308 security review tested the **deployed** runtime (Python 3.12.3, libexpat 2.6.1 in the
+`odoo:19` image) and found billion-laughs and XXE already rejected. That was true — and worthless
+as a guarantee, because the protection came entirely from libexpat ≥ 2.4.0, a property nothing in
+this repo selected, pinned, tested or documented. A base-image bump to an older or backported
+expat, or a later switch to `lxml` for speed, would have removed it silently with no test failing.
+
+**Decision:** `ncollection.exchange.rate._parse_ecb_usd` now rejects any document declaring a
+**DOCTYPE**, before the tree parse. A rate needs no DTD, and every entity-expansion and
+external-entity attack requires one — so one rejection covers the family, with **no new
+dependency**. `defusedxml` was considered and not adopted: it would add a dependency (owner
+approval + `oca-scout`) to replace a five-line guard.
+
+Implemented as a small `expat` pre-scan rather than a handler on the tree parse, because Python
+3.12's C `ElementTree.XMLParser` no longer exposes the underlying parser (verified: no `.parser`
+attribute). The document is already capped at `_MAX_RESPONSE_BYTES`, so the second pass is bounded.
+
+**Measured, with the guard temporarily removed** — three of four hostile documents *parsed
+successfully* and were refused only because they carried no USD cube, i.e. by accident:
+
+| Payload | Without the guard | With the guard |
+|---|---|---|
+| internal entity | **parsed** — refused only for lacking a USD rate | rejected: DOCTYPE not allowed |
+| billion laughs (2-level) | **parsed** — same | rejected: DOCTYPE not allowed |
+| external DTD reference | **parsed** — same | rejected: DOCTYPE not allowed |
+| XXE `file:///etc/passwd` | rejected by expat ("undefined entity") | rejected: DOCTYPE not allowed |
+
+`tests/test_exchange_rate.py::TestEcbXmlHardening` asserts the **reason** for each rejection, not
+merely that the document was refused — a test that only asserted `is None` passed with the guard
+deleted, which is the same incidental-protection trap in test form.
+
 ## 6. What the implementation must get right
 
 Notes for the follow-up ticket, from reading the shipped code.
