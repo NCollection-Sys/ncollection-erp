@@ -67,7 +67,8 @@ ORM_ENFORCEMENT_HINTS = ("check_access_rights", "ir.rule", "_check_company", "Ac
 # DELIVERABLE_1 §7. List is not exhaustive (see LIMITATIONS in the module
 # docstring) — covers the highest-traffic tenant models.
 # ---------------------------------------------------------------------------
-PLATFORM_ADDONS = {"ncollection_saas", "ncollection_subscription", "ncollection_billing"}
+PLATFORM_ADDONS = {"ncollection_saas", "ncollection_subscription", "ncollection_billing",
+                   "ncollection_reseller"}
 TENANT_MODELS = (
     "sale.order", "stock.move", "account.move", "purchase.order",
     "res.partner", "account.move.line", "crm.lead", "hr.employee",

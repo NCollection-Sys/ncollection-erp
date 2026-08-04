@@ -29,6 +29,22 @@
             <field name="domain_force">[('reseller_id.user_id', '=', user.id)]</field>
             <field name="groups" eval="[Command.link(ref('group_reseller'))]"/>
         </record>
+        <!-- ...and the matching admin rule that widens Platform Admin back to the
+             whole fleet. REQUIRED, not cosmetic: reseller_groups.xml makes
+             group_platform_admin IMPLY group_reseller, so without this the only
+             tenant rule an admin matches is the restrictive one above — and since
+             group rules are OR'ed, installing this module silently stripped
+             Platform Admin's access to every tenant it does not personally resell
+             (#300: AccessError on tenant.write in ncollection_subscription and
+             ncollection_billing tests). The sibling rules for ncollection.reseller
+             and the revenue-share report already do this; tenants were missed. -->
+        <record id="tenant_rule_admin" model="ir.rule">
+            <field name="name">Tenant: platform admin sees all</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups"
+                   eval="[Command.link(ref('ncollection_subscription.group_platform_admin'))]"/>
+        </record>
 
         <!-- Revenue-share report rows: own vs. all (admin). -->
         <record id="revshare_rule_own" model="ir.rule">
