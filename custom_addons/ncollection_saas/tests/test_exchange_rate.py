@@ -17,6 +17,7 @@ The properties worth protecting are the ones whose failure is invisible:
    precisely the KeyError that made OCA's provider unusable here.
 """
 import io
+import xml.etree.ElementTree as ET
 
 from odoo.addons.ncollection_saas.models.exchange_rate import _ECB_URL
 from odoo.tests import TransactionCase, tagged
@@ -91,6 +92,81 @@ class TestEcbParse(TransactionCase):
         self.assertIsNone(self.Rate._parse_ecb_usd('<not xml'))
         self.assertIsNone(self.Rate._parse_ecb_usd(''))
         self.assertIsNone(self.Rate._parse_ecb_usd(None))
+
+
+@tagged("post_install", "-at_install")
+class TestEcbXmlHardening(TransactionCase):
+    """#309: entity-expansion protection must be OURS, not the runtime's.
+
+    The #308 review found billion-laughs and XXE already rejected on the
+    deployed image — but only because libexpat >= 2.4.0 rejects them, which
+    nothing here selects, pins or documents. A base-image bump to an older or
+    backported expat, or a switch to lxml for speed, removes that silently.
+    These tests fail if the DOCTYPE guard is removed, so the protection can no
+    longer disappear without someone noticing.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.Rate = self.env['ncollection.exchange.rate']
+
+    def test_the_real_feed_still_parses(self):
+        """The guard must not cost us the legitimate document."""
+        parsed = self.Rate._parse_ecb_usd(_DOC)
+        self.assertIsNotNone(parsed)
+        self.assertAlmostEqual(parsed[1], 1.1535, places=6)
+
+    def test_every_doctype_bearing_document_is_refused_BY_OUR_GUARD(self):
+        """One rejection covers the whole family: a rate needs no DTD, and
+        every entity attack requires one.
+
+        Asserting only ``is None`` here would be worthless — on the CURRENT
+        image libexpat rejects billion-laughs and XXE by itself, and the
+        external-DTD payload returns None anyway because it carries no USD
+        cube. Such a test passes with the guard deleted, which is precisely the
+        incidental-protection trap #309 exists to close, rewritten as a test.
+
+        So it asserts the REASON: the log must carry our DOCTYPE message, not
+        expat's "input amplification factor" one. Delete the guard and this
+        fails even on a runtime that would still block the attack.
+        """
+        attacks = {
+            'internal entity': '<!DOCTYPE r [<!ENTITY a "boom">]><r>&a;</r>',
+            'xxe file://':
+                '<!DOCTYPE r [<!ENTITY x SYSTEM "file:///etc/passwd">]><r>&x;</r>',
+            'billion laughs':
+                '<!DOCTYPE l [<!ENTITY a "aa"><!ENTITY b "&a;&a;">]><l>&b;</l>',
+            'external dtd': '<!DOCTYPE r SYSTEM "http://evil.example/x.dtd"><r/>',
+            'doctype behind a comment': '<!-- ok --><!DOCTYPE r><r/>',
+        }
+        logger = 'odoo.addons.ncollection_saas.models.exchange_rate'
+        for name, payload in attacks.items():
+            with self.subTest(attack=name):
+                with self.assertLogs(logger, level='WARNING') as captured:
+                    self.assertIsNone(self.Rate._parse_ecb_usd(payload),
+                                      "%s was not refused" % name)
+                self.assertTrue(
+                    any('DOCTYPE declaration is not allowed' in line
+                        for line in captured.output),
+                    "%s was refused, but NOT by our DOCTYPE guard — got: %s"
+                    % (name, captured.output))
+
+    def test_doctype_rejection_is_explicit_not_inherited_from_expat(self):
+        """The guard itself must raise, independently of whatever the linked
+        libexpat happens to do about entity amplification."""
+        with self.assertRaises(ET.ParseError):
+            self.Rate._parse_xml_no_doctype('<!DOCTYPE r><r/>')
+        # ...and must stay out of the way of a clean document.
+        root = self.Rate._parse_xml_no_doctype(_DOC)
+        self.assertTrue(root.find('.//*[@currency="USD"]') is not None)
+
+    def test_a_parse_failure_never_escapes_as_an_exception(self):
+        """The cron contract is 'never raise, keep the previous rate'. A narrow
+        except tuple made that depend on _fetch_ecb_document decoding with
+        errors='replace': a lone surrogate raises UnicodeEncodeError, which is
+        neither ParseError nor ExpatError."""
+        self.assertIsNone(self.Rate._parse_ecb_usd('<r>\ud800</r>'))
+        self.assertIsNone(self.Rate._parse_ecb_usd('\x00<r/>'))
 
 
 @tagged("post_install", "-at_install")

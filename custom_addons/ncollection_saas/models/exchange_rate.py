@@ -68,6 +68,23 @@ _RATE_MAX = 10.0
 _MAX_DAILY_MOVE = 0.25
 
 
+class _NcRejectDoctype(ET.TreeBuilder):
+    """Tree builder that refuses any document declaring a DOCTYPE (#309).
+
+    ``ElementTree`` calls a parser target's ``doctype()`` hook from expat's
+    ``StartDoctypeDeclHandler``, which fires at the DOCTYPE *name* — before the
+    internal subset is read, so before any ``<!ENTITY>`` is declared or
+    expanded and before an external DTD would be fetched.
+
+    A plain class rather than an ORM method: this is a stateless SAX callback
+    that never touches ``self.env``, and keeping it off the model also keeps it
+    off the RPC surface entirely.
+    """
+
+    def doctype(self, name, pubid, system):
+        raise ET.ParseError("DOCTYPE declaration is not allowed")
+
+
 class NcExchangeRate(models.Model):
     """One row per ECB publication date, on the admin DB only.
 
@@ -172,6 +189,35 @@ class NcExchangeRate(models.Model):
             resp.close()
 
     @api.model
+    def _parse_xml_no_doctype(self, text):
+        """Parse ``text`` into an element tree, refusing any DOCTYPE.
+
+        A remote document needs no DTD to carry an exchange rate, and every
+        entity-expansion and external-entity attack requires one — so rejecting
+        the whole construct is both complete and free. No new dependency, and
+        nothing to keep in sync with a threat list. ``defusedxml`` was
+        considered and not adopted: a dependency to replace three lines.
+
+        Why this exists: the #308 security review tested the deployed runtime
+        (Python 3.12, libexpat 2.6.1) and found billion-laughs and XXE already
+        rejected — but ONLY because libexpat >= 2.4.0 rejects them, a property
+        nothing in this repo selects, pins, tests or documents. A base-image
+        bump to an older/backported expat, or a switch to lxml for speed,
+        removes it silently. Measured with the guard off: three of four hostile
+        documents PARSED and were refused only for lacking a USD cube — i.e. by
+        accident. ``tests/test_exchange_rate.py::TestEcbXmlHardening`` fails if
+        this guard goes, and asserts the rejection REASON, not just the refusal.
+
+        ``_NcRejectDoctype`` is wired via ``XMLParser(target=...)``, which
+        ElementTree connects to expat's doctype handler — one pass, fired at the
+        DOCTYPE name, before the internal subset (and so before any entity) is
+        read.
+        """
+        parser = ET.XMLParser(target=_NcRejectDoctype())
+        parser.feed(text)
+        return parser.close()
+
+    @api.model
     def _parse_ecb_usd(self, text):
         """Return ``(date, usd_per_eur)`` from the ECB document, or ``None``.
 
@@ -182,8 +228,16 @@ class NcExchangeRate(models.Model):
         if not text:
             return None
         try:
-            root = ET.fromstring(text)
-        except ET.ParseError as exc:
+            root = self._parse_xml_no_doctype(text)
+        except Exception as exc:  # noqa: BLE001 - never break the cron
+            # Deliberately broad, matching _fetch_ecb_document above. The
+            # contract is "never raise, keep the previous rate", and a narrow
+            # tuple made that depend on a decode choice in ANOTHER function:
+            # a lone surrogate in `text` raises UnicodeEncodeError, which is
+            # neither ParseError nor ExpatError. Unreachable today only because
+            # _fetch_ecb_document decodes with errors='replace' — exactly the
+            # kind of unstated cross-function dependency this ticket exists to
+            # remove.
             _logger.warning("ECB document did not parse: %s", exc)
             return None
 
