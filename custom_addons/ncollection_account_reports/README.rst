@@ -103,11 +103,40 @@ Each report has its **own** ``ir.actions.report`` with a **unique**
 resolves reports by name, so every wizard would render against the first action's
 model. Add a report → add its wrapper template + override.
 
+Balance Sheet & Profit and Loss (F2-T03)
+========================================
+
+Two more wizards on the same engine, plus a **comparison mixin**
+(``ncollection.account.report.comparison``) supplying the FPA column set
+*Current · Previous · Variance · Variance %*. The mixin is separate from the
+engine on purpose: GL and Trial Balance have no comparison concept and are left
+untouched. F2-T08 (#118, executive reports) is expected to inherit it rather
+than reimplement the period arithmetic.
+
+* **Balance Sheet** is a *position* — cumulative to the as-of date
+  (``_nc_closing_balances``, mis' ``bale``). **Assets = Liabilities + Equity**
+  holds only because the *Accumulated Earnings* bucket carries the net result
+  Odoo computes rather than posts.
+* **Profit & Loss** is a *flow* — period movement only (``_nc_period_balances``,
+  mis' ``balp``).
+* ``previous_period`` compares against a span of the **same length** immediately
+  before the report; a fixed calendar step would compare unequal periods and
+  make the variance meaningless. ``variance_pct`` divides by ``abs(previous)``
+  so the sign tracks the real move, and yields ``0.0`` (never ``inf``) when the
+  previous figure is zero.
+
+**These two replace** ``ncollection_mis_templates``' ``mis_report_bs`` /
+``mis_report_pl``. Their ``account_type`` groupings are a 1:1 transcription of
+that module's KPI expressions, and ``tests/test_bs_pl.py`` holds an *independent*
+transcription that must agree — so a silent edit to either fails the build. The
+retirement itself (uninstalling ``mis_builder``) is **#117 [F2-T07]**, not this
+task; both remain installed and in agreement until then.
+
 What this does NOT own
 ======================
 
-- More **reports** (Balance Sheet, P&L, Partner Ledger, Aged …) — later F2 tasks
-  on this engine. GL + Trial Balance ship here (F2-T02).
+- More **reports** (Partner Ledger, Aged, Cash Flow, VAT …) — later F2 tasks on
+  this engine. GL + Trial Balance ship here (F2-T02), BS + P&L (F2-T03).
 - Any **accounting logic** — posting, tax, reconciliation stay Odoo's (FPA §6);
   the engine reads via ``_read_group``, one aggregate query (the < 2s target).
 - Dashboards / KPIs — ``ncollection_account_dashboard`` / ``_analytics``.

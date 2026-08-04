@@ -60,10 +60,15 @@
                                 <t t-foreach="o._nc_compute_lines()" t-as="line">
                                     <tr t-att-style="'font-weight:bold' if not line.get('level') else ''">
                                         <t t-foreach="o._nc_columns()" t-as="col">
-                                            <td t-att-class="'text-end' if col['type'] == 'monetary' else ''">
+                                            <td t-att-class="'text-end' if col['type'] in ('monetary', 'percent') else ''">
                                                 <t t-if="col['type'] == 'monetary'">
                                                     <span t-out="line.get(col['key'], 0.0)"
                                                           t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                                </t>
+                                                <t t-elif="col['type'] == 'percent'">
+                                                    <!-- F2-T03: a percentage is not money; never render it
+                                                         with a currency symbol. -->
+                                                    <span t-out="'%.2f%%' % (line.get(col['key']) or 0.0)"/>
                                                 </t>
                                                 <t t-else="">
                                                     <span t-out="line.get(col['key'], '')"/>
@@ -87,6 +92,34 @@
     </template>
 
     <template id="report_general_ledger">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <!-- F2-T03: Balance Sheet + P&L. Same rule as above — a UNIQUE report_name
+         per action, each pointing at a thin wrapper over the shared body. -->
+    <record id="action_report_balance_sheet" model="ir.actions.report">
+        <field name="name">Balance Sheet</field>
+        <field name="model">ncollection.account.report.balance.sheet</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_balance_sheet</field>
+        <field name="report_file">ncollection_account_reports.report_balance_sheet</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <record id="action_report_profit_loss" model="ir.actions.report">
+        <field name="name">Profit &amp; Loss</field>
+        <field name="model">ncollection.account.report.profit.loss</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_profit_loss</field>
+        <field name="report_file">ncollection_account_reports.report_profit_loss</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_balance_sheet">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <template id="report_profit_loss">
         <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 

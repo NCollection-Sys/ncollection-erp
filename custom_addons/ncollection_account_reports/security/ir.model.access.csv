@@ -4,3 +4,5 @@ access_nc_report_line,ncollection.account.report.line,model_ncollection_account_
 access_nc_report_trial_balance,ncollection.account.report.trial.balance,model_ncollection_account_report_trial_balance,account.group_account_readonly,1,1,1,1
 access_nc_report_general_ledger,ncollection.account.report.general.ledger,model_ncollection_account_report_general_ledger,account.group_account_readonly,1,1,1,1
 access_nc_report_gl_line,ncollection.account.report.gl.line,model_ncollection_account_report_gl_line,account.group_account_readonly,1,1,1,1
+access_nc_report_balance_sheet,ncollection.account.report.balance.sheet,model_ncollection_account_report_balance_sheet,account.group_account_readonly,1,1,1,1
+access_nc_report_profit_loss,ncollection.account.report.profit.loss,model_ncollection_account_report_profit_loss,account.group_account_readonly,1,1,1,1
