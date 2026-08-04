@@ -16,6 +16,45 @@
         </field>
     </record>
 
+    <!-- ============ Provision wizard ============ -->
+    <!-- Declared BEFORE the reseller form on purpose: that form's header button
+         carries %(action_reseller_provision_wizard)d, and Odoo resolves such a
+         reference EAGERLY at load time (an ir.model.data lookup while the view
+         record is being created), not lazily at render time. Records in a data
+         file are processed top-to-bottom, so the action must already exist by
+         then. With this block below the form, a FRESH install died with
+         "External ID not found" while upgrades passed — the action row already
+         existed from the previous install (#300 / D1). Keep this order. -->
+    <record id="view_reseller_provision_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.reseller.provision.wizard.form</field>
+        <field name="model">ncollection.reseller.provision.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Provision Sub-Tenant">
+                <group>
+                    <field name="reseller_id" readonly="1"/>
+                    <field name="company_name"/>
+                    <field name="subdomain"/>
+                    <field name="plan_id"/>
+                    <field name="contact_name"/>
+                    <field name="email"/>
+                    <field name="billing_cycle"/>
+                </group>
+                <footer>
+                    <button name="action_provision" type="object"
+                            string="Provision" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_reseller_provision_wizard" model="ir.actions.act_window">
+        <field name="name">Provision Sub-Tenant</field>
+        <field name="res_model">ncollection.reseller.provision.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
     <!-- ============ Reseller form ============ -->
     <record id="view_reseller_form" model="ir.ui.view">
         <field name="name">ncollection.reseller.form</field>
@@ -81,37 +120,6 @@
         <field name="name">Resellers</field>
         <field name="res_model">ncollection.reseller</field>
         <field name="view_mode">list,form</field>
-    </record>
-
-    <!-- ============ Provision wizard ============ -->
-    <record id="view_reseller_provision_wizard_form" model="ir.ui.view">
-        <field name="name">ncollection.reseller.provision.wizard.form</field>
-        <field name="model">ncollection.reseller.provision.wizard</field>
-        <field name="arch" type="xml">
-            <form string="Provision Sub-Tenant">
-                <group>
-                    <field name="reseller_id" readonly="1"/>
-                    <field name="company_name"/>
-                    <field name="subdomain"/>
-                    <field name="plan_id"/>
-                    <field name="contact_name"/>
-                    <field name="email"/>
-                    <field name="billing_cycle"/>
-                </group>
-                <footer>
-                    <button name="action_provision" type="object"
-                            string="Provision" class="btn-primary"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
-                </footer>
-            </form>
-        </field>
-    </record>
-
-    <record id="action_reseller_provision_wizard" model="ir.actions.act_window">
-        <field name="name">Provision Sub-Tenant</field>
-        <field name="res_model">ncollection.reseller.provision.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
     </record>
 
 </odoo>
