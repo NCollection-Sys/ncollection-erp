@@ -288,7 +288,7 @@ Owner (DEV-1) approved the recommendations on 2026-08-04.
 |---|---|---|
 | 1 | Phase-5 topology | ✅ **Option C adopted** — tenant-side context + sanitisation, admin-side egress. §1.2 |
 | 2 | Amend §11 for prompt-bearing egress | ✅ **Approved and applied** — `ARCHITECTURE_SECURITY.md` §11 now carries an *Outbound AI gateway* row. That doc remains authoritative; this one records the reasoning |
-| 3 | In-region processing for the first paying customer (#53) | ⚠️ **STILL OPEN** — see below |
+| 3 | In-region processing for the first paying customer (#53) | ⚠️ **STILL OPEN — tracked in #323** (DEV-2). See below |
 | 4 | #311 as a hard prerequisite for P5-T02 | ✅ **Yes.** Recorded on #59. A second egress with no network-level backstop is worse than the first |
 | 5 | §4 token budgets as starting values | ✅ **Accepted as starting points**, to be calibrated against the first month of real usage. They are not entitlements to defend |
 
@@ -308,3 +308,5 @@ the expensive path — the provider abstraction limits the damage to a config sw
 signed cannot be swapped.
 
 **Action:** answer before the first AI-featuring contract is signed, not before P5-T02 is written.
+**Tracked in #323**, which carries the full question, the engineering default, and what answering it
+requires. Update this row when #323 closes.
