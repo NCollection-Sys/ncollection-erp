@@ -80,7 +80,7 @@ HARDCODED_NAME_RE = re.compile(r"ncollection-(?:odoo|nginx|db|pgadmin)\b")
 # its `--test-tags`, and nothing declares a manifest dependency on it, so from
 # the day #119 created it until #329 every test it contained was inert. A real
 # AttributeError on the CEO dashboard's happy path shipped through a green CI
-# because of it (REGRESSIONS.md R-019).
+# because of it (REGRESSIONS.md R-024).
 #
 # The failure mode is what makes it worth a guard: nothing turns red. A module
 # with a full suite contributes ZERO enforcement, and the only signal is someone
