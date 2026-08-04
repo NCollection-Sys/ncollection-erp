@@ -1,6 +1,6 @@
 # Design Decision — Automated Exchange-Rate Freshness (#236)
 
-**Date:** 2026-08-04 · **Author:** DEV-1 · **Status:** proposed, awaiting owner sign-off ·
+**Date:** 2026-08-04 · **Author:** DEV-1 · **Status:** **accepted** (owner sign-off 2026-08-04) ·
 **Scope:** how NCollection keeps tenant currency rates fresh. Follow-up to **P3-T06** (#46),
 which shipped UAE multi-currency on **seeded fixed pegs** and deferred automated freshness.
 
@@ -153,8 +153,8 @@ Under D1 it nearly evaporates: **tenant databases make no outbound calls whatsoe
 admin DB — already the most-audited, reachable only via the `admin.` subdomain — gains exactly one
 allowlisted host.
 
-**Proposed** addition to §11 *Platform-Layer Specific Risks*. Not applied here: architecture
-documents are authoritative and this needs the owner's sign-off.
+**Applied** to §11 *Platform-Layer Specific Risks* on owner sign-off (2026-08-04). Reproduced
+here so this record stays readable on its own; `ARCHITECTURE_SECURITY.md` is authoritative.
 
 | Surface | Risks | Controls |
 |---|---|---|
@@ -181,8 +181,8 @@ Notes for the follow-up ticket, from reading the shipped code.
 
 - **KWD stays stale.** ECB does not publish it; no free official source does. This ships one of
   the two stale currencies, and says so rather than implying full coverage.
-- **No code.** By D4. Nothing is fetched, written or scheduled by this document.
-- **`ARCHITECTURE_SECURITY.md` is unmodified.** §5 is a proposal awaiting sign-off.
+- **No code.** By D4. Nothing is fetched, written or scheduled by this document. The §11 row
+  states the envelope the implementation must satisfy; it does not implement it.
 - **Historical invoices are not restated.** Fresh rates apply going forward; the six years of
   drift already booked against the 2020 row are an accounting question, not a technical one.
 - **No per-tenant rate overrides.** Every tenant receives the same platform-pushed rate.
