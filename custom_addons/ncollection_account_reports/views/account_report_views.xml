@@ -335,6 +335,27 @@
               parent="menu_ncollection_account_reports"
               action="action_report_profit_loss_wizard" sequence="50"/>
 
+    <!-- F2-T08: Profitability adds a "% of Revenue" column. It is a RATIO, so
+         it uses the Float ratio_pct field, never a Monetary one. -->
+    <record id="view_report_line_profitability_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.profitability.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Profitability" create="false" delete="false"
+                  default_order="id" decoration-bf="level == 0">
+                <field name="label" string="Metric"/>
+                <field name="current_amount" sum="Current"/>
+                <field name="previous_amount" sum="Previous"/>
+                <field name="variance" sum="Variance"/>
+                <field name="variance_pct" string="Variance %" digits="[16,2]"/>
+                <field name="ratio_pct" string="% of Revenue" digits="[16,2]"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="account_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
     <!-- ==== F2-T08: Executive Reports ==== -->
 
     <record id="view_report_financial_summary_form" model="ir.ui.view">

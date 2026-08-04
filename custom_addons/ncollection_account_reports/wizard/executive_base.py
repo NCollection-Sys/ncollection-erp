@@ -79,31 +79,27 @@ class NcollectionExecutiveReport(models.AbstractModel):
         """Just the Profit & Loss figures dict for a period."""
         return self._nc_pl_full(date_from, date_to)[0]
 
-    def _nc_bs(self, date_to=None):
-        """The Balance Sheet bucket totals for an as-of date (F2-T03 owns it)."""
-        statement = self._nc_statement(
-            'ncollection.account.report.balance.sheet', date_to=date_to)
-        return statement._nc_bucket_totals(statement)[0]
+    def _nc_bs_full(self, date_to=None):
+        """``(bucket totals, {account_type: signed balance})`` as of a date.
 
-    def _nc_bs_by_type(self, date_to=None):
-        """``{account_type: cumulative balance}`` as of a date.
-
-        Financial Summary needs Cash / Receivables / Payables, which are
-        ``account_type``s *inside* the Balance Sheet's buckets rather than
-        buckets themselves. Built from the F2-T01 engine's own
-        ``_nc_closing_balances()`` — still a shared service, still not a new
-        aggregate over journal items.
+        ONE Balance Sheet evaluation serves both. Financial Summary needs bucket
+        totals (Assets, Liabilities) *and* individual ``account_type`` figures
+        (Cash, Receivables, Payables) — the latter live inside the buckets
+        rather than being buckets themselves. ``_nc_bucket_totals`` already
+        returns a per-account signed map as its third element, so the by-type
+        view is folded from that instead of costing a second aggregate over the
+        same company/date scope.
         """
         statement = self._nc_statement(
             'ncollection.account.report.balance.sheet', date_to=date_to)
-        balances = statement._nc_closing_balances()
+        totals, _details, raw = statement._nc_bucket_totals(statement)
         accounts = self.env['account.account'].with_context(
-            active_test=False).browse(list(balances))
+            active_test=False).browse(list(raw))
         by_type = {}
         for account in accounts:
             by_type[account.account_type] = (
-                by_type.get(account.account_type, 0.0) + balances[account.id])
-        return by_type
+                by_type.get(account.account_type, 0.0) + raw[account.id])
+        return totals, by_type
 
     # ---- the service surface F3 / #56 will consume -----------------------
 

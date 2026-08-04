@@ -230,6 +230,7 @@ class NcollectionAccountReport(models.AbstractModel):
             'previous_amount': row.get('previous_amount', 0.0),
             'variance': row.get('variance', 0.0),
             'variance_pct': row.get('variance_pct', 0.0),
+            'ratio_pct': row.get('ratio_pct', 0.0),
             'level': row.get('level', 0),
             'currency_id': currency_id,
         } for row in self._nc_compute_lines()])

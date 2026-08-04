@@ -180,6 +180,28 @@ class TestExecutiveReports(AccountTestInvoicingCommon):
         self.assertAlmostEqual(
             f['gross_margin'], f['gross_profit'] / f['total_income'] * 100.0, places=2)
 
+    def test_margins_render_as_a_percent_column_never_as_currency(self):
+        """A ratio in `current_amount` (a Monetary field, rendered through the
+        monetary widget) would print "AED 70.00" against a row labelled
+        "Net Margin". Margins are a percent COLUMN instead, so the Net Profit
+        row's share of revenue IS the net margin."""
+        wizard = self._make(self.Profit)
+        rows = {r['label']: r for r in wizard._nc_compute_lines()}
+        figures = wizard._nc_service_figures()
+        self.assertAlmostEqual(
+            rows['NET PROFIT']['ratio_pct'], figures['net_margin'], places=2)
+        self.assertAlmostEqual(
+            rows['GROSS PROFIT']['ratio_pct'], figures['gross_margin'], places=2)
+        # No row may carry a ratio in a monetary cell.
+        for label, row in rows.items():
+            self.assertNotIn('margin', label.lower(), label)
+        # The percent column exists and is typed as such.
+        ratio = next(c for c in wizard._nc_columns() if c['key'] == 'ratio_pct')
+        self.assertEqual(ratio['type'], 'percent')
+        for column in wizard._nc_columns():
+            if column['type'] == 'monetary':
+                self.assertNotIn('pct', column['key'])
+
     def test_profitability_margin_is_zero_not_infinite_without_revenue(self):
         """An empty period must render 0.00%, never inf, never a traceback."""
         empty = self._make(self.Profit, date_from=date(2020, 1, 1),
@@ -187,14 +209,6 @@ class TestExecutiveReports(AccountTestInvoicingCommon):
         f = empty._nc_service_figures()
         self.assertEqual(f['net_margin'], 0.0)
         self.assertEqual(f['gross_margin'], 0.0)
-
-    def test_margin_rows_do_not_report_a_percentage_of_a_percentage(self):
-        """A margin's swing is in percentage POINTS. "Margin improved 300%" is
-        meaningless, so the variance % cell is suppressed on margin rows."""
-        rows = {r['label']: r for r in self._make(
-            self.Profit, comparison_type='previous_year')._nc_compute_lines()}
-        self.assertEqual(rows['Net Margin %']['variance_pct'], 0.0)
-        self.assertNotEqual(rows['NET PROFIT']['variance_pct'], 0.0)
 
     def test_comparison_columns_populate_across_all_reports(self):
         for model in (self.Summary, self.Revenue, self.Expense, self.Profit):
@@ -229,6 +243,51 @@ class TestExecutiveReports(AccountTestInvoicingCommon):
                               .search(domain).mapped('balance'))
                 expected = -drilled if negate else drilled
                 self.assertAlmostEqual(row['current_amount'], expected, places=2)
+
+    # ---- company scoping through the composition layer --------------------
+
+    def test_executive_figures_exclude_another_companys_postings(self):
+        """The composition layer hands filters to a child wizard through an
+        EXPLICIT field list. If ``company_id`` ever falls off that list, Odoo's
+        ``new()`` silently falls back to ``env.company`` — the child would then
+        aggregate whatever company the session happens to be in, while the
+        Balance Sheet it claims to summarise would not. Correct today; this is
+        the guard that keeps it correct.
+        """
+        other = self.setup_other_company()
+        other_company = other['company']
+        other_journal = other['default_journal_misc']
+        move = self.env['account.move'].with_company(other_company).create({
+            'move_type': 'entry', 'journal_id': other_journal.id,
+            'date': date(2026, 6, 18),
+            'line_ids': [
+                (0, 0, {'account_id': other['default_account_receivable'].id,
+                        'debit': 5000.0, 'credit': 0.0}),
+                (0, 0, {'account_id': other['default_account_revenue'].id,
+                        'debit': 0.0, 'credit': 5000.0}),
+            ]})
+        move.action_post()
+
+        # Our company's figures must be untouched by the 5,000 next door.
+        figures = self._make(self.Summary)._nc_service_figures()
+        self.assertAlmostEqual(figures['revenue'], 1000.0, places=2)
+        self.assertAlmostEqual(figures['net_profit'], 700.0, places=2)
+
+        # ...and the other company's report must see its own 5,000, not ours.
+        theirs = self.Summary.with_company(other_company).create({
+            'company_id': other_company.id,
+            'date_from': self.date_from, 'date_to': self.date_to,
+            'target_move': 'posted', 'comparison_type': 'none',
+        })._nc_service_figures()
+        self.assertAlmostEqual(theirs['revenue'], 5000.0, places=2)
+
+    def test_child_statement_inherits_every_filter_the_domain_uses(self):
+        """Structural guard on the same failure: the explicit inherit list must
+        cover every field the engine's filter domain actually reads."""
+        from ..wizard.executive_base import _INHERITED_FILTERS
+        engine_filters = {'company_id', 'date_from', 'date_to', 'target_move',
+                          'journal_ids', 'account_ids', 'partner_ids'}
+        self.assertEqual(engine_filters - set(_INHERITED_FILTERS), set())
 
     # ---- security (Rule 4) ------------------------------------------------
 

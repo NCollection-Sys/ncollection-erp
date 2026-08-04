@@ -73,8 +73,9 @@ class NcollectionFinancialSummary(models.TransientModel):
         """
         self.ensure_one()
         pl = self._nc_pl(date_from, date_to)
-        bs = self._nc_bs(date_to)
-        by_type = self._nc_bs_by_type(date_to)
+        # One Balance Sheet evaluation serves both the bucket totals and the
+        # per-account_type figures — not two aggregates over the same scope.
+        bs, by_type = self._nc_bs_full(date_to)
         figures = {
             'revenue': pl['total_income'],
             'expenses': pl['cogs'] + pl['operating_expenses'],
