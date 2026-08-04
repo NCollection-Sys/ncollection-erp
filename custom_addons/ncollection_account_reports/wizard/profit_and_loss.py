@@ -105,15 +105,31 @@ class NcollectionProfitAndLoss(models.TransientModel):
                 label, current.get(key, 0.0), previous.get(key, 0.0), level=level))
             # Per-account detail under the leaf buckets only (mis'
             # auto_expand_accounts) — subtotals have no accounts of their own.
-            for account, balance in detail.get(key, ()):
+            # Union of both periods: an account active only in the comparison
+            # period still sits inside the Previous subtotal, so dropping its
+            # row would make the visible rows fail to add up to that subtotal.
+            seen = {account.id for account, _b in detail.get(key, ())}
+            merged = [(account, balance,
+                       previous_by_account.get(account.id, 0.0))
+                      for account, balance in detail.get(key, ())]
+            merged += [(account, 0.0, prior)
+                       for account, prior in previous_detail.get(key, ())
+                       if account.id not in seen]
+            for account, balance, prior in sorted(
+                    merged, key=lambda row: row[0].code or ''):
                 rows.append(self._nc_comparison_row(
-                    account.display_name, balance,
-                    previous_by_account.get(account.id, 0.0),
+                    account.display_name, balance, prior,
                     level=level + 1, account_id=account.id))
         return rows
 
     def _nc_totals(self):
-        """The headline figures, for tests and for F3 dashboards that want them
-        without re-deriving from rendered rows."""
+        """The headline figures as a dict, for tests and for F3 dashboards that
+        want them without parsing rendered rows.
+
+        Runs its own aggregate — it does NOT reuse a previous
+        ``_nc_compute_lines()`` result. Today no caller does both on one record;
+        a caller that starts to (F2-T08 / F3) should hold the result rather than
+        call this per KPI.
+        """
         self.ensure_one()
         return self._nc_pl_figures(self)[0]

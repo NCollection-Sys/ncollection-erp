@@ -144,7 +144,7 @@ class NcollectionAccountReport(models.AbstractModel):
                 opening[unaffected.id] = opening.get(unaffected.id, 0.0) + pl_prior
         return opening
 
-    def _nc_closing_balances(self, date_to=None):
+    def _nc_closing_balances(self):
         """``{account_id: cumulative balance at date_to}`` — every posting from
         the beginning of time up to and including the date.
 
@@ -161,21 +161,25 @@ class NcollectionAccountReport(models.AbstractModel):
         """
         self.ensure_one()
         AML = self.env['account.move.line']
-        domain = self._nc_filter_domain() + [('date', '<=', date_to or self.date_to)]
+        domain = self._nc_filter_domain() + [('date', '<=', self.date_to)]
         return {account.id: balance
                 for account, balance in AML._read_group(
                     domain, groupby=['account_id'], aggregates=['balance:sum'])
                 if account}
 
-    def _nc_period_balances(self, date_from=None, date_to=None):
+    def _nc_period_balances(self):
         """``{account_id: balance MOVEMENT over the period}`` — mis_builder's
         ``balp`` ("balance period"). What a **P&L** needs: a flow, not a
-        position. Added by F2-T03."""
+        position. Added by F2-T03.
+
+        Both helpers read the period off ``self``; to evaluate a DIFFERENT
+        period use ``_nc_comparison_record()``, which rebinds the dates on an
+        in-memory copy so every filter travels with them.
+        """
         self.ensure_one()
         AML = self.env['account.move.line']
         domain = self._nc_filter_domain() + [
-            ('date', '>=', date_from or self.date_from),
-            ('date', '<=', date_to or self.date_to)]
+            ('date', '>=', self.date_from), ('date', '<=', self.date_to)]
         return {account.id: balance
                 for account, balance in AML._read_group(
                     domain, groupby=['account_id'], aggregates=['balance:sum'])

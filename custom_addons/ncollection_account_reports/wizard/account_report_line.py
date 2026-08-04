@@ -17,8 +17,10 @@ class NcollectionAccountReportLine(models.TransientModel):
     # a sort key (that would bucket hierarchical reports by level).
     _order = 'id'
 
-    # readonly: action_drill_down does a dynamic self.env[report_model] dispatch,
-    # so these must not be user-writable (defensive, alongside the create_uid rule).
+    # NOTE: `readonly=True` is a FORM-VIEW hint only — Odoo's write() path gates
+    # on field.groups, never on field.readonly, so an RPC call_kw can still set
+    # these on a row the caller owns. The real control is the allow-list in
+    # action_drill_down below; do not weaken it on the strength of `readonly`.
     report_model = fields.Char(required=True, readonly=True)   # producing wizard model
     report_res_id = fields.Integer(readonly=True)              # producing wizard id
     account_id = fields.Many2one('account.account', readonly=True)
@@ -46,7 +48,20 @@ class NcollectionAccountReportLine(models.TransientModel):
         """Open the journal items behind this line (the report filters + this
         line's account). Odoo record rules still apply → no cross-scope leak."""
         self.ensure_one()
-        wizard = self.env[self.report_model].browse(self.report_res_id)
+        # SECURITY: `report_model` reaches a dynamic self.env[...] dispatch, and
+        # `readonly=True` does NOT stop an RPC write() from setting it to an
+        # arbitrary model (Odoo gates write on field.groups, not field.readonly).
+        # Unchecked, the .browse().exists() below is a raw SELECT that applies
+        # NEITHER ACL NOR ir.rule — an existence oracle over the whole registry
+        # ("does res.users id 3 exist?") for any accounting-readonly user.
+        # Resolving through the report engine's own class fails closed and needs
+        # no hand-maintained list: only models built on the engine can pass.
+        model = self.env.get(self.report_model)
+        if model is None or not isinstance(
+                model, type(self.env['ncollection.account.report'])):
+            raise UserError(self.env._(
+                "This report line does not point at a financial report."))
+        wizard = model.browse(self.report_res_id)
         if not wizard.exists():
             raise UserError(self.env._(
                 "The report run expired — re-generate the report to drill down."))

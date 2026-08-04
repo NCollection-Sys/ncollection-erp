@@ -236,7 +236,72 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
             self.BS.with_user(other).search([('id', '=', mine.id)]),
             "another user could read someone else's Balance Sheet run")
 
+    # ---- drill-down must reconcile with the figure it drills into --------
+
+    def test_bs_drill_down_matches_the_displayed_cumulative_balance(self):
+        """A BS row is cumulative to date_to. The engine's default drill-down
+        domain bounds on date_from, which would open a list totalling 700 under
+        a row reading 1,100 — silently hiding the prior year."""
+        wizard = self._bs()
+        row = next(r for r in wizard._nc_compute_lines()
+                   if r['account_id'] == self.receivable.id)
+        domain = wizard._nc_move_line_domain(account=self.receivable)
+        drilled = sum(self.env['account.move.line'].search(domain).mapped('balance'))
+        self.assertAlmostEqual(drilled, 1100.0, places=2)
+        self.assertAlmostEqual(row['current_amount'], drilled, places=2)
+
+    def test_pl_drill_down_matches_the_displayed_period_movement(self):
+        """P&L is a flow, so the engine's period-bounded default is already
+        right — pin it so a future engine change cannot desync it."""
+        wizard = self._pl()
+        row = next(r for r in wizard._nc_compute_lines()
+                   if r['account_id'] == self.revenue.id)
+        domain = wizard._nc_move_line_domain(account=self.revenue)
+        drilled = sum(self.env['account.move.line'].search(domain).mapped('balance'))
+        # Revenue is credit-normal; the row negates it for presentation.
+        self.assertAlmostEqual(row['current_amount'], -drilled, places=2)
+
+    # ---- drill-down dispatch cannot be forged -----------------------------
+
+    def test_drill_down_rejects_a_forged_report_model(self):
+        """`readonly=True` is only a form-view hint — an RPC write() can still
+        set report_model. Unchecked, .browse().exists() applies neither ACL nor
+        ir.rule, giving an existence oracle over the whole registry."""
+        wizard = self._bs()
+        action = wizard.action_view()
+        line = self.env['ncollection.account.report.line'].browse(
+            action['domain'][0][2])[0]
+        for forged in ('res.users', 'ir.attachment', 'no.such.model'):
+            with self.subTest(model=forged):
+                line.write({'report_model': forged, 'report_res_id': 1})
+                with self.assertRaises(UserError):
+                    line.action_drill_down()
+
+    def test_drill_down_still_works_for_a_legitimate_report_model(self):
+        """The allow-list must not break the real path it guards."""
+        wizard = self._bs()
+        action = wizard.action_view()
+        line = next(line for line in self.env[
+            'ncollection.account.report.line'].browse(action['domain'][0][2])
+            if line.account_id)
+        drill = line.action_drill_down()
+        self.assertEqual(drill['res_model'], 'account.move.line')
+
     # ---- export smoke ----------------------------------------------------
+
+    def test_each_report_renders_under_its_own_report_action(self):
+        """This module has a prior regression here: sharing one report_name
+        makes Odoo resolve every wizard against the FIRST action's model."""
+        seen = {}
+        for wizard in (self._bs(), self._pl()):
+            report = self.env.ref(wizard._nc_report_action_ref())
+            self.assertEqual(report.model, wizard._name)
+            seen[wizard._name] = report.report_name
+        self.assertEqual(len(set(seen.values())), 2, seen)
+        # ...and distinct from the two already shipped.
+        for ref in ('action_report_trial_balance', 'action_report_general_ledger'):
+            shipped = self.env.ref('ncollection_account_reports.%s' % ref)
+            self.assertNotIn(shipped.report_name, set(seen.values()))
 
     def test_pdf_and_xlsx_render_for_both_reports(self):
         for wizard in (self._bs(comparison_type='previous_year'),

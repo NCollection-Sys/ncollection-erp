@@ -64,6 +64,19 @@ class NcollectionBalanceSheet(models.TransientModel):
         # against the FIRST action's model (see report_templates.xml).
         return 'ncollection_account_reports.action_report_balance_sheet'
 
+    def _nc_move_line_domain(self, account=None, partner=None):
+        """Drill-down must show the SAME journal items the displayed figure is
+        made of.
+
+        The engine's default bounds on ``date >= date_from``, which is right for
+        a period report. A Balance Sheet figure is CUMULATIVE to ``date_to``
+        (``_nc_closing_balances``), so the default would open a list whose total
+        silently excludes everything before ``date_from`` — a row reading 1,100
+        that drills into 700. Bound on the closing date only.
+        """
+        return self._nc_filter_domain(account=account, partner=partner) + [
+            ('date', '<=', self.date_to)]
+
     # ---- computation -----------------------------------------------------
 
     def _nc_bucket_totals(self, record):
@@ -102,6 +115,7 @@ class NcollectionBalanceSheet(models.TransientModel):
         previous, _pdetail, previous_by_account = (
             self._nc_bucket_totals(comparison) if comparison is not None
             else ({}, {}, {}))
+        _pdetail = _pdetail or {}
 
         rows = []
         for _section, section_label, buckets, total_label in _BS_SECTIONS:
@@ -112,19 +126,40 @@ class NcollectionBalanceSheet(models.TransientModel):
                 section_current += cur
                 section_previous += prev
                 rows.append(self._nc_comparison_row(bucket_label, cur, prev, level=1))
-                for account, balance in detail.get(key, ()):
+                for account, balance, prior in self._nc_detail_rows(
+                        detail.get(key, ()), _pdetail.get(key, ()),
+                        previous_by_account):
                     rows.append(self._nc_comparison_row(
-                        account.display_name, balance,
-                        previous_by_account.get(account.id, 0.0),
+                        account.display_name, balance, prior,
                         level=2, account_id=account.id))
             rows.append(self._nc_comparison_row(
                 total_label, section_current, section_previous, level=0))
         return rows
 
+    def _nc_detail_rows(self, current_rows, previous_rows, previous_by_account):
+        """Per-account rows for a bucket, over the UNION of both periods.
+
+        An account with a balance only in the COMPARISON period (written off
+        during the current one) still belongs on the report: its money is inside
+        the bucket's Previous subtotal either way, so omitting its row makes the
+        visible rows fail to add up to the subtotal above them.
+        """
+        seen = {account.id: (account, balance) for account, balance in current_rows}
+        merged = [(account, balance, previous_by_account.get(account.id, 0.0))
+                  for account, balance in current_rows]
+        merged += [(account, 0.0, prior)
+                   for account, prior in previous_rows if account.id not in seen]
+        return sorted(merged, key=lambda row: row[0].code or '')
+
     def _nc_totals(self):
         """``(total_assets, total_liabilities_and_equity)`` — the balancing
-        identity, exposed for tests and for F3 dashboards that want the two
-        headline figures without re-deriving them from rendered rows."""
+        identity, for tests and for F3 dashboards that want the two headline
+        figures without parsing rendered rows.
+
+        Runs its own aggregate — it does NOT reuse a previous
+        ``_nc_compute_lines()`` result. Today no caller does both on one record;
+        a caller that starts to (F2-T08 / F3) should hold the result.
+        """
         self.ensure_one()
         totals = self._nc_bucket_totals(self)[0]
         return (sum(totals[k] for k, _l, _s, _t in _BS_SECTIONS[0][2]),

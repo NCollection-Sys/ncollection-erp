@@ -218,8 +218,7 @@
                 <field name="current_amount" sum="Current"/>
                 <field name="previous_amount" sum="Previous"/>
                 <field name="variance" sum="Variance"/>
-                <field name="variance_pct" string="Variance %" widget="float"
-                       digits="[16,2]"/>
+                <field name="variance_pct" string="Variance %" digits="[16,2]"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="account_id" column_invisible="1"/>
                 <field name="partner_id" column_invisible="1"/>
