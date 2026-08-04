@@ -42,44 +42,53 @@ prompts. That is a direct two-layer violation (CLAUDE.md Rule 3: platform addons
 ERP models directly) and concentrates every tenant's business data in the platform's highest-value
 target. Trading a security control for a worse one.
 
-**Option C — split the responsibility. ✅ RECOMMENDED.**
+**Option C — the satellite gateway. ✅ ADOPTED — and it was already decided.**
+
+> **Correction, recorded rather than hidden.** The first draft of this section invented a topology
+> putting the gateway *inside the admin DB*, and flagged "the admin DB now transits tenant content" as
+> its honest cost. That was wrong, and the cost was imaginary:
+> **`ARCHITECTURE_DATA_PLATFORM.md` §10 had already decided this**, and I had not read it before
+> designing. §10.2 lists **AI GATEWAY (P5-T02)** as a *satellite container*; §10.3's extraction rules
+> name "LLM providers" as code that **"should not share a process with the ORM"**; §10.4 states the
+> gateway **"has LLM keys but no DB credentials (it receives context, never fetches it)"**; and
+> `DELIVERABLE_1_SYSTEM_DESIGN.md`:244 puts `ncollection_ai` on **tenant DBs only** (admin_db ❌) with
+> *"Gateway config is platform-side; widget/context run per tenant."*
+> The architecture's answer is strictly better than the one I drafted. What follows is that design,
+> not a new one.
 
 ```
-  Tenant DB                                   Admin DB                    Internet
-  ─────────                                   ────────                    ────────
-  ncollection_ai_client                    ncollection_ai gateway
-  • builds context from ITS OWN data       • per-tenant budget + rate limit
-  • sanitises PII HERE, pre-transit    →   • holds provider credentials     →   ONE allowlisted
-  • cannot see another tenant's DB         • the ONLY outbound egress            provider host
-    (by construction, not by policy)       • logs metadata, never bodies
-              │                                        ▲
-              └──── internal, authenticated ───────────┘
-                    (per-tenant HMAC, the #212 config-sync pattern)
+  Tenant DB                          AI GATEWAY satellite            Internet
+  ─────────                          (own container, §10.2)          ────────
+  ncollection_ai  (module)
+  • builds context from ITS OWN     • LLM keys, and NO DB
+    data                              credentials at all (§10.4)
+  • sanitises PII HERE,         →   • receives context, never    →   ONE allowlisted
+    pre-transit                       fetches it                      provider host
+  • cannot see another tenant's     • per-tenant budget + rate
+    DB (by construction)              limit, circuit breaker
+              │                     • logs metadata, never bodies
+              └── Odoo public interface only (RPC / job queue, §10.4)
+                  — satellites never import Odoo internals or write tenant SQL
 ```
 
 **Why this is the right shape:**
 
-- **§11 holds exactly.** No tenant database makes an outbound call. The admin DB remains the single
-  egress point — the identical topology as the #308 ECB rate fetch, so this is a *precedent applied*,
-  not an exception carved.
-- **Rule 3 holds.** The platform never reads tenant ERP models; the tenant hands over a finished,
-  sanitised context payload.
-- **P5-T03's acceptance becomes structural.** "The context builder physically cannot read another DB"
-  is *free* when the builder runs inside the tenant database. It is a property of where the code
-  lives, not a test that has to keep proving a negative.
-- **The transport already exists.** The platform→tenant config-sync channel (#212) has per-tenant HMAC
-  keys, a re-key path (#283), and hardened bounded reads. Phase 5 inherits it instead of inventing a
-  second authenticated channel.
+- **§11 holds exactly.** No tenant database makes an outbound call.
+- **No database transits tenant content.** The satellite holds *no DB credentials*, so the admin DB is
+  not in the path at all. This is the part my draft got wrong and the architecture got right.
+- **Rule 3 holds, structurally.** The platform never reads tenant ERP models — it *cannot*, lacking
+  credentials.
+- **P5-T03's acceptance becomes free.** "The context builder physically cannot read another DB" is a
+  property of where the code lives, not a test forever proving a negative.
+- **Blast radius is contained by process boundary** (§10.3 rule 2), not by discipline.
 
-**What Option C costs, stated honestly:** the admin DB now *transits* tenant business content, even if
-it never persists it. That is a real concentration of exposure and the reason for the controls in §5.
+### 1.3 What still needs owner sign-off
 
-### 1.3 ⚠️ This needs your signature
+The topology needs no approval — it is the shipped architecture. What *does*:
 
-Option C does not violate §11, but it does **extend** it: §11 currently describes one allowlisted host
-fetching a public exchange rate. It would now also describe a host receiving tenant-derived prompt
-content. **§11 must be amended before P5-T02 is written**, and that amendment is an architecture
-change requiring owner approval — not something an implementation ticket may assume.
+**§11 must be amended** to describe prompt-bearing egress. It currently covers one allowlisted host
+fetching a public exchange rate; it must also cover a satellite receiving tenant-derived context. That
+is an architecture-document change, and an implementation ticket may not assume it.
 
 ---
 
@@ -222,7 +231,26 @@ Whether #310 is resolved first is an explicit prerequisite question, not an afte
 
 ## 7. Reuse decision (Rule 2 / Rule 5)
 
-`oca-scout` survey result: **recorded below at PR time.** No new dependency may be proposed without it.
+`oca-scout` survey, 2026-08-04. **Verdict: BUILD CUSTOM on all four needs. No new OCA dependency, so
+no owner approval is required on that front.** This section is the Rule 2 evidence for #58's checklist.
+
+| Need | Candidate | Verdict | Why |
+|---|---|---|---|
+| LLM provider gateway / connector | **`OCA/ai`** (`ai_connection`, `ai_tool`, `ai_oca_bridge`) | **BUILD** | Three independent disqualifiers: the `19.0` branch is an **empty scaffold** (verified via the git tree API — lint config only, zero modules); every manifest is **AGPL-3**, network copyleft, materially stricter than this project's LGPL-3 stance and a legal-review item for a commercial multi-tenant SaaS; and structurally it stores the provider connection *as an Odoo record inside the DB that uses it*, i.e. **credentials and outbound calls inside the tenant process** — exactly what §11 and the §10 satellite design forbid. Not a gap to revisit later; a shape mismatch |
+| Per-tenant rate limit / token budget | none | **BUILD** | Inherently coupled to `ncollection.subscription` plan tiers — a domain concept no generic single-tenant module can express. `queue_job` (already pinned) offers *channel concurrency*, not token-aware per-tenant budgets; useful only if the request path becomes job-mediated |
+| Encrypted third-party credential storage | none | **BUILD**, on already-approved native mechanisms | `OCA/server-auth`'s `auth_api_key` solves the inverse problem (issuing keys *to* callers). §7 already lists "LLM API keys" in the platform-secret inventory alongside Stripe/SMTP/B2 — the satellite's env/Docker-secrets pipeline. §8 reserves field-level **`pgcrypto`** if a per-tenant BYO key ever needs a DB row. Note the config-sync HMAC derivation pattern **does not generalise** here: provider keys are issued, not derivable, so they must actually be stored |
+| Outbound HTTP hardening + circuit breaker | none (`OCA/connector*` is the wrong shape) | **BUILD**, extending existing helpers | The bounded-read / wall-clock-deadline / `allow_redirects=False` logic already exists twice (`config_sync.py`, `exchange_rate.py`). Extract it rather than write a third copy. **The circuit breaker is genuinely new** — nothing in the repo or OCA implements one, and it is a few dozen lines, not a dependency |
+
+**Two design questions the survey surfaced and left open for this doc:**
+
+1. **One platform-level provider key, or per-tenant BYO keys?** §7's framing implies the former (satellite
+   env secret, like B2); §8's `pgcrypto` reservation enables the latter. **Recommendation: start with a
+   single platform key** — BYO-key support is a plan-tier feature nobody has asked for, and it drags
+   `pgcrypto`, key rotation and per-tenant revocation into P5-T02 for no current customer.
+2. **Synchronous RPC or `queue_job`-mediated dispatch** from tenant to satellite? **Recommendation:
+   RPC for interactive surfaces** (P5-T06 chat, P5-T07 search — a queue adds latency users feel), and
+   **`queue_job` for batch** (P5-T04 anomaly runs), which also makes its existing channel-capacity
+   throttle reusable. Note §10.4 permits both.
 
 Prior art already in this repo that Phase 5 **must reuse rather than reinvent**:
 
