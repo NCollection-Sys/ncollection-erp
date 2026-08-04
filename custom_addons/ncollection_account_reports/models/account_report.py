@@ -144,6 +144,43 @@ class NcollectionAccountReport(models.AbstractModel):
                 opening[unaffected.id] = opening.get(unaffected.id, 0.0) + pl_prior
         return opening
 
+    def _nc_closing_balances(self, date_to=None):
+        """``{account_id: cumulative balance at date_to}`` — every posting from
+        the beginning of time up to and including the date.
+
+        This is mis_builder's ``bale`` ("balance end") semantics, and it is what
+        a **Balance Sheet** needs: a statement of position is cumulative, not a
+        period movement. Deliberately does NOT call
+        ``_nc_assert_single_fiscal_year`` — that guard exists because the
+        *opening* logic resets P&L accounts at the fiscal-year start, which is
+        only well-defined inside one FY. A cumulative to-date sum has no such
+        reset, so a range spanning a boundary is not ambiguous here.
+
+        Added by F2-T03; ``_nc_opening_balances`` above is untouched and remains
+        what the Trial Balance and General Ledger use.
+        """
+        self.ensure_one()
+        AML = self.env['account.move.line']
+        domain = self._nc_filter_domain() + [('date', '<=', date_to or self.date_to)]
+        return {account.id: balance
+                for account, balance in AML._read_group(
+                    domain, groupby=['account_id'], aggregates=['balance:sum'])
+                if account}
+
+    def _nc_period_balances(self, date_from=None, date_to=None):
+        """``{account_id: balance MOVEMENT over the period}`` — mis_builder's
+        ``balp`` ("balance period"). What a **P&L** needs: a flow, not a
+        position. Added by F2-T03."""
+        self.ensure_one()
+        AML = self.env['account.move.line']
+        domain = self._nc_filter_domain() + [
+            ('date', '>=', date_from or self.date_from),
+            ('date', '<=', date_to or self.date_to)]
+        return {account.id: balance
+                for account, balance in AML._read_group(
+                    domain, groupby=['account_id'], aggregates=['balance:sum'])
+                if account}
+
     # ---- report contract (concrete reports override) --------------------
 
     def _nc_report_title(self):
@@ -181,6 +218,14 @@ class NcollectionAccountReport(models.AbstractModel):
             'balance': row.get('balance', 0.0),
             'opening_balance': row.get('opening_balance', 0.0),
             'closing_balance': row.get('closing_balance', 0.0),
+            # F2-T03 comparison columns. Additive: every pre-existing report
+            # (GL, Trial Balance) simply omits these keys and gets 0.0, and no
+            # list view of theirs references the fields — so their on-screen
+            # output is byte-identical to before.
+            'current_amount': row.get('current_amount', 0.0),
+            'previous_amount': row.get('previous_amount', 0.0),
+            'variance': row.get('variance', 0.0),
+            'variance_pct': row.get('variance_pct', 0.0),
             'level': row.get('level', 0),
             'currency_id': currency_id,
         } for row in self._nc_compute_lines()])
@@ -253,6 +298,8 @@ class NcollectionAccountReport(models.AbstractModel):
         f_title = book.add_format({'bold': True, 'font_size': 14})
         f_head = book.add_format({'bold': True, 'bottom': 1, 'bg_color': '#F2F2F2'})
         f_money = book.add_format({'num_format': '#,##0.00'})
+        # F2-T03: a percentage is not money — its own format, no currency.
+        f_pct = book.add_format({'num_format': '#,##0.00"%"'})
         sheet.write(0, 0, self._nc_report_title(), f_title)
         sheet.write(1, 0, '%s → %s' % (self.date_from, self.date_to))
         header_row = 3
@@ -265,6 +312,8 @@ class NcollectionAccountReport(models.AbstractModel):
                 val = row.get(cdef['key'], '')
                 if cdef.get('type') == 'monetary':
                     sheet.write_number(r, col, val or 0.0, f_money)
+                elif cdef.get('type') == 'percent':
+                    sheet.write_number(r, col, val or 0.0, f_pct)
                 else:
                     sheet.write(r, col, val or '')
         book.close()

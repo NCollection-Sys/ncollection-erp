@@ -30,6 +30,15 @@ class NcollectionAccountReportLine(models.TransientModel):
     # Opening/closing are used by the Trial Balance (nullable for other reports).
     opening_balance = fields.Monetary(currency_field='currency_id')
     closing_balance = fields.Monetary(currency_field='currency_id')
+    # F2-T03 comparison columns (FPA §Balance Sheet / §Profit & Loss: Current,
+    # Previous, Variance, Variance %). Nullable for reports without a comparison
+    # — exactly how opening/closing above are nullable outside the Trial Balance.
+    current_amount = fields.Monetary(currency_field='currency_id')
+    previous_amount = fields.Monetary(currency_field='currency_id')
+    variance = fields.Monetary(currency_field='currency_id')
+    # Not Monetary: a percentage is not money, and rendering it with a currency
+    # symbol in the list/PDF would be wrong.
+    variance_pct = fields.Float(digits=(16, 2))
     currency_id = fields.Many2one('res.currency')
     level = fields.Integer(default=0)
 
