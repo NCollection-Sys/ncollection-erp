@@ -25,7 +25,18 @@ from odoo import api, fields, models
 _SUMMARY = 'ncollection.account.report.summary'
 _PROFITABILITY = 'ncollection.account.report.profitability'
 
+# P4-T01 aggregation engine (#54). The CEO dashboard is the first here to need
+# NON-financial figures — pipeline and customers — and this is the only route to
+# them. It is also why no `sale`/`crm` manifest dependency is added: aggregate()
+# returns None (never raises) when a model is absent from the registry or Ring 2
+# denies it, so a Basic-plan tenant degrades to an empty panel instead of a
+# broken dashboard. See _cross_domain() below.
+_AGGREGATION = 'ncollection.aggregation.engine'
+
 _TREND_MONTHS = 6
+
+# How many customers the "top customers" panel shows.
+_TOP_CUSTOMERS = 5
 
 
 class AccountDashboardService(models.AbstractModel):
@@ -87,6 +98,84 @@ class AccountDashboardService(models.AbstractModel):
                 series[k].append(figures.get(k, 0.0))
         return labels, series
 
+    # ---- cross-domain panels (#56) ---------------------------------------
+
+    def _cross_domain(self, spec):
+        """Run one P4-T01 aggregation spec; ``None`` when it yields nothing.
+
+        The engine returns ``None`` — never raises — when the model is absent
+        from the registry (the plan never installed that app) or Ring 2 denies
+        it (installed but unlicensed for this user). Both mean the same thing
+        to a dashboard: render the empty state for that panel and leave the
+        rest of the page working. This is why the manifest gains no ``sale`` or
+        ``crm`` dependency: a hard dep would make the whole module uninstallable
+        where those apps are absent, and break the page where they are merely
+        unlicensed.
+
+        Note this module still performs NO aggregation itself — the read lives
+        in ``ncollection.aggregation.engine`` (P4-T01), which is exactly what
+        ``tests/test_boundary.py`` requires.
+        """
+        return self.env[_AGGREGATION].aggregate(spec)
+
+    def _pipeline_funnel(self):
+        """Open opportunities by stage — value and count. ``None`` without CRM.
+
+        ``type = 'opportunity'`` excludes raw leads, and ``active = True``
+        excludes archived/lost ones, so the funnel shows what is genuinely in
+        play rather than every record ever created.
+        """
+        result = self._cross_domain({
+            'key': 'pipeline',
+            'model': 'crm.lead',
+            'domain': [('type', '=', 'opportunity'), ('active', '=', True)],
+            'groupby': ['stage_id'],
+            'aggregates': ['expected_revenue:sum', '__count'],
+        })
+        if not result or not result.get('rows'):
+            return None
+        stages = []
+        for row in result['rows']:
+            stage = row.get('stage_id')
+            # A grouped many2one always arrives as (id, label) — including the
+            # null group — per the engine's _flatten_cell contract.
+            stage_id, stage_label = stage if stage else (False, self.env._("Unassigned"))
+            stages.append({
+                'stage_id': stage_id,
+                'label': stage_label,
+                'value': row.get('expected_revenue:sum') or 0.0,
+                'count': row.get('__count') or 0,
+            })
+        return stages
+
+    def _top_customers(self, limit=_TOP_CUSTOMERS):
+        """Highest-billing customers on confirmed orders. ``None`` without Sales.
+
+        ``state in (sale, done)`` counts confirmed business only — quotations
+        are not revenue, and including them would flatter the panel.
+        """
+        result = self._cross_domain({
+            'key': 'top_customers',
+            'model': 'sale.order',
+            'domain': [('state', 'in', ('sale', 'done'))],
+            'groupby': ['partner_id'],
+            'aggregates': ['amount_total:sum'],
+            'order': 'amount_total:sum desc',
+            'limit': limit,
+        })
+        if not result or not result.get('rows'):
+            return None
+        customers = []
+        for row in result['rows']:
+            partner = row.get('partner_id')
+            partner_id, partner_label = partner if partner else (False, self.env._("Unknown"))
+            customers.append({
+                'partner_id': partner_id,
+                'label': partner_label,
+                'value': row.get('amount_total:sum') or 0.0,
+            })
+        return customers
+
     # ---- public payloads (the OWL client actions call these) -------------
 
     @api.model
@@ -144,6 +233,66 @@ class AccountDashboardService(models.AbstractModel):
             }],
         }]
         return {'kpis': kpis, 'charts': charts, 'meta': self._meta()}
+
+    @api.model
+    def get_ceo_dashboard(self):
+        """CEO dashboard (#56 / P4-T03): the executive view across domains.
+
+        Headline KPIs and the revenue trend come from the F2-T08 services like
+        every other dashboard here. The pipeline funnel and top customers come
+        from the P4-T01 engine, and are OMITTED — not zeroed — when the tenant's
+        plan does not license CRM/Sales. Omission matters: a funnel rendered as
+        0 would read as "no pipeline", which is a business claim; absent reads
+        as "not part of your plan", which is the truth.
+
+        Keeps the {kpis, charts, meta} contract additive: `panels` is a new
+        optional key the existing three dashboards simply never populate.
+        """
+        current, previous = self._comparison(_SUMMARY)
+        profit_now, profit_prev = self._comparison(_PROFITABILITY)
+        kpis = [
+            self._kpi('revenue', self.env._("Revenue"), current, previous),
+            self._kpi('net_profit', self.env._("Net Profit"), current, previous),
+            self._kpi('cash', self.env._("Cash"), current, previous),
+            self._kpi('net_margin', self.env._("Net Margin"),
+                      profit_now, profit_prev, unit='percent'),
+        ]
+        labels, series = self._trend(_SUMMARY, ('revenue', 'net_profit'))
+        charts = [{
+            'key': 'revenue_vs_profit',
+            'label': self.env._("Revenue vs Net Profit"),
+            'type': 'line',
+            'labels': labels,
+            'series': [
+                {'name': self.env._("Revenue"), 'data': series['revenue']},
+                {'name': self.env._("Net Profit"), 'data': series['net_profit']},
+            ],
+        }]
+
+        panels = []
+        pipeline = self._pipeline_funnel()
+        if pipeline is not None:
+            panels.append({
+                'key': 'pipeline',
+                'label': self.env._("Sales Pipeline"),
+                'type': 'funnel',
+                'rows': pipeline,
+                # Drill-down target for the OWL layer (#56 PR 2). Named here so
+                # the client never has to know which model backs a panel.
+                'drilldown': {'model': 'crm.lead', 'field': 'stage_id'},
+            })
+        customers = self._top_customers()
+        if customers is not None:
+            panels.append({
+                'key': 'top_customers',
+                'label': self.env._("Top Customers"),
+                'type': 'ranking',
+                'rows': customers,
+                'drilldown': {'model': 'sale.order', 'field': 'partner_id'},
+            })
+
+        return {'kpis': kpis, 'charts': charts, 'panels': panels,
+                'meta': self._meta()}
 
     @api.model
     def get_cash_dashboard(self):

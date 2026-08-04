@@ -10,6 +10,8 @@ Inherits AccountTestInvoicingCommon (same base as the sibling
 test_executive_reports) so a full chart of accounts + company are provisioned on
 a clean CI database — never a manual account search that can come up empty.
 """
+from unittest.mock import patch
+
 from odoo import fields
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.tests import tagged
@@ -71,3 +73,76 @@ class TestDashboardService(AccountTestInvoicingCommon):
         payload = self.service.get_cash_dashboard()
         self._assert_shape(payload)
         self._provenance(payload, 'ncollection.account.report.summary')
+
+    # ---- #56 CEO dashboard ------------------------------------------------
+
+    def test_ceo_dashboard(self):
+        payload = self.service.get_ceo_dashboard()
+        self._assert_shape(payload)
+        self._provenance(payload, 'ncollection.account.report.summary')
+        # `panels` is the additive key #56 introduces; the contract stays
+        # backward compatible because the other three never populate it.
+        self.assertIn('panels', payload)
+        self.assertIsInstance(payload['panels'], list)
+
+    def test_ceo_dashboard_degrades_without_crm_or_sales(self):
+        """The whole reason no sale/crm manifest dependency was added.
+
+        This test database installs only the dashboard's real dependencies, so
+        crm/sale are absent — exactly a Basic-plan tenant's situation. The
+        financial half must still render and the cross-domain panels must be
+        OMITTED rather than present-and-zero: a funnel showing 0 reads as "no
+        pipeline", which is a business claim we have no basis to make.
+        """
+        for model in ('crm.lead', 'sale.order'):
+            if model in self.env:
+                self.skipTest('%s is installed here; this asserts the absent case' % model)
+        payload = self.service.get_ceo_dashboard()
+        self.assertEqual(payload['panels'], [], "panels must be omitted, not zeroed")
+        # ...and the financial half is untouched.
+        self.assertTrue(payload['kpis'])
+        self.assertTrue(payload['charts'])
+        self.assertTrue(any(k['value'] is not None for k in payload['kpis']),
+                        "financial KPIs must still resolve without CRM/Sales")
+
+    def test_ceo_panels_render_when_the_engine_returns_rows(self):
+        """The transform from engine rows to panel rows, without needing crm
+        or sale installed. Patches the ENGINE (P4-T01), not our own method, so
+        the code under test is the real _pipeline_funnel/_top_customers."""
+        engine = self.env['ncollection.aggregation.engine']
+        rows = {
+            'pipeline': [
+                {'stage_id': (7, 'Qualified'), 'expected_revenue:sum': 5000.0, '__count': 3},
+                {'stage_id': False, 'expected_revenue:sum': 250.0, '__count': 1},
+            ],
+            'top_customers': [
+                {'partner_id': (11, 'Al Barari Trading'), 'amount_total:sum': 9000.0},
+            ],
+        }
+
+        def fake_aggregate(spec):
+            key = spec['key']
+            return {'key': key, 'rows': rows[key], 'cached': False} if key in rows else None
+
+        with patch.object(type(engine), 'aggregate', side_effect=fake_aggregate):
+            payload = self.service.get_ceo_dashboard()
+
+        panels = {p['key']: p for p in payload['panels']}
+        self.assertEqual(set(panels), {'pipeline', 'top_customers'})
+
+        funnel = panels['pipeline']
+        self.assertEqual(funnel['type'], 'funnel')
+        self.assertEqual(funnel['drilldown'], {'model': 'crm.lead', 'field': 'stage_id'})
+        self.assertEqual(funnel['rows'][0]['label'], 'Qualified')
+        self.assertAlmostEqual(funnel['rows'][0]['value'], 5000.0)
+        self.assertEqual(funnel['rows'][0]['count'], 3)
+        # The null group must not crash the unpack — the engine's _flatten_cell
+        # returns an (id, label) pair for it too, but False arrives here when a
+        # spec yields no group at all.
+        self.assertEqual(funnel['rows'][1]['stage_id'], False)
+        self.assertTrue(funnel['rows'][1]['label'])
+
+        ranking = panels['top_customers']
+        self.assertEqual(ranking['type'], 'ranking')
+        self.assertEqual(ranking['rows'][0]['label'], 'Al Barari Trading')
+        self.assertAlmostEqual(ranking['rows'][0]['value'], 9000.0)
