@@ -8,6 +8,8 @@ from . import config_sync
 # Must follow config_sync: it imports the master/derived key env-var names and
 # derive_tenant_key from there.
 from . import config_sync_rekey
+# Must follow config_sync too: imports its bounded-read constants (#308).
+from . import exchange_rate
 from . import checkout
 from . import domain
 from . import backup

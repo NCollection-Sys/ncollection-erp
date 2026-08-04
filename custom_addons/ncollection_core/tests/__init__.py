@@ -15,3 +15,4 @@ from . import test_aggregation_cache
 from . import test_kpi
 from . import test_config_sync_key
 from . import test_reseller_branding_apply
+from . import test_pushed_rate

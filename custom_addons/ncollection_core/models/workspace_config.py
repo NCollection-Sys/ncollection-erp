@@ -39,6 +39,24 @@ _SYNCABLE_FIELDS = frozenset({
     'allowed_module_names', 'plan_code', 'subscription_status', 'max_users',
 })
 
+# Platform-pushed ECB exchange rate (#308). Like the brand keys these are NOT
+# stored on workspace.config -- they are applied to res.currency.rate and then
+# dropped before the licensing whitelist runs. The platform sends ECB's raw
+# `USD per EUR`; we derive against THIS tenant's own base currency, so the
+# CBUAE peg constant never has to leave ncollection_account_localization_uae.
+_RATE_APPLY_FIELDS = frozenset({'ecb_usd_per_eur', 'ecb_rate_date'})
+
+# Deliberately duplicated from ncollection_saas rather than imported: this module
+# does NOT depend on the platform addon, and more importantly validation belongs
+# on the side that holds the privilege. The platform checked this band before
+# storing -- but the sudo() write happens HERE, and a caller with a valid tenant
+# bearer can send a payload of nothing but rate keys, skipping the platform
+# entirely. res.currency.rate's only core constraint is CHECK (rate>0), so
+# without this any positive float would be accepted and would misprice every
+# foreign-currency invoice in the tenant.
+_RATE_MIN = 0.1
+_RATE_MAX = 10.0
+
 # White-label reseller branding (P3/P10-T09): the platform may cascade a
 # reseller's brand onto the tenant's company alongside the licensing sync. These
 # keys are NOT stored on workspace.config — they are applied to res.company's
@@ -136,6 +154,7 @@ class WorkspaceConfig(models.Model):
         # company row is written for a payload that then raises.
         vals = dict(vals)
         brand = {k: vals.pop(k) for k in list(vals) if k in _BRAND_APPLY_FIELDS}
+        rate = {k: vals.pop(k) for k in list(vals) if k in _RATE_APPLY_FIELDS}
         rejected = set(vals) - _SYNCABLE_FIELDS
         if rejected:
             raise UserError(self.env._(
@@ -152,9 +171,93 @@ class WorkspaceConfig(models.Model):
         # rejected payload never leaves a written company row behind).
         if brand:
             self._nc_apply_pushed_branding(brand)
+        if rate:
+            self._nc_apply_pushed_rate(rate)
         return {'ok': True, 'plan_code': config.plan_code,
                 'subscription_status': config.subscription_status,
-                'required_crons': self._required_cron_health()}
+                'required_crons': self._required_cron_health(),
+                # Capability marker (#308). Its ABSENCE is what tells an
+                # up-to-date platform not to send rate keys to a tenant running
+                # older code -- which would fail this method's own whitelist
+                # guard and take licensing sync down with it.
+                'accepts_rate': True}
+
+    @api.model
+    def _nc_apply_pushed_rate(self, rate):
+        """Write a dated EUR rate derived from THIS tenant's own USD row (#308).
+
+        The platform pushes ECB's raw ``USD per EUR`` and nothing else. Odoo
+        stores ``rate`` as *units of the foreign currency per 1 unit of the
+        company currency*, so with the tenant's existing USD row::
+
+            EUR per CC = (EUR per USD) x (USD per CC) = usd_row.rate / usd_per_eur
+
+        which holds for any company currency that HAS a USD row -- AED here, but
+        nothing in this method is UAE-specific. A company whose own currency is
+        USD is the exception: Odoo keeps no row for a company's own currency, so
+        it is skipped rather than derived. Fail-intact, not fail-wrong. That is deliberate: deriving from the tenant's
+        own USD row means the CBUAE peg (``_AED_PER_USD``) stays in exactly one
+        module instead of being duplicated platform-side, where a future
+        re-peg would silently disagree with itself.
+
+        A tenant with no USD row is skipped, not faked -- it has no peg to
+        derive from, and inventing one would be exactly the "confidently wrong
+        rate" that ARCHITECTURE_SECURITY §11 forbids.
+
+        sudo() because the config-sync service account is scoped to
+        workspace.config alone (1,1,0,0) and MUST stay that way; the privileged
+        write belongs on this side of the channel, as it does for branding.
+
+        Never raises: this rides a payload whose primary job is licensing, and
+        a currency must never be able to fail a license push.
+        """
+        usd_per_eur = rate.get('ecb_usd_per_eur')
+        try:
+            # to_date RAISES on a malformed string -- and this method promises
+            # never to raise, because it rides a payload whose real job is
+            # licensing. Caught here rather than trusted: the platform is not
+            # the only thing that can put a string in this field.
+            rate_date = fields.Date.to_date(rate.get('ecb_rate_date'))
+        except (TypeError, ValueError):
+            rate_date = None
+        if (not rate_date or not isinstance(usd_per_eur, (int, float))
+                or isinstance(usd_per_eur, bool)
+                or not (_RATE_MIN < usd_per_eur < _RATE_MAX)
+                or rate_date > fields.Date.today()):
+            _logger.warning(
+                "Ignoring unusable pushed rate: %r on %r",
+                usd_per_eur, rate.get('ecb_rate_date'))
+            return
+        Currency = self.env['res.currency'].with_context(active_test=False)
+        eur = Currency.search([('name', '=', 'EUR')], limit=1)
+        usd = Currency.search([('name', '=', 'USD')], limit=1)
+        if not eur or not usd:
+            return
+        Rate = self.env['res.currency.rate'].sudo()
+        roots = {c.root_id.id for c in self.env['res.company'].sudo().search([])}
+        for root_id in roots:
+            scope = [('company_id', 'in', (False, root_id))]
+            usd_row = Rate.search(
+                scope + [('currency_id', '=', usd.id),
+                         ('name', '<=', rate_date)],
+                order='name desc', limit=1)
+            if not usd_row or not usd_row.rate:
+                continue  # no peg to derive from -- skip, never invent
+            if Rate.search_count(scope + [('currency_id', '=', eur.id),
+                                          ('name', '=', rate_date)]):
+                continue  # already applied for this date; idempotent
+            try:
+                with self.env.cr.savepoint():
+                    Rate.create({
+                        'currency_id': eur.id,
+                        'company_id': root_id,
+                        'name': rate_date,
+                        'rate': usd_row.rate / usd_per_eur,
+                    })
+            except Exception:  # noqa: BLE001 - never fail a licensing push
+                _logger.warning(
+                    "Could not write the pushed EUR rate for company %s",
+                    root_id, exc_info=True)
 
     @api.model
     def _required_cron_health(self):

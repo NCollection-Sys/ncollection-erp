@@ -224,7 +224,9 @@ class ResCompany(models.Model):
                     if code in _UAE_INDICATIVE_CURRENCIES:
                         _logger.info(
                             "Seeded INDICATIVE %s peg for company %s "
-                            "(floating/basket — refresh via #236).",
+                            "(floating/basket). EUR is now auto-refreshed daily from ECB "
+                            "via config-sync (#308); KWD stays a static "
+                            "snapshot -- no free official source publishes it.",
                             code, root_id)
                 except Exception:  # noqa: BLE001
                     _logger.warning(

@@ -8,6 +8,19 @@
             sync missed or a tenant-side edit introduced. Idempotent; runs off
             the HTTP workers via the provisioning queue channel.
         -->
+        <!-- #308: ONE outbound fetch for the whole platform. Tenants never
+             call out; they receive the number on the existing config-sync
+             payload. Daily because ECB publishes once per working day. -->
+        <record id="cron_ecb_rate_refresh" model="ir.cron">
+            <field name="name">NCollection: refresh ECB exchange rate</field>
+            <field name="model_id" ref="model_ncollection_exchange_rate"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_refresh_ecb_rate()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+
         <record id="cron_config_reconcile" model="ir.cron">
             <field name="name">NCollection: reconcile tenant workspace configs</field>
             <field name="model_id" ref="model_ncollection_tenant"/>

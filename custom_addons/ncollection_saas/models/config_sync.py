@@ -979,6 +979,9 @@ class TenantConfigSync(models.Model):
             (payload or {}).get('required_crons')
             if isinstance(payload, dict) else None,
             skip_reason=skip_reason)
+        # What this tenant can ACCEPT, learned from its own response (#308).
+        # Implemented in exchange_rate.py on the same model.
+        self._record_sync_capabilities(payload if isinstance(payload, dict) else None)
         return True
 
     # ---- lifecycle triggers (status → subscription_status projection) ----
