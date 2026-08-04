@@ -39,5 +39,19 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- F2-T03: same per-user scoping for the BS/P&L report runs. Their
+             lines reuse ncollection.account.report.line, already scoped above. -->
+        <record id="rule_report_balance_sheet_own" model="ir.rule">
+            <field name="name">Balance Sheet runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_balance_sheet"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_profit_loss_own" model="ir.rule">
+            <field name="name">Profit and Loss runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_profit_loss"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>

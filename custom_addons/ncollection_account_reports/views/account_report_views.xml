@@ -201,4 +201,139 @@
               parent="menu_ncollection_account_reports"
               action="action_report_general_ledger_wizard" sequence="30"/>
 
+    <!-- ==== F2-T03: Balance Sheet & Profit and Loss ==== -->
+
+    <!-- Shared comparison list (FPA: Current / Previous / Variance / Variance %).
+         `level` drives indent + bold: 0 = section head or grand total, 1 = a
+         bucket subtotal, 2 = an individual account (the only rows that can
+         drill down). -->
+    <record id="view_report_line_comparison_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.comparison.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Financial Report" create="false" delete="false"
+                  default_order="id" decoration-bf="level == 0"
+                  decoration-muted="level == 2">
+                <field name="label" string="Account"/>
+                <field name="current_amount" sum="Current"/>
+                <field name="previous_amount" sum="Previous"/>
+                <field name="variance" sum="Variance"/>
+                <field name="variance_pct" string="Variance %" widget="float"
+                       digits="[16,2]"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="account_id" column_invisible="1"/>
+                <field name="partner_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+                <button name="action_drill_down" type="object" string="Journal Items"
+                        icon="fa-search-plus" invisible="not account_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_balance_sheet_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.balance.sheet.form</field>
+        <field name="model">ncollection.account.report.balance.sheet</field>
+        <field name="arch" type="xml">
+            <form string="Balance Sheet">
+                <sheet>
+                    <group>
+                        <group string="Position">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <!-- A balance sheet is cumulative: `date_to` is the
+                                 AS-OF date and drives every figure. `date_from`
+                                 only sets the span that "Previous Period" steps
+                                 back by. -->
+                            <field name="date_from" string="Period Start"/>
+                            <field name="date_to" string="As Of"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_balance_sheet_wizard" model="ir.actions.act_window">
+        <field name="name">Balance Sheet</field>
+        <field name="res_model">ncollection.account.report.balance.sheet</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_balance_sheet" name="Balance Sheet"
+              parent="menu_ncollection_account_reports"
+              action="action_report_balance_sheet_wizard" sequence="40"/>
+
+    <record id="view_report_profit_loss_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.profit.loss.form</field>
+        <field name="model">ncollection.account.report.profit.loss</field>
+        <field name="arch" type="xml">
+            <form string="Profit &amp; Loss">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_profit_loss_wizard" model="ir.actions.act_window">
+        <field name="name">Profit &amp; Loss</field>
+        <field name="res_model">ncollection.account.report.profit.loss</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_profit_loss" name="Profit &amp; Loss"
+              parent="menu_ncollection_account_reports"
+              action="action_report_profit_loss_wizard" sequence="50"/>
+
 </odoo>
