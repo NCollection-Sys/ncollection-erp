@@ -16,6 +16,7 @@ Lives in ncollection_saas: only this layer may reach a tenant DB.
 import base64
 import hashlib
 import hmac
+import io
 import json
 import logging
 import re
@@ -86,7 +87,18 @@ _RPC_TIMEOUT = 30
 # one chunk read can block far past this deadline -- a tenant dribbling a byte
 # every ~29s holds a single 8 KiB read for ~8192 x 29s, on the order of days --
 # and the between-chunk check never gets to run. urllib3 2.0.7 here exposes no
-# read1(), so there is no pure-Python way to return after a single recv.
+# read1() -- but the io.BufferedReader UNDER it does, and #285 uses that, so
+# the deadline is now evaluated per recv rather than per chunk. The bound is
+# _RPC_DEADLINE plus ONE socket read timeout (read1 still blocks while nothing
+# arrives at all), not _RPC_DEADLINE flat. Write the number the code keeps.
+# Measured in review against a real trickling socket: 88.02s, approaching the
+# 90s ceiling from below.
+#
+# Reading that low bypasses http.client's MESSAGE FRAMING, not merely urllib3's
+# content decoding -- chunked bodies would arrive with their size prefixes
+# inline, and Content-Length stops being an end-of-body marker. Chunked is
+# therefore refused into the fallback (see _recv_reader); Odoo answers json2
+# with Content-Length, measured on two tenant databases.
 #
 # What this deadline DOES bound: a body arriving in whole chunks separated by
 # gaps, which is the common misbehaving-proxy shape. What actually bounds the
@@ -615,6 +627,48 @@ class TenantConfigSync(models.Model):
         globally would also move Odoo's own clocks mid-test."""
         return time.monotonic()
 
+    @staticmethod
+    def _recv_reader(resp):
+        """The BufferedReader under urllib3, or None (#285).
+
+        urllib3.HTTPResponse has no read1(), which is why #283 concluded there
+        was "no pure-Python way to return after a single recv" and settled for
+        a between-CHUNK deadline. That conclusion was one level too high: the
+        object underneath -- resp.raw._fp.fp -- IS an io.BufferedReader and
+        DOES have read1(), which returns on the FIRST available data instead of
+        looping until n bytes. Measured here: 1 byte returned in 0.00s against
+        a trickle that made raw.read() block indefinitely.
+
+        That is the primitive a wall-clock deadline needs, because the check
+        can then run per recv rather than per 8 KiB.
+
+        Private attributes, hence the defensive walk and the caller's fallback:
+        a future urllib3 may move them, and a SILENT downgrade would be worse
+        than none -- the comment would still promise a bound the code no longer
+        keeps.
+        """
+        # Reading this low bypasses http.client's MESSAGE FRAMING, not just
+        # urllib3's content decoding -- a distinction the first version of this
+        # comment blurred. Two consequences, both measured in review:
+        #   * a chunked body arrives with its size prefixes inline, so it can
+        #     never parse;
+        #   * Content-Length is not honoured as an end-of-body marker.
+        # So the fast path is refused for chunked responses and the fallback
+        # (which goes through http.client and de-chunks correctly) handles
+        # them. Measured against the real endpoint on two tenant databases:
+        # Odoo answers json2 with Content-Length and no Transfer-Encoding, so
+        # this is a guard against a shape that does not currently occur rather
+        # than a limitation of the common path.
+        te = (getattr(resp, 'headers', None) or {}).get('Transfer-Encoding', '')
+        if 'chunked' in (te or '').lower():
+            return None
+        fp = getattr(getattr(resp, 'raw', None), '_fp', None)
+        inner = getattr(fp, 'fp', None)
+        # isinstance, not hasattr: read1 is a specific io contract, and a
+        # look-alike that loops to fill `amt` would silently reinstate the
+        # unbounded behaviour while the fallback warning never fired.
+        return inner if isinstance(inner, io.BufferedReader) else None
+
     def _read_bounded(self, resp, db):
         """At most ``_MAX_RESPONSE_BYTES + 1`` bytes of the body (#278).
 
@@ -646,6 +700,14 @@ class TenantConfigSync(models.Model):
         raw = getattr(resp, 'raw', None)
         if raw is None:
             return None
+        recv = self._recv_reader(resp)
+        if recv is None:
+            _logger.warning(
+                "Config sync to %s: no read1() reader available, falling back "
+                "to chunked reads. The wall-clock deadline is then only "
+                "checked between %s-byte chunks, so a trickled body is bounded "
+                "by the worker limit rather than by _RPC_DEADLINE (#285).",
+                db, _READ_CHUNK)
         deadline = self._read_clock() + _RPC_DEADLINE
         buf = b''
         try:
@@ -660,9 +722,22 @@ class TenantConfigSync(models.Model):
                         "abandoning the body. A tenant must not be able to "
                         "hold a platform worker open.", db, _RPC_DEADLINE)
                     return _READ_FAILED
-                part = raw.read(
-                    min(_READ_CHUNK, _MAX_RESPONSE_BYTES + 1 - len(buf)),
-                    decode_content=True)
+                want = min(_READ_CHUNK, _MAX_RESPONSE_BYTES + 1 - len(buf))
+                if recv is not None:
+                    # read1 returns on the FIRST available data, so the
+                    # deadline above is evaluated per recv -- the whole point.
+                    #
+                    # It also reads the socket WITHOUT urllib3's content
+                    # decoding. That is safe here and actively better: #278
+                    # already sends `Accept-Encoding: identity`, and skipping
+                    # the decoder removes the decompression-bomb surface
+                    # entirely rather than relying on urllib3 bounding decoded
+                    # output. A tenant that gzips anyway yields bytes that fail
+                    # json.loads and lands in the existing "unreadable body"
+                    # path -- fail-safe, already covered.
+                    part = recv.read1(want)
+                else:
+                    part = raw.read(want, decode_content=True)
                 if not isinstance(part, bytes):
                     # Not a real stream (see the MagicMock note below). Bail
                     # out rather than loop forever on a mock that never
