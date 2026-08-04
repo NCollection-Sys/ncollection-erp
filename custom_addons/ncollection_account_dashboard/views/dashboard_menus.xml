@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Financial dashboards are for accounting staff. The menu gate is mirrored
+         by the underlying executive services running under the user's own
+         accounting read rights (no sudo), so a user without those permissions
+         sees empty figures, never another user's data (Rule 4/7). -->
+    <menuitem id="menu_account_dashboard_root"
+              name="Financial Dashboards"
+              groups="ncollection_core.group_role_accountant,ncollection_core.group_role_manager"
+              sequence="12"/>
+
+    <menuitem id="menu_finance_dashboard"
+              name="Finance"
+              parent="menu_account_dashboard_root"
+              action="action_finance_dashboard"
+              sequence="10"/>
+
+    <menuitem id="menu_accountant_dashboard"
+              name="Accountant"
+              parent="menu_account_dashboard_root"
+              action="action_accountant_dashboard"
+              sequence="20"/>
+
+    <menuitem id="menu_cash_dashboard"
+              name="Cash"
+              parent="menu_account_dashboard_root"
+              action="action_cash_dashboard"
+              sequence="30"/>
+
+</odoo>
