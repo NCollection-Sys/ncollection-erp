@@ -18,9 +18,15 @@ class NcollectionAccountReportLine(models.TransientModel):
     _order = 'id'
 
     # NOTE: `readonly=True` is a FORM-VIEW hint only — Odoo's write() path gates
-    # on field.groups, never on field.readonly, so an RPC call_kw can still set
-    # these on a row the caller owns. The real control is the allow-list in
-    # action_drill_down below; do not weaken it on the strength of `readonly`.
+    # on field.groups, never on field.readonly, so an RPC call_kw could set
+    # these on a row the caller owns. TWO controls now stand behind that, and
+    # neither is `readonly`:
+    #   1. ir.model.access.csv grants perm_write=0 on this model (#318) — these
+    #      rows are only ever created and unlinked, never written, so the
+    #      forgery surface is removed rather than merely guarded;
+    #   2. action_drill_down below still validates report_model before the
+    #      dynamic dispatch (#313), because (1) does not bind a superuser or a
+    #      future ACL edit.
     report_model = fields.Char(required=True, readonly=True)   # producing wizard model
     report_res_id = fields.Integer(readonly=True)              # producing wizard id
     account_id = fields.Many2one('account.account', readonly=True)

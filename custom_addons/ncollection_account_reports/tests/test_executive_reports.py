@@ -309,7 +309,10 @@ class TestExecutiveReports(AccountTestInvoicingCommon):
         action = wizard.action_view()
         line = self.env['ncollection.account.report.line'].browse(
             action['domain'][0][2])[0]
-        line.write({'report_model': 'res.users', 'report_res_id': 1})
+        # sudo() only to ARRANGE the forged value — #318 removed perm_write, so
+        # a real user cannot reach this state. The dispatch guard is tested
+        # separately from the ACL on purpose; neither should prop up the other.
+        line.sudo().write({'report_model': 'res.users', 'report_res_id': 1})
         with self.assertRaises(UserError):
             line.action_drill_down()
 

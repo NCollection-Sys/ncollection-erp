@@ -15,7 +15,7 @@ import base64
 from datetime import date
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import tagged
 
 from ..wizard.balance_sheet import _BS_SECTIONS
@@ -263,6 +263,32 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
 
     # ---- drill-down dispatch cannot be forged -----------------------------
 
+    def test_report_lines_are_not_writable_at_all(self):
+        """#318: nothing in the codebase writes to a report line — they are
+        created and unlinked only. Granting perm_write left an RPC call_kw able
+        to forge `report_model` on a row the caller owns, which is what made
+        the drill-down dispatch forgeable in the first place. Removing the
+        capability beats guarding what it enables.
+
+        Must run as a REAL user: the test env is superuser, which bypasses ACLs
+        entirely, so asserting this on `self.env` would pass no matter what the
+        CSV said.
+        """
+        reader = self.env['res.users'].create({
+            'name': 'Line Writer', 'login': 'nc_line_writer',
+            'group_ids': [(6, 0, [self.env.ref('account.group_account_readonly').id,
+                                  self.env.ref('base.group_user').id])],
+        })
+        wizard = self._bs().with_user(reader)
+        action = wizard.action_view()
+        line = self.env['ncollection.account.report.line'].with_user(
+            reader).browse(action['domain'][0][2])[0]
+        # Readable by its creator...
+        self.assertTrue(line.label)
+        # ...but not writable, by anyone, ever.
+        with self.assertRaises(AccessError):
+            line.write({'label': 'tampered'})
+
     def test_drill_down_rejects_a_forged_report_model(self):
         """`readonly=True` is only a form-view hint — an RPC write() can still
         set report_model. Unchecked, .browse().exists() applies neither ACL nor
@@ -273,7 +299,13 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
             action['domain'][0][2])[0]
         for forged in ('res.users', 'ir.attachment', 'no.such.model'):
             with self.subTest(model=forged):
-                line.write({'report_model': forged, 'report_res_id': 1})
+                # sudo() only to ARRANGE the forged value. #318 removed
+                # perm_write so a real user can no longer reach this state at
+                # all — but the dispatch guard must stand on its own, since an
+                # ACL edit or a sudo'd code path would restore the write.
+                # Testing them independently is the point: two controls, two
+                # tests, neither propping the other up.
+                line.sudo().write({'report_model': forged, 'report_res_id': 1})
                 with self.assertRaises(UserError):
                     line.action_drill_down()
 
