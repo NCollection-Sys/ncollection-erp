@@ -69,7 +69,12 @@ class TestXlsxStream(HttpCase):
         self.env[...] lookup. Resolving through the report engine's class fails
         closed, so non-report models are unreachable."""
         self.authenticate('nc_xlsx_owner', 'nc_xlsx_owner_pw')
-        for forged in ('res.users', 'ir.attachment', 'res.company', 'no.such.model'):
+        for forged in ('res.users', 'ir.attachment', 'res.company', 'no.such.model',
+                       # The engine's OWN name: isinstance() is reflexively true
+                       # for it, so without the _abstract check this reached
+                       # exists() on a table that _auto=False never created —
+                       # an unhandled UndefinedTable, i.e. a 500 from one URL.
+                       'ncollection.account.report'):
             with self.subTest(model=forged):
                 res = self.url_open(_ROUTE % (forged, 1))
                 self.assertEqual(

@@ -3,7 +3,7 @@
 
 ``action_export_xlsx`` used to build the workbook, store it as an
 ``ir.attachment`` pointing at the **transient** report wizard, and hand back a
-``/web/content/<id>`` URL. When Odoo's autovacuum reclaimed the wizard (~1h) the
+``/web/content/<id>`` URL. When Odoo's autovacuum reclaimed the wizard the
 attachment was left with a dangling ``res_id`` and nothing ever collected it — a
 slow storage leak across what is now NINE report models.
 
@@ -13,8 +13,12 @@ guessed, which is why the #111 reviewers preferred this over a pruning cron.
 
 Two behaviour changes, both deliberate:
 
-* the download must happen while the wizard lives (~1h) rather than forever —
-  clicking Export is an immediate action, so this is the normal path;
+* the download must happen while the wizard still exists, rather than forever.
+  Note the two thresholds are NOT the same: ``_transient_max_hours`` (1.0h)
+  is when a row becomes *eligible*, but the deletion is performed by
+  ``ir.autovacuum``, whose cron runs **daily** — so in practice a wizard
+  survives well past an hour. Clicking Export is immediate either way, so this
+  is the normal path;
 * the workbook is rebuilt at download time rather than at click time. Same
   filters, so the same numbers unless the underlying data moved in between.
 """
@@ -47,20 +51,36 @@ class NcollectionAccountReportXlsx(http.Controller):
         """
         engine = request.env['ncollection.account.report']
         model = request.env.get(report_model)
-        if model is None or not isinstance(model, type(engine)):
-            # Not a financial report model — indistinguishable from a bad URL,
-            # deliberately: a distinct error would confirm which models exist.
+        # `_abstract` is load-bearing, not belt-and-braces: `isinstance` is
+        # REFLEXIVELY true for the engine itself, so without it a request for
+        # `ncollection.account.report` passes the guard, and `exists()` then
+        # queries a table that was never created (_auto=False) — an unhandled
+        # UndefinedTable, i.e. a 500 from a one-line URL. Verified in the
+        # deployed image; the forged-model test covers it.
+        if model is None or not isinstance(model, type(engine)) or model._abstract:
+            # Not a concrete financial report — indistinguishable from a bad
+            # URL, deliberately: a distinct error would confirm which models
+            # exist.
             raise request.not_found()
 
         wizard = model.browse(report_id)
-        # exists() is a raw SELECT that applies neither ACL nor ir.rule, so it
-        # can only be trusted to answer "was this row vacuumed"; the access
-        # decision comes from the field read below, which does enforce them.
+        # exists() applies neither ACL nor ir.rule — it answers ONLY "was this
+        # row vacuumed", which is why the access check below is separate and
+        # explicit. Accepted residual: the 404-vs-403 split reveals whether a
+        # report id currently exists. Low sensitivity (existence only, no owner
+        # or content) and it mirrors the shipped `action_drill_down` pattern.
         if not wizard.exists():
             raise request.not_found()
 
-        # Reading a field forces ACL + ir.rule; another user's run raises
-        # AccessError here, which Odoo renders as a 403.
+        # EXPLICIT access check. The previous revision relied on a field read
+        # inside _nc_build_xlsx() happening to trigger ir.rule — which is true
+        # today only because every report's _nc_compute_lines() touches self.
+        # _nc_report_title() does NOT: all nine overrides return a static
+        # translated string. Depending on that would have been an authorization
+        # guarantee no test asserts and the next report type could silently
+        # break. AccessError renders as 403.
+        wizard.check_access('read')
+
         filename = '%s.xlsx' % wizard._nc_report_title()
 
         # _nc_build_xlsx returns base64 — its contract predates this route and
@@ -70,4 +90,6 @@ class NcollectionAccountReportXlsx(http.Controller):
             ('Content-Type', _XLSX_MIMETYPE),
             ('Content-Length', len(payload)),
             ('Content-Disposition', content_disposition(filename)),
+            # Financial figures — never let a shared cache or proxy retain them.
+            ('Cache-Control', 'private, no-store'),
         ])
