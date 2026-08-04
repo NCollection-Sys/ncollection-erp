@@ -124,6 +124,12 @@ class AccountDashboardService(models.AbstractModel):
         ``type = 'opportunity'`` excludes raw leads, and ``active = True``
         excludes archived/lost ones, so the funnel shows what is genuinely in
         play rather than every record ever created.
+
+        Deliberately NOT period-scoped, unlike _top_customers below. A pipeline
+        is a current-state view: what is open right now, whenever it was
+        created. Filtering it to the reporting window would hide live deals
+        opened before the window and misrepresent the funnel as smaller than it
+        is.
         """
         result = self._cross_domain({
             'key': 'pipeline',
@@ -132,47 +138,72 @@ class AccountDashboardService(models.AbstractModel):
             'groupby': ['stage_id'],
             'aggregates': ['expected_revenue:sum', '__count'],
         })
-        if not result or not result.get('rows'):
+        # `None` (absent/unlicensed) and `{'rows': []}` (licensed, nothing this
+        # period) are DIFFERENT answers and must not collapse to one. Only the
+        # first omits the panel; the second renders an empty state. Conflating
+        # them would make a licensed CEO with a quiet month look like a Basic
+        # tenant with no CRM at all.
+        if result is None:
             return None
         stages = []
-        for row in result['rows']:
-            stage = row.get('stage_id')
-            # A grouped many2one always arrives as (id, label) — including the
-            # null group — per the engine's _flatten_cell contract.
-            stage_id, stage_label = stage if stage else (False, self.env._("Unassigned"))
+        # Engine rows are TUPLES, ordered groupby-then-aggregates — see
+        # engine.py's `[tuple(self._flatten_cell(cell) for cell in row) ...]`.
+        # They are NOT dicts keyed by field name; unpack positionally, exactly
+        # as ncollection_core's own dashboard_data.py does.
+        for stage_cell, expected_revenue, count in result['rows']:
+            # A grouped many2one always flattens to (id, label) — including the
+            # null group, which arrives as (False, ''). Test the ID, not the
+            # tuple: a non-empty tuple is always truthy.
+            stage_id, stage_label = stage_cell
             stages.append({
                 'stage_id': stage_id,
-                'label': stage_label,
-                'value': row.get('expected_revenue:sum') or 0.0,
-                'count': row.get('__count') or 0,
+                'label': stage_label or self.env._("Unassigned"),
+                'value': expected_revenue or 0.0,
+                'count': count or 0,
             })
         return stages
 
     def _top_customers(self, limit=_TOP_CUSTOMERS):
-        """Highest-billing customers on confirmed orders. ``None`` without Sales.
+        """Highest-billing customers on confirmed orders IN THE REPORTING
+        PERIOD. ``None`` without Sales.
 
-        ``state in (sale, done)`` counts confirmed business only — quotations
-        are not revenue, and including them would flatter the panel.
+        ``state = 'sale'`` counts confirmed business only — quotations are not
+        revenue, and including them would flatter the panel. Odoo 19's
+        SALE_ORDER_STATE is draft/sent/sale/cancel; the old ``done`` value is
+        gone (replaced by the ``locked`` boolean), so matching it would be a
+        term that can never be true. Same filter as
+        ``ncollection_core/models/dashboard/dashboard_data.py:341``.
+
+        Bounded to the same window as ``meta.period``. An unbounded all-time
+        leaderboard sitting next to a period-scoped KPI row is a figure the
+        reader will silently mis-attribute to that period. ``date_order`` is a
+        TIMESTAMP, so the bound is half-open (``>= from``, ``< to + 1 day``) —
+        a ``<= date_to`` would coerce to midnight and drop everything ordered
+        during the final day. Same shape as ``dashboard_data.py:232`` and
+        ``kpi.py:217``.
         """
+        report = self._service(_SUMMARY)
         result = self._cross_domain({
             'key': 'top_customers',
             'model': 'sale.order',
-            'domain': [('state', 'in', ('sale', 'done'))],
+            'domain': [('state', '=', 'sale'),
+                       ('date_order', '>=', report.date_from),
+                       ('date_order', '<', report.date_to + relativedelta(days=1))],
             'groupby': ['partner_id'],
             'aggregates': ['amount_total:sum'],
             'order': 'amount_total:sum desc',
             'limit': limit,
         })
-        if not result or not result.get('rows'):
+        if result is None:          # absent/unlicensed only — see the funnel
             return None
         customers = []
-        for row in result['rows']:
-            partner = row.get('partner_id')
-            partner_id, partner_label = partner if partner else (False, self.env._("Unknown"))
+        # Positional, same as the funnel above — engine rows are tuples.
+        for partner_cell, amount_total in result['rows']:
+            partner_id, partner_label = partner_cell
             customers.append({
                 'partner_id': partner_id,
-                'label': partner_label,
-                'value': row.get('amount_total:sum') or 0.0,
+                'label': partner_label or self.env._("Unknown"),
+                'value': amount_total or 0.0,
             })
         return customers
 
@@ -240,10 +271,17 @@ class AccountDashboardService(models.AbstractModel):
 
         Headline KPIs and the revenue trend come from the F2-T08 services like
         every other dashboard here. The pipeline funnel and top customers come
-        from the P4-T01 engine, and are OMITTED — not zeroed — when the tenant's
-        plan does not license CRM/Sales. Omission matters: a funnel rendered as
-        0 would read as "no pipeline", which is a business claim; absent reads
-        as "not part of your plan", which is the truth.
+        from the P4-T01 engine.
+
+        Three distinct outcomes, deliberately kept distinct:
+
+        * CRM/Sales absent or unlicensed → the panel is **omitted**. Absent
+          reads as "not part of your plan", which is the truth. A funnel
+          rendered as 0 would read as "no pipeline" — a business claim we have
+          no basis to make.
+        * Licensed but nothing matched → the panel is **present with empty
+          rows**, i.e. a real empty state for a real quiet period.
+        * Licensed with data → the panel renders.
 
         Keeps the {kpis, charts, meta} contract additive: `panels` is a new
         optional key the existing three dashboards simply never populate.

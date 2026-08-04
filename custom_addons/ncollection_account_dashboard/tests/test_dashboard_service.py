@@ -12,6 +12,8 @@ a clean CI database — never a manual account search that can come up empty.
 """
 from unittest.mock import patch
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import fields
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.tests import tagged
@@ -80,6 +82,10 @@ class TestDashboardService(AccountTestInvoicingCommon):
         payload = self.service.get_ceo_dashboard()
         self._assert_shape(payload)
         self._provenance(payload, 'ncollection.account.report.summary')
+        # net_margin comes from the PROFITABILITY service, not the summary, so
+        # checking only the summary would leave that one KPI unguarded against
+        # a local recomputation.
+        self._provenance(payload, 'ncollection.account.report.profitability')
         # `panels` is the additive key #56 introduces; the contract stays
         # backward compatible because the other three never populate it.
         self.assertIn('panels', payload)
@@ -110,13 +116,24 @@ class TestDashboardService(AccountTestInvoicingCommon):
         or sale installed. Patches the ENGINE (P4-T01), not our own method, so
         the code under test is the real _pipeline_funnel/_top_customers."""
         engine = self.env['ncollection.aggregation.engine']
+        # Rows must mirror the ENGINE's real contract: a list of TUPLES ordered
+        # groupby-then-aggregates (engine.py builds them with
+        # `tuple(self._flatten_cell(cell) for cell in row)`), and a grouped
+        # many2one always flattens to (id, label) — the null group being
+        # (False, '').
+        #
+        # The first version of this fixture used dicts keyed by field name,
+        # which matched the implementation's WRONG assumption rather than the
+        # engine. It passed, and hid an AttributeError that would have fired on
+        # the first tenant with real pipeline data. A mock is only worth as much
+        # as its fidelity to the contract it stands in for.
         rows = {
             'pipeline': [
-                {'stage_id': (7, 'Qualified'), 'expected_revenue:sum': 5000.0, '__count': 3},
-                {'stage_id': False, 'expected_revenue:sum': 250.0, '__count': 1},
+                ((7, 'Qualified'), 5000.0, 3),
+                ((False, ''), 250.0, 1),          # the null group
             ],
             'top_customers': [
-                {'partner_id': (11, 'Al Barari Trading'), 'amount_total:sum': 9000.0},
+                ((11, 'Al Barari Trading'), 9000.0),
             ],
         }
 
@@ -136,13 +153,79 @@ class TestDashboardService(AccountTestInvoicingCommon):
         self.assertEqual(funnel['rows'][0]['label'], 'Qualified')
         self.assertAlmostEqual(funnel['rows'][0]['value'], 5000.0)
         self.assertEqual(funnel['rows'][0]['count'], 3)
-        # The null group must not crash the unpack — the engine's _flatten_cell
-        # returns an (id, label) pair for it too, but False arrives here when a
-        # spec yields no group at all.
+        # The null group arrives as (False, '') — a NON-EMPTY tuple, so a
+        # truthiness test on it would never fall through. The label must be
+        # substituted from the empty string, not left blank.
         self.assertEqual(funnel['rows'][1]['stage_id'], False)
-        self.assertTrue(funnel['rows'][1]['label'])
+        self.assertTrue(funnel['rows'][1]['label'],
+                        "null group must get a human label, not ''")
+        self.assertNotEqual(funnel['rows'][1]['label'], '')
 
         ranking = panels['top_customers']
         self.assertEqual(ranking['type'], 'ranking')
         self.assertEqual(ranking['rows'][0]['label'], 'Al Barari Trading')
         self.assertAlmostEqual(ranking['rows'][0]['value'], 9000.0)
+
+    def test_licensed_but_empty_is_not_the_same_as_unlicensed(self):
+        """Empty rows must render an empty PANEL; only None omits the panel.
+
+        The engine answers None for "absent or unlicensed" and {'rows': []} for
+        "licensed, nothing matched". Collapsing the two would make a licensed
+        CEO with a quiet month indistinguishable from a Basic-plan tenant with
+        no CRM at all — the exact distinction get_ceo_dashboard's docstring
+        promises to preserve.
+        """
+        engine = self.env['ncollection.aggregation.engine']
+
+        def empty_aggregate(spec):
+            return {'key': spec['key'], 'rows': [], 'cached': False}
+
+        with patch.object(type(engine), 'aggregate', side_effect=empty_aggregate):
+            payload = self.service.get_ceo_dashboard()
+
+        panels = {p['key']: p for p in payload['panels']}
+        self.assertEqual(set(panels), {'pipeline', 'top_customers'},
+                         "licensed-but-empty must still emit both panels")
+        self.assertEqual(panels['pipeline']['rows'], [])
+        self.assertEqual(panels['top_customers']['rows'], [])
+
+        # ...and the contrast: None omits them entirely.
+        with patch.object(type(engine), 'aggregate', side_effect=lambda spec: None):
+            omitted = self.service.get_ceo_dashboard()
+        self.assertEqual(omitted['panels'], [])
+
+    def test_top_customers_is_bounded_to_the_reporting_period(self):
+        """The leaderboard must carry the same date window as meta.period.
+
+        An unbounded all-time ranking displayed next to a period-scoped KPI row
+        is a figure the reader will mis-attribute to that period. Asserts on the
+        SPEC the service hands the engine, which is the only place the bound
+        exists.
+        """
+        engine = self.env['ncollection.aggregation.engine']
+        seen = {}
+
+        def capture(spec):
+            seen[spec['key']] = spec
+            return None
+
+        with patch.object(type(engine), 'aggregate', side_effect=capture):
+            payload = self.service.get_ceo_dashboard()
+
+        # A domain carries TWO terms on date_order, so it must not be flattened
+        # into a dict keyed by field — the second would silently overwrite the
+        # first and the test would assert against only one bound.
+        bounds = {t[1]: t[2] for t in seen['top_customers']['domain']
+                  if t[0] == 'date_order'}
+        self.assertEqual(set(bounds), {'>=', '<'},
+                         "leaderboard needs BOTH a lower and an upper date bound")
+        period = payload['meta']['period']
+        self.assertEqual(bounds['>='], period['from'])
+        # Upper bound is HALF-OPEN: date_order is a timestamp, so `<= date_to`
+        # would coerce to midnight and silently drop the final day's orders.
+        self.assertEqual(bounds['<'], period['to'] + relativedelta(days=1))
+
+        # The funnel, by contrast, is current-state and must NOT be bounded.
+        funnel_fields = [t[0] for t in seen['pipeline']['domain']]
+        self.assertNotIn('create_date', funnel_fields)
+        self.assertNotIn('date_deadline', funnel_fields)
