@@ -1,0 +1,44 @@
+// Financial dashboard layout (F3-T01). Styling uses only the --nc-* design
+// tokens (UI-T01/#128); no hard-coded colours.
+.nc-fin-dashboard {
+    padding: var(--nc-space-6, 1.5rem);
+
+    &__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--nc-space-4, 1rem);
+        margin-bottom: var(--nc-space-6, 1.5rem);
+    }
+
+    &__title {
+        margin: 0;
+        font-size: var(--nc-font-size-xl, 1.5rem);
+        color: var(--nc-text-strong, inherit);
+    }
+
+    &__period {
+        color: var(--nc-text-muted, #6b7280);
+        font-size: var(--nc-font-size-sm, 0.875rem);
+    }
+
+    &__kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--nc-space-4, 1rem);
+        margin-bottom: var(--nc-space-6, 1.5rem);
+    }
+
+    &__charts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: var(--nc-space-4, 1rem);
+    }
+
+    // NcChartWrapper frames the canvas; give it a bounded height so Chart.js
+    // (responsive, maintainAspectRatio:false) has a box to fill.
+    &__canvas {
+        position: relative;
+        height: 260px;
+    }
+}

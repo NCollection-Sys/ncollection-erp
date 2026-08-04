@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_account_dashboard.FinancialDashboard">
+        <div class="nc-fin-dashboard" t-ref="root">
+            <div class="nc-fin-dashboard__head">
+                <h1 class="nc-fin-dashboard__title" t-esc="title"/>
+                <span class="nc-fin-dashboard__period" t-if="state.payload">
+                    <t t-esc="state.payload.meta.period.from"/> — <t t-esc="state.payload.meta.period.to"/>
+                </span>
+            </div>
+
+            <t t-if="state.loading">
+                <NcLoadingSkeleton variant="'card'" lines="4"/>
+            </t>
+            <t t-elif="state.error">
+                <NcEmptyState
+                    title="'Unable to load the dashboard'"
+                    description="'Please retry in a moment.'"
+                    icon="'fa-exclamation-triangle'"/>
+            </t>
+            <t t-else="">
+                <t t-if="!state.payload.kpis.length and !state.payload.charts.length">
+                    <NcEmptyState
+                        title="'No financial data yet'"
+                        description="'Figures appear once accounting entries are posted.'"/>
+                </t>
+                <t t-else="">
+                    <div class="nc-fin-dashboard__kpis">
+                        <t t-foreach="state.payload.kpis" t-as="kpi" t-key="kpi.key">
+                            <t t-set="tr" t-value="trend(kpi)"/>
+                            <NcKpiCard t-if="tr" label="kpi.label" value="formatValue(kpi)" trend="tr"/>
+                            <NcKpiCard t-else="" label="kpi.label" value="formatValue(kpi)"/>
+                        </t>
+                    </div>
+                    <div class="nc-fin-dashboard__charts">
+                        <t t-foreach="state.payload.charts" t-as="chart" t-key="chart.key">
+                            <NcChartWrapper title="chart.label">
+                                <div class="nc-fin-dashboard__canvas">
+                                    <canvas t-att-data-chart-key="chart.key"/>
+                                </div>
+                            </NcChartWrapper>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </div>
+    </t>
+
+</templates>
