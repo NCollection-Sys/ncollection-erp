@@ -705,6 +705,104 @@ class TestConfigSyncHealth(TransactionCase):
         self.assertFalse(resp.text_read, "fell back to .text after giving up")
         self.assertNotIn('THE-WHOLE-BODY', joined)
 
+    # -- the real wall-clock bound (#285) ------------------------------------
+
+    class _Read1Reader:
+        """A BufferedReader stand-in: read1 returns on the FIRST data."""
+
+        def __init__(self, data, per_call=1):
+            self._data = data
+            self._pos = 0
+            self.per_call = per_call
+            self.calls = 0
+
+        def read1(self, amt=None):
+            self.calls += 1
+            end = min(len(self._data), self._pos + min(self.per_call, amt or 1))
+            out = self._data[self._pos:end]
+            self._pos = end
+            return out
+
+    def _read1_response(self, status, data, per_call=1):
+        resp = _StreamedResponse(status, data)
+        reader = self._Read1Reader(data, per_call=per_call)
+        # Mirror the real shape the model walks: resp.raw._fp.fp
+        resp.raw._fp = type('FP', (), {'fp': reader})()
+        return resp, reader
+
+    def test_the_deadline_is_checked_PER_RECV_not_per_chunk(self):
+        """The whole point of #285.
+
+        #283 checked the clock between 8 KiB chunks, and raw.read() blocks
+        until it HAS 8 KiB — so against a trickle the check never ran. read1
+        returns on the first available data, so a slow body is abandoned after
+        a couple of recvs instead of never.
+        """
+        resp, reader = self._read1_response(200, b'x' * (4 * _READ_CHUNK))
+        clock = self._fake_clock(0.0, 1.0, _RPC_DEADLINE + 1.0)
+
+        with patch.object(type(self.tenant), '_read_clock',
+                          staticmethod(clock)), \
+                mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp), "must not break the push")
+
+        # BOTH bounds, and the lower one matters most: with read1 ignored the
+        # reader is never touched, so calls==0 and _pos==0 satisfied the
+        # upper bound and the "didn't read it all" check alike. The test
+        # could not tell "bounded via read1" from "read1 never used".
+        self.assertGreaterEqual(
+            reader.calls, 1,
+            "the read1 reader was never used — this test would pass with the "
+            "fast path disabled entirely")
+        self.assertLessEqual(
+            reader.calls, 2,
+            "more recvs than the deadline schedule allows — the clock is not "
+            "being checked per recv")
+        self.assertLess(reader._pos, len(reader._data),
+                        "read the whole body despite the deadline elapsing")
+
+    def test_a_normal_body_still_arrives_through_read1(self):
+        """The fast path must still deliver a real payload, or #262's
+        required-job self-report silently stops working."""
+        body = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': False}}}).encode()
+        resp, reader = self._read1_response(200, body, per_call=7)
+
+        self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_health_state, 'degraded',
+                         "a body assembled from many read1 calls was lost")
+        self.assertGreater(reader.calls, 1, "precondition: multiple recvs")
+
+    def test_the_cumulative_cap_still_holds_on_the_read1_path(self):
+        """#278's byte budget must survive the new reader."""
+        resp, reader = self._read1_response(
+            200, b'y' * (3 * _MAX_RESPONSE_BYTES), per_call=4096)
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp))
+        self.assertLessEqual(reader._pos, _MAX_RESPONSE_BYTES + 1,
+                             "read past the cap on the read1 path")
+
+    def test_the_fallback_fires_when_read1_is_unavailable(self):
+        """A defensive branch nothing exercises is a branch that does not work.
+
+        If a future urllib3 moves _fp/.fp, the model must fall back to chunked
+        reads AND say so — a silent downgrade would leave the comment claiming
+        a bound the code no longer keeps.
+        """
+        resp = _StreamedResponse(200, json.dumps({'required_crons': {}}).encode())
+        self.assertIsNone(
+            self.tenant._recv_reader(resp),
+            "precondition: this double has no _fp.fp, so read1 is unavailable")
+
+        with self.assertLogs(
+                'odoo.addons.ncollection_saas.models.config_sync',
+                level='WARNING') as caught:
+            self.assertTrue(self._push(resp))
+        self.assertIn('read1', '\n'.join(caught.output),
+                      "the downgrade was silent")
+
     # -- escalation on repeated unreadable reports (#283) -------------------
 
     def _unreadable_push(self):

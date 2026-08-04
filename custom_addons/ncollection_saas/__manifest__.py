@@ -14,7 +14,9 @@
     # Patch bump: #295 purges a deleted tenant's backup directory.
     # Minor bump: #299 turns backup.database_name from a stored RELATED field
     # into a snapshot, so `-u` is what re-defines the column.
-    'version': '19.0.6.6.0',
+    # Patch bump: #285 makes the config-sync read deadline enforceable per
+    # recv via the BufferedReader's read1(). Behaviour only, no schema.
+    'version': '19.0.6.6.1',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',
