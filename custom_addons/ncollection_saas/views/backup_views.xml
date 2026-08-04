@@ -59,9 +59,16 @@
         <field name="arch" type="xml">
             <form string="Tenant Backup">
                 <header>
+                    <!-- Explicitly gated, like the 'Restore in place' button on
+                         the fleet-migration line. Reachable today only because
+                         the parent form is itself system-admin only; without
+                         this, loosening ncollection.backup's ACL later would
+                         expose the platform's most destructive primitive with
+                         no gate of its own (#245 review). -->
                     <button name="%(action_ncollection_backup_restore_wizard)d"
                             type="action" string="Restore…" class="btn-primary"
                             invisible="status != 'done'"
+                            groups="base.group_system"
                             context="{'default_backup_id': id}"/>
                     <field name="status" widget="statusbar"
                            statusbar_visible="pending,running,done,failed"/>

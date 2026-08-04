@@ -1,21 +1,32 @@
 # -*- coding: utf-8 -*-
-"""#245: the SaaS-admin menus must agree with the ACLs behind them.
+"""#245: keep the SaaS-admin ACL boundary where it is.
 
-Standing Rule 4 says a UI restriction is mirrored at the ORM layer. The reverse
-matters too: an ORM restriction with no matching UI restriction produces a menu
-that is visible and then refuses to open.
+**The bug #245 describes does not exist.** It reports that a
+`group_platform_admin`-only user SEES the Tenant Backups / Domains & SSL /
+Fleet Migrations menus and then gets `AccessError` on opening them, because
+those models are ACL-gated to `base.group_system` while the menus inherited the
+root's `group_platform_admin`.
 
-Before this, `ncollection.backup` / `ncollection.domain` /
-`ncollection.fleet.migration` were ACL-gated to `base.group_system` while their
-menus inherited the root's `group_platform_admin`. Since `group_system` implies
-`group_platform_admin` and not the reverse, a platform-admin-only user SAW all
-three menus and got `AccessError` on opening any of them.
+Measured on a fresh database with the menu groups deliberately absent — the
+exact pre-#245 state — the menus were **already hidden**. Odoo's
+`_visible_menu_ids()` excludes any `act_window`-backed menu whose target model
+the user cannot read, and it does so *before* the menu's own `group_ids` are
+consulted. There is no visible-then-errors state to fix.
 
-Aligned DOWN, to `group_system` on the menus. The other direction — widening the
-ACL to `group_platform_admin`, as the issue originally suggested — would have
-handed platform-admins real access to tenant backups, DNS/SSL records and
-fleet-wide migrations that they do not have today. Never widen a boundary to
-resolve an inconsistency.
+So the `groups="base.group_system"` on those menuitems is **redundant today**.
+It is kept to state the intent explicitly rather than lean on Odoo's implicit
+action-based filtering, which is behaviour that could change.
+
+**What these tests actually guard** is the opposite direction. #245 proposes
+aligning "likely `group_platform_admin` for both" — which WIDENS privilege,
+since `group_system` implies `group_platform_admin` and not the reverse. That
+would hand platform-admins live access to tenant backups, DNS/SSL records and
+fleet-wide migrations. RED-proved: applying it fails every subtest below with
+"AccessError not raised".
+
+Read that asymmetry carefully before editing: the `AccessError` assertions carry
+all the regression-detection weight. The menu-visibility assertions re-confirm
+Odoo's own action-based filter and would hold even with the `groups=` removed.
 """
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
@@ -58,11 +69,20 @@ class TestAdminMenuAclAlignment(TransactionCase):
         return menus._filter_visible_menus().ids
 
     def test_platform_admin_sees_no_menu_they_cannot_open(self):
-        """The acceptance: menu visibility and ORM access give the same answer.
+        """Menu visibility and ORM access must give the same answer.
 
-        Asserted as a pair per surface, so a future edit that re-opens the menu
-        without opening the ACL (or vice versa) fails here rather than becoming
-        a support ticket about a menu that errors on click.
+        The two halves do NOT carry equal weight, and it matters:
+
+        * ``assertRaises(AccessError)`` is the real guard. Widen the ACL to
+          ``group_platform_admin`` — the change #245 proposes — and this fails.
+        * ``assertNotIn(menu, visible)`` re-confirms Odoo's own action-based
+          filtering. It holds even with the ``groups=`` this branch added
+          removed, so it cannot detect a regression in that attribute.
+
+        Kept as a pair anyway: together they state the invariant a reader needs
+        (these surfaces are system-admin only, at both layers), and the pairing
+        is what would catch a future edit that opened one layer but not the
+        other.
         """
         visible = self._visible_menu_ids(self.platform_admin)
         for menu_xmlid, model_name in _ADMIN_SURFACES:
