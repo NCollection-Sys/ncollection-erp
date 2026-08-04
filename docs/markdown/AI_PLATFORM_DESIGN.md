@@ -1,7 +1,9 @@
 # AI Platform Design — P5-T01 Spike (#58)
 
-**Status:** proposed — **requires owner approval before any Phase-5 implementation ticket starts**
-(P5-T01 acceptance: *"design doc approved before any AI implementation task starts"*).
+**Status:** **APPROVED by the repo owner (DEV-1), 2026-08-04** — P5-T02 and the rest of Phase 5 may
+proceed on this basis. (P5-T01 acceptance: *"design doc approved before any AI implementation task
+starts"*.) Decisions recorded in §9; one item — in-region processing for the first paying customer —
+remains genuinely open and is flagged there.
 **Deliverable of:** [#58] `[P5-T01] LLM Provider Evaluation & Design Spike` · DEV-1 · 3 days · no production code.
 **Binds:** P5-T02 (Gateway), P5-T03 (Context Injection), P5-T04 (Anomaly Detection), P5-T05 (NL→Domain), P5-T06 (Chat Widget), P5-T07 (Smart Search).
 
@@ -250,12 +252,31 @@ Prior art already in this repo that Phase 5 **must reuse rather than reinvent**:
 
 ---
 
-## 9. Open questions for the owner
+## 9. Decisions
 
-1. **Approve Option C** (tenant-side context, admin-side egress) as the Phase-5 topology?
-2. **Approve amending §11** to describe prompt-bearing egress, before P5-T02 starts?
-3. **Is in-region processing required for the first paying customer (#53)?** If yes, P10-T05 moves
-   ahead of Phase 5 and this roadmap reorders.
-4. **Is #311 (egress backstop) a hard prerequisite for P5-T02?** Recommended: yes.
-5. **Are the §4 token budgets acceptable as starting values**, given they are guesses until real usage
-   exists?
+Owner (DEV-1) approved the recommendations on 2026-08-04.
+
+| # | Question | Decision |
+|---|---|---|
+| 1 | Phase-5 topology | ✅ **Option C adopted** — tenant-side context + sanitisation, admin-side egress. §1.2 |
+| 2 | Amend §11 for prompt-bearing egress | ✅ **Approved and applied** — `ARCHITECTURE_SECURITY.md` §11 now carries an *Outbound AI gateway* row. That doc remains authoritative; this one records the reasoning |
+| 3 | In-region processing for the first paying customer (#53) | ⚠️ **STILL OPEN** — see below |
+| 4 | #311 as a hard prerequisite for P5-T02 | ✅ **Yes.** Recorded on #59. A second egress with no network-level backstop is worse than the first |
+| 5 | §4 token budgets as starting values | ✅ **Accepted as starting points**, to be calibrated against the first month of real usage. They are not entitlements to defend |
+
+### ⚠️ Decision 3 was NOT recommended and remains open
+
+No engineering recommendation was offered here, and "go with the recommended" does not settle it. Whether
+a contract may promise in-region processing is a **commercial and legal** question about what NCollection
+tells buyers — not something this spike can decide.
+
+**The engineering default, absent a decision:** Phase 5 ships on a non-regional provider with a
+documented, customer-visible statement of where prompt data is processed, and **no in-region guarantee
+is made to anyone.**
+
+**What forces the question:** if a prospective first tenant (#53) requires in-region processing, then
+**P10-T05 moves ahead of Phase 5** and the roadmap reorders. Discovering that *after* P5-T02 ships is
+the expensive path — the provider abstraction limits the damage to a config swap, but contracts already
+signed cannot be swapped.
+
+**Action:** answer before the first AI-featuring contract is signed, not before P5-T02 is written.
