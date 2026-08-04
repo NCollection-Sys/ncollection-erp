@@ -141,6 +141,7 @@
     <menuitem id="menu_ncollection_saas_fleet_migration"
               name="Fleet Migrations"
               parent="ncollection_subscription.menu_ncollection_saas_root"
+              groups="base.group_system"
               action="action_ncollection_fleet_migration"
               sequence="75"/>
 

@@ -122,6 +122,7 @@
     <menuitem id="menu_ncollection_saas_backups"
               name="Tenant Backups"
               parent="ncollection_subscription.menu_ncollection_saas_root"
+              groups="base.group_system"
               action="action_ncollection_backup"
               sequence="70"/>
 
