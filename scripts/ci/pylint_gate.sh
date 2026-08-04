@@ -75,8 +75,11 @@ set -uo pipefail
 #      unavoidable manifest-required-author (C8101); the superfluous manifest
 #      keys, missing README, redundant field strings and wizard-in-models
 #      findings were all AVOIDED/cleaned up, so +1 exactly.
+#    55 → 56 (2026-08-04, #119/F3-T01): adds ncollection_account_dashboard —
+#      same single unavoidable C8101; README present, no superfluous manifest
+#      keys, no redundant field strings, so +1 exactly.
 # ---------------------------------------------------------------------------
-PYLINT_BASELINE=55
+PYLINT_BASELINE=56
 
 # The scanned tree and the finding-count pattern. Both callers MUST use the
 # same ones or the two environments would count differently — the subtlest way
