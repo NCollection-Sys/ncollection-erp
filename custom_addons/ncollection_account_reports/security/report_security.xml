@@ -53,5 +53,31 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- F2-T08: same per-user scoping for the executive report runs.
+             Their lines reuse ncollection.account.report.line, scoped above. -->
+        <record id="rule_report_financial_summary_own" model="ir.rule">
+            <field name="name">Financial Summary runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_summary"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_revenue_analysis_own" model="ir.rule">
+            <field name="name">Revenue Analysis runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_revenue"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_expense_analysis_own" model="ir.rule">
+            <field name="name">Expense Analysis runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_expense"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_profitability_own" model="ir.rule">
+            <field name="name">Profitability Report runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_profitability"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>

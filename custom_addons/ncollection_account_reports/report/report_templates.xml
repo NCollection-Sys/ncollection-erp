@@ -123,4 +123,59 @@
         <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 
+    <!-- F2-T08: Executive Reports. Same rule — a UNIQUE report_name per
+         action, each pointing at a thin wrapper over the shared body. -->
+
+    <record id="action_report_financial_summary" model="ir.actions.report">
+        <field name="name">Financial Summary</field>
+        <field name="model">ncollection.account.report.summary</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_financial_summary</field>
+        <field name="report_file">ncollection_account_reports.report_financial_summary</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <record id="action_report_revenue_analysis" model="ir.actions.report">
+        <field name="name">Revenue Analysis</field>
+        <field name="model">ncollection.account.report.revenue</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_revenue_analysis</field>
+        <field name="report_file">ncollection_account_reports.report_revenue_analysis</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <record id="action_report_expense_analysis" model="ir.actions.report">
+        <field name="name">Expense Analysis</field>
+        <field name="model">ncollection.account.report.expense</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_expense_analysis</field>
+        <field name="report_file">ncollection_account_reports.report_expense_analysis</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <record id="action_report_profitability" model="ir.actions.report">
+        <field name="name">Profitability Report</field>
+        <field name="model">ncollection.account.report.profitability</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_profitability</field>
+        <field name="report_file">ncollection_account_reports.report_profitability</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_financial_summary">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <template id="report_revenue_analysis">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <template id="report_expense_analysis">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <template id="report_profitability">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
 </odoo>
