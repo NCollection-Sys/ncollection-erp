@@ -246,6 +246,7 @@ Controls for the surfaces vanilla Odoo doesn't have (§2.3):
 | **License enforcement** (P1-T10) | Bypass = revenue loss + precedent of broken guarantees | Continuous E2E probes (Ring 2 verification, §4); enforcement code changes require 2 reviewers |
 | **Payment webhooks** (P2-T13/P6-T01) | Forged "paid" events, replay | Signature verification (Stripe signing secret / HMAC), timestamp tolerance, idempotency keys, amounts revalidated against the invoice — never trusted from the payload |
 | **Admin DB** | Single point whose compromise = everything | Reachable only via `admin.` subdomain; platform-admin group + strong auth (2FA earliest adopter); most-audited DB; separate backup encryption scope |
+| **Outbound rate fetch** (#236) | Hostile or oversized response from an external host; a feed outage silently freezing rates; a stale rate treated as authoritative | Admin DB only — **no tenant DB makes any outbound call**; single allowlisted host (`www.ecb.europa.eu`); bounded read + wall-clock deadline reusing `config_sync.py`'s hardened patterns (#278/#283) rather than a bare `urlopen`; rates reach tenants only over the platform→tenant config-sync channel with its per-tenant HMAC keys (#212); a failed fetch leaves the previous rate intact and alerts — never writes a zero or partial row |
 
 ---
 
