@@ -18,6 +18,7 @@ The properties worth protecting are the ones whose failure is invisible:
 """
 import io
 
+from odoo.addons.ncollection_saas.models.exchange_rate import _ECB_URL
 from odoo.tests import TransactionCase, tagged
 
 _DOC = """<?xml version="1.0" encoding="UTF-8"?>
@@ -60,6 +61,31 @@ class TestEcbParse(TransactionCase):
     def test_non_numeric_rate_is_refused(self):
         self.assertIsNone(
             self.Rate._parse_ecb_usd(_DOC.replace("rate='1.1535'", "rate='n/a'")))
+
+    def test_a_crafted_doc_cannot_pair_a_fresh_date_with_a_stale_rate(self):
+        """Reproduced before it was fixed: returned ('2026-08-04', '1.08').
+
+        Both halves pass every individual check -- 1.08 is inside the sanity
+        band, the date is valid -- so nothing downstream could have noticed a
+        six-year-old rate wearing today's date.
+        """
+        crafted = ("<Cube>"
+                   "<Cube time='2020-01-01'><Cube currency='USD' rate='1.08'/></Cube>"
+                   "<Cube time='2026-08-04'><Cube currency='JPY' rate='170.1'/></Cube>"
+                   "</Cube>")
+        parsed = self.Rate._parse_ecb_usd(crafted)
+        self.assertIsNotNone(parsed)
+        rate_date, usd = parsed
+        self.assertEqual(str(rate_date), '2020-01-01',
+                         "the USD rate was paired with a foreign date")
+        self.assertAlmostEqual(usd, 1.08, places=6)
+
+    def test_a_future_dated_document_is_refused(self):
+        from odoo import fields as _f
+        from datetime import timedelta
+        future = _f.Date.to_string(_f.Date.today() + timedelta(days=5))
+        self.assertIsNone(
+            self.Rate._parse_ecb_usd(_DOC.replace("2026-08-03", future)))
 
     def test_garbage_is_refused_not_raised(self):
         self.assertIsNone(self.Rate._parse_ecb_usd('<not xml'))
@@ -132,6 +158,37 @@ class TestEcbFetchBounds(TransactionCase):
         self.assertIsNone(self._fetch(reader))
         self.assertGreaterEqual(len(calls), 1, "deadline fired without ever reading")
 
+    def test_no_bounded_reader_means_refuse_not_fall_back(self):
+        """The fallback loops internally and undoes the bomb protection, so on a
+        real external host it is not an acceptable degradation (#285's fallback
+        was tolerable only against our own loopback)."""
+        self.assertIsNone(self._fetch(None))
+
+    def test_the_allowlisted_host_is_not_chased_off_by_a_redirect(self):
+        """requests follows 30 redirects by default, which would silently move
+        the fetch to a host nobody allowlisted."""
+        import requests
+        seen = {}
+
+        class _Resp:
+            status_code = 200
+            headers = {}
+
+            def close(self):
+                pass
+
+        def _get(url, **kw):
+            seen.update(kw, url=url)
+            return _Resp()
+
+        Tenant = self.env['ncollection.tenant']
+        self.patch(type(Tenant), '_recv_reader',
+                   staticmethod(lambda _r: io.BufferedReader(io.BytesIO(b'<x/>'))))
+        self.patch(requests, 'get', _get)
+        self.Rate._fetch_ecb_document()
+        self.assertEqual(seen.get('url'), _ECB_URL)
+        self.assertFalse(seen.get('allow_redirects', True))
+
     def test_non_200_is_refused(self):
         reader = io.BufferedReader(io.BytesIO(_DOC.encode()))
         self.assertIsNone(self._fetch(reader, status=503))
@@ -162,6 +219,21 @@ class TestEcbFailIntact(TransactionCase):
         rec = self.Rate._cron_refresh_ecb_rate()
         self.assertEqual(str(rec.name), '2026-08-03')
         self.assertAlmostEqual(rec.usd_per_eur, 1.1535, places=6)
+
+    def test_an_implausible_daily_move_is_refused(self):
+        """A static band catches garbage; only a delta cap catches a plausible
+        lie. 9.99 sits inside 0.1-10.0 and would misprice everything ~6x."""
+        self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.15})
+        self.patch(type(self.Rate), '_fetch_ecb_document',
+                   lambda s: _DOC.replace("rate='1.1535'", "rate='9.99'"))
+        self.assertFalse(self.Rate._cron_refresh_ecb_rate())
+        self.assertAlmostEqual(self.Rate._latest().usd_per_eur, 1.15, places=6)
+
+    def test_a_normal_daily_move_is_accepted(self):
+        """The cap must not refuse an ordinary day, or the feed freezes."""
+        self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.14})
+        self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
+        self.assertTrue(self.Rate._cron_refresh_ecb_rate())
 
     def test_same_publication_date_does_not_churn(self):
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
@@ -212,3 +284,15 @@ class TestRatePayloadCompatibility(TransactionCase):
     def test_a_junk_response_never_raises(self):
         for payload in (None, [], 'nope', {'accepts_rate': 'yes'}):
             self.tenant._record_sync_capabilities(payload)
+
+    def test_a_failed_push_clears_the_capability_so_it_can_heal(self):
+        """Otherwise the flag is a one-way ratchet: the platform re-sends the
+        same doomed payload forever and LICENSING stops propagating with it."""
+        self.tenant.config_sync_accepts_rate = True
+        self.tenant._config_sync_record('transient', 'boom')
+        self.assertFalse(self.tenant.config_sync_accepts_rate)
+
+    def test_a_successful_push_leaves_the_capability_alone(self):
+        self.tenant.config_sync_accepts_rate = True
+        self.tenant._config_sync_record('ok')
+        self.assertTrue(self.tenant.config_sync_accepts_rate)

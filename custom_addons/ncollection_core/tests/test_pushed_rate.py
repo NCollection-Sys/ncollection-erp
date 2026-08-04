@@ -15,6 +15,9 @@ What must hold:
 4. **A currency can never fail a licensing push.** This rides the config-sync
    payload whose primary job is license enforcement.
 """
+from datetime import timedelta
+
+from odoo import fields
 from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
@@ -98,6 +101,41 @@ class TestPushedRate(TransactionCase):
             self._apply(usd_per_eur=bad)
         self._apply(date='not-a-date')
         self.assertFalse(self._eur_rows())
+
+    def test_an_in_band_looking_but_absurd_rate_is_refused(self):
+        """The CRITICAL my first suite missed entirely.
+
+        The sanity band lived platform-side, but the sudo() write is HERE and a
+        caller with a valid tenant bearer can send a payload of nothing but rate
+        keys -- skipping the platform completely. res.currency.rate's only core
+        constraint is CHECK (rate>0), so every one of these would have been
+        written and would misprice every foreign-currency invoice.
+        """
+        self._seed_usd_peg()
+        for absurd in (9999.0, 0.000000001, 10.0, 0.1):
+            self._apply(usd_per_eur=absurd)
+        self.assertFalse(self._eur_rows(), "an absurd rate reached the books")
+
+    def test_a_future_dated_rate_is_refused(self):
+        """Otherwise a pre-loaded rate silently activates when its date arrives."""
+        self._seed_usd_peg()
+        future = fields.Date.to_string(fields.Date.today() + timedelta(days=30))
+        self._apply(date=future)
+        self.assertFalse(self._eur_rows(future))
+
+    def test_every_root_company_gets_its_own_row(self):
+        """The multi-company loop was real, exercised code with no coverage."""
+        second = self.env['res.company'].create({'name': 'Second Root NC'})
+        self.Rate.create({
+            'currency_id': self.usd.id, 'company_id': second.root_id.id,
+            'name': '2020-01-01', 'rate': 1.0 / _AED_PER_USD,
+        })
+        self._seed_usd_peg()
+        self._apply()
+        rows = self.Rate.search([('currency_id', '=', self.eur.id),
+                                 ('name', '=', '2026-08-03')])
+        self.assertIn(second.root_id.id, rows.mapped('company_id').ids)
+        self.assertIn(self.root_id, rows.mapped('company_id').ids)
 
     def test_the_peg_rows_are_never_touched(self):
         usd_row = self._seed_usd_peg()

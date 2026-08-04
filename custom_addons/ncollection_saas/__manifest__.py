@@ -16,6 +16,8 @@
     # into a snapshot, so `-u` is what re-defines the column.
     # Patch bump: #285 makes the config-sync read deadline enforceable per
     # recv via the BufferedReader's read1(). Behaviour only, no schema.
+    # 19.0.6.7.0 (#308): ECB rate source on the admin DB + the capability-gated
+    # rate keys on the config-sync payload. No tenant makes an outbound call.
     'version': '19.0.6.7.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '

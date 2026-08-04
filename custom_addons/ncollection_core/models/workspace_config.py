@@ -46,6 +46,17 @@ _SYNCABLE_FIELDS = frozenset({
 # CBUAE peg constant never has to leave ncollection_account_localization_uae.
 _RATE_APPLY_FIELDS = frozenset({'ecb_usd_per_eur', 'ecb_rate_date'})
 
+# Deliberately duplicated from ncollection_saas rather than imported: this module
+# does NOT depend on the platform addon, and more importantly validation belongs
+# on the side that holds the privilege. The platform checked this band before
+# storing -- but the sudo() write happens HERE, and a caller with a valid tenant
+# bearer can send a payload of nothing but rate keys, skipping the platform
+# entirely. res.currency.rate's only core constraint is CHECK (rate>0), so
+# without this any positive float would be accepted and would misprice every
+# foreign-currency invoice in the tenant.
+_RATE_MIN = 0.1
+_RATE_MAX = 10.0
+
 # White-label reseller branding (P3/P10-T09): the platform may cascade a
 # reseller's brand onto the tenant's company alongside the licensing sync. These
 # keys are NOT stored on workspace.config — they are applied to res.company's
@@ -181,8 +192,10 @@ class WorkspaceConfig(models.Model):
 
             EUR per CC = (EUR per USD) x (USD per CC) = usd_row.rate / usd_per_eur
 
-        which holds for ANY company currency -- AED here, but nothing in this
-        method is UAE-specific. That is deliberate: deriving from the tenant's
+        which holds for any company currency that HAS a USD row -- AED here, but
+        nothing in this method is UAE-specific. A company whose own currency is
+        USD is the exception: Odoo keeps no row for a company's own currency, so
+        it is skipped rather than derived. Fail-intact, not fail-wrong. That is deliberate: deriving from the tenant's
         own USD row means the CBUAE peg (``_AED_PER_USD``) stays in exactly one
         module instead of being duplicated platform-side, where a future
         re-peg would silently disagree with itself.
@@ -208,7 +221,9 @@ class WorkspaceConfig(models.Model):
         except (TypeError, ValueError):
             rate_date = None
         if (not rate_date or not isinstance(usd_per_eur, (int, float))
-                or isinstance(usd_per_eur, bool) or usd_per_eur <= 0):
+                or isinstance(usd_per_eur, bool)
+                or not (_RATE_MIN < usd_per_eur < _RATE_MAX)
+                or rate_date > fields.Date.today()):
             _logger.warning(
                 "Ignoring unusable pushed rate: %r on %r",
                 usd_per_eur, rate.get('ecb_rate_date'))

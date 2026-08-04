@@ -61,6 +61,12 @@ _ECB_URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'
 _RATE_MIN = 0.1
 _RATE_MAX = 10.0
 
+# The band above only catches garbage. A compromised feed returning 9.99 sits
+# inside it and would misprice every EUR invoice ~6x. What actually fits a DAILY
+# feed is a day-over-day move cap: EUR/USD has never moved anything like 25% in
+# one publication, so a jump that large is a fault, not a market.
+_MAX_DAILY_MOVE = 0.25
+
 
 class NcExchangeRate(models.Model):
     """One row per ECB publication date, on the admin DB only.
@@ -107,6 +113,13 @@ class NcExchangeRate(models.Model):
         try:
             resp = requests.get(
                 _ECB_URL, timeout=_RPC_TIMEOUT, stream=True,
+                # The "single allowlisted host" control is worth nothing if the
+                # client will chase a 301 off it. requests follows up to THIRTY
+                # redirects by default, each with its own timeout budget, so a
+                # hijacked DNS entry or a CDN migration would silently move the
+                # fetch to a host nobody allowlisted. config_sync.py:928 already
+                # pins this for the same reason.
+                allow_redirects=False,
                 # identity: we want bytes we can bound, not a stream the HTTP
                 # layer may inflate on our behalf (#278).
                 headers={'Accept-Encoding': 'identity'},
@@ -120,6 +133,18 @@ class NcExchangeRate(models.Model):
                 _logger.warning("ECB fetch failed: HTTP %s", resp.status_code)
                 return None
             recv = Tenant._recv_reader(resp)
+            if recv is None:
+                # config_sync.py falls back to resp.raw.read here, and documents
+                # that it "LOOPS internally until it has n bytes" -- so the outer
+                # deadline cannot fire mid-call, and decode_content=True undoes
+                # the decompression-bomb protection read1 was picked for. That
+                # fallback is tolerable against our own loopback Odoo; it is not
+                # against a real CDN-fronted host where chunked is unremarkable.
+                # A daily rate can afford to fail; an unbounded read cannot.
+                _logger.warning(
+                    "ECB response offers no bounded reader (chunked?) — "
+                    "refusing rather than falling back to an unbounded read")
+                return None
             deadline = Tenant._read_clock() + _RPC_DEADLINE
             buf = bytearray()
             while len(buf) <= _MAX_RESPONSE_BYTES:
@@ -130,8 +155,7 @@ class NcExchangeRate(models.Model):
                     return None
                 want = min(_READ_CHUNK, _MAX_RESPONSE_BYTES + 1 - len(buf))
                 try:
-                    chunk = (recv.read1(want) if recv is not None
-                             else resp.raw.read(want, decode_content=True))
+                    chunk = recv.read1(want)
                 except Exception as exc:  # noqa: BLE001 - never break the cron
                     _logger.warning("ECB fetch failed (read): %s", exc)
                     return None
@@ -163,13 +187,22 @@ class NcExchangeRate(models.Model):
             _logger.warning("ECB document did not parse: %s", exc)
             return None
 
+        # Scope the USD lookup to the SAME time-bearing node that supplies the
+        # date. Tracking both independently across the whole document let a
+        # crafted feed pair today's date with a six-year-stale rate -- and both
+        # values pass every check individually, so nothing downstream notices.
+        # Reproduced before fixing: ('2026-08-04', '1.08').
         rate_date, usd = None, None
         for node in root.iter():
-            attrib = node.attrib
-            if 'time' in attrib:
-                rate_date = attrib['time']
-            if attrib.get('currency') == 'USD' and 'rate' in attrib:
-                usd = attrib['rate']
+            if 'time' not in node.attrib:
+                continue
+            for child in node.iter():
+                if (child.attrib.get('currency') == 'USD'
+                        and 'rate' in child.attrib):
+                    rate_date, usd = node.attrib['time'], child.attrib['rate']
+                    break
+            if usd is not None:
+                break
         if not rate_date or usd is None:
             # AED is deliberately NOT looked for here: ECB does not publish it,
             # and needing it would be the OCA KeyError we chose BUILD to avoid.
@@ -181,6 +214,11 @@ class NcExchangeRate(models.Model):
             parsed_date = fields.Date.to_date(rate_date)
         except (TypeError, ValueError):
             _logger.warning("ECB USD rate %r / date %r unusable", usd, rate_date)
+            return None
+        if parsed_date and parsed_date > fields.Date.today():
+            _logger.warning(
+                "ECB document is dated in the future (%s) — refusing it",
+                parsed_date)
             return None
         if not parsed_date or not (_RATE_MIN < value < _RATE_MAX):
             _logger.warning(
@@ -205,6 +243,16 @@ class NcExchangeRate(models.Model):
                 "(latest on file: %s)", self._latest().name or 'none')
             return self.browse()
         rate_date, usd_per_eur = parsed
+        previous = self._latest()
+        if previous and previous.usd_per_eur:
+            move = abs(usd_per_eur - previous.usd_per_eur) / previous.usd_per_eur
+            if move > _MAX_DAILY_MOVE:
+                _logger.warning(
+                    "ECB rate moved %.1f%% (%s -> %s) since %s — refusing it and "
+                    "keeping the previous rate; a move that size is a fault, not "
+                    "a market", move * 100, previous.usd_per_eur, usd_per_eur,
+                    previous.name)
+                return self.browse()
         existing = self.search([('name', '=', rate_date)], limit=1)
         if existing:
             # Same publication date: ECB has not moved. Not an error, and not
@@ -257,6 +305,27 @@ class TenantRateSync(models.Model):
         accepts = bool(isinstance(payload, dict) and payload.get('accepts_rate'))
         if accepts != self.config_sync_accepts_rate:
             self.sudo().write({'config_sync_accepts_rate': accepts})
+
+    def _config_sync_record(self, state, error=None):
+        """Reset the rate capability on any non-ok push, so a stuck tenant heals.
+
+        Without this the flag is a one-way ratchet: it is only ever learned from
+        a SUCCESSFUL response, so a tenant that starts rejecting the rate key --
+        a rolling deploy, a rollback, any regression in the tenant-side pop --
+        fails `sync_from_platform` BEFORE `config.write(vals)` runs. That fails
+        the WHOLE push, not just the rate, and a 422 is classified transient and
+        retried forever with the same doomed payload. The channel carries
+        licensing, so the cost of that ratchet is menu/ORM enforcement silently
+        freezing, which is exactly what this feature promised it could not do.
+
+        Dropping to False makes the next attempt byte-identical to the
+        pre-#308 payload, which is known to work.
+        """
+        if state != 'ok':
+            for tenant in self:
+                if tenant.config_sync_accepts_rate:
+                    tenant.sudo().write({'config_sync_accepts_rate': False})
+        return super()._config_sync_record(state, error=error)
 
     def _config_sync_vals(self):
         """Add the ECB rate for tenants that have advertised support.
