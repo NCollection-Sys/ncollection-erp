@@ -11,9 +11,16 @@ accounting data or runs aggregation:
   * read_group / _read_group / search_read              (aggregation)
 
 Docstrings and comments that merely NAME these (this module's own do) are AST
-nodes we never inspect, so they don't trip it — only real access does. The
-companion provenance test (test_dashboard_service) proves the positive side:
-every figure equals the executive-service output.
+nodes we never inspect, so they don't trip it — only real access does.
+
+Known limits of a static AST guard (documented, not fixed here): it cannot see a
+model reached through an INDIRECT name (``m = 'account.move.line'; env[m]``) nor
+a derived metric recomputed purely from service figures
+(``net_profit = revenue - expenses``) — no forbidden model or call, just a
+BinOp indistinguishable from the loop-index math this module legitimately uses.
+The companion PROVENANCE test (test_dashboard_service) is the complementary
+guard for those: every figure must equal the executive-service output, so a
+divergent local recomputation fails there.
 """
 import ast
 import os
@@ -21,8 +28,24 @@ import os
 from odoo.tests import TransactionCase, tagged
 
 _FORBIDDEN_MODELS = {'account.move', 'account.move.line'}
-_FORBIDDEN_CALLS = {'execute', 'read_group', '_read_group', 'search_read'}
+# Aggregation / raw-cursor calls. Includes Odoo 19's formatted_read_group (the
+# read_group replacement) and search_count so a future edit can't aggregate
+# journal items under a different method name.
+_FORBIDDEN_CALLS = {
+    'execute', 'read_group', '_read_group', 'formatted_read_group',
+    'search_read', 'search_count',
+}
 _MODULE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+
+def _is_cursor_access(node):
+    """True for ``self._cr`` or ``…env.cr`` — a raw SQL cursor handle."""
+    if not isinstance(node, ast.Attribute):
+        return False
+    if node.attr == '_cr':
+        return True
+    return node.attr == 'cr' and isinstance(node.value, ast.Attribute) \
+        and node.value.attr == 'env'
 
 
 def _python_files(root):
@@ -52,10 +75,13 @@ class TestZeroComputationBoundary(TransactionCase):
                     key = node.slice
                     if isinstance(key, ast.Constant) and key.value in _FORBIDDEN_MODELS:
                         offenders.append("%s:%s env[%r]" % (rel, node.lineno, key.value))
-                # *.execute(...) / *.read_group(...) / *.search_read(...)
+                # *.execute(...) / *.read_group(...) / *.search_read(...) / ...
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
                         and node.func.attr in _FORBIDDEN_CALLS:
                     offenders.append("%s:%s .%s(...)" % (rel, node.lineno, node.func.attr))
+                # raw SQL cursor: self._cr / self.env.cr
+                if _is_cursor_access(node):
+                    offenders.append("%s:%s raw cursor access" % (rel, node.lineno))
         self.assertFalse(
             offenders,
             "ncollection_account_dashboard must do ZERO financial computation "

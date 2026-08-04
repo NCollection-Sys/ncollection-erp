@@ -18,7 +18,6 @@ import { Component, onMounted, onWillStart, onWillUnmount, useRef, useState } fr
 import { useService } from "@web/core/utils/hooks";
 import {
     NcKpiCard,
-    NcSectionCard,
     NcChartWrapper,
     NcEmptyState,
     NcLoadingSkeleton,
@@ -30,7 +29,6 @@ export class NcFinancialDashboard extends Component {
     static props = ["*"];
     static components = {
         NcKpiCard,
-        NcSectionCard,
         NcChartWrapper,
         NcEmptyState,
         NcLoadingSkeleton,
@@ -76,7 +74,12 @@ export class NcFinancialDashboard extends Component {
         }
         const value = kpi.value ?? 0;
         const delta = value - previous;
-        const dir = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
+        if (delta === 0) {
+            // NcKpiCard renders any non-"down" dir as an up chip, so a "flat"
+            // dir would show a misleading green ↑ 0.0%. No chip is truthful.
+            return null;
+        }
+        const dir = delta > 0 ? "up" : "down";
         const pct = previous !== 0 ? (delta / Math.abs(previous)) * 100 : null;
         return { value: pct === null ? "—" : `${pct.toFixed(1)}%`, dir };
     }
