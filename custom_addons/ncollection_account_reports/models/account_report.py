@@ -268,19 +268,15 @@ class NcollectionAccountReport(models.AbstractModel):
         if xlsxwriter is None:
             raise UserError(self.env._(
                 "XLSX export needs the 'xlsxwriter' Python library."))
-        data = self._nc_build_xlsx()
-        attachment = self.env['ir.attachment'].create({
-            'name': '%s.xlsx' % self._nc_report_title(),
-            'type': 'binary',
-            'datas': data,
-            'res_model': self._name,
-            'res_id': self.id,
-            'mimetype': ('application/vnd.openxmlformats-officedocument.'
-                         'spreadsheetml.sheet'),
-        })
+        # #250: stream from a controller instead of persisting an ir.attachment.
+        # The old path stored the workbook against this TRANSIENT wizard, so
+        # once autovacuum reclaimed the wizard (~1h) the attachment was orphaned
+        # with a dangling res_id and nothing collected it — a slow leak across
+        # all nine report models. No artefact, no leak, and no stored object
+        # whose id could be guessed.
         return {
             'type': 'ir.actions.act_url',
-            'url': '/web/content/%s?download=true' % attachment.id,
+            'url': '/ncollection/account_reports/xlsx/%s/%s' % (self._name, self.id),
             'target': 'self',
         }
 

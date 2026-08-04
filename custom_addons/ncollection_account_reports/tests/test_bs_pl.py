@@ -341,13 +341,14 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
             with self.subTest(report=wizard._name):
                 action = wizard.action_export_pdf()
                 self.assertEqual(action['type'], 'ir.actions.report')
-                wizard.action_export_xlsx()
-                attachment = self.env['ir.attachment'].search(
-                    [('res_model', '=', wizard._name), ('res_id', '=', wizard.id)],
-                    limit=1)
-                self.assertTrue(attachment)
+                # #250: the export streams from a controller and persists
+                # nothing, so the workbook is checked at the source. The route
+                # itself is exercised over HTTP in test_xlsx_stream.py.
+                xlsx = wizard.action_export_xlsx()
+                self.assertIn('/ncollection/account_reports/xlsx/', xlsx['url'])
                 # A real workbook, not an empty/failed stream.
-                self.assertTrue(base64.b64decode(attachment.datas).startswith(b'PK'))
+                self.assertTrue(
+                    base64.b64decode(wizard._nc_build_xlsx()).startswith(b'PK'))
 
     def test_action_view_populates_the_comparison_columns(self):
         """Regression guard: the engine's action_view() must carry the F2-T03

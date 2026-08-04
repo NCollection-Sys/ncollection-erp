@@ -216,21 +216,25 @@ class TestGeneralLedgerTrialBalance(AccountTestInvoicingCommon):
     # ---- isolation: the wizard run + its export are private ------------
 
     def test_gl_run_and_export_are_private_per_user(self):
-        # The drill-down pivot and the XLSX attachment (the F2-T01 IDOR class)
-        # both hinge on another user being unable to read MY report run.
+        # The drill-down pivot and the XLSX export (the F2-T01 IDOR class) both
+        # hinge on another user being unable to read MY report run.
+        #
+        # #250 moved the export from a persisted ir.attachment to a streaming
+        # route, so the guessable object is now the WIZARD id rather than an
+        # attachment id — and the same create_uid ir.rule is what denies it.
+        # Asserting on the wizard therefore still guards the whole class; the
+        # route itself is exercised over HTTP in test_xlsx_stream.py.
         gl = self._gl()
         gl.action_view()
         xlsx = gl.action_export_xlsx()
-        att_id = int(xlsx['url'].split('/web/content/')[1].split('?')[0])
+        self.assertIn('/ncollection/account_reports/xlsx/', xlsx['url'])
         other = self.env['res.users'].create({
             'login': 'nc_gl_reader', 'name': 'Reader',
             'group_ids': [(6, 0, [self.env.ref('account.group_account_readonly').id])]})
-        # cannot read my GL wizard record (blocks the drill-down pivot)…
+        # Cannot read my GL wizard record — which blocks BOTH the drill-down
+        # pivot and the export route, since the route browses this same record.
         with self.assertRaises(AccessError):
             gl.with_user(other).date_from
-        # …nor download my GL export attachment
-        with self.assertRaises(AccessError):
-            self.env['ir.attachment'].browse(att_id).with_user(other).datas
 
     def test_gl_multiple_period_lines_ordered_by_date(self):
         # Several in-period entries for ONE account, inserted OUT of date order:
