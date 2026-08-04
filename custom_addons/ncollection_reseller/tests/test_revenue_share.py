@@ -60,7 +60,11 @@ class TestRevenueShare(TransactionCase):
         self.assertAlmostEqual(eur_row.share_amount, 10.0, places=2)
 
     def test_reseller_without_subtenants_zero(self):
-        p = self.env['res.partner'].create({'name': 'Empty'})
+        # arch-guard: admin-db-billing -- see the note in
+        # test_brand_cascade_payload: platform-side partner, required by
+        # ncollection.reseller.partner_id, not tenant-database access.
+        p = self.env['res.partner'].create(  # arch-guard: admin-db-billing
+            {'name': 'Empty'})
         empty = self.env['ncollection.reseller'].create({
             'name': 'Empty', 'partner_id': p.id, 'revenue_share_pct': 50.0})
         row = self.env['ncollection.reseller.revenue.share'].search(
