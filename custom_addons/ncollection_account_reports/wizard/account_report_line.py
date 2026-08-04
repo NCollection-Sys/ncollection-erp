@@ -41,6 +41,11 @@ class NcollectionAccountReportLine(models.TransientModel):
     # Not Monetary: a percentage is not money, and rendering it with a currency
     # symbol in the list/PDF would be wrong.
     variance_pct = fields.Float(digits=(16, 2))
+    # F2-T08: this row's share of a report-defined base (Profitability renders
+    # it as "% of Revenue", which is what a margin IS). Same reasoning as
+    # variance_pct — a ratio put in a Monetary field would render "AED 70.00"
+    # against a row labelled "Net Margin".
+    ratio_pct = fields.Float(digits=(16, 2))
     currency_id = fields.Many2one('res.currency')
     level = fields.Integer(default=0)
 

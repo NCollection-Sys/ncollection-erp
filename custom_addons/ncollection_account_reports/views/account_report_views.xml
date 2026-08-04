@@ -335,4 +335,231 @@
               parent="menu_ncollection_account_reports"
               action="action_report_profit_loss_wizard" sequence="50"/>
 
+    <!-- F2-T08: Profitability adds a "% of Revenue" column. It is a RATIO, so
+         it uses the Float ratio_pct field, never a Monetary one. -->
+    <record id="view_report_line_profitability_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.profitability.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Profitability" create="false" delete="false"
+                  default_order="id" decoration-bf="level == 0">
+                <field name="label" string="Metric"/>
+                <field name="current_amount" sum="Current"/>
+                <field name="previous_amount" sum="Previous"/>
+                <field name="variance" sum="Variance"/>
+                <field name="variance_pct" string="Variance %" digits="[16,2]"/>
+                <field name="ratio_pct" string="% of Revenue" digits="[16,2]"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="account_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ==== F2-T08: Executive Reports ==== -->
+
+    <record id="view_report_financial_summary_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.summary.form</field>
+        <field name="model">ncollection.account.report.summary</field>
+        <field name="arch" type="xml">
+            <form string="Financial Summary">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_financial_summary_wizard" model="ir.actions.act_window">
+        <field name="name">Financial Summary</field>
+        <field name="res_model">ncollection.account.report.summary</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_financial_summary" name="Financial Summary"
+              parent="menu_ncollection_account_reports"
+              action="action_report_financial_summary_wizard" sequence="60"/>
+
+    <record id="view_report_revenue_analysis_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.revenue.form</field>
+        <field name="model">ncollection.account.report.revenue</field>
+        <field name="arch" type="xml">
+            <form string="Revenue Analysis">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_revenue_analysis_wizard" model="ir.actions.act_window">
+        <field name="name">Revenue Analysis</field>
+        <field name="res_model">ncollection.account.report.revenue</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_revenue_analysis" name="Revenue Analysis"
+              parent="menu_ncollection_account_reports"
+              action="action_report_revenue_analysis_wizard" sequence="70"/>
+
+    <record id="view_report_expense_analysis_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.expense.form</field>
+        <field name="model">ncollection.account.report.expense</field>
+        <field name="arch" type="xml">
+            <form string="Expense Analysis">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_expense_analysis_wizard" model="ir.actions.act_window">
+        <field name="name">Expense Analysis</field>
+        <field name="res_model">ncollection.account.report.expense</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_expense_analysis" name="Expense Analysis"
+              parent="menu_ncollection_account_reports"
+              action="action_report_expense_analysis_wizard" sequence="80"/>
+
+    <record id="view_report_profitability_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.profitability.form</field>
+        <field name="model">ncollection.account.report.profitability</field>
+        <field name="arch" type="xml">
+            <form string="Profitability Report">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_profitability_wizard" model="ir.actions.act_window">
+        <field name="name">Profitability Report</field>
+        <field name="res_model">ncollection.account.report.profitability</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_profitability" name="Profitability Report"
+              parent="menu_ncollection_account_reports"
+              action="action_report_profitability_wizard" sequence="90"/>
+
 </odoo>

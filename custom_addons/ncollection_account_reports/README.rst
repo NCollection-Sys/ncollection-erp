@@ -132,6 +132,38 @@ transcription that must agree — so a silent edit to either fails the build. Th
 retirement itself (uninstalling ``mis_builder``) is **#117 [F2-T07]**, not this
 task; both remain installed and in agreement until then.
 
+Executive Reports (F2-T08)
+==========================
+
+Financial Summary, Revenue Analysis, Expense Analysis and Profitability — the
+FPA §10 *Executive Reports* catalog. They **compose**: every figure comes from
+the F2-T03 Balance Sheet / P&L services or the F2-T01 engine, reached by
+spawning an in-memory sibling wizard (``executive_base.py``) that carries this
+report's own filters.
+
+``tests/test_executive_reports.py`` enforces that structurally: it parses the
+executive modules with ``ast``, strips docstrings and comments, and FAILS if any
+of them names ``account.move.line``, ``_read_group`` or ``_nc_filter_domain``.
+A parallel arithmetic that drifts from the statements it summarises therefore
+cannot be introduced quietly — and a comment claiming compliance cannot satisfy
+the guard.
+
+``_nc_service_figures()`` is the surface **#56 [P4-T03] CEO Dashboard** consumes:
+a dashboard calls it instead of re-deriving anything, and ``_nc_compute_lines``
+renders from the same dict, so the report and the dashboard cannot disagree.
+
+⚠ **Spec status.** Only *Financial Summary* has a real FPA specification (L1870,
+the eight KPIs). *Revenue Analysis*, *Expense Analysis* and *Profitability
+Report* appear in the §10 catalog with **no specification section**; their shape
+is DERIVED from §Cost Center Analysis (*Revenue · Expense · Profit · Margin*)
+with the P&L's own buckets and subtotals. The derivation is recorded at the top
+of each wizard — reconcile those files first if a real spec is written.
+
+*Department Analysis* is deliberately **not** here: the FPA catalog lists it
+under *Management Reports*, not Executive, and it needs an analytic/department
+dimension that does not exist in the financial data model. Building it means
+introducing that dimension — an architecture decision, tracked separately.
+
 What this does NOT own
 ======================
 
