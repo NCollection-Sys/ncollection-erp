@@ -18,7 +18,11 @@
     # recv via the BufferedReader's read1(). Behaviour only, no schema.
     # 19.0.6.7.0 (#308): ECB rate source on the admin DB + the capability-gated
     # rate keys on the config-sync payload. No tenant makes an outbound call.
-    'version': '19.0.6.7.0',
+    # Patch bump: #245 gates the three SaaS-admin menus on base.group_system to
+    # match their ACLs. `-u` is what applies it: convert.py only writes
+    # group_ids when the groups= attribute is PRESENT, so adding one does
+    # upgrade cleanly (removing one would not — the old value would survive).
+    'version': '19.0.6.7.1',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',
