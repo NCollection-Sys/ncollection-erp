@@ -155,9 +155,18 @@ class TestEcbXmlHardening(TransactionCase):
         """The guard itself must raise, independently of whatever the linked
         libexpat happens to do about entity amplification."""
         with self.assertRaises(ET.ParseError):
-            self.Rate._assert_no_doctype('<!DOCTYPE r><r/>')
+            self.Rate._parse_xml_no_doctype('<!DOCTYPE r><r/>')
         # ...and must stay out of the way of a clean document.
-        self.Rate._assert_no_doctype(_DOC)
+        root = self.Rate._parse_xml_no_doctype(_DOC)
+        self.assertTrue(root.find('.//*[@currency="USD"]') is not None)
+
+    def test_a_parse_failure_never_escapes_as_an_exception(self):
+        """The cron contract is 'never raise, keep the previous rate'. A narrow
+        except tuple made that depend on _fetch_ecb_document decoding with
+        errors='replace': a lone surrogate raises UnicodeEncodeError, which is
+        neither ParseError nor ExpatError."""
+        self.assertIsNone(self.Rate._parse_ecb_usd('<r>\ud800</r>'))
+        self.assertIsNone(self.Rate._parse_ecb_usd('\x00<r/>'))
 
 
 @tagged("post_install", "-at_install")

@@ -174,9 +174,16 @@ external-entity attack requires one — so one rejection covers the family, with
 dependency**. `defusedxml` was considered and not adopted: it would add a dependency (owner
 approval + `oca-scout`) to replace a five-line guard.
 
-Implemented as a small `expat` pre-scan rather than a handler on the tree parse, because Python
-3.12's C `ElementTree.XMLParser` no longer exposes the underlying parser (verified: no `.parser`
-attribute). The document is already capped at `_MAX_RESPONSE_BYTES`, so the second pass is bounded.
+Implemented in **one pass**: a `TreeBuilder` subclass whose `doctype()` hook raises, wired via
+`ET.XMLParser(target=...)`. ElementTree connects that hook to expat's `StartDoctypeDeclHandler`,
+which fires at the DOCTYPE *name* — before the internal subset is read, so before any `<!ENTITY>`
+is declared or expanded and before an external DTD would be fetched.
+
+> An earlier revision of this section claimed a two-pass `expat` pre-scan was *necessary* because
+> Python 3.12's C `XMLParser` exposes no `.parser` attribute. The `.parser` part is true; the
+> conclusion was **wrong** — the `target=` hook needs no access to the underlying parser. Corrected
+> after review, and the implementation simplified to match. Recorded rather than quietly deleted,
+> because the wrong version was briefly the documented decision.
 
 **Measured, with the guard temporarily removed** — three of four hostile documents *parsed
 successfully* and were refused only because they carried no USD cube, i.e. by accident:
