@@ -707,20 +707,34 @@ class TestConfigSyncHealth(TransactionCase):
 
     # -- the real wall-clock bound (#285) ------------------------------------
 
-    class _Read1Reader:
-        """A BufferedReader stand-in: read1 returns on the FIRST data."""
+    class _Read1Reader(io.BufferedReader):
+        """A REAL io.BufferedReader that counts calls.
+
+        Subclassing rather than hand-rolling, for two reasons review made
+        clear. The model now type-checks with isinstance (a look-alike that
+        loops to fill `amt` would silently reinstate the unbounded read while
+        the fallback warning never fired), so a duck-typed double would send
+        every one of these tests down the FALLBACK path — they would pass
+        while proving nothing about read1.
+
+        And the hand-rolled version lied: its read1(0) returned a byte instead
+        of b'', letting it over-read past the cap while its own position
+        bookkeeping rewound and hid it. Real semantics cannot drift from
+        themselves.
+        """
 
         def __init__(self, data, per_call=1):
+            super().__init__(io.BytesIO(data))
             self._data = data
-            self._pos = 0
             self.per_call = per_call
             self.calls = 0
+            self.returned = 0
 
-        def read1(self, amt=None):
+        def read1(self, size=-1):
             self.calls += 1
-            end = min(len(self._data), self._pos + min(self.per_call, amt or 1))
-            out = self._data[self._pos:end]
-            self._pos = end
+            want = self.per_call if size in (None, -1) else min(self.per_call, size)
+            out = super().read1(want)
+            self.returned += len(out)
             return out
 
     def _read1_response(self, status, data, per_call=1):
@@ -758,7 +772,7 @@ class TestConfigSyncHealth(TransactionCase):
             reader.calls, 2,
             "more recvs than the deadline schedule allows — the clock is not "
             "being checked per recv")
-        self.assertLess(reader._pos, len(reader._data),
+        self.assertLess(reader.returned, len(reader._data),
                         "read the whole body despite the deadline elapsing")
 
     def test_a_normal_body_still_arrives_through_read1(self):
@@ -781,8 +795,116 @@ class TestConfigSyncHealth(TransactionCase):
             200, b'y' * (3 * _MAX_RESPONSE_BYTES), per_call=4096)
         with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
             self.assertTrue(self._push(resp))
-        self.assertLessEqual(reader._pos, _MAX_RESPONSE_BYTES + 1,
-                             "read past the cap on the read1 path")
+        self.assertLessEqual(
+            reader.returned, _MAX_RESPONSE_BYTES + 1,
+            "read past the cap on the read1 path — asserted on the monotonic "
+            "byte count, because _pos can move backwards and hid exactly this")
+
+    def test_a_REAL_socket_response_takes_the_read1_path(self):
+        """The gap the security review found: nothing exercised the real path.
+
+        Every other double here hand-builds `resp.raw._fp.fp`, and
+        `_RealGzipResponse` is backed by BytesIO — which has no socket, so it
+        silently takes the FALLBACK. A future requests/urllib3 that moves
+        `_fp`/`.fp` would therefore degrade to the weaker bound with nothing
+        in CI to notice; only a WARNING someone happens to read.
+
+        This drives a genuine HTTP request through the real stack.
+        """
+        import http.server
+        import threading
+
+        body = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': False}}}).encode()
+
+        class _H(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+
+        srv = http.server.HTTPServer(('127.0.0.1', 0), _H)
+        threading.Thread(target=srv.handle_request, daemon=True).start()
+        self.addCleanup(srv.server_close)
+
+        resp = requests.post('http://127.0.0.1:%d/' % srv.server_address[1],
+                             data=b'{}', stream=True, timeout=10)
+        self.addCleanup(resp.close)
+
+        self.assertIsNotNone(
+            self.tenant._recv_reader(resp),
+            "the real production path fell back — read1 was not reachable on "
+            "a genuine requests response, so the bound is the weak one")
+
+        with patch.dict('os.environ', {'NC_CONFIG_SYNC_KEY': 'k'}), \
+                patch('requests.post', return_value=resp):
+            self.assertTrue(self.tenant._config_sync_push('synchealth', {}))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(
+            self.tenant.cron_health_state, 'degraded',
+            "a real socket body did not survive the read1 path")
+
+    def test_a_chunked_response_uses_the_fallback_not_read1(self):
+        """read1 bypasses http.client's framing, so chunked bytes arrive with
+        their size prefixes inline and could never parse. The fast path must
+        refuse chunked and let the fallback de-chunk it."""
+        resp = _StreamedResponse(200, b'{"required_crons": {}}')
+        resp.headers = {'Transfer-Encoding': 'chunked'}
+        resp.raw._fp = type('FP', (), {'fp': io.BufferedReader(
+            io.BytesIO(b'{"required_crons": {}}'))})()
+
+        self.assertIsNone(
+            self.tenant._recv_reader(resp),
+            "took the read1 path on a chunked response — the body would "
+            "arrive with chunk-size prefixes and never parse")
+
+    def test_the_cap_BOUNDARY_holds_on_the_read1_path_too(self):
+        """The +1 read is #278's whole mechanism, and it was only tested on the
+        FALLBACK path — which production never takes. Review proved it: drop
+        the `+1` and the boundary tests fail, but the read1 cap test stays
+        green, because its doubles have no `_fp.fp`."""
+        body = json.dumps({'required_crons': {
+            'ncollection_auth.cron_gc_auth_log': {
+                'installed': True, 'active': True}}}).encode()
+        exact = body + b' ' * (_MAX_RESPONSE_BYTES - len(body))
+        self.assertEqual(len(exact), _MAX_RESPONSE_BYTES)
+
+        resp, reader = self._read1_response(200, exact, per_call=4096)
+        self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertEqual(self.tenant.cron_health_state, 'ok',
+                         "a body of exactly the cap must still parse")
+
+        resp, reader = self._read1_response(200, exact + b' ', per_call=4096)
+        with mute_logger('odoo.addons.ncollection_saas.models.config_sync'):
+            self.assertTrue(self._push(resp))
+        self.tenant.invalidate_recordset()
+        self.assertNotEqual(self.tenant.cron_health_state, 'ok',
+                            "one byte past the cap must be discarded")
+        self.assertLessEqual(reader.returned, _MAX_RESPONSE_BYTES + 1)
+
+    def test_an_fp_without_read1_is_refused_by_the_type_check(self):
+        """The guard review found had zero coverage in either direction.
+
+        Without it, an `_fp.fp` lacking read1 would raise AttributeError into
+        the broad except and become a hard _READ_FAILED — turning a response
+        the fallback would have read correctly into a sync failure.
+        """
+        resp = _StreamedResponse(200, b'{"required_crons": {}}')
+        resp.raw._fp = type('FP', (), {'fp': object()})()   # no read1
+        self.assertIsNone(self.tenant._recv_reader(resp))
+
+        with self.assertLogs(
+                'odoo.addons.ncollection_saas.models.config_sync',
+                level='WARNING') as caught:
+            self.assertTrue(self._push(resp))
+        self.assertIn('read1', '\n'.join(caught.output))
 
     def test_the_fallback_fires_when_read1_is_unavailable(self):
         """A defensive branch nothing exercises is a branch that does not work.

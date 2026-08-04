@@ -16,6 +16,7 @@ Lives in ncollection_saas: only this layer may reach a tenant DB.
 import base64
 import hashlib
 import hmac
+import io
 import json
 import logging
 import re
@@ -90,6 +91,14 @@ _RPC_TIMEOUT = 30
 # the deadline is now evaluated per recv rather than per chunk. The bound is
 # _RPC_DEADLINE plus ONE socket read timeout (read1 still blocks while nothing
 # arrives at all), not _RPC_DEADLINE flat. Write the number the code keeps.
+# Measured in review against a real trickling socket: 88.02s, approaching the
+# 90s ceiling from below.
+#
+# Reading that low bypasses http.client's MESSAGE FRAMING, not merely urllib3's
+# content decoding -- chunked bodies would arrive with their size prefixes
+# inline, and Content-Length stops being an end-of-body marker. Chunked is
+# therefore refused into the fallback (see _recv_reader); Odoo answers json2
+# with Content-Length, measured on two tenant databases.
 #
 # What this deadline DOES bound: a body arriving in whole chunks separated by
 # gaps, which is the common misbehaving-proxy shape. What actually bounds the
@@ -638,9 +647,27 @@ class TenantConfigSync(models.Model):
         than none -- the comment would still promise a bound the code no longer
         keeps.
         """
+        # Reading this low bypasses http.client's MESSAGE FRAMING, not just
+        # urllib3's content decoding -- a distinction the first version of this
+        # comment blurred. Two consequences, both measured in review:
+        #   * a chunked body arrives with its size prefixes inline, so it can
+        #     never parse;
+        #   * Content-Length is not honoured as an end-of-body marker.
+        # So the fast path is refused for chunked responses and the fallback
+        # (which goes through http.client and de-chunks correctly) handles
+        # them. Measured against the real endpoint on two tenant databases:
+        # Odoo answers json2 with Content-Length and no Transfer-Encoding, so
+        # this is a guard against a shape that does not currently occur rather
+        # than a limitation of the common path.
+        te = (getattr(resp, 'headers', None) or {}).get('Transfer-Encoding', '')
+        if 'chunked' in (te or '').lower():
+            return None
         fp = getattr(getattr(resp, 'raw', None), '_fp', None)
         inner = getattr(fp, 'fp', None)
-        return inner if hasattr(inner, 'read1') else None
+        # isinstance, not hasattr: read1 is a specific io contract, and a
+        # look-alike that loops to fill `amt` would silently reinstate the
+        # unbounded behaviour while the fallback warning never fired.
+        return inner if isinstance(inner, io.BufferedReader) else None
 
     def _read_bounded(self, resp, db):
         """At most ``_MAX_RESPONSE_BYTES + 1`` bytes of the body (#278).
