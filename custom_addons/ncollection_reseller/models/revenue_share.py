@@ -59,6 +59,24 @@ class ResellerRevenueShare(models.Model):
             SQL.identifier(self._table),
         ))
 
+    def _search(self, *args, **kwargs):
+        """Flush pending ORM writes before this SQL view is queried.
+
+        The model is _auto=False: it reads ncollection_reseller / _tenant /
+        _subscription straight from SQL, and the ORM cannot know that, so it
+        does not flush those models first. A caller that creates or updates a
+        subscription and then reads this report in the SAME transaction would
+        otherwise aggregate stale rows — read-your-own-writes silently broken.
+
+        Found by #300, the first time this suite ever ran: total_mrr came back
+        0.0 and multi-currency collapsed to a single NULL-currency row, because
+        the subscriptions were still sitting in cache. (Tenants happened to be
+        flushed already — the reseller quota check runs a search_count — which
+        is exactly what made the failure look like a bad aggregate.)
+        """
+        self.env.flush_all()
+        return super()._search(*args, **kwargs)
+
     @api.model
     def action_open(self):
         return {
