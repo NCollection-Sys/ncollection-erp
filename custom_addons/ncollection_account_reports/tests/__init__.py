@@ -4,3 +4,4 @@ from . import test_gl_tb
 from . import test_bs_pl
 from . import test_executive_reports
 from . import test_identifier_limits
+from . import test_xlsx_stream

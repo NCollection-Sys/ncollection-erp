@@ -149,7 +149,8 @@ class TestReportEngine(AccountTestInvoicingCommon):
         wizard = self._wizard()
         xlsx = wizard.action_export_xlsx()
         self.assertEqual(xlsx['type'], 'ir.actions.act_url')
-        self.assertIn('/web/content/', xlsx['url'])
+        # #250: streamed from a controller, no persisted ir.attachment.
+        self.assertIn('/ncollection/account_reports/xlsx/', xlsx['url'])
         pdf = wizard.action_export_pdf()
         self.assertEqual(pdf['type'], 'ir.actions.report')
 

@@ -335,9 +335,8 @@ class TestExecutiveReports(AccountTestInvoicingCommon):
                 wizard = self._make(model, comparison_type='previous_year')
                 self.assertEqual(
                     wizard.action_export_pdf()['type'], 'ir.actions.report')
-                wizard.action_export_xlsx()
-                attachment = self.env['ir.attachment'].search(
-                    [('res_model', '=', wizard._name), ('res_id', '=', wizard.id)],
-                    limit=1)
-                self.assertTrue(attachment)
-                self.assertTrue(base64.b64decode(attachment.datas).startswith(b'PK'))
+                # #250: streamed from a controller, nothing persisted.
+                xlsx = wizard.action_export_xlsx()
+                self.assertIn('/ncollection/account_reports/xlsx/', xlsx['url'])
+                self.assertTrue(
+                    base64.b64decode(wizard._nc_build_xlsx()).startswith(b'PK'))
