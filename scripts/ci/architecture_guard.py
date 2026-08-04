@@ -74,8 +74,16 @@ TENANT_MODELS = (
     "res.partner", "account.move.line", "crm.lead", "hr.employee",
     "product.product", "product.template", "stock.picking",
 )
+# `cls.env[...]` as well as `self.env[...]`: setUpClass fixtures spell the
+# lookup the other way, and matching only `self.` meant four identical
+# res.partner creates in ncollection_reseller's own setUpClass methods were
+# never flagged -- while the two that used `self.` failed the mainline. A guard
+# whose coverage depends on which alias a test happens to use reports "clean"
+# for the wrong reason (#304). Aliased locals (`env = self.env`) are still
+# missed; that limitation is documented at the top of this file and unchanged.
 TENANT_MODEL_HINTS = tuple(
-    f"self.env[{q}{m}{q}]" for m in TENANT_MODELS for q in ("'", '"')
+    f"{recv}.env[{q}{m}{q}]"
+    for m in TENANT_MODELS for q in ("'", '"') for recv in ("self", "cls")
 )
 
 # ---------------------------------------------------------------------------
@@ -162,7 +170,15 @@ def check_menu_license_gate(path: Path, text: str, changed_paths: set[Path], fin
 # exact trailing marker — and ONLY that line. Every other tenant-model reference,
 # and every UNANNOTATED account.move, still fails. A reviewer must confirm each
 # annotated line is genuine admin-DB own-data (never a tenant DB).
-ADMIN_DB_MARKER = "# arch-guard: admin-db-billing"
+# Two accepted spellings. `admin-db-billing` is the original and stays valid so
+# the existing annotations keep working; `admin-db-platform` is domain-neutral,
+# because "billing" was becoming a lie -- ncollection_reseller's partner rows
+# are platform-owned data with nothing to do with billing, and a future auditor
+# grepping the billing marker to review billing carve-outs would snag them.
+ADMIN_DB_MARKERS = (
+    "# arch-guard: admin-db-billing",
+    "# arch-guard: admin-db-platform",
+)
 
 
 def check_two_layer_separation(path: Path, text: str, findings: list[str]) -> None:
@@ -170,7 +186,7 @@ def check_two_layer_separation(path: Path, text: str, findings: list[str]) -> No
     if addon not in PLATFORM_ADDONS or path.suffix != ".py":
         return
     for i, line in enumerate(text.splitlines(), 1):
-        if ADMIN_DB_MARKER in line:
+        if any(marker in line for marker in ADMIN_DB_MARKERS):
             continue  # explicitly-annotated admin-DB own-data line (see above)
         if any(hint in line for hint in TENANT_MODEL_HINTS):
             findings.append(
@@ -178,7 +194,7 @@ def check_two_layer_separation(path: Path, text: str, findings: list[str]) -> No
                 f"tenant ERP model — cross-layer access must go through RPC/JSON-RPC, "
                 f"not direct ORM calls into a tenant database (two-layer separation rule). "
                 f"If this is the platform's OWN admin-DB data (e.g. subscription "
-                f"billing), append '{ADMIN_DB_MARKER}' to the line."
+                f"billing), append '{ADMIN_DB_MARKERS[-1]}' to the line."
             )
 
 

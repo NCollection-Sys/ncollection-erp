@@ -27,8 +27,8 @@ class TestResellerIsolation(TransactionCase):
 
         cls.user_a = user('reseller_a')
         cls.user_b = user('reseller_b')
-        pa = cls.env['res.partner'].create({'name': 'A'})
-        pb = cls.env['res.partner'].create({'name': 'B'})
+        pa = cls.env['res.partner'].create({'name': 'A'})  # arch-guard: admin-db-platform
+        pb = cls.env['res.partner'].create({'name': 'B'})  # arch-guard: admin-db-platform
         cls.res_a = cls.env['ncollection.reseller'].create({
             'name': 'A', 'partner_id': pa.id, 'user_id': cls.user_a.id})
         cls.res_b = cls.env['ncollection.reseller'].create({

@@ -15,7 +15,7 @@ class TestBrandCascadePayload(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        partner = cls.env['res.partner'].create({'name': 'Brandco'})
+        partner = cls.env['res.partner'].create({'name': 'Brandco'})  # arch-guard: admin-db-platform
         cls.reseller = cls.env['ncollection.reseller'].create({
             'name': 'Brandco', 'partner_id': partner.id,
             'brand_primary_color': '#101010',
@@ -46,7 +46,12 @@ class TestBrandCascadePayload(TransactionCase):
     def test_unset_reseller_colour_not_pushed(self):
         # A reseller that only sets one colour pushes only that one — the tenant
         # keeps the NCollection default for the rest.
-        partner = self.env['res.partner'].create({'name': 'Partial'})
+        # arch-guard: admin-db-platform -- ncollection.reseller.partner_id is a
+        # required Many2one('res.partner') on the PLATFORM database
+        # (models/reseller.py), so this is the platform's own admin data, not a
+        # cross-layer ORM call into a tenant database.
+        partner = self.env['res.partner'].create(  # arch-guard: admin-db-platform
+            {'name': 'Partial'})
         reseller = self.env['ncollection.reseller'].create({
             'name': 'Partial', 'partner_id': partner.id,
             'brand_primary_color': '#ABCDEF'})
