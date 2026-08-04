@@ -9,7 +9,7 @@ class TestRevenueShare(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        partner = cls.env['res.partner'].create({'name': 'RevCo'})
+        partner = cls.env['res.partner'].create({'name': 'RevCo'})  # arch-guard: admin-db-platform
         cls.reseller = cls.env['ncollection.reseller'].create({
             'name': 'RevCo', 'partner_id': partner.id, 'revenue_share_pct': 20.0})
         cls.plan = cls.env['ncollection.subscription.plan'].create({
@@ -60,10 +60,10 @@ class TestRevenueShare(TransactionCase):
         self.assertAlmostEqual(eur_row.share_amount, 10.0, places=2)
 
     def test_reseller_without_subtenants_zero(self):
-        # arch-guard: admin-db-billing -- see the note in
+        # arch-guard: admin-db-platform -- see the note in
         # test_brand_cascade_payload: platform-side partner, required by
         # ncollection.reseller.partner_id, not tenant-database access.
-        p = self.env['res.partner'].create(  # arch-guard: admin-db-billing
+        p = self.env['res.partner'].create(  # arch-guard: admin-db-platform
             {'name': 'Empty'})
         empty = self.env['ncollection.reseller'].create({
             'name': 'Empty', 'partner_id': p.id, 'revenue_share_pct': 50.0})

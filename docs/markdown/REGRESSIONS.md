@@ -436,6 +436,52 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-023 — `architecture-guard` was red on `develop` itself, and neither CI nor the canary could ever see it ✅ FIXED (#304)
+
+**Symptom.** Running the guard locally on a clean `develop` failed with two two-layer violations
+in `ncollection_reseller/tests/`. Every PR was green. The canary was green. `develop` was red.
+
+**Root cause — two independent blind spots that lined up.**
+
+1. **The guard is diff-scoped.** CI runs
+   `architecture_guard.py --base origin/${{ github.base_ref }}` — it only ever inspects files the
+   PR touched. A violation already sitting on `develop` is invisible by construction. The canary
+   was assumed to cover this, but the canary re-runs `verify.yml`, and **`verify.yml` has no guard
+   step at all** — so Rule 3 was never re-checked against `develop`'s actual tip after any merge.
+
+   This is on the record, not hypothetical. Commit `c6b759f` widened `PLATFORM_ADDONS` to include
+   `ncollection_reseller` and its own message says the guard *"DOES flag pre-existing
+   `self.env['res.partner']` uses in two reseller test files… this PR does not modify them, so the
+   diff-scoped CI guard passes."* It merged green, knowingly, and nothing surfaced them again.
+
+2. **The rule only matched one spelling.** `TENANT_MODEL_HINTS` was built from `self.env[...]`
+   only. `setUpClass` fixtures use `cls.env[...]`, so **five further identical lines** in the same
+   four test files had never been flagged — before or after. The guard's coverage depended on
+   which alias a test happened to use, which means "clean" was true for the wrong reason.
+
+**The findings themselves were false positives**, verified before being silenced:
+`ncollection.reseller.partner_id` is a required `Many2one('res.partner')`, `ncollection.reseller`
+is admin-DB only, and `ncollection_reseller` is never in `CORE_TENANT_MODULES` (the addon set
+provisioning installs into a tenant DB). So it is platform-owned data — but a guard that is red on
+the mainline trains everyone to ignore it, which is the actual damage.
+
+**The guards that now prevent recurrence.**
+
+- `scripts/ci/architecture_guard.py` matches `cls.env[...]` as well as `self.env[...]`. Proved
+  differentially: with a marker stripped, the widened rule **fails** and the old one is **clean**.
+  (Aliased locals — `env = self.env` — are still missed; documented, unchanged.)
+- `.github/workflows/canary.yml` gained a `guard` job that runs the rule over the **whole tree**,
+  not a diff, on every push to `develop`, and is wired into `report`'s `needs` so a violation files
+  a `broken-develop` issue. Proved red-then-green by stripping a marker (exit 1) and restoring it
+  (exit 0). This would have caught `c6b759f` the day it landed.
+- The marker gained a domain-neutral spelling, `# arch-guard: admin-db-platform`. The reseller
+  fixtures were reusing `admin-db-billing`, which was a lie — nothing there is billing — and it
+  would have polluted any future audit that grepped the billing marker to review billing carve-outs.
+
+**Transferable lesson.** *A diff-scoped gate proves things about a diff, never about the branch.*
+Any rule whose value is "this property holds on `develop`" needs a periodic full-tree run, or it
+silently degrades into "this property holds on whatever the last PR happened to touch."
+
 ## R-022 — Five tests were written into the wrong class and never ran; the local command hid them, CI would not have ✅ FIXED (#286)
 
 **Symptom.** On #278 I added five tests to `test_config_sync_health.py`, placed them by mistake

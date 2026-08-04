@@ -10,7 +10,7 @@ class TestResellerQuota(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.partner = cls.env['res.partner'].create({'name': 'Acme Partner'})
+        cls.partner = cls.env['res.partner'].create({'name': 'Acme Partner'})  # arch-guard: admin-db-platform
         cls.Tenant = cls.env['ncollection.tenant']
 
     def _reseller(self, max_subtenants):

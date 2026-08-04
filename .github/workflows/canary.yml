@@ -36,6 +36,27 @@ jobs:
     if: ${{ !inputs.simulate_failure }}
     uses: ./.github/workflows/verify.yml
 
+  # The PR-time `architecture-guard` diffs against the PR BASE, so it can only
+  # ever see files that PR touched. A violation sitting on develop is therefore
+  # invisible to it AND to this canary, which re-runs verify.yml -- and verify.yml
+  # has no guard step at all. That is not hypothetical: c6b759f widened the rule to
+  # cover ncollection_reseller and merged green while knowingly leaving two live
+  # violations behind, and nothing surfaced them again until someone ran the guard
+  # by hand with a wide --base (#304). This job closes that hole by checking the
+  # WHOLE tree on develop, not a diff. Cheap: no Docker, no database.
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: architecture-guard (full tree, not a diff)
+        run: |
+          set -euo pipefail
+          # xargs, not mapfile: mapfile is bash 4+, and the dev machines here run
+          # bash 3.2, so a mapfile version could not be run locally before shipping.
+          # -0/-z keeps paths with spaces intact; -r skips the run on an empty list.
+          git ls-files -z 'custom_addons/**/*.py' 'custom_addons/**/*.xml' \
+            | xargs -0 -r python3 scripts/ci/architecture_guard.py --files
+
   # Only runs when explicitly asked to simulate, so the alerting path is
   # testable on demand without ever red-flagging a healthy develop.
   simulate:
@@ -48,7 +69,7 @@ jobs:
           exit 1
 
   report:
-    needs: [verify, simulate]
+    needs: [verify, simulate, guard]
     # always() so this evaluates even though one of the two jobs above is always
     # skipped; then act only if something actually failed.
     if: ${{ always() && contains(needs.*.result, 'failure') }}
