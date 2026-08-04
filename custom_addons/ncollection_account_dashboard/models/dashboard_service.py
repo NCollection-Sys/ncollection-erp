@@ -163,9 +163,13 @@ class AccountDashboardService(models.AbstractModel):
             })
         return stages
 
-    def _top_customers(self, limit=_TOP_CUSTOMERS):
+    def _top_customers(self, date_from, date_to, limit=_TOP_CUSTOMERS):
         """Highest-billing customers on confirmed orders IN THE REPORTING
         PERIOD. ``None`` without Sales.
+
+        The window is passed IN, not re-derived here, so it is the same object
+        the caller puts in ``meta.period`` — equal by construction, not by two
+        independent calls to ``context_today()`` agreeing.
 
         ``state = 'sale'`` counts confirmed business only — quotations are not
         revenue, and including them would flatter the panel. Odoo 19's
@@ -182,13 +186,12 @@ class AccountDashboardService(models.AbstractModel):
         during the final day. Same shape as ``dashboard_data.py:232`` and
         ``kpi.py:217``.
         """
-        report = self._service(_SUMMARY)
         result = self._cross_domain({
             'key': 'top_customers',
             'model': 'sale.order',
             'domain': [('state', '=', 'sale'),
-                       ('date_order', '>=', report.date_from),
-                       ('date_order', '<', report.date_to + relativedelta(days=1))],
+                       ('date_order', '>=', date_from),
+                       ('date_order', '<', date_to + relativedelta(days=1))],
             'groupby': ['partner_id'],
             'aggregates': ['amount_total:sum'],
             'order': 'amount_total:sum desc',
@@ -307,6 +310,17 @@ class AccountDashboardService(models.AbstractModel):
             ],
         }]
 
+        # Resolve the reporting window ONCE and thread it into both the
+        # leaderboard's date bound and the meta the client displays. Letting
+        # each re-derive it from context_today() would make them equal only by
+        # convention — same wall-clock request, same answer — and a request
+        # landing on a local-midnight boundary would then bound the leaderboard
+        # to a different day than the period shown beside it. That is the exact
+        # mis-attribution this panel's date bound exists to prevent, so it is
+        # worth making structural rather than incidental.
+        summary = self._service(_SUMMARY)
+        period_from, period_to = summary.date_from, summary.date_to
+
         panels = []
         pipeline = self._pipeline_funnel()
         if pipeline is not None:
@@ -319,7 +333,7 @@ class AccountDashboardService(models.AbstractModel):
                 # the client never has to know which model backs a panel.
                 'drilldown': {'model': 'crm.lead', 'field': 'stage_id'},
             })
-        customers = self._top_customers()
+        customers = self._top_customers(period_from, period_to)
         if customers is not None:
             panels.append({
                 'key': 'top_customers',
@@ -330,7 +344,7 @@ class AccountDashboardService(models.AbstractModel):
             })
 
         return {'kpis': kpis, 'charts': charts, 'panels': panels,
-                'meta': self._meta()}
+                'meta': self._meta(period_from, period_to)}
 
     @api.model
     def get_cash_dashboard(self):

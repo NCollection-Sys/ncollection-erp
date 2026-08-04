@@ -10,6 +10,7 @@ Inherits AccountTestInvoicingCommon (same base as the sibling
 test_executive_reports) so a full chart of accounts + company are provisioned on
 a clean CI database — never a manual account search that can come up empty.
 """
+import inspect
 from unittest.mock import patch
 
 from dateutil.relativedelta import relativedelta
@@ -226,6 +227,32 @@ class TestDashboardService(AccountTestInvoicingCommon):
         self.assertEqual(bounds['<'], period['to'] + relativedelta(days=1))
 
         # The funnel, by contrast, is current-state and must NOT be bounded.
-        funnel_fields = [t[0] for t in seen['pipeline']['domain']]
-        self.assertNotIn('create_date', funnel_fields)
-        self.assertNotIn('date_deadline', funnel_fields)
+        # Naming two specific fields would let a future `write_date` bound slip
+        # through while the test still claimed the funnel was unbounded, so this
+        # rejects ANY date term rather than an enumerated pair.
+        dated = [t[0] for t in seen['pipeline']['domain'] if 'date' in t[0]]
+        self.assertFalse(
+            dated,
+            "the funnel is a current-state view by design; a date bound would "
+            "hide live deals opened before the window. Found: %s" % dated)
+
+    def test_top_customers_cannot_derive_its_own_period(self):
+        """The window must be PASSED IN, never re-derived inside the helper.
+
+        Asserting the two dates merely have equal VALUES would still pass if the
+        helper called context_today() itself, because within one request both
+        derivations agree. This pins the structure instead: the helper has no
+        default window, so it cannot silently drift from the meta.period shown
+        next to it — the caller resolves the period once and threads it.
+
+        Checks the SIGNATURE rather than catching a TypeError from calling it
+        with no arguments. That weaker version passed even after defaults were
+        added, because `None + relativedelta(days=1)` raises TypeError too — it
+        proved only that *something* blew up, not that the window is required.
+        """
+        params = inspect.signature(type(self.service)._top_customers).parameters
+        for name in ('date_from', 'date_to'):
+            self.assertIs(
+                params[name].default, inspect.Parameter.empty,
+                "%s must stay REQUIRED; a default lets the helper re-derive a "
+                "window that can differ from the one in meta.period" % name)
