@@ -29,8 +29,11 @@ this file's.
 """
 
 from odoo.tests import TransactionCase, tagged
+from odoo.tools import mute_logger
 
 from ..models.anomaly import detectors as det
+
+_DETECTOR_LOGGER = 'odoo.addons.ncollection_core.models.anomaly.detectors'
 
 # ---------------------------------------------------------------------------
 # The labelled test set
@@ -319,6 +322,15 @@ class TestAnomalyAcceptance(TransactionCase):
                 "%s must produce nothing when its model is unavailable"
                 % detector_key)
 
+    # The detector's own logger is muted for the two tests below. They exist to
+    # prove the code survives an exception, so `_logger.exception` firing is the
+    # CORRECT behaviour — but it writes a traceback into odoo-test.log, and CI
+    # fails the whole run on any traceback there ("Odoo can exit 0 on some test
+    # failures"). That rule is right; deliberately-provoked failures are the
+    # exception it needs, which is what mute_logger is for. Muting the specific
+    # logger, not the level, so an UNEXPECTED traceback from anywhere else still
+    # trips CI.
+    @mute_logger(_DETECTOR_LOGGER)
     def test_a_failing_detector_cannot_sink_the_others(self):
         """ONE detector raising must not cost the others.
 
@@ -356,6 +368,7 @@ class TestAnomalyAcceptance(TransactionCase):
                    lambda cron_self, processed=0, remaining=None, deactivate=False: 60.0)
         self.assertTrue(self.Alert._cron_detect_anomalies())
 
+    @mute_logger(_DETECTOR_LOGGER)
     def test_cron_stops_when_its_time_budget_runs_out(self):
         """The batching must actually stop, or it is decoration.
 
