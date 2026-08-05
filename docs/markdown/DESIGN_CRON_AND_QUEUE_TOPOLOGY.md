@@ -109,17 +109,30 @@ def _cron_refresh_ecb_rate(self):
         channel=_OUTBOUND_CHANNEL,          # 'root.outbound'
         description="Refresh ECB exchange rate",
         identity_key='nc-ecb-refresh',
-    ).refresh_ecb_rate()
+    )._refresh_ecb_rate()
 ```
 
 Two properties are load-bearing and easy to break later:
 
-- **`refresh_ecb_rate` is PUBLIC and must stay so.** `queue_job` persists the method *name*, so
-  renaming it breaks any job already enqueued at the time of deploy. `backup.py` documents the
-  same constraint for the same reason.
+- **`_refresh_ecb_rate` is PRIVATE, and that is a security property, not a style choice.**
+  An earlier revision of this branch made it public and justified it with "queue_job persists the
+  method name, so it must stay public." That conflated two different things and the security
+  review caught it. Renaming *is* constrained — queue_job stores the method NAME and replays it
+  with `getattr`, so a rename once jobs exist in the wild breaks anything already enqueued — but
+  nothing about queue_job requires a *public* name: it never routes through Odoo's RPC gate
+  (verified in `queue_job/job.py`, which has no public-name check anywhere).
+  Public, however, meant RPC-reachable, because `odoo/service/model.py::get_public_method`
+  refuses only names starting with `_`. And the fetch is the method's **first statement** — it
+  runs before any ORM call that would trigger an `ir.model.access` check. So any authenticated
+  user on the admin DB, not just `base.group_system`, could have held one of the platform's 1–2
+  HTTP workers open for the full `_RPC_DEADLINE` plus an idle gap, with none of the
+  `identity_key` dedup or `root.outbound` capacity that apply only to *enqueued* work — #310's
+  own bug, on a different thread pool. `backup.restore_to` is public for a reason that does not
+  apply here: a wizard calls it, which is why its guard lives inside the method.
 - **`identity_key` is not decoration.** Without it, a runner backlog would stack a day's worth
   of identical fetches against the same host — turning our own retry behaviour into the thing
-  the external host sees as abuse.
+  the external host sees as abuse. It collapses a *backlog*; it is not a concurrency lock
+  (`job_record_with_same_identity_key` matches pending/enqueued, not `started`).
 
 ## 5. How this is verified
 
@@ -142,7 +155,7 @@ gap between the **two crons starting**, taken from the harness Odoo's own log:
 
 | Arm | `ir.cron` code | Models | Measured reconcile delay |
 |---|---|---|---|
-| **A** "inline" | `model.refresh_ecb_rate()` | the pre-#310 cron, exactly | **30 s — STARVED** |
+| **A** "inline" | `model._refresh_ecb_rate()` | the pre-#310 cron, exactly | **30 s — STARVED** |
 | **B** "queued" | `model._cron_refresh_ecb_rate()` | the shipped cron, with a real stalled fetch in flight | **0 s — same tick** |
 
 The 30 s recovered is exactly the stall duration: under the old shape the reconcile waited out
@@ -191,6 +204,16 @@ own network. It does not need the dev stack and cannot disturb it.
 
 ## 6. What this does *not* cover
 
+- **The harness does not exercise the real `queue_job` jobrunner** — its largest simplification,
+  named here so nobody reads more into a green run than it earns. `cron-stall-odoo` runs
+  `--no-http` and never passes `--load=...,queue_job`, so no runner thread exists; production's
+  `provisioning-runner` needs both, because the runner dispatches execution via an HTTP callback
+  to itself. Arm B's concurrent stall is therefore a deliberate stand-in process calling the
+  fetch directly, not an enqueue→dispatch→execute round trip. What the harness proves is exactly
+  what #310 claims: the **cron thread** is free while an outbound fetch is stalled. What it does
+  **not** prove is that `root.outbound:1` capacity is enforced at runtime, or that the runner
+  dispatches this job correctly — those rest on the OCA source read in §3.3 and on production
+  observation. A test for channel-capacity enforcement would be a different harness.
 - **The queue runner's own starvation is out of scope.** `root.outbound:1` means a second
   outbound job waits for the first. That is intended, and with one daily fetch it is not a
   queue. A second outbound feature should revisit the capacity, not inherit it silently.

@@ -28,11 +28,13 @@
 #  or if the harness measured the wrong thing. So both shapes go through
 #  identical machinery and are REQUIRED TO DISAGREE:
 #
-#    arm A  "inline"  ir.cron code = model.refresh_ecb_rate()
+#    arm A  "inline"  ir.cron code = model._refresh_ecb_rate()
 #                     Exactly what _cron_refresh_ecb_rate did BEFORE #310 —
 #                     fetch, parse and store on the cron thread. Not an
-#                     approximation: #310 kept that body intact and public and
-#                     only added the enqueue in front of it.
+#                     approximation: #310 kept that body byte-for-byte and only
+#                     added the enqueue in front of it. (An ir.cron `code` field
+#                     may call a private method — the shipped cron already calls
+#                     _cron_refresh_ecb_rate the same way.)
 #                     EXPECTED: reconcile STARVED (delayed ~30s).
 #
 #    arm B  "queued"  ir.cron code = model._cron_refresh_ecb_rate()
@@ -257,7 +259,7 @@ PY
 # ---------------------------------------------------------------------------
 #  Arm B's cron only ENQUEUES, so without this nothing would actually be
 #  stalled and the arm would prove much less than the issue asks. This performs
-#  the same refresh_ecb_rate() the runner would, in its own process, against
+#  the same _refresh_ecb_rate() the runner would, in its own process, against
 #  the stall host. It logs a line before blocking so the caller can wait for
 #  the stall to have STARTED rather than guess with a sleep.
 # ---------------------------------------------------------------------------
@@ -266,7 +268,7 @@ start_inflight_fetch(){
     odoo shell -d "$HARNESS_DB" --no-http --log-level=error "${DBARGS[@]}" \
     >"$WORK/inflight.log" 2>&1 <<'PY' &
 print('INFLIGHT-FETCH-STARTING', flush=True)
-env['ncollection.exchange.rate'].refresh_ecb_rate()
+env['ncollection.exchange.rate']._refresh_ecb_rate()
 PY
   local waited=0
   while [ "$waited" -lt 90 ]; do
@@ -275,6 +277,32 @@ PY
   done
   echo "REFUSING: the stand-in runner never reached the fetch, so nothing was" >&2
   echo "  in flight — arm B would not be testing the issue's condition." >&2
+  exit 1
+}
+
+# ---------------------------------------------------------------------------
+#  arm_died_or_die <container> <logfile> <phase>
+# ---------------------------------------------------------------------------
+#  Fail FAST and loud if an arm's Odoo is gone. Without this, a container that
+#  never started (name collision, missing image, no disk) looks exactly like a
+#  #310 regression — both just produce "the reconcile cron never ran" two full
+#  SERVER_TTL budgets later. A setup failure and a real regression must not be
+#  indistinguishable; that is R-005's lesson in reverse.
+#
+#  `kill -0 $runpid` is deliberately NOT used: bash leaves an exited background
+#  child as a zombie until it is waited on, and the PID still answers, so it
+#  would never fire. Docker's own view of the container is authoritative.
+#  Absence of the container is inconclusive (compose may still be creating it),
+#  so only an existing-but-stopped container counts.
+# ---------------------------------------------------------------------------
+arm_died_or_die(){
+  local cname="$1" logf="$2" phase="$3"
+  docker inspect "$cname" >/dev/null 2>&1 || return 0
+  [ "$(docker inspect -f '{{.State.Running}}' "$cname" 2>/dev/null)" = "false" ] || return 0
+  echo "REFUSING: the harness Odoo exited $phase — no measurement was made." >&2
+  echo "  Either the container failed to start, or it hit its ${SERVER_TTL}s" >&2
+  echo "  ceiling. This is a SETUP failure, not a #310 regression." >&2
+  tail -25 "$logf" >&2
   exit 1
 }
 
@@ -299,6 +327,7 @@ run_arm(){
   local waited=0
   while [ "$waited" -lt "$SERVER_TTL" ]; do
     if grep -q "Modules loaded" "$logf" 2>/dev/null; then break; fi
+    arm_died_or_die "$cname" "$logf" "while starting up"
     sleep 1; waited=$((waited + 1))
   done
 
@@ -320,6 +349,7 @@ run_arm(){
   waited=0
   while [ "$waited" -lt "$SERVER_TTL" ]; do
     if grep -q "reconcile tenant workspace configs.* starting" "$logf" 2>/dev/null; then break; fi
+    arm_died_or_die "$cname" "$logf" "before the reconcile cron ran"
     sleep 1; waited=$((waited + 1))
   done
 
@@ -334,7 +364,7 @@ run_arm(){
 # --- arm A: the pre-#310 shape ----------------------------------------------
 echo "== arm A — INLINE fetch on the cron thread (the pre-#310 shape) =="
 echo "   expecting the reconcile to be STARVED (>= ${MIN_STARVATION}s)"
-delay_a="$(run_arm inline "$C_INLINE" 'model.refresh_ecb_rate()' no)"
+delay_a="$(run_arm inline "$C_INLINE" 'model._refresh_ecb_rate()' no)"
 echo "   reconcile started ${delay_a}s after the ECB cron started"
 if [ "$delay_a" -lt 0 ]; then
   no "arm A: the reconcile cron never ran at all within ${SERVER_TTL}s"
@@ -374,7 +404,13 @@ hr
 if [ "$delay_a" -ge 0 ] && [ "$delay_b" -ge 0 ]; then
   gap=$((delay_a - delay_b))
   echo "== arm A ${delay_a}s vs arm B ${delay_b}s — #310 removes ${gap}s of starvation =="
-  if [ "$gap" -ge "$MIN_STARVATION" ]; then
+  # Gated on BOTH arms having individually passed. A wide gap on its own is not
+  # good news: arm A 50s / arm B 15s also gives gap=35, and printing a ✅ next
+  # to arm B's own ❌ reads as "mostly fine" during triage. It is not — arm B
+  # being late at all means outbound work is still on the cron thread.
+  if [ "$delay_a" -lt "$MIN_STARVATION" ] || [ "$delay_b" -gt "$MAX_ONTIME" ]; then
+    echo "  (gap not scored — an arm above already failed its own threshold)"
+  elif [ "$gap" -ge "$MIN_STARVATION" ]; then
     ok "moving the fetch off the cron thread recovered ${gap}s of cron latency"
   else
     no "the two arms differ by only ${gap}s — the fix is not doing what it claims"

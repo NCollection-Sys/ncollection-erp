@@ -22,7 +22,16 @@
     # match their ACLs. `-u` is what applies it: convert.py only writes
     # group_ids when the groups= attribute is PRESENT, so adding one does
     # upgrade cleanly (removing one would not — the old value would survive).
-    'version': '19.0.6.7.1',
+    # Patch bump: #310 makes _cron_refresh_ecb_rate ENQUEUE the outbound fetch
+    # onto a dedicated root.outbound channel instead of performing it on the
+    # cron thread, and moves the fetch body into a PRIVATE _refresh_ecb_rate.
+    # Private matters: the fetch is the method's first statement, so a public
+    # name would let any authenticated admin-DB user hold an HTTP worker open
+    # for the full deadline via RPC, before any ACL check is reached.
+    # Pure Python, no schema change — a restart is enough and `-u` is not
+    # required — but it is a real behaviour change on the platform's only
+    # outbound call, so it gets traceability like #275's and #243's.
+    'version': '19.0.6.7.2',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

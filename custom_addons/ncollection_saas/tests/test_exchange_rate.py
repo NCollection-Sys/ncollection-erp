@@ -282,18 +282,18 @@ class TestEcbFailIntact(TransactionCase):
     def test_failed_fetch_keeps_the_previous_rate(self):
         old = self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.10})
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: None)
-        self.assertFalse(self.Rate.refresh_ecb_rate())
+        self.assertFalse(self.Rate._refresh_ecb_rate())
         self.assertEqual(self.Rate._latest(), old, "previous rate was disturbed")
         self.assertEqual(len(self.Rate.search([])), 1, "a placeholder row appeared")
 
     def test_unparseable_response_writes_nothing(self):
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: '<not xml')
-        self.assertFalse(self.Rate.refresh_ecb_rate())
+        self.assertFalse(self.Rate._refresh_ecb_rate())
         self.assertFalse(self.Rate.search([]))
 
     def test_success_records_the_feeds_own_date(self):
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
-        rec = self.Rate.refresh_ecb_rate()
+        rec = self.Rate._refresh_ecb_rate()
         self.assertEqual(str(rec.name), '2026-08-03')
         self.assertAlmostEqual(rec.usd_per_eur, 1.1535, places=6)
 
@@ -303,19 +303,19 @@ class TestEcbFailIntact(TransactionCase):
         self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.15})
         self.patch(type(self.Rate), '_fetch_ecb_document',
                    lambda s: _DOC.replace("rate='1.1535'", "rate='9.99'"))
-        self.assertFalse(self.Rate.refresh_ecb_rate())
+        self.assertFalse(self.Rate._refresh_ecb_rate())
         self.assertAlmostEqual(self.Rate._latest().usd_per_eur, 1.15, places=6)
 
     def test_a_normal_daily_move_is_accepted(self):
         """The cap must not refuse an ordinary day, or the feed freezes."""
         self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.14})
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
-        self.assertTrue(self.Rate.refresh_ecb_rate())
+        self.assertTrue(self.Rate._refresh_ecb_rate())
 
     def test_same_publication_date_does_not_churn(self):
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
-        first = self.Rate.refresh_ecb_rate()
-        second = self.Rate.refresh_ecb_rate()
+        first = self.Rate._refresh_ecb_rate()
+        second = self.Rate._refresh_ecb_rate()
         self.assertEqual(first, second)
         self.assertEqual(len(self.Rate.search([])), 1)
 

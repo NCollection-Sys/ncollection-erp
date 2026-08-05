@@ -313,18 +313,42 @@ class NcExchangeRate(models.Model):
         self.with_delay(
             channel=_OUTBOUND_CHANNEL,
             description="Refresh ECB exchange rate",
-            # One pending refresh at a time. Without this a runner backlog could
+            # One PENDING refresh at a time. Without this a runner backlog could
             # stack a day's worth of identical fetches against the same host.
+            #
+            # Precisely: job_record_with_same_identity_key() matches only
+            # wait_dependencies / pending / enqueued, NOT started — so this does
+            # not prevent a second enqueue while an earlier fetch is mid-stall.
+            # Unreachable in practice (the cron is daily and the fetch is
+            # bounded by _RPC_DEADLINE), but do not read this as a concurrency
+            # lock; it is backlog collapsing, not mutual exclusion.
             identity_key='nc-ecb-refresh',
-        ).refresh_ecb_rate()
+        )._refresh_ecb_rate()
 
     @api.model
-    def refresh_ecb_rate(self):
+    def _refresh_ecb_rate(self):
         """Fetch once and record the snapshot. Safe to run repeatedly.
 
-        PUBLIC and must stay so: queue_job persists the method NAME, so a
-        rename would break any job already enqueued (same constraint the backup
-        model documents).
+        PRIVATE on purpose, and the name must not change casually.
+
+        *Private*, because nothing but the queue runner calls it. queue_job
+        resolves a stored job with a plain ``getattr(recordset, method_name)``
+        (``queue_job/job.py``) and has no public-name requirement — verified,
+        not assumed. Odoo's RPC layer, by contrast, refuses any method starting
+        with ``_`` (``odoo/service/model.py::get_public_method``). A public name
+        would therefore have bought nothing and cost a real exposure: the fetch
+        below is the FIRST statement, so it runs before any ORM call that would
+        trigger an ``ir.model.access`` check. Any authenticated user on the
+        admin database could have held an HTTP worker — of which the platform
+        runs 1 or 2 — open for the full ``_RPC_DEADLINE`` plus an idle gap, with
+        none of the ``identity_key`` dedup or ``root.outbound`` capacity that
+        only apply to *enqueued* work. That is #310's own bug on a different
+        thread pool. (``backup.restore_to`` is public for a reason that does not
+        apply here: a wizard calls it, so its guard lives inside the method.)
+
+        *Name-stable*, because queue_job persists the method NAME: renaming it
+        once jobs exist in the wild breaks anything already enqueued at deploy
+        time. Renaming it now is safe only because this has never shipped.
 
         Returns the stored/existing record, or an empty recordset when nothing
         could be fetched — in which case the previous snapshot stands and the

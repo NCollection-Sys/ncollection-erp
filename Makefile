@@ -32,6 +32,11 @@ COMPOSE       ?= docker compose $(COMPOSE_FILES)
 # NOT affect `make up`.
 ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml
 
+# Opt-in cron-starvation harness stack (#310): base + the cronstall overlay. Its
+# services are entirely self-contained (own Postgres, own network, own volumes),
+# so this does NOT affect `make up` and the harness cannot disturb the dev stack.
+CRONSTALL_COMPOSE ?= docker compose -f docker-compose.yml -f docker-compose.cronstall.yml
+
 # OCA addon repos (P1-T04): ./oca/ is GENERATED from the pins in repos.yml —
 # run `make oca` after a fresh clone or whenever repos.yml changes.
 OCA_VENV := .oca-venv
@@ -193,11 +198,21 @@ cron-starvation-verify: ## Run the #310 proof (a stalled outbound fetch must not
 # NOT a `drop_database` call: this suite's fixture does NOT live on the shared
 # db. It has its own Postgres (docker-compose.cronstall.yml) precisely so no
 # other Odoo can run its crons — see DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §5.1.
-# Removing the volume is what resets it.
+# Removing the volumes is what resets it.
+#
+# The project name is DERIVED from compose, never hardcoded: a non-default
+# COMPOSE_PROJECT_NAME renames every volume, and a hardcoded `ncollection-erp_*`
+# would silently clean nothing (Rule 11 / R-006). `docker volume rm -f` already
+# ignores a missing volume, so no `|| true` is needed — and none is wanted: if a
+# volume is still in use, that must fail loudly rather than print success over a
+# stale fixture (Rule 10 / R-005).
 cron-starvation-clean: ## Remove the CRON-STARVATION harness stack + its private volumes (destructive)
-	@docker compose -f docker-compose.yml -f docker-compose.cronstall.yml \
-		rm -sf cron-stall-host cron-stall-db >/dev/null 2>&1 || true
-	@docker volume rm -f ncollection-erp_cronstall_pgdata ncollection-erp_cronstall_data >/dev/null 2>&1 || true
+	@$(CRONSTALL_COMPOSE) rm -sf cron-stall-host cron-stall-db cron-stall-odoo >/dev/null
+	@proj=$$($(CRONSTALL_COMPOSE) config --format json \
+		| python3 -c "import json,sys; print(json.load(sys.stdin)['name'])"); \
+	for v in cronstall_pgdata cronstall_data; do \
+		docker volume rm -f "$${proj}_$${v}" >/dev/null; \
+	done
 	@echo "✅ cron-starvation harness stack + volumes removed."
 
 e2e-verify: ## Set up the e2e tenants and run the Playwright suite
