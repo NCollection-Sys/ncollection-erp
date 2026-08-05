@@ -41,13 +41,22 @@
          by account ACLs and the cross-domain panels by the P4-T01 engine's
          Ring 2 licensing, per model.
 
-         What is NOT mirrored, stated plainly rather than implied: this menu's
-         CEO/Owner narrowing is Ring 1 only. `get_ceo_dashboard` carries no
-         role check of its own, so an accountant who calls it directly gets a
-         payload. That exposes NO data they cannot already see — the same KPIs
-         are on their own Finance/Accountant dashboards, and the panels stay
-         Ring-2 gated regardless — so it is role curation, not a leak. Whether
-         to add the RPC-level check is #333. -->
+         NOW MIRRORED AT THE RPC (#333). This menu's CEO/Owner narrowing used
+         to be Ring 1 only: `get_ceo_dashboard` carried no role check, so an
+         accountant who never saw the menu could call it directly and get a
+         payload. #333 ruled that Standing Rule 4 applies literally — a UI
+         restriction must be mirrored at the ORM/RPC layer, because
+         /web/dataset/call_kw never consults a menu — and the method now
+         raises AccessError for callers outside CEO/Owner/system.
+
+         Worth recording what the gap WAS, so the fix is not remembered as
+         bigger than it was: no data leaked. The same KPIs sit on the
+         accountant's own Finance/Accountant dashboards, read under their own
+         rights with no sudo, and the panels stay Ring-2 gated by the P4-T01
+         engine whoever calls. It was curation missing its mirror.
+
+         The sales/HR/warehouse menus narrow the same way and their methods
+         are still Ring 1 only — a deliberate follow-up, not an oversight. -->
     <menuitem id="menu_ceo_dashboard"
               name="CEO"
               parent="menu_account_dashboard_root"
@@ -62,8 +71,10 @@
          Mirrored at the data layer like the CEO dashboard: the ncollection.kpi /
          P4-T01 engine reads run under the user's own rights with no sudo, so a
          cross-role RPC call returns None (empty), never another role's data.
-         (The RPC-level role check, as for the CEO dashboard, is deferred to
-         #333 — menu gating is Ring 1 curation.) -->
+         (These three are still Ring 1 only. #333 added the RPC-level check to
+         the CEO dashboard and ruled that Rule 4 applies literally; the same
+         mirror is owed here and is a filed follow-up, not a decision still
+         open.) -->
     <menuitem id="menu_department_dashboard_root"
               name="Department Dashboards"
               groups="ncollection_core.group_role_sales,ncollection_core.group_role_hr,ncollection_core.group_role_warehouse"
