@@ -89,18 +89,46 @@ ATTRS_RE = re.compile(r"\battrs\s*=")
 # whichever opens first consumes the other, and neither can start inside the
 # other. Two sequential passes would reintroduce exactly that bug.
 #
-# Given that, a comment open cannot be faked from live markup: `<` is illegal
-# raw inside an attribute value in well-formed XML, so any `<!--` outside CDATA
-# is a real comment. A stray `-->` in an attribute IS legal, but the non-greedy
-# match ends at the first `-->` after a genuine open, so it cannot pull live
-# markup in.
-XML_INERT_RE = re.compile(r"<!--.*?-->|<!\[CDATA\[.*?\]\]>", re.DOTALL)
+# PROCESSING INSTRUCTIONS are the third member of the set, for the identical
+# reason. A PI's content runs to the first `?>` and is otherwise unconstrained,
+# so `<?example note <!-- ?>` is well-formed XML containing a literal `<!--`
+# that no parser reads as a comment. Same hole as CDATA, same fix. (The XML
+# declaration `<?xml ... ?>` is a PI too and gets blanked; it carries no view
+# markup, so nothing is lost.)
+#
+# The general rule is now visible: `<` opens something inert whenever the next
+# character is `!` or `?`. Anything added to XML with that shape belongs in
+# this alternation. What CANNOT be faked from live markup is an inert OPEN,
+# because a raw `<` is illegal inside an attribute value in well-formed XML —
+# that is the guarantee the whole approach rests on, and it survives here. A
+# stray `-->` in an attribute IS legal, but the non-greedy match ends at the
+# first close after a genuine open, so it cannot pull live markup in.
+XML_INERT_RE = re.compile(
+    r"<!--.*?-->|<!\[CDATA\[.*?\]\]>|<\?.*?\?>", re.DOTALL)
 
 
 def without_inert_xml_text(text: str) -> str:
-    """Blank comment and CDATA bodies, preserving line count and numbering."""
-    return XML_INERT_RE.sub(
-        lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
+    """Blank inert-XML bodies, preserving line count and numbering."""
+    return XML_INERT_RE.sub(_blank_but_keep_line_breaks, text)
+
+
+def _blank_but_keep_line_breaks(match: "re.Match[str]") -> str:
+    """Space-fill a matched span, leaving its line breaks in place.
+
+    Line breaks are found with `splitlines` — the SAME function that assigns
+    the line numbers in the findings — rather than by listing separators here.
+    A hand-written list would drift: `str.splitlines` breaks on `\\r`, `\\v`,
+    `\\f`, `\\x1c`-`\\x1e`, `\\x85`, `\\u2028` and `\\u2029` as well as `\\n`, and
+    an earlier version blanked everything but `\\n`, so a bare-CR file
+    collapsed each comment to one line and misreported every finding below it
+    by the difference. Deriving from the numbering function makes the two
+    incapable of disagreeing.
+    """
+    out = []
+    for line in match.group(0).splitlines(keepends=True):
+        content = line.splitlines()[0]          # the line minus its break
+        out.append(" " * len(content) + line[len(content):])
+    return "".join(out)
 
 
 # ---------------------------------------------------------------------------
@@ -192,7 +220,14 @@ def check_view_syntax(path: Path, text: str, findings: list[str]) -> None:
 
 
 def check_menu_license_gate(path: Path, text: str, changed_paths: set[Path], findings: list[str]) -> None:
-    if path.suffix != ".xml" or not LICENSE_MENU_HINT_RE.search(text):
+    # Inert text blanked here too (#348). Rule 2 is about a menu that IS
+    # license-gated; a comment EXPLAINING license gating is not a menu, and
+    # tripping on one is the same defect this ticket fixes for Rule 6 — found
+    # in the same file by the review of that fix. Rules 3 and 4 are untouched:
+    # Rule 3 only reads `.py`, and for Rule 4 a commented-out credential is
+    # still a credential in the repository (see check_secrets).
+    if path.suffix != ".xml" or not LICENSE_MENU_HINT_RE.search(
+            without_inert_xml_text(text)):
         return
     addon = addon_of(path)
     if addon is None:

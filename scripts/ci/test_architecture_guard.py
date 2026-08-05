@@ -26,6 +26,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import architecture_guard as guard  # noqa: E402
 
 
+def _addon_path() -> Path:
+    """An ABSOLUTE path under the real custom_addons/.
+
+    `addon_of()` resolves against `guard.REPO_ROOT`, so a relative fixture
+    path resolves against the process CWD instead and returns None — which
+    makes check_menu_license_gate early-return. The Rule-2 tests below first
+    used a relative path, and the negative one passed VACUOUSLY: it asserted
+    "no findings" against a checker that never ran. Caught by running the
+    suite from another directory, where the POSITIVE test failed too.
+    """
+    return guard.REPO_ROOT / "custom_addons/ncollection_core/views/_fixture.xml"
+
+
 def view_findings(text: str, name: str = "views/thing.xml") -> list[str]:
     findings: list[str] = []
     guard.check_view_syntax(Path(name), text, findings)
@@ -166,8 +179,92 @@ class TestCdataIsCharacterData(unittest.TestCase):
         self.assertIn(":4:", findings[0])
 
 
+class TestProcessingInstructions(unittest.TestCase):
+    """The third inert construct, and the third instance of one hole.
+
+    A PI's content runs to the first `?>` and is otherwise unconstrained, so a
+    literal `<!--` inside one is well-formed XML that no parser reads as a
+    comment. Found by the code-reviewer, on the commit that had just fixed the
+    identical hole for CDATA.
+    """
+
+    def test_a_comment_open_inside_a_pi_cannot_swallow_live_markup(self):
+        """THE CRITICAL, pinned. This input is well-formed XML — xmllint and
+        minidom both accept it — so no well-formedness gate would ever catch
+        it, and the guard reported nothing at all for a real `<tree>`."""
+        findings = view_findings(
+            '<odoo>\n'
+            '  <?example note <!-- looks like a comment open ?>\n'
+            '  <tree string="real"/>\n'
+            '  <!-- unrelated later real comment -->\n'
+            '</odoo>')
+        self.assertEqual(len(findings), 1,
+                         "a real <tree> after a PI must still be reported")
+        self.assertIn(":3:", findings[0])
+
+    def test_a_tree_inside_a_pi_is_not_markup(self):
+        self.assertEqual(view_findings('<?php echo "<tree/>"; ?>'), [])
+
+    def test_the_xml_declaration_is_harmless_to_blank(self):
+        findings = view_findings('<?xml version="1.0"?>\n<tree/>')
+        self.assertEqual(len(findings), 1)
+        self.assertIn(":2:", findings[0])
+
+
+class TestLineBreakPreservation(unittest.TestCase):
+    """`splitlines` decides the line numbers, so it must decide the blanking.
+
+    Blanking every character except `\\n` looks obviously right and is not:
+    `str.splitlines` also breaks on `\\r`, `\\v`, `\\f`, `\\x1c`-`\\x1e`, `\\x85`,
+    `\\u2028` and `\\u2029`. Any of those inside a comment collapsed the whole
+    comment to one line and misreported every finding below it.
+    """
+
+    def test_every_separator_splitlines_honours_is_preserved(self):
+        for sep in ('\n', '\r\n', '\r', '\v', '\f', '\x1c', '\x1d', '\x1e',
+                    '\x85', ' ', ' '):
+            with self.subTest(sep=repr(sep)):
+                text = '<odoo>%s<!--%sa%sb%s-->%s<tree/>' % ((sep,) * 5)
+                findings = view_findings(text)
+                self.assertEqual(len(findings), 1)
+                self.assertIn(
+                    ":%d:" % len(text.splitlines()), findings[0],
+                    "the finding must land on the line splitlines() agrees is "
+                    "the last one")
+
+    def test_blanking_never_changes_the_line_count(self):
+        for sep in ('\n', '\r\n', '\r', ' '):
+            with self.subTest(sep=repr(sep)):
+                text = '<a>%s<!--%sx%sy%s-->%s</a>' % ((sep,) * 5)
+                self.assertEqual(
+                    len(guard.without_inert_xml_text(text).splitlines()),
+                    len(text.splitlines()))
+
+
 class TestScopeOfTheExemption(unittest.TestCase):
     """Comments are exempt from SYNTAX rules only. Not from everything."""
+
+    def test_rule_2_does_not_trip_on_a_comment_about_license_gating(self):
+        """Same defect as the one this ticket fixes for Rule 6, in a sibling
+        check. A comment EXPLAINING license gating is not a license-gated
+        menu. This is a false positive rather than a hole, which is why it
+        ranks below the PI case -- but it is the ticket's own premise."""
+        text = ('<odoo>\n'
+                '  <!-- Menus here use groups="module.license_pro"; the ORM\n'
+                '       side is mirrored in models/access.py (Rule 4). -->\n'
+                '  <menuitem id="m" name="Plain"/>\n'
+                '</odoo>')
+        findings: list[str] = []
+        guard.check_menu_license_gate(_addon_path(), text, set(), findings)
+        self.assertEqual(findings, [],
+                         "a comment about license gating is not a gated menu")
+
+    def test_rule_2_still_fires_on_a_real_license_gated_menu(self):
+        """The half that matters: the exemption must not disarm the rule."""
+        text = '<menuitem id="m" groups="module.license_pro"/>'
+        findings: list[str] = []
+        guard.check_menu_license_gate(_addon_path(), text, set(), findings)
+        self.assertEqual(len(findings), 1)
 
     def test_a_commented_out_secret_is_still_a_secret(self):
         """THE DELIBERATE ASYMMETRY. Commenting out a credential does not
