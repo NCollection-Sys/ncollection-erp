@@ -68,6 +68,9 @@ else
   report "shellcheck" "skipped (not installed)"; skipped=1
 fi
 
+# The guard's own tests run FIRST: a scan that reports "clean" while its
+# rules are broken is worse than no scan. ~0.02s, stdlib only (#330).
+run_gate "invariants-tests"  python3 scripts/ci/test_invariants.py
 run_gate "invariants"        python3 scripts/ci/invariants.py
 run_gate "architecture-guard" python3 scripts/ci/architecture_guard.py --base origin/develop
 

@@ -59,6 +59,12 @@ jobs:
       # Infrastructure invariants — companion to architecture-guard (which covers
       # the addon surface). Each rule encodes a bug we actually diagnosed; see
       # scripts/ci/invariants.py for the provenance of each one.
+      # Before the guard itself: if its own rules are broken, a "clean" scan
+      # means nothing. Pure stdlib unittest on temp dirs — no Docker, no DB,
+      # ~0.02s (#330).
+      - name: Test the invariants guard
+        run: python scripts/ci/test_invariants.py
+
       - name: Run invariants guard
         run: python scripts/ci/invariants.py
 
