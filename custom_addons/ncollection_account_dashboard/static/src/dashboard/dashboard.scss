@@ -116,7 +116,10 @@
         background: none;
         border: 0;
         padding: 0;
-        text-align: left;
+        // `start`, not `left` — this product ships Arabic, and a physical
+        // direction pins the label to the wrong edge under RTL. Enforced by
+        // ncollection_branding's RTL conformance test (UI_UX §23 / P3-T08).
+        text-align: start;
         color: var(--nc-text-strong, inherit);
         cursor: pointer;
         border-radius: var(--nc-radius-sm, 0.25rem);
