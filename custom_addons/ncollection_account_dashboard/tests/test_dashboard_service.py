@@ -17,6 +17,7 @@ from unittest.mock import patch
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields
+from odoo.exceptions import AccessError
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.tests import tagged
 
@@ -260,22 +261,86 @@ class TestDashboardService(AccountTestInvoicingCommon):
         action = self.env.ref('ncollection_account_dashboard.action_ceo_dashboard')
         self.assertEqual(action.tag, 'ncollection_account_dashboard.ceo')
 
-    def test_the_rpc_itself_is_not_role_gated_yet(self):
-        """Pins CURRENT behaviour, not desired behaviour — see #333.
+    # ---- #333: the Rule-4 mirror, decided ---------------------------------
+    #
+    # The previous test here pinned the ABSENCE of a role check and said the
+    # decision was the owner's. It has been made: mirror the menu at the RPC.
+    # These four cases replace it, and they assert at the ORM through
+    # `with_user`, which is the path an RPC client actually takes — asserting
+    # on the menu would be asserting the thing that was never the control.
 
-        The menu narrowing above is Ring 1 only: get_ceo_dashboard has no role
-        check, so a caller who never sees the menu still gets a payload. That
-        exposes nothing an accountant cannot already read on their own
-        dashboards, and the panels stay Ring-2 gated by the engine — but Rule 4
-        says a UI restriction should be mirrored at the RPC, so whether to add
-        the check is an owner decision (#333), not an agent's.
+    # Financial read, granted explicitly here — see _user_with.
+    _ACCOUNT_READ = 'account.group_account_readonly'
 
-        This test exists so the decision cannot be made silently: if someone
-        adds the check, this fails and forces them to state the new contract
-        here rather than leaving two tests disagreeing about the gate.
+    def _user_with(self, login, group_xmlids, financial_read=True):
+        """An internal user holding the named groups (+ financial read).
+
+        `group_ids`, not `groups_id` — Odoo 19 renamed it — and no
+        `base.default_user` template, which Odoo 19 removed (CLAUDE.md).
+
+        WHY THE ACCOUNTING GROUP IS ADDED EXPLICITLY. In a real tenant the
+        role groups acquire their native rights at install time:
+        `ncollection_core/hooks.py` ROLE_IMPLICATIONS links group_role_ceo to
+        account.group_account_readonly (and accountant to
+        account.group_account_user) in a post-init hook. In a bare test
+        database that linking has not necessarily happened — measured on a
+        scratch db, CEO implied only Manager — so a user holding just the role
+        group cannot read account.move.line and the dashboard raises an
+        AccessError from DEEP INSIDE the report services.
+
+        That error looks nothing like the one under test, and it would have
+        made these cases fail for a reason that has no bearing on #333. The
+        grant is therefore part of the fixture, stated rather than smuggled:
+        what is under test is the ROLE CHECK admitting or denying the call,
+        not whether the caller can subsequently read a journal item.
         """
-        payload = self.service.get_ceo_dashboard()
-        self.assertIn('kpis', payload)
+        xmlids = list(group_xmlids) + ([self._ACCOUNT_READ] if financial_read else [])
+        return self.env['res.users'].create({
+            'name': login, 'login': login,
+            'group_ids': [(6, 0, [self.env.ref(x).id for x in xmlids])],
+        })
+
+    def test_an_accountant_cannot_call_the_ceo_rpc(self):
+        """THE POINT OF #333. The accountant is excluded from the menu, so the
+        RPC must exclude them too — /web/dataset/call_kw never consults a
+        menu. Nothing was leaking (these KPIs appear on their own dashboards
+        under their own rights), but Rule 4 does not permit a restriction that
+        exists in one ring only."""
+        user = self._user_with('ceo_rpc_acct',
+                               ['ncollection_core.group_role_accountant'])
+        with self.assertRaises(AccessError) as caught:
+            self.service.with_user(user).get_ceo_dashboard()
+        # Asserting the MESSAGE, not merely the type. This user can read
+        # account.move.line, so an AccessError raised anywhere downstream
+        # would also satisfy assertRaises — and would prove nothing about the
+        # role gate. The check must be what refused, and it must refuse before
+        # any data is touched.
+        self.assertIn("CEO dashboard", str(caught.exception),
+                      "the ROLE check must be what denied this, not a "
+                      "downstream ACL on some model it happened to read")
+
+    def test_the_ceo_can(self):
+        user = self._user_with('ceo_rpc_ceo',
+                               ['ncollection_core.group_role_ceo'])
+        self.assertIn('kpis', self.service.with_user(user).get_ceo_dashboard())
+
+    def test_the_owner_can_through_the_implication_chain(self):
+        """Owner is NOT named in the check. It passes because Owner implies
+        CEO (role_groups.xml), and this test is what keeps that true: listing
+        both groups explicitly would make this pass even if someone removed
+        the implication, which is a guard degrading into decoration."""
+        user = self._user_with('ceo_rpc_owner',
+                               ['ncollection_core.group_role_owner'])
+        self.assertIn('kpis', self.service.with_user(user).get_ceo_dashboard())
+
+    def test_admin_is_not_locked_out(self):
+        """The risk #333 flagged, made executable. `admin` holds
+        base.group_system and NO role group — the implication runs owner ->
+        system, never the reverse — so a check naming only the role groups
+        would have broken admin's access on every tenant, to close a gap that
+        exposed nothing."""
+        user = self._user_with('ceo_rpc_admin', ['base.group_system'])
+        self.assertIn('kpis', self.service.with_user(user).get_ceo_dashboard())
 
     # ---- #56 PR2: the UI's date-range selector -----------------------------
 

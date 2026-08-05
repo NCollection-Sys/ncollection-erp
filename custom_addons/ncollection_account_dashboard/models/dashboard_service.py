@@ -19,6 +19,7 @@ additive. Trend direction is derived in the OWL layer from ``value`` vs
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
+from odoo.exceptions import AccessError
 
 # The executive services (F2-T08) this module consumes. Named once so the
 # boundary test can assert the module only reaches the service layer.
@@ -327,7 +328,44 @@ class AccountDashboardService(models.AbstractModel):
 
         Keeps the {kpis, charts, meta} contract additive: `panels` is a new
         optional key the existing three dashboards simply never populate.
+
+        ROLE-GATED AT THE RPC, not only on the menu (#333). Standing Rule 4:
+        a UI restriction must be mirrored at the ORM/RPC layer, because
+        /web/dataset/call_kw never consults a menu. `menu_ceo_dashboard` is
+        gated to CEO + Owner, so an accountant who never sees the menu could
+        still call this and get the payload.
+
+        WHAT THAT DID AND DID NOT EXPOSE, since the fix should not be
+        remembered as bigger than it was: no data leaked. The KPIs are the
+        same figures an accountant already reads on their own Finance and
+        Accountant dashboards, under their own rights with no sudo, and the
+        cross-domain panels stay Ring-2 gated by the P4-T01 engine whoever
+        calls. This was role CURATION missing its mirror, not a leak. It is
+        fixed because Rule 4 is binding and a mirror that exists only in one
+        ring is exactly what the rule forbids relying on.
+
+        TWO GROUPS, AND BOTH ARE LOAD-BEARING:
+
+        * `group_role_ceo` alone covers Owner, because Owner IMPLIES CEO
+          (ncollection_core/security/role_groups.xml). Enumerating both would
+          pass even if someone removed that implication, turning a guard into
+          decoration — the same trap #346's record rules avoid.
+        * `base.group_system` is NOT redundant. `admin` holds it and holds no
+          role group at all; the implication runs owner -> system, never the
+          reverse. Without this clause the check would lock `admin` out of the
+          dashboard on every tenant, to close a gap that exposed nothing.
+          Verified: a browser run against a scratch tenant reaches this action
+          as admin today.
+
+        Deliberately NOT applied to the sales/HR/warehouse dashboards, whose
+        menus narrow the same way — that is a follow-up, so this ticket's
+        ruling is not widened past what #333 decided.
         """
+        if not (self.env.user.has_group('ncollection_core.group_role_ceo')
+                or self.env.user.has_group('base.group_system')):
+            raise AccessError(self.env._(
+                "The CEO dashboard is available to the CEO and the workspace "
+                "owner."))
         current, previous = self._comparison(_SUMMARY, date_from, date_to)
         profit_now, profit_prev = self._comparison(_PROFITABILITY, date_from, date_to)
         kpis = [
