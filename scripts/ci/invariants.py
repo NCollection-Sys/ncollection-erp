@@ -103,11 +103,54 @@ CI_EXEMPT_MODULES: dict[str, str] = {
         "demo-tenant seeding, installed by `make demo-tenant`; not part of the CI matrix",
 }
 
-# `-i` / `--test-tags` must start their (line-continued) line, which is how
-# ci.yml formats the odoo invocation. Anchoring this way avoids matching an
-# inline `sed -i` and keeps the rule from guessing.
-CI_INSTALL_RE = re.compile(r"^\s*-i\s+([A-Za-z0-9_,]+)", re.M)
-CI_TEST_TAGS_RE = re.compile(r"^\s*--test-tags\s+([A-Za-z0-9_,/]+)", re.M)
+# Read the lists by TOKENISING the command the way bash does, not by matching a
+# line. An earlier version anchored a regex to the physical line each flag starts
+# (`^\s*-i\s+([A-Za-z0-9_,]+)`), which was wrong in a way that matters for a
+# guard: ci.yml's `-i` and `--test-tags` lines are ~800 characters, so a future
+# readability reflow splitting one at a comma —
+#
+#     --test-tags /ncollection_core,...,/ncollection_approvals,\
+#     /ncollection_account_reports,...
+#
+# — is BYTE-IDENTICAL once bash joins the continuation, so odoo receives exactly
+# the same argument and real coverage is untouched. The anchored regex, however,
+# captured only the first physical line and would have reported four fully
+# covered modules as missing. A guard that cries wolf on correct code is worse
+# than no guard (see this module's docstring) — and false-alarming on a change
+# that preserves the very property it checks is the worst version of that.
+#
+# Joining `\<newline>` with the empty string is precisely what bash does, so what
+# we tokenise is what odoo actually receives. Tokenising also removes the old
+# char-class fragility, where a `-` anywhere in a list (e.g. an Odoo negative
+# test tag) silently truncated the match instead of failing loudly.
+CI_LINE_CONTINUATION_RE = re.compile(r"\\\n")
+
+# A module/tag list is word characters, commas, slashes and hyphens — nothing
+# else. Anything containing a quote, brace or path separator is some other
+# flag's operand and is discarded, so an unrelated `grep -i` cannot masquerade
+# as the install list.
+MODULE_LIST_RE = re.compile(r"[A-Za-z0-9_,/-]+")
+
+
+def _ci_flag_values(text: str, flag: str, strip_slash: bool = False) -> set[str]:
+    """Every comma-separated value passed to `flag` in the joined command text.
+
+    Unrelated flags elsewhere in the workflow share these names — `grep -i` is
+    already there today. Their operand is discarded by MODULE_LIST_RE rather
+    than tolerated as harmless noise: an early version of this function let it
+    through, reasoning that a stray token can never hide a real module. True for
+    lookups, but it also kept `installed` non-empty when the real `-i` list had
+    genuinely vanished, which defeated the "could not locate the lists" guard
+    below and turned one clear finding into a report against every module — the
+    exact avalanche that guard exists to prevent. Proven, not theorised: the
+    reformatted-workflow scenario produced it.
+    """
+    tokens = CI_LINE_CONTINUATION_RE.sub("", text).split()
+    values: set[str] = set()
+    for token, following in zip(tokens, tokens[1:]):
+        if token == flag and MODULE_LIST_RE.fullmatch(following):
+            values |= {v for v in following.split(",") if v}
+    return {v.lstrip("/") for v in values} if strip_slash else values
 
 
 def rule_pg_explicit_db(rel: str, line: str, lineno: int, out: list[str]) -> None:
@@ -141,11 +184,6 @@ def rule_no_hardcoded_container(rel: str, line: str, lineno: int, out: list[str]
         )
 
 
-def _split_csv(matches: list[str], strip_slash: bool = False) -> set[str]:
-    names = {n for blob in matches for n in blob.split(",") if n}
-    return {n.lstrip("/") for n in names} if strip_slash else names
-
-
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
     workflow = REPO_ROOT / CI_WORKFLOW
@@ -157,17 +195,21 @@ def rule_ci_module_coverage(out: list[str]) -> None:
         )
         return
 
-    installed = _split_csv(CI_INSTALL_RE.findall(text))
-    tagged = _split_csv(CI_TEST_TAGS_RE.findall(text), strip_slash=True)
+    installed = _ci_flag_values(text, "-i")
+    tagged = _ci_flag_values(text, "--test-tags", strip_slash=True)
 
     # One clear finding beats an avalanche of misleading ones: if the lists
     # cannot be located at all, every module would look uncovered and the real
     # problem (the workflow was reformatted) would be buried under the noise.
+    #
+    # This only defends TOTAL loss of a list. Partial loss used to be the real
+    # hazard — a line-anchored regex capturing half a reflowed list — which is
+    # why the lists are now tokenised from the joined command instead.
     if not installed or not tagged:
         out.append(
             f"{CI_WORKFLOW}: could not locate the `-i` and/or `--test-tags` lists, so "
-            f"module coverage cannot be checked. If the odoo invocation was reformatted, "
-            f"update CI_INSTALL_RE / CI_TEST_TAGS_RE in scripts/ci/invariants.py."
+            f"module coverage cannot be checked. If the odoo invocation changed shape, "
+            f"update `_ci_flag_values` in scripts/ci/invariants.py."
         )
         return
 
