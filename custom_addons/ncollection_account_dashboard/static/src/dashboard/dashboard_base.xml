@@ -35,8 +35,10 @@
                     <div class="nc-fin-dashboard__kpis">
                         <t t-foreach="state.payload.kpis" t-as="kpi" t-key="kpi.key">
                             <t t-set="tr" t-value="trend(kpi)"/>
-                            <NcKpiCard t-if="tr" label="kpi.label" value="formatValue(kpi)" trend="tr"/>
-                            <NcKpiCard t-else="" label="kpi.label" value="formatValue(kpi)"/>
+                            <NcKpiCard t-if="tr" label="kpi.label" value="formatValue(kpi)"
+                                       trend="tr" sub="kpi.sub or undefined"/>
+                            <NcKpiCard t-else="" label="kpi.label" value="formatValue(kpi)"
+                                       sub="kpi.sub or undefined"/>
                         </t>
                     </div>
                     <div class="nc-fin-dashboard__charts">
