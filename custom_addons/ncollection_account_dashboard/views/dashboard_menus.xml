@@ -55,4 +55,39 @@
               action="action_ceo_dashboard"
               sequence="5"/>
 
+    <!-- Department dashboards (#57 / P4-T04) — NON-financial, so a SEPARATE root
+         from the financial one and gated to the operational roles. The root is
+         visible to any of the three department roles; each child is gated to its
+         OWN role so a dashboard is "visible only to its role group" (acceptance).
+         Mirrored at the data layer like the CEO dashboard: the ncollection.kpi /
+         P4-T01 engine reads run under the user's own rights with no sudo, so a
+         cross-role RPC call returns None (empty), never another role's data.
+         (The RPC-level role check, as for the CEO dashboard, is deferred to
+         #333 — menu gating is Ring 1 curation.) -->
+    <menuitem id="menu_department_dashboard_root"
+              name="Department Dashboards"
+              groups="ncollection_core.group_role_sales,ncollection_core.group_role_hr,ncollection_core.group_role_warehouse"
+              sequence="13"/>
+
+    <menuitem id="menu_sales_dashboard"
+              name="Sales"
+              parent="menu_department_dashboard_root"
+              groups="ncollection_core.group_role_sales"
+              action="action_sales_dashboard"
+              sequence="10"/>
+
+    <menuitem id="menu_hr_dashboard"
+              name="HR"
+              parent="menu_department_dashboard_root"
+              groups="ncollection_core.group_role_hr"
+              action="action_hr_dashboard"
+              sequence="20"/>
+
+    <menuitem id="menu_warehouse_dashboard"
+              name="Warehouse"
+              parent="menu_department_dashboard_root"
+              groups="ncollection_core.group_role_warehouse"
+              action="action_warehouse_dashboard"
+              sequence="30"/>
+
 </odoo>
