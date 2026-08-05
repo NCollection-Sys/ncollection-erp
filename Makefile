@@ -47,7 +47,7 @@ OCA_VENV := .oca-venv
         routing-up routing-verify routing-down routing-clean e2e-clean \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
-        cron-starvation-verify cron-starvation-clean \
+        cron-starvation-verify cron-starvation-clean orphan-dbs \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 # `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
@@ -247,6 +247,14 @@ doctor: ## Diagnose the local dev environment ("why doesn't this work on my mach
 
 stack-settled: ## Was db/odoo just (re)started? Sanity check before trusting a scary finding (R-018)
 	@bash scripts/dev/stack_settled.sh
+
+# READ-ONLY on purpose (#337). It lists; it never drops. Every name here is
+# someone's fixture until proven otherwise, and the fixture-ownership table in
+# CLAUDE.md is the authority on which suite owns what — dropping the wrong one
+# silently destroys another suite's setup, which is REGRESSIONS.md R-004.
+# Drop what you recognise, deliberately:  make dropdb db=<name>
+orphan-dbs: ## List databases owned by no documented suite (read-only; never drops)
+	@bash scripts/dev/orphan_dbs.sh
 
 verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + cron-starvation + financial-bootstrap + e2e) — pre-merge gate
 	@echo "==> [1/6] routing & isolation (P1-T06)"

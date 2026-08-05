@@ -142,6 +142,16 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Load test (P3-T03) | `loadtesta` · `loadtestb` · `loadtestc` | `make load-test-clean` |
 | Financial bootstrap (P3-T01) | `fintest` | self-drops (start + end of run) |
 | Cron starvation (#310) | `cronstall` — **on its own private Postgres**, not the shared `db` | `make cron-starvation-clean` |
+| Platform DB (provisioning + config-sync run *against* it) | `saastest` · `ncplatform` | none — **persistent, do not drop** |
+| Demo tenant (`make demo-tenant`) | `albarari` | `make demo-clean` |
+| Aggregation bench | `aggbench` | — |
+
+The last three rows are **not** throwaway fixtures. `saastest` in particular is the
+default `PLATFORM_DB` that `verify_provisioning.sh` and `verify_config_sync.sh` run
+*against* (they create and drop `prov*` tenants underneath it) — dropping it breaks
+both suites until it is rebuilt. `make orphan-dbs` lists everything with no owner in
+this table; keep the two in step, or the list starts naming live fixtures and people
+learn to ignore it.
 
 The cron-starvation harness is the one suite that does **not** put its fixture on the shared
 `db`, and the reason generalises: the dev `odoo` container runs with no `-d`, and Odoo's
