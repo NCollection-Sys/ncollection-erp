@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            P5-T04 anomaly detection.
+
+            noupdate="1" so a tenant that retunes the schedule keeps their
+            change across upgrades. The trade-off is stated in the PR: a revert
+            of this feature leaves these rows behind in already-upgraded tenant
+            databases and they must be deactivated explicitly.
+
+            Daily, because every detector compares against a 30-day DAILY
+            baseline — running it more often would re-evaluate the same series
+            and only produce work, and `dedup_key` would discard the result.
+
+            The job self-limits via ir.cron._commit_progress(): a tenant DB has
+            no queue_job runner to escalate long work to, and odoo-bus runs
+            EVERY tenant's crons on two threads. See _cron_detect_anomalies.
+        -->
+        <record id="cron_detect_anomalies" model="ir.cron">
+            <field name="name">NCollection: detect anomalies</field>
+            <field name="model_id" ref="model_ncollection_alert"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_detect_anomalies()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Digest runs AFTER detection: a higher priority number sorts later
+             in _get_all_ready_jobs (ORDER BY failure_count, priority, id), so
+             a same-tick run emails the alerts this run just created rather
+             than yesterday's. -->
+        <record id="cron_send_alert_digest" model="ir.cron">
+            <field name="name">NCollection: email the anomaly alert digest</field>
+            <field name="model_id" ref="model_ncollection_alert"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_send_digest()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="priority">20</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>
