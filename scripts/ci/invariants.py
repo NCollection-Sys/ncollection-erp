@@ -66,14 +66,58 @@ DB_FLAG_RE = re.compile(r"(?:^|\s)(?:-d|--dbname)(?:[=\s])")
 # R2 — `|| true` on a state-changing docker command hides failure. Caught in the
 # wild: setup_e2e_tenants.sh printed "✅ tenants ready" after a failed restart,
 # leaving a stale @ormcache and producing baffling test results.
+#
+# Matching a LITERAL `docker compose` was not enough, and the gap was not
+# theoretical (#336). Neither of the two places this repo actually issues those
+# commands spells them out:
+#
+#   Makefile      $(COMPOSE) up -d          $(ROUTING_COMPOSE) up -d
+#   shell         "${DC[@]}" up -d          "${DCH[@]}" up -d --wait cron-stall-db
+#
+# so R2 was blind to every one of them. The variable forms below close that.
+# They are deliberately general (any `$(…COMPOSE)` / `"${ARR[@]}"` followed by a
+# state verb) rather than an allowlist of today's variable names, because the
+# next script will invent a new one. A non-docker array happening to take a
+# `start` argument is a tolerable false positive: R2 only fires when the line
+# ALSO carries `|| true`, and the fix — don't swallow the failure — is right
+# either way.
+# `docker volume|network rm/prune` is included because destroying a fixture's
+# storage is as state-changing as restarting it, and #335's bug was exactly
+# that line with a `|| true` and an unconditional "✅ removed" after it.
+# Bare `docker rm` is deliberately NOT here: removing a throwaway CONTAINER in a
+# trap is legitimate best-effort cleanup nobody depends on, and this repo has
+# three such lines today. Guarding it would cry wolf on correct code, which the
+# module docstring rules out.
 DOCKER_STATE_RE = re.compile(
-    r"docker\s+(?:restart|start|stop)\b|docker\s+compose\s+(?:up|restart|start)\b"
+    r"docker\s+(?:restart|start|stop)\b"
+    r"|docker\s+(?:volume|network)\s+(?:rm|prune)\b"
+    r"|docker\s+compose\s+(?:up|restart|start)\b"
+    r"|\$\([A-Z_]*COMPOSE\)\s+(?:up|restart|start)\b"
+    r"|\$\{[A-Za-z_]+\[@\]\}\"?\s+(?:up|restart|start)\b"
 )
 SILENT_FAIL_RE = re.compile(r"\|\|\s*true")
 
 # R3 — Hardcoded container names break under a non-default COMPOSE_PROJECT_NAME.
 # Derive them instead: `docker compose ps -q <service>`.
-HARDCODED_NAME_RE = re.compile(r"ncollection-(?:odoo|nginx|db|pgadmin)\b")
+#
+# Compose prefixes CONTAINERS, VOLUMES and NETWORKS with the same project name,
+# so all three break the same way — but the rule only knew the four container
+# names. #335 then shipped exactly that bug in the other shape:
+#
+#   docker volume rm -f ncollection-erp_cronstall_pgdata … >/dev/null 2>&1 || true
+#
+# hardcoded project prefix, swallowed failure, unconditional "✅ removed" after
+# it. Under a non-default COMPOSE_PROJECT_NAME it would have cleaned nothing and
+# reported success. A code reviewer caught it; this guard could not, on two
+# counts — the pattern below, and the Makefile being out of scope entirely.
+#
+# `<project>_<name>` is the generic form, so match the project prefix itself
+# rather than enumerating volumes. Derive instead:
+#   docker compose config --format json | … ['name']   → the real project name
+HARDCODED_NAME_RE = re.compile(
+    r"ncollection-(?:odoo|nginx|db|pgadmin)\b"
+    r"|ncollection-erp_[A-Za-z0-9_]+"
+)
 
 # R4 — a module CI never installs is a module whose tests never run. Caught in
 # the wild: ncollection_account_dashboard was in neither ci.yml's `-i` list nor
@@ -176,10 +220,20 @@ def rule_no_hardcoded_container(rel: str, line: str, lineno: int, out: list[str]
     # `container_name:` in a compose file is the legitimate DEFINITION, not a usage.
     if "container_name:" in line:
         return
-    if HARDCODED_NAME_RE.search(line):
+    match = HARDCODED_NAME_RE.search(line)
+    if match:
+        # A `<project>_<name>` hit is a volume or network, not a container, so
+        # `ps -q` is the wrong advice for it.
+        if match.group(0).startswith("ncollection-erp_"):
+            how = ("Derive the project name instead: `docker compose config "
+                   "--format json` → `['name']`, then build `<project>_<name>`.")
+            what = "volume/network name"
+        else:
+            how = "Derive it: `docker compose ps -q <service>`."
+            what = "container name"
         out.append(
-            f"{rel}:{lineno}: hardcoded container name breaks a non-default "
-            f"COMPOSE_PROJECT_NAME. Derive it: `docker compose ps -q <service>`.\n"
+            f"{rel}:{lineno}: hardcoded {what} breaks a non-default "
+            f"COMPOSE_PROJECT_NAME. {how}\n"
             f"      {line.strip()}"
         )
 
@@ -253,7 +307,9 @@ def collect(explicit: list[str] | None) -> list[Path]:
     if explicit:
         return [Path(f) for f in explicit if Path(f).is_file()]
     found: list[Path] = []
-    for pattern in ("*.sh", "docker-compose*.yml", "Makefile"):
+    # `*.mk` is here before any exists: the moment someone splits the Makefile,
+    # the split half would otherwise leave R1-R3's scope silently (#336).
+    for pattern in ("*.sh", "docker-compose*.yml", "Makefile", "*.mk"):
         found.extend(REPO_ROOT.rglob(pattern))
     found.extend((REPO_ROOT / ".github" / "workflows").glob("*.yml"))
     # Git hooks are shell too, and carry no .sh extension — guard them as well.
@@ -268,7 +324,7 @@ def scan(path: Path, findings: list[str]) -> None:
         return
 
     rel = str(path.relative_to(REPO_ROOT))
-    is_makefile = path.name == "Makefile"
+    is_makefile = path.name == "Makefile" or path.suffix == ".mk"
     is_workflow = ".github/workflows" in rel
     is_compose = path.name.startswith("docker-compose")
     # .githooks/* are shell scripts without a .sh extension.
@@ -287,12 +343,19 @@ def scan(path: Path, findings: list[str]) -> None:
         if is_shell or is_compose or (is_makefile and line.startswith("\t")):
             rule_pg_explicit_db(rel, line, lineno, findings)
 
-        # R2 — shell scripts only.
-        if is_shell:
+        # R2/R3 — shell, workflow run-steps, and Makefile RECIPE lines (#336).
+        #
+        # The Makefile used to be out of scope for both, which is precisely
+        # where `make` issues its docker commands — and #335 shipped a bug into
+        # that blind spot. Recipe lines only (leading tab), for the same reason
+        # R1 restricts itself: scanning every line would flag `.PHONY:` target
+        # lists and variable definitions, which invoke nothing.
+        is_make_recipe = is_makefile and line.startswith("\t")
+
+        if is_shell or is_make_recipe:
             rule_no_silent_docker_failure(rel, line, lineno, findings)
 
-        # R3 — shell scripts and workflow run-steps.
-        if is_shell or is_workflow:
+        if is_shell or is_workflow or is_make_recipe:
             rule_no_hardcoded_container(rel, line, lineno, findings)
 
 
