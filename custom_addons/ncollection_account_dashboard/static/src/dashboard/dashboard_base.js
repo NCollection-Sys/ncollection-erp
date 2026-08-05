@@ -133,13 +133,30 @@ export class NcFinancialDashboard extends Component {
         return { value: pct === null ? "—" : `${pct.toFixed(1)}%`, dir };
     }
 
-    /** Render a KPI value using the payload's currency / percent unit. */
+    /** Render a KPI value using the payload's currency / percent / number unit.
+     *  "number" (a bare ratio like inventory turnover) is additive for #57; the
+     *  financial dashboards only ever send "currency"/"percent", so their
+     *  rendering is unchanged. */
     formatValue(kpi) {
         const value = kpi.value ?? 0;
         if (kpi.unit === "percent") {
             return `${value.toFixed(1)}%`;
         }
+        if (kpi.unit === "number") {
+            return value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+        }
         return this.formatAmount(value);
+    }
+
+    /** Format a panel row value by the panel's unit. Defaults to currency so
+     *  #56's monetary panels (pipeline value, top customers) are unchanged;
+     *  #57's count/quantity panels (headcount, leave days, units moved) pass
+     *  unit:"number" and render as a bare number, never with a currency symbol. */
+    formatPanelValue(panel, row) {
+        if (panel.unit === "number") {
+            return (row.value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
+        }
+        return this.formatAmount(row.value);
     }
 
     /** A bare number as tenant currency. */

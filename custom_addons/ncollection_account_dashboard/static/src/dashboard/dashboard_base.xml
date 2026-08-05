@@ -26,7 +26,7 @@
                     icon="'fa-exclamation-triangle'"/>
             </t>
             <t t-else="">
-                <t t-if="!state.payload.kpis.length and !state.payload.charts.length">
+                <t t-if="!state.payload.kpis.length and !state.payload.charts.length and !(state.payload.panels and state.payload.panels.length)">
                     <NcEmptyState
                         title="'No financial data yet'"
                         description="'Figures appear once accounting entries are posted.'"/>
@@ -35,8 +35,10 @@
                     <div class="nc-fin-dashboard__kpis">
                         <t t-foreach="state.payload.kpis" t-as="kpi" t-key="kpi.key">
                             <t t-set="tr" t-value="trend(kpi)"/>
-                            <NcKpiCard t-if="tr" label="kpi.label" value="formatValue(kpi)" trend="tr"/>
-                            <NcKpiCard t-else="" label="kpi.label" value="formatValue(kpi)"/>
+                            <NcKpiCard t-if="tr" label="kpi.label" value="formatValue(kpi)"
+                                       trend="tr" sub="kpi.sub or undefined"/>
+                            <NcKpiCard t-else="" label="kpi.label" value="formatValue(kpi)"
+                                       sub="kpi.sub or undefined"/>
                         </t>
                     </div>
                     <div class="nc-fin-dashboard__charts">
@@ -72,7 +74,7 @@
                                                 <t t-esc="row.label"/>
                                             </button>
                                             <span class="nc-panel__bar" t-att-style="barStyle(panel, row)"/>
-                                            <span class="nc-panel__value" t-esc="formatAmount(row.value)"/>
+                                            <span class="nc-panel__value" t-esc="formatPanelValue(panel, row)"/>
                                             <span class="nc-panel__count" t-if="row.count !== undefined">
                                                 <t t-esc="row.count"/>
                                             </span>

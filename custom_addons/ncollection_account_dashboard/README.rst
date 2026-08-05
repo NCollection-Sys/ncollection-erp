@@ -36,5 +36,22 @@ The service returns ``{kpis, charts, meta}``:
   view from ``value`` vs ``previous``; the service does no arithmetic).
 * ``charts`` — ``[{key, label, type, labels, series:[{name, data}]}]``.
 * ``meta``  — ``{currency, period:{from, to}, as_of}``.
+* ``panels`` — optional (#56/#57), cross-domain rows:
+  ``[{key, label, type, rows, drilldown:{model, field}}]``.
 
 This shape is the stable API downstream dashboards consume; keep it additive.
+
+Department dashboards (#57 / P4-T04)
+====================================
+
+Sales, HR and Warehouse — **non-financial**, added into this module (extends the
+shared base; no new module). Each dashboard's headline KPI (incl. target) comes
+from the P4-T02 ``ncollection.kpi`` service and its panels from the P4-T01
+``ncollection.aggregation.engine`` — the same "services only, zero computation"
+rule as the financial dashboards, enforced by ``tests/test_boundary.py`` (which
+also forbids any direct ``sale``/``crm``/``hr``/``stock`` access). Each is
+gated to its role (``group_role_sales`` / ``_hr`` / ``_warehouse``) under a
+separate **Department Dashboards** menu, mirrored at the data layer (KPI/engine
+reads run under the user's own rights, no ``sudo`` — a cross-role call returns
+empty, never another role's data). Apps that a plan does not install degrade to
+an omitted KPI/panel (never a misleading zero).

@@ -27,7 +27,20 @@ import os
 
 from odoo.tests import TransactionCase, tagged
 
-_FORBIDDEN_MODELS = {'account.move', 'account.move.line'}
+# Financial (F3-T01) AND department (P4-T04) domain models. The dashboard module
+# must reach NONE of them directly — financial figures come from the F2-T08
+# report services, department figures from the P4-T02 KPI service / P4-T01
+# aggregation engine. Spec dicts pass these names as plain string CONSTANTS
+# (e.g. {'model': 'sale.order'}), which are not env[...] subscripts, so the
+# established #56 pattern is unaffected; only a real self.env['sale.order']
+# would trip.
+_FORBIDDEN_MODELS = {
+    'account.move', 'account.move.line',
+    'sale.order', 'crm.lead',
+    'hr.employee', 'hr.leave', 'hr.attendance',
+    'stock.move', 'stock.move.line', 'stock.quant',
+    'stock.valuation.layer', 'stock.warehouse.orderpoint',
+}
 # Aggregation / raw-cursor calls. Includes Odoo 19's formatted_read_group (the
 # read_group replacement) and search_count so a future edit can't aggregate
 # journal items under a different method name.
