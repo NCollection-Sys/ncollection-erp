@@ -17,6 +17,8 @@ level, not merely by convention.
 import logging
 import math
 
+from psycopg2.errors import UniqueViolation
+
 from odoo import api, fields, models
 
 from . import detectors as anomaly_detectors
@@ -33,10 +35,15 @@ SEVERITY_SELECTION = [
 # `zscore_of_latest` returns ±inf for the flat-then-moved case, which is correct
 # arithmetic and unstorable in practice:
 #
-#   * JSON has no Infinity. `json.dumps(float('inf'))` emits the bare token
-#     `Infinity`, which is invalid JSON — so an alert with an infinite z-score
-#     would break every jsonrpc caller that read it, including the dashboards
-#     this feature exists to feed.
+#   * The column cannot hold it. `zscore` is `digits=(16, 4)`, i.e. a
+#     PostgreSQL NUMERIC(16,4), and NUMERIC has no infinity — verified:
+#     `SELECT 'Infinity'::numeric(16,4)` raises "numeric field overflow". So
+#     WITHOUT this clamp, the flat-then-moved case — the one the statistics
+#     module calls the clearest signal there is — would raise on every write.
+#   * JSON has no Infinity either. `json.dumps(float('inf'))` emits the bare
+#     token `Infinity`, which is invalid JSON — so an alert with an infinite
+#     z-score would break every jsonrpc caller that read it, including the
+#     dashboards this feature exists to feed.
 #   * The value adds nothing once `severity` is computed: everything at or above
 #     SEVERITY_CRITICAL_AT is already 'critical'.
 #
@@ -96,7 +103,9 @@ class NCollectionAlert(models.Model):
 
     # The idempotency key. Built by the detector from (detector, scope, period)
     # so that re-running the cron over the same window cannot duplicate a row.
-    dedup_key = fields.Char(required=True, index=True, copy=False)
+    # No index=True: the UNIQUE constraint below already creates a btree,
+    # and a second one on the same column is pure write cost.
+    dedup_key = fields.Char(required=True, copy=False)
 
     _dedup_key_uniq = models.Constraint(
         'UNIQUE (dedup_key)',
@@ -121,7 +130,8 @@ class NCollectionAlert(models.Model):
         finding must not take down the cron for the detectors after it.
 
         A duplicate is a NORMAL outcome, not an error — it is what idempotency
-        looks like on the second run — so it is caught and logged at debug.
+        looks like on the second run — so it is caught narrowly and logged at
+        debug. Everything else is a real bug and is logged as one.
         """
         # Two kinds of detector share this path, on purpose:
         #   * statistical ones supply a z-score and let the ladder decide;
@@ -150,10 +160,22 @@ class NCollectionAlert(models.Model):
         try:
             with self.env.cr.savepoint():
                 return self.create(values)
-        except Exception as exc:  # noqa: BLE001 - never break the cron
-            _logger.debug(
-                "Alert not recorded for %s (likely already present): %s",
-                finding.get('dedup_key'), exc)
+        except UniqueViolation:
+            # The EXPECTED outcome of a re-run. This is what idempotency looks
+            # like, so it is not news.
+            _logger.debug("Alert %s already recorded.", finding.get('dedup_key'))
+            return self.browse()
+        except Exception:  # noqa: BLE001 - never break the cron
+            # Anything else is a real bug, and it must not be filed under
+            # "probably a duplicate" at a level nobody reads. An earlier version
+            # logged every failure at DEBUG with that wording, which meant a
+            # detector emitting an invalid value (raising in the ORM, before any
+            # SQL) silently dropped a genuine anomaly with no trace in
+            # production — undermining the zero-false-negative guarantee this
+            # feature is built around.
+            _logger.exception(
+                "Anomaly alert could not be recorded (detector=%s, key=%s)",
+                finding.get('detector_key'), finding.get('dedup_key'))
             return self.browse()
 
     # ------------------------------------------------------------------
@@ -179,9 +201,18 @@ class NCollectionAlert(models.Model):
 
         `_commit_progress` is Odoo 19's native answer: it commits what is done,
         reports what remains, and returns the seconds left in this run. When the
-        budget is gone we stop, and Odoo reschedules the job ASAP as
-        PARTIALLY_DONE rather than letting it overrun. Work already committed is
-        never redone thanks to `dedup_key`.
+        budget is gone we stop, and Odoo reschedules the job as PARTIALLY_DONE
+        rather than letting it overrun.
+
+        **What that does and does not buy, precisely.** A rescheduled run calls
+        this method again from the top — there is no per-detector "already ran"
+        marker, so the cheap detectors are re-evaluated. `dedup_key` makes that
+        harmless for the RECORDS (no duplicates) but the queries are redone.
+        The expensive detector is the stock one, and it carries its own
+        resumable cursor (`detectors.STOCK_CURSOR_PARAM`) so its progress does
+        survive across runs. Under sustained pressure the ordering here still
+        favours the earlier detectors; if per-detector cost ever grows, this
+        wants a rotating start offset rather than a fixed list.
         """
         cron = self.env['ir.cron']
         detector = self.env['ncollection.anomaly.detector']
@@ -256,4 +287,15 @@ class NCollectionAlert(models.Model):
         group = self.env.ref('base.group_system', raise_if_not_found=False)
         if not group:
             return []
-        return [user.email for user in group.sudo().users if user.email]
+        # `all_user_ids`, NOT `users`. Odoo 19 renamed the members field — the
+        # mirror of the `res.users.groups_id` -> `group_ids` rename CLAUDE.md
+        # already records — and `res.groups.users` no longer exists at all, so
+        # the earlier spelling raised AttributeError on every digest run. It was
+        # invisible until this method got a test, which is the whole argument
+        # for having one: a nightly cron that always fails is a feature that
+        # silently never shipped.
+        #
+        # `all_user_ids` rather than `user_ids` because administrators usually
+        # hold group_system by IMPLICATION from another group; `user_ids` lists
+        # only direct members and would miss most of them.
+        return [user.email for user in group.sudo().all_user_ids if user.email]

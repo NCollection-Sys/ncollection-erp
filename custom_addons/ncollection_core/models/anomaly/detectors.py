@@ -11,9 +11,22 @@ directly"). That is not ceremony; it is what buys three properties for free:
   database does not have, so the detector silently produces no findings instead
   of raising. No ``depends`` is added, so P1-T09 menu visibility and P1-T10
   licence enforcement stay untouched.
-* **Ring-2 licensing, inherited not re-implemented.** A model the plan does not
-  licence for this user raises ``AccessError`` inside the engine and is dropped
-  there. This module never consults a plan.
+* **Module availability, inherited not re-implemented.** The engine's registry
+  check drops a model this database does not have, and this module never
+  consults a plan of its own.
+
+  **Ring-2 licensing is NOT enforced on the cron path, and saying otherwise
+  would be a lie worth catching.** `ir.cron` records carry no explicit
+  ``user_id`` here, so they run as the superuser (verified: every existing cron
+  in a live tenant resolves to ``user_id = 1``), and ``license_enforcement.py``
+  deliberately returns early for ``env.su`` — an intentional, documented
+  exemption. The engine detects a Ring-2 denial by catching ``AccessError`` from
+  a probe read, so under the cron that probe can never fail. Consequence: a
+  tenant that downgrades and loses, say, HR keeps getting attendance alerts
+  until the module is actually uninstalled. Availability is respected; plan
+  entitlement is not. Tracked as a follow-up rather than papered over, because
+  the fix (run the cron as a licence-bound user) affects every cron, not just
+  this one.
 * **Fail-open.** The engine never raises into a caller.
 
 Detector shape: each returns a list of *findings* — plain dicts, no ORM — which
@@ -34,6 +47,23 @@ _logger = logging.getLogger(__name__)
 # enough for a weekly rhythm to show up in the baseline and short enough that a
 # genuine level-shift is not averaged away for a month.
 BASELINE_DAYS = 30
+
+# How many (product, warehouse) reordering rules one run of the stock detector
+# looks at. This is the only detector whose cost scales with catalogue size
+# rather than with a date window, and a tenant DB has no queue runner to hand
+# long work to — so it is paged, and the page is what bounds a single cron run.
+#
+# 500 is chosen to be comfortably sub-second on the P4-T01 performance budget
+# (every dashboard endpoint under 500ms on 100k-record demo data) while still
+# covering an ordinary SMB catalogue in a single run. A larger catalogue is
+# covered across successive runs by the cursor below, so the page size trades
+# LATENCY for safety, never coverage.
+STOCK_PAGE_SIZE = 500
+
+# Where the resumable scan remembers it got to. An ir.config_parameter rather
+# than a column, because it is one integer of tenant-local scheduler state and
+# does not belong on a business record.
+STOCK_CURSOR_PARAM = 'ncollection_core.anomaly_stock_offset'
 
 # Registry order is the order the cron processes them in, and therefore the
 # order of the batches — see `ncollection.alert._cron_detect_anomalies`.
@@ -231,64 +261,127 @@ class NCollectionAnomalyDetector(models.AbstractModel):
         }]
 
     @api.model
+    def _cell_id(self, cell):
+        """Id out of an engine groupby cell.
+
+        The engine flattens a grouped many2one to ``(id, label)`` — including
+        the null group, which becomes ``(False, '')``. One shape, always, so
+        this never has to special-case "present but empty".
+        """
+        if isinstance(cell, (tuple, list)) and cell:
+            return cell[0], (cell[1] if len(cell) > 1 else '')
+        return cell, str(cell)
+
+    @api.model
     def _detect_stock_below_safety(self, reference=None):
-        """Products held below their configured reordering minimum.
+        """Products below their reordering minimum, PER WAREHOUSE.
 
         Threshold, not statistics: being under a minimum somebody configured is
-        a fact about now, not a deviation from history. It supplies `severity`
-        directly rather than a z-score — see `_record_finding`.
+        a fact about now, not a deviation from history, so this supplies
+        `severity` directly rather than a z-score (see `_record_finding`).
+
+        **Grouped by (product, warehouse), not by product.** An earlier version
+        grouped both sides by ``product_id`` alone, which silently masked real
+        stockouts: ``product_min_qty:max`` collapsed every warehouse's rule into
+        one number while ``stock.quant`` was summed across ALL internal
+        locations, so a product completely out of stock in Warehouse 1 was
+        invisible whenever Warehouse 2 happened to hold enough. Reproduced on a
+        live database before this fix (min 100 / on-hand 0 in one warehouse,
+        110 in another -> no finding at all). `stock.warehouse.orderpoint` is
+        warehouse-scoped by definition, so the comparison has to be too.
+
+        **Bounded and resumable.** This is the one detector whose cost scales
+        with catalogue size rather than with a date window, and a tenant
+        database has no queue runner to escalate long work to. An unbounded
+        ``stock.quant`` read here would hold a shared `odoo-bus` cron thread for
+        as long as it took — starving every OTHER tenant's crons, which is #310
+        multiplied by tenant count. So it reads one page per run and remembers
+        where it stopped; successive runs cover the whole catalogue without any
+        single run being unbounded.
         """
         engine = self.env['ncollection.aggregation.engine']
+        offset = self._stock_cursor()
+
         minimums = engine.aggregate({
             'key': 'orderpoint_minimums',
             'model': 'stock.warehouse.orderpoint',
-            'groupby': ['product_id'],
+            'groupby': ['product_id', 'warehouse_id'],
             'aggregates': ['product_min_qty:max'],
+            'limit': STOCK_PAGE_SIZE,
+            'offset': offset,
         })
         if not minimums:
             return []      # stock not installed, or no reordering rules
 
+        rows = minimums['rows'] or []
+        # Advance (or wrap) the cursor BEFORE any early return, so a page that
+        # produces no findings still moves on rather than pinning the scan.
+        self._advance_stock_cursor(offset, len(rows))
+        if not rows:
+            return []
+
+        product_ids = []
+        for row in rows:
+            if isinstance(row, (tuple, list)) and len(row) >= 3:
+                product_id, _label = self._cell_id(row[0])
+                if product_id:
+                    product_ids.append(product_id)
+        if not product_ids:
+            return []
+
+        # Scoped to the page's products, so this read is bounded by the page
+        # rather than by the size of the tenant's inventory.
         on_hand = engine.aggregate({
             'key': 'stock_on_hand',
             'model': 'stock.quant',
-            'domain': [('location_id.usage', '=', 'internal')],
-            'groupby': ['product_id'],
+            'domain': [
+                ('location_id.usage', '=', 'internal'),
+                ('product_id', 'in', product_ids),
+            ],
+            'groupby': ['product_id', 'warehouse_id'],
             'aggregates': ['quantity:sum'],
         })
+
         quantities = {}
         for row in (on_hand or {}).get('rows') or ():
-            if isinstance(row, (tuple, list)) and len(row) >= 2 and row[0]:
-                product_id = row[0][0] if isinstance(row[0], (tuple, list)) else row[0]
-                quantities[product_id] = float(row[-1] or 0.0)
+            if not isinstance(row, (tuple, list)) or len(row) < 3:
+                continue
+            product_id, _ = self._cell_id(row[0])
+            warehouse_id, _ = self._cell_id(row[1])
+            quantities[(product_id, warehouse_id)] = float(row[-1] or 0.0)
 
         findings = []
-        for row in minimums['rows'] or ():
-            if not isinstance(row, (tuple, list)) or len(row) < 2 or not row[0]:
+        for row in rows:
+            if not isinstance(row, (tuple, list)) or len(row) < 3:
                 continue
-            # groupby many2one cells are flattened to (id, label) by the engine.
-            product = row[0]
-            product_id, label = (product if isinstance(product, (tuple, list))
-                                 else (product, str(product)))
+            product_id, product_label = self._cell_id(row[0])
+            warehouse_id, warehouse_label = self._cell_id(row[1])
+            if not product_id:
+                continue
             minimum = float(row[-1] or 0.0)
             if minimum <= 0:
                 continue
-            available = quantities.get(product_id, 0.0)
+
+            # Absent from the quant read means no stock in that warehouse at
+            # all — 0.0, which is the most severe case, not a reason to skip.
+            available = quantities.get((product_id, warehouse_id), 0.0)
             if available >= minimum:
                 continue
 
             # Severity by depth of the shortfall: out of stock is materially
             # worse than slightly under the reorder point.
-            shortfall_ratio = (minimum - available) / minimum
             if available <= 0:
                 severity = 'critical'
-            elif shortfall_ratio >= 0.5:
+            elif (minimum - available) / minimum >= 0.5:
                 severity = 'warning'
             else:
                 severity = 'info'
 
+            where = ' in %s' % warehouse_label if warehouse_label else ''
             findings.append({
                 'detector_key': 'stock_below_safety',
-                'name': '%s is below its safety stock level' % label,
+                'name': '%s is below its safety stock level%s' % (
+                    product_label, where),
                 'severity': severity,
                 'suggested_action': (
                     'On hand %.2f against a minimum of %.2f — raise a purchase '
@@ -296,7 +389,38 @@ class NCollectionAnomalyDetector(models.AbstractModel):
                 'observed_value': available,
                 'baseline_value': minimum,
                 'zscore': 0.0,
+                # Warehouse is part of the identity: the same product short in
+                # two warehouses is two problems, not one.
                 'dedup_key': self._dedup_key(
-                    'stock_below_safety', 'product-%s' % product_id, reference),
+                    'stock_below_safety',
+                    'product-%s-wh-%s' % (product_id, warehouse_id),
+                    reference),
             })
         return findings
+
+    # ------------------------------------------------------------------
+    # Resumable scan cursor
+    # ------------------------------------------------------------------
+
+    @api.model
+    def _stock_cursor(self):
+        value = self.env['ir.config_parameter'].sudo().get_param(
+            STOCK_CURSOR_PARAM, '0')
+        try:
+            return max(0, int(value))
+        except (TypeError, ValueError):
+            return 0
+
+    @api.model
+    def _advance_stock_cursor(self, offset, row_count):
+        """Move to the next page, or wrap when the catalogue is exhausted.
+
+        Wrapping on a short page is what makes the scan cyclic: every product
+        is revisited on a later run, so a bounded page size costs latency, not
+        coverage. Without the wrap the cursor would run off the end and the
+        detector would go permanently silent — a false negative that no test
+        would notice, because it only appears after N runs.
+        """
+        next_offset = 0 if row_count < STOCK_PAGE_SIZE else offset + row_count
+        self.env['ir.config_parameter'].sudo().set_param(
+            STOCK_CURSOR_PARAM, str(next_offset))

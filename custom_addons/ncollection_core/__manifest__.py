@@ -32,8 +32,9 @@
         'views/subscription_blocked_templates.xml',
         'views/dashboard_action.xml',
         'data/kpi_data.xml',
-        # P5-T04 anomaly detection: views before the cron data, so the
-        # ir.cron records' model_id ref resolves against a loaded model.
+        # P5-T04 anomaly detection. (Order is cosmetic here: init_models()
+        # reflects every Python model into ir.model before ANY of a module's
+        # data files load, so model_id ref= would resolve either way.)
         'views/alert_views.xml',
         'data/anomaly_cron.xml',
     ],

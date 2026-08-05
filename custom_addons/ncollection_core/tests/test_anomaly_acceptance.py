@@ -154,6 +154,152 @@ class TestAnomalyAcceptance(TransactionCase):
         self.assertEqual(
             self.Alert.search_count([('dedup_key', '=', findings[0]['dedup_key'])]), 1)
 
+    # ------------------------------------------------------------------
+    # stock_below_safety — the fourth detector
+    # ------------------------------------------------------------------
+    # This detector had NO acceptance coverage in the first version of this
+    # file, and a real multi-warehouse false negative shipped inside that blind
+    # spot (found by review against a live database). It is a threshold
+    # detector, so it takes the two-spec path rather than the statistical one
+    # and needs its own stub.
+
+    def _stub_engine_keyed(self, by_key):
+        """Stub the engine per spec `key`, returning None for anything absent.
+
+        The stock detector issues TWO specs — `orderpoint_minimums` and
+        `stock_on_hand` — so a single-series stub cannot exercise it. Returning
+        None for an unknown key also reproduces the engine's real "model not
+        available" answer.
+        """
+        Engine = type(self.env['ncollection.aggregation.engine'])
+
+        def fake(engine_self, spec):
+            rows = by_key.get(spec['key'])
+            if rows is None:
+                return None
+            return {'key': spec['key'], 'rows': rows, 'cached': False}
+
+        self.patch(Engine, 'aggregate', fake)
+
+    def test_stock_below_minimum_in_a_single_warehouse_is_detected(self):
+        self._stub_engine_keyed({
+            'orderpoint_minimums': [((7, 'Widget'), (1, 'WH1'), 100.0)],
+            'stock_on_hand': [((7, 'Widget'), (1, 'WH1'), 20.0)],
+        })
+        findings = self.Detector.detect('stock_below_safety')
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]['detector_key'], 'stock_below_safety')
+        self.assertEqual(findings[0]['severity'], 'warning')   # 80% short
+
+    def test_stock_at_or_above_minimum_is_not_an_alert(self):
+        self._stub_engine_keyed({
+            'orderpoint_minimums': [((7, 'Widget'), (1, 'WH1'), 100.0)],
+            'stock_on_hand': [((7, 'Widget'), (1, 'WH1'), 100.0)],
+        })
+        self.assertEqual(self.Detector.detect('stock_below_safety'), [])
+
+    def test_completely_out_of_stock_is_critical(self):
+        self._stub_engine_keyed({
+            'orderpoint_minimums': [((7, 'Widget'), (1, 'WH1'), 100.0)],
+            'stock_on_hand': [],           # no quant row at all for it
+        })
+        findings = self.Detector.detect('stock_below_safety')
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]['severity'], 'critical')
+        self.assertEqual(findings[0]['observed_value'], 0.0,
+                         "no quant row means no stock, not 'skip this product'")
+
+    def test_a_stockout_in_one_warehouse_is_not_masked_by_another(self):
+        """THE regression this detector shipped with.
+
+        Grouping both sides by product alone collapsed every warehouse's
+        reordering rule into one number and summed on-hand across all of them,
+        so Warehouse 1 being completely empty was invisible whenever Warehouse 2
+        happened to be carrying enough. Reproduced live before the fix; pinned
+        here so it cannot come back.
+        """
+        self._stub_engine_keyed({
+            'orderpoint_minimums': [
+                ((7, 'Widget'), (1, 'WH1'), 100.0),
+                ((7, 'Widget'), (2, 'WH2'), 100.0),
+            ],
+            'stock_on_hand': [
+                ((7, 'Widget'), (2, 'WH2'), 110.0),   # WH2 healthy
+                # WH1 absent entirely -> zero on hand
+            ],
+        })
+        findings = self.Detector.detect('stock_below_safety')
+        self.assertEqual(
+            len(findings), 1,
+            "the empty warehouse must raise an alert even though another "
+            "warehouse is overstocked — got %s" % findings)
+        self.assertEqual(findings[0]['severity'], 'critical')
+        self.assertIn('WH1', findings[0]['name'])
+        self.assertIn('wh-1', findings[0]['dedup_key'],
+                      "warehouse must be part of the identity, or the same "
+                      "product short in two warehouses collapses into one alert")
+
+    def test_the_same_product_short_in_two_warehouses_is_two_alerts(self):
+        self._stub_engine_keyed({
+            'orderpoint_minimums': [
+                ((7, 'Widget'), (1, 'WH1'), 100.0),
+                ((7, 'Widget'), (2, 'WH2'), 100.0),
+            ],
+            'stock_on_hand': [],
+        })
+        findings = self.Detector.detect('stock_below_safety')
+        self.assertEqual(len(findings), 2)
+        self.assertEqual(len({f['dedup_key'] for f in findings}), 2,
+                         "two distinct problems need two distinct dedup keys")
+
+    def test_stock_scan_cursor_advances_and_wraps(self):
+        """The resumable scan must move on, and must wrap rather than run off.
+
+        Without the wrap the cursor would climb past the end of the catalogue
+        and the detector would go permanently silent — a false negative that
+        only appears after N runs and that no single-run test would notice.
+        """
+        param = self.env['ir.config_parameter'].sudo()
+        from odoo.addons.ncollection_core.models.anomaly import detectors as det
+
+        # A short page (fewer rows than the page size) means "end of catalogue".
+        self._stub_engine_keyed({
+            'orderpoint_minimums': [((7, 'Widget'), (1, 'WH1'), 100.0)],
+            'stock_on_hand': [((7, 'Widget'), (1, 'WH1'), 100.0)],
+        })
+        param.set_param(det.STOCK_CURSOR_PARAM, '250')
+        self.Detector.detect('stock_below_safety')
+        self.assertEqual(param.get_param(det.STOCK_CURSOR_PARAM), '0',
+                         "a short page means the catalogue is exhausted; the "
+                         "cursor must wrap to 0, not keep climbing")
+
+        # A full page means there is more to come: advance by the page size.
+        full_page = [((i, 'P%s' % i), (1, 'WH1'), 1.0)
+                     for i in range(det.STOCK_PAGE_SIZE)]
+        self._stub_engine_keyed({
+            'orderpoint_minimums': full_page,
+            'stock_on_hand': [((i, 'P%s' % i), (1, 'WH1'), 5.0)
+                              for i in range(det.STOCK_PAGE_SIZE)],
+        })
+        param.set_param(det.STOCK_CURSOR_PARAM, '0')
+        self.Detector.detect('stock_below_safety')
+        self.assertEqual(param.get_param(det.STOCK_CURSOR_PARAM),
+                         str(det.STOCK_PAGE_SIZE))
+
+    def test_digest_sends_one_mail_for_the_open_alerts(self):
+        """Smoke test: the digest is a cron nobody would notice failing."""
+        self._stub_engine(_NORMAL + [3])
+        for finding in self.Detector.detect('sales_trend_drop'):
+            self.Alert._record_finding(finding)
+        self.assertTrue(self.Alert.search_count([('state', '=', 'new')]))
+
+        before = self.env['mail.mail'].search_count([])
+        self.env['res.users'].browse(2).write({'email': 'admin@example.com'})
+        self.Alert._cron_send_digest()
+        self.assertGreater(
+            self.env['mail.mail'].search_count([]), before,
+            "the digest must actually produce a mail when alerts are open")
+
     def test_absent_model_yields_no_findings_and_no_crash(self):
         """A tenant without `sale` (or `hr`) must simply produce nothing.
 
@@ -173,14 +319,28 @@ class TestAnomalyAcceptance(TransactionCase):
                 % detector_key)
 
     def test_a_failing_detector_cannot_sink_the_others(self):
-        """One detector raising must not cost the cron the remaining three."""
+        """ONE detector raising must not cost the others.
+
+        An earlier version made every spec explode, so all four failed
+        identically — which proved the loop survives, but not the thing the name
+        claims. Here only the sales spec raises; the expense detector must still
+        return its finding.
+        """
         Engine = type(self.env['ncollection.aggregation.engine'])
+        rows = [("2026-08-%02d" % (i + 1), v)
+                for i, v in enumerate(_NORMAL + [900])]
 
-        def explode(engine_self, spec):
-            raise RuntimeError("simulated ORM failure")
+        def selective(engine_self, spec):
+            if spec['key'] == 'sales_trend':
+                raise RuntimeError("simulated ORM failure")
+            return {'key': spec['key'], 'rows': rows, 'cached': False}
 
-        self.patch(Engine, 'aggregate', explode)
-        self.assertEqual(self.Detector.detect('sales_trend_drop'), [])
+        self.patch(Engine, 'aggregate', selective)
+
+        self.assertEqual(self.Detector.detect('sales_trend_drop'), [],
+                         "the broken detector yields nothing rather than raising")
+        self.assertTrue(self.Detector.detect('expense_spike'),
+                        "a healthy detector must be unaffected by its neighbour")
 
         # And the cron itself completes rather than propagating.
         #

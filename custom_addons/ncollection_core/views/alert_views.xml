@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        P5-T04 anomaly alerts. Odoo 19: <list>, never <tree>; no attrs=.
+        P5-T04 anomaly alerts. Odoo 19 view conventions apply (Rule 6).
 
         No menu item is declared here on purpose. The ticket surfaces alerts on
         the department dashboards, which live in ncollection_account_dashboard —

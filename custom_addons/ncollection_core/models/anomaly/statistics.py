@@ -13,6 +13,11 @@ The ticket says *"statistical baselines first (z-scores/moving averages) — LLM
 explanation layered on top only where useful"*. This module is the "first" half
 in its entirety; no model here calls out to anything.
 
+A `moving_average` helper was written and then REMOVED: no detector needed it
+once the baseline became "mean and spread of the trailing points, excluding the
+one under test", which is what a z-score already is. Shipping it unused would
+have been dead code carried by tests that proved nothing about the product.
+
 **Why a z-score against a trailing baseline** rather than a fixed threshold:
 ``ncollection.kpi.threshold`` (P4-T02) already covers "is this number good?"
 with configured bands. That answers a different question. A tenant cannot know
@@ -41,22 +46,6 @@ DEFAULT_THRESHOLD = 3.0
 # has to be genuinely extreme to reach 'critical'.
 SEVERITY_WARNING_AT = 5.0
 SEVERITY_CRITICAL_AT = 8.0
-
-
-def moving_average(values, window):
-    """Trailing moving average, or ``[]`` when one cannot be formed.
-
-    Returns ``len(values) - window + 1`` points. An empty list is a normal
-    answer meaning "not enough history yet", never an error — callers treat it
-    as "skip this series", which is what keeps a new tenant quiet.
-    """
-    if not values or window <= 0 or window > len(values):
-        return []
-    out = []
-    for start in range(len(values) - window + 1):
-        chunk = values[start:start + window]
-        out.append(sum(chunk) / float(window))
-    return out
 
 
 def zscore_of_latest(values, min_points=MIN_BASELINE_POINTS):

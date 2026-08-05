@@ -4,6 +4,8 @@
 These functions decide what counts as an anomaly, so every property worth
 protecting here is one whose failure is SILENT:
 
+0. (A `moving_average` helper was removed before merge — unused by every
+   detector, so its tests proved nothing about shipped behaviour.)
 1. **Too little history is not an anomaly.** A tenant provisioned last week has
    four data points. Reporting "anomalous" on noise is how an alert feature
    trains its users to ignore it.
@@ -29,18 +31,6 @@ from odoo.tests import TransactionCase, tagged
 @tagged("post_install", "-at_install")
 class TestAnomalyStatistics(TransactionCase):
     """Pure-function tests; no env used, but kept in the suite that ships."""
-
-    # ---- moving_average ------------------------------------------------
-
-    def test_moving_average_smooths_a_series(self):
-        self.assertEqual(stats.moving_average([1, 2, 3, 4], 2), [1.5, 2.5, 3.5])
-
-    def test_moving_average_window_longer_than_series_yields_nothing(self):
-        """Not an error — simply no baseline yet. Callers treat [] as 'skip'."""
-        self.assertEqual(stats.moving_average([1, 2], 5), [])
-
-    def test_moving_average_rejects_a_meaningless_window(self):
-        self.assertEqual(stats.moving_average([1, 2, 3], 0), [])
 
     # ---- zscore_of_latest ----------------------------------------------
 
