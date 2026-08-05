@@ -28,8 +28,8 @@
             <t t-else="">
                 <t t-if="!state.payload.kpis.length and !state.payload.charts.length and !(state.payload.panels and state.payload.panels.length)">
                     <NcEmptyState
-                        title="'No data yet'"
-                        description="'Figures appear once there is activity to summarise.'"/>
+                        title="'No financial data yet'"
+                        description="'Figures appear once accounting entries are posted.'"/>
                 </t>
                 <t t-else="">
                     <div class="nc-fin-dashboard__kpis">
