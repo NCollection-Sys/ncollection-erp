@@ -179,6 +179,35 @@ HARDCODED_NAME_RE = re.compile(
 # the bug it exists to catch.
 CI_WORKFLOW = ".github/workflows/ci.yml"
 
+# R5 — the dev and routing Odoo containers must keep `--max-cron-threads`.
+#
+# Without it, Odoo's cron worker enumerates EVERY database on the server:
+# `cron_database_list()` is `config['db_name'] or list_dbs(True)`, and neither
+# container passes `-d`. `--db-filter` does NOT restrict this — it filters HTTP
+# routing only, which is exactly the trap that let the problem live unnoticed
+# (#337). Measured before the fix: 32 cron jobs in 3 minutes across 21
+# databases, none of them the working one.
+#
+# Why this is worth a rule rather than the comments #337 shipped with:
+#
+#   * It is SILENT. Crons ticking 89 databases produce no error and no failing
+#     suite — only log noise nobody reads.
+#   * It CORRUPTS MEASUREMENT. It is how #310's first harness "proved" 46s of
+#     cron starvation that never happened, by attributing the shared
+#     container's own ~60s cron cycle to its harness. That cost a full rebuild
+#     of the harness (DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §5.1).
+#
+# Checks for the FLAG, never for `=0`: docker-compose.dev.yml deliberately
+# renders `--max-cron-threads=${NC_DEV_CRON_THREADS:-0}` so a developer can opt
+# back in. Asserting the value would break that escape hatch and teach people to
+# delete the guard.
+#
+# Whole-file, not per-line, because absence is the thing being detected — a
+# line scanner can only see lines that exist.
+CRON_SCOPED_FILES = ("docker-compose.dev.yml", "docker-compose.routing.yml")
+CRON_THREADS_FLAG = "--max-cron-threads"
+ODOO_COMMAND_RE = re.compile(r"^\s*command:.*\bodoo\b")
+
 # Modules deliberately outside the CI matrix. Each entry MUST carry a reason —
 # "excluded on purpose" and "forgotten" have to stay distinguishable, which is
 # the entire point of the rule. A module listed here that IS covered is reported
@@ -277,6 +306,56 @@ def rule_no_hardcoded_container(rel: str, line: str, lineno: int, out: list[str]
             f"COMPOSE_PROJECT_NAME. {how}\n"
             f"      {line.strip()}"
         )
+
+
+def rule_cron_threads_scoped(out: list[str]) -> None:
+    """Every dev/routing Odoo `command:` must still carry --max-cron-threads.
+
+    See the R5 block above for why. Two failure modes are reported separately
+    on purpose:
+
+    * the flag is gone      -> the regression is back;
+    * the command is gone   -> this rule can no longer see what it guards, and
+                               saying so loudly beats reporting "clean" over a
+                               file it no longer understands. That is the same
+                               choice R4 makes when it cannot locate ci.yml's
+                               lists, and for the same reason.
+    """
+    for name in CRON_SCOPED_FILES:
+        path = REPO_ROOT / name
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            out.append(
+                f"{name}: not readable, so the cron-scoping guard cannot run. "
+                f"If the file was renamed, update CRON_SCOPED_FILES in "
+                f"scripts/ci/invariants.py."
+            )
+            continue
+
+        commands = [
+            line for line in text.splitlines()
+            if ODOO_COMMAND_RE.match(line) and not line.strip().startswith("#")
+        ]
+        if not commands:
+            out.append(
+                f"{name}: could not find the odoo service's `command:` line, so "
+                f"it cannot be checked for `{CRON_THREADS_FLAG}`. If the command "
+                f"moved to a multi-line form, update ODOO_COMMAND_RE in "
+                f"scripts/ci/invariants.py rather than deleting this rule."
+            )
+            continue
+
+        if not any(CRON_THREADS_FLAG in line for line in commands):
+            out.append(
+                f"{name}: the odoo `command:` no longer passes "
+                f"`{CRON_THREADS_FLAG}` (#337). Without it this container runs "
+                f"the crons of EVERY database on the server — `db_filter` does "
+                f"NOT restrict cron, only HTTP routing. It is silent, and it "
+                f"corrupts any timing measured against a shared-server database "
+                f"(see DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §5.1).\n"
+                f"      {commands[0].strip()}"
+            )
 
 
 def rule_ci_module_coverage(out: list[str]) -> None:
@@ -499,6 +578,7 @@ def main() -> int:
     # the change that introduces the bug is precisely the one whose diff does
     # not include ci.yml.
     rule_ci_module_coverage(findings)
+    rule_cron_threads_scoped(findings)
 
     if findings:
         print("invariants: violations found\n")
@@ -508,7 +588,7 @@ def main() -> int:
         print("KNOWN_PENDING entry in scripts/ci/invariants.py naming the follow-up PR.")
         return 1
 
-    print(f"invariants: clean ({len(paths)} file(s) scanned, 4 rule(s) applied).")
+    print(f"invariants: clean ({len(paths)} file(s) scanned, 5 rule(s) applied).")
     if CI_EXEMPT_MODULES:
         print(f"  note: {len(CI_EXEMPT_MODULES)} module(s) exempt from CI coverage:")
         for module, reason in CI_EXEMPT_MODULES.items():
