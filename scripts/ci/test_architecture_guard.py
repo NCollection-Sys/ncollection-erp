@@ -300,6 +300,30 @@ class TestSearchGroupAttributes(unittest.TestCase):
             view_findings('<search><group colspan="11" col="11" '
                           'groups="base.group_no_one"><filter name="a"/></group></search>'), [])
 
+    def test_an_equality_inside_an_allowed_attribute_is_not_an_attribute(self):
+        """`invisible` is schema-LEGAL on a group, and Odoo 17+ actively
+        encourages boolean expressions in it. A quote-blind name regex read the
+        `state ==` inside the VALUE as a second, disallowed attribute and
+        rejected working markup."""
+        self.assertEqual(
+            view_findings('<search><group invisible="state == \'done\'">'
+                          '<filter name="a"/></group></search>'), [])
+
+    def test_an_unescaped_gt_in_a_value_does_not_hide_a_later_violation(self):
+        """THE GUARD HOLE, pinned. XML requires only `<` and `&` to be escaped;
+        a raw `>` in a value is legal and Odoo core writes it constantly. With
+        a `[^>]*` tag bound the match stopped there, so the fatal `string=`
+        after it was never scanned — the rule silently passing exactly what it
+        exists to catch."""
+        findings = view_findings('<search><group invisible="qty > 5" '
+                                 'string="Foo"><filter name="a"/></group></search>')
+        self.assertEqual(len(findings), 1,
+                         "a violation after an unescaped > must still be seen")
+
+    def test_unquoted_and_single_quoted_values_are_still_caught(self):
+        self.assertEqual(len(view_findings('<search><group expand=0/></search>')), 1)
+        self.assertEqual(len(view_findings("<search><group expand='0'/></search>")), 1)
+
     def test_a_form_group_with_string_is_untouched(self):
         """Forms are not RNG-validated at all — the rng directory ships no
         form_view.rng — which is why `<group string="Measurement">` installs

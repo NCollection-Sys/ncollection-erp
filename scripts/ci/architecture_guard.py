@@ -51,8 +51,27 @@ TREE_TAG_RE = re.compile(r"<tree\b")
 # Non-greedy so two search views in one file are two regions, not one spanning
 # region that would swallow the legitimate markup between them.
 SEARCH_REGION_RE = re.compile(r"<search\b.*?</search\s*>", re.DOTALL)
-SEARCH_GROUP_RE = re.compile(r"<group\b([^>]*)>")
-ATTR_NAME_RE = re.compile(r"([A-Za-z_][\w.-]*)\s*=")
+# BOTH PATTERNS ARE QUOTE-AWARE, and neither was at first — the review found
+# one false positive and one guard hole in the naive versions.
+#
+# The tag interior consumes a quoted span WHOLE, so an unescaped `>` inside a
+# value cannot terminate the tag. XML only requires `<` and `&` to be escaped;
+# `>` is legal raw, and Odoo core writes it constantly in boolean expressions
+# (`invisible="qty > 5"`). With a plain `[^>]*` bound the match stopped at that
+# `>`, so a genuinely fatal `string=` LATER in the same tag was never scanned —
+# the rule silently passing the exact thing it exists to catch.
+#
+# Note this is a different guarantee from the one SEARCH_REGION_RE relies on:
+# there, a raw `<` is illegal inside an attribute value so a `<search` open
+# cannot be faked. That argument does NOT extend to `>` as a terminator.
+SEARCH_GROUP_RE = re.compile(r"""<group\b((?:[^>"']|"[^"]*"|'[^']*')*)>""")
+# Attribute NAMES only. The quoted alternatives swallow the whole value, so an
+# `==` inside one is never read as a second attribute. Without this,
+# `invisible="state == 'done'"` — a schema-LEGAL attribute carrying idiomatic
+# Odoo 17+ syntax — was reported as a disallowed `state` attribute. The bare
+# alternative keeps unquoted values (`expand=0`) working.
+ATTR_NAME_RE = re.compile(
+    r"""([A-Za-z_][\w.:-]*)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)""")
 
 # The ONLY attributes Odoo 19 permits on a `<group>` inside a `<search>`.
 #
