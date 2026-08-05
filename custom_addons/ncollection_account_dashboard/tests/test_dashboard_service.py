@@ -11,6 +11,7 @@ test_executive_reports) so a full chart of accounts + company are provisioned on
 a clean CI database — never a manual account search that can come up empty.
 """
 import inspect
+from datetime import date
 from unittest.mock import patch
 
 from dateutil.relativedelta import relativedelta
@@ -235,6 +236,108 @@ class TestDashboardService(AccountTestInvoicingCommon):
             dated,
             "the funnel is a current-state view by design; a date bound would "
             "hide live deals opened before the window. Found: %s" % dated)
+
+    # ---- #56 PR2: role access on the client action -------------------------
+
+    def test_ceo_menu_is_narrower_than_its_siblings(self):
+        """#56's acceptance says "respects role access", so pin the gate.
+
+        The CEO view is for CEO/Owner — an accountant may open Finance but not
+        this. Odoo INTERSECTS a menu's groups with its parent's, so the child
+        can only narrow; asserting the child's own groups is therefore the whole
+        gate. Ring 1 only: the ORM mirror is that get_ceo_dashboard runs the
+        executive services under the caller's own rights with no sudo, and the
+        panels go through the P4-T01 engine, which enforces Ring 2 per model.
+        """
+        menu = self.env.ref('ncollection_account_dashboard.menu_ceo_dashboard')
+        groups = menu.group_ids       # Odoo 19 renamed groups_id -> group_ids
+        self.assertIn(self.env.ref('ncollection_core.group_role_ceo'), groups)
+        self.assertIn(self.env.ref('ncollection_core.group_role_owner'), groups)
+        self.assertNotIn(
+            self.env.ref('ncollection_core.group_role_accountant'), groups,
+            "the CEO cross-domain view is not an accountant surface")
+
+        action = self.env.ref('ncollection_account_dashboard.action_ceo_dashboard')
+        self.assertEqual(action.tag, 'ncollection_account_dashboard.ceo')
+
+    def test_the_rpc_itself_is_not_role_gated_yet(self):
+        """Pins CURRENT behaviour, not desired behaviour — see #333.
+
+        The menu narrowing above is Ring 1 only: get_ceo_dashboard has no role
+        check, so a caller who never sees the menu still gets a payload. That
+        exposes nothing an accountant cannot already read on their own
+        dashboards, and the panels stay Ring-2 gated by the engine — but Rule 4
+        says a UI restriction should be mirrored at the RPC, so whether to add
+        the check is an owner decision (#333), not an agent's.
+
+        This test exists so the decision cannot be made silently: if someone
+        adds the check, this fails and forces them to state the new contract
+        here rather than leaving two tests disagreeing about the gate.
+        """
+        payload = self.service.get_ceo_dashboard()
+        self.assertIn('kpis', payload)
+
+    # ---- #56 PR2: the UI's date-range selector -----------------------------
+
+    def test_explicit_range_drives_the_period_and_the_leaderboard(self):
+        """A supplied range must reach BOTH meta.period and the panel domain.
+
+        If it reached only meta, the header would advertise a period the figures
+        do not cover — the same mis-attribution the leaderboard's date bound
+        exists to prevent, just moved one level up.
+        """
+        engine = self.env['ncollection.aggregation.engine']
+        seen = {}
+
+        def capture(spec):
+            seen[spec['key']] = spec
+            return None
+
+        date_from = date(2026, 3, 1)
+        date_to = date(2026, 3, 31)
+        with patch.object(type(engine), 'aggregate', side_effect=capture):
+            payload = self.service.get_ceo_dashboard(date_from, date_to)
+
+        self.assertEqual(payload['meta']['period']['from'], date_from)
+        self.assertEqual(payload['meta']['period']['to'], date_to)
+
+        bounds = {t[1]: t[2] for t in seen['top_customers']['domain']
+                  if t[0] == 'date_order'}
+        self.assertEqual(bounds['>='], date_from)
+        self.assertEqual(bounds['<'], date_to + relativedelta(days=1))
+
+    def test_a_half_specified_range_is_ignored_entirely(self):
+        """One date without the other must fall back to the default period.
+
+        Honouring half a range would silently widen the other end to the
+        service default while the caller believes a bound was applied.
+        """
+        default = self.service._service('ncollection.account.report.summary')
+        default_from, default_to = default.date_from, default.date_to
+
+        payload = self.service.get_ceo_dashboard(date(2026, 3, 1), None)
+
+        # Assert on FROM, not TO. Asserting `to` would be vacuous: with
+        # date_to=None the end falls back to the default either way, so the
+        # check passes whether or not the lone date_from was honoured. `from`
+        # is the only field that actually discriminates.
+        self.assertEqual(payload['meta']['period']['from'], default_from,
+                         "a lone date_from must be ignored, not applied")
+        self.assertEqual(payload['meta']['period']['to'], default_to)
+
+    def test_other_dashboards_keep_their_no_argument_contract(self):
+        """PR2 touches the SHARED base, so the siblings are the regression risk.
+
+        Their OWL components still call these with no arguments; a required
+        parameter added here would break three shipped dashboards at once.
+        """
+        for method in ('get_finance_dashboard', 'get_accountant_dashboard',
+                       'get_cash_dashboard'):
+            with self.subTest(method=method):
+                payload = getattr(self.service, method)()
+                self._assert_shape(payload)
+                self.assertNotIn('panels', payload,
+                                 "%s must not grow a panels key" % method)
 
     def test_top_customers_cannot_derive_its_own_period(self):
         """The window must be PASSED IN, never re-derived inside the helper.

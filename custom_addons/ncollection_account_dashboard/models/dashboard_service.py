@@ -45,14 +45,34 @@ class AccountDashboardService(models.AbstractModel):
 
     # ---- shared orchestration helpers (reused by #56/#57) ----------------
 
-    def _service(self, model_name):
-        """An in-memory executive report record on this user's default period
-        (YTD, previous-period comparison). ``new()`` — never hits the DB."""
-        return self.env[model_name].new({})
+    def _service(self, model_name, date_from=None, date_to=None):
+        """An in-memory executive report record. ``new()`` — never hits the DB.
 
-    def _comparison(self, model_name):
+        With no window it uses the report's own default period (YTD, previous-
+        period comparison). With one, the dates are set ON THE REPORT RECORD
+        rather than applied here, so the report keeps deriving its own
+        comparison window: period arithmetic stays in the report layer, which is
+        the only layer allowed to own it.
+        """
+        values = {}
+        if date_from and date_to:
+            values = {'date_from': date_from, 'date_to': date_to}
+        try:
+            return self.env[model_name].new(values)
+        except ValueError:
+            # This method is reachable by RPC, and the client sends raw strings
+            # from a date input — trivially bypassed by calling the method
+            # directly. Odoo's field conversion raises ValueError on a malformed
+            # date, which would surface as an opaque 500. A bad range is treated
+            # exactly like a half-specified one: ignored, fall back to the
+            # report's default period. Nothing unvalidated ever reaches a domain
+            # either way, because callers read the dates back off the converted
+            # record rather than using the strings they passed in.
+            return self.env[model_name].new({})
+
+    def _comparison(self, model_name, date_from=None, date_to=None):
         """``(current, previous)`` figure dicts straight from the service."""
-        return self._service(model_name)._nc_service_comparison()
+        return self._service(model_name, date_from, date_to)._nc_service_comparison()
 
     @staticmethod
     def _kpi(key, label, current, previous, unit='currency'):
@@ -269,8 +289,14 @@ class AccountDashboardService(models.AbstractModel):
         return {'kpis': kpis, 'charts': charts, 'meta': self._meta()}
 
     @api.model
-    def get_ceo_dashboard(self):
+    def get_ceo_dashboard(self, date_from=None, date_to=None):
         """CEO dashboard (#56 / P4-T03): the executive view across domains.
+
+        ``date_from``/``date_to`` are optional (the UI's range selector). Both
+        must be supplied to take effect — a half-specified range silently
+        widening to YTD would be worse than ignoring it, because the header
+        would still display whatever the caller asked for. They are handed to
+        the report services untouched; nothing here interprets them.
 
         Headline KPIs and the revenue trend come from the F2-T08 services like
         every other dashboard here. The pipeline funnel and top customers come
@@ -289,8 +315,8 @@ class AccountDashboardService(models.AbstractModel):
         Keeps the {kpis, charts, meta} contract additive: `panels` is a new
         optional key the existing three dashboards simply never populate.
         """
-        current, previous = self._comparison(_SUMMARY)
-        profit_now, profit_prev = self._comparison(_PROFITABILITY)
+        current, previous = self._comparison(_SUMMARY, date_from, date_to)
+        profit_now, profit_prev = self._comparison(_PROFITABILITY, date_from, date_to)
         kpis = [
             self._kpi('revenue', self.env._("Revenue"), current, previous),
             self._kpi('net_profit', self.env._("Net Profit"), current, previous),
@@ -298,6 +324,9 @@ class AccountDashboardService(models.AbstractModel):
             self._kpi('net_margin', self.env._("Net Margin"),
                       profit_now, profit_prev, unit='percent'),
         ]
+        # The trend deliberately stays on its rolling 6-month window rather than
+        # following the selected range: a "trend" over a user-picked fortnight
+        # would be one or two points, which is a line chart in shape only.
         labels, series = self._trend(_SUMMARY, ('revenue', 'net_profit'))
         charts = [{
             'key': 'revenue_vs_profit',
@@ -318,7 +347,7 @@ class AccountDashboardService(models.AbstractModel):
         # to a different day than the period shown beside it. That is the exact
         # mis-attribution this panel's date bound exists to prevent, so it is
         # worth making structural rather than incidental.
-        summary = self._service(_SUMMARY)
+        summary = self._service(_SUMMARY, date_from, date_to)
         period_from, period_to = summary.date_from, summary.date_to
 
         panels = []

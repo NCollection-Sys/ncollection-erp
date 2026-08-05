@@ -8,6 +8,12 @@
                 <span class="nc-fin-dashboard__period" t-if="state.payload">
                     <t t-esc="state.payload.meta.period.from"/> — <t t-esc="state.payload.meta.period.to"/>
                 </span>
+                <!-- Additive toolbar slot. Renders nothing unless a subclass
+                     defines the sub-template, so Finance / Accountant / Cash
+                     are untouched. -->
+                <t t-if="toolbarTemplate">
+                    <t t-call="{{ toolbarTemplate }}"/>
+                </t>
             </div>
 
             <t t-if="state.loading">
@@ -40,6 +46,40 @@
                                     <canvas t-att-data-chart-key="chart.key"/>
                                 </div>
                             </NcChartWrapper>
+                        </t>
+                    </div>
+
+                    <!-- Cross-domain panels (#56). `panels` is an ADDITIVE payload
+                         key: the other three dashboards never populate it, so this
+                         block renders nothing for them. A panel present with zero
+                         rows is a real empty state (licensed, quiet period); a panel
+                         the plan does not license is absent entirely, never zeroed. -->
+                    <div class="nc-fin-dashboard__panels" t-if="state.payload.panels and state.payload.panels.length">
+                        <t t-foreach="state.payload.panels" t-as="panel" t-key="panel.key">
+                            <section class="nc-panel">
+                                <h2 class="nc-panel__title" t-esc="panel.label"/>
+                                <t t-if="!panel.rows.length">
+                                    <NcEmptyState
+                                        title="'Nothing in this period'"
+                                        description="'This panel is part of your plan; there is simply no data for the selected range.'"/>
+                                </t>
+                                <ol t-else="" class="nc-panel__rows" t-att-class="'nc-panel__rows--' + panel.type">
+                                    <t t-foreach="panel.rows" t-as="row" t-key="row_index">
+                                        <li class="nc-panel__row">
+                                            <button class="nc-panel__label" type="button"
+                                                    t-on-click="() => this.drillDown(panel, row)"
+                                                    t-att-title="drillDownHint(panel)">
+                                                <t t-esc="row.label"/>
+                                            </button>
+                                            <span class="nc-panel__bar" t-att-style="barStyle(panel, row)"/>
+                                            <span class="nc-panel__value" t-esc="formatAmount(row.value)"/>
+                                            <span class="nc-panel__count" t-if="row.count !== undefined">
+                                                <t t-esc="row.count"/>
+                                            </span>
+                                        </li>
+                                    </t>
+                                </ol>
+                            </section>
                         </t>
                     </div>
                 </t>

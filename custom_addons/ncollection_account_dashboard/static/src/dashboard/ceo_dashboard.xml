@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Header toolbar for the CEO dashboard. Rendered through the base's
+         additive `toolbarTemplate` slot, so the other three dashboards, which
+         define no toolbar, are byte-identical to before. -->
+    <t t-name="ncollection_account_dashboard.CeoToolbar">
+        <div class="nc-fin-dashboard__toolbar">
+            <label class="nc-range__field">
+                <span class="nc-range__caption">From</span>
+                <input type="date" class="nc-range__input"
+                       t-model="range.from"
+                       t-att-max="range.to or undefined"
+                       aria-label="Period start"/>
+            </label>
+            <label class="nc-range__field">
+                <span class="nc-range__caption">To</span>
+                <input type="date" class="nc-range__input"
+                       t-model="range.to"
+                       t-att-min="range.from or undefined"
+                       aria-label="Period end"/>
+            </label>
+
+            <!-- Also disabled while loading: two rapid applies race, and if the
+                 responses resolve out of order the dashboard would settle on
+                 figures for a range the user no longer has selected, with
+                 nothing on screen to say so. -->
+            <button class="btn btn-primary nc-range__apply" type="button"
+                    t-on-click="applyRange"
+                    t-att-disabled="rangeIsPartial or rangeIsInvalid or state.loading">
+                Apply
+            </button>
+            <button class="btn btn-secondary" type="button"
+                    t-if="range.from or range.to"
+                    t-on-click="resetRange">
+                Reset
+            </button>
+
+            <!-- Say WHY it is disabled. A dead button with no explanation reads
+                 as a broken page. -->
+            <span class="nc-range__hint" t-if="rangeIsPartial">
+                Pick both dates to apply a range.
+            </span>
+            <span class="nc-range__hint nc-range__hint--error" t-elif="rangeIsInvalid">
+                The start date is after the end date.
+            </span>
+
+            <button class="btn btn-secondary nc-print-hide" type="button"
+                    t-on-click="exportPdf"
+                    title="Print or save this dashboard as a PDF">
+                Export PDF
+            </button>
+        </div>
+    </t>
+
+</templates>

@@ -41,4 +41,149 @@
         position: relative;
         height: 260px;
     }
+
+    // ---- CEO additions (#56) ---------------------------------------------
+
+    &__toolbar {
+        display: flex;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: var(--nc-space-3, 0.75rem);
+    }
+
+    &__panels {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: var(--nc-space-4, 1rem);
+        margin-top: var(--nc-space-6, 1.5rem);
+    }
+}
+
+.nc-range {
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--nc-space-1, 0.25rem);
+    }
+
+    &__caption {
+        font-size: var(--nc-font-size-xs, 0.75rem);
+        color: var(--nc-text-muted, #6b7280);
+    }
+
+    &__hint {
+        font-size: var(--nc-font-size-sm, 0.875rem);
+        color: var(--nc-text-muted, #6b7280);
+        align-self: center;
+
+        &--error {
+            color: var(--nc-color-danger, #b42318);
+        }
+    }
+}
+
+.nc-panel {
+    background: var(--nc-surface, #fff);
+    border: 1px solid var(--nc-border, #e5e7eb);
+    border-radius: var(--nc-radius-md, 0.5rem);
+    padding: var(--nc-space-4, 1rem);
+
+    &__title {
+        margin: 0 0 var(--nc-space-3, 0.75rem);
+        font-size: var(--nc-font-size-md, 1rem);
+        color: var(--nc-text-strong, inherit);
+    }
+
+    &__rows {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--nc-space-2, 0.5rem);
+    }
+
+    &__row {
+        display: grid;
+        grid-template-columns: minmax(6rem, 1fr) 3fr auto auto;
+        align-items: center;
+        gap: var(--nc-space-3, 0.75rem);
+    }
+
+    // The label is a real <button>: it is an action, so it must be reachable by
+    // keyboard and announced as activatable. Styled flat so the row still reads
+    // as a list rather than a row of buttons.
+    &__label {
+        background: none;
+        border: 0;
+        padding: 0;
+        // `start`, not `left` — this product ships Arabic, and a physical
+        // direction pins the label to the wrong edge under RTL. Enforced by
+        // ncollection_branding's RTL conformance test (UI_UX §23 / P3-T08).
+        text-align: start;
+        color: var(--nc-text-strong, inherit);
+        cursor: pointer;
+        border-radius: var(--nc-radius-sm, 0.25rem);
+
+        &:hover,
+        &:focus-visible {
+            text-decoration: underline;
+        }
+
+        // Never remove the focus ring — this is the only affordance a keyboard
+        // user has for the drill-down.
+        &:focus-visible {
+            outline: 2px solid var(--nc-color-focus, #2563eb);
+            outline-offset: 2px;
+        }
+    }
+
+    &__bar {
+        display: block;
+        height: 0.5rem;
+        min-width: 2px;
+        border-radius: var(--nc-radius-sm, 0.25rem);
+        background: var(--nc-color-accent, #2563eb);
+    }
+
+    &__value {
+        font-variant-numeric: tabular-nums;
+        color: var(--nc-text-strong, inherit);
+    }
+
+    &__count {
+        font-variant-numeric: tabular-nums;
+        color: var(--nc-text-muted, #6b7280);
+        font-size: var(--nc-font-size-sm, 0.875rem);
+    }
+}
+
+// ---- Print / PDF export (#56) --------------------------------------------
+// The export is the browser's own print pipeline, so these rules ARE the PDF.
+@media print {
+    // Odoo's chrome is navigation, not content, and would otherwise consume a
+    // third of the first page.
+    .o_main_navbar,
+    .o_control_panel,
+    .nc-print-hide,
+    .nc-range__apply {
+        display: none !important;
+    }
+
+    .nc-fin-dashboard {
+        padding: 0;
+    }
+
+    // Keep a panel or a chart from being split across a page break mid-row.
+    .nc-panel,
+    .nc-fin-dashboard__canvas {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    // Backgrounds are informational here (the funnel bars encode magnitude), so
+    // ask the browser to keep them rather than print an empty rail.
+    .nc-panel__bar {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 }
