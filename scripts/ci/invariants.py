@@ -286,12 +286,50 @@ CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
         "Same shape and same reason as prod: staging mirrors production, and a "
         "staging that skipped tenant crons would not be a rehearsal of it.",
 }
+# A service with NO `command:` at all runs the image's CMD, and `odoo:19`'s is a
+# bare `odoo` whose built-in defaults are max_cron_threads=2 and db_name unset —
+# i.e. the #337/#343 disease with no line for a line-based rule to read. That is
+# how the BASE docker-compose.yml's own `odoo` service stayed invisible to R5 and
+# R6 alike while `.github/workflows/ci.yml`'s build job ran `docker compose up -d`
+# against exactly that shape. Found by review, not by the rule that was written
+# to prevent it.
+#
+# These are the services allowed to carry no command, with the reason:
+CRON_COMMANDLESS_ALLOWED: dict[tuple[str, str], str] = {
+    ("docker-compose.cronscope.yml", "cron-scope-runner"):
+        "Harness service, never started by `up`. Every invocation is a "
+        "`compose run` from verify_cron_scope.sh supplying its own command — "
+        "the two arms differ by one flag, so a command here would hide the "
+        "variable under test.",
+    ("docker-compose.cronstall.yml", "cron-stall-odoo"):
+        "Same shape, same reason (#310): the starvation harness supplies one "
+        "command per arm.",
+}
+COMPOSE_IMAGE_ODOO_RE = re.compile(r"^\s+image:\s*\S*odoo", re.MULTILINE)
+COMPOSE_HAS_CMD_RE = re.compile(r"^\s+(?:command|entrypoint):", re.MULTILINE)
+
+# KNOWN BLIND SPOTS, stated rather than discovered later (both confirmed absent
+# from this repo today, both found by the review of this rule):
+#   * a command supplied through a YAML anchor/merge key (`x-base: &base` +
+#     `<<: *base`) lives outside the `services:` block this scans, so the
+#     service reads as commandless — it would be flagged, not missed, which is
+#     the safe direction, but the message would be wrong.
+#   * `entrypoint: ["odoo"]` with the flags in a separate `command:` is treated
+#     as "has a command" and then only matches if the text happens to contain
+#     `odoo` — for a differently-named config path it would be dropped.
+# Closing either properly needs a YAML parser; invariants.py deliberately has no
+# third-party imports, so this is documented instead of half-done.
 COMPOSE_SERVICE_RE = re.compile(r"^  ([A-Za-z0-9_.-]+):\s*$")
 COMPOSE_TOPLEVEL_RE = re.compile(r"^([A-Za-z0-9_.-]+):")
 COMPOSE_COMMAND_RE = re.compile(r"^(\s+)command:\s*(.*)$")
 # `-d <db>` / `-d=<db>` / `--database <db>`. The lookbehind keeps `--db-filter`
 # from matching: its `-d` is preceded by a `-`.
-DB_SCOPE_RE = re.compile(r"(?<![\w-])(?:-d|--database)[ =]")
+# `-d db` / `-d=db` / `--database db`, and the JSON-list form where the flag is
+# its own quoted token (`["odoo", "-d", "somedb"]`) and is followed by a quote or
+# comma rather than a space. Missing that spelling made the rule cry wolf on a
+# compliant command. The lookbehind keeps `--db-filter` from matching: its `-d`
+# is preceded by a `-`.
+DB_SCOPE_RE = re.compile(r"(?<![\w-])(?:-d|--database)(?=[ =\"',\]]|$)")
 
 
 def _compose_odoo_commands(text: str) -> list[tuple[str, str, int]]:
@@ -336,6 +374,35 @@ def _compose_odoo_commands(text: str) -> list[tuple[str, str, int]]:
     return [(s, c, n) for s, c, n in out if re.search(r"\bodoo\b", c)]
 
 
+def _commandless_odoo_services(text: str) -> list[tuple[str, int]]:
+    """Odoo-image services with no `command:`/`entrypoint:` of their own."""
+    found: list[tuple[str, int]] = []
+    lines = text.splitlines()
+    service, start, in_services, body = None, 0, False, []
+
+    def flush() -> None:
+        if service and COMPOSE_IMAGE_ODOO_RE.search("\n".join(body)) \
+                and not COMPOSE_HAS_CMD_RE.search("\n".join(body)):
+            found.append((service, start))
+
+    for i, line in enumerate(lines, 1):
+        top = COMPOSE_TOPLEVEL_RE.match(line)
+        if top:
+            flush()
+            service, body = None, []
+            in_services = top.group(1) == "services"
+            continue
+        svc = COMPOSE_SERVICE_RE.match(line)
+        if svc and in_services:
+            flush()
+            service, start, body = svc.group(1), i, []
+            continue
+        if service:
+            body.append(line)
+    flush()
+    return found
+
+
 def rule_cron_enumeration_declared(out: list[str]) -> None:
     """A cron-running Odoo service must scope cron, or be an allowed enumerator."""
     for path in sorted(REPO_ROOT.glob("docker-compose*.yml")):
@@ -346,6 +413,17 @@ def rule_cron_enumeration_declared(out: list[str]) -> None:
             out.append(f"{rel}: not readable, so the cron-enumeration guard "
                        f"cannot run.")
             continue
+        for service, lineno in _commandless_odoo_services(text):
+            if (rel, service) in CRON_COMMANDLESS_ALLOWED:
+                continue
+            out.append(
+                f"{rel}:{lineno}: service `{service}` uses an Odoo image with no "
+                f"`command:`, so it runs the image default — `max_cron_threads=2` "
+                f"and no `-d`, which ticks EVERY database on the server "
+                f"(#337/#343). Give it an explicit command, or add "
+                f"('{rel}', '{service}') to CRON_COMMANDLESS_ALLOWED in "
+                f"scripts/ci/invariants.py with the reason it needs none."
+            )
         for service, command, lineno in _compose_odoo_commands(text):
             value_m = CRON_THREADS_VALUE_RE.search(command)
             if value_m and CRON_THREADS_OK_RE.match(value_m.group(1)):

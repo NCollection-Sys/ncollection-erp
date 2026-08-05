@@ -255,11 +255,20 @@ thing that scopes cron is `-d` on the command line.
 
 | Service | cron threads | `-d` | Runs whose crons | Correct? |
 |---|---|---|---|---|
+| **`odoo` (BASE `docker-compose.yml`)** | **`0` (#343)** | — | nobody | ✅ **fixed here** |
 | `odoo` (dev), `odoo` (routing) | `0` | — | nobody | ✅ #337 |
 | `odoo` (pooling) | `0` | — | nobody — web only | ✅ |
 | **`provisioning-runner` (saas)** | `1` | **`-d` (#343)** | the platform DB only | ✅ **fixed here** |
 | `odoo-bus` (pooling) | `2` | none | **every database** | ✅ **on purpose** |
 | `odoo` (prod), `odoo` (staging) | `1` (from the conf) | none | **every database** | ✅ **on purpose** |
+
+The **base** row is the one that was missed twice. It carried no `command:` at all, so it ran
+the image's CMD — a bare `odoo`, whose built-in defaults are `max_cron_threads=2` and no
+`db_name`. A rule that reads `command:` lines cannot see a service that has none, which is why
+R5 *and* the first version of R6 both reported clean on it. The base file's own comment invites
+the bare `docker compose up`, and CI's `build` job runs exactly that — harmless there only
+because CI's Postgres is ephemeral, and not harmless at all on a developer's persistent
+`postgres_data` volume.
 
 ### 8.1 Why enumeration is right for some and wrong for others
 
@@ -294,6 +303,10 @@ naming:
 - **Absent is not zero.** A command with no `--max-cron-threads` inherits `max_cron_threads = 1`
   from `odoo.prod.conf`, so "no flag" means "runs cron". prod and staging are caught by this,
   not missed by it.
+- **A missing command is not an exemption.** An Odoo-image service with no `command:` runs the
+  image default and must be listed in `CRON_COMMANDLESS_ALLOWED` with a reason. Only the two
+  harness services qualify: neither is ever started by `up`, and both take a per-arm command
+  from their script, so a command in the file would hide the variable under test.
 - **The allowlist is the deliverable.** The rule does not forbid enumeration; it forbids
   enumerating *by accident*. `odoo-bus`, prod and staging are entries with reasons, which is
   what #343 asked to be recorded and what a bare compose edit would not have produced.

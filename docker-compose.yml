@@ -66,6 +66,19 @@ services:
       # The production multi-tenant config is config/odoo.prod.conf, selected
       # by docker-compose.prod.yml. See docs/markdown/LOCAL_DEV_AND_ARCHITECTURE.md.
       - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+    # --max-cron-threads=0 HERE, not only in the overlays (#343). The image's
+    # CMD is a bare `odoo`, and its built-in defaults are max_cron_threads=2
+    # with db_name unset — so a plain `docker compose up`, which the comment
+    # above explicitly invites, produced a container that ran the crons of
+    # EVERY database on the developer's persistent postgres_data volume.
+    # `--db-filter` would not have helped: `cron_database_list()` is
+    # `config['db_name'] or list_dbs(True)` and does not consult it (#337).
+    #
+    # Every overlay that needs different behaviour REPLACES this line rather
+    # than merging with it — dev/routing restate the flag, prod/pooling/staging
+    # bring their own command — so this is a floor for the bare invocation, not
+    # a constraint on any deployment.
+    command: odoo --max-cron-threads=0
     healthcheck:
       # /web/health is Odoo's built-in no-database health route (200 OK).
       test: ["CMD-SHELL", "curl -sf http://localhost:8069/web/health || exit 1"]
