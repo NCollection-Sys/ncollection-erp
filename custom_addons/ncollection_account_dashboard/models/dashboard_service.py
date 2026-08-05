@@ -302,6 +302,21 @@ class AccountDashboardService(models.AbstractModel):
         }]
         return {'kpis': kpis, 'charts': charts, 'meta': self._meta()}
 
+    def _require_any_group(self, xmlids, message):
+        """Raise AccessError unless the caller holds one of `xmlids` (#333).
+
+        Extracted rather than inlined because three sibling methods are due
+        the same treatment — the sales/HR/warehouse dashboards narrow their
+        menus to a single role each and are still Ring 1 only. Four copies of
+        the same five lines is how two of them end up subtly different.
+
+        `AccessError`, not `UserError`: Odoo documents it as the access-rights
+        error and maps it to HTTP 403, which is what an RPC caller should see
+        for an authorization refusal.
+        """
+        if not any(self.env.user.has_group(x) for x in xmlids):
+            raise AccessError(message)
+
     @api.model
     def get_ceo_dashboard(self, date_from=None, date_to=None):
         """CEO dashboard (#56 / P4-T03): the executive view across domains.
@@ -361,11 +376,10 @@ class AccountDashboardService(models.AbstractModel):
         menus narrow the same way — that is a follow-up, so this ticket's
         ruling is not widened past what #333 decided.
         """
-        if not (self.env.user.has_group('ncollection_core.group_role_ceo')
-                or self.env.user.has_group('base.group_system')):
-            raise AccessError(self.env._(
-                "The CEO dashboard is available to the CEO and the workspace "
-                "owner."))
+        self._require_any_group(
+            ('ncollection_core.group_role_ceo', 'base.group_system'),
+            self.env._("The CEO dashboard is available to the CEO and the "
+                       "workspace owner."))
         current, previous = self._comparison(_SUMMARY, date_from, date_to)
         profit_now, profit_prev = self._comparison(_PROFITABILITY, date_from, date_to)
         kpis = [

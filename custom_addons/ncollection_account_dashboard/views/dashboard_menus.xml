@@ -71,8 +71,10 @@
          Mirrored at the data layer like the CEO dashboard: the ncollection.kpi /
          P4-T01 engine reads run under the user's own rights with no sudo, so a
          cross-role RPC call returns None (empty), never another role's data.
-         (The RPC-level role check, as for the CEO dashboard, is deferred to
-         #333 — menu gating is Ring 1 curation.) -->
+         (These three are still Ring 1 only. #333 added the RPC-level check to
+         the CEO dashboard and ruled that Rule 4 applies literally; the same
+         mirror is owed here and is a filed follow-up, not a decision still
+         open.) -->
     <menuitem id="menu_department_dashboard_root"
               name="Department Dashboards"
               groups="ncollection_core.group_role_sales,ncollection_core.group_role_hr,ncollection_core.group_role_warehouse"

@@ -246,9 +246,13 @@ class TestDashboardService(AccountTestInvoicingCommon):
         The CEO view is for CEO/Owner — an accountant may open Finance but not
         this. Odoo INTERSECTS a menu's groups with its parent's, so the child
         can only narrow; asserting the child's own groups is therefore the whole
-        gate. Ring 1 only: the ORM mirror is that get_ceo_dashboard runs the
-        executive services under the caller's own rights with no sudo, and the
-        panels go through the P4-T01 engine, which enforces Ring 2 per model.
+        gate at Ring 1.
+
+        NO LONGER Ring 1 ONLY (#333): get_ceo_dashboard now carries its own
+        role check, asserted by the four cases further down this file. The
+        menu and the RPC are two halves of one control, and this test covers
+        only the menu half — which is why the other half needed its own tests
+        rather than an extra assertion here.
         """
         menu = self.env.ref('ncollection_account_dashboard.menu_ceo_dashboard')
         groups = menu.group_ids       # Odoo 19 renamed groups_id -> group_ids
@@ -341,6 +345,17 @@ class TestDashboardService(AccountTestInvoicingCommon):
         exposed nothing."""
         user = self._user_with('ceo_rpc_admin', ['base.group_system'])
         self.assertIn('kpis', self.service.with_user(user).get_ceo_dashboard())
+
+    def test_a_manager_is_denied(self):
+        """The role structurally closest to slipping through: Manager sits one
+        hop BELOW CEO in the chain (ceo implies manager, not the reverse) and
+        implies neither CEO nor system. A check that accidentally tested the
+        implication in the wrong direction would admit them."""
+        user = self._user_with('ceo_rpc_mgr',
+                               ['ncollection_core.group_role_manager'])
+        with self.assertRaises(AccessError) as caught:
+            self.service.with_user(user).get_ceo_dashboard()
+        self.assertIn("CEO dashboard", str(caught.exception))
 
     # ---- #56 PR2: the UI's date-range selector -----------------------------
 
