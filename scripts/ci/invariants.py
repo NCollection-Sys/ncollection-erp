@@ -263,8 +263,16 @@ CI_EXEMPT_MODULES: dict[str, str] = {
 #     --test-tags /ncollection_core,...,/ncollection_approvals,\
 #     /ncollection_account_reports,...
 #
-# — is BYTE-IDENTICAL once bash joins the continuation, so odoo receives exactly
-# the same argument and real coverage is untouched. The anchored regex, however,
+# — is byte-identical once bash joins the continuation ONLY IF the continuation
+# is UNINDENTED. Bash removes `\<newline>` and nothing else, so:
+#
+#     -i mod_a,\<nl>mod_b            -> ['-i', 'mod_a,mod_b']     identical
+#     -i mod_a,\<nl>    mod_b        -> ['-i', 'mod_a,', 'mod_b'] NOT identical
+#
+# (verified against real bash, #330). The indented form genuinely drops mod_b
+# from the install list, so flagging it is CORRECT — and it is the form a human
+# reflowing a long line inside a YAML block scalar would naturally write. Both
+# cases are pinned in scripts/ci/test_invariants.py. The anchored regex, however,
 # captured only the first physical line and would have reported four fully
 # covered modules as missing. A guard that cries wolf on correct code is worse
 # than no guard (see this module's docstring) — and false-alarming on a change
