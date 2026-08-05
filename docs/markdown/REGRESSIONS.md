@@ -436,6 +436,61 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-025 — A guard's regex could not see the file it was meant to guard ✅ FIXED (#343)
+
+**Symptom.** None, again — and from the guard's side, worse than none: a clean report.
+
+`invariants.py` R5 was added by #337 to stop Odoo containers running the crons of every
+database on the server. `docker-compose.saas.yml`'s `provisioning-runner` had the identical
+defect and was **not** caught. Measured: R5's matcher
+
+```python
+ODOO_COMMAND_RE = re.compile(r"^\s*command:.*\bodoo\b")
+```
+
+matches **0 lines** in that file, because the command is written as a folded YAML block:
+
+```yaml
+command: >
+  odoo -c /etc/odoo/odoo.conf
+       --max-cron-threads=1
+       --db-filter=^${PLATFORM_DB:-ncollection}$$
+```
+
+The flags live on continuation lines. Even had someone added the file to `CRON_SCOPED_FILES`,
+R5 would have reported its "the command is gone" fallback rather than checking anything.
+
+**Root cause.** A **line-shaped rule guarding a block-shaped setting.** The rule's unit of
+analysis was one line; the thing it governs is a multi-line YAML scalar. That mismatch is
+invisible in review, because the regex is correct for every file it was written against —
+and both files it was pointed at happen to use the inline form.
+
+Worth separating from the cron bug itself: #337 was a defect, #343's *interesting* half is
+that the guard written to prevent a recurrence had a structural blind spot for the very next
+instance. A guard's coverage is not what it checks; it is what it can **see**.
+
+**The guard that now prevents recurrence.** `invariants.py` **R6**
+(`rule_cron_enumeration_declared`):
+
+- gathers folded (`>`) and literal (`|`) `command:` blocks before matching, so the unit of
+  analysis is the command, not the line;
+- scans **every** `docker-compose*.yml`, not a hand-maintained file list — the other half of
+  why R5 missed this;
+- treats a **missing** `--max-cron-threads` as cron-enabled, because it inherits
+  `max_cron_threads = 1` from `odoo.prod.conf`. "Absent" and "zero" are not the same, and
+  conflating them would have skipped prod and staging entirely;
+- requires `-d`, or an entry in `CRON_ENUMERATORS_ALLOWED` **with a written reason**, so a
+  container that legitimately serves every tenant's crons (`odoo-bus`, prod, staging) is a
+  recorded decision instead of looking identical to the accident.
+
+RED-proved end to end against a temporary repo root: fires with `-d` removed, silent with it
+present, silent when `-d` is removed but threads are `0` (correctly R5's territory).
+
+**Runtime proof:** `make cron-scope-verify` (in `verify-all`), two arms one flag apart on a
+private Postgres — see `DESIGN_CRON_AND_QUEUE_TOPOLOGY.md` §8.4.
+
+---
+
 ## R-024 — A whole module's test suite had never run in CI, and nothing was red ✅ FIXED (#328)
 
 **Symptom.** None. That is the entry.
