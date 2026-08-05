@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!--
+            Role-scoped visibility for anomaly alerts (#346).
+
+            #61 shipped detection with read locked to base.group_system, because
+            all three reviewers flagged a blanket base.group_user grant as a
+            role-boundary leak: alerts carry daily revenue, vendor-bill totals
+            and attendance counts, which ROLE_MATRIX D5 places in
+            CEO/Accountant/Owner territory rather than "every employee".
+
+            THE RULE IS THE CONTROL, THE MENU IS CONVENIENCE. Standing Rule 4 —
+            a UI restriction must be mirrored at the ORM, because
+            /web/dataset/call_kw never consults a menu. Everything below is
+            enforced on `search`, so an RPC client is bound by exactly what the
+            UI shows.
+
+            HOW ODOO COMBINES THESE. Record rules attached to groups are OR-ed
+            across the groups a user holds, so a user in two roles sees the
+            union of their slices. That is why each rule names only the groups
+            that SHOULD see its detector.
+
+            WHY base.group_system IS ON EVERY RULE. Without it, an administrator
+            who also holds a role group would fall under that role's rule and be
+            silently narrowed to its slice — losing access by acquiring a group,
+            which is the opposite of what anyone expects. Pinned by
+            test_an_admin_who_also_holds_a_role_still_sees_everything.
+
+            THE IMPLICATION CHAIN DOES REAL WORK (security/role_groups.xml):
+
+                owner   -> implies ceo AND base.group_system
+                ceo     -> implies manager
+                sales/warehouse/hr/accountant/manager -> imply employee -> base.group_user
+
+            So a CEO reaches the attendance and stock rules THROUGH manager, and
+            an owner reaches everything through system. Those are consequences
+            of the existing role model, not extra grants made here — and
+            test_anomaly_visibility asserts them, so editing the chain fails
+            loudly instead of silently widening access.
+
+            noupdate="0" deliberately: unlike the cron rows, these are a
+            security policy. A tenant must not be able to keep a stale, wider
+            rule across an upgrade that narrows one.
+        -->
+
+        <record id="rule_alert_sales" model="ir.rule">
+            <field name="name">Anomaly alerts: sales</field>
+            <field name="model_id" ref="model_ncollection_alert"/>
+            <field name="domain_force">[('detector_key', '=', 'sales_trend_drop')]</field>
+            <field name="groups" eval="[(6, 0, [
+                ref('ncollection_core.group_role_sales'),
+                ref('ncollection_core.group_role_ceo'),
+                ref('ncollection_core.group_role_owner'),
+                ref('base.group_system')])]"/>
+        </record>
+
+        <record id="rule_alert_expense" model="ir.rule">
+            <field name="name">Anomaly alerts: expenses</field>
+            <field name="model_id" ref="model_ncollection_alert"/>
+            <field name="domain_force">[('detector_key', '=', 'expense_spike')]</field>
+            <field name="groups" eval="[(6, 0, [
+                ref('ncollection_core.group_role_accountant'),
+                ref('ncollection_core.group_role_ceo'),
+                ref('ncollection_core.group_role_owner'),
+                ref('base.group_system')])]"/>
+        </record>
+
+        <record id="rule_alert_attendance" model="ir.rule">
+            <field name="name">Anomaly alerts: attendance</field>
+            <field name="model_id" ref="model_ncollection_alert"/>
+            <field name="domain_force">[('detector_key', '=', 'attendance_anomaly')]</field>
+            <field name="groups" eval="[(6, 0, [
+                ref('ncollection_core.group_role_hr'),
+                ref('ncollection_core.group_role_manager'),
+                ref('ncollection_core.group_role_owner'),
+                ref('base.group_system')])]"/>
+        </record>
+
+        <record id="rule_alert_stock" model="ir.rule">
+            <field name="name">Anomaly alerts: stock</field>
+            <field name="model_id" ref="model_ncollection_alert"/>
+            <field name="domain_force">[('detector_key', '=', 'stock_below_safety')]</field>
+            <field name="groups" eval="[(6, 0, [
+                ref('ncollection_core.group_role_warehouse'),
+                ref('ncollection_core.group_role_manager'),
+                ref('ncollection_core.group_role_owner'),
+                ref('base.group_system')])]"/>
+        </record>
+    </data>
+</odoo>
