@@ -50,6 +50,37 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 TREE_TAG_RE = re.compile(r"<tree\b")
 ATTRS_RE = re.compile(r"\battrs\s*=")
 
+# Rule 6 is about MARKUP, and a comment is not markup (#348).
+#
+# The guard used to match these patterns as raw text, so a comment DOCUMENTING
+# the rule failed the rule. Hit for real while writing #346:
+#
+#     <!-- P5-T04 alerts. Odoo 19: <list>, never <tree>; no attrs=. -->
+#
+# produced two violations on that line while the view below it was correct
+# throughout. The workaround is to delete the explanation, which is the wrong
+# direction — a guard that punishes writing the convention down next to the
+# code it governs teaches people to remove it.
+#
+# Bodies are blanked rather than removed so LINE NUMBERS survive: findings
+# report `path:line`, and shifting them would send readers to the wrong place.
+#
+# DELIBERATELY NOT APPLIED TO check_secrets. A commented-out credential is
+# still a credential sitting in the repository; only the SYNTAX rules care
+# whether the text is live markup.
+#
+# An unterminated `<!--` matches nothing here, so such a file is scanned as
+# before. That is not a gap worth code: the file is malformed XML and CI's own
+# well-formedness step fails it independently.
+XML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def without_xml_comments(text: str) -> str:
+    """Blank every XML comment body, preserving line count and numbering."""
+    return XML_COMMENT_RE.sub(
+        lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
+
+
 # ---------------------------------------------------------------------------
 # Rule 2: menu hiding without matching ORM/RPC enforcement
 # A changed view/menu file that adds `groups=` restrictions is fine on its
@@ -131,7 +162,7 @@ def addon_of(path: Path) -> str | None:
 def check_view_syntax(path: Path, text: str, findings: list[str]) -> None:
     if path.suffix != ".xml":
         return
-    for i, line in enumerate(text.splitlines(), 1):
+    for i, line in enumerate(without_xml_comments(text).splitlines(), 1):
         if TREE_TAG_RE.search(line):
             findings.append(f"{path}:{i}: uses <tree> — Odoo 19 requires <list> (Rule 6)")
         if ATTRS_RE.search(line):
