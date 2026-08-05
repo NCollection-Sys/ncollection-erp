@@ -15,7 +15,35 @@ services:
 
   odoo:
     # Verbose logging + Odoo dev conveniences (auto-reload of assets, etc.).
-    command: odoo --log-level=debug --dev=reload,qweb,xml
+    #
+    # --max-cron-threads=0 by default (#337). Without it this container runs the
+    # crons of EVERY database on the server, not just the one you are working
+    # on. Odoo's cron worker selects databases with
+    #
+    #     cron_database_list() = config['db_name'] or list_dbs(True)
+    #
+    # and with no `-d` there is no db_name, so it returns every database and
+    # ticks each one about once a minute, forever. `--db-filter` does NOT
+    # restrict this — it only filters HTTP routing, which is exactly the trap
+    # that made this survive so long.
+    #
+    # Measured before the fix: 32 cron jobs in 3 minutes across 21 databases —
+    # months-old fixtures (ci_*, dimtest, revtest244, t304check, …) running real
+    # fleet-migration, mail-queue and notification logic, none of them the
+    # working DB. It also silently corrupts timing measurements taken against a
+    # shared-server database: it is how #310's first harness fabricated 46s of
+    # cron starvation that never happened (DESIGN_CRON_AND_QUEUE_TOPOLOGY.md
+    # §5.1).
+    #
+    # Nothing in the repo needs the dev scheduler: every suite invokes its cron
+    # directly (`env['…']._cron_reconcile_config()` in verify_config_sync.sh),
+    # and the one test that needs a REAL cron thread runs its own isolated Odoo
+    # (docker-compose.cronstall.yml).
+    #
+    # Need crons locally? `NC_DEV_CRON_THREADS=1 make up` — but understand what
+    # you are turning on: it is cron for all ~89 databases again, not just
+    # yours. To exercise one cron, call it from `make odoo-shell` instead.
+    command: odoo --log-level=debug --dev=reload,qweb,xml --max-cron-threads=${NC_DEV_CRON_THREADS:-0}
 
   # Edge reverse proxy (P1-T03). Dev = *.localhost over plain HTTP; the dev
   # server block routes the realtime bus to Odoo :8069 (dev runs workers=0).

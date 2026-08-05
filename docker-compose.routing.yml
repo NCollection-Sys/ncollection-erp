@@ -25,4 +25,19 @@
 services:
 
   odoo:
-    command: ["odoo", "--db-filter=^%d$$", "--no-database-list", "--proxy-mode", "--log-level=info"]
+    # --max-cron-threads=0 (#337), and it must be HERE as well as in
+    # docker-compose.dev.yml: a service's `command` REPLACES the one from a
+    # lower-precedence file rather than merging with it, so the dev override's
+    # cron setting does not carry into the routing stack. Fixing only the dev
+    # file would have left crons ticking every database on the server for the
+    # whole of `make verify-all`, which runs on this stack.
+    #
+    # Note especially that `--db-filter` on this very line does NOT restrict
+    # cron — it filters HTTP routing only. Odoo's cron worker uses
+    # `config['db_name'] or list_dbs(True)`, and there is no `-d` here, so
+    # without this flag it would tick all ~89 databases. That distinction is
+    # the whole of #337.
+    #
+    # Nothing in the routing/verification suites needs the scheduler: each
+    # invokes its cron method directly.
+    command: ["odoo", "--db-filter=^%d$$", "--no-database-list", "--proxy-mode", "--log-level=info", "--max-cron-threads=0"]
