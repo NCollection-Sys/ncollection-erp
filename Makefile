@@ -47,7 +47,7 @@ OCA_VENV := .oca-venv
         routing-up routing-verify routing-down routing-clean e2e-clean \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
-        cron-starvation-verify cron-starvation-clean \
+        cron-starvation-verify cron-starvation-clean orphan-dbs \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 help: ## Show this help

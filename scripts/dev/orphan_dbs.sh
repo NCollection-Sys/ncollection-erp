@@ -23,11 +23,15 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."   # repo root
 
 DB_USER="${DB_USER:-odoo}"
-DC=(docker compose)
+# Pin the file set explicitly, as every other script here does. It works without
+# the flags today (compose auto-loads docker-compose.yml from cwd and the `db`
+# service is identical either way), but an explicitly-set COMPOSE_PROJECT_NAME
+# would make the bare form resolve somewhere else.
+DC=(docker compose -f docker-compose.yml -f docker-compose.dev.yml)
 
 # Databases with a documented owner. Anchored ERE, matched against the whole
 # name, so `rtclienta` is owned but `rtclientaX` is not silently swallowed.
-OWNED_RE='^(postgres|template[01]|ncollection|ncplatform|albarari'\
+OWNED_RE='^(postgres|ncollection|ncplatform|albarari'\
 '|rtclienta|rtclientb|rtadmin'\
 '|e2eclienta|e2eclientb|e2eadmin'\
 '|prov[a-z0-9]*'\
