@@ -86,8 +86,8 @@ DB_FLAG_RE = re.compile(r"(?:^|\s)(?:-d|--dbname)(?:[=\s])")
 # that line with a `|| true` and an unconditional "✅ removed" after it.
 # Bare `docker rm` is deliberately NOT here: removing a throwaway CONTAINER in a
 # trap is legitimate best-effort cleanup nobody depends on, and this repo has
-# three such lines today. Guarding it would cry wolf on correct code, which the
-# module docstring rules out.
+# six such lines today (3 in verify_cron_starvation.sh, 3 in pg_baseline.sh).
+# Guarding it would cry wolf on correct code, which the module docstring rules out.
 DOCKER_STATE_RE = re.compile(
     r"docker\s+(?:restart|start|stop)\b"
     r"|docker\s+(?:volume|network)\s+(?:rm|prune)\b"
@@ -96,6 +96,11 @@ DOCKER_STATE_RE = re.compile(
     r"|\$\{[A-Za-z_]+\[@\]\}\"?\s+(?:up|restart|start)\b"
 )
 SILENT_FAIL_RE = re.compile(r"\|\|\s*true")
+
+# `define NAME` / `define NAME =` opens a GNU make macro body, closed by `endef`.
+# Body lines carry no leading tab, so they need explicit tracking to stay in
+# scope — see the block comment in scan().
+MAKE_DEFINE_RE = re.compile(r"define\s+[A-Za-z_][A-Za-z0-9_]*")
 
 # R3 — Hardcoded container names break under a non-default COMPOSE_PROJECT_NAME.
 # Derive them instead: `docker compose ps -q <service>`.
@@ -114,9 +119,45 @@ SILENT_FAIL_RE = re.compile(r"\|\|\s*true")
 # `<project>_<name>` is the generic form, so match the project prefix itself
 # rather than enumerating volumes. Derive instead:
 #   docker compose config --format json | … ['name']   → the real project name
+# The container names are DERIVED from the compose files, not enumerated here.
+# The old hardcoded list named four services while the compose files defined
+# eight — `pgbouncer`, `odoo-bus`, `certbot` and `provisioning-runner` were all
+# invisible to R3, and any list would go stale again with the next service.
+#
+# A general `ncollection-<word>` pattern was tried first and REJECTED: it fired
+# on `ghcr.io/ncollection-sys/…` (a GitHub org), `ncollection-sshd.local` and
+# `52ncollection-unattended` (config filenames) — three false positives on
+# correct code, which this module's docstring rules out. Matching only names a
+# compose file actually declares as a container cannot make that mistake.
+CONTAINER_NAME_RE = re.compile(r"container_name:\s*([A-Za-z0-9][A-Za-z0-9_.-]*)")
+
+# Fallback if the compose files cannot be read. An empty derived set would make
+# the container half of R3 silently match nothing — a guard that reports clean
+# because it stopped looking is worse than one that is merely incomplete.
+_FALLBACK_CONTAINERS = ("ncollection-odoo", "ncollection-nginx",
+                        "ncollection-db", "ncollection-pgadmin")
+
+
+def _declared_container_names() -> tuple[str, ...]:
+    names: set[str] = set()
+    for path in REPO_ROOT.glob("docker-compose*.yml"):
+        try:
+            names |= set(CONTAINER_NAME_RE.findall(path.read_text(encoding="utf-8")))
+        except OSError:
+            continue
+    # Longest first so `ncollection-odoo-bus` wins over `ncollection-odoo`, and
+    # the finding names the container that is actually written on the line.
+    return tuple(sorted(names, key=len, reverse=True)) or _FALLBACK_CONTAINERS
+
+
+# Order matters: the `<project>_<name>` alternative must come FIRST. Python's
+# `|` takes the earliest alternative that matches at the leftmost position, and
+# `erp_` does not satisfy `erp\b` (underscore is a word character), so without
+# this ordering a volume name could match the container branch and get the wrong
+# remediation advice.
 HARDCODED_NAME_RE = re.compile(
-    r"ncollection-(?:odoo|nginx|db|pgadmin)\b"
-    r"|ncollection-erp_[A-Za-z0-9_]+"
+    r"ncollection-erp_[A-Za-z0-9_]+"
+    + "".join(f"|{re.escape(n)}\\b" for n in _declared_container_names())
 )
 
 # R4 — a module CI never installs is a module whose tests never run. Caught in
@@ -330,6 +371,8 @@ def scan(path: Path, findings: list[str]) -> None:
     # .githooks/* are shell scripts without a .sh extension.
     is_shell = path.suffix == ".sh" or rel.startswith(".githooks/")
 
+    in_define = False
+
     for lineno, line in enumerate(text.splitlines(), 1):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -337,21 +380,33 @@ def scan(path: Path, findings: list[str]) -> None:
         if is_pending(rel, line):
             continue
 
-        # R1 — shell, compose and Makefile RECIPE lines only. Makefile recipes
-        # start with a tab; scanning all lines would flag the `.PHONY: … psql …`
-        # list and the `psql:` target definition, which invoke nothing.
-        if is_shell or is_compose or (is_makefile and line.startswith("\t")):
+        # `define … endef` macro bodies are NOT tab-indented, so a recipe-only
+        # heuristic cannot see them — and `drop_database` is exactly such a
+        # macro, invoked by every destructive `*-clean` target in the Makefile.
+        # Without this, the #335 bug shape could be reintroduced inside the one
+        # piece of Makefile infrastructure that backs all of them and no rule
+        # would fire. Proven with a PoC before it was fixed.
+        if is_makefile:
+            if MAKE_DEFINE_RE.match(stripped):
+                in_define = True
+                continue        # the `define NAME` line itself invokes nothing
+            if stripped == "endef":
+                in_define = False
+                continue
+
+        # Makefile lines that actually RUN something: recipe lines (leading tab)
+        # and macro bodies. Everything else — `.PHONY:` lists, variable
+        # definitions, target headers — invokes nothing and would be noise.
+        is_make_recipe = is_makefile and (line.startswith("\t") or in_define)
+
+        # R1 — shell, compose, and Makefile recipe/macro lines.
+        if is_shell or is_compose or is_make_recipe:
             rule_pg_explicit_db(rel, line, lineno, findings)
 
-        # R2/R3 — shell, workflow run-steps, and Makefile RECIPE lines (#336).
-        #
-        # The Makefile used to be out of scope for both, which is precisely
-        # where `make` issues its docker commands — and #335 shipped a bug into
-        # that blind spot. Recipe lines only (leading tab), for the same reason
-        # R1 restricts itself: scanning every line would flag `.PHONY:` target
-        # lists and variable definitions, which invoke nothing.
-        is_make_recipe = is_makefile and line.startswith("\t")
-
+        # R2/R3 — shell, workflow run-steps, and Makefile recipe/macro lines
+        # (#336). The Makefile used to be out of scope for both, which is
+        # precisely where `make` issues its docker commands — and #335 shipped a
+        # bug straight into that blind spot.
         if is_shell or is_make_recipe:
             rule_no_silent_docker_failure(rel, line, lineno, findings)
 
@@ -359,10 +414,81 @@ def scan(path: Path, findings: list[str]) -> None:
             rule_no_hardcoded_container(rel, line, lineno, findings)
 
 
+# ---------------------------------------------------------------------------
+# Self-test
+# ---------------------------------------------------------------------------
+# These regexes are the whole guard, and they are five alternations deep. They
+# regress silently: a pattern that stops matching reports "clean", which is
+# indistinguishable from a healthy repo. That is not hypothetical — while
+# writing #336 a generalised `ncollection-<word>` container pattern was tried
+# and fired on a GitHub org and two config filenames; it was caught only by
+# running the tool by hand against the whole repo.
+#
+# So the cases run on EVERY invocation rather than living in a separate test
+# nobody executes. They are pure regex matches — microseconds — and a failure
+# here aborts before any scanning, because a broken guard must not be allowed
+# to print a reassuring "clean".
+SELF_TEST: tuple[tuple[str, str, bool], ...] = (
+    # (regex name, line, should this line be flagged?)
+    ("state", "docker restart odoo", True),
+    ("state", "docker compose up -d", True),
+    ("state", "\t$(COMPOSE) up -d", True),
+    ("state", '\t"${DC[@]}" up -d --wait db', True),
+    ("state", "docker volume rm -f x", True),
+    ("state", "docker network prune -f", True),
+    # Bare container removal is deliberately unguarded — see DOCKER_STATE_RE.
+    ("state", "docker rm -f scratch", False),
+    ("state", "docker compose ps -q db", False),
+    ("state", "docker build -t img .", False),
+
+    ("name", "docker volume rm ncollection-erp_cronstall_pgdata", True),
+    ("name", "docker logs ncollection-odoo-bus", True),
+    ("name", "docker exec ncollection-odoo bash", True),
+    # The three false positives a generalised pattern produced (#336).
+    ("name", "docker build -t ghcr.io/ncollection-sys/ncollection-erp:local .", False),
+    ("name", "install -m 0644 /etc/fail2ban/jail.d/ncollection-sshd.local", False),
+    ("name", "install -m 0644 /etc/apt/apt.conf.d/52ncollection-unattended", False),
+    ("name", "cd /srv/ncollection-erp/scripts && ./run.sh", False),
+
+    ("pg", "psql -U odoo -c 'SELECT 1'", True),
+    ("pg", "psql -U odoo -d postgres -c 'SELECT 1'", False),
+    ("pg", "pg_isready -U odoo -d postgres", False),
+    ("pg", "dropdb -U odoo --if-exists scratch", False),
+)
+
+
+def run_self_test() -> list[str]:
+    """Return a list of failures; empty means the patterns still behave."""
+    failures: list[str] = []
+    for name, line, expected in SELF_TEST:
+        if name == "state":
+            actual = bool(DOCKER_STATE_RE.search(line))
+        elif name == "name":
+            actual = bool(HARDCODED_NAME_RE.search(line))
+        else:
+            actual = bool(PG_TOOL_RE.search(line)) and not DB_FLAG_RE.search(line)
+        if actual is not expected:
+            failures.append(
+                f"{name}: expected {'a hit' if expected else 'no hit'} on {line!r}"
+            )
+    return failures
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--files", nargs="*", help="explicit file list instead of a repo scan")
     args = parser.parse_args()
+
+    # Before anything else: a guard that cannot detect its own breakage would
+    # otherwise print "clean" over a repo it is no longer really checking.
+    broken = run_self_test()
+    if broken:
+        print("invariants: SELF-TEST FAILED — the guard itself is broken\n")
+        for f in broken:
+            print(f"  ✗ {f}")
+        print("\nThe patterns in scripts/ci/invariants.py no longer behave as documented.")
+        print("Fix them before trusting any scan result.")
+        return 1
 
     paths = collect(args.files)
     findings: list[str] = []
