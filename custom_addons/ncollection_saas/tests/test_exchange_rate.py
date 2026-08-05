@@ -18,6 +18,7 @@ The properties worth protecting are the ones whose failure is invisible:
 """
 import io
 import xml.etree.ElementTree as ET
+from unittest.mock import patch
 
 from odoo.addons.ncollection_saas.models.exchange_rate import _ECB_URL
 from odoo.tests import TransactionCase, tagged
@@ -281,18 +282,18 @@ class TestEcbFailIntact(TransactionCase):
     def test_failed_fetch_keeps_the_previous_rate(self):
         old = self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.10})
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: None)
-        self.assertFalse(self.Rate._cron_refresh_ecb_rate())
+        self.assertFalse(self.Rate.refresh_ecb_rate())
         self.assertEqual(self.Rate._latest(), old, "previous rate was disturbed")
         self.assertEqual(len(self.Rate.search([])), 1, "a placeholder row appeared")
 
     def test_unparseable_response_writes_nothing(self):
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: '<not xml')
-        self.assertFalse(self.Rate._cron_refresh_ecb_rate())
+        self.assertFalse(self.Rate.refresh_ecb_rate())
         self.assertFalse(self.Rate.search([]))
 
     def test_success_records_the_feeds_own_date(self):
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
-        rec = self.Rate._cron_refresh_ecb_rate()
+        rec = self.Rate.refresh_ecb_rate()
         self.assertEqual(str(rec.name), '2026-08-03')
         self.assertAlmostEqual(rec.usd_per_eur, 1.1535, places=6)
 
@@ -302,21 +303,53 @@ class TestEcbFailIntact(TransactionCase):
         self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.15})
         self.patch(type(self.Rate), '_fetch_ecb_document',
                    lambda s: _DOC.replace("rate='1.1535'", "rate='9.99'"))
-        self.assertFalse(self.Rate._cron_refresh_ecb_rate())
+        self.assertFalse(self.Rate.refresh_ecb_rate())
         self.assertAlmostEqual(self.Rate._latest().usd_per_eur, 1.15, places=6)
 
     def test_a_normal_daily_move_is_accepted(self):
         """The cap must not refuse an ordinary day, or the feed freezes."""
         self.Rate.create({'name': '2026-08-01', 'usd_per_eur': 1.14})
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
-        self.assertTrue(self.Rate._cron_refresh_ecb_rate())
+        self.assertTrue(self.Rate.refresh_ecb_rate())
 
     def test_same_publication_date_does_not_churn(self):
         self.patch(type(self.Rate), '_fetch_ecb_document', lambda s: _DOC)
-        first = self.Rate._cron_refresh_ecb_rate()
-        second = self.Rate._cron_refresh_ecb_rate()
+        first = self.Rate.refresh_ecb_rate()
+        second = self.Rate.refresh_ecb_rate()
         self.assertEqual(first, second)
         self.assertEqual(len(self.Rate.search([])), 1)
+
+    # ---- #310: the cron must ENQUEUE, never fetch on the cron thread --------
+
+    def test_the_cron_enqueues_and_does_not_fetch_inline(self):
+        """The whole point of #310.
+
+        If the cron still performed the fetch, a slow external host would hold
+        the cron thread for up to limit_time_real_cron -- an hour in prod, and
+        UNBOUNDED in dev, where workers=0 means Odoo does not enforce it at all
+        -- blocking every other platform cron behind it.
+
+        Proved by making the fetch explode: the cron must complete anyway,
+        because it never calls it. Asserting only "with_delay was called" would
+        still pass if the fetch ALSO ran inline.
+        """
+        def explode(*args, **kwargs):
+            raise AssertionError("the cron performed the outbound fetch inline")
+
+        with patch.object(type(self.Rate), '_fetch_ecb_document', explode):
+            with patch.object(type(self.Rate), 'with_delay') as delayed:
+                self.Rate._cron_refresh_ecb_rate()
+
+        self.assertTrue(delayed.called, "the cron must enqueue the refresh")
+        self.assertEqual(
+            delayed.call_args.kwargs.get('channel'), 'root.outbound',
+            "outbound work must not share root.provisioning with provisioning, "
+            "backup, fleet-migration and config-sync -- a stalled host would "
+            "sit in a slot they need")
+        self.assertEqual(
+            delayed.call_args.kwargs.get('identity_key'), 'nc-ecb-refresh',
+            "without an identity key a runner backlog stacks duplicate fetches "
+            "against the same host")
 
 
 @tagged("post_install", "-at_install")

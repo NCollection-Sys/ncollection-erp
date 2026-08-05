@@ -30,9 +30,23 @@ services:
       HOST: db
       USER: ${DB_USER:-odoo}
       PASSWORD: ${DB_PASSWORD:-odoo}
-      # queue_job channel capacity — the dedicated 'provisioning' sub-channel
-      # gets 2 concurrent slots; keep the root default low.
-      ODOO_QUEUE_JOB_CHANNELS: root:1,root.provisioning:2
+      # queue_job channel capacity.
+      #
+      # A child's job must clear its PARENT's capacity too — jobrunner/channels.py
+      # `get_jobs_to_run` pulls children's jobs into the parent queue and then
+      # yields only `while self.has_capacity()`. So root is a cap on the whole
+      # subtree, not a default for jobs sitting directly on root.
+      #
+      # That is why root moved 1 -> 2 (#310). At root:1 the platform ran ONE
+      # queued job at a time and 'root.provisioning:2' could never actually
+      # reach 2. It also means outbound work needs a root slot to spare: with
+      # root:2 a stalled fetch on root.outbound can hold at most half, so
+      # provisioning / backup / fleet-migration / config-sync always retain one.
+      #
+      # root.outbound is capacity 1 on purpose — this is where a slow external
+      # host is allowed to be slow, in isolation. One concurrent outbound job is
+      # all the platform needs.
+      ODOO_QUEUE_JOB_CHANNELS: root:2,root.provisioning:2,root.outbound:1
       # Config-sync bearer key (P2-T03): the reconcile cron + queued live syncs
       # run here, so the runner needs the same key as the odoo service.
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}

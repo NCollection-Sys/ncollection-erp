@@ -60,7 +60,13 @@ services:
       USER: ${DB_USER:-odoo}
       PASSWORD: ${DB_PASSWORD:-odoo}
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
-    command: odoo -c /etc/odoo/odoo.prod.conf --workers=1 --max-cron-threads=1
+    # --max-cron-threads=2, not 1 (#310). This CLI flag OVERRIDES odoo.prod.conf,
+    # so the conf's max_cron_threads is inert for the container that actually
+    # runs cron — editing the conf alone would have looked like a fix and done
+    # nothing. The real fix is that outbound work no longer runs on a cron
+    # thread at all (it is queued); the second thread is defence in depth, so
+    # one long-running cron cannot serialise every other cron behind it.
+    command: odoo -c /etc/odoo/odoo.prod.conf --workers=1 --max-cron-threads=2
     volumes:
       - odoo_data:/var/lib/odoo
       - ./custom_addons:/mnt/extra-addons

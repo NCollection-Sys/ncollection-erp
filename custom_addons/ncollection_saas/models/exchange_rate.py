@@ -52,6 +52,13 @@ _logger = logging.getLogger(__name__)
 # egress target, and the security control names exactly one host.
 _ECB_URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'
 
+# Dedicated queue_job channel for OUTBOUND network work (#310), deliberately
+# NOT the shared 'root.provisioning' that provisioning, backup, fleet migration
+# and config-sync all use. A stalled external host may occupy this channel for
+# as long as its deadline allows; it must never occupy a slot those jobs need.
+# Capacity is declared in docker-compose.saas.yml (root.outbound:1).
+_OUTBOUND_CHANNEL = 'root.outbound'
+
 # ECB's daily file is ~15 KB. _MAX_RESPONSE_BYTES (64 KiB) is already a
 # generous ceiling, so we reuse it rather than inventing a second limit.
 
@@ -283,7 +290,41 @@ class NcExchangeRate(models.Model):
 
     @api.model
     def _cron_refresh_ecb_rate(self):
+        """Cron entry point: ENQUEUE the fetch, never perform it here (#310).
+
+        Returns immediately, so the cron thread is free again in milliseconds.
+        The outbound call itself happens on the queue_job runner, in its own
+        channel.
+
+        Why this indirection exists: cron runs with ``max_cron_threads`` small
+        (odoo-bus pins it on the command line), and ``limit_time_real_cron`` is
+        an hour. A slow external host doing the fetch INSIDE the cron thread
+        could therefore block every other platform cron — config-sync reconcile
+        and license enforcement among them — for up to that hour. In dev it is
+        worse: ``workers = 0`` means Odoo does not enforce the cron time limit
+        at all.
+
+        The job runs on a DEDICATED channel rather than the shared
+        ``root.provisioning`` one. Putting it there would have relocated the
+        starvation rather than removed it: provisioning, backup, fleet
+        migration and config-sync all share that channel, so a stalled fetch
+        would sit in a slot they need.
+        """
+        self.with_delay(
+            channel=_OUTBOUND_CHANNEL,
+            description="Refresh ECB exchange rate",
+            # One pending refresh at a time. Without this a runner backlog could
+            # stack a day's worth of identical fetches against the same host.
+            identity_key='nc-ecb-refresh',
+        ).refresh_ecb_rate()
+
+    @api.model
+    def refresh_ecb_rate(self):
         """Fetch once and record the snapshot. Safe to run repeatedly.
+
+        PUBLIC and must stay so: queue_job persists the method NAME, so a
+        rename would break any job already enqueued (same constraint the backup
+        model documents).
 
         Returns the stored/existing record, or an empty recordset when nothing
         could be fetched — in which case the previous snapshot stands and the
