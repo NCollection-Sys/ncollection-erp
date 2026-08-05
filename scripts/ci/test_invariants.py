@@ -142,23 +142,55 @@ class TestR3HardcodedNames(GuardTestCase):
 
     def setUp(self):
         super().setUp()
-        # R3 derives container names from compose files in the repo root.
+        # R3 derives container names from compose files in THIS fixture root.
+        #
+        # The names are deliberately FICTIONAL. An earlier version used the
+        # repo's real ones, which made every case here vacuous twice over:
+        # the derived pattern was frozen at import from the real repo (so the
+        # fixture was inert), and `ncollection-odoo-bus` contains
+        # `ncollection-odoo` as a \b-bounded prefix, so even the pre-#336
+        # four-name regex matched it. The test passed under the very
+        # regression it was named for. Names nothing outside this tempdir
+        # declares cannot fail that way.
         self.write("docker-compose.yml",
                    "services:\n"
-                   "  odoo:\n"
-                   "    container_name: ncollection-odoo\n"
-                   "  bus:\n"
-                   "    container_name: ncollection-odoo-bus\n")
+                   "  alpha:\n"
+                   "    container_name: fixturesvc-alpha\n"
+                   "  beta:\n"
+                   "    container_name: fixturesvc-beta-worker\n")
 
     def test_hardcoded_container_is_flagged(self):
-        found = self.scan("s.sh", "docker logs ncollection-odoo\n")
+        found = self.scan("s.sh", "docker logs fixturesvc-alpha\n")
         self.assertEqual(len(found), 1)
         self.assertIn("container name", found[0])
 
-    def test_name_is_derived_so_a_new_service_is_covered(self):
-        """#336: the old list named four services while compose declared eight."""
-        found = self.scan("s.sh", "docker logs ncollection-odoo-bus\n")
+    def test_name_is_derived_from_the_compose_files(self):
+        """#336: the old list named four services while compose declared eight.
+
+        This can ONLY pass if the pattern was built from this fixture, since
+        `fixturesvc-beta-worker` appears nowhere in the real repo and in no
+        hardcoded list. That is the whole point — the previous version of this
+        test passed even with the derivation reverted.
+        """
+        found = self.scan("s.sh", "docker logs fixturesvc-beta-worker\n")
         self.assertEqual(len(found), 1)
+
+    def test_a_name_no_compose_file_declares_is_not_flagged(self):
+        """The other half of derivation: it must not invent names either."""
+        self.assertEqual(
+            self.scan("s.sh", "docker logs fixturesvc-never-declared\n"), [])
+
+    def test_the_real_repos_names_do_not_leak_into_a_fixture_run(self):
+        """Pins the isolation bug itself.
+
+        `ncollection-odoo` is a real container in this repo and is NOT in the
+        fixture, so a finding here means the pattern was frozen from the real
+        tree rather than derived from the fixture — which is exactly what was
+        happening before #330's review caught it.
+        """
+        self.assertEqual(
+            self.scan("s.sh", "docker logs ncollection-odoo\n"), [],
+            "the derived pattern must come from the fixture, not the real repo")
 
     def test_project_prefixed_volume_gets_volume_advice(self):
         found = self.scan("s.sh", "docker volume rm ncollection-erp_pgdata\n")

@@ -19,6 +19,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import functools
 import re
 import sys
 from pathlib import Path
@@ -138,9 +139,9 @@ _FALLBACK_CONTAINERS = ("ncollection-odoo", "ncollection-nginx",
                         "ncollection-db", "ncollection-pgadmin")
 
 
-def _declared_container_names() -> tuple[str, ...]:
+def _declared_container_names(root: Path) -> tuple[str, ...]:
     names: set[str] = set()
-    for path in REPO_ROOT.glob("docker-compose*.yml"):
+    for path in root.glob("docker-compose*.yml"):
         try:
             names |= set(CONTAINER_NAME_RE.findall(path.read_text(encoding="utf-8")))
         except OSError:
@@ -155,10 +156,20 @@ def _declared_container_names() -> tuple[str, ...]:
 # `erp_` does not satisfy `erp\b` (underscore is a word character), so without
 # this ordering a volume name could match the container branch and get the wrong
 # remediation advice.
-HARDCODED_NAME_RE = re.compile(
-    r"ncollection-erp_[A-Za-z0-9_]+"
-    + "".join(f"|{re.escape(n)}\\b" for n in _declared_container_names())
-)
+# Built LAZILY, per repo root, not once at import (#330). A module-level
+# constant froze the derived names at import time, which made every test that
+# pointed REPO_ROOT at a fixture silently exercise THIS repo's real names
+# instead — a test that could not fail, which is precisely what the harness
+# exists to prevent. Cached because the rule is called per LINE and globbing
+# compose files each time would be O(lines x files).
+@functools.lru_cache(maxsize=8)
+def _hardcoded_name_re(root: Path) -> re.Pattern:
+    return re.compile(
+        r"ncollection-erp_[A-Za-z0-9_]+"
+        + "".join(f"|{re.escape(n)}\\b"
+                  for n in _declared_container_names(root))
+    )
+
 
 # R4 — a module CI never installs is a module whose tests never run. Caught in
 # the wild: ncollection_account_dashboard was in neither ci.yml's `-i` list nor
@@ -335,7 +346,7 @@ def rule_no_hardcoded_container(rel: str, line: str, lineno: int, out: list[str]
     # `container_name:` in a compose file is the legitimate DEFINITION, not a usage.
     if "container_name:" in line:
         return
-    match = HARDCODED_NAME_RE.search(line)
+    match = _hardcoded_name_re(REPO_ROOT).search(line)
     if match:
         # A `<project>_<name>` hit is a volume or network, not a container, so
         # `ps -q` is the wrong advice for it.
@@ -628,7 +639,7 @@ def run_self_test() -> list[str]:
         if name == "state":
             actual = bool(DOCKER_STATE_RE.search(line))
         elif name == "name":
-            actual = bool(HARDCODED_NAME_RE.search(line))
+            actual = bool(_hardcoded_name_re(REPO_ROOT).search(line))
         elif name == "cron_cmd":
             actual = bool(ODOO_COMMAND_RE.match(line))
         elif name == "cron_val":
