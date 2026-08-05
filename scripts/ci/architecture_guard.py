@@ -56,11 +56,24 @@ ATTR_NAME_RE = re.compile(r"([A-Za-z_][\w.-]*)\s*=")
 
 # The ONLY attributes Odoo 19 permits on a `<group>` inside a `<search>`.
 #
-# Read off the schema, not guessed: `base/rng/search_view.rng` includes
-# `common.rng`, whose `group` define lists colspan/rowspan/fill/height/width/
-# name/color/invisible, plus `position`+`name` from the `overload` define and
-# `groups` from `access_rights`. Anything else makes the RelaxNG validator
-# reject the WHOLE view, so the module fails to INSTALL rather than degrade.
+# Read off the schema: `base/rng/search_view.rng` includes `common.rng`, whose
+# `group` define lists colspan/rowspan/fill/height/width/name/color/invisible,
+# plus `position`+`name` from the `overload` define, `groups` from
+# `access_rights`, and `col` from `container`. Anything else makes the RelaxNG
+# validator reject the WHOLE view, so the module fails to INSTALL.
+#
+# `col` IS THE ONE TO NOTICE, and I missed it on the first pass. It is not in
+# `group`'s own attribute list — it arrives through the `container` ref, and
+# RelaxNG splices a referenced define's attributes into the containing element
+# wherever the ref sits. Reading only the attributes written next to `group`
+# gives ten and looks complete. That is the same shape of mistake this rule
+# exists to catch: a confident, schema-cited list that is short one entry.
+#
+# It is not academic — core Odoo 19 ships exactly this inside a `<search>`:
+#     base/views/ir_model_views.xml:
+#     <group colspan="11" col="11" groups="base.group_no_one">
+# so a rule without `col` flags Odoo's own markup as fatal. Pinned by
+# test_the_core_odoo_pattern_is_allowed.
 #
 # `string` and `expand` are both absent, which is the practical point: the two
 # spellings people actually write are both fatal. Verified against the pinned
@@ -73,6 +86,7 @@ ATTR_NAME_RE = re.compile(r"([A-Za-z_][\w.-]*)\s*=")
 SEARCH_GROUP_ALLOWED_ATTRS = frozenset({
     "colspan", "rowspan", "fill", "height", "width", "name", "color",
     "invisible", "position", "groups",
+    "col",   # via the `container` define, NOT group's own list — see above
 })
 ATTRS_RE = re.compile(r"\battrs\s*=")
 

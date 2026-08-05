@@ -283,6 +283,23 @@ class TestSearchGroupAttributes(unittest.TestCase):
         self.assertEqual(
             view_findings('<search><group name="g" groups="base.group_user"/></search>'), [])
 
+    def test_col_is_allowed(self):
+        """`col` is NOT in `group`'s own attribute list — it arrives through
+        the `container` ref, and RelaxNG splices a referenced define's
+        attributes into the containing element. Reading only what sits next to
+        `group` gives ten attributes and looks complete; it is eleven.
+        Verified VALID against the pinned odoo:19 schema."""
+        self.assertEqual(
+            view_findings('<search><group col="4"><filter name="a"/></group></search>'), [])
+
+    def test_the_core_odoo_pattern_is_allowed(self):
+        """Verbatim from core: base/views/ir_model_views.xml, inside a
+        `<search>`. A rule missing `col` flags ODOO'S OWN markup as fatal —
+        which is how this test came to exist."""
+        self.assertEqual(
+            view_findings('<search><group colspan="11" col="11" '
+                          'groups="base.group_no_one"><filter name="a"/></group></search>'), [])
+
     def test_a_form_group_with_string_is_untouched(self):
         """Forms are not RNG-validated at all — the rng directory ships no
         form_view.rng — which is why `<group string="Measurement">` installs

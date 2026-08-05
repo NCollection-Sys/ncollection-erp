@@ -91,11 +91,19 @@
                 #61 recorded the reason as "Odoo 19 dropped `expand`". That is
                 WRONG, and #353 corrected it against the schema itself:
                 base/rng/common.rng allows a <group> only colspan, rowspan,
-                fill, height, width, name, color, invisible, position and
-                groups. Neither `expand` NOR `string` is among them, so
+                fill, height, width, name, color, invisible, position, groups
+                and col. Neither `expand` NOR `string` is among them, so
                 <group string="Group By"> — the far commoner spelling — is
                 equally fatal. RelaxNG rejects the whole view either way and
                 the module fails to INSTALL rather than degrading.
+
+                `col` is the one that is easy to miss: it is not written next
+                to `group` at all, but comes in through the `container` ref,
+                and RelaxNG splices a referenced define's attributes into the
+                containing element. Core Odoo relies on it — ir_model_views.xml
+                has <group colspan="11" col="11" groups="..."> inside a
+                <search> — so a guard that omitted it would flag Odoo's own
+                markup. It did, on the first pass; odoo-reviewer caught it.
 
                 Verified against the pinned odoo:19 image: <group/> and
                 <group><filter/></group> validate; <group string=> and
