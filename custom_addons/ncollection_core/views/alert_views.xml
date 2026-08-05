@@ -87,10 +87,26 @@
         <field name="arch" type="xml">
             <!--
                 Flat, with <separator/> rather than a <group expand="0">.
-                Odoo 19 dropped `expand` from search <group>, and the RelaxNG
-                validator rejects the whole view for it — module install fails
-                outright rather than degrading. Matches the shape already used
-                in ncollection_saas/views/backup_views.xml.
+
+                #61 recorded the reason as "Odoo 19 dropped `expand`". That is
+                WRONG, and #353 corrected it against the schema itself:
+                base/rng/common.rng allows a <group> only colspan, rowspan,
+                fill, height, width, name, color, invisible, position and
+                groups. Neither `expand` NOR `string` is among them, so
+                <group string="Group By"> — the far commoner spelling — is
+                equally fatal. RelaxNG rejects the whole view either way and
+                the module fails to INSTALL rather than degrading.
+
+                Verified against the pinned odoo:19 image: <group/> and
+                <group><filter/></group> validate; <group string=> and
+                <group expand=> are both REJECTED. Forms are unaffected —
+                the rng directory ships no form_view.rng at all, which is why
+                <group string="Measurement"> above installs perfectly well.
+
+                Matches the shape already used in
+                ncollection_saas/views/backup_views.xml, and now guarded by
+                architecture_guard so the next person gets a lint error
+                instead of a failed install.
             -->
             <search>
                 <field name="name"/>
