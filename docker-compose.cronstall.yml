@@ -1,0 +1,150 @@
+# ============================================================================
+#  #310 — cron-starvation harness overlay (local proof; not a runtime stack)
+# ============================================================================
+#  Used ONLY by `make cron-starvation-verify`
+#  (custom_addons/ncollection_saas/scripts/provisioning/verify_cron_starvation.sh).
+#  Nothing here is part of dev, staging or production, and `make up` never
+#  merges it.
+#
+#  It answers #310's second acceptance criterion — "verify the config-sync
+#  reconcile still runs on schedule while a deliberately stalled fetch is in
+#  flight" — against a REAL Odoo cron thread rather than a mock.
+#
+#  ---------------------------------------------------------------------------
+#  WHY THIS STACK IS COMPLETELY SELF-CONTAINED (this is the load-bearing part)
+#  ---------------------------------------------------------------------------
+#  The first version of this harness reused the shared `db`. Every measurement
+#  it produced was WRONG, and wrong in the most dangerous direction: it
+#  "proved" a starvation that had not happened.
+#
+#  The dev stack's `odoo` container runs with no `-d`, and Odoo's
+#  `cron_database_list()` is `config['db_name'] or list_dbs(True)` — with no
+#  db_name it returns EVERY database on the server and runs every one's crons.
+#  (`--db-filter` does not restrict this; it only filters HTTP routing.)
+#  Verified live: that container was ticking through revtest244, ci_240,
+#  saastest, e2eadmin, t304check and ~20 other leftover fixtures once a minute.
+#
+#  So a harness database on the shared server has TWO Odoos running its crons.
+#  The reconcile marker was being set by the shared container on its own ~60s
+#  poll cycle, and the harness happily reported the resulting 46s as
+#  "starvation" — a fabricated CRITICAL of exactly the shape CLAUDE.md Rule 14
+#  / R-018 warns about.
+#
+#  Hence its own Postgres. No other Odoo can enumerate a database it cannot
+#  reach, so every cron that runs here is provably OURS. The harness Odoo is
+#  deliberately NOT attached to the project's `default` network either, so this
+#  overlay cannot perturb — or be perturbed by — the running dev stack. It
+#  needs no dev stack at all.
+#
+#  Three services:
+#
+#    cron-stall-db     the harness's private Postgres, with its own volume.
+#
+#    cron-stall-host   a TCP socket that accepts on :443 and then never speaks,
+#                      stalling the TLS handshake so `requests` blocks for its
+#                      full read timeout (_RPC_TIMEOUT, 30s; measured 30.1s).
+#                      Deterministic, unlike an unroutable IP — which some
+#                      networks answer with ICMP-unreachable and others drop.
+#
+#    cron-stall-odoo   a throwaway Odoo whose /etc/hosts sends
+#                      www.ecb.europa.eu to the stall host, run with
+#                      --max-cron-threads=1 to reproduce the exact production
+#                      constraint the issue is about.
+#
+#  The source tree is mounted READ-ONLY: the RED arm is an `ir.cron` row in the
+#  harness database, never a patched checkout (Rule 14 again — editing a
+#  bind-mounted file lands under any other agent using the repo).
+# ============================================================================
+services:
+
+  cron-stall-db:
+    image: postgres:16          # already local (the dev stack uses it)
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-odoo}
+    networks:
+      - cronstall_net
+    volumes:
+      - cronstall_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # `-d` is REQUIRED — without it pg_isready targets a database named after
+      # the USER ("odoo"), which does not exist. REGRESSIONS.md R-003.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    # No `ports:` — nothing is published, so this cannot collide with the dev
+    # stack's 5433 and is unreachable from the host.
+
+  cron-stall-host:
+    image: odoo:19              # already local; avoids pulling a second image
+    # root ONLY so it may bind the privileged port 443. Runs no Odoo — it is
+    # nine lines of socket code, with no repo mounts at all.
+    user: root
+    networks:
+      cronstall_net:
+        ipv4_address: 172.31.250.10
+    command:
+      - python3
+      - -c
+      - |
+        # Accept connections and hold them open, forever, saying nothing, so a
+        # client doing https:// blocks in the TLS handshake until its own read
+        # timeout fires. Closing or refusing would give an INSTANT error, which
+        # is the opposite of the condition under test.
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(("0.0.0.0", 443))
+        s.listen(64)
+        print("cron-stall-host: listening on :443", flush=True)
+        # Held forever on purpose: releasing a socket would un-stall the very
+        # fetch under test. Bounded in practice — the container is created and
+        # destroyed per harness run and sees a handful of connections.
+        held = []
+        while True:
+            conn, _ = s.accept()
+            held.append(conn)
+
+  cron-stall-odoo:
+    image: odoo:19
+    depends_on:
+      cron-stall-db:
+        condition: service_healthy
+    networks:
+      - cronstall_net
+    # The whole injection, scoped to this container's own hosts file. The
+    # allowlisted-host control in exchange_rate.py is untouched: _ECB_URL is
+    # still the real hardcoded ECB URL — only this throwaway container resolves
+    # it differently.
+    extra_hosts:
+      - "www.ecb.europa.eu:172.31.250.10"
+    environment:
+      HOST: cron-stall-db
+      USER: ${DB_USER:-odoo}
+      PASSWORD: ${DB_PASSWORD:-odoo}
+    volumes:
+      - cronstall_data:/var/lib/odoo
+      # read-only: the harness must never be able to modify the working tree.
+      - ./custom_addons:/mnt/extra-addons:ro
+      - ./oca:/mnt/oca-addons:ro
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+    # No `command:` — the harness supplies one per arm. No `ports:`, so nothing
+    # here can collide with the dev stack's 8069.
+
+networks:
+  cronstall_net:
+    # A fixed subnet high in Docker's own 172.16/12 range so the stall host's
+    # address can be a literal in extra_hosts. A DNS alias for a public FQDN
+    # was rejected: it resolves for every container sharing the network, which
+    # is a footgun for whoever attaches something else here later.
+    ipam:
+      config:
+        - subnet: 172.31.250.0/24
+
+volumes:
+  # Both private to the harness. Nothing it does can touch the dev stack's
+  # postgres_data / odoo_data.
+  cronstall_pgdata:
+  cronstall_data:

@@ -52,6 +52,13 @@ _logger = logging.getLogger(__name__)
 # egress target, and the security control names exactly one host.
 _ECB_URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'
 
+# Dedicated queue_job channel for OUTBOUND network work (#310), deliberately
+# NOT the shared 'root.provisioning' that provisioning, backup, fleet migration
+# and config-sync all use. A stalled external host may occupy this channel for
+# as long as its deadline allows; it must never occupy a slot those jobs need.
+# Capacity is declared in docker-compose.saas.yml (root.outbound:1).
+_OUTBOUND_CHANNEL = 'root.outbound'
+
 # ECB's daily file is ~15 KB. _MAX_RESPONSE_BYTES (64 KiB) is already a
 # generous ceiling, so we reuse it rather than inventing a second limit.
 
@@ -283,7 +290,65 @@ class NcExchangeRate(models.Model):
 
     @api.model
     def _cron_refresh_ecb_rate(self):
+        """Cron entry point: ENQUEUE the fetch, never perform it here (#310).
+
+        Returns immediately, so the cron thread is free again in milliseconds.
+        The outbound call itself happens on the queue_job runner, in its own
+        channel.
+
+        Why this indirection exists: cron runs with ``max_cron_threads`` small
+        (odoo-bus pins it on the command line), and ``limit_time_real_cron`` is
+        an hour. A slow external host doing the fetch INSIDE the cron thread
+        could therefore block every other platform cron — config-sync reconcile
+        and license enforcement among them — for up to that hour. In dev it is
+        worse: ``workers = 0`` means Odoo does not enforce the cron time limit
+        at all.
+
+        The job runs on a DEDICATED channel rather than the shared
+        ``root.provisioning`` one. Putting it there would have relocated the
+        starvation rather than removed it: provisioning, backup, fleet
+        migration and config-sync all share that channel, so a stalled fetch
+        would sit in a slot they need.
+        """
+        self.with_delay(
+            channel=_OUTBOUND_CHANNEL,
+            description="Refresh ECB exchange rate",
+            # One PENDING refresh at a time. Without this a runner backlog could
+            # stack a day's worth of identical fetches against the same host.
+            #
+            # Precisely: job_record_with_same_identity_key() matches only
+            # wait_dependencies / pending / enqueued, NOT started — so this does
+            # not prevent a second enqueue while an earlier fetch is mid-stall.
+            # Unreachable in practice (the cron is daily and the fetch is
+            # bounded by _RPC_DEADLINE), but do not read this as a concurrency
+            # lock; it is backlog collapsing, not mutual exclusion.
+            identity_key='nc-ecb-refresh',
+        )._refresh_ecb_rate()
+
+    @api.model
+    def _refresh_ecb_rate(self):
         """Fetch once and record the snapshot. Safe to run repeatedly.
+
+        PRIVATE on purpose, and the name must not change casually.
+
+        *Private*, because nothing but the queue runner calls it. queue_job
+        resolves a stored job with a plain ``getattr(recordset, method_name)``
+        (``queue_job/job.py``) and has no public-name requirement — verified,
+        not assumed. Odoo's RPC layer, by contrast, refuses any method starting
+        with ``_`` (``odoo/service/model.py::get_public_method``). A public name
+        would therefore have bought nothing and cost a real exposure: the fetch
+        below is the FIRST statement, so it runs before any ORM call that would
+        trigger an ``ir.model.access`` check. Any authenticated user on the
+        admin database could have held an HTTP worker — of which the platform
+        runs 1 or 2 — open for the full ``_RPC_DEADLINE`` plus an idle gap, with
+        none of the ``identity_key`` dedup or ``root.outbound`` capacity that
+        only apply to *enqueued* work. That is #310's own bug on a different
+        thread pool. (``backup.restore_to`` is public for a reason that does not
+        apply here: a wizard calls it, so its guard lives inside the method.)
+
+        *Name-stable*, because queue_job persists the method NAME: renaming it
+        once jobs exist in the wild breaks anything already enqueued at deploy
+        time. Renaming it now is safe only because this has never shipped.
 
         Returns the stored/existing record, or an empty recordset when nothing
         could be fetched — in which case the previous snapshot stands and the
