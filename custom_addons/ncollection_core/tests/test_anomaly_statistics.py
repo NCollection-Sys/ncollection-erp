@@ -24,8 +24,9 @@ about and tested without a database — and so the ORM cannot smuggle a recordse
 into a number.
 """
 
-from odoo.addons.ncollection_core.models.anomaly import statistics as stats
 from odoo.tests import TransactionCase, tagged
+
+from ..models.anomaly import statistics as stats
 
 
 @tagged("post_install", "-at_install")

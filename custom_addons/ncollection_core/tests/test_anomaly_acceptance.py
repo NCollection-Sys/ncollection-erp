@@ -30,6 +30,8 @@ this file's.
 
 from odoo.tests import TransactionCase, tagged
 
+from ..models.anomaly import detectors as det
+
 # ---------------------------------------------------------------------------
 # The labelled test set
 # ---------------------------------------------------------------------------
@@ -260,7 +262,6 @@ class TestAnomalyAcceptance(TransactionCase):
         only appears after N runs and that no single-run test would notice.
         """
         param = self.env['ir.config_parameter'].sudo()
-        from odoo.addons.ncollection_core.models.anomaly import detectors as det
 
         # A short page (fewer rows than the page size) means "end of catalogue".
         self._stub_engine_keyed({
