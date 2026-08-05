@@ -50,10 +50,16 @@ OCA_VENV := .oca-venv
         cron-starvation-verify cron-starvation-clean \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
+# `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
+# MAKEFILE_LIST, and grep prefixes every match with `filename:` once it is given
+# more than one file. The awk FS then splits at that first colon, so `$1` came
+# out as "Makefile" for every row instead of the target name — on every machine
+# that has a .env, i.e. every configured dev machine. It looked fine on a fresh
+# clone, which is how it survived this long.
 help: ## Show this help
 	@echo "NCollection ERP — make targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-		| awk 'BEGIN {FS=":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+		| awk 'BEGIN {FS=":.*?## "}; {printf "  \033[36m%-26s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "  Variables: db=<database> (default: $(db)), m=<module>"
 
