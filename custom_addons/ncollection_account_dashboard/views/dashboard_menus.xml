@@ -34,11 +34,20 @@
     <!-- CEO (#56). Narrower than its siblings: the executive cross-domain view
          is for CEO/Owner, not every accountant. The parent menu's own groups
          still apply, so this INTERSECTS them rather than widening anything —
-         an accountant cannot see this item. Mirrored at the data layer by the
-         same mechanism as the rest: get_ceo_dashboard runs the executive
-         services under the caller's own accounting rights with no sudo, and
-         the cross-domain panels go through the P4-T01 engine, which enforces
-         Ring 2 licensing per model (Rule 4/7). -->
+         an accountant cannot see this item.
+
+         What IS mirrored at the data layer: every figure is read under the
+         caller's own rights with no sudo, so the executive services are gated
+         by account ACLs and the cross-domain panels by the P4-T01 engine's
+         Ring 2 licensing, per model.
+
+         What is NOT mirrored, stated plainly rather than implied: this menu's
+         CEO/Owner narrowing is Ring 1 only. `get_ceo_dashboard` carries no
+         role check of its own, so an accountant who calls it directly gets a
+         payload. That exposes NO data they cannot already see — the same KPIs
+         are on their own Finance/Accountant dashboards, and the panels stay
+         Ring-2 gated regardless — so it is role curation, not a leak. Whether
+         to add the RPC-level check is #333. -->
     <menuitem id="menu_ceo_dashboard"
               name="CEO"
               parent="menu_account_dashboard_root"

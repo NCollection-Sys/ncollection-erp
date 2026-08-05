@@ -57,7 +57,10 @@ export class CeoDashboard extends NcFinancialDashboard {
     }
 
     async applyRange() {
-        if (this.rangeIsPartial || this.rangeIsInvalid) {
+        // `state.loading` is guarded here as well as on the button: the button's
+        // disabled attribute is a UI affordance, and this method is reachable
+        // from a keyboard activation that lands in the same tick.
+        if (this.rangeIsPartial || this.rangeIsInvalid || this.state.loading) {
             return;
         }
         await this.load();

@@ -57,7 +57,18 @@ class AccountDashboardService(models.AbstractModel):
         values = {}
         if date_from and date_to:
             values = {'date_from': date_from, 'date_to': date_to}
-        return self.env[model_name].new(values)
+        try:
+            return self.env[model_name].new(values)
+        except ValueError:
+            # This method is reachable by RPC, and the client sends raw strings
+            # from a date input — trivially bypassed by calling the method
+            # directly. Odoo's field conversion raises ValueError on a malformed
+            # date, which would surface as an opaque 500. A bad range is treated
+            # exactly like a half-specified one: ignored, fall back to the
+            # report's default period. Nothing unvalidated ever reaches a domain
+            # either way, because callers read the dates back off the converted
+            # record rather than using the strings they passed in.
+            return self.env[model_name].new({})
 
     def _comparison(self, model_name, date_from=None, date_to=None):
         """``(current, previous)`` figure dicts straight from the service."""

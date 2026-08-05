@@ -21,9 +21,13 @@
                        aria-label="Period end"/>
             </label>
 
+            <!-- Also disabled while loading: two rapid applies race, and if the
+                 responses resolve out of order the dashboard would settle on
+                 figures for a range the user no longer has selected, with
+                 nothing on screen to say so. -->
             <button class="btn btn-primary nc-range__apply" type="button"
                     t-on-click="applyRange"
-                    t-att-disabled="rangeIsPartial or rangeIsInvalid">
+                    t-att-disabled="rangeIsPartial or rangeIsInvalid or state.loading">
                 Apply
             </button>
             <button class="btn btn-secondary" type="button"

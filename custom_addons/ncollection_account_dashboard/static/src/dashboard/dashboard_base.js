@@ -68,11 +68,19 @@ export class NcFinancialDashboard extends Component {
         this._chartsDirty = false;
 
         onWillStart(() => this.load());
-        onMounted(() => this._mountCharts());
-        // A reload replaces the payload, so OWL rebuilds every <canvas>. The old
-        // Chart.js instances still point at the detached nodes and would leak
-        // (and keep their resize listeners), so they are torn down and rebuilt —
-        // but only on a patch that actually followed a fetch, not on every patch.
+        onMounted(() => {
+            this._mountCharts();
+            // Clearing here is load-bearing, not tidiness. load() runs in
+            // onWillStart and sets the flag BEFORE the first render, so leaving
+            // it set would make the next patch — for the CEO dashboard, merely
+            // typing a character into a date input, long before Apply — destroy
+            // and rebuild every chart against an unchanged payload.
+            this._chartsDirty = false;
+        });
+        // A reload replaces the payload, so OWL rebuilds every <canvas> and the
+        // old Chart.js instances would be left pointing at detached nodes. They
+        // are torn down in load() and rebuilt here, on the patch that follows a
+        // fetch — which the flag now genuinely identifies.
         onPatched(() => {
             if (this._chartsDirty) {
                 this._chartsDirty = false;
@@ -87,6 +95,11 @@ export class NcFinancialDashboard extends Component {
     async load() {
         this.state.loading = true;
         this.state.error = false;
+        // Tear down NOW, not when the fetch resolves. Flipping `loading` removes
+        // every canvas from the DOM on the very next patch, so deferring this
+        // would leave live Chart.js instances — and their resize listeners —
+        // attached to detached nodes for the whole network round trip.
+        this._destroyCharts();
         try {
             this.state.payload = await this.orm.call(
                 "ncollection.account.dashboard.service",
@@ -162,8 +175,11 @@ export class NcFinancialDashboard extends Component {
         return `width: ${share.toFixed(1)}%`;
     }
 
+    // `undefined`, not "" — OWL omits the attribute entirely for undefined,
+    // whereas "" renders an empty title=. Matches the t-att-max/min convention
+    // used in the CEO toolbar.
     drillDownHint(panel) {
-        return panel.drilldown ? _t("Open the underlying records") : "";
+        return panel.drilldown ? _t("Open the underlying records") : undefined;
     }
 
     /**

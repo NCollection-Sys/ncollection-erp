@@ -260,6 +260,23 @@ class TestDashboardService(AccountTestInvoicingCommon):
         action = self.env.ref('ncollection_account_dashboard.action_ceo_dashboard')
         self.assertEqual(action.tag, 'ncollection_account_dashboard.ceo')
 
+    def test_the_rpc_itself_is_not_role_gated_yet(self):
+        """Pins CURRENT behaviour, not desired behaviour — see #333.
+
+        The menu narrowing above is Ring 1 only: get_ceo_dashboard has no role
+        check, so a caller who never sees the menu still gets a payload. That
+        exposes nothing an accountant cannot already read on their own
+        dashboards, and the panels stay Ring-2 gated by the engine — but Rule 4
+        says a UI restriction should be mirrored at the RPC, so whether to add
+        the check is an owner decision (#333), not an agent's.
+
+        This test exists so the decision cannot be made silently: if someone
+        adds the check, this fails and forces them to state the new contract
+        here rather than leaving two tests disagreeing about the gate.
+        """
+        payload = self.service.get_ceo_dashboard()
+        self.assertIn('kpis', payload)
+
     # ---- #56 PR2: the UI's date-range selector -----------------------------
 
     def test_explicit_range_drives_the_period_and_the_leaderboard(self):
