@@ -36,6 +36,10 @@ ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml
 # services are entirely self-contained (own Postgres, own network, own volumes),
 # so this does NOT affect `make up` and the harness cannot disturb the dev stack.
 CRONSTALL_COMPOSE ?= docker compose -f docker-compose.yml -f docker-compose.cronstall.yml
+# Opt-in cron-SCOPE harness stack (#343): base + the cronscope overlay. Its own
+# Postgres, for the same reason — the RED arm deliberately runs other databases'
+# crons, which must never happen on the shared dev db (Rule 14).
+CRONSCOPE_COMPOSE ?= docker compose -f docker-compose.yml -f docker-compose.cronscope.yml
 
 # OCA addon repos (P1-T04): ./oca/ is GENERATED from the pins in repos.yml —
 # run `make oca` after a fresh clone or whenever repos.yml changes.
@@ -48,6 +52,7 @@ OCA_VENV := .oca-venv
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
         cron-starvation-verify cron-starvation-clean orphan-dbs \
+        cron-scope-verify cron-scope-clean \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 # `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
@@ -198,6 +203,21 @@ config-sync-verify: ## Run the P2-T03 config-sync proof (provision -> plan chang
 financial-bootstrap-verify: ## Run the P3-T01 proof (Enterprise financial set installs -> Trial Balance runs on UAE data)
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_financial_bootstrap.sh
 
+cron-scope-verify: ## Run the #343 proof (provisioning-runner ticks the platform DB's crons only, and still ticks them)
+	./custom_addons/ncollection_saas/scripts/provisioning/verify_cron_scope.sh
+
+# Same reasoning as cron-starvation-clean below: this fixture is NOT on the
+# shared db, so there is nothing to drop_database — removing the private
+# volumes is what resets it. Project name derived, never hardcoded (Rule 11).
+cron-scope-clean: ## Remove the CRON-SCOPE harness stack + its private volumes (destructive)
+	@$(CRONSCOPE_COMPOSE) rm -sf cron-scope-runner cron-scope-db >/dev/null
+	@proj=$$($(CRONSCOPE_COMPOSE) config --format json \
+		| python3 -c "import json,sys; print(json.load(sys.stdin)['name'])"); \
+	for v in cronscope_pgdata cronscope_data; do \
+		docker volume rm -f "$${proj}_$${v}" >/dev/null; \
+	done
+	@echo "✅ cron-scope harness stack + volumes removed."
+
 cron-starvation-verify: ## Run the #310 proof (a stalled outbound fetch must not delay the config-sync reconcile cron)
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_cron_starvation.sh
 
@@ -256,17 +276,19 @@ stack-settled: ## Was db/odoo just (re)started? Sanity check before trusting a s
 orphan-dbs: ## List databases owned by no documented suite (read-only; never drops)
 	@bash scripts/dev/orphan_dbs.sh
 
-verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + cron-starvation + financial-bootstrap + e2e) — pre-merge gate
-	@echo "==> [1/6] routing & isolation (P1-T06)"
+verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + cron + financial-bootstrap + e2e) — pre-merge gate
+	@echo "==> [1/7] routing & isolation (P1-T06)"
 	@$(MAKE) --no-print-directory routing-verify
-	@echo "==> [2/6] provisioning (P2-T01)"
+	@echo "==> [2/7] provisioning (P2-T01)"
 	@$(MAKE) --no-print-directory provisioning-verify
-	@echo "==> [3/6] config sync (P2-T03)"
+	@echo "==> [3/7] config sync (P2-T03)"
 	@$(MAKE) --no-print-directory config-sync-verify
-	@echo "==> [4/6] cron starvation (#310)"
+	@echo "==> [4/7] cron starvation (#310)"
 	@$(MAKE) --no-print-directory cron-starvation-verify
-	@echo "==> [5/6] financial bootstrap (P3-T01)"
+	@echo "==> [5/7] cron scope (#343)"
+	@$(MAKE) --no-print-directory cron-scope-verify
+	@echo "==> [6/7] financial bootstrap (P3-T01)"
 	@$(MAKE) --no-print-directory financial-bootstrap-verify
-	@echo "==> [6/6] end-to-end guarantees (P1-T20)"
+	@echo "==> [7/7] end-to-end guarantees (P1-T20)"
 	@$(MAKE) --no-print-directory e2e-verify
 	@echo "✅ verify-all: every suite green."

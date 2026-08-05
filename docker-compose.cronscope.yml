@@ -1,0 +1,70 @@
+# ============================================================================
+# #343 — proof that `provisioning-runner` ticks ONLY the platform database.
+#
+# WHY THIS NEEDS ITS OWN POSTGRES, like the #310 harness before it.
+# The thing under test IS "which databases does this container run crons on".
+# Measured against the shared dev `db`, the answer is contaminated by every
+# other fixture on that server, and — worse — the RED arm would deliberately
+# run the crons of all ~89 local databases, mutating other suites' fixtures.
+# The bug is only observable by letting it happen, so it has to happen
+# somewhere private. CLAUDE.md Rule 14 / R-018.
+#
+# Nothing here is published to the host: no `ports:`, its own network, its own
+# volume. It cannot collide with the dev stack's 5433, and the dev stack cannot
+# see it.
+#
+# Usage is `make cron-scope-verify`; the arms' commands come from the script,
+# not from this file, so the two shapes under comparison stay side by side and
+# readable there.
+# ============================================================================
+services:
+
+  cron-scope-db:
+    image: postgres:16          # already local (the dev stack uses it)
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-odoo}
+    networks:
+      - cronscope_net
+    volumes:
+      - cronscope_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # `-d` is REQUIRED — without it pg_isready targets a database named after
+      # the USER ("odoo"), which does not exist. CLAUDE.md rule 9 / R-003.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  # The runner under test. Deliberately NOT named provisioning-runner: this is
+  # a throwaway shaped like it, so nothing here can be mistaken for, or collide
+  # with, the real service in docker-compose.saas.yml.
+  cron-scope-runner:
+    image: odoo:19
+    depends_on:
+      cron-scope-db:
+        condition: service_healthy
+    environment:
+      HOST: cron-scope-db
+      USER: ${DB_USER:-odoo}
+      PASSWORD: ${DB_PASSWORD:-odoo}
+    networks:
+      - cronscope_net
+    volumes:
+      # Read-only: this container must never be able to write to the working
+      # tree another agent may be using.
+      - ./custom_addons:/mnt/extra-addons:ro
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - cronscope_data:/var/lib/odoo
+    # No `command:` — each arm supplies its own, so the only difference between
+    # them is the one flag under test. No `ports:`, so nothing is reachable.
+    restart: "no"
+
+networks:
+  cronscope_net:
+    driver: bridge
+
+volumes:
+  cronscope_pgdata:
+  cronscope_data:

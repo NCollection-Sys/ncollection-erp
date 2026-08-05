@@ -36,7 +36,7 @@ OWNED_RE='^(postgres|ncollection|ncplatform|albarari'\
 '|e2eclienta|e2eclientb|e2eadmin'\
 '|prov[a-z0-9]*'\
 '|loadtesta|loadtestb|loadtestc'\
-'|fintest|saastest|aggbench|cronstall)$'
+'|fintest|saastest|aggbench|cronstall|cronscopeplatform|cronscopetenant)$'
 
 if [ -z "$("${DC[@]}" ps -q db 2>/dev/null)" ]; then
   echo "REFUSING: the 'db' service is not running. Start it first: make up" >&2

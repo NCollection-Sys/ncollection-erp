@@ -50,13 +50,25 @@ services:
       # Config-sync bearer key (P2-T03): the reconcile cron + queued live syncs
       # run here, so the runner needs the same key as the odoo service.
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
-    # --load starts the queue_job jobrunner thread; --db-filter pins the runner
-    # to the single admin/platform DB (it never watches tenant DBs). It shells
-    # out (odoo subprocess) to build tenant DBs — never a cross-DB ORM call.
+    # --load starts the queue_job jobrunner thread. It shells out (odoo
+    # subprocess) to build tenant DBs — never a cross-DB ORM call.
+    #
+    # `-d` IS LOAD-BEARING AND IS NOT REDUNDANT WITH `--db-filter` (#343).
+    # db_filter pins HTTP routing only. Cron is chosen separately:
+    # `cron_database_list()` is `config['db_name'] or list_dbs(True)`, so
+    # without a `-d` this runner ticked the crons of EVERY database on the
+    # server — including every tenant DB it is explicitly not supposed to
+    # watch, and, following this file's own documented dev invocation, all ~89
+    # local fixtures. Same finding as #337; different fix, because this
+    # container is SUPPOSED to run cron (the config-sync reconcile job lives
+    # here), so `--max-cron-threads=0` would silently stop that job instead.
+    # Neither odoo.conf nor odoo.prod.conf sets `db_name`, so `-d` on the
+    # command line is the only thing that scopes it.
     command: >
       odoo -c /etc/odoo/odoo.conf
            --load=base,web,queue_job
            --workers=2 --max-cron-threads=1
+           -d ${PLATFORM_DB:-ncollection}
            --db-filter=^${PLATFORM_DB:-ncollection}$$
     volumes:
       - ./custom_addons:/mnt/extra-addons:ro

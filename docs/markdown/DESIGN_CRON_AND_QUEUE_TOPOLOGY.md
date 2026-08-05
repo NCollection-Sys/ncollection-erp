@@ -234,3 +234,98 @@ own network. It does not need the dev stack and cannot disturb it.
 - **`queue_job` changing how parent capacity is consumed.** §3.3 is a claim about
   `get_jobs_to_run` in the pinned version; a major bump should re-check it, because the `root:2`
   value is derived from that behaviour and nothing else.
+
+---
+
+## 8. Which databases each container's cron covers (#343)
+
+§1 established *where* work is allowed to run. This section answers the separate question
+**whose** crons each container runs — a decision that was, until #343, being made by accident
+in three places and correctly in none of them by intent.
+
+Odoo picks cron databases with
+
+```python
+cron_database_list() = config['db_name'] or list_dbs(True)
+```
+
+`--db-filter` is not in that expression. It filters **HTTP routing only**. Neither
+`config/odoo.conf` nor `config/odoo.prod.conf` sets `db_name`, so on this project the *only*
+thing that scopes cron is `-d` on the command line.
+
+| Service | cron threads | `-d` | Runs whose crons | Correct? |
+|---|---|---|---|---|
+| **`odoo` (BASE `docker-compose.yml`)** | **`0` (#343)** | — | nobody | ✅ **fixed here** |
+| `odoo` (dev), `odoo` (routing) | `0` | — | nobody | ✅ #337 |
+| `odoo` (pooling) | `0` | — | nobody — web only | ✅ |
+| **`provisioning-runner` (saas)** | `1` | **`-d` (#343)** | the platform DB only | ✅ **fixed here** |
+| `odoo-bus` (pooling) | `2` | none | **every database** | ✅ **on purpose** |
+| `odoo` (prod), `odoo` (staging) | `1` (from the conf) | none | **every database** | ✅ **on purpose** |
+
+The **base** row is the one that was missed twice. It carried no `command:` at all, so it ran
+the image's CMD — a bare `odoo`, whose built-in defaults are `max_cron_threads=2` and no
+`db_name`. A rule that reads `command:` lines cannot see a service that has none, which is why
+R5 *and* the first version of R6 both reported clean on it. The base file's own comment invites
+the bare `docker compose up`, and CI's `build` job runs exactly that — harmless there only
+because CI's Postgres is ephemeral, and not harmless at all on a developer's persistent
+`postgres_data` volume.
+
+### 8.1 Why enumeration is right for some and wrong for others
+
+Running every database's crons is not a bug in itself — **it is how one Odoo serves a
+multi-tenant fleet.** `odoo-bus` exists precisely to be that worker; scoping it to one database
+would stop cron for every tenant. The single-container prod/staging shape is the same worker
+without the pooling split.
+
+`provisioning-runner` is the opposite. It is platform-only by design — its own compose comment
+said it "never watches tenant DBs", which was true of its HTTP routing and false of its cron.
+Following this repo's documented dev invocation, it ticked ~89 local fixture databases.
+
+### 8.2 Why `--max-cron-threads=0` — the #337 fix — was the wrong fix here
+
+The dev and routing containers must not run cron **at all**, so disabling it is exact. This
+container *must* run cron: the config-sync reconcile job lives in it. Setting `0` would have
+looked like a fix, passed every existing check, and silently stopped that job — the delayed,
+invisible failure this document exists to avoid. **Same bug, opposite remedy**, which is why
+`invariants.py` needs two rules rather than a longer file list in one.
+
+### 8.3 The guard, and the blind spot that let this survive R5
+
+R5 (#337) asserts the dev/routing commands still carry `--max-cron-threads`. It matched
+`^\s*command:.*\bodoo\b` — and `docker-compose.saas.yml` writes its command as a folded
+block, so the flags live on continuation lines and R5 matched **zero lines** in that file.
+A line-shaped rule cannot guard a block-shaped setting.
+
+**R6** gathers the whole block first, then requires any cron-running Odoo service to carry
+`-d` *or* appear in `CRON_ENUMERATORS_ALLOWED` with a written reason. Two consequences worth
+naming:
+
+- **Absent is not zero.** A command with no `--max-cron-threads` inherits `max_cron_threads = 1`
+  from `odoo.prod.conf`, so "no flag" means "runs cron". prod and staging are caught by this,
+  not missed by it.
+- **A missing command is not an exemption.** An Odoo-image service with no `command:` runs the
+  image default and must be listed in `CRON_COMMANDLESS_ALLOWED` with a reason. Only the two
+  harness services qualify: neither is ever started by `up`, and both take a per-arm command
+  from their script, so a command in the file would hide the variable under test.
+- **The allowlist is the deliverable.** The rule does not forbid enumeration; it forbids
+  enumerating *by accident*. `odoo-bus`, prod and staging are entries with reasons, which is
+  what #343 asked to be recorded and what a bare compose edit would not have produced.
+
+### 8.4 Verification
+
+`make cron-scope-verify` — a private Postgres with two databases, and two arms one flag apart:
+
+| Arm | Command | Platform DB ticked | Decoy tenant ticked |
+|---|---|---|---|
+| A (RED) — pre-#343 | `--db-filter`, no `-d` | yes | **yes** — the bug |
+| B (GREEN) — shipped | `--db-filter` **and** `-d` | yes | **no** |
+
+Cron execution is read from `ir_cron.nextcall` moving forward — the database's own record —
+rather than from log text. Both databases are seeded with a cron due in the **past**, so "did
+not run" cannot be mistaken for "was not due yet"; without that seeding, arm B would pass for
+the wrong reason. Arm A is what makes it a proof: a harness that ticks nothing at all would
+otherwise report success.
+
+The suite is on its own Postgres for the reason in §5.1 **plus** one of its own — arm A
+deliberately runs other databases' crons, so aiming it at the shared server would corrupt other
+suites' fixtures on purpose (Rule 14).
