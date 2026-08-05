@@ -436,6 +436,87 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-024 — A whole module's test suite had never run in CI, and nothing was red ✅ FIXED (#328)
+
+**Symptom.** None. That is the entry.
+
+`ncollection_account_dashboard` was created by #119 (F3-T01) with a full test suite.
+It appeared in **neither** `ci.yml`'s `-i` install list nor its `--test-tags`, and **no
+module declares a manifest dependency on it**, so CI never installed it and never ran a
+single one of its tests. Every PR touching it went green on the strength of tests that
+never executed.
+
+It surfaced only sideways. While building #56 (P4-T03) on top of that module, two
+reviewers independently found a real crash on the happy path:
+
+```
+AttributeError: 'tuple' object has no attribute 'get'
+```
+
+`ncollection.aggregation.engine.aggregate()` returns rows as **tuples** (`engine.py`
+builds them with `tuple(self._flatten_cell(cell) for cell in row)`); the consuming code
+called `row.get(...)`. Any tenant with CRM/Sales installed and populated would have
+500'd the entire CEO dashboard — including the financial KPIs that are specifically
+designed to survive a missing panel. The `albarari` demo tenant had 6 qualifying
+`sale.order` records, so it would have crashed there immediately.
+
+**Root cause — two independent failures that lined up.**
+
+1. **The module was invisible to CI.** Coverage is expressed as two hand-maintained
+   comma-separated lists in `ci.yml`. Nothing reconciled them against
+   `custom_addons/`. A module absent from both is silently skipped.
+2. **The test that should have caught the crash agreed with it.** The mock returned
+   *dict*-shaped rows, encoding the author's assumption rather than the engine's
+   contract, so it went green against the bug. Even had CI run it, it would have
+   passed.
+
+Failure 1 is why nobody noticed failure 2.
+
+**Why it is dangerous, not just untidy.** Every other guard in this repo announces
+itself when it trips. This one produced *no signal at all*: the build is green, the
+test count looks plausible because it is buried in a 798-test total, and the only way
+to detect it is to diff `ci.yml` against `ls custom_addons/` by eye. It also recurs by
+**default** — every new module starts uncovered, so the next one repeats this exactly
+unless someone remembers.
+
+**Fix.** Two parts, deliberately split:
+
+- **#329** added the module to both lists. Proven, not assumed: the CI log for that run
+  contains `ncollection_account_dashboard: 15 tests` — a line that had never appeared in
+  any CI log before — with the full suite at 798/798.
+- **#328** added the guard below, so it cannot recur silently.
+
+**The guard.** `scripts/ci/invariants.py` **R4** (`rule_ci_module_coverage`): every
+directory under `custom_addons/` holding an `__manifest__.py` must appear in **both**
+`ci.yml`'s `-i` list and its `--test-tags`. Exemptions live in `CI_EXEMPT_MODULES` and
+each **must** carry a reason — currently one entry, `ncollection_demo_freshorigin`
+(demo-tenant seeding, installed via `make demo-tenant`). A module that *is* covered
+while still listed is reported as a **stale exemption**, so the allowlist cannot rot
+into a second hiding place.
+
+Two design points worth keeping:
+
+- R4 is a **whole-repo set comparison**, not a per-line pattern like R1–R3, so it runs
+  once from `main()` and **runs even under `--files`**. This is load-bearing: adding a
+  module without touching `ci.yml` is precisely the change whose diff does *not* contain
+  `ci.yml`, so a diff-scoped version could never see its own bug — the same trap as
+  [R-023](#r-023).
+- If the lists cannot be located at all (someone reformats the odoo invocation), it
+  emits **one** clear finding saying so, rather than reporting every module as uncovered
+  and burying the real problem.
+
+RED-proved on five paths, each in isolation: missing from `--test-tags` only; missing
+from both; a brand-new module nobody wired in; a stale exemption; and a reformatted
+workflow.
+
+**Transferable lesson.** *A passing test suite proves nothing until you have confirmed
+it ran.* Coverage expressed as a hand-maintained list will drift from reality, and the
+drift is silent by construction. Same family as [R-022](#r-022) (tests in the wrong
+class, never collected) and [R-023](#r-023) (a guard that could not see the branch it
+guarded): in all three the check existed, looked healthy, and was inspecting nothing.
+
+---
+
 ## R-023 — `architecture-guard` was red on `develop` itself, and neither CI nor the canary could ever see it ✅ FIXED (#304)
 
 **Symptom.** Running the guard locally on a clean `develop` failed with two two-layer violations
