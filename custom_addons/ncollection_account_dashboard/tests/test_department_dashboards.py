@@ -31,15 +31,28 @@ class TestDepartmentDashboards(TransactionCase):
         self.assertIsInstance(payload['panels'], list)
         self.assertIn('currency', payload['meta'])
 
-    def test_all_three_shape_and_graceful_absent(self):
-        # sale/crm/hr/stock are NOT installed in this test DB, so every KPI and
-        # panel source returns None -> omitted. The dashboards must still return
-        # a valid, non-crashing payload with empty kpis/panels.
+    def test_all_three_shape(self):
+        # Shape only — whether kpis/panels are populated depends on which apps
+        # the CI DB installs (hr/crm/sale are present here), so we assert the
+        # contract holds and nothing crashes, not that they are empty.
+        for method in ('get_sales_dashboard', 'get_hr_dashboard', 'get_warehouse_dashboard'):
+            self._assert_shape(getattr(self.service, method)())
+
+    def test_graceful_absent(self):
+        # Deterministic plan-gating: force BOTH service layers to report the
+        # backing app absent/unlicensed (engine -> None, KPI value -> None) and
+        # assert every KPI and panel is omitted — no crash, no misleading zero.
+        # This does not depend on the CI DB's installed-app set.
+        Engine = type(self.env['ncollection.aggregation.engine'])
+        Kpi = type(self.env['ncollection.kpi'])
+        self.patch(Engine, 'aggregate', lambda eng, spec: None)
+        self.patch(Kpi, 'compute', lambda kpi, reference=None: {
+            'value': None, 'previous': None, 'unit': 'ratio', 'target': 0.0})
         for method in ('get_sales_dashboard', 'get_hr_dashboard', 'get_warehouse_dashboard'):
             payload = getattr(self.service, method)()
             self._assert_shape(payload)
-            self.assertEqual(payload['kpis'], [], "%s: KPI must be omitted when its app is absent" % method)
-            self.assertEqual(payload['panels'], [], "%s: panels must be omitted when apps are absent" % method)
+            self.assertEqual(payload['kpis'], [], "%s: KPI must be omitted when absent" % method)
+            self.assertEqual(payload['panels'], [], "%s: panels must be omitted when absent" % method)
 
     # ---- provenance: rows/cards pass through the service verbatim ---------
 
