@@ -28,6 +28,8 @@
             'ncollection_account_dashboard/static/src/dashboard/finance_dashboard.js',
             'ncollection_account_dashboard/static/src/dashboard/accountant_dashboard.js',
             'ncollection_account_dashboard/static/src/dashboard/cash_dashboard.js',
+            'ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.js',
+            'ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml',
         ],
     },
 }
