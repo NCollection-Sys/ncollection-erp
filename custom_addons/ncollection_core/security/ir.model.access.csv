@@ -9,3 +9,4 @@ access_kpi_user,ncollection.kpi.user,model_ncollection_kpi,base.group_user,1,0,0
 access_kpi_system,ncollection.kpi.system,model_ncollection_kpi,base.group_system,1,1,1,1
 access_kpi_threshold_user,ncollection.kpi.threshold.user,model_ncollection_kpi_threshold,base.group_user,1,0,0,0
 access_kpi_threshold_system,ncollection.kpi.threshold.system,model_ncollection_kpi_threshold,base.group_system,1,1,1,1
+access_alert_system,ncollection.alert.system,model_ncollection_alert,base.group_system,1,1,1,1

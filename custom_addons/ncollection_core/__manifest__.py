@@ -8,7 +8,10 @@
     # independently; bumped to 1.11.0 to keep a single monotonic version.
     # 19.0.1.12.0 (#308): sync_from_platform also applies a pushed ECB rate,
     # derived against the tenant's own USD peg row. No schema change.
-    'version': '19.0.1.12.0',
+    # 19.0.1.13.0 (#61/P5-T04): ncollection.alert + four anomaly detectors
+    # + two daily crons. New model and new columns, so `-u` is what applies
+    # it to an existing tenant database.
+    'version': '19.0.1.13.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -29,6 +32,11 @@
         'views/subscription_blocked_templates.xml',
         'views/dashboard_action.xml',
         'data/kpi_data.xml',
+        # P5-T04 anomaly detection. (Order is cosmetic here: init_models()
+        # reflects every Python model into ir.model before ANY of a module's
+        # data files load, so model_id ref= would resolve either way.)
+        'views/alert_views.xml',
+        'data/anomaly_cron.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in
     # 'depends': the dashboard reads sale/account/crm through SOFT checks

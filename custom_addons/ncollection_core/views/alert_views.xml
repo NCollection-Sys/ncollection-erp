@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P5-T04 anomaly alerts. Odoo 19 view conventions apply (Rule 6).
+
+        No menu item is declared here on purpose. The ticket surfaces alerts on
+        the department dashboards, which live in ncollection_account_dashboard —
+        DEV-3's #57/PR #341 territory. Adding a competing menu now would both
+        collide with that work and pre-empt a placement decision that belongs
+        with the dashboards. The action exists so the records are reachable
+        (Settings > Technical > Actions, or a direct link) until then.
+    -->
+    <record id="view_ncollection_alert_list" model="ir.ui.view">
+        <field name="name">ncollection.alert.list</field>
+        <field name="model">ncollection.alert</field>
+        <field name="arch" type="xml">
+            <list string="Anomaly Alerts" decoration-danger="severity == 'critical'"
+                  decoration-warning="severity == 'warning'"
+                  decoration-muted="state == 'acknowledged'">
+                <field name="detected_at"/>
+                <field name="severity"/>
+                <field name="name"/>
+                <field name="detector_key"/>
+                <field name="observed_value" digits="[16,2]"/>
+                <field name="baseline_value" digits="[16,2]"/>
+                <field name="zscore"/>
+                <field name="state"/>
+                <field name="severity_rank" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ncollection_alert_form" model="ir.ui.view">
+        <field name="name">ncollection.alert.form</field>
+        <field name="model">ncollection.alert</field>
+        <field name="arch" type="xml">
+            <form string="Anomaly Alert">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="severity"/>
+                        <field name="detector_key"/>
+                        <field name="detected_at"/>
+                        <field name="state"/>
+                    </group>
+                    <group string="Measurement">
+                        <field name="observed_value"/>
+                        <field name="baseline_value"/>
+                        <field name="zscore"
+                               help="Standard deviations from the baseline."/>
+                    </group>
+                    <group string="Suggested action">
+                        <field name="suggested_action" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ncollection_alert" model="ir.actions.act_window">
+        <field name="name">Anomaly Alerts</field>
+        <field name="res_model">ncollection.alert</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
