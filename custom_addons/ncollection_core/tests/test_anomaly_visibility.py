@@ -61,6 +61,18 @@ class TestAnomalyVisibility(TransactionCase):
             'group_ids': [(6, 0, groups)],
         })
 
+    def _mute_cron_commit(self):
+        """Stop `_commit_progress` committing inside a TransactionCase.
+
+        The digest yields to the cron's time budget between recipients, and
+        `_commit_progress` really commits — which is the point in production
+        and forbidden in a test, because it would break the test's own
+        rollback. Stubbed to a generous budget so what is under test is the
+        digest's CONTENT, not Odoo's commit.
+        """
+        self.patch(type(self.env['ir.cron']), '_commit_progress',
+                   lambda cron, processed=0, remaining=None, deactivate=False: 60.0)
+
     def _visible(self, user):
         alerts = self.env['ncollection.alert'].with_user(user).search([])
         return {alert.detector_key for alert in alerts}
@@ -148,6 +160,7 @@ class TestAnomalyVisibility(TransactionCase):
         not allowed to open. The digest runs its search `with_user`, so this
         asserts the rules and the mail cannot diverge.
         """
+        self._mute_cron_commit()
         sales = self._user('dig_sales', ['ncollection_core.group_role_sales'])
         sales.email = 'sales@example.com'
         acct = self._user('dig_acct', ['ncollection_core.group_role_accountant'])
@@ -175,6 +188,7 @@ class TestAnomalyVisibility(TransactionCase):
     def test_a_recipient_with_nothing_to_report_gets_no_mail(self):
         """Silence is a feature. A daily empty email is how alerting gets
         filtered into a folder nobody opens."""
+        self._mute_cron_commit()
         self.env['ncollection.alert'].search([]).unlink()
         user = self._user('dig_quiet', ['ncollection_core.group_role_sales'])
         user.email = 'quiet@example.com'
@@ -197,3 +211,17 @@ class TestAnomalyVisibility(TransactionCase):
                 'name': 'forged', 'detector_key': 'sales_trend_drop',
                 'severity': 'critical', 'dedup_key': 'forged:1',
             })
+
+    def test_owner_can_write_through_the_implied_system_group(self):
+        """Owner's own ACL row is read-only; its write comes from the
+        base.group_system it implies. Odoo takes the UNION of a user's ACL
+        rows, so the permissive row wins — asserted because 'read-only role
+        row plus full system row on one user' is the one place those two
+        grants meet, and getting it backwards would either strand the tenant's
+        top role or silently hand write access to every role."""
+        owner = self._user('vis_owner_w', ['ncollection_core.group_role_owner'])
+        alert = self.env['ncollection.alert'].with_user(owner).create({
+            'name': 'owner-made', 'detector_key': 'sales_trend_drop',
+            'severity': 'info', 'dedup_key': 'owner:1',
+        })
+        self.assertTrue(alert, "the owner must retain write via group_system")

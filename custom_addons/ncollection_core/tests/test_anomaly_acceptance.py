@@ -299,6 +299,11 @@ class TestAnomalyAcceptance(TransactionCase):
 
         before = self.env['mail.mail'].search_count([])
         self.env['res.users'].browse(2).write({'email': 'admin@example.com'})
+        # #346 gave the digest a per-recipient time budget, and
+        # `_commit_progress` really commits — forbidden inside a
+        # TransactionCase. Stubbed so this still tests the mail, not the commit.
+        self.patch(type(self.env['ir.cron']), '_commit_progress',
+                   lambda cron, processed=0, remaining=None, deactivate=False: 60.0)
         self.Alert._cron_send_digest()
         self.assertGreater(
             self.env['mail.mail'].search_count([]), before,

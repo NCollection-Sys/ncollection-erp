@@ -17,6 +17,7 @@ level, not merely by convention.
 import logging
 import math
 
+from markupsafe import escape
 from psycopg2.errors import UniqueViolation
 
 from odoo import SUPERUSER_ID, api, fields, models
@@ -273,21 +274,50 @@ class NCollectionAlert(models.Model):
             if not alerts:
                 continue      # nothing for this person: send nothing at all
 
+            # ESCAPED, not interpolated raw. `alert.name` and
+            # `suggested_action` embed values the detector took from tenant
+            # data — `_detect_stock_below_safety` puts the product and
+            # warehouse NAMES straight into them — so they are user-authored
+            # strings reaching an HTML email. #346 widened the audience from
+            # administrators to seven role groups, which is the moment a
+            # mis-named product stops being a curiosity.
             lines = ''.join(
                 '<li><b>%s</b> — %s<br/><i>%s</i></li>' % (
-                    dict(SEVERITY_SELECTION).get(alert.severity, alert.severity),
-                    alert.name,
-                    alert.suggested_action or '',
+                    escape(dict(SEVERITY_SELECTION).get(alert.severity,
+                                                        alert.severity)),
+                    escape(alert.name or ''),
+                    escape(alert.suggested_action or ''),
                 )
                 for alert in alerts
             )
+            body = '<p>Open anomaly alerts:</p><ul>%s</ul>' % lines
+            # QUEUED, NOT SENT. `.send()` here would do a synchronous SMTP
+            # round-trip per recipient, on the cron thread, with no budget —
+            # and a tenant database has no queue_job runner to escalate to
+            # while `odoo-bus` runs EVERY tenant's crons on two threads. That
+            # is #310's failure class exactly, and an earlier revision of this
+            # method had it: one mail per run became one blocking send per role
+            # holder. `mail.mail` defaults to state 'outgoing', and Odoo's own
+            # `ir_cron_mail_scheduler_action` flushes the queue in batched,
+            # budgeted runs off this thread. Creating the record IS the work
+            # this cron owns; delivering it is not.
             self.env['mail.mail'].sudo().create({
                 'subject': 'NCollection: %s open alert(s)' % len(alerts),
-                'body_html': '<p>Open anomaly alerts:</p><ul>%s</ul>' % lines,
+                'body_html': body,
                 'email_to': user.email,
                 'auto_delete': True,
-            }).send()
+            })
             sent += 1
+
+            # Yield to the run's budget between recipients, the same way
+            # _cron_detect_anomalies does. Cheap now that no SMTP happens here,
+            # but it keeps the loop bounded on a tenant with many role holders
+            # rather than relying on that number staying small.
+            if not self.env['ir.cron']._commit_progress(1):
+                _logger.info(
+                    "Alert digest paused after %s recipient(s); Odoo will "
+                    "reschedule the rest.", sent)
+                break
 
         if not sent:
             _logger.info("Alert digest: nothing to send to anyone.")
