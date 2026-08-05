@@ -3,12 +3,10 @@
     <!--
         P5-T04 anomaly alerts. Odoo 19 view conventions apply (Rule 6).
 
-        No menu item is declared here on purpose. The ticket surfaces alerts on
-        the department dashboards, which live in ncollection_account_dashboard —
-        DEV-3's #57/PR #341 territory. Adding a competing menu now would both
-        collide with that work and pre-empt a placement decision that belongs
-        with the dashboards. The action exists so the records are reachable
-        (Settings > Technical > Actions, or a direct link) until then.
+        #61 shipped these views with NO menu, because the surface belonged to
+        DEV-3's #57/PR #341 and adding a competing one would have collided with
+        work in flight. #341 has since merged, so #346 adds the menu below and
+        the record rules that make it safe to show anyone.
     -->
     <record id="view_ncollection_alert_list" model="ir.ui.view">
         <field name="name">ncollection.alert.list</field>
@@ -61,7 +59,15 @@
         <field name="name">Anomaly Alerts</field>
         <field name="res_model">ncollection.alert</field>
         <field name="view_mode">list,form</field>
-        <field name="context">{'search_default_open': 1}</field>
+        <!--
+            create/edit/delete off. Role holders have read-only ACLs, so a
+            visible Save would fail server-side with an AccessError — the
+            control is real either way, but offering an action that cannot
+            succeed is how a user learns to distrust the screen. Alerts are
+            written by the detector; a human forging or deleting one could
+            hide a real anomaly.
+        -->
+        <field name="context">{'search_default_open': 1, 'create': False, 'edit': False, 'delete': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No alerts — nothing unusual detected.</p>
             <p>Anomalies are detected once a day. You see the alerts for your

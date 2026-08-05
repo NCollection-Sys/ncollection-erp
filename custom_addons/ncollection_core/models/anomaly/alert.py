@@ -19,7 +19,7 @@ import math
 
 from psycopg2.errors import UniqueViolation
 
-from odoo import api, fields, models
+from odoo import SUPERUSER_ID, api, fields, models
 
 from . import detectors as anomaly_detectors
 from . import statistics as stats
@@ -335,4 +335,14 @@ class NCollectionAlert(models.Model):
                 users |= group.sudo().all_user_ids
         # Deduplicated by the recordset union above, so a user in three roles
         # still receives exactly one digest.
-        return users.filtered(lambda u: u.email and u.active)
+        #
+        # `id != SUPERUSER_ID` is defence in depth, not a live fix. The whole
+        # design rests on `with_user(user)` DROPPING superuser — verified in
+        # Odoo 19's `Environment.__call__`, which recomputes `su` as False once
+        # a concrete user is passed. But `Environment.__new__` forces `su=True`
+        # again whenever `uid == 1`, so the reserved superuser record is the one
+        # account for which the per-recipient search would silently return
+        # EVERYTHING. It ships inactive and without an email, so the filter
+        # below already excludes it — this makes that non-accidental.
+        return users.filtered(
+            lambda u: u.email and u.active and u.id != SUPERUSER_ID)

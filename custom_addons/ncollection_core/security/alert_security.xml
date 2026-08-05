@@ -39,6 +39,15 @@
             test_anomaly_visibility asserts them, so editing the chain fails
             loudly instead of silently widening access.
 
+            WHY CEO IS NOT LISTED ON THE ATTENDANCE AND STOCK RULES. It would
+            be redundant (ceo implies manager) and it would COST something: the
+            test that asserts a CEO sees all four detectors only proves the
+            implication chain still works while the chain is what carries it.
+            Listing ceo explicitly would make that test pass even if somebody
+            removed ceo -> manager, turning a guard into decoration. Owner is
+            listed everywhere for the opposite reason: it is the tenant's top
+            role and must never depend on a chain edit.
+
             noupdate="0" deliberately: unlike the cron rows, these are a
             security policy. A tenant must not be able to keep a stale, wider
             rule across an upgrade that narrows one.
