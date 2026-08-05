@@ -69,9 +69,17 @@ ATTRS_RE = re.compile(r"\battrs\s*=")
 # still a credential sitting in the repository; only the SYNTAX rules care
 # whether the text is live markup.
 #
-# An unterminated `<!--` matches nothing here, so such a file is scanned as
-# before. That is not a gap worth code: the file is malformed XML and CI's own
-# well-formedness step fails it independently.
+# An unterminated `<!--` matches nothing here, so such a file is scanned
+# exactly as before — which fails SAFE: the worst case is the false positive
+# this ticket removes, never a missed violation. For addon XML the file is also
+# rejected outright by CI's `Validate XML (well-formedness)` step (xmllint over
+# custom_addons/); outside custom_addons nothing validates it, which is why the
+# conservative direction here matters rather than being a formality.
+#
+# In WELL-FORMED XML there is no way to fake a comment open: `<` is illegal raw
+# inside an attribute value, so a literal `<!--` is always a real comment. A
+# stray `-->` inside an attribute IS legal, but the non-greedy match ends at
+# the first `-->` after a genuine open, so it cannot pull live markup in.
 XML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 

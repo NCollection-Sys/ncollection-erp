@@ -93,6 +93,15 @@ class TestRealViolationsStillFail(unittest.TestCase):
         findings = view_findings('<tree/> <!-- documented -->')
         self.assertEqual(len(findings), 1)
 
+    def test_a_stray_comment_close_in_an_attribute_does_not_move_the_boundary(self):
+        """A bare `-->` inside an attribute value is legal XML, and the guard
+        must not treat it as ending a comment that already closed. The reverse
+        -- faking a comment OPEN from an attribute -- is impossible, because a
+        raw `<` is illegal inside an attribute value in well-formed XML."""
+        findings = view_findings('<!-- doc --> <field help="a --> b"/> <tree/>')
+        self.assertEqual(len(findings), 1,
+                         "markup after a stray --> must still be scanned")
+
     def test_line_numbers_survive_a_preceding_multi_line_comment(self):
         """Blanking, not deleting. Findings are reported as `path:line` and a
         reader follows them literally; shifting them by the length of every
