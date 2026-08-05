@@ -233,6 +233,140 @@ CRON_THREADS_VALUE_RE = re.compile(r"--max-cron-threads=([^\s\"',\]]+)")
 CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 
 
+# ---------------------------------------------------------------------------
+# R6 — an Odoo container that RUNS cron must say WHICH database's cron it runs.
+#
+# R5 above is the "must not run cron at all" rule, and it covers exactly two
+# files. This is the other half, and it covers every compose file: if a service
+# runs cron (threads != 0), it must carry `-d`, or be listed below as a
+# deliberate enumerator.
+#
+# WHY IT IS A SEPARATE RULE RATHER THAN MORE FILES IN R5. #337 fixed dev and
+# routing with `--max-cron-threads=0`, because those must not run cron. Applying
+# that to `provisioning-runner` would have SILENTLY STOPPED the config-sync
+# reconcile job that lives there (#343). Same bug, opposite fix — so the guard
+# has to distinguish "must not run cron" from "must run only its own cron",
+# which one rule cannot.
+#
+# WHY THE BUG SURVIVED R5. R5's matcher is `^\s*command:.*\bodoo\b`, and
+# `docker-compose.saas.yml` writes its command as a folded block:
+#
+#     command: >
+#       odoo -c /etc/odoo/odoo.conf
+#            --max-cron-threads=1
+#
+# so the flags live on continuation lines and the matcher sees NOTHING there —
+# measured: 0 matching lines in that file. R6 therefore gathers the whole block
+# before looking at it. A line-shaped rule cannot guard a block-shaped setting.
+#
+# ABSENT IS NOT ZERO. A command with no `--max-cron-threads` inherits the
+# config file's value, and `config/odoo.prod.conf` sets `max_cron_threads = 1`.
+# So "no flag" means "runs cron", which is why the check below treats a missing
+# flag as cron-enabled rather than skipping the service.
+#
+# THE ALLOWLIST IS THE POINT. Enumerating every database is CORRECT for the
+# production cron worker — that is how one Odoo runs every tenant's crons. The
+# rule does not forbid it; it forbids doing it by accident. Adding an entry is
+# a recorded decision with a reason, which is what #343's acceptance criteria
+# asked for and what a bare code change would not have produced.
+# Reported in the clean line. A literal here drifts the moment a rule is
+# added — it already read `5` with six rules wired.
+RULE_COUNT = 6
+
+CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
+    ("docker-compose.pooling.yml", "odoo-bus"):
+        "THE tenant cron worker in the pooling split (P2-T09). Running every "
+        "database's crons is its entire job; scoping it to one would stop cron "
+        "for every tenant.",
+    ("docker-compose.prod.yml", "odoo"):
+        "The single-container production shape, used when the pooling overlay "
+        "is NOT layered. It is then the only cron worker, so it must enumerate "
+        "for the same reason odoo-bus does.",
+    ("docker-compose.staging.yml", "odoo"):
+        "Same shape and same reason as prod: staging mirrors production, and a "
+        "staging that skipped tenant crons would not be a rehearsal of it.",
+}
+COMPOSE_SERVICE_RE = re.compile(r"^  ([A-Za-z0-9_.-]+):\s*$")
+COMPOSE_TOPLEVEL_RE = re.compile(r"^([A-Za-z0-9_.-]+):")
+COMPOSE_COMMAND_RE = re.compile(r"^(\s+)command:\s*(.*)$")
+# `-d <db>` / `-d=<db>` / `--database <db>`. The lookbehind keeps `--db-filter`
+# from matching: its `-d` is preceded by a `-`.
+DB_SCOPE_RE = re.compile(r"(?<![\w-])(?:-d|--database)[ =]")
+
+
+def _compose_odoo_commands(text: str) -> list[tuple[str, str, int]]:
+    """Every Odoo `command:` in a compose file, as (service, command, lineno).
+
+    Folded (`>`) and literal (`|`) blocks are joined, so the flags on their
+    continuation lines are visible. Only keys inside `services:` are treated as
+    service names — `networks:` and `volumes:` use the same indentation.
+    """
+    out: list[tuple[str, str, int]] = []
+    lines = text.splitlines()
+    service, in_services, i = None, False, 0
+    while i < len(lines):
+        line = lines[i]
+        top = COMPOSE_TOPLEVEL_RE.match(line)
+        if top:
+            in_services = top.group(1) == "services"
+            service = None
+            i += 1
+            continue
+        svc = COMPOSE_SERVICE_RE.match(line)
+        if svc and in_services:
+            service = svc.group(1)
+            i += 1
+            continue
+        cmd_m = COMPOSE_COMMAND_RE.match(line)
+        if cmd_m and service and not line.strip().startswith("#"):
+            indent, rest = cmd_m.group(1), cmd_m.group(2).strip()
+            if rest in (">", "|", ">-", "|-", ">+", "|+"):
+                body, j = [], i + 1
+                while j < len(lines):
+                    nxt = lines[j]
+                    if nxt.strip() and not nxt.startswith(indent + " "):
+                        break
+                    body.append(_strip_yaml_comment(nxt).strip())
+                    j += 1
+                out.append((service, " ".join(body), i + 1))
+                i = j
+                continue
+            out.append((service, _strip_yaml_comment(rest), i + 1))
+        i += 1
+    return [(s, c, n) for s, c, n in out if re.search(r"\bodoo\b", c)]
+
+
+def rule_cron_enumeration_declared(out: list[str]) -> None:
+    """A cron-running Odoo service must scope cron, or be an allowed enumerator."""
+    for path in sorted(REPO_ROOT.glob("docker-compose*.yml")):
+        rel = path.name
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            out.append(f"{rel}: not readable, so the cron-enumeration guard "
+                       f"cannot run.")
+            continue
+        for service, command, lineno in _compose_odoo_commands(text):
+            value_m = CRON_THREADS_VALUE_RE.search(command)
+            if value_m and CRON_THREADS_OK_RE.match(value_m.group(1)):
+                continue                      # cron disabled — R5's territory
+            if DB_SCOPE_RE.search(command):
+                continue                      # scoped to one database
+            if (rel, service) in CRON_ENUMERATORS_ALLOWED:
+                continue                      # deliberate, with a reason
+            threads = value_m.group(1) if value_m else "unset (inherits the conf)"
+            out.append(
+                f"{rel}:{lineno}: service `{service}` runs cron "
+                f"(--max-cron-threads={threads}) with no `-d`, so "
+                f"`cron_database_list()` falls back to `list_dbs(True)` and it "
+                f"ticks EVERY database on the server (#337/#343). `--db-filter` "
+                f"does NOT restrict cron — it filters HTTP routing only. Either "
+                f"add `-d <db>`, or add ('{rel}', '{service}') to "
+                f"CRON_ENUMERATORS_ALLOWED in scripts/ci/invariants.py with the "
+                f"reason it must enumerate."
+            )
+
+
 def _strip_yaml_comment(line: str) -> str:
     """Drop a trailing ` # …` comment.
 
@@ -665,6 +799,7 @@ def main() -> int:
     # not include ci.yml.
     rule_ci_module_coverage(findings)
     rule_cron_threads_scoped(findings)
+    rule_cron_enumeration_declared(findings)
 
     if findings:
         print("invariants: violations found\n")
@@ -674,7 +809,7 @@ def main() -> int:
         print("KNOWN_PENDING entry in scripts/ci/invariants.py naming the follow-up PR.")
         return 1
 
-    print(f"invariants: clean ({len(paths)} file(s) scanned, 5 rule(s) applied).")
+    print(f"invariants: clean ({len(paths)} file(s) scanned, {RULE_COUNT} rule(s) applied).")
     if CI_EXEMPT_MODULES:
         print(f"  note: {len(CI_EXEMPT_MODULES)} module(s) exempt from CI coverage:")
         for module, reason in CI_EXEMPT_MODULES.items():

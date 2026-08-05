@@ -142,6 +142,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Load test (P3-T03) | `loadtesta` · `loadtestb` · `loadtestc` | `make load-test-clean` |
 | Financial bootstrap (P3-T01) | `fintest` | self-drops (start + end of run) |
 | Cron starvation (#310) | `cronstall` — **on its own private Postgres**, not the shared `db` | `make cron-starvation-clean` |
+| Cron scope (#343) | `cronscopeplatform` · `cronscopetenant` — **also on their own private Postgres** | `make cron-scope-clean` |
 | Platform DB (provisioning + config-sync run *against* it) | `saastest` · `ncplatform` | none — **persistent, do not drop** |
 | Demo tenant (`make demo-tenant`) | `albarari` | `make demo-clean` |
 | Aggregation bench | `aggbench` | — |
@@ -153,11 +154,13 @@ both suites until it is rebuilt. `make orphan-dbs` lists everything with no owne
 this table; keep the two in step, or the list starts naming live fixtures and people
 learn to ignore it.
 
-The cron-starvation harness is the one suite that does **not** put its fixture on the shared
-`db`, and the reason generalises: the dev `odoo` container runs with no `-d`, and Odoo's
+The cron-starvation and cron-scope harnesses are the suites that do **not** put their
+fixtures on the shared `db`, and the reason generalises: the dev `odoo` container runs with no `-d`, and Odoo's
 `cron_database_list()` falls back to `list_dbs(True)` — so it runs the crons of **every database
 on that server**, including every leftover fixture. Any timing measured against a shared-server
-database is therefore attributable to nobody. See `DESIGN_CRON_AND_QUEUE_TOPOLOGY.md` §5.1.
+database is therefore attributable to nobody. See `DESIGN_CRON_AND_QUEUE_TOPOLOGY.md` §5.1. The cron-scope harness has a second
+reason on top of that one: its RED arm *deliberately* runs every database's crons, so
+pointing it at the shared server would mutate other suites' fixtures on purpose.
 
 Fixture names must be **alphanumeric**: `db_filter=^%d$` routes a subdomain to the database
 of the same name, underscores are invalid in hostnames, hyphens need Postgres quoting.

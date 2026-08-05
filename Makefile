@@ -36,6 +36,10 @@ ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml
 # services are entirely self-contained (own Postgres, own network, own volumes),
 # so this does NOT affect `make up` and the harness cannot disturb the dev stack.
 CRONSTALL_COMPOSE ?= docker compose -f docker-compose.yml -f docker-compose.cronstall.yml
+# Opt-in cron-SCOPE harness stack (#343): base + the cronscope overlay. Its own
+# Postgres, for the same reason — the RED arm deliberately runs other databases'
+# crons, which must never happen on the shared dev db (Rule 14).
+CRONSCOPE_COMPOSE ?= docker compose -f docker-compose.yml -f docker-compose.cronscope.yml
 
 # OCA addon repos (P1-T04): ./oca/ is GENERATED from the pins in repos.yml —
 # run `make oca` after a fresh clone or whenever repos.yml changes.
@@ -197,6 +201,21 @@ config-sync-verify: ## Run the P2-T03 config-sync proof (provision -> plan chang
 
 financial-bootstrap-verify: ## Run the P3-T01 proof (Enterprise financial set installs -> Trial Balance runs on UAE data)
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_financial_bootstrap.sh
+
+cron-scope-verify: ## Run the #343 proof (provisioning-runner ticks the platform DB's crons only, and still ticks them)
+	./custom_addons/ncollection_saas/scripts/provisioning/verify_cron_scope.sh
+
+# Same reasoning as cron-starvation-clean below: this fixture is NOT on the
+# shared db, so there is nothing to drop_database — removing the private
+# volumes is what resets it. Project name derived, never hardcoded (Rule 11).
+cron-scope-clean: ## Remove the CRON-SCOPE harness stack + its private volumes (destructive)
+	@$(CRONSCOPE_COMPOSE) rm -sf cron-scope-runner cron-scope-db >/dev/null
+	@proj=$$($(CRONSCOPE_COMPOSE) config --format json \
+		| python3 -c "import json,sys; print(json.load(sys.stdin)['name'])"); \
+	for v in cronscope_pgdata cronscope_data; do \
+		docker volume rm -f "$${proj}_$${v}" >/dev/null; \
+	done
+	@echo "✅ cron-scope harness stack + volumes removed."
 
 cron-starvation-verify: ## Run the #310 proof (a stalled outbound fetch must not delay the config-sync reconcile cron)
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_cron_starvation.sh
