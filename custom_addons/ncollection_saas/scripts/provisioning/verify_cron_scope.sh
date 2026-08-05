@@ -59,7 +59,13 @@ psql_q() { # psql_q <db> <sql> -> single value, whitespace-trimmed
 }
 
 # Invoked through the EXIT trap below, which shellcheck cannot see.
-# shellcheck disable=SC2329
+#
+# BOTH codes on purpose. shellcheck renamed this check: 0.10+ reports SC2329
+# on the definition, older versions report SC2317 on the body. CI installs
+# whatever `apt-get install shellcheck` gives the runner, which is currently
+# older than a dev machine's Homebrew build — so a directive naming only one
+# code passes locally and fails in CI, which is exactly what happened here.
+# shellcheck disable=SC2329,SC2317
 cleanup() {
   "${DC[@]}" rm -sf cron-scope-runner >/dev/null 2>&1 || true
 }
