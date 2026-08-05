@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Tests for architecture_guard's XML-comment handling (#348).
+"""Tests for architecture_guard's inert-XML handling (#348).
 
-SCOPE, STATED UP FRONT: this covers the comment-skipping behaviour and the one
-rule interaction that behaviour deliberately does NOT extend to. It is not
+SCOPE, STATED UP FRONT: this covers the comment/CDATA-skipping behaviour and
+the one rule interaction that behaviour deliberately does NOT extend to. It is not
 coverage of the whole guard — #330 scoped that as its own ticket, and an
 undeclared gap in a test file reads as coverage it does not have.
 
@@ -10,7 +10,7 @@ WHY THIS FILE EXISTS AT ALL. The bug was that Rule 6 matched `<tree>` and
 `attrs=` as raw text, so a comment DOCUMENTING the rule failed the rule. The
 fix is small enough to look obviously right, which is exactly the kind of fix
 that rots: the next person greps for `<tree` and adds a matcher without knowing
-comments are supposed to be blanked first. These cases fail if they do.
+comments and CDATA are supposed to be blanked first. These cases fail if they do.
 
 Run standalone (no pytest dependency in CI):
 
@@ -120,6 +120,52 @@ class TestRealViolationsStillFail(unittest.TestCase):
         self.assertIn(":6:", findings[0])
 
 
+class TestCdataIsCharacterData(unittest.TestCase):
+    """CDATA is blanked for the same reason comments are, not as an extra.
+
+    A `<![CDATA[...]]>` body reaches Odoo as a STRING, never as view markup,
+    so Rule 6 has nothing to say about a `<tree>` spelled inside one. Found by
+    the odoo-reviewer on the first round of this ticket, when the fix handled
+    comments only.
+    """
+
+    def test_a_tree_inside_cdata_is_not_markup(self):
+        self.assertEqual(
+            view_findings('<field><![CDATA[ <tree/> ]]></field>'), [])
+
+    def test_an_unterminated_comment_inside_cdata_cannot_swallow_live_markup(self):
+        """THE HOLE, pinned. Inside CDATA, `<!--` is ordinary text, so an
+        unterminated one there is perfectly well-formed XML and gets no
+        backstop from the well-formedness gate. Handling comments in a
+        SEPARATE, earlier pass would run from it past `]]>` to the next real
+        `-->` and blank the live `<tree/>` in between — the guard silently
+        passing something it must catch."""
+        findings = view_findings(
+            '<field><![CDATA[ <!-- unterminated ]]></field>\n'
+            '<tree/>\n'
+            '<!-- a later, genuine comment -->')
+        self.assertEqual(len(findings), 1,
+                         "live markup after a CDATA block must still be scanned")
+        self.assertIn(":2:", findings[0])
+
+    def test_a_cdata_open_inside_a_comment_does_not_escape_the_comment(self):
+        """The mirror image, and the reason both live in ONE alternation: the
+        scan is left to right, so whichever construct opens first consumes the
+        other and neither can start inside the other."""
+        findings = view_findings('<!-- mentions <![CDATA[ --> <tree/>')
+        self.assertEqual(len(findings), 1,
+                         "the comment must end at its own -->, not at ]]>")
+
+    def test_line_numbers_survive_a_multi_line_cdata_block(self):
+        text = ('<field><![CDATA[\n'   # 1
+                '  line two\n'         # 2
+                ']]></field>\n'        # 3
+                '<tree/>')             # 4
+        findings = view_findings(text)
+        self.assertEqual(len(findings), 1)
+        self.assertIn(":4:", findings[0])
+
+
 class TestScopeOfTheExemption(unittest.TestCase):
     """Comments are exempt from SYNTAX rules only. Not from everything."""
 
@@ -150,18 +196,18 @@ class TestBlanking(unittest.TestCase):
     def test_line_count_is_preserved_exactly(self):
         text = '<a>\n<!--\nx\ny\n-->\n</a>'
         self.assertEqual(
-            len(guard.without_xml_comments(text).splitlines()),
+            len(guard.without_inert_xml_text(text).splitlines()),
             len(text.splitlines()))
 
     def test_text_outside_comments_is_untouched(self):
-        self.assertEqual(guard.without_xml_comments('<list/>'), '<list/>')
+        self.assertEqual(guard.without_inert_xml_text('<list/>'), '<list/>')
 
     def test_an_unterminated_comment_is_left_alone(self):
         """Documented behaviour, not an oversight: the file is malformed XML
         and CI's well-formedness step fails it on its own. Pinned so nobody
         'fixes' it into swallowing the rest of a real file."""
         text = '<odoo>\n<!-- never closed\n<tree/>\n</odoo>'
-        self.assertEqual(guard.without_xml_comments(text), text)
+        self.assertEqual(guard.without_inert_xml_text(text), text)
 
 
 if __name__ == "__main__":

@@ -76,16 +76,30 @@ ATTRS_RE = re.compile(r"\battrs\s*=")
 # custom_addons/); outside custom_addons nothing validates it, which is why the
 # conservative direction here matters rather than being a formality.
 #
-# In WELL-FORMED XML there is no way to fake a comment open: `<` is illegal raw
-# inside an attribute value, so a literal `<!--` is always a real comment. A
-# stray `-->` inside an attribute IS legal, but the non-greedy match ends at
-# the first `-->` after a genuine open, so it cannot pull live markup in.
-XML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+# CDATA IS BLANKED TOO, and for the same reason rather than as an extra. A
+# `<![CDATA[...]]>` body is character DATA — the parser hands it to Odoo as a
+# string, never as view markup — so Rule 6 has nothing to say about a `<tree>`
+# spelled inside one.
+#
+# It also closes a hole. Inside CDATA, `<!--` is ordinary text, so an
+# unterminated one there is NOT malformed XML and gets no backstop from the
+# well-formedness gate; a comments-only pass would run from it past `]]>` to
+# the next real `-->` and blank whatever live markup sat in between. Both
+# constructs therefore go in ONE alternation: the scan is left to right, so
+# whichever opens first consumes the other, and neither can start inside the
+# other. Two sequential passes would reintroduce exactly that bug.
+#
+# Given that, a comment open cannot be faked from live markup: `<` is illegal
+# raw inside an attribute value in well-formed XML, so any `<!--` outside CDATA
+# is a real comment. A stray `-->` in an attribute IS legal, but the non-greedy
+# match ends at the first `-->` after a genuine open, so it cannot pull live
+# markup in.
+XML_INERT_RE = re.compile(r"<!--.*?-->|<!\[CDATA\[.*?\]\]>", re.DOTALL)
 
 
-def without_xml_comments(text: str) -> str:
-    """Blank every XML comment body, preserving line count and numbering."""
-    return XML_COMMENT_RE.sub(
+def without_inert_xml_text(text: str) -> str:
+    """Blank comment and CDATA bodies, preserving line count and numbering."""
+    return XML_INERT_RE.sub(
         lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
 
 
@@ -170,7 +184,7 @@ def addon_of(path: Path) -> str | None:
 def check_view_syntax(path: Path, text: str, findings: list[str]) -> None:
     if path.suffix != ".xml":
         return
-    for i, line in enumerate(without_xml_comments(text).splitlines(), 1):
+    for i, line in enumerate(without_inert_xml_text(text).splitlines(), 1):
         if TREE_TAG_RE.search(line):
             findings.append(f"{path}:{i}: uses <tree> — Odoo 19 requires <list> (Rule 6)")
         if ATTRS_RE.search(line):
