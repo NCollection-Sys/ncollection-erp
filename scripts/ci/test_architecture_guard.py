@@ -241,6 +241,113 @@ class TestLineBreakPreservation(unittest.TestCase):
                     len(text.splitlines()))
 
 
+class TestSearchGroupAttributes(unittest.TestCase):
+    """`<group>` in a `<search>` may carry only schema-approved attributes.
+
+    NOT a style rule: Odoo 19's RelaxNG rejects the WHOLE view, so the module
+    fails to INSTALL rather than degrade — and CI's `Validate XML` step cannot
+    catch it, because the file IS well-formed and the violation is
+    schema-level. First signal today is a failed install, minutes in.
+
+    THE PREMISE IN THE TICKET WAS WRONG, which is why these cases are pinned
+    against the schema rather than against the ticket. #61 recorded "Odoo 19
+    dropped `expand`", and #353 inherited it. Reading base/rng/common.rng
+    shows a `<group>` may carry only colspan/rowspan/fill/height/width/name/
+    color/invisible/position/groups — `string` is absent too, and it is the
+    commoner spelling. An expand-only rule would have passed the more likely
+    bug straight through.
+    """
+
+    def test_expand_is_rejected(self):
+        findings = view_findings('<search><group expand="0"><filter name="a"/></group></search>')
+        self.assertEqual(len(findings), 1)
+        self.assertIn("separator", findings[0])
+
+    def test_string_is_rejected_too(self):
+        """The case the ticket's own framing would have missed."""
+        self.assertEqual(
+            len(view_findings('<search><group string="Group By"><filter name="a"/></group></search>')),
+            1, "<group string=> is as fatal as <group expand=>")
+
+    def test_a_bare_group_is_fine(self):
+        """Verified against the pinned odoo:19 schema: this VALIDATES. A rule
+        that flagged every `<group>` in a search would be wrong, not merely
+        noisy — it would push people to change working views."""
+        self.assertEqual(view_findings('<search><group/></search>'), [])
+
+    def test_a_group_with_children_but_no_attributes_is_fine(self):
+        self.assertEqual(
+            view_findings('<search><group><filter name="a"/></group></search>'), [])
+
+    def test_schema_approved_attributes_are_fine(self):
+        self.assertEqual(
+            view_findings('<search><group name="g" groups="base.group_user"/></search>'), [])
+
+    def test_col_is_allowed(self):
+        """`col` is NOT in `group`'s own attribute list — it arrives through
+        the `container` ref, and RelaxNG splices a referenced define's
+        attributes into the containing element. Reading only what sits next to
+        `group` gives ten attributes and looks complete; it is eleven.
+        Verified VALID against the pinned odoo:19 schema."""
+        self.assertEqual(
+            view_findings('<search><group col="4"><filter name="a"/></group></search>'), [])
+
+    def test_the_core_odoo_pattern_is_allowed(self):
+        """Verbatim from core: base/views/ir_model_views.xml, inside a
+        `<search>`. A rule missing `col` flags ODOO'S OWN markup as fatal —
+        which is how this test came to exist."""
+        self.assertEqual(
+            view_findings('<search><group colspan="11" col="11" '
+                          'groups="base.group_no_one"><filter name="a"/></group></search>'), [])
+
+    def test_an_equality_inside_an_allowed_attribute_is_not_an_attribute(self):
+        """`invisible` is schema-LEGAL on a group, and Odoo 17+ actively
+        encourages boolean expressions in it. A quote-blind name regex read the
+        `state ==` inside the VALUE as a second, disallowed attribute and
+        rejected working markup."""
+        self.assertEqual(
+            view_findings('<search><group invisible="state == \'done\'">'
+                          '<filter name="a"/></group></search>'), [])
+
+    def test_an_unescaped_gt_in_a_value_does_not_hide_a_later_violation(self):
+        """THE GUARD HOLE, pinned. XML requires only `<` and `&` to be escaped;
+        a raw `>` in a value is legal and Odoo core writes it constantly. With
+        a `[^>]*` tag bound the match stopped there, so the fatal `string=`
+        after it was never scanned — the rule silently passing exactly what it
+        exists to catch."""
+        findings = view_findings('<search><group invisible="qty > 5" '
+                                 'string="Foo"><filter name="a"/></group></search>')
+        self.assertEqual(len(findings), 1,
+                         "a violation after an unescaped > must still be seen")
+
+    def test_unquoted_and_single_quoted_values_are_still_caught(self):
+        self.assertEqual(len(view_findings('<search><group expand=0/></search>')), 1)
+        self.assertEqual(len(view_findings("<search><group expand='0'/></search>")), 1)
+
+    def test_a_form_group_with_string_is_untouched(self):
+        """Forms are not RNG-validated at all — the rng directory ships no
+        form_view.rng — which is why `<group string="Measurement">` installs
+        fine. The rule is scoped to search regions for exactly this reason."""
+        self.assertEqual(
+            view_findings('<form><group string="Measurement"><field name="a"/></group></form>'), [])
+
+    def test_the_token_inside_a_comment_is_not_markup(self):
+        """Composes with #348 — and this is a live case: alert_views.xml's own
+        header documents `<group expand="0">` in prose."""
+        self.assertEqual(
+            view_findings('<search><!-- never <group expand="0"> --><field name="a"/></search>'), [])
+
+    def test_only_the_offending_group_is_reported(self):
+        """A compliant search view earlier in the file must not be blamed for
+        a later one — the region match is non-greedy for this reason."""
+        text = ('<search>\n<separator/>\n</search>\n'
+                '<form><group string="ok"/></form>\n'
+                '<search>\n<group expand="0"/>\n</search>')
+        findings = view_findings(text)
+        self.assertEqual(len(findings), 1)
+        self.assertIn(":6:", findings[0])
+
+
 class TestScopeOfTheExemption(unittest.TestCase):
     """Comments are exempt from SYNTAX rules only. Not from everything."""
 

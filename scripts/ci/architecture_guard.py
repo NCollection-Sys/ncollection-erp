@@ -48,6 +48,65 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 # Rule 1: deprecated Odoo 19 view syntax
 # ---------------------------------------------------------------------------
 TREE_TAG_RE = re.compile(r"<tree\b")
+# Non-greedy so two search views in one file are two regions, not one spanning
+# region that would swallow the legitimate markup between them.
+SEARCH_REGION_RE = re.compile(r"<search\b.*?</search\s*>", re.DOTALL)
+# BOTH PATTERNS ARE QUOTE-AWARE, and neither was at first — the review found
+# one false positive and one guard hole in the naive versions.
+#
+# The tag interior consumes a quoted span WHOLE, so an unescaped `>` inside a
+# value cannot terminate the tag. XML only requires `<` and `&` to be escaped;
+# `>` is legal raw, and Odoo core writes it constantly in boolean expressions
+# (`invisible="qty > 5"`). With a plain `[^>]*` bound the match stopped at that
+# `>`, so a genuinely fatal `string=` LATER in the same tag was never scanned —
+# the rule silently passing the exact thing it exists to catch.
+#
+# Note this is a different guarantee from the one SEARCH_REGION_RE relies on:
+# there, a raw `<` is illegal inside an attribute value so a `<search` open
+# cannot be faked. That argument does NOT extend to `>` as a terminator.
+SEARCH_GROUP_RE = re.compile(r"""<group\b((?:[^>"']|"[^"]*"|'[^']*')*)>""")
+# Attribute NAMES only. The quoted alternatives swallow the whole value, so an
+# `==` inside one is never read as a second attribute. Without this,
+# `invisible="state == 'done'"` — a schema-LEGAL attribute carrying idiomatic
+# Odoo 17+ syntax — was reported as a disallowed `state` attribute. The bare
+# alternative keeps unquoted values (`expand=0`) working.
+ATTR_NAME_RE = re.compile(
+    r"""([A-Za-z_][\w.:-]*)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)""")
+
+# The ONLY attributes Odoo 19 permits on a `<group>` inside a `<search>`.
+#
+# Read off the schema: `base/rng/search_view.rng` includes `common.rng`, whose
+# `group` define lists colspan/rowspan/fill/height/width/name/color/invisible,
+# plus `position`+`name` from the `overload` define, `groups` from
+# `access_rights`, and `col` from `container`. Anything else makes the RelaxNG
+# validator reject the WHOLE view, so the module fails to INSTALL.
+#
+# `col` IS THE ONE TO NOTICE, and I missed it on the first pass. It is not in
+# `group`'s own attribute list — it arrives through the `container` ref, and
+# RelaxNG splices a referenced define's attributes into the containing element
+# wherever the ref sits. Reading only the attributes written next to `group`
+# gives ten and looks complete. That is the same shape of mistake this rule
+# exists to catch: a confident, schema-cited list that is short one entry.
+#
+# It is not academic — core Odoo 19 ships exactly this inside a `<search>`:
+#     base/views/ir_model_views.xml:
+#     <group colspan="11" col="11" groups="base.group_no_one">
+# so a rule without `col` flags Odoo's own markup as fatal. Pinned by
+# test_the_core_odoo_pattern_is_allowed.
+#
+# `string` and `expand` are both absent, which is the practical point: the two
+# spellings people actually write are both fatal. Verified against the pinned
+# odoo:19 image — `<group/>` and `<group><filter/></group>` validate;
+# `<group string="G">` and `<group expand="0">` are both REJECTED.
+#
+# Forms are unaffected and this rule is scoped to search regions anyway: the
+# rng directory ships no form_view.rng at all, which is why `<group
+# string="Measurement">` in a form installs perfectly well.
+SEARCH_GROUP_ALLOWED_ATTRS = frozenset({
+    "colspan", "rowspan", "fill", "height", "width", "name", "color",
+    "invisible", "position", "groups",
+    "col",   # via the `container` define, NOT group's own list — see above
+})
 ATTRS_RE = re.compile(r"\battrs\s*=")
 
 # Rule 6 is about MARKUP, and a comment is not markup (#348).
@@ -212,11 +271,63 @@ def addon_of(path: Path) -> str | None:
 def check_view_syntax(path: Path, text: str, findings: list[str]) -> None:
     if path.suffix != ".xml":
         return
-    for i, line in enumerate(without_inert_xml_text(text).splitlines(), 1):
+    # Blank once: the line rules and the region rule below must agree about
+    # what counts as live markup, and blanking twice would just be slower.
+    live = without_inert_xml_text(text)
+    for i, line in enumerate(live.splitlines(), 1):
         if TREE_TAG_RE.search(line):
             findings.append(f"{path}:{i}: uses <tree> — Odoo 19 requires <list> (Rule 6)")
         if ATTRS_RE.search(line):
             findings.append(f"{path}:{i}: uses deprecated attrs= — use direct field conditions (Rule 6)")
+    _check_search_group_expand(path, live, findings)
+
+
+def _check_search_group_expand(path: Path, live: str, findings: list[str]) -> None:
+    """A `<group>` inside a `<search>` carrying a disallowed attribute (#353).
+
+    NOT a style rule. Odoo 19's RelaxNG validator rejects the WHOLE view for
+    this attribute, so the module fails to install outright rather than
+    degrading. Hit for real in #61: the fix was to flatten to `<separator/>`,
+    the shape ncollection_saas/views/backup_views.xml already uses.
+
+    Nothing caught it before. `architecture_guard` had no `expand` rule at all,
+    and CI's `Validate XML (well-formedness)` step runs `xmllint --noout` —
+    the file IS well-formed; the violation is schema-level. So the first
+    signal was a failed module install, minutes into the `test` job.
+
+    WHY THIS ONE IS REGION-SCOPED AND THE OTHERS ARE PER LINE. `<group>` is
+    perfectly legitimate in a `<form>`, and `expand` is legitimate on other
+    elements — only the combination inside a `<search>` is fatal. A per-line
+    rule cannot express "inside a search view" and would either miss it or
+    fail every form in the repo.
+
+    Deliberately a REGEX over the region rather than an ElementTree parse.
+    Parsing would be more precise, and is only safe on well-formed XML — which
+    is not guaranteed for `.xml` outside custom_addons/, where nothing
+    validates well-formedness (see the XML_INERT_RE block). Failing to parse
+    would mean either crashing the guard or silently skipping the file; a
+    regex over the same text the other Rule-6 checks read keeps the failure
+    mode consistent with them. An unterminated `<search>` matches no region
+    and is simply not scanned — the same fail-safe direction as an
+    unterminated comment.
+    """
+    for region in SEARCH_REGION_RE.finditer(live):
+        for m in SEARCH_GROUP_RE.finditer(region.group(0)):
+            bad = sorted({
+                a for a in ATTR_NAME_RE.findall(m.group(1))
+                if a not in SEARCH_GROUP_ALLOWED_ATTRS
+            })
+            if not bad:
+                continue
+            offset = region.start() + m.start()
+            line = live.count("\n", 0, offset) + 1
+            findings.append(
+                f"{path}:{line}: <group {bad[0]}=...> inside a "
+                f"<search> — Odoo 19's schema allows none of {bad} on a search "
+                f"group, and RelaxNG rejects the WHOLE view, so the module "
+                f"fails to INSTALL rather than degrade. Flatten the search view "
+                f"and use <separator/> between filter groups, as "
+                f"ncollection_saas/views/backup_views.xml does (Rule 6)")
 
 
 def check_menu_license_gate(path: Path, text: str, changed_paths: set[Path], findings: list[str]) -> None:
