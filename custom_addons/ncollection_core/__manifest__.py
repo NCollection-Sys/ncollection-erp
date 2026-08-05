@@ -11,7 +11,10 @@
     # 19.0.1.13.0 (#61/P5-T04): ncollection.alert + four anomaly detectors
     # + two daily crons. New model and new columns, so `-u` is what applies
     # it to an existing tenant database.
-    'version': '19.0.1.13.0',
+    # 19.0.1.14.0 (#346): role-scoped alert visibility — 4 ir.rule records,
+    # role ACL rows and a menu. Security policy change, so `-u` is what
+    # applies it; a tenant left un-upgraded keeps alerts admin-only.
+    'version': '19.0.1.14.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -27,6 +30,10 @@
         'security/role_groups.xml',
         'security/config_sync_security.xml',
         'security/ir.model.access.csv',
+        # P5-T04 follow-up (#346): record rules scoping alerts by role.
+        # After ir.model.access.csv, because a rule is meaningless
+        # without the ACL that lets the group reach the model at all.
+        'security/alert_security.xml',
         'views/workspace_settings_views.xml',
         'views/workspace_appearance_views.xml',
         'views/subscription_blocked_templates.xml',

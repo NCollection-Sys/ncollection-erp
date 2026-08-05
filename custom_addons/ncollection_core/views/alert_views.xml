@@ -3,12 +3,10 @@
     <!--
         P5-T04 anomaly alerts. Odoo 19 view conventions apply (Rule 6).
 
-        No menu item is declared here on purpose. The ticket surfaces alerts on
-        the department dashboards, which live in ncollection_account_dashboard —
-        DEV-3's #57/PR #341 territory. Adding a competing menu now would both
-        collide with that work and pre-empt a placement decision that belongs
-        with the dashboards. The action exists so the records are reachable
-        (Settings > Technical > Actions, or a direct link) until then.
+        #61 shipped these views with NO menu, because the surface belonged to
+        DEV-3's #57/PR #341 and adding a competing one would have collided with
+        work in flight. #341 has since merged, so #346 adds the menu below and
+        the record rules that make it safe to show anyone.
     -->
     <record id="view_ncollection_alert_list" model="ir.ui.view">
         <field name="name">ncollection.alert.list</field>
@@ -61,5 +59,66 @@
         <field name="name">Anomaly Alerts</field>
         <field name="res_model">ncollection.alert</field>
         <field name="view_mode">list,form</field>
+        <!--
+            create/edit/delete off. Role holders have read-only ACLs, so a
+            visible Save would fail server-side with an AccessError — the
+            control is real either way, but offering an action that cannot
+            succeed is how a user learns to distrust the screen. Alerts are
+            written by the detector; a human forging or deleting one could
+            hide a real anomaly.
+        -->
+        <field name="context">{'search_default_open': 1, 'create': False, 'edit': False, 'delete': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No alerts — nothing unusual detected.</p>
+            <p>Anomalies are detected once a day. You see the alerts for your
+               role only; an administrator sees all of them.</p>
+        </field>
     </record>
+
+    <record id="view_ncollection_alert_search" model="ir.ui.view">
+        <field name="name">ncollection.alert.search</field>
+        <field name="model">ncollection.alert</field>
+        <field name="arch" type="xml">
+            <!--
+                Flat, with <separator/> rather than a <group expand="0">.
+                Odoo 19 dropped `expand` from search <group>, and the RelaxNG
+                validator rejects the whole view for it — module install fails
+                outright rather than degrading. Matches the shape already used
+                in ncollection_saas/views/backup_views.xml.
+            -->
+            <search>
+                <field name="name"/>
+                <field name="detector_key"/>
+                <filter name="open" string="Open"
+                        domain="[('state', '=', 'new')]"/>
+                <filter name="critical" string="Critical"
+                        domain="[('severity', '=', 'critical')]"/>
+                <separator/>
+                <filter name="by_severity" string="Group by Severity"
+                        context="{'group_by': 'severity'}"/>
+                <filter name="by_detector" string="Group by Detector"
+                        context="{'group_by': 'detector_key'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!--
+        The menu is CONVENIENCE, not security (#346). Its `groups` mirror the
+        union of the record rules in security/alert_security.xml, so the menu is
+        hidden from users who would see nothing anyway — but the enforcement is
+        the rule, because /web/dataset/call_kw never consults a menu
+        (Standing Rule 4). test_anomaly_visibility asserts at the ORM for that
+        reason.
+
+        Top-level, with a high sequence so it sorts after the ERP apps. NOT
+        parented under `menu_ncollection_dashboard_root`, which carries its own
+        action (the P1-T17 landing page) — giving an action-menu children
+        changes what clicking it does, and quietly altering the landing page is
+        not this ticket's business.
+    -->
+    <menuitem id="menu_ncollection_alert"
+              name="Anomaly Alerts"
+              action="action_ncollection_alert"
+              sequence="90"
+              groups="ncollection_core.group_role_sales,ncollection_core.group_role_accountant,ncollection_core.group_role_hr,ncollection_core.group_role_warehouse,ncollection_core.group_role_manager,ncollection_core.group_role_ceo,ncollection_core.group_role_owner,base.group_system"/>
 </odoo>

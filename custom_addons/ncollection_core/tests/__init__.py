@@ -18,3 +18,4 @@ from . import test_reseller_branding_apply
 from . import test_pushed_rate
 from . import test_anomaly_statistics
 from . import test_anomaly_acceptance
+from . import test_anomaly_visibility

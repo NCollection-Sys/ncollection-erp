@@ -17,9 +17,10 @@ level, not merely by convention.
 import logging
 import math
 
+from markupsafe import escape
 from psycopg2.errors import UniqueViolation
 
-from odoo import api, fields, models
+from odoo import SUPERUSER_ID, api, fields, models
 
 from . import detectors as anomaly_detectors
 from . import statistics as stats
@@ -252,50 +253,126 @@ class NCollectionAlert(models.Model):
             _logger.info("Alert digest skipped: mail is not installed.")
             return False
 
-        alerts = self.search([('state', '=', 'new')], order='severity_rank, detected_at desc')
-        if not alerts:
-            return False
+        sent = 0
+        for user in self._digest_recipients():
+            # THE POINT: the recipient's OWN rights select the content. Running
+            # the search `with_user` makes the ORM apply the record rules from
+            # security/alert_security.xml, so the mail contains exactly what
+            # that person could see in the UI — no more, and no less.
+            #
+            # The alternative — a detector_key -> role map here — was rejected.
+            # It would duplicate the rules, and the two would drift: the day
+            # they disagreed, this cron would email somebody a slice they are
+            # not allowed to open. Deriving the content from the rules makes
+            # that class of bug unrepresentable.
+            #
+            # It is also per-RECIPIENT rather than per-ROLE, which is what makes
+            # a CEO-who-is-also-in-sales get one correct digest instead of two
+            # partial ones.
+            alerts = self.with_user(user).search(
+                [('state', '=', 'new')], order='severity_rank, detected_at desc')
+            if not alerts:
+                continue      # nothing for this person: send nothing at all
 
-        recipients = self._digest_recipients()
-        if not recipients:
-            _logger.info("Alert digest skipped: no recipient with an email.")
-            return False
-
-        lines = ''.join(
-            '<li><b>%s</b> — %s<br/><i>%s</i></li>' % (
-                dict(SEVERITY_SELECTION).get(alert.severity, alert.severity),
-                alert.name,
-                alert.suggested_action or '',
+            # ESCAPED, not interpolated raw. `alert.name` and
+            # `suggested_action` embed values the detector took from tenant
+            # data — `_detect_stock_below_safety` puts the product and
+            # warehouse NAMES straight into them — so they are user-authored
+            # strings reaching an HTML email. #346 widened the audience from
+            # administrators to seven role groups, which is the moment a
+            # mis-named product stops being a curiosity.
+            lines = ''.join(
+                '<li><b>%s</b> — %s<br/><i>%s</i></li>' % (
+                    escape(dict(SEVERITY_SELECTION).get(alert.severity,
+                                                        alert.severity)),
+                    escape(alert.name or ''),
+                    escape(alert.suggested_action or ''),
+                )
+                for alert in alerts
             )
-            for alert in alerts
-        )
-        self.env['mail.mail'].sudo().create({
-            'subject': 'NCollection: %s open alert(s)' % len(alerts),
-            'body_html': '<p>Open anomaly alerts:</p><ul>%s</ul>' % lines,
-            'email_to': ','.join(recipients),
-            'auto_delete': True,
-        }).send()
-        return True
+            body = '<p>Open anomaly alerts:</p><ul>%s</ul>' % lines
+            # QUEUED, NOT SENT. `.send()` here would do a synchronous SMTP
+            # round-trip per recipient, on the cron thread, with no budget —
+            # and a tenant database has no queue_job runner to escalate to
+            # while `odoo-bus` runs EVERY tenant's crons on two threads. That
+            # is #310's failure class exactly, and an earlier revision of this
+            # method had it: one mail per run became one blocking send per role
+            # holder. `mail.mail` defaults to state 'outgoing', and Odoo's own
+            # `ir_cron_mail_scheduler_action` flushes the queue in batched,
+            # budgeted runs off this thread. Creating the record IS the work
+            # this cron owns; delivering it is not.
+            self.env['mail.mail'].sudo().create({
+                'subject': 'NCollection: %s open alert(s)' % len(alerts),
+                'body_html': body,
+                'email_to': user.email,
+                'auto_delete': True,
+            })
+            sent += 1
+
+            # Yield to the run's budget between recipients, the same way
+            # _cron_detect_anomalies does. Cheap now that no SMTP happens here,
+            # but it keeps the loop bounded on a tenant with many role holders
+            # rather than relying on that number staying small.
+            if not self.env['ir.cron']._commit_progress(1):
+                _logger.info(
+                    "Alert digest paused after %s recipient(s); Odoo will "
+                    "reschedule the rest.", sent)
+                break
+
+        if not sent:
+            _logger.info("Alert digest: nothing to send to anyone.")
+        return bool(sent)
 
     @api.model
     def _digest_recipients(self):
-        """Emails of the people who should act on alerts.
+        """The users who should be told about alerts, as a recordset.
 
-        System administrators of this tenant. Deliberately not "every internal
-        user": an alert digest sent to everyone is a digest everyone filters.
+        Everyone who can SEE an alert, which after #346 means the role holders
+        as well as administrators — a role that is trusted with the data is a
+        role worth notifying. Still not "every internal user": a plain employee
+        has no ACL on the model, so there is nothing to tell them about.
+
+        Returns users rather than addresses because the caller runs the search
+        `with_user`, letting the record rules decide each person's contents.
         """
-        group = self.env.ref('base.group_system', raise_if_not_found=False)
-        if not group:
-            return []
-        # `all_user_ids`, NOT `users`. Odoo 19 renamed the members field — the
-        # mirror of the `res.users.groups_id` -> `group_ids` rename CLAUDE.md
-        # already records — and `res.groups.users` no longer exists at all, so
-        # the earlier spelling raised AttributeError on every digest run. It was
-        # invisible until this method got a test, which is the whole argument
-        # for having one: a nightly cron that always fails is a feature that
-        # silently never shipped.
+        # Every group that any alert record rule grants, plus system. Derived
+        # from the SAME xmlids the rules use, so adding a role to a rule and
+        # forgetting the digest cannot happen silently — a role that can see
+        # alerts is a role that gets told about them.
         #
-        # `all_user_ids` rather than `user_ids` because administrators usually
-        # hold group_system by IMPLICATION from another group; `user_ids` lists
-        # only direct members and would miss most of them.
-        return [user.email for user in group.sudo().all_user_ids if user.email]
+        # Membership is read via `all_user_ids`, so implication counts: an
+        # owner holds these through ceo/system without being listed anywhere.
+        #
+        # `all_user_ids`, NOT `users`: Odoo 19 renamed the members field — the
+        # mirror of the `res.users.groups_id` -> `group_ids` rename CLAUDE.md
+        # records — and `res.groups.users` no longer exists, so the old
+        # spelling raised AttributeError on every digest run. That bug shipped
+        # in #61 and was invisible until the method got a test.
+        group_xmlids = (
+            'base.group_system',
+            'ncollection_core.group_role_sales',
+            'ncollection_core.group_role_accountant',
+            'ncollection_core.group_role_hr',
+            'ncollection_core.group_role_warehouse',
+            'ncollection_core.group_role_manager',
+            'ncollection_core.group_role_ceo',
+            'ncollection_core.group_role_owner',
+        )
+        users = self.env['res.users'].browse()
+        for xmlid in group_xmlids:
+            group = self.env.ref(xmlid, raise_if_not_found=False)
+            if group:
+                users |= group.sudo().all_user_ids
+        # Deduplicated by the recordset union above, so a user in three roles
+        # still receives exactly one digest.
+        #
+        # `id != SUPERUSER_ID` is defence in depth, not a live fix. The whole
+        # design rests on `with_user(user)` DROPPING superuser — verified in
+        # Odoo 19's `Environment.__call__`, which recomputes `su` as False once
+        # a concrete user is passed. But `Environment.__new__` forces `su=True`
+        # again whenever `uid == 1`, so the reserved superuser record is the one
+        # account for which the per-recipient search would silently return
+        # EVERYTHING. It ships inactive and without an email, so the filter
+        # below already excludes it — this makes that non-accidental.
+        return users.filtered(
+            lambda u: u.email and u.active and u.id != SUPERUSER_ID)

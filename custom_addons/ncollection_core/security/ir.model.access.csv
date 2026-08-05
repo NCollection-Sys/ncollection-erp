@@ -10,3 +10,10 @@ access_kpi_system,ncollection.kpi.system,model_ncollection_kpi,base.group_system
 access_kpi_threshold_user,ncollection.kpi.threshold.user,model_ncollection_kpi_threshold,base.group_user,1,0,0,0
 access_kpi_threshold_system,ncollection.kpi.threshold.system,model_ncollection_kpi_threshold,base.group_system,1,1,1,1
 access_alert_system,ncollection.alert.system,model_ncollection_alert,base.group_system,1,1,1,1
+access_alert_sales,ncollection.alert.sales,model_ncollection_alert,ncollection_core.group_role_sales,1,0,0,0
+access_alert_accountant,ncollection.alert.accountant,model_ncollection_alert,ncollection_core.group_role_accountant,1,0,0,0
+access_alert_hr,ncollection.alert.hr,model_ncollection_alert,ncollection_core.group_role_hr,1,0,0,0
+access_alert_warehouse,ncollection.alert.warehouse,model_ncollection_alert,ncollection_core.group_role_warehouse,1,0,0,0
+access_alert_manager,ncollection.alert.manager,model_ncollection_alert,ncollection_core.group_role_manager,1,0,0,0
+access_alert_ceo,ncollection.alert.ceo,model_ncollection_alert,ncollection_core.group_role_ceo,1,0,0,0
+access_alert_owner,ncollection.alert.owner,model_ncollection_alert,ncollection_core.group_role_owner,1,0,0,0
