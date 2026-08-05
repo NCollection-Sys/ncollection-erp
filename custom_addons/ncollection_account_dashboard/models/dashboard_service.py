@@ -33,10 +33,23 @@ _PROFITABILITY = 'ncollection.account.report.profitability'
 # broken dashboard. See _cross_domain() below.
 _AGGREGATION = 'ncollection.aggregation.engine'
 
+# P4-T02 operational KPI service (#55). Each department dashboard's headline KPI
+# (avg deal size / employee turnover / inventory turnover) is read from here via
+# .compute(), which already returns value/previous/target/band and — crucially —
+# yields value=None when the backing app is absent/unlicensed, so this module
+# still performs NO computation of its own (the KPI model calls the engine).
+_KPI = 'ncollection.kpi'
+
 _TREND_MONTHS = 6
 
 # How many customers the "top customers" panel shows.
 _TOP_CUSTOMERS = 5
+
+# How many rows a department leaderboard / ranking panel shows.
+_RANKING_LIMIT = 8
+
+# Department KPI unit (ncollection.kpi) -> the OWL base's formatValue unit.
+_KPI_UNIT = {'currency': 'currency', 'percent': 'percent', 'ratio': 'number'}
 
 
 class AccountDashboardService(models.AbstractModel):
@@ -394,3 +407,168 @@ class AccountDashboardService(models.AbstractModel):
             'series': [{'name': self.env._("Cash"), 'data': series['cash']}],
         }]
         return {'kpis': kpis, 'charts': charts, 'meta': self._meta()}
+
+    # ---- department dashboards (#57 / P4-T04) ----------------------------
+    #
+    # Sales / HR / Warehouse. NON-financial, so every figure comes from the
+    # P4-T02 KPI service (headline KPI, incl. target) or the P4-T01 aggregation
+    # engine (panels) — never a direct sale/crm/hr/stock read and never any
+    # arithmetic here (tests/test_boundary.py enforces this). Each dashboard is
+    # role-gated by its menu (group_role_sales/hr/warehouse) and mirrored at the
+    # ORM: the KPI/engine reads run under the user's own rights with no sudo, so
+    # a user lacking the app's access gets None -> an omitted KPI/panel, never
+    # another role's data.
+
+    def _department_kpi(self, key, label):
+        """The one operational KPI for a department, from ncollection.kpi (#55).
+
+        Returns a KPI-card dict, or None when the KPI is undefined or cannot be
+        computed on this tenant (app absent/unlicensed) — an omitted card is
+        honest where a rendered 0 would misstate the business. Target and
+        previous come from the KPI service; no value is derived here."""
+        kpi = self.env[_KPI].search([('key', '=', key)], limit=1)
+        if not kpi:
+            return None
+        data = kpi.compute()
+        if data.get('value') is None:
+            return None
+        card = {
+            'key': key,
+            'label': label,
+            'value': data['value'],
+            'previous': data['previous'],
+            'unit': _KPI_UNIT.get(data['unit'], 'number'),
+        }
+        if data.get('target'):
+            card['sub'] = self.env._("Target: %s", data['target'])
+        return card
+
+    def _ranking_panel(self, spec):
+        """Run one aggregation spec and shape it as a ranking panel's rows, or
+        None (absent/unlicensed). Rows are engine tuples, unpacked POSITIONALLY
+        exactly like _pipeline_funnel/_top_customers — (group_cell, value)."""
+        result = self._cross_domain(spec)
+        if result is None:
+            return None
+        rows = []
+        for group_cell, value in result['rows']:
+            group_id, group_label = group_cell
+            rows.append({
+                'id': group_id,
+                'label': group_label or self.env._("Unassigned"),
+                'value': value or 0.0,
+            })
+        return rows
+
+    def _count_panel(self, spec):
+        """Like _ranking_panel but for a count aggregate — rows carry `count`."""
+        result = self._cross_domain(spec)
+        if result is None:
+            return None
+        rows = []
+        for group_cell, count in result['rows']:
+            group_id, group_label = group_cell
+            rows.append({
+                'id': group_id,
+                'label': group_label or self.env._("Unassigned"),
+                'value': count or 0,
+                'count': count or 0,
+            })
+        return rows
+
+    def _add_panel(self, panels, rows, key, label, ptype, model, field):
+        """Append a panel only when its data source exists (rows is not None).
+        None == the app is absent/unlicensed, so the panel is omitted entirely
+        (never a present-but-empty panel, which means a real quiet period)."""
+        if rows is not None:
+            panels.append({'key': key, 'label': label, 'type': ptype,
+                           'rows': rows, 'drilldown': {'model': model, 'field': field}})
+
+    @api.model
+    def get_sales_dashboard(self):
+        """Sales dashboard (#57): avg-deal-size KPI + pipeline funnel +
+        salesperson leaderboard. Role: group_role_sales."""
+        kpis = [k for k in (
+            self._department_kpi('avg_deal_size', self.env._("Average Deal Size")),
+        ) if k is not None]
+        panels = []
+        pipeline = self._pipeline_funnel()
+        self._add_panel(panels, pipeline, 'pipeline', self.env._("Sales Pipeline"),
+                        'funnel', 'crm.lead', 'stage_id')
+        leaderboard = self._ranking_panel({
+            'key': 'leaderboard',
+            'model': 'sale.order',
+            'domain': [('state', '=', 'sale')],
+            'groupby': ['user_id'],
+            'aggregates': ['amount_total:sum'],
+            'order': 'amount_total:sum desc',
+            'limit': _RANKING_LIMIT,
+        })
+        self._add_panel(panels, leaderboard, 'leaderboard',
+                        self.env._("Salesperson Leaderboard"), 'ranking',
+                        'sale.order', 'user_id')
+        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
+
+    @api.model
+    def get_hr_dashboard(self):
+        """HR dashboard (#57): employee-turnover KPI + headcount by department +
+        approved leave by type. Role: group_role_hr."""
+        kpis = [k for k in (
+            self._department_kpi('employee_turnover', self.env._("Employee Turnover")),
+        ) if k is not None]
+        panels = []
+        headcount = self._count_panel({
+            'key': 'headcount',
+            'model': 'hr.employee',
+            'domain': [('active', '=', True)],
+            'groupby': ['department_id'],
+            'aggregates': ['__count'],
+        })
+        self._add_panel(panels, headcount, 'headcount',
+                        self.env._("Headcount by Department"), 'ranking',
+                        'hr.employee', 'department_id')
+        leave = self._ranking_panel({
+            'key': 'leave',
+            'model': 'hr.leave',
+            'domain': [('state', '=', 'validate')],
+            'groupby': ['holiday_status_id'],
+            'aggregates': ['number_of_days:sum'],
+            'order': 'number_of_days:sum desc',
+            'limit': _RANKING_LIMIT,
+        })
+        self._add_panel(panels, leave, 'leave', self.env._("Approved Leave by Type"),
+                        'ranking', 'hr.leave', 'holiday_status_id')
+        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
+
+    @api.model
+    def get_warehouse_dashboard(self):
+        """Warehouse dashboard (#57): inventory-turnover KPI + stock valuation by
+        product + movement velocity. Role: group_role_warehouse."""
+        kpis = [k for k in (
+            self._department_kpi('inventory_turnover', self.env._("Inventory Turnover")),
+        ) if k is not None]
+        panels = []
+        valuation = self._ranking_panel({
+            'key': 'valuation',
+            'model': 'stock.valuation.layer',
+            'groupby': ['product_id'],
+            'aggregates': ['value:sum'],
+            'order': 'value:sum desc',
+            'limit': _RANKING_LIMIT,
+        })
+        self._add_panel(panels, valuation, 'valuation',
+                        self.env._("Stock Valuation by Product"), 'ranking',
+                        'stock.valuation.layer', 'product_id')
+        movement = self._ranking_panel({
+            'key': 'movement',
+            'model': 'stock.move',
+            'domain': [('state', '=', 'done')],
+            'groupby': ['product_id'],
+            'aggregates': ['product_qty:sum'],
+            'order': 'product_qty:sum desc',
+            'limit': _RANKING_LIMIT,
+        })
+        self._add_panel(panels, movement, 'movement',
+                        self.env._("Movement Velocity"), 'ranking',
+                        'stock.move', 'product_id')
+        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}

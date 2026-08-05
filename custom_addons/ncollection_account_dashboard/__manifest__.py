@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Account Dashboard',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Dashboard',
     'summary': 'Finance, Accountant and Cash financial dashboards '
                '(presentation only — consumes the executive report services)',
@@ -11,7 +11,12 @@
     # module consumes for every figure (never re-computed here — FPA §7
     # "Must Never Own: Report Generation, Accounting Rules"). ncollection_branding:
     # the UI-T02 OWL component library + design tokens the dashboards render with.
-    'depends': ['ncollection_account_reports', 'ncollection_branding'],
+    # ncollection_core (#57): the P4-T01 aggregation engine + the P4-T02
+    # ncollection.kpi operational-KPI service the department dashboards consume,
+    # and the sales/hr/warehouse role groups their menus gate on. Already present
+    # transitively (the CEO dashboard already reads the engine); made explicit now
+    # that this module references core models directly.
+    'depends': ['ncollection_account_reports', 'ncollection_branding', 'ncollection_core'],
     'data': [
         'views/dashboard_actions.xml',
         'views/dashboard_menus.xml',
@@ -30,6 +35,9 @@
             'ncollection_account_dashboard/static/src/dashboard/cash_dashboard.js',
             'ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.js',
             'ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml',
+            'ncollection_account_dashboard/static/src/dashboard/sales_dashboard.js',
+            'ncollection_account_dashboard/static/src/dashboard/hr_dashboard.js',
+            'ncollection_account_dashboard/static/src/dashboard/warehouse_dashboard.js',
         ],
     },
 }
