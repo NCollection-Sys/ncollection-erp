@@ -59,6 +59,46 @@ class TestDepartmentDashboards(TransactionCase):
             {'id': 9, 'label': 'Bob', 'value': 3000.0},
         ])
 
+    def test_panel_units_are_currency_or_number(self):
+        # HIGH fix: count/quantity panels must carry unit='number' so the view
+        # never prefixes a headcount or a units-moved figure with a currency
+        # symbol; monetary panels stay 'currency'. Patch the engine so the panel
+        # specs return rows but the KPIs' own internal specs return None (omitted).
+        Engine = type(self.env['ncollection.aggregation.engine'])
+        panel_keys = {'headcount', 'leave', 'valuation', 'movement', 'leaderboard'}
+
+        def fake(eng, spec):
+            key = spec.get('key')
+            if key in panel_keys:
+                return {'key': key, 'cached': False, 'rows': [((1, 'X'), 3.0)]}
+            if key == 'pipeline':
+                return {'key': key, 'cached': False, 'rows': [((1, 'New'), 1000.0, 2)]}
+            return None
+
+        self.patch(Engine, 'aggregate', fake)
+        expected = {
+            'get_sales_dashboard': {'pipeline': 'currency', 'leaderboard': 'currency'},
+            'get_hr_dashboard': {'headcount': 'number', 'leave': 'number'},
+            'get_warehouse_dashboard': {'valuation': 'currency', 'movement': 'number'},
+        }
+        for method, units in expected.items():
+            panels = {p['key']: p for p in getattr(self.service, method)()['panels']}
+            for key, unit in units.items():
+                self.assertIn(key, panels, "%s should render the %s panel" % (method, key))
+                self.assertEqual(panels[key]['unit'], unit,
+                                 "%s/%s must be %r" % (method, key, unit))
+
+    def test_populated_panels_survive_absent_kpi(self):
+        # HIGH fix: a dashboard with panel data but NO KPI (a common partial-
+        # licensing case) must still expose its panels, not collapse to empty.
+        Engine = type(self.env['ncollection.aggregation.engine'])
+        self.patch(Engine, 'aggregate', lambda eng, spec: (
+            {'key': spec.get('key'), 'cached': False, 'rows': [((1, 'X'), 3.0)]}
+            if spec.get('key') in ('headcount', 'leave') else None))
+        payload = self.service.get_hr_dashboard()
+        self.assertEqual(payload['kpis'], [])           # KPI omitted...
+        self.assertTrue(payload['panels'])              # ...but panels remain
+
     def test_panel_none_when_source_absent(self):
         Engine = type(self.env['ncollection.aggregation.engine'])
         self.patch(Engine, 'aggregate', lambda eng, spec: None)
@@ -92,17 +132,30 @@ class TestDepartmentDashboards(TransactionCase):
     # ---- acceptance: visible only to its role group ----------------------
 
     def test_menu_role_visibility(self):
-        cases = [
-            ('menu_sales_dashboard', 'group_role_sales'),
-            ('menu_hr_dashboard', 'group_role_hr'),
-            ('menu_warehouse_dashboard', 'group_role_warehouse'),
-        ]
-        for menu_xmlid, group_xmlid in cases:
+        # Odoo 19: ir.ui.menu's groups relation is `group_ids` (renamed from
+        # groups_id — see odoo19-gotchas). Assert each dashboard is visible to
+        # its OWN role and to NO other department role, which proves "visible
+        # only to its role group" robustly even if group_ids ever carried
+        # implied groups.
+        roles = {
+            'menu_sales_dashboard': 'group_role_sales',
+            'menu_hr_dashboard': 'group_role_hr',
+            'menu_warehouse_dashboard': 'group_role_warehouse',
+        }
+        dept_groups = {
+            xmlid: self.env.ref('ncollection_core.%s' % xmlid)
+            for xmlid in roles.values()
+        }
+        for menu_xmlid, group_xmlid in roles.items():
             menu = self.env.ref('ncollection_account_dashboard.%s' % menu_xmlid)
-            group = self.env.ref('ncollection_core.%s' % group_xmlid)
-            self.assertEqual(
-                menu.groups_id, group,
-                "%s must be gated to exactly %s" % (menu_xmlid, group_xmlid))
+            own = dept_groups[group_xmlid]
+            self.assertIn(own, menu.group_ids,
+                          "%s must be visible to %s" % (menu_xmlid, group_xmlid))
+            for other_xmlid, other in dept_groups.items():
+                if other_xmlid != group_xmlid:
+                    self.assertNotIn(
+                        other, menu.group_ids,
+                        "%s must NOT be visible to %s" % (menu_xmlid, other_xmlid))
 
     def test_financial_dashboards_untouched(self):
         # Guard against #57 regressing the existing dashboards' contract (#4):

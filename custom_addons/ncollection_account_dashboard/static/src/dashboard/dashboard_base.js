@@ -148,6 +148,17 @@ export class NcFinancialDashboard extends Component {
         return this.formatAmount(value);
     }
 
+    /** Format a panel row value by the panel's unit. Defaults to currency so
+     *  #56's monetary panels (pipeline value, top customers) are unchanged;
+     *  #57's count/quantity panels (headcount, leave days, units moved) pass
+     *  unit:"number" and render as a bare number, never with a currency symbol. */
+    formatPanelValue(panel, row) {
+        if (panel.unit === "number") {
+            return (row.value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
+        }
+        return this.formatAmount(row.value);
+    }
+
     /** A bare number as tenant currency. */
     formatAmount(value) {
         const num = (value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 });

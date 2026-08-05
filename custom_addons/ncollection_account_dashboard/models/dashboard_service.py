@@ -444,9 +444,12 @@ class AccountDashboardService(models.AbstractModel):
         return card
 
     def _ranking_panel(self, spec):
-        """Run one aggregation spec and shape it as a ranking panel's rows, or
-        None (absent/unlicensed). Rows are engine tuples, unpacked POSITIONALLY
-        exactly like _pipeline_funnel/_top_customers — (group_cell, value)."""
+        """Run one SINGLE-groupby, SINGLE-aggregate spec and shape it as ranking
+        rows, or None (absent/unlicensed). Each engine row is a 2-tuple
+        ``(group_cell, aggregate)`` — the same positional unpack idiom as
+        _pipeline_funnel/_top_customers, though those carry two aggregates. Works
+        for a summed field OR a ``__count`` aggregate (the value is just the
+        count then)."""
         result = self._cross_domain(spec)
         if result is None:
             return None
@@ -460,28 +463,18 @@ class AccountDashboardService(models.AbstractModel):
             })
         return rows
 
-    def _count_panel(self, spec):
-        """Like _ranking_panel but for a count aggregate — rows carry `count`."""
-        result = self._cross_domain(spec)
-        if result is None:
-            return None
-        rows = []
-        for group_cell, count in result['rows']:
-            group_id, group_label = group_cell
-            rows.append({
-                'id': group_id,
-                'label': group_label or self.env._("Unassigned"),
-                'value': count or 0,
-                'count': count or 0,
-            })
-        return rows
-
-    def _add_panel(self, panels, rows, key, label, ptype, model, field):
+    def _add_panel(self, panels, rows, key, label, ptype, model, field,
+                   unit='currency'):
         """Append a panel only when its data source exists (rows is not None).
         None == the app is absent/unlicensed, so the panel is omitted entirely
-        (never a present-but-empty panel, which means a real quiet period)."""
+        (never a present-but-empty panel, which means a real quiet period).
+
+        ``unit`` tells the view how to format each row value: 'currency' (the
+        #56 default — monetary panels) or 'number' (bare counts/quantities like
+        headcount, leave days, units moved), so a headcount never renders with a
+        currency symbol."""
         if rows is not None:
-            panels.append({'key': key, 'label': label, 'type': ptype,
+            panels.append({'key': key, 'label': label, 'type': ptype, 'unit': unit,
                            'rows': rows, 'drilldown': {'model': model, 'field': field}})
 
     @api.model
@@ -506,7 +499,7 @@ class AccountDashboardService(models.AbstractModel):
         })
         self._add_panel(panels, leaderboard, 'leaderboard',
                         self.env._("Salesperson Leaderboard"), 'ranking',
-                        'sale.order', 'user_id')
+                        'sale.order', 'user_id', unit='currency')
         return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
 
     @api.model
@@ -517,7 +510,7 @@ class AccountDashboardService(models.AbstractModel):
             self._department_kpi('employee_turnover', self.env._("Employee Turnover")),
         ) if k is not None]
         panels = []
-        headcount = self._count_panel({
+        headcount = self._ranking_panel({
             'key': 'headcount',
             'model': 'hr.employee',
             'domain': [('active', '=', True)],
@@ -526,7 +519,7 @@ class AccountDashboardService(models.AbstractModel):
         })
         self._add_panel(panels, headcount, 'headcount',
                         self.env._("Headcount by Department"), 'ranking',
-                        'hr.employee', 'department_id')
+                        'hr.employee', 'department_id', unit='number')
         leave = self._ranking_panel({
             'key': 'leave',
             'model': 'hr.leave',
@@ -537,7 +530,7 @@ class AccountDashboardService(models.AbstractModel):
             'limit': _RANKING_LIMIT,
         })
         self._add_panel(panels, leave, 'leave', self.env._("Approved Leave by Type"),
-                        'ranking', 'hr.leave', 'holiday_status_id')
+                        'ranking', 'hr.leave', 'holiday_status_id', unit='number')
         return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
 
     @api.model
@@ -559,16 +552,21 @@ class AccountDashboardService(models.AbstractModel):
         self._add_panel(panels, valuation, 'valuation',
                         self.env._("Stock Valuation by Product"), 'ranking',
                         'stock.valuation.layer', 'product_id')
+        # Odoo 17+: stock.move's executed-quantity field is `quantity`
+        # (`product_qty` moved to stock.move.line). Mirror ncollection.kpi's
+        # already-verified stock.move spec (kpi.py uses quantity:sum) so this
+        # panel actually returns rows instead of silently failing into an empty
+        # state indistinguishable from "Inventory app not installed".
         movement = self._ranking_panel({
             'key': 'movement',
             'model': 'stock.move',
             'domain': [('state', '=', 'done')],
             'groupby': ['product_id'],
-            'aggregates': ['product_qty:sum'],
-            'order': 'product_qty:sum desc',
+            'aggregates': ['quantity:sum'],
+            'order': 'quantity:sum desc',
             'limit': _RANKING_LIMIT,
         })
         self._add_panel(panels, movement, 'movement',
                         self.env._("Movement Velocity"), 'ranking',
-                        'stock.move', 'product_id')
+                        'stock.move', 'product_id', unit='number')
         return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
