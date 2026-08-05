@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        P5-T04 anomaly alerts. Odoo 19 view conventions apply (Rule 6).
+        P5-T04 anomaly alerts. Odoo 19: <list>, never <tree>; no attrs= (Rule 6).
+
+        That sentence is the point of #348. Writing it used to FAIL the guard
+        that enforces it — the guard matched the rule's own vocabulary as raw
+        text, so #61 shipped a vaguer comment as a workaround. It is restored
+        here as the ticket's live acceptance evidence; if the exclusion ever
+        regresses, this file stops passing.
 
         #61 shipped these views with NO menu, because the surface belonged to
         DEV-3's #57/PR #341 and adding a competing one would have collided with

@@ -157,6 +157,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      # Before the guard itself: a guard whose own behaviour is unverified
+      # fails in the one direction nobody notices — passing when it should not.
+      - name: Test architecture-guard
+        run: python scripts/ci/test_architecture_guard.py
+
       - name: Run architecture-guard
         run: python scripts/ci/architecture_guard.py --base origin/${{ github.base_ref }}
 

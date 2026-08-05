@@ -50,6 +50,87 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 TREE_TAG_RE = re.compile(r"<tree\b")
 ATTRS_RE = re.compile(r"\battrs\s*=")
 
+# Rule 6 is about MARKUP, and a comment is not markup (#348).
+#
+# The guard used to match these patterns as raw text, so a comment DOCUMENTING
+# the rule failed the rule. Hit for real while writing #346:
+#
+#     <!-- P5-T04 alerts. Odoo 19: <list>, never <tree>; no attrs=. -->
+#
+# produced two violations on that line while the view below it was correct
+# throughout. The workaround is to delete the explanation, which is the wrong
+# direction — a guard that punishes writing the convention down next to the
+# code it governs teaches people to remove it.
+#
+# Bodies are blanked rather than removed so LINE NUMBERS survive: findings
+# report `path:line`, and shifting them would send readers to the wrong place.
+#
+# DELIBERATELY NOT APPLIED TO check_secrets. A commented-out credential is
+# still a credential sitting in the repository; only the SYNTAX rules care
+# whether the text is live markup.
+#
+# An unterminated `<!--` matches nothing here, so such a file is scanned
+# exactly as before — which fails SAFE: the worst case is the false positive
+# this ticket removes, never a missed violation. For addon XML the file is also
+# rejected outright by CI's `Validate XML (well-formedness)` step (xmllint over
+# custom_addons/); outside custom_addons nothing validates it, which is why the
+# conservative direction here matters rather than being a formality.
+#
+# CDATA IS BLANKED TOO, and for the same reason rather than as an extra. A
+# `<![CDATA[...]]>` body is character DATA — the parser hands it to Odoo as a
+# string, never as view markup — so Rule 6 has nothing to say about a `<tree>`
+# spelled inside one.
+#
+# It also closes a hole. Inside CDATA, `<!--` is ordinary text, so an
+# unterminated one there is NOT malformed XML and gets no backstop from the
+# well-formedness gate; a comments-only pass would run from it past `]]>` to
+# the next real `-->` and blank whatever live markup sat in between. Both
+# constructs therefore go in ONE alternation: the scan is left to right, so
+# whichever opens first consumes the other, and neither can start inside the
+# other. Two sequential passes would reintroduce exactly that bug.
+#
+# PROCESSING INSTRUCTIONS are the third member of the set, for the identical
+# reason. A PI's content runs to the first `?>` and is otherwise unconstrained,
+# so `<?example note <!-- ?>` is well-formed XML containing a literal `<!--`
+# that no parser reads as a comment. Same hole as CDATA, same fix. (The XML
+# declaration `<?xml ... ?>` is a PI too and gets blanked; it carries no view
+# markup, so nothing is lost.)
+#
+# The general rule is now visible: `<` opens something inert whenever the next
+# character is `!` or `?`. Anything added to XML with that shape belongs in
+# this alternation. What CANNOT be faked from live markup is an inert OPEN,
+# because a raw `<` is illegal inside an attribute value in well-formed XML —
+# that is the guarantee the whole approach rests on, and it survives here. A
+# stray `-->` in an attribute IS legal, but the non-greedy match ends at the
+# first close after a genuine open, so it cannot pull live markup in.
+XML_INERT_RE = re.compile(
+    r"<!--.*?-->|<!\[CDATA\[.*?\]\]>|<\?.*?\?>", re.DOTALL)
+
+
+def without_inert_xml_text(text: str) -> str:
+    """Blank inert-XML bodies, preserving line count and numbering."""
+    return XML_INERT_RE.sub(_blank_but_keep_line_breaks, text)
+
+
+def _blank_but_keep_line_breaks(match: "re.Match[str]") -> str:
+    """Space-fill a matched span, leaving its line breaks in place.
+
+    Line breaks are found with `splitlines` — the SAME function that assigns
+    the line numbers in the findings — rather than by listing separators here.
+    A hand-written list would drift: `str.splitlines` breaks on `\\r`, `\\v`,
+    `\\f`, `\\x1c`-`\\x1e`, `\\x85`, `\\u2028` and `\\u2029` as well as `\\n`, and
+    an earlier version blanked everything but `\\n`, so a bare-CR file
+    collapsed each comment to one line and misreported every finding below it
+    by the difference. Deriving from the numbering function makes the two
+    incapable of disagreeing.
+    """
+    out = []
+    for line in match.group(0).splitlines(keepends=True):
+        content = line.splitlines()[0]          # the line minus its break
+        out.append(" " * len(content) + line[len(content):])
+    return "".join(out)
+
+
 # ---------------------------------------------------------------------------
 # Rule 2: menu hiding without matching ORM/RPC enforcement
 # A changed view/menu file that adds `groups=` restrictions is fine on its
@@ -131,7 +212,7 @@ def addon_of(path: Path) -> str | None:
 def check_view_syntax(path: Path, text: str, findings: list[str]) -> None:
     if path.suffix != ".xml":
         return
-    for i, line in enumerate(text.splitlines(), 1):
+    for i, line in enumerate(without_inert_xml_text(text).splitlines(), 1):
         if TREE_TAG_RE.search(line):
             findings.append(f"{path}:{i}: uses <tree> — Odoo 19 requires <list> (Rule 6)")
         if ATTRS_RE.search(line):
@@ -139,7 +220,14 @@ def check_view_syntax(path: Path, text: str, findings: list[str]) -> None:
 
 
 def check_menu_license_gate(path: Path, text: str, changed_paths: set[Path], findings: list[str]) -> None:
-    if path.suffix != ".xml" or not LICENSE_MENU_HINT_RE.search(text):
+    # Inert text blanked here too (#348). Rule 2 is about a menu that IS
+    # license-gated; a comment EXPLAINING license gating is not a menu, and
+    # tripping on one is the same defect this ticket fixes for Rule 6 — found
+    # in the same file by the review of that fix. Rules 3 and 4 are untouched:
+    # Rule 3 only reads `.py`, and for Rule 4 a commented-out credential is
+    # still a credential in the repository (see check_secrets).
+    if path.suffix != ".xml" or not LICENSE_MENU_HINT_RE.search(
+            without_inert_xml_text(text)):
         return
     addon = addon_of(path)
     if addon is None:
