@@ -197,16 +197,53 @@ CI_WORKFLOW = ".github/workflows/ci.yml"
 #     container's own ~60s cron cycle to its harness. That cost a full rebuild
 #     of the harness (DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §5.1).
 #
-# Checks for the FLAG, never for `=0`: docker-compose.dev.yml deliberately
-# renders `--max-cron-threads=${NC_DEV_CRON_THREADS:-0}` so a developer can opt
-# back in. Asserting the value would break that escape hatch and teach people to
-# delete the guard.
+# The VALUE is checked, not merely the flag's presence. An earlier version
+# checked only that the string appeared, reasoning that policing the value would
+# break the `${NC_DEV_CRON_THREADS:-0}` escape hatch. That was confused, and
+# review reproduced two false negatives against it:
+#
+#   1. `command: odoo …   # was: --max-cron-threads=0, see #337`
+#      The flag is GONE from the invoked command, but the substring survives in
+#      a trailing comment -> reported clean, on a live regression. Commenting a
+#      flag out "for now" is the single most likely way this comes back.
+#
+#   2. `--max-cron-threads=64`
+#      Passes as compliant while fully re-enabling the bug. Per this rule's own
+#      mechanics above, ANY non-zero thread count still runs
+#      `cron_database_list()` -> `list_dbs(True)` without a `-d`, so it ticks
+#      every database — just with a concurrency cap. Only 0 spawns no cron
+#      thread at all.
+#
+# The hatch survives because it lives at RUNTIME, not in the file: the committed
+# default is `${NC_DEV_CRON_THREADS:-0}`, and a developer opts in with
+# `NC_DEV_CRON_THREADS=1 make up` without editing anything the guard reads.
 #
 # Whole-file, not per-line, because absence is the thing being detected — a
 # line scanner can only see lines that exist.
 CRON_SCOPED_FILES = ("docker-compose.dev.yml", "docker-compose.routing.yml")
 CRON_THREADS_FLAG = "--max-cron-threads"
 ODOO_COMMAND_RE = re.compile(r"^\s*command:.*\bodoo\b")
+
+# The flag's value, stopping at whatever quotes/brackets the YAML form uses, so
+# both `--max-cron-threads=0` (list form, quoted) and the shell-string form are
+# captured cleanly.
+CRON_THREADS_VALUE_RE = re.compile(r"--max-cron-threads=([^\s\"',\]]+)")
+
+# Accepted values: a literal 0, or an interpolation whose DEFAULT is 0.
+CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
+
+
+def _strip_yaml_comment(line: str) -> str:
+    """Drop a trailing ` # …` comment.
+
+    Without this the guard can be defeated by commenting the flag out and
+    leaving the old text on the line — see case 1 above. A `#` only opens a
+    comment when preceded by whitespace, which is what distinguishes it from a
+    `#` inside a value.
+    """
+    index = line.find(" #")
+    return line if index == -1 else line[:index]
+
 
 # Modules deliberately outside the CI matrix. Each entry MUST carry a reason —
 # "excluded on purpose" and "forgotten" have to stay distinguishable, which is
@@ -346,16 +383,39 @@ def rule_cron_threads_scoped(out: list[str]) -> None:
             )
             continue
 
-        if not any(CRON_THREADS_FLAG in line for line in commands):
-            out.append(
-                f"{name}: the odoo `command:` no longer passes "
-                f"`{CRON_THREADS_FLAG}` (#337). Without it this container runs "
-                f"the crons of EVERY database on the server — `db_filter` does "
-                f"NOT restrict cron, only HTTP routing. It is silent, and it "
-                f"corrupts any timing measured against a shared-server database "
-                f"(see DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §5.1).\n"
-                f"      {commands[0].strip()}"
-            )
+        # EVERY matched command must carry it, not merely one of them. With one
+        # command per scoped file today the distinction is invisible — but
+        # docker-compose.pooling.yml has two Odoo services with different thread
+        # counts, so whoever extends this rule for #343 would otherwise inherit
+        # a check that passes a file while one of its services lost the flag.
+        for line in commands:
+            values = CRON_THREADS_VALUE_RE.findall(_strip_yaml_comment(line))
+            if not values:
+                out.append(
+                    f"{name}: the odoo `command:` no longer passes "
+                    f"`{CRON_THREADS_FLAG}` (#337). Without it this container "
+                    f"runs the crons of EVERY database on the server — "
+                    f"`db_filter` does NOT restrict cron, only HTTP routing. It "
+                    f"is silent, and it corrupts any timing measured against a "
+                    f"shared-server database (see "
+                    f"DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §5.1).\n"
+                    f"      {line.strip()}"
+                )
+                continue
+
+            for value in values:
+                if CRON_THREADS_OK_RE.match(value):
+                    continue
+                out.append(
+                    f"{name}: `{CRON_THREADS_FLAG}={value}` does not scope cron "
+                    f"(#337). Any NON-ZERO thread count still enumerates every "
+                    f"database — `cron_database_list()` is "
+                    f"`config['db_name'] or list_dbs(True)` and there is no "
+                    f"`-d` here, so a cap on concurrency is not a cap on which "
+                    f"databases tick. Use `0`, or an interpolation defaulting "
+                    f"to 0 such as `${{NC_DEV_CRON_THREADS:-0}}`.\n"
+                    f"      {line.strip()}"
+                )
 
 
 def rule_ci_module_coverage(out: list[str]) -> None:
@@ -529,6 +589,23 @@ SELF_TEST: tuple[tuple[str, str, bool], ...] = (
     ("name", "install -m 0644 /etc/apt/apt.conf.d/52ncollection-unattended", False),
     ("name", "cd /srv/ncollection-erp/scripts && ./run.sh", False),
 
+    # R5 — the command matcher must see both YAML forms and no other service's
+    # command; the value matcher must accept only a real 0.
+    ("cron_cmd", "    command: odoo --log-level=debug --max-cron-threads=0", True),
+    ("cron_cmd", '    command: ["odoo", "--proxy-mode", "--max-cron-threads=0"]', True),
+    ("cron_cmd", "    command: postgres -c config_file=/etc/postgresql.conf", False),
+    # A commented-out command must NOT match: the pattern anchors on
+    # `^\s*command:`, and skipping comment LINES is separately the caller's job.
+    ("cron_cmd", "    # command: odoo --max-cron-threads=0", False),
+    ("cron_val", "--max-cron-threads=0", True),
+    ("cron_val", '"--max-cron-threads=0"', True),
+    ("cron_val", "--max-cron-threads=${NC_DEV_CRON_THREADS:-0}", True),
+    # The two false negatives review reproduced against the first version.
+    ("cron_val", "--max-cron-threads=64", False),
+    ("cron_val", "--max-cron-threads=${NC_DEV_CRON_THREADS:-2}", False),
+    ("cron_comment", "command: odoo  # was: --max-cron-threads=0, see #337", False),
+    ("cron_comment", "command: odoo --max-cron-threads=0", True),
+
     ("pg", "psql -U odoo -c 'SELECT 1'", True),
     ("pg", "psql -U odoo -d postgres -c 'SELECT 1'", False),
     ("pg", "pg_isready -U odoo -d postgres", False),
@@ -544,6 +621,15 @@ def run_self_test() -> list[str]:
             actual = bool(DOCKER_STATE_RE.search(line))
         elif name == "name":
             actual = bool(HARDCODED_NAME_RE.search(line))
+        elif name == "cron_cmd":
+            actual = bool(ODOO_COMMAND_RE.match(line))
+        elif name == "cron_val":
+            values = CRON_THREADS_VALUE_RE.findall(line)
+            actual = bool(values) and all(
+                CRON_THREADS_OK_RE.match(v) for v in values)
+        elif name == "cron_comment":
+            # The flag must survive comment-stripping to count.
+            actual = bool(CRON_THREADS_VALUE_RE.findall(_strip_yaml_comment(line)))
         else:
             actual = bool(PG_TOOL_RE.search(line)) and not DB_FLAG_RE.search(line)
         if actual is not expected:
