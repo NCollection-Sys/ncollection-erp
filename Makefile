@@ -42,6 +42,7 @@ OCA_VENV := .oca-venv
         routing-up routing-verify routing-down routing-clean e2e-clean \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
+        cron-starvation-verify cron-starvation-clean \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 help: ## Show this help
@@ -186,6 +187,19 @@ config-sync-verify: ## Run the P2-T03 config-sync proof (provision -> plan chang
 financial-bootstrap-verify: ## Run the P3-T01 proof (Enterprise financial set installs -> Trial Balance runs on UAE data)
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_financial_bootstrap.sh
 
+cron-starvation-verify: ## Run the #310 proof (a stalled outbound fetch must not delay the config-sync reconcile cron)
+	./custom_addons/ncollection_saas/scripts/provisioning/verify_cron_starvation.sh
+
+# NOT a `drop_database` call: this suite's fixture does NOT live on the shared
+# db. It has its own Postgres (docker-compose.cronstall.yml) precisely so no
+# other Odoo can run its crons — see DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §5.1.
+# Removing the volume is what resets it.
+cron-starvation-clean: ## Remove the CRON-STARVATION harness stack + its private volumes (destructive)
+	@docker compose -f docker-compose.yml -f docker-compose.cronstall.yml \
+		rm -sf cron-stall-host cron-stall-db >/dev/null 2>&1 || true
+	@docker volume rm -f ncollection-erp_cronstall_pgdata ncollection-erp_cronstall_data >/dev/null 2>&1 || true
+	@echo "✅ cron-starvation harness stack + volumes removed."
+
 e2e-verify: ## Set up the e2e tenants and run the Playwright suite
 	bash e2e/scripts/setup_e2e_tenants.sh
 	cd e2e && npm ci && npx playwright install chromium && npx playwright test
@@ -213,15 +227,17 @@ doctor: ## Diagnose the local dev environment ("why doesn't this work on my mach
 stack-settled: ## Was db/odoo just (re)started? Sanity check before trusting a scary finding (R-018)
 	@bash scripts/dev/stack_settled.sh
 
-verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + financial-bootstrap + e2e) — pre-merge gate
-	@echo "==> [1/5] routing & isolation (P1-T06)"
+verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + cron-starvation + financial-bootstrap + e2e) — pre-merge gate
+	@echo "==> [1/6] routing & isolation (P1-T06)"
 	@$(MAKE) --no-print-directory routing-verify
-	@echo "==> [2/5] provisioning (P2-T01)"
+	@echo "==> [2/6] provisioning (P2-T01)"
 	@$(MAKE) --no-print-directory provisioning-verify
-	@echo "==> [3/5] config sync (P2-T03)"
+	@echo "==> [3/6] config sync (P2-T03)"
 	@$(MAKE) --no-print-directory config-sync-verify
-	@echo "==> [4/5] financial bootstrap (P3-T01)"
+	@echo "==> [4/6] cron starvation (#310)"
+	@$(MAKE) --no-print-directory cron-starvation-verify
+	@echo "==> [5/6] financial bootstrap (P3-T01)"
 	@$(MAKE) --no-print-directory financial-bootstrap-verify
-	@echo "==> [5/5] end-to-end guarantees (P1-T20)"
+	@echo "==> [6/6] end-to-end guarantees (P1-T20)"
 	@$(MAKE) --no-print-directory e2e-verify
 	@echo "✅ verify-all: every suite green."
