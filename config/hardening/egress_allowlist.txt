@@ -1,0 +1,40 @@
+# ============================================================================
+#  Container egress allowlist  (ticket #311 — ARCHITECTURE_SECURITY §11)
+# ============================================================================
+#  harden.sh step [7/7] resolves each hostname below to its current IPv4
+#  address(es) and installs a `RETURN` (allow) rule per IP in the DOCKER-USER
+#  NC-EGRESS chain; everything else from the egress subnet (172.31.240.0/24)
+#  is DROPed. This is the NETWORK-level backstop behind the existing CODE-level
+#  controls (#308 ECB pin, #58 AI-gateway allowlist).
+#
+#  Format: one host per line. Blank lines and `#` comments ignored. Only the
+#  first whitespace-delimited token on a line is used, so trailing `# notes`
+#  are fine.
+#
+#  ⚠️  DRIFT: several of these are CDN/anycast-fronted (verified: ECB is served
+#  via the ax4z.com CDN; Stripe, Google, Let's Encrypt sit behind Cloudflare;
+#  B2 rotates). Their IPs change WITHOUT NOTICE. The allowlist is resolved at
+#  harden.sh run time, NOT continuously — so a resolver refresh means re-running
+#  harden.sh (idempotent). If a host below resolves to zero IPv4 addresses,
+#  harden.sh ABORTS rather than install a policy that would silently break it.
+#  Operational handling of drift is documented in RUNBOOK_SECURITY.md; #311 does
+#  NOT attempt to solve dynamic-IP tracking.
+#
+#  Keep this list MINIMAL — every entry widens the egress surface. Add a host
+#  only when a running platform service must reach it.
+# ============================================================================
+
+# --- Exchange-rate fetch (#236/#308: ncollection_saas exchange_rate.py) ------
+www.ecb.europa.eu            # ECB daily reference rates (CDN-fronted)
+
+# --- Billing (Stripe, when NC_STRIPE_* configured) ---------------------------
+api.stripe.com               # Stripe API (Cloudflare-fronted)
+
+# --- TLS certificate issuance (certbot / Let's Encrypt) ----------------------
+acme-v02.api.letsencrypt.org # ACME directory (Cloudflare-fronted)
+
+# --- Backups (pgBackRest -> object storage; only if the backup overlay runs) -
+# NOTE: the S3/B2 endpoint is deployment-specific (.env
+# PGBACKREST_REPO1_S3_ENDPOINT). Uncomment + set to YOUR endpoint host, or the
+# PITR db (docker-compose.backup.yml) cannot archive-push.
+# s3.us-west-000.backblazeb2.com
