@@ -270,6 +270,37 @@ class TestDepartmentDashboards(TransactionCase):
         for method in self._ROLE_OF:
             self._assert_denied(self.service.with_user(user), method)
 
+    def test_the_owner_is_denied_too(self):
+        """THE CASE THE SUITE WAS MISSING, and the reason it mattered.
+
+        `group_role_owner` implies `base.group_system` directly
+        (role_groups.xml), so the first version of these guards — which reused
+        the CEO dashboard's `base.group_system` clause verbatim — admitted
+        every Owner while every comment and the commit message said Owner was
+        denied. No test covered Owner, so CI would have shipped it. Found by
+        the security review, not by this file.
+        """
+        user = self._user_with('dept_owner', ['ncollection_core.group_role_owner'])
+        for method in self._ROLE_OF:
+            self._assert_denied(self.service.with_user(user), method)
+
+    def test_an_owner_who_also_holds_a_department_role_is_admitted(self):
+        """The trap in the FIX, made executable.
+
+        Excluding Owner wholesale would deny someone the menu actually shows:
+        a user holding both Owner and Sales holds `group_role_sales`, which is
+        the group `menu_sales_dashboard` names, so they see it. The exclusion
+        applies only to the technical-admin escape hatch, never to the role
+        match — and that ordering is what this pins.
+        """
+        user = self._user_with('dept_owner_sales',
+                               ['ncollection_core.group_role_owner',
+                                'ncollection_core.group_role_sales'])
+        svc = self.service.with_user(user)
+        self.assertIn('kpis', svc.get_sales_dashboard(),
+                      "holding the Sales role must admit, Owner or not")
+        self._assert_denied(svc, 'get_hr_dashboard')
+
     def test_system_admin_reaches_all_three(self):
         """`admin` holds base.group_system and no role group. Without that
         clause every existing test in this file would break too: none of them

@@ -80,8 +80,10 @@
          pipeline-funnel rows.
 
          The mirror is EXACTLY these groups and no wider. This root gates to
-         sales/HR/warehouse, and Odoo intersects a child menu's groups with
-         its parent's, so no executive role reaches these menus — and none may
+         sales/HR/warehouse. Odoo filters each menu by its OWN `groups` and
+         renders it only if every ancestor passes independently too, so the
+         net effect here is an intersection and no executive role reaches
+         these menus — and none may
          call the RPCs either. A CEO loses nothing: get_ceo_dashboard already
          carries the same pipeline panel. Widening the RPC past the menu would
          swap this ticket's Rule-4 mismatch for its exact inverse. -->
