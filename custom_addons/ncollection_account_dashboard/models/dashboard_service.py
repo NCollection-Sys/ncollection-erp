@@ -305,10 +305,19 @@ class AccountDashboardService(models.AbstractModel):
     def _require_any_group(self, xmlids, message):
         """Raise AccessError unless the caller holds one of `xmlids` (#333).
 
-        Extracted rather than inlined because three sibling methods are due
-        the same treatment — the sales/HR/warehouse dashboards narrow their
-        menus to a single role each and are still Ring 1 only. Four copies of
-        the same five lines is how two of them end up subtly different.
+        Used by all four role-curated dashboards. #333 mirrored the CEO menu;
+        #356 did the same for sales/HR/warehouse, which is why this exists as
+        a helper — four copies of the same five lines is how two of them end
+        up subtly different.
+
+        EVERY caller passes `base.group_system` alongside its role, and that
+        is not boilerplate. `admin` holds it and holds NO role group (the
+        implication runs owner -> system, never the reverse), so omitting it
+        locks admin out on every tenant. It also breaks the existing suites:
+        no test of the department dashboards uses `with_user`, so they all run
+        as uid 1 (`__system__`), which holds exactly that group. Measured on
+        #333: dropping the clause there produced 8 failures, only one of which
+        was the test written for it.
 
         `AccessError`, not `UserError`: Odoo documents it as the access-rights
         error and maps it to HTTP 403, which is what an RPC caller should see
@@ -316,6 +325,36 @@ class AccountDashboardService(models.AbstractModel):
         """
         if not any(self.env.user.has_group(x) for x in xmlids):
             raise AccessError(message)
+
+    def _require_role_or_technical_admin(self, role_xmlid, message):
+        """Allow `role_xmlid`, or a TECHNICAL admin — but not the Owner (#356).
+
+        WHY THIS IS NOT JUST _require_any_group WITH base.group_system.
+        `group_role_owner` IMPLIES `base.group_system` directly
+        (ncollection_core/security/role_groups.xml), so that clause admits
+        every Owner. On the CEO dashboard that is harmless — Owner qualifies
+        there anyway, through `group_role_ceo` — and its docstring says so.
+        The precondition does not hold here: nothing implies
+        group_role_sales/hr/warehouse for an Owner. Reusing the clause
+        unmodified therefore let Owner through the department dashboards while
+        the ruling, the comments and the commit message all said Owner was
+        denied. Caught by the security review; the tests did not cover Owner
+        at all, so nothing else would have.
+
+        THE ROLE IS CHECKED FIRST, AND THAT ORDER MATTERS. A user may hold
+        BOTH the Owner role and a department role — that person DOES see the
+        menu, because they hold the group it names, so they must pass here
+        too. Excluding Owner from the role branch would deny someone the menu
+        shows, which is the same Rule-4 mismatch pointing the other way.
+        The exclusion applies only to the technical-admin escape hatch.
+        """
+        user = self.env.user
+        if user.has_group(role_xmlid):
+            return
+        if (user.has_group('base.group_system')
+                and not user.has_group('ncollection_core.group_role_owner')):
+            return
+        raise AccessError(message)
 
     @api.model
     def get_ceo_dashboard(self, date_from=None, date_to=None):
@@ -372,9 +411,11 @@ class AccountDashboardService(models.AbstractModel):
           Verified: a browser run against a scratch tenant reaches this action
           as admin today.
 
-        Deliberately NOT applied to the sales/HR/warehouse dashboards, whose
-        menus narrow the same way — that is a follow-up, so this ticket's
-        ruling is not widened past what #333 decided.
+        The sales/HR/warehouse dashboards narrow their menus the same way and
+        were left out of #333 on purpose, so its ruling was not widened past
+        what had been decided. #356 has since closed them, using the helper
+        below — see get_sales_dashboard for why one of them was reachable
+        rather than merely unmirrored.
         """
         self._require_any_group(
             ('ncollection_core.group_role_ceo', 'base.group_system'),
@@ -532,7 +573,27 @@ class AccountDashboardService(models.AbstractModel):
     @api.model
     def get_sales_dashboard(self):
         """Sales dashboard (#57): avg-deal-size KPI + pipeline funnel +
-        salesperson leaderboard. Role: group_role_sales."""
+        salesperson leaderboard. Role: group_role_sales.
+
+        ROLE-GATED AT THE RPC (#356). This one was actually reachable, not
+        merely unmirrored: `group_role_manager` implies
+        `sales_team.group_sale_salesman_all_leads` at runtime
+        (ncollection_core/hooks.py), so a Manager — who is not in the Sales
+        role and cannot see this menu — could call it directly and receive the
+        pipeline-funnel rows. Found by the security review of #333.
+
+        EXACTLY the menu, no wider. `menu_department_dashboard_root` is gated
+        to sales/HR/warehouse, and Odoo filters each menu node by its OWN
+        `groups` while rendering a node only if every ancestor independently
+        passes too — so the net effect here is the intersection, and no
+        executive role sees these menus — and the mirror must
+        say the same thing. A CEO loses nothing: get_ceo_dashboard already
+        calls the same _pipeline_funnel(). Widening the RPC past the menu
+        would trade this ticket's Rule-4 mismatch for its exact inverse.
+        """
+        self._require_role_or_technical_admin(
+            'ncollection_core.group_role_sales',
+            self.env._("The Sales dashboard is available to the Sales role."))
         kpis = [k for k in (
             self._department_kpi('avg_deal_size', self.env._("Average Deal Size")),
         ) if k is not None]
@@ -558,6 +619,9 @@ class AccountDashboardService(models.AbstractModel):
     def get_hr_dashboard(self):
         """HR dashboard (#57): employee-turnover KPI + headcount by department +
         approved leave by type. Role: group_role_hr."""
+        self._require_role_or_technical_admin(
+            'ncollection_core.group_role_hr',
+            self.env._("The HR dashboard is available to the HR role."))
         kpis = [k for k in (
             self._department_kpi('employee_turnover', self.env._("Employee Turnover")),
         ) if k is not None]
@@ -589,6 +653,9 @@ class AccountDashboardService(models.AbstractModel):
     def get_warehouse_dashboard(self):
         """Warehouse dashboard (#57): inventory-turnover KPI + stock valuation by
         product + movement velocity. Role: group_role_warehouse."""
+        self._require_role_or_technical_admin(
+            'ncollection_core.group_role_warehouse',
+            self.env._("The Warehouse dashboard is available to the Warehouse role."))
         kpis = [k for k in (
             self._department_kpi('inventory_turnover', self.env._("Inventory Turnover")),
         ) if k is not None]
