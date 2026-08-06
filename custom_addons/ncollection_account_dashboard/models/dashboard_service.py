@@ -260,9 +260,18 @@ class AccountDashboardService(models.AbstractModel):
         # True, and insufficient: `sale`'s own ir.model.access.csv grants
         # `sales_team.group_sale_salesman` READ on account.move.line, and
         # ncollection_core/hooks.py links group_role_sales to that group at
-        # install. `purchase` and `point_of_sale` grant it too. So in any
-        # tenant with Sales, Purchase or POS installed the underlying read
+        # install. So in any tenant with Sales installed the underlying read
         # succeeds and nothing else stood in the way.
+        #
+        # Precisely: 9 ACL rows across 5 modules grant read on
+        # account.move.line (account, sale, purchase, point_of_sale,
+        # hr_expense), but only sale's is reachable through the role matrix
+        # today — Manager gets there too, via group_sale_salesman_all_leads
+        # implying group_sale_salesman. purchase/POS/hr_expense grant to
+        # groups no ROLE_IMPLICATIONS entry maps a role into, so they are
+        # LATENT rather than live: a future mapping, or an Owner assigning a
+        # native group by hand, reaches them. The guard does not care how the
+        # ACL was obtained, which is why it holds for those cases too.
         #
         # OWNER IS ABSENT FROM THE LIST ON PURPOSE: it implies CEO, so naming
         # it would keep the Owner test green even if that implication were

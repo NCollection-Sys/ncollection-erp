@@ -309,11 +309,18 @@ class TestDashboardService(AccountTestInvoicingCommon):
         model and, before this fix, received the company's revenue,
         receivables, profit and assets from a menu they cannot see.
 
-        The grant here stands in for that linking, which does not run in a
-        bare test database (measured during #333: group_role_ceo implied only
-        Manager). Without it this test cannot tell a working guard from an
-        incidental ACL refusal — which is exactly what the message assertion
-        in _assert_financially_denied also guards against.
+        WHAT THIS GRANT IS AND IS NOT. It hands the user
+        account.group_account_readonly directly — it does NOT exercise
+        sale's own ACL row via sales_team.group_sale_salesman. Both routes end
+        at the same place (the caller can read account.move.line, so only the
+        role guard stands between them and the figures), and this one needs no
+        `sale` install, but the simulation is by equivalence, not literal
+        reproduction. The real linking does not run in a bare test database
+        anyway — measured during #333, group_role_ceo implied only Manager.
+
+        Without the grant this test cannot tell a working guard from an
+        incidental ACL refusal, which is also why _assert_financially_denied
+        asserts the exception MESSAGE rather than just its type.
         """
         user = self._user_with('fin_sales', ['ncollection_core.group_role_sales'])
         self._assert_financially_denied(self.service.with_user(user))
