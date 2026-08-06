@@ -4,10 +4,23 @@
     <!-- Financial dashboards are for the roles that actually carry accounting
          ORM rights: Accountant / CEO / Owner (see ncollection_core hooks.py
          ROLE_IMPLICATIONS — Manager implies only sales/stock/hr, NOT account, so
-         it is deliberately excluded). The gate is genuinely mirrored at the data
-         layer: the executive services run under the user's own accounting rights
-         with no sudo, so anyone reaching a figure must already be permitted to
-         read it (Rule 4/7); no other role can open the RPC. -->
+         it is deliberately excluded).
+
+         THE OLD COMMENT HERE CLAIMED "no other role can open the RPC", on the
+         grounds that the executive services run under the caller's own rights
+         with no sudo so anyone reaching a figure must already be permitted to
+         read it. THAT WAS FALSE, and it is why #358 went unnoticed: `sale`'s
+         own ir.model.access.csv grants `sales_team.group_sale_salesman` READ
+         on account.move.line, and hooks.py links group_role_sales to exactly
+         that group at install. `purchase` and `point_of_sale` grant it too.
+         So in any tenant with Sales, Purchase or POS installed, a Sales-role
+         user — who cannot see this menu — could call get_finance_dashboard()
+         and receive revenue, receivables, net profit and assets.
+
+         The three methods now carry their own RPC role checks (#358), so the
+         gate is mirrored where the claim said it already was. "The ACL
+         mirrors it" is a hypothesis about every module a tenant might
+         install, not a property of this module — do not re-derive it here. -->
     <menuitem id="menu_account_dashboard_root"
               name="Financial Dashboards"
               groups="ncollection_core.group_role_accountant,ncollection_core.group_role_ceo,ncollection_core.group_role_owner"

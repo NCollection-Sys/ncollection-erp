@@ -265,6 +265,108 @@ class TestDashboardService(AccountTestInvoicingCommon):
         action = self.env.ref('ncollection_account_dashboard.action_ceo_dashboard')
         self.assertEqual(action.tag, 'ncollection_account_dashboard.ceo')
 
+    # ---- #358: the financial dashboards were never gated at all -----------
+    #
+    # menu_account_dashboard_root gates to accountant + CEO + owner, and the
+    # finance/accountant/cash children declare no groups of their own, so they
+    # inherit exactly that. None of the three methods checked anything.
+    #
+    # This is NOT the #333/#356 situation. There the payload was figures the
+    # caller could already reach another way, so the gap was curation. Here a
+    # Sales-role user — granted no accounting group by the role matrix — read
+    # the company's revenue, receivables, profit and assets. The standing
+    # assumption that "the ACL already mirrors this menu" was false: Odoo's
+    # stock ACL for account.move.line lists Sales/User among the groups
+    # permitted to read it.
+
+    _FINANCIAL_METHODS = ('get_finance_dashboard', 'get_accountant_dashboard',
+                          'get_cash_dashboard')
+
+    def _assert_financially_denied(self, service):
+        for method in self._FINANCIAL_METHODS:
+            with self.assertRaises(AccessError) as caught:
+                getattr(service, method)()
+            self.assertIn(
+                "financial dashboards", str(caught.exception),
+                "%s must be refused by its role guard, not by an incidental "
+                "AccessError from a model it happened to read" % method)
+
+    def test_a_sales_user_cannot_read_the_financial_dashboards(self):
+        """THE EXPOSURE #358 WAS FILED FOR.
+
+        WHY THE USER IS GIVEN MODEL READ. The first version of this test
+        withheld it, reasoning that the Sales role holds no accounting group —
+        and it failed for the wrong reason: the ACL refused account.move.line
+        before the missing guard mattered, so the test would have passed on
+        UNFIXED code and proved nothing.
+
+        In a real tenant the ACL does not refuse. `sale`'s own
+        ir.model.access.csv grants `sales_team.group_sale_salesman` read on
+        account.move.line, and ncollection_core/hooks.py links
+        group_role_sales to exactly that group at install. `purchase` and
+        `point_of_sale` grant it too. So any tenant with Sales, Purchase or
+        POS installed — nearly all of them — has a Sales user who CAN read the
+        model and, before this fix, received the company's revenue,
+        receivables, profit and assets from a menu they cannot see.
+
+        WHAT THIS GRANT IS AND IS NOT. It hands the user
+        account.group_account_readonly directly — it does NOT exercise
+        sale's own ACL row via sales_team.group_sale_salesman. Both routes end
+        at the same place (the caller can read account.move.line, so only the
+        role guard stands between them and the figures), and this one needs no
+        `sale` install, but the simulation is by equivalence, not literal
+        reproduction. The real linking does not run in a bare test database
+        anyway — measured during #333, group_role_ceo implied only Manager.
+
+        Without the grant this test cannot tell a working guard from an
+        incidental ACL refusal, which is also why _assert_financially_denied
+        asserts the exception MESSAGE rather than just its type.
+        """
+        user = self._user_with('fin_sales', ['ncollection_core.group_role_sales'])
+        self._assert_financially_denied(self.service.with_user(user))
+
+    def test_a_manager_cannot_either(self):
+        """Manager is not on this menu either. Same model-read reasoning as
+        the Sales case above: hooks.py links group_role_manager to
+        sales_team.group_sale_salesman_all_leads, so in a real tenant a
+        Manager reaches account.move.line as well."""
+        user = self._user_with('fin_mgr', ['ncollection_core.group_role_manager'])
+        self._assert_financially_denied(self.service.with_user(user))
+
+    def test_the_accountant_can(self):
+        user = self._user_with('fin_acct',
+                               ['ncollection_core.group_role_accountant'])
+        for method in self._FINANCIAL_METHODS:
+            self.assertIn('kpis', getattr(self.service.with_user(user), method)())
+
+    def test_the_ceo_can_read_the_financial_dashboards(self):
+        user = self._user_with('fin_ceo', ['ncollection_core.group_role_ceo'])
+        for method in self._FINANCIAL_METHODS:
+            self.assertIn('kpis', getattr(self.service.with_user(user), method)())
+
+    def test_the_owner_can_read_them_through_the_implication_chain(self):
+        """Owner is NOT named in the guard — it passes because Owner implies
+        CEO. Naming it would keep this green if the implication were removed,
+        which is a guard decaying into decoration (the #333 argument).
+
+        Note the guard here deliberately uses _require_any_group, NOT
+        _require_role_or_technical_admin: that helper EXCLUDES Owner from the
+        base.group_system hatch because Owner is absent from the department
+        menus. Owner is present on THIS menu, so excluding it would be wrong.
+        Two helpers, two menus, opposite treatment of the same role.
+        """
+        user = self._user_with('fin_owner', ['ncollection_core.group_role_owner'])
+        for method in self._FINANCIAL_METHODS:
+            self.assertIn('kpis', getattr(self.service.with_user(user), method)())
+
+    def test_admin_is_not_locked_out_of_the_financial_dashboards(self):
+        """Same reason as #333: `admin` holds base.group_system and no role
+        group, and every other test in this file runs as uid 1 (`__system__`),
+        which holds exactly that."""
+        user = self._user_with('fin_admin', ['base.group_system'])
+        for method in self._FINANCIAL_METHODS:
+            self.assertIn('kpis', getattr(self.service.with_user(user), method)())
+
     # ---- #333: the Rule-4 mirror, decided ---------------------------------
     #
     # The previous test here pinned the ABSENCE of a role check and said the

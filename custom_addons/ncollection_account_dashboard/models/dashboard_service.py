@@ -250,6 +250,44 @@ class AccountDashboardService(models.AbstractModel):
     def get_finance_dashboard(self):
         """Finance dashboard: the eight Financial Summary KPIs + a revenue vs
         expenses trend."""
+        # ROLE-GATED AT THE RPC (#358). This one EXPOSED DATA, unlike #333 and
+        # #356, which were curation. A Sales-role user — who cannot see
+        # menu_account_dashboard_root at all — received the company's revenue,
+        # receivables, net profit and assets.
+        #
+        # The standing claim was that the ACL alone mirrors this menu, since
+        # the report services run under the caller's own rights with no sudo.
+        # True, and insufficient: `sale`'s own ir.model.access.csv grants
+        # `sales_team.group_sale_salesman` READ on account.move.line, and
+        # ncollection_core/hooks.py links group_role_sales to that group at
+        # install. So in any tenant with Sales installed the underlying read
+        # succeeds and nothing else stood in the way.
+        #
+        # Precisely: 9 ACL rows across 5 modules grant read on
+        # account.move.line (account, sale, purchase, point_of_sale,
+        # hr_expense), but only sale's is reachable through the role matrix
+        # today — Manager gets there too, via group_sale_salesman_all_leads
+        # implying group_sale_salesman. purchase/POS/hr_expense grant to
+        # groups no ROLE_IMPLICATIONS entry maps a role into, so they are
+        # LATENT rather than live: a future mapping, or an Owner assigning a
+        # native group by hand, reaches them. The guard does not care how the
+        # ACL was obtained, which is why it holds for those cases too.
+        #
+        # OWNER IS ABSENT FROM THE LIST ON PURPOSE: it implies CEO, so naming
+        # it would keep the Owner test green even if that implication were
+        # removed (#333).
+        #
+        # _require_any_group, NOT _require_role_or_technical_admin: that
+        # helper excludes Owner from the base.group_system hatch because Owner
+        # is absent from the DEPARTMENT menus (#356). Owner is present on this
+        # one. Same role, two menus, opposite treatment — which is why there
+        # are two helpers rather than one with a flag.
+        self._require_any_group(
+            ('ncollection_core.group_role_accountant',
+             'ncollection_core.group_role_ceo',
+             'base.group_system'),
+            self.env._("The financial dashboards are available to the "
+                       "Accountant, the CEO and the workspace owner."))
         current, previous = self._comparison(_SUMMARY)
         kpis = [
             self._kpi('revenue', self.env._("Revenue"), current, previous),
@@ -278,6 +316,13 @@ class AccountDashboardService(models.AbstractModel):
     def get_accountant_dashboard(self):
         """Accountant dashboard: profitability KPIs (incl. service-computed
         margins) + a P&L composition bar."""
+        # Role-gated at the RPC (#358) — reasoning in get_finance_dashboard.
+        self._require_any_group(
+            ('ncollection_core.group_role_accountant',
+             'ncollection_core.group_role_ceo',
+             'base.group_system'),
+            self.env._("The financial dashboards are available to the "
+                       "Accountant, the CEO and the workspace owner."))
         current, previous = self._comparison(_PROFITABILITY)
         kpis = [
             self._kpi('total_income', self.env._("Revenue"), current, previous),
@@ -485,6 +530,13 @@ class AccountDashboardService(models.AbstractModel):
     def get_cash_dashboard(self):
         """Cash dashboard: cash / receivables / payables position + a cash
         position trend."""
+        # Role-gated at the RPC (#358) — reasoning in get_finance_dashboard.
+        self._require_any_group(
+            ('ncollection_core.group_role_accountant',
+             'ncollection_core.group_role_ceo',
+             'base.group_system'),
+            self.env._("The financial dashboards are available to the "
+                       "Accountant, the CEO and the workspace owner."))
         current, previous = self._comparison(_SUMMARY)
         kpis = [
             self._kpi('cash', self.env._("Cash"), current, previous),
