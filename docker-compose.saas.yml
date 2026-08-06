@@ -75,6 +75,12 @@ services:
       - ./oca:/mnt/oca-addons:ro
       - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
       - odoo_data:/var/lib/odoo
+    # Egress backstop (#311): db-plane (direct to db) + egress `default`. This is
+    # the container where the `root.outbound` queue_job channel runs, so the ECB
+    # rate fetch actually egresses HERE — its host must be in the allowlist.
+    networks:
+      - default
+      - nc_dbplane
     # Resource caps: heavy but bounded, so a provisioning spike can never starve
     # the interactive stack (SECURITY §11 — resource exhaustion).
     mem_limit: 1500m

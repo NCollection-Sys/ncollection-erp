@@ -28,6 +28,12 @@ services:
     volumes:
       - ./config/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
       - ./config/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    # Egress backstop (#311): db-plane ONLY — pgbouncer just proxies odoo↔db and
+    # never calls out, so it lives on the internal-only net (no route off-host).
+    # It is the canonical "should have NO egress" service verify_hardening.sh
+    # proves denial against.
+    networks:
+      - nc_dbplane
     restart: unless-stopped
 
   # HTTP workers → PgBouncer. Cron disabled here (it runs on odoo-bus, direct).
@@ -67,6 +73,11 @@ services:
     # thread at all (it is queued); the second thread is defence in depth, so
     # one long-running cron cannot serialise every other cron behind it.
     command: odoo -c /etc/odoo/odoo.prod.conf --workers=1 --max-cron-threads=2
+    # Egress backstop (#311): db-plane (direct to db) + egress `default` (cron may
+    # send mail; outbound-capable but firewall-filtered to the allowlist).
+    networks:
+      - default
+      - nc_dbplane
     volumes:
       - odoo_data:/var/lib/odoo
       - ./custom_addons:/mnt/extra-addons

@@ -73,6 +73,11 @@ services:
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
       - "${PGADMIN_PORT:-5050}:80"
+    # Egress backstop (#311): the base moved `db` onto the internal-only db-plane,
+    # so pgAdmin must join it to reach the database (its web UI is still served
+    # via the host port map, which is network-agnostic). Dev-only; no egress.
+    networks:
+      - nc_dbplane
     restart: unless-stopped
     volumes:
       - pgadmin_data:/var/lib/pgadmin
