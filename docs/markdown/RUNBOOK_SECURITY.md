@@ -23,6 +23,7 @@
 | Docker daemon | `no-new-privileges`, `live-restore`, log caps | `config/hardening/docker-daemon.json` |
 | Secrets | `.env` → mode `600`, owned by the deploy user | (in `harden.sh`) |
 | Postgres | never published (compose already does this) | — |
+| Container egress (#311) | `DOCKER-USER` default-deny; allowlist-only outbound from the egress subnet; IPv6 denied | `config/hardening/egress_allowlist.txt` |
 
 `harden.sh` is **idempotent** — re-run any time to re-assert.
 
@@ -56,6 +57,34 @@ sudo ufw allow from <YOUR_IP> to any port 8069 proto tcp   # temporary
 sudo ufw delete allow from <YOUR_IP> to any port 8069 proto tcp
 ```
 
+## Container egress backstop (#311) — operating notes
+
+`harden.sh` step [7/7] default-denies outbound traffic from the egress subnet
+(`172.31.240.0/24`) in the `DOCKER-USER` iptables chain and allows only the
+hosts in `config/hardening/egress_allowlist.txt`. This is a **network backstop
+behind** the code-level egress controls (ECB pin #308, AI gateway #58), not a
+replacement — Docker bypasses UFW's `default allow outgoing`, so without it a
+compromised container could reach anywhere.
+
+- **CDN / dynamic-IP drift (expected, not a bug).** Several allowlisted hosts
+  are CDN/anycast-fronted (verified: ECB via the ax4z.com CDN; Stripe, Google,
+  ACME behind Cloudflare; B2 rotates). Their IPs change without notice. The
+  allowlist is resolved **at `harden.sh` run time, not continuously.** When an
+  allowlisted call starts failing (`verify_hardening.sh` §D flags the ECB
+  reach), the fix is simply to **re-run `harden.sh`** — it re-resolves and
+  ping-pongs to a fresh chain with zero policy gap. #311 deliberately does not
+  track dynamic IPs; a resolver/cron-refresh mechanism is future work.
+- **Persistence across reboot.** iptables rules set here are **not persisted**
+  (no `iptables-persistent`). After any reboot, **re-run `harden.sh`** to
+  re-assert the egress policy (it is idempotent). Fold this into the post-reboot
+  checklist alongside bringing the stack up.
+- **Adding a host.** Add the hostname to `egress_allowlist.txt` (keep it
+  minimal — every entry widens the surface), commit, deploy, then re-run
+  `harden.sh`. If a required host resolves to zero IPv4 addresses, `harden.sh`
+  **aborts** rather than install a policy that would silently break it.
+- **The AI-gateway provider host** is a **commented, inactive slot** in the
+  allowlist; uncomment it only when P5-T02 ships the gateway satellite.
+
 ## Known trade-offs (documented, not bugs)
 
 - **Deploy user in the `docker` group** = root-equivalent (needed for CD to run
@@ -64,6 +93,8 @@ sudo ufw delete allow from <YOUR_IP> to any port 8069 proto tcp
 - **Docker vs UFW:** Docker bypasses UFW for *published* ports. Our compose
   publishes **no** DB port (`ports: !reset []`), so Postgres stays private — but
   never add a `- "5432:5432"` publish on a hardened host expecting UFW to hide it.
+  UFW also does not cover container **egress**; that is handled separately by the
+  `DOCKER-USER` backstop (see the #311 section above).
 - **Auto-reboot is off** — kernel security updates install but a reboot is
   manual. Schedule it; `live-restore` keeps tenants up across the Docker restart.
 
@@ -89,6 +120,7 @@ only when all are ✅:
 - [ ] Docker `daemon.json` applied (`no-new-privileges`, log caps)
 - [ ] Postgres **not** reachable from outside (`5432`/`5433` closed)
 - [ ] `.env` is mode `600`, owned by the deploy user
+- [ ] Container egress backstop live (#311): `verify_hardening.sh` **§D** green — single first-matching `NC-EGRESS` jump ending in DROP, IPv6 denied, db-plane service blocked off-host, allowlisted host reachable
 
 ## Required tenant-side jobs — what to do when one is reported disabled (#262)
 
