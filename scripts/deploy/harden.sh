@@ -110,15 +110,22 @@ ALLOWLIST_FILE="$HARDEN_DIR/egress_allowlist.txt"
 egress_ips=""
 while read -r host; do
   [ -n "$host" ] || continue
-  host_ips="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u)"
+  # `|| true`: getent exits non-zero on NXDOMAIN and pipefail would abort the
+  # assignment before the descriptive check below could run.
+  host_ips="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u || true)"
   if [ -z "$host_ips" ]; then
     echo "!! egress allowlist: '$host' resolved to no IPv4 address — aborting (not installing a policy that would break it)." >&2
     exit 1
   fi
   egress_ips+="$host_ips"$'\n'
 done < <(grep -vE '^[[:space:]]*(#|$)' "$ALLOWLIST_FILE" | awk '{print $1}')
-# numeric-sorted unique IPv4 set (deterministic chain ordering)
-egress_ips="$(printf '%s' "$egress_ips" | grep -vE '^$' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n -u)"
+# numeric-sorted unique IPv4 set (deterministic chain ordering). `|| true`:
+# grep exits 1 on empty input, which pipefail would turn into a bare abort.
+egress_ips="$(printf '%s' "$egress_ips" | grep -vE '^$' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n -u || true)"
+if [ -z "$egress_ips" ]; then
+  echo "!! egress allowlist has no usable hosts (all commented?) — refusing to install a deny-everything policy." >&2
+  exit 1
+fi
 
 # DOCKER-USER is normally created by dockerd; create it if docker hasn't yet so
 # our rule survives and takes effect the moment docker wires its jump.
@@ -175,6 +182,7 @@ if ! ip6tables -C DOCKER-USER -j DROP 2>/dev/null; then
   ip6tables -N DOCKER-USER 2>/dev/null || true
   ip6tables -I DOCKER-USER 1 -j DROP
 fi
-echo "    egress policy live on slot NC-EGRESS-$target ($(printf '%s' "$egress_ips" | grep -c .) allowlisted IPs)"
+ip_count="$(printf '%s' "$egress_ips" | grep -c . || true)"
+echo "    egress policy live on slot NC-EGRESS-$target ($ip_count allowlisted IPs)"
 
 echo "✅ Hardening applied. Prove it: scripts/deploy/verify_hardening.sh <host>"
