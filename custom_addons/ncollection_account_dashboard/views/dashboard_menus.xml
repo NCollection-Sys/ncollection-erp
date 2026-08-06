@@ -55,8 +55,9 @@
          rights with no sudo, and the panels stay Ring-2 gated by the P4-T01
          engine whoever calls. It was curation missing its mirror.
 
-         The sales/HR/warehouse menus narrow the same way and their methods
-         are still Ring 1 only — a deliberate follow-up, not an oversight. -->
+         The sales/HR/warehouse menus narrow the same way. They were left out
+         of #333 deliberately and #356 has since mirrored them too — see the
+         department block below. -->
     <menuitem id="menu_ceo_dashboard"
               name="CEO"
               parent="menu_account_dashboard_root"

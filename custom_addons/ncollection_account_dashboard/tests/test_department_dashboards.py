@@ -192,6 +192,26 @@ class TestDepartmentDashboards(TransactionCase):
         'get_hr_dashboard': 'ncollection_core.group_role_hr',
         'get_warehouse_dashboard': 'ncollection_core.group_role_warehouse',
     }
+    # The distinctive fragment of each guard's own message. Every denial below
+    # asserts on it, because assertRaises(AccessError) alone would be satisfied
+    # by ANY AccessError — including one from a downstream model ACL — and
+    # would therefore keep passing if the guard were moved behind some other
+    # raising check. The guard is the first statement today; this is what keeps
+    # that observable rather than assumed.
+    _DENIAL_TEXT = {
+        'get_sales_dashboard': 'Sales dashboard',
+        'get_hr_dashboard': 'HR dashboard',
+        'get_warehouse_dashboard': 'Warehouse dashboard',
+    }
+
+    def _assert_denied(self, service, method):
+        """Assert the ROLE guard denied `method`, not something downstream."""
+        with self.assertRaises(AccessError) as caught:
+            getattr(service, method)()
+        self.assertIn(
+            self._DENIAL_TEXT[method], str(caught.exception),
+            "%s must be refused by its role guard, not by an incidental "
+            "AccessError from a model it happened to read" % method)
 
     def _user_with(self, login, group_xmlids):
         """An internal user holding exactly the named groups.
@@ -236,9 +256,7 @@ class TestDepartmentDashboards(TransactionCase):
             for other in self._ROLE_OF:
                 if other == method:
                     continue
-                with self.assertRaises(AccessError,
-                                       msg="%s must deny the %s role" % (other, role)):
-                    getattr(svc, other)()
+                self._assert_denied(svc, other)
 
     def test_the_ceo_is_denied_too(self):
         """Deliberate, and the ruling of #356: the mirror is EXACTLY the menu.
@@ -250,8 +268,7 @@ class TestDepartmentDashboards(TransactionCase):
         """
         user = self._user_with('dept_ceo', ['ncollection_core.group_role_ceo'])
         for method in self._ROLE_OF:
-            with self.assertRaises(AccessError, msg=method):
-                getattr(self.service.with_user(user), method)()
+            self._assert_denied(self.service.with_user(user), method)
 
     def test_system_admin_reaches_all_three(self):
         """`admin` holds base.group_system and no role group. Without that

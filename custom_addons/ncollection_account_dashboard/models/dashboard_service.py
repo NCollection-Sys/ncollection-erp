@@ -381,9 +381,11 @@ class AccountDashboardService(models.AbstractModel):
           Verified: a browser run against a scratch tenant reaches this action
           as admin today.
 
-        Deliberately NOT applied to the sales/HR/warehouse dashboards, whose
-        menus narrow the same way — that is a follow-up, so this ticket's
-        ruling is not widened past what #333 decided.
+        The sales/HR/warehouse dashboards narrow their menus the same way and
+        were left out of #333 on purpose, so its ruling was not widened past
+        what had been decided. #356 has since closed them, using the helper
+        below — see get_sales_dashboard for why one of them was reachable
+        rather than merely unmirrored.
         """
         self._require_any_group(
             ('ncollection_core.group_role_ceo', 'base.group_system'),
