@@ -140,7 +140,7 @@ Status key: ✅ have · ⚠️ partial · ❌ gap · ⛔ deliberately out of sco
 |---|---|---|
 | Odoo ORM | `TransactionCase` × 84 | ✅ backbone |
 | Pure Python, no DB | stdlib `unittest` | ✅ guards only (~0.02s) |
-| **Clock-controlled logic** | `freeze_time` / patched `now` | ❌ **1 file of 81** — see G3 |
+| Time-boundary logic | injected `today=` · backdated `create_date` | ✅ both sides asserted — see G3 |
 | OWL / JS component | Odoo 19 `hoot` (`static/tests/`) | ❌ **13 OWL files, 0 tests** — see G2 |
 | React demo unit | vitest | ⛔ `demo/` is a throwaway prototype |
 
@@ -220,8 +220,8 @@ earlier ranking. Each carries the C2 declaration it needs before anyone writes i
 |---|---|---|---|---|---|
 | **G1** | Module upgrade / migration path | CI container (fresh) | `upgr*` (ephemeral) | PR | M |
 | **G2** | Odoo tours for the 13 OWL dashboards | existing CI container | reuse `ci_test` | PR | M |
-| **G3** | Clock control on time-dependent logic | existing unit suite | none | PR | S |
-| **G4** | Local runnability of the unit suite | dev stack | `baselineunit` | on demand | S |
+| ~~G3~~ | ~~Clock control~~ — **WITHDRAWN**, already covered (see below) | — | — | — | — |
+| **G4** | Local runnability of the unit suite | dev stack | `nctest` | on demand | S |
 | **G5** | ZAP baseline DAST | CI only, **never shared stack** | none | nightly | S |
 | **G6** | Tenant schema-drift check | **own compose + private PG** | `drift*` | weekly | S |
 | **G7** | A third plan's module subset | extend `verify_provisioning.sh` | existing `prov*` | pre-merge | XS |
@@ -258,14 +258,39 @@ builds — no new infra, no new stack, no `/etc/hosts` mapping. Playwright stays
 real value renders. Together with the RPC role guards (#333/#356/#358) this closes the UI
 and RPC sides at once.
 
-### G3 — Clock control
+### G3 — WITHDRAWN. Time boundaries are already covered.
 
-**Risk.** Dunning schedules, auth-log retention windows, exchange-rate freshness,
-subscription lifecycle transitions and cron cadence are all time-dependent. Exactly **one**
-of 81 test files controls the clock (`ncollection_saas/tests/test_pipeline.py`).
+An earlier draft ranked this third, claiming "exactly one of 81 test files controls the
+clock". That number came from grepping for `freeze_time` / `patch(...now)` — it measured
+**adoption of a library this repo does not need**, not boundary coverage. Verifying before
+starting the work disproved it. Recorded here as the convention, not a gap:
 
-**Acceptance.** Every time-dependent rule asserts behaviour on **both** sides of its
-boundary under a frozen clock — not "it has not fired yet".
+**Pattern 1 — inject the clock.** `ncollection_billing/models/subscription.py` exposes
+`_cron_lifecycle_sweep(self, today=None)`, and its tests drive it with `today=` directly.
+Dependency injection beats freezing a global: nothing is monkey-patched, and the production
+path is the tested path.
+
+**Pattern 2 — backdate the data.** `test_auth_log_retention.py` writes `create_date` via raw
+SQL (it is an auto-set magic column) and asserts against real elapsed time.
+
+Both sides of the boundary are already asserted, precisely:
+
+| Rule | Inside the boundary | Outside |
+|---|---|---|
+| Expiry buffer | `test_within_buffer_stays_active` (−1d) | `test_expire_after_buffer` (−3d) |
+| Grace period | `test_within_grace_stays_expired` (−5d) | `test_suspend_after_grace` (−20d) |
+| Warning thresholds | `test_expiry_warnings_fire_once_per_threshold` walks 30 / 14 / 1 day **and replays the sweep to prove idempotency** | |
+| Auth-log minimisation | `age_days=179` | `age_days=181` (180-day window) |
+
+The one suite that looks thin is thin **by design**: exchange-rate staleness is
+*observability, not an automated action* — `DESIGN_EXCHANGE_RATE_FRESHNESS.md` says "surface
+that staleness rather than let a stale row look authoritative". No threshold fires, so there
+is no boundary to straddle. Its tests instead cover what does have edges: future-dated
+documents, crafted fresh-date/stale-rate pairs, oversized responses, redirects.
+
+**Rule for new time-dependent logic:** expose an injectable `today=` / `now=` parameter and
+assert both sides. Do not add a clock-freezing dependency — the two patterns above are
+sufficient and neither requires one.
 
 ### G4 — Local runnability of the unit suite
 
