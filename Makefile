@@ -172,7 +172,7 @@ TEST_DB          ?= nctest
 TEST_HTTP_PORT   ?= 8169
 TEST_GEVENT_PORT ?= 8172
 
-test: ## Run the Odoo test suite locally (m=<module> to scope) — owns db=$(TEST_DB)
+test: ## Run the Odoo test suite locally, same matrix as CI (m=<module> to scope) — owns db 'nctest'
 	@python3 scripts/dev/ci_matrix.py --self-test
 	@set -e; \
 	if [ -n "$(m)" ]; then mods="$(m)"; tags="/$(m)"; \
