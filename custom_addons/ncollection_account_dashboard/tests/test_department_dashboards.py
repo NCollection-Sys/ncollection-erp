@@ -12,6 +12,7 @@ sale/crm/hr/stock query (test_boundary enforces that statically). Here we prove:
   (no recomputation);
 * each dashboard menu is visible ONLY to its role group (the acceptance).
 """
+from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -178,3 +179,85 @@ class TestDepartmentDashboards(TransactionCase):
             payload = getattr(self.service, method)()
             self.assertGreaterEqual(set(payload), {'kpis', 'charts', 'meta'})
             self.assertTrue(payload['kpis'])
+
+    # ---- #356: the Rule-4 mirror for the department dashboards -------------
+    #
+    # Each menu gates to ONE role and its parent root gates to the three of
+    # them, so Odoo's intersection means no executive sees these menus. The
+    # RPC now says exactly that and no more. Asserted at the ORM via
+    # with_user, which is the path an RPC client actually takes.
+
+    _ROLE_OF = {
+        'get_sales_dashboard': 'ncollection_core.group_role_sales',
+        'get_hr_dashboard': 'ncollection_core.group_role_hr',
+        'get_warehouse_dashboard': 'ncollection_core.group_role_warehouse',
+    }
+
+    def _user_with(self, login, group_xmlids):
+        """An internal user holding exactly the named groups.
+
+        `group_ids`, not `groups_id` — Odoo 19 renamed it — and no
+        `base.default_user` template, which Odoo 19 removed (CLAUDE.md).
+        """
+        return self.env['res.users'].create({
+            'name': login, 'login': login,
+            'group_ids': [(6, 0, [self.env.ref(x).id for x in group_xmlids])],
+        })
+
+    def test_a_manager_cannot_read_the_sales_pipeline(self):
+        """THE REASON #356 EXISTS, and the one case that was truly reachable.
+
+        group_role_manager implies sales_team.group_sale_salesman_all_leads at
+        runtime (ncollection_core/hooks.py), so a Manager could call this and
+        get the pipeline-funnel rows — a panel curated for a role they do not
+        hold, on a menu they cannot see. Unlike #333's situation, this was not
+        merely an unmirrored restriction: it returned data the caller had no
+        curated route to.
+        """
+        user = self._user_with('dept_mgr', ['ncollection_core.group_role_manager'])
+        with self.assertRaises(AccessError) as caught:
+            self.service.with_user(user).get_sales_dashboard()
+        self.assertIn("Sales dashboard", str(caught.exception),
+                      "the ROLE check must be what denied this, not a "
+                      "downstream ACL on a model it happened to read")
+
+    def test_each_role_reaches_its_own_dashboard_and_no_other(self):
+        """The whole matrix in one place: three roles, three dashboards.
+
+        The diagonal must pass and every off-diagonal cell must raise. Testing
+        only the diagonal would miss a check that names the wrong group, and
+        testing only one denial would miss two of them.
+        """
+        for method, role in self._ROLE_OF.items():
+            user = self._user_with('dept_%s' % method, [role])
+            svc = self.service.with_user(user)
+            self.assertIn('kpis', getattr(svc, method)(),
+                          "%s must admit its own role" % method)
+            for other in self._ROLE_OF:
+                if other == method:
+                    continue
+                with self.assertRaises(AccessError,
+                                       msg="%s must deny the %s role" % (other, role)):
+                    getattr(svc, other)()
+
+    def test_the_ceo_is_denied_too(self):
+        """Deliberate, and the ruling of #356: the mirror is EXACTLY the menu.
+
+        No executive role appears on menu_department_dashboard_root, so none
+        may call these. A CEO loses nothing — get_ceo_dashboard already
+        carries the same _pipeline_funnel() panel. Pinned so that widening the
+        RPC past the menu becomes a visible decision rather than a drift.
+        """
+        user = self._user_with('dept_ceo', ['ncollection_core.group_role_ceo'])
+        for method in self._ROLE_OF:
+            with self.assertRaises(AccessError, msg=method):
+                getattr(self.service.with_user(user), method)()
+
+    def test_system_admin_reaches_all_three(self):
+        """`admin` holds base.group_system and no role group. Without that
+        clause every existing test in this file would break too: none of them
+        uses with_user, so they all run as uid 1 (`__system__`)."""
+        user = self._user_with('dept_admin', ['base.group_system'])
+        for method in self._ROLE_OF:
+            self.assertIn('kpis', getattr(self.service.with_user(user), method)(),
+                          "%s must admit a system administrator" % method)

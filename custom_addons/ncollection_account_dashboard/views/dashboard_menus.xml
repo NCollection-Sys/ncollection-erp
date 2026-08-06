@@ -71,10 +71,19 @@
          Mirrored at the data layer like the CEO dashboard: the ncollection.kpi /
          P4-T01 engine reads run under the user's own rights with no sudo, so a
          cross-role RPC call returns None (empty), never another role's data.
-         (These three are still Ring 1 only. #333 added the RPC-level check to
-         the CEO dashboard and ruled that Rule 4 applies literally; the same
-         mirror is owed here and is a filed follow-up, not a decision still
-         open.) -->
+         MIRRORED AT THE RPC (#356). Each method now raises AccessError for
+         callers outside its own role (plus base.group_system, which `admin`
+         holds and no role group implies). One of these was genuinely
+         reachable rather than merely unmirrored: a Manager, who sees none of
+         these menus, could call get_sales_dashboard and receive the
+         pipeline-funnel rows.
+
+         The mirror is EXACTLY these groups and no wider. This root gates to
+         sales/HR/warehouse, and Odoo intersects a child menu's groups with
+         its parent's, so no executive role reaches these menus — and none may
+         call the RPCs either. A CEO loses nothing: get_ceo_dashboard already
+         carries the same pipeline panel. Widening the RPC past the menu would
+         swap this ticket's Rule-4 mismatch for its exact inverse. -->
     <menuitem id="menu_department_dashboard_root"
               name="Department Dashboards"
               groups="ncollection_core.group_role_sales,ncollection_core.group_role_hr,ncollection_core.group_role_warehouse"
