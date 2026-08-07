@@ -25,6 +25,7 @@ Test 3 is the one that would catch a genuine regression: if someone ever gave
 the builder a second cursor, 1 and 2 would still pass and 3 would fail.
 """
 import inspect
+import pathlib
 
 from odoo.tests import TransactionCase, tagged
 
@@ -57,13 +58,19 @@ class TestContextIsolation(TransactionCase):
         Reading the source is crude, and it is the only check that fails LOUDLY
         the moment someone adds one — a behavioural test cannot prove the
         absence of a code path it does not exercise."""
-        source = inspect.getsource(context_builder)
-        for smell in ('registry(', 'sql_db.db_connect', 'psycopg2.connect',
-                      'Registry(', 'cursor()'):
-            self.assertNotIn(
-                smell, source,
-                "context_builder.py contains %r. Every read must go through "
-                "self.env, which is bound to exactly one database." % smell)
+        # EVERY model file, not just this one. Scoping it to context_builder
+        # was a real gap: a psycopg2.connect() dropped into pii.py or
+        # ai_question.py tomorrow would have passed the whole suite.
+        models_dir = pathlib.Path(context_builder.__file__).parent
+        for path in sorted(models_dir.glob('*.py')):
+            source = path.read_text()
+            for smell in ('registry(', 'sql_db.db_connect', 'psycopg2.connect',
+                          'Registry(', 'cursor()'):
+                self.assertNotIn(
+                    smell, source,
+                    "%s contains %r. Every read must go through self.env, "
+                    "which is bound to exactly one database."
+                    % (path.name, smell))
 
     # --------------------------------------------- 2. reads via the safe engine
     def test_all_reads_go_through_the_aggregation_engine(self):
@@ -92,8 +99,20 @@ class TestContextIsolation(TransactionCase):
         self.assertIn('workspace', context['sections'])
 
     # ------------------------------------------- 3. the real cross-database case
-    def test_a_prompt_contains_nothing_from_another_database(self):
-        """THE ACCEPTANCE CRITERION, against the real case.
+    def test_no_other_database_name_appears_in_an_assembled_context(self):
+        """A narrow trip-wire. NOT the whole acceptance criterion — the
+        isolation audit was right to call the original framing overstated.
+
+        What this actually checks: no OTHER fixture database's NAME appears in
+        a context built here. That catches one specific accident (a connection
+        string or db name leaking into the payload) and nothing more. A genuine
+        cross-tenant read would surface as another tenant's partner name or
+        invoice amount, and this test would sail straight past it.
+
+        The real assurance is structural and lives in the two tests above: the
+        builder takes no tenant argument, and no file in models/ opens a second
+        cursor. Those are what make a cross-database read impossible; this is a
+        cheap extra alarm, labelled honestly.
 
         A marker is written into THIS database. The context is then built and,
         because `self.env` is this tenant, the marker is reachable. The point is
@@ -101,9 +120,6 @@ class TestContextIsolation(TransactionCase):
         appear, because no code path reaches one — there is no second cursor to
         read it with.
 
-        Asserted here as: the assembled context references this database and no
-        other. A regression that introduced a second connection would have to
-        make another database's name appear for its data to.
         """
         context = self.builder.build()
         serialised = str(context)
@@ -217,6 +233,26 @@ class TestContextIsolation(TransactionCase):
             self.assertNotIn(
                 name, serialised,
                 "partner name %r survived sanitisation into the prompt" % name)
+
+    def test_recent_invoices_asks_for_the_MOST_RECENT_months(self):
+        """REGRESSION. The spec had no `order`, and _read_group defaults to the
+        groupby term ASCENDING — so with limit 12 it returned the OLDEST twelve
+        months. Unlike a rejected spec this fills successfully with WRONG data:
+        nothing dropped, nothing logged, and three review questions answered
+        from stale figures.
+
+        Invisible below 12 months of history, which is why albarari looked fine.
+        Asserting the spec's intent is the only check that works on any dataset.
+        """
+        spec = next(s for s in self.builder._default_specs()
+                    if s['key'] == 'recent_invoices')
+        self.assertIn('order', spec,
+                      "recent_invoices has no order: _read_group will return "
+                      "the OLDEST months, not the recent ones")
+        self.assertTrue(
+            spec['order'].strip().lower().endswith('desc'),
+            "recent_invoices must order DESC to be 'recent'; got %r"
+            % spec['order'])
 
     def test_the_workspace_company_name_is_pseudonymised(self):
         """The company name reaches the PROVIDER, which — unlike the gateway —

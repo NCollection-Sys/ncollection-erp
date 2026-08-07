@@ -20,6 +20,19 @@ decisions is an orchestrator that starts duplicating them.
 """
 from odoo import api, models
 
+# A question is a sentence. Anything longer is a paste, a bug, or an attempt to
+# push the real instructions out of the context window — and it burns the
+# tenant's token budget (§4) on text nobody asked a question with. Capped here
+# rather than at the UI, because ask() is a public @api.model method that
+# P5-T06's widget will call directly and any HTTP caller can reach.
+_MAX_QUESTION_CHARS = 2000
+
+# Bounded so a tenant with a large partner list cannot turn one question into a
+# full-table scan. Ordered by most-recently-written, on the reasoning that a
+# question is far likelier to name a partner someone has touched lately than one
+# dormant since import.
+_IDENTITY_SCAN_LIMIT = 2000
+
 _PROMPT_TEMPLATE = """You are a business analyst for {company}.
 
 Answer the user's question using ONLY the workspace data below. If the data does
@@ -40,6 +53,27 @@ class AiQuestion(models.AbstractModel):
     _name = 'ncollection.ai.question'
     _description = 'AI question orchestration (build, sanitise, send, rehydrate)'
 
+    def _known_identities(self):
+        """Real names to pseudonymise wherever they appear in free text.
+
+        Read through `self.env`, so ORM record rules apply: a user only ever
+        contributes names they can already see. That matters — this list is not
+        a secret, but it should not become a way to learn which partners exist.
+
+        Bounded by _IDENTITY_SCAN_LIMIT. If a tenant has more partners than
+        that, a name outside the window is not pseudonymised — a real residual
+        gap, stated here rather than hidden, and the reason the structured path
+        (field-name matching on context rows) remains the primary control. The
+        free-text scan is a second layer for user-typed input, not a promise of
+        completeness.
+        """
+        partners = self.env['res.partner'].search(
+            [('name', '!=', False)], limit=_IDENTITY_SCAN_LIMIT,
+            order='write_date desc')
+        names = set(partners.mapped('name'))
+        names.add(self.env.company.name)
+        return [name for name in names if name]
+
     @api.model
     def ask(self, question, max_context_tokens=2000, max_answer_tokens=1024):
         """Answer a natural-language question about THIS tenant's data.
@@ -51,13 +85,21 @@ class AiQuestion(models.AbstractModel):
         context = self.env['ncollection.ai.context'].build(
             max_tokens=max_context_tokens)
 
-        # Sanitise the WHOLE payload — context and question together. The
-        # question is user-typed and can name a customer, so sanitising only the
-        # context would leak the one identity the user cared enough to type.
-        clean, mapping = self.env['ncollection.ai.pii'].sanitise({
-            'context': context['sections'],
-            'question': question,
-        })
+        # Sanitise the WHOLE payload — context and question together.
+        #
+        # An earlier version of this comment claimed that alone was sufficient.
+        # It was not, and three reviewers reproduced the leak independently: the
+        # sanitiser recognises identities BY FIELD NAME, and `question` is not an
+        # identity field, so a customer name typed by the user travelled to the
+        # provider verbatim. Free text is a category field names cannot reach.
+        #
+        # So the known names are passed explicitly. The sanitiser cannot look
+        # them up itself without an ORM query inside what should stay a pure,
+        # testable transform.
+        clean, mapping = self.env['ncollection.ai.pii'].sanitise(
+            {'context': context['sections'], 'question': question[:_MAX_QUESTION_CHARS]},
+            known_identities=self._known_identities(),
+        )
 
         workspace = clean['context'].get('workspace', {})
         prompt = _PROMPT_TEMPLATE.format(

@@ -78,8 +78,17 @@ set -uo pipefail
 #    55 → 56 (2026-08-04, #119/F3-T01): adds ncollection_account_dashboard —
 #      same single unavoidable C8101; README present, no superfluous manifest
 #      keys, no redundant field strings, so +1 exactly.
+#    56 → 57 (2026-08-07, #60/P5-T03): adds ncollection_ai — same single
+#      unavoidable C8101. The first draft of that module scored 64: a deprecated
+#      `description` key, a missing README.rst, 3 superfluous manifest keys and
+#      2 untranslated UserError strings. All 7 were paid down rather than
+#      absorbed into the baseline (README added, manifest trimmed, errors
+#      wrapped in self.env._()), so +1 exactly, as with every module above.
+#      Worth recording HOW it was caught: not by the author, but by the
+#      odoo-reviewer subagent, which ran this gate on both branches and reported
+#      64-vs-56 before the PR was opened.
 # ---------------------------------------------------------------------------
-PYLINT_BASELINE=56
+PYLINT_BASELINE=57
 
 # The scanned tree and the finding-count pattern. Both callers MUST use the
 # same ones or the two environments would count differently — the subtlest way

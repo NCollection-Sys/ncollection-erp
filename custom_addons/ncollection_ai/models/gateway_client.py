@@ -91,15 +91,16 @@ class AiGatewayClient(models.AbstractModel):
                 message = detail.get('message') or detail.get('error')
             except (ValueError, OSError):
                 message = 'HTTP %s' % exc.code
-            raise UserError(message) from None
+            raise UserError(self.env._(message)) from None
         except urllib.error.URLError as exc:
             # Most often: the satellite is not running. That is a normal state —
             # it is an opt-in overlay — so the message says so rather than
             # leaving someone to debug a socket error.
-            raise UserError(
+            raise UserError(self.env._(
                 "The AI service is not reachable (%s). If this is a development "
-                "environment, start it with `make ai-up`." % exc.reason
-            ) from None
+                "environment, start it with `make ai-up`.", exc.reason
+            )) from None
         except (ValueError, OSError) as exc:
-            raise UserError("The AI service returned an unreadable response "
-                            "(%s)." % type(exc).__name__) from None
+            raise UserError(self.env._(
+                "The AI service returned an unreadable response (%s).",
+                type(exc).__name__)) from None

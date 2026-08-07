@@ -89,7 +89,14 @@ class AiContextBuilder(models.AbstractModel):
                         ('state', '=', 'posted')],
              'groupby': ['invoice_date:month'],
              'aggregates': ['amount_total:sum'],
-             'limit': 12},
+             # `order` is NOT optional here. _read_group defaults to ordering by
+             # the groupby term ASCENDING, so with a limit this returned the
+             # OLDEST 12 months — and unlike a rejected spec it fills
+             # successfully with wrong data: nothing dropped, nothing logged,
+             # and three review questions answered from stale figures. Only
+             # visible once a tenant has more than 12 months of history, which
+             # albarari does not, which is why local runs looked fine.
+             'limit': 12, 'order': 'invoice_date:month desc'},
             {'key': 'top_customers', 'model': 'sale.order',
              'domain': [('state', 'in', ('sale', 'done'))],
              'groupby': ['partner_id'],

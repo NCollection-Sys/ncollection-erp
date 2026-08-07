@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
+# Full module documentation lives in README.rst and in each model's docstring.
+# `description` is deprecated (pylint-odoo C8103) and the superfluous keys
+# `data`/`installable`/`application` are omitted deliberately: they equal the
+# Odoo defaults, and the last two new-module PRs in this repo (#101, #119) each
+# added exactly +1 pylint finding by following this pattern.
 {
     'name': 'NCollection AI',
     'summary': 'Tenant-side AI context injection (P5-T03)',
-    'description': """
-Builds tenant-scoped context for LLM prompts from ERP aggregations, sanitises
-PII before it leaves the database, and talks to the AI gateway satellite over
-HTTP.
-
-Runs on TENANT databases only (DELIVERABLE_1_SYSTEM_DESIGN.md:244). The gateway
-that performs the actual outbound call is a separate satellite container holding
-no database credentials — see satellites/ai_gateway/README.md.
-""",
     'version': '19.0.1.0.0',
     'category': 'Productivity',
     'author': 'NCollection',
     'license': 'LGPL-3',
     # ncollection_core carries the P4-T01 aggregation engine this consumes.
     'depends': ['ncollection_core'],
-    'data': [],
-    'installable': True,
-    'application': False,
 }
