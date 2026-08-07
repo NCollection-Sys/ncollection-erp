@@ -1,0 +1,159 @@
+# -*- coding: utf-8 -*-
+"""Tests for the HTTP boundary to the gateway satellite (P5-T03 / #60).
+
+Written because a reviewer flagged their absence twice, in two consecutive
+rounds. Every other test in this module mocks `_complete` out entirely, so the
+real error handling — four distinct branches, all of them user-facing — had
+never executed under test.
+
+`urlopen` is patched rather than a server being started: the point is the
+mapping from transport failure to the message a person reads, and that needs no
+socket.
+"""
+import io
+import json
+import urllib.error
+
+from unittest.mock import patch
+
+from odoo.addons.ncollection_ai.models import gateway_client
+from odoo.exceptions import UserError
+from odoo.tests import TransactionCase, tagged
+
+
+class _FakeResponse(io.BytesIO):
+    """urlopen's context-manager protocol, over a fixed body."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+@tagged('post_install', '-at_install')
+class TestGatewayClient(TransactionCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.gateway = cls.env['ncollection.ai.gateway']
+
+    def _with_urlopen(self, side_effect):
+        return patch('urllib.request.urlopen', side_effect=side_effect)
+
+    # ------------------------------------------------------------ happy path
+    def test_a_successful_response_is_parsed_and_returned(self):
+        payload = {'text': 'hello', 'usage': {'input_tokens': 10}}
+
+        with self._with_urlopen(
+                lambda *a, **k: _FakeResponse(json.dumps(payload).encode())):
+            result = self.gateway._complete('a sanitised prompt')
+        self.assertEqual(result, payload)
+
+    def test_the_request_carries_this_database_as_the_tenant(self):
+        """db-per-tenant means the cursor's database IS the tenant, so there is
+        nothing for a caller to pass and therefore nothing to spoof from here.
+        (Authenticating that claim AT THE GATEWAY is #373.)"""
+        captured = {}
+
+        def fake_urlopen(request, timeout=None):
+            captured['body'] = json.loads(request.data.decode())
+            return _FakeResponse(b'{"text": "ok"}')
+
+        with patch('urllib.request.urlopen', new=fake_urlopen):
+            self.gateway._complete('prompt', max_tokens=64)
+        self.assertEqual(captured['body']['tenant'], self.env.cr.dbname)
+        self.assertEqual(captured['body']['max_tokens'], 64)
+
+    # --------------------------------------------------------- error mapping
+    def test_an_http_error_surfaces_the_gateways_own_message(self):
+        """The satellite's error bodies are deliberately friendly and carry no
+        tenant content (P5-T02), so a user over their allowance should read
+        that, not a stack trace."""
+        body = json.dumps({'message': 'Monthly AI budget exhausted.'}).encode()
+        error = urllib.error.HTTPError(
+            'http://x/v1/complete', 429, 'Too Many Requests', {},
+            io.BytesIO(body))
+
+        with self._with_urlopen(error):
+            with self.assertRaises(UserError) as caught:
+                self.gateway._complete('prompt')
+        self.assertIn('Monthly AI budget exhausted.', str(caught.exception))
+
+    def test_an_http_error_with_an_unreadable_body_falls_back_to_the_code(self):
+        """A gateway that returns HTML or an empty body must not turn a 502 into
+        a JSON parse traceback."""
+        error = urllib.error.HTTPError(
+            'http://x/v1/complete', 502, 'Bad Gateway', {},
+            io.BytesIO(b'<html>nope</html>'))
+
+        with self._with_urlopen(error):
+            with self.assertRaises(UserError) as caught:
+                self.gateway._complete('prompt')
+        self.assertIn('502', str(caught.exception))
+
+    def test_an_unreachable_satellite_says_how_to_start_it(self):
+        """The overlay is opt-in, so 'not running' is a NORMAL state and the
+        most likely one. Saying so beats leaving someone to read a socket
+        error."""
+        with self._with_urlopen(urllib.error.URLError('Connection refused')):
+            with self.assertRaises(UserError) as caught:
+                self.gateway._complete('prompt')
+        message = str(caught.exception)
+        self.assertIn('not reachable', message)
+        self.assertIn('make ai-up', message)
+
+    def test_a_malformed_response_body_becomes_a_user_error(self):
+        with self._with_urlopen(lambda *a, **k: _FakeResponse(b'not json')):
+            with self.assertRaises(UserError) as caught:
+                self.gateway._complete('prompt')
+        self.assertIn('unreadable', str(caught.exception))
+
+    def test_a_socket_failure_becomes_a_user_error(self):
+        with self._with_urlopen(OSError('connection reset')):
+            with self.assertRaises(UserError) as caught:
+                self.gateway._complete('prompt')
+        self.assertIn('unreadable', str(caught.exception))
+
+    # ---------------------------------------------------------------- bounds
+    def test_the_response_read_is_capped(self):
+        """A satellite that streams forever must not exhaust tenant memory.
+
+        THIS TEST WAS VACUOUS AND A REVIEWER PROVED IT. The first version fed
+        an unterminated JSON body and asserted UserError — which is raised
+        whether or not the read is capped, since the body is unparseable at any
+        length. Deleting the cap from the source did not fail it.
+
+        So it now asserts on the CALL: the read must be bounded, and the bound
+        must be the constant. That fails the moment someone writes read().
+        """
+        seen = {}
+
+        # Deliberately NOT a subclass of _FakeResponse. Overriding read() there
+        # trips pylint-odoo's method-required-super, and adding super() then
+        # trips its missing-return — a standalone stub satisfies both by not
+        # being an override at all.
+        class _RecordingResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            # pylint: disable=method-required-super
+            # Not an override: this class has no parent, it is a stub
+            # implementing urlopen's response protocol. pylint-odoo flags any
+            # method named `read` regardless, and `read` is fixed by that
+            # protocol. Subclassing io.BytesIO to satisfy the check instead
+            # trips missing-return, so this is a disable rather than debt —
+            # same treatment as the print-used disable in seed_tenant.py (#221).
+            def read(self, size=-1):
+                seen['size'] = size
+                return b'{"text": "ok"}'
+
+        with self._with_urlopen(lambda *a, **k: _RecordingResponse()):
+            self.gateway._complete('prompt')
+        self.assertEqual(seen.get('size'), gateway_client._MAX_RESPONSE_BYTES,
+                         "the response body must be read with an explicit "
+                         "byte cap, not read() in full")
