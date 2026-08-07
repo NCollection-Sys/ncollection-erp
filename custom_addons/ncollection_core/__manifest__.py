@@ -17,7 +17,13 @@
     # 19.0.1.15.0 (#347): adds the cron service user and binds the anomaly
     # crons to it. A DATA file, so `-u` is what applies it; a tenant left
     # un-upgraded keeps running its crons as superuser with Ring 2 inert.
-    'version': '19.0.1.15.0',
+    # 19.0.1.15.1 (#347): 15.0 gave that user a REAL password — the XML wrote
+    # `<field name="password">False</field>` with no eval=, so the loader stored
+    # the literal string "False" and hashed it, shipping a working credential to
+    # every tenant. The field is gone and a post-migrate nulls the column for
+    # tenants that already installed 15.0 (the record is noupdate, so an upgrade
+    # will not rewrite it on its own).
+    'version': '19.0.1.15.1',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',

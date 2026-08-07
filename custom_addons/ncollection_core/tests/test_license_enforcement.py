@@ -146,7 +146,8 @@ class TestLicenseEnforcement(TransactionCase):
         """A cron with no user_id runs as uid 1 — which is the bug. Binding is
         what makes every other test here meaningful."""
         expected = self.env.ref("ncollection_core.user_cron_service")
-        for xmlid in ("ncollection_core.cron_detect_anomalies",):
+        for xmlid in ("ncollection_core.cron_detect_anomalies",
+                      "ncollection_core.cron_send_alert_digest"):
             cron = self.env.ref(xmlid)
             self.assertEqual(cron.user_id, expected, xmlid)
             self.assertNotEqual(cron.user_id.id, 1, "%s runs as SUPERUSER, so "

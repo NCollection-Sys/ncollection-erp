@@ -39,10 +39,26 @@
             <!-- Odoo 19: group_ids, not groups_id. base.group_user ONLY —
                  see the comment above about group_system. -->
             <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
-            <!-- No password and no API key: this account is never logged into
-                 and never authenticates. It exists to give scheduled work an
-                 identity that the licence layer can actually see. -->
-            <field name="password">False</field>
+            <!-- NO password field at all, and that omission is the point.
+                 res.users.password's own help: "Keep empty if you don't want
+                 the user to be able to connect on the system." Left NULL,
+                 COALESCE(password,'')='' makes every verify() fail.
+
+                 The first version of this file wrote
+                     <field name="password">False</field>
+                 which looks like it disables login and does the opposite. With
+                 no eval=/type=, Odoo's XML loader defaults to type='char' and
+                 stores the literal STRING "False" — truthy, so _set_password
+                 hashes it. That shipped a working, git-committed credential
+                 (cron@ncollection.internal / False) to every tenant that
+                 installed this version. Caught by review; live-confirmed
+                 against a real tenant, where the password column held a
+                 genuine pbkdf2 hash instead of NULL.
+
+                 config_sync_key.py, in this same module, already states the
+                 principle: "a NULL/known password would be an unguarded login
+                 surface". The pattern was next door and this file did not
+                 follow it. -->
         </record>
 
         <!--
