@@ -68,6 +68,19 @@ jobs:
       - name: Run invariants guard
         run: python scripts/ci/invariants.py
 
+      # The AI gateway satellite (#59) is NOT an Odoo module, so the `test` job
+      # below never sees it — `--test-tags` scopes that run to custom_addons.
+      # Without this step its 28 tests would exist and never execute, which is
+      # the "inert test" failure this repo has already been bitten by (ci.yml's
+      # own `hr` comment: "a skipped test is not a passing test").
+      #
+      # Runs in `lint` rather than `test` because it needs neither Postgres nor
+      # Odoo: pure stdlib, injected clocks, ~5s, no network.
+      - name: Test the AI gateway satellite
+        run: |
+          python satellites/ai_gateway/test_ai_gateway.py
+          python satellites/ai_gateway/test_gateway_http.py
+
       # pylint-odoo. The gate — the baseline, its full provenance history, the
       # invocation, the scanned tree and the finding-count pattern — lives in
       # scripts/ci/pylint_gate.sh so that .githooks/pre-push runs the IDENTICAL
