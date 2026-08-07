@@ -102,14 +102,26 @@ class TestPiiSanitiser(TransactionCase):
         clean, _ = self.pii.sanitise({'note': '-----BEGIN PRIVATE KEY-----'})
         self.assertIn('[REDACTED]', clean['note'])
 
-    def test_a_checksum_is_NOT_mistaken_for_a_secret(self):
-        """The false-positive side of the base64 catch-all, which review
-        confirmed was real: a 64-char SHA-256 was being redacted as a secret.
-        A user asking "does this hash match?" must still get an answer, and §5
-        lists this kind of value as substance."""
-        sha = 'a' * 64
-        clean, _ = self.pii.sanitise({'note': 'checksum %s ok' % sha})
-        self.assertIn(sha, clean['note'])
+    def test_long_hex_is_redacted_even_though_it_might_be_a_checksum(self):
+        """THE ACCEPTED TRADE-OFF, pinned so nobody 'fixes' it back.
+
+        A SHA-256 and an HMAC key are both arbitrary hex; no shape tells them
+        apart. Exempting hex to spare checksums handed a free pass to every hex
+        secret — verified leaking a 40-char HMAC key, which is also SHA-1
+        length, so even a digest-length-only exemption failed.
+
+        §5 makes 'never send' unconditional for secrets, and this module's rule
+        is that a missed secret costs more than a redacted checksum. So a user
+        asking 'does this hash match' sees [REDACTED]. That is a real loss of
+        context quality, chosen deliberately.
+        """
+        for value in ('a' * 64, 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6a7b8c9d0'):
+            clean, _ = self.pii.sanitise({'note': 'value %s ok' % value})
+            self.assertNotIn(value, clean['note'])
+
+    def test_a_long_lot_number_still_survives(self):
+        """Pure digits stay exempt: a 44-digit lot or batch number is substance,
+        and only the 13-19 digit PAN range is treated as sensitive."""
         lot = '1' * 44
         clean, _ = self.pii.sanitise({'note': 'lot %s' % lot})
         self.assertIn(lot, clean['note'])

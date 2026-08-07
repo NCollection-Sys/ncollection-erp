@@ -18,7 +18,10 @@ that owns it — context shape in the builder, PII rules in the sanitiser, budge
 and provider choice in the satellite. An orchestrator that starts making
 decisions is an orchestrator that starts duplicating them.
 """
+import re
+
 from odoo import api, models
+from odoo.exceptions import UserError
 
 # A question is a sentence. Anything longer is a paste, a bug, or an attempt to
 # push the real instructions out of the context window — and it burns the
@@ -32,6 +35,42 @@ _MAX_QUESTION_CHARS = 2000
 # question is far likelier to name a partner someone has touched lately than one
 # dormant since import.
 _IDENTITY_SCAN_LIMIT = 2000
+
+# FAIL CLOSED ON FREE TEXT — the scope change agreed after three review rounds.
+#
+# Denylist scrubbing of arbitrary text is unwinnable: each round of patterns
+# closed the previous round's exploit and opened a new one (a password with a
+# colon, a hex-not-checksum secret, a compound display name, a 16-digit PAN).
+# Every fix proved the last bug dead, never the class.
+#
+# So the question is now checked against an ALLOWLIST of shape before anything
+# is sent. A business question is words, numbers and punctuation. A credential,
+# key, token or identifier is a long unbroken run of mixed alphanumerics — which
+# no English word is. If such a run survives scrubbing, the request is REFUSED
+# rather than shipped, and the user is told to remove it.
+#
+# This bounds the class instead of chasing instances. Scrubbing stays as the
+# second layer: this gate catches what patterns miss, patterns catch what the
+# gate's threshold allows through.
+_MAX_WORD_CHARS = 24
+_SUSPICIOUS_RUN_RE = re.compile(r'[A-Za-z0-9+/_=-]{16,}')
+
+
+def _looks_like_embedded_secret(word):
+    """True when a whitespace-delimited token cannot be ordinary prose.
+
+    Requires BOTH length and mixed character classes: 'internationalisation' is
+    long but all letters, while 'sk_live_51H8gk3K2FZ' mixes cases and digits.
+    """
+    if len(word) <= _MAX_WORD_CHARS:
+        return False
+    stripped = word.strip('.,;:!?()[]"\'')
+    if not _SUSPICIOUS_RUN_RE.search(stripped):
+        return False
+    has_digit = any(c.isdigit() for c in stripped)
+    has_alpha = any(c.isalpha() for c in stripped)
+    return has_digit and has_alpha
+
 
 _PROMPT_TEMPLATE = """You are a business analyst for {company}.
 
@@ -74,6 +113,25 @@ class AiQuestion(models.AbstractModel):
         names.add(self.env.company.name)
         return [name for name in names if name]
 
+    def _document_prefixes(self):
+        """The tenant's REAL ir.sequence prefixes.
+
+        Shape cannot distinguish a document reference from a government ID —
+        "S000042" (a sale order at padding 6) and a 1-letter passport are
+        identical. Asking the database removes the guesswork, and removes the
+        dependence on whatever padding Odoo happens to ship today.
+        """
+        seqs = self.env['ir.sequence'].sudo().search(
+            [('prefix', '!=', False)], limit=500)
+        prefixes = set()
+        for seq in seqs:
+            # Prefixes carry strftime placeholders like %(year)s; keep the
+            # leading literal, which is what a reference actually starts with.
+            head = re.split(r'%|/', seq.prefix or '')[0].strip()
+            if head and head.isalpha():
+                prefixes.add(head.upper())
+        return sorted(prefixes)
+
     @api.model
     def ask(self, question, max_context_tokens=2000, max_answer_tokens=1024):
         """Answer a natural-language question about THIS tenant's data.
@@ -96,9 +154,21 @@ class AiQuestion(models.AbstractModel):
         # So the known names are passed explicitly. The sanitiser cannot look
         # them up itself without an ORM query inside what should stay a pure,
         # testable transform.
+        question = (question or '')[:_MAX_QUESTION_CHARS]
+
+        # Fail closed BEFORE any scrubbing runs. See _looks_like_embedded_secret.
+        offenders = [w for w in question.split() if _looks_like_embedded_secret(w)]
+        if offenders:
+            raise UserError(self.env._(
+                "Your question looks like it contains an identifier, key or "
+                "token. Nothing was sent. Please remove it and ask in plain "
+                "words — this assistant works from your workspace data, so it "
+                "does not need one."))
+
         clean, mapping = self.env['ncollection.ai.pii'].sanitise(
-            {'context': context['sections'], 'question': question[:_MAX_QUESTION_CHARS]},
+            {'context': context['sections'], 'question': question},
             known_identities=self._known_identities(),
+            doc_prefixes=self._document_prefixes(),
         )
 
         workspace = clean['context'].get('workspace', {})

@@ -16,6 +16,7 @@ network.
 """
 from unittest.mock import patch
 
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -65,23 +66,33 @@ class TestAskSanitisation(TransactionCase):
         self.assertNotIn(self.env.company.name, prompt)
 
     # --------------------------------------------------------- secrets in text
-    def test_an_api_key_pasted_into_the_question_is_redacted(self):
-        """CRITICAL. The realistic case is a user asking 'is this the right
-        key?' — §5's 'never send' tier must reach free text, not only fields."""
-        prompt = self._prompt_for(
-            "Is this the right webhook secret: sk_live_51H8gk3K2FZabcdefghijkl ?")
-        self.assertNotIn('sk_live_51H8gk3K2FZabcdefghijkl', prompt)
-        self.assertIn('[REDACTED]', prompt)
+    def test_a_pasted_credential_is_REFUSED_not_merely_scrubbed(self):
+        """The scope change after three review rounds: fail closed.
 
-    def test_a_jwt_pasted_into_the_question_is_redacted(self):
-        jwt = ('eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.'
-               'dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U')
-        prompt = self._prompt_for("Decode this token for me: %s" % jwt)
-        self.assertNotIn(jwt, prompt)
+        These used to assert the secret was scrubbed out of the prompt. Three
+        rounds showed that denylist scrubbing of arbitrary text cannot be made
+        complete — each set of patterns closed one exploit and opened another.
+        So a question carrying anything shaped like a credential is now REFUSED
+        and nothing is transmitted at all, which bounds the class instead of
+        chasing instances.
+        """
+        for secret in (
+            "Is this the right webhook secret: sk_live_51H8gk3K2FZabcdefghijkl ?",
+            "Decode this: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0."
+            "dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+            "why is AKIAIOSFODNN7EXAMPLEXXXXXXXXXXXXXXX failing?",
+        ):
+            with self.assertRaises(UserError) as caught:
+                self._prompt_for(secret)
+            self.assertIn('Nothing was sent', str(caught.exception))
 
-    def test_an_aws_key_is_redacted(self):
-        prompt = self._prompt_for("why is AKIAIOSFODNN7EXAMPLE failing?")
-        self.assertNotIn('AKIAIOSFODNN7EXAMPLE', prompt)
+    def test_the_refusal_tells_the_user_what_to_do(self):
+        """Refusing is only useful if the person can act on it."""
+        with self.assertRaises(UserError) as caught:
+            self._prompt_for("key sk_live_51H8gk3K2FZabcdefghijklmnop please")
+        message = str(caught.exception)
+        self.assertIn('remove it', message)
+        self.assertIn('Nothing was sent', message)
 
     def test_a_passport_number_is_redacted(self):
         """HIGH. One embedded letter breaks the phone pattern's character

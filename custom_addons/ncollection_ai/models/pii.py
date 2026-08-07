@@ -54,6 +54,11 @@ _NEVER_SEND_HINTS = ('password', 'secret', 'api_key', 'apikey', 'token',
 
 _REDACTED = '[REDACTED]'
 
+# "is this value already nothing but pseudonyms" — used to decide whether a
+# partner field still needs whole-field tokenisation. Allows separators so
+# "PARTNER_1 / PARTNER_2" counts as fully tokenised.
+_ONLY_TOKENS_RE = re.compile(r'(?:(?:PARTNER|EMAIL|PHONE)_\d+|\[REDACTED\]|[\s,;/-]+)+')
+
 # ---------------------------------------------------------------------------
 # SHAPE-BASED SCRUBBING — the free-text tier
 # ---------------------------------------------------------------------------
@@ -88,18 +93,51 @@ _SECRET_SHAPES = (
     # Credentials embedded in a URL or connection string. The most plausible
     # paste in an ERP/integration context, and nothing else here catches it:
     #   postgres://admin:Sup3rSecret123@db.internal:5432/erp
-    re.compile(r'\b[a-z][a-z0-9+.-]*://[^\s:@/]+:[^\s:@/]+@\S+',
-               re.IGNORECASE),
+    # Anything up to the LAST '@' before whitespace. The previous version
+    # excluded ':' and '/' from the userinfo groups, so one such character in
+    # the password broke the match entirely and the whole string — scheme, user
+    # and password — shipped verbatim. Passwords containing ':' or '/' are
+    # unremarkable, so that was a one-character bypass of this round's headline
+    # coverage.
+    re.compile(r'\b[a-z][a-z0-9+.-]*://[^\s@]+@\S+', re.IGNORECASE),
     re.compile(r'\b(?:password|passwd|pwd)\s*=\s*\S+', re.IGNORECASE),
     re.compile(r'\bAIza[A-Za-z0-9_-]{30,}\b'),                     # GCP API key
-    re.compile(r'-----BEGIN[A-Z ]*PRIVATE KEY-----'),               # PEM marker
+    # IGNORECASE. This is the THIRD case-sensitivity miss in this file
+    # (IBAN, then _ALNUM_ID_RE, now this) — added after both fixes and
+    # still repeating them.
+    re.compile(r'-----BEGIN[A-Z ]*PRIVATE KEY-----', re.IGNORECASE),
     # Long base64 blob. EXCLUDES pure hex and pure digits: a SHA-256 checksum or
     # a long lot/batch number is data a user may legitimately ask about, and
     # redacting it silently would gut context quality. Confirmed as a real false
     # positive by review, not a hypothetical one — a 64-char hex hash was being
     # redacted as a secret.
-    re.compile(r'\b(?![0-9]+\b)(?![0-9a-fA-F]{40,}\b)'
-               r'[A-Za-z0-9+/]{40,}={0,2}\b'),
+    # Long alphanumeric blobs, and long hex runs, are both redacted. Only pure
+    # DIGIT runs are exempt (handled by the PAN pattern below).
+    #
+    # THE CHECKSUM TRADE-OFF, decided rather than stumbled into. A SHA-256 and
+    # an HMAC key are both arbitrary hex; no shape distinguishes them. Two
+    # attempts to be clever failed:
+    #   * exempt all 40+ hex  -> handed a free pass to every hex secret.
+    #   * exempt only digest lengths (32/40/64) -> a 40-char HMAC key IS
+    #     SHA-1 length, so it sailed through. Verified leaking.
+    # §5 makes "never send" unconditional for secrets, and this file's own rule
+    # is that a missed secret costs more than a redacted checksum. So hex is
+    # redacted, and a user asking "does this hash match" gets [REDACTED] — a
+    # real, accepted loss of context quality, pinned by a test that asserts the
+    # redaction rather than pretending it does not happen.
+    # (?![0-9]+\b) matters more than it looks: every DIGIT is also a hex
+    # character, so without it this pattern eats the 44-digit lot number the
+    # must-survive test protects. Pure digits are the PAN pattern's job.
+    re.compile(r'\b(?![0-9]+\b)[0-9a-fA-F]{32,}\b'),
+    re.compile(r'\b(?![0-9]+\b)[A-Za-z0-9+/]{40,}={0,2}\b'),
+    # Long digit runs beyond phone length. Before the E.164 upper bound these
+    # were incidentally swept into PHONE_n — mislabelled, but redacted. Adding
+    # the bound removed that accidental cover from 16-digit card PANs, which sit
+    # in the same sensitivity class as the bank numbers §5 names.
+    # 13-19 digits: the ISO/IEC 7812 PAN range. NOT "15+" — that also swallowed
+    # a 44-digit lot number, destroying substance §5 says to send freely. The
+    # bound has to match the thing being protected, not merely exceed phones.
+    re.compile(r'\b(?:\d[ -]?){12,18}\d\b'),
 )
 
 # Government-issued identifiers that mix letters and digits — passports,
@@ -159,7 +197,7 @@ class AiPiiSanitiser(models.AbstractModel):
     _description = 'AI prompt PII sanitisation (tenant-side, pre-transit)'
 
     # ---------------------------------------------------------------- sanitise
-    def sanitise(self, payload, known_identities=None):
+    def sanitise(self, payload, known_identities=None, doc_prefixes=None):
         """Return ``(clean_payload, mapping)``.
 
         ``mapping`` is token -> original, used ONLY to re-hydrate the response
@@ -182,22 +220,27 @@ class AiPiiSanitiser(models.AbstractModel):
         identities = sorted(
             {name for name in (known_identities or []) if name and len(name) >= 4},
             key=len, reverse=True)
-        clean = self._walk(payload, mapping, counters, identities=identities)
+        prefixes = tuple(p.upper() for p in (doc_prefixes or ()) if p)
+        clean = self._walk(payload, mapping, counters,
+                           identities=identities, doc_prefixes=prefixes)
         return clean, mapping
 
-    def _walk(self, node, mapping, counters, field_name='', identities=()):
+    def _walk(self, node, mapping, counters, field_name='', identities=(),
+              doc_prefixes=()):
         if isinstance(node, dict):
             return {
                 key: (_REDACTED if self._is_secret(key)
-                      else self._walk(value, mapping, counters, key, identities))
+                      else self._walk(value, mapping, counters, key, identities,
+                                      doc_prefixes))
                 for key, value in node.items()
             }
         if isinstance(node, (list, tuple)):
-            return [self._walk(item, mapping, counters, field_name, identities)
+            return [self._walk(item, mapping, counters, field_name,
+                               identities, doc_prefixes)
                     for item in node]
         if isinstance(node, str):
             return self._scrub_text(node, mapping, counters, field_name,
-                                    identities)
+                                    identities, doc_prefixes)
         # int / float / bool / None — amounts, dates-as-numbers, counts, states.
         # §5: "send freely — the actual substance".
         return node
@@ -208,7 +251,8 @@ class AiPiiSanitiser(models.AbstractModel):
             return True
         return any(hint in lowered for hint in _NEVER_SEND_HINTS)
 
-    def _scrub_text(self, text, mapping, counters, field_name, identities=()):
+    def _scrub_text(self, text, mapping, counters, field_name,
+                    identities=(), doc_prefixes=()):
         """Redact secrets found by pattern, pseudonymise identities.
 
         ORDER MATTERS. Secrets are redacted before anything else gets a chance
@@ -224,20 +268,28 @@ class AiPiiSanitiser(models.AbstractModel):
         # 2. IBANs — can hide in free text where no field name helps.
         text = _IBAN_RE.sub(_REDACTED, text)
 
-        # 3. Government identifiers that mix letters and digits. Document
-        #    references are protected from this by _looks_like_document().
-        text = _ALNUM_ID_RE.sub(_REDACTED, text)
+        # 3. Government identifiers that mix letters and digits.
+        #
+        #    Document references are protected by matching against the tenant's
+        #    ACTUAL ir.sequence prefixes, passed in by the caller. Shape alone
+        #    cannot separate them: "S000042" (a sale order at padding 6) and a
+        #    1-letter passport are identical. The previous claim that "genuine
+        #    references cannot match" held only for the padding values Odoo
+        #    ships today — an admin bumping sale.order padding from 5 to 6 in
+        #    Settings would have started destroying every order reference.
+        text = _ALNUM_ID_RE.sub(
+            lambda m: m.group(0)
+            if any(m.group(0).upper().startswith(pfx) for pfx in doc_prefixes)
+            else _REDACTED, text)
 
         # 4. Known real identities appearing anywhere in the text. This is what
         #    field-name matching structurally cannot do, and it is the fix for
         #    the leak three reviewers reproduced: a customer name typed into a
         #    free-text question.
-        substituted = False
         for name in identities:
             if name in text:
                 text = text.replace(
                     name, self._token('PARTNER', name, mapping, counters))
-                substituted = True
 
         text = _EMAIL_RE.sub(
             lambda m: self._token('EMAIL', m.group(0), mapping, counters), text)
@@ -249,19 +301,24 @@ class AiPiiSanitiser(models.AbstractModel):
         # Partner-ish fields are pseudonymised whole: a name is not a pattern,
         # so it can only be recognised by where it came from.
         #
-        # `not substituted` is LOAD-BEARING. Without it a value that is both a
-        # known identity AND under a partner field is tokenised TWICE: step 4
-        # turns "Al Barari Trading" into PARTNER_1, then this step tokenises the
-        # literal string "PARTNER_1" again into PARTNER_2 with
-        # mapping['PARTNER_2'] = 'PARTNER_1' — a token pointing at another
-        # token. Re-hydration then restores only one level and the USER SEES THE
-        # RAW STRING "PARTNER_1" in their answer.
+        # The condition is "is this value now nothing but tokens", NOT "did we
+        # substitute something". Both earlier versions were wrong in opposite
+        # directions:
         #
-        # This fired on EVERY ask() call, because the workspace company name is
-        # both in _known_identities() and matched by _is_partner_field(). It
-        # also breaks the join-preservation invariant this whole design exists
-        # for — the same partner is no longer the same token everywhere.
-        if not substituted and self._is_partner_field(field_name) and text.strip():
+        #   * no guard at all -> a value that was both a known identity and
+        #     under a partner field got tokenised TWICE, producing
+        #     mapping['PARTNER_2'] = 'PARTNER_1' — a token pointing at a token.
+        #     Re-hydration restored one level and the user saw the raw string.
+        #   * `not substituted` -> skipped the fallback whenever ANYTHING was
+        #     substituted, so a COMPOUND value leaked its remainder:
+        #     "Al Barari Trading, Attn: Sarah Al Mansoori" tokenised the company
+        #     and shipped the person's name in cleartext beside it. Odoo's
+        #     display_name/contact_name conventions produce exactly that shape.
+        #
+        # Checking the RESULT closes both: fully-tokenised values are left alone
+        # (no double wrap), and anything with residual text is still wrapped.
+        if self._is_partner_field(field_name) and text.strip() and \
+                not _ONLY_TOKENS_RE.fullmatch(text.strip()):
             text = self._token('PARTNER', text, mapping, counters)
         return text
 
