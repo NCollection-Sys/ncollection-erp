@@ -54,6 +54,7 @@ OCA_VENV := .oca-venv
         cron-starvation-verify cron-starvation-clean orphan-dbs \
         cron-scope-verify cron-scope-clean \
         upgrade-verify upgrade-clean \
+        ai-up ai-down ai-logs ai-test ai-verify \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 # `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
@@ -221,6 +222,30 @@ upgrade-verify: ## Prove module upgrades run their migrations and data survives 
 
 upgrade-clean: ## Drop the UPGRADE fixture DBs upgrgreen/upgrred (destructive)
 	@for d in upgrgreen upgrred; do $(call drop_database,$$d); done
+
+## ---- AI gateway satellite (P5-T02 / #59, opt-in) ----
+# The platform's FIRST satellite (ARCHITECTURE_DATA_PLATFORM §10.2) and the only
+# component allowed to call an LLM provider (§11). Deliberately an OVERLAY, not
+# part of `make up`: a service in the base compose sits in the path of every
+# suite — routing, e2e, provisioning, both cron harnesses, financial bootstrap,
+# upgrade — for a feature none of them exercise.
+AI_COMPOSE ?= $(COMPOSE) -f docker-compose.ai.yml
+
+ai-up: ## Start the AI gateway satellite (mock provider by default)
+	$(AI_COMPOSE) up -d ai-gateway
+
+ai-down: ## Stop the AI gateway satellite
+	$(AI_COMPOSE) stop ai-gateway
+
+ai-logs: ## Follow the AI gateway logs (structured JSON, metadata only)
+	$(AI_COMPOSE) logs -f ai-gateway
+
+ai-test: ## Run the satellite's own unit + HTTP tests (no Docker, no network)
+	python3 satellites/ai_gateway/test_ai_gateway.py
+	python3 satellites/ai_gateway/test_gateway_http.py
+
+ai-verify: ## Prove the gateway is a choke point and cannot reach a database (#59)
+	./scripts/ai/verify_ai_gateway.sh
 
 ## ---- Demo (separate React prototype, NOT the Odoo product) ----
 demo: ## Run the standalone React demo UI on :5173

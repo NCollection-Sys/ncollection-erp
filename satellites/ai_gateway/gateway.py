@@ -84,6 +84,28 @@ class Gateway:
             reset_seconds=float(env.get("NC_AI_BREAKER_RESET", 60)),
         )
 
+        # A budget smaller than one default request's WORST CASE refuses every
+        # caller that does not set max_tokens explicitly — with "budget
+        # exhausted" on the very first request, which reads like a quota problem
+        # rather than the misconfiguration it is. The check reserves
+        # prompt + max_tokens up front (a ceiling charged only on success is not
+        # a ceiling), so this is inherent, not incidental.
+        #
+        # A warning, not a hard failure: a deliberately small budget is
+        # legitimate for a restricted tier whose callers pass small max_tokens.
+        # Found by the #59 proof script, which set a 60-token budget and could
+        # not complete a single default request.
+        budget = self.ledger.usage("_startup_probe")["token_budget"]
+        if budget < DEFAULT_MAX_TOKENS:
+            _log.warning(json.dumps({
+                "event": "config_warning",
+                "detail": ("NC_AI_TOKEN_BUDGET (%d) is below the default "
+                           "max_tokens (%d): any request that does not set "
+                           "max_tokens explicitly will be refused as budget-"
+                           "exhausted on its first call"
+                           % (budget, DEFAULT_MAX_TOKENS)),
+            }))
+
     def complete(self, tenant: str, prompt: str, max_tokens: int) -> dict:
         """The one path to a provider. Returns a JSON-able dict.
 

@@ -33,6 +33,17 @@ api.stripe.com               # Stripe API (Cloudflare-fronted)
 # --- TLS certificate issuance (certbot / Let's Encrypt) ----------------------
 acme-v02.api.letsencrypt.org # ACME directory (Cloudflare-fronted)
 
+# --- AI gateway satellite (#59 / P5-T02; only if a REAL provider is set) -----
+# COMMENTED ON PURPOSE. The gateway ships with NC_AI_PROVIDER=mock, which
+# reaches nothing at all, so no egress is required for the default deployment
+# and this list stays minimal — every active entry widens the surface.
+#
+# Uncomment the line matching your configured NC_AI_PROVIDER and re-run
+# harden.sh (idempotent). Leaving it commented while configuring a real provider
+# does not fail open: the DOCKER-USER backstop DROPs the traffic, so the gateway
+# reports the provider unreachable and its circuit breaker opens.
+# api.anthropic.com            # Claude Messages API (recommended default, §2.3)
+
 # --- Backups (pgBackRest -> object storage; only if the backup overlay runs) -
 # NOTE: the S3/B2 endpoint is deployment-specific (.env
 # PGBACKREST_REPO1_S3_ENDPOINT). Uncomment + set to YOUR endpoint host, or the

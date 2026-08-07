@@ -1,0 +1,89 @@
+# ============================================================================
+#  AI gateway satellite (P5-T02 / #59) — OPT-IN overlay
+# ============================================================================
+#  The platform's FIRST satellite container (ARCHITECTURE_DATA_PLATFORM §10.2).
+#  It is the single component permitted to call an LLM provider
+#  (ARCHITECTURE_SECURITY §11) and it holds the provider API keys.
+#
+#  WHY AN OVERLAY AND NOT THE BASE COMPOSE
+#  ---------------------------------------
+#  Adding a service to docker-compose.yml puts it in the path of EVERY suite —
+#  routing, e2e, provisioning, both cron harnesses, financial bootstrap and the
+#  upgrade proof all run `docker compose up`. A broken service definition would
+#  break all of them at once, for a feature none of them exercise. So this
+#  follows the routing / cronstall / cronscope pattern: opt in explicitly.
+#
+#      docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+#                     -f docker-compose.ai.yml up -d ai-gateway
+#
+#  NO DB PLANE — AND THAT IS THE SECURITY CONTROL
+#  ----------------------------------------------
+#  This service joins `default` (the egress plane) and deliberately NOT
+#  `nc_dbplane`. §10.4 says the gateway "has LLM keys but no DB credentials (it
+#  receives context, never fetches it)". Omitting the credentials would rely on
+#  configuration staying correct forever; omitting the NETWORK means the process
+#  has no route to Postgres at all. The property is then structural, which is
+#  the same reasoning #311 applied to `db` itself.
+#
+#  Do not add `nc_dbplane` here. If something seems to need it, the design
+#  (AI_PLATFORM_DESIGN §1.2, Option B) already considered and rejected that.
+#
+#  EGRESS
+#  ------
+#  Reaching the provider requires its host in config/hardening/egress_allowlist.txt
+#  AND a re-run of scripts/deploy/harden.sh — #311's DOCKER-USER backstop DROPs
+#  everything else from this subnet. With the default `mock` provider the
+#  gateway reaches nothing, so the allowlist entry only matters once a real
+#  provider is configured.
+# ============================================================================
+services:
+  ai-gateway:
+    # No Dockerfile and no build step: the satellite is pure stdlib, so a stock
+    # Python image plus a bind mount IS the deployment. Nothing to install means
+    # nothing to audit in the one process that holds the LLM keys.
+    image: python:3.12-slim
+    container_name: ncollection-ai-gateway
+    restart: unless-stopped
+    working_dir: /app
+    command: ["python3", "gateway.py"]
+    volumes:
+      # Read-only: this process has no reason to write to its own code.
+      - ./satellites/ai_gateway:/app:ro
+    environment:
+      # `mock` by default — a deployment that forgets to configure a provider
+      # produces obviously-fake completions rather than silently spending money
+      # or shipping tenant content somewhere unintended.
+      NC_AI_PROVIDER: ${NC_AI_PROVIDER:-mock}
+      NC_AI_API_KEY: ${NC_AI_API_KEY:-}
+      NC_AI_MODEL: ${NC_AI_MODEL:-claude-sonnet-4-5}
+      # Budgets are the spike's calibration starting points (§4), expected to be
+      # tuned against real usage rather than guessed more precisely now.
+      NC_AI_TOKEN_BUDGET: ${NC_AI_TOKEN_BUDGET:-100000}
+      NC_AI_MAX_REQUESTS: ${NC_AI_MAX_REQUESTS:-60}
+      NC_AI_WINDOW_SECONDS: ${NC_AI_WINDOW_SECONDS:-3600}
+      NC_AI_BREAKER_THRESHOLD: ${NC_AI_BREAKER_THRESHOLD:-5}
+      NC_AI_BREAKER_RESET: ${NC_AI_BREAKER_RESET:-60}
+      NC_AI_PORT: 8080
+      PYTHONUNBUFFERED: "1"
+    networks:
+      # EGRESS PLANE ONLY. See the header — the absence of nc_dbplane is the
+      # control, not an oversight.
+      - default
+    # Not published to the host by default. Odoo reaches it over the compose
+    # network as http://ai-gateway:8080; exposing it would put an endpoint that
+    # spends money on a metered API onto the host's interface for no reason.
+    expose:
+      - "8080"
+    # §10: "resource-limited in compose (mem_limit, cpus)". A satellite that can
+    # exhaust the host defeats the fault-isolation the topology exists for.
+    mem_limit: 256m
+    cpus: 0.5
+    # §10: every satellite exposes /healthz. Stdlib only, so no curl in the
+    # image — urllib is already there.
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
