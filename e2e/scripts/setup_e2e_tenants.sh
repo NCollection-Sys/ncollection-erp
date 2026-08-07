@@ -62,6 +62,46 @@ create_tenant(){
     local nc_modules
     nc_modules="$(printf '%s' "$modules" | tr ',' '\n' | grep '^ncollection_' \
       | tr '\n' ',' | sed 's/,$//')"
+
+    # Any module in the LIST that this reused fixture does not actually have yet
+    # must be INSTALLED, not upgraded — `-u` on an uninstalled module is a no-op.
+    # Without this, adding a module to the list above only takes effect on a
+    # fresh database. CI creates tenants from scratch every run, so it would go
+    # green while every local run stayed silently broken — the worst kind of
+    # asymmetry, because the environment that disagrees is the one nobody
+    # watches. Found exactly that way when #363's dashboards rendered in theory
+    # and were `uninstalled` in fact.
+    # ONE query, not one per module. Asking inside a `while read` loop is the
+    # trap scripts/dev/orphan_dbs.sh already documents: `docker compose exec -T`
+    # reads stdin, so the first iteration swallows the rest of the loop's input
+    # and only the first module is ever examined. That is how this check first
+    # reported "nothing missing" against a database where the module was plainly
+    # `uninstalled`.
+    local installed missing
+    installed="$("${DC[@]}" exec -T db psql -U odoo -d "$db" -tAc \
+      "SELECT name FROM ir_module_module WHERE state='installed'" 2>/dev/null \
+      | tr -d '\r' | tr '\n' ' ')"
+    # `printf '%s\n'`, NOT `printf '%s'`. Without the trailing newline `read`
+    # returns false on the final element and the loop body never runs for it —
+    # so the LAST module in the list is silently never checked. Every earlier
+    # module here happened to be installed already, which made `missing` look
+    # empty while `ncollection_account_dashboard` sat plainly `uninstalled`.
+    missing="$(printf '%s\n' "$modules" | tr ',' '\n' \
+      | while IFS= read -r m; do
+          [ -n "$m" ] || continue
+          case " $installed " in (*" $m "*) : ;; (*) printf '%s\n' "$m" ;; esac
+        done | tr '\n' ',' | sed 's/,$//')"
+
+    if [ -n "$missing" ]; then
+      echo "  • $db already provisioned — INSTALLING newly-listed: ${missing}"
+      if ! "${DC[@]}" exec -T odoo odoo -d "$db" -i "$missing" --without-demo=True \
+           --no-http --stop-after-init "${DBARGS[@]}" >"/tmp/e2e_install_$db.log" 2>&1; then
+        echo "ERROR: installing $missing on $db failed." >&2
+        tail -20 "/tmp/e2e_install_$db.log" >&2
+        exit 1
+      fi
+    fi
+
     echo "  • $db already provisioned — upgrading ${nc_modules}"
     if ! "${DC[@]}" exec -T odoo odoo -d "$db" -u "$nc_modules" --without-demo=True \
          --no-http --stop-after-init "${DBARGS[@]}" >"/tmp/e2e_upgrade_$db.log" 2>&1; then
@@ -91,7 +131,13 @@ PY
 }
 
 echo "Setting up E2E tenants…"
-create_tenant e2eclienta "base,ncollection_core,ncollection_branding,crm,sale" "crm,sale"
+# e2eclienta additionally carries the accounting stack so the financial
+# dashboards (#363) have something to render. e2eclientb deliberately does NOT:
+# its job in this suite is to be the unlicensed half of the plan-gating pair,
+# and adding accounting there would blur that contrast for no gain.
+create_tenant e2eclienta \
+  "base,ncollection_core,ncollection_branding,crm,sale,account,ncollection_account_dashboard" \
+  "crm,sale,account,ncollection_account_dashboard"
 create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
 
 # platform DB — the SaaS platform stack (checkout routes + plans) so the
@@ -184,6 +230,48 @@ else:
 env.cr.commit()
 PY
 done
+
+# ---------------------------------------------------------------------------
+# Financial-dashboard fixture (#363) — e2eclienta only
+# ---------------------------------------------------------------------------
+# The 8 ncollection_account_dashboard OWL files had no browser coverage. They
+# are the one surface where a stale asset bundle or a mount-time throw is
+# invisible to every other gate — exactly the failure dashboard.spec.ts was
+# written for after the core dashboard silently vanished from the actions
+# registry.
+#
+# Tours were the obvious alternative and are the wrong tool HERE: `odoo:19`
+# ships no browser, so HttpCase tours SKIP and odoo still reports
+# "0 failed, 0 error(s)" — green having run nothing. verify.yml already
+# installs chromium for Playwright, so this rides on infrastructure that is
+# already paid for rather than adding ~300MB to the test image.
+#
+# Seeded on e2eclienta ONLY: e2eclientb's value as a fixture is being the
+# UNLICENSED half of the plan-gating pair, and installing accounting there
+# would blur that contrast.
+echo "  • seeding financial-dashboard fixture on e2eclienta…"
+"${DC[@]}" exec -T odoo odoo shell -d e2eclienta --no-http --log-level=error "${DBARGS[@]}" \
+  >/dev/null 2>&1 <<'PY'
+# A CEO-role user: the financial dashboards are gated at the RPC (#333/#356/#358),
+# so the probe must hold a role the guard admits. The accounting group is granted
+# explicitly because ncollection_core/hooks.py links roles to their native
+# accounting rights in a post-init hook that a fixture database has not
+# necessarily run — without it the dashboard raises an AccessError from deep
+# inside the report services, which is not the failure under test.
+Users = env['res.users']
+groups = [env.ref('base.group_user').id]
+for xmlid in ('ncollection_core.group_role_ceo', 'account.group_account_readonly'):
+    g = env.ref(xmlid, raise_if_not_found=False)
+    if g:
+        groups.append(g.id)
+u = Users.search([('login', '=', 'fin')], limit=1)
+if u:
+    u.write({'password': 'demo1234', 'group_ids': [(6, 0, groups)]})
+else:
+    Users.create({'name': 'fin', 'login': 'fin', 'password': 'demo1234',
+                  'group_ids': [(6, 0, groups)]})
+env.cr.commit()
+PY
 
 # Refresh the live server's caches so it reflects the new tenants/config/users.
 # License enforcement + menu visibility are @ormcache'd per process; the config
