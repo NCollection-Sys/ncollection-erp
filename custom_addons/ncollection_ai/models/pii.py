@@ -151,9 +151,24 @@ class AiPiiSanitiser(models.AbstractModel):
         return sum(char.isdigit() for char in candidate) >= _MIN_PHONE_DIGITS
 
     def _is_partner_field(self, field_name):
+        """Field names whose VALUE is an identity.
+
+        `company` is in this list deliberately. The gateway already knows which
+        tenant is calling (it is the budget key), but the PROVIDER does not —
+        and the workspace name is exactly the kind of identity §5 says the model
+        does not need: "the model reasons over structure; it does not need real
+        identities". Framing survives fine as "you are an analyst for COMPANY_1".
+
+        It was missing at first, and the context builder's docstring meanwhile
+        claimed the company name "is pseudonymised downstream like any other
+        identity". It was not — the real workspace name went straight into the
+        prompt. Caught by the review harness reporting 0 pseudonyms against a
+        context that plainly contained one.
+        """
         lowered = (field_name or '').lower()
         return lowered in ('partner_id', 'partner_name', 'customer', 'supplier',
-                           'display_name', 'contact_name') or \
+                           'display_name', 'contact_name', 'company',
+                           'company_name', 'company_id') or \
             lowered.endswith('_partner') or lowered.startswith('partner_')
 
     def _token(self, kind, original, mapping, counters):

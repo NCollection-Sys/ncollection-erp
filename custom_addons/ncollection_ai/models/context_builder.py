@@ -63,6 +63,15 @@ class AiContextBuilder(models.AbstractModel):
     _name = 'ncollection.ai.context'
     _description = 'AI prompt context builder (tenant-scoped)'
 
+    # NOTE ON `order`: it must name the AGGREGATE ALIAS ('amount_total:sum
+    # desc'), not the bare field ('amount_total desc'). Odoo's _read_group
+    # rejects the bare form, and ncollection.aggregation.engine never raises —
+    # it returns None for any failed spec — so a malformed order does not error,
+    # it silently removes the whole section. That shipped a context missing
+    # receivables and top_customers, which quietly made 6 of the 20 review
+    # questions unanswerable with nothing in any log to say why.
+    # test_default_specs_all_produce_rows() exists to catch exactly this.
+    #
     # The default snapshot. Deliberately small: §4's token budgets are per
     # tenant per window, and a context that ships every row burns the budget on
     # data no question asked about.
@@ -74,7 +83,7 @@ class AiContextBuilder(models.AbstractModel):
                         ('state', '=', 'posted')],
              'groupby': ['partner_id'],
              'aggregates': ['amount_residual:sum'],
-             'limit': 20, 'order': 'amount_residual desc'},
+             'limit': 20, 'order': 'amount_residual:sum desc'},
             {'key': 'recent_invoices', 'model': 'account.move',
              'domain': [('move_type', '=', 'out_invoice'),
                         ('state', '=', 'posted')],
@@ -85,7 +94,7 @@ class AiContextBuilder(models.AbstractModel):
              'domain': [('state', 'in', ('sale', 'done'))],
              'groupby': ['partner_id'],
              'aggregates': ['amount_total:sum'],
-             'limit': 10, 'order': 'amount_total desc'},
+             'limit': 10, 'order': 'amount_total:sum desc'},
         ]
 
     @api.model
@@ -108,9 +117,48 @@ class AiContextBuilder(models.AbstractModel):
             # error, or every plan variation becomes a crash.
             result = engine.aggregate(spec)
             if result and result.get('rows'):
-                sections[spec['key']] = result['rows']
+                sections[spec['key']] = self._label_rows(spec, result['rows'])
 
         return self._truncate(sections, max_tokens)
+
+    def _label_rows(self, spec, rows):
+        """Turn the engine's positional rows into named dicts.
+
+        THIS IS A PII CONTROL, not cosmetics. The engine returns rows as nested
+        lists — ``[[16, "Nakheel"], 101920.0]`` — with no field names anywhere.
+        ncollection.ai.pii decides what to pseudonymise BY FIELD NAME, so an
+        unlabelled row sails straight past it and real customer names reach the
+        provider. That is exactly what happened: the review harness reported one
+        pseudonym against a context containing six customer names.
+
+        Labelling here rather than teaching the sanitiser to sniff ``[id, name]``
+        pairs, because the sanitiser should keep deciding on names — a shape
+        heuristic would be guessing, and it would still miss a bare string.
+
+        It also improves context quality, which is the ticket's other criterion:
+        ``{"partner_id": "Nakheel", "amount_residual:sum": 101920.0}`` is far
+        easier for a model to reason over than a nested array.
+
+        The many2one id is DROPPED. It is a tenant-internal identifier with no
+        analytical value, and sending it would leak a stable cross-request
+        handle that pseudonymisation is meant to remove.
+        """
+        labels = list(spec.get('groupby', [])) + list(spec.get('aggregates', []))
+        labelled = []
+        for row in rows:
+            if not isinstance(row, (list, tuple)):
+                labelled.append(row)      # already shaped; leave it alone
+                continue
+            item = {}
+            for index, value in enumerate(row):
+                name = labels[index] if index < len(labels) else 'value_%d' % index
+                # many2one cells arrive as [id, display_name] — keep the name.
+                if isinstance(value, (list, tuple)) and len(value) == 2 \
+                        and isinstance(value[1], str):
+                    value = value[1]
+                item[name] = value
+            labelled.append(item)
+        return labelled
 
     def _workspace_facts(self):
         """Identity, so the model knows whose data it is reasoning about.

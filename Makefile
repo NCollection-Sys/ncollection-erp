@@ -54,7 +54,7 @@ OCA_VENV := .oca-venv
         cron-starvation-verify cron-starvation-clean orphan-dbs \
         cron-scope-verify cron-scope-clean \
         upgrade-verify upgrade-clean \
-        ai-up ai-down ai-logs ai-test ai-verify \
+        ai-up ai-down ai-logs ai-test ai-verify ai-context-sample \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 # `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
@@ -246,6 +246,9 @@ ai-test: ## Run the satellite's own unit + HTTP tests (no Docker, no network)
 
 ai-verify: ## Prove the gateway is a choke point and cannot reach a database (#59)
 	./scripts/ai/verify_ai_gateway.sh
+
+ai-context-sample: ## Print the AI context for the 20 review questions (#60) [db=albarari]
+	./scripts/ai/context_sample.sh $(db)
 
 ## ---- Demo (separate React prototype, NOT the Odoo product) ----
 demo: ## Run the standalone React demo UI on :5173

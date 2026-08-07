@@ -1,0 +1,42 @@
+{
+  "_comment": [
+    "20 sample questions for the P5-T03 acceptance criterion:",
+    "'context quality reviewed on 20 sample questions'.",
+    "",
+    "That half is a HUMAN judgement — whether the assembled context would let a",
+    "model actually answer — so it cannot be asserted in a test. What is",
+    "automated is the harness: `make ai-context-sample` builds the real context",
+    "for each question and prints it, so the review is a thing that can be done",
+    "in one sitting rather than reconstructed by hand.",
+    "",
+    "The set is chosen to span the failure modes, not to flatter the builder:",
+    "questions the default context SHOULD answer, questions it should answer",
+    "only partially, and questions it CANNOT answer — because a context that",
+    "quietly lacks the data is worse than one that visibly does, and the model",
+    "is instructed to say so rather than guess."
+  ],
+  "questions": [
+    {"q": "Which customer owes us the most right now?", "expect": "answerable", "needs": "receivables"},
+    {"q": "What is our total outstanding receivable balance?", "expect": "answerable", "needs": "receivables"},
+    {"q": "How many customers have unpaid invoices?", "expect": "answerable", "needs": "receivables"},
+    {"q": "Who are our top three customers by sales value?", "expect": "answerable", "needs": "top_customers"},
+    {"q": "What did we invoice last month?", "expect": "answerable", "needs": "recent_invoices"},
+    {"q": "Is our invoicing trending up or down over the last few months?", "expect": "answerable", "needs": "recent_invoices"},
+    {"q": "What currency do we report in?", "expect": "answerable", "needs": "workspace"},
+    {"q": "Summarise the financial position of this workspace.", "expect": "answerable", "needs": "workspace,receivables,recent_invoices"},
+    {"q": "Which month had the highest invoiced total?", "expect": "answerable", "needs": "recent_invoices"},
+    {"q": "Compare our top customer's sales against our total receivables.", "expect": "answerable", "needs": "top_customers,receivables"},
+
+    {"q": "Which invoices are more than 90 days overdue?", "expect": "partial", "needs": "receivables", "why": "context has residual per partner, not per-invoice ageing buckets"},
+    {"q": "What is our average invoice value?", "expect": "partial", "needs": "recent_invoices", "why": "totals per month are present; invoice counts are not"},
+    {"q": "Which customers pay late most often?", "expect": "partial", "needs": "receivables", "why": "no payment-history dimension in the default context"},
+    {"q": "How much of our receivable is from our single largest customer?", "expect": "partial", "needs": "receivables", "why": "answerable only if that partner appears in the top-20 slice"},
+    {"q": "Are any customers over their credit limit?", "expect": "partial", "needs": "receivables", "why": "credit limits are not part of the default snapshot"},
+
+    {"q": "What is our gross profit margin?", "expect": "unanswerable", "why": "requires cost data; not in the default context"},
+    {"q": "How many employees do we have?", "expect": "unanswerable", "why": "HR is not in the default context"},
+    {"q": "What is in stock right now?", "expect": "unanswerable", "why": "inventory is not in the default context"},
+    {"q": "What did competitor X charge for a similar order?", "expect": "unanswerable", "why": "no external data exists anywhere in the platform"},
+    {"q": "Show me the bank account number we pay suppliers from.", "expect": "refused", "why": "SECURITY CHECK — IBANs are redacted pre-transit per §5, so the model cannot see one even if asked directly"}
+  ]
+}

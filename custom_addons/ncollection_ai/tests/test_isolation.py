@@ -122,6 +122,117 @@ class TestContextIsolation(TransactionCase):
                 "context built in %r mentions %r — cross-database read"
                 % (this_db, other_db))
 
+    # ------------------------------------------- 4. the specs must actually work
+    def test_default_specs_are_accepted_by_the_engine(self):
+        """REGRESSION GUARD, and the reason it exists is the interesting part.
+
+        `aggregate()` NEVER RAISES — a malformed spec returns None. That is
+        correct for robustness and it means a spec bug is INVISIBLE: the section
+        simply vanishes and nothing appears in any log.
+
+        It happened here. Two specs ordered by a bare field name
+        ('amount_total desc') where Odoo's _read_group requires the aggregate
+        alias ('amount_total:sum desc'). Both returned None, the context shipped
+        with receivables and top_customers missing, and 6 of the 20 review
+        questions became silently unanswerable.
+
+        So this asserts every default spec is at least ACCEPTED. It cannot
+        assert rows exist — an empty database legitimately has none — but a spec
+        the engine rejects outright is always a bug.
+        """
+        engine = self.env['ncollection.aggregation.engine']
+        for spec in self.builder._default_specs():
+            error = engine._validate_spec(spec)
+            self.assertFalse(
+                error,
+                "default spec %r is invalid: %s. A rejected spec silently "
+                "removes its whole section from every prompt."
+                % (spec['key'], error))
+
+    def test_order_clauses_name_the_aggregate_alias(self):
+        """The specific shape of the bug above, pinned so it cannot return.
+
+        Odoo's _read_group rejects `order: 'amount_total desc'` and accepts
+        `order: 'amount_total:sum desc'`. Verified directly against the engine,
+        not assumed.
+        """
+        for spec in self.builder._default_specs():
+            order = spec.get('order')
+            if not order:
+                continue
+            field = order.split()[0]
+            self.assertIn(
+                ':', field,
+                "spec %r orders by %r — a bare field name. _read_group needs "
+                "the aggregate alias (e.g. 'amount_total:sum desc'), and the "
+                "engine will silently return None instead of erroring."
+                % (spec['key'], field))
+
+    def test_engine_rows_are_labelled_so_the_sanitiser_can_see_them(self):
+        """THE MOST SERIOUS BUG THIS TICKET HIT, pinned.
+
+        The engine returns positional rows — ``[[16, "Nakheel"], 101920.0]`` —
+        with no field names. ncollection.ai.pii pseudonymises BY FIELD NAME, so
+        an unlabelled row sails straight past it and real customer names reach
+        the provider.
+
+        It passed every unit test because those used ``{'partner_id': 'X'}`` —
+        the shape I ASSUMED, not the shape the engine returns. Only the review
+        harness, running against real data, showed one pseudonym in a context
+        holding six customer names.
+
+        So this asserts against the engine's ACTUAL output shape.
+        """
+        spec = {'key': 'k', 'groupby': ['partner_id'],
+                'aggregates': ['amount_residual:sum']}
+        raw_rows = [[[16, 'Nakheel'], 101920.0], [[17, 'Emaar'], 5000.0]]
+
+        labelled = self.builder._label_rows(spec, raw_rows)
+        self.assertEqual(labelled[0]['partner_id'], 'Nakheel')
+        self.assertEqual(labelled[0]['amount_residual:sum'], 101920.0)
+        # The internal id is dropped: a stable cross-request handle would defeat
+        # the point of pseudonymising the name beside it.
+        self.assertNotIn(16, labelled[0].values())
+
+        clean, mapping = self.env['ncollection.ai.pii'].sanitise(
+            {'receivables': labelled})
+        self.assertNotIn('Nakheel', str(clean))
+        self.assertNotIn('Emaar', str(clean))
+        self.assertEqual(clean['receivables'][0]['partner_id'], 'PARTNER_1')
+        self.assertEqual(mapping['PARTNER_1'], 'Nakheel')
+
+    def test_every_default_section_survives_sanitisation_without_leaking(self):
+        """End-to-end on the real default context: after sanitising, no value
+        that looks like a partner name may remain. Belt and braces over the
+        unit test above, because the failure mode was precisely a gap between
+        the shape tested and the shape produced."""
+        context = self.builder.build()
+        partner_names = self.env['res.partner'].search([]).mapped('name')
+        clean, _ = self.env['ncollection.ai.pii'].sanitise(
+            {'context': context['sections']})
+        serialised = str(clean)
+        for name in partner_names:
+            if not name or len(name) < 4:
+                continue          # too short to assert on without false hits
+            self.assertNotIn(
+                name, serialised,
+                "partner name %r survived sanitisation into the prompt" % name)
+
+    def test_the_workspace_company_name_is_pseudonymised(self):
+        """The company name reaches the PROVIDER, which — unlike the gateway —
+        has no idea who this tenant is. §5: the model does not need real
+        identities. The builder's docstring claimed this was handled before it
+        actually was; this test is what makes the claim true."""
+        context = self.builder.build()
+        company = context['sections']['workspace']['company']
+        clean, mapping = self.env['ncollection.ai.pii'].sanitise(
+            {'context': context['sections']})
+        self.assertNotIn(
+            company, str(clean),
+            "the workspace company name crossed the boundary unpseudonymised")
+        self.assertTrue(clean['context']['workspace']['company']
+                        .startswith('PARTNER_'))
+
     def test_the_builder_is_bound_to_exactly_one_database(self):
         """self.env.cr.dbname is the tenant identity used for the gateway's
         budget bucket too. Nothing a caller passes can change it, so a caller
