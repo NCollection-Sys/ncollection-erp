@@ -100,7 +100,12 @@ _SECRET_SHAPES = (
     # unremarkable, so that was a one-character bypass of this round's headline
     # coverage.
     re.compile(r'\b[a-z][a-z0-9+.-]*://[^\s@]+@\S+', re.IGNORECASE),
-    re.compile(r'\b(?:password|passwd|pwd)\s*=\s*\S+', re.IGNORECASE),
+    # Lookaround, not \b — same round-6 CRITICAL as ai_question's noun regex.
+    # `\b` does not fire between `_` and a letter, so DB_PASSWORD=hunter2 was
+    # invisible HERE TOO, meaning the refusal gate and this redactor missed it
+    # together. An env-var line is the most common shape a pasted secret takes.
+    re.compile(r'(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*\S+',
+               re.IGNORECASE),
     re.compile(r'\bAIza[A-Za-z0-9_-]{30,}\b'),                     # GCP API key
     # IGNORECASE. This is the THIRD case-sensitivity miss in this file
     # (IBAN, then _ALNUM_ID_RE, now this) — added after both fixes and

@@ -234,6 +234,25 @@ class TestAskSanitisation(TransactionCase):
             "the login is p4ss123",
             "the passkey is p4ss123",
             "my recovery phrase is apple grape ocean tiger delta ranch",
+            # Round 6: `\b` does not fire between `_` and a letter, so every
+            # env-var/config shape was invisible to BOTH the gate and pii.py —
+            # proven live through the real ask() -> HTTP -> gateway path.
+            "DB_PASSWORD=hunter2, can you check our receivables?",
+            "wifi_password: greenelephant",
+            "the smtp_password is Str0ngPass99 for the mailer",
+            "userlogin: admin123",
+            "just fyi jwt_token=abc.def.ghi is expiring soon",
+            "root_password to p4ss123",
+            # Round 6: juxtaposition, no connector at all — a reviewer called
+            # this "arguably the single most common way people paste one".
+            "wifi password p4ssW0rd2026",
+            "root password Str0ngPass99 on the staging box",
+            "ssh key AbCdEf123456 for the deploy user",
+            "admin login Adm1nUser99 for the console",
+            # Round 6: nouns the list was missing.
+            "the security code is 4521 on that card",
+            "the access code is 778899 for the gate",
+            "the verification code is 445566, use it now",
         ):
             with self.assertRaises(UserError, msg=question):
                 self._prompt_for(question)
@@ -265,6 +284,17 @@ class TestAskSanitisation(TransactionCase):
             "Is the security key mandatory for this integration?",
             "summarize creditworthiness key metrics for Al Barari Trading "
             "LLC internationalisation project",
+            # Round 6 false refusals. Bare `pass` was a credential noun, `key`
+            # matched inside "monkey", and idioms were being read as
+            # declarations. A control that refuses these gets switched off.
+            "Can you pass this invoice to Sarah?",
+            "I will pass the file to accounting.",
+            "the key to success is teamwork",
+            "the login page is down, can you check?",
+            "The token expires in a day, is that normal?",
+            "The api key rotation policy: how many keys are older than 90 days?",
+            "did the monkey to zoo shipment clear customs?",
+            "the password is not accepted, can you check my account?",
         ):
             prompt = self._prompt_for(question)   # must not raise
             self.assertIn('QUESTION:', prompt)

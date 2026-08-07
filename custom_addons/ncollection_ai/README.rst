@@ -72,21 +72,37 @@ Known limits
   list. The undecidability argument is real, but it was being used to cover a
   gap it did not apply to. The actual boundary:
 
-  **Caught** — a credential named by a noun in ``_CREDENTIAL_NOUN``, joined
-  within ~40 characters by a connector (``is``/``are``/``was``/``were``/``to``/
-  ``=``/``:``/``,``), where the value is not an ordinary state word
-  (``invalid``, ``expired``, ``missing``…); **or** any single token over 19
-  characters mixing letters and digits; **or** anything matching a structural
-  shape (vendor prefixes, JWT, PEM, connection string, IBAN, card PAN).
+  **Caught** — a credential named by a noun in ``_CREDENTIAL_NOUN`` and either
+  immediately followed by a letters-and-digits token (``"wifi password
+  p4ssW0rd2026"``) or joined within ~40 characters by a connector
+  (``is``/``are``/``was``/``were``/``to``/``=``/``:``/``,``/`` - ``) whose value
+  is not an ordinary state word; **or** any single token over 19 characters
+  mixing letters and digits; **or** anything matching a structural shape
+  (vendor prefixes, JWT, PEM, connection string, IBAN, card PAN). Env-var and
+  config shapes (``DB_PASSWORD=``, ``wifi_password:``) are included — they were
+  not, until round 6, because ``\b`` does not fire between ``_`` and a letter.
 
-  **Not caught** — a credential named by a noun outside that list; a secret
-  given with no noun at all (``"check correcthorsebatterystaple for me"``); a
-  value that is itself a state word.
+  **Not caught**, each demonstrated by a reviewer and each tracked in the
+  corpus so the count stays visible:
 
-  The first gap is a maintainable list and should grow whenever a missing noun
-  is found. The second is genuinely undecidable — a lowercase passphrase is
-  indistinguishable from prose — and is why this feature needs a zero-retention
-  provider agreement rather than a cleverer pattern.
+  - a noun outside the list (``"the doorcode is 4521"``)
+  - no noun at all (``"check correcthorsebatterystaple for me"``)
+  - a decoy clause that puts a state word in the value slot and the real secret
+    further along (``"the password is not accepted, it's actually p4ss123"``).
+    Closing this needs a scan of every token near the noun, which was measured
+    and rejected: it refuses ``"the api key rotation policy: how many keys are
+    older than 90 days?"`` because *rotation* is eight characters.
+  - a declaration whose connector falls outside the window
+
+  The noun list is maintainable and should grow whenever a gap is found. The
+  rest is genuinely undecidable — a lowercase passphrase is indistinguishable
+  from prose — and is why this feature needs a zero-retention provider
+  agreement rather than a cleverer pattern.
+
+  **Six review rounds established this.** Every round that tried to close the
+  gap with more pattern opened a false refusal elsewhere, and a control that
+  blocks *"Can you pass this invoice to Sarah?"* gets switched off — a worse
+  security outcome than the gap it closed.
 * **Only ``ask()`` is public.** ``_build``, ``_sanitise``, ``_rehydrate`` and
   ``_complete`` are underscore-prefixed so Odoo's ``call_kw`` refuses them
   outright. Before that, a Manager-role user blocked from ``ask()`` could call

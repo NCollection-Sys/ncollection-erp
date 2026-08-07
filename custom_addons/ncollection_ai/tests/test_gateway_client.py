@@ -16,6 +16,7 @@ import urllib.error
 
 from unittest.mock import patch
 
+from odoo.addons.ncollection_ai.models import gateway_client
 from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
@@ -109,18 +110,50 @@ class TestGatewayClient(TransactionCase):
                 self.gateway._complete('prompt')
         self.assertIn('unreadable', str(caught.exception))
 
-    def test_a_socket_failure_mid_read_becomes_a_user_error(self):
+    def test_a_socket_failure_becomes_a_user_error(self):
         with self._with_urlopen(OSError('connection reset')):
             with self.assertRaises(UserError) as caught:
                 self.gateway._complete('prompt')
         self.assertIn('unreadable', str(caught.exception))
 
     # ---------------------------------------------------------------- bounds
-    def test_an_oversized_response_is_not_read_without_limit(self):
+    def test_the_response_read_is_capped(self):
         """A satellite that streams forever must not exhaust tenant memory.
-        The read is capped, so an over-long body fails as unparseable rather
-        than being swallowed whole."""
-        with self._with_urlopen(
-                lambda *a, **k: _FakeResponse(b'{"text": "' + b'x' * 2_000_000)):
-            with self.assertRaises(UserError):
-                self.gateway._complete('prompt')
+
+        THIS TEST WAS VACUOUS AND A REVIEWER PROVED IT. The first version fed
+        an unterminated JSON body and asserted UserError — which is raised
+        whether or not the read is capped, since the body is unparseable at any
+        length. Deleting the cap from the source did not fail it.
+
+        So it now asserts on the CALL: the read must be bounded, and the bound
+        must be the constant. That fails the moment someone writes read().
+        """
+        seen = {}
+
+        # Deliberately NOT a subclass of _FakeResponse. Overriding read() there
+        # trips pylint-odoo's method-required-super, and adding super() then
+        # trips its missing-return — a standalone stub satisfies both by not
+        # being an override at all.
+        class _RecordingResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            # pylint: disable=method-required-super
+            # Not an override: this class has no parent, it is a stub
+            # implementing urlopen's response protocol. pylint-odoo flags any
+            # method named `read` regardless, and `read` is fixed by that
+            # protocol. Subclassing io.BytesIO to satisfy the check instead
+            # trips missing-return, so this is a disable rather than debt —
+            # same treatment as the print-used disable in seed_tenant.py (#221).
+            def read(self, size=-1):
+                seen['size'] = size
+                return b'{"text": "ok"}'
+
+        with self._with_urlopen(lambda *a, **k: _RecordingResponse()):
+            self.gateway._complete('prompt')
+        self.assertEqual(seen.get('size'), gateway_client._MAX_RESPONSE_BYTES,
+                         "the response body must be read with an explicit "
+                         "byte cap, not read() in full")

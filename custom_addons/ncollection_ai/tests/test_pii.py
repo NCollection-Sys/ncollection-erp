@@ -175,12 +175,21 @@ class TestPiiSanitiser(TransactionCase):
 
     def test_a_genuine_document_reference_still_survives(self):
         """The other side: padding-aware matching must not start redacting real
-        references, or every question about a specific order breaks."""
+        references, or every question about a specific order breaks.
+
+        THE DIGIT COUNTS MATTER AND THIS TEST WAS ONCE VACUOUS BECAUSE OF THEM.
+        The first version used SO00042/WH00012 — five digits — and
+        _ALNUM_ID_RE requires SIX to nine, so the pattern never matched and
+        _is_document_reference was never called. A reviewer proved it by
+        forcing that method to return False; the test still passed. These
+        fixtures now sit inside the 6-9 range so the exemption path actually
+        executes, and the padding values match.
+        """
         clean, _ = self.pii._sanitise(
-            {'note': 'check SO00042 and WH00012 today'},
-            doc_prefixes=(('SO', 5), ('WH', 5)))
-        self.assertIn('SO00042', clean['note'])
-        self.assertIn('WH00012', clean['note'])
+            {'note': 'check SO0000042 and WH0000012 today'},
+            doc_prefixes=(('SO', 7), ('WH', 7)))
+        self.assertIn('SO0000042', clean['note'])
+        self.assertIn('WH0000012', clean['note'])
 
     def test_a_long_lot_number_still_survives(self):
         """Pure digits stay exempt: a 44-digit lot or batch number is substance,

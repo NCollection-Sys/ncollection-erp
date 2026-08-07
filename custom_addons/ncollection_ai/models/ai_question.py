@@ -102,56 +102,99 @@ _IDENTITY_SCAN_LIMIT = 2000
 #
 # The real boundary, precisely:
 #
-#   CAUGHT      a credential named by a noun in _CREDENTIAL_NOUN, joined within
-#               _NOUN_VALUE_WINDOW characters by a connector in _CONNECTOR_RE,
-#               where the value is not in _STATE_WORD_RE; OR any single token
-#               over _MAX_WORD_CHARS that mixes letters and digits; OR anything
-#               matching a pii.py structural shape.
-#   NOT CAUGHT  a credential named by a noun NOT in that list; a secret given
-#               with no noun at all ("check correcthorsebatterystaple for me");
-#               a value that is itself an ordinary state word.
+#   CAUGHT      a credential named by a noun in _CREDENTIAL_NOUN and either
+#                 * immediately followed by a letters-and-digits token
+#                   ("wifi password p4ssW0rd2026"), or
+#                 * joined within _NOUN_VALUE_WINDOW characters by a connector
+#                   in _CONNECTOR_RE whose value is not in _STATE_WORD_RE;
+#               OR any single token over _MAX_WORD_CHARS mixing letters and
+#               digits; OR anything matching a pii.py structural shape.
 #
-# The first of those is a maintainable list and should grow when someone finds a
-# missing noun. The second is the genuinely undecidable one — a lowercase
-# passphrase is indistinguishable from prose — and is why this feature needs a
-# zero-retention provider agreement rather than a cleverer regex.
+#   NOT CAUGHT, each demonstrated by a reviewer and each pinned in the RESIDUAL
+#   section of the gate corpus so the count stays visible:
+#                 * a noun outside the list ("the doorcode is 4521")
+#                 * no noun at all ("check correcthorsebatterystaple for me")
+#                 * a DECOY CLAUSE that puts a state word in the value slot and
+#                   the real secret further along:
+#                       "the password is not accepted, it's actually p4ss123"
+#                   Fixable only by scanning every token near the noun, which
+#                   was measured and rejected: it refuses "the api key rotation
+#                   policy: how many keys are older than 90 days?" because
+#                   "rotation" is eight characters.
+#                 * a declaration whose connector falls outside the window
+#
+# The noun list is maintainable and should grow when someone finds a gap. The
+# rest is the genuinely undecidable part — a lowercase passphrase is
+# indistinguishable from prose — and is why this feature needs a zero-retention
+# provider agreement rather than a cleverer regex.
+#
+# SIX REVIEW ROUNDS ESTABLISHED THIS. Every round that tried to close the gap
+# with more pattern opened a false-refusal somewhere else, and a control that
+# blocks "Can you pass this invoice to Sarah?" gets switched off, which is a
+# worse security outcome than the gap it was closing.
 
 # The credential nouns. Round 5 shipped a much shorter list and reviewers
 # walked straight through the gaps: `pin`, `otp`, `cvv`, `passcode`, `login`,
 # `passkey`, and `recovery phrase` / `seed phrase` are all ordinary words for a
 # credential and none of them were here.
-_CREDENTIAL_NOUN = (
-    r'\b(?:pass(?:word|wd|phrase|code|key)?|pwd|secret|credentials?|'
-    r'key|token|login|pin|otp|cvv|cvc|(?:recovery|seed|mnemonic)\s+phrase)\b')
+# THE BOUNDARY IS A LOOKAROUND, NOT \b. This is the round-6 CRITICAL, and it
+# was proven end-to-end through the real ask() -> HTTP -> gateway path:
+#
+#     "DB_PASSWORD=hunter2, can you check our receivables?"   -> was SENT
+#
+# `\b` does not fire between two word characters and `_` IS a word character,
+# so DB_PASSWORD, wifi_password and smtp_password were all invisible to this
+# regex — and to the identical `\b` in pii.py's own password= pattern, so both
+# layers missed them together. That is the single most common shape a real
+# secret is pasted in: an env var or a config line.
+#
+# (?<![A-Za-z0-9]) admits a preceding `_`, `-`, `.` or start-of-string while
+# still refusing a preceding LETTER, which is what keeps `monkey`, `donkey`,
+# `whiskey` and `keyboard` from registering as the noun `key`. Verified both
+# ways before it was applied, not after.
+#
+# Bare `pass` is GONE. The optional suffix group made `pass` itself a
+# credential noun, so "Can you pass this invoice to Sarah?" was refused — a
+# reviewer's example, and an ordinary sentence.
+#
+# `secret` carries an idiom guard for the same reason: "secret sauce" and
+# "secret santa" are English, not credentials.
+# TWO GROUPS, because the right boundary differs by noun.
+#
+#   _NOUN_SEP_BOUNDED  `key` and `pin` are inside ordinary English words
+#                      (monkey, donkey, whiskey, keyboard, spin, pinpoint), so
+#                      these must not be preceded by a letter or digit.
+#   _NOUN_COMPOUND_OK  `password`, `login`, `token` and friends appear inside
+#                      COMPOUND CREDENTIAL NAMES far more often than inside
+#                      English words — userlogin, jwt_token, smtp_password — so
+#                      a letter prefix is allowed. Both were verified against a
+#                      both-directions case list before being applied.
+_NOUN_SEP_BOUNDED = (r'(?<![A-Za-z0-9])'
+                     r'(?:key(?!\s+to\b)|pin)'
+                     r'(?![A-Za-z0-9])')
+_NOUN_COMPOUND_OK = (
+    r'(?:pass(?:word|wd|phrase|code|key)|pwd|'
+    r'secret(?!\s+(?:sauce|santa|weapon|ingredient|to\b))|credentials?|'
+    r'token|login|otp|cvv|cvc|(?:recovery|seed|mnemonic)\s+phrase|'
+    r'(?:security|access|verification)\s+code)(?![A-Za-z0-9])')
+_CREDENTIAL_NOUN = '(?:%s|%s)' % (_NOUN_SEP_BOUNDED, _NOUN_COMPOUND_OK)
 
-# TRIGGER 1 — a credential noun handed a value.
-#
-# The connector list and the WINDOW are both round-6 corrections. Round 5
-# required the noun to sit IMMEDIATELY before `is|are|=|:`, so ordinary English
-# defeated it:
-#     "the password, which was rotated last night, is p4ss123"   -> passed
-#     "I reset the wifi password to greenelephant purpletiger"   -> passed
-#     "password wise it is p4ss123"                              -> passed
-# None of those is adversarial phrasing; they are how people write. So the noun
-# and the connector may now be separated by up to _NOUN_VALUE_WINDOW characters
-# of filler, and `was|were|to|,|-` join the connector set.
-#
-# The value side is NOT bare \S any more. That over-refused ordinary
-# troubleshooting — "The API key is invalid", "our access token is expired" —
-# which is its own risk: a control that blocks benign questions gets switched
-# off. A short, closed list of STATE words is exempted instead. That list is a
-# bounded English vocabulary, unlike the unbounded space of secrets, so
-# maintaining it is tractable in a way pattern-chasing was not.
 _CREDENTIAL_NOUN_RE = re.compile(_CREDENTIAL_NOUN, re.IGNORECASE)
 _NOUN_VALUE_WINDOW = 40
-_CONNECTOR_RE = re.compile(r'(?:\b(?:is|are|was|were|to)\b|[=:,])\s*',
+_CONNECTOR_RE = re.compile(r'(?:\b(?:is|are|was|were|to)\b|[=:,]|\s-\s)\s*',
                            re.IGNORECASE)
 _STATE_WORD_RE = re.compile(
     r'(?:in)?valid|expired?|wrong|missing|null|none|empty|blank|broken|'
     r'incorrect|correct|working|required|mandatory|optional|unavailable|'
     r'unset|set|rejected|refused|denied|accepted|active|inactive|disabled|'
     r'enabled|not|no|never|always|the|a|an|still|now|used|unused|gone|ok|'
-    r'fine|failing|failed|different|same|right|bad|good|new|old',
+    r'fine|failing|failed|different|same|right|bad|good|new|old|down|up|'
+    # Question words. "The api key rotation policy: how many keys are older
+    # than 90 days?" was refused because the topic-separator colon was read
+    # as a connector and "how" was not recognised. A value that is a question
+    # word is never a credential.
+    r'how|what|when|why|which|who|where|whether|any|all|only|just|it|its|'
+    r'is|are|was|were|that|this|there|here|can|could|should|would',
     re.IGNORECASE)
 
 # There is no third trigger. Round 5 had one — a credential noun
@@ -202,32 +245,69 @@ def _looks_like_embedded_secret(word):
     return has_digit and has_alpha
 
 
+def _value_after(tail, connector):
+    """The first whitespace token after a connector, stripped of punctuation."""
+    rest = tail[connector.end():].split()
+    return rest[0].strip('.,;:!?()[]"\'') if rest else ''
+
+
+def _looks_like_a_credential_value(value):
+    """Value-shaped rather than merely not-a-state-word.
+
+    Applied only to connectors AFTER the first, where the bar has to be higher
+    — see _declares_a_secret. A credential carries a digit or real length;
+    "can", "ask" and "you" carry neither.
+    """
+    return len(value) >= 8 or any(c.isdigit() for c in value)
+
+
 def _declares_a_secret(text):
-    """Trigger 1: a credential noun whose value is not an ordinary state word.
+    """Trigger 1: a credential noun handed a value that is not a state word.
 
-    Only the FIRST connector after each noun is considered, and that is the
-    whole trick. A regex allowed to skip filler looking for a connector will
-    happily walk past the real one to a later comma:
-        "The API key is invalid, can you check why the sync failed?"
-    matched on the comma, took "can" as the value, and refused a completely
-    benign question. Reading only the first connector gives "invalid", which is
-    a state word, so the question is allowed.
+    THE FIRST connector after the noun is judged leniently: any value that is
+    not an ordinary state word means a declaration. That is what catches
+    "the CVV is 123" and "root password is hunter2", and what ALLOWS
+    "The API key is invalid" — reading only the first connector gives
+    "invalid", so the question goes through.
 
-    Conversely the filler-tolerance is what catches ordinary English that
-    round 5 let through, because the noun and its value are rarely adjacent:
+    LATER connectors are judged strictly, and that asymmetry is the point. A
+    filler clause beginning with a state word would otherwise mask the real
+    declaration:
         "the password, which was rotated last night, is p4ss123"
+    ("which" is a state word.) But scanning on with the lenient rule would
+    re-break the benign case above, because its later comma yields "can". So
+    later connectors additionally require a value-SHAPED value.
+
+    Both halves are pinned by the corpus in tests/test_ai_question.py, in both
+    directions. Six review rounds established that this trigger cannot be made
+    complete — see the boundary section at the top of this module for exactly
+    what it does and does not catch.
     """
     for noun in _CREDENTIAL_NOUN_RE.finditer(text):
         tail = text[noun.end():noun.end() + _NOUN_VALUE_WINDOW]
-        connector = _CONNECTOR_RE.search(tail)
-        if not connector:
-            continue
-        rest = tail[connector.end():].split()
-        if not rest:
-            continue
-        if _STATE_WORD_RE.fullmatch(rest[0].strip('.,;:!?()[]"\'')):
-            continue
-        return True
+
+        # JUXTAPOSITION — no connector at all, which a reviewer identified as
+        # "arguably the single most common way people paste a credential":
+        #     "wifi password p4ssW0rd2026"      "ssh key AbCdEf123456"
+        # Only the IMMEDIATELY following token counts, and it must mix letters
+        # AND digits, which is what keeps ordinary noun phrases quiet —
+        # "password reset email", "api key rotation policy", "login page" all
+        # have a plain word there.
+        following = tail.split()
+        if following:
+            candidate = following[0].strip('.,;:!?()[]"\'')
+            if (len(candidate) >= 6
+                    and any(c.isdigit() for c in candidate)
+                    and any(c.isalpha() for c in candidate)):
+                return True
+
+        for position, connector in enumerate(_CONNECTOR_RE.finditer(tail)):
+            value = _value_after(tail, connector)
+            if not value:
+                continue
+            if not _STATE_WORD_RE.fullmatch(value):
+                if position == 0 or _looks_like_a_credential_value(value):
+                    return True
     return False
 
 
