@@ -85,17 +85,46 @@ _SECRET_SHAPES = (
                r'[A-Za-z0-9_-]*'),                                  # JWT
     re.compile(r'\b(?:Bearer|Basic)\s+[A-Za-z0-9+/._~-]{16,}=*',
                re.IGNORECASE),                                      # auth headers
-    re.compile(r'\b[A-Za-z0-9+/]{40,}={0,2}\b'),                    # long base64 blob
+    # Credentials embedded in a URL or connection string. The most plausible
+    # paste in an ERP/integration context, and nothing else here catches it:
+    #   postgres://admin:Sup3rSecret123@db.internal:5432/erp
+    re.compile(r'\b[a-z][a-z0-9+.-]*://[^\s:@/]+:[^\s:@/]+@\S+',
+               re.IGNORECASE),
+    re.compile(r'\b(?:password|passwd|pwd)\s*=\s*\S+', re.IGNORECASE),
+    re.compile(r'\bAIza[A-Za-z0-9_-]{30,}\b'),                     # GCP API key
+    re.compile(r'-----BEGIN[A-Z ]*PRIVATE KEY-----'),               # PEM marker
+    # Long base64 blob. EXCLUDES pure hex and pure digits: a SHA-256 checksum or
+    # a long lot/batch number is data a user may legitimately ask about, and
+    # redacting it silently would gut context quality. Confirmed as a real false
+    # positive by review, not a hypothetical one — a 64-char hex hash was being
+    # redacted as a secret.
+    re.compile(r'\b(?![0-9]+\b)(?![0-9a-fA-F]{40,}\b)'
+               r'[A-Za-z0-9+/]{40,}={0,2}\b'),
 )
 
 # Government-issued identifiers that mix letters and digits — passports,
 # driving licences, residence permits. The phone pattern cannot see these: one
 # embedded letter breaks its character class, so they sailed through untouched.
 #
-# Bounded deliberately to 1-2 leading letters + 6-9 digits, and applied AFTER
-# the document-reference guard below, because "INV/2026/00042" and "SO0042"
-# must survive — §5 lists document references as substance.
-_ALNUM_ID_RE = re.compile(r'\b(?![A-Z]{2}\d{2})[A-Z]{1,2}\d{6,9}\b')
+# Bounded to 1-2 leading letters + 6-9 digits.
+#
+# NO negative lookahead, and IGNORECASE — both were bugs found on re-review:
+#
+#  * `(?![A-Z]{2}\d{2})` was meant to avoid overlapping the IBAN pattern, but an
+#    ID like "AB1234567" NECESSARILY starts with two letters and two digits, so
+#    the lookahead excluded every 2-letter-prefixed ID — a large share of real
+#    passport and national-ID formats. IBANs are already redacted one step
+#    earlier, so it protected nothing and blinded the pattern.
+#  * Without IGNORECASE "a1234567" sailed through — repeating, one line below,
+#    the exact case-sensitivity bug just fixed on the IBAN pattern.
+#
+# No document guard is needed: genuine Odoo references cannot match. "INV/…"
+# and "BILL/…" have 3-4 leading letters (over the cap), and "SO0042" has 4
+# digits (under the floor). Verified against INV/2026/00042, SO0042,
+# WH/OUT/00012, BILL/2026/0007 and PO00123 — none match. The guard that used to
+# sit here checked for an adjacent "/" and was trivially bypassed by ordinary
+# punctuation ("passport /A1234567" leaked), so it made things strictly worse.
+_ALNUM_ID_RE = re.compile(r'\b[A-Z]{1,2}\d{6,9}\b', re.IGNORECASE)
 _EMAIL_RE = re.compile(r'\b[\w.+-]+@[\w-]+\.[\w.-]+\b')
 # Deliberately conservative: matching more aggressively starts eating the
 # substance §5 says to send freely.
@@ -110,6 +139,12 @@ _EMAIL_RE = re.compile(r'\b[\w.+-]+@[\w-]+\.[\w.-]+\b')
 # counting, in _looks_like_phone().
 _PHONE_CANDIDATE_RE = re.compile(r'\+?\d[\d\s().-]{7,}\d')
 _MIN_PHONE_DIGITS = 9
+# E.164 caps a real phone number at 15 digits. Without an UPPER bound the
+# pattern swallowed any long digit run — a 44-digit lot/batch number came back
+# as PHONE_1, destroying data §5 lists as substance. Found by the
+# false-positive test the security re-review asked for; the lower bound alone
+# was never sufficient.
+_MAX_PHONE_DIGITS = 15
 
 
 class AiPiiSanitiser(models.AbstractModel):
@@ -191,18 +226,18 @@ class AiPiiSanitiser(models.AbstractModel):
 
         # 3. Government identifiers that mix letters and digits. Document
         #    references are protected from this by _looks_like_document().
-        text = _ALNUM_ID_RE.sub(
-            lambda m: m.group(0) if self._looks_like_document(text, m)
-            else _REDACTED, text)
+        text = _ALNUM_ID_RE.sub(_REDACTED, text)
 
         # 4. Known real identities appearing anywhere in the text. This is what
         #    field-name matching structurally cannot do, and it is the fix for
         #    the leak three reviewers reproduced: a customer name typed into a
         #    free-text question.
+        substituted = False
         for name in identities:
             if name in text:
                 text = text.replace(
                     name, self._token('PARTNER', name, mapping, counters))
+                substituted = True
 
         text = _EMAIL_RE.sub(
             lambda m: self._token('EMAIL', m.group(0), mapping, counters), text)
@@ -213,25 +248,22 @@ class AiPiiSanitiser(models.AbstractModel):
 
         # Partner-ish fields are pseudonymised whole: a name is not a pattern,
         # so it can only be recognised by where it came from.
-        if self._is_partner_field(field_name) and text.strip():
+        #
+        # `not substituted` is LOAD-BEARING. Without it a value that is both a
+        # known identity AND under a partner field is tokenised TWICE: step 4
+        # turns "Al Barari Trading" into PARTNER_1, then this step tokenises the
+        # literal string "PARTNER_1" again into PARTNER_2 with
+        # mapping['PARTNER_2'] = 'PARTNER_1' — a token pointing at another
+        # token. Re-hydration then restores only one level and the USER SEES THE
+        # RAW STRING "PARTNER_1" in their answer.
+        #
+        # This fired on EVERY ask() call, because the workspace company name is
+        # both in _known_identities() and matched by _is_partner_field(). It
+        # also breaks the join-preservation invariant this whole design exists
+        # for — the same partner is no longer the same token everywhere.
+        if not substituted and self._is_partner_field(field_name) and text.strip():
             text = self._token('PARTNER', text, mapping, counters)
         return text
-
-    def _looks_like_document(self, text, match):
-        """True when an alphanumeric-ID match is really a document reference.
-
-        §5 lists document states and references as substance to send freely, and
-        an over-eager ID pattern would eat "INV/2026/00042" or "SO0042" — making
-        every question about a specific document unanswerable. Documents in Odoo
-        carry a separator or a known prefix; identifiers generally do not.
-        """
-        token = match.group(0)
-        if token[:2].upper() in ('SO', 'PO', 'INV', 'BILL', 'WH', 'MO'):
-            return True
-        # A slash immediately around the match means a reference like INV/2026/…
-        start, end = match.span()
-        neighbourhood = text[max(0, start - 1):min(len(text), end + 1)]
-        return '/' in neighbourhood
 
     def _looks_like_phone(self, candidate):
         """Confirm a candidate by DIGIT COUNT, not by shape.
@@ -242,7 +274,8 @@ class AiPiiSanitiser(models.AbstractModel):
         becomes unanswerable — while §5 explicitly lists dates as substance to
         send freely. Caught by test_the_substance_is_untouched.
         """
-        return sum(char.isdigit() for char in candidate) >= _MIN_PHONE_DIGITS
+        digits = sum(char.isdigit() for char in candidate)
+        return _MIN_PHONE_DIGITS <= digits <= _MAX_PHONE_DIGITS
 
     def _is_partner_field(self, field_name):
         """Field names whose VALUE is an identity.

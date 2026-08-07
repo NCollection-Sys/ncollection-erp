@@ -52,6 +52,89 @@ class TestPiiSanitiser(TransactionCase):
         self.assertNotIn('AE070331234567890123456', clean['narration'])
         self.assertIn('[REDACTED]', clean['narration'])
 
+    def test_a_LOWERCASE_iban_is_redacted(self):
+        """The test the last commit CLAIMED to add and did not.
+
+        re.IGNORECASE was added to _IBAN_RE, and the commit message said "+
+        test". test_pii.py was byte-for-byte unchanged. The fix worked but was
+        unguarded — anyone could drop the flag and nothing would fail. That is
+        the same class of problem as the original CRITICAL: an assertion of
+        verification that had not happened.
+        """
+        for iban in ('ae070331234567890123456', 'Ae070331234567890123456',
+                     'AE070331234567890123456'):
+            clean, _ = self.pii.sanitise({'narration': 'paid to %s today' % iban})
+            self.assertNotIn(iban, clean['narration'])
+
+    def test_two_letter_and_lowercase_government_ids_are_redacted(self):
+        """The ID pattern's negative lookahead excluded every 2-letter-prefixed
+        ID (they necessarily start with 2 letters + 2 digits), and it lacked
+        IGNORECASE. Only the single-letter uppercase case — the one the original
+        test used — actually worked."""
+        for ident in ('A1234567', 'AB1234567', 'a1234567', 'ab123456'):
+            clean, _ = self.pii.sanitise({'note': 'passport %s here' % ident})
+            self.assertNotIn(ident, clean['note'], '%r leaked' % ident)
+
+    def test_punctuation_cannot_smuggle_an_id_past_redaction(self):
+        """REGRESSION. The old _looks_like_document() guard passed anything with
+        a '/' within one character, so "passport /A1234567" leaked — a bypass
+        reachable by a date, a fraction, "and/or", or a file path. The guard
+        protected nothing (genuine references cannot match the pattern) and was
+        deleted."""
+        for text in ('passport /A1234567 ok', 'passport A1234567/ ok',
+                     'ref 1/A1234567/2 ok'):
+            clean, _ = self.pii.sanitise({'note': text})
+            self.assertNotIn('A1234567', clean['note'], '%r leaked' % text)
+
+    def test_a_connection_string_password_is_redacted(self):
+        """The most plausible credential paste in an ERP/integration context,
+        and nothing caught it before."""
+        for secret in ('postgres://admin:Sup3rSecret123@db.internal:5432/erp',
+                       'mysql://root:hunter2@10.0.0.5/db'):
+            clean, _ = self.pii.sanitise({'note': 'try %s' % secret})
+            self.assertNotIn('Sup3rSecret123', clean['note'])
+            self.assertNotIn('hunter2', clean['note'])
+
+    def test_a_gcp_key_and_a_pem_block_are_redacted(self):
+        clean, _ = self.pii.sanitise(
+            {'note': 'key AIzaSyD-1234567890abcdefghijklmnopqrstu'})
+        self.assertNotIn('AIzaSyD-1234567890abcdefghijklmnopqrstu', clean['note'])
+        clean, _ = self.pii.sanitise({'note': '-----BEGIN PRIVATE KEY-----'})
+        self.assertIn('[REDACTED]', clean['note'])
+
+    def test_a_checksum_is_NOT_mistaken_for_a_secret(self):
+        """The false-positive side of the base64 catch-all, which review
+        confirmed was real: a 64-char SHA-256 was being redacted as a secret.
+        A user asking "does this hash match?" must still get an answer, and §5
+        lists this kind of value as substance."""
+        sha = 'a' * 64
+        clean, _ = self.pii.sanitise({'note': 'checksum %s ok' % sha})
+        self.assertIn(sha, clean['note'])
+        lot = '1' * 44
+        clean, _ = self.pii.sanitise({'note': 'lot %s' % lot})
+        self.assertIn(lot, clean['note'])
+
+    def test_a_name_is_never_tokenised_twice(self):
+        """REGRESSION, and it fired on EVERY ask() call.
+
+        A value that is both a known identity AND under a partner field was
+        tokenised twice — PARTNER_1, then that literal string tokenised again
+        into PARTNER_2 mapping to 'PARTNER_1'. Re-hydration restored one level
+        and the user saw the raw token in their answer. It also broke the
+        join-preservation invariant the whole pseudonymisation design exists for.
+        """
+        clean, mapping = self.pii.sanitise(
+            {'partner_id': 'Al Barari Trading'},
+            known_identities=['Al Barari Trading'])
+        self.assertEqual(clean['partner_id'], 'PARTNER_1')
+        self.assertEqual(mapping, {'PARTNER_1': 'Al Barari Trading'})
+        # No token may map to another token.
+        for value in mapping.values():
+            self.assertFalse(value.startswith('PARTNER_'),
+                             'mapping points at a token, not a real value')
+        self.assertEqual(self.pii.rehydrate('PARTNER_1 owes most', mapping),
+                         'Al Barari Trading owes most')
+
     # ---------------------------------------------------------- pseudonymise
     def test_partner_names_become_stable_tokens(self):
         """§5: 'the model reasons over structure; it does not need real
