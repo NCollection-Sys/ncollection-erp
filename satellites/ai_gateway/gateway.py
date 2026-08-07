@@ -36,6 +36,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 import threading
 import time
@@ -49,6 +50,9 @@ from limits import (  # noqa: E402
     TenantLimits,
 )
 from providers import ProviderError, build_provider  # noqa: E402
+# A database name under db_filter=^%d$ — see the check in do_POST.
+_TENANT_RE = re.compile(r"^[A-Za-z0-9]{1,63}$")
+
 from tenant_auth import (  # noqa: E402
     HEADER_SIGNATURE, HEADER_TIMESTAMP, verify,
 )
@@ -292,6 +296,20 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not tenant or not prompt:
             self._send(400, {"error": "'tenant' and 'prompt' must be non-empty"})
+            return
+
+        # A tenant IS a database name here, and CLAUDE.md fixes that shape:
+        # "tenant key === subdomain === database name, always". ALPHANUMERIC
+        # ONLY -- db_filter=^%d$ routes a subdomain to the database of the same
+        # name, underscores are invalid in hostnames and hyphens need Postgres
+        # quoting. Adding this check immediately exposed that the proof script
+        # was probing with `probe-a`, a name no real tenant could ever have.
+        # Enforcing it is input hygiene, and it also bounds the per-tenant
+        # breaker/ledger dicts: without it, anyone holding the master could mint
+        # unlimited distinct tenant strings and grow both without limit.
+        if not _TENANT_RE.match(tenant):
+            self._send(400, {"error": "'tenant' must be 1-63 alphanumeric "
+                                      "characters (it is a database name)"})
             return
 
         # AUTHENTICATE THE CLAIM BEFORE IT IS USED FOR ANYTHING (#373).

@@ -53,7 +53,7 @@ services:
       # `mock` by default — a deployment that forgets to configure a provider
       # produces obviously-fake completions rather than silently spending money
       # or shipping tenant content somewhere unintended.
-      # The platform master from which every  tenant's signing key is DERIVED
+      # The platform master from which every tenant's signing key is DERIVED
       # (#373). Unset => the gateway refuses every request with 503 rather than
       # believing whatever tenant it is told. Fail closed on purpose.
       NC_AI_GATEWAY_KEY: ${NC_AI_GATEWAY_KEY:-}

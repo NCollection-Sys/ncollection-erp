@@ -26,16 +26,35 @@ prior art Phase 5 **must reuse rather than reinvent**:
 
 Only the master exists as a stored secret. Per-tenant keys are DERIVED on both
 sides, never stored anywhere — the property #212 was designed around. A leaked
-key authenticates as exactly one tenant, never platform-wide, and rotating the
-master rotates every tenant at once.
+DERIVED key authenticates as exactly one tenant, and rotating the master
+rotates every tenant at once.
+
+THE ACCEPTED TRADE-OFF, stated here rather than left in a ticket comment.
+"Never platform-wide" is true of a leaked derived key, NOT of the master. The
+master lives in the env of the Odoo container, which is ONE process serving
+every tenant database — so a tenant admin able to run arbitrary Python in their
+own database (a Server Action) can read it and derive any other tenant's key.
+
+That was chosen deliberately over the alternative, which was storing a usable
+key inside every tenant database — a DB dump would then yield a live
+credential, the exact property #212 exists to avoid. Config-sync's master has
+the identical exposure for the identical reason.
+
+Bounded, and worth being precise about what it does NOT reach: the satellite
+holds the LLM provider keys and no database credentials, and a forger receives
+their own HTTP response. So the blast radius is budget theft, audit
+misattribution and breaker griefing — never another tenant's prompts, responses
+or data. Mitigations are master rotation and keeping tenant admins away from
+Server Actions, not anything in this file.
 
 WHY THIS FILE IS A COPY OF LOGIC THAT ALREADY EXISTS
 ----------------------------------------------------
 `ncollection_saas/models/config_sync.py` has the same three lines. It cannot be
 imported here: this process is plain Python with no Odoo, and the tenant addon
-is forbidden from importing `satellites/` (asserted by
-`ncollection_ai/tests/test_isolation.py` — the HTTP boundary is the whole point
-of the satellite topology).
+is forbidden from importing `satellites/`, which IS now asserted, by
+`test_isolation.py::test_the_addon_never_imports_from_the_satellite`. Three
+comments claimed that test existed before it did; a reviewer grepped and found
+nothing. The test was written rather than the claim softened.
 
 So the algorithm is deliberately duplicated, and the drift that invites is
 guarded mechanically instead of by hope: `scripts/ci/invariants.py` asserts the
@@ -51,8 +70,9 @@ import time
 # produce a key valid for the other one.
 KDF_LABEL = b'nc-ai-gateway:'
 
-# Signed request headers.
-HEADER_TENANT = 'X-NC-Tenant'
+# Signed request headers. The tenant itself travels in the SIGNED BODY, not a
+# header — a header would be a second place to state the same thing, and the
+# two could disagree. There is deliberately no X-NC-Tenant.
 HEADER_TIMESTAMP = 'X-NC-Timestamp'
 HEADER_SIGNATURE = 'X-NC-Signature'
 
@@ -96,7 +116,13 @@ def verify(master: str, tenant: str, timestamp: str, body: bytes,
     if not master or not tenant or not signature or not timestamp:
         return False
     try:
-        sent_at = float(timestamp)
+        # int(), NOT float(). float('nan') parses fine, and EVERY comparison
+        # against NaN is False — so `abs(now - nan) > SKEW` is False and a
+        # timestamp of literally "nan" skips the freshness check entirely,
+        # turning a 300-second window into a signature that never expires.
+        # Found by review, confirmed live. Every legitimate sender emits
+        # '%d' % int(time.time()), so nothing real is lost by refusing floats.
+        sent_at = int(timestamp)
     except (TypeError, ValueError):
         return False
     current = time.time() if now is None else now

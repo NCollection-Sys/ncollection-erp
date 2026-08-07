@@ -41,6 +41,40 @@ class TestContextIsolation(TransactionCase):
         cls.builder = cls.env['ncollection.ai.context']
 
     # ------------------------------------------------- 1. structural signature
+    def test_the_addon_never_imports_from_the_satellite(self):
+        """The HTTP boundary IS the satellite topology (#373).
+
+        THIS TEST EXISTS BECAUSE ITS ABSENCE WAS AN OVERCLAIM. Three separate
+        comments — in gateway_client.py, tenant_auth.py and invariants.py —
+        justified duplicating security-critical key derivation on the grounds
+        that "test_isolation.py asserts ncollection_ai never imports from
+        satellites/". A reviewer grepped this file and found zero occurrences
+        of the word. The duplication was right; the stated guarantee was
+        fiction, so nothing would have stopped a later PR from "tidying up"
+        the copy into a real import.
+
+        Why an import would be wrong even though it looks cleaner: the addon
+        runs inside Odoo in a tenant database; the satellite is a separate
+        process with LLM credentials and NO database credentials
+        (ARCHITECTURE_DATA_PLATFORM §10). Importing across that line makes the
+        two deployable units one, and the isolation stops being structural.
+        """
+        import re
+        module_root = pathlib.Path(__file__).resolve().parent.parent
+        offenders = []
+        for path in module_root.rglob('*.py'):
+            for lineno, line in enumerate(
+                    path.read_text(encoding='utf-8').splitlines(), 1):
+                # Imports only — the word appears legitimately in prose that
+                # explains why it must not be imported.
+                if re.match(r'\s*(from|import)\s+.*\bsatellites\b', line):
+                    offenders.append('%s:%d: %s'
+                                     % (path.name, lineno, line.strip()))
+        self.assertFalse(
+            offenders,
+            "ncollection_ai must not import from satellites/ — the HTTP "
+            "boundary is the isolation. Found:\n%s" % '\n'.join(offenders))
+
     def test_only_ask_is_reachable_by_rpc(self):
         """CRITICAL, round 5. The role gate protected ONE of four doors.
 

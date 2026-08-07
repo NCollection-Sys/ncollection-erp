@@ -61,11 +61,13 @@ _TIMEOUT = 30
 # platform, and rotating the master rotates everyone.
 #
 # WHY THIS IS DUPLICATED, KNOWINGLY. The identical three lines live in
-# satellites/ai_gateway/tenant_auth.py. This module MUST NOT import them —
-# tests/test_isolation.py asserts ncollection_ai never imports from
-# satellites/, because the HTTP boundary is the entire point of the satellite
-# topology. So the copy is deliberate and the drift it invites is guarded by
-# scripts/ci/invariants.py, which fails CI if the two stop agreeing.
+# satellites/ai_gateway/tenant_auth.py. This module MUST NOT import them,
+# which test_isolation.py::test_the_addon_never_imports_from_the_satellite now
+# actually asserts — three comments claimed it did before it was written.
+# The copy is deliberate; the drift it invites is guarded by invariants.py's
+# rule_ai_gateway_kdf_agrees, which EXECUTES both implementations and compares
+# their output, so a reordered concatenation fails CI even though every
+# substring is still present.
 _GATEWAY_KEY_ENV = 'NC_AI_GATEWAY_KEY'
 _KDF_LABEL = b'nc-ai-gateway:'
 _HEADER_TIMESTAMP = 'X-NC-Timestamp'
