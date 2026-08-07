@@ -168,6 +168,12 @@ _IDENTITY_SCAN_LIMIT = 2000
 # "secret santa" are English, not credentials.
 # TWO GROUPS, because the right boundary differs by noun.
 #
+# No idiom guard on `key` any more. Rounds 6-7 carried `key(?!\s+to\b)` to keep
+# "the key to success is teamwork" askable, but that suppressed the NOUN, so
+# "here are the keys to Str0ngRoom2026" stopped being seen at all. The value
+# shape settles both correctly: "success"/"teamwork" are not credential-shaped,
+# "Str0ngRoom2026" is. A guard that hides the signal is worse than no guard.
+#
 #   _NOUN_SEP_BOUNDED  `key` and `pin` are inside ordinary English words
 #                      (monkey, donkey, whiskey, keyboard, spin, pinpoint), so
 #                      these must not be preceded by a letter or digit.
@@ -177,7 +183,7 @@ _IDENTITY_SCAN_LIMIT = 2000
 #                      a letter prefix is allowed. Both were verified against a
 #                      both-directions case list before being applied.
 _NOUN_SEP_BOUNDED = (r'(?<![A-Za-z0-9])'
-                     r'(?:key(?!\s+to\b)|pin)s?'
+                     r'(?:keys?|pins?)'
                      r'(?![A-Za-z0-9])')
 _NOUN_COMPOUND_OK = (
     r'(?:pass(?:word|wd|phrase|code|key)|pwd|'
@@ -186,10 +192,6 @@ _NOUN_COMPOUND_OK = (
     r'(?:security|access|verification)\s+code)s?(?![A-Za-z0-9])')
 _CREDENTIAL_NOUN = '(?:%s|%s)' % (_NOUN_SEP_BOUNDED, _NOUN_COMPOUND_OK)
 
-_CREDENTIAL_NOUN_RE = re.compile(_CREDENTIAL_NOUN, re.IGNORECASE)
-_NOUN_VALUE_WINDOW = 40
-_CONNECTOR_RE = re.compile(r'(?:\b(?:is|are|was|were|to)\b|[=:,]|\s-\s)\s*',
-                           re.IGNORECASE)
 # HOW A VALUE IS JUDGED — a shape ALLOWLIST, not a word denylist.
 #
 # Rounds 5-7 used _STATE_WORD_RE: refuse unless the value is a known English
@@ -261,7 +263,12 @@ def _looks_like_a_juxtaposed_value(value):
     interleaved digits make them indistinguishable from a secret by shape, so
     they fail safe. Documented rather than pretended away.
     """
-    if len(value) < 6 or not value.isalnum():
+    # `-`, `_` and `.` are ordinary in real secrets, and requiring isalnum()
+    # meant ONE of them removed the value from detection entirely at both
+    # layers: "wifi password p4ss-W0rd2026" was sent verbatim while the
+    # punctuation-free "p4ssW0rd2026" was caught.
+    core = value.replace('-', '').replace('_', '').replace('.', '')
+    if len(value) < 6 or not core.isalnum():
         return False
     if any(c.isdigit() for c in value.rstrip('0123456789')):
         return True
@@ -339,9 +346,15 @@ def _declares_a_secret(text):
     """
     for noun in _CREDENTIAL_NOUN_RE.finditer(text):
         tail = text[noun.end():noun.end() + _NOUN_VALUE_WINDOW]
-        if _HIGH_SIGNAL_NOUN_RE.fullmatch(noun.group(0).strip()):
-            if tail.split():
-                return True
+        # A high-signal noun still needs a CONNECTOR before its value counts.
+        # Without that, "Does our password policy require a passphrase for
+        # admin accounts?" and "what does passphrase mean here?" were refused —
+        # ordinary IT-policy questions carrying no secret. With it,
+        # "my recovery phrase is apple grape ocean" is still caught, because
+        # the value follows "is".
+        if (_HIGH_SIGNAL_NOUN_RE.fullmatch(noun.group(0).strip())
+                and _CONNECTOR_RE.search(tail)):
+            return True
 
         following = tail.split()
         if following and _looks_like_a_juxtaposed_value(
@@ -355,7 +368,13 @@ def _declares_a_secret(text):
             # too short and "abc.def.ghi" carries no digit. `:` deliberately
             # does NOT get this treatment: it is also an ordinary topic
             # separator ("api key rotation policy: how many keys...").
-            if '=' in connector.group(0) and rest:
+            # UNSPACED `=` only — glued directly to the noun, as in
+            # "SECRET_KEY=abc". "key = value pairs are stored as JSON" and
+            # "our login = SSO for every vendor" are ordinary integration
+            # English, and refusing them was a self-inflicted denial of the
+            # feature. Spaced `=` falls through to the ordinary shape test.
+            if (connector.start() == 0 and connector.group(0).startswith('=')
+                    and rest):
                 return True
             for token in rest:
                 if _looks_like_a_credential_value(
@@ -405,6 +424,22 @@ class AiQuestion(models.AbstractModel):
         names.add(self.env.company.name)
         return [name for name in names if name]
 
+    def _free_text_enabled(self):
+        """Whether this workspace accepts free-typed questions. Default NO.
+
+        `sudo()` because the parameter is a workspace-level policy switch and a
+        non-admin user must be able to hit the refusal rather than an
+        AccessError on ir.config_parameter — a confusing error for a
+        deliberate policy.
+
+        Defaulting to False rather than True is the whole point: turning this
+        on should be a decision someone makes, having read what it means (#375),
+        not a state a workspace arrives in by installing a module.
+        """
+        return self.env['ir.config_parameter'].sudo().get_param(
+            'ncollection_ai.enable_free_text_questions', '').strip().lower() in (
+                '1', 'true', 'yes')
+
     def _document_prefixes(self):
         """The tenant's REAL ir.sequence prefixes.
 
@@ -420,6 +455,11 @@ class AiQuestion(models.AbstractModel):
         exempted as a warehouse reference and sent verbatim. A genuine WH
         reference is WH/OUT/00012 and never matches that pattern at all.
         """
+        # sudo(): ir.sequence prefixes are non-sensitive document-format
+        # metadata (core already grants read to base.group_user), and this read
+        # only feeds a REDACTION decision — it never returns data to the caller.
+        # sudo here guarantees the decision is made on the real prefixes rather
+        # than failing open if a future role loses that read.
         seqs = self.env['ir.sequence'].sudo().search(
             [('prefix', '!=', False)], limit=500)
         prefixes = set()
@@ -450,6 +490,34 @@ class AiQuestion(models.AbstractModel):
             raise AccessError(self.env._(
                 "The AI assistant is available to the Accountant, the CEO and "
                 "the workspace owner."))
+
+        # FREE TEXT IS OFF BY DEFAULT. This is a scope decision, not a bug.
+        #
+        # P5-T03 is the Context Injection Engine. Its acceptance criteria are
+        # "injection tests prove no cross-tenant data can enter a prompt" and
+        # "context quality reviewed on 20 sample questions" — a curated
+        # developer list. Accepting ARBITRARY end-user prose was never in this
+        # ticket; it was added here, and every CRITICAL across eight review
+        # rounds has been about it.
+        #
+        # Round 8 is where it stops. A reviewer showed that
+        #     "the wifi password is sunshine"      leaks
+        # while
+        #     "the token is stored securely"       must not be refused
+        # and those two are STRUCTURALLY IDENTICAL — noun, connector, one word.
+        # Loosening the value test refuses the second; tightening it leaks the
+        # first. No rule reads both correctly, because the difference is
+        # semantic, not syntactic.
+        #
+        # So the engine ships and the free-text surface ships OFF. The filters
+        # below remain as defence in depth for whoever turns it on, and #375
+        # owns that decision along with the provider terms it depends on.
+        if not self._free_text_enabled():
+            raise UserError(self.env._(
+                "Natural-language questions are not enabled on this workspace. "
+                "The AI context engine is available, but sending free-typed "
+                "text to an external provider must be switched on deliberately "
+                "— see the AI section of the workspace settings."))
 
         context = self.env['ncollection.ai.context']._build(
             max_tokens=max_context_tokens)

@@ -98,7 +98,7 @@ _SECRET_SHAPES = (
     re.compile(r'(?<![A-Za-z0-9])xox[baprs]-[A-Za-z0-9-]{10,}\b'),                # Slack tokens
     re.compile(r'(?<![A-Za-z0-9])eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.'
                r'[A-Za-z0-9_-]*'),                                  # JWT
-    re.compile(r'\b(?:Bearer|Basic)\s+[A-Za-z0-9+/._~-]{16,}=*',
+    re.compile(r'(?<![A-Za-z0-9])(?:Bearer|Basic)\s+[A-Za-z0-9+/._~-]{16,}=*',
                re.IGNORECASE),                                      # auth headers
     # Credentials embedded in a URL or connection string. The most plausible
     # paste in an ERP/integration context, and nothing else here catches it:
@@ -109,7 +109,7 @@ _SECRET_SHAPES = (
     # and password — shipped verbatim. Passwords containing ':' or '/' are
     # unremarkable, so that was a one-character bypass of this round's headline
     # coverage.
-    re.compile(r'\b[a-z][a-z0-9+.-]*://[^\s@]+@\S+', re.IGNORECASE),
+    re.compile(r'(?<![A-Za-z0-9])[a-z][a-z0-9+.-]*://[^\s@]+@\S+', re.IGNORECASE),
     # Lookaround, not \b — same round-6 CRITICAL as ai_question's noun regex.
     # `\b` does not fire between `_` and a letter, so DB_PASSWORD=hunter2 was
     # invisible HERE TOO, meaning the refusal gate and this redactor missed it
@@ -138,8 +138,8 @@ _SECRET_SHAPES = (
     # (?![0-9]+\b) matters more than it looks: every DIGIT is also a hex
     # character, so without it this pattern eats the 44-digit lot number the
     # must-survive test protects. Pure digits are the PAN pattern's job.
-    re.compile(r'\b(?![0-9]+\b)[0-9a-fA-F]{32,}\b'),
-    re.compile(r'\b(?![0-9]+\b)[A-Za-z0-9+/]{40,}={0,2}\b'),
+    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[0-9a-fA-F]{32,}\b'),
+    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[A-Za-z0-9+/]{40,}={0,2}\b'),
     # Long digit runs beyond phone length. Before the E.164 upper bound these
     # were incidentally swept into PHONE_n — mislabelled, but redacted. Adding
     # the bound removed that accidental cover from 16-digit card PANs, which sit
@@ -147,7 +147,7 @@ _SECRET_SHAPES = (
     # 13-19 digits: the ISO/IEC 7812 PAN range. NOT "15+" — that also swallowed
     # a 44-digit lot number, destroying substance §5 says to send freely. The
     # bound has to match the thing being protected, not merely exceed phones.
-    re.compile(r'\b(?:\d[ -]?){12,18}\d\b'),
+    re.compile(r'(?<![A-Za-z0-9])(?:\d[ -]?){12,18}\d\b'),
 )
 
 # Government-issued identifiers that mix letters and digits — passports,
@@ -173,7 +173,7 @@ _SECRET_SHAPES = (
 # sit here checked for an adjacent "/" and was trivially bypassed by ordinary
 # punctuation ("passport /A1234567" leaked), so it made things strictly worse.
 _ALNUM_ID_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{1,2}\d{6,9}\b', re.IGNORECASE)
-_EMAIL_RE = re.compile(r'\b[\w.+-]+@[\w-]+\.[\w.-]+\b')
+_EMAIL_RE = re.compile(r'(?<![A-Za-z0-9])[\w.+-]+@[\w-]+\.[\w.-]+\b')
 # Deliberately conservative: matching more aggressively starts eating the
 # substance §5 says to send freely.
 #

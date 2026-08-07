@@ -65,65 +65,69 @@ passed it. That exact claim was disproved for the financial dashboards in
 Known limits
 ============
 
-* **Free-text secret detection is best-effort and cannot be made complete.**
-  An earlier version of this section drew the line at "declared vs undeclared"
-  secrets. That was an overclaim — ``"the CVV is 123"`` is declared in plain
-  English and was leaking, because ``cvv`` was simply missing from the noun
-  list. The undecidability argument is real, but it was being used to cover a
-  gap it did not apply to. The actual boundary:
+* **Natural-language questions are OFF by default.** ``ask()`` refuses free
+  text unless ``ncollection_ai.enable_free_text_questions`` is set. This is a
+  scope decision: P5-T03 is the *Context Injection Engine*, and its acceptance
+  criteria never included arbitrary end-user prose. Eight review rounds
+  established that filtering such prose cannot be made both safe and usable —
+  ``"the wifi password is sunshine"`` must be refused and ``"the token is
+  stored securely"`` must not, and those are the same sentence structurally.
+  Turning it on is a deliberate act, taken with the provider terms it depends
+  on. See issue #375, which P5-T06 must resolve first.
 
-  **Caught** — a credential named by a noun in ``_CREDENTIAL_NOUN`` and either
-  immediately followed by a letters-and-digits token (``"wifi password
-  p4ssW0rd2026"``) or joined within ~40 characters by a connector
-  (``is``/``are``/``was``/``were``/``to``/``=``/``:``/``,``/`` - ``) whose value
-  is not an ordinary state word; **or** any single token over 19 characters
-  mixing letters and digits; **or** anything matching a structural shape
-  (vendor prefixes, JWT, PEM, connection string, IBAN, card PAN). Env-var and
-  config shapes (``DB_PASSWORD=``, ``wifi_password:``) are included — they were
-  not, until round 6, because ``\b`` does not fire between ``_`` and a letter.
+* **Behind that switch, the free-text filter is best-effort.** It refuses a
+  credential noun (``password``, ``key``, ``login``, ``cvv``, ``recovery
+  phrase``…, including plurals and compound forms like ``DB_PASSWORD``) whose
+  value is credential-*shaped* — letters+digits, a short digit run, length ≥12,
+  or mixed case. Also refused: an unspaced ``=`` assignment, and any single
+  token over 19 characters mixing letters and digits.
 
-  **Not caught**, each demonstrated by a reviewer and each tracked in the
-  corpus so the count stays visible:
+  **Not caught** — pinned by
+  ``test_the_known_residual_is_what_the_documentation_says_it_is``, which
+  asserts these still travel, so closing one *fails that test* and forces this
+  list to be corrected rather than drifting:
 
-  - a noun outside the list (``"the doorcode is 4521"``)
+  - a credential noun outside the list (``"the doorcode is 4521"``)
   - no noun at all (``"check correcthorsebatterystaple for me"``)
-  - a decoy clause that puts a state word in the value slot and the real secret
-    further along (``"the password is not accepted, it's actually p4ss123"``).
-    Closing this needs a scan of every token near the noun, which was measured
-    and rejected: it refuses ``"the api key rotation policy: how many keys are
-    older than 90 days?"`` because *rotation* is eight characters.
-  - a declaration whose connector falls outside the window
+  - a short, single-case, dictionary-word value (``"the password is dragon"``)
+  - connectors spelled as words the module does not know (``"password equals
+    X"``, ``"the api key -> X"``)
 
-  The noun list is maintainable and should grow whenever a gap is found. The
-  rest is genuinely undecidable — a lowercase passphrase is indistinguishable
-  from prose — and is why this feature needs a zero-retention provider
-  agreement rather than a cleverer pattern.
+  **Known false refusals**, accepted as the fail-safe direction: an ordinary
+  word of 12+ characters directly after a credential noun (``"the password is
+  confidential"``), and ERP references with interleaved digits beside a
+  credential noun (``AC2026Z9``, ``TXN2026Q1``). ``login history2026`` and
+  ``login AB123456`` are *not* refused — their digits are a trailing run. This
+  cost is why the feature is opt-in rather than on.
 
-  **Six review rounds established this.** Every round that tried to close the
-  gap with more pattern opened a false refusal elsewhere, and a control that
-  blocks *"Can you pass this invoice to Sarah?"* gets switched off — a worse
-  security outcome than the gap it closed.
-* **Only ``ask()`` is public.** ``_build``, ``_sanitise``, ``_rehydrate`` and
-  ``_complete`` are underscore-prefixed so Odoo's ``call_kw`` refuses them
-  outright. Before that, a Manager-role user blocked from ``ask()`` could call
-  ``ncollection.ai.context.build()`` by RPC and receive **unsanitised**
-  company-wide receivables — sanitisation only happens inside ``ask()``.
-* Long hex strings are redacted, so a question about a **checksum** gets
+* Long hex strings are redacted, so a question about a **checksum** returns
   ``[REDACTED]``. Deliberate: no shape separates a SHA-1 digest from a 40-char
   HMAC key, and §5's "never send" for secrets is unconditional.
+
 * The free-text identity scan is bounded (``_IDENTITY_SCAN_LIMIT``). A partner
   outside that window is not pseudonymised in free text. The structured path
   remains the primary control.
-* The tenant identity sent to the gateway is **not authenticated** — tracked
-  separately, since the fix spans the already-merged satellite (#59).
+
+* **Only ``ask()`` is public.** ``_build``, ``_sanitise``, ``_rehydrate`` and
+  ``_complete`` are underscore-prefixed so Odoo's ``call_kw`` refuses them.
+  Before that, a Manager-role user blocked from ``ask()`` could call
+  ``ncollection.ai.context.build()`` by RPC and receive **unsanitised**
+  company-wide receivables.
+
+* The tenant identity sent to the gateway is **not authenticated** — tracked in
+  #373, since the fix spans the already-merged satellite (#59).
+
 * Prompts are assembled tenant-side. ``AI_PLATFORM_DESIGN.md`` §3 specifies
-  gateway-side layering with a recorded template version; that is not
-  implemented here and is tracked separately.
+  gateway-side layering with a recorded template version; not implemented here.
 
 Usage
 =====
 
 .. code-block:: python
+
+    # Free text is OFF by default — read "Known limits" and #375 first.
+    env['ir.config_parameter'].sudo().set_param(
+        'ncollection_ai.enable_free_text_questions', 'True')
 
     env['ncollection.ai.question'].ask("Which customer owes us the most?")
 

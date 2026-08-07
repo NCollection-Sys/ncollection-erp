@@ -27,6 +27,11 @@ class TestAskSanitisation(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.Question = cls.env['ncollection.ai.question']
+        # Free text is OFF by default (see ask()). These tests exercise the
+        # filters BEHIND that switch, so they turn it on explicitly — which is
+        # also a standing reminder that a default install does not have it.
+        cls.env['ir.config_parameter'].sudo().set_param(
+            'ncollection_ai.enable_free_text_questions', 'True')
         cls.partner = cls.env['res.partner'].create({
             'name': 'Al Barari Trading LLC',
             'email': 'ahmed@albarari.example',
@@ -47,6 +52,43 @@ class TestAskSanitisation(TransactionCase):
         ):
             self.Question.ask(question)
         return captured['prompt']
+
+    # ----------------------------------------------------------- opt-in switch
+    def test_free_text_questions_are_refused_until_switched_on(self):
+        """THE SCOPE DECISION, pinned.
+
+        P5-T03 is the Context Injection Engine. Its acceptance criteria never
+        included accepting arbitrary end-user prose — that was added here, and
+        every CRITICAL across eight review rounds came from it. Round 8 showed
+        why it cannot be resolved: "the wifi password is sunshine" must be
+        refused and "the token is stored securely" must not, and those are the
+        same sentence structurally.
+
+        So the engine ships and the free-text surface ships OFF. Turning it on
+        is a deliberate act, taken together with the provider terms it depends
+        on (#375). The filters remain as defence in depth for whoever does.
+        """
+        self.env['ir.config_parameter'].sudo().set_param(
+            'ncollection_ai.enable_free_text_questions', 'False')
+        self.addCleanup(
+            self.env['ir.config_parameter'].sudo().set_param,
+            'ncollection_ai.enable_free_text_questions', 'True')
+
+        with self.assertRaises(UserError) as caught:
+            self.Question.ask("Which customer owes us the most?")
+        self.assertIn('not enabled', str(caught.exception))
+
+    def test_the_switch_is_off_when_the_parameter_was_never_set(self):
+        """Absent must mean OFF. A default that arrives by installing a module
+        is not a decision anyone made."""
+        self.env['ir.config_parameter'].sudo().search([
+            ('key', '=', 'ncollection_ai.enable_free_text_questions')]).unlink()
+        self.addCleanup(
+            self.env['ir.config_parameter'].sudo().set_param,
+            'ncollection_ai.enable_free_text_questions', 'True')
+
+        with self.assertRaises(UserError):
+            self.Question.ask("Which customer owes us the most?")
 
     # ------------------------------------------------------------ authorization
     def test_a_sales_user_cannot_ask_and_therefore_cannot_read_receivables(self):
@@ -170,14 +212,19 @@ class TestAskSanitisation(TransactionCase):
         existed only in a scratchpad file, invisible to anyone reading the
         repo. This is that corpus, in the tree.
         """
-        for question in (
+        for question, value in (
             # a credential noun outside _CREDENTIAL_NOUN
-            "the doorcode is 4521",
+            ("the doorcode is 4521", "4521"),
             # no noun at all — genuinely undecidable, five English words
-            "check correcthorsebatterystaple for me",
+            ("check correcthorsebatterystaple for me",
+             "correcthorsebatterystaple"),
         ):
             prompt = self._prompt_for(question)   # must NOT raise
-            self.assertIn('QUESTION:', prompt)
+            # Assert the VALUE actually travels. A reviewer pointed out the
+            # first version only checked that nothing raised, so it would have
+            # stayed green if some unrelated pattern started redacting these —
+            # the exact opposite of what the docstring promises.
+            self.assertIn(value, prompt, question)
 
     # ------------------------------------------------------- must NOT scrub
     def test_a_document_reference_survives(self):
