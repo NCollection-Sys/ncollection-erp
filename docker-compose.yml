@@ -60,6 +60,10 @@ services:
       # platform uses it to push plan changes into tenant DBs. Empty by default
       # (config sync then fails soft + logs).
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+      # Same master the ai-gateway satellite holds (#373). The tenant side
+      # derives HMAC(master, 'nc-ai-gateway:' + dbname) per request and never
+      # stores a per-tenant secret anywhere.
+      NC_AI_GATEWAY_KEY: ${NC_AI_GATEWAY_KEY:-}
       # Stripe test-mode keys (P2-T13). Read from .env; ncollection_billing
       # configures the admin-DB Stripe provider from these. Empty by default,
       # so online payment simply stays disabled (never a half-configured

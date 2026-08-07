@@ -649,6 +649,51 @@ def rule_cron_threads_scoped(out: list[str]) -> None:
                 )
 
 
+def rule_ai_gateway_kdf_agrees(out: list[str]) -> None:
+    """The per-tenant AI-gateway key derivation exists TWICE and must agree (#373).
+
+    `satellites/ai_gateway/tenant_auth.py` verifies the signature;
+    `custom_addons/ncollection_ai/models/gateway_client.py` produces it. Neither
+    can import the other: the satellite is plain Python with no Odoo, and the
+    addon is forbidden from importing `satellites/` (asserted by
+    ncollection_ai/tests/test_isolation.py, because the HTTP boundary IS the
+    satellite topology).
+
+    So the algorithm is duplicated on purpose. Duplication that nothing checks
+    is how a security control silently stops matching its verifier — the change
+    would pass every unit test on both sides independently and fail only in
+    production, as a 401 nobody can explain. This asserts the two agree on the
+    domain-separation label, the hash, and the signed material.
+    """
+    checks = [
+        ("satellites/ai_gateway/tenant_auth.py",
+         ["KDF_LABEL = b'nc-ai-gateway:'", "hashlib.sha256",
+          "timestamp.encode() + b'.' + body"]),
+        ("custom_addons/ncollection_ai/models/gateway_client.py",
+         ["_KDF_LABEL = b'nc-ai-gateway:'", "hashlib.sha256",
+          "timestamp.encode() + b'.' + body"]),
+    ]
+    for rel, needles in checks:
+        path = REPO_ROOT / rel
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            out.append(
+                f"{rel}: unreadable, so the AI-gateway key derivation cannot be "
+                f"checked against its counterpart (#373)."
+            )
+            continue
+        for needle in needles:
+            if needle not in text:
+                out.append(
+                    f"{rel}: the AI-gateway signing scheme no longer contains "
+                    f"{needle!r}. The tenant side and the satellite derive the "
+                    f"per-tenant key independently and MUST stay identical "
+                    f"(#373) — change both, or authentication breaks in "
+                    f"production while both test suites still pass."
+                )
+
+
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
     workflow = REPO_ROOT / CI_WORKFLOW
@@ -897,6 +942,7 @@ def main() -> int:
     rule_ci_module_coverage(findings)
     rule_cron_threads_scoped(findings)
     rule_cron_enumeration_declared(findings)
+    rule_ai_gateway_kdf_agrees(findings)
 
     if findings:
         print("invariants: violations found\n")

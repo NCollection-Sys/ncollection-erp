@@ -12,6 +12,7 @@ socket.
 """
 import io
 import json
+import os
 import urllib.error
 
 from unittest.mock import patch
@@ -39,6 +40,16 @@ class TestGatewayClient(TransactionCase):
         super().setUpClass()
         cls.gateway = cls.env['ncollection.ai.gateway']
 
+    def setUp(self):
+        super().setUp()
+        # Requests are signed per tenant (#373), so the master must be present
+        # or _complete refuses before it reaches the transport. patch.dict
+        # restores the real environment afterwards.
+        patcher = patch.dict(
+            os.environ, {gateway_client._GATEWAY_KEY_ENV: 'test-master-key'})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def _with_urlopen(self, side_effect):
         return patch('urllib.request.urlopen', side_effect=side_effect)
 
@@ -65,6 +76,57 @@ class TestGatewayClient(TransactionCase):
             self.gateway._complete('prompt', max_tokens=64)
         self.assertEqual(captured['body']['tenant'], self.env.cr.dbname)
         self.assertEqual(captured['body']['max_tokens'], 64)
+
+    # ------------------------------------------------------------ signing
+    def test_the_request_is_signed_for_this_database(self):
+        """#373 — the gateway used to believe whatever tenant it was told.
+
+        The signature is over the timestamp AND the exact body bytes, keyed by
+        HMAC(master, 'nc-ai-gateway:' + dbname). Recomputing it here with the
+        same inputs proves the wire format is what the satellite verifies —
+        the two sides are separate code (the addon must not import
+        satellites/), so this is the seam that can silently drift.
+        """
+        captured = {}
+
+        def fake_urlopen(request, timeout=None):
+            captured['headers'] = dict(request.headers)
+            captured['body'] = request.data
+            return _FakeResponse(b'{"text": "ok"}')
+
+        with patch('urllib.request.urlopen', new=fake_urlopen):
+            self.gateway._complete('prompt')
+
+        headers = {k.lower(): v for k, v in captured['headers'].items()}
+        stamp = headers['x-nc-timestamp']
+        expected = gateway_client._sign(
+            'test-master-key', self.env.cr.dbname, stamp, captured['body'])
+        self.assertEqual(headers['x-nc-signature'], expected)
+
+    def test_a_different_database_produces_a_different_signature(self):
+        """The whole point of deriving PER TENANT: holding one workspace's key
+        must not let you sign as another. If these ever matched, a single
+        leaked key would be platform-wide."""
+        body, stamp = b'{"tenant": "x"}', '1700000000'
+        self.assertNotEqual(
+            gateway_client._sign('m', 'acme', stamp, body),
+            gateway_client._sign('m', 'globex', stamp, body))
+
+    def test_a_missing_master_refuses_before_sending_anything(self):
+        """Fail closed. An unsigned request would be rejected by the satellite
+        anyway, but refusing here means the prompt never leaves the process."""
+        sent = []
+
+        def fake_urlopen(request, timeout=None):
+            sent.append(request)
+            return _FakeResponse(b'{}')
+
+        with patch.dict(os.environ, {gateway_client._GATEWAY_KEY_ENV: ''}):
+            with patch('urllib.request.urlopen', new=fake_urlopen):
+                with self.assertRaises(UserError) as caught:
+                    self.gateway._complete('prompt')
+        self.assertIn(gateway_client._GATEWAY_KEY_ENV, str(caught.exception))
+        self.assertFalse(sent, "nothing may be transmitted without a signature")
 
     # --------------------------------------------------------- error mapping
     def test_an_http_error_surfaces_the_gateways_own_message(self):
