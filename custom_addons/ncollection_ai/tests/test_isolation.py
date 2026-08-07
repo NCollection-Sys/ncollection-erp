@@ -26,6 +26,7 @@ the builder a second cursor, 1 and 2 would still pass and 3 would fail.
 """
 import inspect
 import pathlib
+import re
 
 from odoo.tests import TransactionCase, tagged
 
@@ -41,6 +42,64 @@ class TestContextIsolation(TransactionCase):
         cls.builder = cls.env['ncollection.ai.context']
 
     # ------------------------------------------------- 1. structural signature
+    def test_the_addon_never_imports_from_the_satellite(self):
+        """The HTTP boundary IS the satellite topology (#373).
+
+        THIS TEST EXISTS BECAUSE ITS ABSENCE WAS AN OVERCLAIM. Three separate
+        comments — in gateway_client.py, tenant_auth.py and invariants.py —
+        justified duplicating security-critical key derivation on the grounds
+        that "test_isolation.py asserts ncollection_ai never imports from
+        satellites/". A reviewer grepped this file and found zero occurrences
+        of the word. The duplication was right; the stated guarantee was
+        fiction, so nothing would have stopped a later PR from "tidying up"
+        the copy into a real import.
+
+        Why an import would be wrong even though it looks cleaner: the addon
+        runs inside Odoo in a tenant database; the satellite is a separate
+        process with LLM credentials and NO database credentials
+        (ARCHITECTURE_DATA_PLATFORM §10). Importing across that line makes the
+        two deployable units one, and the isolation stops being structural.
+
+        WHAT THIS DOES AND DOES NOT GUARANTEE — stated precisely, because the
+        previous version of this docstring overclaimed and a reviewer bypassed
+        it in one line. This is a LEXICAL check. It catches the realistic
+        accidental case (someone "tidies up" the duplicated crypto into a real
+        import) and the obvious dynamic dodges below. It does NOT stop a
+        determined author: `sys.path.insert(...)` followed by a bare
+        `import tenant_auth` names no satellite and would pass. Nothing short
+        of import-hooking the test runner would, and that is not worth it here.
+        The real enforcement is that the two run as separate deployable units;
+        this is a tripwire, not a wall.
+        """
+        module_root = pathlib.Path(__file__).resolve().parent.parent
+        offenders = []
+        this_file = pathlib.Path(__file__).resolve()
+        for path in module_root.rglob('*.py'):
+            # Skip THIS file: it necessarily spells out every pattern it
+            # forbids, in its own docstring, and would flag itself.
+            if path.resolve() == this_file:
+                continue
+            for lineno, line in enumerate(
+                    path.read_text(encoding='utf-8').splitlines(), 1):
+                # Imports only — the word appears legitimately in prose that
+                # explains why it must not be imported.
+                stripped = line.strip()
+                if stripped.startswith('#'):
+                    continue        # prose explaining why not to, not an import
+                # Direct imports, plus the dynamic dodges and the sys.path
+                # manipulation that would be needed to reach the satellite
+                # without naming it on an import line.
+                if (re.match(r'\s*(from|import)\s+.*\bsatellites\b', line)
+                        or re.search(r'\bsatellites\b', stripped) and re.search(
+                            r'importlib|__import__', stripped)
+                        or re.search(r'sys\.path\.(insert|append)', stripped)):
+                    offenders.append('%s:%d: %s'
+                                     % (path.name, lineno, stripped))
+        self.assertFalse(
+            offenders,
+            "ncollection_ai must not import from satellites/ — the HTTP "
+            "boundary is the isolation. Found:\n%s" % '\n'.join(offenders))
+
     def test_only_ask_is_reachable_by_rpc(self):
         """CRITICAL, round 5. The role gate protected ONE of four doors.
 

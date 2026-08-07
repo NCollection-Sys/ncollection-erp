@@ -282,7 +282,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 6
+RULE_COUNT = 7
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -649,6 +649,117 @@ def rule_cron_threads_scoped(out: list[str]) -> None:
                 )
 
 
+def rule_ai_gateway_kdf_agrees(out: list[str]) -> None:
+    """The AI-gateway key derivation exists TWICE and must AGREE BY OUTPUT (#373).
+
+    `satellites/ai_gateway/tenant_auth.py` verifies the signature;
+    `custom_addons/ncollection_ai/models/gateway_client.py` produces it. Neither
+    can import the other: the satellite is plain Python with no Odoo, and the
+    addon must not import `satellites/` (enforced by
+    ncollection_ai/tests/test_isolation.py::
+    test_the_addon_never_imports_from_the_satellite). So the copy is deliberate.
+
+    THIS RULE COMPARES BEHAVIOUR, NOT TEXT, and that distinction is the whole
+    point. The first version matched three literal substrings, and a reviewer
+    showed it was blind to the single most important line: swapping
+    `KDF_LABEL + tenant` for `tenant + KDF_LABEL` in one file produces a
+    completely different signature while every substring is still present and
+    every unit test on both sides still passes (each recomputes its expectation
+    with the same function it is testing, so they are self-referential).
+
+    So both implementations are executed on fixed vectors and their outputs
+    compared. Any divergence — order, encoding, digest, delimiter — fails here.
+    The functions are extracted with `ast` and exec'd in an empty namespace, so
+    neither file is imported: `gateway_client.py` imports odoo and would not
+    load in CI.
+    """
+    import ast
+
+    def _extract(rel: str, wanted: dict[str, str]) -> dict | None:
+        """exec the named top-level functions/constants, without importing."""
+        path = REPO_ROOT / rel
+        try:
+            source = path.read_text(encoding="utf-8")
+        except OSError:
+            out.append(f"{rel}: unreadable, so the AI-gateway key derivation "
+                       f"cannot be compared with its counterpart (#373).")
+            return None
+        try:
+            tree = ast.parse(source)
+        except SyntaxError as exc:
+            out.append(f"{rel}: does not parse ({exc}), so the AI-gateway key "
+                       f"derivation cannot be compared (#373).")
+            return None
+
+        keep: list[ast.stmt] = []
+        names = set(wanted.values())
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef) and node.name in names:
+                keep.append(node)
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name) and target.id in names:
+                        keep.append(node)
+        # ONE namespace for globals and locals: a function body resolves names
+        # against its GLOBALS, so splitting them leaves KDF_LABEL invisible to
+        # the very function that uses it.
+        namespace: dict = {"hmac": __import__("hmac"),
+                           "hashlib": __import__("hashlib")}
+        exec(compile(ast.Module(body=keep, type_ignores=[]), rel, "exec"),
+             namespace)
+        missing = [n for n in wanted.values() if n not in namespace]
+        if missing:
+            out.append(
+                f"{rel}: {', '.join(sorted(missing))} not found at module level, "
+                f"so the AI-gateway signing scheme cannot be compared with its "
+                f"counterpart (#373). If it was renamed, update this rule — do "
+                f"not leave the two sides unchecked."
+            )
+            return None
+        return {alias: namespace[real] for alias, real in wanted.items()}
+
+    satellite = _extract(
+        "satellites/ai_gateway/tenant_auth.py",
+        {"derive": "derive_tenant_key", "sign": "sign", "label": "KDF_LABEL"},
+    )
+    addon = _extract(
+        "custom_addons/ncollection_ai/models/gateway_client.py",
+        {"derive": "_derive_tenant_key", "sign": "_sign", "label": "_KDF_LABEL"},
+    )
+    if not satellite or not addon:
+        return
+
+    if satellite["label"] != addon["label"]:
+        out.append(
+            f"AI-gateway domain-separation labels differ: "
+            f"{satellite['label']!r} vs {addon['label']!r} (#373)."
+        )
+
+    # Fixed vectors, including a tenant containing the label itself and one
+    # with an underscore, since db names may carry them.
+    for master, tenant, stamp, body in (
+        ("m", "acme", "1700000000", b'{"tenant":"acme"}'),
+        ("another-master", "globex_2", "1", b""),
+        ("m", "nc-ai-gateway:evil", "1700000000", b"x"),
+    ):
+        if satellite["derive"](master, tenant) != addon["derive"](master, tenant):
+            out.append(
+                f"AI-gateway per-tenant KEY DERIVATION diverges for "
+                f"tenant={tenant!r} (#373). The tenant side signs and the "
+                f"satellite verifies; if these disagree, authentication breaks "
+                f"in production while both test suites still pass, because each "
+                f"recomputes its expectation with the same function it tests."
+            )
+            return
+        if (satellite["sign"](master, tenant, stamp, body)
+                != addon["sign"](master, tenant, stamp, body)):
+            out.append(
+                f"AI-gateway SIGNATURES diverge for tenant={tenant!r} (#373). "
+                f"Same consequence as above: a 401 nobody can explain."
+            )
+            return
+
+
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
     workflow = REPO_ROOT / CI_WORKFLOW
@@ -897,6 +1008,7 @@ def main() -> int:
     rule_ci_module_coverage(findings)
     rule_cron_threads_scoped(findings)
     rule_cron_enumeration_declared(findings)
+    rule_ai_gateway_kdf_agrees(findings)
 
     if findings:
         print("invariants: violations found\n")

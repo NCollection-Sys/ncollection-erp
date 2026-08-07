@@ -36,7 +36,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -48,6 +50,20 @@ from limits import (  # noqa: E402
     TenantLimits,
 )
 from providers import ProviderError, build_provider  # noqa: E402
+# A database name under db_filter=^%d$ — see the check in do_POST.
+# fullmatch(), NOT match(). Python's `$` matches end-of-string OR immediately
+# before a single trailing newline, so `match()` accepted "acme\n" — a value
+# this gate's own error message disclaims, from a stock JSON body.
+#
+# THIS IS THE THIRD TIME THIS WEEK. The PII filter shipped the same anchor
+# blindness twice (c309d52 trailing \b, 54e3e71 the inner guard one level in).
+# Anchors in this codebase mean less than they look like they mean: prefer
+# fullmatch()/lookarounds over trusting ^...$ or \b.
+_TENANT_RE = re.compile(r"[A-Za-z0-9]{1,63}")
+
+from tenant_auth import (  # noqa: E402
+    HEADER_SIGNATURE, HEADER_TIMESTAMP, verify,
+)
 
 # Structured JSON logs, per the satellite contract (§10: "health endpoint,
 # structured JSON logs, restart-safe, resource-limited").
@@ -79,10 +95,22 @@ class Gateway:
         env = os.environ if env is None else env
         self.provider = build_provider(env)
         self.ledger = BudgetLedger(_limits_from_env(env))
-        self.breaker = CircuitBreaker(
-            failure_threshold=int(env.get("NC_AI_BREAKER_THRESHOLD", 5)),
-            reset_seconds=float(env.get("NC_AI_BREAKER_RESET", 60)),
-        )
+
+        # The platform master from which every tenant's key is DERIVED (#373).
+        # Empty means unconfigured, and this fails CLOSED — see _authenticated().
+        self.auth_master = env.get("NC_AI_GATEWAY_KEY", "")
+
+        # PER TENANT, not one shared instance (#373). A shared breaker meant one
+        # tenant's provider failures opened the circuit for EVERYONE, so a single
+        # workspace could 503 the whole platform — and before authentication, a
+        # forged tenant could do it deliberately while hiding the true source.
+        # Isolation of failure is the same argument as isolation of budget.
+        self._breaker_settings = {
+            "failure_threshold": int(env.get("NC_AI_BREAKER_THRESHOLD", 5)),
+            "reset_seconds": float(env.get("NC_AI_BREAKER_RESET", 60)),
+        }
+        self._breakers: dict[str, CircuitBreaker] = {}
+        self._breakers_lock = threading.Lock()
 
         # A budget smaller than one default request's WORST CASE refuses every
         # caller that does not set max_tokens explicitly — with "budget
@@ -106,6 +134,41 @@ class Gateway:
                            % (budget, DEFAULT_MAX_TOKENS)),
             }))
 
+    def breaker_for(self, tenant: str) -> CircuitBreaker:
+        """This tenant's breaker, created on first use (#373).
+
+        Unbounded in principle; bounded in practice by the tenant count, which
+        is the same bound BudgetLedger already accepts for the same reason. A
+        breaker is a few counters — the memory is not the concern, and evicting
+        one would discard exactly the state it exists to remember.
+        """
+        with self._breakers_lock:
+            breaker = self._breakers.get(tenant)
+            if breaker is None:
+                breaker = CircuitBreaker(**self._breaker_settings)
+                self._breakers[tenant] = breaker
+            return breaker
+
+    def open_circuit_count(self) -> int:
+        """How many tenant breakers are not closed. Names no tenant."""
+        with self._breakers_lock:
+            breakers = list(self._breakers.values())
+        return sum(1 for b in breakers if b.state != "closed")
+
+    def authenticated(self, tenant: str, timestamp: str, body: bytes,
+                      signature: str) -> bool:
+        """Verify the caller may claim to be `tenant`.
+
+        FAILS CLOSED when the master is unset. The alternative — run
+        unauthenticated and log a warning — is how #373 existed in the first
+        place, and a warning in a satellite's log is not a control. A
+        deployment that has not configured the key gets a clear 503 rather than
+        a quietly open door.
+        """
+        if not self.auth_master:
+            return False
+        return verify(self.auth_master, tenant, timestamp, body, signature)
+
     def complete(self, tenant: str, prompt: str, max_tokens: int) -> dict:
         """The one path to a provider. Returns a JSON-able dict.
 
@@ -113,7 +176,8 @@ class Gateway:
         outage does not silently burn a tenant's allowance on calls that cannot
         succeed.
         """
-        self.breaker.before_call()
+        breaker = self.breaker_for(tenant)
+        breaker.before_call()
 
         # ~4 chars/token, matching the mock's estimate. Checking BEFORE the call
         # is what makes the ceiling real: charging only on success would let one
@@ -125,9 +189,9 @@ class Gateway:
         try:
             completion = self.provider.complete(prompt, max_tokens)
         except ProviderError:
-            self.breaker.record_failure()
+            breaker.record_failure()
             raise
-        self.breaker.record_success()
+        breaker.record_success()
 
         self.ledger.record(tenant, completion.total_tokens)
         elapsed_ms = int((time.monotonic() - started) * 1000)
@@ -194,7 +258,12 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, {
                 "status": "ok",
                 "provider": self.gateway.provider.name,
-                "circuit": self.gateway.breaker.state,
+                # Breakers are per tenant now (#373), so there is no single
+                # "the" circuit. Report how many are not closed — the useful
+                # operational signal, and it names no tenant, keeping /healthz
+                # free of tenant content.
+                "circuits_open": self.gateway.open_circuit_count(),
+                "authenticated": bool(self.gateway.auth_master),
             })
             return
         self._send(404, {"error": "not found"})
@@ -224,7 +293,8 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         try:
-            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            raw_body = self.rfile.read(length)
+            payload = json.loads(raw_body.decode("utf-8"))
             tenant = str(payload["tenant"])
             prompt = str(payload["prompt"])
             max_tokens = int(payload.get("max_tokens", DEFAULT_MAX_TOKENS))
@@ -234,6 +304,42 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not tenant or not prompt:
             self._send(400, {"error": "'tenant' and 'prompt' must be non-empty"})
+            return
+
+        # A tenant IS a database name here, and CLAUDE.md fixes that shape:
+        # "tenant key === subdomain === database name, always". ALPHANUMERIC
+        # ONLY -- db_filter=^%d$ routes a subdomain to the database of the same
+        # name, underscores are invalid in hostnames and hyphens need Postgres
+        # quoting. Adding this check immediately exposed that the proof script
+        # was probing with `probe-a`, a name no real tenant could ever have.
+        # Enforcing it is input hygiene, and it also bounds the per-tenant
+        # breaker/ledger dicts: without it, anyone holding the master could mint
+        # unlimited distinct tenant strings and grow both without limit.
+        if not _TENANT_RE.fullmatch(tenant):
+            self._send(400, {"error": "'tenant' must be 1-63 alphanumeric "
+                                      "characters (it is a database name)"})
+            return
+
+        # AUTHENTICATE THE CLAIM BEFORE IT IS USED FOR ANYTHING (#373).
+        # Ordering is the control: budget bucketing, breaker selection and audit
+        # metadata all key off `tenant`, so a check that ran after any of them
+        # would already have let a forged identity move real state.
+        if not self.gateway.auth_master:
+            self._send(503, {
+                "error": "gateway_unauthenticated",
+                "message": ("This gateway has no NC_AI_GATEWAY_KEY configured, "
+                            "so it cannot verify which workspace is calling and "
+                            "refuses to guess."),
+            })
+            return
+        if not self.gateway.authenticated(
+                tenant,
+                self.headers.get(HEADER_TIMESTAMP, ""),
+                raw_body,
+                self.headers.get(HEADER_SIGNATURE, "")):
+            # No detail about WHY. A caller learning "timestamp too old" versus
+            # "bad signature" is being handed an oracle.
+            self._send(401, {"error": "unauthenticated"})
             return
 
         try:

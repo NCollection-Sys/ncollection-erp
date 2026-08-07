@@ -27,7 +27,11 @@ NOT ON THE CRON WORKER
 design; queued/async invocation is P5-T04's problem, not this module's. The
 deadline below bounds the damage if one is made from somewhere it should not be.
 """
+import hashlib
+import hmac
 import json
+import os
+import time
 import urllib.error
 import urllib.request
 
@@ -38,6 +42,55 @@ from odoo.exceptions import UserError
 # in turn mirror config_sync.py. Three copies of one number would drift; the
 # comment is the link until there is a shared config surface worth building.
 _TIMEOUT = 30
+
+# ---------------------------------------------------------------------------
+# PER-TENANT REQUEST SIGNING (#373)
+# ---------------------------------------------------------------------------
+# The gateway used to believe whatever `tenant` a caller put in the body, so
+# anything able to reach ai-gateway:8080 could spend another workspace's AI
+# allowance and misattribute its audit trail.
+#
+# The scheme is NOT invented here. ARCHITECTURE_SECURITY specifies it for the
+# config-sync channel and AI_PLATFORM_DESIGN §7 lists it as prior art Phase 5
+# "must reuse rather than reinvent":
+#
+#     per-tenant key = HMAC-SHA256(master, label || tenant)
+#
+# Only the master is stored. Per-tenant keys are derived on both sides and
+# never written anywhere, so a leak authenticates one tenant rather than the
+# platform, and rotating the master rotates everyone.
+#
+# WHY THIS IS DUPLICATED, KNOWINGLY. The identical three lines live in
+# satellites/ai_gateway/tenant_auth.py. This module MUST NOT import them,
+# which test_isolation.py::test_the_addon_never_imports_from_the_satellite now
+# actually asserts — three comments claimed it did before it was written.
+# The copy is deliberate; the drift it invites is guarded by invariants.py's
+# rule_ai_gateway_kdf_agrees, which EXECUTES both implementations and compares
+# their output, so a reordered concatenation fails CI even though every
+# substring is still present.
+_GATEWAY_KEY_ENV = 'NC_AI_GATEWAY_KEY'
+_KDF_LABEL = b'nc-ai-gateway:'
+_HEADER_TIMESTAMP = 'X-NC-Timestamp'
+_HEADER_SIGNATURE = 'X-NC-Signature'
+
+
+def _derive_tenant_key(master, tenant):
+    """Mirror of tenant_auth.derive_tenant_key. Keep the two identical."""
+    return hmac.new(master.encode(), _KDF_LABEL + tenant.encode(),
+                    hashlib.sha256).digest()
+
+
+def _sign(master, tenant, timestamp, body):
+    """Mirror of tenant_auth.sign. Signs the timestamp AND the body.
+
+    The timestamp is inside the signed material, not merely beside it —
+    otherwise a captured body is replayable forever with a fresh stamp.
+    """
+    key = _derive_tenant_key(master, tenant)
+    return hmac.new(key, timestamp.encode() + b'.' + body,
+                    hashlib.sha256).hexdigest()
+
+
 _MAX_RESPONSE_BYTES = 256 * 1024
 
 _DEFAULT_URL = 'http://ai-gateway:8080'
@@ -73,9 +126,24 @@ class AiGatewayClient(models.AbstractModel):
             'max_tokens': max_tokens,
         }).encode('utf-8')
 
+        # Sign as THIS database. env.cr.dbname is the tenant identity under
+        # db-per-tenant, and it is not caller-supplied — there is nothing here
+        # for a caller to spoof, which is why the claim is worth signing.
+        master = os.environ.get(_GATEWAY_KEY_ENV, '')
+        if not master:
+            raise UserError(self.env._(
+                "The AI service is not configured on this deployment "
+                "(%s is unset), so this workspace cannot prove its identity to "
+                "it. Nothing was sent.", _GATEWAY_KEY_ENV))
+        timestamp = '%d' % int(time.time())
         request = urllib.request.Request(
             '%s/v1/complete' % self._base_url(), data=body, method='POST',
-            headers={'content-type': 'application/json'})
+            headers={
+                'content-type': 'application/json',
+                _HEADER_TIMESTAMP: timestamp,
+                _HEADER_SIGNATURE: _sign(master, self.env.cr.dbname,
+                                         timestamp, body),
+            })
 
         try:
             with urllib.request.urlopen(request, timeout=_TIMEOUT) as response:
