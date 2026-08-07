@@ -8,6 +8,12 @@ services:
       POSTGRES_USER: ${DB_USER:-odoo}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-odoo}
     restart: always
+    # Egress backstop (#311): the DB lives ONLY on the internal-only db-plane, so
+    # it has no route off the host at all (defence-in-depth behind the
+    # DOCKER-USER firewall). The backup overlay re-adds `default` when pgBackRest
+    # must reach object storage; see docker-compose.backup.yml.
+    networks:
+      - nc_dbplane
     # Tuned multi-tenant config (P3-T02, ARCHITECTURE_DATA_PLATFORM §9). `-c` on
     # the command line still wins over the file, so the prod overlay
     # (docker-compose.prod.yml) overrides only the host-RAM-dependent knobs.
@@ -39,6 +45,13 @@ services:
         condition: service_healthy
     ports:
       - "8069:8069"
+    # Egress backstop (#311): on BOTH the internal db-plane (to reach db) and the
+    # egress-capable `default` net (outbound + reached by nginx). Its outbound IP
+    # is on `default`, whose fixed subnet the DOCKER-USER firewall filters to the
+    # allowlist. See scripts/deploy/harden.sh + ARCHITECTURE_SECURITY.md §11.
+    networks:
+      - default
+      - nc_dbplane
     environment:
       HOST: db
       USER: ${DB_USER:-odoo}
@@ -90,3 +103,25 @@ services:
 volumes:
   postgres_data:
   odoo_data:
+
+# Egress backstop (#311). Two planes with FIXED subnets so the host firewall
+# (scripts/deploy/harden.sh, DOCKER-USER chain) can match container egress by
+# source subnet:
+#   * default    — egress-capable + east-west; the ONLY plane whose outbound is
+#                  filtered to the allowlist. Fixed subnet, not Docker's random
+#                  one, so the firewall rule is stable across recreates.
+#   * nc_dbplane — internal:true (Docker gives it NO gateway), so db/pgbouncer
+#                  attached here alone cannot reach off-host at all. DB clients
+#                  (odoo/odoo-bus/provisioning-runner) join it IN ADDITION to
+#                  `default`. Subnets 172.31.240-241 avoid the cronstall test net
+#                  (172.31.250.0/24).
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.31.240.0/24
+  nc_dbplane:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.31.241.0/24

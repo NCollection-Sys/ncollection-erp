@@ -51,6 +51,14 @@ services:
       # aes-256-cbc passphrase — REQUIRED. Empty here (secret unset) fails loud,
       # which is correct: the encrypted repo must not run without its key.
       PGBACKREST_REPO1_CIPHER_PASS: ${PGBACKREST_REPO1_CIPHER_PASS:-}
+    # Egress backstop (#311): unlike the non-backup db (db-plane only, zero
+    # egress), the PITR db MUST reach object storage for `archive-push`, so it
+    # joins the egress `default` net here. The S3/B2 endpoint (.env
+    # PGBACKREST_REPO1_S3_ENDPOINT) is in the harden.sh allowlist; all other
+    # egress from db stays denied by default-deny.
+    networks:
+      - default
+      - nc_dbplane
     volumes:
       - ./config/pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
       - pgbackrest_repo:/var/lib/pgbackrest
