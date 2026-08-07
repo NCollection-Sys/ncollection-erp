@@ -51,7 +51,15 @@ from limits import (  # noqa: E402
 )
 from providers import ProviderError, build_provider  # noqa: E402
 # A database name under db_filter=^%d$ — see the check in do_POST.
-_TENANT_RE = re.compile(r"^[A-Za-z0-9]{1,63}$")
+# fullmatch(), NOT match(). Python's `$` matches end-of-string OR immediately
+# before a single trailing newline, so `match()` accepted "acme\n" — a value
+# this gate's own error message disclaims, from a stock JSON body.
+#
+# THIS IS THE THIRD TIME THIS WEEK. The PII filter shipped the same anchor
+# blindness twice (c309d52 trailing \b, 54e3e71 the inner guard one level in).
+# Anchors in this codebase mean less than they look like they mean: prefer
+# fullmatch()/lookarounds over trusting ^...$ or \b.
+_TENANT_RE = re.compile(r"[A-Za-z0-9]{1,63}")
 
 from tenant_auth import (  # noqa: E402
     HEADER_SIGNATURE, HEADER_TIMESTAMP, verify,
@@ -307,7 +315,7 @@ class Handler(BaseHTTPRequestHandler):
         # Enforcing it is input hygiene, and it also bounds the per-tenant
         # breaker/ledger dicts: without it, anyone holding the master could mint
         # unlimited distinct tenant strings and grow both without limit.
-        if not _TENANT_RE.match(tenant):
+        if not _TENANT_RE.fullmatch(tenant):
             self._send(400, {"error": "'tenant' must be 1-63 alphanumeric "
                                       "characters (it is a database name)"})
             return

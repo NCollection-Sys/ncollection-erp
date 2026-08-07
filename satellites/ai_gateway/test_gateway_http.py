@@ -77,6 +77,9 @@ class GatewayServerCase(unittest.TestCase):
         self.thread.start()
         self.base = f"http://127.0.0.1:{self.port}"
 
+    def url_complete(self):
+        return f"{self.base}/v1/complete"
+
     def tearDown(self):
         self.server.shutdown()
         self.server.server_close()
@@ -241,6 +244,49 @@ class TestTenantAuthentication(GatewayServerCase):
                              {"tenant": "acme", "prompt": "hi"})
         self.assertEqual(status, 200)
         self.assertIn("text", body)
+
+
+class TestTenantAndTimestampValidation(GatewayServerCase):
+    """Round-2 review findings, pinned.
+
+    Both are the same lesson: a check is only worth what its EDGES are worth,
+    and neither of these had a test at all when it shipped.
+    """
+
+    def test_a_tenant_with_a_trailing_newline_is_refused(self):
+        """`$` matches before a trailing newline, so `match()` accepted
+        "acme\n" — from a stock JSON escape, no exotic bytes. Third instance of
+        this anchor bug in one week (the PII filter shipped it twice)."""
+        for bad in ("acme\n", "acme\r", "\n", "ac me", "acme-1", "acme_1",
+                    "a" * 64, ""):
+            status, _ = _post(self.url_complete(),
+                              {"tenant": bad, "prompt": "hi"}, tenant=bad)
+            self.assertIn(status, (400, 401), "tenant %r must not be accepted" % bad)
+
+    def test_a_real_database_name_is_still_accepted(self):
+        """The other half — the platform's own fixtures must still work."""
+        for good in ("acme", "rtclienta", "e2eadmin", "cronscopeplatform"):
+            status, _ = _post(self.url_complete(),
+                              {"tenant": good, "prompt": "hi"})
+            self.assertEqual(status, 200, good)
+
+    def test_a_nan_timestamp_cannot_make_a_signature_immortal(self):
+        """float('nan') parses, and every comparison with NaN is False, so the
+        freshness window was skipped entirely — a signature that never expires.
+        Parsed with int() now; this test is why it stays that way."""
+        for bad_stamp in ("nan", "NaN", "inf", "-inf", "1e10", "0x10", "3.5"):
+            body = json.dumps({"tenant": "acme", "prompt": "hi"}).encode()
+            sig = sign(TEST_MASTER, "acme", bad_stamp, body)
+            req = urllib.request.Request(
+                self.url_complete(), data=body, method="POST",
+                headers={"content-type": "application/json",
+                         HEADER_TIMESTAMP: bad_stamp, HEADER_SIGNATURE: sig})
+            try:
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    status = resp.status
+            except urllib.error.HTTPError as exc:
+                status = exc.code
+            self.assertEqual(status, 401, "timestamp %r" % bad_stamp)
 
 
 class TestUnconfiguredGatewayFailsClosed(GatewayServerCase):
