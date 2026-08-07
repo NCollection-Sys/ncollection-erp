@@ -56,8 +56,18 @@ and frontend (`views/*.xml`, `static/src/*.js` OWL, `*.scss`). There is no separ
 frontend/backend deploy — it's a monolith.
 
 ## How we work
-- **Branches:** `main` = stable, `develop` = active integration. Both currently in sync.
-  Feature work branches off `develop`.
+- **Branches:** `main` = stable, `develop` = active integration. Feature work branches off
+  `develop`. **They are NOT in sync** — `develop` is hundreds of commits ahead, and `main`
+  is the repo's **default** branch. Two consequences that bite silently:
+  1. **A new workflow added on `develop` never runs.** GitHub registers workflows from the
+     DEFAULT branch, so a `.github/workflows/*.yml` file that exists only on `develop` is
+     inert — it will not appear in the Actions list and no event will trigger it. Verified:
+     `e2e.yml` is registered and does *not* exist on develop; `close-linked-issues.yml`
+     exists on develop and is *not* registered. `nightly.yml` documents the same rule for
+     schedules.
+  2. **`Closes #<n>` never fires**, because closing keywords are honoured only on a merge
+     into the default branch. Close issues by hand — `/solve-issue` Phase 7 does this, and
+     it is why issues appeared to close automatically when that command was used.
 - **Per issue:** `/solve-issue <n>` → it checks the issue is open, in order, and its
   dependency issues are closed → branch `feature/<n>-<task-id>` off `develop` → PR to
   `develop` with **`Closes #<n>`** → CI → 1 review → merge.

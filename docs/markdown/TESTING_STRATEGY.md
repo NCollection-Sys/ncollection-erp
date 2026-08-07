@@ -5,7 +5,7 @@ Companion to `REGRESSIONS.md` (a regression is not closed until a guard exists) 
 `BRANCH_PROTECTION.md` (why none of this can *block* a merge).
 
 Written 2026-08-06 against the live tree: **81 test files · 869 test methods · 11
-`verify_*.sh` proofs · 8 Playwright specs (12 tests) · 5 workflows** — and validated by a
+`verify_*.sh` proofs · 9 Playwright specs (16 tests) · 6 workflows** — and validated by a
 full-estate baseline run on `958d8d6` the same day (§7).
 
 > Every timing in this document is **measured**, not estimated. An earlier draft carried
@@ -85,7 +85,7 @@ premise that nothing covered it; the workflow audit disproved that.
 | Supply chain | pip-audit · Trivy (fs: vuln + secret) | 2 | PR, **non-blocking** | — |
 | Odoo ORM tests | `custom_addons/*/tests/` | 81 files · **869 methods** · 84 `TransactionCase` · 8 `HttpCase` | PR `test` job | **4m CI / 2m 8s local** |
 | Infra proofs | 11 × `verify_*.sh` | 11 suites (7 in `verify-all`) | `make verify-all`, local | **8m 20s warm** |
-| Browser E2E | `e2e/tests/`, chromium only | 8 specs · **12 tests** | PR `verify.yml` | **6m CI / 19s local** |
+| Browser E2E | `e2e/tests/`, chromium only | 9 specs · **16 tests** (4 added by #363) | PR `verify.yml` | **6m CI / 45s** |
 | Load / perf | k6 `load_test.js` · `bench_aggregation.py` | 2 | manual | — |
 | Security audit | `phase1_security_audit.sh` · `phase3_security_assessment.sh` | 2 | manual / pre-launch | — |
 | Post-merge | `canary.yml` (verify + **full-tree** guard) | 1 | every merge | ~12m |
@@ -98,8 +98,8 @@ premise that nothing covered it; the workflow audit disproved that.
 This is **not** the classic pyramid. For an Odoo SaaS it is a pyramid with a sidecar:
 
 ```
-              ▲  Playwright  (12)          ← correct size, do not grow much
-            ▲▲▲  HttpCase + tours (8 + 0)  ← THE WEAK RUNG
+              ▲  Playwright  (16)          ← now also carries the OWL dashboards
+            ▲▲▲  HttpCase (8), tours (0)   ← tours are NOT available: no browser in odoo:19
         ▲▲▲▲▲▲▲  TransactionCase (84)      ← the backbone
     ▲▲▲▲▲▲▲▲▲▲▲  static guards (8+2)       ← enforce rules a test cannot express
 
@@ -141,7 +141,7 @@ Status key: ✅ have · ⚠️ partial · ❌ gap · ⛔ deliberately out of sco
 | Odoo ORM | `TransactionCase` × 84 | ✅ backbone |
 | Pure Python, no DB | stdlib `unittest` | ✅ guards only (~0.02s) |
 | Time-boundary logic | injected `today=` · backdated `create_date` | ✅ both sides asserted — see G3 |
-| OWL / JS component | Odoo 19 `hoot` (`static/tests/`) | ❌ **13 OWL files, 0 tests** — see G2 |
+| OWL / JS component | Playwright via `verify.yml` (**not** tours — `odoo:19` has no browser) | ⚠️ 5 of 13 covered: core dashboard + the 4 financial ones (#363) |
 | React demo unit | vitest | ⛔ `demo/` is a throwaway prototype |
 
 ### C. Integration (real DB / real HTTP)
@@ -180,8 +180,8 @@ Status key: ✅ have · ⚠️ partial · ❌ gap · ⛔ deliberately out of sco
 
 | Type | Status |
 |---|---|
-| Platform guarantees — auth, checkout, dashboard, isolation, license, roles, visibility, branding | ✅ **12 tests, 19s** |
-| **In-product business flows** | ❌ — see G2 (tours are the right tool, not Playwright) |
+| Platform guarantees — auth, checkout, dashboards, isolation, license, roles, visibility, branding | ✅ **16 tests, 45s** |
+| In-product business flows | ⚠️ dashboards covered (#363); other flows still uncovered — Playwright is the layer, see G2 |
 | Cross-browser | ⛔ chromium only, deliberate |
 | Visual regression | ❌ G9 — matters because we sell white-label |
 | Accessibility (axe) | ❌ G9 |
@@ -219,7 +219,7 @@ earlier ranking. Each carries the C2 declaration it needs before anyone writes i
 | ID | Gap | Owning stack | DB prefix | Runs | Effort |
 |---|---|---|---|---|---|
 | **G1** | Module upgrade / migration path | CI container (fresh) | `upgr*` (ephemeral) | PR | M |
-| **G2** | Odoo tours for the 13 OWL dashboards | existing CI container | reuse `ci_test` | PR | M |
+| ~~G2~~ | ~~Odoo tours~~ — **CLOSED (#363)**, covered by Playwright instead (see below) | `verify.yml` stack | reuse `e2e*` | PR | done |
 | ~~G3~~ | ~~Clock control~~ — **WITHDRAWN**, already covered (see below) | — | — | — | — |
 | **G4** | Local runnability of the unit suite | dev stack | `nctest` | on demand | S |
 | **G5** | ZAP baseline DAST | CI only, **never shared stack** | none | nightly | S |
@@ -245,18 +245,46 @@ customer's data. Confirmed by audit that **nothing covers it**:
 **Acceptance.** Install at commit N-1 → seed representative records → `-u` to HEAD → assert
 (a) upgrade exits 0, (b) seeded records survive with expected values, (c) no traceback.
 
-### G2 — Odoo tours for the OWL dashboards
+### G2 — CLOSED (#363). Dashboards are covered by Playwright, not tours.
 
-**Risk.** 13 OWL `.js` files, zero JavaScript tests of any kind. Dashboard regressions are
-caught only if a human opens the page.
+**This entry originally recommended Odoo tours, and the reasoning was wrong.** It is kept
+rather than deleted because the mistake is the useful part.
 
-**Why tours, not Playwright.** Tours run inside `HttpCase` in the container CI already
-builds — no new infra, no new stack, no `/etc/hosts` mapping. Playwright stays reserved for
-*cross-subdomain* behaviour, the one thing tours cannot do.
+The argument was: *"tours run inside `HttpCase` in the container CI already builds — no new
+infra."* **That premise is false.** `odoo:19` ships no browser and no `websocket-client`, so
+an `HttpCase` tour does not fail — it **skips**, and Odoo still prints
+`0 failed, 0 error(s) of N tests`. Green, having executed nothing. Found by writing the
+tours and running them, not by reading:
 
-**Acceptance.** Each dashboard has a tour that loads it as the intended role and asserts a
-real value renders. Together with the RPC role guards (#333/#356/#358) this closes the UI
-and RPC sides at once.
+```
+skipped ... : websocket-client module is not installed     # install it, then:
+skipped ... : Chrome executable not found
+odoo.tests.result: 0 failed, 0 error(s) of 4 tests
+```
+
+The costs are therefore the reverse of what this entry claimed:
+
+| | Odoo tours | Playwright |
+|---|---|---|
+| Browser | ❌ none — needs ~300MB in the test image, installed on every CI run | ✅ **already installed** by `verify.yml` |
+| Fixture work | ✅ `AccountTestInvoicingHttpCommon` provides accounting data | seeded on `e2eclienta` (done in #363) |
+
+**Also corrected:** "13 OWL files, zero JavaScript tests" was an overstatement. One of the
+13 — `ncollection_core`'s dashboard — already had `dashboard.spec.ts`, which also exercises
+the shared `NcKpiCard` indirectly. The real gap was the **8 `ncollection_account_dashboard`
+files**.
+
+**Resolved in #363 / PR #370:** four Playwright specs assert
+`.nc-kpi-card__value:not(:empty)` on the CEO / Finance / Accountant / Cash dashboards as a
+CEO-role user. Asserting the container merely exists would pass against a dashboard that
+mounted and rendered nothing — the exact shape of a silent failure. E2E suite went from 12
+to **16 tests**, green in CI.
+
+**The rule this leaves behind:** Playwright is the right layer for *any* browser assertion
+here, not only cross-subdomain ones, for as long as `odoo:19` has no browser. Tours become
+viable only if Chromium is added to the test image, and that trade should be made
+deliberately — it is a recurring cost on every CI run, against a browser that already
+exists in `verify.yml`.
 
 ### G3 — WITHDRAWN. Time boundaries are already covered.
 
