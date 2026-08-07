@@ -34,18 +34,50 @@ Two tiers of protection
 ``commercial_partner_id``…) are pseudonymised to stable per-request tokens.
 
 **By shape** — free text, which field names cannot reach. Credentials (JWTs,
-``sk_``/``AKIA``/``ghp_`` prefixes, ``Bearer`` headers), IBANs, and
-government-issued identifiers are redacted wherever they appear; known partner
-and company names are pseudonymised.
+``sk_``/``AKIA``/``ghp_`` prefixes, ``Bearer`` headers, connection strings, PEM
+blocks), IBANs, card PANs and government-issued identifiers are redacted
+wherever they appear; known partner and company names are pseudonymised.
 
 The second tier exists because the module's own entry point, ``ask(question)``,
-takes free text. Four reviewers independently demonstrated that a customer name,
-an API key, a JWT and a passport number all reached the provider verbatim when
-only the first tier existed.
+takes free text. Reviewers demonstrated that a customer name, an API key, a JWT
+and a passport number all reached the provider verbatim when only the first tier
+existed.
+
+On top of both, ``ask()`` **refuses** a question that looks like it carries a
+credential rather than trying to scrub it — see *Known limits* for what that
+does and does not buy. Scrubbing an arbitrary string cannot be made complete,
+so the boundary is drawn by refusing rather than by cleaning.
+
+Who may ask
+===========
+
+``ask()`` is gated to the **Accountant**, the **CEO** and the workspace owner
+(``base.group_system``). The default context carries receivables and invoice
+history, so it takes the same gate as the financial dashboards.
+
+The gate lives in the method, not on a menu, because the module ships no menu
+yet — ``ask()`` is a public ``@api.model`` reachable by RPC today. Relying on
+the aggregation engine's per-model ACL check is **not** sufficient: core grants
+``group_sale_salesman`` read on ``account.move``, so a Sales user would have
+passed it. That exact claim was disproved for the financial dashboards in
+``9bb86e7`` (#358).
 
 Known limits
 ============
 
+* **Free-text secret detection is best-effort and cannot be made complete.**
+  Deciding whether a run of prose is a secret is undecidable —
+  ``correcthorsebatterystaple`` is a passphrase and also five English words.
+  Three triggers are applied (high-confidence structured shapes; a credential
+  noun handed a value; a credential noun co-occurring with an unusually long
+  token), and together they refuse every case four review rounds produced. An
+  **undeclared** secret shaped like ordinary prose — ``"check
+  correcthorsebatterystaple for me"`` — still reaches the provider. This is
+  inherent, not a defect awaiting a fix, and it is why the feature needs a
+  zero-retention provider agreement rather than a cleverer pattern.
+* Long hex strings are redacted, so a question about a **checksum** gets
+  ``[REDACTED]``. Deliberate: no shape separates a SHA-1 digest from a 40-char
+  HMAC key, and §5's "never send" for secrets is unconditional.
 * The free-text identity scan is bounded (``_IDENTITY_SCAN_LIMIT``). A partner
   outside that window is not pseudonymised in free text. The structured path
   remains the primary control.

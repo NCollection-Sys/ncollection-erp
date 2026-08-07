@@ -91,7 +91,10 @@ class AiGatewayClient(models.AbstractModel):
                 message = detail.get('message') or detail.get('error')
             except (ValueError, OSError):
                 message = 'HTTP %s' % exc.code
-            raise UserError(self.env._(message)) from None
+            # NOT wrapped in self.env._(): `message` is the gateway's own
+            # error text, so there is no msgid for it in any catalogue and
+            # the call was a no-op that read as though it did something.
+            raise UserError(message) from None
         except urllib.error.URLError as exc:
             # Most often: the satellite is not running. That is a normal state —
             # it is an opt-in overlay — so the message says so rather than

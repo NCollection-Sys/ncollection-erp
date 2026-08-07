@@ -16,7 +16,7 @@ network.
 """
 from unittest.mock import patch
 
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -48,6 +48,59 @@ class TestAskSanitisation(TransactionCase):
             self.Question.ask(question)
         return captured['prompt']
 
+    # ------------------------------------------------------------ authorization
+    def test_a_sales_user_cannot_ask_and_therefore_cannot_read_receivables(self):
+        """CRITICAL, round 4. Standing Rule 4: mirror every UI restriction at
+        the ORM/RPC layer.
+
+        This module ships no menu, which is exactly why the gate must be in the
+        method — ask() is a public @api.model that any authenticated tenant user
+        can reach by RPC today, before P5-T06 adds a widget.
+
+        The bug was believing the aggregation engine's per-model readability
+        check was enough. It is not, and this is not a hypothetical: core grants
+        sales_team.group_sale_salesman read on account.move, and
+        ncollection_core/hooks.py links group_role_sales to it at install — so a
+        Sales user passed _model_readable('account.move') and the default
+        context would have handed them company receivables and invoice history.
+
+        9bb86e7 (#358) disproved the identical 'the ACL alone mirrors this'
+        claim for the financial dashboards ONE DAY before this module was
+        written, which is the real reason this test exists.
+        """
+        sales = self.env['res.users'].create({
+            'name': 'Sales Only', 'login': 'ai_sales_probe',
+            'group_ids': [(6, 0, [
+                self.env.ref('base.group_user').id,
+                self.env.ref('ncollection_core.group_role_sales').id,
+            ])],
+        })
+        with self.assertRaises(AccessError):
+            self.Question.with_user(sales).ask("What are our receivables?")
+
+    def test_an_accountant_may_ask(self):
+        """The gate has to let the intended roles through, or it is just an
+        outage. Pairs with the test above: refusing everyone would pass that
+        one on its own."""
+        accountant = self.env['res.users'].create({
+            'name': 'Accountant', 'login': 'ai_acct_probe',
+            'group_ids': [(6, 0, [
+                self.env.ref('base.group_user').id,
+                self.env.ref('ncollection_core.group_role_accountant').id,
+            ])],
+        })
+
+        def fake_complete(_self, prompt, max_tokens=1024):
+            return {'text': 'ok', 'usage': {}}
+
+        with patch(
+            'odoo.addons.ncollection_ai.models.gateway_client'
+            '.AiGatewayClient.complete',
+            new=fake_complete,
+        ):
+            result = self.Question.with_user(accountant).ask("Any overdue?")
+        self.assertEqual(result['answer'], 'ok')
+
     # ------------------------------------------------------- identity in text
     def test_a_customer_name_typed_in_the_question_never_reaches_the_prompt(self):
         """CRITICAL, reproduced by three reviewers independently.
@@ -77,7 +130,7 @@ class TestAskSanitisation(TransactionCase):
         chasing instances.
         """
         for secret in (
-            "Is this the right webhook secret: sk_live_51H8gk3K2FZabcdefghijkl ?",
+            "Is this the right webhook secret: sk-live-51H8gk3K2FZabcdefghijkl ?",
             "Decode this: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0."
             "dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
             "why is AKIAIOSFODNN7EXAMPLEXXXXXXXXXXXXXXX failing?",
@@ -89,7 +142,7 @@ class TestAskSanitisation(TransactionCase):
     def test_the_refusal_tells_the_user_what_to_do(self):
         """Refusing is only useful if the person can act on it."""
         with self.assertRaises(UserError) as caught:
-            self._prompt_for("key sk_live_51H8gk3K2FZabcdefghijklmnop please")
+            self._prompt_for("key sk-live-51H8gk3K2FZabcdefghijklmnop please")
         message = str(caught.exception)
         self.assertIn('remove it', message)
         self.assertIn('Nothing was sent', message)
@@ -141,3 +194,51 @@ class TestAskSanitisation(TransactionCase):
         # PARTNER_1 is whichever identity was tokenised first; the point is that
         # a token does not survive into the user-visible answer.
         self.assertNotIn('PARTNER_1', result['answer'])
+
+    # --------------------------------------------------- the round-4 corpus
+    #
+    # Two reviewers independently proved the round-3 gate was simultaneously too
+    # loose (missed short/lowercase/multi-word secrets) and too tight (refused
+    # real emails and URLs). Both directions are pinned here, because testing
+    # only the first is how the second shipped.
+
+    def test_credentials_that_are_not_long_mixed_alphanumerics_are_refused(self):
+        """The round-4 CRITICAL, found twice independently.
+
+        The old gate needed len>24 AND a digit AND a letter; the scrubber's
+        generic shapes needed 32 hex / 40 base64. Anything between — an ordinary
+        password, an all-lowercase passphrase, a multi-word one — fell in the
+        trench between the two layers and reached the provider verbatim.
+        """
+        for question in (
+            "My database password is Str0ngPass99, check connections?",
+            "root password is hunter2 for the staging box",
+            "here is the key: correcthorsebatterystaple please store it",
+            "ssh key fingerprint check: myapikeyisabcdefghijklmnop works",
+            "wifi password is greenelephant purpletiger blueocean today",
+            "boundary token AbCdEfGh12345678ABCDefgh done",
+            "the database password is Tr0ub4dor3xKcvQmZpL9 check syncs?",
+            "the api secret is 8xK2mN9pQr4sT6vW1yB3cD5e for that vendor",
+            "service account key: aZ9mK3pQ7rL1vB5nC8xD2eF6 check webhooks",
+        ):
+            with self.assertRaises(UserError, msg=question):
+                self._prompt_for(question)
+
+    def test_ordinary_business_questions_are_not_refused(self):
+        """The other half, and the half that was missing.
+
+        A control that blocks a customer's email address while passing
+        'hunter2' is not reading the right signal. The first three of these
+        were refused outright by the round-3 gate; the last two are the reason
+        the credential-noun triggers require a VALUE rather than firing on the
+        noun alone.
+        """
+        for question in (
+            "email ahmed.al-mansoori2026@albarari-trading-solutions.ae about this",
+            "check https://albarari-trading.ae/portal/invoices/00042 please",
+            "Explain the internationalisation of our receivables report",
+            "What is the status of the secret santa invoice?",
+            "Does the password reset email actually work for tenants?",
+        ):
+            prompt = self._prompt_for(question)   # must not raise
+            self.assertIn('QUESTION:', prompt)

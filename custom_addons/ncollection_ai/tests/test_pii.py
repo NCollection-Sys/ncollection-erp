@@ -119,6 +119,41 @@ class TestPiiSanitiser(TransactionCase):
             clean, _ = self.pii.sanitise({'note': 'value %s ok' % value})
             self.assertNotIn(value, clean['note'])
 
+    def test_a_compound_name_rehydrates_without_leaking_raw_tokens(self):
+        """HIGH, round 4 — the R3 fix was still broken on its OWN example.
+
+        "Al Barari Trading, Attn: Sarah Al Mansoori" fails the already-tokenised
+        check on its colon, so it gets wrapped a second time. Storing the
+        SUBSTITUTED text produced a token whose value contained other tokens:
+
+            mapping['PARTNER_3'] = 'PARTNER_2, Attn: PARTNER_1'
+
+        Every token is the same length, so sorted(key=len) keeps insertion
+        order, and rehydrate()'s single forward pass expanded 1 and 2 BEFORE 3
+        introduced them. The user read "PARTNER_2, Attn: PARTNER_1" instead of
+        the contact — the R3 fix traded a cleartext leak for a garbled answer in
+        the exact scenario it was written for.
+
+        Storing the pre-tokenisation snapshot makes one pass provably enough.
+        """
+        names = ['Al Barari Trading', 'Sarah Al Mansoori']
+        clean, mapping = self.pii.sanitise(
+            {'partner_id': 'Al Barari Trading, Attn: Sarah Al Mansoori'},
+            known_identities=names)
+
+        # Nothing real crosses the boundary.
+        for name in names:
+            self.assertNotIn(name, clean['partner_id'])
+        # No stored value may contain a token, or one pass cannot be enough.
+        for value in mapping.values():
+            self.assertNotIn('PARTNER_', value)
+        # And the user gets the real thing back, not internal token names.
+        answer = self.pii.rehydrate(
+            'The contact on file is %s.' % clean['partner_id'], mapping)
+        self.assertNotIn('PARTNER_', answer)
+        for name in names:
+            self.assertIn(name, answer)
+
     def test_a_long_lot_number_still_survives(self):
         """Pure digits stay exempt: a 44-digit lot or batch number is substance,
         and only the 13-19 digit PAN range is treated as sensitive."""

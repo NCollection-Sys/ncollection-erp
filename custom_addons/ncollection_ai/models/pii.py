@@ -34,7 +34,7 @@ per-request, so nothing accumulates a reusable mapping.
 """
 import re
 
-from odoo import models
+from odoo import api, models
 
 # Values that must NEVER cross the boundary, in any form. Redacted outright
 # rather than pseudonymised: unlike a name, there is no analytical value in
@@ -106,11 +106,6 @@ _SECRET_SHAPES = (
     # (IBAN, then _ALNUM_ID_RE, now this) — added after both fixes and
     # still repeating them.
     re.compile(r'-----BEGIN[A-Z ]*PRIVATE KEY-----', re.IGNORECASE),
-    # Long base64 blob. EXCLUDES pure hex and pure digits: a SHA-256 checksum or
-    # a long lot/batch number is data a user may legitimately ask about, and
-    # redacting it silently would gut context quality. Confirmed as a real false
-    # positive by review, not a hypothetical one — a 64-char hex hash was being
-    # redacted as a secret.
     # Long alphanumeric blobs, and long hex runs, are both redacted. Only pure
     # DIGIT runs are exempt (handled by the PAN pattern below).
     #
@@ -197,6 +192,11 @@ class AiPiiSanitiser(models.AbstractModel):
     _description = 'AI prompt PII sanitisation (tenant-side, pre-transit)'
 
     # ---------------------------------------------------------------- sanitise
+    # @api.model on both public methods: Odoo's call_kw treats the first
+    # positional arg as record ids and browse()s it unless _api_model is
+    # set. Neither is RPC-called today, but a future caller would have had
+    # `payload` silently swallowed as ids rather than erroring.
+    @api.model
     def sanitise(self, payload, known_identities=None, doc_prefixes=None):
         """Return ``(clean_payload, mapping)``.
 
@@ -282,6 +282,17 @@ class AiPiiSanitiser(models.AbstractModel):
             if any(m.group(0).upper().startswith(pfx) for pfx in doc_prefixes)
             else _REDACTED, text)
 
+        # Snapshot AFTER every redaction, BEFORE any tokenisation. This is what
+        # a whole-field partner wrap stores as its mapping value (see step 7),
+        # so the stored value can never contain a token — which is what made
+        # re-hydration produce nested garbage.
+        #
+        # Deliberately not the raw input: a redacted secret must stay redacted.
+        # Restoring the pre-redaction text would resurrect a credential into the
+        # user-visible answer, which is a smaller blast radius than sending it
+        # to the provider but is still the thing this module exists to prevent.
+        redacted_only = text
+
         # 4. Known real identities appearing anywhere in the text. This is what
         #    field-name matching structurally cannot do, and it is the fix for
         #    the leak three reviewers reproduced: a customer name typed into a
@@ -317,9 +328,26 @@ class AiPiiSanitiser(models.AbstractModel):
         #
         # Checking the RESULT closes both: fully-tokenised values are left alone
         # (no double wrap), and anything with residual text is still wrapped.
+        #
+        # What is WRAPPED is the substituted text; what is STORED is the
+        # pre-tokenisation snapshot. That distinction is the round-4 fix. The
+        # guard above only tolerates whitespace and , ; / - as residue, so a
+        # compound like "Al Barari Trading, Attn: Sarah Al Mansoori" fails the
+        # fullmatch on its colon and gets wrapped a second time. Storing the
+        # substituted text then produced
+        #     mapping['PARTNER_3'] = 'PARTNER_2, Attn: PARTNER_1'
+        # and since every token is the same length, sorted(key=len) leaves them
+        # in insertion order, so rehydrate()'s single forward pass expanded
+        # PARTNER_1 and PARTNER_2 BEFORE PARTNER_3 introduced them — and the
+        # user read "PARTNER_2, Attn: PARTNER_1" instead of the contact.
+        #
+        # Storing the snapshot makes the mapping value token-free by
+        # construction, so one forward pass is provably enough. Widening the
+        # residue character class instead would have been another instance-fix:
+        # the next unlisted separator brings the nesting straight back.
         if self._is_partner_field(field_name) and text.strip() and \
                 not _ONLY_TOKENS_RE.fullmatch(text.strip()):
-            text = self._token('PARTNER', text, mapping, counters)
+            text = self._token('PARTNER', redacted_only, mapping, counters)
         return text
 
     def _looks_like_phone(self, candidate):
@@ -376,6 +404,7 @@ class AiPiiSanitiser(models.AbstractModel):
         return token
 
     # -------------------------------------------------------------- rehydrate
+    @api.model
     def rehydrate(self, text, mapping):
         """Put the real identities back, inside this database.
 
