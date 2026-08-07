@@ -1,0 +1,118 @@
+name: Close Linked Issues
+
+# THE GAP THIS CLOSES
+# -------------------
+# `Closes #<n>` has NEVER worked in this repo, and not because anyone wrote it
+# wrong. GitHub only honours closing keywords when the PR merges into the
+# repository's DEFAULT branch. Ours is `main`; every PR targets `develop`. So the
+# keyword is silently inert on every single PR we open.
+#
+# Measured, not assumed: of the 40 most recently closed issues, ZERO were closed
+# by GitHub (a `closed` timeline event carrying a `commit_id`) and 40 were closed
+# by a person. It only ever LOOKED automatic because whoever merged also closed
+# the issue by hand moments later.
+#
+# WHY IT MATTERS MORE HERE THAN IN MOST REPOS
+# -------------------------------------------
+# CLAUDE.md: "a CLOSED issue = a COMPLETED task. This is what makes dependency
+# checks work." `/solve-issue <n>` reads issue state to decide whether a ticket's
+# dependencies are satisfied. Every merged-but-still-open issue therefore makes a
+# future ticket look blocked when it is not — the failure is silent, and it grows
+# with every merge.
+#
+# WHAT THIS DOES
+# --------------
+# On a PR merged into `develop`, parse the PR body and title for closing keywords
+# and close exactly those issues, with a comment naming the PR and merge commit.
+#
+# DELIBERATELY NARROW:
+#   * only on MERGED prs (not merely closed) — an abandoned PR must not close
+#     the issue it referenced,
+#   * only for base `develop` — merges to `main` are left to GitHub's own
+#     behaviour, so the two can never fight over the same issue,
+#   * only issues, never PRs (a `#<n>` may refer to either),
+#   * already-closed issues are skipped, so a re-run is a no-op (Rule 12).
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [develop]
+
+# pull_request_target runs in the BASE repo's context, which is what grants the
+# issues:write needed to close anything. Safe here because this workflow never
+# checks out or executes PR head code — it only reads the event payload and
+# calls the API.
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  close:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close the issues this PR said it closes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+
+          # GitHub's own keyword list.
+          KEYWORDS='close[sd]?|fix(e[sd])?|resolve[sd]?'
+
+          # The leading (^|[^[:alnum:]]) is LOAD-BEARING, not decoration. Without
+          # it "This disclosed #99 in passing" matches — because "disclosed"
+          # ends in "closed" — and this workflow would close an unrelated issue
+          # on a passing mention. Caught by testing the parser against
+          # disclosed/unfixes/prefixes before trusting it. A non-alphanumeric
+          # boundary is used rather than \b so the expression does not depend on
+          # GNU grep extensions.
+          #
+          # Title and body are read from the environment, never interpolated into
+          # the script — a PR title containing backticks or $(...) must be data,
+          # not code.
+          refs="$(printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" \
+                  | grep -ioE "(^|[^[:alnum:]])(${KEYWORDS})[[:space:]]+#[0-9]+" \
+                  | grep -oE '#[0-9]+' | tr -d '#' | sort -u || true)"
+
+          if [ -z "$refs" ]; then
+            echo "::notice::PR #${PR_NUMBER} references no issue to close."
+            exit 0
+          fi
+
+          closed=0
+          for n in $refs; do
+            kind="$(gh api "repos/$REPO/issues/$n" --jq \
+                      'if .pull_request then "pr" else "issue" end' 2>/dev/null || echo "missing")"
+            case "$kind" in
+              pr)      echo "  #$n is a pull request, not an issue — skipping."; continue ;;
+              missing) echo "  #$n does not exist — skipping."; continue ;;
+            esac
+
+            state="$(gh api "repos/$REPO/issues/$n" --jq '.state')"
+            if [ "$state" = "closed" ]; then
+              echo "  #$n already closed — skipping (idempotent)."
+              continue
+            fi
+
+            gh issue close "$n" --repo "$REPO" --comment \
+              "Closed automatically: merged to \`develop\` in #${PR_NUMBER} (\`${MERGE_SHA:0:9}\`).
+
+            GitHub's own \`Closes #n\` does not fire here — it only applies to the repository's
+            default branch (\`main\`), and every PR targets \`develop\`. This workflow
+            (\`.github/workflows/close-linked-issues.yml\`) exists to keep the convention
+            \"a CLOSED issue = a COMPLETED task\" true, because \`/solve-issue\` reads it for
+            dependency checks."
+            echo "  closed #$n"
+            closed=$((closed + 1))
+          done
+
+          {
+            echo "### Linked issues closed"
+            echo ""
+            echo "PR #${PR_NUMBER} -> closed **${closed}** issue(s): ${refs//$'\n'/, }"
+          } >> "$GITHUB_STEP_SUMMARY"
