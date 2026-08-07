@@ -105,7 +105,7 @@ class AiContextBuilder(models.AbstractModel):
         ]
 
     @api.model
-    def build(self, specs=None, max_tokens=2000):
+    def _build(self, specs=None, max_tokens=2000):
         """Assemble context for THIS tenant.
 
         Returns ``{'sections': {...}, 'dropped': [...], 'estimated_tokens': n}``.

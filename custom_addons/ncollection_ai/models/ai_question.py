@@ -85,42 +85,85 @@ _IDENTITY_SCAN_LIMIT = 2000
 #   1. pii.py shape patterns  — HIGH-CONFIDENCE STRUCTURED secrets only: vendor
 #      prefixes, JWTs, PEM blocks, connection strings, IBANs, card PANs. These
 #      have real, checkable structure. This layer works; it is not the gap.
-#   2. _DECLARED_SECRET_RE   — a credential NAMED and handed a value
-#      ("password is X", "api key: Y"). This is how a person actually leaks one
-#      in a chat box, and it catches the short/lowercase/multi-word cases that
-#      shape never can, because the giveaway is the noun, not the value.
+#   2. _declares_a_secret     — a credential NOUN handed a value that is not an
+#      ordinary state word. The giveaway is the noun, not the value, which is
+#      why this reaches short, lowercase and multi-word secrets that shape never
+#      can.
 #   3. _looks_like_embedded_secret — high-entropy mixed-alphanumeric runs that
 #      no word is, with emails and URLs exempted so the assistant stays usable.
 #
-# RESIDUAL, ACCEPTED, NOT A TODO: an UNDECLARED secret that is shaped like
-# ordinary prose still reaches the provider. Nothing here catches
-# "check correcthorsebatterystaple for me". That is inherent, it is documented
-# in README.rst, and it is the reason this feature needs a zero-retention
-# provider agreement rather than a cleverer regex.
-
-# The credential nouns themselves. Bare `key` is included and covers the
-# api/access/private/ssh compounds for free — enumerating them instead missed
-# "here is the key:", which is how a person actually writes it.
-_CREDENTIAL_NOUN = (r'\b(?:pass(?:word|wd|phrase)?|pwd|secret|credentials?|'
-                    r'key|token)\b')
-
-# TRIGGER 1 — a credential noun handed a value. The `is|are|=|:` is
-# load-bearing in BOTH directions: it catches "password is hunter2", and it is
-# what stops "the secret santa invoice" and "does the password reset email
-# work" from being refused.
-_DECLARED_SECRET_RE = re.compile(
-    _CREDENTIAL_NOUN + r'\s*(?:is|are|=|:)\s*\S', re.IGNORECASE)
-
-# TRIGGER 3 — co-occurrence. A credential noun ANYWHERE plus an unusually long
-# token ANYWHERE, even when no `is`/`:` joins them. This is what catches
-#     "ssh key fingerprint check: myapikeyisabcdefghijklmnop"
-# where the value hangs off "check:" rather than off the noun, and is 26
-# lowercase letters with no digit — invisible to both other triggers.
+# THE RESIDUAL, STATED AS THE ACTUAL BOUNDARY RATHER THAN A FLATTERING ONE.
 #
-# Requiring BOTH signals is what keeps it quiet: an ordinary question mentioning
-# a password carries no 20-character token, and a question carrying a long token
-# usually mentions no credential. Neither alone refuses anything.
+# Round 5 described this as "declared secrets are caught, undeclared ones are
+# not", and a reviewer correctly called that an overclaim: "the CVV is 123" was
+# DECLARED in plain English and still leaked, because the noun was missing from
+# the list. Nothing undecidable about it — it was simply unimplemented, and the
+# undecidability argument was being used to cover a gap it did not apply to.
+#
+# The real boundary, precisely:
+#
+#   CAUGHT      a credential named by a noun in _CREDENTIAL_NOUN, joined within
+#               _NOUN_VALUE_WINDOW characters by a connector in _CONNECTOR_RE,
+#               where the value is not in _STATE_WORD_RE; OR any single token
+#               over _MAX_WORD_CHARS that mixes letters and digits; OR anything
+#               matching a pii.py structural shape.
+#   NOT CAUGHT  a credential named by a noun NOT in that list; a secret given
+#               with no noun at all ("check correcthorsebatterystaple for me");
+#               a value that is itself an ordinary state word.
+#
+# The first of those is a maintainable list and should grow when someone finds a
+# missing noun. The second is the genuinely undecidable one — a lowercase
+# passphrase is indistinguishable from prose — and is why this feature needs a
+# zero-retention provider agreement rather than a cleverer regex.
+
+# The credential nouns. Round 5 shipped a much shorter list and reviewers
+# walked straight through the gaps: `pin`, `otp`, `cvv`, `passcode`, `login`,
+# `passkey`, and `recovery phrase` / `seed phrase` are all ordinary words for a
+# credential and none of them were here.
+_CREDENTIAL_NOUN = (
+    r'\b(?:pass(?:word|wd|phrase|code|key)?|pwd|secret|credentials?|'
+    r'key|token|login|pin|otp|cvv|cvc|(?:recovery|seed|mnemonic)\s+phrase)\b')
+
+# TRIGGER 1 — a credential noun handed a value.
+#
+# The connector list and the WINDOW are both round-6 corrections. Round 5
+# required the noun to sit IMMEDIATELY before `is|are|=|:`, so ordinary English
+# defeated it:
+#     "the password, which was rotated last night, is p4ss123"   -> passed
+#     "I reset the wifi password to greenelephant purpletiger"   -> passed
+#     "password wise it is p4ss123"                              -> passed
+# None of those is adversarial phrasing; they are how people write. So the noun
+# and the connector may now be separated by up to _NOUN_VALUE_WINDOW characters
+# of filler, and `was|were|to|,|-` join the connector set.
+#
+# The value side is NOT bare \S any more. That over-refused ordinary
+# troubleshooting — "The API key is invalid", "our access token is expired" —
+# which is its own risk: a control that blocks benign questions gets switched
+# off. A short, closed list of STATE words is exempted instead. That list is a
+# bounded English vocabulary, unlike the unbounded space of secrets, so
+# maintaining it is tractable in a way pattern-chasing was not.
 _CREDENTIAL_NOUN_RE = re.compile(_CREDENTIAL_NOUN, re.IGNORECASE)
+_NOUN_VALUE_WINDOW = 40
+_CONNECTOR_RE = re.compile(r'(?:\b(?:is|are|was|were|to)\b|[=:,])\s*',
+                           re.IGNORECASE)
+_STATE_WORD_RE = re.compile(
+    r'(?:in)?valid|expired?|wrong|missing|null|none|empty|blank|broken|'
+    r'incorrect|correct|working|required|mandatory|optional|unavailable|'
+    r'unset|set|rejected|refused|denied|accepted|active|inactive|disabled|'
+    r'enabled|not|no|never|always|the|a|an|still|now|used|unused|gone|ok|'
+    r'fine|failing|failed|different|same|right|bad|good|new|old',
+    re.IGNORECASE)
+
+# There is no third trigger. Round 5 had one — a credential noun
+# co-occurring with a long token — and round 6 deleted it: once trigger 1
+# read the FIRST connector instead of skipping to any connector, it caught
+# everything trigger 3 did, including the case trigger 3 was written for
+# ("ssh key fingerprint check: myapikeyis..."). Measured, not assumed: with
+# trigger 3 disabled the corpus still refuses all 21 exploits. All it still
+# contributed was a false refusal of
+#     "customer creditworthiness key metrics ... internationalisation project"
+# where `key` and the long word were unrelated. A redundant control that only
+# produces false positives is worse than no control.
 
 # 19, not 24. The old floor sat directly above the band two reviewers exploited
 # — real secrets of 20-24 characters (`Tr0ub4dor3xKcvQmZpL9` is 20) passed the
@@ -159,18 +202,33 @@ def _looks_like_embedded_secret(word):
     return has_digit and has_alpha
 
 
-def _looks_like_a_long_value(word):
-    """A token too long to be an ordinary word, whatever it is made of.
+def _declares_a_secret(text):
+    """Trigger 1: a credential noun whose value is not an ordinary state word.
 
-    No digit requirement — that is the whole point, since this is the signal
-    that catches all-lowercase passphrases. It is safe to be this loose ONLY
-    because the caller also requires a credential noun in the same question;
-    on its own it would refuse 'internationalisation'.
+    Only the FIRST connector after each noun is considered, and that is the
+    whole trick. A regex allowed to skip filler looking for a connector will
+    happily walk past the real one to a later comma:
+        "The API key is invalid, can you check why the sync failed?"
+    matched on the comma, took "can" as the value, and refused a completely
+    benign question. Reading only the first connector gives "invalid", which is
+    a state word, so the question is allowed.
+
+    Conversely the filler-tolerance is what catches ordinary English that
+    round 5 let through, because the noun and its value are rarely adjacent:
+        "the password, which was rotated last night, is p4ss123"
     """
-    stripped = word.strip('.,;:!?()[]"\'')
-    if len(stripped) <= _MAX_WORD_CHARS:
-        return False
-    return not (_EMAIL_SHAPE_RE.match(stripped) or _URL_SHAPE_RE.match(stripped))
+    for noun in _CREDENTIAL_NOUN_RE.finditer(text):
+        tail = text[noun.end():noun.end() + _NOUN_VALUE_WINDOW]
+        connector = _CONNECTOR_RE.search(tail)
+        if not connector:
+            continue
+        rest = tail[connector.end():].split()
+        if not rest:
+            continue
+        if _STATE_WORD_RE.fullmatch(rest[0].strip('.,;:!?()[]"\'')):
+            continue
+        return True
+    return False
 
 
 _PROMPT_TEMPLATE = """You are a business analyst for {company}.
@@ -221,6 +279,13 @@ class AiQuestion(models.AbstractModel):
         "S000042" (a sale order at padding 6) and a 1-letter passport are
         identical. Asking the database removes the guesswork, and removes the
         dependence on whatever padding Odoo happens to ship today.
+
+        Returns (PREFIX, padding) pairs. The padding half is not decoration:
+        matching on prefix alone was a live passport leak. This repo's own dev
+        database returns OP, SP and WH among its prefixes — all two characters,
+        exactly the width _ALNUM_ID_RE allows — so "passport WH1234567" was
+        exempted as a warehouse reference and sent verbatim. A genuine WH
+        reference is WH/OUT/00012 and never matches that pattern at all.
         """
         seqs = self.env['ir.sequence'].sudo().search(
             [('prefix', '!=', False)], limit=500)
@@ -230,7 +295,7 @@ class AiQuestion(models.AbstractModel):
             # leading literal, which is what a reference actually starts with.
             head = re.split(r'%|/', seq.prefix or '')[0].strip()
             if head and head.isalpha():
-                prefixes.add(head.upper())
+                prefixes.add((head.upper(), seq.padding or 0))
         return sorted(prefixes)
 
     @api.model
@@ -253,7 +318,7 @@ class AiQuestion(models.AbstractModel):
                 "The AI assistant is available to the Accountant, the CEO and "
                 "the workspace owner."))
 
-        context = self.env['ncollection.ai.context'].build(
+        context = self.env['ncollection.ai.context']._build(
             max_tokens=max_context_tokens)
 
         # Sanitise the WHOLE payload — context and question together.
@@ -271,19 +336,16 @@ class AiQuestion(models.AbstractModel):
 
         # Fail closed BEFORE any scrubbing runs. Two independent triggers,
         # because they catch disjoint things — see the block comment above.
-        words = question.split()
-        declared = _DECLARED_SECRET_RE.search(question)
-        shaped = any(_looks_like_embedded_secret(w) for w in words)
-        co_occurs = bool(_CREDENTIAL_NOUN_RE.search(question)) and \
-            any(_looks_like_a_long_value(w) for w in words)
-        if declared or shaped or co_occurs:
+        declared = _declares_a_secret(question)
+        shaped = any(_looks_like_embedded_secret(w) for w in question.split())
+        if declared or shaped:
             raise UserError(self.env._(
                 "Your question looks like it contains a password, key or "
                 "token. Nothing was sent. Please remove it and ask in plain "
                 "words — this assistant works from your workspace data, so it "
                 "does not need one."))
 
-        clean, mapping = self.env['ncollection.ai.pii'].sanitise(
+        clean, mapping = self.env['ncollection.ai.pii']._sanitise(
             {'context': context['sections'], 'question': question},
             known_identities=self._known_identities(),
             doc_prefixes=self._document_prefixes(),
@@ -297,12 +359,12 @@ class AiQuestion(models.AbstractModel):
             question=clean['question'],
         )
 
-        response = self.env['ncollection.ai.gateway'].complete(
+        response = self.env['ncollection.ai.gateway']._complete(
             prompt, max_tokens=max_answer_tokens)
 
         return {
             # Re-hydrated HERE, inside the database that owns the mapping.
-            'answer': self.env['ncollection.ai.pii'].rehydrate(
+            'answer': self.env['ncollection.ai.pii']._rehydrate(
                 response.get('text', ''), mapping),
             # Surfaced rather than silent: an answer built on truncated evidence
             # should be visibly so.

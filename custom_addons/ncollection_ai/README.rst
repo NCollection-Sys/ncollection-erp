@@ -66,15 +66,32 @@ Known limits
 ============
 
 * **Free-text secret detection is best-effort and cannot be made complete.**
-  Deciding whether a run of prose is a secret is undecidable —
-  ``correcthorsebatterystaple`` is a passphrase and also five English words.
-  Three triggers are applied (high-confidence structured shapes; a credential
-  noun handed a value; a credential noun co-occurring with an unusually long
-  token), and together they refuse every case four review rounds produced. An
-  **undeclared** secret shaped like ordinary prose — ``"check
-  correcthorsebatterystaple for me"`` — still reaches the provider. This is
-  inherent, not a defect awaiting a fix, and it is why the feature needs a
-  zero-retention provider agreement rather than a cleverer pattern.
+  An earlier version of this section drew the line at "declared vs undeclared"
+  secrets. That was an overclaim — ``"the CVV is 123"`` is declared in plain
+  English and was leaking, because ``cvv`` was simply missing from the noun
+  list. The undecidability argument is real, but it was being used to cover a
+  gap it did not apply to. The actual boundary:
+
+  **Caught** — a credential named by a noun in ``_CREDENTIAL_NOUN``, joined
+  within ~40 characters by a connector (``is``/``are``/``was``/``were``/``to``/
+  ``=``/``:``/``,``), where the value is not an ordinary state word
+  (``invalid``, ``expired``, ``missing``…); **or** any single token over 19
+  characters mixing letters and digits; **or** anything matching a structural
+  shape (vendor prefixes, JWT, PEM, connection string, IBAN, card PAN).
+
+  **Not caught** — a credential named by a noun outside that list; a secret
+  given with no noun at all (``"check correcthorsebatterystaple for me"``); a
+  value that is itself a state word.
+
+  The first gap is a maintainable list and should grow whenever a missing noun
+  is found. The second is genuinely undecidable — a lowercase passphrase is
+  indistinguishable from prose — and is why this feature needs a zero-retention
+  provider agreement rather than a cleverer pattern.
+* **Only ``ask()`` is public.** ``_build``, ``_sanitise``, ``_rehydrate`` and
+  ``_complete`` are underscore-prefixed so Odoo's ``call_kw`` refuses them
+  outright. Before that, a Manager-role user blocked from ``ask()`` could call
+  ``ncollection.ai.context.build()`` by RPC and receive **unsanitised**
+  company-wide receivables — sanitisation only happens inside ``ask()``.
 * Long hex strings are redacted, so a question about a **checksum** gets
   ``[REDACTED]``. Deliberate: no shape separates a SHA-1 digest from a 40-char
   HMAC key, and §5's "never send" for secrets is unconditional.

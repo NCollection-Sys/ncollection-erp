@@ -58,8 +58,8 @@ with open('/mnt/extra-addons/ncollection_ai/data/sample_questions.json') as fh:
 Context = env['ncollection.ai.context']
 Pii = env['ncollection.ai.pii']
 
-context = Context.build()
-clean, mapping = Pii.sanitise({'context': context['sections']})
+context = Context._build()
+clean, mapping = Pii._sanitise({'context': context['sections']})
 
 print()
 print("SECTIONS PRESENT : %s" % ", ".join(sorted(clean['context'])))

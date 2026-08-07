@@ -41,15 +41,46 @@ class TestContextIsolation(TransactionCase):
         cls.builder = cls.env['ncollection.ai.context']
 
     # ------------------------------------------------- 1. structural signature
+    def test_only_ask_is_reachable_by_rpc(self):
+        """CRITICAL, round 5. The role gate protected ONE of four doors.
+
+        `ask()` was gated, but `build`, `sanitise`, `rehydrate` and `complete`
+        were public @api.model methods on registered models, so every one of
+        them was reachable via /web/dataset/call_kw. A reviewer demonstrated it
+        live: a Manager-role user, correctly refused by ask(), called
+        ncollection.ai.context.build() directly and received UNSANITISED
+        company-wide receivables with real partner names — because sanitisation
+        only ever happens inside ask().
+
+        Odoo's call_kw refuses methods starting with '_', so the fix is
+        structural rather than another gate to keep in sync. This test pins the
+        property: if someone makes one of them public again, the RPC surface
+        reopens silently.
+        """
+        public = {
+            'ncollection.ai.context': 'build',
+            'ncollection.ai.pii': 'sanitise',
+            'ncollection.ai.gateway': 'complete',
+        }
+        for model, method in public.items():
+            self.assertFalse(
+                hasattr(self.env[model], method),
+                "%s.%s must stay private (underscore-prefixed) — a public name "
+                "is RPC-reachable and bypasses ask()'s role gate" % (model, method))
+            self.assertTrue(hasattr(self.env[model], '_' + method))
+
+        # ...and ask() must remain public, or the feature is unreachable.
+        self.assertTrue(hasattr(self.env['ncollection.ai.question'], 'ask'))
+
     def test_build_takes_no_tenant_argument(self):
         """A `tenant` parameter would mean the builder can address more than one
         database — which is the property this ticket exists to rule out. Its
         absence is the guarantee, so it is asserted rather than assumed."""
-        params = set(inspect.signature(self.builder.build).parameters)
+        params = set(inspect.signature(self.builder._build).parameters)
         for forbidden in ('tenant', 'tenant_id', 'db', 'dbname', 'database'):
             self.assertNotIn(
                 forbidden, params,
-                "build() gained a %r parameter. Cross-tenant isolation here is "
+                "_build() gained a %r parameter. Cross-tenant isolation here is "
                 "structural: self.env IS the tenant. A tenant argument implies "
                 "a shared store that needs partitioning." % forbidden)
 
@@ -91,7 +122,7 @@ class TestContextIsolation(TransactionCase):
         """A tenant on a plan without `sale` has no top_customers. That is
         normal, not a failure — the engine returns None and the section is
         simply absent. If it raised, every plan variation would crash."""
-        context = self.builder.build(specs=[
+        context = self.builder._build(specs=[
             {'key': 'nonexistent', 'model': 'no.such.model.at.all',
              'aggregates': ['x:sum']},
         ])
@@ -121,7 +152,7 @@ class TestContextIsolation(TransactionCase):
         read it with.
 
         """
-        context = self.builder.build()
+        context = self.builder._build()
         serialised = str(context)
 
         this_db = self.env.cr.dbname
@@ -210,7 +241,7 @@ class TestContextIsolation(TransactionCase):
         # the point of pseudonymising the name beside it.
         self.assertNotIn(16, labelled[0].values())
 
-        clean, mapping = self.env['ncollection.ai.pii'].sanitise(
+        clean, mapping = self.env['ncollection.ai.pii']._sanitise(
             {'receivables': labelled})
         self.assertNotIn('Nakheel', str(clean))
         self.assertNotIn('Emaar', str(clean))
@@ -222,9 +253,9 @@ class TestContextIsolation(TransactionCase):
         that looks like a partner name may remain. Belt and braces over the
         unit test above, because the failure mode was precisely a gap between
         the shape tested and the shape produced."""
-        context = self.builder.build()
+        context = self.builder._build()
         partner_names = self.env['res.partner'].search([]).mapped('name')
-        clean, _ = self.env['ncollection.ai.pii'].sanitise(
+        clean, _ = self.env['ncollection.ai.pii']._sanitise(
             {'context': context['sections']})
         serialised = str(clean)
         for name in partner_names:
@@ -259,9 +290,9 @@ class TestContextIsolation(TransactionCase):
         has no idea who this tenant is. §5: the model does not need real
         identities. The builder's docstring claimed this was handled before it
         actually was; this test is what makes the claim true."""
-        context = self.builder.build()
+        context = self.builder._build()
         company = context['sections']['workspace']['company']
-        clean, mapping = self.env['ncollection.ai.pii'].sanitise(
+        clean, mapping = self.env['ncollection.ai.pii']._sanitise(
             {'context': context['sections']})
         self.assertNotIn(
             company, str(clean),
@@ -275,8 +306,8 @@ class TestContextIsolation(TransactionCase):
         cannot spend another tenant's allowance or address another tenant's
         data by argument."""
         self.assertTrue(self.env.cr.dbname)
-        context_one = self.builder.build()
-        context_two = self.builder.build()
+        context_one = self.builder._build()
+        context_two = self.builder._build()
         # Same database, same shape — no ambient parameter steering it elsewhere.
         self.assertEqual(set(context_one['sections']),
                          set(context_two['sections']))

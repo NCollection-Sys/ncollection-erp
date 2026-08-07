@@ -42,7 +42,7 @@ class TestAskSanitisation(TransactionCase):
 
         with patch(
             'odoo.addons.ncollection_ai.models.gateway_client'
-            '.AiGatewayClient.complete',
+            '.AiGatewayClient._complete',
             new=fake_complete,
         ):
             self.Question.ask(question)
@@ -95,7 +95,7 @@ class TestAskSanitisation(TransactionCase):
 
         with patch(
             'odoo.addons.ncollection_ai.models.gateway_client'
-            '.AiGatewayClient.complete',
+            '.AiGatewayClient._complete',
             new=fake_complete,
         ):
             result = self.Question.with_user(accountant).ask("Any overdue?")
@@ -186,7 +186,7 @@ class TestAskSanitisation(TransactionCase):
 
         with patch(
             'odoo.addons.ncollection_ai.models.gateway_client'
-            '.AiGatewayClient.complete',
+            '.AiGatewayClient._complete',
             new=fake_complete,
         ):
             result = self.Question.ask(
@@ -220,6 +220,20 @@ class TestAskSanitisation(TransactionCase):
             "the database password is Tr0ub4dor3xKcvQmZpL9 check syncs?",
             "the api secret is 8xK2mN9pQr4sT6vW1yB3cD5e for that vendor",
             "service account key: aZ9mK3pQ7rL1vB5nC8xD2eF6 check webhooks",
+            # Round 5: ordinary English defeated the adjacency requirement, and
+            # four everyday credential nouns were simply missing from the list.
+            "I reset the wifi password to greenelephant purpletiger",
+            "wifi password was greenelephant purpletiger before",
+            "reset the password, greenelephant purpletiger blueocean",
+            "the password, which was rotated last night, is p4ss123",
+            "the vpn password (set by IT on Monday) is p4ss123",
+            "the CVV is 123 on that card, can you check the charge",
+            "my PIN is 4521 for the corporate card",
+            "the OTP is 552211, please confirm the payout",
+            "the passcode is 4521, does that look right",
+            "the login is p4ss123",
+            "the passkey is p4ss123",
+            "my recovery phrase is apple grape ocean tiger delta ranch",
         ):
             with self.assertRaises(UserError, msg=question):
                 self._prompt_for(question)
@@ -239,6 +253,18 @@ class TestAskSanitisation(TransactionCase):
             "Explain the internationalisation of our receivables report",
             "What is the status of the secret santa invoice?",
             "Does the password reset email actually work for tenants?",
+            # Round 5: the value side was a bare \S, so ordinary troubleshooting
+            # was hard-refused. A control that blocks benign questions gets
+            # switched off, which is its own security outcome.
+            "The API key is invalid, can you check why the sync failed?",
+            "Our access token is expired, is that expected behaviour?",
+            "The credentials are wrong on the nightly sync job, any idea why?",
+            "My password is not working today, can you check my account?",
+            "The webhook secret is missing from the last deployment?",
+            "The token is null in the response, is that a bug?",
+            "Is the security key mandatory for this integration?",
+            "summarize creditworthiness key metrics for Al Barari Trading "
+            "LLC internationalisation project",
         ):
             prompt = self._prompt_for(question)   # must not raise
             self.assertIn('QUESTION:', prompt)

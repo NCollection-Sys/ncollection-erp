@@ -56,7 +56,7 @@ class AiGatewayClient(models.AbstractModel):
             'ncollection_ai.gateway_url', _DEFAULT_URL).rstrip('/')
 
     @api.model
-    def complete(self, prompt, max_tokens=1024):
+    def _complete(self, prompt, max_tokens=1024):
         """Send a SANITISED prompt to the gateway. Returns its JSON payload.
 
         The caller is responsible for having sanitised already — see

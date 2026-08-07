@@ -197,7 +197,7 @@ class AiPiiSanitiser(models.AbstractModel):
     # set. Neither is RPC-called today, but a future caller would have had
     # `payload` silently swallowed as ids rather than erroring.
     @api.model
-    def sanitise(self, payload, known_identities=None, doc_prefixes=None):
+    def _sanitise(self, payload, known_identities=None, doc_prefixes=None):
         """Return ``(clean_payload, mapping)``.
 
         ``mapping`` is token -> original, used ONLY to re-hydrate the response
@@ -220,7 +220,10 @@ class AiPiiSanitiser(models.AbstractModel):
         identities = sorted(
             {name for name in (known_identities or []) if name and len(name) >= 4},
             key=len, reverse=True)
-        prefixes = tuple(p.upper() for p in (doc_prefixes or ()) if p)
+        # (PREFIX, padding) pairs — see _is_document_reference. Normalised here
+        # so callers may pass any iterable of pairs.
+        prefixes = tuple((str(prefix).upper(), int(padding or 0))
+                         for prefix, padding in (doc_prefixes or ()) if prefix)
         clean = self._walk(payload, mapping, counters,
                            identities=identities, doc_prefixes=prefixes)
         return clean, mapping
@@ -277,9 +280,18 @@ class AiPiiSanitiser(models.AbstractModel):
         #    references cannot match" held only for the padding values Odoo
         #    ships today — an admin bumping sale.order padding from 5 to 6 in
         #    Settings would have started destroying every order reference.
+        #    The exemption matches prefix AND DIGIT COUNT, not prefix alone.
+        #    A bare startswith was a live passport leak, demonstrated against
+        #    this repo's REAL sequences: `_document_prefixes()` on the dev
+        #    database returns GROUP, INT, OP, PACK, PAY, SP, WH — and OP, SP and
+        #    WH are two characters, exactly the width _ALNUM_ID_RE allows. So
+        #        "verify passport WH1234567 against the visa file"
+        #    was sent verbatim, because it happens to start with a stock
+        #    warehouse prefix. Genuine WH references look like WH/OUT/00012 and
+        #    never match this pattern at all.
         text = _ALNUM_ID_RE.sub(
             lambda m: m.group(0)
-            if any(m.group(0).upper().startswith(pfx) for pfx in doc_prefixes)
+            if self._is_document_reference(m.group(0), doc_prefixes)
             else _REDACTED, text)
 
         # Snapshot AFTER every redaction, BEFORE any tokenisation. This is what
@@ -350,6 +362,26 @@ class AiPiiSanitiser(models.AbstractModel):
             text = self._token('PARTNER', redacted_only, mapping, counters)
         return text
 
+    def _is_document_reference(self, token, doc_prefixes):
+        """True only for a token matching a real sequence's prefix AND padding.
+
+        `doc_prefixes` is a tuple of (PREFIX, padding) read from the tenant's
+        own ir.sequence rows. Both halves are required: prefix alone let
+        "WH1234567" (a passport) pass as a warehouse reference, and padding
+        alone would exempt any number of the right length.
+
+        Padding 0 means the sequence declares none, so no digit count can be
+        confirmed and nothing is exempted — fail closed, since this decides
+        whether a §5 never-send identifier is redacted.
+        """
+        upper = token.upper()
+        for prefix, padding in doc_prefixes:
+            if not padding or not upper.startswith(prefix):
+                continue
+            if len(upper) - len(prefix) == padding and upper[len(prefix):].isdigit():
+                return True
+        return False
+
     def _looks_like_phone(self, candidate):
         """Confirm a candidate by DIGIT COUNT, not by shape.
 
@@ -405,7 +437,7 @@ class AiPiiSanitiser(models.AbstractModel):
 
     # -------------------------------------------------------------- rehydrate
     @api.model
-    def rehydrate(self, text, mapping):
+    def _rehydrate(self, text, mapping):
         """Put the real identities back, inside this database.
 
         Longest token first: without it ``PARTNER_1`` would match inside
