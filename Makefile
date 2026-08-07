@@ -150,6 +150,66 @@ upgrade: ## Upgrade a module after editing it:  make upgrade m=<module> [db=...]
 	$(COMPOSE) exec odoo odoo -d $(db) -u $(m) --stop-after-init $(ODOO_DB_ARGS)
 	$(COMPOSE) restart odoo
 
+## ---- Tests ----
+# The local counterpart to CI's `test` job (#365). Until this target existed the
+# 869 tests had NEVER been run locally: they only ever executed inside CI's
+# disposable container, which hands them a private Postgres and a free port 8069.
+# Against the live dev stack both assumptions break, and two flags are therefore
+# NOT optional — omit either and the suite dies in ~1s having run nothing:
+#
+#   * ODOO_DB_ARGS        the container's /etc/odoo/odoo.conf carries no DB
+#                         credentials, so a bare `exec odoo odoo` resolves
+#                         default@default:default and fails on connect.
+#   * --http-port/--gevent-port
+#                         --test-enable starts the HTTP server so the HttpCase
+#                         classes have something to talk to, and the container is
+#                         ALREADY serving on 8069 -> "Address already in use".
+#
+# The module list is DERIVED from ci.yml (scripts/dev/ci_matrix.py) rather than
+# copied here, so "local runs what CI runs" holds by construction. A second copy
+# would drift exactly as the pylint gate did before #267.
+TEST_DB          ?= nctest
+TEST_HTTP_PORT   ?= 8169
+TEST_GEVENT_PORT ?= 8172
+
+test: ## Run the Odoo test suite locally, same matrix as CI (m=<module> to scope) — owns db 'nctest'
+	@python3 scripts/dev/ci_matrix.py --self-test
+	@set -e; \
+	if [ -n "$(m)" ]; then mods="$(m)"; tags="/$(m)"; \
+	else mods="$$(python3 scripts/dev/ci_matrix.py --modules)"; \
+	     tags="$$(python3 scripts/dev/ci_matrix.py --tags)"; fi; \
+	echo "==> db     : $(TEST_DB)"; \
+	echo "==> modules: $$mods"; \
+	echo "==> tags   : $$tags"; \
+	$(call drop_database,$(TEST_DB)); \
+	log="$$(mktemp)"; rcfile="$$(mktemp)"; \
+	( $(COMPOSE) exec -T odoo odoo -d $(TEST_DB) $(ODOO_DB_ARGS) \
+	      --http-port=$(TEST_HTTP_PORT) --gevent-port=$(TEST_GEVENT_PORT) \
+	      -i "$$mods" --test-enable --test-tags "$$tags" \
+	      --stop-after-init --log-level=test 2>&1; \
+	  echo $$? > "$$rcfile" ) | tee "$$log"; \
+	rc="$$(cat "$$rcfile")"; \
+	$(call drop_database,$(TEST_DB)); \
+	if [ "$$rc" -ne 0 ]; then \
+	  echo "FAILED: odoo exited $$rc"; rm -f "$$log" "$$rcfile"; exit 1; fi; \
+	if grep -qi "traceback (most recent call last)" "$$log"; then \
+	  echo "FAILED: traceback in the test log (odoo can exit 0 on a failed test —"; \
+	  echo "        this is the same grep ci.yml applies for that reason)."; \
+	  rm -f "$$log" "$$rcfile"; exit 1; fi; \
+	if ! grep -q "odoo.tests.result:" "$$log"; then \
+	  echo "FAILED: no 'odoo.tests.result' line — the suite did not RUN."; \
+	  echo "        Silence is not success: a log with no result line and no"; \
+	  echo "        traceback is what odoo leaves when it dies before testing"; \
+	  echo "        (bad --db_* args, port already bound) or when --test-tags"; \
+	  echo "        matched nothing. Both would otherwise report green."; \
+	  rm -f "$$log" "$$rcfile"; exit 1; fi; \
+	if ! grep -q "odoo.tests.result: 0 failed, 0 error(s)" "$$log"; then \
+	  echo "FAILED: odoo reported failing tests:"; \
+	  grep "odoo.tests.result:" "$$log"; rm -f "$$log" "$$rcfile"; exit 1; fi; \
+	grep "odoo.tests.result:" "$$log" || true; \
+	rm -f "$$log" "$$rcfile"; \
+	echo "OK: local suite green (db $(TEST_DB) dropped)."
+
 ## ---- Demo (separate React prototype, NOT the Odoo product) ----
 demo: ## Run the standalone React demo UI on :5173
 	cd demo && npm install && npm run dev

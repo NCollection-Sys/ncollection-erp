@@ -128,6 +128,9 @@ STOP and ask before changing the architecture.
 `up` `down` `restart` `logs` `ps` · `bootstrap db=<db>` · `install m=<mod> db=<db>` ·
 `upgrade m=<mod> db=<db>` · `psql db=<db>` · `shell` · `demo` (runs the React app).
 **First run:** `make hooks-install` (pre-push gates) · `make doctor` (diagnose the env).
+**Tests:** `make test` runs the SAME suite CI runs, locally (`m=<module>` to scope). Its
+module list is derived from `ci.yml` by `scripts/dev/ci_matrix.py`, never copied, so local
+and CI cannot drift. It owns `nctest` and drops it at both ends.
 **Before merging:** `make verify-all` (routing + provisioning + e2e).
 
 ## Test fixture ownership (do not cross the streams)
@@ -146,6 +149,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Platform DB (provisioning + config-sync run *against* it) | `saastest` · `ncplatform` | none — **persistent, do not drop** |
 | Demo tenant (`make demo-tenant`) | `albarari` | `make demo-clean` |
 | Aggregation bench | `aggbench` | — |
+| Local test suite (`make test`) | `nctest` | self-drops (start + end of run) |
 
 The last three rows are **not** throwaway fixtures. `saastest` in particular is the
 default `PLATFORM_DB` that `verify_provisioning.sh` and `verify_config_sync.sh` run

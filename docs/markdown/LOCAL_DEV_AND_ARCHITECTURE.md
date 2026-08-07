@@ -207,6 +207,34 @@ Defined in `.github/workflows/ci.yml`. Four jobs, all **validation only**:
 | `test` | spins up Postgres, installs all modules with `--test-enable`, fails on any traceback |
 | `build` | `docker compose up -d` + smoke-tests that `/web/login` responds |
 
+### Running that same test job locally
+
+```bash
+make test                      # the whole matrix, exactly what CI runs
+make test m=ncollection_auth   # scope to one module while iterating
+```
+
+Use this for the RED half of the TDD loop instead of pushing and waiting on CI.
+
+Two details worth knowing, because both used to make this impossible (#365):
+
+- **The module list is derived from `ci.yml`**, by `scripts/dev/ci_matrix.py`, rather than
+  copied into the Makefile. A second copy would drift the moment someone adds a module to
+  one and not the other — the same trap the pylint gate had before #267. `ci.yml` stays the
+  single source, and `rule_ci_module_coverage` in `scripts/ci/invariants.py` already fails
+  the build if any module is missing from it.
+- **Two flags are not optional**, and their absence is why nobody had ever run this suite
+  locally. The container's `/etc/odoo/odoo.conf` carries no database credentials, so a bare
+  `exec odoo odoo` resolves `default@default:default` and dies on connect; and
+  `--test-enable` starts the HTTP server for the `HttpCase` classes, which collides with the
+  container already serving on 8069. `make test` passes both for you.
+
+The target owns the database `nctest` and drops it at the start *and* end of every run, so
+re-running it is a genuine no-op. It fails loudly if the suite reports failures, if a
+traceback appears, **or if no test result line appears at all** — because a log with neither
+result nor traceback is what Odoo leaves when it dies before testing, and that must not read
+as green.
+
 ### Deployment
 
 **There is no automated deploy (CD) yet.** CI only *validates* PRs. Standing up staging and
