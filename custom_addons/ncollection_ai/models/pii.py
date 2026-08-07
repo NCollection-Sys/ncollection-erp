@@ -75,18 +75,28 @@ _ONLY_TOKENS_RE = re.compile(r'(?:(?:PARTNER|EMAIL|PHONE)_\d+|\[REDACTED\]|[\s,;
 # ISO 13616. IGNORECASE because a lowercase IBAN is still an IBAN — without it
 # the value fell through to the phone pattern and was MISLABELLED as PHONE_n
 # rather than redacted, which looked like protection while being an accident.
-_IBAN_RE = re.compile(r'\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b', re.IGNORECASE)
+_IBAN_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b', re.IGNORECASE)
 
+# Every prefix below is anchored with (?<![A-Za-z0-9]) rather than \b. Round 7
+# fixed only the password= pattern and the comment claimed "the round-6
+# CRITICAL" resolved in the past tense — a reviewer then showed the SAME bug
+# alive in eleven siblings, because `\b` never fires after `_`:
+#     "STRIPE_SECRET_KEY_sk_live_51exampleK2FZabcdefghijkl please rotate"
+#     "prod_gh_token_ghp_1234567890abcdefghij was committed by mistake"
+#     "field_passport_A1234567 on file"
+# A partial fix described as a complete one is the exact failure this file's
+# history is made of, so the whole family is anchored the same way.
+#
 # Credential shapes. Prefix-anchored where the vendor publishes one, plus a
 # JWT shape and an Authorization header value. This list will never be
 # complete; it does not need to be, it needs to catch what people actually
 # paste into a text box.
 _SECRET_SHAPES = (
-    re.compile(r'\bsk[-_](?:live|test)?[-_]?[A-Za-z0-9]{16,}\b'),   # Stripe & friends
-    re.compile(r'\bAKIA[0-9A-Z]{16}\b'),                            # AWS access key
-    re.compile(r'\bgh[pousr]_[A-Za-z0-9]{20,}\b'),                  # GitHub tokens
-    re.compile(r'\bxox[baprs]-[A-Za-z0-9-]{10,}\b'),                # Slack tokens
-    re.compile(r'\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.'
+    re.compile(r'(?<![A-Za-z0-9])sk[-_](?:live|test)?[-_]?[A-Za-z0-9]{16,}\b'),   # Stripe & friends
+    re.compile(r'(?<![A-Za-z0-9])AKIA[0-9A-Z]{16}\b'),                            # AWS access key
+    re.compile(r'(?<![A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{20,}\b'),                  # GitHub tokens
+    re.compile(r'(?<![A-Za-z0-9])xox[baprs]-[A-Za-z0-9-]{10,}\b'),                # Slack tokens
+    re.compile(r'(?<![A-Za-z0-9])eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.'
                r'[A-Za-z0-9_-]*'),                                  # JWT
     re.compile(r'\b(?:Bearer|Basic)\s+[A-Za-z0-9+/._~-]{16,}=*',
                re.IGNORECASE),                                      # auth headers
@@ -106,7 +116,7 @@ _SECRET_SHAPES = (
     # together. An env-var line is the most common shape a pasted secret takes.
     re.compile(r'(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*\S+',
                re.IGNORECASE),
-    re.compile(r'\bAIza[A-Za-z0-9_-]{30,}\b'),                     # GCP API key
+    re.compile(r'(?<![A-Za-z0-9])AIza[A-Za-z0-9_-]{30,}\b'),                     # GCP API key
     # IGNORECASE. This is the THIRD case-sensitivity miss in this file
     # (IBAN, then _ALNUM_ID_RE, now this) — added after both fixes and
     # still repeating them.
@@ -162,7 +172,7 @@ _SECRET_SHAPES = (
 # WH/OUT/00012, BILL/2026/0007 and PO00123 — none match. The guard that used to
 # sit here checked for an adjacent "/" and was trivially bypassed by ordinary
 # punctuation ("passport /A1234567" leaked), so it made things strictly worse.
-_ALNUM_ID_RE = re.compile(r'\b[A-Z]{1,2}\d{6,9}\b', re.IGNORECASE)
+_ALNUM_ID_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{1,2}\d{6,9}\b', re.IGNORECASE)
 _EMAIL_RE = re.compile(r'\b[\w.+-]+@[\w-]+\.[\w.-]+\b')
 # Deliberately conservative: matching more aggressively starts eating the
 # substance §5 says to send freely.

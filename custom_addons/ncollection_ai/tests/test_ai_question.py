@@ -157,6 +157,28 @@ class TestAskSanitisation(TransactionCase):
         prompt = self._prompt_for("email ahmed@albarari.example about this")
         self.assertNotIn('ahmed@albarari.example', prompt)
 
+    def test_the_known_residual_is_what_the_documentation_says_it_is(self):
+        """THE GAP, PINNED. This test asserts that these still LEAK.
+
+        That is deliberate. The boundary section in ai_question.py and the
+        Known-limits section in README.rst both promise exactly this set, and a
+        promise nobody checks drifts. If a future change closes one of these,
+        THIS TEST FAILS — and the right response is to delete the case from
+        here and from both documents, not to re-loosen the filter.
+
+        A reviewer noted the previous round claimed a residual corpus that
+        existed only in a scratchpad file, invisible to anyone reading the
+        repo. This is that corpus, in the tree.
+        """
+        for question in (
+            # a credential noun outside _CREDENTIAL_NOUN
+            "the doorcode is 4521",
+            # no noun at all — genuinely undecidable, five English words
+            "check correcthorsebatterystaple for me",
+        ):
+            prompt = self._prompt_for(question)   # must NOT raise
+            self.assertIn('QUESTION:', prompt)
+
     # ------------------------------------------------------- must NOT scrub
     def test_a_document_reference_survives(self):
         """§5 lists document references as substance. An over-eager ID pattern
@@ -253,6 +275,26 @@ class TestAskSanitisation(TransactionCase):
             "the security code is 4521 on that card",
             "the access code is 778899 for the gate",
             "the verification code is 445566, use it now",
+            # Round 7: a trailing `s` is alphanumeric, so the noun lookahead
+            # killed every PLURAL noun outright.
+            "our passwords are hunter2 and greenelephant for the two accounts",
+            "the api tokens are AbCdEf123456 and XyZ987654 for staging",
+            "the logins are jdoe2026 and asmith2026",
+            "the pins are 4521 and 7788 for the two terminals",
+            # Round 7: ONE filler word ate the only connector, and the round-7
+            # state-word additions (now/still/right/just/that) made it routine.
+            "the password is now hunter2",
+            "the pin is still 4521",
+            "the cvv is same 552233",
+            "my password is just hunter2",
+            "the CVV is that 123",
+            # Round 7: the two-clause decoy, previously documented as an
+            # accepted residual. It is caught now.
+            "the password is not accepted, it's actually p4ss123",
+            # Round 7: pii.py's other eleven \b anchors had the same
+            # underscore bug the password= pattern had.
+            "STRIPE_SECRET_KEY_sk_live_51exampleK2FZabcdefghijkl please rotate",
+            "prod_gh_token_ghp_1234567890abcdefghij was committed by mistake",
         ):
             with self.assertRaises(UserError, msg=question):
                 self._prompt_for(question)
@@ -295,6 +337,22 @@ class TestAskSanitisation(TransactionCase):
             "The api key rotation policy: how many keys are older than 90 days?",
             "did the monkey to zoo shipment clear customs?",
             "the password is not accepted, can you check my account?",
+            # Round 7 false refusals. The state-word DENYLIST was replaced by a
+            # value-shape ALLOWLIST precisely because these were being blocked
+            # while "the password is now hunter2" sailed through.
+            "credentials are stored in the vault, correct?",
+            "the token is stored securely, right?",
+            "the api key is embedded in our integration docs",
+            "the pin is printed on the receipt",
+            "the otp is sent by SMS",
+            "the login is shared across our sales team, is that fine?",
+            "the token count for this session is high",
+            "the login history2026 export is ready",
+            "confirm the login SO2026042 is linked correctly",
+            "customer login AB123456 is locked out again",
+            "the login - for testing purposes - is broken today",
+            "the password, apparently, is unavailable right now",
+            "the api key, honestly, is meaningless without rotation",
         ):
             prompt = self._prompt_for(question)   # must not raise
             self.assertIn('QUESTION:', prompt)

@@ -83,55 +83,62 @@ _IDENTITY_SCAN_LIMIT = 2000
 # So the layers are scoped to what each can actually do, and no further:
 #
 #   1. pii.py shape patterns  — HIGH-CONFIDENCE STRUCTURED secrets only: vendor
-#      prefixes, JWTs, PEM blocks, connection strings, IBANs, card PANs. These
-#      have real, checkable structure. This layer works; it is not the gap.
-#   2. _declares_a_secret     — a credential NOUN handed a value that is not an
-#      ordinary state word. The giveaway is the noun, not the value, which is
-#      why this reaches short, lowercase and multi-word secrets that shape never
-#      can.
-#   3. _looks_like_embedded_secret — high-entropy mixed-alphanumeric runs that
-#      no word is, with emails and URLs exempted so the assistant stays usable.
+#      prefixes, JWTs, PEM blocks, connection strings, IBANs, card PANs.
+#   2. _declares_a_secret     — a credential NOUN with a credential-SHAPED
+#      value near it, by juxtaposition or through a connector.
+#   3. _looks_like_embedded_secret — high-entropy runs no word is, with emails
+#      and URLs exempted so the assistant stays usable.
+#
+# ROUND 8 INVERTED THE VALUE TEST, and that is the structural lesson. Rounds
+# 5-7 asked "is this value a known English STATE WORD?" — an open-ended
+# denylist of English, the same losing shape as chasing secrets. It failed in
+# both directions at once: round 7's own additions (`now`, `still`, `just`,
+# `that`) let "the password is now hunter2" through, while ordinary support
+# English like "the token is stored securely, right?" was refused. Asking
+# instead "does this look like a credential VALUE" is a bounded, checkable
+# property, and it fixed both directions together.
 #
 # THE RESIDUAL, STATED AS THE ACTUAL BOUNDARY RATHER THAN A FLATTERING ONE.
 #
-# Round 5 described this as "declared secrets are caught, undeclared ones are
-# not", and a reviewer correctly called that an overclaim: "the CVV is 123" was
-# DECLARED in plain English and still leaked, because the noun was missing from
-# the list. Nothing undecidable about it — it was simply unimplemented, and the
-# undecidability argument was being used to cover a gap it did not apply to.
-#
-# The real boundary, precisely:
+# Round 5 called this "declared vs undeclared" and a reviewer showed "the CVV
+# is 123" was declared and still leaking. Round 7 named four gaps and a
+# reviewer showed a fifth, easier one it had not named. So the list below is
+# PINNED BY A TEST (test_the_known_residual_is_what_the_documentation_says_it_is)
+# that asserts these still leak — if a change closes one, that test fails and
+# the docs get corrected rather than quietly drifting.
 #
 #   CAUGHT      a credential named by a noun in _CREDENTIAL_NOUN and either
-#                 * immediately followed by a letters-and-digits token
-#                   ("wifi password p4ssW0rd2026"), or
-#                 * joined within _NOUN_VALUE_WINDOW characters by a connector
-#                   in _CONNECTOR_RE whose value is not in _STATE_WORD_RE;
-#               OR any single token over _MAX_WORD_CHARS mixing letters and
-#               digits; OR anything matching a pii.py structural shape.
+#                 * immediately followed by a value with INTERLEAVED digits or
+#                   mixed case ("wifi password p4ssW0rd2026"), or
+#                 * assigned with `=` ("SECRET_KEY=abc" — shape irrelevant), or
+#                 * within _VALUE_LOOKAHEAD_TOKENS of a connector, where the
+#                   value is credential-SHAPED (see _looks_like_a_credential_value);
+#               a HIGH-SIGNAL noun (recovery/seed/mnemonic phrase, passphrase)
+#               with any value at all, since those are six ordinary lowercase
+#               words no shape rule can see; OR any single token over
+#               _MAX_WORD_CHARS mixing letters and digits; OR a pii.py shape.
 #
-#   NOT CAUGHT, each demonstrated by a reviewer and each pinned in the RESIDUAL
-#   section of the gate corpus so the count stays visible:
-#                 * a noun outside the list ("the doorcode is 4521")
-#                 * no noun at all ("check correcthorsebatterystaple for me")
-#                 * a DECOY CLAUSE that puts a state word in the value slot and
-#                   the real secret further along:
-#                       "the password is not accepted, it's actually p4ss123"
-#                   Fixable only by scanning every token near the noun, which
-#                   was measured and rejected: it refuses "the api key rotation
-#                   policy: how many keys are older than 90 days?" because
-#                   "rotation" is eight characters.
-#                 * a declaration whose connector falls outside the window
+#   NOT CAUGHT  * a credential noun outside the list ("the doorcode is 4521")
+#               * no noun at all ("check correcthorsebatterystaple for me")
+#               * connectors spelled as words this file does not know
+#                 ("wifi password equals p4ssW0rd2026", "the api key -> X")
+#               * a declaration whose connector falls outside the window
 #
-# The noun list is maintainable and should grow when someone finds a gap. The
-# rest is the genuinely undecidable part — a lowercase passphrase is
-# indistinguishable from prose — and is why this feature needs a zero-retention
-# provider agreement rather than a cleverer regex.
+#   KNOWN FALSE REFUSALS, accepted as the fail-safe direction: an ERP reference
+#               with interleaved digits beside a credential noun — "access code
+#               AC2026Z9", "token TXN2026Q1" — is indistinguishable from a
+#               secret by shape. "login history2026" and "login AB123456" are
+#               NOT refused, because their digits are a trailing run.
 #
-# SIX REVIEW ROUNDS ESTABLISHED THIS. Every round that tried to close the gap
-# with more pattern opened a false-refusal somewhere else, and a control that
-# blocks "Can you pass this invoice to Sarah?" gets switched off, which is a
-# worse security outcome than the gap it was closing.
+# The noun and connector lists are maintainable and should grow when someone
+# finds a gap. The no-noun case is the genuinely undecidable one — a lowercase
+# passphrase is indistinguishable from prose — and is why this feature needs a
+# zero-retention provider agreement rather than a cleverer regex (#375).
+#
+# EIGHT REVIEW ROUNDS. Every round that closed a gap with more pattern opened a
+# false refusal somewhere else, and a control that blocks "Can you pass this
+# invoice to Sarah?" gets switched off — a worse outcome than the gap it closed.
+# Do not add a pattern here without running BOTH halves of the corpus.
 
 # The credential nouns. Round 5 shipped a much shorter list and reviewers
 # walked straight through the gaps: `pin`, `otp`, `cvv`, `passcode`, `login`,
@@ -170,56 +177,117 @@ _IDENTITY_SCAN_LIMIT = 2000
 #                      a letter prefix is allowed. Both were verified against a
 #                      both-directions case list before being applied.
 _NOUN_SEP_BOUNDED = (r'(?<![A-Za-z0-9])'
-                     r'(?:key(?!\s+to\b)|pin)'
+                     r'(?:key(?!\s+to\b)|pin)s?'
                      r'(?![A-Za-z0-9])')
 _NOUN_COMPOUND_OK = (
     r'(?:pass(?:word|wd|phrase|code|key)|pwd|'
     r'secret(?!\s+(?:sauce|santa|weapon|ingredient|to\b))|credentials?|'
     r'token|login|otp|cvv|cvc|(?:recovery|seed|mnemonic)\s+phrase|'
-    r'(?:security|access|verification)\s+code)(?![A-Za-z0-9])')
+    r'(?:security|access|verification)\s+code)s?(?![A-Za-z0-9])')
 _CREDENTIAL_NOUN = '(?:%s|%s)' % (_NOUN_SEP_BOUNDED, _NOUN_COMPOUND_OK)
 
 _CREDENTIAL_NOUN_RE = re.compile(_CREDENTIAL_NOUN, re.IGNORECASE)
 _NOUN_VALUE_WINDOW = 40
 _CONNECTOR_RE = re.compile(r'(?:\b(?:is|are|was|were|to)\b|[=:,]|\s-\s)\s*',
                            re.IGNORECASE)
-_STATE_WORD_RE = re.compile(
-    r'(?:in)?valid|expired?|wrong|missing|null|none|empty|blank|broken|'
-    r'incorrect|correct|working|required|mandatory|optional|unavailable|'
-    r'unset|set|rejected|refused|denied|accepted|active|inactive|disabled|'
-    r'enabled|not|no|never|always|the|a|an|still|now|used|unused|gone|ok|'
-    r'fine|failing|failed|different|same|right|bad|good|new|old|down|up|'
-    # Question words. "The api key rotation policy: how many keys are older
-    # than 90 days?" was refused because the topic-separator colon was read
-    # as a connector and "how" was not recognised. A value that is a question
-    # word is never a credential.
-    r'how|what|when|why|which|who|where|whether|any|all|only|just|it|its|'
-    r'is|are|was|were|that|this|there|here|can|could|should|would',
-    re.IGNORECASE)
+# HOW A VALUE IS JUDGED — a shape ALLOWLIST, not a word denylist.
+#
+# Rounds 5-7 used _STATE_WORD_RE: refuse unless the value is a known English
+# state word. That list is open-ended, which is the same losing shape as
+# chasing secrets, and it failed in both directions at once. Round 7's own
+# additions (`now`, `still`, `right`, `ok`, `fine`) created a CRITICAL:
+#     "the password is now hunter2"   -> one filler word ate the connector
+# while ordinary support English was still refused:
+#     "the token is stored securely, right?"
+#
+# So the question is inverted. Instead of asking "is this an English word I
+# recognise", ask "does this look like a credential VALUE" — a bounded,
+# checkable property. Verified against 14 real secrets and 28 ordinary words
+# before it was adopted: no secret missed, no benign word refused.
+_MIN_VALUE_CHARS = 3
+_MAX_DIGIT_RUN = 12
+_LONG_VALUE_CHARS = 12
+_MIXED_CASE_CHARS = 8
 
-# There is no third trigger. Round 5 had one — a credential noun
-# co-occurring with a long token — and round 6 deleted it: once trigger 1
-# read the FIRST connector instead of skipping to any connector, it caught
-# everything trigger 3 did, including the case trigger 3 was written for
-# ("ssh key fingerprint check: myapikeyis..."). Measured, not assumed: with
-# trigger 3 disabled the corpus still refuses all 21 exploits. All it still
-# contributed was a false refusal of
-#     "customer creditworthiness key metrics ... internationalisation project"
-# where `key` and the long word were unrelated. A redundant control that only
-# produces false positives is worse than no control.
 
-# 19, not 24. The old floor sat directly above the band two reviewers exploited
-# — real secrets of 20-24 characters (`Tr0ub4dor3xKcvQmZpL9` is 20) passed the
-# gate and were then too short for pii.py's 32-hex / 40-base64 generic shapes.
-# The two layers shared a blind spot rather than covering one another.
+def _looks_like_a_credential_value(value):
+    """True when a token looks like a secret rather than a word.
+
+    Four shapes, each chosen against real examples:
+      letters+digits    hunter2, p4ss123, jdoe2026, AbCdEf123456
+      short digit run   4521, 552233, 445566 (PINs, CVVs, OTPs)
+      long              greenelephant, correcthorsebatterystaple
+      mixed case        Str0ngPassZZ
+    "stored", "printed", "encrypted", "temporary", "rotation" and "invalid" are
+    none of these, which is what keeps ordinary questions askable.
+    """
+    if len(value) < _MIN_VALUE_CHARS:
+        return False
+    has_digit = any(c.isdigit() for c in value)
+    has_alpha = any(c.isalpha() for c in value)
+    if has_digit and has_alpha:
+        return True
+    if value.isdigit() and len(value) <= _MAX_DIGIT_RUN:
+        return True
+    if len(value) >= _LONG_VALUE_CHARS:
+        return True
+    return (len(value) >= _MIXED_CASE_CHARS
+            and not value.islower() and not value.isupper())
+
+
+# How many tokens after a connector may be inspected. More than one, because a
+# single filler word otherwise hides the value ("the password is now hunter2");
+# bounded, because scanning the whole sentence re-refuses ordinary questions.
+_VALUE_LOOKAHEAD_TOKENS = 3
+
+# HIGH-SIGNAL NOUNS — any following value counts, no shape test.
+# A wallet/2FA recovery phrase is SIX ORDINARY LOWERCASE WORDS
+# ("apple grape ocean tiger delta ranch"), so no shape rule can ever see it.
+# These nouns are also never ordinary ERP English, unlike `key` or `token`,
+# so treating the mere phrasing as sufficient costs nothing real.
+_HIGH_SIGNAL_NOUN_RE = re.compile(
+    r'(?:(?:recovery|seed|mnemonic)\s+phrase|passphrase)s?', re.IGNORECASE)
+
+
+def _looks_like_a_juxtaposed_value(value):
+    """Stricter than the connector test, because juxtaposition has no verb.
+
+    Requires digits INTERLEAVED with letters, or mixed case — not a trailing
+    digit run. Without that, every ERP reference sitting beside a credential
+    noun was refused: "the login history2026 export", "confirm the login
+    SO2026042", "customer login AB123456 is locked out".
+
+    Still refuses a few genuinely ambiguous references (AC2026Z9, TXN2026Q1) —
+    interleaved digits make them indistinguishable from a secret by shape, so
+    they fail safe. Documented rather than pretended away.
+    """
+    if len(value) < 6 or not value.isalnum():
+        return False
+    if any(c.isdigit() for c in value.rstrip('0123456789')):
+        return True
+    return not value.islower() and not value.isupper()
+
+
+_CREDENTIAL_NOUN_RE = re.compile(_CREDENTIAL_NOUN, re.IGNORECASE)
+_NOUN_VALUE_WINDOW = 40
+_CONNECTOR_RE = re.compile(r'(?:\b(?:is|are|was|were|to)\b|[=:,]|\s-\s)\s*',
+                           re.IGNORECASE)
+# There is no third trigger. Round 5 had a co-occurrence rule; round 6
+# deleted it as redundant, and round 8's value-shape test made the question
+# moot — the connector path now reaches everything it did.
+
+# TRIGGER 2 — a single high-entropy token, with no credential noun anywhere.
+# 19, not 24: the old floor sat directly above the band two reviewers
+# exploited, where real 20-24 character secrets were too short for pii.py's
+# 32-hex / 40-base64 generic shapes. The two layers shared a blind spot rather
+# than covering one another.
 _MAX_WORD_CHARS = 19
 _SUSPICIOUS_RUN_RE = re.compile(r'[A-Za-z0-9+/_=-]{16,}')
 
-# Exempted from the shape gate: both are ordinary content in a business
-# question, both are long, hyphen-rich and digit-bearing, and both were being
-# refused outright. Neither is unprotected by the exemption — pii.py
-# pseudonymises emails, and a URL carrying credentials still matches the
-# connection-string pattern there.
+# Exempt from the shape gate: both are ordinary content in a business question,
+# both are long, hyphen-rich and digit-bearing, and both were being refused
+# outright. Neither is left unprotected — pii.py pseudonymises emails, and a URL
+# carrying credentials still matches its connection-string pattern.
 _EMAIL_SHAPE_RE = re.compile(r'^[\w.+-]+@[\w-]+\.[\w.-]+$')
 _URL_SHAPE_RE = re.compile(r'^[a-z][a-z0-9+.-]*://[^\s@]*$', re.IGNORECASE)
 
@@ -245,68 +313,53 @@ def _looks_like_embedded_secret(word):
     return has_digit and has_alpha
 
 
-def _value_after(tail, connector):
-    """The first whitespace token after a connector, stripped of punctuation."""
-    rest = tail[connector.end():].split()
-    return rest[0].strip('.,;:!?()[]"\'') if rest else ''
-
-
-def _looks_like_a_credential_value(value):
-    """Value-shaped rather than merely not-a-state-word.
-
-    Applied only to connectors AFTER the first, where the bar has to be higher
-    — see _declares_a_secret. A credential carries a digit or real length;
-    "can", "ask" and "you" carry neither.
-    """
-    return len(value) >= 8 or any(c.isdigit() for c in value)
-
-
 def _declares_a_secret(text):
-    """Trigger 1: a credential noun handed a value that is not a state word.
+    """A credential noun with a credential-SHAPED value near it.
 
-    THE FIRST connector after the noun is judged leniently: any value that is
-    not an ordinary state word means a declaration. That is what catches
-    "the CVV is 123" and "root password is hunter2", and what ALLOWS
-    "The API key is invalid" — reading only the first connector gives
-    "invalid", so the question goes through.
+    Two ways a value attaches to the noun, both seen in reviewer examples:
 
-    LATER connectors are judged strictly, and that asymmetry is the point. A
-    filler clause beginning with a state word would otherwise mask the real
-    declaration:
-        "the password, which was rotated last night, is p4ss123"
-    ("which" is a state word.) But scanning on with the lenient rule would
-    re-break the benign case above, because its later comma yields "can". So
-    later connectors additionally require a value-SHAPED value.
+      juxtaposition   "wifi password p4ssW0rd2026"   (no connector at all —
+                      called the most common paste of all)
+      connector       "the password is now hunter2"  (up to
+                      _VALUE_LOOKAHEAD_TOKENS tokens after is/are/was/were/to/
+                      =/:/,/ - , because ONE filler word otherwise hides it)
 
-    Both halves are pinned by the corpus in tests/test_ai_question.py, in both
-    directions. Six review rounds established that this trigger cannot be made
-    complete — see the boundary section at the top of this module for exactly
-    what it does and does not catch.
+    The value is judged by SHAPE, not by whether it is a word this module
+    happens to recognise. That inversion is round 8's change and it is the
+    point: the previous denylist of English state words was open-ended, so it
+    failed in both directions simultaneously — leaking "the password is now
+    hunter2" while refusing "the token is stored securely, right?".
+
+    Bounded on purpose. Scanning the whole sentence re-refuses ordinary
+    questions; three tokens after a connector is enough for one filler word and
+    not enough to reach an unrelated long word later in the sentence.
+
+    See the boundary section at the top of this module for what this still does
+    NOT catch. It is not complete and cannot be.
     """
     for noun in _CREDENTIAL_NOUN_RE.finditer(text):
         tail = text[noun.end():noun.end() + _NOUN_VALUE_WINDOW]
-
-        # JUXTAPOSITION — no connector at all, which a reviewer identified as
-        # "arguably the single most common way people paste a credential":
-        #     "wifi password p4ssW0rd2026"      "ssh key AbCdEf123456"
-        # Only the IMMEDIATELY following token counts, and it must mix letters
-        # AND digits, which is what keeps ordinary noun phrases quiet —
-        # "password reset email", "api key rotation policy", "login page" all
-        # have a plain word there.
-        following = tail.split()
-        if following:
-            candidate = following[0].strip('.,;:!?()[]"\'')
-            if (len(candidate) >= 6
-                    and any(c.isdigit() for c in candidate)
-                    and any(c.isalpha() for c in candidate)):
+        if _HIGH_SIGNAL_NOUN_RE.fullmatch(noun.group(0).strip()):
+            if tail.split():
                 return True
 
-        for position, connector in enumerate(_CONNECTOR_RE.finditer(tail)):
-            value = _value_after(tail, connector)
-            if not value:
-                continue
-            if not _STATE_WORD_RE.fullmatch(value):
-                if position == 0 or _looks_like_a_credential_value(value):
+        following = tail.split()
+        if following and _looks_like_a_juxtaposed_value(
+                following[0].strip('.,;:!?()[]"\'')):
+            return True
+        for connector in _CONNECTOR_RE.finditer(tail):
+            rest = tail[connector.end():].split()[:_VALUE_LOOKAHEAD_TOKENS]
+            # `=` after a credential noun is an ASSIGNMENT, not English, so the
+            # value's shape is irrelevant. Without this, SECRET_KEY=abc and
+            # jwt_token=abc.def.ghi walked through the shape test — "abc" is
+            # too short and "abc.def.ghi" carries no digit. `:` deliberately
+            # does NOT get this treatment: it is also an ordinary topic
+            # separator ("api key rotation policy: how many keys...").
+            if '=' in connector.group(0) and rest:
+                return True
+            for token in rest:
+                if _looks_like_a_credential_value(
+                        token.strip('.,;:!?()[]"\'')):
                     return True
     return False
 
