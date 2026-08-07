@@ -53,6 +53,7 @@ OCA_VENV := .oca-venv
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
         cron-starvation-verify cron-starvation-clean orphan-dbs \
         cron-scope-verify cron-scope-clean \
+        upgrade-verify upgrade-clean \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
 # `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
@@ -210,6 +211,17 @@ test: ## Run the Odoo test suite locally, same matrix as CI (m=<module> to scope
 	rm -f "$$log" "$$rcfile"; \
 	echo "OK: local suite green (db $(TEST_DB) dropped)."
 
+## ---- Upgrade proof (#362) ----
+# The `-u` path had NO coverage: deploy.sh runs no upgrade at all (it deploys the
+# image then curls /web/health — liveness, not correctness) and CI always installs
+# fresh with -i. Yet five modules ship eight migration scripts that run once,
+# against live customer data, on a database-per-tenant platform.
+upgrade-verify: ## Prove module upgrades run their migrations and data survives (#362) — owns upgr*
+	./scripts/upgrade/verify_upgrade.sh
+
+upgrade-clean: ## Drop the UPGRADE fixture DBs upgrgreen/upgrred (destructive)
+	@for d in upgrgreen upgrred; do $(call drop_database,$$d); done
+
 ## ---- Demo (separate React prototype, NOT the Odoo product) ----
 demo: ## Run the standalone React demo UI on :5173
 	cd demo && npm install && npm run dev
@@ -336,19 +348,21 @@ stack-settled: ## Was db/odoo just (re)started? Sanity check before trusting a s
 orphan-dbs: ## List databases owned by no documented suite (read-only; never drops)
 	@bash scripts/dev/orphan_dbs.sh
 
-verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + cron + financial-bootstrap + e2e) — pre-merge gate
-	@echo "==> [1/7] routing & isolation (P1-T06)"
+verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + cron + financial-bootstrap + upgrade + e2e) — pre-merge gate
+	@echo "==> [1/8] routing & isolation (P1-T06)"
 	@$(MAKE) --no-print-directory routing-verify
-	@echo "==> [2/7] provisioning (P2-T01)"
+	@echo "==> [2/8] provisioning (P2-T01)"
 	@$(MAKE) --no-print-directory provisioning-verify
-	@echo "==> [3/7] config sync (P2-T03)"
+	@echo "==> [3/8] config sync (P2-T03)"
 	@$(MAKE) --no-print-directory config-sync-verify
-	@echo "==> [4/7] cron starvation (#310)"
+	@echo "==> [4/8] cron starvation (#310)"
 	@$(MAKE) --no-print-directory cron-starvation-verify
-	@echo "==> [5/7] cron scope (#343)"
+	@echo "==> [5/8] cron scope (#343)"
 	@$(MAKE) --no-print-directory cron-scope-verify
-	@echo "==> [6/7] financial bootstrap (P3-T01)"
+	@echo "==> [6/8] financial bootstrap (P3-T01)"
 	@$(MAKE) --no-print-directory financial-bootstrap-verify
-	@echo "==> [7/7] end-to-end guarantees (P1-T20)"
+	@echo "==> [7/8] module upgrade path (#362)"
+	@$(MAKE) --no-print-directory upgrade-verify
+	@echo "==> [8/8] end-to-end guarantees (P1-T20)"
 	@$(MAKE) --no-print-directory e2e-verify
 	@echo "✅ verify-all: every suite green."

@@ -131,7 +131,8 @@ STOP and ask before changing the architecture.
 **Tests:** `make test` runs the SAME suite CI runs, locally (`m=<module>` to scope). Its
 module list is derived from `ci.yml` by `scripts/dev/ci_matrix.py`, never copied, so local
 and CI cannot drift. It owns `nctest` and drops it at both ends.
-**Before merging:** `make verify-all` (routing + provisioning + e2e).
+**Before merging:** `make verify-all` (8 suites: routing + provisioning + config-sync + cron ×2
++ financial-bootstrap + **upgrade** + e2e).
 
 ## Test fixture ownership (do not cross the streams)
 Each suite owns a database namespace and may **only** drop its own. These used to be
@@ -150,6 +151,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Demo tenant (`make demo-tenant`) | `albarari` | `make demo-clean` |
 | Aggregation bench | `aggbench` | — |
 | Local test suite (`make test`) | `nctest` | self-drops (start + end of run) |
+| Upgrade proof (#362) | `upgrgreen` · `upgrred` | self-drops (start + end) · `make upgrade-clean` |
 
 The last three rows are **not** throwaway fixtures. `saastest` in particular is the
 default `PLATFORM_DB` that `verify_provisioning.sh` and `verify_config_sync.sh` run
