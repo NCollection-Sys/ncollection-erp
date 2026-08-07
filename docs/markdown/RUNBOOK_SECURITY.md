@@ -105,6 +105,30 @@ sudo rm -f /etc/ssh/sshd_config.d/60-ncollection.conf && sudo systemctl reload s
 sudo ufw disable                                                                    # drop the firewall
 ```
 
+### Rolling back the egress backstop (#311)
+
+The egress rules are **not persisted** (no `iptables-persistent`), so the
+simplest full rollback is a **reboot** — it clears the `DOCKER-USER` egress
+policy entirely and does not come back until `harden.sh` runs again.
+
+To remove it **immediately without a reboot** (restores the prior
+"containers may egress anywhere" behaviour):
+
+```bash
+# Remove whichever NC-EGRESS slot is live, then delete both chains.
+for s in A B; do
+  while sudo iptables -C DOCKER-USER -s 172.31.240.0/24 -j "NC-EGRESS-$s" 2>/dev/null; do
+    sudo iptables -D DOCKER-USER -s 172.31.240.0/24 -j "NC-EGRESS-$s"; done
+  sudo iptables -F "NC-EGRESS-$s" 2>/dev/null; sudo iptables -X "NC-EGRESS-$s" 2>/dev/null
+done
+sudo ip6tables -D DOCKER-USER -j DROP 2>/dev/null   # lift the IPv6 default-deny
+```
+
+The compose two-plane split is rolled back by reverting the PR and
+recreating the stack (`docker compose up -d`); `db`/`pgbouncer` return to
+the default bridge. Re-assert everything at any time with `harden.sh`
+(idempotent).
+
 ---
 
 ## Committed hardening checklist (acceptance mirror)
