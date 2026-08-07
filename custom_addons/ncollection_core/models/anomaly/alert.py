@@ -183,6 +183,43 @@ class NCollectionAlert(models.Model):
     # Scheduled detection
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Cron identity (#347)
+    # ------------------------------------------------------------------
+
+    _CRON_USER_XMLID = 'ncollection_core.user_cron_service'
+
+    def _cron_identity_ok(self):
+        """True when this job is running as the dedicated scheduler user.
+
+        FAILS CLOSED, and that is the whole point. An ir.cron whose user_id is
+        missing or archived silently reverts to SUPERUSER — and su bypasses the
+        entire access-check machinery (check_access, has_access and
+        _filtered_access all short-circuit on env.su before our licence hook is
+        reached, and search() ignores ACLs outright). So the fallback is not a
+        degraded mode, it is #347 restored in full.
+
+        Refusing to run is visible: the tenant stops getting digests and someone
+        asks why. Running as superuser is invisible: a downgraded tenant keeps
+        receiving output derived from a module its plan no longer includes, and
+        nobody finds out until they audit it.
+        """
+        if self.env.su or self.env.user._is_system():
+            _logger.error(
+                "anomaly cron refused to run: it is executing as a superuser or "
+                "system user, so plan entitlement cannot be enforced (#347). "
+                "Expected the %s account. Check that ir.cron.user_id is set and "
+                "that the user is active.", self._CRON_USER_XMLID)
+            return False
+        expected = self.env.ref(self._CRON_USER_XMLID, raise_if_not_found=False)
+        if not expected or not expected.active:
+            _logger.error(
+                "anomaly cron refused to run: %s is missing or archived, so the "
+                "job would fall back to superuser and silently bypass licence "
+                "enforcement (#347).", self._CRON_USER_XMLID)
+            return False
+        return True
+
     @api.model
     def _cron_detect_anomalies(self):
         """Run every detector, one batch per detector, inside a time budget.
@@ -215,6 +252,8 @@ class NCollectionAlert(models.Model):
         favours the earlier detectors; if per-detector cost ever grows, this
         wants a rotating start offset rather than a fixed list.
         """
+        if not self._cron_identity_ok():
+            return
         cron = self.env['ir.cron']
         detector = self.env['ncollection.anomaly.detector']
         keys = list(anomaly_detectors.DETECTOR_KEYS)
@@ -249,6 +288,8 @@ class NCollectionAlert(models.Model):
         costs one line and the alternative silently changes what provisioning
         installs.
         """
+        if not self._cron_identity_ok():
+            return
         if 'mail.mail' not in self.env:
             _logger.info("Alert digest skipped: mail is not installed.")
             return False

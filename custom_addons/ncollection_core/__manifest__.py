@@ -14,7 +14,10 @@
     # 19.0.1.14.0 (#346): role-scoped alert visibility — 4 ir.rule records,
     # role ACL rows and a menu. Security policy change, so `-u` is what
     # applies it; a tenant left un-upgraded keeps alerts admin-only.
-    'version': '19.0.1.14.0',
+    # 19.0.1.15.0 (#347): adds the cron service user and binds the anomaly
+    # crons to it. A DATA file, so `-u` is what applies it; a tenant left
+    # un-upgraded keeps running its crons as superuser with Ring 2 inert.
+    'version': '19.0.1.15.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -43,6 +46,8 @@
         # reflects every Python model into ir.model before ANY of a module's
         # data files load, so model_id ref= would resolve either way.)
         'views/alert_views.xml',
+        # Must load BEFORE any cron that binds to it.
+        'data/cron_user.xml',
         'data/anomaly_cron.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in

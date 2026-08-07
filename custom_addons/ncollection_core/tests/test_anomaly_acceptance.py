@@ -97,6 +97,17 @@ class TestAnomalyAcceptance(TransactionCase):
                    lambda engine_self, spec: {'key': spec['key'], 'rows': rows,
                                               'cached': False})
 
+    def _as_scheduler(self, records):
+        """Run as the cron service user (#347).
+
+        These crons are bound to ncollection_core.user_cron_service in
+        production precisely so plan entitlement applies to them. Calling them
+        as uid 1 would exercise a path production never takes, and the
+        fail-closed guard rightly refuses to run there.
+        """
+        return records.with_user(
+            self.env.ref('ncollection_core.user_cron_service'))
+
     def test_zero_false_negatives_on_the_seeded_test_set(self):
         """THE acceptance criterion. Every seeded anomaly must be detected."""
         false_negatives = []
@@ -304,7 +315,7 @@ class TestAnomalyAcceptance(TransactionCase):
         # TransactionCase. Stubbed so this still tests the mail, not the commit.
         self.patch(type(self.env['ir.cron']), '_commit_progress',
                    lambda cron, processed=0, remaining=None, deactivate=False: 60.0)
-        self.Alert._cron_send_digest()
+        self._as_scheduler(self.Alert)._cron_send_digest()
         self.assertGreater(
             self.env['mail.mail'].search_count([]), before,
             "the digest must actually produce a mail when alerts are open")
@@ -371,7 +382,7 @@ class TestAnomalyAcceptance(TransactionCase):
         Cron = type(self.env['ir.cron'])
         self.patch(Cron, '_commit_progress',
                    lambda cron_self, processed=0, remaining=None, deactivate=False: 60.0)
-        self.assertTrue(self.Alert._cron_detect_anomalies())
+        self.assertTrue(self._as_scheduler(self.Alert)._cron_detect_anomalies())
 
     @mute_logger(_DETECTOR_LOGGER)
     def test_cron_stops_when_its_time_budget_runs_out(self):
@@ -393,7 +404,7 @@ class TestAnomalyAcceptance(TransactionCase):
             return 0.0        # no seconds left after the first detector
 
         self.patch(Cron, '_commit_progress', budget_exhausted)
-        self.Alert._cron_detect_anomalies()
+        self._as_scheduler(self.Alert)._cron_detect_anomalies()
 
         # One declaration call (processed=0) + exactly one detector step, then
         # the loop must break rather than running the remaining three.

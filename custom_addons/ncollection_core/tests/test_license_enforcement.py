@@ -108,6 +108,8 @@ class TestLicenseEnforcement(TransactionCase):
         self.env["res.partner"].with_user(self.user).check_access("read")
 
     def test_system_user_exempt(self):
+        """Still true for a real interactive system user. Scope made explicit
+        by the cron tests below (#347)."""
         self._set_plan("crm")
         # admin is a system user; even a blocked namespace would pass.
         partner = self.env["res.partner"].with_user(self.env.ref("base.user_admin"))
@@ -116,6 +118,84 @@ class TestLicenseEnforcement(TransactionCase):
     def test_su_exempt(self):
         self._set_plan("crm")
         self.env["res.partner"].sudo().check_access("read")
+
+    # ---------------------------------------------------------- #347: crons
+    #
+    # ir.cron without an explicit user_id runs as SUPERUSER, and su bypasses
+    # the ENTIRE access-check machinery: check_access(), has_access() and
+    # _filtered_access() all short-circuit on env.su BEFORE this mixin's
+    # _check_access override is reached, and search() ignores ACLs outright.
+    # So the hole could not be closed by patching the licence hook — the bypass
+    # lives above it, in core, by design. The fix is that crons now run as a
+    # real, non-superuser identity.
+
+    def test_the_cron_service_user_exists_and_is_not_a_system_user(self):
+        """The whole fix rests on this account NOT being system.
+
+        LicenseEnforcementMixin exempts `_is_system()` as well as su, so a
+        scheduler user carrying base.group_system would reintroduce #347
+        through the other half of the same condition.
+        """
+        user = self.env.ref("ncollection_core.user_cron_service")
+        self.assertTrue(user.active)
+        self.assertFalse(user._is_system(), "the scheduler user must not be a "
+                                            "system user (#347)")
+        self.assertTrue(user.has_group("base.group_user"))
+
+    def test_the_anomaly_crons_run_as_that_user_not_as_superuser(self):
+        """A cron with no user_id runs as uid 1 — which is the bug. Binding is
+        what makes every other test here meaningful."""
+        expected = self.env.ref("ncollection_core.user_cron_service")
+        for xmlid in ("ncollection_core.cron_detect_anomalies",):
+            cron = self.env.ref(xmlid)
+            self.assertEqual(cron.user_id, expected, xmlid)
+            self.assertNotEqual(cron.user_id.id, 1, "%s runs as SUPERUSER, so "
+                                                    "Ring 2 cannot gate it" % xmlid)
+
+    def test_a_blocked_model_is_denied_to_the_cron_user(self):
+        """CRITERION 2. Before #347 the equivalent path could not deny anything,
+        because the job ran as superuser."""
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        with patch.object(
+            type(self.Menu),
+            "_ncollection_blocked_namespaces_cached",
+            return_value=frozenset({"res"}),
+        ):
+            with self.assertRaises(AccessError) as caught:
+                self.env["res.partner"].with_user(cron_user).check_access("read")
+            self.assertIn("NCollection plan", str(caught.exception))
+
+    def test_the_aggregation_engine_reports_it_unreadable_for_the_cron_user(self):
+        """The consequence that matters: 'a tenant whose plan omits a module
+        gets no cron-produced output derived from it'.
+
+        The engine decides what may be aggregated by probing with a read and
+        catching AccessError. Under superuser that probe could never raise, so
+        every model looked readable — this asserts the real end-state, not just
+        that the mixin raises.
+        """
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        engine = self.env["ncollection.aggregation.engine"]
+        with patch.object(
+            type(self.Menu),
+            "_ncollection_blocked_namespaces_cached",
+            return_value=frozenset({"res"}),
+        ):
+            self.assertFalse(
+                engine.with_user(cron_user)._model_readable("res.partner"))
+            # And the old behaviour, which is why this was invisible:
+            self.assertTrue(engine.sudo()._model_readable("res.partner"))
+
+    def test_the_cron_user_still_reaches_what_the_plan_DOES_include(self):
+        """The other half. A fix that denied crons everything would pass every
+        test above and break scheduled work on every tenant."""
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        with patch.object(
+            type(self.Menu),
+            "_ncollection_blocked_namespaces_cached",
+            return_value=frozenset({"mis"}),
+        ):
+            self.env["res.partner"].with_user(cron_user).check_access("read")
 
     def test_no_config_fail_open(self):
         self.Config.search([]).unlink()

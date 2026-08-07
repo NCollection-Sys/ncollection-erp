@@ -15,18 +15,23 @@ directly"). That is not ceremony; it is what buys three properties for free:
   check drops a model this database does not have, and this module never
   consults a plan of its own.
 
-  **Ring-2 licensing is NOT enforced on the cron path, and saying otherwise
-  would be a lie worth catching.** `ir.cron` records carry no explicit
-  ``user_id`` here, so they run as the superuser (verified: every existing cron
-  in a live tenant resolves to ``user_id = 1``), and ``license_enforcement.py``
-  deliberately returns early for ``env.su`` — an intentional, documented
-  exemption. The engine detects a Ring-2 denial by catching ``AccessError`` from
-  a probe read, so under the cron that probe can never fail. Consequence: a
-  tenant that downgrades and loses, say, HR keeps getting attendance alerts
-  until the module is actually uninstalled. Availability is respected; plan
-  entitlement is not. Tracked as a follow-up rather than papered over, because
-  the fix (run the cron as a licence-bound user) affects every cron, not just
-  this one.
+  **Ring-2 licensing IS enforced on the cron path (#347).** It was not, and the
+  previous text here said so plainly rather than papering over it. The cause:
+  `ir.cron` rows carried no explicit ``user_id``, so they ran as the superuser
+  (verified — every cron in a live tenant resolved to ``user_id = 1``), and
+  ``env.su`` bypasses the ENTIRE access-check machinery. Not merely
+  ``license_enforcement``'s own exemption: Odoo's ``check_access``,
+  ``has_access`` and ``_filtered_access`` all short-circuit on ``env.su``
+  *before* any override is reached, and ``search()`` ignores ACLs outright. So
+  the probe this engine uses to detect a Ring-2 denial could never fail.
+
+  That is why the fix is an IDENTITY, not a flag: the crons now run as
+  ``ncollection_core.user_cron_service``, a plain internal user (deliberately
+  not ``base.group_system``, which is exempt too). What a detector can read now
+  tracks the tenant's plan automatically, through the same path real users take
+  — licensing inherited, never re-implemented. A tenant that downgrades off HR
+  stops getting attendance findings even while ``hr`` remains installed.
+
 * **Fail-open.** The engine never raises into a caller.
 
 Detector shape: each returns a list of *findings* — plain dicts, no ORM — which

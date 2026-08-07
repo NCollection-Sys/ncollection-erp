@@ -20,6 +20,10 @@
         <record id="cron_detect_anomalies" model="ir.cron">
             <field name="name">NCollection: detect anomalies</field>
             <field name="model_id" ref="model_ncollection_alert"/>
+            <!-- #347: run as a real, non-superuser identity so Ring 2
+                 licence enforcement actually applies. Without this the
+                 job runs as uid 1 and su bypasses the whole check. -->
+            <field name="user_id" ref="ncollection_core.user_cron_service"/>
             <field name="state">code</field>
             <field name="code">model._cron_detect_anomalies()</field>
             <field name="interval_number">1</field>
@@ -34,6 +38,10 @@
         <record id="cron_send_alert_digest" model="ir.cron">
             <field name="name">NCollection: email the anomaly alert digest</field>
             <field name="model_id" ref="model_ncollection_alert"/>
+            <!-- #347: run as a real, non-superuser identity so Ring 2
+                 licence enforcement actually applies. Without this the
+                 job runs as uid 1 and su bypasses the whole check. -->
+            <field name="user_id" ref="ncollection_core.user_cron_service"/>
             <field name="state">code</field>
             <field name="code">model._cron_send_digest()</field>
             <field name="interval_number">1</field>

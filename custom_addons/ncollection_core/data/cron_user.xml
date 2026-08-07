@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            THE CRON SERVICE USER (#347)
+
+            ir.cron rows without an explicit user_id run as SUPERUSER. Odoo sets
+            su=True for uid 1, and su short-circuits the ENTIRE access-check
+            machinery — check_access(), has_access() and _filtered_access() all
+            return before our LicenseEnforcementMixin._check_access override is
+            ever called, and search() bypasses ACLs outright. So Ring 2 could
+            not deny any installed model to any cron, whatever the plan said.
+
+            That is why this is a USER and not a flag. The hole cannot be closed
+            by patching the licence hook: the bypass lives above it, in core, by
+            design. The only place the check can fire is a cron that is not
+            superuser in the first place.
+
+            DELIBERATELY NOT base.group_system. LicenseEnforcementMixin exempts
+            `self.env.user._is_system()` as well as su, so granting system here
+            would reintroduce the exact bug through the other half of the same
+            condition. A plain internal user is the point.
+
+            Rights therefore MIRROR THE TENANT'S ENTITLEMENT: this user reaches
+            what the tenant's plan allows, automatically, because it goes
+            through the ordinary licence path that already works for real users.
+            When a tenant downgrades, the cron loses the same models its users
+            lose. No second copy of the licensing rules — Standing Rule
+            "licensing is inherited, never re-implemented".
+
+            noupdate="1" so a tenant that adjusts this user (extra role groups
+            for a cron that legitimately needs them) keeps the change across
+            upgrades.
+        -->
+        <record id="user_cron_service" model="res.users">
+            <field name="name">NCollection Scheduler</field>
+            <field name="login">cron@ncollection.internal</field>
+            <field name="active" eval="True"/>
+            <!-- Odoo 19: group_ids, not groups_id. base.group_user ONLY —
+                 see the comment above about group_system. -->
+            <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+            <!-- No password and no API key: this account is never logged into
+                 and never authenticates. It exists to give scheduled work an
+                 identity that the licence layer can actually see. -->
+            <field name="password">False</field>
+        </record>
+
+        <!--
+            WHICH CRONS BIND TO THIS, AND WHY NOT ALL OF THEM.
+
+            Bound: the two anomaly crons in this module. They read ACROSS
+            licensable models to detect anomalies, which is exactly the traffic
+            Ring 2 is supposed to gate, and is how #347 was found (#61).
+
+            NOT bound: ncollection_auth's log-retention purge. It touches only
+            that module's own models in the `ncollection` namespace, which is
+            never blocked, so binding it would gain no enforcement while adding
+            ACL burden — and ncollection_auth does not depend on this module, so
+            it could not resolve this xmlid without introducing a new
+            inter-module dependency for no benefit.
+
+            NOT bound: everything in ncollection_saas (backup, config-sync
+            reconcile, fleet migration, domain SSL, ECB rates). Those run in the
+            PLATFORM database, where this module is not installed at all, so the
+            licence mixin does not exist there. Verified: saastest carries
+            ncollection_saas + _subscription and NOT ncollection_core; a tenant
+            carries ncollection_core and neither platform module. They are
+            unaffected by construction, not by care.
+
+            The rule for anything added later: bind a cron to this user if it
+            reads models the tenant's PLAN governs. A cron that only touches
+            core `ncollection.*` models does not need it.
+        -->
+
+        <!-- An immutable anchor. `login` can be renamed by anyone with
+             res.users write access in the tenant; an xmlid cannot be moved by
+             editing a field, so the crons below resolve the account by xmlid
+             and a rename cannot silently detach them (the same reasoning
+             config_sync_key.py applies to its own service account). -->
+    </data>
+</odoo>
