@@ -116,7 +116,7 @@ try:
     s.connect(('db', 5432)); print('REACHED')
 except Exception as e:
     print('BLOCKED:' + type(e).__name__)
-" 2>/dev/null | tr -d '[:space:]')"
+" 2>"$CALL_ERR" | tr -d '[:space:]')"
 case "$db_probe" in
   BLOCKED*) ok "gateway cannot reach db:5432 ($db_probe)" ;;
   REACHED)  no "gateway REACHED the database — §10.4 isolation is broken" ;;
