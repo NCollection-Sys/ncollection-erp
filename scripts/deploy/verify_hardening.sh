@@ -98,27 +98,32 @@ fi
 
 # Behavioural proof (needs the stack running). Tolerant: if a container lacks a
 # probe tool or is not running, we SKIP rather than false-fail.
-egress_probe(){  # container url -> echoes OPEN | BLOCKED | NOTOOL | NORUN
-  docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^$1$" || { echo NORUN; return; }
-  docker exec "$1" sh -c '
+egress_probe(){  # compose-service url -> echoes OPEN | BLOCKED | NOTOOL | NORUN
+  # Resolve the running container from its compose SERVICE name — never a
+  # hardcoded container name, which breaks under a custom COMPOSE_PROJECT_NAME
+  # (invariants.py R3). Run this from the repo root so the project resolves.
+  cid="$(docker compose ps -q "$1" 2>/dev/null | head -1)"
+  [ -n "$cid" ] || { echo NORUN; return; }
+  # shellcheck disable=SC2016  # $0/URL expand in the CONTAINER's shell, not here
+  docker exec "$cid" sh -c '
     if command -v curl >/dev/null 2>&1; then curl -sf -m 6 -o /dev/null "$0" && echo OPEN || echo BLOCKED
     elif command -v wget >/dev/null 2>&1; then wget -q -T 6 -O /dev/null "$0" && echo OPEN || echo BLOCKED
     else echo NOTOOL; fi' "$2" 2>/dev/null || echo BLOCKED
 }
 if command -v docker >/dev/null 2>&1; then
   # Zero-egress service: pgbouncer (db-plane only) must NOT reach off-host.
-  case "$(egress_probe ncollection-pgbouncer https://api.stripe.com/)" in
+  case "$(egress_probe pgbouncer https://api.stripe.com/)" in
     BLOCKED) ok "pgbouncer egress denied (db-plane only)";;
     OPEN)    no "pgbouncer reached the internet — db-plane isolation broken";;
     *)       echo "  ⚠️  pgbouncer egress probe skipped (not running / no tool)";;
   esac
   # Egress service: odoo reaches an allowlisted host but not a random one.
-  case "$(egress_probe ncollection-odoo https://www.ecb.europa.eu/)" in
+  case "$(egress_probe odoo https://www.ecb.europa.eu/)" in
     OPEN)    ok "odoo reaches allowlisted host (ECB)";;
     BLOCKED) no "odoo could NOT reach allowlisted ECB — allowlist stale? re-run harden.sh";;
     *)       echo "  ⚠️  odoo allowlist-reach probe skipped (not running / no tool)";;
   esac
-  case "$(egress_probe ncollection-odoo https://example.com/)" in
+  case "$(egress_probe odoo https://example.com/)" in
     BLOCKED) ok "odoo egress to non-allowlisted host denied";;
     OPEN)    no "odoo reached a NON-allowlisted host (example.com) — egress not enforced";;
     *)       echo "  ⚠️  odoo deny probe skipped (not running / no tool)";;
