@@ -224,8 +224,14 @@ class TestPiiSanitiser(TransactionCase):
         """Pure digits stay exempt: a 44-digit lot or batch number is substance,
         and only the 13-19 digit PAN range is treated as sensitive."""
         lot = '1' * 44
-        clean, _ = self.pii._sanitise({'note': 'lot %s' % lot})
-        self.assertIn(lot, clean['note'])
+        for text in ('lot %s' % lot, 'lot_%s_x' % lot, '%s_x' % lot):
+            # The underscore-glued forms are round-10 regressions: fixing the
+            # OUTER anchor let the hex pattern reach past a trailing `_`, while
+            # the INNER "leave pure digits alone" guard still used \b and so
+            # could not find a boundary to stop it. Over-redaction, not a leak —
+            # and invisible until a case used underscore adjacency.
+            clean, _ = self.pii._sanitise({'note': text})
+            self.assertIn(lot, clean['note'], text)
 
     def test_a_name_is_never_tokenised_twice(self):
         """REGRESSION, and it fired on EVERY ask() call.

@@ -135,11 +135,11 @@ _SECRET_SHAPES = (
     # redacted, and a user asking "does this hash match" gets [REDACTED] — a
     # real, accepted loss of context quality, pinned by a test that asserts the
     # redaction rather than pretending it does not happen.
-    # (?![0-9]+\b) matters more than it looks: every DIGIT is also a hex
+    # (?![0-9]+(?![A-Za-z0-9])) matters more than it looks: every DIGIT is also a hex
     # character, so without it this pattern eats the 44-digit lot number the
     # must-survive test protects. Pure digits are the PAN pattern's job.
-    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[0-9a-fA-F]{32,}(?![A-Za-z0-9])'),
-    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[A-Za-z0-9+/]{40,}={0,2}(?![A-Za-z0-9])'),
+    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+(?![A-Za-z0-9]))[0-9a-fA-F]{32,}(?![A-Za-z0-9])'),
+    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+(?![A-Za-z0-9]))[A-Za-z0-9+/]{40,}={0,2}(?![A-Za-z0-9])'),
     # Long digit runs beyond phone length. Before the E.164 upper bound these
     # were incidentally swept into PHONE_n — mislabelled, but redacted. Adding
     # the bound removed that accidental cover from 16-digit card PANs, which sit
@@ -173,7 +173,7 @@ _SECRET_SHAPES = (
 # sit here checked for an adjacent "/" and was trivially bypassed by ordinary
 # punctuation ("passport /A1234567" leaked), so it made things strictly worse.
 _ALNUM_ID_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{1,2}\d{6,9}(?![A-Za-z0-9])', re.IGNORECASE)
-_EMAIL_RE = re.compile(r'(?<![A-Za-z0-9])[\w.+-]+@[\w-]+\.[\w.-]+(?![A-Za-z0-9])')
+_EMAIL_RE = re.compile(r'(?<![A-Za-z0-9])[\w.+-]+@[\w-]+\.[\w.-]*[\w-]')
 # Deliberately conservative: matching more aggressively starts eating the
 # substance §5 says to send freely.
 #
