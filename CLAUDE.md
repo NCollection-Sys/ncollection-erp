@@ -192,6 +192,9 @@ So tenant key === subdomain === database name, always.
   what it seeds, which login shows which role, and how to rebuild it.
 - `REGRESSIONS.md` — the regression ledger: symptom → root cause → the guard that now
   prevents recurrence. **A regression is not closed until a guard exists.**
+- `TESTING_STRATEGY.md` — what we test at each layer, what a green result actually proves,
+  the ranked gap register (G1–G11, each with its owning stack + DB prefix), and the measured
+  `958d8d6` baseline (17/17 green, 10m37s warm). Read before adding any new suite.
 - `DESIGN_CRON_AND_QUEUE_TOPOLOGY.md` — where work that can block on someone else's server is
   allowed to run (#310): why outbound work is queued rather than croned, why `root` capacity had
   to change, and why a `max_cron_threads` edit to `odoo.prod.conf` is a no-op.
