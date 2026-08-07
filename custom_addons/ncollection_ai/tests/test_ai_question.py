@@ -342,6 +342,9 @@ class TestAskSanitisation(TransactionCase):
             # underscore bug the password= pattern had.
             "STRIPE_SECRET_KEY_sk_live_51exampleK2FZabcdefghijkl please rotate",
             "prod_gh_token_ghp_1234567890abcdefghij was committed by mistake",
+            # Round 9: the value was the FOURTH token after the connector, one
+            # past the old 3-token lookahead.
+            "the password is really quite simply hunter2",
         ):
             with self.assertRaises(UserError, msg=question):
                 self._prompt_for(question)

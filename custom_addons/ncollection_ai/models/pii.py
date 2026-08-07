@@ -75,7 +75,7 @@ _ONLY_TOKENS_RE = re.compile(r'(?:(?:PARTNER|EMAIL|PHONE)_\d+|\[REDACTED\]|[\s,;
 # ISO 13616. IGNORECASE because a lowercase IBAN is still an IBAN — without it
 # the value fell through to the phone pattern and was MISLABELLED as PHONE_n
 # rather than redacted, which looked like protection while being an accident.
-_IBAN_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b', re.IGNORECASE)
+_IBAN_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{2}\d{2}[A-Z0-9]{11,30}(?![A-Za-z0-9])', re.IGNORECASE)
 
 # Every prefix below is anchored with (?<![A-Za-z0-9]) rather than \b. Round 7
 # fixed only the password= pattern and the comment claimed "the round-6
@@ -92,10 +92,10 @@ _IBAN_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b', re.IGNO
 # complete; it does not need to be, it needs to catch what people actually
 # paste into a text box.
 _SECRET_SHAPES = (
-    re.compile(r'(?<![A-Za-z0-9])sk[-_](?:live|test)?[-_]?[A-Za-z0-9]{16,}\b'),   # Stripe & friends
-    re.compile(r'(?<![A-Za-z0-9])AKIA[0-9A-Z]{16}\b'),                            # AWS access key
-    re.compile(r'(?<![A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{20,}\b'),                  # GitHub tokens
-    re.compile(r'(?<![A-Za-z0-9])xox[baprs]-[A-Za-z0-9-]{10,}\b'),                # Slack tokens
+    re.compile(r'(?<![A-Za-z0-9])sk[-_](?:live|test)?[-_]?[A-Za-z0-9]{16,}(?![A-Za-z0-9])'),   # Stripe & friends
+    re.compile(r'(?<![A-Za-z0-9])AKIA[0-9A-Z]{16}(?![A-Za-z0-9])'),                            # AWS access key
+    re.compile(r'(?<![A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{20,}(?![A-Za-z0-9])'),                  # GitHub tokens
+    re.compile(r'(?<![A-Za-z0-9])xox[baprs]-[A-Za-z0-9-]{10,}(?![A-Za-z0-9])'),                # Slack tokens
     re.compile(r'(?<![A-Za-z0-9])eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.'
                r'[A-Za-z0-9_-]*'),                                  # JWT
     re.compile(r'(?<![A-Za-z0-9])(?:Bearer|Basic)\s+[A-Za-z0-9+/._~-]{16,}=*',
@@ -116,7 +116,7 @@ _SECRET_SHAPES = (
     # together. An env-var line is the most common shape a pasted secret takes.
     re.compile(r'(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*\S+',
                re.IGNORECASE),
-    re.compile(r'(?<![A-Za-z0-9])AIza[A-Za-z0-9_-]{30,}\b'),                     # GCP API key
+    re.compile(r'(?<![A-Za-z0-9])AIza[A-Za-z0-9_-]{30,}(?![A-Za-z0-9])'),                     # GCP API key
     # IGNORECASE. This is the THIRD case-sensitivity miss in this file
     # (IBAN, then _ALNUM_ID_RE, now this) — added after both fixes and
     # still repeating them.
@@ -138,8 +138,8 @@ _SECRET_SHAPES = (
     # (?![0-9]+\b) matters more than it looks: every DIGIT is also a hex
     # character, so without it this pattern eats the 44-digit lot number the
     # must-survive test protects. Pure digits are the PAN pattern's job.
-    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[0-9a-fA-F]{32,}\b'),
-    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[A-Za-z0-9+/]{40,}={0,2}\b'),
+    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[0-9a-fA-F]{32,}(?![A-Za-z0-9])'),
+    re.compile(r'(?<![A-Za-z0-9])(?![0-9]+\b)[A-Za-z0-9+/]{40,}={0,2}(?![A-Za-z0-9])'),
     # Long digit runs beyond phone length. Before the E.164 upper bound these
     # were incidentally swept into PHONE_n — mislabelled, but redacted. Adding
     # the bound removed that accidental cover from 16-digit card PANs, which sit
@@ -147,7 +147,7 @@ _SECRET_SHAPES = (
     # 13-19 digits: the ISO/IEC 7812 PAN range. NOT "15+" — that also swallowed
     # a 44-digit lot number, destroying substance §5 says to send freely. The
     # bound has to match the thing being protected, not merely exceed phones.
-    re.compile(r'(?<![A-Za-z0-9])(?:\d[ -]?){12,18}\d\b'),
+    re.compile(r'(?<![A-Za-z0-9])(?:\d[ -]?){12,18}\d(?![A-Za-z0-9])'),
 )
 
 # Government-issued identifiers that mix letters and digits — passports,
@@ -172,8 +172,8 @@ _SECRET_SHAPES = (
 # WH/OUT/00012, BILL/2026/0007 and PO00123 — none match. The guard that used to
 # sit here checked for an adjacent "/" and was trivially bypassed by ordinary
 # punctuation ("passport /A1234567" leaked), so it made things strictly worse.
-_ALNUM_ID_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{1,2}\d{6,9}\b', re.IGNORECASE)
-_EMAIL_RE = re.compile(r'(?<![A-Za-z0-9])[\w.+-]+@[\w-]+\.[\w.-]+\b')
+_ALNUM_ID_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{1,2}\d{6,9}(?![A-Za-z0-9])', re.IGNORECASE)
+_EMAIL_RE = re.compile(r'(?<![A-Za-z0-9])[\w.+-]+@[\w-]+\.[\w.-]+(?![A-Za-z0-9])')
 # Deliberately conservative: matching more aggressively starts eating the
 # substance §5 says to send freely.
 #

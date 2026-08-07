@@ -173,6 +173,35 @@ class TestPiiSanitiser(TransactionCase):
                 doc_prefixes=prefixes)
             self.assertNotIn(ident, clean['note'], ident)
 
+    def test_a_secret_glued_to_a_TRAILING_word_character_is_still_redacted(self):
+        """CRITICAL, round 9, found independently by two reviewers — and it is
+        the MIRROR of the bug rounds 6 and 8 already fixed on the other side.
+
+        `\\b` does not fire between two word characters, and `_` is one. Rounds
+        6-8 fixed every LEADING anchor and the commit message said so, with a
+        grep to prove it: "grep this file for a leading \\b, expect zero." That
+        grep was true — and only checked the left edge. Ten patterns still ended
+        in a bare `\\b`, so a value glued to a TRAILING underscore vanished:
+
+            "passport A1234567_scan attached"        -> shipped verbatim
+            "card 4111111111111111_2026 chargeback"  -> shipped verbatim
+
+        Both are §5 NEVER-SEND categories. Nothing upstream covers them either:
+        there is no credential noun for "passport", and the token is under the
+        embedded-secret length floor. This test exists because no previous test
+        used a trailing-glued value — the coverage gap that let it ship.
+        """
+        cases = (
+            ('passport A1234567_scan attached', 'A1234567'),
+            ('card 4111111111111111_2026 chargeback', '4111111111111111'),
+            ('key: AKIAIOSFODNN7EXAMPLE_bucket rotate', 'AKIAIOSFODNN7EXAMPLE'),
+            ('acct AE070331234567890123456_ref verify', 'AE070331234567890123456'),
+            ('hash: %s_v2 stored' % ('a' * 64), 'a' * 64),
+        )
+        for text, secret in cases:
+            clean, _ = self.pii._sanitise({'note': text})
+            self.assertNotIn(secret, clean['note'], text)
+
     def test_a_genuine_document_reference_still_survives(self):
         """The other side: padding-aware matching must not start redacting real
         references, or every question about a specific order breaks.

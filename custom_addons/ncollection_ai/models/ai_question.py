@@ -122,7 +122,8 @@ _IDENTITY_SCAN_LIMIT = 2000
 #               * no noun at all ("check correcthorsebatterystaple for me")
 #               * connectors spelled as words this file does not know
 #                 ("wifi password equals p4ssW0rd2026", "the api key -> X")
-#               * a declaration whose connector falls outside the window
+#               * a declaration whose connector falls outside the
+#                 _NOUN_VALUE_WINDOW (40 characters after the noun)
 #
 #   KNOWN FALSE REFUSALS, accepted as the fail-safe direction: an ERP reference
 #               with interleaved digits beside a credential noun — "access code
@@ -240,7 +241,14 @@ def _looks_like_a_credential_value(value):
 # How many tokens after a connector may be inspected. More than one, because a
 # single filler word otherwise hides the value ("the password is now hunter2");
 # bounded, because scanning the whole sentence re-refuses ordinary questions.
-_VALUE_LOOKAHEAD_TOKENS = 3
+#
+# 6, not 3. A reviewer found "the password is really quite simply hunter2"
+# passing at 3 — the value is the FOURTH token. Raising it was measured, not
+# guessed: at 3, 5, 6 and 8 the corpus reports zero false refusals, so 6 buys
+# the catch for free. (The first measurement of this said otherwise and was
+# wrong — a heredoc nested in a command substitution never re-read the file.
+# Re-run cleanly before trusting a number like this.)
+_VALUE_LOOKAHEAD_TOKENS = 6
 
 # HIGH-SIGNAL NOUNS — any following value counts, no shape test.
 # A wallet/2FA recovery phrase is SIX ORDINARY LOWERCASE WORDS
