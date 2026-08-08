@@ -14,9 +14,13 @@
 # missing something", fix the environment instead; that is what #363 should
 # have done and could not.
 #
-# NOT YET SEEDED. The suite's real skip set has to be measured from a full run
-# (`--test-tags` across every module, as ci.yml runs it), not guessed from the
-# nine `skipTest` call sites in the tree — most are conditional and do not fire
-# when the module IS installed. Seeding it from a guess would bake in exactly
-# the assumption this gate is meant to replace. The first CI run that trips
-# this gate reports the true set; each line then gets reviewed and justified.
+# SEEDED FROM A MEASURED RUN, not from the tree. CI's exact module set and
+# --test-tags, run to completion: 951 tests, 0 failed, 0 error(s). Exactly ONE
+# test skipped. There are nine `skipTest` call sites in the suite, but the other
+# eight are conditional on a module being ABSENT and do not fire when it is
+# installed — which is why the set had to be measured rather than grepped.
+#
+# Re-measure with the same command whenever the install list changes: a module
+# LEAVING that list is exactly how a conditional skip starts firing, silently.
+
+TestDashboardService.test_ceo_dashboard_degrades_without_crm_or_sales  # asserts the crm/sale-ABSENT branch, and crm is installed here, so the skip is the test doing its job — not coverage lost
