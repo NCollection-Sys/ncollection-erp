@@ -269,6 +269,46 @@ class TestLicenseEnforcement(TransactionCase):
         self.assertTrue(alert.id)
         self.assertTrue(alert.exists())
 
+    def test_the_scheduler_account_cannot_authenticate(self):
+        """The protection that makes the unrestricted alert read acceptable.
+
+        An earlier version of this file shipped `<field name="password">False
+        </field>`, which has no eval= — so Odoo stored the literal STRING
+        "False", hashed it, and every tenant got a working login of
+        cron@ncollection.internal / False. A reviewer authenticated with it.
+
+        The field is gone and the column is NULL, which makes every verify()
+        fail. This asserts that rather than trusting the absence of a line.
+        """
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        self.assertFalse(
+            cron_user.sudo().password,
+            "the scheduler must have no password — a known credential on an "
+            "active internal account is a fleet-wide backdoor (#347)")
+        self.assertFalse(
+            self.env["res.users.apikeys"].sudo().search_count(
+                [("user_id", "=", cron_user.id)]),
+            "the scheduler must have no API key either")
+
+    def test_the_scheduler_cannot_write_business_models(self):
+        """The least-privilege boundary, asserted rather than described.
+
+        The first attempt granted app-user groups under a comment saying "READ
+        grants only"; review proved those carry write/create on sale.order and
+        UNLINK on stock lots and hr.employee. Only read-only rows remain, and
+        this fails if anyone re-broadens them.
+        """
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        for model_name in ("sale.order", "account.move"):
+            if model_name not in self.env:
+                continue          # module not installed in this database
+            model = self.env[model_name].with_user(cron_user)
+            self.assertTrue(model.has_access("read"), model_name)
+            for op in ("write", "create", "unlink"):
+                self.assertFalse(model.has_access(op),
+                                 "%s must not be %s-able by the scheduler"
+                                 % (model_name, op))
+
     def test_no_config_fail_open(self):
         self.Config.search([]).unlink()
         self.env.registry.clear_cache()
