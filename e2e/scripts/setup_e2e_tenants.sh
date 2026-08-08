@@ -281,12 +281,15 @@ PY
 # not tell a correct per-role guard from a single copy-pasted check that admits
 # any department role.
 #
-# The native group is granted alongside the ncollection role for the same reason
-# the `fin` block above grants account.group_account_readonly: hooks.py links
-# roles to their native rights in a post-init hook that a fixture database has
-# not necessarily run. Without it the dashboard raises an AccessError from deep
-# inside the panel queries — an error indistinguishable from the role guard
-# refusing, which would make the denial tests pass for the wrong reason.
+# The native group mirrors what hooks.py's ROLE_IMPLICATIONS does in a real
+# tenant, so the fixture user resembles a production one.
+#
+# It is NOT load-bearing for these tests, and the first version of this comment
+# claimed it was — that it prevented an AccessError from the panel queries. It
+# does not: ncollection.aggregation.engine.aggregate() catches AccessError and
+# degrades to None/[] rather than propagating, so the dashboard would have
+# rendered an empty payload either way. Corrected rather than deleted, because
+# the wrong version would have misdirected the next person debugging this.
 echo "  • seeding department-role users (dept_sales / dept_hr / dept_wh) on e2eclienta…"
 "${DC[@]}" exec -T odoo odoo shell -d e2eclienta --no-http --log-level=error "${DBARGS[@]}" \
   >/dev/null 2>&1 <<'PY'

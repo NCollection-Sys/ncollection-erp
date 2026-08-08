@@ -7,7 +7,14 @@
 # waves them through. A test that starts skipping is a new identity, and a new
 # identity fails.
 #
-# Format:  Class.method   # why this skip is acceptable
+# Format:  addon.Class.method   # why this skip is acceptable
+#
+# The addon comes from the log's logger name. Odoo keeps it OUT of the test
+# description on purpose, so recovering it here is what stops two modules that
+# name a class and method identically from sharing one entry.
+# A line with no `#` reason is REJECTED: adding an entry is a claim that the
+# skip is deliberate, and an unexplained claim is indistinguishable from
+# someone silencing a failure.
 #
 # Adding a line is a claim that the skip is DELIBERATE — the test asserts an
 # absent-module case on purpose. If the honest answer is "the environment is
@@ -23,4 +30,4 @@
 # Re-measure with the same command whenever the install list changes: a module
 # LEAVING that list is exactly how a conditional skip starts firing, silently.
 
-TestDashboardService.test_ceo_dashboard_degrades_without_crm_or_sales  # asserts the crm/sale-ABSENT branch, and crm is installed here, so the skip is the test doing its job — not coverage lost
+ncollection_account_dashboard.TestDashboardService.test_ceo_dashboard_degrades_without_crm_or_sales  # asserts the crm/sale-ABSENT branch, and crm is installed here, so the skip is the test doing its job — not coverage lost

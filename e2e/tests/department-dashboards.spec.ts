@@ -28,6 +28,19 @@ import { TENANTS, loginViaRpc } from '../fixtures/tenants';
  * and this distinguishes them; asserting only that the root mounted would not,
  * because the root renders in the error branch too.
  *
+ * WHAT THIS DOES NOT ASSERT
+ * -------------------------
+ * Dashboard CORRECTNESS. `aggregate()` is documented and coded never to raise —
+ * it degrades an absent, unlicensed or empty model to None/[] — so
+ * `state.payload` is truthy whether the panels hold real rows or none, and this
+ * fixture seeds no crm.lead / sale.order / hr.employee / stock records at all.
+ * A regression that wrongly made `_model_readable` return False for an installed
+ * and licensed model, silently dropping a panel a paying tenant should see,
+ * would still pass here. That is covered server-side in
+ * ncollection_account_dashboard/tests/, where the payload can be asserted
+ * directly. What these prove is: the client action resolves, the component
+ * mounts, the RPC returns, and the role gate admits or refuses the right people.
+ *
  * THE DENIAL TESTS ARE THE POINT
  * ------------------------------
  * #356 gated these three at the RPC after the security review found a Manager

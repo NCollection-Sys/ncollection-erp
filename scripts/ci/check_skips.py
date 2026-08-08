@@ -62,24 +62,48 @@ DEFAULT_ALLOWLIST = REPO_ROOT / "scripts" / "ci" / "expected_skips.txt"
 # The description shape is Odoo's business and has changed between versions, so
 # capture it loosely and normalise afterwards rather than pinning a format.
 SKIP_RE = re.compile(r"\bskipped\s+(?P<desc>.+?)\s+:\s+(?P<reason>.*)$")
+# Odoo logs the addon in the logger name and deliberately keeps it OUT of the
+# description ("since we have the module name in the logger, this will avoid to
+# duplicate module info in log line" — odoo/tests/result.py). Recovering it here
+# makes the identity `addon.Class.method`, so two modules that happen to name a
+# class and method identically cannot share an allowlist entry.
+LOGGER_ADDON_RE = re.compile(r"odoo\.addons\.(?P<addon>\w+)[.\s:]")
 
 
-def normalise(description: str) -> str:
-    """Reduce Odoo's test description to a stable `Class.method` identity.
+# Odoo 19's OdooTestResult.getDescription, read from the shipped source rather
+# than assumed, emits exactly two shapes:
+#
+#     TestCase   -> "Class.method"
+#     _SubTest   -> "Subtest Class.method (param='x')"
+#
+# NOT the standard library's "method (package.module.Class)". An earlier version
+# of this file matched the stdlib shape; that branch never fired on a real Odoo
+# log, and every description fell through to a `split()[0]` fallback which
+# happened to be right for the first shape and CATASTROPHICALLY wrong for the
+# second — every subtest skip in the repo collapsed to the single identity
+# "Subtest". One allowlist entry would then have masked every subtest skip
+# forever, environmental ones included: the exact failure this gate exists to
+# prevent, reproduced inside the gate. There are already 19 `subTest` call sites
+# in the suite. Found by review, not by the tests.
+SUBTEST_RE = re.compile(r"^Subtest\s+(?P<ident>[\w.]+\.\w+)")
+TESTCASE_RE = re.compile(r"^(?P<ident>\w+\.\w+)\s*$")
 
-    unittest renders a test as `method (package.module.Class)`, sometimes with
-    a trailing docstring line. Both the ordering and the package prefix have
-    moved between Odoo versions, so the allowlist stores the shortest thing
-    that is still unambiguous — the class and the method.
+
+def normalise(description: str, addon: str = "") -> str:
+    """Reduce Odoo's test description to a stable identity.
+
+    Returns `addon.Class.method` when the addon is known, else `Class.method`.
+
+    The subtest's PARAMETERS are deliberately dropped. Keying on them would make
+    an allowlist entry expire the moment a loop's values changed, and the
+    granularity that matters is the test, not the iteration — the same
+    granularity the non-subtest shape gives.
     """
     description = description.strip()
-    m = re.match(r"^(?P<method>\w+)\s+\((?P<path>[\w.]+)\)", description)
-    if m:
-        cls = m.group("path").rsplit(".", 1)[-1]
-        return f"{cls}.{m.group('method')}"
-    # Already `Class.method`, or something unrecognised — keep the leading token
-    # so an unparseable description still produces a stable, reportable key.
-    return description.split()[0] if description.split() else description
+    m = SUBTEST_RE.match(description) or TESTCASE_RE.match(description)
+    ident = m.group("ident") if m else (
+        description.split()[0] if description.split() else description)
+    return f"{addon}.{ident}" if addon else ident
 
 
 def load_allowlist(path: Path) -> dict[str, str]:
@@ -92,7 +116,17 @@ def load_allowlist(path: Path) -> dict[str, str]:
         if not line or line.startswith("#"):
             continue
         identity, _, why = line.partition("#")
-        allowed[identity.strip()] = why.strip()
+        identity, why = identity.strip(), why.strip()
+        if not why:
+            # An entry with no justification is an assertion nobody made. The
+            # whole point of the allowlist is that adding a line is a CLAIM the
+            # skip is deliberate; an unexplained line is indistinguishable from
+            # someone silencing a failure.
+            raise SystemExit(
+                f"skip-gate: {path.name}: '{identity}' has no reason.\n"
+                f"           Format is `Class.method  # why this skip is "
+                f"acceptable`.")
+        allowed[identity] = why
     return allowed
 
 
@@ -101,8 +135,11 @@ def find_skips(text: str) -> list[tuple[str, str]]:
     found = []
     for line in text.splitlines():
         m = SKIP_RE.search(line)
-        if m:
-            found.append((normalise(m.group("desc")), m.group("reason").strip()))
+        if not m:
+            continue
+        addon_m = LOGGER_ADDON_RE.search(line)
+        addon = addon_m.group("addon") if addon_m else ""
+        found.append((normalise(m.group("desc"), addon), m.group("reason").strip()))
     return found
 
 
