@@ -298,7 +298,9 @@ class TestLicenseEnforcement(TransactionCase):
         UNLINK on stock lots and hr.employee. Only read-only rows remain, and
         this fails if anyone re-broadens them.
         """
-        from odoo.addons.ncollection_core.hooks import SCHEDULER_READ_MODELS
+        # Relative: pylint-odoo's odoo-addons-relative-import rejects an
+        # absolute self-import. tests/ -> `..` is the addon root.
+        from ..hooks import SCHEDULER_READ_MODELS
 
         cron_user = self.env.ref("ncollection_core.user_cron_service")
         checked = []
