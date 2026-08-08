@@ -30,18 +30,6 @@ ROLE_XMLIDS = [
 # trusted; we audit OUR outbound edges, not Odoo's internal ones).
 MATRIX_ALLOWED_DIRECT = {
     'ncollection_core.group_role_employee': {'base.group_user'},
-    # The scheduler service account (#347). NOT a human role — it is the
-    # identity tenant crons run as, so Ring-2 licence enforcement applies to
-    # scheduled work (a superuser cron bypasses the access machinery entirely).
-    # READ grants only, and `_all_leads` rather than `group_sale_salesman`
-    # because the latter carries an own-documents-only rule and a scheduler
-    # owns nothing. Accounting is deliberately READ-ONLY.
-    'ncollection_core.group_cron_service': {
-        'sales_team.group_sale_salesman_all_leads',
-        'stock.group_stock_user',
-        'hr.group_hr_user',
-        'account.group_account_readonly',
-    },
     'ncollection_core.group_role_sales': {
         'ncollection_core.group_role_employee',
         'sales_team.group_sale_salesman',

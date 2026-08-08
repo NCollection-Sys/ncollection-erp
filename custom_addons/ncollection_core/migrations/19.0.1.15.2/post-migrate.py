@@ -82,13 +82,53 @@ def migrate(cr, version):
     #     ROLE_IMPLICATIONS, but that table is applied by post_init_hook, which
     #     runs on INSTALL ONLY — an upgrading tenant would never link them, and
     #     the scheduler would be able to write alerts while reading nothing to
-    #     base them on. _sync_role_implications is idempotent and skips groups
-    #     whose module is not installed, so calling it here is safe.
+    #     base them on. _sync_scheduler_read_access is idempotent and skips
+    #     models this database does not have, so calling it here is safe.
+    #
+    #     Read-only ACLs on exactly the five detector models — NOT the app-user
+    #     groups a first attempt used, which a reviewer showed carry write and
+    #     unlink across Sales, Stock and HR behind a "read only" comment.
     from odoo import SUPERUSER_ID, api
-    from odoo.addons.ncollection_core.hooks import _sync_role_implications
+    from odoo.addons.ncollection_core.hooks import _sync_scheduler_read_access
 
     env = api.Environment(cr, SUPERUSER_ID, {})
-    result = _sync_role_implications(env)
-    linked = result.get('ncollection_core.group_cron_service', {})
-    _logger.info("#347: scheduler read grants linked=%s skipped=%s",
-                 linked.get('linked'), linked.get('skipped'))
+    # RETRACT the app-user groups an earlier build of this branch linked to
+    # group_cron_service. _sync_role_implications only ever ADDS, so dropping
+    # the entry from ROLE_IMPLICATIONS does not unlink what a previous run
+    # already granted — a tenant upgraded against the interim build would keep
+    # write/create on sale.order and crm.lead and UNLINK on stock lots and
+    # hr.employee, which is precisely the over-grant this fix removes.
+    cr.execute("""
+        DELETE FROM res_groups_implied_rel i
+        USING ir_model_data d
+        WHERE i.gid = d.res_id
+          AND d.model = 'res.groups'
+          AND d.module = %s
+          AND d.name = 'group_cron_service'
+    """, (_XMLID_MODULE,))
+    if cr.rowcount:
+        _logger.warning(
+            "#347: removed %s app-user group implication(s) from "
+            "group_cron_service. An interim build granted write/unlink across "
+            "Sales, Stock and HR under a comment claiming read-only.",
+            cr.rowcount)
+        # Odoo materialises implied groups onto users, so the memberships those
+        # implications created must go too — otherwise the user keeps the rights
+        # after the link is gone.
+        cr.execute("""
+            DELETE FROM res_groups_users_rel r
+            USING ir_model_data d
+            WHERE r.uid = %s
+              AND r.gid = d.res_id
+              AND d.model = 'res.groups'
+              AND d.module IN ('sales_team', 'stock', 'hr', 'account')
+        """, (user_id,))
+        if cr.rowcount:
+            _logger.warning(
+                "#347: removed %s materialised app-group membership(s) from the "
+                "scheduler.", cr.rowcount)
+        env.invalidate_all()
+
+    result = _sync_scheduler_read_access(env)
+    _logger.info("#347: scheduler read granted=%s skipped=%s",
+                 result['granted'], result['skipped'])
