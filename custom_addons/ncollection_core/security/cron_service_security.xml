@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            Least-privilege group for the tenant scheduler account (#347).
+
+            THE PROBLEM THIS SOLVES. Binding the anomaly crons to a real,
+            non-superuser identity is what makes Ring-2 licence enforcement
+            apply to them at all — `env.su` bypasses Odoo's entire access-check
+            machinery, so a superuser cron could never be denied. But a plain
+            base.group_user cannot CREATE ncollection.alert: the only row
+            granting create was base.group_system, and the scheduler must not be
+            a system user (LicenseEnforcementMixin exempts `_is_system()` as
+            well as su, so that would reintroduce the bug it exists to close).
+
+            Without this group the fix "worked" in the worst way: the licence
+            bypass closed, every detected anomaly discarded on every plan, and
+            correct/broken indistinguishable because both look like no alerts.
+            Caught by two reviewers; the branch failed its own CI traceback gate.
+
+            SCOPE, DELIBERATELY NARROW. Create and write on ncollection.alert
+            and nothing else. Not unlink: alerts are resolved, never deleted by
+            the scheduler. This is the same shape as group_config_sync beside
+            it — a service account gets exactly the one permission its job
+            needs, never base.group_system.
+
+            ON THE UNRESTRICTED ALERT READ, raised in review. alert_security.xml
+            defines four ir.rule records and all four are GROUP-scoped, none
+            global. Odoo's _get_rules selects rules whose group the user belongs
+            to; an empty set means Domain.AND([]) = TRUE, i.e. NO restriction,
+            not deny-all. So this group reads all four alert categories rather
+            than a slice.
+
+            Accepted, deliberately, for two reasons that are checked rather than
+            assumed: the account cannot authenticate at all (no password, no API
+            key — pinned by test_the_scheduler_account_cannot_authenticate), and
+            the digest never reads as itself, it switches to each recipient with
+            with_user() before selecting their slice. So there is no path by
+            which this read reaches a human who should not see it. It is scoped
+            this way because a scheduler that could not read alerts could not
+            deduplicate them.
+
+            READ ON THE DETECTOR MODELS is granted too, but NOT here and not as
+            app-user groups. hooks.py::_sync_scheduler_read_access adds
+            read-only (1,0,0,0) rows for exactly sale.order, account.move,
+            hr.attendance, stock.quant and stock.warehouse.orderpoint, only for
+            those a given database actually has. In code rather than in the CSV
+            because a CSV row cannot be conditional on a module being installed.
+
+            (This paragraph used to say the group granted NO business read at
+            all. That was true when written and became false the moment those
+            ACLs were added — the same stale-comment problem this ticket keeps
+            producing. Ring 2 still gates every one of those reads by plan,
+            which is the entire point of #347.)
+        -->
+        <record id="group_cron_service" model="res.groups">
+            <field name="name">NCollection Scheduler (service)</field>
+            <field name="comment">Non-interactive tenant service account: may
+                record anomaly alerts produced by scheduled detection. Not a
+                system user, so plan entitlement still applies to everything it
+                reads. Not for human users.</field>
+        </record>
+    </data>
+</odoo>

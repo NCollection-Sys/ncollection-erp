@@ -14,7 +14,19 @@
     # 19.0.1.14.0 (#346): role-scoped alert visibility — 4 ir.rule records,
     # role ACL rows and a menu. Security policy change, so `-u` is what
     # applies it; a tenant left un-upgraded keeps alerts admin-only.
-    'version': '19.0.1.14.0',
+    # 19.0.1.15.0 (#347): adds the cron service user and binds the anomaly
+    # crons to it. A DATA file, so `-u` is what applies it; a tenant left
+    # un-upgraded keeps running its crons as superuser with Ring 2 inert.
+    # 19.0.1.15.2 (#347): 15.0 gave that user a REAL password — the XML wrote
+    # `<field name="password">False</field>` with no eval=, so the loader stored
+    # the literal string "False" and hashed it, shipping a working credential to
+    # every tenant. The field is gone and a post-migrate nulls the column for
+    # tenants that already installed 15.0 (the record is noupdate, so an upgrade
+    # will not rewrite it on its own). The same migration also adds the
+    # account to the new group_cron_service, without which it cannot
+    # create ncollection.alert and every detected anomaly is silently
+    # discarded.
+    'version': '19.0.1.15.2',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -29,6 +41,10 @@
     'data': [
         'security/role_groups.xml',
         'security/config_sync_security.xml',
+        # Before ir.model.access.csv: that file has a row keyed on
+        # group_cron_service, and a CSV cannot forward-reference a
+        # group the loader has not created yet (#347).
+        'security/cron_service_security.xml',
         'security/ir.model.access.csv',
         # P5-T04 follow-up (#346): record rules scoping alerts by role.
         # After ir.model.access.csv, because a rule is meaningless
@@ -43,6 +59,8 @@
         # reflects every Python model into ir.model before ANY of a module's
         # data files load, so model_id ref= would resolve either way.)
         'views/alert_views.xml',
+        # Must load BEFORE any cron that binds to it.
+        'data/cron_user.xml',
         'data/anomaly_cron.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in

@@ -53,6 +53,74 @@ ROLE_IMPLICATIONS = {
 }
 
 
+# THE SCHEDULER'S READ ACCESS (#347), as explicit per-model ACL rows rather
+# than group implications.
+#
+# The first attempt granted group_cron_service the app-user groups
+# (sales_team.group_sale_salesman_all_leads, stock.group_stock_user,
+# hr.group_hr_user) under a comment saying "READ grants only". A reviewer
+# checked that against Odoo's shipped CSVs and it was FALSE: those groups carry
+# write/create on sale.order and crm.lead, and UNLINK on stock lots, packages
+# and hr.employee. A non-interactive scheduler held the delete rights of three
+# entire apps behind a comment asserting the opposite.
+#
+# These are the five models the detectors actually read — nothing else — and
+# each row is read-only (1,0,0,0). Same discipline as group_config_sync, which
+# is scoped to one model's writes and says so truthfully.
+#
+# Created in code, not in ir.model.access.csv, because a CSV row cannot be
+# conditional: it references model_<module>_<model>, and a tenant without `hr`
+# or `stock` would fail to install on a missing xmlid. This mirrors why
+# ROLE_IMPLICATIONS exists.
+SCHEDULER_READ_MODELS = (
+    'sale.order',
+    'account.move',
+    'hr.attendance',
+    'stock.quant',
+    'stock.warehouse.orderpoint',
+)
+
+
+def _sync_scheduler_read_access(env):
+    """Grant group_cron_service read-only ACLs on the detector models present.
+
+    Idempotent, and skips silently for models this database does not have.
+    Returns {'granted': [...], 'skipped': [...]} so tests can assert on it.
+    """
+    group = env.ref('ncollection_core.group_cron_service',
+                    raise_if_not_found=False)
+    if not group:
+        return {'granted': [], 'skipped': list(SCHEDULER_READ_MODELS)}
+
+    Access = env['ir.model.access'].sudo()
+    granted, skipped = [], []
+    for model_name in SCHEDULER_READ_MODELS:
+        model = env['ir.model'].sudo().search(
+            [('model', '=', model_name)], limit=1)
+        if not model:
+            skipped.append(model_name)      # module not installed here
+            continue
+        existing = Access.search([
+            ('model_id', '=', model.id), ('group_id', '=', group.id)], limit=1)
+        values = {
+            'name': 'ncollection.scheduler.read.%s' % model_name,
+            'model_id': model.id,
+            'group_id': group.id,
+            'perm_read': True,
+            'perm_write': False,
+            'perm_create': False,
+            'perm_unlink': False,
+        }
+        if existing:
+            existing.write(values)
+        else:
+            Access.create(values)
+        granted.append(model_name)
+    _logger.info("#347 scheduler read access: granted=%s skipped=%s",
+                 granted, skipped)
+    return {'granted': granted, 'skipped': skipped}
+
+
 def _sync_role_implications(env):
     """Link cross-module implied_ids for whatever target groups exist.
 
@@ -85,3 +153,4 @@ def _sync_role_implications(env):
 
 def post_init_hook(env):
     _sync_role_implications(env)
+    _sync_scheduler_read_access(env)

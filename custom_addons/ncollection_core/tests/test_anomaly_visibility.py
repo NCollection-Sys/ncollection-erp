@@ -79,6 +79,17 @@ class TestAnomalyVisibility(TransactionCase):
 
     # ---- one role, one slice -------------------------------------------
 
+    def _as_scheduler(self, records):
+        """Run as the cron service user (#347).
+
+        These crons are bound to ncollection_core.user_cron_service in
+        production precisely so plan entitlement applies to them. Calling them
+        as uid 1 would exercise a path production never takes, and the
+        fail-closed guard rightly refuses to run there.
+        """
+        return records.with_user(
+            self.env.ref('ncollection_core.user_cron_service'))
+
     def test_sales_sees_only_sales_alerts(self):
         user = self._user('vis_sales', ['ncollection_core.group_role_sales'])
         self.assertEqual(self._visible(user), {'sales_trend_drop'})
@@ -168,7 +179,7 @@ class TestAnomalyVisibility(TransactionCase):
 
         Mail = self.env['mail.mail']
         before = Mail.search([])
-        self.env['ncollection.alert']._cron_send_digest()
+        self._as_scheduler(self.env['ncollection.alert'])._cron_send_digest()
         new_mails = Mail.search([]) - before
 
         by_to = {m.email_to: m.body_html or '' for m in new_mails}
@@ -195,7 +206,7 @@ class TestAnomalyVisibility(TransactionCase):
 
         Mail = self.env['mail.mail']
         before = Mail.search_count([])
-        self.env['ncollection.alert']._cron_send_digest()
+        self._as_scheduler(self.env['ncollection.alert'])._cron_send_digest()
         self.assertEqual(Mail.search_count([]), before,
                          "no alerts means no mail at all")
 
