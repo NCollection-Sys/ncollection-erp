@@ -70,8 +70,17 @@ else:
 # 4. R-014: link cross-module role implications now that the plan's modules are
 #    installed (core's post_init_hook ran during a single -i, before sale/account
 #    groups existed, so it linked nothing). Idempotent.
-from odoo.addons.ncollection_core.hooks import _sync_role_implications  # noqa: E402
+#    #347 rides on the SAME regression for the same reason: the scheduler's
+#    read-only ACLs are granted per model, and those models do not exist yet
+#    when core installs. Review reproduced this against the real ci.yml command
+#    (1 failed of 951) — without this call a freshly provisioned tenant has a
+#    scheduler that can read nothing, so every detector reports nothing forever,
+#    which is indistinguishable from "correctly blocked by licence".
+from odoo.addons.ncollection_core.hooks import (  # noqa: E402
+    _sync_role_implications, _sync_scheduler_read_access,
+)
 _sync_role_implications(env)  # noqa: F821
+_sync_scheduler_read_access(env)  # noqa: F821
 
 # 5. Config-sync service account (P2-T03). A dedicated, non-interactive user
 #    scoped to ncollection.workspace.config writes (group_config_sync — NOT a

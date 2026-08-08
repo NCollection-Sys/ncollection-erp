@@ -298,16 +298,28 @@ class TestLicenseEnforcement(TransactionCase):
         UNLINK on stock lots and hr.employee. Only read-only rows remain, and
         this fails if anyone re-broadens them.
         """
+        from odoo.addons.ncollection_core.hooks import SCHEDULER_READ_MODELS
+
         cron_user = self.env.ref("ncollection_core.user_cron_service")
-        for model_name in ("sale.order", "account.move"):
+        checked = []
+        for model_name in SCHEDULER_READ_MODELS:
             if model_name not in self.env:
-                continue          # module not installed in this database
+                continue          # module absent — accounted for below
+            checked.append(model_name)
             model = self.env[model_name].with_user(cron_user)
             self.assertTrue(model.has_access("read"), model_name)
             for op in ("write", "create", "unlink"):
                 self.assertFalse(model.has_access(op),
                                  "%s must not be %s-able by the scheduler"
                                  % (model_name, op))
+
+        # `continue` alone made this pass with ZERO assertions under
+        # `make test m=ncollection_core`, which installs none of these modules —
+        # a false green on the documented developer workflow. skipTest makes
+        # that visible in the log instead of silent.
+        if not checked:
+            self.skipTest("none of %s installed in this run"
+                          % (SCHEDULER_READ_MODELS,))
 
     def test_no_config_fail_open(self):
         self.Config.search([]).unlink()

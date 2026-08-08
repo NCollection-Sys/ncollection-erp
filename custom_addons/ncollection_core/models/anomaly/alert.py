@@ -183,6 +183,51 @@ class NCollectionAlert(models.Model):
     # Scheduled detection
     # ------------------------------------------------------------------
 
+    def _register_hook(self):
+        """Ensure the scheduler's read ACLs exist once the registry is complete.
+
+        post_init_hook is NOT enough, and that is the whole point of this hook.
+        It fires during THIS module's install, and provisioning installs
+        ncollection_core together with the plan's apps in ONE `odoo -i`. Core
+        has a shallow dependency graph, so it loads FIRST — none of the detector
+        models exist yet and the grant applies to nothing. That is R-014, which
+        this repo already hit for _sync_role_implications; seed_tenant.py
+        re-runs that for exactly this reason and now re-runs this too.
+
+        But seed_tenant only covers the PROVISIONING path. A plain `odoo -i`
+        (which is how CI and `make test` build their databases) never touches
+        it, and review reproduced the failure there: 1 failed of 951.
+
+        _register_hook runs after the FULL registry is loaded, so every model is
+        present whatever the install order. Guarded on a cheap count so a normal
+        boot does no writes.
+        """
+        result = super()._register_hook()
+        try:
+            # THREE dots: this file is models/anomaly/, so `..` is `models`
+            # and hooks.py sits at the addon root. Two dots resolved to
+            # odoo.addons.ncollection_core.models.hooks and the broad
+            # except below turned the ImportError into a log line.
+            from ...hooks import (
+                SCHEDULER_READ_MODELS, _sync_scheduler_read_access,
+            )
+            group = self.env.ref('ncollection_core.group_cron_service',
+                                 raise_if_not_found=False)
+            if not group:
+                return result
+            present = self.env['ir.model'].sudo().search_count(
+                [('model', 'in', list(SCHEDULER_READ_MODELS))])
+            granted = self.env['ir.model.access'].sudo().search_count(
+                [('group_id', '=', group.id),
+                 ('model_id.model', 'in', list(SCHEDULER_READ_MODELS))])
+            if granted < present:
+                _sync_scheduler_read_access(self.env)
+        except Exception:       # noqa: BLE001 - never block a registry load
+            _logger.exception(
+                "#347: could not sync the scheduler's read access; anomaly "
+                "detection may report nothing until this is resolved.")
+        return result
+
     # ------------------------------------------------------------------
     # Cron identity (#347)
     # ------------------------------------------------------------------
@@ -212,6 +257,16 @@ class NCollectionAlert(models.Model):
                 "that the user is active.", self._CRON_USER_XMLID)
             return False
         expected = self.env.ref(self._CRON_USER_XMLID, raise_if_not_found=False)
+        if expected and self.env.uid != expected.id:
+            # Not su, not system, but not the scheduler either. The docstring
+            # said "running as the dedicated scheduler user" while the code only
+            # checked that it was NOT su/system — an ordinary internal user
+            # passed. Reachable if ir.cron.user_id is reassigned, or from server
+            # code; not over RPC, since these methods are underscore-private.
+            _logger.error(
+                "anomaly cron refused to run: executing as uid %s, not the %s "
+                "account (#347).", self.env.uid, self._CRON_USER_XMLID)
+            return False
         if not expected or not expected.active:
             _logger.error(
                 "anomaly cron refused to run: %s is missing or archived, so the "

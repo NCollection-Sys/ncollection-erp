@@ -112,16 +112,20 @@ def migrate(cr, version):
             "group_cron_service. An interim build granted write/unlink across "
             "Sales, Stock and HR under a comment claiming read-only.",
             cr.rowcount)
-        # Odoo materialises implied groups onto users, so the memberships those
-        # implications created must go too — otherwise the user keeps the rights
-        # after the link is gone.
+        # Odoo materialises the FULL TRANSITIVE closure onto users, so the
+        # memberships those implications created must go too — otherwise the
+        # user keeps the rights after the link is gone. The module list covers
+        # the closure, not just the three groups named directly: review walked
+        # implied_ids and found sales_team/stock/hr each also pull in `product`
+        # and `purchase`, which an earlier version of this list missed.
         cr.execute("""
             DELETE FROM res_groups_users_rel r
             USING ir_model_data d
             WHERE r.uid = %s
               AND r.gid = d.res_id
               AND d.model = 'res.groups'
-              AND d.module IN ('sales_team', 'stock', 'hr', 'account')
+              AND d.module IN ('sales_team', 'sale', 'crm', 'stock', 'hr',
+                               'account', 'product', 'purchase')
         """, (user_id,))
         if cr.rowcount:
             _logger.warning(
