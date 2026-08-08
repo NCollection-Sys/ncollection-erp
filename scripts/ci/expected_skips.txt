@@ -1,0 +1,22 @@
+# Skips this repo accepts, keyed on `Class.method` — NOT on the reason text.
+#
+# Keyed on identity because the reasons our suite emits are things like
+# "sale is not installed on this database". Allowlisting that STRING would
+# allowlist the exact failure this gate exists to catch: the day `sale` drops
+# out of ci.yml's install list, three tests go quiet and a text-matching gate
+# waves them through. A test that starts skipping is a new identity, and a new
+# identity fails.
+#
+# Format:  Class.method   # why this skip is acceptable
+#
+# Adding a line is a claim that the skip is DELIBERATE — the test asserts an
+# absent-module case on purpose. If the honest answer is "the environment is
+# missing something", fix the environment instead; that is what #363 should
+# have done and could not.
+#
+# NOT YET SEEDED. The suite's real skip set has to be measured from a full run
+# (`--test-tags` across every module, as ci.yml runs it), not guessed from the
+# nine `skipTest` call sites in the tree — most are conditional and do not fire
+# when the module IS installed. Seeding it from a guess would bake in exactly
+# the assumption this gate is meant to replace. The first CI run that trips
+# this gate reports the true set; each line then gets reviewed and justified.
