@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            Least-privilege group for the tenant scheduler account (#347).
+
+            THE PROBLEM THIS SOLVES. Binding the anomaly crons to a real,
+            non-superuser identity is what makes Ring-2 licence enforcement
+            apply to them at all — `env.su` bypasses Odoo's entire access-check
+            machinery, so a superuser cron could never be denied. But a plain
+            base.group_user cannot CREATE ncollection.alert: the only row
+            granting create was base.group_system, and the scheduler must not be
+            a system user (LicenseEnforcementMixin exempts `_is_system()` as
+            well as su, so that would reintroduce the bug it exists to close).
+
+            Without this group the fix "worked" in the worst way: the licence
+            bypass closed, every detected anomaly discarded on every plan, and
+            correct/broken indistinguishable because both look like no alerts.
+            Caught by two reviewers; the branch failed its own CI traceback gate.
+
+            SCOPE, DELIBERATELY NARROW. Create and write on ncollection.alert
+            and nothing else. Not unlink: alerts are resolved, never deleted by
+            the scheduler. This is the same shape as group_config_sync beside
+            it — a service account gets exactly the one permission its job
+            needs, never base.group_system.
+
+            NOTE WHAT THIS DOES **NOT** GRANT: any right to READ the business
+            models the detectors query (sale.order, account.move, hr.attendance,
+            stock.*). Those stay governed by the tenant's ordinary role ACLs and
+            therefore by its plan — which is the entire point of #347. This
+            group covers only the scheduler's own bookkeeping.
+        -->
+        <record id="group_cron_service" model="res.groups">
+            <field name="name">NCollection Scheduler (service)</field>
+            <field name="comment">Non-interactive tenant service account: may
+                record anomaly alerts produced by scheduled detection. Not a
+                system user, so plan entitlement still applies to everything it
+                reads. Not for human users.</field>
+        </record>
+    </data>
+</odoo>

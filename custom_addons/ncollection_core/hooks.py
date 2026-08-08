@@ -50,6 +50,30 @@ ROLE_IMPLICATIONS = {
         # Owner overrides CEO's read-only with full accounting access.
         'account.group_account_user',
     ],
+    # THE SCHEDULER (#347). Binding crons to a non-superuser identity is what
+    # makes Ring-2 licence enforcement apply to them — but a plain
+    # base.group_user can read none of the models the detectors query, so the
+    # fix would close the bypass by silently killing the feature: every
+    # detection run returning nothing, on every plan, with correct and broken
+    # looking identical. Caught in review.
+    #
+    # These grants are the READ side only, and the plan still gates them: Ring 2
+    # denies a blocked namespace to this user exactly as it does to a human.
+    # Licensing stays inherited, never re-implemented.
+    #
+    # Reusing this table rather than a second mechanism matters, because it is
+    # already conditional on the target module being installed — a tenant
+    # without `hr` must not fail to install over a missing group xmlid.
+    'ncollection_core.group_cron_service': [
+        # ALL documents, not `group_sale_salesman`: that carries an
+        # own-documents-only record rule, and a scheduler owns nothing, so it
+        # would see an empty tenant and report no anomalies.
+        'sales_team.group_sale_salesman_all_leads',
+        'stock.group_stock_user',
+        'hr.group_hr_user',
+        # READ-ONLY. A detector reads accounting; it never writes it.
+        'account.group_account_readonly',
+    ],
 }
 
 

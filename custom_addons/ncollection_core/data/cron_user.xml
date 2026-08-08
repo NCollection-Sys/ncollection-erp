@@ -38,7 +38,10 @@
             <field name="active" eval="True"/>
             <!-- Odoo 19: group_ids, not groups_id. base.group_user ONLY —
                  see the comment above about group_system. -->
-            <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+            <field name="group_ids" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('ncollection_core.group_cron_service'),
+            ])]"/>
             <!-- NO password field at all, and that omission is the point.
                  res.users.password's own help: "Keep empty if you don't want
                  the user to be able to connect on the system." Left NULL,

@@ -198,6 +198,77 @@ class TestLicenseEnforcement(TransactionCase):
         ):
             self.env["res.partner"].with_user(cron_user).check_access("read")
 
+    # ------------------------------------------- the fail-closed guard itself
+    #
+    # A reviewer replaced this guard's entire body with `return True` and all
+    # 204 tests still passed. The guard IS the safety net #347 is about — the
+    # thing that stops a cron silently reverting to superuser — and nothing
+    # asserted on it. These do.
+
+    def _alert_model(self):
+        return self.env["ncollection.alert"]
+
+    def test_the_guard_refuses_to_run_as_superuser(self):
+        """The exact condition #347 exists to prevent. su bypasses the whole
+        access-check machinery, so running is worse than not running."""
+        self.assertFalse(self._alert_model().sudo()._cron_identity_ok())
+
+    def test_the_guard_refuses_to_run_as_a_system_user(self):
+        """_is_system() is exempt from licence enforcement too, so a system
+        identity is just as inert as su."""
+        admin = self.env.ref("base.user_admin")
+        self.assertFalse(
+            self._alert_model().with_user(admin)._cron_identity_ok())
+
+    def test_the_guard_refuses_when_the_service_user_is_archived(self):
+        """An archived user makes ir.cron fall back to superuser silently. That
+        fallback is not a degraded mode, it is the bug restored."""
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        model = self._alert_model().with_user(cron_user)
+        self.assertTrue(model._cron_identity_ok())     # nominal first
+        cron_user.sudo().active = False
+        self.addCleanup(lambda: cron_user.sudo().write({"active": True}))
+        self.assertFalse(model._cron_identity_ok())
+
+    def test_the_guard_refuses_when_the_xmlid_is_missing(self):
+        """Defensive branch: a tenant whose data record was deleted. env.ref is
+        called with raise_if_not_found=False, so this must return False rather
+        than explode inside a cron."""
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        model = self._alert_model().with_user(cron_user)
+        with patch.object(
+            type(model), "_CRON_USER_XMLID", "ncollection_core.does_not_exist"
+        ):
+            self.assertFalse(model._cron_identity_ok())
+
+    def test_the_guard_allows_the_real_scheduler(self):
+        """And it must actually permit the nominal case, or every cron on every
+        tenant is dead and all four tests above pass anyway."""
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        self.assertTrue(
+            self._alert_model().with_user(cron_user)._cron_identity_ok())
+
+    def test_the_scheduler_can_actually_record_an_alert(self):
+        """CRITICAL from review: the scheduler is a plain internal user, and
+        only base.group_system had create on ncollection.alert. So the fix
+        closed the licence bypass and silently discarded every finding — on
+        every plan, with correct and broken both looking like 'no alerts'.
+
+        group_cron_service grants create/write on this ONE model and nothing
+        else. Asserting the record exists is the point; asserting the cron
+        'returned True' is what let this ship.
+        """
+        cron_user = self.env.ref("ncollection_core.user_cron_service")
+        Alert = self._alert_model().with_user(cron_user)
+        alert = Alert.create({
+            "name": "acl probe",
+            "detector_key": "expense_spike",
+            "severity": "warning",
+            "dedup_key": "acl-probe-347",
+        })
+        self.assertTrue(alert.id)
+        self.assertTrue(alert.exists())
+
     def test_no_config_fail_open(self):
         self.Config.search([]).unlink()
         self.env.registry.clear_cache()

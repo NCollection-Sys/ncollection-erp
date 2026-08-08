@@ -17,3 +17,4 @@ access_alert_warehouse,ncollection.alert.warehouse,model_ncollection_alert,ncoll
 access_alert_manager,ncollection.alert.manager,model_ncollection_alert,ncollection_core.group_role_manager,1,0,0,0
 access_alert_ceo,ncollection.alert.ceo,model_ncollection_alert,ncollection_core.group_role_ceo,1,0,0,0
 access_alert_owner,ncollection.alert.owner,model_ncollection_alert,ncollection_core.group_role_owner,1,0,0,0
+access_alert_cron_service,ncollection.alert.cron.service,model_ncollection_alert,ncollection_core.group_cron_service,1,1,1,0
