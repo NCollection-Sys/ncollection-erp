@@ -192,7 +192,7 @@ class ProvisioningJob(models.Model):
         reserved set, the subprocess and maintenance-DB helpers) ARE unified —
         it is only this existence rule that differs.
         """
-        if not db or not DB_NAME_RE.match(db):
+        if not db or not DB_NAME_RE.fullmatch(db):
             raise ValidationError(self.env._(
                 "Invalid database name '%s': must match ^[a-z][a-z0-9]{2,62}$.", db))
         if db in RESERVED_DB_NAMES or db == self.env.cr.dbname:
@@ -278,7 +278,7 @@ class ProvisioningJob(models.Model):
         the retry-sweep, which runs BEFORE _validate_db_name: a job manually created
         with database_name == the platform DB must never let a retry drop it."""
         return bool(
-            db and _CLEANUP_NAME_RE.match(db)
+            db and _CLEANUP_NAME_RE.fullmatch(db)
             and db not in RESERVED_DB_NAMES and db != self.env.cr.dbname
             and self._database_exists(db))
 

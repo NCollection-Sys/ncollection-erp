@@ -492,7 +492,7 @@ class TenantConfigSync(models.Model):
             report = {
                 xml_id: info
                 for xml_id, info in sorted(report.items())[:_MAX_REPORTED_CRONS]
-                if isinstance(xml_id, str) and _XMLID_RE.match(xml_id)
+                if isinstance(xml_id, str) and _XMLID_RE.fullmatch(xml_id)
                 and isinstance(info, dict)
             }
             if not report:

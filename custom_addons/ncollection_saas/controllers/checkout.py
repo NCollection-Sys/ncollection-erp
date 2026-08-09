@@ -104,7 +104,7 @@ class CheckoutController(http.Controller):
         if (len(company) > _MAX_FIELD_LEN or len(contact) > _MAX_FIELD_LEN
                 or len(email) > _MAX_FIELD_LEN):
             return {'success': False, 'error': 'field_too_long'}
-        if not EMAIL_RE.match(email):
+        if not EMAIL_RE.fullmatch(email):
             return {'success': False, 'error': 'invalid_email'}
         if not Tenant._nc_verify_recaptcha(recaptcha_token, source_ip):
             return {'success': False, 'error': 'captcha_failed'}

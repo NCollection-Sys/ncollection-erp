@@ -66,7 +66,7 @@ class ResCompany(models.Model):
         for company in self:
             for fname in _COLOR_FIELDS:
                 value = company[fname]
-                if value and not _HEX_COLOR_RE.match(value):
+                if value and not _HEX_COLOR_RE.fullmatch(value):
                     raise ValidationError(self.env._(
                         "%(value)r is not a valid colour for '%(field)s'. "
                         "Use a 6-digit hex colour such as #1F5F8F.",
