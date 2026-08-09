@@ -56,7 +56,7 @@ class NCollectionAuthSignup(http.Controller):
 
         if not name or not email or not password:
             return {'success': False, 'error': 'missing_fields'}
-        if not EMAIL_RE.match(email):
+        if not EMAIL_RE.fullmatch(email):
             return {'success': False, 'error': 'invalid_email'}
         if len(password) < MIN_PASSWORD_LENGTH:
             return {'success': False, 'error': 'weak_password'}

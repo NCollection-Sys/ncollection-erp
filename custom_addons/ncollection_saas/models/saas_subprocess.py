@@ -75,7 +75,7 @@ class SaasSubprocessMixin(models.AbstractModel):
         ``_validate_db_name`` adds that check because it CREATES — see the note
         there (#243).
         """
-        if not db or not DB_NAME_RE.match(db):
+        if not db or not DB_NAME_RE.fullmatch(db):
             raise ValidationError(self.env._(
                 "Unsafe database name '%s' (must match ^[a-z][a-z0-9]{2,62}$).", db))
         self._assert_not_reserved(db)
@@ -100,7 +100,7 @@ class SaasSubprocessMixin(models.AbstractModel):
         tenant model and belongs to the caller that knows which tenant the
         backup came from (ncollection.backup._assert_restore_target).
         """
-        if not db or not SCRATCH_DB_NAME_RE.match(db):
+        if not db or not SCRATCH_DB_NAME_RE.fullmatch(db):
             raise ValidationError(self.env._(
                 "Unsafe scratch database name '%s' "
                 "(must match ^[a-z][a-z0-9_]{2,62}$).", db))

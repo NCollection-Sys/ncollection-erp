@@ -85,7 +85,7 @@ class Reseller(models.Model):
         for reseller in self:
             for fname in _BRAND_COLOR_FIELDS:
                 value = reseller[fname]
-                if value and not _HEX_COLOR_RE.match(value):
+                if value and not _HEX_COLOR_RE.fullmatch(value):
                     raise ValidationError(self.env._(
                         "%(value)r is not a valid colour for '%(field)s'. Use a "
                         "6-digit hex colour such as #1F5F8F.",

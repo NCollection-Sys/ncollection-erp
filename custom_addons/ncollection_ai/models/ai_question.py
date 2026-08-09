@@ -319,7 +319,7 @@ def _looks_like_embedded_secret(word):
     stripped = word.strip('.,;:!?()[]"\'')
     if len(stripped) <= _MAX_WORD_CHARS:
         return False
-    if _EMAIL_SHAPE_RE.match(stripped) or _URL_SHAPE_RE.match(stripped):
+    if _EMAIL_SHAPE_RE.fullmatch(stripped) or _URL_SHAPE_RE.fullmatch(stripped):
         return False
     if not _SUSPICIOUS_RUN_RE.search(stripped):
         return False

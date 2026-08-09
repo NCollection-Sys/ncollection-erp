@@ -14,3 +14,4 @@ from . import test_config_sync_health
 from . import test_config_sync_rekey
 from . import test_exchange_rate
 from . import test_admin_menu_acl_alignment
+from . import test_regex_anchors

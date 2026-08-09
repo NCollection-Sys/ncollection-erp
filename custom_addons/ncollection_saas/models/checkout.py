@@ -77,7 +77,7 @@ class TenantCheckout(models.Model):
         an orphan-DB collision is caught authoritatively before provisioning.
         """
         subdomain = self._nc_normalize_subdomain(subdomain)
-        if not SUBDOMAIN_RE.match(subdomain):
+        if not SUBDOMAIN_RE.fullmatch(subdomain):
             return False, 'invalid'
         if subdomain in RESERVED_SUBDOMAINS or subdomain in OFFENSIVE_SUBDOMAINS:
             return False, 'reserved'

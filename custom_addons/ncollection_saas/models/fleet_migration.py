@@ -100,7 +100,7 @@ class FleetMigration(models.Model):
         if not mods:
             raise ValidationError(self.env._("Specify at least one module."))
         for module in mods:
-            if not MODULE_NAME_RE.match(module):
+            if not MODULE_NAME_RE.fullmatch(module):
                 raise ValidationError(self.env._("Invalid module name '%s'.", module))
         return mods
 

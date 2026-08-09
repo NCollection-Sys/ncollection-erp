@@ -282,7 +282,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 7
+RULE_COUNT = 8
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -412,6 +412,67 @@ def _commandless_odoo_services(text: str) -> list[tuple[str, int]]:
             body.append(line)
     flush()
     return found
+
+
+# ---------------------------------------------------------------------------
+# R8 — an anchored validator must be applied with .fullmatch(), never .match().
+#
+# `$` does NOT mean end-of-string in Python. It matches at the end OR
+# immediately before a trailing newline. So `re.compile(r'^[a-z]+$').match(
+# "postgres\n")` returns a match, and every `^...$` + `.match()` validator in
+# the repo silently accepted a trailing newline — measured, 11 of them.
+#
+# WHY THAT IS WORSE THAN A STRAY CHARACTER. These validators are followed by
+# EXACT comparisons that then miss:
+#
+#     if not DB_NAME_RE.match(db): raise ...        # "postgres\n" passes
+#     if db in RESERVED_DB_NAMES or db == cr.dbname: raise ...   # and MISSES
+#
+# so the newline defeats the reserved-name and self-target guards, which are
+# the actual security control. Same shape in checkout.py for reserved
+# subdomains. No live exploit was found (the subdomain path is saved by an
+# upstream .strip(), and a DROP uses sql.Identifier so "postgres\n" is a
+# distinct identifier) — but the protection is INCIDENTAL, and a validator
+# whose correctness depends on some caller remembering to normalise is not a
+# validator.
+#
+# Three anchor bugs shipped in one week before this rule existed (#377): a
+# trailing `\b` that let `card 4111111111111111_2026` reach a third-party LLM
+# unredacted, the identical bug one level down in its own guard, and this `$`
+# one. Every one was found by a human reading code.
+#
+# Scoped to `.match(` on a name whose pattern is anchored, so a deliberate
+# prefix match on an UNanchored pattern is untouched.
+ANCHORED_COMPILE_RE = re.compile(
+    r"(?P<name>\w+)\s*=\s*re\.compile\(\s*r?[\'\"](?P<pat>\^.*\$)[\'\"]",
+    re.MULTILINE)
+VALIDATOR_DIRS = ("custom_addons/", "ai_gateway/")
+
+
+def rule_anchored_regex_uses_fullmatch(out: list[str]) -> None:
+    """`^...$` compiled here, `.match()` called there — flag it (#377)."""
+    for path in sorted(REPO_ROOT.rglob("*.py")):
+        rel = str(path.relative_to(REPO_ROOT))
+        if not rel.startswith(VALIDATOR_DIRS) or "/tests/" in rel:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        anchored = {m.group("name") for m in ANCHORED_COMPILE_RE.finditer(text)}
+        if not anchored:
+            continue
+        for i, line in enumerate(text.splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            for name in anchored:
+                if re.search(r"\b%s\.match\(" % re.escape(name), line):
+                    out.append(
+                        f"{rel}:{i}: `{name}` is anchored (^...$) but applied "
+                        f"with .match() — `$` also matches before a trailing "
+                        f"newline, so \"value\\n\" passes and any exact "
+                        f"comparison after it (reserved names, self-target) "
+                        f"MISSES. Use .fullmatch() (#377).")
 
 
 def rule_cron_enumeration_declared(out: list[str]) -> None:
@@ -1008,6 +1069,7 @@ def main() -> int:
     rule_ci_module_coverage(findings)
     rule_cron_threads_scoped(findings)
     rule_cron_enumeration_declared(findings)
+    rule_anchored_regex_uses_fullmatch(findings)
     rule_ai_gateway_kdf_agrees(findings)
 
     if findings:

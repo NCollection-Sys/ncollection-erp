@@ -167,7 +167,7 @@ class Tenant(models.Model):
             name = tenant.database_name
             if not name:
                 continue
-            if not _GENERATED_NAME_RE.match(name):
+            if not _GENERATED_NAME_RE.fullmatch(name):
                 raise ValidationError(self.env._(
                     "Invalid database name '%s' — it must be lowercase alphanumeric, "
                     "start with a letter, and be 3–63 characters (no underscores, "
@@ -186,7 +186,7 @@ class Tenant(models.Model):
         is kept."""
         self.ensure_one()
         current = self.database_name
-        if current and _GENERATED_NAME_RE.match(current):
+        if current and _GENERATED_NAME_RE.fullmatch(current):
             return current
         name = self._generate_database_name(self.company_name)
         self.database_name = name
