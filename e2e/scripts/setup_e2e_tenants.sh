@@ -273,6 +273,48 @@ else:
 env.cr.commit()
 PY
 
+# ---------------------------------------------------------------------------
+# Department-dashboard fixtures (#363 follow-up) — e2eclienta only.
+#
+# One user per department role. NOT one user holding all three: the spec asserts
+# that a Sales-role user is REFUSED the HR dashboard, and a combined user could
+# not tell a correct per-role guard from a single copy-pasted check that admits
+# any department role.
+#
+# The native group mirrors what hooks.py's ROLE_IMPLICATIONS does in a real
+# tenant, so the fixture user resembles a production one.
+#
+# It is NOT load-bearing for these tests, and the first version of this comment
+# claimed it was — that it prevented an AccessError from the panel queries. It
+# does not: ncollection.aggregation.engine.aggregate() catches AccessError and
+# degrades to None/[] rather than propagating, so the dashboard would have
+# rendered an empty payload either way. Corrected rather than deleted, because
+# the wrong version would have misdirected the next person debugging this.
+echo "  • seeding department-role users (dept_sales / dept_hr / dept_wh) on e2eclienta…"
+"${DC[@]}" exec -T odoo odoo shell -d e2eclienta --no-http --log-level=error "${DBARGS[@]}" \
+  >/dev/null 2>&1 <<'PY'
+Users = env['res.users']
+FIXTURES = (
+    ('dept_sales', 'ncollection_core.group_role_sales',
+     'sales_team.group_sale_salesman'),
+    ('dept_hr', 'ncollection_core.group_role_hr', 'hr.group_hr_user'),
+    ('dept_wh', 'ncollection_core.group_role_warehouse', 'stock.group_stock_user'),
+)
+for login, role_xmlid, native_xmlid in FIXTURES:
+    groups = [env.ref('base.group_user').id]
+    for xmlid in (role_xmlid, native_xmlid):
+        g = env.ref(xmlid, raise_if_not_found=False)
+        if g:
+            groups.append(g.id)
+    u = Users.search([('login', '=', login)], limit=1)
+    if u:
+        u.write({'password': 'demo1234', 'group_ids': [(6, 0, groups)]})
+    else:
+        Users.create({'name': login, 'login': login, 'password': 'demo1234',
+                      'group_ids': [(6, 0, groups)]})
+env.cr.commit()
+PY
+
 # Refresh the live server's caches so it reflects the new tenants/config/users.
 # License enforcement + menu visibility are @ormcache'd per process; the config
 # and users were written from separate `odoo shell` processes, so restart the

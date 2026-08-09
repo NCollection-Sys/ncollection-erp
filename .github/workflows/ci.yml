@@ -175,6 +175,9 @@ jobs:
       - name: Test architecture-guard
         run: python scripts/ci/test_architecture_guard.py
 
+      - name: Test the skip gate
+        run: python scripts/ci/test_check_skips.py
+
       - name: Run architecture-guard
         run: python scripts/ci/architecture_guard.py --base origin/${{ github.base_ref }}
 
@@ -247,6 +250,15 @@ jobs:
 
       - name: Fail on tracebacks in log (Odoo can exit 0 on some test failures)
         run: (! grep -i "traceback (most recent call last)" odoo-test.log)
+
+      # Companion to the line above, for the other way Odoo reports green
+      # having covered nothing: a SKIPPED test is counted as passing. #363's
+      # four browser tours skipped on a missing Chrome and reported
+      # "0 failed, 0 error(s) of 4 tests". Keyed on test identity rather than
+      # on the skip reason — see the module docstring for why the obvious
+      # alternative allowlists exactly the dangerous case.
+      - name: Fail on unexpected skips (a skipped test is not a passing test)
+        run: python scripts/ci/check_skips.py odoo-test.log
 
   build:
     runs-on: ubuntu-latest

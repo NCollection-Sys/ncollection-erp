@@ -73,6 +73,7 @@ fi
 run_gate "invariants-tests"  python3 scripts/ci/test_invariants.py
 run_gate "invariants"        python3 scripts/ci/invariants.py
 run_gate "arch-guard-tests"  python3 scripts/ci/test_architecture_guard.py
+run_gate "skip-gate-tests"   python3 scripts/ci/test_check_skips.py
 run_gate "architecture-guard" python3 scripts/ci/architecture_guard.py --base origin/develop
 
 # pylint-odoo (#267). The SAME script CI's lint job runs, so the baseline, the
