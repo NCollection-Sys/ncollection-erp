@@ -110,8 +110,19 @@ for db in "$PLATFORM_DB" "$TENANT_DB"; do
     tail -25 "$SETUP_LOG" >&2
     exit 1
   fi
-  "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" "$SETUP_LOG" \
-    "base on $db" "the harness needs a working odoo image and config"
+  # The EXIT trap must run — it removes the harness containers — and it takes
+  # SETUP_LOG with it. On a refusal the asserter prints 6 matching lines and
+  # then the full log is gone, which is the moment you most want it. Copy the
+  # evidence somewhere the trap does not own before aborting.
+  if ! "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" "$SETUP_LOG" \
+       "base on $db" "the harness needs a working odoo image and config"; then
+    if cp -f "$SETUP_LOG" "/tmp/cron_scope_setup_$db.log"; then
+      echo "  Full setup log preserved at: /tmp/cron_scope_setup_$db.log" >&2
+    else
+      echo "  Could not preserve the full log — the lines above are all of it." >&2
+    fi
+    exit 1
+  fi
 done
 pass "$PLATFORM_DB and $TENANT_DB exist on the private server"
 

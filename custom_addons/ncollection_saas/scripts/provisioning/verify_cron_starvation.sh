@@ -204,9 +204,19 @@ fi
 #
 # The check lives in ONE place, not inline here — six harnesses share this
 # failure mode and six copies would drift.
-"$PWD/scripts/dev/assert_odoo_setup.sh" "$WORK/setup.log" \
-  "ncollection_saas on $HARNESS_DB" \
-  "if ./oca is empty, run 'make oca' — queue_job lives there"
+# Same evidence-vs-cleanup tension as verify_cron_scope.sh: the EXIT trap does
+# `rm -rf "$WORK"` because it also removes containers, so a refusal would leave
+# only the asserter's 6-line tail. Preserve the log first.
+if ! "$PWD/scripts/dev/assert_odoo_setup.sh" "$WORK/setup.log" \
+     "ncollection_saas on $HARNESS_DB" \
+     "if ./oca is empty, run 'make oca' — queue_job lives there"; then
+  if cp -f "$WORK/setup.log" /tmp/cron_starvation_setup.log; then
+    echo "  Full setup log preserved at: /tmp/cron_starvation_setup.log" >&2
+  else
+    echo "  Could not preserve the full log — the lines above are all of it." >&2
+  fi
+  exit 1
+fi
 hr
 
 # --- the stall host ---------------------------------------------------------

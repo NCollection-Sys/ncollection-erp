@@ -33,6 +33,21 @@
 #     "$REPO/scripts/dev/assert_odoo_setup.sh" "$WORK/setup.log" \
 #         "some_module on $DB" "run 'make oca' if ./oca is empty"
 #
+# SCOPE CAVEAT — the markers are DATABASE-WIDE, not per-module (#388). When
+# odoo runs with -i/-u it builds its graph from EVERY installed module on that
+# database, with no filter on the names you passed (loading.py):
+#
+#     env.cr.execute("SELECT name from ir_module_module WHERE state IN %s", ...)
+#
+# so `Some modules are not loaded`, `inconsistent states` and `not installable,
+# skipped` can all fire because of a module this command never mentioned.
+# (`invalid module names, ignored` is the exception — correctly scoped to the
+# requested names.) The cost lands on PERSISTENT databases: if `saastest` ever
+# picks up one module stuck at `to install`, every later `-u ncollection_saas`
+# on it refuses on a healthy upgrade. Measured when this shipped: 0 such rows
+# on saastest and ncplatform, so the precondition is real but unmet. #388
+# tracks scoping it properly.
+#
 # Exit 0 = the setup really did load. Exit 1 = it did not; measuring now would
 # produce a confident, precise, wrong answer about the layer under test.
 # =============================================================================
