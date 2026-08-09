@@ -38,6 +38,11 @@
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../../../.."
+REPO_ROOT="$PWD"
+# Cleaned up by the existing EXIT trap below, NOT by a second one: bash keeps
+# only the last trap per signal, so adding another here would silently disable
+# the container cleanup.
+SETUP_LOG="$(mktemp)"
 
 PLATFORM_DB="cronscopeplatform"
 TENANT_DB="cronscopetenant"
@@ -68,6 +73,7 @@ psql_q() { # psql_q <db> <sql> -> single value, whitespace-trimmed
 # shellcheck disable=SC2329,SC2317
 cleanup() {
   "${DC[@]}" rm -sf cron-scope-runner >/dev/null 2>&1 || true
+  rm -f "$SETUP_LOG"
 }
 trap cleanup EXIT
 
@@ -90,10 +96,22 @@ for db in "$PLATFORM_DB" "$TENANT_DB"; do
     continue
   fi
   echo "      creating $db (odoo -i base, ~1 min)…"
-  "${DC[@]}" run --rm -T cron-scope-runner \
-    odoo -c /etc/odoo/odoo.conf -d "$db" -i base \
-         --without-demo=all --stop-after-init --max-cron-threads=0 \
-    >/dev/null 2>&1
+  # Output CAPTURED, exit status CHECKED, and then the log inspected — this
+  # step previously did none of the three. A failed install here left both
+  # databases without the cron the arms measure, and the arms would have
+  # reported "did not tick" as a scoping result rather than a setup failure
+  # (#385). Odoo also exits 0 on some failures, which is why the exit status
+  # alone is not enough; see scripts/dev/assert_odoo_setup.sh.
+  if ! "${DC[@]}" run --rm -T cron-scope-runner \
+       odoo -c /etc/odoo/odoo.conf -d "$db" -i base \
+            --without-demo=all --stop-after-init --max-cron-threads=0 \
+       >"$SETUP_LOG" 2>&1; then
+    echo "REFUSING: could not create '$db' — the arms would measure nothing." >&2
+    tail -25 "$SETUP_LOG" >&2
+    exit 1
+  fi
+  "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" "$SETUP_LOG" \
+    "base on $db" "the harness needs a working odoo image and config"
 done
 pass "$PLATFORM_DB and $TENANT_DB exist on the private server"
 

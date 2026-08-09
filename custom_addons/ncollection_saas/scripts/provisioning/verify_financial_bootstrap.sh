@@ -40,8 +40,11 @@ hr
 echo "== 1) install the Enterprise financial set on a fresh UAE tenant =="
 drop_db "$DB"
 "${DC[@]}" exec -T db createdb -U odoo -O odoo "$DB" >/dev/null 2>&1
+_setup_log="$(mktemp)"
 if "${DC[@]}" exec -T odoo odoo -d "$DB" -i "$MODULES" --without-demo=True --no-http \
-     --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1; then
+     --stop-after-init "${DBARGS[@]}" >"$_setup_log" 2>&1 \
+   && "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
+        "$_setup_log" "$MODULES on $DB" "if ./oca is empty, run 'make oca'"; then
   ok "financial set installed cleanly ($MODULES)"
 else
   no "financial set failed to install"; hr; echo "SUMMARY: $pass passed, $fail failed."; exit 1

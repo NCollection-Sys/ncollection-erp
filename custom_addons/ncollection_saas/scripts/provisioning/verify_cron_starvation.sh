@@ -196,6 +196,17 @@ if ! "${DCH[@]}" run --rm -T cron-stall-odoo \
   tail -25 "$WORK/setup.log" >&2
   exit 1
 fi
+# EXIT 0 IS NOT SUCCESS — odoo returns 0 having SKIPPED a module whose
+# dependency it could not find. That is what made this harness report 120s of
+# "starvation" for a cron that could never fire: setup "passed", the arming
+# step passed too (env.ref reads cron rows surviving from an earlier install),
+# and the measurement was vacuous (#385).
+#
+# The check lives in ONE place, not inline here — six harnesses share this
+# failure mode and six copies would drift.
+"$PWD/scripts/dev/assert_odoo_setup.sh" "$WORK/setup.log" \
+  "ncollection_saas on $HARNESS_DB" \
+  "if ./oca is empty, run 'make oca' — queue_job lives there"
 hr
 
 # --- the stall host ---------------------------------------------------------

@@ -100,6 +100,10 @@ create_tenant(){
         tail -20 "/tmp/e2e_install_$db.log" >&2
         exit 1
       fi
+      # Exit 0 is not success: odoo returns 0 having skipped a module whose
+      # dependency is missing, so the check above cannot see that (#385).
+      "$PWD/scripts/dev/assert_odoo_setup.sh" "/tmp/e2e_install_$db.log" \
+        "modules on $db" "if ./oca is empty, run 'make oca'"
     fi
 
     echo "  • $db already provisioned — upgrading ${nc_modules}"
@@ -110,6 +114,10 @@ create_tenant(){
       tail -20 "/tmp/e2e_upgrade_$db.log" >&2
       exit 1
     fi
+      # Exit 0 is not success: odoo returns 0 having skipped a module whose
+      # dependency is missing, so the check above cannot see that (#385).
+      "$PWD/scripts/dev/assert_odoo_setup.sh" "/tmp/e2e_upgrade_$db.log" \
+        "modules on $db" "if ./oca is empty, run 'make oca'"
   else
     echo "  • (re)creating $db (modules: $modules) — this takes a minute…"
     drop_db "$db"
