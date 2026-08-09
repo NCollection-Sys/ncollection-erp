@@ -443,29 +443,83 @@ def _commandless_odoo_services(text: str) -> list[tuple[str, int]]:
 #
 # Scoped to `.match(` on a name whose pattern is anchored, so a deliberate
 # prefix match on an UNanchored pattern is untouched.
+#
+# KNOWN BLIND SPOTS, enumerated by the review that found the cross-module one.
+# None exist in the tree today (checked: no `rb'^`, no `re.VERBOSE`, no
+# `re.compile(a + b)` under VALIDATOR_DIRS), so these are robustness debt
+# rather than live gaps — written down so the next reader does not have to
+# rediscover them:
+#   * byte patterns `re.compile(rb'^...$')` — the `r?` prefix does not allow
+#     `rb`.
+#   * a pattern built by concatenation, `re.compile(r'^' + SUFFIX)`.
+#   * a triple-quoted multi-line `re.VERBOSE` pattern — the capture has no
+#     re.DOTALL, so it cannot span a newline.
+#   * the literal text `NAME.match(` inside a string or a TRAILING comment is
+#     read as a call site; only whole comment LINES are skipped.
 ANCHORED_COMPILE_RE = re.compile(
     r"(?P<name>\w+)\s*=\s*re\.compile\(\s*r?[\'\"](?P<pat>\^.*\$)[\'\"]",
     re.MULTILINE)
 VALIDATOR_DIRS = ("custom_addons/", "ai_gateway/")
 
 
-def rule_anchored_regex_uses_fullmatch(out: list[str]) -> None:
-    """`^...$` compiled here, `.match()` called there — flag it (#377)."""
+# Any `NAME = re.compile(...)` — used to spot a name compiled BOTH anchored and
+# unanchored somewhere in the tree, which would make a global judgement unsafe.
+ANY_COMPILE_RE = re.compile(r"(?P<name>\w+)\s*=\s*re\.compile\(", re.MULTILINE)
+
+
+def _validator_sources() -> list[tuple[str, str]]:
+    """(relative path, text) for every non-test module under VALIDATOR_DIRS."""
+    out = []
     for path in sorted(REPO_ROOT.rglob("*.py")):
         rel = str(path.relative_to(REPO_ROOT))
         if not rel.startswith(VALIDATOR_DIRS) or "/tests/" in rel:
             continue
         try:
-            text = path.read_text(encoding="utf-8", errors="ignore")
+            out.append((rel, path.read_text(encoding="utf-8", errors="ignore")))
         except OSError:
             continue
-        anchored = {m.group("name") for m in ANCHORED_COMPILE_RE.finditer(text)}
-        if not anchored:
-            continue
+    return out
+
+
+def rule_anchored_regex_uses_fullmatch(out: list[str]) -> None:
+    """`^...$` compiled here, `.match()` called THERE — flag it (#377).
+
+    REPO-WIDE, not per file, and that is the whole point of the second pass.
+    The first version collected anchored names from each file's own text, so a
+    pattern compiled in one module and IMPORTED into another was invisible —
+    including `DB_NAME_RE`, which `saas_subprocess.py` defines and
+    `provisioning_job.py` imports and uses. That call site is the one this
+    rule's own rationale quotes as the canonical vulnerable shape, and the rule
+    could not see it: reverting it to `.match()` reported clean. Found by
+    review, on the commit that added the rule.
+
+    A name compiled BOTH anchored and unanchored anywhere in the tree is
+    ambiguous — `.match()` on it may be perfectly correct — so it is skipped
+    rather than guessed at. None exist today; the check is here so that adding
+    one does not silently turn this rule into a source of false positives,
+    which is how a guard trains people to ignore it.
+    """
+    sources = _validator_sources()
+    anchored, every = set(), set()
+    for _rel, text in sources:
+        anchored |= {m.group("name") for m in ANCHORED_COMPILE_RE.finditer(text)}
+        every |= {m.group("name") for m in ANY_COMPILE_RE.finditer(text)}
+    # compiled somewhere without the ^...$ shape as well -> cannot judge
+    ambiguous = {
+        n for n in anchored
+        if sum(1 for _r, t in sources
+               for m in ANY_COMPILE_RE.finditer(t) if m.group("name") == n)
+        > sum(1 for _r, t in sources
+              for m in ANCHORED_COMPILE_RE.finditer(t) if m.group("name") == n)
+    }
+    checked = anchored - ambiguous
+    if not checked:
+        return
+    for rel, text in sources:
         for i, line in enumerate(text.splitlines(), 1):
             if line.lstrip().startswith("#"):
                 continue
-            for name in anchored:
+            for name in checked:
                 if re.search(r"\b%s\.match\(" % re.escape(name), line):
                     out.append(
                         f"{rel}:{i}: `{name}` is anchored (^...$) but applied "
@@ -994,6 +1048,20 @@ SELF_TEST: tuple[tuple[str, str, bool], ...] = (
 
     # R5 — the command matcher must see both YAML forms and no other service's
     # command; the value matcher must accept only a real 0.
+    # R8 — the anchored-pattern detector. It parses PYTHON SOURCE with a regex,
+    # which makes it the most fragile rule here: if it silently stops matching,
+    # main() prints "clean" over call sites it is no longer checking. That is
+    # precisely what this self-test exists to prevent, and R8 shipped without
+    # any until review pointed out every other regex rule had them.
+    ("anchored", "DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')", True),
+    ("anchored", 'EMAIL_RE = re.compile(r"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")', True),
+    ("anchored", "_X = re.compile(r'^a$', re.IGNORECASE)", True),
+    # Unanchored, or anchored at one end only: `.match()` on these is a
+    # deliberate prefix test and must NOT be flagged.
+    ("anchored", "PREFIX_RE = re.compile(r'^odoo\\.addons')", False),
+    ("anchored", "SUFFIX_RE = re.compile(r'\\.py$')", False),
+    ("anchored", "LOOSE_RE = re.compile(r'[a-z]+')", False),
+
     ("cron_cmd", "    command: odoo --log-level=debug --max-cron-threads=0", True),
     ("cron_cmd", '    command: ["odoo", "--proxy-mode", "--max-cron-threads=0"]', True),
     ("cron_cmd", "    command: postgres -c config_file=/etc/postgresql.conf", False),
@@ -1024,6 +1092,8 @@ def run_self_test() -> list[str]:
             actual = bool(DOCKER_STATE_RE.search(line))
         elif name == "name":
             actual = bool(_hardcoded_name_re(REPO_ROOT).search(line))
+        elif name == "anchored":
+            actual = bool(ANCHORED_COMPILE_RE.search(line))
         elif name == "cron_cmd":
             actual = bool(ODOO_COMMAND_RE.match(line))
         elif name == "cron_val":

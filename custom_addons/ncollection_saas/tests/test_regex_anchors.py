@@ -34,8 +34,7 @@ test — which is why each shipped. This file is that missing test, and
 `invariants.py` R8 is the guard that fails the next one automatically.
 """
 
-import re
-
+from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase, tagged
 
 from ..models import checkout as checkout_model
@@ -93,50 +92,48 @@ class TestAnchoredValidators(TransactionCase):
         self.assertIsNone(rx.fullmatch("postgres\n"))
 
     def test_a_newline_defeats_the_reserved_name_guard(self):
-        """The consequence, made executable.
+        """The consequence, made executable — THROUGH the guard, not the regex.
 
-        The reserved check is an exact membership test, so a name the regex let
-        through with a newline is NOT caught by it. This is the two-layer
-        failure, not just a lax pattern — and it is why the fix belongs in the
-        validator rather than in another downstream check.
+        An earlier version of this test asserted only
+        `DB_NAME_RE.fullmatch(name + "\\n") is None`, which is a property of the
+        PATTERN: it would have passed unchanged with every production call site
+        reverted to `.match()`. Review counted three such tests in this file
+        where I had claimed two. It now drives `_assert_safe_db_name`, so a
+        call-site regression fails it.
+
+        The membership assertion stays, because it names WHY the fix belongs in
+        the validator: the reserved check is exact, so anything the regex lets
+        through with a newline is not caught downstream.
         """
+        mixin = self.env['ncollection.saas.subprocess.mixin']
         reserved = subprocess_model.RESERVED_DB_NAMES
         for name in sorted(reserved):
             with self.subTest(reserved=name):
-                self.assertIn(name, reserved)
                 self.assertNotIn(
                     name + "\n", reserved,
                     "membership is exact — which is correct, and precisely why "
                     "the validator must not admit the newline in the first place")
-                self.assertIsNone(subprocess_model.DB_NAME_RE.fullmatch(name + "\n"))
+                with self.assertRaises(ValidationError):
+                    mixin._assert_safe_db_name(name + "\n")
 
     def test_the_guard_rejects_a_reserved_name_with_a_newline(self):
         """End to end through the real guard, not the regex alone."""
         mixin = self.env['ncollection.saas.subprocess.mixin']
-        from odoo.exceptions import ValidationError
         for probe in ('postgres\n', 'admin\n', self.env.cr.dbname + '\n'):
             with self.subTest(db=probe), self.assertRaises(ValidationError):
                 mixin._assert_safe_db_name(probe)
 
-    def test_no_anchored_validator_in_this_module_still_uses_match(self):
-        """A cheap in-suite mirror of invariants.py R8.
+    def test_the_cross_module_call_site_rejects_a_newline(self):
+        """`provisioning_job._validate_db_name` — the site R8 could not see.
 
-        R8 runs in CI and pre-push; this catches the same mistake in a plain
-        `make test` run, where someone iterating on these models is most likely
-        to introduce it.
+        `DB_NAME_RE` is compiled in saas_subprocess and IMPORTED here, so the
+        first version of invariants R8 (which collected anchored names per
+        FILE) reported clean with this call site reverted to `.match()` —
+        the very shape its own rationale quotes as canonical. R8 is now
+        repo-wide and catches it statically; this covers it dynamically, so
+        the one call site with no regression protection has two.
         """
-        import inspect
-        for module in (subprocess_model, checkout_model, tenant_model,
-                       pj_model, fleet_model, config_sync_model):
-            src = inspect.getsource(module)
-            anchored = {
-                m.group(1) for m in re.finditer(
-                    r"(\w+)\s*=\s*re\.compile\(\s*r?['\"](\^.*\$)['\"]", src)
-            }
-            for name in anchored:
-                with self.subTest(module=module.__name__, validator=name):
-                    self.assertNotRegex(
-                        src, r"\b%s\.match\(" % re.escape(name),
-                        "%s.%s is anchored but applied with .match(); `$` also "
-                        "matches before a trailing newline (#377)"
-                        % (module.__name__, name))
+        job = self.env['ncollection.provisioning.job']
+        for probe in ('clienta\n', 'postgres\n'):
+            with self.subTest(db=probe), self.assertRaises(ValidationError):
+                job._validate_db_name(probe)
