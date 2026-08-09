@@ -20,7 +20,9 @@ from __future__ import annotations
 
 import argparse
 import functools
+import io
 import re
+import tokenize
 import sys
 from pathlib import Path
 
@@ -459,12 +461,47 @@ def _commandless_odoo_services(text: str) -> list[tuple[str, int]]:
 ANCHORED_COMPILE_RE = re.compile(
     r"(?P<name>\w+)\s*=\s*re\.compile\(\s*r?[\'\"](?P<pat>\^.*\$)[\'\"]",
     re.MULTILINE)
-VALIDATOR_DIRS = ("custom_addons/", "ai_gateway/")
+# The trees whose validators this rule polices. VERIFIED TO EXIST at run time
+# below — the first version named "ai_gateway/", which is not a directory (the
+# real path is satellites/ai_gateway/), so the rule scanned ZERO gateway files
+# while its own docstring claimed to cover them. It reported clean either way.
+# A guard pointed at a path that does not exist is worse than no guard, so a
+# missing entry is now a hard failure rather than silent nil coverage.
+VALIDATOR_DIRS = ("custom_addons/", "satellites/")
 
 
 # Any `NAME = re.compile(...)` — used to spot a name compiled BOTH anchored and
 # unanchored somewhere in the tree, which would make a global judgement unsafe.
 ANY_COMPILE_RE = re.compile(r"(?P<name>\w+)\s*=\s*re\.compile\(", re.MULTILINE)
+
+
+def _match_call_lines(text: str, names: set[str]) -> list[tuple[int, str]]:
+    """Line numbers where `NAME.match(` appears as CODE, for NAME in `names`.
+
+    Tokenised rather than grepped. This codebase documents old bugs by QUOTING
+    the buggy line in prose — this rule's own comment block does it, and so
+    does test_regex_anchors.py — so a text scan flags the documentation and
+    fails the build over an explanation. It also missed the reverse case: a
+    `.match(` in a trailing comment was treated as a call, because only whole
+    comment LINES were skipped. tokenize sees neither strings nor comments,
+    which removes both.
+    """
+    hits = []
+    try:
+        toks = list(tokenize.generate_tokens(io.StringIO(text).readline))
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        # Unparseable source is someone else's failure (flake8, the test run);
+        # reporting nothing here is right, but never report CLEAN silently.
+        return hits
+    for i, tok in enumerate(toks[:-3]):
+        if tok.type != tokenize.NAME or tok.string not in names:
+            continue
+        dot, meth, par = toks[i + 1], toks[i + 2], toks[i + 3]
+        if (dot.type == tokenize.OP and dot.string == "."
+                and meth.type == tokenize.NAME and meth.string == "match"
+                and par.type == tokenize.OP and par.string == "("):
+            hits.append((tok.start[0], tok.string))
+    return hits
 
 
 def _validator_sources() -> list[tuple[str, str]]:
@@ -499,6 +536,13 @@ def rule_anchored_regex_uses_fullmatch(out: list[str]) -> None:
     one does not silently turn this rule into a source of false positives,
     which is how a guard trains people to ignore it.
     """
+    missing = [d for d in VALIDATOR_DIRS if not (REPO_ROOT / d).is_dir()]
+    if missing:
+        out.append(
+            f"invariants R8: VALIDATOR_DIRS names {missing}, which do not "
+            f"exist — the rule would scan nothing there and still report "
+            f"clean. Fix the path or drop the entry (#377).")
+        return
     sources = _validator_sources()
     anchored, every = set(), set()
     for _rel, text in sources:
@@ -516,17 +560,13 @@ def rule_anchored_regex_uses_fullmatch(out: list[str]) -> None:
     if not checked:
         return
     for rel, text in sources:
-        for i, line in enumerate(text.splitlines(), 1):
-            if line.lstrip().startswith("#"):
-                continue
-            for name in checked:
-                if re.search(r"\b%s\.match\(" % re.escape(name), line):
-                    out.append(
-                        f"{rel}:{i}: `{name}` is anchored (^...$) but applied "
-                        f"with .match() — `$` also matches before a trailing "
-                        f"newline, so \"value\\n\" passes and any exact "
-                        f"comparison after it (reserved names, self-target) "
-                        f"MISSES. Use .fullmatch() (#377).")
+        for lineno, name in _match_call_lines(text, checked):
+            out.append(
+                f"{rel}:{lineno}: `{name}` is anchored (^...$) but applied "
+                f"with .match() — `$` also matches before a trailing "
+                f"newline, so \"value\\n\" passes and any exact "
+                f"comparison after it (reserved names, self-target) "
+                f"MISSES. Use .fullmatch() (#377).")
 
 
 def rule_cron_enumeration_declared(out: list[str]) -> None:

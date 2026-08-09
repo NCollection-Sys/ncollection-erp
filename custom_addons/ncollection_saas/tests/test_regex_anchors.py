@@ -20,12 +20,40 @@ real control. `_nc_subdomain_availability` has the identical shape for reserved
 subdomains.
 
 WHAT WAS *NOT* FOUND, stated so nobody re-derives a scarier version: no live
-exploit. The public subdomain path is saved by an upstream `.strip()`, and
-`_drop_database` uses `sql.Identifier`, so `"postgres\\n"` is a distinct quoted
-identifier rather than `postgres`. The protection is INCIDENTAL — it lives in a
-caller's normalisation and in psycopg2's quoting, not in the validator. A
-validator whose correctness depends on someone else remembering to strip is not
-doing its job, and the next caller may not.
+exploit. But the first version of this note gave the wrong reason, and the
+correction matters for how the pre-fix severity reads.
+
+There are TWO routes, not one:
+
+  * The public subdomain path IS saved by an upstream `.strip()`
+    (`_nc_normalize_subdomain`), so a newline never reaches the validator.
+  * `tenant.database_name` is NOT. It is a writable Char, exempt from format
+    enforcement while `database_status` is `not_provisioned`/`error`, and
+    writable by `base.group_system` / `group_platform_admin`. It reaches
+    `_assert_safe_db_name` / `_assert_scratch_db_name` through backup path
+    checks, a backup-dir rmtree target, a DROP DATABASE and a subprocess `-d`
+    arg with NO normalisation anywhere in between.
+
+That second route was closed by nothing upstream. What made it harmless was
+DOWNSTREAM: `sql.Identifier` quoting (so `"postgres\\n"` is a distinct
+identifier), literal path-segment semantics (a directory named `postgres\\n`
+is not `postgres`), and argv-list subprocess calls (no shell).
+
+So the fix CLOSES a real, privilege-gated hole on that route rather than merely
+hardening an already-safe one. In both cases the protection was INCIDENTAL —
+someone else's normalisation, or psycopg2's quoting — never the validator. A
+validator whose correctness depends on that is not doing its job, and the next
+caller may not inherit the luck.
+
+COVERAGE, STATED HONESTLY. This file exercises the seven validators owned by
+ncollection_saas. Six more were swept and are NOT covered here — the two hex
+colours (branding, reseller), the two signup emails (core, saas controller),
+and the email/URL shape checks in ncollection_ai — because importing them would
+couple this suite to four other addons being installed. Those six rely on
+invariants R8, which is a static guard that CI and pre-push run, and which the
+review of this ticket found had a live directory-scope bug of its own. That bug
+is fixed and R8 is now proved against five shapes including the cross-module
+and prose cases; the reliance is deliberate, not an oversight.
 
 Three anchor bugs shipped in one week before this (#377): a trailing `\\b` that
 let `card 4111111111111111_2026` reach a third-party LLM unredacted, the same
