@@ -46,8 +46,13 @@ if "${DC[@]}" exec -T odoo odoo -d "$DB" -i "$MODULES" --without-demo=True --no-
    && "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
         "$_setup_log" "$MODULES on $DB" "if ./oca is empty, run 'make oca'"; then
   ok "financial set installed cleanly ($MODULES)"
+  rm -f "$_setup_log"
 else
-  no "financial set failed to install"; hr; echo "SUMMARY: $pass passed, $fail failed."; exit 1
+  no "financial set failed to install"
+  # Kept, not removed: this branch is now reachable via the asserter (odoo
+  # exiting 0 on a silently-skipped module), where the log IS the diagnosis.
+  echo "  Full setup log kept at: $_setup_log" >&2
+  hr; echo "SUMMARY: $pass passed, $fail failed."; exit 1
 fi
 
 # account_financial_report + mis_builder (pulled by ncollection_mis_templates)

@@ -49,15 +49,40 @@ if [ ! -r "$log" ]; then
   exit 1
 fi
 
-# `Some modules are not loaded` / `inconsistent states` are Odoo's own wording
-# when a dependency is missing; the other two catch a setup that blew up without
-# changing the exit status.
-if grep -qiE "Some modules are not loaded|inconsistent states|Traceback \(most recent call last\)|CRITICAL" "$log"; then
+# Odoo's own wording, from odoo/modules/loading.py and module_graph.py. There
+# are TWO distinct silent-skip shapes and the first version of this guard only
+# knew one of them:
+#
+#   * a DEPENDENCY of an installed module is missing -> ERROR "Some modules are
+#     not loaded" + "inconsistent states". This is the queue_job/empty-oca case
+#     that #385 was filed for.
+#   * the module NAME itself is unknown, or its manifest says installable:False
+#     -> WARNING ONLY. Reproduced live:
+#
+#         $ odoo -d db -i totally_nonexistent_module_xyz --stop-after-init
+#         exit: 0
+#         WARNING ... invalid module names, ignored: totally_nonexistent_module_xyz
+#         INFO ... Modules loaded.
+#
+#     No ERROR, no CRITICAL, no traceback — odoo installs base's auto-deps and
+#     reports success. That fires on any FIRST install of a module (no
+#     ir_module_module row to short-circuit the name check), which is exactly
+#     what verify_financial_bootstrap, verify_upgrade's build_fixture and the
+#     e2e fresh-install path all do. A bad bind mount, a wrong addons_path or a
+#     typo in a MODULES= variable all land here. Found by review after the first
+#     version shipped with only the ERROR-level markers.
+#
+# CRITICAL is anchored to Odoo's log-level COLUMN, not matched as a bare word:
+# this codebase uses `severity='critical'` as an enum value and has a test named
+# test_completely_out_of_stock_is_critical, both of which appear verbatim in
+# real logs. An unanchored match would refuse a healthy run the moment a suite
+# added --test-enable.
+if grep -qE "Some modules are not loaded|inconsistent states|invalid module names|not installable, skipped|Traceback \(most recent call last\)|^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:,]+ [0-9]+ CRITICAL " "$log"; then
   echo "REFUSING: $what did not actually load — odoo exited 0 but reported the" >&2
   echo "  module skipped, inconsistent, or a traceback. Continuing would measure" >&2
   echo "  something that cannot happen and report the SYMPTOM as a failure of" >&2
   echo "  whatever this suite tests." >&2
   [ -n "$hint" ] && echo "  Hint: $hint" >&2
-  grep -iE "not loaded|inconsistent states|Traceback|CRITICAL" "$log" | tail -6 >&2
+  grep -E "not loaded|inconsistent states|invalid module names|not installable|Traceback|CRITICAL" "$log" | tail -6 >&2
   exit 1
 fi

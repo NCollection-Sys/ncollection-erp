@@ -86,9 +86,15 @@ build_fixture(){   # $1 = db
     echo "  would compare two databases that were never built (#385)." >&2
     tail -25 "$_log" >&2; rm -f "$_log"; exit 1
   fi
-  "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
-    "$_log" "$MODULES on $db" "if ./oca is empty, run 'make oca'"
-  rm -f "$_log"
+  # Success branch only — a bare `rm` after the call cannot run under `set -e`,
+  # so a refusal both leaked the temp file and discarded the evidence.
+  if "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
+       "$_log" "$MODULES on $db" "if ./oca is empty, run 'make oca'"; then
+    rm -f "$_log"
+  else
+    echo "  Full setup log kept at: $_log" >&2
+    exit 1
+  fi
 }
 
 wind_back(){       # $1 = db — make Odoo believe the module is older than it is

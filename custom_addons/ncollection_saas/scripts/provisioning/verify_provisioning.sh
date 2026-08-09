@@ -64,10 +64,19 @@ platform_schema_sync(){
     echo "  really a setup problem. Fix the upgrade, then re-run." >&2
     exit 1
   fi
-  "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
-    "$_setup_log" "ncollection_saas on $PLATFORM_DB" \
-    "if ./oca is empty, run 'make oca' — queue_job lives there"
-  rm -f "$_setup_log"
+  # The `rm` is in the SUCCESS branch only, on purpose. Placed after a bare call
+  # it would never run under `set -e` — the abort path both leaked the file and
+  # threw away the one artefact worth reading. On a refusal the asserter prints
+  # 6 matching lines; the full log is what you actually want next, so keep it
+  # and say where.
+  if "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
+       "$_setup_log" "ncollection_saas on $PLATFORM_DB" \
+       "if ./oca is empty, run 'make oca' — queue_job lives there"; then
+    rm -f "$_setup_log"
+  else
+    echo "  Full setup log kept at: $_setup_log" >&2
+    exit 1
+  fi
 }
 platform_schema_sync
 

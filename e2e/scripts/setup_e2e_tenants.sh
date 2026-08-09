@@ -24,6 +24,10 @@
 # ============================================================================
 set -euo pipefail
 cd "$(dirname "$0")/../.."   # repo root
+# Pinned once, right after the cd that establishes it. The asserter is invoked
+# from six places below; resolving it through $PWD each time would silently
+# break if anything in between ever changes directory.
+REPO_ROOT="$PWD"
 
 # This suite requires the ROUTING stack: base (db+odoo) + dev (the nginx edge)
 # + routing (db_filter=^%d$). `docker compose` alone loads ONLY the base file,
@@ -102,7 +106,7 @@ create_tenant(){
       fi
       # Exit 0 is not success: odoo returns 0 having skipped a module whose
       # dependency is missing, so the check above cannot see that (#385).
-      "$PWD/scripts/dev/assert_odoo_setup.sh" "/tmp/e2e_install_$db.log" \
+      "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" "/tmp/e2e_install_$db.log" \
         "modules on $db" "if ./oca is empty, run 'make oca'"
     fi
 
@@ -116,13 +120,26 @@ create_tenant(){
     fi
       # Exit 0 is not success: odoo returns 0 having skipped a module whose
       # dependency is missing, so the check above cannot see that (#385).
-      "$PWD/scripts/dev/assert_odoo_setup.sh" "/tmp/e2e_upgrade_$db.log" \
+      "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" "/tmp/e2e_upgrade_$db.log" \
         "modules on $db" "if ./oca is empty, run 'make oca'"
   else
     echo "  • (re)creating $db (modules: $modules) — this takes a minute…"
     drop_db "$db"
-    "${DC[@]}" exec -T odoo odoo -d "$db" -i "$modules" --without-demo=True --no-http \
-      --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
+    # THIS is the branch CI takes. A fresh ubuntu-latest runner has no
+    # databases, so `tenant_provisioned` is false there and the reuse/upgrade
+    # branch above never executes. It previously had NO exit check and threw the
+    # output away, so a failed install was invisible on the one runner this
+    # suite exists to gate. Found by review of #385 — the first version of that
+    # ticket wired only the reuse branch and its commit message claimed the file
+    # was fully covered. It was not.
+    if ! "${DC[@]}" exec -T odoo odoo -d "$db" -i "$modules" --without-demo=True --no-http \
+         --stop-after-init "${DBARGS[@]}" >"/tmp/e2e_create_$db.log" 2>&1; then
+      echo "ERROR: creating $db with modules '$modules' failed." >&2
+      tail -20 "/tmp/e2e_create_$db.log" >&2
+      exit 1
+    fi
+    "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" "/tmp/e2e_create_$db.log" \
+      "$modules on $db" "if ./oca is empty, run 'make oca'"
   fi
   # Deterministic seed: known admin creds + the plan's allowed-module projection.
   "${DC[@]}" exec -T odoo odoo shell -d "$db" --no-http --log-level=error "${DBARGS[@]}" \
@@ -152,15 +169,27 @@ create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "
 # e2eadmin.localhost public-checkout journey (P2-T18/T16) has real endpoints.
 if ! db_exists e2eadmin; then
   echo "  • creating e2eadmin (base)…"
-  "${DC[@]}" exec -T odoo odoo -d e2eadmin -i base --without-demo=True --no-http \
-    --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
+  if ! "${DC[@]}" exec -T odoo odoo -d e2eadmin -i base --without-demo=True --no-http \
+       --stop-after-init "${DBARGS[@]}" >/tmp/e2e_create_e2eadmin.log 2>&1; then
+    echo "ERROR: creating e2eadmin failed — the checkout journeys need it." >&2
+    tail -20 /tmp/e2e_create_e2eadmin.log >&2
+    exit 1
+  fi
+  "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" /tmp/e2e_create_e2eadmin.log \
+    "base on e2eadmin" "if ./oca is empty, run 'make oca'"
 fi
 if ! "${DC[@]}" exec -T db psql -U odoo -d e2eadmin -tAc \
      "SELECT 1 FROM ir_module_module WHERE name='ncollection_saas' AND state='installed'" \
      2>/dev/null | grep -q 1; then
   echo "  • installing platform stack (ncollection_saas) on e2eadmin…"
-  "${DC[@]}" exec -T odoo odoo -d e2eadmin -i ncollection_saas --without-demo=True --no-http \
-    --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
+  if ! "${DC[@]}" exec -T odoo odoo -d e2eadmin -i ncollection_saas --without-demo=True --no-http \
+       --stop-after-init "${DBARGS[@]}" >/tmp/e2e_install_e2eadmin.log 2>&1; then
+    echo "ERROR: installing ncollection_saas on e2eadmin failed." >&2
+    tail -20 /tmp/e2e_install_e2eadmin.log >&2
+    exit 1
+  fi
+  "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" /tmp/e2e_install_e2eadmin.log \
+    "ncollection_saas on e2eadmin" "if ./oca is empty, run 'make oca' — queue_job lives there"
 else
   # Same staleness trap as create_tenant above. e2eadmin is the PLATFORM db, so
   # it holds ncollection.tenant — every field added to that model lands here.
@@ -172,6 +201,8 @@ else
     tail -20 /tmp/e2e_upgrade_e2eadmin.log >&2
     exit 1
   fi
+  "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" /tmp/e2e_upgrade_e2eadmin.log \
+    "ncollection_saas on e2eadmin" "if ./oca is empty, run 'make oca'"
 fi
 # Deterministic admin creds + a checkout plan (write-or-create) for the register
 # journey. `odoo shell` is a REPL: an exception in the piped script does NOT set a
