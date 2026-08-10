@@ -79,8 +79,22 @@ build_fixture(){   # $1 = db
   local db="$1"
   drop_db "$db"
   "${DC[@]}" exec -T db createdb -U odoo -O odoo "$db" >/dev/null 2>&1
-  "${DC[@]}" exec -T odoo odoo -d "$db" -i "$MODULES" --without-demo=True --no-http \
-      --stop-after-init "${DBARGS[@]}" >/dev/null 2>&1
+  local _log; _log="$(mktemp)"
+  if ! "${DC[@]}" exec -T odoo odoo -d "$db" -i "$MODULES" --without-demo=True --no-http \
+       --stop-after-init "${DBARGS[@]}" >"$_log" 2>&1; then
+    echo "REFUSING: could not install $MODULES on '$db' — the upgrade proof" >&2
+    echo "  would compare two databases that were never built (#385)." >&2
+    tail -25 "$_log" >&2; rm -f "$_log"; exit 1
+  fi
+  # Success branch only — a bare `rm` after the call cannot run under `set -e`,
+  # so a refusal both leaked the temp file and discarded the evidence.
+  if "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
+       "$_log" "$MODULES on $db" "if ./oca is empty, run 'make oca'"; then
+    rm -f "$_log"
+  else
+    echo "  Full setup log kept at: $_log" >&2
+    exit 1
+  fi
 }
 
 wind_back(){       # $1 = db — make Odoo believe the module is older than it is

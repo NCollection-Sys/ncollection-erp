@@ -196,6 +196,27 @@ if ! "${DCH[@]}" run --rm -T cron-stall-odoo \
   tail -25 "$WORK/setup.log" >&2
   exit 1
 fi
+# EXIT 0 IS NOT SUCCESS — odoo returns 0 having SKIPPED a module whose
+# dependency it could not find. That is what made this harness report 120s of
+# "starvation" for a cron that could never fire: setup "passed", the arming
+# step passed too (env.ref reads cron rows surviving from an earlier install),
+# and the measurement was vacuous (#385).
+#
+# The check lives in ONE place, not inline here — six harnesses share this
+# failure mode and six copies would drift.
+# Same evidence-vs-cleanup tension as verify_cron_scope.sh: the EXIT trap does
+# `rm -rf "$WORK"` because it also removes containers, so a refusal would leave
+# only the asserter's 6-line tail. Preserve the log first.
+if ! "$PWD/scripts/dev/assert_odoo_setup.sh" "$WORK/setup.log" \
+     "ncollection_saas on $HARNESS_DB" \
+     "if ./oca is empty, run 'make oca' — queue_job lives there"; then
+  if cp -f "$WORK/setup.log" /tmp/cron_starvation_setup.log; then
+    echo "  Full setup log preserved at: /tmp/cron_starvation_setup.log" >&2
+  else
+    echo "  Could not preserve the full log — the lines above are all of it." >&2
+  fi
+  exit 1
+fi
 hr
 
 # --- the stall host ---------------------------------------------------------

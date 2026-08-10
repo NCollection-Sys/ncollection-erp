@@ -53,11 +53,28 @@ tq(){ "${DC[@]}" exec -T db psql -U odoo -d "$1" -tAc "$2" 2>/dev/null | tr -d '
 # suite's own "ready" over a stale schema, which is R-005's exact shape.
 platform_schema_sync(){
   echo "  syncing ${PLATFORM_DB} schema with the code (odoo -u ncollection_saas) ..."
+  # Output CAPTURED, not discarded: odoo exits 0 having SKIPPED a module whose
+  # dependency is missing, so the exit status below cannot see that on its own
+  # (#385 — it cost an invalid gate run elsewhere in this suite).
+  _setup_log="$(mktemp)"
   if ! "${DC[@]}" exec -T odoo odoo -d "$PLATFORM_DB" -u ncollection_saas \
-       --stop-after-init --no-http --log-level=warn "${DBARGS[@]}" >/dev/null 2>&1; then
+       --stop-after-init --no-http --log-level=warn "${DBARGS[@]}" >"$_setup_log" 2>&1; then
     echo "REFUSING: could not upgrade ncollection_saas on '$PLATFORM_DB'." >&2
     echo "  Running on a stale schema would report a code failure that is" >&2
     echo "  really a setup problem. Fix the upgrade, then re-run." >&2
+    exit 1
+  fi
+  # The `rm` is in the SUCCESS branch only, on purpose. Placed after a bare call
+  # it would never run under `set -e` — the abort path both leaked the file and
+  # threw away the one artefact worth reading. On a refusal the asserter prints
+  # 6 matching lines; the full log is what you actually want next, so keep it
+  # and say where.
+  if "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)/scripts/dev/assert_odoo_setup.sh" \
+       "$_setup_log" "ncollection_saas on $PLATFORM_DB" \
+       "if ./oca is empty, run 'make oca' — queue_job lives there"; then
+    rm -f "$_setup_log"
+  else
+    echo "  Full setup log kept at: $_setup_log" >&2
     exit 1
   fi
 }
