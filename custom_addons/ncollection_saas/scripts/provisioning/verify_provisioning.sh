@@ -53,6 +53,16 @@ tq(){ "${DC[@]}" exec -T db psql -U odoo -d "$1" -tAc "$2" 2>/dev/null | tr -d '
 # suite's own "ready" over a stale schema, which is R-005's exact shape.
 platform_schema_sync(){
   echo "  syncing ${PLATFORM_DB} schema with the code (odoo -u ncollection_saas) ..."
+  # BEFORE the upgrade, not after (#388). The setup check that follows reads
+  # odoo's log for markers that are DATABASE-WIDE — odoo builds its graph from
+  # every installed module on the DB, not just the one named on the command
+  # line — so a module left mid-transition by unrelated history makes that
+  # check refuse and blame ncollection_saas. PLATFORM_DB is persistent
+  # (CLAUDE.md: saastest/ncplatform, "do not drop"), which makes it the one
+  # database where such a row can accumulate and then refuse every future
+  # upgrade. This names the real culprit first.
+  "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)/scripts/dev/assert_modules_settled.sh" \
+    "$PLATFORM_DB" "the ncollection_saas upgrade"
   # Output CAPTURED, not discarded: odoo exits 0 having SKIPPED a module whose
   # dependency is missing, so the exit status below cannot see that on its own
   # (#385 — it cost an invalid gate run elsewhere in this suite).
