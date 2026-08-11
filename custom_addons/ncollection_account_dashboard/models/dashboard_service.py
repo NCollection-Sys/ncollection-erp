@@ -20,8 +20,12 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
 # #374: the gate lives in ncollection_core so ncollection_ai can use the SAME
-# definition. AccessError is still imported — the two helpers moved, but this
-# module keeps raising it elsewhere.
+# definition. `from odoo.exceptions import AccessError` went with it — both
+# helpers that raised it are on the mixin now, and nothing else in this file
+# raises it. (An earlier version of this comment claimed the import was still
+# here. It was not: I had removed it in the same hunk, flake8 stayed clean
+# BECAUSE it was gone, and the comment asserted the opposite until review
+# read it.)
 from odoo.addons.ncollection_core.models.financial_gate import (
     FINANCIAL_GATE_GROUPS,
 )
