@@ -73,6 +73,9 @@ jobs:
       # other and never opened the document. This runs on the HOST because the
       # odoo container mounts only custom_addons/ and oca/, so an Odoo test
       # physically cannot read docs/.
+      - name: Test the role-matrix guard
+        run: python scripts/ci/test_check_role_matrix.py
+
       - name: Check the role matrix matches the code
         run: python scripts/ci/check_role_matrix.py
 

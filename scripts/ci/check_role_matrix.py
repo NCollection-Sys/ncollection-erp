@@ -10,37 +10,58 @@ WHAT WAS WRONG. `ncollection_core/hooks.py` stated the contract:
 Nothing enforced it. `test_hook_mapping_matches_matrix` and
 `test_no_unexpected_escalation` compare `ROLE_IMPLICATIONS` against
 `MATRIX_ALLOWED_DIRECT` — a Python dict IN THE SAME TEST FILE. Neither opens
-`docs/ROLE_MATRIX.md`. So there were three sources of truth, two enforced
-against each other, and the third — the one described as authoritative and the
-one a human actually reads — enforced against nothing.
-
-Demonstrated during #347: a group implication was added, the in-file dict caught
-the mapping change immediately (that guard is real and works), and the DOCUMENT
-went stale with nothing noticing. A reviewer found it by reading — which is
-precisely the check the comment claims is automated.
+`docs/ROLE_MATRIX.md`. Three sources of truth: two checked against each other,
+and the third — the one described as authoritative, and the one a human reads —
+checked against nothing. It drifted during #347 and only a reviewer noticed.
 
 WHY THIS IS A SCRIPT AND NOT AN ODOO TEST. #382 proposed "the test parses the
 doc". It cannot: tests run inside the odoo container, which mounts only
-./custom_addons and ./oca. `docs/` is not there — verified, `test -f` on the
-path fails inside the container. Implementing the ticket as literally written
-would require mounting docs/ into every environment including production, or
-moving a human-facing document into an addon. Both are worse than putting the
-check where both files already exist: the host, in CI's lint job and pre-push.
+./custom_addons and ./oca. Verified three ways — docker-compose.yml's odoo
+volumes, CI's `docker run` bind mounts, and the production Dockerfile's COPYs.
+Implementing it as written would mean shipping docs/ into production images or
+moving a human-facing document into an addon. This runs on the host instead,
+in CI's lint job and on pre-push, where both files already exist.
 
-WHAT IT CHECKS. §2 of the matrix has two "Implies" columns, and they are
-enforced by different mechanisms, so they are compared against different things:
+IT FAILS CLOSED, AND THAT IS THE WHOLE DESIGN. The first version of this file
+scanned cells for backticked xml-ids and a list of bare role words, and silently
+contributed NOTHING for anything else. Review proved that reintroduces the very
+defect this ticket exists to close:
 
-    column 2  "Implies (static, base only)"      -> security/role_groups.xml
-    column 3  "Implies (runtime-linked, ...)"    -> hooks.ROLE_IMPLICATIONS
+    `stock.group_stock_user`, crm.group_use_lead_menu   -> {'stock.group_stock_user'}
+    Employees                                            -> set()
+    Manager (chain, mirrors Owner scope)                 -> {manager, OWNER}
 
-    doc column 3          == ROLE_IMPLICATIONS       (hooks.py)
-    doc columns 2 + 3     == MATRIX_ALLOWED_DIRECT   (tests/test_roles.py)
+The first two let the document describe a grant the code does not implement
+while this script prints "clean". The third invents an edge from prose. So cells
+are now parsed against a STRICT GRAMMAR and anything unrecognised is a hard
+failure, never an empty set:
 
-The Odoo test keeps doing the job only it can do — comparing the allowlist to
-the group graph a real database actually ends up with. This adds the missing
-edge: the allowlist itself now has to match the document.
+    cell   := "—"  |  token ("," token)*
+    token  := `module.group_xmlid`            (backticks REQUIRED)
+            |  RoleName                        (canonical, from the matrix)
+            |  RoleName (qualifier)            (e.g. "CEO (chain)")
 
-Exit 0 = the three agree. Exit 1 = they do not, naming each difference.
+Prose belongs in the Rationale column. A clarifying aside inside columns 2-3
+now fails loudly with an actionable message rather than being half-understood.
+
+WHAT IT CHECKS. §2 has two "Implies" columns, enforced by different mechanisms,
+so they are compared against different things:
+
+    column 2  "static, base only"   -> security/role_groups.xml
+    column 3  "runtime-linked"      -> hooks.ROLE_IMPLICATIONS
+
+    doc column 3       == ROLE_IMPLICATIONS      (hooks.py)
+    doc columns 2 + 3  == MATRIX_ALLOWED_DIRECT  (tests/test_roles.py)
+
+ONLY §2 IS MACHINE-CHECKED. §3 (inheritance chains), §4 (decisions) and §5
+(escalation checklist) are human-maintained prose and are NOT verified here.
+§3 in particular restates §2 and can drift silently; that is a known, declared
+gap rather than an implied guarantee.
+
+The Odoo test keeps the job only it can do: comparing the allowlist to the group
+graph a real database ends up with.
+
+Exit 0 = the three agree. Exit 1 = they do not, or a cell could not be parsed.
 """
 from __future__ import annotations
 
@@ -56,8 +77,16 @@ TESTS = REPO / "custom_addons" / "ncollection_core" / "tests" / "test_roles.py"
 
 ROLE_PREFIX = "ncollection_core."
 
-# Column 1 reads `**Sales** \`group_role_sales\``; columns 2-3 refer to other
-# roles by DISPLAY NAME ("Employee", "Manager (chain)"), not by xml-id.
+
+class MatrixSyntaxError(Exception):
+    """A §2 cell does not match the grammar. Never swallowed."""
+
+
+# Columns 2-3 refer to other roles by DISPLAY NAME ("Employee", "CEO (chain)").
+# Derived-vs-hardcoded: this stays hand-written, but _check_role_words_cover()
+# asserts every role the table actually defines appears here, so adding a 9th
+# role to the document without teaching this map fails instead of silently
+# dropping references to it.
 _ROLE_WORDS = {
     "employee": "group_role_employee",
     "sales": "group_role_sales",
@@ -69,28 +98,61 @@ _ROLE_WORDS = {
     "owner": "group_role_owner",
 }
 
-_BACKTICKED = re.compile(r"`([A-Za-z_][\w.]*\.[\w.]+)`")
 _ROLE_ID = re.compile(r"`(group_role_\w+)`")
-_WORD = re.compile(r"[A-Za-z]+")
+# A backticked xml-id: at least one dot, nothing else in the token.
+_TOKEN_XMLID = re.compile(r"^`([A-Za-z_]\w*(?:\.\w+)+)`$")
+# A bare role name with an optional BALANCED parenthetical qualifier.
+_TOKEN_ROLE = re.compile(r"^([A-Za-z]+)(?:\s*\([^()]*\))?$")
+# Spellings that mean "this role implies nothing here".
+_NONE_CELL = {"", "—", "–", "-", "n/a", "none"}
 
 
-def _cell_targets(cell: str) -> set[str]:
-    """Every group xml-id a matrix cell names.
-
-    Two spellings appear and both must be understood, because using only one
-    would silently ignore half the matrix:
-      * backticked full xml-ids -> `base.group_user`, `stock.group_stock_user`
-      * bare role display names -> Employee, "Manager (chain)"
-    """
-    out = {m.group(1) for m in _BACKTICKED.finditer(cell)}
-    # Strip the backticked spans before scanning words, so `hr.group_hr_user`
-    # does not also register as the bare role word "hr".
-    residue = _BACKTICKED.sub(" ", cell)
-    for word in _WORD.findall(residue):
-        role = _ROLE_WORDS.get(word.lower())
-        if role:
-            out.add(ROLE_PREFIX + role)
+def _cell_targets(cell: str, where: str = "a cell") -> set[str]:
+    """Every group xml-id a §2 cell names. Raises rather than guessing."""
+    text = cell.strip()
+    if text.lower() in _NONE_CELL:
+        return set()
+    out: set[str] = set()
+    for raw in text.split(","):
+        token = raw.strip()
+        if not token:
+            raise MatrixSyntaxError(
+                "%s: empty entry — a stray or trailing comma in %r" % (where, text))
+        m = _TOKEN_XMLID.match(token)
+        if m:
+            out.add(m.group(1))
+            continue
+        m = _TOKEN_ROLE.match(token)
+        if m:
+            role = _ROLE_WORDS.get(m.group(1).lower())
+            if role:
+                out.add(ROLE_PREFIX + role)
+                continue
+            raise MatrixSyntaxError(
+                "%s: %r is not one of the roles this matrix defines (%s). If it "
+                "is a group, wrap it in backticks as `module.xmlid`; if it is "
+                "prose, move it to the Rationale column."
+                % (where, m.group(1), ", ".join(sorted(_ROLE_WORDS))))
+        raise MatrixSyntaxError(
+            "%s: cannot parse %r. Columns 2-3 accept only `module.xmlid` in "
+            "backticks, a role name, or a role name with a (qualifier) — one "
+            "per comma-separated entry. Prose belongs in the Rationale column, "
+            "because a half-understood cell is how the document and the code "
+            "drift apart while this check reports clean (#382)."
+            % (where, token))
     return out
+
+
+def _check_role_words_cover(roles: set[str]) -> None:
+    """Every role the table DEFINES must be nameable in another row's cell."""
+    known = {ROLE_PREFIX + v for v in _ROLE_WORDS.values()}
+    missing = sorted(roles - known)
+    if missing:
+        raise MatrixSyntaxError(
+            "docs/ROLE_MATRIX.md defines role(s) %s that scripts/ci/"
+            "check_role_matrix.py cannot resolve by name. Add them to "
+            "_ROLE_WORDS, or a reference to them from another row would be "
+            "silently dropped." % ", ".join(missing))
 
 
 def parse_matrix(text: str) -> dict[str, dict[str, set[str]]]:
@@ -100,10 +162,9 @@ def parse_matrix(text: str) -> dict[str, dict[str, set[str]]]:
         start = next(i for i, ln in enumerate(lines)
                      if ln.strip().startswith("## 2."))
     except StopIteration:
-        raise SystemExit(
-            "REFUSING: docs/ROLE_MATRIX.md has no '## 2.' section — the "
-            "document was restructured and this check would silently verify "
-            "nothing.")
+        raise MatrixSyntaxError(
+            "docs/ROLE_MATRIX.md has no '## 2.' section — the document was "
+            "restructured and this check would otherwise verify nothing.")
     out: dict[str, dict[str, set[str]]] = {}
     for ln in lines[start:]:
         if ln.strip().startswith("## 3."):
@@ -116,24 +177,37 @@ def parse_matrix(text: str) -> dict[str, dict[str, set[str]]]:
         m = _ROLE_ID.search(cols[0])
         if not m:
             continue                      # header row / separator
-        out[ROLE_PREFIX + m.group(1)] = {
-            "static": _cell_targets(cols[1]),
-            "runtime": _cell_targets(cols[2]),
+        role = ROLE_PREFIX + m.group(1)
+        out[role] = {
+            "static": _cell_targets(cols[1], "%s, static column" % role),
+            "runtime": _cell_targets(cols[2], "%s, runtime column" % role),
         }
+    _check_role_words_cover(set(out))
     return out
 
 
 def _literal(path: Path, name: str):
     """Read a module-level constant WITHOUT importing (odoo is unavailable)."""
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    for node in tree.body:
-        if isinstance(node, ast.Assign):
-            for tgt in node.targets:
-                if isinstance(tgt, ast.Name) and tgt.id == name:
-                    return ast.literal_eval(node.value)
-    raise SystemExit(
-        "REFUSING: %s not found in %s — it was renamed or removed, and this "
-        "check would silently verify nothing." % (name, path))
+    found = [n for n in tree.body
+             if isinstance(n, ast.Assign)
+             and any(isinstance(t, ast.Name) and t.id == name for t in n.targets)]
+    if not found:
+        raise MatrixSyntaxError(
+            "%s not found in %s — it was renamed or removed, and this check "
+            "would otherwise verify nothing." % (name, path))
+    if len(found) > 1:
+        # Reading only the first would compare against a partial value.
+        raise MatrixSyntaxError(
+            "%s is assigned %d times at module level in %s. This reader takes "
+            "one literal assignment; a second one (or a later .update()) would "
+            "be silently ignored." % (name, len(found), path))
+    try:
+        return ast.literal_eval(found[0].value)
+    except (ValueError, TypeError) as exc:
+        raise MatrixSyntaxError(
+            "%s in %s is no longer a plain literal (%s), so it cannot be read "
+            "without importing odoo." % (name, path, exc))
 
 
 def _diff(label: str, role: str, expected: set[str], actual: set[str]) -> list:
@@ -149,7 +223,7 @@ def _diff(label: str, role: str, expected: set[str], actual: set[str]) -> list:
     return problems
 
 
-def main() -> int:
+def run() -> int:
     matrix = parse_matrix(MATRIX.read_text(encoding="utf-8"))
     if not matrix:
         print("REFUSING: parsed 0 roles from docs/ROLE_MATRIX.md §2 — the "
@@ -162,20 +236,19 @@ def main() -> int:
 
     problems: list[str] = []
 
-    # 1. runtime column vs hooks.ROLE_IMPLICATIONS. Roles with an empty runtime
-    #    cell ("—") legitimately have no entry at all, so compare on the union
-    #    of both key sets rather than on either one's keys.
+    # 1. runtime column vs hooks.ROLE_IMPLICATIONS. Roles whose runtime cell is
+    #    "—" legitimately have no entry, so iterate the union of both key sets.
     for role in sorted(set(matrix) | set(implications)):
         doc = matrix.get(role, {}).get("runtime", set())
-        code = implications.get(role, set())
-        problems += _diff("ROLE_IMPLICATIONS", role, doc, code)
+        problems += _diff("ROLE_IMPLICATIONS", role, doc,
+                          implications.get(role, set()))
 
     # 2. both columns vs the test's allowlist.
     for role in sorted(set(matrix) | set(allowed)):
         entry = matrix.get(role, {})
         doc = entry.get("static", set()) | entry.get("runtime", set())
-        test = allowed.get(role, set())
-        problems += _diff("MATRIX_ALLOWED_DIRECT", role, doc, test)
+        problems += _diff("MATRIX_ALLOWED_DIRECT", role, doc,
+                          allowed.get(role, set()))
 
     if problems:
         print("docs/ROLE_MATRIX.md and the code disagree:", file=sys.stderr)
@@ -191,48 +264,13 @@ def main() -> int:
     return 0
 
 
-# --- self-test -------------------------------------------------------------
-# This file parses a markdown table with regexes, which is exactly the kind of
-# code that starts matching nothing and reporting success. R8 in invariants.py
-# shipped with that defect; check_skips.py shipped with a parser written to
-# match a fixture the author had invented. These run before main().
-_SELF_TEST_TABLE = """
-## 2. The matrix
-
-| Role (xml-id) | Implies (static, base only) | Implies (runtime-linked) | Rationale |
-|---|---|---|---|
-| **Employee** `group_role_employee` | `base.group_user` | — | floor |
-| **Sales** `group_role_sales` | Employee | `sales_team.group_sale_salesman` | scope |
-| **Owner** `group_role_owner` | CEO (chain), `base.group_system` | `account.group_account_user` | all |
-
-## 3. next
-"""
-
-
-def _self_test() -> None:
-    got = parse_matrix(_SELF_TEST_TABLE)
-    assert set(got) == {
-        ROLE_PREFIX + "group_role_employee",
-        ROLE_PREFIX + "group_role_sales",
-        ROLE_PREFIX + "group_role_owner",
-    }, got
-    emp = got[ROLE_PREFIX + "group_role_employee"]
-    assert emp["static"] == {"base.group_user"}, emp
-    assert emp["runtime"] == set(), emp          # the em-dash means "none"
-    sal = got[ROLE_PREFIX + "group_role_sales"]
-    # A bare role word in the static column resolves to that role's xml-id.
-    assert sal["static"] == {ROLE_PREFIX + "group_role_employee"}, sal
-    assert sal["runtime"] == {"sales_team.group_sale_salesman"}, sal
-    own = got[ROLE_PREFIX + "group_role_owner"]
-    # "CEO (chain), `base.group_system`" -> both spellings in ONE cell.
-    assert own["static"] == {ROLE_PREFIX + "group_role_ceo",
-                             "base.group_system"}, own
-    # A backticked xml-id must NOT also register as a bare role word.
-    assert _cell_targets("`hr.group_hr_user`") == {"hr.group_hr_user"}
-    # A cell naming nothing yields nothing rather than raising.
-    assert _cell_targets("—") == set()
+def main() -> int:
+    try:
+        return run()
+    except MatrixSyntaxError as exc:
+        print("REFUSING: %s" % exc, file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
-    _self_test()
     sys.exit(main())

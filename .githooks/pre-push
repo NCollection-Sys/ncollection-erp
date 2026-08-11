@@ -74,6 +74,7 @@ run_gate "invariants-tests"  python3 scripts/ci/test_invariants.py
 run_gate "invariants"        python3 scripts/ci/invariants.py
 run_gate "arch-guard-tests"  python3 scripts/ci/test_architecture_guard.py
 run_gate "skip-gate-tests"   python3 scripts/ci/test_check_skips.py
+run_gate "role-matrix-tests" python3 scripts/ci/test_check_role_matrix.py
 run_gate "role-matrix"       python3 scripts/ci/check_role_matrix.py
 run_gate "architecture-guard" python3 scripts/ci/architecture_guard.py --base origin/develop
 
