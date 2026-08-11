@@ -98,6 +98,57 @@ class TestMenuVisibility(TransactionCase):
         self.assertIn(self.fake_child.id, blocked_ids)
         self.assertNotIn(self.custom_root.id, blocked_ids)
 
+    def test_a_group_holder_still_does_not_see_an_unlicensed_app(self):
+        """#177 (F8): holding the app's OWN group must not reveal its menu root.
+
+        The finding reported that P1-T09 hid an unlicensed module's root from a
+        normal user but NOT from a user holding that module's group, and
+        proposed a fix on the premise that "the current logic exempts
+        group-holders". There is no such exemption in the engine — the blocking
+        is an unconditional set subtraction — and the behaviour does not
+        reproduce: measured on the e2e fixture, `biz` (holding
+        sales_team.group_sale_salesman) does NOT see the Sales root on
+        e2eclientb, where `sale` is installed but unlicensed.
+
+        It was nevertheless untested, and the e2e visibility spec deliberately
+        gates that tenant via Ring 2 access-denial rather than menu visibility
+        BECAUSE of this report — so the behaviour had never been pinned. This
+        pins it: a regression is not closed until a guard exists.
+
+        The licensed half is asserted with the SAME user for a reason. Without
+        it, a user who could see no menus at all would satisfy the first
+        assertion and the test would pass while proving nothing.
+        """
+        group = self.env["res.groups"].create({"name": "Fake App User"})
+        self.env["ir.model.data"].create({
+            "name": "group_fake_user", "module": "fake_app",
+            "model": "res.groups", "res_id": group.id,
+        })
+        holder = self.env["res.users"].create({
+            "name": "Fake App Group Holder", "login": "nc177_group_holder",
+            # Odoo 19 renamed res.users.groups_id -> group_ids.
+            "group_ids": [(6, 0, [self.env.ref("base.group_user").id, group.id])],
+        })
+        self.assertTrue(holder.has_group("fake_app.group_fake_user"))
+
+        cfg = self.Config.create({"allowed_module_names": "crm"})
+        self.assertNotIn(
+            self.fake_root.id,
+            self.Menu.with_user(holder)._visible_menu_ids(),
+            "an unlicensed app's menu root was visible to a user holding that "
+            "app's own group — Ring 1 leaks the menu while Ring 2 blocks the "
+            "data, so the menu is a dead end that should not be shown (#177)")
+
+        # Control: same user, same menu, now licensed. If this fails, the
+        # assertion above proved nothing.
+        cfg.write({"allowed_module_names": "crm,fake_app"})
+        self.assertIn(
+            self.fake_root.id,
+            self.Menu.with_user(holder)._visible_menu_ids(),
+            "the control failed: this user cannot see the root even when the "
+            "app IS licensed, so the hidden-when-unlicensed assertion above is "
+            "vacuous")
+
     def test_config_change_updates_menus(self):
         """Acceptance: changing workspace config updates menus (cache clear)."""
         cfg = self.Config.create({"allowed_module_names": "crm,sale,account"})
