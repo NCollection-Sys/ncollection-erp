@@ -68,6 +68,14 @@ jobs:
       - name: Run invariants guard
         run: python scripts/ci/invariants.py
 
+      # #382: docs/ROLE_MATRIX.md is described in hooks.py as authoritative and
+      # was enforced by nothing — the tests compared two Python copies to each
+      # other and never opened the document. This runs on the HOST because the
+      # odoo container mounts only custom_addons/ and oca/, so an Odoo test
+      # physically cannot read docs/.
+      - name: Check the role matrix matches the code
+        run: python scripts/ci/check_role_matrix.py
+
       # The AI gateway satellite (#59) is NOT an Odoo module, so the `test` job
       # below never sees it — `--test-tags` scopes that run to custom_addons.
       # Without this step its 28 tests would exist and never execute, which is
