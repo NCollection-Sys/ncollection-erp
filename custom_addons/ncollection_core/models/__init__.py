@@ -8,6 +8,9 @@ from . import license_enforcement
 from . import ir_http
 from . import subscription_gate
 from . import res_users
+# #374 the financial-data role gate, shared by ncollection_account_dashboard
+# and ncollection_ai so the rule has ONE definition rather than two that drift.
+from . import financial_gate
 # Tenant-side config-sync credential installer — shared by the provisioning seed
 # and the #221 re-key job so the security-critical apikey write has ONE home.
 from . import config_sync_key

@@ -19,3 +19,5 @@ from . import test_pushed_rate
 from . import test_anomaly_statistics
 from . import test_anomaly_acceptance
 from . import test_anomaly_visibility
+# #374 — the shared financial gate is wired to its consumers, not re-copied
+from . import test_financial_gate

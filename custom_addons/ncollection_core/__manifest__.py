@@ -26,7 +26,13 @@
     # account to the new group_cron_service, without which it cannot
     # create ncollection.alert and every detected anomaly is silently
     # discarded.
-    'version': '19.0.1.15.2',
+    # 19.0.1.16.0 (#374): ncollection.financial.gate.mixin — the financial-data
+    # role gate, previously written out twice (dashboard_service.py and
+    # ncollection_ai/ai_question.py). An AbstractModel with no table and no
+    # data/view/security records, so unlike every entry above it needs NO `-u`:
+    # a restart picks it up, and a tenant left un-upgraded behaves identically
+    # because the admitted group set is unchanged.
+    'version': '19.0.1.16.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
