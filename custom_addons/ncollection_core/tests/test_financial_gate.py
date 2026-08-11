@@ -73,12 +73,23 @@ class TestFinancialGateMixin(TransactionCase):
         Every `continue` above is a model this database does not have. If they
         were ALL absent the loop would assert nothing and still report success —
         the shape this repo keeps getting caught by.
+
+        SKIP, NOT FAIL, and the difference matters. `make test m=ncollection_core`
+        is a documented workflow, and it installs this module ALONE — so no
+        consumer exists and there is genuinely nothing to check. The first
+        version of this asserted instead, which turned that supported scoped run
+        into a failure. A skip is the honest answer: nothing was verified, and
+        the skip gate (scripts/ci/check_skips.py) makes it visible rather than
+        silent. In CI's full matrix both consumers are installed, so this does
+        not skip there — if it ever does, that gate fails and tells us the
+        consumers stopped being installed, which is the condition worth knowing.
         """
         present = [m for m in _CONSUMERS if m in self.env]
-        self.assertTrue(
-            present,
-            "no consumer of %s is installed, so the inheritance assertions "
-            "above checked nothing" % _MIXIN)
+        if not present:
+            self.skipTest(
+                "no consumer of %s is installed on this database (scoped run), "
+                "so the inheritance assertions checked nothing" % _MIXIN)
+        self.assertTrue(present)
 
     def test_the_gate_tuple_has_the_three_groups_and_the_admin_hatch(self):
         """`base.group_system` is the clause most likely to be 'tidied' away.
