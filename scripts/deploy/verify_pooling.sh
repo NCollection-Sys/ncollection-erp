@@ -14,6 +14,11 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.." || exit 1
 
+# docker-compose.pooling.yml mounts ./oca, and this script is invoked directly
+# (its own header documents a raw `docker compose ... up -d`), never through a
+# make target — so the Makefile-level guards cannot reach it (#384).
+./scripts/dev/assert_oca_present.sh "the pooling stack"
+
 DC=(docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.pooling.yml)
 DB_USER="${DB_USER:-odoo}"
 DB_PASSWORD="${DB_PASSWORD:-odoo}"
