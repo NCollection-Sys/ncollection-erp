@@ -72,7 +72,7 @@ help: ## Show this help
 
 ## ---- Stack lifecycle ----
 up: ## Start the dev stack (Odoo :8069, Nginx edge :80, pgAdmin :5050)
-	@test -d oca/mis-builder || (echo "ERROR: ./oca/ is empty — run 'make oca' first (aggregates the pinned OCA repos from repos.yml)."; exit 1)
+	@./scripts/dev/assert_oca_present.sh "the dev stack"
 	$(COMPOSE) up -d
 
 oca: ## Aggregate the pinned OCA addon repos from repos.yml into ./oca/
@@ -86,7 +86,7 @@ staging-config: ## Validate the merged staging compose config (docker-compose.ym
 	docker compose -f docker-compose.yml -f docker-compose.staging.yml config -q && echo "✅ staging compose valid"
 
 staging-build: ## Build the deployable image locally (run 'make oca' first). Tag: :local
-	@test -d oca/mis-builder || (echo "ERROR: ./oca/ is empty — run 'make oca' first."; exit 1)
+	@./scripts/dev/assert_oca_present.sh "the staging image build"
 	docker build -t ghcr.io/ncollection-sys/ncollection-erp:local .
 
 go-live-check: ## P3-T13 go-live readiness preflight (verifies automated gate items; lists manual ones)
@@ -319,6 +319,7 @@ cron-scope-clean: ## Remove the CRON-SCOPE harness stack + its private volumes (
 	@echo "✅ cron-scope harness stack + volumes removed."
 
 cron-starvation-verify: ## Run the #310 proof (a stalled outbound fetch must not delay the config-sync reconcile cron)
+	@./scripts/dev/assert_oca_present.sh "the cron-starvation harness"
 	./custom_addons/ncollection_saas/scripts/provisioning/verify_cron_starvation.sh
 
 # NOT a `drop_database` call: this suite's fixture does NOT live on the shared
@@ -377,6 +378,7 @@ orphan-dbs: ## List databases owned by no documented suite (read-only; never dro
 	@bash scripts/dev/orphan_dbs.sh
 
 verify-all: ## Run EVERY verification suite (routing + provisioning + config-sync + cron + financial-bootstrap + upgrade + e2e) — pre-merge gate
+	@./scripts/dev/assert_oca_present.sh "verify-all"
 	@echo "==> [1/8] routing & isolation (P1-T06)"
 	@$(MAKE) --no-print-directory routing-verify
 	@echo "==> [2/8] provisioning (P2-T01)"

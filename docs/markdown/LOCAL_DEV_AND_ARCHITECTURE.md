@@ -141,6 +141,37 @@ make bootstrap db=ncollection
 > manager to create a DB, then install modules from **Apps** (search "NCollection", enable
 > developer mode first — see §6).
 
+### Working in a `git worktree`? Run `make oca` first (#384)
+
+`./oca/` holds the pinned OCA addon repos. It is **generated** by `make oca` from
+`repos.yml` and is **gitignored**, so it does not travel with the tree — a fresh
+worktree has none. `docker-compose.yml` mounts it regardless:
+
+```yaml
+- ./oca:/mnt/oca-addons:ro
+```
+
+Docker **creates a missing bind-mount source as an empty directory** instead of
+failing, so `/mnt/oca-addons` exists and is empty, Odoo starts normally, and every
+module depending on an OCA addon silently fails to install. That surfaces much
+later as an unrelated error — measured, the cron-starvation harness reported
+`arm A: the reconcile cron never ran at all within 120s`, when the real event was
+`ncollection_saas` never installing because OCA `queue_job` was absent. It cost a
+full invalid `verify-all` run and was first blamed on a regression in `develop`.
+
+`make up`, `make verify-all`, `make cron-starvation-verify` and `make staging-build`
+now refuse immediately via `scripts/dev/assert_oca_present.sh`, naming the missing
+repos. So:
+
+```bash
+git worktree add ../nc-feature-x feature/x
+cd ../nc-feature-x
+make oca            # ~1 min; without it every OCA-dependent suite fails oddly
+```
+
+⚠️ **Do not "fix" this with a symlink.** `.gitignore`'s rule is `/oca/`, which matches
+a **directory**. A symlink named `oca` is *not* ignored and can be committed by accident.
+
 ---
 
 ## 6. The daily edit loop (no image rebuilds!)
