@@ -220,8 +220,8 @@ test: ## Run the Odoo test suite locally, same matrix as CI (m=<module> to scope
 upgrade-verify: ## Prove module upgrades run their migrations and data survives (#362) — owns upgr*
 	./scripts/upgrade/verify_upgrade.sh
 
-upgrade-clean: ## Drop the UPGRADE fixture DBs upgrgreen/upgrred (destructive)
-	@for d in upgrgreen upgrred; do $(call drop_database,$$d); done
+upgrade-clean: ## Drop the UPGRADE fixture DBs upgrgreen/upgrred/upgrcore (destructive)
+	@for d in upgrgreen upgrred upgrcore; do $(call drop_database,$$d); done
 
 ## ---- AI gateway satellite (P5-T02 / #59, opt-in) ----
 # The platform's FIRST satellite (ARCHITECTURE_DATA_PLATFORM §10.2) and the only

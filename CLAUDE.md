@@ -161,7 +161,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Demo tenant (`make demo-tenant`) | `albarari` | `make demo-clean` |
 | Aggregation bench | `aggbench` | — |
 | Local test suite (`make test`) | `nctest` | self-drops (start + end of run) |
-| Upgrade proof (#362) | `upgrgreen` · `upgrred` | self-drops (start + end) · `make upgrade-clean` |
+| Upgrade proof (#362, #381) | `upgrgreen` · `upgrred` · `upgrcore` | self-drops (start + end) · `make upgrade-clean` |
 
 The last three rows are **not** throwaway fixtures. `saastest` in particular is the
 default `PLATFORM_DB` that `verify_provisioning.sh` and `verify_config_sync.sh` run
