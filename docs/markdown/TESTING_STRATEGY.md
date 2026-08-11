@@ -8,6 +8,12 @@ Written 2026-08-06 against the live tree: **81 test files · 869 test methods ·
 `verify_*.sh` proofs · 9 Playwright specs (16 tests) · 6 workflows** — and validated by a
 full-estate baseline run on `958d8d6` the same day (§7).
 
+**Re-measured 2026-08-11 (#394): 87 test files · 961 test methods · 13 `verify_*.sh` proofs
+(8 suites in `verify-all`) · 10 Playwright specs (21 tests) · 6 workflows.** The line above is
+kept as the dated original rather than overwritten, because this document's value is that its
+numbers can be trusted — which means showing when they were taken. Durations were **not**
+re-measured; see the ¹ footnote under §3.
+
 > Every timing in this document is **measured**, not estimated. An earlier draft carried
 > estimates that were wrong by 6–10×; they are replaced here with the numbers from the
 > baseline run, and the one figure that remains unmeasured is labelled as such.
@@ -80,18 +86,24 @@ premise that nothing covered it; the workflow audit disproved that.
 
 | Layer | Implementation | Size | Trigger | Measured |
 |---|---|---|---|---|
-| Static gates | flake8 · pylint-odoo (baseline 54) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` | 8 checks | pre-push + PR | **8s** |
-| Guard self-tests | `test_invariants.py` · `test_architecture_guard.py` | 2 | PR, **before** the guards | <1s |
+| Static gates | flake8 · pylint-odoo (**baseline 57**) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` (**9 rules**) · `check_role_matrix.py` · `check_skips.py` · AI-gateway satellite | **12 steps** across the `lint` and `architecture-guard` jobs | pre-push (9 gates) + PR | 8s¹ |
+| Guard self-tests | `test_invariants.py` · `test_architecture_guard.py` · `test_check_skips.py` · `test_check_role_matrix.py` | **4** | PR + pre-push, **before** the guards | <1s¹ |
 | Supply chain | pip-audit · Trivy (fs: vuln + secret) | 2 | PR, **non-blocking** | — |
-| Odoo ORM tests | `custom_addons/*/tests/` | 81 files · **869 methods** · 84 `TransactionCase` · 8 `HttpCase` | PR `test` job | **4m CI / 2m 8s local** |
-| Infra proofs | 11 × `verify_*.sh` | 11 suites (7 in `verify-all`) | `make verify-all`, local | **8m 20s warm** |
-| Browser E2E | `e2e/tests/`, chromium only | 9 specs · **16 tests** (4 added by #363) | PR `verify.yml` | **6m CI / 45s** |
+| Odoo ORM tests | `custom_addons/*/tests/` | **87 files · 961 methods** · 90 `TransactionCase` · 8 `HttpCase` | PR `test` job | 4m CI / 2m 8s local¹ |
+| Infra proofs | **13** × `verify_*.sh` | **8 suites in `verify-all`** (routing · provisioning · config-sync · cron-starvation · cron-scope · financial-bootstrap · **upgrade** · e2e) | `make verify-all`, local | 8m 20s warm¹ |
+| Browser E2E | `e2e/tests/`, chromium only | **10 specs · 21 tests** (5 added by the #363 follow-up) | PR `verify.yml` | 6m CI / 45s¹ |
 | Load / perf | k6 `load_test.js` · `bench_aggregation.py` | 2 | manual | — |
 | Security audit | `phase1_security_audit.sh` · `phase3_security_assessment.sh` | 2 | manual / pre-launch | — |
 | Post-merge | `canary.yml` (verify + **full-tree** guard) | 1 | every merge | ~12m |
-| Drift | `nightly.yml` | 1 | 03:00 UTC | ~12m |
+| Drift | `nightly.yml` | 1 | 03:00 UTC | ~12m¹ |
 
-14 of 15 addons carry tests; `ncollection_demo_freshorigin` does not.
+¹ **Timing not re-measured.** These are the `958d8d6` baseline figures (§7). #394 corrected
+the *counts* against the tree as it stands and deliberately did not restate the *durations*,
+because inventing a number is exactly the failure this document exists to prevent. The one
+figure measured since: `make verify-all` runs 8 suites with **73 assertions + 21 Playwright
+tests**, and `make test` reports **961 tests, 0 failed**.
+
+**15 of 16** addons carry tests; `ncollection_demo_freshorigin` does not (verified 2026-08-11).
 
 ### The shape, honestly
 
@@ -180,7 +192,7 @@ Status key: ✅ have · ⚠️ partial · ❌ gap · ⛔ deliberately out of sco
 
 | Type | Status |
 |---|---|
-| Platform guarantees — auth, checkout, dashboards, isolation, license, roles, visibility, branding | ✅ **16 tests, 45s** |
+| Platform guarantees — auth, checkout, dashboards, isolation, license, roles, visibility, branding | ✅ **21 tests, 45s** |
 | In-product business flows | ⚠️ dashboards covered (#363); other flows still uncovered — Playwright is the layer, see G2 |
 | Cross-browser | ⛔ chromium only, deliberate |
 | Visual regression | ❌ G9 — matters because we sell white-label |
@@ -230,20 +242,47 @@ earlier ranking. Each carries the C2 declaration it needs before anyone writes i
 | **G10** | Noisy-neighbour load | **own compose + private PG** | `noisy*` | manual | M |
 | **G11** | Coverage measurement | CI container | reuse `ci_test` | report-only | M |
 
-### G1 — Module upgrade / migration path  ⭐ highest
+### G1 — Module upgrade / migration path  ⭐ **PARTIALLY CLOSED** (#362, #381)
+
+**Do not read this entry as "nothing covers it" — that is what it said until #394, and it
+had been false since #362.** Two of the four original bullets are still true, so it is not
+closed either. Both halves are stated below rather than collapsing to one verdict.
 
 **Risk.** db-per-tenant with live upgrades is the most direct route to corrupting a paying
-customer's data. Confirmed by audit that **nothing covers it**:
+customer's data.
 
-- `deploy.sh` runs **no `-u` at all** — it deploys the image then `smoke-test.sh` curls
-  `/web/health`. **Liveness, not correctness.**
-- CI always installs fresh (`-i`), never `-u`.
-- `ncollection.fleet.migration` — the actual fleet-upgrade engine — is unit-tested in
-  `test_fleet_migration.py` but appears in **no** verify script and **no** workflow.
-- The backup proofs assert data survives *backup/restore*. That is a different operation.
+**What is now covered** — `scripts/upgrade/verify_upgrade.sh`, in `make verify-all`,
+**30 assertions** across three arms:
 
-**Acceptance.** Install at commit N-1 → seed representative records → `-u` to HEAD → assert
-(a) upgrade exits 0, (b) seeded records survive with expected values, (c) no traceback.
+- **GREEN** — install, seed rows today's constraints would reject, wind
+  `ncollection_subscription` back to `19.0.1.1.0`, `-u` to HEAD, assert the migration was
+  *surgical*: a provisioned tenant keeps its legacy `database_name` (changing it orphans a
+  live database), an unprovisioned one is cleared, a valid one is untouched, no rows lost.
+- **RED** — duplicate `database_name`s must abort **loudly**, with an actionable message
+  naming the tenants, and must not degenerate into a raw `UniqueViolation`.
+- **CORE** (#381) — `ncollection_core`'s `19.0.1.15.2` post-migrate, which does security
+  repair in raw SQL and had **zero** coverage. Asserts the shipped credential is nulled, the
+  scheduler is restored to `group_cron_service`, and every materialised app-group membership
+  is revoked — including `product`/`purchase`, the transitive-closure bug a human caught by
+  reading. Five *fixture* assertions run first so the five repair assertions cannot pass
+  over an empty set.
+
+**What is STILL open** — verified while updating this entry, not assumed:
+
+- `deploy.sh` still runs **no `-u` at all** — it deploys the image then `smoke-test.sh` curls
+  `/web/health`. **Liveness, not correctness.** Deployment does not upgrade.
+- CI's `test` job still installs fresh (`-i`) only. The `-u` coverage lives in
+  `verify-all`/`verify.yml`, not in `test`.
+- `ncollection.fleet.migration` — the actual **fleet-wide** upgrade engine — is unit-tested
+  in `test_fleet_migration.py` but still appears in **no** verify script and **no** workflow.
+  What is proved is a *single* database's upgrade path, not a fleet rollout.
+- The backup proofs assert data survives *backup/restore*. That remains a different
+  operation.
+
+**Remaining acceptance.** Exercise `ncollection.fleet.migration` end-to-end over more than
+one tenant database, and decide whether `deploy.sh` should run `-u` or whether upgrades stay
+a separate operator step. Until then the single-database path is proved and the fleet path
+is not.
 
 ### G2 — CLOSED (#363). Dashboards are covered by Playwright, not tours.
 
