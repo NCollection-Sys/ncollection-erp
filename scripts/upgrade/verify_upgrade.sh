@@ -72,7 +72,11 @@ OLD_VERSION="19.0.1.1.0"
 # matches nothing, and an assertion on it would pass while proving nothing —
 # the vacuous-test shape this repo keeps getting bitten by.
 CORE_DB="${UPGRADE_CORE_DB:-upgrcore}"
-CORE_MODULES="$MODULES,sale,crm,stock,hr,purchase"
+# hr_attendance is listed separately on purpose: the detector model
+# `hr.attendance` lives in hr_attendance, not hr. Installing only `hr` leaves
+# that model absent, _sync_scheduler_read_access skips it by design, and the
+# grant assertion below would quietly cover 4 of 5 models.
+CORE_MODULES="$MODULES,sale,crm,stock,hr,hr_attendance,purchase"
 # Below 19.0.1.15.2 so the migration is replayed. 15.0 is the version that
 # actually shipped the working `False` password this repairs.
 CORE_OLD_VERSION="19.0.1.15.0"
@@ -271,6 +275,17 @@ INSERT INTO res_groups_users_rel (uid, gid)
 SELECT DISTINCT $cron_uid, d.res_id FROM ir_model_data d
  WHERE d.model='res.groups' AND d.module IN ('sales_team','sale','crm','stock','hr','account','product','purchase')
 ON CONFLICT DO NOTHING;
+-- (4) the READ side. ROLE_IMPLICATIONS is applied by post_init_hook, which runs
+--     on INSTALL ONLY, so a tenant UPGRADING from 15.0 never got these ACLs.
+--     This fixture is built with -i at HEAD, where post_init_hook ALREADY
+--     granted them — so without this DELETE the damaged state is never
+--     reproduced and an assertion on the re-grant passes no matter what the
+--     migration does. Review caught exactly that: the first version of this arm
+--     left every one of its 14 checks green with the migration's
+--     _sync_scheduler_read_access call deleted outright.
+DELETE FROM ir_model_access
+ WHERE group_id = $cron_gid
+   AND model_id IN (SELECT id FROM ir_model WHERE model IN ('sale.order','account.move','hr.attendance','stock.quant','stock.warehouse.orderpoint'));
 " >/dev/null 2>&1
 
 b_pw="$(q "$CORE_DB" "SELECT count(*) FROM res_users WHERE id=$cron_uid AND password IS NOT NULL")"
@@ -278,6 +293,12 @@ b_member="$(q "$CORE_DB" "SELECT count(*) FROM res_groups_users_rel WHERE uid=$c
 b_swept="$(q "$CORE_DB" "SELECT count(*) FROM res_groups_users_rel r JOIN ir_model_data d ON d.res_id=r.gid AND d.model='res.groups' WHERE r.uid=$cron_uid AND d.module IN ('sales_team','sale','crm','stock','hr','account','product','purchase')")"
 b_pp="$(q "$CORE_DB" "SELECT count(*) FROM res_groups_users_rel r JOIN ir_model_data d ON d.res_id=r.gid AND d.model='res.groups' WHERE r.uid=$cron_uid AND d.module IN ('product','purchase')")"
 b_impl="$(q "$CORE_DB" "SELECT count(*) FROM res_groups_implied_rel WHERE gid=$cron_gid")"
+b_read="$(q "$CORE_DB" "SELECT count(*) FROM ir_model_access WHERE group_id=$cron_gid AND model_id IN (SELECT id FROM ir_model WHERE model IN ('sale.order','account.move','hr.attendance','stock.quant','stock.warehouse.orderpoint'))")"
+# Expected count is DERIVED from which detector models this database actually
+# has, never hardcoded: _sync_scheduler_read_access skips absent models by
+# design, so a hardcoded number would fail for the wrong reason the day the
+# model list changes.
+n_models="$(q "$CORE_DB" "SELECT count(*) FROM ir_model WHERE model IN ('sale.order','account.move','hr.attendance','stock.quant','stock.warehouse.orderpoint')")"
 
 # The fixture must be REAL before the assertions on it mean anything. A sweep
 # assertion over an empty set passes while proving nothing — the exact vacuous
@@ -287,6 +308,9 @@ b_impl="$(q "$CORE_DB" "SELECT count(*) FROM res_groups_implied_rel WHERE gid=$c
 [ "${b_swept:-0}" -gt 0 ] && ok "fixture: $b_swept app-group membership(s) materialised" || no "fixture: no app-group memberships to sweep — the arm would be vacuous"
 [ "${b_pp:-0}" -gt 0 ]    && ok "fixture: $b_pp of them are product/purchase (the closure bug)" || no "fixture: no product/purchase memberships — the regression this pins is unexercised"
 [ "${b_impl:-0}" -gt 0 ]  && ok "fixture: $b_impl implication(s) on group_cron_service" || no "fixture: no implication, so the migration's sweep branch will not run"
+[ "${n_models:-0}" -gt 0 ] && ok "fixture: $n_models detector model(s) present to grant on" || no "fixture: no detector models — the read-side assertion would be vacuous"
+[ "$b_read" = "0" ] && ok "fixture: scheduler read ACLs stripped (the upgrading-tenant state)" \
+  || no "fixture: $b_read read ACL(s) still present — the re-grant would pass without the migration"
 
 echo "== 5b) wind ncollection_core back to $CORE_OLD_VERSION and upgrade =="
 wind_back "$CORE_DB" ncollection_core "$CORE_OLD_VERSION"
@@ -320,6 +344,25 @@ a_impl="$(q "$CORE_DB" "SELECT count(*) FROM res_groups_implied_rel WHERE gid=$c
   || no "$a_pp product/purchase membership(s) survived — the exact bug review caught is back"
 [ "$a_impl" = "0" ] && ok "app-user implications removed from group_cron_service" \
   || no "$a_impl implication(s) survived on group_cron_service"
+a_read="$(q "$CORE_DB" "SELECT count(*) FROM ir_model_access WHERE group_id=$cron_gid AND model_id IN (SELECT id FROM ir_model WHERE model IN ('sale.order','account.move','hr.attendance','stock.quant','stock.warehouse.orderpoint'))")"
+# STATED PRECISELY, because the obvious reading of this line is wrong. It
+# asserts the INVARIANT — after an upgrade the scheduler can read the detector
+# models — NOT that post-migrate.py's _sync_scheduler_read_access call is what
+# delivered it. Those are different claims and this arm cannot separate them.
+#
+# Measured: deleting that call from the migration outright leaves this suite at
+# 30 passed, 0 failed. The reason is alert.py's _register_hook (models/anomaly/
+# alert.py), which re-grants whenever `granted < present` on ANY registry load
+# — the R-014 belt-and-braces fix. So the migration's call is redundant with a
+# mechanism that runs on every boot, and no assertion reachable from here can
+# tell the two apart.
+#
+# Review asked for this assertion to close the read-side gap. It does not close
+# it, and saying so is the point: the invariant is worth pinning, the coverage
+# claim is not available. Isolating the migration's call would mean disabling
+# _register_hook in the fixture, which tests a configuration we never ship.
+[ "$a_read" = "$n_models" ] && ok "scheduler CAN read all $n_models detector model(s) after the upgrade (invariant, not attribution)" \
+  || no "read granted on $a_read of $n_models detector model(s) — the scheduler would write alerts it cannot base on anything"
 
 hr
 echo "SUMMARY: $pass passed, $fail failed."
