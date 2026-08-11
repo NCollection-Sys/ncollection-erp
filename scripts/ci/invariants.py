@@ -284,7 +284,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 8
+RULE_COUNT = 9
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -804,6 +804,61 @@ def rule_cron_threads_scoped(out: list[str]) -> None:
                 )
 
 
+# --- R9: workflow actions must be SHA-pinned ------------------------------
+# A `uses: owner/action@v4` reference resolves a MUTABLE tag: whoever controls
+# that repo can move it, and the next CI run executes different code with our
+# repository token. Every workflow here pinned a full SHA except one — canary.yml
+# used `actions/checkout@v4` — and nothing noticed, because nothing looked.
+#
+# Found while bumping the actions off deprecated Node 20. Fixing the one instance
+# without this rule would leave the class open: the next hand-written step is
+# just as likely to paste a tag.
+WORKFLOW_DIR = ".github/workflows"
+# A local reusable workflow (`uses: ./.github/...`) is our own file at our own
+# commit — there is no third party and no tag to move.
+_USES_RE = re.compile(r"^\s*-?\s*uses:\s*(?P<ref>\S+)", re.MULTILINE)
+_SHA_PINNED_RE = re.compile(r"^[\w.-]+/[\w.-]+(?:/[\w.-]+)*@[0-9a-f]{40}$")
+
+
+def rule_workflow_actions_sha_pinned(out: list[str]) -> None:
+    """Every third-party `uses:` in .github/workflows must pin a 40-char SHA."""
+    wf_dir = REPO_ROOT / WORKFLOW_DIR
+    if not wf_dir.is_dir():
+        out.append(
+            f"{WORKFLOW_DIR}: directory not found, so the action-pinning guard "
+            f"cannot run. A guard aimed at nothing must not report clean."
+        )
+        return
+    files = sorted(wf_dir.glob("*.yml")) + sorted(wf_dir.glob("*.yaml"))
+    if not files:
+        out.append(
+            f"{WORKFLOW_DIR}: no workflow files found, so this rule verified "
+            f"nothing. If workflows moved, update WORKFLOW_DIR."
+        )
+        return
+    for path in files:
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            out.append(f"{rel}: not readable, so its actions cannot be checked.")
+            continue
+        for m in _USES_RE.finditer(text):
+            ref = m.group("ref").strip().strip('"\'')
+            if ref.startswith("./") or ref.startswith("."):
+                continue                      # our own reusable workflow
+            if _SHA_PINNED_RE.match(ref):
+                continue
+            lineno = text[: m.start()].count("\n") + 1
+            out.append(
+                f"{rel}:{lineno}: `uses: {ref}` is not pinned to a 40-character "
+                f"commit SHA. A tag or branch is MUTABLE — whoever owns that "
+                f"repository can move it and run different code with this "
+                f"repo's token on the next CI run. Pin the SHA and keep the "
+                f"version in a trailing comment."
+            )
+
+
 def rule_ai_gateway_kdf_agrees(out: list[str]) -> None:
     """The AI-gateway key derivation exists TWICE and must AGREE BY OUTPUT (#373).
 
@@ -1181,6 +1236,7 @@ def main() -> int:
     rule_cron_enumeration_declared(findings)
     rule_anchored_regex_uses_fullmatch(findings)
     rule_ai_gateway_kdf_agrees(findings)
+    rule_workflow_actions_sha_pinned(findings)
 
     if findings:
         print("invariants: violations found\n")

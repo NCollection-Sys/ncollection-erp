@@ -230,6 +230,60 @@ jobs:
 """
 
 
+class TestR9WorkflowActionsShaPinned(GuardTestCase):
+    """R9 — a `uses:` on a mutable tag runs code someone else can change.
+
+    Written after finding canary.yml on `actions/checkout@v4` while every other
+    workflow SHA-pinned. Fixing that one line without a rule would leave the
+    class open: the next hand-written step is just as likely to paste a tag.
+    """
+
+    SHA = "a" * 40
+
+    def _findings(self):
+        found = []
+        invariants.rule_workflow_actions_sha_pinned(found)
+        return found
+
+    def _wf(self, body):
+        self.write(invariants.WORKFLOW_DIR + "/w.yml", body)
+
+    def test_a_sha_pin_is_clean(self):
+        self._wf("jobs:\n  a:\n    steps:\n"
+                 "      - uses: actions/checkout@%s # v7.0.1\n" % self.SHA)
+        self.assertEqual(self._findings(), [])
+
+    def test_a_mutable_tag_is_flagged(self):
+        self._wf("jobs:\n  a:\n    steps:\n"
+                 "      - uses: actions/checkout@v4\n")
+        found = self._findings()
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("not pinned", found[0])
+
+    def test_a_branch_reference_is_flagged(self):
+        self._wf("jobs:\n  a:\n    steps:\n"
+                 "      - uses: evil/action@main\n")
+        self.assertEqual(len(self._findings()), 1)
+
+    def test_a_short_sha_is_flagged(self):
+        """7 hex chars is still ambiguous and still resolvable to a tag move."""
+        self._wf("jobs:\n  a:\n    steps:\n"
+                 "      - uses: actions/checkout@3d3c42e\n")
+        self.assertEqual(len(self._findings()), 1)
+
+    def test_a_local_reusable_workflow_is_exempt(self):
+        """`uses: ./.github/...` is our own file at our own commit."""
+        self._wf("jobs:\n  a:\n    uses: ./.github/workflows/verify.yml\n")
+        self.assertEqual(self._findings(), [])
+
+    def test_no_workflow_files_reports_rather_than_passing(self):
+        """A guard aimed at nothing must not be able to report clean."""
+        (self.root / invariants.WORKFLOW_DIR).mkdir(parents=True, exist_ok=True)
+        found = self._findings()
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("verified", found[0])
+
+
 class TestR4CiModuleCoverage(GuardTestCase):
 
     def _repo(self, modules=("mod_a", "mod_b"), install=None, tags=None):
