@@ -25,14 +25,26 @@
 # assert_odoo_setup.sh — nothing is suppressed. It changes an accurate refusal
 # with a misleading CAUSE into an accurate refusal with the right one.
 #
-# WHAT IT DOES NOT DO. It does not make the markers per-module. A module that
-# goes bad DURING this run for unrelated reasons still reports through
-# assert_odoo_setup.sh with the same ambiguity. This covers the pre-existing
-# case, which is the one that actually accumulates on a long-lived database.
+# WHAT IT DOES NOT DO.
+#  * It does not make the markers per-module. A module that goes bad DURING
+#    this run for unrelated reasons still reports through assert_odoo_setup.sh
+#    with the same ambiguity. This covers the pre-existing case, which is the
+#    one that actually accumulates on a long-lived database.
+#  * It does not refuse on a transitional row that is merely PRESENT — see the
+#    age window below. A healthy concurrent upgrade produces exactly those rows,
+#    so refusing on presence would false-positive on the shared stack.
+#  * Consequently a genuinely broken row is invisible for its first 30 minutes.
+#    That is the deliberate trade: a missed refusal costs one confusing run of
+#    assert_odoo_setup.sh, and the next invocation catches it; a false refusal
+#    blocks healthy work and sends someone to repair rows that are fine.
+#  * It does not serialise access to PLATFORM_DB. Two concurrent runs against
+#    saastest remain possible and are still a bad idea — this only ensures they
+#    are not misreported as corruption.
 #
-# Exit 0 = no module is mid-transition (including "database does not exist yet"
-# and "database has no modules yet" — both are legitimately settled).
-# Exit 1 = something is stuck, or the state could not be determined.
+# Exit 0 = nothing is stuck (including "database does not exist yet", "no module
+# table yet", and "transitional rows exist but are fresh").
+# Exit 1 = something has been stuck past the window, or the state could not be
+# determined.
 # =============================================================================
 set -euo pipefail
 
@@ -73,11 +85,55 @@ fi
 # 'uninstallable', which is NOT in the state list odoo selects for the graph
 # (measured: saastest and ncplatform each carry 29 such rows and they have
 # never tripped anything).
+# AGE MATTERS — a transitional row is NOT on its own evidence of a problem.
+#
+# Odoo marks a module AND its whole dependency subtree 'to upgrade'/'to install'
+# up front (button_upgrade/button_install in loading.py STEP 2), then loads the
+# graph one package at a time and commits after EACH package
+# (module.env.cr.commit(), loading.py:273). That commit also durably publishes
+# the STEP-2 writes for every module still queued. So for the entire duration
+# of a healthy `odoo -u ncollection_saas`, any other Postgres session sees rows
+# in exactly these states. That is normal, not abandonment.
+#
+# The first version of this guard refused on presence alone. On the shared
+# stack, PLATFORM_DB defaults to saastest for BOTH verify_provisioning.sh and
+# verify_config_sync.sh, and nothing serialises them — so two agents running
+# `make verify-all` concurrently would have produced a confident, wrong
+# "modules stuck, repair the rows" against a perfectly healthy database. That
+# is R-018's exact shape, which this repo has already been burned by twice.
+# Caught in review before it shipped.
+#
+# So: refuse only on rows that have sat untouched longer than a full upgrade
+# could plausibly take. A real `-u` on these databases takes 1-3 minutes; an
+# abandoned row persists indefinitely. 30 minutes separates them with a wide
+# margin. Override with NC_SETTLED_MAX_AGE_MIN when a legitimately longer
+# migration is expected.
+max_age_min="${NC_SETTLED_MAX_AGE_MIN:-30}"
+
 if ! stuck="$(psql_q "$db" \
-      "SELECT name || ' (' || state || ')' FROM ir_module_module \
-        WHERE state IN ('to install','to upgrade','to remove') ORDER BY name")"; then
+      "SELECT name || ' (' || state || ', untouched for ' \
+              || date_trunc('second', now() - write_date) || ')' \
+         FROM ir_module_module \
+        WHERE state IN ('to install','to upgrade','to remove') \
+          AND write_date < now() - interval '$max_age_min minutes' \
+        ORDER BY name")"; then
   echo "REFUSING: could not read module states from '$db'." >&2
   exit 1
+fi
+
+# Fresh transitional rows are reported, never refused on: they are what a
+# concurrent healthy upgrade looks like. Saying so out loud beats leaving the
+# next person to wonder why the guard stayed quiet.
+if ! inflight="$(psql_q "$db" \
+      "SELECT count(*) FROM ir_module_module \
+        WHERE state IN ('to install','to upgrade','to remove') \
+          AND write_date >= now() - interval '$max_age_min minutes'")"; then
+  echo "REFUSING: could not read module states from '$db'." >&2
+  exit 1
+fi
+if [ -n "$inflight" ] && [ "$inflight" != "0" ]; then
+  echo "  note: $inflight module(s) on '$db' are mid-transition but were touched" \
+       "within ${max_age_min}m — treating as an upgrade in flight, not as stuck."
 fi
 
 if [ -n "$stuck" ]; then
@@ -89,8 +145,10 @@ if [ -n "$stuck" ]; then
   echo "  the database, so these rows would make the setup check refuse and" >&2
   echo "  blame the wrong module (#388)." >&2
   echo "" >&2
-  echo "  If '$db' is a throwaway fixture, drop and rebuild it. If it is a" >&2
-  echo "  PERSISTENT platform DB (saastest, ncplatform — CLAUDE.md says do not" >&2
+  echo "  These have been untouched for over ${max_age_min}m, so this is not a" >&2
+  echo "  concurrent upgrade in flight. If '$db' is a throwaway fixture, drop" >&2
+  echo "  and rebuild it. If it is a PERSISTENT platform DB (saastest," >&2
+  echo "  ncplatform — CLAUDE.md says do not" >&2
   echo "  drop), repair the rows above instead: finish or roll back whatever" >&2
   echo "  left them mid-transition." >&2
   exit 1

@@ -50,7 +50,14 @@ fi
 # checks this replaces both tested `oca/mis-builder` alone, so an oca/ that was
 # half-aggregated — mis-builder present, queue missing — passed them while
 # still breaking every module that depends on queue_job.
-expected="$(grep -oE '^\./oca/[A-Za-z0-9_.-]+' repos.yml | sed 's|^\./oca/||' | sort -u)"
+# `|| true` is load-bearing here and is NOT a Rule 10 violation: grep exits 1
+# when it matches nothing, which under `pipefail` + `set -e` aborted this
+# script AT THIS LINE — before the empty-result check below could print
+# anything. Measured: bare `exit 1`, no message. That turned the one case this
+# check exists to report into the silent, unexplained failure the whole ticket
+# is about. The empty result is explicitly handled on the very next line, so
+# nothing is being swallowed.
+expected="$(grep -oE '^\./oca/[A-Za-z0-9_.-]+' repos.yml | sed 's|^\./oca/||' | sort -u || true)"
 if [ -z "$expected" ]; then
   echo "REFUSING: no './oca/<repo>:' targets found in repos.yml — the pin list" >&2
   echo "  changed shape and this check would silently verify nothing." >&2

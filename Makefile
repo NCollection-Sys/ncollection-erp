@@ -256,6 +256,7 @@ demo: ## Run the standalone React demo UI on :5173
 
 ## ---- Routing verification (P1-T06, opt-in — does NOT change `make up`) ----
 routing-up: ## Start the routing stack (db_filter=^%d$ ON) to prove subdomain->DB routing
+	@./scripts/dev/assert_oca_present.sh "the routing stack"
 	$(ROUTING_COMPOSE) up -d
 
 routing-verify: ## Create rtclienta/rtclientb/rtadmin test DBs and run the isolation proof
