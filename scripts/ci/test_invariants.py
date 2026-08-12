@@ -230,6 +230,57 @@ jobs:
 """
 
 
+class TestR10PortalSuiteModelsReachable(GuardTestCase):
+    """R10 — the portal isolation suite skips if its models are not installed.
+
+    ci.yml never names account/sale/stock directly; they arrive through five
+    custom manifests. If all of them drop the dependency the suite becomes a
+    skip and CI stays green having proved nothing (#403).
+    """
+
+    def _findings(self):
+        found = []
+        invariants.rule_portal_suite_models_reachable(found)
+        return found
+
+    def _ci(self, modules):
+        self.write(invariants.CI_WORKFLOW,
+                   "jobs:\n  test:\n    steps:\n      - run: |\n"
+                   "          odoo -i %s --test-enable\n" % ",".join(modules))
+
+    def _manifest(self, module, depends):
+        self.write("custom_addons/%s/__manifest__.py" % module,
+                   "{'name': '%s', 'depends': %r}\n" % (module, depends))
+
+    def test_a_module_in_the_install_list_providing_each_model_is_clean(self):
+        self._ci(["mod_a", "mod_b"])
+        self._manifest("mod_a", ["account", "sale"])
+        self._manifest("mod_b", ["stock"])
+        self.assertEqual(self._findings(), [])
+
+    def test_a_dropped_dependency_is_flagged(self):
+        """The #403 regression: mod_b stops depending on stock."""
+        self._ci(["mod_a", "mod_b"])
+        self._manifest("mod_a", ["account", "sale"])
+        self._manifest("mod_b", ["mail"])
+        found = self._findings()
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("'stock'", found[0])
+
+    def test_a_provider_outside_the_install_list_does_not_count(self):
+        """Depending on stock is useless if CI never installs that module."""
+        self._ci(["mod_a"])
+        self._manifest("mod_a", ["account", "sale"])
+        self._manifest("mod_uninstalled", ["stock"])
+        self.assertEqual(len(self._findings()), 1)
+
+    def test_an_unparsable_install_list_reports_rather_than_passing(self):
+        self.write(invariants.CI_WORKFLOW, "jobs:\n  test:\n    steps: []\n")
+        found = self._findings()
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("verified nothing", found[0])
+
+
 class TestR9WorkflowActionsShaPinned(GuardTestCase):
     """R9 — a `uses:` on a mutable tag runs code someone else can change.
 

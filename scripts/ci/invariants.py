@@ -19,6 +19,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ast
 import functools
 import io
 import re
@@ -284,7 +285,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 9
+RULE_COUNT = 10
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -970,6 +971,53 @@ def rule_ai_gateway_kdf_agrees(out: list[str]) -> None:
             return
 
 
+# --- R10: the portal isolation suite must keep its models ------------------
+# custom_addons/ncollection_core/tests/test_portal_isolation.py SKIPS unless
+# account.move, sale.order and stock.picking exist. ci.yml's -i list names none
+# of account/sale/stock directly — they arrive TRANSITIVELY through five
+# separate custom manifests, and stock_account/sale_stock auto-install on top.
+# It genuinely runs today. If every one of those manifests drops the dependency,
+# the suite downgrades to a skip and CI stays green having proved nothing about
+# portal isolation — the vacuous-guard shape that suite's own docstring warns
+# about (#330/#348/#363/#381). Found by the #66 security review; filed as #403.
+PORTAL_SUITE_REQUIRES = ("account", "sale", "stock")
+
+
+def rule_portal_suite_models_reachable(out: list[str]) -> None:
+    """Some module CI installs must still depend on account, sale and stock."""
+    workflow = REPO_ROOT / CI_WORKFLOW
+    try:
+        text = workflow.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        out.append(f"{CI_WORKFLOW}: not readable, so the portal-suite model "
+                   f"reachability check cannot run.")
+        return
+    installed = set(_ci_flag_values(text, "-i"))
+    if not installed:
+        out.append(f"{CI_WORKFLOW}: no -i modules parsed, so this rule verified "
+                   f"nothing. A guard aimed at nothing must not report clean.")
+        return
+    for needed in PORTAL_SUITE_REQUIRES:
+        providers = []
+        for manifest in sorted((REPO_ROOT / "custom_addons").glob("*/__manifest__.py")):
+            module = manifest.parent.name
+            if module not in installed:
+                continue
+            try:
+                data = ast.literal_eval(manifest.read_text(encoding="utf-8"))
+            except (OSError, ValueError, SyntaxError):
+                continue
+            if needed in (data.get("depends") or []):
+                providers.append(module)
+        if not providers:
+            out.append(
+                f"{CI_WORKFLOW}: no module in the -i list depends on '{needed}', "
+                f"so custom_addons/ncollection_core/tests/test_portal_isolation.py "
+                f"will SKIP in CI and portal isolation goes unproven. Add "
+                f"'{needed}' to a module CI installs, or name it in -i directly."
+            )
+
+
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
     workflow = REPO_ROOT / CI_WORKFLOW
@@ -1237,6 +1285,7 @@ def main() -> int:
     rule_anchored_regex_uses_fullmatch(findings)
     rule_ai_gateway_kdf_agrees(findings)
     rule_workflow_actions_sha_pinned(findings)
+    rule_portal_suite_models_reachable(findings)
 
     if findings:
         print("invariants: violations found\n")
