@@ -160,9 +160,15 @@ echo "Setting up E2E tenants…"
 # dashboards (#363) have something to render. e2eclientb deliberately does NOT:
 # its job in this suite is to be the unlicensed half of the plan-gating pair,
 # and adding accounting there would blur that contrast for no gain.
+# `stock` is here for P6-T02 (#66): portal isolation of DELIVERIES. The
+# stock.picking portal rule does not live in `stock` — that module ships no
+# group_portal rules at all — it comes from `sale_stock`, which auto-installs
+# once `sale` and `stock_account` are both present. So adding `stock` beside the
+# existing `sale` is what actually brings the rule under test into existence.
+# Licensed too, so the menu is reachable rather than merely installed.
 create_tenant e2eclienta \
-  "base,ncollection_core,ncollection_branding,crm,sale,account,ncollection_account_dashboard" \
-  "crm,sale,account,ncollection_account_dashboard"
+  "base,ncollection_core,ncollection_branding,crm,sale,account,stock,ncollection_account_dashboard" \
+  "crm,sale,account,stock,ncollection_account_dashboard"
 create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
 
 # platform DB — the SaaS platform stack (checkout routes + plans) so the
@@ -351,6 +357,79 @@ for login, role_xmlid, native_xmlid in FIXTURES:
     else:
         Users.create({'name': login, 'login': login, 'password': 'demo1234',
                       'group_ids': [(6, 0, groups)]})
+env.cr.commit()
+PY
+
+# ---------------------------------------------------------------------------
+# Portal isolation fixture (P6-T02 / #66) — e2eclienta only
+# ---------------------------------------------------------------------------
+# TWO partners, each with its own portal user AND its own records. Both halves
+# are load-bearing and the pair is the point: a suite asserting "portal user A
+# cannot see B's invoice" proves nothing unless B HAS an invoice and A can see
+# its own. Before this fixture existed the tenant had ZERO invoices and no real
+# portal user, so every such assertion would have passed vacuously — the shape
+# this repo has shipped four times (#330, #348, #363, #381).
+#
+# The invoice is POSTED deliberately. Odoo's core portal rule is
+#   state not in ('cancel','draft') AND move_type in (out_invoice, ...)
+#   AND partner_id child_of user.commercial_partner_id
+# so a DRAFT invoice is invisible even to its rightful owner — the own-records
+# control would fail for a reason that has nothing to do with isolation.
+#
+# The delivery comes from CONFIRMING a sale order rather than creating a picking
+# by hand. stock.picking's portal rule (shipped by sale_stock, not stock) is
+#   partner_id = user.partner_id  OR  sale_id.partner_id = user.partner_id
+# so only a picking with sale_id set exercises the second branch, which is the
+# one a real delivery actually takes.
+echo "  • seeding portal isolation fixture (portala / portalb) on e2eclienta…"
+"${DC[@]}" exec -T odoo odoo shell -d e2eclienta --no-http --log-level=error "${DBARGS[@]}" \
+  >/dev/null 2>&1 <<'PY'
+Users = env['res.users']
+Partner = env['res.partner']
+Product = env['product.product']
+Move = env['account.move']
+SO = env['sale.order']
+portal_group = env.ref('base.group_portal')
+
+prod = Product.search([('name', '=', 'P6T02 Widget')], limit=1)
+if not prod:
+    prod = Product.create({'name': 'P6T02 Widget', 'type': 'consu',
+                           'is_storable': True, 'list_price': 100.0})
+
+for tag, company in (('a', 'Portal Alpha Ltd'), ('b', 'Portal Beta Ltd')):
+    login = 'portal%s' % tag
+    partner = Partner.search([('name', '=', company)], limit=1)
+    if not partner:
+        partner = Partner.create({'name': company,
+                                  'email': '%s@example.com' % login})
+    user = Users.search([('login', '=', login)], limit=1)
+    if user:
+        user.write({'password': 'demo1234', 'partner_id': partner.id,
+                    'group_ids': [(6, 0, [portal_group.id])]})
+    else:
+        # `name` must equal the company: creating a res.users with a name AND
+        # an existing partner_id WRITES that name onto the partner. Passing
+        # "<company> Contact" here silently renamed the partner, which made a
+        # later exact-name lookup miss and a mutation probe a no-op.
+        Users.create({'name': company, 'login': login,
+                      'password': 'demo1234', 'partner_id': partner.id,
+                      'group_ids': [(6, 0, [portal_group.id])]})
+    inv = Move.search([('partner_id', '=', partner.id),
+                       ('move_type', '=', 'out_invoice')], limit=1)
+    if not inv:
+        inv = Move.create({
+            'move_type': 'out_invoice', 'partner_id': partner.id,
+            'invoice_line_ids': [(0, 0, {'product_id': prod.id,
+                                         'quantity': 1, 'price_unit': 100.0})]})
+    if inv.state == 'draft':
+        inv.action_post()
+    so = SO.search([('partner_id', '=', partner.id)], limit=1)
+    if not so:
+        so = SO.create({'partner_id': partner.id,
+                        'order_line': [(0, 0, {'product_id': prod.id,
+                                               'product_uom_qty': 1})]})
+    if so.state in ('draft', 'sent'):
+        so.action_confirm()
 env.cr.commit()
 PY
 
