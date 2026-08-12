@@ -114,10 +114,11 @@ test('#332 the chart canvas shrinks with its container on a live resize', async 
   await expect.poll(async () => (await widths()).container, { timeout: 10_000 })
     .toBeLessThan(wide.container);
 
-  // The control: without it, a page that failed to resize at all would satisfy
-  // the assertion below trivially.
-  const narrow = await widths();
-  expect(narrow.container).toBeLessThan(wide.container);
+  // NOTE: the poll above is itself the control — it does not resolve until the
+  // container has genuinely shrunk, so a page that never resized fails there
+  // rather than reaching the assertion below. An earlier version repeated that
+  // assertion here and called THAT the control, which was dead weight and a
+  // misleading comment; review caught it.
 
   await expect.poll(async () => {
     const w = await widths();

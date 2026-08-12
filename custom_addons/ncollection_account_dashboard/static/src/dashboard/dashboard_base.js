@@ -288,11 +288,28 @@ export class NcFinancialDashboard extends Component {
                     // animator never runs, so a resize is always applied
                     // immediately and nothing can go stale.
                     //
-                    // TRADE-OFF, stated rather than buried: the four financial
-                    // and three department dashboards no longer animate their
-                    // charts on entry or on data change. A chart that is the
-                    // wrong size at every width but the one it mounted at is
-                    // the worse defect.
+                    // TRADE-OFF, stated rather than buried, and it is WIDER
+                    // than "no entry animation". `animation: false` is a global
+                    // switch inside Chart.js, so across all seven dashboards
+                    // (four financial + three department) this also disables:
+                    //   * entry and data-change animation;
+                    //   * tooltip fade in/out — Tooltip._resolveAnimations gates
+                    //     on `chart.options.animation` (Chart.js 4.4.5:14295);
+                    //   * hover/active transitions such as point-radius growth —
+                    //     same gate at DatasetController._resolveAnimations:5288.
+                    // Everything still RENDERS; it renders instantly. Flagged
+                    // because someone adding an interactive chart feature to the
+                    // department dashboards would otherwise assume those
+                    // transitions exist. A chart that is the wrong size at every
+                    // width except the one it mounted at is the worse defect.
+                    //
+                    // That this is provably safe rather than merely working
+                    // today: with `animation: false`, _resolveAnimations leaves
+                    // the options undefined (5288), so Animations.update
+                    // short-circuits without calling animator.add (4656), so
+                    // Animator.running() can never return true (791) — the park
+                    // branch above is unreachable for these charts, not just
+                    // unreached.
                     animation: false,
                 },
             }));
