@@ -8,11 +8,26 @@ Written 2026-08-06 against the live tree: **81 test files · 869 test methods ·
 `verify_*.sh` proofs · 9 Playwright specs (16 tests) · 6 workflows** — and validated by a
 full-estate baseline run on `958d8d6` the same day (§7).
 
-**Re-measured 2026-08-11 (#394): 87 test files · 961 test methods · 13 `verify_*.sh` proofs
-(8 suites in `verify-all`) · 10 Playwright specs (21 tests) · 6 workflows.** The line above is
-kept as the dated original rather than overwritten, because this document's value is that its
-numbers can be trusted — which means showing when they were taken. Durations were **not**
-re-measured; see the ¹ footnote under §3.
+**Live counts — enforced, not re-typed (#405):
+**88**<!--count:test_files--> test files ·
+**973**<!--count:test_methods--> test methods ·
+**13**<!--count:verify_scripts--> `verify_*.sh` proofs
+(**8**<!--count:verify_all_suites--> suites in `verify-all`) ·
+**11**<!--count:e2e_specs--> Playwright specs.**
+
+The line above is kept as the dated original rather than overwritten, because this
+document's value is that its numbers can be trusted — which means showing when they
+were taken. #394 re-measured them all by hand and they were **wrong again twelve hours
+later**, after three merges. So the derivable ones now carry invisible
+`<!--count:*-->` markers and `scripts/ci/check_testing_strategy.py` fails CI when any
+drifts. Update with `--write`, never by typing.
+
+Three figures are deliberately **not** enforced, because they cannot be derived from
+the tree and a guard claiming them would be the very defect this document warns about:
+the **e2e test count** (needs Playwright to run — 27 at 2026-08-12), the **odoo test
+count** (`make test` says 977 where a `def test_` grep gives 973; subtests are counted
+separately — both are true, only the grep is derivable), and all **durations**. Those
+stay dated measurements; see the ¹ footnote under §3.
 
 > Every timing in this document is **measured**, not estimated. An earlier draft carried
 > estimates that were wrong by 6–10×; they are replaced here with the numbers from the
@@ -86,12 +101,12 @@ premise that nothing covered it; the workflow audit disproved that.
 
 | Layer | Implementation | Size | Trigger | Measured |
 |---|---|---|---|---|
-| Static gates | flake8 · pylint-odoo (**baseline 57**) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` (**9 rules**) · `check_role_matrix.py` · `check_skips.py` · AI-gateway satellite | **12 steps** across the `lint` and `architecture-guard` jobs | pre-push (9 gates) + PR | 8s¹ |
-| Guard self-tests | `test_invariants.py` · `test_architecture_guard.py` · `test_check_skips.py` · `test_check_role_matrix.py` | **4** | PR + pre-push, **before** the guards | <1s¹ |
+| Static gates | flake8 · pylint-odoo (baseline **57**<!--count:pylint_baseline-->) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` (**10**<!--count:invariants_rules--> rules) · `check_role_matrix.py` · `check_skips.py` · AI-gateway satellite | **12 steps** across the `lint` and `architecture-guard` jobs | pre-push (9 gates) + PR | 8s¹ |
+| Guard self-tests | `test_invariants.py` · `test_architecture_guard.py` · `test_check_skips.py` · `test_check_role_matrix.py` | **5**<!--count:guard_selftests--> | PR + pre-push, **before** the guards | <1s¹ |
 | Supply chain | pip-audit · Trivy (fs: vuln + secret) | 2 | PR, **non-blocking** | — |
 | Odoo ORM tests | `custom_addons/*/tests/` | **87 files · 961 methods** · 90 `TransactionCase` · 8 `HttpCase` | PR `test` job | 4m CI / 2m 8s local¹ |
-| Infra proofs | **13** × `verify_*.sh` | **8 suites in `verify-all`** (routing · provisioning · config-sync · cron-starvation · cron-scope · financial-bootstrap · **upgrade** · e2e) | `make verify-all`, local | 8m 20s warm¹ |
-| Browser E2E | `e2e/tests/`, chromium only | **10 specs · 21 tests** (5 added by the #363 follow-up) | PR `verify.yml` | 6m CI / 45s¹ |
+| Infra proofs | **13**<!--count:verify_scripts--> × `verify_*.sh` | **8**<!--count:verify_all_suites--> suites in `verify-all` (routing · provisioning · config-sync · cron-starvation · cron-scope · financial-bootstrap · **upgrade** · e2e) | `make verify-all`, local | 8m 20s warm¹ |
+| Browser E2E | `e2e/tests/`, chromium only | **11**<!--count:e2e_specs--> specs · 27 tests¹ (portal isolation added by #66/#403) | PR `verify.yml` | 6m CI / 45s¹ |
 | Load / perf | k6 `load_test.js` · `bench_aggregation.py` | 2 | manual | — |
 | Security audit | `phase1_security_audit.sh` · `phase3_security_assessment.sh` | 2 | manual / pre-launch | — |
 | Post-merge | `canary.yml` (verify + **full-tree** guard) | 1 | every merge | ~12m |
