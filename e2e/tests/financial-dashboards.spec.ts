@@ -67,3 +67,60 @@ test.describe('financial dashboards render for an admitted role (#363)', () => {
     });
   }
 });
+
+/**
+ * #332 — charts must shrink when the window does.
+ *
+ * WHY THIS TEST DID NOT EXIST. Tablet rendering was always fine: a real tablet
+ * LOADS at 768px, and at that width the canvas fits exactly. Only a live
+ * RESIZE broke it, and no test had ever changed a viewport — grep confirmed no
+ * spec called setViewportSize before this one.
+ *
+ * WHY IT MEASURES canvas-vs-CONTAINER. The ticket records that its first
+ * automated check asserted `documentElement.scrollWidth > clientWidth` — page
+ * level — and PASSED, because the canvas overflows its CARD, not the document.
+ * An assertion against the wrong container is indistinguishable from a passing
+ * one, so this compares the canvas to the element that is supposed to contain
+ * it.
+ *
+ * One dashboard is enough: the chart lifecycle lives in the shared
+ * dashboard_base.js, so all four financial and three department dashboards
+ * share this code path.
+ */
+test('#332 the chart canvas shrinks with its container on a live resize', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await loginViaRpc(page, 'e2eclienta', PROBE, 'demo1234');
+  await page.goto(
+    `${TENANTS.e2eclienta}/odoo/action-ncollection_account_dashboard.action_finance_dashboard`,
+    { waitUntil: 'domcontentloaded' },
+  );
+
+  const box = page.locator('.nc-fin-dashboard__canvas').first();
+  await expect(box).toBeVisible({ timeout: 30_000 });
+  await expect(box.locator('canvas')).toBeVisible({ timeout: 20_000 });
+
+  const widths = async () => box.evaluate((el) => ({
+    container: Math.round(el.getBoundingClientRect().width),
+    canvas: Math.round((el.querySelector('canvas') as HTMLCanvasElement).getBoundingClientRect().width),
+  }));
+
+  const wide = await widths();
+  expect(wide.canvas).toBeLessThanOrEqual(wide.container + 2);
+
+  await page.setViewportSize({ width: 768, height: 900 });
+  // Chart.js resizes through a ResizeObserver, which is asynchronous. Poll
+  // rather than sleeping a fixed amount: a fixed wait either flakes or slows
+  // every run, and the failure mode here is permanent, not slow.
+  await expect.poll(async () => (await widths()).container, { timeout: 10_000 })
+    .toBeLessThan(wide.container);
+
+  // The control: without it, a page that failed to resize at all would satisfy
+  // the assertion below trivially.
+  const narrow = await widths();
+  expect(narrow.container).toBeLessThan(wide.container);
+
+  await expect.poll(async () => {
+    const w = await widths();
+    return w.canvas - w.container;
+  }, { timeout: 10_000 }).toBeLessThanOrEqual(2);
+});
