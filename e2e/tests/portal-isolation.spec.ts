@@ -95,14 +95,24 @@ for (const { label, path } of [
 }
 
 /**
- * MEASURED CAVEAT: this one did NOT catch the mutation the two id-based tests
- * caught. Re-parenting Beta under Alpha leaks Beta's documents to Alpha, and
- * both id-based tests failed — but this list assertion stayed green, because
- * the portal list renders a leaked document under the COMMERCIAL partner's
- * name (Alpha), so the string "Portal Beta Ltd" never appears.
+ * MEASURED CAVEAT: this one cannot catch a leak, and the reason recorded here
+ * originally was WRONG — corrected after #66's security review checked the
+ * templates.
+ *
+ * It said a leaked document renders under the commercial partner's name. It
+ * does not. `portal_my_invoices` (account/views/account_portal_templates.xml)
+ * has NO partner column at all — the row is Invoice # / Date / Due Date /
+ * Amount / Status. The "Portal Alpha Ltd" string this test matches comes from
+ * the portal HEADER (portal/views/portal_templates.xml, `t-esc="user_id.name"`)
+ * — the logged-in user's own name, rendered on every page regardless of which
+ * documents are listed. So the control would read identically whether or not a
+ * leak occurred, and a leaked Beta row would carry no partner label to detect.
+ *
+ * Confirmed empirically: re-parenting Beta under Alpha fails the two id-based
+ * tests and the #403 PDF test, and leaves this one green.
  *
  * Kept because it pins the ordinary case cheaply, and stated plainly so nobody
- * reads it as isolation evidence: the id-based tests above are what prove it.
+ * reads it as isolation evidence: the id-based tests are what prove it.
  */
 test('#66 the portal list page itself shows only the owner\'s documents', async ({ page }) => {
   await loginViaRpc(page, TENANT, 'portala', PW);
@@ -112,4 +122,81 @@ test('#66 the portal list page itself shows only the owner\'s documents', async 
   // B's must not. Asserting only the absence would pass on a blank page.
   expect(body).toContain('Portal Alpha Ltd');
   expect(body).not.toContain('Portal Beta Ltd');
+});
+
+/**
+ * #403 — the vectors #66 did not reach: the CONTROLLER path.
+ *
+ * Portal users have NO ORM access to ir.attachment at all — group_portal has no
+ * ir.model.access row for it, measured on a live tenant — so attachments reach
+ * them only through controllers that use sudo plus `_document_check_access`.
+ * An ORM test therefore proves the wrong thing; this is the layer that matters.
+ *
+ * Both routes are probed with a REAL other-partner id, discovered at runtime
+ * rather than hardcoded, so the test cannot silently drift onto a nonexistent
+ * record and pass by 404.
+ */
+test('#403 a portal user cannot fetch another partner\'s invoice PDF', async ({ browser }) => {
+  const ctxA = await browser.newContext();
+  const ctxB = await browser.newContext();
+  const a = await ctxA.newPage();
+  const b = await ctxB.newPage();
+  await loginViaRpc(a, TENANT, 'portala', PW);
+  await loginViaRpc(b, TENANT, 'portalb', PW);
+
+  const mine = await ownDocumentIds(a, '/my/invoices');
+  const theirs = await ownDocumentIds(b, '/my/invoices');
+  expect(mine.length, 'A has no invoice — control failed').toBeGreaterThan(0);
+  expect(theirs.length, 'B has no invoice — nothing to probe').toBeGreaterThan(0);
+
+  const pdf = (page: any, id: number) => page.request.get(
+    `${TENANTS[TENANT]}/my/invoices/${id}?report_type=pdf&download=true`,
+    // maxRedirects: 0 is LOAD-BEARING. Odoo answers an unauthorised document
+    // with 303 -> /my, and /my returns 200. Following redirects turns a denial
+    // into a "200" and the assertion below then reads a refusal as a successful
+    // download. The first version of this test did exactly that and reported a
+    // leak that did not exist. Measured:
+    //   own   -> 200 application/pdf   24084 bytes
+    //   other -> 303 text/html            193 bytes  location=/my
+    { maxRedirects: 0 },
+  );
+
+  // CONTROL: A's own PDF really is served, so a denial below is about ownership
+  // rather than the route being broken for everyone.
+  const own = await pdf(a, mine[0]);
+  expect(own.status(), 'A cannot fetch its OWN invoice PDF').toBe(200);
+  expect(own.headers()['content-type']).toContain('application/pdf');
+
+  for (const id of theirs) {
+    const res = await pdf(a, id);
+    // Assert on WHAT CAME BACK, not just the status: a PDF body is the leak.
+    expect(res.headers()['content-type'] || '',
+      `A received a PDF for partner B's invoice (id ${id})`)
+      .not.toContain('application/pdf');
+    expect([303, 302, 403, 404]).toContain(res.status());
+  }
+
+  await ctxA.close();
+  await ctxB.close();
+});
+
+test('#403 /web/content serves portal users no attachment at all', async ({ page }) => {
+  // STATED AS MEASURED, not as isolation. Portal users have NO ir.attachment
+  // ACL (group_portal has no row for it), and this route denies them in BOTH
+  // directions — own and other alike, 404 each. So it cannot demonstrate
+  // cross-partner isolation: an "A cannot fetch B's" assertion here would pass
+  // just as well against a route that serves nobody, which is the vacuity this
+  // suite exists to avoid.
+  //
+  // It is kept as a CHANGE DETECTOR: if a future module grants group_portal
+  // access to ir.attachment, the own-document fetch starts succeeding, this
+  // fails, and whoever made that change has to prove isolation on this route.
+  await loginViaRpc(page, TENANT, 'portala', PW);
+  for (const id of [560, 561]) {
+    const res = await page.request.get(`${TENANTS[TENANT]}/web/content/${id}`,
+      { maxRedirects: 0 });
+    expect(res.status(), `/web/content/${id} became reachable for a portal `
+      + 'user — attachment isolation now needs a real test on this route')
+      .not.toBe(200);
+  }
 });

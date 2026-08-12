@@ -170,6 +170,83 @@ class TestPortalIsolation(TransactionCase):
                     self.env[model].with_user(
                         self.alpha['user']).browse(target.id).read(['id'])
 
+    # -- vectors #403: attachments, chatter, followers ---------------------
+
+    def _attach(self, party, public=False):
+        """An attachment hung on that party's invoice."""
+        return self.env['ir.attachment'].create({
+            'name': 'p6t02-%s.txt' % party['partner'].name,
+            'raw': b'confidential',
+            'res_model': 'account.move', 'res_id': party['invoice'].id,
+            'public': public,
+        })
+
+    def test_a_portal_user_has_no_ORM_access_to_attachments_at_all(self):
+        """#403: measured, and it is NOT what the code comments suggest.
+
+        `ir_attachment._check_access` reads "public is always accessible" and
+        otherwise defers to the referenced record — which implies a portal user
+        could read attachments on their own documents. They cannot: group_portal
+        has NO ir.model.access row for ir.attachment, so the model-level check
+        denies first and the record-level logic is never reached. Verified on a
+        live tenant: the ACL table has rows for mail.message but none for
+        ir.attachment or mail.followers.
+
+        So an ORM assertion here cannot demonstrate cross-partner isolation —
+        it demonstrates that portal users have no ORM path to attachments in
+        EITHER direction. That is the honest claim, and it is worth pinning:
+        if a future module grants group_portal read on ir.attachment, this
+        fails and the real isolation question (which the controller answers)
+        becomes live.
+
+        The actual attachment-serving path is the portal controller, which uses
+        sudo plus `_document_check_access`. That is exercised over HTTP in
+        e2e/tests/portal-isolation.spec.ts, not here.
+        """
+        mine = self._attach(self.alpha)
+        theirs = self._attach(self.beta)
+        for label, att, user in (('own', mine, self.alpha['user']),
+                                 ("another partner's", theirs, self.alpha['user'])):
+            with self.subTest(attachment=label):
+                with self.assertRaises(
+                        AccessError,
+                        msg="portal gained ORM access to %s attachment; the "
+                            "controller path is now the only thing isolating "
+                            "them and needs its own test" % label):
+                    self.env['ir.attachment'].with_user(user).browse(
+                        att.id).read(['name'])
+
+    def test_attachments_on_financial_documents_default_to_not_public(self):
+        """`public=True` is a one-field bypass, so the default is worth pinning.
+
+        `_check_access`: "public is always accessible for reading" — that check
+        sits BELOW the model ACL, so today it is unreachable for portal users
+        via the ORM. It is reachable through the controller path, and nothing in
+        account/sale/sale_stock sets public=True on report output (grepped).
+        This fails if that ever changes.
+        """
+        self.assertFalse(self._attach(self.alpha).public)
+
+    def test_a_portal_user_cannot_read_chatter_on_another_partners_invoice(self):
+        """mail.message inherits the document's access. Verified once by hand
+        during #66's review; this makes it permanent."""
+        self.beta['invoice'].message_post(body='Beta internal note')
+        msgs = self.env['mail.message'].with_user(self.alpha['user']).search(
+            [('model', '=', 'account.move'),
+             ('res_id', '=', self.beta['invoice'].id)])
+        self.assertFalse(msgs, "portal user A read chatter on B's invoice")
+
+    def test_a_portal_user_cannot_enumerate_followers_of_another_partners_invoice(self):
+        """mail.followers leaks WHO is involved even when the body does not."""
+        # Measured: group_portal has no ir.model.access row for mail.followers,
+        # so this RAISES rather than returning an empty set. Asserting
+        # `assertFalse(search(...))` would have been wrong in a way that still
+        # looked like a pass in a less careful reading.
+        with self.assertRaises(AccessError):
+            self.env['mail.followers'].with_user(self.alpha['user']).search(
+                [('res_model', '=', 'account.move'),
+                 ('res_id', '=', self.beta['invoice'].id)])
+
     def test_a_portal_user_cannot_write_to_another_partners_record(self):
         """Read isolation without write isolation would still be a breach.
 

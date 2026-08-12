@@ -430,6 +430,14 @@ for tag, company in (('a', 'Portal Alpha Ltd'), ('b', 'Portal Beta Ltd')):
                                                'product_uom_qty': 1})]})
     if so.state in ('draft', 'sent'):
         so.action_confirm()
+    # An attachment per party, so the attachment-serving route can be probed
+    # with a REAL other-partner id (#403). Portal users have no ORM access to
+    # ir.attachment at all — no group_portal ACL row exists — so the only path
+    # to one is the controller, and only an HTTP test reaches it.
+    Att = env['ir.attachment']
+    if not Att.search([('name', '=', 'p6t02-%s.txt' % login)], limit=1):
+        Att.create({'name': 'p6t02-%s.txt' % login, 'raw': b'confidential',
+                    'res_model': 'account.move', 'res_id': inv.id})
 env.cr.commit()
 PY
 
