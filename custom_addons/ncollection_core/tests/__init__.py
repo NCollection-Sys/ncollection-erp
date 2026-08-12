@@ -21,3 +21,5 @@ from . import test_anomaly_acceptance
 from . import test_anomaly_visibility
 # #374 — the shared financial gate is wired to its consumers, not re-copied
 from . import test_financial_gate
+# P6-T02 (#66) — portal users see only their own records
+from . import test_portal_isolation
