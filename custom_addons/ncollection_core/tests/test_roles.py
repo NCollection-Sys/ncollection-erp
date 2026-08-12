@@ -1,9 +1,24 @@
 # -*- coding: utf-8 -*-
 """Tenant role definitions: existence, chains, escalation audit (P1-T08).
 
-The escalation test enforces docs/ROLE_MATRIX.md: a role's transitive
-implied-group closure must stay inside the matrix allowlist. Widening a
-chain without updating the matrix (and this allowlist) fails CI.
+WHAT THIS FILE ENFORCES, STATED ACCURATELY (#382). The escalation tests check a
+role's transitive implied-group closure against MATRIX_ALLOWED_DIRECT below —
+which is a copy of docs/ROLE_MATRIX.md §2, not the document itself. Nothing here
+opens that file, and nothing can: tests run inside the odoo container, which
+mounts only custom_addons/ and oca/.
+
+The header of this file used to say "The escalation test enforces
+docs/ROLE_MATRIX.md". It did not. It enforced a second copy of it, and the
+document drifted during #347 with every test still green.
+
+The missing edge — MATRIX_ALLOWED_DIRECT == the document — is now checked by
+scripts/ci/check_role_matrix.py on the host, in CI's lint job and on pre-push.
+So the chain is closed:
+
+    ROLE_MATRIX.md  ==  MATRIX_ALLOWED_DIRECT   (check_role_matrix.py, host)
+    MATRIX_ALLOWED_DIRECT  >=  the real group graph  (this file, in a database)
+
+Keep the allowlist below in step with the document, or the host check fails.
 """
 
 from odoo.tests import TransactionCase, tagged

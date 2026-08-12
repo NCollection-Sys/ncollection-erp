@@ -47,7 +47,7 @@ jobs:
   guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: architecture-guard (full tree, not a diff)
         run: |
           set -euo pipefail
@@ -85,13 +85,36 @@ jobs:
           SHA: ${{ github.sha }}
           ACTOR: ${{ github.actor }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # 'setup-failed' = no suite ran, so this commit is not implicated.
+          VERIFY_STATUS: ${{ needs.verify.outputs.status }}
         run: |
           set -euo pipefail
           short="${SHA:0:9}"
           subject="$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message' | head -1)"
 
+          # A SKIPPED suite is not a FAILING one (#398). When setup never came
+          # up, nothing about this commit was measured — blaming it, and
+          # assigning its author, sends someone to investigate a change that
+          # cannot be responsible. #397 did exactly that to a commit touching
+          # only CLAUDE.md and TESTING_STRATEGY.md.
+          if [ "${VERIFY_STATUS:-}" = "setup-failed" ]; then
+            title="⚠️ develop could not be verified (setup failed)"
+            headline="**Verification could not run — this is NOT a known-broken develop.**
+
+          Every suite reported \`skipped\`, meaning a precondition (checkout, OCA
+          aggregation, or the stack) never came up. Nothing about the commit below was
+          measured, so it is recorded for context only and is **not** implicated.
+          The OCA aggregation retries 3× before giving up, so a single transient
+          network failure will not reach here."
+            assignee=""
+          else
+            title="🔴 develop is broken by $short"
+            headline="**develop is failing verification.**"
+            assignee="$ACTOR"
+          fi
+
           body=$(cat <<EOF
-          **develop is failing verification.**
+          $headline
 
           | | |
           |---|---|
@@ -101,7 +124,9 @@ jobs:
 
           Because this repo has no branch protection (GitHub Free private repos cannot
           enable it), CI could not block this. Treat a red develop as the top priority:
-          fix forward or revert \`$short\` before merging anything else.
+          fix forward or revert \`$short\` before merging anything else — but check the
+          failing step first: if it is setup rather than a suite, the commit is innocent
+          and the fix belongs in the harness (#398).
 
           Reproduce locally:
           \`\`\`bash
@@ -125,13 +150,21 @@ jobs:
             echo "develop already flagged in #$existing — commenting instead of duplicating."
             gh issue comment "$existing" --repo "$REPO" --body "$body"
           else
-            gh issue create --repo "$REPO" \
-              --title "🔴 develop is broken by $short" \
-              --label broken-develop \
-              --body "$body" \
-              --assignee "$ACTOR" \
-              || gh issue create --repo "$REPO" \
-                   --title "🔴 develop is broken by $short" \
-                   --label broken-develop \
-                   --body "$body"
+            if [ -n "$assignee" ]; then
+              gh issue create --repo "$REPO" \
+                --title "$title" \
+                --label broken-develop \
+                --body "$body" \
+                --assignee "$assignee" \
+                || gh issue create --repo "$REPO" \
+                     --title "$title" \
+                     --label broken-develop \
+                     --body "$body"
+            else
+              # No assignee on a setup failure: there is nobody to assign it to.
+              gh issue create --repo "$REPO" \
+                --title "$title" \
+                --label broken-develop \
+                --body "$body"
+            fi
           fi

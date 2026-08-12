@@ -89,8 +89,14 @@ frontend/backend deploy — it's a monolith.
   Business features that become part of the NCollection product should gradually migrate to native ncollection_* modules according to the project roadmap.
   Never introduce a new OCA dependency without checking the project architecture first.
 6. Small incremental commits, each verified. Run `make hooks-install` **once** and the
-   pre-push hook runs the fast gates for you (flake8 · shellcheck · `invariants.py` ·
-   `architecture_guard.py`). Add `cd demo && npx tsc --noEmit` if `demo/` changed.
+   pre-push hook runs the fast gates for you — **nine**, not the four this line used to
+   list: flake8 · shellcheck · `invariants-tests` · `invariants` · `arch-guard-tests` ·
+   `skip-gate-tests` · `role-matrix-tests` · `role-matrix` · `architecture-guard`
+   (plus `pylint-odoo`, which fails only on findings beyond its baseline).
+   Each guard's **tests run before the guard itself**: a scan that reports "clean"
+   while its own rules are broken is worse than no scan, and this repo has shipped
+   three of those (#330, #348, #311). Add `cd demo && npx tsc --noEmit` if `demo/`
+   changed.
 7. No secrets in git; dev creds live in `.env` (gitignored; template `.env.example`).
 8. The architecture documents are authoritative.
 9. **Postgres CLI tools need an explicit `-d`.** `psql` and `pg_isready` default the target
@@ -161,7 +167,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Demo tenant (`make demo-tenant`) | `albarari` | `make demo-clean` |
 | Aggregation bench | `aggbench` | — |
 | Local test suite (`make test`) | `nctest` | self-drops (start + end of run) |
-| Upgrade proof (#362) | `upgrgreen` · `upgrred` | self-drops (start + end) · `make upgrade-clean` |
+| Upgrade proof (#362, #381) | `upgrgreen` · `upgrred` · `upgrcore` | self-drops (start + end) · `make upgrade-clean` |
 
 The last three rows are **not** throwaway fixtures. `saastest` in particular is the
 default `PLATFORM_DB` that `verify_provisioning.sh` and `verify_config_sync.sh` run
@@ -191,6 +197,30 @@ So tenant key === subdomain === database name, always.
   repos (verified: HTTP 403), so a red PR is merge-able. `canary.yml` re-verifies `develop`
   after every merge and files a `broken-develop` issue — that is **detection, not a gate**.
   Treat such an issue as top priority. See `docs/markdown/BRANCH_PROTECTION.md`.
+
+- **A suite that "passed" may have measured nothing.** Odoo exits **0** having failed to
+  load a module, two ways: a missing dependency (ERROR `Some modules are not loaded`), and an
+  unknown module name or `installable: False` (**WARNING only**, then `Modules loaded.`). A
+  harness that checks only the exit status then measures something that cannot happen and
+  blames whatever it was testing — that is how 120s of phantom cron starvation was nearly
+  filed as a regression against a healthy `develop`. Every setup step now pipes its log
+  through `scripts/dev/assert_odoo_setup.sh`, which refuses instead (#385).
+- **`./oca` is generated and gitignored, so a fresh `git worktree` has none** — and docker
+  creates a missing bind-mount source as an **empty directory** rather than failing, so Odoo
+  starts fine while every OCA-dependent module silently fails to install. `make up`,
+  `verify-all`, `cron-starvation-verify`, `routing-up` and `staging-build` refuse via
+  `scripts/dev/assert_oca_present.sh`. Run `make oca` first in a new worktree (#384).
+- **Those setup markers are database-wide, not per-module.** Odoo builds its graph from every
+  installed module on the database, so an unrelated broken row makes the check blame the
+  module you are upgrading. `scripts/dev/assert_modules_settled.sh` runs first on the
+  persistent platform DBs and names the real culprit (#388).
+- **A skipped Odoo test counts as a passing one** (`0 failed, 0 error(s) of N tests`).
+  `scripts/ci/check_skips.py` fails CI on any skip not in `expected_skips.txt`, keyed on test
+  identity rather than reason text — allowlisting a reason string would allowlist the
+  dangerous case (#363).
+- **`docs/ROLE_MATRIX.md` is enforced by `scripts/ci/check_role_matrix.py`, not by the Odoo
+  tests** — those compare two Python copies to each other and never open the file. Only **§2**
+  is machine-checked; §3-§5 are unverified prose (#382).
 
 ## Docs index (`docs/markdown/`, PDFs in `docs/pdf/`)
 - `LOCAL_DEV_AND_ARCHITECTURE.md` — onboarding + runtime + workflow (start here for setup).

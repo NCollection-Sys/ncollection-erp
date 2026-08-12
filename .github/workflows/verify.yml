@@ -41,6 +41,10 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Callers (canary.yml) need to tell "the code is broken" from "verification
+    # could not run". Only the gate knows, so it publishes it (#398).
+    outputs:
+      status: ${{ steps.gate.outputs.status }}
     env:
       # Routing overlay = base + dev + routing. Odoo runs workers=0 here, so the
       # realtime bus stays on :8069 and matches the dev Nginx /websocket route.
@@ -50,14 +54,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Empty on pull_request (checkout picks the merge ref itself); the
           # nightly passes 'develop' so it does not silently verify main.
           ref: ${{ inputs.ref }}
 
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -66,7 +70,22 @@ jobs:
       - name: Aggregate pinned OCA repos
         run: |
           pip install 'git-aggregator==4.1'
-          gitaggregate -c repos.yml -j 3
+          # Seven external repositories are cloned on EVERY run. A transient
+          # TLS/network failure here skipped every suite and produced a
+          # "develop is broken" issue blaming a docs-only commit (#397/#398):
+          #   fatal: server certificate verification failed. CAfile: none
+          # R-018 says re-run before trusting a scary finding; here the machine
+          # can do that itself.
+          ok=""
+          for attempt in 1 2 3; do
+            if gitaggregate -c repos.yml -j 3; then ok=1; break; fi
+            echo "::warning::OCA aggregation attempt $attempt failed; retrying in 15s"
+            sleep 15
+          done
+          if [ -z "$ok" ]; then
+            echo "::error::OCA aggregation failed after 3 attempts — verification could not run."
+            exit 1
+          fi
 
       # Both fixture namespaces: routing owns rt*, e2e owns
       # e2e*. verify_routing.sh uses curl --resolve, but Chromium needs real
@@ -100,7 +119,7 @@ jobs:
 
       # ---- Suite 2: end-to-end platform guarantees (P1-T20) ------------------
       - name: Set up Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -155,26 +174,41 @@ jobs:
             echo "_Provisioning (P2-T01) runs locally via \`make verify-all\` — it is documented as not a CI test._"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # A SKIPPED suite is not a FAILING one. Skipped means a precondition —
+      # checkout, OCA aggregation, the stack — never came up, so nothing was
+      # measured; the code under test is unproven, not broken. Both still fail
+      # the job (an unverified merge is not acceptable either), but they are
+      # reported differently, and canary.yml uses `status` to decide whether it
+      # is entitled to blame a commit (#398).
       - name: Gate — fail if any suite failed
+        id: gate
         if: always()
         run: |
-          rc=0
+          rc=0; any_failed=""; any_skipped=""
           for pair in \
             "routing:${{ steps.routing.outcome }}" \
             "typecheck:${{ steps.typecheck.outcome }}" \
             "e2e-setup:${{ steps.e2esetup.outcome }}" \
             "e2e:${{ steps.e2e.outcome }}"; do
             name="${pair%%:*}"; outcome="${pair##*:}"
-            if [ "$outcome" != "success" ]; then
-              echo "::error::suite '$name' did not pass (outcome: $outcome)"
-              rc=1
+            if [ "$outcome" = "skipped" ]; then
+              echo "::error::suite '$name' did NOT RUN (outcome: skipped) — a precondition failed, so nothing was measured"
+              any_skipped=1; rc=1
+            elif [ "$outcome" != "success" ]; then
+              echo "::error::suite '$name' FAILED (outcome: $outcome)"
+              any_failed=1; rc=1
             fi
           done
+          if [ -n "$any_failed" ]; then status=suite-failed
+          elif [ -n "$any_skipped" ]; then status=setup-failed
+          else status=ok; fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "verify status: $status"
           exit "$rc"
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report
           path: |

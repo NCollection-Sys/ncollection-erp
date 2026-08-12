@@ -13,8 +13,16 @@ install/upgrade on the tenant (wired through provisioning P2-T01 and config
 sync P2-T03). Idempotent — safe to call any number of times.
 
 The authoritative human-readable matrix lives in docs/ROLE_MATRIX.md; the
-mapping below and that document MUST change together (enforced by the
-transitive-closure test in tests/test_roles.py).
+mapping below and that document MUST change together. That is enforced by
+scripts/ci/check_role_matrix.py, which runs in CI's lint job and on pre-push.
+
+This sentence used to end "(enforced by the transitive-closure test in
+tests/test_roles.py)" and that was FALSE for as long as it stood: those tests
+compare this mapping against MATRIX_ALLOWED_DIRECT, a dict in the test file
+itself, and never open the document. The document could drift indefinitely
+while the suite stayed green — and during #347 it did. The check could not live
+in an Odoo test because the container mounts only custom_addons/ and oca/, so
+docs/ is unreachable from inside it (#382).
 """
 
 import logging

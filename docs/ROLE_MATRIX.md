@@ -3,9 +3,27 @@
 Status: Authoritative (referenced by ARCHITECTURE_SECURITY.md §11 checklist)
 
 Source of truth pairing: this document ↔ `ncollection_core/hooks.py::ROLE_IMPLICATIONS`
-and `ncollection_core/security/role_groups.xml`. **They must change together** —
-the transitive-closure test in `ncollection_core/tests/test_roles.py` fails CI when
-a role's implied set exceeds what this matrix allows.
+and `ncollection_core/security/role_groups.xml`. **They must change together**, and
+that is now actually enforced (#382):
+
+- **`scripts/ci/check_role_matrix.py`** parses **§2 of this file** and fails CI's lint
+  job and pre-push if it disagrees with `hooks.py::ROLE_IMPLICATIONS` or with
+  `tests/test_roles.py::MATRIX_ALLOWED_DIRECT`. It runs on the host, because the Odoo
+  container mounts only `custom_addons/` and `oca/` and cannot read `docs/`.
+- The transitive-closure test in `ncollection_core/tests/test_roles.py` fails CI when a
+  role's implied set in a real database exceeds what the allowlist permits. **It has
+  never read this file** — the banner used to imply it did, which is the overclaim
+  #382 was filed about.
+
+**Only §2 is machine-checked.** §3 (inheritance chains), §4 (decisions) and §5
+(escalation checklist) are human-maintained prose and are verified by nobody — §3 in
+particular restates §2 and can drift silently. Stated so a reader knows which parts of
+this document are guaranteed and which are a promise.
+
+**§2 cell format is strict**, because a half-understood cell is how a document and its
+code drift apart while a checker reports clean. Columns 2 and 3 accept only
+`` `module.xmlid` `` in backticks, a role name, or a role name with a `(qualifier)` —
+comma-separated. Prose belongs in the Rationale column.
 
 Task: [P1-T08]. Audited by: [P1-T21] Phase-1 security audit.
 

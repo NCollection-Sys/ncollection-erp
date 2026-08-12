@@ -1,6 +1,16 @@
 {
     'name': 'NCollection Account Dashboard',
-    'version': '19.0.1.1.0',
+    # 19.0.1.1.1 (#332): charts did not shrink on a window resize — a stale
+    # Chart.js resize parked during the entry animation was drained on top of
+    # the correct new size. Pure JS asset change: no models, columns, data or
+    # security records, so nothing MUST be migrated. It still needs
+    # `-u ncollection_account_dashboard` per tenant to take effect, because Odoo
+    # serves a CACHED asset bundle and the browser keeps the old code until the
+    # module is upgraded. There is no fleet-wide upgrade orchestrator yet
+    # (ARCHITECTURE_DATA_PLATFORM.md §7 — Phase 2), so for already-provisioned
+    # tenants that is currently a manual ops step. The version bump exists so
+    # that orchestrator, when it lands, has a signal to detect.
+    'version': '19.0.1.1.1',
     'category': 'Accounting/Dashboard',
     'summary': 'Finance, Accountant and Cash financial dashboards '
                '(presentation only — consumes the executive report services)',

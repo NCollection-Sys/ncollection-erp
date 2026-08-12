@@ -44,9 +44,21 @@
 # (`invalid module names, ignored` is the exception — correctly scoped to the
 # requested names.) The cost lands on PERSISTENT databases: if `saastest` ever
 # picks up one module stuck at `to install`, every later `-u ncollection_saas`
-# on it refuses on a healthy upgrade. Measured when this shipped: 0 such rows
-# on saastest and ncplatform, so the precondition is real but unmet. #388
-# tracks scoping it properly.
+# on it refuses on a healthy upgrade — reproduced live: with one unresolvable
+# module row present, `odoo -u base` exits 0 and this guard refuses with
+# "base did not actually load", which is false. base loaded fine.
+#
+# ADDRESSED, not eliminated, by scripts/dev/assert_modules_settled.sh (#388),
+# which the persistent-DB harnesses now run BEFORE the upgrade and which names
+# the actual culprit. The markers here are still database-wide; what is covered
+# is the PRE-EXISTING case, which is the one that accumulates on a long-lived
+# database. A module that goes bad DURING a run still reports with the same
+# ambiguity.
+#
+# NOTE, measured: a stuck row alone is NOT enough to trip this. A module at
+# 'to install' whose code is present simply gets installed by the next run —
+# no marker, no refusal. It takes a row that CANNOT resolve (code absent, or a
+# missing dependency) to produce the misleading refusal above.
 #
 # Exit 0 = the setup really did load. Exit 1 = it did not; measuring now would
 # produce a confident, precise, wrong answer about the layer under test.

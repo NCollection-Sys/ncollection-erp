@@ -21,7 +21,11 @@ decisions is an orchestrator that starts duplicating them.
 import re
 
 from odoo import api, models
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import UserError
+# #374: ONE definition of the financial gate, shared with the dashboards.
+from odoo.addons.ncollection_core.models.financial_gate import (
+    FINANCIAL_GATE_GROUPS,
+)
 
 # WHO MAY ASK. Standing Rule 4: any UI restriction must be mirrored at the
 # ORM/RPC layer. This module ships no menu yet, which is exactly why the gate
@@ -40,11 +44,13 @@ from odoo.exceptions import AccessError, UserError
 # base.group_system is not boilerplate: `admin` holds it and holds no role group
 # (the implication runs owner -> system, never the reverse), so omitting it locks
 # admin out on every tenant and breaks every test that runs as uid 1.
-_ALLOWED_GROUPS = (
-    'ncollection_core.group_role_accountant',
-    'ncollection_core.group_role_ceo',
-    'base.group_system',
-)
+# #374: this was a second, independent copy of the tuple. It agreed with the
+# dashboards' copy — the risk was drift, and the copy that drifts is an
+# authorization check. Both now read the same definition from ncollection_core,
+# which both modules already depend on. The reasoning above is kept here
+# because it is what makes THIS module's use of the gate correct, not just the
+# gate itself.
+_ALLOWED_GROUPS = FINANCIAL_GATE_GROUPS
 
 # A question is a sentence. Anything longer is a paste, a bug, or an attempt to
 # push the real instructions out of the context window — and it burns the
@@ -409,6 +415,9 @@ QUESTION: {question}
 
 class AiQuestion(models.AbstractModel):
     _name = 'ncollection.ai.question'
+    # _require_any_group comes from here (#374) — the inline has_group check it
+    # replaces was the second copy of the dashboards' gate.
+    _inherit = 'ncollection.financial.gate.mixin'
     _description = 'AI question orchestration (build, sanitise, send, rehydrate)'
 
     def _known_identities(self):
@@ -494,10 +503,9 @@ class AiQuestion(models.AbstractModel):
         #
         # AccessError, not UserError: Odoo maps it to HTTP 403, which is what an
         # RPC caller should see for an authorization refusal.
-        if not any(self.env.user.has_group(x) for x in _ALLOWED_GROUPS):
-            raise AccessError(self.env._(
-                "The AI assistant is available to the Accountant, the CEO and "
-                "the workspace owner."))
+        self._require_any_group(_ALLOWED_GROUPS, self.env._(
+            "The AI assistant is available to the Accountant, the CEO and "
+            "the workspace owner."))
 
         # FREE TEXT IS OFF BY DEFAULT. This is a scope decision, not a bug.
         #

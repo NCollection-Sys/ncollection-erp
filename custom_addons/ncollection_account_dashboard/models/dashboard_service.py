@@ -19,7 +19,16 @@ additive. Trend direction is derived in the OWL layer from ``value`` vs
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import AccessError
+# #374: the gate lives in ncollection_core so ncollection_ai can use the SAME
+# definition. `from odoo.exceptions import AccessError` went with it — both
+# helpers that raised it are on the mixin now, and nothing else in this file
+# raises it. (An earlier version of this comment claimed the import was still
+# here. It was not: I had removed it in the same hunk, flake8 stayed clean
+# BECAUSE it was gone, and the comment asserted the opposite until review
+# read it.)
+from odoo.addons.ncollection_core.models.financial_gate import (
+    FINANCIAL_GATE_GROUPS,
+)
 
 # The executive services (F2-T08) this module consumes. Named once so the
 # boundary test can assert the module only reaches the service layer.
@@ -55,6 +64,9 @@ _KPI_UNIT = {'currency': 'currency', 'percent': 'percent', 'ratio': 'number'}
 
 class AccountDashboardService(models.AbstractModel):
     _name = 'ncollection.account.dashboard.service'
+    # _require_any_group / _require_role_or_technical_admin come from here.
+    # They were defined below AND re-implemented in ncollection_ai (#374).
+    _inherit = 'ncollection.financial.gate.mixin'
     _description = 'NCollection Account Dashboard Payload Service'
 
     # ---- shared orchestration helpers (reused by #56/#57) ----------------
@@ -283,9 +295,7 @@ class AccountDashboardService(models.AbstractModel):
         # one. Same role, two menus, opposite treatment — which is why there
         # are two helpers rather than one with a flag.
         self._require_any_group(
-            ('ncollection_core.group_role_accountant',
-             'ncollection_core.group_role_ceo',
-             'base.group_system'),
+            FINANCIAL_GATE_GROUPS,
             self.env._("The financial dashboards are available to the "
                        "Accountant, the CEO and the workspace owner."))
         current, previous = self._comparison(_SUMMARY)
@@ -318,9 +328,7 @@ class AccountDashboardService(models.AbstractModel):
         margins) + a P&L composition bar."""
         # Role-gated at the RPC (#358) — reasoning in get_finance_dashboard.
         self._require_any_group(
-            ('ncollection_core.group_role_accountant',
-             'ncollection_core.group_role_ceo',
-             'base.group_system'),
+            FINANCIAL_GATE_GROUPS,
             self.env._("The financial dashboards are available to the "
                        "Accountant, the CEO and the workspace owner."))
         current, previous = self._comparison(_PROFITABILITY)
@@ -346,60 +354,6 @@ class AccountDashboardService(models.AbstractModel):
             }],
         }]
         return {'kpis': kpis, 'charts': charts, 'meta': self._meta()}
-
-    def _require_any_group(self, xmlids, message):
-        """Raise AccessError unless the caller holds one of `xmlids` (#333).
-
-        Used by all four role-curated dashboards. #333 mirrored the CEO menu;
-        #356 did the same for sales/HR/warehouse, which is why this exists as
-        a helper — four copies of the same five lines is how two of them end
-        up subtly different.
-
-        EVERY caller passes `base.group_system` alongside its role, and that
-        is not boilerplate. `admin` holds it and holds NO role group (the
-        implication runs owner -> system, never the reverse), so omitting it
-        locks admin out on every tenant. It also breaks the existing suites:
-        no test of the department dashboards uses `with_user`, so they all run
-        as uid 1 (`__system__`), which holds exactly that group. Measured on
-        #333: dropping the clause there produced 8 failures, only one of which
-        was the test written for it.
-
-        `AccessError`, not `UserError`: Odoo documents it as the access-rights
-        error and maps it to HTTP 403, which is what an RPC caller should see
-        for an authorization refusal.
-        """
-        if not any(self.env.user.has_group(x) for x in xmlids):
-            raise AccessError(message)
-
-    def _require_role_or_technical_admin(self, role_xmlid, message):
-        """Allow `role_xmlid`, or a TECHNICAL admin — but not the Owner (#356).
-
-        WHY THIS IS NOT JUST _require_any_group WITH base.group_system.
-        `group_role_owner` IMPLIES `base.group_system` directly
-        (ncollection_core/security/role_groups.xml), so that clause admits
-        every Owner. On the CEO dashboard that is harmless — Owner qualifies
-        there anyway, through `group_role_ceo` — and its docstring says so.
-        The precondition does not hold here: nothing implies
-        group_role_sales/hr/warehouse for an Owner. Reusing the clause
-        unmodified therefore let Owner through the department dashboards while
-        the ruling, the comments and the commit message all said Owner was
-        denied. Caught by the security review; the tests did not cover Owner
-        at all, so nothing else would have.
-
-        THE ROLE IS CHECKED FIRST, AND THAT ORDER MATTERS. A user may hold
-        BOTH the Owner role and a department role — that person DOES see the
-        menu, because they hold the group it names, so they must pass here
-        too. Excluding Owner from the role branch would deny someone the menu
-        shows, which is the same Rule-4 mismatch pointing the other way.
-        The exclusion applies only to the technical-admin escape hatch.
-        """
-        user = self.env.user
-        if user.has_group(role_xmlid):
-            return
-        if (user.has_group('base.group_system')
-                and not user.has_group('ncollection_core.group_role_owner')):
-            return
-        raise AccessError(message)
 
     @api.model
     def get_ceo_dashboard(self, date_from=None, date_to=None):
@@ -532,9 +486,7 @@ class AccountDashboardService(models.AbstractModel):
         position trend."""
         # Role-gated at the RPC (#358) — reasoning in get_finance_dashboard.
         self._require_any_group(
-            ('ncollection_core.group_role_accountant',
-             'ncollection_core.group_role_ceo',
-             'base.group_system'),
+            FINANCIAL_GATE_GROUPS,
             self.env._("The financial dashboards are available to the "
                        "Accountant, the CEO and the workspace owner."))
         current, previous = self._comparison(_SUMMARY)
