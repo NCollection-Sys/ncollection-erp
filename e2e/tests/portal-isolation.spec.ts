@@ -180,23 +180,62 @@ test('#403 a portal user cannot fetch another partner\'s invoice PDF', async ({ 
   await ctxB.close();
 });
 
-test('#403 /web/content serves portal users no attachment at all', async ({ page }) => {
+test('#403 /web/content serves portal users no DOCUMENT attachment', async ({ browser }) => {
   // STATED AS MEASURED, not as isolation. Portal users have NO ir.attachment
-  // ACL (group_portal has no row for it), and this route denies them in BOTH
-  // directions — own and other alike, 404 each. So it cannot demonstrate
-  // cross-partner isolation: an "A cannot fetch B's" assertion here would pass
-  // just as well against a route that serves nobody, which is the vacuity this
-  // suite exists to avoid.
+  // ACL (group_portal has no row for it), so this route denies them in BOTH
+  // directions — own and other alike. A "A cannot fetch B's" assertion here
+  // would therefore pass just as well against a route that serves nobody.
   //
-  // It is kept as a CHANGE DETECTOR: if a future module grants group_portal
-  // access to ir.attachment, the own-document fetch starts succeeding, this
-  // fails, and whoever made that change has to prove isolation on this route.
+  // TWO EARLIER VERSIONS WERE WRONG, both in ways that still looked like a pass:
+  //   1. Hardcoded the fixture's attachment ids (560/561). Those exist only on
+  //      the database they were seeded in — on CI's fresh tenant they do not
+  //      exist, so the route answered 404 "not found" rather than "not allowed"
+  //      and the test passed having probed nothing.
+  //   2. Scanned ids 1..60 instead. That FAILED, because id 12 is
+  //      `placeholder.png` — a public web asset, `public=True` by design and
+  //      correctly served to everyone. Broad scanning cannot tell a public
+  //      asset from a leaked document.
+  //
+  // So the ids are resolved at RUNTIME, as admin, restricted to attachments
+  // that hang on the three documents this suite is about. That is
+  // fixture-independent and cannot be satisfied by an id that does not exist.
+  const admin = await browser.newContext();
+  const adminPage = await admin.newPage();
+  await loginViaRpc(adminPage, TENANT, 'admin', 'admin');
+  const res = await adminPage.request.post(
+    `${TENANTS[TENANT]}/web/dataset/call_kw`, {
+      data: {
+        jsonrpc: '2.0', method: 'call',
+        params: {
+          model: 'ir.attachment', method: 'search_read',
+          args: [[['res_model', 'in',
+                   ['account.move', 'sale.order', 'stock.picking']]],
+                 ['id', 'name', 'public']],
+          kwargs: {},
+        },
+      },
+    });
+  const docAttachments = (await res.json())?.result ?? [];
+  await admin.close();
+
+  // CONTROL: there ARE document attachments to probe. The fixture seeds one per
+  // party; if that ever stops, this test must fail rather than pass on none.
+  expect(docAttachments.length,
+    'no attachments hang on any invoice/order/picking, so this test probed '
+    + 'nothing — the fixture seed has regressed').toBeGreaterThan(0);
+  // And none of them is public, which would be a legitimate 200 below.
+  expect(docAttachments.filter((a: any) => a.public)).toHaveLength(0);
+
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
   await loginViaRpc(page, TENANT, 'portala', PW);
-  for (const id of [560, 561]) {
-    const res = await page.request.get(`${TENANTS[TENANT]}/web/content/${id}`,
+  for (const att of docAttachments) {
+    const r = await page.request.get(`${TENANTS[TENANT]}/web/content/${att.id}`,
       { maxRedirects: 0 });
-    expect(res.status(), `/web/content/${id} became reachable for a portal `
-      + 'user — attachment isolation now needs a real test on this route')
+    expect(r.status(), `/web/content served a portal user the document `
+      + `attachment "${att.name}" (id ${att.id}) — that route is now a path to `
+      + 'documents and needs a real cross-partner isolation test')
       .not.toBe(200);
   }
+  await ctx.close();
 });
