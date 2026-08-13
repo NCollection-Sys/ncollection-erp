@@ -320,4 +320,47 @@
         <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 
+    <!-- ==== F2-T09: dimension analysis (#315) ====
+         A UNIQUE report_name per action, each a thin wrapper over the shared
+         body — sharing one renders every wizard against the FIRST action's
+         model, as the F2-T02 note above records the hard way. -->
+    <record id="action_report_cost_center" model="ir.actions.report">
+        <field name="name">Cost Center Analysis</field>
+        <field name="model">ncollection.account.report.cost.center</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_cost_center</field>
+        <field name="report_file">ncollection_account_reports.report_cost_center</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_cost_center">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <record id="action_report_profit_center" model="ir.actions.report">
+        <field name="name">Profit Center Analysis</field>
+        <field name="model">ncollection.account.report.profit.center</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_profit_center</field>
+        <field name="report_file">ncollection_account_reports.report_profit_center</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_profit_center">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <record id="action_report_department" model="ir.actions.report">
+        <field name="name">Department Analysis</field>
+        <field name="model">ncollection.account.report.department</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_department</field>
+        <field name="report_file">ncollection_account_reports.report_department</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_department">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
 </odoo>
