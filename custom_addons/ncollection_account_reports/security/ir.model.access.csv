@@ -14,3 +14,4 @@ access_nc_report_partner_ledger,ncollection.account.report.partner.ledger,model_
 access_nc_report_partner_line,ncollection.account.report.partner.line,model_ncollection_account_report_partner_line,account.group_account_readonly,1,0,1,1
 access_nc_report_aged_partner,ncollection.account.report.aged.partner,model_ncollection_account_report_aged_partner,account.group_account_readonly,1,1,1,1
 access_nc_report_aged_line,ncollection.account.report.aged.line,model_ncollection_account_report_aged_line,account.group_account_readonly,1,0,1,1
+access_nc_report_statement,ncollection.account.report.statement,model_ncollection_account_report_statement,account.group_account_readonly,1,1,1,1

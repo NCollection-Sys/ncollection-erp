@@ -13,3 +13,4 @@ from . import profitability
 # F2-T05 partner-facing reports (#115)
 from . import partner_ledger
 from . import aged_partner_balance
+from . import partner_statement

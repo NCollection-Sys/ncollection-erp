@@ -695,4 +695,48 @@
               parent="menu_ncollection_account_reports"
               action="action_report_aged_partner_wizard" sequence="50"/>
 
+    <!-- ==== F2-T05: Customer / Vendor Statements (#115) ==== -->
+
+    <record id="view_report_partner_statement_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.statement.form</field>
+        <field name="model">ncollection.account.report.statement</field>
+        <field name="arch" type="xml">
+            <form string="Partner Statement">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Partners">
+                            <field name="partner_scope"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_export_pdf" type="object" string="Print"
+                            class="btn-primary"/>
+                    <button name="action_send" type="object" string="Send by Email"/>
+                    <button name="action_view" type="object" string="View Lines"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_partner_statement_wizard" model="ir.actions.act_window">
+        <field name="name">Customer / Vendor Statement</field>
+        <field name="res_model">ncollection.account.report.statement</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_partner_statement" name="Customer / Vendor Statement"
+              parent="menu_ncollection_account_reports"
+              action="action_report_partner_statement_wizard" sequence="60"/>
+
 </odoo>
