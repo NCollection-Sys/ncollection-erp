@@ -168,6 +168,39 @@ class TestCashFlowAndEquity(AccountTestInvoicingCommon):
         self.assertAlmostEqual(net_profit['previous_amount'], 0.0, places=2)
         self.assertAlmostEqual(net_profit['variance'], 7000.0, places=2)
 
+    def test_the_comparison_period_reconciles_too(self):
+        """The Previous column is computed through a DIFFERENT path.
+
+        `_nc_cash_balance_at` is deliberately called off `self` rather than off
+        the in-memory comparison record, because `new(origin=<in-memory>)` is
+        unsupported nesting — and that decision had no test that would notice it
+        being undone. Every other reconciliation test runs with no comparison at
+        all, so this is the one that covers the previous period's cash figures.
+
+        2025 held exactly one entry: 5,000 of capital, received in cash.
+        """
+        wizard = self._cf(comparison_type='previous_year')
+        rows = {row['label']: row for row in wizard._nc_compute_lines()}
+
+        def previous(label):
+            return rows[label]['previous_amount']
+
+        self.assertAlmostEqual(previous("Cash at the beginning of the period"),
+                               0.0, places=2)
+        self.assertAlmostEqual(previous("Cash at the end of the period"),
+                               5000.0, places=2)
+        self.assertAlmostEqual(
+            previous("Net cash from operating activities")
+            + previous("Net cash from investing activities")
+            + previous("Net cash from financing activities"),
+            previous("Cash at the end of the period")
+            - previous("Cash at the beginning of the period"), places=2,
+            msg="the comparison period does not reconcile — the Previous "
+                "column is not a cash flow statement")
+        # ...and it is FINANCING that moved, not some other section soaking it up.
+        self.assertAlmostEqual(previous("Net cash from financing activities"),
+                               5000.0, places=2)
+
     # ---- the guards the identity rests on -------------------------------
 
     def test_every_odoo_account_type_is_classified_exactly_once(self):
@@ -360,6 +393,27 @@ class TestCashFlowAndEquity(AccountTestInvoicingCommon):
                          'view_report_line_equity_list').id,
             "the equity list view is not pinned — Odoo may render the report "
             "through a view with none of its columns")
+
+    def test_report_runs_are_private_to_their_creator(self):
+        """Rule 4: the UI restriction mirrored at the ORM.
+
+        Every sibling wizard has an ``ir.rule`` scoping its runs to
+        ``create_uid``; without one an accounting-readonly user can read — and
+        re-export — another user's run by id. The rendered FIGURES already sit
+        behind ``rule_report_line_own``, so what this covers is the run record
+        itself and the export actions reachable through it.
+        """
+        other = self.env['res.users'].create({
+            'name': 'Other Accountant', 'login': 'f2t04_other_accountant',
+            'group_ids': [(6, 0, [self.env.ref('account.group_account_readonly').id,
+                                  self.env.ref('base.group_user').id])]})
+        for wizard in (self._cf(), self._eq()):
+            with self.subTest(report=wizard._name):
+                self.assertFalse(
+                    self.env[wizard._name].with_user(other).search(
+                        [('id', '=', wizard.id)]),
+                    "another user could read someone else's %s run"
+                    % wizard._name)
 
     def test_a_user_without_the_accounting_group_is_denied(self):
         """Mirrors every sibling report: the ACL gates on

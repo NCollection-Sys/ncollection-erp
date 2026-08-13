@@ -48,6 +48,26 @@ off-balance and regular accounts, so those entries balance among themselves and
 carry no cash effect. Including them would add a zero at best and corrupt the
 identity at worst.
 
+KNOWN LIMITATION — reclassification into ``off_balance`` after posting. Odoo's
+``_check_off_balance`` constraint is declared on ``account.move.line``, so it
+fires when a LINE is written, not when an ``account.account``'s type is edited
+later. Retyping an account to ``off_balance`` when it already carries posted
+regular moves therefore drops its movement out of the sections while the other
+leg still counts, and the statement is off by exactly that balance. Detecting it
+costs a query per run to defend against an act that also makes the Balance Sheet
+and Trial Balance wrong, so it is recorded here rather than guarded — the same
+call the module makes for the other two divergences it documents. The
+reclassification, not the report, is the thing to fix.
+
+DEPRECIATION assumes its offset is an INVESTING account. The add-back is a pure
+transfer, so the sections always still sum to the cash movement whatever the
+offset is typed. What it assumes is that the credit side (accumulated
+depreciation) is typed ``asset_fixed``/``asset_non_current``, which is where a
+conventional chart puts it. A chart that offsets depreciation against, say,
+``asset_current`` would have that amount shifted out of Operating twice and the
+Operating/Investing SPLIT would be wrong — the total, and therefore the
+reconciliation, would not be.
+
 DEPRECIATION is the one place the presentation moves money between sections
 without changing the total. It is a non-cash expense sitting inside net profit,
 matched by a fall in fixed assets. Leaving it in Investing would invent a cash

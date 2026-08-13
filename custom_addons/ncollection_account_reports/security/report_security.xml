@@ -79,5 +79,22 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- F2-T04 (#114). Same rule as every wizard above: a run belongs to the
+             user who generated it. The FIGURES already sit behind
+             rule_report_line_own, so what this closes is the run itself — its
+             company, its period, its comparison window — plus re-running
+             action_view()/the exports against someone else's record. -->
+        <record id="rule_report_cash_flow_own" model="ir.rule">
+            <field name="name">Cash Flow Statement runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_cash_flow"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_equity_changes_own" model="ir.rule">
+            <field name="name">Statement of Changes in Equity runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_equity_changes"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>
