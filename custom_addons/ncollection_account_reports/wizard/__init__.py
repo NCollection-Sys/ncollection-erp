@@ -2,6 +2,7 @@
 from . import account_report_line
 from . import account_report_reference
 from . import report_comparison
+from . import whole_entity
 from . import trial_balance
 from . import general_ledger
 from . import balance_sheet
@@ -14,3 +15,6 @@ from . import profitability
 from . import partner_ledger
 from . import aged_partner_balance
 from . import partner_statement
+# F2-T04 Cash Flow + Statement of Changes in Equity (#114)
+from . import cash_flow
+from . import equity_changes

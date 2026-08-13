@@ -9,3 +9,5 @@ from . import test_xlsx_stream
 from . import test_partner_ledger
 from . import test_aged_partner
 from . import test_partner_statement
+# F2-T04 Cash Flow + Statement of Changes in Equity (#114)
+from . import test_cash_flow_equity
