@@ -20,8 +20,13 @@ _ASSET = ('asset_receivable', 'asset_cash', 'asset_current', 'asset_prepayments'
 _LIAB = ('liability_payable', 'liability_credit_card', 'liability_current',
          'liability_non_current')
 _EQUITY = ('equity', 'equity_unaffected')
-_EARNINGS = ('income', 'income_other', 'expense', 'expense_direct_cost',
-             'expense_depreciation')
+# `expense_other` added by #411. It was missing from this shadow map AND from
+# the template it shadows, and this suite passed anyway — because no fixture
+# posted to such an account. A map kept "in sync by intent" with nothing
+# exercising the difference is not verified, it is only untested, so the fixture
+# below now posts one.
+_EARNINGS = ('income', 'income_other', 'expense', 'expense_other',
+             'expense_direct_cost', 'expense_depreciation')
 
 
 @tagged('post_install', '-at_install')
@@ -41,6 +46,13 @@ class TestMisReconciliation(TransactionCase):
         cls.cash = acc('asset_cash', 'asset_current')
         cls.income = acc('income')
         cls.liab = acc('liability_current', 'liability_payable')
+        # #411: created rather than searched — a chart of accounts need not
+        # ship an `expense_other` account, and silently skipping the type this
+        # suite failed to notice would repeat the original mistake.
+        cls.other_expense = Account.create({
+            'name': 'FX Loss (#411)', 'code': 'NCMFX1',
+            'account_type': 'expense_other',
+            'company_ids': [(6, 0, cls.company.ids)]})
         cls.journal = cls.env['account.journal'].search(
             [('type', '=', 'general'), ('company_id', '=', cls.company.id)], limit=1)
         # These require a chart of accounts on the company (loaded by the billing
@@ -49,16 +61,19 @@ class TestMisReconciliation(TransactionCase):
             "test needs a chart of accounts on the company (asset/income/liability + a general journal)"
 
         # One balanced entry spanning asset / income / liability:
-        #   Dr cash 1000 = Cr revenue 700 + Cr liability 300
-        # => assets 1000; current earnings 700; liabilities 300; identity holds.
+        #   Dr cash 1000 + Dr other-expense 50 = Cr revenue 700 + Cr liability 350
+        # => assets 1000; current earnings 700 - 50 = 650; liabilities 350;
+        #    identity holds ONLY if expense_other is inside earnings (#411).
         move = cls.env['account.move'].create({
             'move_type': 'entry',
             'journal_id': cls.journal.id,
             'date': fields.Date.context_today(cls.env.user),
             'line_ids': [
                 (0, 0, {'account_id': cls.cash.id, 'debit': 1000.0, 'credit': 0.0}),
+                (0, 0, {'account_id': cls.other_expense.id, 'debit': 50.0,
+                        'credit': 0.0}),
                 (0, 0, {'account_id': cls.income.id, 'debit': 0.0, 'credit': 700.0}),
-                (0, 0, {'account_id': cls.liab.id, 'debit': 0.0, 'credit': 300.0}),
+                (0, 0, {'account_id': cls.liab.id, 'debit': 0.0, 'credit': 350.0}),
             ],
         })
         move.action_post()

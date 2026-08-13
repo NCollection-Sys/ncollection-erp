@@ -25,14 +25,18 @@ equity section, and the test asserts exactly that against
 restatement of this one. Both are cumulative-to-date and both negate the
 credit-normal balances, so a positive figure means equity.
 
-KNOWN, MEASURED DIVERGENCE. The Balance Sheet's ``accumulated_earnings`` bucket
-is a deliberate 1:1 transcription of the mis_builder template it replaces during
-the #117 transition, and that template's expression omits ``expense_other``.
-This statement does not omit it, because a statement of equity that drops a
-class of expense is wrong. So on books that use an ``expense_other`` account the
-two differ by exactly that account's balance — asserted as such in
-``test_cash_flow_equity.py`` rather than left to be discovered. Reconciling them
-means editing the mis parity map, which belongs to #117, not here.
+A DIVERGENCE THAT USED TO LIVE HERE, NOW CLOSED. Until #411 the Balance Sheet's
+``accumulated_earnings`` bucket omitted ``expense_other``, so on books using such
+an account this statement and the Balance Sheet disagreed by exactly its balance.
+#114 recorded that as a measured divergence and left it, on the belief that
+correcting it meant breaking parity with the mis_builder template — a decision
+for #117. That belief was wrong: ``ncollection_mis_templates`` is this repo's own
+module and carried the same omission, so #411 corrected the templates and the
+wizards together and parity was never at stake. ``test_cash_flow_equity.py`` now
+asserts the two are EQUAL on exactly that fixture.
+
+This file never had the bug: it classifies by ``internal_group`` (below), which
+is why the contrast was worth recording at the time.
 """
 from dateutil.relativedelta import relativedelta
 

@@ -234,6 +234,53 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
         used |= {t for _k, _l, _sg, types in _PL_BUCKETS for t in types}
         self.assertEqual(used - valid, set())
 
+    def test_every_account_type_is_classified_by_both_statements(self):
+        """#411's real fix. The one above checks `used - valid`; this checks
+        the OTHER direction, which is the direction that was broken.
+
+        `expense_other` sat in neither map for the life of this module. No test
+        noticed, because asserting "we use no invalid type" says nothing about
+        whether a valid type went unused — so the Balance Sheet silently stopped
+        balancing on any book that touched one, and the P&L overstated profit by
+        the same amount. One missing type; two wrong statements; zero failures.
+
+        `cash_flow.py` already refuses to render on an unclassified type
+        (`_nc_assert_every_type_is_classified`). This is the same idea as a test
+        rather than a runtime raise, deliberately: the Balance Sheet and P&L feed
+        the F3 dashboards, so a hard refusal there has a far wider blast radius
+        than on a standalone statement wizard, and Odoo adding a type is
+        something CI and the #362 upgrade proof see long before a tenant does.
+
+        `off_balance` is the one exclusion, and it is principled: Odoo forbids a
+        move from mixing off-balance and regular accounts, so those entries
+        balance among themselves and belong to no section of either statement.
+        """
+        selection = set(dict(
+            self.env['account.account']._fields['account_type'].selection))
+
+        bs_used = {t
+                   for _s, _l, buckets, _tl in _BS_SECTIONS
+                   for _k, _bl, _sg, types in buckets for t in types}
+        self.assertEqual(
+            selection - bs_used, {'off_balance'},
+            "account type(s) are in NO Balance Sheet bucket, so any book using "
+            "one produces a statement that does not balance — by exactly that "
+            "account's balance, and with nothing on the report saying so. This "
+            "is #411 recurring; add them to _BS_SECTIONS.")
+
+        # Odoo derives internal_group as account_type.split('_', 1)[0], so this
+        # is Odoo's own answer to "is this an income-statement account", not a
+        # second hand-maintained list that could drift from the first.
+        income_statement = {t for t in selection
+                            if t.split('_', 1)[0] in ('income', 'expense')}
+        pl_used = {t for _k, _l, _sg, types in _PL_BUCKETS for t in types}
+        self.assertEqual(
+            income_statement - pl_used, set(),
+            "income-statement account type(s) are in NO P&L bucket, so net "
+            "profit is overstated by their balance — and the Balance Sheet's "
+            "Accumulated Earnings is the same figure, so it stops balancing "
+            "too. This is #411 recurring; add them to _PL_BUCKETS.")
+
     def test_every_pl_account_type_appears_in_accumulated_earnings(self):
         """The BS 'Accumulated Earnings' bucket must cover exactly the account
         types the P&L reports on — otherwise the statement silently stops
