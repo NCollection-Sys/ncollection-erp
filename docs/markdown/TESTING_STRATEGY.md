@@ -10,7 +10,7 @@ full-estate baseline run on `958d8d6` the same day (§7).
 
 **Live counts — enforced, not re-typed (#405):
 **92**<!--count:test_files--> test files ·
-**1022**<!--count:test_methods--> test methods ·
+**1024**<!--count:test_methods--> test methods ·
 **13**<!--count:verify_scripts--> `verify_*.sh` proofs
 (**8**<!--count:verify_all_suites--> suites in `verify-all`) ·
 **11**<!--count:e2e_specs--> Playwright specs.**
