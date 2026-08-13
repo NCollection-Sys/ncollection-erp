@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **16**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **17**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
