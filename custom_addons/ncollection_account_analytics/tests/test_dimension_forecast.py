@@ -82,6 +82,37 @@ class TestDimensionAndForecast(AccountTestInvoicingCommon):
             1000.0, places=2,
             msg="the dimension total is not the amount actually posted")
 
+    def test_a_draft_distribution_contributes_nothing(self):
+        """The breakdown filters no move state — and must not need to.
+
+        Odoo creates ``account.analytic.line`` only for POSTED move lines: both
+        call sites are gated on it (``_inverse_analytic_distribution`` browses
+        ``parent_state == "posted"``, and ``account_move`` creates them at
+        posting). So this service is implicitly posted-only, matching the KPIs
+        beside it, which say so explicitly.
+
+        That is a guarantee borrowed from Odoo rather than enforced here, and an
+        unstated borrowed guarantee is one that quietly stops holding. This
+        asserts it: a 5,000 distribution left in draft must move nothing.
+        """
+        before = self.Dim._nc_total('cost_center', self.date_from, self.date_to)
+        self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': self.journal.id,
+            'date': date(2026, 3, 20),
+            'line_ids': [
+                (0, 0, {'account_id': self.receivable.id, 'debit': 5000.0,
+                        'credit': 0.0}),
+                (0, 0, {'account_id': self.revenue.id, 'debit': 0.0,
+                        'credit': 5000.0,
+                        'analytic_distribution': {str(self.north.id): 100.0}}),
+            ]})  # deliberately NOT posted
+        after = self.Dim._nc_total('cost_center', self.date_from, self.date_to)
+        self.assertAlmostEqual(
+            before, after, places=2,
+            msg="a DRAFT distribution moved the cost-centre total — Odoo no "
+                "longer restricts analytic lines to posted moves, so this "
+                "service must filter move state itself")
+
     def test_an_unknown_dimension_returns_none_not_an_empty_list(self):
         """"This tenant cannot answer that" and "no activity" are different,
         and the aggregation engine's contract is that the first is None."""

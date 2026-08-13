@@ -9,7 +9,8 @@ than the textbook COGS-based formula, specifically to stay off this line. This
 file is the other side of that split, so it deliberately mirrors core's shape —
 ``key`` Selection dispatching to ``_compute_<key>``, a period plus the one
 before, ``value=None`` meaning "cannot answer" — and a dashboard can render
-either model with the same code.
+either model with the same code. The payload KEYS match exactly; one field's
+semantics deliberately do not, and ``_nc_delta_pct`` says which and why.
 
 WHY THIS READS ``account.move.line`` DIRECTLY. ARCHITECTURE_DATA_PLATFORM §9.4
 makes the aggregation engine the choke point for **dashboard queries** and says
@@ -66,6 +67,20 @@ RECEIVABLE_TYPES = ('asset_receivable',)
 
 
 class NcollectionFinancialKpi(models.Model):
+    """One row per ``key``, and the three rows are canonical.
+
+    ACL (``security/ir.model.access.csv``) gives an accounting manager
+    read+write but NOT create or unlink. A fourth row could name no
+    ``_compute_<key>`` method and would silently compute nothing, and the views
+    already declare ``create="false" delete="false"`` — an ACL that out-grants
+    its own UI is exactly the gap RPC finds. What a manager legitimately owns is
+    the target and the period, which write covers.
+
+    (This note lives here rather than in the CSV: Odoo parses that file with its
+    CSV importer, which has no comment syntax — a ``#`` line is read as a data
+    row and fails the whole registry load.)
+    """
+
     _name = 'ncollection.account.analytics.kpi'
     _description = 'NCollection Financial KPI'
     _order = 'sequence, id'
@@ -160,6 +175,14 @@ class NcollectionFinancialKpi(models.Model):
 
         NOTE for the two percentage KPIs: this is a change in the RATE, not
         percentage points. A reader who wants points wants ``value - previous``.
+
+        DIVERGES DELIBERATELY from ``ncollection.kpi._delta_pct``, which divides
+        by a SIGNED ``previous``. Over a signed denominator a figure worsening
+        from -100 to -150 reports +50%, reading as an improvement. The two
+        models therefore share a payload SHAPE but not this field's semantics
+        whenever ``previous`` is negative — a renderer that assumes one
+        convention will disagree with the other model, so the divergence is
+        stated here rather than discovered.
         """
         if value is None or previous is None or not previous:
             return None
@@ -168,44 +191,52 @@ class NcollectionFinancialKpi(models.Model):
     # ---- shared figure helpers -------------------------------------------
 
     @api.model
-    def _nc_movement(self, account_types, date_from, date_to):
+    def _nc_movement(self, account_types, date_from, date_to, company=None):
         """Signed balance movement over ``account_types`` in a window.
 
         Posted entries only — a draft invoice is an intention, and a KPI that
         counted it would move when nothing had happened.
+
+        ``company`` defaults to the active one and exists so this matches
+        ``dimension._nc_breakdown``'s signature: two sibling services in one
+        module where only one can be pointed at another company is an asymmetry
+        the first cross-company caller discovers, not the author.
         """
+        company = company or self.env.company
         rows = self.env['account.move.line']._read_group(
             [('parent_state', '=', 'posted'),
-             ('company_id', '=', self.env.company.id),
+             ('company_id', '=', company.id),
              ('account_id.account_type', 'in', list(account_types)),
              ('date', '>=', date_from), ('date', '<', date_to)],
             aggregates=['balance:sum'])
         return (rows[0][0] or 0.0) if rows else 0.0
 
     @api.model
-    def _nc_closing(self, account_types, date):
+    def _nc_closing(self, account_types, date, company=None):
         """Cumulative balance on ``account_types`` up to and including ``date``.
 
         A position, not a flow — receivables outstanding is "what is owed now",
         which is every posting since the beginning of time, not this month's.
         """
+        company = company or self.env.company
         rows = self.env['account.move.line']._read_group(
             [('parent_state', '=', 'posted'),
-             ('company_id', '=', self.env.company.id),
+             ('company_id', '=', company.id),
              ('account_id.account_type', 'in', list(account_types)),
              ('date', '<=', date)],
             aggregates=['balance:sum'])
         return (rows[0][0] or 0.0) if rows else 0.0
 
     @api.model
-    def _nc_revenue(self, date_from, date_to):
+    def _nc_revenue(self, date_from, date_to, company=None):
         """Revenue for the window, presented positive.
 
         Income accounts are credit-normal, so their balance movement is
         negative when the business earns money; negating is what makes "revenue
         of 1,000" read as 1,000. Same convention as the P&L's `sign=-1`.
         """
-        return -self._nc_movement(REVENUE_TYPES, date_from, date_to)
+        return -self._nc_movement(REVENUE_TYPES, date_from, date_to,
+                                  company=company)
 
     # ---- the KPIs ---------------------------------------------------------
 

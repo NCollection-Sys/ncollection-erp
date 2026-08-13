@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <data noupdate="1">
     <!-- F4-T01 (#120): the three dimensions FPA §7 names, as ROOT analytic
          plans. Odoo validates the 100% distribution rule INDEPENDENTLY per root
          plan (analytic_mixin._validate_distribution), so one journal item can
@@ -8,9 +9,15 @@
          defines no dimension model of its own — Standing Rule 2, extend before
          replacing.
 
-         NOT noupdate: these are seeds a tenant renames and fills, but their
-         STRUCTURE (three independent roots) is what this module's services key
-         on, so a corrected definition must reach existing tenants on upgrade.
+         noupdate="1" BECAUSE TENANTS RENAME THESE. A record without it is
+         write()-ten from the XML on every `-u`, so a tenant who renamed
+         "Departments" to "Business Units" would find it silently renamed back
+         on the next upgrade — no log, no warning. Nothing here needs
+         overwriting to keep working: `dimension.py` keys on the EXTERNAL ID,
+         never on `name`, so the three roots stay resolvable however they are
+         labelled. A future structural correction ships as a migration script,
+         which is the Odoo pattern for exactly this.
+
          Tenants add their own analytic accounts underneath; none are seeded,
          because a cost-centre tree is a business's own shape and inventing one
          would be a guess every tenant then has to undo. -->
@@ -28,4 +35,5 @@
         <field name="name">Profit Centers</field>
         <field name="default_applicability">optional</field>
     </record>
+    </data>
 </odoo>
