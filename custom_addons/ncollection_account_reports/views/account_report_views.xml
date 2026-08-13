@@ -562,4 +562,137 @@
               parent="menu_ncollection_account_reports"
               action="action_report_profitability_wizard" sequence="90"/>
 
+    <!-- ==== F2-T05: Partner Ledger (#115) ==== -->
+
+    <record id="view_report_partner_line_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.partner.line.list</field>
+        <field name="model">ncollection.account.report.partner.line</field>
+        <field name="arch" type="xml">
+            <list string="Partner Ledger" create="false" delete="false"
+                  default_order="id" decoration-bf="is_initial">
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="move_name"/>
+                <field name="journal_id"/>
+                <field name="account_id"/>
+                <field name="label" string="Label"/>
+                <field name="debit" sum="Debit"/>
+                <field name="credit" sum="Credit"/>
+                <field name="running_balance"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="is_initial" column_invisible="1"/>
+                <button name="action_drill_down" type="object" string="Journal Items"
+                        icon="fa-search-plus" invisible="is_initial"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_partner_ledger_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.partner.ledger.form</field>
+        <field name="model">ncollection.account.report.partner.ledger</field>
+        <field name="arch" type="xml">
+            <form string="Partner Ledger">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="partner_scope"/>
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_partner_ledger_wizard" model="ir.actions.act_window">
+        <field name="name">Partner Ledger</field>
+        <field name="res_model">ncollection.account.report.partner.ledger</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_partner_ledger" name="Partner Ledger"
+              parent="menu_ncollection_account_reports"
+              action="action_report_partner_ledger_wizard" sequence="40"/>
+
+    <!-- ==== F2-T05: Aged Receivable / Payable (#115) ==== -->
+
+    <record id="view_report_aged_line_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.aged.line.list</field>
+        <field name="model">ncollection.account.report.aged.line</field>
+        <field name="arch" type="xml">
+            <list string="Aged Partner Balance" create="false" delete="false"
+                  default_order="id">
+                <field name="partner_id"/>
+                <field name="bucket_current" sum="Current"/>
+                <field name="bucket_1" sum="1-30"/>
+                <field name="bucket_2" sum="31-60"/>
+                <field name="bucket_3" sum="61-90"/>
+                <field name="bucket_4" sum="91-120"/>
+                <field name="bucket_over" sum="Over 120"/>
+                <field name="total" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <button name="action_drill_down" type="object" string="Open Items"
+                        icon="fa-search-plus"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_aged_partner_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.aged.partner.form</field>
+        <field name="model">ncollection.account.report.aged.partner</field>
+        <field name="arch" type="xml">
+            <form string="Aged Partner Balance">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_to" string="As at"/>
+                            <field name="target_move" invisible="1"/>
+                            <field name="date_from" invisible="1"/>
+                        </group>
+                        <group string="Options">
+                            <field name="partner_scope"/>
+                            <field name="period_length"/>
+                            <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="partner_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_aged_partner_wizard" model="ir.actions.act_window">
+        <field name="name">Aged Partner Balance</field>
+        <field name="res_model">ncollection.account.report.aged.partner</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_aged_partner" name="Aged Receivable / Payable"
+              parent="menu_ncollection_account_reports"
+              action="action_report_aged_partner_wizard" sequence="50"/>
+
 </odoo>

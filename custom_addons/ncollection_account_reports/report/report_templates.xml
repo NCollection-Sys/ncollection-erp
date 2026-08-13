@@ -178,4 +178,34 @@
         <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 
+    <!-- ==== F2-T05: partner-facing reports (#115) ====
+         A UNIQUE report_name per action, each a thin wrapper over the shared
+         body — sharing one renders every wizard, as the F2-T02 note above
+         records the hard way. -->
+    <record id="action_report_partner_ledger" model="ir.actions.report">
+        <field name="name">Partner Ledger</field>
+        <field name="model">ncollection.account.report.partner.ledger</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_partner_ledger</field>
+        <field name="report_file">ncollection_account_reports.report_partner_ledger</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_partner_ledger">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <record id="action_report_aged_partner" model="ir.actions.report">
+        <field name="name">Aged Partner Balance</field>
+        <field name="model">ncollection.account.report.aged.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_aged_partner</field>
+        <field name="report_file">ncollection_account_reports.report_aged_partner</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_aged_partner">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
 </odoo>
