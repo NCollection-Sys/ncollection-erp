@@ -493,6 +493,121 @@ class TestR5CronThreadsScoped(GuardTestCase):
 # ---------------------------------------------------------------------------
 # The guard's own self-test must stay honest
 # ---------------------------------------------------------------------------
+# R11 — a CI exemption's reason must be TRUE, not merely present (#422)
+# ---------------------------------------------------------------------------
+class TestR11ExemptionReasonsAreTrue(GuardTestCase):
+    """The reason field exists so "excluded on purpose" and "forgotten" stay
+    distinguishable. Requiring a reason does not achieve that if nothing checks
+    whether the reason is true — which is how `ncollection_demo_freshorigin`
+    came to claim `make demo-tenant` installed it while that target's script
+    never mentioned it (#418).
+
+    Only FALSIFIABLE reasons are checked. Prose is left alone, deliberately:
+    a guard that flagged "demo data, never installed in CI" would be crying
+    wolf on a perfectly good reason, and this module's own docstring calls that
+    worse than no guard.
+    """
+
+    def _exempt(self, reason):
+        original = invariants.CI_EXEMPT_MODULES
+        invariants.CI_EXEMPT_MODULES = {"mod_a": reason}
+        self.addCleanup(setattr, invariants, "CI_EXEMPT_MODULES", original)
+
+    def _findings(self):
+        findings = []
+        invariants.rule_ci_exemption_reasons(findings)
+        return findings
+
+    def test_a_reason_naming_a_command_that_does_handle_it_is_clean(self):
+        """The shape a correct exemption has: the target's script really does
+        mention the module."""
+        self.write("Makefile", "seed:\n\t@bash scripts/seed.sh\n")
+        self.write("scripts/seed.sh", "#!/bin/bash\nodoo -i mod_a\n")
+        self._exempt("seeded by `make seed`; not part of the CI matrix")
+        self.assertEqual(self._findings(), [])
+
+    def test_a_reason_naming_a_command_that_does_NOT_handle_it_is_flagged(self):
+        """THE case this rule exists for, and the one that shipped: the target
+        exists, the script exists, and neither mentions the module."""
+        self.write("Makefile", "seed:\n\t@bash scripts/seed.sh\n")
+        self.write("scripts/seed.sh", "#!/bin/bash\nodoo -i something_else\n")
+        self._exempt("seeded by `make seed`; not part of the CI matrix")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("mod_a", found[0])
+        self.assertIn("make seed", found[0])
+
+    def test_prose_with_no_command_is_left_alone(self):
+        """Nothing to falsify. Flagging this would be crying wolf on a reason
+        that is both honest and unverifiable."""
+        self._exempt("demo data, deliberately never installed anywhere")
+        self.assertEqual(self._findings(), [])
+
+    def test_a_reason_naming_a_target_that_does_not_exist_is_flagged(self):
+        """A reason resting on a command nobody can run is not a reason. This
+        is what a renamed Makefile target leaves behind."""
+        self.write("Makefile", "other:\n\t@true\n")
+        self._exempt("handled by `make gone`")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("no such Makefile target", found[0])
+
+    def test_the_recipe_itself_counts_as_evidence(self):
+        """A target that installs the module inline, without delegating to a
+        script, is just as true a reason."""
+        self.write("Makefile", "seed:\n\t@odoo -i mod_a --stop-after-init\n")
+        self._exempt("installed inline by `make seed`")
+        self.assertEqual(self._findings(), [])
+
+    def test_a_missing_script_does_not_crash_the_guard(self):
+        """The recipe names a script that is not there. The guard must report a
+        finding, not raise — a guard that dies on a broken repo tells you
+        nothing about the repo."""
+        self.write("Makefile", "seed:\n\t@bash scripts/absent.sh\n")
+        self._exempt("seeded by `make seed`")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("mod_a", found[0])
+
+    def test_a_missing_makefile_does_not_crash_the_guard(self):
+        self._exempt("seeded by `make seed`")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("no such Makefile target", found[0])
+
+    def test_only_the_named_targets_recipe_is_read(self):
+        """The recipe ends at the first non-tab line. Without that, a target
+        would inherit the next one's body and a false reason could be validated
+        by an unrelated command further down the Makefile.
+        """
+        self.write(
+            "Makefile",
+            "seed:\n\t@true\n\nother:\n\t@odoo -i mod_a\n")
+        self._exempt("seeded by `make seed`")
+        found = self._findings()
+        self.assertEqual(
+            len(found), 1,
+            "the guard read past the target's own recipe, so an unrelated "
+            "command validated a false reason")
+
+    def test_the_live_exemption_list_is_currently_honest(self):
+        """The guard's own subject, checked for real rather than in a fixture.
+
+        Every other test here proves the rule works on a synthetic repo. This
+        one proves it is SATISFIED on this one — the same discipline
+        check_doc_counts.py applies to itself, and the reason a guard cannot
+        pass by only ever being pointed at fixtures.
+        """
+        invariants.REPO_ROOT = self._real_root
+        findings = []
+        invariants.rule_ci_exemption_reasons(findings)
+        self.assertEqual(
+            findings, [],
+            "a CI exemption in this repo names a command that does not handle "
+            "it — fix the reason or drop the exemption")
+
+
+# ---------------------------------------------------------------------------
 class TestSelfTest(GuardTestCase):
 
     def test_the_embedded_self_test_passes(self):
