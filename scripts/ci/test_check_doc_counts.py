@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for the testing-strategy count guard (#405).
+"""Tests for the document count guard (#405, #408).
 
 The guard exists because hand-written counts in TESTING_STRATEGY.md went stale
 within twelve hours of #394 re-measuring them. These tests exist because a
@@ -9,7 +9,7 @@ already passed CI while measuring nothing.
 
 Run standalone (no pytest dependency in CI):
 
-    python3 scripts/ci/test_check_testing_strategy.py
+    python3 scripts/ci/test_check_doc_counts.py
 """
 
 import sys
@@ -19,18 +19,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import check_testing_strategy as C  # noqa: E402
+import check_doc_counts as C  # noqa: E402
 
 
 class GuardTestCase(unittest.TestCase):
 
     def setUp(self):
-        self._doc = C.DOC
+        self._docs = C.DOCS
         self.tmp = Path(tempfile.mkdtemp()) / "TESTING_STRATEGY.md"
-        C.DOC = self.tmp
+        C.DOCS = (self.tmp,)
 
     def tearDown(self):
-        C.DOC = self._doc
+        C.DOCS = self._docs
 
     def write(self, text):
         self.tmp.write_text(text, encoding="utf-8")
@@ -61,17 +61,17 @@ class TestMarkerParsing(GuardTestCase):
         self.assertEqual(C.main(), 1)
 
     def test_an_unreadable_document_refuses(self):
-        C.DOC = Path("/nonexistent/TESTING_STRATEGY.md")
+        C.DOCS = (Path("/nonexistent/TESTING_STRATEGY.md"),)
         self.assertEqual(C.main(), 1)
 
     def test_write_mode_repairs_a_drifted_count(self):
         actual = C.measure()
         self.write("rules **999**<!--count:invariants_rules--> here\n")
-        sys.argv = ["check_testing_strategy.py", "--write"]
+        sys.argv = ["check_doc_counts.py", "--write"]
         try:
             self.assertEqual(C.main(), 0)
         finally:
-            sys.argv = ["check_testing_strategy.py"]
+            sys.argv = ["check_doc_counts.py"]
         self.assertIn("**%d**<!--count:invariants_rules-->"
                       % actual["invariants_rules"],
                       self.tmp.read_text(encoding="utf-8"))

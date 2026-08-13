@@ -19,7 +19,7 @@ The line above is kept as the dated original rather than overwritten, because th
 document's value is that its numbers can be trusted — which means showing when they
 were taken. #394 re-measured them all by hand and they were **wrong again twelve hours
 later**, after three merges. So the derivable ones now carry invisible
-`<!--count:*-->` markers and `scripts/ci/check_testing_strategy.py` fails CI when any
+`<!--count:*-->` markers and `scripts/ci/check_doc_counts.py` fails CI when any
 drifts. Update with `--write`, never by typing.
 
 Three figures are deliberately **not** enforced, because they cannot be derived from
