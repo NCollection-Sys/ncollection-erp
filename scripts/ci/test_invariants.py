@@ -590,6 +590,79 @@ class TestR11ExemptionReasonsAreTrue(GuardTestCase):
             "the guard read past the target's own recipe, so an unrelated "
             "command validated a false reason")
 
+    def test_a_script_under_a_nested_path_is_still_read(self):
+        """The HIGH from review. An unanchored `scripts/...` match against
+        `./custom_addons/x/scripts/y.sh` captures only the tail, resolves to no
+        file, and drops the script from evidence SILENTLY — reporting a TRUE
+        reason as false. Six targets in the real Makefile invoke scripts this
+        way, so this is the shape that would have misfired first.
+        """
+        self.write("Makefile",
+                   "seed:\n\t@./custom_addons/x/scripts/deep/seed.sh\n")
+        self.write("custom_addons/x/scripts/deep/seed.sh",
+                   "#!/bin/bash\nodoo -i mod_a\n")
+        self._exempt("seeded by `make seed`")
+        self.assertEqual(
+            self._findings(), [],
+            "a nested script path was not resolved, so a true reason was "
+            "reported as false — crying wolf on correct data")
+
+    def test_a_superstring_module_name_does_not_satisfy_the_check(self):
+        """`mod_a` must not be satisfied by `mod_a_extra_addon`. A plain
+        substring match calls a false reason verified, which is the one thing
+        this rule must never do."""
+        self.write("Makefile", "seed:\n\t@bash scripts/seed.sh\n")
+        self.write("scripts/seed.sh", "#!/bin/bash\nodoo -i mod_a_extra_addon\n")
+        self._exempt("seeded by `make seed`")
+        found = self._findings()
+        self.assertEqual(len(found), 1,
+                         "a different module sharing a prefix satisfied the "
+                         "check")
+
+    def test_a_variable_assignment_is_not_mistaken_for_a_target(self):
+        """`seed:=production` starts with `seed:` but is an assignment. Reading
+        it as a rule yields an empty recipe and a false finding."""
+        # The assignment comes AFTER the real target on purpose. Placed
+        # before it, the last-definition-wins rule would overwrite the bogus
+        # match and the test would pass with or without the fix — which is
+        # exactly what the first version of this test did.
+        self.write("Makefile",
+                   "seed:\n\t@bash scripts/seed.sh\n\nseed:=production\n")
+        self.write("scripts/seed.sh", "#!/bin/bash\nodoo -i mod_a\n")
+        self._exempt("seeded by `make seed`")
+        self.assertEqual(self._findings(), [])
+
+    def test_a_recipe_line_continuation_is_followed(self):
+        """make joins a trailing backslash regardless of the next line's
+        indentation, so stopping at the first non-tab line loses the rest of
+        the command — and with it the script that proves the reason."""
+        self.write(
+            "Makefile",
+            "seed:\n\t@echo starting && \\\n    bash scripts/seed.sh\n")
+        self.write("scripts/seed.sh", "#!/bin/bash\nodoo -i mod_a\n")
+        self._exempt("seeded by `make seed`")
+        self.assertEqual(self._findings(), [])
+
+    def test_the_last_definition_of_a_repeated_target_wins(self):
+        """GNU make uses the last definition. Reading the first would check a
+        recipe that never runs."""
+        self.write(
+            "Makefile",
+            "seed:\n\t@true\n\nseed:\n\t@bash scripts/seed.sh\n")
+        self.write("scripts/seed.sh", "#!/bin/bash\nodoo -i mod_a\n")
+        self._exempt("seeded by `make seed`")
+        self.assertEqual(self._findings(), [])
+
+    def test_an_unparseable_make_command_is_reported_not_skipped(self):
+        """`make -C dir target` is a command this guard cannot follow. Filing it
+        as unverifiable prose would make an UNCHECKED claim indistinguishable
+        from a checked one — which is the entire defect this rule exists for."""
+        self.write("Makefile", "seed:\n\t@true\n")
+        self._exempt("handled by `make -C sub seed`")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("cannot parse", found[0])
+
     def test_the_live_exemption_list_is_currently_honest(self):
         """The guard's own subject, checked for real rather than in a fixture.
 

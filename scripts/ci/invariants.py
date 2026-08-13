@@ -1032,6 +1032,7 @@ def rule_portal_suite_models_reachable(out: list[str]) -> None:
 
 
 _MAKE_TARGET_RE = re.compile(r"`make ([a-z0-9][a-z0-9._-]*)`")
+_MAKE_MENTION_RE = re.compile(r"`[^`]*\bmake\b[^`]*`")
 
 
 def _make_recipe(target: str) -> str | None:
@@ -1044,18 +1045,30 @@ def _make_recipe(target: str) -> str | None:
     makefile = REPO_ROOT / "Makefile"
     if not makefile.is_file():
         return None
+    # A target HEADER, not any line starting with the name. `seed:=production`
+    # passes a naive startswith and is a variable assignment, not a rule.
+    header = re.compile(rf"^{re.escape(target)}\s*:(?!=)")
     recipe: list[str] = []
+    found = False
     collecting = False
+    continued = False
     for line in makefile.read_text(encoding="utf-8").splitlines():
         if collecting:
-            # Recipes are tab-indented; the first non-tab line ends the target.
-            if line.startswith("\t"):
+            # Recipes are tab-indented, EXCEPT a continuation of the previous
+            # physical line, which make joins regardless of indentation.
+            if line.startswith("\t") or continued:
                 recipe.append(line)
+                continued = line.rstrip().endswith("\\")
                 continue
-            break
-        if line.startswith(f"{target}:"):
+            collecting = False
+        if header.match(line):
+            # GNU make takes the LAST definition when a target repeats, so a
+            # second header restarts collection rather than being ignored.
+            found = True
             collecting = True
-    return "\n".join(recipe) if collecting else None
+            continued = False
+            recipe = []
+    return "\n".join(recipe) if found else None
 
 
 def _reason_evidence(target: str) -> str | None:
@@ -1071,8 +1084,16 @@ def _reason_evidence(target: str) -> str | None:
     if recipe is None:
         return None
     evidence = [recipe]
-    for match in re.finditer(r"(scripts/[\w./-]+\.(?:sh|py))", recipe):
-        script = REPO_ROOT / match.group(1)
+    # WHOLE TOKENS, not a substring search for `scripts/`. An unanchored
+    # `scripts/...` match against
+    #   ./custom_addons/ncollection_saas/scripts/provisioning/verify_x.sh
+    # captures only the tail, which resolves to no file — so the script's text
+    # is dropped from evidence SILENTLY and a true reason is reported as false.
+    # Six targets in this repo's Makefile invoke scripts by exactly that shape.
+    # Crying wolf on correct data is the failure this module's docstring calls
+    # worse than no guard at all.
+    for token in re.findall(r"[\w./-]+\.(?:sh|py)\b", recipe):
+        script = REPO_ROOT / token.lstrip("./")
         if script.is_file():
             evidence.append(script.read_text(encoding="utf-8"))
     return "\n".join(evidence)
@@ -1096,7 +1117,19 @@ def rule_ci_exemption_reasons(out: list[str]) -> None:
     docstring calls worse than no guard at all.
     """
     for module, reason in CI_EXEMPT_MODULES.items():
-        for target in _MAKE_TARGET_RE.findall(reason):
+        targets = _MAKE_TARGET_RE.findall(reason)
+        # A reason that mentions `make` in a form this cannot parse — `make -C
+        # dir target`, `make target VAR=1`, two commands in one span — must say
+        # so. Skipping it silently would file it as unverifiable prose, which is
+        # how an unchecked claim looks exactly like a checked one.
+        if _MAKE_MENTION_RE.search(reason) and not targets:
+            out.append(
+                f"CI_EXEMPT_MODULES: `{module}`'s reason names a `make` command "
+                f"this guard cannot parse, so the claim went unverified. Use the "
+                f"plain `make <target>` form, or reword the reason as prose if "
+                f"there is nothing to check."
+            )
+        for target in targets:
             evidence = _reason_evidence(target)
             if evidence is None:
                 out.append(
@@ -1105,7 +1138,18 @@ def rule_ci_exemption_reasons(out: list[str]) -> None:
                     f"true, so the exemption is unexplained."
                 )
                 continue
-            if module not in evidence:
+            # WORD BOUNDARY: a plain substring match reports `mod_a` as
+            # present when the evidence only mentions `mod_a_extra_addon`.
+            #
+            # KNOWN LIMIT, stated rather than hidden: this cannot read a
+            # NEGATED mention. A script commenting "we deliberately do not
+            # install X" satisfies the check. Detecting that needs to
+            # understand prose, and a guard that guesses at intent would
+            # produce exactly the false alarms this rule is careful to avoid.
+            # It verifies that the name APPEARS where the reason says it is
+            # handled — which is what catches a reason naming the wrong
+            # command, the failure that actually occurred.
+            if not re.search(rf"\b{re.escape(module)}\b", evidence):
                 out.append(
                     f"CI_EXEMPT_MODULES: `{module}`'s reason says `make {target}` "
                     f"handles it, but neither that target's recipe nor the scripts "
