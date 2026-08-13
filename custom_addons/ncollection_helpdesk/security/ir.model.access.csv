@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_sla_policy_user,nc.sla.policy.user,model_ncollection_helpdesk_sla_policy,helpdesk_mgmt.group_helpdesk_user,1,0,0,0
+access_nc_sla_policy_manager,nc.sla.policy.manager,model_ncollection_helpdesk_sla_policy,helpdesk_mgmt.group_helpdesk_manager,1,1,1,1
