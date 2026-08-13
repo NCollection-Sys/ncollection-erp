@@ -155,6 +155,13 @@ class NcollectionCashFlow(models.TransientModel):
         Same device as ``_nc_comparison_record()``: every other filter travels
         with the dates, so each figure is computed through the exact same engine
         helpers as the current period. Nothing to drift.
+
+        CALLING THIS INVALIDATES EVERY EARLIER IN-MEMORY COPY OF THIS WIZARD.
+        ``NewId.__eq__``/``__hash__`` key on ``origin`` alone, so every
+        ``new(..., origin=self)`` resolves to the SAME ORM cache slot — the
+        second call silently overwrites the first one's dates. Read whatever you
+        need off an in-memory record BEFORE calling this, never after. Consume
+        the returned record immediately.
         """
         self.ensure_one()
         return self.new({'date_from': date_from, 'date_to': date_to},
@@ -196,6 +203,13 @@ class NcollectionCashFlow(models.TransientModel):
 
     def _nc_cash_flow_figures(self, record):
         """Every figure the statement renders, for one period."""
+        # Snapshot the window FIRST. `record` may be the in-memory comparison
+        # copy, and the `_nc_at()` calls below share its ORM cache slot (see
+        # that method) — so reading `record.date_to` after them yields the
+        # date of the last _nc_at, not this period's. That bug shipped in
+        # review: the Previous column's closing cash silently read as the
+        # opening date's balance, and every current-period test passed.
+        date_from, date_to = record.date_from, record.date_to
         moved = self._nc_movement_by_type(record)
 
         def total(types):
@@ -218,13 +232,13 @@ class NcollectionCashFlow(models.TransientModel):
             figures['operating'] - figures['net_profit'] - depreciation)
         figures['net_change'] = (figures['operating'] + figures['investing']
                                  + figures['financing'])
-        # Measured off SELF, not off `record`: `record` may already be the
-        # in-memory comparison copy, and `new(origin=<in-memory record>)` is not
-        # a supported nesting. Only the dates differ between the two, and those
-        # are passed explicitly — so the figures are identical either way.
+        # Measured off SELF, not off `record`: `record` may already be an
+        # in-memory copy, and only the window differs between the two — which is
+        # passed explicitly, from the snapshot taken before anything could
+        # clobber it.
         figures['cash_open'] = self._nc_cash_balance_at(
-            record.date_from - relativedelta(days=1))
-        figures['cash_close'] = self._nc_cash_balance_at(record.date_to)
+            date_from - relativedelta(days=1))
+        figures['cash_close'] = self._nc_cash_balance_at(date_to)
         return figures
 
     def _nc_compute_lines(self):
