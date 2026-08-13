@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep docs/markdown/TESTING_STRATEGY.md's counts true (#405).
+"""Keep the counts in our load-bearing documents true (#405, #408).
 
 WHY THIS EXISTS. CLAUDE.md calls that document authoritative for "what a green
 result actually proves". #394 re-measured every count in it and dated the
@@ -14,7 +14,18 @@ merging when nothing checks them. Same shape as #382, where hooks.py claimed
 docs/ROLE_MATRIX.md was enforced and nothing enforced it, and the same fix.
 
 The repo already solves this twice: PROGRESS.md is GENERATED, and ROLE_MATRIX.md
-is ENFORCED by scripts/ci/check_role_matrix.py. This document just never got it.
+is ENFORCED by scripts/ci/check_role_matrix.py. These documents never got it.
+
+TWO DOCUMENTS, ONE GUARD (#408). CLAUDE.md had the same defect and worse: it is
+auto-loaded into EVERY session, so a wrong statement there is repeated to every
+future reader before they look at anything. It claimed "nine" pre-push gates
+(11), listed 4 custom addons (16), and called ncollection_core "near-empty" and
+ncollection_saas an "empty skeleton" — 8,647 and 9,856 lines respectively.
+
+A second copy of this script would have been the drift-by-duplication this repo
+keeps being bitten by (#243, #374): two guards, one of them quietly falling
+behind. The marker machinery and the measurements are generic, so both documents
+share them.
 
 HOW IT WORKS. Each count in the prose carries an invisible marker:
 
@@ -48,7 +59,10 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-DOC = REPO / "docs" / "markdown" / "TESTING_STRATEGY.md"
+DOCS = (
+    REPO / "docs" / "markdown" / "TESTING_STRATEGY.md",
+    REPO / "CLAUDE.md",
+)
 
 MARKER_RE = re.compile(r"\*\*(?P<value>[\d,]+)\*\*<!--count:(?P<key>\w+)-->")
 
@@ -86,6 +100,13 @@ def measure() -> dict[str, int]:
         (REPO / "Makefile").read_text(encoding="utf-8"), re.MULTILINE))
     m["e2e_specs"] = len(list((REPO / "e2e" / "tests").glob("*.spec.ts")))
     m["guard_selftests"] = len(list((REPO / "scripts" / "ci").glob("test_*.py")))
+    # #408 — CLAUDE.md's own claims. The gate count went stale the same DAY it
+    # was written: #394 wrote "nine", #405 added two more gates hours later.
+    m["prepush_gates"] = len(re.findall(
+        r'^\s*run_gate\s+"', (REPO / ".githooks" / "pre-push").read_text(
+            encoding="utf-8"), re.MULTILINE))
+    m["custom_addons"] = len([d for d in (REPO / "custom_addons").iterdir()
+                              if d.is_dir() and (d / "__manifest__.py").exists()])
 
     inv = (REPO / "scripts" / "ci" / "invariants.py").read_text(encoding="utf-8")
     found = re.search(r"^RULE_COUNT = (\d+)", inv, re.MULTILINE)
@@ -107,10 +128,47 @@ def measure() -> dict[str, int]:
     return m
 
 
+def _check_one(doc, actual: dict[str, int], write: bool) -> tuple[int, list[str]]:
+    """Verify (or repair) one document. Returns (markers_seen, problems)."""
+    try:
+        text = doc.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise MeasureError("%s is unreadable (%s), so its counts cannot be "
+                           "verified" % (doc, exc))
+
+    marked = {m.group("key"): int(m.group("value").replace(",", ""))
+              for m in MARKER_RE.finditer(text)}
+    if not marked:
+        raise MeasureError(
+            "no <!--count:*--> markers found in %s. Either the document lost "
+            "them or this guard is aimed at the wrong file; either way it is "
+            "verifying nothing" % doc.name)
+
+    unknown = sorted(set(marked) - set(actual))
+    if unknown:
+        raise MeasureError(
+            "%s marks count(s) this guard cannot measure: %s. Add a "
+            "measurement or remove the marker — a marker nothing checks is "
+            "worse than no marker" % (doc.name, ", ".join(unknown)))
+
+    if write:
+        def _fix(m: re.Match) -> str:
+            return "**%d**<!--count:%s-->" % (actual[m.group("key")],
+                                              m.group("key"))
+        doc.write_text(MARKER_RE.sub(_fix, text), encoding="utf-8")
+        return len(marked), []
+
+    return len(marked), [
+        "  %-22s %s says %s, tree says %s"
+        % (key, doc.name, marked[key], actual[key])
+        for key in sorted(marked) if marked[key] != actual[key]
+    ]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true",
-                    help="update the document's counts in place")
+                    help="update the documents' counts in place")
     args = ap.parse_args()
 
     try:
@@ -119,51 +177,34 @@ def main() -> int:
         print("REFUSING: %s" % exc, file=sys.stderr)
         return 1
 
-    try:
-        text = DOC.read_text(encoding="utf-8")
-    except OSError as exc:
-        print("REFUSING: %s is unreadable (%s), so its counts cannot be "
-              "verified." % (DOC, exc), file=sys.stderr)
-        return 1
-
-    marked = {m.group("key"): int(m.group("value").replace(",", ""))
-              for m in MARKER_RE.finditer(text)}
-    if not marked:
-        print("REFUSING: no <!--count:*--> markers found in %s. Either the "
-              "document lost them or this guard is aimed at the wrong file; "
-              "either way it is verifying nothing." % DOC.name, file=sys.stderr)
-        return 1
-
-    unknown = sorted(set(marked) - set(actual))
-    if unknown:
-        print("REFUSING: the document marks count(s) this guard cannot "
-              "measure: %s. Add a measurement or remove the marker — a marker "
-              "nothing checks is worse than no marker."
-              % ", ".join(unknown), file=sys.stderr)
-        return 1
+    total, problems = 0, []
+    for doc in DOCS:
+        try:
+            seen, probs = _check_one(doc, actual, args.write)
+        except MeasureError as exc:
+            print("REFUSING: %s." % exc, file=sys.stderr)
+            return 1
+        total += seen
+        problems += probs
 
     if args.write:
-        def _fix(m: re.Match) -> str:
-            return "**%d**<!--count:%s-->" % (actual[m.group("key")], m.group("key"))
-        DOC.write_text(MARKER_RE.sub(_fix, text), encoding="utf-8")
-        print("testing-strategy counts written (%d markers)" % len(marked))
+        print("doc counts written (%d markers across %d documents)"
+              % (total, len(DOCS)))
         return 0
 
-    problems = [
-        "  %-18s document says %s, tree says %s" % (key, marked[key], actual[key])
-        for key in sorted(marked) if marked[key] != actual[key]
-    ]
     if problems:
-        print("docs/markdown/TESTING_STRATEGY.md is out of date:", file=sys.stderr)
+        print("documents are out of date:", file=sys.stderr)
         for p in problems:
             print(p, file=sys.stderr)
-        print("\nRun: python3 scripts/ci/check_testing_strategy.py --write\n"
-              "This document is what CLAUDE.md points at for 'what a green "
-              "result actually proves'. A stale answer to that is worse than "
-              "no answer, because it is trusted (#405).", file=sys.stderr)
+        print("\nRun: python3 scripts/ci/check_doc_counts.py --write\n"
+              "These are the documents a reader trusts for what this repo is "
+              "and what a green result proves. CLAUDE.md is loaded into every "
+              "session, so a wrong number there is repeated to every future "
+              "reader (#405, #408).", file=sys.stderr)
         return 1
 
-    print("testing-strategy counts clean (%d markers verified)" % len(marked))
+    print("doc counts clean (%d markers across %d documents verified)"
+          % (total, len(DOCS)))
     return 0
 
 
