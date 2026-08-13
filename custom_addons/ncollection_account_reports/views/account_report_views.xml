@@ -739,4 +739,122 @@
               parent="menu_ncollection_account_reports"
               action="action_report_partner_statement_wizard" sequence="60"/>
 
+    <!-- ==== F2-T04: Cash Flow + Statement of Changes in Equity (#114) ==== -->
+
+    <!-- The Cash Flow uses the shared comparison list: FPA's Amount / Previous
+         Period / Difference are the same three quantities as Current /
+         Previous / Variance, so it reuses that view rather than adding a
+         near-duplicate. The equity statement genuinely differs — its columns
+         are two INSTANTS and the movement between them, not two periods — so it
+         gets its own. -->
+    <record id="view_report_line_equity_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.equity.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Statement of Changes in Equity" create="false"
+                  delete="false" default_order="id" decoration-bf="level == 0"
+                  decoration-muted="level == 2">
+                <field name="label" string="Component"/>
+                <field name="opening_balance" sum="Opening"/>
+                <field name="balance" string="Movement" sum="Movement"/>
+                <field name="closing_balance" sum="Closing"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="account_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+                <button name="action_drill_down" type="object" string="Journal Items"
+                        icon="fa-search-plus" invisible="not account_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_cash_flow_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.cash.flow.form</field>
+        <field name="model">ncollection.account.report.cash.flow</field>
+        <field name="arch" type="xml">
+            <form string="Cash Flow Statement">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                    </group>
+                    <!-- No journal/account/partner filters: this statement is
+                         computed over the complete books and refuses to render
+                         under one (wizard/whole_entity.py). Offering a filter
+                         that the model then rejects would be a trap. -->
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_cash_flow_wizard" model="ir.actions.act_window">
+        <field name="name">Cash Flow Statement</field>
+        <field name="res_model">ncollection.account.report.cash.flow</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_cash_flow" name="Cash Flow Statement"
+              parent="menu_ncollection_account_reports"
+              action="action_report_cash_flow_wizard" sequence="45"/>
+
+    <record id="view_report_equity_changes_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.equity.changes.form</field>
+        <field name="model">ncollection.account.report.equity.changes</field>
+        <field name="arch" type="xml">
+            <form string="Statement of Changes in Equity">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <!-- Opening is the position the day before
+                                 `date_from`; closing is the position at
+                                 `date_to`. Both are cumulative. -->
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_equity_changes_wizard" model="ir.actions.act_window">
+        <field name="name">Statement of Changes in Equity</field>
+        <field name="res_model">ncollection.account.report.equity.changes</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_equity_changes" name="Statement of Changes in Equity"
+              parent="menu_ncollection_account_reports"
+              action="action_report_equity_changes_wizard" sequence="47"/>
+
 </odoo>
