@@ -286,7 +286,13 @@ class TestDimensionAnalysis(AccountTestInvoicingCommon):
         self.assertEqual(north['level'], 1)
         self.assertAlmostEqual(north['current_amount'], 3000.0, places=2)
         self.assertAlmostEqual(north['ratio_pct'], 50.0, places=2)
-        self.assertEqual(north['account_id'], self.north.id)
+        self.assertFalse(
+            north['account_id'],
+            "account_id on ncollection.account.report.line is a Many2one to "
+            "account.account; an ANALYTIC account id there is a foreign key "
+            "into the wrong table — it failed the full matrix outright, and "
+            "where the id sequences collide it would open an unrelated "
+            "account's journal items instead")
 
     def test_the_total_row_is_the_sum_of_the_dimension_rows(self):
         """3,000 + 2,000 = 5,000. A total that disagrees with the rows above it

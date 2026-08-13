@@ -220,9 +220,20 @@ class NcollectionDimensionAnalysisBase(models.AbstractModel):
                               key=lambda a: a.display_name):
             now = current.get(account, {})
             before = previous.get(account, {})
+            # account_id is NOT set. It is a Many2one to `account.account`
+            # (the FINANCIAL account) on ncollection.account.report.line, and
+            # `account` here is an `account.analytic.account` — a different
+            # table. Passing it wrote an analytic id into a financial-account
+            # foreign key, which the full test matrix rejected outright and
+            # which, wherever the two id sequences happen to COLLIDE, would
+            # silently open some unrelated account's journal items from the
+            # drill-down button. FPA specifies no Drill Down for these reports
+            # (unlike §Balance Sheet, which has one), so there is nothing to
+            # lose; an analytic-aware drill-down would need its own field on
+            # the line model.
             row = self._nc_comparison_row(
                 account.display_name, now.get(headline, 0.0),
-                before.get(headline, 0.0), level=1, account_id=account.id)
+                before.get(headline, 0.0), level=1)
             row['ratio_pct'] = now.get('margin')
             rows.append(row)
             totals['current'] += now.get(headline, 0.0)
