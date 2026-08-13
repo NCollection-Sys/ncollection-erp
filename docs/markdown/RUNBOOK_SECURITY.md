@@ -299,6 +299,53 @@ There is no recovery path from the tenant side — the stored hashes are one-way
 and per-tenant. Set a new master and re-key the fleet (steps 1–4). Until then,
 config sync is down for every tenant and plan changes will not propagate.
 
+## Reaching existing tenants with the report isolation rules (#413)
+
+`ncollection_account_reports` shipped five models — the F2-T05 partner reports —
+with an `ir.model.access` row and **no `ir.rule`**. Their `create_uid` scoping
+existed only as a Python filter inside `action_view()`, so a plain RPC
+`search([])` on `ncollection.account.report.partner.line` or `...aged.line`
+returned another accountant's rendered partner figures. The rules are added by
+#413.
+
+**Merging that fix does not patch a single already-provisioned tenant.** The
+records live in the module's data, so a tenant only gets them when the module is
+upgraded there. Until then those reports stay readable across users on every
+tenant that already has the module — which is the "fixed in code, never reached
+production" gap the #218 section above exists to prevent repeating.
+
+### The run
+
+*SaaS Admin → Fleet Migrations → New*
+
+| Field | Value |
+|---|---|
+| Modules | `ncollection_account_reports` |
+| **Operation** | **Upgrade (odoo -u)** — the default, and the right one here: the module is already installed, only its data needs reloading |
+| Canary tenants | pick one low-risk tenant |
+| Dry run | **on for the first pass** |
+| Auto-restore on failure | leave **on** |
+
+1. **Dry run first**, and confirm the command says `-u`. Unlike the #218
+   backfill, `-u` is correct here — these tenants already have the module, and
+   `-i` would skip them as already installed and change nothing.
+2. Turn dry-run off and **Start**. Canary first, then the fleet.
+3. Confirm on any upgraded tenant: as a second user holding
+   `account.group_account_readonly`, an RPC `search([])` on
+   `ncollection.account.report.partner.line` must return **nothing** while
+   another user's report run exists. That is the whole point of the change; the
+   module's own `test_report_security.py` asserts the same property.
+
+Off-peak — each non-skipped tenant takes a full backup first.
+
+**Scope note.** This is *not* privilege escalation: both users must already hold
+`account.group_account_readonly`, and either could run the report themselves. It
+is the module failing the security model it documents and tests elsewhere. Treat
+it as routine hardening on the next scheduled fleet window rather than an
+incident, unless a tenant has accountants who are deliberately partitioned from
+each other's work.
+
+
 ## Out of scope (own tickets / future)
 
 - SSL Labs A grade + headers audit → **P3-T12** · OWASP probing → **P3-T12**

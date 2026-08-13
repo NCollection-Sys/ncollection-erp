@@ -124,7 +124,7 @@ class TestReportIsolation(AccountTestInvoicingCommon):
         for model in accesses.mapped('model_id'):
             rules = Rule.search([('model_id', '=', model.id),
                                  ('global', '=', True)])
-            if not any('create_uid' in (rule.domain_force or '')
+            if not any(self._nc_is_own_records_domain(rule.domain_force)
                        for rule in rules):
                 unscoped.append(model.model)
         self.assertFalse(
@@ -133,4 +133,28 @@ class TestReportIsolation(AccountTestInvoicingCommon):
             "no global ir.rule scoping them to create_uid, so any such user "
             "can read another user's report run or its rendered figures over "
             "RPC. Add a rule_<report>_own record to report_security.xml — a "
-            "create_uid filter written in Python is not a control (#413).")
+            "create_uid filter written in Python is not a control (#413).\n"
+            "If one of these is NOT per-run private data — a shared lookup, "
+            "master data — then it does not belong in this module's ACL and "
+            "the answer is to move it, NOT to scope it to its creator, which "
+            "would hide other users' records from a report filter.")
+
+    @staticmethod
+    def _nc_is_own_records_domain(domain_force):
+        """Is this domain THE own-records domain, character for character?
+
+        Deliberately an equality check and not a search for ``create_uid``
+        anywhere in the string. A domain can mention the field and restrict
+        nothing — ``[('create_uid', '!=', False)]`` matches every record that
+        has a creator, i.e. all of them — and a guard that accepted it would
+        report a wide-open model as scoped, which is worse than no guard.
+
+        The cost is that a legitimate future variant (say, one that also scopes
+        by company) fails here and has to be added deliberately. That is the
+        right trade for a security guard: the failure is loud, in a test, with
+        this docstring attached.
+        """
+        return " ".join((domain_force or "").split()) in (
+            "[('create_uid', '=', user.id)]",
+            '[("create_uid", "=", user.id)]',
+        )
