@@ -18,3 +18,5 @@ from . import partner_statement
 # F2-T04 Cash Flow + Statement of Changes in Equity (#114)
 from . import cash_flow
 from . import equity_changes
+# F2-T09 dimension analysis (#315)
+from . import dimension_analysis

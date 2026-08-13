@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **17**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **18**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -67,12 +67,21 @@ adding a module fails CI until someone updates this list.
 - `ncollection_ai` — tenant-side AI: gateway client, context injection, PII redaction.
 - `ncollection_approvals` — configurable approval workflows.
 - `ncollection_data_import` — onboarding import toolkit (CSV templates + wizard).
+- `ncollection_helpdesk` — SLA response/resolution timers on top of OCA
+  `helpdesk_mgmt` (+ `helpdesk_mgmt_rating`), which is what P6-T03 adopts for the
+  ticket itself. Also carries the ownership guard on OCA's `/ticket/close`, whose
+  `.sudo()` lookup of a request-supplied id bypassed the portal record rule.
 
 **Financial** (`ncollection_account_*` + MIS):
 - `ncollection_account_core` — shared financial base, subscription restriction hooks.
 - `ncollection_account_reports` — native report engine: filters, drill-down, PDF + XLSX.
 - `ncollection_account_dashboard` — Finance / Accountant / Cash / CEO dashboards
   (presentation only — consumes the report services).
+- `ncollection_account_analytics` — cost/profit centres on Odoo's own analytic
+  plans (no dimension model of ours), the three FINANCIAL KPIs `ncollection_core`
+  deliberately declined (Revenue Growth %, DSO, Gross Margin %), budget variance
+  and trend extrapolation. ADR #15 names it the native owner of financial
+  computation alongside `ncollection_account_reports`.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
 

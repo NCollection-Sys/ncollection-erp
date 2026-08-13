@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The three FINANCIAL KPIs ncollection_core deliberately declined (see
+         its models/kpi/kpi.py docstring and the 2026-07-19 split). Targets are
+         left at 0 — a shipped target is a claim about someone else's business.
+
+         noupdate="1": a tenant edits the target and the period; an upgrade must
+         not reset their configuration. The definitions themselves live in
+         Python (a closed Selection dispatch), so a formula correction ships in
+         code and reaches every tenant regardless. -->
+    <data noupdate="1">
+        <record id="kpi_revenue_growth" model="ncollection.account.analytics.kpi">
+            <field name="key">revenue_growth</field>
+            <field name="name">Revenue Growth %</field>
+            <field name="unit">percent</field>
+            <field name="period_type">month</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="kpi_gross_margin" model="ncollection.account.analytics.kpi">
+            <field name="key">gross_margin</field>
+            <field name="name">Gross Margin %</field>
+            <field name="unit">percent</field>
+            <field name="period_type">month</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <record id="kpi_dso" model="ncollection.account.analytics.kpi">
+            <field name="key">dso</field>
+            <field name="name">Days Sales Outstanding</field>
+            <field name="unit">days</field>
+            <field name="period_type">month</field>
+            <field name="sequence">30</field>
+        </record>
+    </data>
+</odoo>

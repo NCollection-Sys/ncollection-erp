@@ -2,11 +2,10 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Account Reports',
-    # 19.0.1.3.0 (#413): the five F2-T05 models gain the create_uid ir.rule
-    # every other report already had. New security records, so `-u` is what
-    # applies it to an existing tenant database — until it runs, those reports
-    # stay readable across users.
-    'version': '19.0.1.3.0',
+    # 19.0.1.4.0 (#315/F2-T09): Department / Cost Centre / Profit Centre
+    # analysis. New models + views + ACL rows + a new dependency, so `-u` is
+    # what applies it to an existing tenant database.
+    'version': '19.0.1.4.0',
     'category': 'Accounting/Accounting',
     'summary': 'Native financial report engine: definition, filters, drill-down, '
                'PDF + XLSX export (F2-T01) — the permanent replacement for the '
@@ -20,7 +19,14 @@
     # qweb-pdf — so NO OCA dependency is added (oca-scout: BUILD; adopting OCA
     # report_xlsx would bake an AGPL dep into the module meant to OUTLIVE the
     # ADR #15 sunset). Odoo owns posting/tax; this module only READS and renders.
-    'depends': ['account', 'ncollection_account_core'],
+    # F2-T09 (#315) adds ncollection_account_analytics. The three dimension
+    # reports group by the analytic PLANS that module seeds, so they are
+    # meaningless without it — a hard dependency is the honest encoding: the
+    # menus exist exactly when the dimension does. The direction is acyclic by
+    # construction, because FPA §7 forbids the analytics module from owning
+    # reports, so it can never depend back on this one.
+    'depends': ['account', 'ncollection_account_core',
+                'ncollection_account_analytics'],
     'data': [
         'security/ir.model.access.csv',
         'security/report_security.xml',

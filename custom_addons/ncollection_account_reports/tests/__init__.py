@@ -13,3 +13,5 @@ from . import test_partner_statement
 from . import test_cash_flow_equity
 # Report-run isolation guard (#413)
 from . import test_report_security
+# F2-T09 dimension analysis (#315)
+from . import test_dimension_analysis
