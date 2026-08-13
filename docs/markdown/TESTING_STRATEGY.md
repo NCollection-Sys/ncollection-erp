@@ -9,8 +9,8 @@ Written 2026-08-06 against the live tree: **81 test files · 869 test methods ·
 full-estate baseline run on `958d8d6` the same day (§7).
 
 **Live counts — enforced, not re-typed (#405):
-**100**<!--count:test_files--> test files ·
-**1125**<!--count:test_methods--> test methods ·
+**101**<!--count:test_files--> test files ·
+**1152**<!--count:test_methods--> test methods ·
 **13**<!--count:verify_scripts--> `verify_*.sh` proofs
 (**8**<!--count:verify_all_suites--> suites in `verify-all`) ·
 **11**<!--count:e2e_specs--> Playwright specs.**
@@ -101,7 +101,7 @@ premise that nothing covered it; the workflow audit disproved that.
 
 | Layer | Implementation | Size | Trigger | Measured |
 |---|---|---|---|---|
-| Static gates | flake8 · pylint-odoo (baseline **57**<!--count:pylint_baseline-->) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` (**10**<!--count:invariants_rules--> rules) · `check_role_matrix.py` · `check_skips.py` · AI-gateway satellite | **12 steps** across the `lint` and `architecture-guard` jobs | pre-push (9 gates) + PR | 8s¹ |
+| Static gates | flake8 · pylint-odoo (baseline **57**<!--count:pylint_baseline-->) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` (**11**<!--count:invariants_rules--> rules) · `check_role_matrix.py` · `check_skips.py` · AI-gateway satellite | **12 steps** across the `lint` and `architecture-guard` jobs | pre-push (9 gates) + PR | 8s¹ |
 | Guard self-tests | `test_invariants.py` · `test_architecture_guard.py` · `test_check_skips.py` · `test_check_role_matrix.py` | **5**<!--count:guard_selftests--> | PR + pre-push, **before** the guards | <1s¹ |
 | Supply chain | pip-audit · Trivy (fs: vuln + secret) | 2 | PR, **non-blocking** | — |
 | Odoo ORM tests | `custom_addons/*/tests/` | **87 files · 961 methods** · 90 `TransactionCase` · 8 `HttpCase` | PR `test` job | 4m CI / 2m 8s local¹ |

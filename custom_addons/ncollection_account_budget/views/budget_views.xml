@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_budget_list" model="ir.ui.view">
+        <field name="name">ncollection.account.budget.list</field>
+        <field name="model">ncollection.account.budget</field>
+        <field name="arch" type="xml">
+            <list string="Budgets" decoration-muted="state == 'revised'"
+                  decoration-bf="state == 'approved'">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'approved'"
+                       decoration-warning="state == 'draft'"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_budget_form" model="ir.ui.view">
+        <field name="name">ncollection.account.budget.form</field>
+        <field name="model">ncollection.account.budget</field>
+        <field name="arch" type="xml">
+            <form string="Budget">
+                <header>
+                    <button name="action_approve" type="object" string="Approve"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_revise" type="object" string="Revise"
+                            invisible="state != 'approved'"/>
+                    <button name="action_reset_to_draft" type="object"
+                            string="Reset to Draft" invisible="state != 'approved'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="2026 Operating Budget"/></h1>
+                    </div>
+                    <group>
+                        <group string="Period">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="Scope">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <!-- Readonly: a revision points at what it
+                                 supersedes, and rewriting that by hand would
+                                 break the audit chain the acceptance asks for. -->
+                            <field name="revised_from_id" readonly="1"
+                                   invisible="not revised_from_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Budget Lines">
+                            <!-- Editable only in draft: an approved budget is a
+                                 decision, and lines that keep moving would make
+                                 "approved" a label rather than a state. -->
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="account_id"/>
+                                    <field name="name" string="Note"/>
+                                    <field name="analytic_distribution"
+                                           widget="analytic_distribution"/>
+                                    <field name="amount"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_budget" model="ir.actions.act_window">
+        <field name="name">Budgets</field>
+        <field name="res_model">ncollection.account.budget</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Its own list view: the generic comparison one prints
+         "Current"/"Previous", which would disagree with the PDF's
+         "Actual"/"Budget" for the same numbers (the #315 lesson). -->
+    <record id="view_report_line_budget_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.budget.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Budget vs Actual" create="false" delete="false"
+                  default_order="id" decoration-bf="level == 0">
+                <field name="label" string="Account"/>
+                <field name="previous_amount" string="Budget" sum="Budget"/>
+                <field name="current_amount" string="Actual" sum="Actual"/>
+                <field name="variance" sum="Variance"/>
+                <field name="variance_pct" string="Variance %" digits="[16,2]"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="account_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+                <button name="action_drill_down" type="object" string="Journal Items"
+                        icon="fa-search-plus" invisible="not account_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_budget_actual_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.budget.actual.form</field>
+        <field name="model">ncollection.account.report.budget.actual</field>
+        <field name="arch" type="xml">
+            <form string="Budget vs Actual">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Budgets">
+                            <field name="budget_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_budget_actual_wizard" model="ir.actions.act_window">
+        <field name="name">Budget vs Actual</field>
+        <field name="res_model">ncollection.account.report.budget.actual</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_budget_root" name="Budgets"
+              parent="account.menu_finance_entries" sequence="90"/>
+    <menuitem id="menu_budget" name="Budgets"
+              parent="menu_budget_root" action="action_budget" sequence="10"/>
+    <menuitem id="menu_report_budget_actual" name="Budget vs Actual"
+              parent="ncollection_account_reports.menu_ncollection_account_reports"
+              action="action_report_budget_actual_wizard" sequence="80"/>
+</odoo>

@@ -15,6 +15,8 @@ module could produce.
 """
 from datetime import date
 
+from unittest.mock import patch
+
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.tests import tagged
 
@@ -130,15 +132,41 @@ class TestDimensionAndForecast(AccountTestInvoicingCommon):
 
     # ---- variance --------------------------------------------------------
 
-    def test_variance_reports_the_missing_budget_module_rather_than_zero(self):
-        """#121 is not installed, so there is no budget. A 0.00 variance would
-        read as "exactly on budget" — the opposite of the truth."""
-        result = self.Forecast._nc_budget_variance(self.date_from, self.date_to)
+    def test_variance_reports_a_missing_budget_module_rather_than_zero(self):
+        """The ABSENT-module branch, now that #121 has shipped.
+
+        This test used to rely on ``ncollection_account_budget`` genuinely not
+        existing. It does now, and is in the CI matrix, so the branch is
+        reached by making the lookup return None — the same thing a tenant
+        without the module installed produces. The property under test is
+        unchanged and is the one that matters: a 0.00 variance would read as
+        "exactly on budget", the opposite of "there is no budget".
+        """
+        with patch.object(type(self.Forecast), '_nc_budget_model',
+                          return_value=None):
+            result = self.Forecast._nc_budget_variance(
+                self.date_from, self.date_to)
         self.assertFalse(result['available'])
         self.assertIn('ncollection_account_budget', result['reason'])
         self.assertNotIn('variance', result,
                          "a variance figure was returned with no budget to "
                          "compare against")
+
+    def test_variance_defers_to_the_budget_module_when_it_is_present(self):
+        """The other half of the contract, unreachable until #121 shipped.
+
+        `_nc_budget_variance` must hand off to the budget module rather than
+        answer itself — #120 owns the arithmetic, #121 owns the figure. With no
+        approved budget in this fixture the answer is still "unavailable", but
+        the REASON now comes from the budget module, which is how we know the
+        handoff happened rather than the absent-branch firing.
+        """
+        result = self.Forecast._nc_budget_variance(
+            self.date_from, self.date_to)
+        self.assertFalse(result['available'])
+        self.assertIn('No approved budget', result['reason'],
+                      "the reason did not come from ncollection_account_budget "
+                      "— _nc_budget_variance is not delegating")
 
     def test_variance_percentage_uses_an_absolute_denominator(self):
         """A cost budgeted at -100 and spent at -150 is a 50% OVERSPEND. Over a

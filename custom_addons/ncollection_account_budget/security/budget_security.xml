@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- The report WIZARD is a per-user run, so it gets the create_uid
+             scoping every sibling report has (#413). The budget records
+             themselves deliberately do NOT: a budget is shared tenant data
+             that a whole finance team reads and a manager edits. Scoping those
+             to their creator would hide the company's own plan from everyone
+             but whoever typed it — which is the wrong fix that #413's own
+             assertion message warns about. -->
+        <record id="rule_report_budget_actual_own" model="ir.rule">
+            <field name="name">Budget vs Actual runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_budget_actual"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+
+        <!-- Multi-company: a tenant with several companies must not see
+             another's budget. Mirrors the company rules Odoo puts on
+             account.move and friends. -->
+        <record id="rule_budget_company" model="ir.rule">
+            <field name="name">Budget: own company</field>
+            <field name="model_id" ref="model_ncollection_account_budget"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_budget_line_company" model="ir.rule">
+            <field name="name">Budget line: own company</field>
+            <field name="model_id" ref="model_ncollection_account_budget_line"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+        </record>
+    </data>
+</odoo>
