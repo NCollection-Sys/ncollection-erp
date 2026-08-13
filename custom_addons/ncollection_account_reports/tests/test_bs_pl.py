@@ -32,14 +32,15 @@ _MIS_BS = {
     'long_term_liabilities': ('liability_non_current',),
     'equity': ('equity', 'equity_unaffected'),
     'accumulated_earnings': ('income', 'income_other', 'expense',
-                             'expense_direct_cost', 'expense_depreciation'),
+                             'expense_other', 'expense_direct_cost',
+                             'expense_depreciation'),
 }
 # mis_report_profit_and_loss.xml — `balp[][('account_id.account_type', ...)]`
 _MIS_PL = {
     'revenue': ('income',),
     'other_income': ('income_other',),
     'cogs': ('expense_direct_cost',),
-    'operating_expenses': ('expense', 'expense_depreciation'),
+    'operating_expenses': ('expense', 'expense_other', 'expense_depreciation'),
 }
 # Credit-normal groups mis negates (a leading `-` on the expression).
 _MIS_NEGATED = {'current_liabilities', 'long_term_liabilities', 'equity',
@@ -76,6 +77,19 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
         # Current year (2026): revenue 1000, expense 300 → net 700.
         entry(date(2026, 6, 15), cls.receivable, cls.revenue, 1000.0)
         entry(date(2026, 6, 20), cls.expense, cls.receivable, 300.0)
+        # ...and 50 of `expense_other` (#411). Every income-statement TYPE must
+        # be exercised here, not just the five that happened to be mapped: the
+        # balancing identity held for years only because no fixture posted to
+        # this one, and a Balance Sheet that silently drops a class of expense
+        # is exactly the failure this test exists to catch.
+        cls.other_expense = cls.env['account.account'].create({
+            'name': 'FX Loss', 'code': 'NCFX01', 'account_type': 'expense_other',
+            'company_ids': [(6, 0, cls.env.company.ids)]})
+        # Funded from the PAYABLE, not the receivable: every other test here
+        # asserts the receivable figure literally, and a fixture change that
+        # moves unrelated expectations hides which assertion actually broke.
+        entry(date(2026, 6, 25), cls.other_expense,
+              cls.company_data['default_account_payable'], 50.0)
 
         cls.date_from = date(2026, 1, 1)
         cls.date_to = date(2026, 12, 31)
@@ -136,17 +150,21 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
                                figures['total_income'] - figures['cogs'])
         self.assertAlmostEqual(figures['net_profit'],
                                figures['gross_profit'] - figures['operating_expenses'])
-        self.assertAlmostEqual(figures['net_profit'], 700.0)    # 1000 - 300
+        # 1000 revenue - 300 expense - 50 expense_other. That last term is
+        # the #411 fix: before it, `expense_other` sat in NO bucket, so the
+        # P&L overstated profit by exactly its balance and the Balance
+        # Sheet's Accumulated Earnings — the same figure — did not balance.
+        self.assertAlmostEqual(figures['net_profit'], 650.0)
 
     def test_pl_previous_year_comparison_columns(self):
         """Current 2026 vs the same period in 2025 (revenue 400, no expense)."""
         rows = {r['label']: r for r in
                 self._pl(comparison_type='previous_year')._nc_compute_lines()}
         net = rows['NET PROFIT']
-        self.assertAlmostEqual(net['current_amount'], 700.0)
-        self.assertAlmostEqual(net['previous_amount'], 400.0)
-        self.assertAlmostEqual(net['variance'], 300.0)
-        self.assertAlmostEqual(net['variance_pct'], 75.0, places=2)
+        self.assertAlmostEqual(net['current_amount'], 650.0)   # #411
+        self.assertAlmostEqual(net['previous_amount'], 400.0)  # 2025: revenue only
+        self.assertAlmostEqual(net['variance'], 250.0)
+        self.assertAlmostEqual(net['variance_pct'], 62.5, places=2)
 
     def test_pl_previous_period_is_same_length_immediately_before(self):
         wizard = self._pl(date_from=date(2026, 4, 1), date_to=date(2026, 6, 30),
@@ -358,6 +376,6 @@ class TestBalanceSheetProfitAndLoss(AccountTestInvoicingCommon):
         lines = self.env['ncollection.account.report.line'].browse(
             action['domain'][0][2])
         net = lines.filtered(lambda line: line.label == 'NET PROFIT')
-        self.assertAlmostEqual(net.current_amount, 700.0)
+        self.assertAlmostEqual(net.current_amount, 650.0)      # #411
         self.assertAlmostEqual(net.previous_amount, 400.0)
-        self.assertAlmostEqual(net.variance, 300.0)
+        self.assertAlmostEqual(net.variance, 250.0)

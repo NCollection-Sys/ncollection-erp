@@ -308,19 +308,19 @@ class TestCashFlowAndEquity(AccountTestInvoicingCommon):
         with self.assertRaises(UserError):
             wizard._nc_compute_lines()
 
-    def test_the_bs_tie_diverges_only_by_expense_other_and_by_that_much(self):
-        """CHARACTERISATION, not approval.
+    def test_the_bs_tie_holds_for_expense_other_too(self):
+        """The type that used to break the tie, now asserted to hold it.
 
-        The Balance Sheet's ``accumulated_earnings`` bucket is a deliberate 1:1
-        transcription of the mis_builder template it replaces until #117, and
-        that expression omits ``expense_other``. This statement does not omit
-        it, because equity that drops a class of expense is wrong. So on books
-        that use such an account the two differ — by exactly its balance, which
-        is what this pins down. Reconciling them means editing the mis parity
-        map, which belongs to #117.
+        This test was written for #114 as a CHARACTERISATION: the Balance
+        Sheet's ``accumulated_earnings`` bucket omitted ``expense_other``, so
+        the two computations differed by exactly that account's balance, and
+        the test pinned the difference rather than approving it. #411 closed
+        the omission — in the mis templates and the wizards together, since the
+        templates are this repo's own — so the assertion is now equality.
 
-        The cash flow, which classifies every type, keeps reconciling — that
-        contrast is the whole argument for CLASSIFY-EVERYTHING.
+        Kept rather than deleted: this is the only test that exercises the tie
+        with an account type outside the five the parity map originally
+        covered, which is the exact hole #411 fixed.
         """
         fx_loss = self.env['account.account'].create({
             'code': 'NCX001', 'name': 'FX Loss', 'account_type': 'expense_other',
@@ -340,11 +340,14 @@ class TestCashFlowAndEquity(AccountTestInvoicingCommon):
             'target_move': 'posted', 'comparison_type': 'none'})
         bs_totals = bs._nc_bucket_totals(bs)[0]
         bs_equity = bs_totals['equity'] + bs_totals['accumulated_earnings']
-        self.assertAlmostEqual(bs_equity - closing, 500.0, places=2,
-                               msg="the BS/equity divergence is no longer "
-                                   "exactly the expense_other balance — #117 "
-                                   "may have closed it, or something else moved")
-        # The cash flow is unaffected: expense_other IS classified there.
+        self.assertAlmostEqual(bs_equity, closing, places=2,
+                               msg="the equity statement and the Balance "
+                                   "Sheet's equity section disagree on a book "
+                                   "using expense_other — the #411 fix has "
+                                   "regressed in one of them")
+        # The cash flow classifies every type, so it reconciled even while the
+        # two above disagreed. That contrast was the argument for
+        # CLASSIFY-EVERYTHING and is still worth asserting.
         figures = self._cf()._nc_totals()
         self.assertAlmostEqual(
             figures['operating'] + figures['investing'] + figures['financing'],
