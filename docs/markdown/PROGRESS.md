@@ -18,13 +18,13 @@
 | Phase 2 — SaaS Automation | 18 | 18 | 100% |
 | Phase 3 — ERP + UAE Localization | 12 | 13 | 92% |
 | Phase 4 — Executive Dashboards | 4 | 4 | 100% |
-| Phase 5 — AI Platform | 4 | 7 | 57% |
+| Phase 5 — AI Platform | 5 | 7 | 71% |
 | Phase 6 — Customer Portal | 1 | 5 | 20% |
 | Phase 7 — Mobile Application | 0 | 7 | 0% |
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 1 | 9 | 11% |
-| **Total** | **61** | **100** | **61%** |
+| **Total** | **62** | **100** | **62%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -110,7 +110,7 @@
 | P5-T02 | LLM Gateway Service | DEV-1 | P5-T01 | [#59](https://github.com/NCollection-Sys/ncollection-erp/issues/59) | ✅ done | 2026-08-07 |
 | P5-T03 | Context Injection Engine | DEV-1 | P5-T02, P4-T01 | [#60](https://github.com/NCollection-Sys/ncollection-erp/issues/60) | ✅ done | 2026-08-07 |
 | P5-T04 | Anomaly Detection Jobs | DEV-2 | P4-T01 | [#61](https://github.com/NCollection-Sys/ncollection-erp/issues/61) | ✅ done | 2026-08-05 |
-| P5-T05 | NL→Domain Mapper | DEV-2 | P5-T02 | [#62](https://github.com/NCollection-Sys/ncollection-erp/issues/62) | 🔨 open |  |
+| P5-T05 | NL→Domain Mapper | DEV-2 | P5-T02 | [#62](https://github.com/NCollection-Sys/ncollection-erp/issues/62) | ✅ done | 2026-08-13 |
 | P5-T06 | AI Chat Widget | DEV-3 | P5-T03 | [#63](https://github.com/NCollection-Sys/ncollection-erp/issues/63) | 🔨 open |  |
 | P5-T07 | Smart Search UI | DEV-3 | P5-T05 | [#64](https://github.com/NCollection-Sys/ncollection-erp/issues/64) | 🔨 open |  |
 
