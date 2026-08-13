@@ -6,8 +6,9 @@
 # added exactly +1 pylint finding by following this pattern.
 {
     'name': 'NCollection AI',
-    'summary': 'Tenant-side AI context injection (P5-T03)',
-    'version': '19.0.1.0.0',
+    'summary': 'Tenant-side AI context injection (P5-T03) and the '
+               'natural-language search-domain mapper (P5-T05, off by default)',
+    'version': '19.0.1.1.0',
     'category': 'Productivity',
     'author': 'NCollection',
     'license': 'LGPL-3',
