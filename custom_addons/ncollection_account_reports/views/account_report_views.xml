@@ -857,4 +857,148 @@
               parent="menu_ncollection_account_reports"
               action="action_report_equity_changes_wizard" sequence="47"/>
 
+    <!-- ==== F2-T09: dimension analysis (#315) ====
+         Three near-identical wizards on purpose: FPA names three reports
+         with three different metric sets, and one wizard with a dimension
+         selector would hide that a Profit Centre shows Gross Profit while a
+         Cost Centre does not. They share every line of computation via
+         ncollection.account.report.dimension.base. -->
+    <record id="view_report_cost_center_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.cost.center.form</field>
+        <field name="model">ncollection.account.report.cost.center</field>
+        <field name="arch" type="xml">
+            <form string="Cost Center Analysis">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_cost_center_wizard" model="ir.actions.act_window">
+        <field name="name">Cost Center Analysis</field>
+        <field name="res_model">ncollection.account.report.cost.center</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_cost_center" name="Cost Center Analysis"
+              parent="menu_ncollection_account_reports"
+              action="action_report_cost_center_wizard" sequence="70"/>
+
+    <record id="view_report_profit_center_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.profit.center.form</field>
+        <field name="model">ncollection.account.report.profit.center</field>
+        <field name="arch" type="xml">
+            <form string="Profit Center Analysis">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_profit_center_wizard" model="ir.actions.act_window">
+        <field name="name">Profit Center Analysis</field>
+        <field name="res_model">ncollection.account.report.profit.center</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_profit_center" name="Profit Center Analysis"
+              parent="menu_ncollection_account_reports"
+              action="action_report_profit_center_wizard" sequence="72"/>
+
+    <record id="view_report_department_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.department.form</field>
+        <field name="model">ncollection.account.report.department</field>
+        <field name="arch" type="xml">
+            <form string="Department Analysis">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Comparison">
+                            <field name="comparison_type"/>
+                            <field name="comparison_date_from"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                            <field name="comparison_date_to"
+                                   invisible="comparison_type != 'custom'"
+                                   required="comparison_type == 'custom'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_department_wizard" model="ir.actions.act_window">
+        <field name="name">Department Analysis</field>
+        <field name="res_model">ncollection.account.report.department</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_department" name="Department Analysis"
+              parent="menu_ncollection_account_reports"
+              action="action_report_department_wizard" sequence="74"/>
+
 </odoo>

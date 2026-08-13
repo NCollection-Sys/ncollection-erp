@@ -134,5 +134,28 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- F2-T09 dimension analysis (#315). These ARE per-user report runs,
+             so they get the same create_uid scoping as every sibling — and
+             #413's guard (test_every_model_this_module_grants_is_scoped_to_its_creator)
+             fails the build without them, which is the guard working as
+             designed on the first module added after it landed. -->
+        <record id="rule_report_cost_center_own" model="ir.rule">
+            <field name="name">Cost Center Analysis runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_cost_center"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_profit_center_own" model="ir.rule">
+            <field name="name">Profit Center Analysis runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_profit_center"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_department_own" model="ir.rule">
+            <field name="name">Department Analysis runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_department"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>
