@@ -8,7 +8,7 @@
 > python scripts/github_issue_sync.py --report
 > ```
 >
-> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-08-07
+> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-08-13
 
 ## Scoreboard
 
@@ -19,12 +19,12 @@
 | Phase 3 — ERP + UAE Localization | 12 | 13 | 92% |
 | Phase 4 — Executive Dashboards | 4 | 4 | 100% |
 | Phase 5 — AI Platform | 4 | 7 | 57% |
-| Phase 6 — Customer Portal | 0 | 5 | 0% |
+| Phase 6 — Customer Portal | 1 | 5 | 20% |
 | Phase 7 — Mobile Application | 0 | 7 | 0% |
 | Phase 8 — Platform Services | 0 | 9 | 0% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 1 | 9 | 11% |
-| **Total** | **60** | **100** | **60%** |
+| **Total** | **61** | **100** | **61%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -119,7 +119,7 @@
 | Task | Name | Dev | Deps | Issue | Status | Closed |
 |---|---|---|---|---|---|---|
 | P6-T01 | Regional Payment Gateways (Tenant Invoices) | DEV-1 | P2-T13 | [#65](https://github.com/NCollection-Sys/ncollection-erp/issues/65) | 🔨 open |  |
-| P6-T02 | Portal Access Rights | DEV-2 | P1-T08 | [#66](https://github.com/NCollection-Sys/ncollection-erp/issues/66) | 🔨 open |  |
+| P6-T02 | Portal Access Rights | DEV-2 | P1-T08 | [#66](https://github.com/NCollection-Sys/ncollection-erp/issues/66) | ✅ done | 2026-08-12 |
 | P6-T03 | Support Ticketing | DEV-2 | P6-T02 | [#67](https://github.com/NCollection-Sys/ncollection-erp/issues/67) | 🔨 open |  |
 | P6-T04 | Portal UI Redesign | DEV-3 | P6-T02 | [#68](https://github.com/NCollection-Sys/ncollection-erp/issues/68) | 🔨 open |  |
 | P6-T05 | Knowledge Base | DEV-3 | P6-T04 | [#69](https://github.com/NCollection-Sys/ncollection-erp/issues/69) | 🔨 open |  |

@@ -44,12 +44,39 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons (current state)
-- `ncollection_subscription` — **substantive**: Tenant / Subscription / Plan / Provisioning
-  / SaaS-admin Dashboard models + views + security.
+## Custom addons — **16**<!--count:custom_addons--> of them (count enforced; see #408)
+
+This list said **four** until #408, and described two of them as empty. They are not:
+`ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
+"near-empty" reasons about them entirely wrongly, which is why the count is now enforced —
+adding a module fails CI until someone updates this list.
+
+**Platform layer** (never queries tenant ERP models directly — Rule 3):
+- `ncollection_saas` — the provisioning engine: tenant lifecycle, provisioning jobs,
+  config-sync (+ re-key), fleet migration, backups, checkout, domains, exchange rates.
+- `ncollection_subscription` — Tenant / Subscription / Plan / SaaS-admin dashboard.
+- `ncollection_reseller` — partner reseller accounts, cascading branding, sub-tenants.
+- `ncollection_billing` — subscription billing: invoices, UAE VAT, proration, Stripe.
+
+**Tenant layer** (installed into each tenant database):
+- `ncollection_core` — the security spine: 8 role groups + implications, license
+  enforcement, menu visibility (Ring 1), workspace config, the financial gate, the
+  aggregation engine, KPIs, anomaly detection, the customer dashboard.
+- `ncollection_auth` — authentication audit log + hardened login/session defaults.
 - `ncollection_branding` — theme, logo, colors.
-- `ncollection_core` — near-empty; has the demo signup controller. Fills out over Phase 1.
-- `ncollection_saas` — empty skeleton (Phase 2).
+- `ncollection_ai` — tenant-side AI: gateway client, context injection, PII redaction.
+- `ncollection_approvals` — configurable approval workflows.
+- `ncollection_data_import` — onboarding import toolkit (CSV templates + wizard).
+
+**Financial** (`ncollection_account_*` + MIS):
+- `ncollection_account_core` — shared financial base, subscription restriction hooks.
+- `ncollection_account_reports` — native report engine: filters, drill-down, PDF + XLSX.
+- `ncollection_account_dashboard` — Finance / Accountant / Cash / CEO dashboards
+  (presentation only — consumes the report services).
+- `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
+- `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
+
+**Demo:** `ncollection_demo_freshorigin` — the Fresh Origin showcase dataset.
 
 In Odoo, a feature = **one module** holding both backend (`models/*.py`, `controllers/`)
 and frontend (`views/*.xml`, `static/src/*.js` OWL, `*.scss`). There is no separate
@@ -76,7 +103,10 @@ frontend/backend deploy — it's a monolith.
 - **CI** (`.github/workflows/ci.yml`, runs on PRs): `lint` (flake8 + pylint-odoo baseline),
   `architecture-guard` (`scripts/ci/architecture_guard.py`), `test` (installs addons +
   `--test-tags` scoped to ours), `build` (compose smoke test). No CD yet (Phase 2/3).
-- **The 100 GitHub issues** are the plan (`[P<phase>-T<nn>]` task IDs, phase + dev labels).
+- **The GitHub issues are the plan** (`[P<phase>-T<nn>]` / `[F<n>-T<nn>]` task IDs, phase +
+  dev labels) — ~122 task-ID issues as of 2026-08-13, up from the 100 this line used to
+  claim. Deliberately NOT machine-checked: it needs the GitHub API, and a lint-job guard
+  should not make network calls, so it is dated rather than enforced.
   Phase-9 (marketplace) is deferred until after Phase 10.
 
 ## Standing rules (binding — full list in docs/markdown/TASK_PROMPT_TEMPLATE.md)
@@ -89,10 +119,13 @@ frontend/backend deploy — it's a monolith.
   Business features that become part of the NCollection product should gradually migrate to native ncollection_* modules according to the project roadmap.
   Never introduce a new OCA dependency without checking the project architecture first.
 6. Small incremental commits, each verified. Run `make hooks-install` **once** and the
-   pre-push hook runs the fast gates for you — **nine**, not the four this line used to
-   list: flake8 · shellcheck · `invariants-tests` · `invariants` · `arch-guard-tests` ·
-   `skip-gate-tests` · `role-matrix-tests` · `role-matrix` · `architecture-guard`
-   (plus `pylint-odoo`, which fails only on findings beyond its baseline).
+   pre-push hook runs the fast gates for you — **11**<!--count:prepush_gates--> of them,
+   not the four this line claimed before #394 and not the nine it claimed after: flake8 ·
+   shellcheck · `invariants-tests` · `invariants` · `arch-guard-tests` · `skip-gate-tests` ·
+   `role-matrix-tests` · `role-matrix` · `doc-counts-tests` · `doc-counts` ·
+   `architecture-guard` (plus `pylint-odoo`, which fails only on findings beyond its
+   baseline). That number is now **enforced** by `scripts/ci/check_doc_counts.py` — it went
+   stale within hours twice, because nothing checked it (#408).
    Each guard's **tests run before the guard itself**: a scan that reports "clean"
    while its own rules are broken is worse than no scan, and this repo has shipped
    three of those (#330, #348, #311). Add `cd demo && npx tsc --noEmit` if `demo/`
@@ -147,7 +180,7 @@ STOP and ask before changing the architecture.
 **Tests:** `make test` runs the SAME suite CI runs, locally (`m=<module>` to scope). Its
 module list is derived from `ci.yml` by `scripts/dev/ci_matrix.py`, never copied, so local
 and CI cannot drift. It owns `nctest` and drops it at both ends.
-**Before merging:** `make verify-all` (8 suites: routing + provisioning + config-sync + cron ×2
+**Before merging:** `make verify-all` (**8**<!--count:verify_all_suites--> suites: routing + provisioning + config-sync + cron ×2
 + financial-bootstrap + **upgrade** + e2e).
 
 ## Test fixture ownership (do not cross the streams)

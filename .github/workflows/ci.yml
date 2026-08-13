@@ -82,11 +82,13 @@ jobs:
       # #405: TESTING_STRATEGY.md's counts went stale within a day of #394
       # re-measuring them by hand. CLAUDE.md points at that document for "what
       # a green result actually proves", so a stale answer is worse than none.
-      - name: Test the testing-strategy guard
-        run: python scripts/ci/test_check_testing_strategy.py
+      - name: Test the doc-counts guard
+        run: python scripts/ci/test_check_doc_counts.py
 
-      - name: Check TESTING_STRATEGY.md counts match the tree
-        run: python scripts/ci/check_testing_strategy.py
+      # #408 also covers CLAUDE.md, which is auto-loaded into every session —
+      # a wrong number there is repeated to every future reader.
+      - name: Check TESTING_STRATEGY.md and CLAUDE.md counts match the tree
+        run: python scripts/ci/check_doc_counts.py
 
       # The AI gateway satellite (#59) is NOT an Odoo module, so the `test` job
       # below never sees it — `--test-tags` scopes that run to custom_addons.

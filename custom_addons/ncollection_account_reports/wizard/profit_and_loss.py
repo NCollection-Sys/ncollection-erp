@@ -26,8 +26,11 @@ _PL_BUCKETS = [
     ('revenue', "Sales Revenue", -1, ('income',)),
     ('other_income', "Other Operating Income", -1, ('income_other',)),
     ('cogs', "Cost of Goods Sold", 1, ('expense_direct_cost',)),
+    # `expense_other` added by #411 — see balance_sheet.py. A P&L that drops
+    # a class of expense overstates net profit, and the Balance Sheet's
+    # Accumulated Earnings is the same figure, so the two must move together.
     ('operating_expenses', "Operating Expenses", 1,
-     ('expense', 'expense_depreciation')),
+     ('expense', 'expense_other', 'expense_depreciation')),
 ]
 
 # Presentation order: (label, level, bucket_key or None for a derived subtotal).

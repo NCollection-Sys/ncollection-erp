@@ -2,7 +2,11 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Account Reports',
-    'version': '19.0.1.0.0',
+    # 19.0.1.3.0 (#413): the five F2-T05 models gain the create_uid ir.rule
+    # every other report already had. New security records, so `-u` is what
+    # applies it to an existing tenant database — until it runs, those reports
+    # stay readable across users.
+    'version': '19.0.1.3.0',
     'category': 'Accounting/Accounting',
     'summary': 'Native financial report engine: definition, filters, drill-down, '
                'PDF + XLSX export (F2-T01) — the permanent replacement for the '

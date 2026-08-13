@@ -121,7 +121,7 @@
     </record>
     <record id="bs_kpi_current_earnings_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="bs_kpi_current_earnings"/>
-        <field name="name">-bale[][('account_id.account_type', 'in', ('income', 'income_other', 'expense', 'expense_direct_cost', 'expense_depreciation'))]</field>
+        <field name="name">-bale[][('account_id.account_type', 'in', ('income', 'income_other', 'expense', 'expense_other', 'expense_direct_cost', 'expense_depreciation'))]</field>
     </record>
 
     <record id="bs_kpi_total_liab_eq" model="mis.report.kpi">

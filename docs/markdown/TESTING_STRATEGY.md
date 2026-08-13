@@ -9,8 +9,8 @@ Written 2026-08-06 against the live tree: **81 test files · 869 test methods ·
 full-estate baseline run on `958d8d6` the same day (§7).
 
 **Live counts — enforced, not re-typed (#405):
-**89**<!--count:test_files--> test files ·
-**997**<!--count:test_methods--> test methods ·
+**94**<!--count:test_files--> test files ·
+**1051**<!--count:test_methods--> test methods ·
 **13**<!--count:verify_scripts--> `verify_*.sh` proofs
 (**8**<!--count:verify_all_suites--> suites in `verify-all`) ·
 **11**<!--count:e2e_specs--> Playwright specs.**
@@ -19,7 +19,7 @@ The line above is kept as the dated original rather than overwritten, because th
 document's value is that its numbers can be trusted — which means showing when they
 were taken. #394 re-measured them all by hand and they were **wrong again twelve hours
 later**, after three merges. So the derivable ones now carry invisible
-`<!--count:*-->` markers and `scripts/ci/check_testing_strategy.py` fails CI when any
+`<!--count:*-->` markers and `scripts/ci/check_doc_counts.py` fails CI when any
 drifts. Update with `--write`, never by typing.
 
 Three figures are deliberately **not** enforced, because they cannot be derived from

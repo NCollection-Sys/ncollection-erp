@@ -178,4 +178,146 @@
         <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 
+    <!-- ==== F2-T05: partner-facing reports (#115) ====
+         A UNIQUE report_name per action, each a thin wrapper over the shared
+         body — sharing one renders every wizard, as the F2-T02 note above
+         records the hard way. -->
+    <record id="action_report_partner_ledger" model="ir.actions.report">
+        <field name="name">Partner Ledger</field>
+        <field name="model">ncollection.account.report.partner.ledger</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_partner_ledger</field>
+        <field name="report_file">ncollection_account_reports.report_partner_ledger</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_partner_ledger">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <record id="action_report_aged_partner" model="ir.actions.report">
+        <field name="name">Aged Partner Balance</field>
+        <field name="model">ncollection.account.report.aged.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_aged_partner</field>
+        <field name="report_file">ncollection_account_reports.report_aged_partner</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_aged_partner">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <record id="action_report_partner_statement" model="ir.actions.report">
+        <field name="name">Partner Statement</field>
+        <field name="model">ncollection.account.report.statement</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_partner_statement</field>
+        <field name="report_file">ncollection_account_reports.report_partner_statement</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <!-- A statement is ONE DOCUMENT PER PARTNER, so `web.external_layout` is
+         called inside the partner loop — each partner gets its own branded
+         page rather than all of them sharing one header. Branding (logo,
+         colours) comes from that layout via ncollection_branding: this adds no
+         layout of its own, which is what "branded per #49" means here. -->
+    <template id="report_partner_statement">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-foreach="o._nc_statement_docs()" t-as="st">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <h2 t-out="o._nc_report_title()"/>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong t-out="st['partner'].display_name"/>
+                                    <div t-out="st['partner'].contact_address"/>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <div><span t-out="o.date_from"/> → <span t-out="o.date_to"/></div>
+                                </div>
+                            </div>
+                            <table class="table table-sm o_main_table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th><th>Entry</th><th>Label</th>
+                                        <th class="text-end">Debit</th>
+                                        <th class="text-end">Credit</th>
+                                        <th class="text-end">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="font-weight:bold">
+                                        <td colspan="5">Opening Balance</td>
+                                        <td class="text-end">
+                                            <span t-out="st['opening']"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <t t-foreach="st['lines']" t-as="line">
+                                        <tr>
+                                            <td t-out="line['date']"/>
+                                            <td t-out="line['move_name']"/>
+                                            <td t-out="line['label']"/>
+                                            <td class="text-end">
+                                                <span t-out="line['debit']"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="line['credit']"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="line['running_balance']"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <tr style="font-weight:bold">
+                                        <td colspan="5">Balance Due</td>
+                                        <td class="text-end">
+                                            <span t-out="st['closing']"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ==== F2-T04: Cash Flow + Statement of Changes in Equity (#114) ====
+         A UNIQUE report_name per action, each a thin wrapper over the shared
+         body — sharing one renders every wizard, as the F2-T02 note above
+         records the hard way. -->
+    <record id="action_report_cash_flow" model="ir.actions.report">
+        <field name="name">Cash Flow Statement</field>
+        <field name="model">ncollection.account.report.cash.flow</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_cash_flow</field>
+        <field name="report_file">ncollection_account_reports.report_cash_flow</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_cash_flow">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <record id="action_report_equity_changes" model="ir.actions.report">
+        <field name="name">Statement of Changes in Equity</field>
+        <field name="model">ncollection.account.report.equity.changes</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_equity_changes</field>
+        <field name="report_file">ncollection_account_reports.report_equity_changes</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_equity_changes">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
 </odoo>
