@@ -76,13 +76,21 @@ class NcollectionAccountBudgetLine(models.Model):
                     "be changed. Revise it to make a new version.",
                     budget=line.budget_id.name, state=line.budget_id.state))
 
-    def unlink(self):
+    @api.ondelete(at_uninstall=False)
+    def _check_budget_editable_on_delete(self):
         """Deleting a line of an approved budget is an edit too.
 
         ``@api.constrains`` never fires on delete, so the check above cannot
-        cover this path however many fields it lists — it needs its own
-        override. Without it, "approved budgets do not change" held for every
-        edit except the most destructive one.
+        cover this path however many fields it lists. The first version
+        overrode ``unlink()`` and raised there, which pylint-odoo rejects
+        (``E8140 no-raise-unlink``) — and it is right to: an exception in
+        ``unlink`` also blocks module uninstall and data cleanup.
+
+        ``@api.ondelete(at_uninstall=False)`` is Odoo's mechanism for exactly
+        this. Core uses it for the same purpose in
+        ``account.move._unlink_forbid_parts_of_chain``. The flag is what makes
+        the difference: the rule protects live data and steps aside during
+        uninstall, which an ``unlink`` override cannot do.
         """
         for line in self:
             if line.budget_id.state != 'draft':
@@ -90,7 +98,6 @@ class NcollectionAccountBudgetLine(models.Model):
                     "%(budget)s is %(state)s — its lines cannot be deleted. "
                     "Revise it to make a new version.",
                     budget=line.budget_id.name, state=line.budget_id.state))
-        return super().unlink()
 
     # ---- actuals ---------------------------------------------------------
 
