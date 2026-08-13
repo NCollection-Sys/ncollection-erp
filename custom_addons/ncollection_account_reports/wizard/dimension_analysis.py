@@ -26,6 +26,28 @@ revenue arrives positive and costs negative. Costs are negated on the way out so
 a reader sees "Expense 10,000" rather than "-10,000" — the same presentation
 choice the P&L makes with ``sign``.
 
+AN UNDEFINED MARGIN DOES NOT SURVIVE RENDERING, AND THIS FILE USED TO CLAIM IT
+DID. A cost centre with costs and no revenue has an undefined margin, and
+``_nc_dimension_figures`` returns ``None`` for it — correct, and useful to a
+service consumer. But ``ncollection.account.report.line.ratio_pct`` is a
+``fields.Float``, and every renderer coerces: the engine writes ``None`` into
+the field (Odoo's Float does ``float(value or 0.0)``), the PDF template does
+``value or 0.0``, and the XLSX writer does the same. So the on-screen list, the
+PDF and the workbook all print **0.00%** — indistinguishable from a genuine
+break-even centre, which is exactly the misreading the sentinel was for.
+
+A Float column cannot express "undefined", so the honest options were to add a
+nullable presentation or to say so. This says so, and
+``test_an_undefined_margin_renders_as_zero_which_is_a_known_limitation`` pins
+the real behaviour so nobody re-derives the false guarantee from the comment.
+Filed for a proper fix.
+
+TARGET_MOVE DOES NOT APPLY HERE, so the three wizard forms do not offer it.
+Odoo creates ``account.analytic.line`` only for POSTED move lines (and
+``button_draft`` unlinks them again when a move is reset), so "All Entries"
+could only ever return the same rows as "Posted Entries". Showing a control
+that cannot change the answer is worse than omitting it.
+
 METRICS ARE FPA'S, WHERE FPA HAS THEM. §Cost Center Analysis specifies Revenue ·
 Expense · Profit · Margin; §Profit Center Analysis specifies Revenue · Expenses ·
 Gross Profit · Net Profit. **Department Analysis has no specification** — it is a
@@ -72,15 +94,41 @@ class NcollectionDimensionAnalysisBase(models.AbstractModel):
              'type': 'percent'}]
 
     def _nc_list_view_ref(self):
-        return 'ncollection_account_reports.view_report_line_profitability_list'
+        # Its own view, not Profitability's: that one labels `ratio_pct`
+        # "% of Revenue" — correct there, where every row IS a share of
+        # revenue. Here the figure is a MARGIN, and one report whose column is
+        # named one thing on screen and another in the PDF is the kind of gap
+        # between layers that already produced one bug in this ticket.
+        return 'ncollection_account_reports.view_report_line_dimension_list'
 
     # ---- figures ---------------------------------------------------------
 
-    def _nc_analytic_domain(self, date_from, date_to, account_types):
+    def _nc_analytic_window(self, date_from, date_to):
+        """The window + company, without any account-type restriction."""
         self.ensure_one()
-        return [('general_account_id.account_type', 'in', list(account_types)),
-                ('date', '>=', date_from), ('date', '<=', date_to),
+        return [('date', '>=', date_from), ('date', '<=', date_to),
                 ('company_id', '=', self.company_id.id)]
+
+    def _nc_analytic_domain(self, date_from, date_to, account_types):
+        return self._nc_analytic_window(date_from, date_to) + [
+            ('general_account_id.account_type', 'in', list(account_types))]
+
+    def _nc_unclassified_domain(self, date_from, date_to):
+        """Analytic lines carrying NO financial account.
+
+        ``general_account_id`` is computed from ``move_line_id`` and is NOT
+        required: a line entered by hand through Analytic Items, or one from an
+        uninvoiced timesheet, has none. Such a line matches none of the three
+        type domains, so without this it would drop out of revenue AND cost and
+        the dimension would read 0/0/0 while carrying real recorded activity —
+        absent rather than misclassified, which is the harder kind to notice.
+
+        It is surfaced as its own figure rather than folded into a bucket:
+        this module cannot know whether an unclassified amount is income or
+        cost, and guessing would be worse than showing it.
+        """
+        return self._nc_analytic_window(date_from, date_to) + [
+            ('general_account_id', '=', False)]
 
     def _nc_dimension_figures(self, date_from, date_to):
         """``{analytic_account: {revenue, cogs, opex, expense, profit,
@@ -116,6 +164,11 @@ class NcollectionDimensionAnalysisBase(models.AbstractModel):
         revenue = totals(REVENUE_TYPES)
         cogs = totals(COGS_TYPES)
         opex = totals(OPEX_TYPES)
+        unclassified_rows = self.env['account.analytic.line']._read_group(
+            base + self._nc_unclassified_domain(date_from, date_to),
+            groupby=[column], aggregates=['amount:sum'])
+        unclassified = {account.id: amount or 0.0
+                        for account, amount in unclassified_rows if account}
 
         figures = {}
         for account in accounts:
@@ -133,8 +186,13 @@ class NcollectionDimensionAnalysisBase(models.AbstractModel):
                 'expense': expense,
                 'gross_profit': account_revenue - account_cogs,
                 'profit': profit,
-                # None, not 0.0: a margin on no revenue is undefined, and 0%
-                # would read as "sold at cost".
+                # Real activity this module cannot classify. Surfaced so it
+                # cannot vanish; deliberately NOT added to profit, because its
+                # sign has no agreed meaning here.
+                'unclassified': unclassified.get(account.id, 0.0),
+                # None at the SERVICE layer, where a consumer can act on it.
+                # See the module docstring: it does NOT survive rendering, and
+                # pretending otherwise was this file's own bug.
                 'margin': (profit / account_revenue * 100.0
                            if account_revenue else None),
             }

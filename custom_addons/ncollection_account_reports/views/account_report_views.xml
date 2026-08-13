@@ -857,6 +857,25 @@
               parent="menu_ncollection_account_reports"
               action="action_report_equity_changes_wizard" sequence="47"/>
 
+    <record id="view_report_line_dimension_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.dimension.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Dimension Analysis" create="false" delete="false"
+                  default_order="id" decoration-bf="level == 0"
+                  decoration-muted="level == 2">
+                <field name="label" string="Dimension"/>
+                <field name="current_amount" sum="Current"/>
+                <field name="previous_amount" sum="Previous"/>
+                <field name="variance" sum="Variance"/>
+                <field name="ratio_pct" string="Margin %" digits="[16,2]"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="account_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
     <!-- ==== F2-T09: dimension analysis (#315) ====
          Three near-identical wizards on purpose: FPA names three reports
          with three different metric sets, and one wizard with a dimension
@@ -875,7 +894,6 @@
                                    domain="[('id', 'in', allowed_company_ids)]"/>
                             <field name="date_from"/>
                             <field name="date_to"/>
-                            <field name="target_move"/>
                         </group>
                         <group string="Comparison">
                             <field name="comparison_type"/>
@@ -921,7 +939,6 @@
                                    domain="[('id', 'in', allowed_company_ids)]"/>
                             <field name="date_from"/>
                             <field name="date_to"/>
-                            <field name="target_move"/>
                         </group>
                         <group string="Comparison">
                             <field name="comparison_type"/>
@@ -967,7 +984,6 @@
                                    domain="[('id', 'in', allowed_company_ids)]"/>
                             <field name="date_from"/>
                             <field name="date_to"/>
-                            <field name="target_move"/>
                         </group>
                         <group string="Comparison">
                             <field name="comparison_type"/>
