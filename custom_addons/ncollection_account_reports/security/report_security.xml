@@ -96,5 +96,43 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- F2-T05 partner-facing reports (#115), added by #413. These five
+             shipped with an ACL row and no rule: both wizards filter
+             `create_uid` in PYTHON when clearing a previous run, and that hand
+             filter was the only control — a plain RPC search([]) on
+             partner.line or aged.line walked straight past it and returned
+             another accountant's rendered partner figures. Standing Rule 4: a
+             restriction that exists only above the ORM is not a restriction.
+             The two .line models are the ones that carry money. -->
+        <record id="rule_report_partner_ledger_own" model="ir.rule">
+            <field name="name">Partner Ledger runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_partner_ledger"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_partner_line_own" model="ir.rule">
+            <field name="name">Partner Ledger lines: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_partner_line"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_aged_partner_own" model="ir.rule">
+            <field name="name">Aged Partner Balance runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_aged_partner"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_aged_line_own" model="ir.rule">
+            <field name="name">Aged Partner Balance lines: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_aged_line"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+        <record id="rule_report_statement_own" model="ir.rule">
+            <field name="name">Partner Statement runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_statement"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>
