@@ -2,7 +2,10 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Account Reports',
-    'version': '19.0.1.0.0',
+    # 19.0.1.1.0 (#115/F2-T05): partner-facing reports — Partner Ledger first.
+    # New models + views + ACL rows, so `-u` is what applies it to an existing
+    # tenant database.
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Accounting',
     'summary': 'Native financial report engine: definition, filters, drill-down, '
                'PDF + XLSX export (F2-T01) — the permanent replacement for the '
