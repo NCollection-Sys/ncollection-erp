@@ -14,7 +14,7 @@ variance is then a comparison of like with like, computed from
 translation layer in between that could drift.
 """
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import ValidationError
 
 # What "actual" means for a budget line: posted journal items only. A draft
 # invoice is an intention, and a budget that counted it would report spending
@@ -24,6 +24,17 @@ POSTED = ('posted',)
 
 class NcollectionAccountBudgetLine(models.Model):
     _name = 'ncollection.account.budget.line'
+    # analytic.mixin, not a raw Json field. It is what `account.move.line`
+    # inherits, so budget and actual really are "keyed alike" rather than only
+    # described that way. Concretely it supplies: `_validate_distribution()`'s
+    # 100%-per-root-plan check, the create/write percentage sanitiser,
+    # `_search_analytic_distribution` (so a budget can be searched or grouped by
+    # analytic account), `distribution_analytic_account_ids`, the GIN index, and
+    # `analytic_precision` — which the `analytic_distribution` WIDGET declares as
+    # a field dependency and the web client injects into the read spec whether or
+    # not the model has it. Without the mixin, opening the Budget Lines list asks
+    # for a field that does not exist.
+    _inherit = ['analytic.mixin']
     _description = 'NCollection Budget Line'
     _order = 'budget_id, account_id'
 
@@ -34,8 +45,7 @@ class NcollectionAccountBudgetLine(models.Model):
     account_id = fields.Many2one(
         'account.account', required=True, index=True,
         help="The financial account this line budgets.")
-    # Same mechanism the actuals use, so budget and actual are keyed alike.
-    analytic_distribution = fields.Json()
+    # `analytic_distribution` comes from analytic.mixin — see above.
     amount = fields.Monetary(required=True, currency_field='currency_id')
     currency_id = fields.Many2one(
         related='company_id.currency_id', readonly=True)
@@ -46,19 +56,41 @@ class NcollectionAccountBudgetLine(models.Model):
         'A budget line of zero budgets nothing — leave it out instead.',
     )
 
-    @api.constrains('budget_id')
+    @api.constrains('budget_id', 'account_id', 'amount',
+                    'analytic_distribution', 'name')
     def _check_budget_editable(self):
         """An approved budget is a decision; its lines stop moving.
 
-        Without this, "approved" would be a label rather than a state, and the
-        audit history would record an approval of something that later changed.
+        EVERY editable field is listed, not just ``budget_id``. Odoo runs a
+        constraint only when one of its declared fields is in the written vals
+        (``_validate_fields``: ``if not field_names.isdisjoint(check._constrains)``),
+        so the first version — constrained on ``budget_id`` alone — fired on
+        create and never on ``line.write({'amount': 99999})``. The guard existed
+        and enforced nothing, which is worse than not having it, because the
+        README and the acceptance criterion both claimed it worked.
         """
         for line in self:
             if line.budget_id.state != 'draft':
-                raise UserError(self.env._(
+                raise ValidationError(self.env._(
                     "%(budget)s is %(state)s — only a draft budget's lines can "
                     "be changed. Revise it to make a new version.",
                     budget=line.budget_id.name, state=line.budget_id.state))
+
+    def unlink(self):
+        """Deleting a line of an approved budget is an edit too.
+
+        ``@api.constrains`` never fires on delete, so the check above cannot
+        cover this path however many fields it lists — it needs its own
+        override. Without it, "approved budgets do not change" held for every
+        edit except the most destructive one.
+        """
+        for line in self:
+            if line.budget_id.state != 'draft':
+                raise ValidationError(self.env._(
+                    "%(budget)s is %(state)s — its lines cannot be deleted. "
+                    "Revise it to make a new version.",
+                    budget=line.budget_id.name, state=line.budget_id.state))
+        return super().unlink()
 
     # ---- actuals ---------------------------------------------------------
 

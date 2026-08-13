@@ -32,7 +32,12 @@
     # established. mis_builder_budget is compatible but AGPL-3, installed
     # nowhere, and inside the #117 sunset — useful as a design reference for
     # pro-rata accumulation, not as a dependency. repos.yml unchanged.
-    'depends': ['account', 'ncollection_account_core',
+    #   - mail                        : declared explicitly because the budget
+    #                                   model inherits mail.thread directly. It
+    #                                   arrives transitively through account
+    #                                   today, which works right up until that
+    #                                   chain changes.
+    'depends': ['account', 'mail', 'ncollection_account_core',
                 'ncollection_account_reports'],
     'data': [
         'security/ir.model.access.csv',

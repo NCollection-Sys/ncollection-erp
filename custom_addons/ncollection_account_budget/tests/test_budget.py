@@ -14,7 +14,7 @@ both ends) is asserted rather than assumed.
 from datetime import date
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import tagged
 
 
@@ -106,17 +106,83 @@ class TestBudget(AccountTestInvoicingCommon):
         with self.assertRaises(UserError):
             self.budget.action_reset_to_draft()
 
+    def test_a_revision_carries_the_lines_forward(self):
+        """THE test that was missing, and it is a CRITICAL one.
+
+        Odoo's One2many defaults to ``copy=False``, so ``action_revise`` used to
+        return a correct header — right name, dates, ``revised_from_id`` — with
+        ZERO lines, silently. "Revise" means "start from what was approved and
+        adjust it"; without the lines there is nothing to adjust.
+
+        The old test only asserted the ORIGINAL kept its line, which stayed true
+        the whole time the revision was coming out empty.
+        """
+        self.budget.action_approve()
+        revision = self.budget.action_revise()
+        self.assertEqual(
+            len(revision.line_ids), len(self.budget.line_ids),
+            "the revision lost the lines it was supposed to start from")
+        self.assertEqual(revision.line_ids.account_id, self.expense)
+        self.assertAlmostEqual(revision.line_ids.amount, 12000.0, places=2)
+        # ...and it is a COPY, not the same rows moved across.
+        self.assertNotEqual(revision.line_ids.id, self.budget.line_ids.id)
+
     def test_an_approved_budget_stops_accepting_line_changes(self):
         """Otherwise 'approved' is a label, not a state, and the audit history
         records an approval of something that later changed."""
         self.budget.action_approve()
-        with self.assertRaises(UserError):
+        with self.assertRaises(ValidationError):
             self.env['ncollection.account.budget.line'].create({
                 'budget_id': self.budget.id,
                 'account_id': self.expense.id, 'amount': 500.0})
 
+    def test_an_approved_budget_refuses_edits_to_an_EXISTING_line(self):
+        """The path the first guard missed entirely.
+
+        Odoo runs a constraint only when one of its declared fields is written,
+        so a guard constrained on ``budget_id`` alone fired on create and never
+        on ``line.write({'amount': ...})``. The README and the acceptance
+        criterion both claimed approved budgets were immutable while an RPC
+        write sailed straight through.
+        """
+        self.budget.action_approve()
+        line = self.budget.line_ids[0]
+        for values in ({'amount': 99999.0},
+                       {'account_id': self.payable.id},
+                       {'name': 'quietly changed'}):
+            with self.subTest(field=list(values)[0]):
+                with self.assertRaises(ValidationError):
+                    line.write(values)
+
+    def test_an_approved_budget_refuses_line_DELETION(self):
+        """`@api.constrains` never fires on delete, so the constraint above
+        cannot cover this however many fields it lists — deleting a line was the
+        one edit that stayed possible."""
+        self.budget.action_approve()
+        with self.assertRaises(ValidationError):
+            self.budget.line_ids.unlink()
+
+    def test_two_overlapping_approved_budgets_both_count(self):
+        """Deliberate, and asserted so it is a decision rather than an accident.
+
+        A company-wide budget and a departmental one may both touch the same
+        account for the same period. They are two real plans, so the figure is
+        their sum — but nothing said so until this test.
+        """
+        self.budget.action_approve()
+        second = self.Budget.create({
+            'name': 'March top-up',
+            'date_from': date(2026, 3, 1), 'date_to': date(2026, 3, 31),
+            'line_ids': [(0, 0, {'account_id': self.expense.id,
+                                 'amount': 500.0})]})
+        second.action_approve()
+        budgeted = self.Budget._nc_budgeted(date(2026, 3, 1), date(2026, 3, 31))
+        # 12,000 * 31/365 (pro-rated) + 500 (fully inside the window)
+        self.assertAlmostEqual(budgeted[self.expense.id],
+                               12000.0 * 31 / 365 + 500.0, places=2)
+
     def test_a_budget_cannot_end_before_it_starts(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             self.Budget.create({
                 'name': 'Backwards', 'date_from': date(2026, 12, 31),
                 'date_to': date(2026, 1, 1)})

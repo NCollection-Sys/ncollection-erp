@@ -31,7 +31,7 @@ likely to hold and the one ``mis_builder_budget`` reaches for under its
 rather than scattered through the arithmetic.
 """
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 STATES = [
     ('draft', 'Draft'),
@@ -56,7 +56,13 @@ class NcollectionAccountBudget(models.Model):
     date_to = fields.Date(required=True, tracking=True)
     state = fields.Selection(STATES, default='draft', required=True,
                              tracking=True, index=True)
-    line_ids = fields.One2many('ncollection.account.budget.line', 'budget_id')
+    # copy=True IS LOAD-BEARING. Odoo's One2many defaults to copy=False
+    # ("o2m are not copied by default", fields_relational.py), so without this
+    # `action_revise` returned a correct header with ZERO lines — the revision
+    # silently lost everything it was meant to start from. `account.move.line_ids`
+    # sets copy=True for exactly this reason.
+    line_ids = fields.One2many('ncollection.account.budget.line', 'budget_id',
+                               copy=True)
     # A revision points at what it supersedes, so the chain is walkable in both
     # directions and neither copy is silently authoritative.
     revised_from_id = fields.Many2one(
@@ -69,7 +75,7 @@ class NcollectionAccountBudget(models.Model):
     def _check_period(self):
         for budget in self:
             if budget.date_to < budget.date_from:
-                raise UserError(self.env._(
+                raise ValidationError(self.env._(
                     "A budget cannot end before it starts."))
 
     # ---- lifecycle -------------------------------------------------------
@@ -140,13 +146,21 @@ class NcollectionAccountBudget(models.Model):
             return 0.0
         return ((end - start).days + 1) / budget_days
 
-    def _nc_budgeted(self, date_from, date_to, account_types=None):
+    @api.model
+    def _nc_budgeted(self, date_from, date_to):
         """``{account_id: budgeted amount}`` pro-rated into the window.
 
         Only APPROVED budgets count. A draft is a proposal and a revised one has
         been superseded; including either would report a plan nobody agreed to.
+
+        ``@api.model`` because it deliberately searches EVERY approved budget
+        rather than reading ``self``. An earlier version carried a
+        ``self.ensure_one() if len(self) == 1 else None`` line that could never
+        raise — it read like a guard and was not one, and worse, it disguised
+        the fact that calling this on a specific subset silently ignores that
+        subset. The wizard's own ``_nc_budgeted`` is where a caller-chosen set
+        is honoured.
         """
-        self.ensure_one() if len(self) == 1 else None
         budgets = self.search([
             ('state', '=', 'approved'),
             ('company_id', '=', self.env.company.id),
@@ -160,8 +174,6 @@ class NcollectionAccountBudget(models.Model):
             if not ratio:
                 continue
             for line in budget.line_ids:
-                if account_types and line.account_id.account_type not in account_types:
-                    continue
                 budgeted[line.account_id.id] = (
                     budgeted.get(line.account_id.id, 0.0)
                     + line.amount * ratio)
