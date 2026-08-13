@@ -96,6 +96,56 @@ class TestHelpdeskSla(TransactionCase):
             ticket.nc_sla_resolution_deadline,
             ticket.create_date + timedelta(hours=10))
 
+    def test_editing_a_policy_moves_the_deadlines_of_its_existing_tickets(self):
+        """The gap the review caught, pinned.
+
+        `_compute_nc_sla_deadlines` depends on the TICKET's fields; it cannot
+        depend on the policy, which is found by search. So without the write()
+        override on the policy, tightening or loosening a commitment left every
+        already-matched ticket on its old deadline forever — and because the
+        cron only refreshes the STATE (derived from those deadlines), the badge
+        went confidently wrong rather than merely stale. Verified empirically
+        before the fix: the deadline did not move.
+        """
+        policy = self.Policy.create({
+            'name': 'Team editable', 'team_id': self.team.id, 'priority': '1',
+            'response_hours': 2.0, 'resolution_hours': 10.0})
+        ticket = self._ticket(priority='1', team=self.team)
+        self.assertEqual(ticket.nc_sla_policy_id, policy)
+        before = ticket.nc_sla_resolution_deadline
+
+        policy.resolution_hours = 20.0
+
+        ticket.invalidate_recordset(
+            ['nc_sla_resolution_deadline', 'nc_sla_response_deadline'])
+        self.assertNotEqual(
+            ticket.nc_sla_resolution_deadline, before,
+            "editing the policy must move the tickets it governs")
+        self.assertEqual(
+            ticket.nc_sla_resolution_deadline,
+            ticket.create_date + timedelta(hours=20))
+
+    def test_a_closed_tickets_verdict_survives_a_later_policy_edit(self):
+        """The other half: a recorded verdict must not be rewritten by a
+        commitment changed after the fact."""
+        policy = self.Policy.create({
+            'name': 'Team closing', 'team_id': self.team.id, 'priority': '2',
+            'response_hours': 2.0, 'resolution_hours': 10.0})
+        ticket = self._ticket(priority='2', team=self.team)
+        closed_stage = self.env['helpdesk.ticket.stage'].search(
+            [('closed', '=', True)], limit=1)
+        ticket.stage_id = closed_stage
+        self.assertEqual(ticket.nc_sla_state, 'met')
+
+        # Both hours move together: resolution < response is refused by the
+        # policy's own constraint, which caught this test writing an
+        # unsatisfiable policy on the first run.
+        policy.write({'response_hours': 0.25, 'resolution_hours': 0.5})
+
+        ticket.invalidate_recordset(['nc_sla_state'])
+        self.assertEqual(ticket.nc_sla_state, 'met',
+                         "a closed ticket's verdict must not be rewritten")
+
     def test_changing_priority_moves_the_deadlines(self):
         ticket = self._ticket(priority='0')
         before = ticket.nc_sla_resolution_deadline

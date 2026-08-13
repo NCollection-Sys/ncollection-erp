@@ -95,6 +95,52 @@ class NcHelpdeskSlaPolicy(models.Model):
                     "Resolution hours cannot be shorter than response hours "
                     "(policy \"%s\").", policy.name))
 
+    #: Editing any of these changes what a ticket's deadlines SHOULD be.
+    #: `hours` change the answer for tickets already matched here; the rest
+    #: change WHICH tickets match at all, so they need the wider sweep.
+    _DEADLINE_FIELDS = frozenset({'response_hours', 'resolution_hours'})
+    _MATCHING_FIELDS = frozenset({'team_id', 'priority', 'active', 'company_id'})
+
+    def write(self, vals):
+        """Push a changed commitment onto the tickets it governs.
+
+        WHY THIS OVERRIDE EXISTS. `helpdesk.ticket._compute_nc_sla_deadlines`
+        depends on the TICKET's team/priority/company/create_date — it cannot
+        depend on the policy, because the policy is found by a search rather
+        than reached through a field, and `@api.depends` cannot express that.
+        Without this, editing a policy's hours left every already-matched
+        ticket on its old deadline forever: no write to the ticket, and the
+        cron only refreshes `nc_sla_state`, which is derived from those stale
+        deadlines. The badge would then be confidently wrong rather than
+        merely late — the silent-wrong-while-green failure this repo's guards
+        exist to prevent.
+
+        Scope of the sweep is deliberately asymmetric: an hours edit only
+        affects tickets already matched to this policy, while a team/priority/
+        active change alters the MATCH itself, so open tickets in the affected
+        companies are re-evaluated too. Closed tickets are left alone — their
+        verdict is already recorded and must not be rewritten by a later
+        change of policy.
+        """
+        touches_deadline = self._DEADLINE_FIELDS & set(vals)
+        touches_matching = self._MATCHING_FIELDS & set(vals)
+        companies = self.mapped('company_id')
+        res = super().write(vals)
+        if not (touches_deadline or touches_matching):
+            return res
+
+        Ticket = self.env['helpdesk.ticket'].sudo()
+        affected = Ticket.search([('nc_sla_policy_id', 'in', self.ids)])
+        if touches_matching:
+            companies |= self.mapped('company_id')
+            affected |= Ticket.search([
+                ('closed', '=', False),
+                ('company_id', 'in', companies.ids)])
+        if affected:
+            affected._compute_nc_sla_deadlines()
+            affected._nc_sla_refresh()
+        return res
+
     @api.model
     def _match(self, team, priority, company):
         """The policy that governs a ticket, or an empty recordset.

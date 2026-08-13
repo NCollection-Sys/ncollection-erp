@@ -154,14 +154,27 @@ class HelpdeskTicket(models.Model):
         touches_response = 'user_id' in vals or 'stage_id' in vals
         res = super().write(vals)
         if touches_response:
-            for ticket in self:
-                if not ticket.nc_sla_first_response and (
-                        ticket.user_id or ticket.stage_id.closed):
-                    ticket.sudo().nc_sla_first_response = fields.Datetime.now()
+            # Batched, not one write per ticket. The property-setter form
+            # re-entered this override once per record, so a bulk reassignment
+            # from the list view cost an extra write each — bounded (the
+            # recursive call's vals never satisfies touches_response) but
+            # needless on a hot path.
+            to_stamp = self.filtered(
+                lambda t: not t.nc_sla_first_response
+                and (t.user_id or t.stage_id.closed))
+            if to_stamp:
+                to_stamp.sudo().write(
+                    {'nc_sla_first_response': fields.Datetime.now()})
         # Any of these can change the verdict; recompute rather than wait for
         # the cron, so the UI is right immediately after the action that
         # changed it.
-        if touches_response or {'priority', 'team_id', 'closed'} & set(vals):
+        #
+        # `closed` is deliberately NOT in this set. On helpdesk_mgmt it is
+        # related='stage_id.closed' store=True, hence readonly — it never
+        # arrives in vals, so listing it would read as a safety net that can
+        # never fire. Closing happens by writing stage_id, which
+        # touches_response already covers.
+        if touches_response or {'priority', 'team_id'} & set(vals):
             self._nc_sla_refresh()
         return res
 
