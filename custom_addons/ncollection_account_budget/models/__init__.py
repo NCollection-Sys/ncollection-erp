@@ -4,4 +4,3 @@
 # ncollection_account_analytics, so the report lives beside its data.
 from . import budget
 from . import budget_line
-from . import budget_report
