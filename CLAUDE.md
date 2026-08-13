@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **16**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **17**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -73,6 +73,11 @@ adding a module fails CI until someone updates this list.
 - `ncollection_account_reports` — native report engine: filters, drill-down, PDF + XLSX.
 - `ncollection_account_dashboard` — Finance / Accountant / Cash / CEO dashboards
   (presentation only — consumes the report services).
+- `ncollection_account_analytics` — cost/profit centres on Odoo's own analytic
+  plans (no dimension model of ours), the three FINANCIAL KPIs `ncollection_core`
+  deliberately declined (Revenue Growth %, DSO, Gross Margin %), budget variance
+  and trend extrapolation. ADR #15 names it the native owner of financial
+  computation alongside `ncollection_account_reports`.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
 
