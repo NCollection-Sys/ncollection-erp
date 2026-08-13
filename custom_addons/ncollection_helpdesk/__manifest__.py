@@ -23,6 +23,7 @@
     'depends': ['helpdesk_mgmt', 'helpdesk_mgmt_rating'],
     'data': [
         'security/ir.model.access.csv',
+        'security/sla_security.xml',
         'data/sla_data.xml',
         'views/sla_policy_views.xml',
         'views/helpdesk_ticket_views.xml',

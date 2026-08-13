@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            Company scoping for SLA policies.
+
+            The ACLs grant helpdesk agents read and managers write, with no
+            company domain — so in a tenant running more than one company, an
+            agent scoped to Company A could read (and a manager could edit)
+            Company B's commitments. The model already carries company_id and
+            _match() filters on it, so the MATCHING was never cross-company;
+            this closes direct read/write of the rows themselves.
+
+            Shape copied deliberately from the rule OCA ships for
+            helpdesk.ticket.team (helpdesk_security.xml) rather than invented:
+            `company_ids + [False]` keeps company-less fallback policies visible
+            to everyone, which is exactly what a fallback is for.
+
+            Global rule (no groups) so it applies to every group that can reach
+            the model, present and future — a rule attached to today's two
+            groups would silently not cover a third.
+        -->
+        <record id="nc_sla_policy_company_rule" model="ir.rule">
+            <field name="name">NCollection SLA policy: multi-company</field>
+            <field name="model_id" ref="model_ncollection_helpdesk_sla_policy"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+            <field name="global" eval="True"/>
+        </record>
+    </data>
+</odoo>
