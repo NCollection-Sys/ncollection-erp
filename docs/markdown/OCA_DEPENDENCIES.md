@@ -100,3 +100,38 @@ includes accounting. Nothing installs OCA modules into the admin DB.
   payment surface (`payment_status`, portal pay link). No OCA dependency, no Enterprise module.
 - **Auto-charge retry** (silently re-billing a stored card) is deferred — it needs saved payment
   tokens (not set up in P2-T13); the dunning here is the scheduled reminder-email cadence.
+
+## P6-T03 Support Ticketing — ADOPT `OCA/helpdesk`, build only the SLA gap
+
+- **The doc named the candidate.** `DELIVERABLE_1_SYSTEM_DESIGN.md` lists
+  `Helpdesk/Ticketing | OCA/helpdesk | P6-T03`, and its process is: search the 19.0
+  branch → evaluate/install → pin if suitable → otherwise document why not. This entry is
+  step 3 and step 4 at once: most of it is adopted, one piece is not available.
+- **The 19.0 branch is real and maintained** — ten modules, Production/Stable. That is the
+  decisive difference from the `auth_brute_force` precedent above, which was dead upstream
+  on every branch ≥12.0 and therefore correctly rebuilt on Odoo core.
+- **ADOPTED:** `helpdesk_mgmt` (ticket model, teams, stages, portal submit/track pages) and
+  `helpdesk_mgmt_rating` (CSAT on close). Pinned at `a8c722a0` in `repos.yml`.
+  - *Installs on the stock image* — `helpdesk_mgmt` depends on core `mail` + `portal` only
+    and declares **no** `external_dependencies`, so unlike the `queue_job`/`openupgradelib`
+    trap it needs no custom Dockerfile. Verified rather than assumed:
+    `-i helpdesk_mgmt,helpdesk_mgmt_rating` on a clean DB exits 0 with zero tracebacks.
+  - *No `website` dependency is dragged in.* The controllers carry `website=True`, which
+    looked like a problem for a platform that is deliberately backend/portal-only (every
+    NCollection route is `website=False`). Checked: the templates `t-call
+    portal.portal_layout`, and both modules installed with `website` **uninstalled**.
+  - *Odoo's own Helpdesk is Enterprise-only* — confirmed absent from the `odoo:19`
+    Community image — so there is no core alternative to weigh this against.
+- **BUILT CUSTOM:** SLA timers, in `ncollection_helpdesk`. `helpdesk_mgmt_sla` is **not on
+  the 19.0 branch**; its migration PR #1012 is open and unmerged, and two earlier attempts
+  (#1006, #1009) closed without landing. Vendoring an unmerged branch is the mistake
+  `auth_brute_force` taught, so the timers are native: a policy model (per team+priority),
+  response/resolution deadlines, and an hourly scan cron that refreshes the breach state —
+  a stored state no ORM recompute can maintain, because only the clock changes it.
+- **SUNSET note:** if PR #1012 merges, re-evaluate `ncollection_helpdesk` for retirement in
+  favour of upstream. Keep the module's surface small so that stays cheap.
+- **Portal isolation is adopted, not written.** `helpdesk_mgmt` already ships
+  `partner_id child_of user.commercial_partner_id` — the same convention P6-T02 measured as
+  this repo's majority pattern. We therefore add **no** `ir.rule`; instead
+  `test_ticket_portal_isolation.py` pins that domain, so an OCA bump that weakens it fails a
+  test rather than silently widening who can read a customer's tickets.
