@@ -136,8 +136,50 @@ Usage
     make ai-up                 # start the gateway satellite (mock provider)
     make ai-context-sample     # review the context for 20 sample questions
 
+Natural-language search domains (P5-T05)
+========================================
+
+``ncollection.ai.domain.mapper`` turns a question into a **validated Odoo search
+domain** for one of four models — ``sale.order``, ``account.move``,
+``stock.picking``, ``crm.lead`` — and stops there. It does not run the domain:
+no ``search``, no ``read``, no write, no ``sudo``. Execution belongs to the
+consumer (P5-T07 / #64), under that caller's own access rights.
+
+**Off, and mock-only.** Two independent gates, both deliberate:
+
+* ``ncollection_ai.enable_nl_domain_mapper`` — its own parameter, default
+  **False**. Deliberately NOT ``enable_free_text_questions``: #375 treats free
+  text as a separate, later decision, and one shared flag would mean enabling
+  either capability silently enabled the other.
+* The satellite must report the **mock** provider on ``/healthz``. #375 requires
+  a zero-retention agreement *and* a recorded administrator acknowledgement
+  before any live provider, and that acknowledgement mechanism does not exist
+  yet — so the config flag alone cannot start sending prose to a real provider.
+  This is a safety gate, not an authorisation mechanism; it does not make the
+  capability production-ready.
+
+**What crosses the boundary** is the question plus the field table for one
+model — names, types, and the options a selection field accepts. No records, no
+values, no aggregates. ``ncollection.ai.context`` is never called from here, so
+no tenant data can reach this prompt by any route.
+
+**Provider output is data, never code.** It is parsed with ``json.loads`` and
+then checked leaf by leaf in ``models/domain_schema.py`` — the whitelist *is*
+the boundary. Dotted traversal, unknown fields, traversing operators
+(``child_of``, ``any``), wrong value types, malformed prefix notation, and
+oversized or over-nested domains are all refused. A refusal never echoes the
+provider's text back.
+
+The field table was read off the live models (``ir_model_fields``), not
+inferred: ``account.move.user_id`` is absent because it is not stored, and
+``sale.order`` has no ``done`` state in Odoo 19.
+
+Conformance set: ``data/domain_test_set.json`` — 56 valid mappings plus
+adversarial cases (injection, malformed output, unsafe structure), exercised by
+``tests/test_domain_mapper.py`` with the gateway patched out.
+
 Credits
 =======
 
-NCollection — P5-T03, building on P4-T01 (aggregation engine) and P5-T02
-(gateway satellite).
+NCollection — P5-T03 and P5-T05, building on P4-T01 (aggregation engine) and
+P5-T02 (gateway satellite).
