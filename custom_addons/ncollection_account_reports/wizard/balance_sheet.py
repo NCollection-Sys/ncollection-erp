@@ -42,9 +42,14 @@ _BS_SECTIONS = [
          ('equity', 'equity_unaffected')),
         # The current + prior years' net result. Odoo COMPUTES this rather than
         # posting it, so without this bucket the statement would not balance.
+        # `expense_other` was missing here until #411, so a book using one
+        # produced a Balance Sheet that did not balance — by exactly that
+        # account's balance. The omission came from the mis template this
+        # bucket transcribes, which is OUR module and was corrected with it,
+        # so parity is preserved rather than broken.
         ('accumulated_earnings', "Accumulated Earnings", -1,
-         ('income', 'income_other', 'expense', 'expense_direct_cost',
-          'expense_depreciation')),
+         ('income', 'income_other', 'expense', 'expense_other',
+          'expense_direct_cost', 'expense_depreciation')),
     ], "TOTAL LIABILITIES & EQUITY"),
 ]
 

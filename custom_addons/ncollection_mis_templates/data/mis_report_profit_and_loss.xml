@@ -87,7 +87,7 @@
     </record>
     <record id="pl_kpi_op_expenses_expr" model="mis.report.kpi.expression">
         <field name="kpi_id" ref="pl_kpi_op_expenses"/>
-        <field name="name">balp[][('account_id.account_type', 'in', ('expense', 'expense_depreciation'))]</field>
+        <field name="name">balp[][('account_id.account_type', 'in', ('expense', 'expense_other', 'expense_depreciation'))]</field>
     </record>
 
     <record id="pl_kpi_operating_profit" model="mis.report.kpi">
