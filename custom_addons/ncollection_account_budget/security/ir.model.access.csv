@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_budget_read,ncollection.account.budget.read,model_ncollection_account_budget,account.group_account_readonly,1,0,0,0
+access_nc_budget_manage,ncollection.account.budget.manage,model_ncollection_account_budget,account.group_account_manager,1,1,1,1
+access_nc_budget_line_read,ncollection.account.budget.line.read,model_ncollection_account_budget_line,account.group_account_readonly,1,0,0,0
+access_nc_budget_line_manage,ncollection.account.budget.line.manage,model_ncollection_account_budget_line,account.group_account_manager,1,1,1,1
+access_nc_report_budget_actual,ncollection.account.report.budget.actual,model_ncollection_account_report_budget_actual,account.group_account_readonly,1,1,1,1

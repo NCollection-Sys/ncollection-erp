@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A UNIQUE report_name, wrapping the shared F2 body. Sharing one across
+         actions renders every wizard against the FIRST action's model — a bug
+         ncollection_account_reports records having shipped once. -->
+    <record id="action_report_budget_actual" model="ir.actions.report">
+        <field name="name">Budget vs Actual</field>
+        <field name="model">ncollection.account.report.budget.actual</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_budget.report_budget_actual</field>
+        <field name="report_file">ncollection_account_budget.report_budget_actual</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_budget_actual">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+</odoo>

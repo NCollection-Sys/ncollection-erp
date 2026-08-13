@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **17**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **18**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -78,6 +78,12 @@ adding a module fails CI until someone updates this list.
   deliberately declined (Revenue Growth %, DSO, Gross Margin %), budget variance
   and trend extrapolation. ADR #15 names it the native owner of financial
   computation alongside `ncollection_account_reports`.
+- `ncollection_account_budget` — budget planning, revision and approval (an
+  approved budget stops accepting line edits; a revision supersedes rather than
+  overwrites), plus the Budget-vs-Actual report. Budget lines key off a GL
+  account + `analytic_distribution`, the same way the actuals do, so the two
+  sides compare like with like. Satisfies the `_nc_variance_payload` contract
+  `ncollection_account_analytics` has been calling since #120.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
 
