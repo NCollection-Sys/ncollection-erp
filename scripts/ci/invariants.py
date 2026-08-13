@@ -285,7 +285,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 10
+RULE_COUNT = 11  # 11th: rule_ci_exemption_reasons (#422)
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -629,8 +629,21 @@ def _strip_yaml_comment(line: str) -> str:
 # the entire point of the rule. A module listed here that IS covered is reported
 # as a stale exemption, so the allowlist cannot quietly rot.
 CI_EXEMPT_MODULES: dict[str, str] = {
+    # Corrected by #422. This said "installed by `make demo-tenant`", which was
+    # not true and had never been checked: that target runs
+    # scripts/demo/build_demo_tenant.sh, which does not mention this module, and
+    # the module is `uninstalled` on every live database. The reason field
+    # exists so "excluded on purpose" and "forgotten" stay distinguishable, and
+    # this entry had quietly become the second while claiming the first.
+    #
+    # What is actually true is written below, and it names no command — so
+    # rule_ci_exemption_reasons has nothing to falsify, which is correct: this
+    # is prose, not a verifiable claim. Deciding what the dataset is FOR (wire
+    # it into a demo flow, install it deliberately, or retire it) is #418.
     "ncollection_demo_freshorigin":
-        "demo-tenant seeding, installed by `make demo-tenant`; not part of the CI matrix",
+        "a showcase dataset that nothing currently installs — not in the CI "
+        "matrix, and not reached by any script; its purpose is under review "
+        "in #418",
 }
 
 # Read the lists by TOKENISING the command the way bash does, not by matching a
@@ -1018,6 +1031,135 @@ def rule_portal_suite_models_reachable(out: list[str]) -> None:
             )
 
 
+_MAKE_TARGET_RE = re.compile(r"`make ([a-z0-9][a-z0-9._-]*)`")
+_MAKE_MENTION_RE = re.compile(r"`[^`]*\bmake\b[^`]*`")
+
+
+def _make_recipe(target: str) -> str | None:
+    """The recipe lines of a Makefile target, or None when it does not exist.
+
+    Deliberately literal: it reads the physical recipe rather than asking make
+    to expand it. Shelling out to `make` would need the whole toolchain present
+    and could execute something; reading the text cannot.
+    """
+    makefile = REPO_ROOT / "Makefile"
+    if not makefile.is_file():
+        return None
+    # A target HEADER, not any line starting with the name. `seed:=production`
+    # passes a naive startswith and is a variable assignment, not a rule.
+    header = re.compile(rf"^{re.escape(target)}\s*:(?!=)")
+    recipe: list[str] = []
+    found = False
+    collecting = False
+    continued = False
+    for line in makefile.read_text(encoding="utf-8").splitlines():
+        if collecting:
+            # Recipes are tab-indented, EXCEPT a continuation of the previous
+            # physical line, which make joins regardless of indentation.
+            if line.startswith("\t") or continued:
+                recipe.append(line)
+                continued = line.rstrip().endswith("\\")
+                continue
+            collecting = False
+        if header.match(line):
+            # GNU make takes the LAST definition when a target repeats, so a
+            # second header restarts collection rather than being ignored.
+            found = True
+            collecting = True
+            continued = False
+            recipe = []
+    return "\n".join(recipe) if found else None
+
+
+def _reason_evidence(target: str) -> str | None:
+    """``target``'s recipe plus the text of every script it invokes.
+
+    One level of indirection is followed on purpose. `make demo-tenant` is a
+    single line — `bash scripts/demo/build_demo_tenant.sh` — so the claim
+    "installed by make demo-tenant" is only checkable by reading that script.
+    Following further would mean writing a shell interpreter; one level covers
+    this repo's Makefile, where targets delegate immediately.
+    """
+    recipe = _make_recipe(target)
+    if recipe is None:
+        return None
+    evidence = [recipe]
+    # WHOLE TOKENS, not a substring search for `scripts/`. An unanchored
+    # `scripts/...` match against
+    #   ./custom_addons/ncollection_saas/scripts/provisioning/verify_x.sh
+    # captures only the tail, which resolves to no file — so the script's text
+    # is dropped from evidence SILENTLY and a true reason is reported as false.
+    # Six targets in this repo's Makefile invoke scripts by exactly that shape.
+    # Crying wolf on correct data is the failure this module's docstring calls
+    # worse than no guard at all.
+    for token in re.findall(r"[\w./-]+\.(?:sh|py)\b", recipe):
+        script = REPO_ROOT / token.lstrip("./")
+        if script.is_file():
+            evidence.append(script.read_text(encoding="utf-8"))
+    return "\n".join(evidence)
+
+
+def rule_ci_exemption_reasons(out: list[str]) -> None:
+    """Every CI exemption whose reason NAMES a command must be telling the truth.
+
+    ``CI_EXEMPT_MODULES`` already requires a reason, and the existing coverage
+    check catches one direction of rot: an exemption for a module that later
+    becomes covered. It cannot catch the other — a reason that was never true,
+    or that stopped being true when the thing it names changed. Not
+    hypothetical: `ncollection_demo_freshorigin`'s reason claimed "installed by
+    `make demo-tenant`" while that target's script never mentioned it, and
+    nothing turned red (#418, #422).
+
+    Only FALSIFIABLE reasons are checked. A reason naming no command is prose
+    and is left alone — "demo data, never installed in CI" is a perfectly good
+    reason with nothing to verify it against. Checking only the claims that CAN
+    be wrong is what keeps this from crying wolf, which this module's own
+    docstring calls worse than no guard at all.
+    """
+    for module, reason in CI_EXEMPT_MODULES.items():
+        targets = _MAKE_TARGET_RE.findall(reason)
+        # A reason that mentions `make` in a form this cannot parse — `make -C
+        # dir target`, `make target VAR=1`, two commands in one span — must say
+        # so. Skipping it silently would file it as unverifiable prose, which is
+        # how an unchecked claim looks exactly like a checked one.
+        if _MAKE_MENTION_RE.search(reason) and not targets:
+            out.append(
+                f"CI_EXEMPT_MODULES: `{module}`'s reason names a `make` command "
+                f"this guard cannot parse, so the claim went unverified. Use the "
+                f"plain `make <target>` form, or reword the reason as prose if "
+                f"there is nothing to check."
+            )
+        for target in targets:
+            evidence = _reason_evidence(target)
+            if evidence is None:
+                out.append(
+                    f"CI_EXEMPT_MODULES: `{module}`'s reason names `make {target}`, "
+                    f"but there is no such Makefile target. The reason cannot be "
+                    f"true, so the exemption is unexplained."
+                )
+                continue
+            # WORD BOUNDARY: a plain substring match reports `mod_a` as
+            # present when the evidence only mentions `mod_a_extra_addon`.
+            #
+            # KNOWN LIMIT, stated rather than hidden: this cannot read a
+            # NEGATED mention. A script commenting "we deliberately do not
+            # install X" satisfies the check. Detecting that needs to
+            # understand prose, and a guard that guesses at intent would
+            # produce exactly the false alarms this rule is careful to avoid.
+            # It verifies that the name APPEARS where the reason says it is
+            # handled — which is what catches a reason naming the wrong
+            # command, the failure that actually occurred.
+            if not re.search(rf"\b{re.escape(module)}\b", evidence):
+                out.append(
+                    f"CI_EXEMPT_MODULES: `{module}`'s reason says `make {target}` "
+                    f"handles it, but neither that target's recipe nor the scripts "
+                    f"it runs mention `{module}`. Either the reason is stale — fix "
+                    f"it or drop the exemption — or the command stopped doing what "
+                    f"it used to. An allowlist entry nobody can verify is the gap "
+                    f"the reason field exists to close."
+                )
+
+
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
     workflow = REPO_ROOT / CI_WORKFLOW
@@ -1280,6 +1422,7 @@ def main() -> int:
     # the change that introduces the bug is precisely the one whose diff does
     # not include ci.yml.
     rule_ci_module_coverage(findings)
+    rule_ci_exemption_reasons(findings)
     rule_cron_threads_scoped(findings)
     rule_cron_enumeration_declared(findings)
     rule_anchored_regex_uses_fullmatch(findings)
