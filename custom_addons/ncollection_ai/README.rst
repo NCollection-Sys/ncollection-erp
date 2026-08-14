@@ -73,7 +73,9 @@ Known limits
   ``"the wifi password is sunshine"`` must be refused and ``"the token is
   stored securely"`` must not, and those are the same sentence structurally.
   Turning it on is a deliberate act, taken with the provider terms it depends
-  on. See issue #375, which P5-T06 must resolve first.
+  on. See issue #375. The P5-T06 chat widget ships around this, not through
+  it: its default path sends **server-owned** curated prompts (below), and
+  its typed input only exists once this flag is deliberately on.
 
 * **Behind that switch, the free-text filter is best-effort.** It refuses a
   credential noun (``password``, ``key``, ``login``, ``cvv``, ``recovery
@@ -178,8 +180,59 @@ Conformance set: ``data/domain_test_set.json`` — 56 valid mappings plus
 adversarial cases (injection, malformed output, unsafe structure), exercised by
 ``tests/test_domain_mapper.py`` with the gateway patched out.
 
+The assistant chat widget (P5-T06)
+==================================
+
+A floating OWL assistant on every backend screen (``main_components``):
+minimize/expand, unread dot, per-user transcript, suggestion chips that follow
+the current module, and a typing indicator. Server half is
+``ncollection.ai.chat``; history is ``ncollection.ai.chat.message``.
+
+**How it is usable while free text is OFF — and why that is not a #375
+bypass.** The client sends a **key**; the question text is resolved
+server-side from ``data/suggested_prompts.json`` and an unknown key is
+refused. Server-owned English in a reviewable file is not *arbitrary user
+prose*, which is the category #375 gates. The curated path therefore runs the
+same pipeline (``_run_pipeline``: build → sanitise → send → rehydrate) without
+the free-text gate — and nothing else changes: typed input is a thin wrapper
+over ``ask()`` and inherits the flag, the secret scans and the cap; the input
+box is not even rendered until the server reports the flag on.
+
+Every suggestion is drawn from the **answerable** tier of the P5-T03 sample
+set, because a chip whose answer is "the data does not contain this" teaches
+users the assistant is broken. Grow ``suggested_prompts.json`` when the
+context builder grows sections, not before.
+
+**History is private per user, in both directions.** ACLs admit the
+financial-gate groups only; a **global** record rule scopes every operation to
+``user_id = user.id`` (two accountants cannot read each other); there is no
+write/unlink ACL below ``base.group_system``, because an editable record of
+what the assistant said is a tampering surface. An exchange is persisted only
+**after** an answer exists — a refusal or a gateway failure leaves no
+transcript.
+
+**Provider output is data end to end.** Stored as ``Text`` (never ``Html``),
+returned verbatim, and rendered client-side by an escape-first markdown subset
+(bold, inline code, ``- `` bullets): every character is HTML-escaped before
+any tag is introduced, so there is no path from model output to markup.
+
+**Deliberate v1 limits:**
+
+* **Batch, not streaming.** ``AI_PLATFORM_DESIGN.md`` §6 prescribes streaming
+  for chat, but the shipped P5-T02 gateway is batch-only and §6 itself ties
+  streaming to the #310 cron constraint. Decision recorded at the plan gate:
+  a typing indicator now; SSE is its own ticket, starting at the satellite.
+* **Module context is best-effort.** The widget reads the active model from
+  the router (record pages); anywhere it cannot, the server's ``default``
+  prompt set applies. The server treats ``module_ctx`` as untrusted either
+  way.
+* **Transcripts have no retention policy yet.** Rows live until the user is
+  deleted (``ondelete='cascade'``). If they accumulate, borrow
+  ``ncollection_auth``'s minimisation schedule rather than inventing a second
+  one.
+
 Credits
 =======
 
-NCollection — P5-T03 and P5-T05, building on P4-T01 (aggregation engine) and
-P5-T02 (gateway satellite).
+NCollection — P5-T03, P5-T05 and P5-T06, building on P4-T01 (aggregation
+engine) and P5-T02 (gateway satellite).
