@@ -1,0 +1,99 @@
+{
+  "_comment": [
+    "The SERVER-OWNED suggested-prompt registry for the P5-T06 chat widget.",
+    "",
+    "This file is the #375 boundary made concrete. That decision says no",
+    "ARBITRARY USER PROSE reaches the LLM provider while",
+    "ncollection_ai.enable_free_text_questions is off — and these prompts are",
+    "the opposite of arbitrary user prose: fixed English, reviewed in this",
+    "file, resolved server-side FROM THE KEY ALONE. The client sends a key;",
+    "the text it maps to never leaves this file's control. Editing this file",
+    "is editing what can be sent, which is exactly where that decision wants",
+    "the control surface to live (same philosophy as the #62 model whitelist).",
+    "",
+    "Every question is drawn from the ANSWERABLE tier of",
+    "data/sample_questions.json — the P5-T03 review corpus — because a",
+    "suggestion the default context cannot answer teaches users the assistant",
+    "is broken. The stock.picking set is deliberately finance-flavoured: the",
+    "default context carries no inventory sections (that is a documented",
+    "P5-T03 boundary), and offering 'What is in stock?' would promise an",
+    "answer the pipeline cannot give. Grow these lists when the context",
+    "builder grows sections, not before.",
+    "",
+    "modules maps an Odoo res_model (the widget reports where the user is)",
+    "to the prompt keys shown first. Unknown or missing contexts fall back",
+    "to 'default' server-side."
+  ],
+  "prompts": {
+    "workspace_summary": {
+      "label": "Summarise our financial position",
+      "question": "Summarise the financial position of this workspace."
+    },
+    "top_debtor": {
+      "label": "Who owes us the most?",
+      "question": "Which customer owes us the most right now?"
+    },
+    "receivable_total": {
+      "label": "Total outstanding receivables",
+      "question": "What is our total outstanding receivable balance?"
+    },
+    "unpaid_customers": {
+      "label": "Customers with unpaid invoices",
+      "question": "How many customers have unpaid invoices?"
+    },
+    "top_customers": {
+      "label": "Top three customers",
+      "question": "Who are our top three customers by sales value?"
+    },
+    "last_month_invoiced": {
+      "label": "Last month's invoicing",
+      "question": "What did we invoice last month?"
+    },
+    "invoicing_trend": {
+      "label": "Invoicing trend",
+      "question": "Is our invoicing trending up or down over the last few months?"
+    },
+    "reporting_currency": {
+      "label": "Reporting currency",
+      "question": "What currency do we report in?"
+    },
+    "best_month": {
+      "label": "Best invoicing month",
+      "question": "Which month had the highest invoiced total?"
+    },
+    "top_vs_receivables": {
+      "label": "Top customer vs receivables",
+      "question": "Compare our top customer's sales against our total receivables."
+    }
+  },
+  "modules": {
+    "default": [
+      "workspace_summary",
+      "top_debtor",
+      "last_month_invoiced",
+      "reporting_currency"
+    ],
+    "sale.order": [
+      "top_customers",
+      "last_month_invoiced",
+      "invoicing_trend",
+      "best_month"
+    ],
+    "crm.lead": [
+      "top_customers",
+      "top_vs_receivables",
+      "workspace_summary"
+    ],
+    "account.move": [
+      "top_debtor",
+      "receivable_total",
+      "unpaid_customers",
+      "invoicing_trend"
+    ],
+    "stock.picking": [
+      "workspace_summary",
+      "best_month",
+      "reporting_currency"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            A chat with the assistant is a PRIVATE per-user log — the widget
+            surfaces receivables and invoice history in prose, so another
+            user's transcript is financial data by transitivity.
+
+            The ACLs scope access to the financial-gate groups (Accountant,
+            CEO, base.group_system; Owner arrives via its CEO implication).
+            This rule scopes WITHIN those groups: two accountants must not
+            read each other's conversations either.
+
+            Global (no groups) so it binds every group that can reach the
+            model, present and future. All four operations on purpose —
+            reading another user's transcript is the leak, but writing or
+            deleting one would be tampering with someone else's record of
+            what the assistant told them.
+        -->
+        <record id="nc_ai_chat_message_own_rule" model="ir.rule">
+            <field name="name">AI chat history: own messages only</field>
+            <field name="model_id" ref="model_ncollection_ai_chat_message"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+    </data>
+</odoo>

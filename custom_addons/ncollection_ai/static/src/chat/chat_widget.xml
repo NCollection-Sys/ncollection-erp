@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_ai.ChatWidget">
+        <!-- Renders NOTHING for users outside the financial gate. UX only:
+             the server re-checks the gate on every RPC (Standing Rule 4). -->
+        <div t-if="state.enabled" class="nc-ai-chat">
+            <div t-if="state.open" class="nc-ai-chat__panel" role="dialog" aria-label="AI assistant">
+                <div class="nc-ai-chat__header">
+                    <span class="nc-ai-chat__title">AI Assistant</span>
+                    <button class="nc-ai-chat__iconbtn" title="Minimize"
+                            aria-label="Minimize" t-on-click="toggle">–</button>
+                </div>
+
+                <div class="nc-ai-chat__messages" t-ref="messages">
+                    <div t-if="!state.messages.length" class="nc-ai-chat__empty">
+                        Ask about this workspace's data — pick a suggestion below.
+                    </div>
+                    <t t-foreach="state.messages" t-as="msg" t-key="msg.id">
+                        <div t-attf-class="nc-ai-chat__msg nc-ai-chat__msg--{{ msg.role }}">
+                            <!-- User text: escaped verbatim. Assistant text:
+                                 escape-first markdown subset — never raw HTML. -->
+                            <t t-if="msg.role === 'user'"><span t-esc="msg.body"/></t>
+                            <t t-else=""><t t-out="renderBody(msg)"/></t>
+                        </div>
+                    </t>
+                    <div t-if="state.sending" class="nc-ai-chat__typing" aria-live="polite">
+                        <span/><span/><span/>
+                    </div>
+                    <div t-if="state.error" class="nc-ai-chat__error" role="alert">
+                        <t t-esc="state.error"/>
+                    </div>
+                </div>
+
+                <div class="nc-ai-chat__suggestions">
+                    <t t-foreach="state.suggestions" t-as="chip" t-key="chip.key">
+                        <button class="nc-ai-chat__chip" t-att-disabled="state.sending"
+                                t-on-click="() => this.onSuggested(chip.key)">
+                            <t t-esc="chip.label"/>
+                        </button>
+                    </t>
+                </div>
+
+                <!-- The input EXISTS only when the server said free text is
+                     enabled (#375). Submitting still lands in ask() with every
+                     server-side gate — this condition is convenience, not
+                     enforcement. -->
+                <form t-if="state.freeText" class="nc-ai-chat__form" t-on-submit="onSubmitTyped">
+                    <input type="text" class="nc-ai-chat__input"
+                           placeholder="Ask about your workspace data…"
+                           t-att-disabled="state.sending"
+                           t-model="state.typed"/>
+                    <button type="submit" class="nc-ai-chat__sendbtn"
+                            t-att-disabled="state.sending or !state.typed.trim()">
+                        Send
+                    </button>
+                </form>
+                <div t-else="" class="nc-ai-chat__hint">
+                    Free-typed questions are switched off on this workspace (see #375).
+                    Suggestions above are always available.
+                </div>
+            </div>
+
+            <button class="nc-ai-chat__bubble" t-on-click="toggle"
+                    t-att-title="state.open ? 'Minimize the AI assistant' : 'Open the AI assistant'"
+                    aria-label="AI assistant">
+                <span class="nc-ai-chat__bubble-icon">✦</span>
+                <span t-if="state.unread" class="nc-ai-chat__dot" aria-label="New answer"/>
+            </button>
+        </div>
+    </t>
+
+</templates>

@@ -8,3 +8,6 @@ from . import ai_question
 # is visible in the module listing rather than only as a detail of the mapper.
 from . import domain_schema
 from . import domain_mapper
+# P5-T06. History + the curated-prompt path; imports ai_question's constants,
+# so it stays below it here.
+from . import chat
