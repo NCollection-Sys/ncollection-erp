@@ -33,54 +33,40 @@ from .common import AuditCommon
 @tagged('post_install', '-at_install')
 class TestAcceptance(AuditCommon):
 
-    def _require_account(self):
-        """Skip ONLY where accounting genuinely is not installed.
+    def test_the_invoice_amount_criterion_is_NOT_met_and_says_why(self):
+        """P8-T05's acceptance criterion, and the reason this module does not
+        meet it.
 
-        This module depends on `auditlog` alone on purpose — it installs on the
-        platform database too, which has no `account` (verified: `saastest`
-        reports account `uninstalled`). In CI `account` IS installed, so this
-        never skips there — and if it ever did, `scripts/ci/check_skips.py`
-        fails the build on the unexpected skip rather than counting it as a
-        pass (#363). The guard does the work; this is not an escape hatch.
+            "changing an invoice amount produces an audit entry with old/new
+             values, user, IP, and timestamp"
+
+        Two measured facts make that undeliverable with this auditlog:
+
+        1. `amount_total` is a STORED COMPUTED field. Probed on a scratch
+           database before this module existed — changing a line's price_unit
+           moved it 100 -> 250 and produced ZERO `account.move` audit rows,
+           because recompute-flush never reaches the `write()` auditlog
+           patches. So the criterion needs `account.move.line`.
+
+        2. Auditing `account.move.line` overflows Python's recursion limit —
+           79 nested `write_full` frames cycling through
+           `_compute_discount_allocation_needed`. It surfaces only on CI, which
+           means the chain is near the ceiling everywhere rather than absent
+           here.
+
+        So the model the criterion needs is the model that cannot be audited.
+        The issue was rescoped rather than reworded; this test exists so the
+        gap is asserted in the suite instead of living only in a PR body.
         """
-        if 'account.move' not in self.env:
-            self.skipTest("account is not installed on this database")
-
-    def test_changing_an_invoice_amount_produces_a_full_audit_entry(self):
-        """THE acceptance criterion, end to end."""
-        self._require_account()
-        move = self._invoice(price_unit=100.0)
-        self.env['auditlog.log'].search([]).unlink()   # start from a clean slate
-
-        move.invoice_line_ids[0].price_unit = 250.0
-        self.env.flush_all()
-
-        line_model = self.env['ir.model']._get('account.move.line')
-        logs = self.env['auditlog.log'].search(
-            [('model_id', '=', line_model.id), ('method', '=', 'write')])
-        self.assertTrue(
-            logs,
-            "changing the invoice amount produced NO audit entry. A rule on "
-            "account.move alone cannot see this: amount_total is a stored "
-            "computed field written by recompute-flush, which never reaches "
-            "the write() auditlog patches.")
-
-        changed = {line.field_name: (line.old_value, line.new_value)
-                   for log in logs for line in log.line_ids}
-        self.assertIn('price_unit', changed, "the changed field is not logged")
-        old_value, new_value = changed['price_unit']
-        self.assertEqual((old_value, new_value), ('100.0', '250.0'),
-                         "old/new values are wrong — under log_type='fast' the "
-                         "old value would be a hardcoded False")
-
-        entry = logs[0]
-        self.assertEqual(entry.user_id, self.env.user, "no acting user")
-        self.assertTrue(entry.create_date, "no timestamp")
-        # IP is a separate assertion below: a test writes with no HTTP request,
-        # so empty here is the CORRECT answer, not a missing feature.
-        self.assertEqual(entry.nc_remote_addr, '',
-                         "a write with no HTTP request must record no IP "
-                         "rather than inventing one")
+        from ..models.audit_rule import _NC_WITHHELD
+        for name in ('account.move', 'account.move.line'):
+            self.assertIn(name, _NC_WITHHELD)
+            self.assertNotIn(
+                name, set(self.env['auditlog.rule'].search([]).mapped(
+                    'model_model')),
+                "%s is audited again — verify the recursion is genuinely "
+                "fixed on CI, not just locally, before trusting this" % name)
+        self.assertIn('recursion', _NC_WITHHELD['account.move.line'])
 
     def test_the_ip_is_captured_when_there_IS_a_request(self):
         """The fifth field. `auditlog` has no IP anywhere — grepped for

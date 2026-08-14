@@ -76,6 +76,33 @@ class TestTamperEvidence(AuditCommon):
         self.assertIn('chain_broken', kinds,
                       "a rewritten seal did not break the chain")
 
+    def test_a_manager_cannot_EDIT_audit_rows(self):
+        """The half the delete test missed, and Strix caught.
+
+        Removing `perm_unlink` stops a manager erasing a row and does nothing
+        about them REWRITING one. Editing is the easier attack and leaves a
+        plausible-looking trail rather than a hole. The seal would report it —
+        but only until the next seal covers the doctored row, and the manager
+        can wait an hour.
+
+        The ACL row is now read-only for the manager group on both
+        `auditlog.log` and `auditlog.log.line`; the retention cron runs as root
+        and prunes regardless.
+        """
+        manager = self.env['res.users'].create({
+            'name': 'Audit Manager 3', 'login': 'nc_audit_mgr3',
+            'group_ids': [(6, 0, [
+                self.env.ref('auditlog.group_auditlog_manager').id,
+                self.env.ref('base.group_user').id])],
+        })
+        log = self.Log.search([], limit=1)
+        with self.assertRaises(AccessError):
+            log.with_user(manager).write({'name': 'doctored'})
+        line = log.line_ids[:1]
+        if line:
+            with self.assertRaises(AccessError):
+                line.with_user(manager).write({'new_value': 'doctored'})
+
     def test_a_manager_cannot_delete_audit_rows(self):
         """OCA grants perm_unlink=1 on auditlog.log to its manager group. This
         module overrides that row to 0 — otherwise the tamper evidence above

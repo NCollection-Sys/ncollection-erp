@@ -86,6 +86,12 @@ What this does NOT cover
   test rather than hidden.
 * **Retention is trusted.** Pruning destroys the evidence it protected. Anyone
   who can run that cron can erase history without the verifier objecting.
+* **The invoice-amount acceptance criterion is NOT met.** It needs
+  ``account.move.line`` (``amount_total`` is a stored computed field, so a rule
+  on ``account.move`` alone logs nothing), and auditing that model overflows
+  Python's recursion limit — 79 nested ``write_full`` frames. Both financial
+  models are withheld. **#81 was rescoped to infrastructure-only rather than
+  reworded.**
 * **``res.users`` is NOT audited**, and the ticket lists it. Auditing it
   disables the plan seat limit: ``ncollection_core`` enforces ``max_users`` by
   overriding ``res.users.create``, ``auditlog`` enforces auditing by

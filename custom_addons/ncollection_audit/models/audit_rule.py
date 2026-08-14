@@ -68,9 +68,8 @@ _logger = logging.getLogger(__name__)
 # Named because the ticket names them — plus account.move.line, which the
 # acceptance criterion requires and the ticket's list omits (see the docstring).
 CRITICAL_MODELS = (
-    'account.move',
-    'account.move.line',
     'sale.order',
+    # 'account.move' and 'account.move.line' ARE DELIBERATELY ABSENT.
     # 'res.partner' IS DELIBERATELY ABSENT — see _NC_WITHHELD.
     # 'res.users' IS DELIBERATELY ABSENT, and the ticket names it. See
     # _NC_WITHHELD below — auditing it disables a licence seat limit.
@@ -80,6 +79,33 @@ CRITICAL_MODELS = (
 # Written as data so it can be asserted by a test: an omission that is not
 # tested reads as an oversight, and the next person quietly "fixes" it.
 _NC_WITHHELD = {
+    'account.move':
+        "shares account.move.line's recursion — see below. Writing a move "
+        "recomputes its lines, so the two cannot be separated without a way to "
+        "test the separation, and there is none (the failure appears only on "
+        "the GitHub runner).",
+    'account.move.line':
+        "auditing it produces a NESTED WRITE CHAIN that overflows Python's "
+        "recursion limit. Measured on CI: 79 nested auditlog `write_full` "
+        "frames, cycling through `_compute_discount_allocation_needed` — the "
+        "patched write does its before/after reads, a compute writes back, and "
+        "that re-enters the patched write; auditlog's `auditlog_disabled` "
+        "context does not cover the recordset the compute writes to. "
+        "\n\n"
+        "IT DOES NOT REPRODUCE LOCALLY, and that is the alarming part rather "
+        "than the reassuring one. The full matrix passes here 1229/0, and so "
+        "does a byte-for-byte reproduction of CI's own one-shot `docker run` "
+        "invocation. 79 frames x ~12 each is ~950, against a limit of 1000 — "
+        "so the chain is almost certainly present everywhere and merely "
+        "finishes under the ceiling here. A depth that scales with data and "
+        "sits within 5% of the limit fails on whichever tenant has one more "
+        "invoice line, not deterministically in CI. "
+        "\n\n"
+        "THIS IS THE MODEL THE ACCEPTANCE CRITERION NEEDS. Withholding it is "
+        "why #81 was rescoped rather than delivered as written: `amount_total` "
+        "is a stored computed field, so a rule on `account.move` alone logs "
+        "nothing when an invoice amount changes (measured), and the model that "
+        "would log it cannot be audited safely.",
     'res.partner':
         "full-mode auditing BREAKS res.partner creation. auditlog's write_full/"
         "create_full read every stored field before and after the write inside "
@@ -108,6 +134,22 @@ _NC_WITHHELD = {
         "pay for. Tracked separately; an audit trail must not punch a hole in "
         "billing enforcement to get itself installed.",
 }
+
+# Models whose CONTENTS are more sensitive than an audit viewer's clearance.
+#
+# Excluding a group-restricted FIELD (see _nc_excluded_fields) is not enough
+# when the whole record is the sensitive thing. `ncollection.auth.log` is
+# authentication telemetry — logins, failures, reset requests, source
+# addresses — and `auditlog.log.line` is readable by
+# `auditlog.group_auditlog_user`. Copying an auth trail into a
+# lower-trust trail hands out exactly the record that trail exists to protect,
+# and duplicates PII that `ncollection_auth`'s own retention deliberately
+# minimises on a schedule this module knows nothing about.
+#
+# These models keep their OWN audit story. Flagged by security review.
+SENSITIVE_MODELS = frozenset({
+    'ncollection.auth.log',
+})
 
 # Recompute churn, not user intent. Excluded so the trail stays readable.
 NOISY_FIELDS = {
@@ -149,6 +191,8 @@ class AuditlogRule(models.Model):
             if model is None or model._transient or model._abstract:
                 continue
             if record.model.startswith('ncollection.audit'):
+                continue
+            if record.model in SENSITIVE_MODELS:
                 continue
             names.append(record.model)
         return sorted(set(names))

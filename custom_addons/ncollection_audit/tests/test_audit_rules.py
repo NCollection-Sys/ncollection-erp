@@ -102,27 +102,6 @@ class TestAuditRules(AuditCommon):
         self.fail("no model in this database has a group-restricted stored "
                   "field, so the exclusion mechanism is untested here")
 
-    def test_account_move_LINE_is_seeded_not_just_account_move(self):
-        """The ticket's model list does NOT include account.move.line. Its
-        acceptance criterion requires it, because amount_total is a stored
-        computed field and recompute-flush never reaches the patched write().
-        Measured before this module existed:
-
-            PROBE amount_total before: 100.0 / after: 250.0
-            PROBE move logs before/after: 4 4
-
-        If someone ever 'tidies' the list back to the ticket's wording, this
-        fails and test_acceptance fails with it.
-        """
-        if 'account.move' not in self.env:
-            self.skipTest("account is not installed on this database")
-        seeded = set(self.Rule.search([]).mapped('model_model'))
-        self.assertIn('account.move', seeded)
-        self.assertIn(
-            'account.move.line', seeded,
-            "only account.move is audited, so changing an invoice amount "
-            "produces no audit entry at all")
-
     def test_every_persistent_ncollection_model_present_is_discovered(self):
         """Discovery is what lets ONE module serve a tenant database and the
         platform database, whose ncollection models differ. Hardcoding platform
@@ -134,6 +113,7 @@ class TestAuditRules(AuditCommon):
         fail for the wrong reason. In the full matrix the set is large, so the
         assertion has real content there.
         """
+        from ..models.audit_rule import SENSITIVE_MODELS
         IrModel = self.env['ir.model'].sudo()
         expected = set()
         for record in IrModel.search([('model', '=like', 'ncollection.%')]):
@@ -142,6 +122,8 @@ class TestAuditRules(AuditCommon):
                 continue
             if record.model.startswith('ncollection.audit'):
                 continue
+            if record.model in SENSITIVE_MODELS:
+                continue          # excluded on purpose — see the auth-log test
             expected.add(record.model)
         seeded = set(self.Rule.search([]).mapped('model_model'))
         self.assertFalse(
@@ -159,6 +141,28 @@ class TestAuditRules(AuditCommon):
             "the fixture model is missing, so this proves nothing")
         seeded = set(self.Rule.search([]).mapped('model_model'))
         self.assertFalse([n for n in seeded if n.startswith('ncollection.audit')])
+
+    def test_authentication_telemetry_is_not_copied_into_the_general_trail(self):
+        """Excluding a group-restricted FIELD is not enough when the whole
+        RECORD is the sensitive thing.
+
+        `ncollection.auth.log` is authentication telemetry — logins, failures,
+        reset requests, source addresses — and `auditlog.log.line` is readable
+        by `auditlog.group_auditlog_user`. Copying it into a lower-trust trail
+        hands out the record that trail exists to protect, and duplicates PII
+        that `ncollection_auth`'s own retention minimises on a schedule this
+        module knows nothing about. Flagged by security review.
+        """
+        from ..models.audit_rule import SENSITIVE_MODELS
+        self.assertIn('ncollection.auth.log', SENSITIVE_MODELS)
+        seeded = set(self.Rule.search([]).mapped('model_model'))
+        self.assertFalse(
+            seeded & SENSITIVE_MODELS,
+            "a model whose contents outrank an audit viewer's clearance is "
+            "being copied into the general trail: %s"
+            % sorted(seeded & SENSITIVE_MODELS))
+        self.assertFalse(
+            set(self.Rule._nc_audited_models()) & SENSITIVE_MODELS)
 
     def test_transient_models_are_never_audited(self):
         """Wizards are a form somebody opened, not a fact worth keeping — and

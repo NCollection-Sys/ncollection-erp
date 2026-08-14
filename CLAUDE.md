@@ -68,14 +68,15 @@ adding a module fails CI until someone updates this list.
   re-seeded on every registry load (R-014), a retention period that is a system
   parameter rather than a hardcoded 180, and tamper evidence — a per-row content
   digest plus hourly range seals, with `perm_unlink` taken off the manager group.
-  **Infrastructure only**: financial audit UX is #124. Two deliberate
-  departures from the ticket's model list, both measured: it ADDS
-  `account.move.line` (the acceptance criterion needs it — `amount_total` is a
-  stored computed field, so a rule on `account.move` alone logs nothing when an
-  invoice amount changes) and it WITHHOLDS `res.users` (auditing it disables the
-  plan seat limit, because `ncollection_core` enforces `max_users` via a
-  `res.users.create` override and `auditlog` monkeypatches `create` onto the
-  class). Group-restricted fields are never logged — `auditlog` ignores
+  **Infrastructure only, and #81 was RESCOPED**: three of the four models
+  P8-T05 names cannot be audited with this `auditlog`, each measured —
+  `res.users` disables the plan seat limit (#428), `res.partner` breaks partner
+  creation via ThrowAwayCache (#429), `account.move`/`account.move.line`
+  recurse ~950 frames deep (#431). The last is the model the acceptance
+  criterion needs, so **the invoice-amount criterion is not met**; what ships is
+  `sale.order` plus the `ncollection.*` models. Financial audit UX remains #124.
+  Group-restricted fields and `ncollection.auth.log` are never logged —
+  `auditlog` ignores
   `groups=` and its log table is readable by a lower-trust group.
 - `ncollection_branding` — theme, logo, colors.
 - `ncollection_ai` — tenant-side AI: gateway client, context injection, PII redaction.
