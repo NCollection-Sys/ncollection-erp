@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **19**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **20**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -88,6 +88,14 @@ adding a module fails CI until someone updates this list.
   account + `analytic_distribution`, the same way the actuals do, so the two
   sides compare like with like. Satisfies the `_nc_variance_payload` contract
   `ncollection_account_analytics` has been calling since #120.
+- `ncollection_account_assets` — fixed assets. **The one module that ADOPTS an OCA
+  engine rather than building native**: `account_asset_management` (pinned #122) owns
+  depreciation boards and posting, because Odoo 19 Community ships no assets at all and
+  OCA's model uses the same `analytic_distribution` #120 established — the single-FK
+  problem that ruled OCA out for #121 does not reproduce. This module owns what OCA
+  lacks: the **account-type guard** (a profile pointed at a plain `expense` account
+  leaves #114's cash flow balanced and reconciling while its Operating/Investing split
+  is silently wrong), the **transfer** flow, and the **Asset Register** on the F2 engine.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
 

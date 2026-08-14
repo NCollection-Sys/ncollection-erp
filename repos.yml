@@ -31,6 +31,22 @@
     - oca aa34bf33fc96fbae7fb5a2b9609b807b4e20514c
   target: oca aggregated
 
+# --- Financial tools (F4-T03 / #122. Consumed: account_asset_management —
+# --- the fixed-asset engine: registration, depreciation boards, posting and
+# --- disposal. Consumer: ncollection_account_assets, which owns the transfer
+# --- flow, the register report and the account-type wiring the engine does
+# --- not enforce. NOT a sunset pin: unlike account_financial_report and
+# --- mis_builder, this is engine-level accounting Odoo would own if Community
+# --- shipped it (it does not — account_asset is Enterprise-only, verified in
+# --- the running image), so FPA §4 puts it on the Odoo side of the line
+# --- permanently. Decision record: docs/markdown/OCA_DEPENDENCIES.md.)
+./oca/account-financial-tools:
+  remotes:
+    oca: https://github.com/OCA/account-financial-tools.git
+  merges:
+    - oca fde45b2c6d80b59eba1fc29bbd23c33a1c1e1af3
+  target: oca aggregated
+
 # --- MIS Builder (SUNSET: #117 [F2-T07]. Consumed: mis_builder,
 # --- mis_builder_budget; mis_builder_demo for demo DBs. Consumer:
 # --- ncollection_mis_templates)
