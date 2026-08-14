@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit, never rewrite: OCA owns these views and will keep changing
+         them. Anchoring on field names (not positions) keeps this working
+         across upstream layout edits. -->
+    <record id="ticket_view_form_nc_sla" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.nc.sla</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk_mgmt.ticket_view_form"/>
+        <field name="arch" type="xml">
+            <field name="priority" position="after">
+                <field name="nc_sla_state" widget="badge"
+                       decoration-success="nc_sla_state in ('on_track', 'met')"
+                       decoration-warning="nc_sla_state == 'due_soon'"
+                       decoration-danger="nc_sla_state == 'breached'"
+                       invisible="nc_sla_state == 'none'"/>
+                <field name="nc_sla_policy_id" invisible="not nc_sla_policy_id"/>
+                <field name="nc_sla_response_deadline"
+                       invisible="not nc_sla_response_deadline"/>
+                <field name="nc_sla_resolution_deadline"
+                       invisible="not nc_sla_resolution_deadline"/>
+                <field name="nc_sla_first_response"
+                       invisible="not nc_sla_first_response"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="ticket_view_tree_nc_sla" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.list.nc.sla</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk_mgmt.ticket_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="stage_id" position="after">
+                <field name="nc_sla_state" widget="badge"
+                       decoration-success="nc_sla_state in ('on_track', 'met')"
+                       decoration-warning="nc_sla_state == 'due_soon'"
+                       decoration-danger="nc_sla_state == 'breached'"/>
+                <field name="nc_sla_resolution_deadline" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            Fallback policies (team_id empty), one per priority. noupdate="1"
+            so a desk that tunes its own commitments does not have them
+            silently reset by the next module upgrade — these are defaults, not
+            enforced values.
+
+            The hours are a starting ladder, deliberately unambitious: an SLA
+            nobody can hit is worse than no SLA, because it turns the breach
+            column into noise everyone learns to ignore.
+        -->
+        <record id="sla_policy_urgent" model="ncollection.helpdesk.sla.policy">
+            <field name="name">Default — Urgent</field>
+            <field name="priority">3</field>
+            <field name="sequence">10</field>
+            <field name="response_hours">1.0</field>
+            <field name="resolution_hours">8.0</field>
+        </record>
+        <record id="sla_policy_high" model="ncollection.helpdesk.sla.policy">
+            <field name="name">Default — High</field>
+            <field name="priority">2</field>
+            <field name="sequence">20</field>
+            <field name="response_hours">4.0</field>
+            <field name="resolution_hours">24.0</field>
+        </record>
+        <record id="sla_policy_normal" model="ncollection.helpdesk.sla.policy">
+            <field name="name">Default — Normal</field>
+            <field name="priority">1</field>
+            <field name="sequence">30</field>
+            <field name="response_hours">8.0</field>
+            <field name="resolution_hours">48.0</field>
+        </record>
+        <record id="sla_policy_low" model="ncollection.helpdesk.sla.policy">
+            <field name="name">Default — Low</field>
+            <field name="priority">0</field>
+            <field name="sequence">40</field>
+            <field name="response_hours">24.0</field>
+            <field name="resolution_hours">120.0</field>
+        </record>
+
+        <!--
+            The SLA scan. A breach is a fact about the clock, and no ORM
+            recompute fires because time passed — so without this cron the
+            stored nc_sla_state would only ever be as fresh as the last write
+            to the ticket. Same reasoning as the P2-T14 lifecycle sweep.
+
+            Hourly, not daily: the tightest shipped promise is a 1-hour Urgent
+            response, and a daily scan would report that breach up to a day
+            late. The sweep only touches tickets that carry a policy and writes
+            only on change, so the cost is bounded by open-ticket count.
+        -->
+        <record id="cron_nc_sla_scan" model="ir.cron">
+            <field name="name">NCollection: helpdesk SLA scan</field>
+            <field name="model_id" ref="helpdesk_mgmt.model_helpdesk_ticket"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_nc_sla_scan()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

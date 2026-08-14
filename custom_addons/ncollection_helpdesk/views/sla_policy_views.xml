@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_nc_sla_policy_list" model="ir.ui.view">
+        <field name="name">ncollection.helpdesk.sla.policy.list</field>
+        <field name="model">ncollection.helpdesk.sla.policy</field>
+        <field name="arch" type="xml">
+            <list string="SLA Policies">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="team_id" placeholder="All teams"/>
+                <field name="priority"/>
+                <field name="response_hours"/>
+                <field name="resolution_hours"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_nc_sla_policy_form" model="ir.ui.view">
+        <field name="name">ncollection.helpdesk.sla.policy.form</field>
+        <field name="model">ncollection.helpdesk.sla.policy</field>
+        <field name="arch" type="xml">
+            <form string="SLA Policy">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Finance — Urgent"/></h1>
+                    </div>
+                    <group>
+                        <group string="Applies to">
+                            <field name="team_id" placeholder="All teams (fallback)"/>
+                            <field name="priority"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Commitment (elapsed hours)">
+                            <field name="response_hours"/>
+                            <field name="resolution_hours"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_nc_sla_policy" model="ir.actions.act_window">
+        <field name="name">SLA Policies</field>
+        <field name="res_model">ncollection.helpdesk.sla.policy</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Under Helpdesk > Configuration, where an OCA helpdesk admin already
+         looks for teams and stages. Gated to the manager group, mirrored by
+         the ACL (manager rw, user read-only) — a menu is not authorization. -->
+    <menuitem id="menu_nc_sla_policy"
+              name="SLA Policies"
+              parent="helpdesk_mgmt.helpdesk_ticket_config_main_menu"
+              action="action_nc_sla_policy"
+              groups="helpdesk_mgmt.group_helpdesk_manager"
+              sequence="50"/>
+
+</odoo>

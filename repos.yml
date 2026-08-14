@@ -110,3 +110,36 @@
   merges:
     - oca ebb87ea4e2e0f1838e3b6646a94ac0d6fcb6cf10
   target: oca aggregated
+
+# --- Helpdesk (P6-T03 / #67. Consumed: helpdesk_mgmt — the ticket model,
+# --- teams, stages and the portal submit/track pages; helpdesk_mgmt_rating —
+# --- CSAT on close. Consumer: ncollection_helpdesk, which adds SLA timers.
+# ---
+# --- WHY ADOPTED rather than built. DELIVERABLE_1 §"OCA Repository to Check"
+# --- names this repo for P6-T03, and its process is search -> evaluate ->
+# --- pin, or document why not. The 19.0 branch is real and Production/Stable
+# --- (unlike auth_brute_force above, which is dead upstream), helpdesk_mgmt
+# --- depends on core `mail` + `portal` ONLY, and declares no
+# --- external_dependencies — so unlike the queue_job/openupgradelib trap it
+# --- installs on the stock odoo:19 image. Verified here, not assumed:
+# --- `-i helpdesk_mgmt,helpdesk_mgmt_rating` on a clean DB exits 0 with zero
+# --- tracebacks. Odoo's own Helpdesk is Enterprise-only, so there is no core
+# --- alternative to weigh it against.
+# ---
+# --- NOT dragged in: `website`. The routes carry website=True, but the
+# --- templates t-call `portal.portal_layout` and the modules installed with
+# --- `website` UNINSTALLED — checked, because this platform is deliberately
+# --- backend/portal-only (every ncollection route is website=False).
+# ---
+# --- SLA GAP (the reason ncollection_helpdesk exists): helpdesk_mgmt_sla is
+# --- NOT on the 19.0 branch. Its migration PR #1012 is open and unmerged, and
+# --- two earlier attempts (#1006, #1009) closed without landing. Grafting an
+# --- unmerged branch would repeat the mistake auth_brute_force taught, so the
+# --- SLA timers are built natively and that module is marked for retirement if
+# --- #1012 ever merges.
+./oca/helpdesk:
+  remotes:
+    oca: https://github.com/OCA/helpdesk.git
+  merges:
+    - oca a8c722a03a5c6d76bf86d9feea13ae34c9abb3a5
+  target: oca aggregated
