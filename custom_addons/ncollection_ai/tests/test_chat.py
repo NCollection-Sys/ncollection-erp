@@ -105,7 +105,7 @@ class TestChatService(TransactionCase):
     def test_the_registry_is_internally_consistent(self):
         """Every key a module list references must exist in prompts — a chip
         that 404s on click is a data bug this test turns into a red build."""
-        from odoo.addons.ncollection_ai.models.chat import _prompt_catalog
+        from ..models.chat import _prompt_catalog
         catalog = _prompt_catalog()
         for module, keys in catalog['modules'].items():
             for key in keys:
@@ -266,7 +266,8 @@ class TestChatService(TransactionCase):
         with a user question and no answer — or worse, a fabricated one —
         misrepresents what happened."""
         def boom(_self, prompt, max_tokens=1024):
-            raise UserError('The AI assistant is temporarily unavailable.')
+            raise UserError(_self.env._(
+                'The AI assistant is temporarily unavailable.'))
 
         patcher = patch(_GATEWAY_TARGET, new=boom)
         patcher.start()

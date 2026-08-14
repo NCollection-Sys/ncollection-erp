@@ -7,7 +7,7 @@
 
 .nc-ai-chat {
     position: fixed;
-    right: 1.25rem;
+    inset-inline-end: 1.25rem;
     bottom: 1.25rem;
     z-index: 1056; // above content, below Odoo's modal backdrops (1060+)
     display: flex;
@@ -36,7 +36,7 @@
     &__dot {
         position: absolute;
         top: 0.2rem;
-        right: 0.2rem;
+        inset-inline-end: 0.2rem;
         width: 0.7rem;
         height: 0.7rem;
         border-radius: 50%;
@@ -109,7 +109,7 @@
         overflow-wrap: anywhere;
 
         p { margin: 0 0 0.35rem; &:last-child { margin-bottom: 0; } }
-        ul { margin: 0.25rem 0; padding-left: 1.1rem; }
+        ul { margin: 0.25rem 0; padding-inline-start: 1.1rem; }
         code {
             background: rgba(15, 23, 42, 0.08);
             border-radius: var(--nc-radius-sm, 0.25rem);
