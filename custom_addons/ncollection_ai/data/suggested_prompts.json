@@ -22,7 +22,12 @@
     "",
     "modules maps an Odoo res_model (the widget reports where the user is)",
     "to the prompt keys shown first. Unknown or missing contexts fall back",
-    "to 'default' server-side."
+    "to 'default' server-side.",
+    "",
+    "NOTE for dev/staging: this file is read ONCE per Odoo process",
+    "(models/chat.py caches it at import). After editing it, RESTART the",
+    "odoo container — a `make upgrade` alone re-reads XML/CSV data, not",
+    "Python-level caches, and would leave the old prompts being served."
   ],
   "prompts": {
     "workspace_summary": {

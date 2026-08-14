@@ -533,7 +533,15 @@ class AiQuestion(models.AbstractModel):
                 "text to an external provider must be switched on deliberately "
                 "— see the AI section of the workspace settings."))
 
-        question = (question or '')[:_MAX_QUESTION_CHARS]
+        # Type-guarded, not just falsy-guarded: a raw-RPC caller passing a
+        # list or an int would otherwise reach the regex scans and die in a
+        # TypeError 500 instead of a refusal. And an empty question is refused
+        # rather than silently mapped to an empty prompt — sending "" to the
+        # provider would spend tokens answering nothing. No security impact —
+        # the gate and the flag both precede this — purely error quality.
+        if not isinstance(question, str) or not question.strip():
+            raise UserError(self.env._("Please type a question to ask."))
+        question = question[:_MAX_QUESTION_CHARS]
 
         # Fail closed BEFORE any scrubbing runs — and, since the P5-T06 split,
         # before the context is even built, so a refused question triggers no

@@ -102,6 +102,33 @@ class TestChatService(TransactionCase):
              as_a.get_state(module_ctx={'evil': 1})['suggestions']],
             default_keys)
 
+    def test_get_state_can_skip_the_history_read(self):
+        """The navigation-driven chip refresh asks for suggestions only —
+        include_history=False must not silently keep reading the transcript."""
+        self._with_gateway()
+        as_a = self.Chat.with_user(self.acct_a)
+        as_a.send_suggested('workspace_summary')
+        light = as_a.get_state(include_history=False)
+        self.assertTrue(light['suggestions'])
+        self.assertEqual(light['history'], [])
+        # And the full call still returns it — skipping is opt-in.
+        self.assertEqual(len(as_a.get_state()['history']), 2)
+
+    def test_a_non_string_or_empty_question_is_refused_not_a_traceback(self):
+        """Raw-RPC junk (a list, an int, whitespace) must produce a refusal,
+        not a TypeError 500 — and never an empty prompt to the provider."""
+        self.env['ir.config_parameter'].sudo().set_param(
+            'ncollection_ai.enable_free_text_questions', 'True')
+        self.addCleanup(
+            self.env['ir.config_parameter'].sudo().set_param,
+            'ncollection_ai.enable_free_text_questions', 'False')
+        captured = self._with_gateway()
+        for junk in (['a', 'list'], 42, '', '   ', None, {'q': 'hi'}):
+            with self.assertRaises(UserError, msg=repr(junk)):
+                self.Chat.with_user(self.acct_a).send_typed(junk)
+        self.assertEqual(captured['calls'], 0)
+        self.assertFalse(self.Message.with_user(self.acct_a).search([]))
+
     def test_the_registry_is_internally_consistent(self):
         """Every key a module list references must exist in prompts — a chip
         that 404s on click is a data bug this test turns into a red build."""
@@ -112,6 +139,16 @@ class TestChatService(TransactionCase):
                 self.assertIn(key, catalog['prompts'],
                               '%s references unknown key %s' % (module, key))
         self.assertIn('default', catalog['modules'])
+        # Shape, not just existence: get_state reads ['label'] and
+        # send_suggested reads ['question'] unguarded, so an entry missing
+        # either would crash EVERY widget mount (the reviewer's phrasing:
+        # this file is designed to be edited, so the malformed-entry case is
+        # the expected change path, not a hypothetical).
+        for key, entry in catalog['prompts'].items():
+            for field in ('label', 'question'):
+                self.assertTrue(
+                    isinstance(entry.get(field), str) and entry[field].strip(),
+                    'prompt %r must carry a non-empty %r' % (key, field))
 
     # -------------------------------------------------------- suggested path
     def test_a_suggested_prompt_works_while_free_text_is_OFF(self):

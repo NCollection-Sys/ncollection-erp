@@ -120,6 +120,11 @@ class TestContextIsolation(TransactionCase):
             'ncollection.ai.context': 'build',
             'ncollection.ai.pii': 'sanitise',
             'ncollection.ai.gateway': 'complete',
+            # P5-T06. The pipeline runner send_suggested() fronts with its own
+            # gate INSTEAD of the free-text flag — public, it would be an
+            # any-prose-to-provider endpoint that bypasses the flag and both
+            # secret scans. Three reviewers independently asked for this pin.
+            'ncollection.ai.question': 'run_pipeline',
         }
         for model, method in public.items():
             self.assertFalse(

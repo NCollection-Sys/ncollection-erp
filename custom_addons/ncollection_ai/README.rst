@@ -230,6 +230,15 @@ any tag is introduced, so there is no path from model output to markup.
   deleted (``ondelete='cascade'``). If they accumulate, borrow
   ``ncollection_auth``'s minimisation schedule rather than inventing a second
   one.
+* **A gated user can insert rows into their OWN transcript** by calling
+  ``create()`` directly over RPC — the ACL grants create so the service can
+  persist as the user, and the record rule pins ``user_id``, so the reach is
+  strictly self. Cross-user forgery is blocked and tested; rendering is
+  escape-first, so planted markup is inert. Closing the self-insert path
+  would need a ``sudo()`` write channel, which this module deliberately does
+  not have (security review, 2026-08-14: LOW, accept-and-document). The
+  consequence to respect: **a transcript is a user's own notebook, not
+  evidence** — never treat it as an audit record.
 
 Credits
 =======

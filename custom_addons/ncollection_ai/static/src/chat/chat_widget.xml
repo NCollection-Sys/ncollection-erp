@@ -55,9 +55,11 @@
                         Send
                     </button>
                 </form>
+                <!-- No issue-tracker references in tenant-facing copy: a
+                     customer cannot see this repo's #375. -->
                 <div t-else="" class="nc-ai-chat__hint">
-                    Free-typed questions are switched off on this workspace (see #375).
-                    Suggestions above are always available.
+                    Free-typed questions are switched off on this workspace.
+                    The suggestions above are always available.
                 </div>
             </div>
 

@@ -22,10 +22,15 @@
 import { Component, markup, onWillStart, useEffect, useRef, useState } from "@odoo/owl";
 import { browser } from "@web/core/browser/browser";
 import { router, routerBus } from "@web/core/browser/router";
+import { _t } from "@web/core/l10n/translation";
 import { registry } from "@web/core/registry";
+import { user } from "@web/core/user";
 import { useBus, useService } from "@web/core/utils/hooks";
 
-const OPEN_STORAGE_KEY = "nc_ai_chat_open";
+// Namespaced per user: two people sharing a browser profile must not inherit
+// each other's open/closed panel state (the transcript itself is fetched
+// per-session and server-gated — only this boolean was shared).
+const OPEN_STORAGE_KEY = `nc_ai_chat_open.${user.userId}`;
 
 function escapeHtml(text) {
     return String(text)
@@ -99,10 +104,12 @@ export class NcAiChatWidget extends Component {
         // Suggestions follow the user around: when the route changes while
         // the panel is open, re-ask the server for the prompts that fit the
         // new module context. (Server falls back to 'default' for anything
-        // it does not recognise.)
+        // it does not recognise.) Fire-and-forget ON PURPOSE, so it must
+        // swallow its own rejection: a transient failure of a cosmetic
+        // refresh must not raise Odoo's traceback dialog over nothing.
         useBus(routerBus, "ROUTE_CHANGE", () => {
             if (this.state.enabled && this.state.open) {
-                this.refreshSuggestions();
+                this.refreshSuggestions().catch(() => {});
             }
         });
 
@@ -138,8 +145,12 @@ export class NcAiChatWidget extends Component {
     }
 
     async refreshSuggestions() {
+        // include_history=false: this refresh only wants the chips, and the
+        // server should not re-read 40 transcript rows to serve a navigation
+        // event (an odoo-reviewer finding — the widget discarded them).
         const state = await this.orm.call("ncollection.ai.chat", "get_state", [], {
             module_ctx: this.moduleCtx,
+            include_history: false,
         });
         if (state.enabled) {
             this.state.suggestions = state.suggestions || [];
@@ -151,7 +162,7 @@ export class NcAiChatWidget extends Component {
         browser.localStorage.setItem(OPEN_STORAGE_KEY, this.state.open ? "1" : "0");
         if (this.state.open) {
             this.state.unread = false;
-            this.refreshSuggestions();
+            this.refreshSuggestions().catch(() => {});
         }
     }
 
@@ -161,7 +172,7 @@ export class NcAiChatWidget extends Component {
 
     async _send(method, args) {
         if (this.state.sending) {
-            return;
+            return false;
         }
         this.state.sending = true;
         this.state.error = "";
@@ -171,6 +182,7 @@ export class NcAiChatWidget extends Component {
             if (!this.state.open) {
                 this.state.unread = true;
             }
+            return true;
         } catch (error) {
             // A refusal (gate, #375 flag, secret scan, unknown key) arrives
             // as an RPC error. It is shown as a transient notice and NOT
@@ -179,7 +191,8 @@ export class NcAiChatWidget extends Component {
             this.state.error =
                 (error && error.data && error.data.message) ||
                 (error && error.message) ||
-                "The assistant could not answer.";
+                _t("The assistant could not answer.");
+            return false;
         } finally {
             this.state.sending = false;
         }
@@ -196,7 +209,14 @@ export class NcAiChatWidget extends Component {
             return;
         }
         this.state.typed = "";
-        await this._send("send_typed", [question]);
+        const sent = await this._send("send_typed", [question]);
+        if (!sent && !this.state.typed) {
+            // A refusal is an EXPECTED flow here (the secret scan, the #375
+            // flag, a gateway hiccup). Destroying a long typed question on
+            // refusal punishes the user for the server doing its job — put
+            // it back so it can be edited rather than retyped from nothing.
+            this.state.typed = question;
+        }
     }
 }
 

@@ -85,7 +85,7 @@ class AiChat(models.AbstractModel):
 
     # ------------------------------------------------------------------ state
     @api.model
-    def get_state(self, module_ctx=None):
+    def get_state(self, module_ctx=None, include_history=True):
         """Everything the widget needs to render, and nothing more.
 
         Returns ``{'enabled': False}`` for users outside the financial gate
@@ -94,6 +94,11 @@ class AiChat(models.AbstractModel):
         console for the crime of loading the web client. Not raising is a UX
         decision only — the send methods below still hard-refuse, because
         rendering nothing is not an authorization control (Standing Rule 4).
+
+        ``include_history=False`` serves the widget's navigation-driven chip
+        refresh, which wants ONLY the suggestions: re-reading 40 transcript
+        rows on every route change to throw them away is the small version of
+        the dashboard-goes-slow pattern _HISTORY_LIMIT's comment warns about.
         """
         if not any(self.env.user.has_group(g) for g in _ALLOWED_GROUPS):
             return {'enabled': False}
@@ -114,11 +119,13 @@ class AiChat(models.AbstractModel):
         # same thing: record rules do not apply to the superuser, and admin
         # (uid 1 in tests, base.group_system in life) reading everyone's chat
         # through the widget would be a leak with a helpful UI.
-        history = self.env['ncollection.ai.chat.message'].search_read(
-            [('user_id', '=', self.env.uid)],
-            ['role', 'body', 'create_date'],
-            order='id desc', limit=_HISTORY_LIMIT)
-        history.reverse()  # oldest first, the way a transcript reads
+        history = []
+        if include_history:
+            history = self.env['ncollection.ai.chat.message'].search_read(
+                [('user_id', '=', self.env.uid)],
+                ['role', 'body', 'create_date'],
+                order='id desc', limit=_HISTORY_LIMIT)
+            history.reverse()  # oldest first, the way a transcript reads
 
         return {
             'enabled': True,
