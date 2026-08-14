@@ -178,15 +178,42 @@ class TestAuditRules(AuditCommon):
         signal. Asserted so that turning it on is a decision, not a drift."""
         self.assertFalse(any(self.Rule.search([]).mapped('log_read')))
 
-    def test_noisy_recompute_fields_are_excluded(self):
-        """One invoice create emitted three write logs carrying
-        sequence_prefix, invoice_partner_display_name and payment_state —
-        Odoo's own churn, not user intent. Left in, the rows that matter are
-        buried; this is a signal problem before it is a cost problem."""
-        rule = self.Rule.search([('model_model', '=', 'res.users')], limit=1)
-        if not rule:
-            self.skipTest("res.users rule absent")
-        self.assertIn('login_date', rule.fields_to_exclude_ids.mapped('name'))
+    def test_the_noisy_field_exclusions_still_apply_to_something(self):
+        """NOISY_FIELDS is currently DEAD, and this test says so out loud.
+
+        Every model it names — account.move, account.move.line, res.users — is
+        withheld (#428/#429/#431), so none of those exclusions apply to anything
+        that ships today. They are kept because they become live again the
+        moment those models can be audited, not because they do anything now.
+
+        The earlier version of this test asserted the exclusion on a seeded
+        res.users rule and SKIPPED when that rule was absent — which, after the
+        rescope, was always. `scripts/ci/check_skips.py` failed the build on it
+        (#363: a skipped test is not a passing test), which is the guard working
+        exactly as intended on its own repo.
+
+        So this exercises the MECHANISM directly against a model that need not
+        be audited, and it runs everywhere.
+        """
+        from ..models.audit_rule import NOISY_FIELDS
+        IrModel = self.env['ir.model'].sudo()
+        checked = 0
+        for model_name, noisy in NOISY_FIELDS.items():
+            record = IrModel.search([('model', '=', model_name)], limit=1)
+            if not record:
+                continue          # that module is not installed here
+            excluded = set(self.Rule._nc_excluded_fields(record).mapped('name'))
+            present = {name for name in noisy
+                       if self.env[model_name]._fields.get(name)}
+            self.assertTrue(
+                present <= excluded,
+                "%s: noisy fields that would still be logged: %s"
+                % (model_name, sorted(present - excluded)))
+            checked += 1
+        self.assertTrue(
+            checked, "no model named in NOISY_FIELDS exists on this database, "
+                     "so this proves nothing — if that is now permanent, delete "
+                     "NOISY_FIELDS rather than leaving a dead constant")
 
     def test_seeding_twice_creates_nothing(self):
         """Standing Rule 12: prove idempotency, do not echo it."""
