@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Seals are evidence, so nobody edits them through the ORM: both
+             groups get read-only ACLs (security/ir.model.access.csv) and the
+             cron creates them via sudo. A record rule adds nothing here — the
+             ACL already denies write and unlink to every group that can see
+             the model, and a rule that only ever evaluates to "no" is
+             decoration. Stated so the absence reads as a decision. -->
+
+        <!-- Retention is DELIBERATELY off. Turning on automatic deletion of
+             audit records the moment a module installs is not a default a
+             module gets to choose for an existing database. The policy is
+             wired and parameterised; arming it is one flag and one decision.
+             OCA's own ir_cron_auditlog_autovacuum stays inactive too — it
+             hardcodes 180 days in its code field and is superseded by this. -->
+        <record id="ir_cron_nc_audit_retention" model="ir.cron">
+            <field name="name">NCollection: prune audit logs past retention</field>
+            <field name="model_id" ref="auditlog.model_auditlog_autovacuum"/>
+            <field name="state">code</field>
+            <field name="code">model._nc_cron_autovacuum()</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="False"/>
+        </record>
+    </data>
+</odoo>

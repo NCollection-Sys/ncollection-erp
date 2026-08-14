@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- BATCHED ON PURPOSE. Production runs max_cron_threads = 1 with
+         limit_time_real_cron = 3600 — ONE cron thread serving every tenant
+         database on the node, sequentially (DESIGN_CRON_AND_QUEUE_TOPOLOGY.md,
+         #310). An unbounded job here would delay every other tenant's crons.
+         The limit makes a busy tenant produce many short runs instead of one
+         long one; the next run picks up where this one stopped, because
+         sealing resumes from the last sealed id. -->
+    <record id="ir_cron_nc_audit_seal" model="ir.cron">
+        <field name="name">NCollection: seal audit log ranges</field>
+        <field name="model_id" ref="model_ncollection_audit_seal"/>
+        <field name="state">code</field>
+        <field name="code">model._nc_cron_seal()</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="param_audit_retention_days" model="ir.config_parameter">
+        <field name="key">ncollection.audit.retention_days</field>
+        <field name="value">180</field>
+    </record>
+</odoo>
