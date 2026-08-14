@@ -494,8 +494,6 @@ class AiQuestion(models.AbstractModel):
 
         Returns ``{'answer', 'dropped_sections', 'usage'}``.
         """
-        import json  # local: keeps the module import-light for a rarely-used path
-
         # BEFORE anything is read. An authorization check that runs after the
         # context is built has already done the privileged read it was meant to
         # prevent — harmless here because nothing is returned, but it makes the
@@ -535,6 +533,51 @@ class AiQuestion(models.AbstractModel):
                 "text to an external provider must be switched on deliberately "
                 "— see the AI section of the workspace settings."))
 
+        question = (question or '')[:_MAX_QUESTION_CHARS]
+
+        # Fail closed BEFORE any scrubbing runs — and, since the P5-T06 split,
+        # before the context is even built, so a refused question triggers no
+        # privileged read at all (the same ordering principle as the gate
+        # above). Two independent triggers, because they catch disjoint
+        # things — see the block comment above.
+        declared = _declares_a_secret(question)
+        shaped = any(_looks_like_embedded_secret(w) for w in question.split())
+        if declared or shaped:
+            raise UserError(self.env._(
+                "Your question looks like it contains a password, key or "
+                "token. Nothing was sent. Please remove it and ask in plain "
+                "words — this assistant works from your workspace data, so it "
+                "does not need one."))
+
+        return self._run_pipeline(
+            question, max_context_tokens=max_context_tokens,
+            max_answer_tokens=max_answer_tokens)
+
+    def _run_pipeline(self, question, max_context_tokens=2000,
+                      max_answer_tokens=1024):
+        """build → sanitise → send → rehydrate, for an ALREADY-AUTHORIZED question.
+
+        Private on purpose, and the split is a security boundary, not tidiness
+        (P5-T06 / #63): every caller owns its own admission decision.
+
+          ask()             financial gate + free-text gate + secret scans —
+                            the full gauntlet, because its input is user prose.
+          send_suggested()  financial gate + a server-owned registry lookup —
+                            no free-text gate, because the text never came from
+                            a user. That is #375's line, drawn in code: the
+                            flag governs ARBITRARY USER PROSE, and bypassing it
+                            for anything else must be impossible. This method
+                            being _private (not RPC-callable) is what makes
+                            "impossible" true — an @api.model here would be a
+                            public unauthenticated-prose endpoint.
+
+        Everything data-protective stays INSIDE the pipeline where no caller
+        can skip it: the sanitiser (identities, secrets-by-shape, document
+        prefixes) runs on the whole payload regardless of who asked, and
+        re-hydration happens here because only this database holds the mapping.
+        """
+        import json  # local: keeps the module import-light for a rarely-used path
+
         context = self.env['ncollection.ai.context']._build(
             max_tokens=max_context_tokens)
 
@@ -549,19 +592,6 @@ class AiQuestion(models.AbstractModel):
         # So the known names are passed explicitly. The sanitiser cannot look
         # them up itself without an ORM query inside what should stay a pure,
         # testable transform.
-        question = (question or '')[:_MAX_QUESTION_CHARS]
-
-        # Fail closed BEFORE any scrubbing runs. Two independent triggers,
-        # because they catch disjoint things — see the block comment above.
-        declared = _declares_a_secret(question)
-        shaped = any(_looks_like_embedded_secret(w) for w in question.split())
-        if declared or shaped:
-            raise UserError(self.env._(
-                "Your question looks like it contains a password, key or "
-                "token. Nothing was sent. Please remove it and ask in plain "
-                "words — this assistant works from your workspace data, so it "
-                "does not need one."))
-
         clean, mapping = self.env['ncollection.ai.pii']._sanitise(
             {'context': context['sections'], 'question': question},
             known_identities=self._known_identities(),
