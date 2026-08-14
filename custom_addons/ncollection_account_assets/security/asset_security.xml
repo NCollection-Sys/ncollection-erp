@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Both wizards are per-user runs, so both get the create_uid scoping
+             every sibling report wizard has carried since #413. Without it, one
+             tenant user can browse another's report parameters — and, for the
+             transfer wizard, the asset they were about to move. The asset and
+             profile records themselves deliberately keep OCA's own
+             multi-company rules and are NOT creator-scoped: a fixed-asset
+             register is shared tenant data that a whole finance team reads. -->
+        <record id="rule_report_asset_register_own" model="ir.rule">
+            <field name="name">Asset Register runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_asset_register"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+
+        <record id="rule_asset_transfer_own" model="ir.rule">
+            <field name="name">Asset transfer runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_asset_transfer"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
+    </data>
+</odoo>

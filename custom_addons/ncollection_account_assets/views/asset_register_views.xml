@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A UNIQUE report_name wrapping the shared F2 body. Sharing one across
+         actions renders every wizard against the FIRST action's model — a bug
+         ncollection_account_reports records having shipped once. -->
+    <record id="action_report_asset_register" model="ir.actions.report">
+        <field name="name">Asset Register</field>
+        <field name="model">ncollection.account.report.asset.register</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_assets.report_asset_register</field>
+        <field name="report_file">ncollection_account_assets.report_asset_register</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_asset_register">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <!-- Its own list view. The generic one prints Debit/Credit/Balance, which
+         for this report means Purchase Value / Accumulated / Depreciation —
+         three columns that would read as something else entirely on screen
+         while the PDF said the right thing (the #315 lesson: a bug that lived
+         entirely in the gap between two renderers). -->
+    <record id="view_report_line_asset_register_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.asset.register.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="Asset Register" create="false" delete="false"
+                  default_order="id" decoration-bf="level == 0">
+                <field name="label" string="Asset"/>
+                <field name="debit" string="Purchase Value" sum="Purchase Value"/>
+                <field name="opening_balance" string="Opening NBV" sum="Opening NBV"/>
+                <field name="balance" string="Depreciation" sum="Depreciation"/>
+                <field name="credit" string="Accumulated Depr." sum="Accumulated Depr."/>
+                <field name="closing_balance" string="Closing NBV" sum="Closing NBV"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_asset_register_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.asset.register.form</field>
+        <field name="model">ncollection.account.report.asset.register</field>
+        <field name="arch" type="xml">
+            <form string="Asset Register">
+                <sheet>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                        <group string="Scope">
+                            <field name="profile_ids" widget="many2many_tags"/>
+                            <field name="group_ids" widget="many2many_tags"/>
+                            <field name="include_removed"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_asset_register_wizard" model="ir.actions.act_window">
+        <field name="name">Asset Register</field>
+        <field name="res_model">ncollection.account.report.asset.register</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_asset_register" name="Asset Register"
+              parent="ncollection_account_reports.menu_ncollection_account_reports"
+              action="action_report_asset_register_wizard" sequence="90"/>
+</odoo>

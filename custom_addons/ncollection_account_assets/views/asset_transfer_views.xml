@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_asset_transfer_form" model="ir.ui.view">
+        <field name="name">ncollection.account.asset.transfer.form</field>
+        <field name="model">ncollection.account.asset.transfer</field>
+        <field name="arch" type="xml">
+            <form string="Transfer Asset">
+                <sheet>
+                    <group>
+                        <group string="Asset">
+                            <field name="asset_id"/>
+                            <field name="date"/>
+                            <field name="note" placeholder="Moved to the Dubai branch"/>
+                        </group>
+                        <group string="Destination">
+                            <!-- The label lives here rather than on a
+                                 redeclared field: redeclaring
+                                 analytic_distribution would drop
+                                 analytic.mixin's compute/search and the widget
+                                 binding with them. -->
+                            <field name="analytic_distribution"
+                                   string="New Analytic Distribution"
+                                   widget="analytic_distribution"/>
+                            <field name="profile_id"/>
+                            <field name="journal_id"
+                                   invisible="not profile_id"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        A transfer changes where value sits, never how much.
+                        Net book value is unchanged and the P&amp;L is not
+                        touched — a gain or loss belongs to a disposal, not a
+                        transfer. The depreciation schedule is never re-planned:
+                        moving an asset between departments does not restart its
+                        useful life.
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_transfer" type="object" string="Transfer"
+                            class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_asset_transfer" model="ir.actions.act_window">
+        <field name="name">Transfer Asset</field>
+        <field name="res_model">ncollection.account.asset.transfer</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="account_asset_management.model_account_asset"/>
+        <field name="binding_view_types">form,list</field>
+        <!-- Rule 4: this UI restriction is MIRRORED at the ORM layer, not just
+             hidden. The wizard's ir.model.access row grants
+             account.group_account_manager alone, so an RPC call from a
+             read-only accounting user is refused by the ORM even though it
+             never sees this action. -->
+        <!-- Odoo 19 renamed this to `group_ids`; `groups_id` raises
+             "Invalid field 'groups_id' in 'ir.actions.act_window'" at load and
+             takes the whole registry down with it. Same rename CLAUDE.md
+             records for res.users. -->
+        <field name="group_ids" eval="[(4, ref('account.group_account_manager'))]"/>
+    </record>
+</odoo>
