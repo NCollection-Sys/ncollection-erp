@@ -232,7 +232,14 @@ jobs:
           # Idempotent PER COMMIT, not per PR: re-requesting on a new head is
           # the entire point, but asking twice for the SAME head would spam on
           # every re-run.
-          if printf '%s\n' "$comments" | grep -q "ci:strix-requested:$short"; then
+          # OUR OWN marker, from OUR OWN bot. Matching it in anyone's comment
+          # was a suppression vector — Strix found it on this very PR: a person
+          # who can comment can pre-seed `ci:strix-requested:<sha>` for a commit
+          # they are about to push, and this job would then skip the review it
+          # exists to force. Author-filtered here for exactly the reason the
+          # stamp below is; getting one right and not the other was the bug.
+          if printf '%s\n' "$comments" | grep '^github-actions\[bot\]' \
+               | grep -q "ci:strix-requested:$short"; then
             echo "Already requested a review for $short — not asking twice."
             exit 0
           fi
