@@ -97,7 +97,11 @@ if [ -z "$services" ]; then
 fi
 
 if [ -z "$services" ]; then
-  echo "config-mounts: no running compose service — nothing to check."
+  # STDERR, not stdout. `--list` is a machine contract consumed by
+  # prove_config_mount_guard.sh, and this sentence on stdout was parsed as a
+  # record: `service` became "config-mounts: no running compose service…",
+  # which then flowed into `docker compose up --force-recreate "$service"`.
+  echo "config-mounts: no running compose service — nothing to check." >&2
   exit 0
 fi
 
@@ -136,6 +140,17 @@ for service in $services; do
       continue
     fi
     want="$(host_sha "$host_path")"
+    # Distinguish "no sha256sum in this image" from "cannot read the file".
+    # Both produce empty output, and reporting a minimal image as STALE would
+    # be a false alarm on a perfectly healthy stack — the one outcome worse
+    # than having no guard, because it gets ignored and then deleted.
+    if ! docker compose exec -T "$service" \
+           sh -c 'command -v sha256sum >/dev/null 2>&1'; then
+      echo "SKIPPED: $service has no sha256sum, so $dest cannot be compared."
+      echo "  This is NOT a pass — the mount is simply unchecked. Add coreutils"
+      echo "  to that image or teach this guard another digest."
+      continue
+    fi
     got="$(docker compose exec -T "$service" \
              sha256sum "$dest" 2>/dev/null | cut -d' ' -f1 | tr -d '\r' || true)"
 
@@ -168,7 +183,12 @@ if [ "$list_only" -eq 1 ]; then
 fi
 
 if [ "$checked" -eq 0 ]; then
-  declared="$(grep -lE '^\s*-\s*\./config/[A-Za-z0-9_.-]+\.conf:' \
+  # ANY ./config/... mount, at any depth, any extension. The first version
+  # required a .conf directly under config/, so it could not see 4 of the 9
+  # real mounts in this repo (pgbackrest.conf, pgbouncer.ini, userlist.txt,
+  # postgresql.conf — all in subdirectories). A vacuity check that cannot see
+  # the thing it is checking for is the defect it exists to prevent.
+  declared="$(grep -lE '^\s*-\s*\./config/[A-Za-z0-9_./-]+:' \
                 docker-compose*.yml 2>/dev/null | head -1 || true)"
   if [ -n "$declared" ]; then
     echo "REFUSING: $declared declares a single-file config bind mount, but no" >&2

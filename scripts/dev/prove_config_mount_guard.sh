@@ -53,24 +53,67 @@ target="${target#"$PWD"/}"
 echo "proving against: service=$service file=$target"
 
 # shellcheck disable=SC2329
-# Invoked indirectly by the EXIT trap below; shellcheck cannot see that.
+# Invoked indirectly by the traps below; shellcheck cannot see that.
 cleanup() {
-  # Restore unconditionally. A proof that leaves the stack broken has done more
-  # harm than the bug it was checking for.
+  # A proof that leaves the stack broken has done more harm than the bug it was
+  # checking for. Restore the file, then the container, and SAY SO if either
+  # fails — the first version discarded the recreate's output and its exit
+  # status, so a failed restore was indistinguishable from success and would
+  # later surface as a STALE report nobody could attribute to an aborted proof.
   if [ -s "$snapshot" ]; then
-    cp "$snapshot" "$target"
+    cp "$snapshot" "$target" || {
+      echo "RESTORE FAILED: could not put $target back." >&2
+      echo "  Recover with: git checkout -- $target" >&2
+    }
   fi
-  rm -f "$snapshot"
+  rm -f "$snapshot" "$snapshot.new"
   # shellcheck disable=SC2086
-  docker compose $compose_args up -d --force-recreate "$service" >/dev/null 2>&1
+  if ! docker compose $compose_args up -d --force-recreate "$service" >/dev/null 2>&1; then
+    echo "RESTORE FAILED: could not recreate '$service'." >&2
+    echo "  The file is back but the container may still hold the stale mount." >&2
+    echo "  Recover with: docker compose $compose_args up -d --force-recreate $service" >&2
+  fi
   sleep 10
 }
-trap cleanup EXIT
+# EXIT alone is not enough. bash registers INT and TERM separately, and a
+# supervisor that signals only this PID (rather than the foreground process
+# group) leaves an EXIT-only trap waiting on whatever child is currently
+# blocked — measured: `kill -INT <pid>` did not run the trap until the child
+# finished. SIGKILL cannot be trapped by anything, which is why the recovery
+# command is printed BEFORE the file is touched.
+trap cleanup EXIT INT TERM
 
 if [ -z "$(docker compose ps -q "$service" 2>/dev/null)" ]; then
   echo "REFUSING: $service is not running, so this proves nothing." >&2
   exit 1
 fi
+
+# The guard reports whatever the RUNNING stack mounts, which may come from an
+# overlay this script cannot recreate with (saas, pooling, prod, cronstall,
+# cronscope). Recreating with the wrong `-f` set either errors "no such
+# service" or resolves a different definition — and the old cleanup discarded
+# both outcomes. Refuse rather than pretend.
+# shellcheck disable=SC2086
+if ! docker compose $compose_args config --services 2>/dev/null | grep -qx "$service"; then
+  echo "REFUSING: '$service' is not defined by the compose files this proof" >&2
+  echo "  can recreate with ($compose_args)." >&2
+  echo "  Run it against the plain dev stack, or extend compose_args." >&2
+  exit 1
+fi
+
+# The file must be tracked and clean, so recovery is always one command — and
+# that command is printed NOW, before anything is broken, because SIGKILL
+# cannot be trapped and would otherwise leave no trail.
+if ! git diff --quiet -- "$target" 2>/dev/null; then
+  echo "REFUSING: $target already has uncommitted changes." >&2
+  echo "  This proof rewrites it and restores from a snapshot; starting from a" >&2
+  echo "  dirty file risks losing your edit." >&2
+  exit 1
+fi
+echo "if this is interrupted with SIGKILL (which no trap can catch), recover with:"
+echo "    git checkout -- $target"
+echo "    docker compose $compose_args up -d --force-recreate $service"
+echo
 
 cp "$target" "$snapshot"
 
