@@ -8,6 +8,8 @@ Both halves are asserted end-to-end over real HTTP, not by calling the
 controller methods directly — a route that works when called as a Python
 function and 404s over the wire has passed nothing.
 """
+from unittest.mock import patch
+
 from odoo.tests import HttpCase, tagged
 
 from odoo.addons.ncollection_api.models.api_token import NC_API_SCOPE
@@ -388,22 +390,40 @@ class TestApiFoundation(HttpCase):
             "attacker-controlled input and is free to evade")
 
     def test_the_throttle_refuses_BEFORE_any_credential_work(self):
-        """Once tripped, even a VALID secret gets 429.
+        """No PBKDF2 runs on a throttled request — asserted, not inferred.
 
-        This is what proves no hashing happens on a throttled request: if the
-        check ran after `_nc_authenticate`, a correct secret would still be
-        verified — and verifying is the cost being defended against. It also
-        keeps the endpoint from becoming an oracle that answers "your
-        credentials were right" while throttled.
+        The whole point of #436 is the CPU cost of the hash, so "did we skip
+        the hash" is the property that matters. Asserting only the 429 does not
+        show it: adding a `_nc_authenticate` call BEFORE the throttle check
+        still returns 429, and that mutation passed this test when it read that
+        way. The status code cannot see the difference; a call count can.
+
+        A valid secret is used deliberately — with a wrong one,
+        `_nc_authenticate` returning nothing would be indistinguishable from it
+        never having been called.
         """
         after = self._arm_throttle()
         for _ in range(after):
             self.assertEqual(self._token(secret='wrong').status_code, 401)
-        blocked = self._token()          # the REAL secret
+
+        ClientModel = type(self.env['ncollection.api.client'])
+        original = ClientModel._nc_authenticate
+        calls = []
+
+        def counting(model_self, client_id, client_secret):
+            calls.append(client_id)
+            return original(model_self, client_id, client_secret)
+
+        with patch.object(ClientModel, '_nc_authenticate', counting):
+            blocked = self._token()      # the REAL secret
         self.assertEqual(
             blocked.status_code, 429,
-            "a valid secret was still verified while throttled — the check "
-            "runs after the credential work it exists to prevent")
+            "a valid secret was accepted while throttled — the throttle is "
+            "not refusing at all")
+        self.assertEqual(
+            calls, [],
+            "the credential check ran on a throttled request: the PBKDF2 this "
+            "ticket exists to bound was paid anyway, and the 429 only hid it")
 
     def test_a_successful_authentication_clears_the_throttle(self):
         """Core's semantics, kept: a working integration is never one retry
