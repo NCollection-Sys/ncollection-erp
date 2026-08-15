@@ -179,6 +179,116 @@ jobs:
             trivy-report.txt
           if-no-files-found: ignore
 
+  # Strix (#440) is a hosted GitHub App on a third party's infrastructure, NOT a
+  # workflow of ours — it posts through the Checks API, which is why its result
+  # links to app.strix.ai instead of an actions run. It cannot be "added to CI".
+  #
+  # THE PROBLEM IS NOT THAT IT SKIPS PRs. It reviewed 6 of the last 7. The
+  # problem is that its verdict goes STALE and then becomes INVISIBLE: it stamps
+  # the commit it reviewed ("Updated for `<sha>`") and binds its check run to
+  # that commit. Push again and the check does not appear on the new head at all
+  # — not as "stale", but as nothing. Measured:
+  #
+  #     #433  reviewed 8bfa29b   head ffb4087   <- later commits never reviewed
+  #     #426  reviewed ef23913   head 9a19574   <- same
+  #
+  # Both merged that way, and nothing said so. Anyone gating on `gh pr checks`
+  # sees no Strix row and reads it as "not configured for this PR" rather than
+  # "your last commits are unreviewed" — absence of a result taken for absence
+  # of a problem.
+  #
+  # THIS JOB DETECTS THAT; IT DOES NOT TRY TO FIX IT. An earlier version posted
+  # `@strix-security` to re-request a review, on the strength of their own
+  # documented trigger. Measured on this PR, that does not work from
+  # GITHUB_TOKEN: the bot asked for a review of 585163f at 18:42:51Z and Strix
+  # ignored it for sixteen minutes, then stamped the NEXT head about two minutes
+  # after it was pushed — its ordinary push latency. Every restamp we have seen
+  # is explained by push, none by the mention. So requesting is dropped: a check
+  # that depends on a third party choosing to answer cannot be relied on, and a
+  # job that posts comments nobody acts on is just noise.
+  #
+  # Reporting staleness needs nobody's cooperation and fixes the actual defect,
+  # which was never "Strix didn't run" but "staleness was invisible".
+  #
+  # Worth having at all: on #430 Strix filed a HIGH that four internal reviewers
+  # and the whole suite missed (audit managers could REWRITE sealed rows —
+  # removing perm_unlink only stopped them DELETING), and on THIS PR it found a
+  # MEDIUM in this very job.
+  #
+  # Lives in ci.yml deliberately. A new .github/workflows/*.yml added via develop
+  # would be INERT: close-linked-issues.yml and deploy-staging.yml are both in
+  # that state right now, present on develop, absent from main, neither has ever
+  # run.
+  #
+  # No `needs:`, so it runs alongside lint/test/build and gates nothing.
+  strix-verdict-covers-head:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read   # read comments; this job posts nothing
+    steps:
+      - name: Strix's verdict must cover the commit being merged
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          short="${HEAD_SHA:0:7}"
+          deadline=$(( SECONDS + 720 ))   # Strix takes ~2-3 min from a push
+
+          reviewed=""
+          while : ; do
+            # One line per comment, author first, so the stamp is read from
+            # STRIX's comments only. Reading every comment would let anyone who
+            # quotes it ("Updated for `abc1234`") forge the marker and turn this
+            # check green on unreviewed code — the same class of hole Strix
+            # itself found in this job's first version.
+            #
+            # A CAPTURE, not two greps: piping the matched phrase into
+            # `grep -oE '[0-9a-f]+'` looked equivalent and was not, because the
+            # words "Updated" and "for" are themselves made of hex characters,
+            # so it emitted `d`, `a`, `ed`, `f` and only then the sha.
+            #
+            # shellcheck disable=SC2016  # backticks are LITERAL here — part of
+            # Strix's markdown, not a command substitution.
+            reviewed=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+                         --jq '.[] | "\(.user.login)\t\(.body | gsub("\n"; " "))"' \
+                       | grep '^strix-security\[bot\]' \
+                       | sed -nE 's/.*Updated for `([0-9a-f]{7,40})`.*/\1/p' \
+                       | tail -1)
+
+            [ "$reviewed" = "$short" ] && break
+            [ "$SECONDS" -ge "$deadline" ] && break
+            echo "waiting for Strix: reviewed=${reviewed:-none} head=$short"
+            sleep 20
+          done
+
+          if [ "$reviewed" = "$short" ]; then
+            echo "Strix reviewed $short — its verdict covers this commit."
+            exit 0
+          fi
+
+          echo "::error::Strix has not reviewed $short."
+          {
+            echo "### Strix's verdict does not cover this commit"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Strix reviewed | \`${reviewed:-nothing on this PR}\` |"
+            echo "| You would merge | \`$short\` |"
+            echo
+            echo "Strix binds its check run to the commit it reviewed, so on a"
+            echo "later push it vanishes from the head rather than showing as"
+            echo "stale. #433 and #426 were both merged that way."
+            echo
+            echo "Re-request one by commenting \`@strix-security\` **as a human**"
+            echo "— a GITHUB_TOKEN comment does not reach the App (measured on"
+            echo "#441). Or merge knowing these commits are unreviewed."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
   architecture-guard:
     runs-on: ubuntu-latest
     steps:
