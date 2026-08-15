@@ -135,6 +135,28 @@ class NcollectionApiV1(http.Controller):
                       "too many failed authentication attempts; try again "
                       "later", 429)
 
+    def _resolve_scopes(self, client, post, route, started):
+        """``(scopes, None)`` when grantable, else ``(None, Response)``.
+
+        Both refusals are 400 `invalid_scope` but they are NOT the same case,
+        and conflating them once hid a defect: asking for a scope the client
+        does not hold must be REFUSED rather than quietly narrowed, while
+        asking for nothing at all is simply an empty request. A test for the
+        first passed against code that did the second, because narrowing an
+        all-excess request leaves an empty set and lands here.
+        """
+        requested = (post.get('scope') or '').split()
+        try:
+            scopes = client._nc_grantable(requested)
+        except ValidationError as exc:
+            self._log(route, 400, started, client=client)
+            return None, _error('invalid_scope', str(exc), 400)
+        if not scopes:
+            self._log(route, 400, started, client=client)
+            return None, _error('invalid_scope',
+                                "at least one scope is required", 400)
+        return scopes, None
+
     def _authenticate(self):
         """``(token, uid)`` from the Authorization header, or ``(None, None)``."""
         header = request.httprequest.headers.get('Authorization') or ''
@@ -198,16 +220,9 @@ class NcollectionApiV1(http.Controller):
             self._log(route, 429, started, client=client)
             return _error('rate_limited', "too many requests", 429)
 
-        requested = (post.get('scope') or '').split()
-        try:
-            scopes = client._nc_grantable(requested)
-        except ValidationError as exc:
-            self._log(route, 400, started, client=client)
-            return _error('invalid_scope', str(exc), 400)
-        if not scopes:
-            self._log(route, 400, started, client=client)
-            return _error('invalid_scope', "at least one scope is required",
-                          400)
+        scopes, refusal = self._resolve_scopes(client, post, route, started)
+        if refusal is not None:
+            return refusal
 
         _token, plaintext = request.env['ncollection.api.token'].sudo()._nc_issue(
             client, scopes, TOKEN_TTL_SECONDS)
