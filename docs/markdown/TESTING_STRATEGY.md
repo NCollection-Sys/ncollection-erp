@@ -101,7 +101,7 @@ premise that nothing covered it; the workflow audit disproved that.
 
 | Layer | Implementation | Size | Trigger | Measured |
 |---|---|---|---|---|
-| Static gates | flake8 · pylint-odoo (baseline **57**<!--count:pylint_baseline-->) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` (**11**<!--count:invariants_rules--> rules) · `check_role_matrix.py` · `check_skips.py` · AI-gateway satellite | **12 steps** across the `lint` and `architecture-guard` jobs | pre-push (9 gates) + PR | 8s¹ |
+| Static gates | flake8 · pylint-odoo (baseline **57**<!--count:pylint_baseline-->) · xmllint · shellcheck · `architecture_guard.py` · `invariants.py` (**12**<!--count:invariants_rules--> rules) · `check_role_matrix.py` · `check_skips.py` · AI-gateway satellite | **12 steps** across the `lint` and `architecture-guard` jobs | pre-push (9 gates) + PR | 8s¹ |
 | Guard self-tests | `test_invariants.py` · `test_architecture_guard.py` · `test_check_skips.py` · `test_check_role_matrix.py` | **5**<!--count:guard_selftests--> | PR + pre-push, **before** the guards | <1s¹ |
 | Supply chain | pip-audit · Trivy (fs: vuln + secret) | 2 | PR, **non-blocking** | — |
 | Odoo ORM tests | `custom_addons/*/tests/` | **87 files · 961 methods** · 90 `TransactionCase` · 8 `HttpCase` | PR `test` job | 4m CI / 2m 8s local¹ |
