@@ -8,7 +8,7 @@
 > python scripts/github_issue_sync.py --report
 > ```
 >
-> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-08-13
+> Tasks: `DELIVERABLE_1_SYSTEM_DESIGN.md` · Status: GitHub issues · Last synced: 2026-08-15
 
 ## Scoreboard
 
@@ -19,12 +19,12 @@
 | Phase 3 — ERP + UAE Localization | 12 | 13 | 92% |
 | Phase 4 — Executive Dashboards | 4 | 4 | 100% |
 | Phase 5 — AI Platform | 5 | 7 | 71% |
-| Phase 6 — Customer Portal | 1 | 5 | 20% |
+| Phase 6 — Customer Portal | 2 | 5 | 40% |
 | Phase 7 — Mobile Application | 0 | 7 | 0% |
-| Phase 8 — Platform Services | 0 | 9 | 0% |
+| Phase 8 — Platform Services | 2 | 9 | 22% |
 | Phase 9 — Marketplace (Deferred) | 0 | 7 | 0% |
 | Phase 10 — Enterprise Readiness | 1 | 9 | 11% |
-| **Total** | **62** | **100** | **62%** |
+| **Total** | **65** | **100** | **65%** |
 
 ## Phase 1 — Customer Workspace
 
@@ -120,7 +120,7 @@
 |---|---|---|---|---|---|---|
 | P6-T01 | Regional Payment Gateways (Tenant Invoices) | DEV-1 | P2-T13 | [#65](https://github.com/NCollection-Sys/ncollection-erp/issues/65) | 🔨 open |  |
 | P6-T02 | Portal Access Rights | DEV-2 | P1-T08 | [#66](https://github.com/NCollection-Sys/ncollection-erp/issues/66) | ✅ done | 2026-08-12 |
-| P6-T03 | Support Ticketing | DEV-2 | P6-T02 | [#67](https://github.com/NCollection-Sys/ncollection-erp/issues/67) | 🔨 open |  |
+| P6-T03 | Support Ticketing | DEV-2 | P6-T02 | [#67](https://github.com/NCollection-Sys/ncollection-erp/issues/67) | ✅ done | 2026-08-13 |
 | P6-T04 | Portal UI Redesign | DEV-3 | P6-T02 | [#68](https://github.com/NCollection-Sys/ncollection-erp/issues/68) | 🔨 open |  |
 | P6-T05 | Knowledge Base | DEV-3 | P6-T04 | [#69](https://github.com/NCollection-Sys/ncollection-erp/issues/69) | 🔨 open |  |
 
@@ -140,11 +140,11 @@
 
 | Task | Name | Dev | Deps | Issue | Status | Closed |
 |---|---|---|---|---|---|---|
-| P8-T01 | REST API Foundation | DEV-1 | P1-T19 | [#77](https://github.com/NCollection-Sys/ncollection-erp/issues/77) | 🔨 open |  |
+| P8-T01 | REST API Foundation | DEV-1 | P1-T19 | [#77](https://github.com/NCollection-Sys/ncollection-erp/issues/77) | ✅ done | 2026-08-15 |
 | P8-T02 | REST Business Endpoints | DEV-1 | P8-T01 | [#78](https://github.com/NCollection-Sys/ncollection-erp/issues/78) | 🔨 open |  |
 | P8-T03 | Webhooks System | DEV-1 | P8-T02 | [#79](https://github.com/NCollection-Sys/ncollection-erp/issues/79) | 🔨 open |  |
 | P8-T04 | Full Observability Stack | DEV-1 | P2-T10 | [#80](https://github.com/NCollection-Sys/ncollection-erp/issues/80) | 🔨 open |  |
-| P8-T05 | Audit Trail | DEV-2 | P1-T07 | [#81](https://github.com/NCollection-Sys/ncollection-erp/issues/81) | 🔨 open |  |
+| P8-T05 | Audit Trail | DEV-2 | P1-T07 | [#81](https://github.com/NCollection-Sys/ncollection-erp/issues/81) | ✅ done | 2026-08-14 |
 | P8-T06 | Developer SDKs | DEV-2 | P8-T02 | [#82](https://github.com/NCollection-Sys/ncollection-erp/issues/82) | 🔨 open |  |
 | P8-T07 | API Documentation Portal | DEV-3 | P8-T02 | [#83](https://github.com/NCollection-Sys/ncollection-erp/issues/83) | 🔨 open |  |
 | P8-T08 | Integration Directory UI | DEV-3 | P8-T02 | [#84](https://github.com/NCollection-Sys/ncollection-erp/issues/84) | 🔨 open |  |
