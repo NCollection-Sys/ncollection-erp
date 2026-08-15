@@ -15,6 +15,8 @@ from odoo.tests import HttpCase, tagged
 
 from odoo.addons.ncollection_api.models.api_token import NC_API_SCOPE
 
+from ..models.api_throttle import MAX_TRACKED_SOURCES
+
 
 @tagged('post_install', '-at_install')
 class TestApiFoundation(HttpCase):
@@ -520,17 +522,16 @@ class TestApiFoundation(HttpCase):
         own right — on a worker with `limit_memory_hard`, growth is an
         availability incident, not untidiness.
         """
-        from odoo.addons.ncollection_api.models import api_throttle as mod
         throttle = self.env['ncollection.api.throttle']
         throttle._nc_reset()
         failures = throttle._nc_failures()
 
         now = datetime.datetime.now()
-        for i in range(mod.MAX_TRACKED_SOURCES + 50):
+        for i in range(MAX_TRACKED_SOURCES + 50):
             failures['10.0.%d.%d' % (i // 256, i % 256)] = (1, now)
         throttle._nc_evict(failures)
         self.assertLessEqual(
-            len(failures), mod.MAX_TRACKED_SOURCES,
+            len(failures), MAX_TRACKED_SOURCES,
             "the map grew past its ceiling — nothing bounds it")
 
     def test_the_throttle_does_not_share_core_s_login_bucket(self):
