@@ -285,7 +285,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 11  # 11th: rule_ci_exemption_reasons (#422)
+RULE_COUNT = 12  # 12th: rule_addons_path_matches_pins (#424)
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -1160,6 +1160,103 @@ def rule_ci_exemption_reasons(out: list[str]) -> None:
                 )
 
 
+# ---------------------------------------------------------------------------
+# R12 — every pinned OCA repo reaches every addons_path (#424)
+# ---------------------------------------------------------------------------
+ADDONS_PATH_FILES = (
+    "config/odoo.conf",
+    "config/odoo.prod.conf",
+    CI_WORKFLOW,
+)
+
+_ADDONS_PATH_RE = re.compile(
+    r"(?:^\s*addons_path\s*=|--addons-path=)\s*([^\s\\]+)", re.MULTILINE)
+
+
+def _addons_path_repos(text: str) -> set[str] | None:
+    """The OCA repo names an addons_path lists, or None if it has none."""
+    found = set()
+    seen_any = False
+    for match in _ADDONS_PATH_RE.finditer(text):
+        seen_any = True
+        for entry in match.group(1).split(","):
+            entry = entry.strip()
+            prefix = "/mnt/oca-addons/"
+            if entry.startswith(prefix):
+                found.add(entry[len(prefix):])
+    return found if seen_any else None
+
+
+def rule_addons_path_matches_pins(out: list[str]) -> None:
+    """repos.yml is the pin list; three hand-maintained copies must agree.
+
+    `addons_path` is written out by hand in THREE places — the dev config, the
+    prod config, and ci.yml's odoo invocation — and until this rule nothing
+    checked them against each other or against repos.yml. Adding an OCA repo
+    means editing all three, and the failure modes are asymmetric and all
+    quiet:
+
+        missing from config/odoo.conf       works in CI, fails locally
+        missing from config/odoo.prod.conf  works everywhere except PRODUCTION
+        missing from ci.yml                 works locally, and CI installs
+                                            nothing while reporting green
+
+    The third is the dangerous one. An unknown module name is a WARNING, then
+    `Modules loaded.`, then exit 0 — the failure CLAUDE.md documents under
+    "what a green check does NOT mean". `assert_odoo_setup.sh` (#385) catches
+    the setup-log version; it cannot catch a list that never asked for the
+    module.
+
+    Measured: adding OCA/account-financial-tools for #122 required editing all
+    three by hand, and nothing would have complained about a miss.
+    """
+    try:
+        pins_text = (REPO_ROOT / "repos.yml").read_text(
+            encoding="utf-8", errors="ignore")
+    except OSError:
+        out.append("repos.yml: not readable, so addons_path cannot be checked "
+                   "against the pin list.")
+        return
+
+    pinned = set(re.findall(r"^\./oca/([A-Za-z0-9_.-]+)\s*:", pins_text,
+                            re.MULTILINE))
+    if not pinned:
+        # Fail closed. An empty pin list would make every addons_path look
+        # complete, which is the silent pass assert_oca_present.sh refuses for
+        # the same reason.
+        out.append("repos.yml: no `./oca/<repo>:` targets found, so this rule "
+                   "would verify nothing. The pin list changed shape — update "
+                   "`rule_addons_path_matches_pins` in scripts/ci/invariants.py.")
+        return
+
+    for rel in ADDONS_PATH_FILES:
+        try:
+            text = (REPO_ROOT / rel).read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            out.append(f"{rel}: not readable, so its addons_path cannot be "
+                       f"checked against repos.yml.")
+            continue
+
+        listed = _addons_path_repos(text)
+        if listed is None:
+            out.append(
+                f"{rel}: no addons_path found, so this rule would verify "
+                f"nothing for it. If the file changed shape, update "
+                f"`_ADDONS_PATH_RE` in scripts/ci/invariants.py.")
+            continue
+
+        for repo in sorted(pinned - listed):
+            out.append(
+                f"{rel}: repos.yml pins ./oca/{repo} but its addons_path does "
+                f"not list /mnt/oca-addons/{repo}. Every module in that repo "
+                f"is an 'invalid module name' there — a WARNING, then exit 0.")
+        for repo in sorted(listed - pinned):
+            out.append(
+                f"{rel}: addons_path lists /mnt/oca-addons/{repo}, which "
+                f"repos.yml does not pin. `make oca` will never create that "
+                f"directory, so the entry is dead.")
+
+
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
     workflow = REPO_ROOT / CI_WORKFLOW
@@ -1422,6 +1519,7 @@ def main() -> int:
     # the change that introduces the bug is precisely the one whose diff does
     # not include ci.yml.
     rule_ci_module_coverage(findings)
+    rule_addons_path_matches_pins(findings)
     rule_ci_exemption_reasons(findings)
     rule_cron_threads_scoped(findings)
     rule_cron_enumeration_declared(findings)

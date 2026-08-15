@@ -689,5 +689,121 @@ class TestSelfTest(GuardTestCase):
         self.assertEqual(invariants.run_self_test(), [])
 
 
+# ---------------------------------------------------------------------------
+# R12 — every pinned OCA repo reaches every addons_path (#424)
+# ---------------------------------------------------------------------------
+class TestR12AddonsPathMatchesPins(GuardTestCase):
+    """repos.yml is the pin list; three hand-maintained copies must agree.
+
+    Adding an OCA repo means editing `config/odoo.conf`, `config/odoo.prod.conf`
+    and `ci.yml` by hand, and until this rule nothing compared them. The
+    failure modes are asymmetric and all quiet — the worst being a miss in
+    ci.yml, where an unknown module name is a WARNING, then `Modules loaded.`,
+    then exit 0, so CI goes green having installed less than it claims.
+    """
+
+    PINS = "./oca/server-tools:\n  merges:\n    - oca abc123\n"
+
+    def _files(self, dev=None, prod=None, ci=None):
+        self.write("repos.yml", self.PINS)
+        base = "/mnt/extra-addons,/mnt/oca-addons/server-tools"
+        self.write("config/odoo.conf",
+                   "addons_path = %s\n" % (base if dev is None else dev))
+        self.write("config/odoo.prod.conf",
+                   "addons_path = %s\n" % (base if prod is None else prod))
+        self.write(invariants.CI_WORKFLOW,
+                   "        run: |\n          odoo --addons-path=%s \\\n"
+                   % (base if ci is None else ci))
+
+    def _findings(self):
+        found = []
+        invariants.rule_addons_path_matches_pins(found)
+        return found
+
+    def test_all_three_agreeing_is_clean(self):
+        """The fixture itself. If this fails, everything below measures the
+        fixture rather than the rule."""
+        self._files()
+        self.assertEqual(self._findings(), [])
+
+    def test_a_pin_missing_from_the_DEV_config_is_reported(self):
+        self._files(dev="/mnt/extra-addons")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("config/odoo.conf", found[0])
+        self.assertIn("server-tools", found[0])
+
+    def test_a_pin_missing_from_the_PROD_config_is_reported(self):
+        """The quietest of the three: it works everywhere except production."""
+        self._files(prod="/mnt/extra-addons")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("config/odoo.prod.conf", found[0])
+
+    def test_a_pin_missing_from_CI_is_reported(self):
+        """THE dangerous one. CI would install less than it claims and still
+        report green, because an unknown module name is only a WARNING."""
+        self._files(ci="/mnt/extra-addons")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn(invariants.CI_WORKFLOW, found[0])
+        self.assertIn("exit 0", found[0])
+
+    def test_an_addons_path_entry_with_no_pin_is_reported(self):
+        """The other direction: a repo dropped from repos.yml but left in a
+        path. `make oca` never creates that directory, so the entry is dead."""
+        self._files(dev="/mnt/extra-addons,/mnt/oca-addons/server-tools,"
+                        "/mnt/oca-addons/ghost")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("ghost", found[0])
+        self.assertIn("does not pin", found[0])
+
+    def test_an_empty_pin_list_REFUSES_rather_than_passing(self):
+        """An empty repos.yml would make every addons_path look complete. That
+        is the silent pass assert_oca_present.sh refuses for the same reason."""
+        self.write("repos.yml", "# nothing here\n")
+        self.write("config/odoo.conf", "addons_path = /mnt/extra-addons\n")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("would verify nothing", found[0])
+
+    def test_a_file_with_no_addons_path_REFUSES_rather_than_passing(self):
+        """If a config is reformatted so the regex stops matching, every pin
+        would look absent — or, worse, present. Say so instead."""
+        self._files()
+        self.write("config/odoo.prod.conf", "; reformatted, no addons_path\n")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("would verify nothing", found[0])
+
+    def test_a_missing_file_is_reported_not_skipped(self):
+        self.write("repos.yml", self.PINS)
+        self.write("config/odoo.conf",
+                   "addons_path = /mnt/oca-addons/server-tools\n")
+        self.write(invariants.CI_WORKFLOW,
+                   "odoo --addons-path=/mnt/oca-addons/server-tools \\\n")
+        found = self._findings()
+        self.assertEqual(len(found), 1)
+        self.assertIn("config/odoo.prod.conf", found[0])
+        self.assertIn("not readable", found[0])
+
+    def test_THIS_repo_currently_satisfies_the_rule(self):
+        """The rule's own subject, checked for real rather than in a fixture.
+
+        Every other test here proves it works on a synthetic tree. This one
+        proves it is SATISFIED on this one — the discipline check_doc_counts.py
+        applies to itself, and the reason a guard cannot pass by only ever
+        being pointed at fixtures.
+        """
+        invariants.REPO_ROOT = self._real_root
+        found = []
+        invariants.rule_addons_path_matches_pins(found)
+        self.assertEqual(
+            found, [],
+            "an OCA repo pinned in repos.yml is missing from an addons_path, "
+            "or an addons_path names a repo that is not pinned")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
