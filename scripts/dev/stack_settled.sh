@@ -14,6 +14,13 @@
 #  any agent about to report a scary finding a 2-second check on whether the
 #  ground moved under it, instead of guessing.
 #
+#  Also checks that every bind-mounted config file the containers hold still
+#  matches the file on disk (#427). A single-file bind mount tracks an inode,
+#  git replaces files by rename, and Odoo answers an unreadable ODOO_RC by
+#  silently using defaults — no addons_path, no db_filter. That is the same
+#  class of quiet wrongness this script exists for, arriving from a direction
+#  `docker compose ps` cannot see.
+#
 #  Read-only. Never restarts/recreates anything itself.
 #
 #  Usage: scripts/dev/stack_settled.sh
@@ -51,6 +58,16 @@ check_one() {
 
 check_one db
 check_one odoo
+
+# A container reading a config file that no longer exists is the other way the
+# ground moves under an agent (#427), and it is quieter than a restart: Odoo
+# falls back to DEFAULTS rather than failing, so a suite keeps running and
+# measures something else. `docker compose ps` cannot see it — the container
+# has been up for hours.
+echo
+if ! ./scripts/dev/assert_config_mounts_fresh.sh; then
+  unsettled=1
+fi
 
 echo
 if [ "$unsettled" -eq 0 ]; then
