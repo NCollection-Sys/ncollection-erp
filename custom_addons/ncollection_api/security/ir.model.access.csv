@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_api_scope_user,ncollection.api.scope.user,model_ncollection_api_scope,base.group_user,1,0,0,0
+access_nc_api_scope_system,ncollection.api.scope.system,model_ncollection_api_scope,base.group_system,1,1,1,1
+access_nc_api_client_system,ncollection.api.client.system,model_ncollection_api_client,base.group_system,1,1,1,1
+access_nc_api_token_system,ncollection.api.token.system,model_ncollection_api_token,base.group_system,1,0,0,1
+access_nc_api_log_system,ncollection.api.request.log.system,model_ncollection_api_request_log,base.group_system,1,0,0,0

@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **21**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **22**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -62,6 +62,15 @@ adding a module fails CI until someone updates this list.
 - `ncollection_core` — the security spine: 8 role groups + implications, license
   enforcement, menu visibility (Ring 1), workspace config, the financial gate, the
   aggregation engine, KPIs, anomaly detection, the customer dashboard.
+- `ncollection_api` — the public REST API (#77): `/api/v1`, OAuth2
+  client-credentials, scoped tokens, per-client rate limiting, metadata-only
+  request logging. **Extends Odoo core's `res.users.apikeys`** rather than
+  building a credential store — core already hashes the secret and hides it
+  from the ORM (`_auto = False`). Tokens carry `scope='ncollection_api'`, which
+  is what stops them being replayed as RPC credentials (core matches
+  `scope IS NULL OR scope = 'rpc'`). `base_rest` is deprecated upstream and
+  `installable: False` on 19.0; OCA `fastapi` needs five pip packages the stock
+  image lacks — decision and revisit trigger in OCA_DEPENDENCIES.md.
 - `ncollection_auth` — authentication audit log + hardened login/session defaults.
 - `ncollection_audit` — audit-trail **infrastructure** on OCA `auditlog` (#81):
   the client IP `auditlog` has no field for, audit rules seeded as data and
@@ -208,6 +217,11 @@ STOP and ask before changing the architecture.
 - HTTP JSON routes are `type='jsonrpc'` (`type='json'` is deprecated).
 - `res.users` groups field is `group_ids` (was `groups_id`); `base.default_user` template
   was removed — create users with an explicit `group_ids` set.
+- **`auth='none'` routes default to a READ-ONLY transaction.** `http.py`:
+  `default_mode = routing.get('readonly', default_auth == 'none')`. Any write
+  from such a route dies with `psycopg2.errors.ReadOnlySqlTransaction` — and if
+  you catch it, the response still looks perfect while nothing is persisted.
+  Pass `readonly=False` explicitly (#77).
 - Sending the `X-Odoo-Database` header on `/web/session/authenticate` makes Odoo skip the
   session cookie — only send it on session-less public calls (e.g. signup).
 

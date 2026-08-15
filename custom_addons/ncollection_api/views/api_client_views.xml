@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nc_api_client_list" model="ir.ui.view">
+        <field name="name">ncollection.api.client.list</field>
+        <field name="model">ncollection.api.client</field>
+        <field name="arch" type="xml">
+            <list string="API Clients">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="user_id"/>
+                <field name="rate_limit_per_minute"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_nc_api_client_form" model="ir.ui.view">
+        <field name="name">ncollection.api.client.form</field>
+        <field name="model">ncollection.api.client</field>
+        <field name="arch" type="xml">
+            <form string="API Client">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Warehouse sync"/></h1>
+                    </div>
+                    <group>
+                        <group string="Credentials">
+                            <field name="client_id" readonly="1"/>
+                            <!-- The secret is NEVER shown here. It exists once,
+                                 at rotation, and is not recoverable. -->
+                            <field name="active"/>
+                        </group>
+                        <group string="Authorisation">
+                            <field name="user_id"/>
+                            <field name="rate_limit_per_minute"/>
+                            <field name="scope_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        The API acts with the selected user's access rights. A
+                        client can never read what that user could not read —
+                        there is no second permission model.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_nc_api_client" model="ir.actions.act_window">
+        <field name="name">API Clients</field>
+        <field name="res_model">ncollection.api.client</field>
+        <field name="view_mode">list,form</field>
+        <!-- Rule 4: mirrored at the ORM. ir.model.access.csv grants this model
+             to base.group_system alone, so an RPC call from any other role is
+             refused whether or not the menu is visible. -->
+        <field name="group_ids" eval="[(4, ref('base.group_system'))]"/>
+    </record>
+
+    <menuitem id="menu_nc_api_root" name="Public API"
+              parent="base.menu_administration" sequence="90"
+              groups="base.group_system"/>
+    <menuitem id="menu_nc_api_client" name="API Clients"
+              parent="menu_nc_api_root" action="action_nc_api_client"
+              sequence="10"/>
+</odoo>
