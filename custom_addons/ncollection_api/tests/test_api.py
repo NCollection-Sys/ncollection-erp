@@ -8,9 +8,14 @@ Both halves are asserted end-to-end over real HTTP, not by calling the
 controller methods directly — a route that works when called as a Python
 function and 404s over the wire has passed nothing.
 """
+import datetime
+from unittest.mock import patch
+
 from odoo.tests import HttpCase, tagged
 
 from odoo.addons.ncollection_api.models.api_token import NC_API_SCOPE
+
+from ..models.api_throttle import MAX_TRACKED_SOURCES
 
 
 @tagged('post_install', '-at_install')
@@ -37,6 +42,18 @@ class TestApiFoundation(HttpCase):
             'scope_ids': [(6, 0, [cls.contacts_read.id])],
         })
         cls.secret = cls.client_rec._nc_rotate_secret()
+
+    def setUp(self):
+        super().setUp()
+        # #436's throttle counts failed authentications in a map hanging off
+        # the REGISTRY, which outlives a transaction and is therefore shared by
+        # every test in this class. Without this reset the failures produced by
+        # test_a_bad_secret_and_an_unknown_client_are_indistinguishable (2) and
+        # test_every_failure_uses_the_same_envelope (1) accumulate, and once the
+        # throttle's own tests push the total past the threshold, whatever runs
+        # next gets a 429 in place of the status it asserts — a failure whose
+        # cause is in a different test.
+        self.env['ncollection.api.throttle']._nc_reset()
 
     # ---- helpers ---------------------------------------------------------
 
@@ -321,3 +338,256 @@ class TestApiFoundation(HttpCase):
         self.client_rec.sudo().rate_limit_per_minute = 0
         for _ in range(3):
             self.assertEqual(self._token().status_code, 200)
+
+    # ---- #436: throttling FAILED authentication --------------------------
+    #
+    # The per-client limiter above only ever runs for a client that has already
+    # proved its secret. Everything below is about the requests that never get
+    # that far, each of which costs a PBKDF2.
+
+    def _arm_throttle(self, after=3, duration=300):
+        """Pin the threshold so these tests do not ride on core's default."""
+        icp = self.env['ir.config_parameter'].sudo()
+        icp.set_param('base.login_cooldown_after', str(after))
+        icp.set_param('base.login_cooldown_duration', str(duration))
+        return after
+
+    def test_repeated_failed_token_requests_are_throttled(self):
+        """The acceptance criterion: the app layer, not only nginx.
+
+        Before #436 this loop could run forever, each iteration paying for a
+        PBKDF2-SHA512, because the per-client limiter sits AFTER authentication
+        and an unknown client never reaches it.
+        """
+        after = self._arm_throttle()
+        for attempt in range(after):
+            response = self._token(secret='wrong')
+            self.assertEqual(
+                response.status_code, 401,
+                "attempt %d was throttled early — the threshold is not the "
+                "configured one" % attempt)
+        blocked = self._token(secret='wrong')
+        self.assertEqual(
+            blocked.status_code, 429,
+            "an unlimited number of failed authentications is accepted; each "
+            "one costs a PBKDF2")
+        self.assertEqual(blocked.json()['error']['code'],
+                         'too_many_failed_attempts')
+
+    def test_the_throttle_cannot_be_evaded_by_rotating_client_id(self):
+        """Keyed on the source, not on the credential.
+
+        A counter keyed on client_id would be free to evade: the attacker
+        chooses that value, and can choose a fresh one every request. This is
+        the acceptance criterion that rules out #436's own option 2.
+        """
+        after = self._arm_throttle()
+        for attempt in range(after):
+            response = self._token(
+                client_id='rotating-%d' % attempt, secret='wrong')
+            self.assertEqual(response.status_code, 401)
+        blocked = self._token(client_id='rotating-final', secret='wrong')
+        self.assertEqual(
+            blocked.status_code, 429,
+            "a fresh client_id reset the counter — the throttle is keyed on "
+            "attacker-controlled input and is free to evade")
+
+    def test_the_throttle_refuses_BEFORE_any_credential_work(self):
+        """No PBKDF2 runs on a throttled request — asserted, not inferred.
+
+        The whole point of #436 is the CPU cost of the hash, so "did we skip
+        the hash" is the property that matters. Asserting only the 429 does not
+        show it: adding a `_nc_authenticate` call BEFORE the throttle check
+        still returns 429, and that mutation passed this test when it read that
+        way. The status code cannot see the difference; a call count can.
+
+        A valid secret is used deliberately — with a wrong one,
+        `_nc_authenticate` returning nothing would be indistinguishable from it
+        never having been called.
+        """
+        after = self._arm_throttle()
+        for _ in range(after):
+            self.assertEqual(self._token(secret='wrong').status_code, 401)
+
+        ClientModel = type(self.env['ncollection.api.client'])
+        original = ClientModel._nc_authenticate
+        calls = []
+
+        def counting(model_self, client_id, client_secret):
+            calls.append(client_id)
+            return original(model_self, client_id, client_secret)
+
+        with patch.object(ClientModel, '_nc_authenticate', counting):
+            blocked = self._token()      # the REAL secret
+        self.assertEqual(
+            blocked.status_code, 429,
+            "a valid secret was accepted while throttled — the throttle is "
+            "not refusing at all")
+        self.assertEqual(
+            calls, [],
+            "the credential check ran on a throttled request: the PBKDF2 this "
+            "ticket exists to bound was paid anyway, and the 429 only hid it")
+
+    def test_a_success_does_NOT_reset_the_failure_counter(self):
+        """The interleave attack, and why this diverges from core.
+
+        Core's `_assert_can_auth` clears the whole per-source bucket on any
+        success. Copying that here was a HIGH finding in security review: at
+        `/web/login` the party holding a valid credential is the account's own
+        user, but this endpoint can be driven by an attacker who legitimately
+        holds ONE live credential — their own low-tier client, a leaked but
+        unrevoked secret — while grinding guesses at OTHER clients.
+
+        With a bucket-wide clear they could run
+
+            fail x (threshold - 1) -> succeed once -> counter wiped -> repeat
+
+        forever, never tripping the cooldown, and the app layer would have
+        bounded nothing.
+
+        So: the success must NOT rescue the source. This drives the exact
+        interleave and asserts it still ends in a lockout.
+        """
+        after = self._arm_throttle()
+        for _ in range(after - 1):
+            self.assertEqual(self._token(secret='wrong').status_code, 401)
+        self.assertEqual(
+            self._token().status_code, 200,
+            "a valid secret below the threshold should still work")
+        # One more failure must now tip it over, because the success did not
+        # roll the count back to zero.
+        self.assertEqual(self._token(secret='wrong').status_code, 401)
+        blocked = self._token(secret='wrong')
+        self.assertEqual(
+            blocked.status_code, 429,
+            "a single success wiped the failure counter — an attacker holding "
+            "one live credential can interleave successes and grind failed "
+            "attempts forever")
+
+    def test_failures_decay_by_TIME_now_that_success_does_not_clear(self):
+        """The other half of removing the success-clear.
+
+        If failures only ever accumulated, a source that once hit the threshold
+        would be one failure away from a lockout forever. An entry older than
+        `base.login_cooldown_duration` is therefore forgotten on sight.
+
+        Asserted by ageing the stored entry rather than by sleeping — a test
+        that waits 300s is a test nobody runs.
+        """
+        after = self._arm_throttle(duration=300)
+        for _ in range(after):
+            self._token(secret='wrong')
+        self.assertEqual(self._token(secret='wrong').status_code, 429)
+
+        throttle = self.env['ncollection.api.throttle']
+        failures = throttle._nc_failures()
+        self.assertEqual(len(failures), 1, "expected one tracked source")
+        source = list(failures)[0]
+        count, __ = failures[source]
+        failures[source] = (
+            count, datetime.datetime.now() - datetime.timedelta(seconds=301))
+
+        self.assertFalse(
+            throttle._nc_is_throttled(source),
+            "a failure older than the cooldown window still throttles — "
+            "counters never decay, so any source that once tripped stays one "
+            "failure from a lockout permanently")
+        self.assertNotIn(
+            source, failures,
+            "the stale entry was not dropped, so it still occupies memory")
+
+    def test_reading_the_throttle_does_not_CREATE_an_entry(self):
+        """The memory-growth half of the same security finding.
+
+        The first version indexed a `defaultdict`, so merely ASKING about an
+        unknown source inserted a permanent entry. A caller rotating source
+        addresses — a routed IPv6 prefix is enough — could then grow the map
+        without bound while sending one request per address, staying under both
+        the per-IP cooldown and nginx's per-IP zone. Neither layer bounds that,
+        which is what made it real rather than theoretical.
+        """
+        throttle = self.env['ncollection.api.throttle']
+        throttle._nc_reset()
+        self.assertFalse(throttle._nc_is_throttled('198.51.100.7'))
+        self.assertEqual(
+            throttle._nc_failures(), {},
+            "a read inserted an entry: an unauthenticated caller can grow this "
+            "map by one entry per source address, without ever failing twice")
+
+    def test_the_tracked_map_has_a_hard_CEILING(self):
+        """Bounded by design, the way nginx's own zone is.
+
+        nginx's `limit_req_zone ... :10m` is a fixed arena with LRU eviction.
+        An unbounded Python dict fed by unauthenticated input is a DoS in its
+        own right — on a worker with `limit_memory_hard`, growth is an
+        availability incident, not untidiness.
+        """
+        throttle = self.env['ncollection.api.throttle']
+        throttle._nc_reset()
+        failures = throttle._nc_failures()
+
+        now = datetime.datetime.now()
+        for i in range(MAX_TRACKED_SOURCES + 50):
+            failures['10.0.%d.%d' % (i // 256, i % 256)] = (1, now)
+        throttle._nc_evict(failures)
+        self.assertLessEqual(
+            len(failures), MAX_TRACKED_SOURCES,
+            "the map grew past its ceiling — nothing bounds it")
+
+    def test_the_throttle_does_not_share_core_s_login_bucket(self):
+        """The module's central design claim, which nothing tested.
+
+        `ncollection.api.throttle` deliberately does NOT reuse core's
+        `registry._login_failures`. If it did, a tenant's integration retrying
+        with a stale secret would put their STAFF on the /web/login cooldown
+        from the office IP.
+
+        Without this test, changing REGISTRY_ATTR back to '_login_failures'
+        passes the entire suite — the exact hole the docstring claims is
+        closed would reopen silently. Found in code review.
+        """
+        registry = self.env.registry
+        before = dict(getattr(registry, '_login_failures', {}) or {})
+        after = self._arm_throttle()
+        for _ in range(after + 1):
+            self._token(secret='wrong')
+
+        self.assertTrue(
+            self.env['ncollection.api.throttle']._nc_failures(),
+            "the API throttle recorded nothing, so this proves nothing")
+        self.assertEqual(
+            dict(getattr(registry, '_login_failures', {}) or {}), before,
+            "API failures landed in CORE's login-cooldown bucket — a failing "
+            "integration would lock this tenant's humans out of /web/login")
+
+    def test_the_throttle_reports_a_DIFFERENT_code_than_the_rate_limit(self):
+        """Both are 429, but the remedy differs: `rate_limited` means slow
+        down, `too_many_failed_attempts` means the credentials are wrong and
+        retrying will not help. One code for both would tell an integrator
+        nothing actionable."""
+        self._arm_throttle(after=1)
+        self.assertEqual(self._token(secret='wrong').status_code, 401)
+        throttled = self._token(secret='wrong')
+        self.assertEqual(throttled.status_code, 429)
+        self.assertEqual(throttled.json()['error']['code'],
+                         'too_many_failed_attempts')
+
+        # And the per-client limiter still answers with its own code.
+        self.env['ncollection.api.throttle']._nc_reset()
+        self.client_rec.sudo().rate_limit_per_minute = 1
+        self.assertEqual(self._token().status_code, 200)
+        limited = self._token()
+        self.assertEqual(limited.status_code, 429)
+        self.assertEqual(limited.json()['error']['code'], 'rate_limited')
+
+    def test_setting_the_cooldown_to_zero_disables_the_throttle(self):
+        """One switch with one meaning across both surfaces:
+        `base.login_cooldown_after = 0` already disables the /web/login
+        cooldown, and disables this for the same reason. Reusing core's policy
+        rather than inventing a second parameter is what buys that."""
+        self._arm_throttle(after=0)
+        for attempt in range(6):
+            self.assertEqual(
+                self._token(secret='wrong').status_code, 401,
+                "attempt %d was throttled with the mechanism disabled"
+                % attempt)

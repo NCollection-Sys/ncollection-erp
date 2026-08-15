@@ -148,6 +148,17 @@ so nginx picks up the new cert.
   and (prod/HTTPS only) `Strict-Transport-Security`.
 - **DB manager blocked:** `/web/database/*` → `403` at the edge.
 - **Login throttled:** `limit_req` on `/web/login` (returns `429` when tripped).
+- **API token endpoint throttled (#436):** `limit_req zone=apitoken` on
+  `/api/v1/oauth/token` (`429` when tripped). Until #436 this path matched **no
+  location at all** and fell through to `location /`, so the public API's
+  failed-authentication path had no edge limit — and every invalid attempt costs
+  a PBKDF2 in Odoo. This zone rejects before Odoo is reached, so the hash never
+  runs. `ncollection.api.throttle` is the independent app-layer second half; the
+  two are not redundant, because the app counter is per-database (an attacker
+  rotating tenant subdomains gets a fresh bucket) while this zone is keyed on
+  source IP globally. **Exact match, deliberately:** the business endpoints
+  P8-T02 (#78) adds must be sized on their own traffic, not by a number chosen
+  for a credential endpoint.
 - **Realtime bus** proxied to the mode-correct Odoo port (8069 dev / 8072 prod).
 - **TLS** (prod): TLS 1.2/1.3, wildcard cert, HTTP→HTTPS 301, HSTS.
 

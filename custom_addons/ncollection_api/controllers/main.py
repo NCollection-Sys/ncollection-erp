@@ -111,6 +111,52 @@ class NcollectionApiV1(http.Controller):
             return False
         return not client.sudo()._nc_consume_rate_slot()
 
+    def _throttle_response(self, route, started, source):
+        """``None`` when ``source`` may proceed, else a ready 429 ``Response``.
+
+        Extracted so `oauth_token` stays readable, and to sit alongside
+        `_rate_limited` — the two are different controls at different stages
+        (this one before any credential work, that one only for a client that
+        already proved its secret) and reading them side by side makes the
+        difference obvious.
+        """
+        throttle = request.env['ncollection.api.throttle'].sudo()
+        if not throttle._nc_is_throttled(source):
+            return None
+        self._log(route, 429, started)
+        # A DISTINCT code from the per-client `rate_limited`, because the
+        # correct client behaviour differs: `rate_limited` means back off and
+        # retry, this means the credentials are wrong and retrying will not
+        # help. Same status, different remedy, so a machine-readable code that
+        # conflated them would be useless to an integrator. It leaks nothing:
+        # the per-client limiter is only reachable AFTER authenticating, so an
+        # attacker who never authenticates can only ever see this one.
+        return _error('too_many_failed_attempts',
+                      "too many failed authentication attempts; try again "
+                      "later", 429)
+
+    def _resolve_scopes(self, client, post, route, started):
+        """``(scopes, None)`` when grantable, else ``(None, Response)``.
+
+        Both refusals are 400 `invalid_scope` but they are NOT the same case,
+        and conflating them once hid a defect: asking for a scope the client
+        does not hold must be REFUSED rather than quietly narrowed, while
+        asking for nothing at all is simply an empty request. A test for the
+        first passed against code that did the second, because narrowing an
+        all-excess request leaves an empty set and lands here.
+        """
+        requested = (post.get('scope') or '').split()
+        try:
+            scopes = client._nc_grantable(requested)
+        except ValidationError as exc:
+            self._log(route, 400, started, client=client)
+            return None, _error('invalid_scope', str(exc), 400)
+        if not scopes:
+            self._log(route, 400, started, client=client)
+            return None, _error('invalid_scope',
+                                "at least one scope is required", 400)
+        return scopes, None
+
     def _authenticate(self):
         """``(token, uid)`` from the Authorization header, or ``(None, None)``."""
         header = request.httprequest.headers.get('Authorization') or ''
@@ -143,28 +189,40 @@ class NcollectionApiV1(http.Controller):
                           "only client_credentials is supported; the "
                           "authorization_code flow is not implemented", 400)
 
+        # #436: throttle BEFORE any credential work. Every failed attempt below
+        # costs a PBKDF2 — including the deliberate dummy hash on the
+        # unknown-client path — and until now nothing bounded how often that
+        # could be provoked. The check is a dict lookup, so the successful path
+        # pays essentially nothing for it.
+        source = self._remote_addr()
+        throttled = self._throttle_response(route, started, source)
+        if throttled is not None:
+            return throttled
+
         client = request.env['ncollection.api.client'].sudo()._nc_authenticate(
             post.get('client_id'), post.get('client_secret'))
         if not client:
             # 401 with no detail. Distinguishing "unknown client" from "bad
-            # secret" would turn this into an enumeration oracle.
+            # secret" would turn this into an enumeration oracle. The throttle
+            # counts both identically for the same reason.
+            request.env['ncollection.api.throttle'].sudo()._nc_record_failure(
+                source)
             self._log(route, 401, started)
             return _error('invalid_client', "client authentication failed", 401)
+
+        # NOTE: a success deliberately does NOT clear this source's failures.
+        # Doing so let an attacker holding ONE live credential interleave
+        # `fail x (threshold - 1)` with a single success and grind forever —
+        # found in security review. Failures decay by TIME instead; see
+        # `ncollection.api.throttle`.
 
         if self._rate_limited(client):
             self._log(route, 429, started, client=client)
             return _error('rate_limited', "too many requests", 429)
 
-        requested = (post.get('scope') or '').split()
-        try:
-            scopes = client._nc_grantable(requested)
-        except ValidationError as exc:
-            self._log(route, 400, started, client=client)
-            return _error('invalid_scope', str(exc), 400)
-        if not scopes:
-            self._log(route, 400, started, client=client)
-            return _error('invalid_scope', "at least one scope is required",
-                          400)
+        scopes, refusal = self._resolve_scopes(client, post, route, started)
+        if refusal is not None:
+            return refusal
 
         _token, plaintext = request.env['ncollection.api.token'].sudo()._nc_issue(
             client, scopes, TOKEN_TTL_SECONDS)
