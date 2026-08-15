@@ -79,7 +79,13 @@ oca: ## Aggregate the pinned OCA addon repos from repos.yml into ./oca/
 	@test -x $(OCA_VENV)/bin/gitaggregate || \
 		(python3 -m venv $(OCA_VENV) && $(OCA_VENV)/bin/pip -q install 'git-aggregator==4.1')
 	$(OCA_VENV)/bin/gitaggregate -c repos.yml -j 3
-	@echo "OCA repos aggregated. Apply with: make restart"
+	@echo "OCA repos aggregated. Apply with:"
+	@echo "  docker compose up -d --force-recreate odoo"
+	@echo ""
+	@echo "NOT 'make restart' (#427): restarting reuses the mount"
+	@echo "namespace, so a config file replaced by rename stays stale and"
+	@echo "Odoo silently falls back to defaults. 'up -d' does not re-bind"
+	@echo "either — it reports Healthy and changes nothing."
 
 ## ---- Staging / CD (P2-T07) ----
 staging-config: ## Validate the merged staging compose config (docker-compose.yml + .staging.yml)
