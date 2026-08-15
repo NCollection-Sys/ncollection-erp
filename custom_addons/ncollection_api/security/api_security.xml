@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Scopes are seeded as DATA, not created by hand. A scope that
+             exists but guards nothing is an invitation to grant it, so the
+             set is deliberately small and each one is enforced by a route. -->
+        <record id="scope_contacts_read" model="ncollection.api.scope">
+            <field name="code">contacts:read</field>
+            <field name="description">Read contacts (res.partner)</field>
+        </record>
+    </data>
+</odoo>
