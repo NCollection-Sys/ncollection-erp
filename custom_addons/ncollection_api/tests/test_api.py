@@ -38,6 +38,18 @@ class TestApiFoundation(HttpCase):
         })
         cls.secret = cls.client_rec._nc_rotate_secret()
 
+    def setUp(self):
+        super().setUp()
+        # #436's throttle counts failed authentications in a map hanging off
+        # the REGISTRY, which outlives a transaction and is therefore shared by
+        # every test in this class. Without this reset the failures produced by
+        # test_a_bad_secret_and_an_unknown_client_are_indistinguishable (2) and
+        # test_every_failure_uses_the_same_envelope (1) accumulate, and once the
+        # throttle's own tests push the total past the threshold, whatever runs
+        # next gets a 429 in place of the status it asserts — a failure whose
+        # cause is in a different test.
+        self.env['ncollection.api.throttle']._nc_reset()
+
     # ---- helpers ---------------------------------------------------------
 
     def _token(self, scope='contacts:read', client_id=None, secret=None):
@@ -321,3 +333,123 @@ class TestApiFoundation(HttpCase):
         self.client_rec.sudo().rate_limit_per_minute = 0
         for _ in range(3):
             self.assertEqual(self._token().status_code, 200)
+
+    # ---- #436: throttling FAILED authentication --------------------------
+    #
+    # The per-client limiter above only ever runs for a client that has already
+    # proved its secret. Everything below is about the requests that never get
+    # that far, each of which costs a PBKDF2.
+
+    def _arm_throttle(self, after=3, duration=300):
+        """Pin the threshold so these tests do not ride on core's default."""
+        icp = self.env['ir.config_parameter'].sudo()
+        icp.set_param('base.login_cooldown_after', str(after))
+        icp.set_param('base.login_cooldown_duration', str(duration))
+        return after
+
+    def test_repeated_failed_token_requests_are_throttled(self):
+        """The acceptance criterion: the app layer, not only nginx.
+
+        Before #436 this loop could run forever, each iteration paying for a
+        PBKDF2-SHA512, because the per-client limiter sits AFTER authentication
+        and an unknown client never reaches it.
+        """
+        after = self._arm_throttle()
+        for attempt in range(after):
+            response = self._token(secret='wrong')
+            self.assertEqual(
+                response.status_code, 401,
+                "attempt %d was throttled early — the threshold is not the "
+                "configured one" % attempt)
+        blocked = self._token(secret='wrong')
+        self.assertEqual(
+            blocked.status_code, 429,
+            "an unlimited number of failed authentications is accepted; each "
+            "one costs a PBKDF2")
+        self.assertEqual(blocked.json()['error']['code'],
+                         'too_many_failed_attempts')
+
+    def test_the_throttle_cannot_be_evaded_by_rotating_client_id(self):
+        """Keyed on the source, not on the credential.
+
+        A counter keyed on client_id would be free to evade: the attacker
+        chooses that value, and can choose a fresh one every request. This is
+        the acceptance criterion that rules out #436's own option 2.
+        """
+        after = self._arm_throttle()
+        for attempt in range(after):
+            response = self._token(
+                client_id='rotating-%d' % attempt, secret='wrong')
+            self.assertEqual(response.status_code, 401)
+        blocked = self._token(client_id='rotating-final', secret='wrong')
+        self.assertEqual(
+            blocked.status_code, 429,
+            "a fresh client_id reset the counter — the throttle is keyed on "
+            "attacker-controlled input and is free to evade")
+
+    def test_the_throttle_refuses_BEFORE_any_credential_work(self):
+        """Once tripped, even a VALID secret gets 429.
+
+        This is what proves no hashing happens on a throttled request: if the
+        check ran after `_nc_authenticate`, a correct secret would still be
+        verified — and verifying is the cost being defended against. It also
+        keeps the endpoint from becoming an oracle that answers "your
+        credentials were right" while throttled.
+        """
+        after = self._arm_throttle()
+        for _ in range(after):
+            self.assertEqual(self._token(secret='wrong').status_code, 401)
+        blocked = self._token()          # the REAL secret
+        self.assertEqual(
+            blocked.status_code, 429,
+            "a valid secret was still verified while throttled — the check "
+            "runs after the credential work it exists to prevent")
+
+    def test_a_successful_authentication_clears_the_throttle(self):
+        """Core's semantics, kept: a working integration is never one retry
+        away from locking itself out.
+
+        Drives threshold-1 failures, succeeds, then drives threshold-1 again.
+        Without the reset the second run would trip.
+        """
+        after = self._arm_throttle()
+        for _ in range(after - 1):
+            self.assertEqual(self._token(secret='wrong').status_code, 401)
+        self.assertEqual(self._token().status_code, 200)
+        for attempt in range(after - 1):
+            self.assertEqual(
+                self._token(secret='wrong').status_code, 401,
+                "attempt %d was throttled — a successful authentication did "
+                "not clear the counter" % attempt)
+
+    def test_the_throttle_reports_a_DIFFERENT_code_than_the_rate_limit(self):
+        """Both are 429, but the remedy differs: `rate_limited` means slow
+        down, `too_many_failed_attempts` means the credentials are wrong and
+        retrying will not help. One code for both would tell an integrator
+        nothing actionable."""
+        self._arm_throttle(after=1)
+        self.assertEqual(self._token(secret='wrong').status_code, 401)
+        throttled = self._token(secret='wrong')
+        self.assertEqual(throttled.status_code, 429)
+        self.assertEqual(throttled.json()['error']['code'],
+                         'too_many_failed_attempts')
+
+        # And the per-client limiter still answers with its own code.
+        self.env['ncollection.api.throttle']._nc_reset()
+        self.client_rec.sudo().rate_limit_per_minute = 1
+        self.assertEqual(self._token().status_code, 200)
+        limited = self._token()
+        self.assertEqual(limited.status_code, 429)
+        self.assertEqual(limited.json()['error']['code'], 'rate_limited')
+
+    def test_setting_the_cooldown_to_zero_disables_the_throttle(self):
+        """One switch with one meaning across both surfaces:
+        `base.login_cooldown_after = 0` already disables the /web/login
+        cooldown, and disables this for the same reason. Reusing core's policy
+        rather than inventing a second parameter is what buys that."""
+        self._arm_throttle(after=0)
+        for attempt in range(6):
+            self.assertEqual(
+                self._token(secret='wrong').status_code, 401,
+                "attempt %d was throttled with the mechanism disabled"
+                % attempt)

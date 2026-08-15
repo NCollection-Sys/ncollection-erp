@@ -143,13 +143,41 @@ class NcollectionApiV1(http.Controller):
                           "only client_credentials is supported; the "
                           "authorization_code flow is not implemented", 400)
 
+        # #436: throttle BEFORE any credential work. Every failed attempt below
+        # costs a PBKDF2 — including the deliberate dummy hash on the
+        # unknown-client path — and until now nothing bounded how often that
+        # could be provoked. The check is a dict lookup, so the successful path
+        # pays essentially nothing for it.
+        throttle = request.env['ncollection.api.throttle'].sudo()
+        source = self._remote_addr()
+        if throttle._nc_is_throttled(source):
+            self._log(route, 429, started)
+            # A DISTINCT code from the per-client `rate_limited`, because the
+            # correct client behaviour differs: `rate_limited` means back off
+            # and retry, this means the credentials are wrong and retrying will
+            # not help. Same status, different remedy, so a machine-readable
+            # code that conflated them would be useless to an integrator.
+            # It leaks nothing: the per-client limiter is only reachable AFTER
+            # authenticating, so an attacker who never authenticates can only
+            # ever see this one.
+            return _error('too_many_failed_attempts',
+                          "too many failed authentication attempts; try again "
+                          "later", 429)
+
         client = request.env['ncollection.api.client'].sudo()._nc_authenticate(
             post.get('client_id'), post.get('client_secret'))
         if not client:
             # 401 with no detail. Distinguishing "unknown client" from "bad
-            # secret" would turn this into an enumeration oracle.
+            # secret" would turn this into an enumeration oracle. The throttle
+            # counts both identically for the same reason.
+            throttle._nc_record_failure(source)
             self._log(route, 401, started)
             return _error('invalid_client', "client authentication failed", 401)
+
+        # Proof of a valid secret. Core clears its login counter on success and
+        # this follows that, so a working integration is never a step away from
+        # its own lockout.
+        throttle._nc_record_success(source)
 
         if self._rate_limited(client):
             self._log(route, 429, started, client=client)
