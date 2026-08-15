@@ -179,6 +179,108 @@ jobs:
             trivy-report.txt
           if-no-files-found: ignore
 
+  # Strix (#440) is a hosted GitHub App on a third party's infrastructure, NOT a
+  # workflow of ours — it posts through the Checks API, which is why its result
+  # links to app.strix.ai instead of an actions run. It cannot be "added to CI";
+  # the only thing we control is whether it is asked to look AGAIN.
+  #
+  # THE PROBLEM IS NOT THAT IT SKIPS PRs. It reviewed 6 of the last 7. The
+  # problem is that its verdict goes STALE and then becomes INVISIBLE: it stamps
+  # the commit it reviewed ("Updated for `<sha>`"), and its check run is bound
+  # to that commit. Push again and the check does not appear on the new head at
+  # all — not as "stale", but as nothing. Measured:
+  #
+  #     #433  reviewed 8bfa29b   head ffb4087   <- later commits never reviewed
+  #     #426  reviewed ef23913   head 9a19574   <- same
+  #
+  # Both merged that way. Anyone gating on `gh pr checks` sees no Strix row and
+  # reads it as "not configured" rather than "your last commits are unreviewed".
+  #
+  # Worth fixing rather than dropping: on #430 Strix filed a HIGH that four
+  # internal reviewers and the whole suite missed — audit managers could REWRITE
+  # sealed rows, because removing perm_unlink only stopped them DELETING.
+  #
+  # This job lives in ci.yml deliberately. A new .github/workflows/*.yml added
+  # via develop would be INERT: close-linked-issues.yml and deploy-staging.yml
+  # are both in that state right now, present on develop, absent from main, and
+  # neither has ever run.
+  #
+  # No `needs:`, so it runs alongside lint/test/build and gates nothing.
+  strix-review-request:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write   # the only scope this needs: post one comment
+    steps:
+      - name: Re-request a Strix review when its verdict is stale
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          short="${HEAD_SHA:0:7}"
+
+          # One line per comment, author first, so the stamp can be read from
+          # STRIX's comments only. Reading every comment would let anyone who
+          # quotes Strix ("Updated for `abc1234`") move the marker, and a
+          # quoted stale sha would suppress the re-request this job exists for.
+          comments=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+                       --jq '.[] | "\(.user.login)\t\(.body | gsub("\n"; " "))"')
+
+          # Idempotent PER COMMIT, not per PR: re-requesting on a new head is
+          # the entire point, but asking twice for the SAME head would spam on
+          # every re-run.
+          if printf '%s\n' "$comments" | grep -q "ci:strix-requested:$short"; then
+            echo "Already requested a review for $short — not asking twice."
+            exit 0
+          fi
+
+          # Strix stamps the commit it reviewed. If that is already this head,
+          # its verdict is current and there is nothing to ask for.
+          # A CAPTURE, not two greps. Piping the matched phrase into
+          # `grep -oE '[0-9a-f]+'` looked equivalent and was not: the words
+          # "Updated" and "for" are themselves made of hex characters, so it
+          # emitted `d`, `a`, `ed`, `f` and then the sha, and the comparison
+          # below saw the wrong token — reporting a CURRENT verdict as stale.
+          #
+          # shellcheck disable=SC2016  # the backticks are LITERAL — part of
+          # Strix's markdown ("Updated for `abc1234`"), not a substitution.
+          reviewed=$(printf '%s\n' "$comments" \
+            | grep '^strix-security\[bot\]' \
+            | sed -nE 's/.*Updated for `([0-9a-f]{7,40})`.*/\1/p' | tail -1)
+
+          if [ -n "$reviewed" ] && [ "$reviewed" = "$short" ]; then
+            echo "Strix already reviewed $short — verdict is current."
+            exit 0
+          fi
+
+          if [ -n "$reviewed" ]; then
+            echo "Strix reviewed $reviewed but head is $short — stale, re-requesting."
+          else
+            echo "No Strix review on this PR yet — requesting one."
+          fi
+
+          # Their documented trigger, from Strix's own PR comment:
+          # "tag @strix-security in a PR comment to run a fresh review."
+          #
+          # Built with printf so every line reaches GitHub at column 0. Quoting
+          # a multi-line string inline would carry this file's indentation into
+          # the comment, and four leading spaces make Markdown render the rest
+          # as a code block.
+          body=$(printf '%s\n' \
+            '@strix-security' \
+            '' \
+            "<!-- ci:strix-requested:$short -->" \
+            "<sub>Requested by ci.yml (#440) because Strix's verdict did not" \
+            "cover \`$short\`. Its check run is bound to the commit it reviewed," \
+            'so after a later push it vanishes from the head rather than showing' \
+            'as stale — #433 and #426 were both merged that way.</sub>')
+
+          gh pr comment "$PR" --repo "$REPO" --body "$body"
+          echo "Requested a Strix review of $short on PR #$PR."
+
   architecture-guard:
     runs-on: ubuntu-latest
     steps:
