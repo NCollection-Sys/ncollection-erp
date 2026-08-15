@@ -52,8 +52,14 @@ target="${rest%%|*}"
 target="${target#"$PWD"/}"
 echo "proving against: service=$service file=$target"
 
-# shellcheck disable=SC2329
+# shellcheck disable=SC2317,SC2329
 # Invoked indirectly by the traps below; shellcheck cannot see that.
+#
+# BOTH codes, deliberately. Newer shellcheck reports SC2329 ("function is never
+# invoked") on the definition; the version CI installs from apt reports SC2317
+# ("command appears to be unreachable") on the body. Suppressing only the one
+# the local binary emits passed here and failed in CI — the lint job is the
+# only place the difference is visible.
 cleanup() {
   # A proof that leaves the stack broken has done more harm than the bug it was
   # checking for. Restore the file, then the container, and SAY SO if either

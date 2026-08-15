@@ -120,7 +120,9 @@ for service in $services; do
     "$cid" 2>/dev/null || true)"
 
   while IFS='|' read -r source dest; do
-    [ -n "${source:-}" ] && [ -n "${dest:-}" ] || continue
+    if [ -z "${source:-}" ] || [ -z "${dest:-}" ]; then
+      continue                    # blank line from an empty mount list
+    fi
     # Docker Desktop reports SOME bind sources with a `/host_mnt` prefix and
     # others without it — measured on one container, in one inspect call:
     #     /host_mnt/<repo>/config/odoo.conf   -> /etc/odoo/odoo.conf
