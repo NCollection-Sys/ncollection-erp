@@ -68,6 +68,8 @@
         # Must load BEFORE any cron that binds to it.
         'data/cron_user.xml',
         'data/anomaly_cron.xml',
+        # P8-T10 error telemetry & structured incident logging (Issue #444)
+        'views/error_log_views.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in
     # 'depends': the dashboard reads sale/account/crm through SOFT checks

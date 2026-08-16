@@ -18,3 +18,4 @@ access_alert_manager,ncollection.alert.manager,model_ncollection_alert,ncollecti
 access_alert_ceo,ncollection.alert.ceo,model_ncollection_alert,ncollection_core.group_role_ceo,1,0,0,0
 access_alert_owner,ncollection.alert.owner,model_ncollection_alert,ncollection_core.group_role_owner,1,0,0,0
 access_alert_cron_service,ncollection.alert.cron.service,model_ncollection_alert,ncollection_core.group_cron_service,1,1,1,0
+access_error_log_system,ncollection.error.log.system,model_ncollection_error_log,base.group_system,1,1,1,1

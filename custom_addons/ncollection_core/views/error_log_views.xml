@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        NCollection Error & Incident Telemetry Log Views (P8-T10 / Issue #444).
+        Odoo 19 compliant: <list> view, no attrs=, zero external leaks.
+    -->
+
+    <!-- List View -->
+    <record id="view_ncollection_error_log_list" model="ir.ui.view">
+        <field name="name">ncollection.error.log.list</field>
+        <field name="model">ncollection.error.log</field>
+        <field name="arch" type="xml">
+            <list string="Error Incidents" create="false" edit="false" delete="true">
+                <field name="create_date" string="Timestamp"/>
+                <field name="uuid" string="Incident ID" decoration-bf="1"/>
+                <field name="http_status" decoration-danger="http_status >= 500" decoration-warning="http_status &lt; 500"/>
+                <field name="error_type"/>
+                <field name="route"/>
+                <field name="method"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_ncollection_error_log_form" model="ir.ui.view">
+        <field name="name">ncollection.error.log.form</field>
+        <field name="model">ncollection.error.log</field>
+        <field name="arch" type="xml">
+            <form string="Error Incident" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="uuid" string="Incident Correlation ID"/>
+                        <h1>
+                            <field name="uuid" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="HTTP &amp; Request Info">
+                            <field name="http_status"/>
+                            <field name="method"/>
+                            <field name="route"/>
+                            <field name="create_date" string="Occurred At"/>
+                        </group>
+                        <group string="Client &amp; Context">
+                            <field name="user_id"/>
+                            <field name="remote_addr"/>
+                            <field name="user_agent"/>
+                            <field name="error_type"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Message Summary">
+                            <field name="message" widget="text" readonly="1"/>
+                        </page>
+                        <page string="Masked Traceback">
+                            <field name="traceback_masked" widget="ace" options="{'mode': 'python'}" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_ncollection_error_log_search" model="ir.ui.view">
+        <field name="name">ncollection.error.log.search</field>
+        <field name="model">ncollection.error.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Error Incidents">
+                <field name="uuid" string="Incident ID"/>
+                <field name="error_type"/>
+                <field name="route"/>
+                <field name="user_id"/>
+                <filter string="5xx Server Errors" name="server_errors" domain="[('http_status', '&gt;=', 500)]"/>
+                <filter string="4xx Client Errors" name="client_errors" domain="[('http_status', '&gt;=', 400), ('http_status', '&lt;', 500)]"/>
+                <separator/>
+                <filter string="Group by HTTP Status" name="by_status" context="{'group_by': 'http_status'}"/>
+                <filter string="Group by Error Type" name="by_type" context="{'group_by': 'error_type'}"/>
+                <filter string="Group by Date" name="by_date" context="{'group_by': 'create_date:day'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_ncollection_error_log" model="ir.actions.act_window">
+        <field name="name">Error &amp; Incident Logs</field>
+        <field name="res_model">ncollection.error.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ncollection_error_log_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No error incidents recorded. System health is optimal!
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -23,3 +23,5 @@ from . import test_anomaly_visibility
 from . import test_financial_gate
 # P6-T02 (#66) — portal users see only their own records
 from . import test_portal_isolation
+# P8-T10 (#444) — error log & incident correlation tests
+from . import test_error_log
