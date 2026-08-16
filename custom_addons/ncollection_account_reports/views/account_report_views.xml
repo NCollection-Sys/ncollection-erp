@@ -1017,4 +1017,61 @@
               parent="menu_ncollection_account_reports"
               action="action_report_department_wizard" sequence="74"/>
 
+    <!-- ==== F2-T06: UAE FTA VAT 201 Return Wizard & List (#116) ==== -->
+    <record id="view_report_uae_vat_form" model="ir.ui.view">
+        <field name="name">ncollection.account.report.uae.vat.form</field>
+        <field name="model">ncollection.account.report.uae.vat</field>
+        <field name="arch" type="xml">
+            <form string="UAE FTA VAT 201 Return">
+                <sheet>
+                    <group>
+                        <group string="Tax Period">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   domain="[('id', 'in', allowed_company_ids)]"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="target_move"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view" type="object" string="View Return" class="btn-primary"/>
+                    <button name="action_export_pdf" type="object" string="Export PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button name="action_export_faf" type="object" string="Export FTA Audit File (FAF)" class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_report_line_uae_vat_list" model="ir.ui.view">
+        <field name="name">ncollection.account.report.line.uae.vat.list</field>
+        <field name="model">ncollection.account.report.line</field>
+        <field name="arch" type="xml">
+            <list string="UAE FTA VAT 201 Return" create="false" delete="false" default_order="id"
+                  decoration-bf="level == 0" decoration-muted="level == 2">
+                <field name="box" string="Box"/>
+                <field name="label" string="Description / Supply Category"/>
+                <field name="balance" string="Amount (AED)"/>
+                <field name="vat_amount" string="VAT Amount (AED)"/>
+                <field name="recoverable_vat" string="Recoverable VAT (AED)"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="level" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_report_uae_vat_wizard" model="ir.actions.act_window">
+        <field name="name">UAE FTA VAT 201 Return</field>
+        <field name="res_model">ncollection.account.report.uae.vat</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_report_uae_vat" name="UAE FTA VAT 201 Return"
+              parent="menu_ncollection_account_reports"
+              action="action_report_uae_vat_wizard" sequence="80"/>
+
 </odoo>
+

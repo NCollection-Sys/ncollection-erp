@@ -157,5 +157,13 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- F2-T06: UAE FTA VAT 201 Return isolation (#116) -->
+        <record id="rule_report_uae_vat_own" model="ir.rule">
+            <field name="name">UAE FTA VAT 201 Return runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_uae_vat"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>
+
