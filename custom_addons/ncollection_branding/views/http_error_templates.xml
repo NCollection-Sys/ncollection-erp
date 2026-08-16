@@ -1,40 +1,261 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Branded HTTP error pages (P1-T13).
+        Branded Uniform Error Pages (P1-T13 / P8-T10 / Issue #444).
 
-        http_routing renders these for frontend requests; the page chrome
-        (logo, colors) already flows from web.frontend_layout + the company
-        logo, so we brand the copy and the 404 illustration.
-
-        NOTE (recon-verified): http_routing.500 deliberately loads NO asset
-        bundles or theme (it must render on a broken cursor), so it is NOT
-        inherited here with asset-dependent content — its default is a plain
-        neutral page with no Odoo wordmark in the body. Backend (/odoo)
-        errors surface as OWL dialogs, branded in static/src/js.
+        Self-contained, zero-asset-dependent glassmorphic layout for all HTTP error states
+        (400, 401, 403, 404, 500, 503). Renders cleanly even on a broken database cursor
+        or uncompiled asset bundles.
     -->
 
-    <!-- 404: swap the html_editor-routed Odoo illustration for our logo
-         (also removes the dependency on the html_editor module's shape
-         route, which a lean tenant may not have installed). -->
-    <template id="http_404_branded" inherit_id="http_routing.404"
-              name="NCollection 404">
-        <xpath expr="//img[contains(@src, '404.svg')]" position="replace">
-            <img class="img img-fluid mx-auto"
-                 src="/ncollection_branding/static/src/img/logo.png"
-                 alt="NCollection" style="max-height: 90px; width: auto;"/>
-        </xpath>
-        <xpath expr="//p[a[@href='/contactus']]" position="replace">
-            <p><b>Don't panic.</b> If you think this is a mistake, please contact your workspace administrator.</p>
+    <!-- Master Self-Contained Error Page Layout -->
+    <template id="ncollection_error_layout" name="NCollection Uniform Error Page">
+        <t t-set="brand" t-value="'#1F5F8F'"/>
+        <html lang="en">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title><t t-out="error_title or 'Error'"/> — NCollection</title>
+                <link type="image/x-icon" rel="shortcut icon" href="/ncollection_branding/static/src/img/favicon.ico"/>
+                <style>
+                    :root {
+                        --nc-brand: #1F5F8F;
+                        --nc-brand-hover: #17486D;
+                        --nc-text-main: #0F172A;
+                        --nc-text-muted: #5A6B83;
+                        --nc-bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%);
+                    }
+                    * { box-sizing: border-box; }
+                    body {
+                        margin: 0;
+                        padding: 24px;
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                        background: var(--nc-bg-gradient);
+                        color: var(--nc-text-main);
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .nc-err-card {
+                        max-width: 580px;
+                        width: 100%;
+                        background: rgba(255, 255, 255, 0.96);
+                        backdrop-filter: blur(12px);
+                        border: 1px solid #E2E8F0;
+                        border-radius: 16px;
+                        box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 0 1px rgba(15, 23, 42, 0.1);
+                        padding: 48px 36px;
+                        text-align: center;
+                        animation: ncFadeIn 0.35s ease-out;
+                    }
+                    @keyframes ncFadeIn {
+                        from { opacity: 0; transform: translateY(10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .nc-err-logo {
+                        max-height: 48px;
+                        width: auto;
+                        margin-bottom: 28px;
+                    }
+                    .nc-err-icon-box {
+                        width: 64px;
+                        height: 64px;
+                        margin: 0 auto 20px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .nc-icon-404 { background: #EFF6FF; color: #2563EB; }
+                    .nc-icon-403 { background: #FEF3C7; color: #D97706; }
+                    .nc-icon-500 { background: #FEE2E2; color: #DC2626; }
+                    .nc-icon-generic { background: #F1F5F9; color: #64748B; }
+
+                    .nc-err-code {
+                        display: inline-block;
+                        font-size: 0.82rem;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.08em;
+                        color: #64748B;
+                        margin-bottom: 6px;
+                    }
+                    .nc-err-title {
+                        font-size: 1.65rem;
+                        font-weight: 700;
+                        color: var(--nc-text-main);
+                        margin: 0 0 12px;
+                        line-height: 1.25;
+                    }
+                    .nc-err-desc {
+                        font-size: 1rem;
+                        color: var(--nc-text-muted);
+                        line-height: 1.55;
+                        margin: 0 0 28px;
+                    }
+                    .nc-badge-incident {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        background: #F8FAFC;
+                        border: 1px solid #CBD5E1;
+                        padding: 8px 14px;
+                        border-radius: 8px;
+                        font-size: 0.85rem;
+                        color: #334155;
+                        margin-bottom: 24px;
+                        cursor: pointer;
+                        transition: all 0.15s ease;
+                    }
+                    .nc-badge-incident:hover {
+                        background: #F1F5F9;
+                        border-color: #94A3B8;
+                    }
+                    .nc-btn-primary {
+                        display: inline-block;
+                        background: var(--nc-brand);
+                        color: #ffffff;
+                        padding: 12px 26px;
+                        border-radius: 8px;
+                        text-decoration: none;
+                        font-weight: 600;
+                        font-size: 0.95rem;
+                        transition: background 0.15s ease;
+                    }
+                    .nc-btn-primary:hover {
+                        background: var(--nc-brand-hover);
+                        color: #ffffff;
+                    }
+                    .nc-links {
+                        margin-top: 24px;
+                        display: flex;
+                        justify-content: center;
+                        gap: 18px;
+                        font-size: 0.88rem;
+                    }
+                    .nc-links a {
+                        color: var(--nc-text-muted);
+                        text-decoration: none;
+                    }
+                    .nc-links a:hover {
+                        color: var(--nc-brand);
+                        text-decoration: underline;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="nc-err-card">
+                    <img class="nc-err-logo" src="/ncollection_branding/static/src/img/logo.png" alt="NCollection"/>
+
+                    <!-- Icon box -->
+                    <div t-attf-class="nc-err-icon-box nc-icon-{{error_type or 'generic'}}">
+                        <t t-if="error_type == '404'">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                            </svg>
+                        </t>
+                        <t t-elif="error_type == '403'">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </t>
+                        <t t-elif="error_type == '500'">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </t>
+                        <t t-else="">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </t>
+                    </div>
+
+                    <span class="nc-err-code" t-out="error_code or 'HTTP Error'"/>
+                    <h1 class="nc-err-title" t-out="error_title or 'Something went wrong'"/>
+                    <p class="nc-err-desc" t-out="error_message or 'The requested page could not be displayed. Please check the URL or return to your dashboard.'"/>
+
+                    <!-- Incident Copy Badge (for 500s or whenever incident_id is available) -->
+                    <t t-if="incident_id">
+                        <div class="nc-badge-incident" onclick="ncCopyIncident()" title="Click to copy Incident ID">
+                            <span>Incident Reference: <strong id="ncIncidentId" t-out="incident_id"/></span>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span id="ncCopiedFeedback" style="display:none; color:#16A34A; font-weight:600;">✓ Copied</span>
+                        </div>
+                    </t>
+
+                    <div>
+                        <a href="/web" class="nc-btn-primary">Return to Workspace</a>
+                    </div>
+
+                    <div class="nc-links">
+                        <a href="/web/session/logout">Log out</a>
+                        <span>•</span>
+                        <a t-attf-href="mailto:support@ncollection.com?subject=Incident%20{{incident_id or 'Report'}}">Contact Support</a>
+                    </div>
+                </div>
+
+                <script>
+                    function ncCopyIncident() {
+                        var idEl = document.getElementById('ncIncidentId');
+                        if (!idEl) return;
+                        var text = 'Incident: ' + idEl.innerText + ' | URL: ' + window.location.href + ' | Time: ' + new Date().toISOString();
+                        navigator.clipboard.writeText(text).then(function() {
+                            var fb = document.getElementById('ncCopiedFeedback');
+                            if (fb) {
+                                fb.style.display = 'inline';
+                                setTimeout(function() { fb.style.display = 'none'; }, 2500);
+                            }
+                        });
+                    }
+                </script>
+            </body>
+        </html>
+    </template>
+
+    <!-- 404: Page Not Found -->
+    <template id="http_404_branded" inherit_id="http_routing.404" name="NCollection 404">
+        <xpath expr="//div[hasclass('container')]" position="replace">
+            <t t-call="ncollection_branding.ncollection_error_layout">
+                <t t-set="error_code" t-value="'404 Not Found'"/>
+                <t t-set="error_type" t-value="'404'"/>
+                <t t-set="error_title" t-value="'Page not found'"/>
+                <t t-set="error_message" t-value="'The link you followed may be broken, or the page may have been moved. If you believe this is an error, please contact your workspace administrator.'"/>
+            </t>
         </xpath>
     </template>
 
-    <!-- Generic 4xx fallback: keep the copy, no Odoo strings present —
-         inherited only to future-proof branding hooks. -->
-    <template id="http_4xx_branded" inherit_id="http_routing.4xx"
-              name="NCollection 4xx">
-        <xpath expr="//h1" position="attributes">
-            <attribute name="class">mt-5 o_ncollection_error_title</attribute>
+    <!-- 403: Access Denied -->
+    <template id="http_403_branded" inherit_id="http_routing.403" name="NCollection 403">
+        <xpath expr="//div[hasclass('container')]" position="replace">
+            <t t-call="ncollection_branding.ncollection_error_layout">
+                <t t-set="error_code" t-value="'403 Access Denied'"/>
+                <t t-set="error_type" t-value="'403'"/>
+                <t t-set="error_title" t-value="'Access Restricted'"/>
+                <t t-set="error_message" t-value="'You do not have the required permissions to view this resource. Contact your workspace administrator to request access.'"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Generic 4xx fallback -->
+    <template id="http_4xx_branded" inherit_id="http_routing.4xx" name="NCollection 4xx">
+        <xpath expr="//div[hasclass('container')]" position="replace">
+            <t t-call="ncollection_branding.ncollection_error_layout">
+                <t t-set="error_code" t-value="'Client Request Error'"/>
+                <t t-set="error_type" t-value="'generic'"/>
+                <t t-set="error_title" t-value="'Unable to complete request'"/>
+                <t t-set="error_message" t-value="'The request could not be processed as submitted. Please check the URL or return to your dashboard.'"/>
+            </t>
         </xpath>
     </template>
 

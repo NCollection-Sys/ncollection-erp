@@ -67,12 +67,31 @@ class TestWebclientBranding(TransactionCase):
 
     def test_404_override_present(self):
         arch = self._arch("ncollection_branding.http_404_branded")
-        # the branded logo replaces the Odoo 404 illustration; "404.svg"
-        # legitimately remains inside the xpath SELECTOR, so we only assert
-        # the replacement content is present (install-success already proves
-        # the xpath matched and the swap applied).
-        self.assertIn("ncollection_branding/static/src/img/logo.png", arch)
+        self.assertIn("ncollection_branding.ncollection_error_layout", arch)
         self.assertIn("workspace administrator", arch)
+
+    def test_403_override_present(self):
+        arch = self._arch("ncollection_branding.http_403_branded")
+        self.assertIn("ncollection_branding.ncollection_error_layout", arch)
+        self.assertIn("403 Access Denied", arch)
+
+    def test_uniform_error_layout_render(self):
+        """Uniform error layout renders standalone with branding, incident copy badge, and recovery CTAs."""
+        html = str(self.env["ir.qweb"]._render(
+            "ncollection_branding.ncollection_error_layout", {
+                "error_code": "500 Internal Error",
+                "error_type": "500",
+                "error_title": "Server Incident",
+                "error_message": "An unexpected error occurred.",
+                "incident_id": "ERR-99A1F0-8A2D",
+            }
+        ))
+        self.assertIn("NCollection", html)
+        self.assertIn("/ncollection_branding/static/src/img/logo.png", html)
+        self.assertIn("ERR-99A1F0-8A2D", html)
+        self.assertIn("Return to Workspace", html)
+        self.assertIn("ncCopyIncident", html)
+        self.assertNotIn("Odoo", html)
 
     def test_settings_about_override_present(self):
         arch = self._arch("ncollection_branding.res_config_settings_view_form_branded")
