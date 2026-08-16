@@ -20,3 +20,5 @@ from . import cash_flow
 from . import equity_changes
 # F2-T09 dimension analysis (#315)
 from . import dimension_analysis
+# F2-T06 UAE FTA VAT 201 Return (#116)
+from . import uae_vat_report

@@ -363,4 +363,19 @@
         <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 
+    <!-- F2-T06: UAE FTA VAT 201 Return PDF Report (#116) -->
+    <record id="action_report_uae_vat" model="ir.actions.report">
+        <field name="name">UAE FTA VAT 201 Return</field>
+        <field name="model">ncollection.account.report.uae.vat</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_uae_vat</field>
+        <field name="report_file">ncollection_account_reports.report_uae_vat</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_uae_vat">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
 </odoo>
+

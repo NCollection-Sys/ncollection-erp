@@ -52,6 +52,10 @@ class NcollectionAccountReportLine(models.TransientModel):
     # variance_pct — a ratio put in a Monetary field would render "AED 70.00"
     # against a row labelled "Net Margin".
     ratio_pct = fields.Float(digits=(16, 2))
+    # F2-T06: UAE FTA VAT 201 box identifier and tax values
+    box = fields.Char()
+    vat_amount = fields.Monetary(currency_field='currency_id', string='VAT Amount')
+    recoverable_vat = fields.Monetary(currency_field='currency_id', string='Recoverable VAT')
     currency_id = fields.Many2one('res.currency')
     level = fields.Integer(default=0)
 
