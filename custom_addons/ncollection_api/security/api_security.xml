@@ -4,9 +4,60 @@
         <!-- Scopes are seeded as DATA, not created by hand. A scope that
              exists but guards nothing is an invitation to grant it, so the
              set is deliberately small and each one is enforced by a route. -->
+        <!-- Contacts -->
         <record id="scope_contacts_read" model="ncollection.api.scope">
             <field name="code">contacts:read</field>
             <field name="description">Read contacts (res.partner)</field>
+        </record>
+        <record id="scope_contacts_write" model="ncollection.api.scope">
+            <field name="code">contacts:write</field>
+            <field name="description">Create, update, and archive contacts (res.partner)</field>
+        </record>
+
+        <!-- Products -->
+        <record id="scope_products_read" model="ncollection.api.scope">
+            <field name="code">products:read</field>
+            <field name="description">Read products and prices (product.template)</field>
+        </record>
+        <record id="scope_products_write" model="ncollection.api.scope">
+            <field name="code">products:write</field>
+            <field name="description">Create and update products (product.template)</field>
+        </record>
+
+        <!-- Sales Orders -->
+        <record id="scope_sales_read" model="ncollection.api.scope">
+            <field name="code">sales:read</field>
+            <field name="description">Read sales orders and quotations (sale.order)</field>
+        </record>
+        <record id="scope_sales_write" model="ncollection.api.scope">
+            <field name="code">sales:write</field>
+            <field name="description">Create, update, and confirm sales orders (sale.order)</field>
+        </record>
+
+        <!-- Invoices -->
+        <record id="scope_invoices_read" model="ncollection.api.scope">
+            <field name="code">invoices:read</field>
+            <field name="description">Read customer invoices and credit notes (account.move)</field>
+        </record>
+        <record id="scope_invoices_write" model="ncollection.api.scope">
+            <field name="code">invoices:write</field>
+            <field name="description">Create, update, and post customer invoices (account.move)</field>
+        </record>
+
+        <!-- Stock Levels -->
+        <record id="scope_stock_read" model="ncollection.api.scope">
+            <field name="code">stock:read</field>
+            <field name="description">Read inventory quants and stock levels (stock.quant)</field>
+        </record>
+
+        <!-- CRM Leads -->
+        <record id="scope_crm_read" model="ncollection.api.scope">
+            <field name="code">crm:read</field>
+            <field name="description">Read CRM leads and opportunities (crm.lead)</field>
+        </record>
+        <record id="scope_crm_write" model="ncollection.api.scope">
+            <field name="code">crm:write</field>
+            <field name="description">Create, update, and progress CRM leads (crm.lead)</field>
         </record>
     </data>
 </odoo>

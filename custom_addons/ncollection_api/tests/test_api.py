@@ -591,3 +591,315 @@ class TestApiFoundation(HttpCase):
                 self._token(secret='wrong').status_code, 401,
                 "attempt %d was throttled with the mechanism disabled"
                 % attempt)
+
+
+@tagged('post_install', '-at_install')
+class TestApiBusinessEndpoints(HttpCase):
+    """P8-T02: REST Business Endpoints tests (Contacts, Products, Sales, Invoices, Stock, CRM, OpenAPI)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.Client = cls.env['ncollection.api.client']
+        cls.Scope = cls.env['ncollection.api.scope']
+
+        cls.all_scopes = cls.Scope.search([])
+
+        group_xml_ids = [
+            'base.group_user',
+            'base.group_partner_manager',
+            'product.group_product_manager',
+            'sales_team.group_sale_manager',
+            'sales_team.group_sale_salesman',
+            'account.group_account_invoice',
+            'account.group_account_user',
+            'account.group_account_manager',
+            'crm.group_use_lead',
+            'stock.group_stock_user',
+            'stock.group_stock_manager',
+            'purchase.group_purchase_user',
+            'purchase.group_purchase_manager',
+        ]
+        groups = []
+        for xml_id in group_xml_ids:
+            try:
+                g = cls.env.ref(xml_id, raise_if_not_found=False)
+                if g:
+                    groups.append(g.id)
+            except Exception:
+                pass
+
+        cls.service_user = cls.env['res.users'].create({
+            'name': 'API Business Service User',
+            'login': 'nc_api_business_user',
+            'group_ids': [(6, 0, groups)],
+        })
+
+        cls.client_rec = cls.Client.create({
+            'name': 'Business API Test Client',
+            'user_id': cls.service_user.id,
+            'scope_ids': [(6, 0, cls.all_scopes.ids)],
+        })
+        cls.secret = cls.client_rec._nc_rotate_secret()
+
+        cls.test_partner = cls.env['res.partner'].create({
+            'name': 'Seed Business Partner',
+            'email': 'partner@test.com',
+            'is_company': True,
+        })
+
+    def setUp(self):
+        super().setUp()
+        self.env['ncollection.api.throttle']._nc_reset()
+
+    def _token(self, scope=None):
+        requested_scope = scope or " ".join(sorted(self.all_scopes.mapped('code')))
+        response = self.url_open(
+            '/api/v1/oauth/token',
+            data={'grant_type': 'client_credentials',
+                  'client_id': self.client_rec.client_id,
+                  'client_secret': self.secret,
+                  'scope': requested_scope})
+        return response
+
+    def _get(self, path, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, headers=headers)
+
+    def _post(self, path, data, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, json=data, headers=headers, method='POST')
+
+    def _put(self, path, data, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, json=data, headers=headers, method='PUT')
+
+    def _delete(self, path, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, headers=headers, method='DELETE')
+
+    # ---- Contacts ----
+
+    def test_contacts_crud_lifecycle(self):
+        """Full CRUD on /api/v1/contacts."""
+        tok = self._token(scope='contacts:read contacts:write').json()['access_token']
+
+        # 1. Create
+        created = self._post('/api/v1/contacts', {
+            'name': 'New Enterprise Client',
+            'email': 'enterprise@test.com',
+            'phone': '+971501112233',
+            'is_company': True,
+            'city': 'Dubai',
+            'vat': '100123456789012',
+        }, token=tok)
+        self.assertEqual(created.status_code, 201, created.text)
+        data = created.json()
+        self.assertEqual(data['name'], 'New Enterprise Client')
+        self.assertEqual(data['city'], 'Dubai')
+        partner_id = data['id']
+
+        # 2. List
+        listed = self._get('/api/v1/contacts?name=New Enterprise', token=tok)
+        self.assertEqual(listed.status_code, 200)
+        self.assertGreaterEqual(listed.json()['count'], 1)
+
+        # 3. Get single
+        single = self._get('/api/v1/contacts/%d' % partner_id, token=tok)
+        self.assertEqual(single.status_code, 200)
+        self.assertEqual(single.json()['name'], 'New Enterprise Client')
+
+        # 4. Update
+        updated = self._put('/api/v1/contacts/%d' % partner_id, {
+            'phone': '+971509998888',
+        }, token=tok)
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()['phone'], '+971509998888')
+
+        # 5. Delete (archive)
+        deleted = self._delete('/api/v1/contacts/%d' % partner_id, token=tok)
+        self.assertEqual(deleted.status_code, 200)
+        self.assertTrue(deleted.json()['success'])
+
+    def test_contacts_scope_enforcement(self):
+        """Writing contacts requires contacts:write scope."""
+        read_tok = self._token(scope='contacts:read').json()['access_token']
+        post_res = self._post('/api/v1/contacts', {'name': 'Unauthorized'}, token=read_tok)
+        self.assertEqual(post_res.status_code, 403)
+        self.assertEqual(post_res.json()['error']['code'], 'insufficient_scope')
+
+    def test_contacts_pagination_clamping(self):
+        """Pagination limit/offset parameters are parsed and clamped."""
+        tok = self._token(scope='contacts:read').json()['access_token']
+        res = self._get('/api/v1/contacts?limit=1&offset=0', token=tok)
+        self.assertEqual(res.status_code, 200)
+        self.assertLessEqual(res.json()['count'], 1)
+
+        bad_res = self._get('/api/v1/contacts?limit=invalid', token=tok)
+        self.assertEqual(bad_res.status_code, 400)
+        self.assertEqual(bad_res.json()['error']['code'], 'invalid_request')
+
+    # ---- Products ----
+
+    def test_products_endpoints(self):
+        """Product CRUD endpoints or 422 module_not_installed fallback."""
+        tok = self._token(scope='products:read products:write').json()['access_token']
+        if 'product.template' not in self.env:
+            res = self._get('/api/v1/products', token=tok)
+            self.assertEqual(res.status_code, 422)
+            self.assertEqual(res.json()['error']['code'], 'module_not_installed')
+            return
+
+        created = self._post('/api/v1/products', {
+            'name': 'API Test Widget',
+            'default_code': 'WIDGET-01',
+            'list_price': 250.0,
+            'type': 'consu',
+        }, token=tok)
+        self.assertEqual(created.status_code, 201, created.text)
+        prod_id = created.json()['id']
+
+        listed = self._get('/api/v1/products?default_code=WIDGET-01', token=tok)
+        self.assertEqual(listed.status_code, 200)
+        self.assertGreaterEqual(listed.json()['count'], 1)
+
+        single = self._get('/api/v1/products/%d' % prod_id, token=tok)
+        self.assertEqual(single.status_code, 200)
+        self.assertEqual(single.json()['list_price'], 250.0)
+
+        updated = self._put('/api/v1/products/%d' % prod_id, {
+            'list_price': 300.0,
+        }, token=tok)
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()['list_price'], 300.0)
+
+    # ---- Sales Orders ----
+
+    def test_sales_endpoints(self):
+        """Sales order CRUD or 422 module_not_installed fallback."""
+        tok = self._token(scope='sales:read sales:write').json()['access_token']
+        if 'sale.order' not in self.env:
+            res = self._get('/api/v1/sales', token=tok)
+            self.assertEqual(res.status_code, 422)
+            self.assertEqual(res.json()['error']['code'], 'module_not_installed')
+            return
+
+        prod = self.env['product.product'].create({'name': 'Order Product', 'list_price': 100.0})
+
+        created = self._post('/api/v1/sales', {
+            'partner_id': self.test_partner.id,
+            'order_line': [{
+                'product_id': prod.id,
+                'product_uom_qty': 3.0,
+                'price_unit': 100.0,
+            }],
+        }, token=tok)
+        self.assertEqual(created.status_code, 201, created.text)
+        order_id = created.json()['id']
+
+        listed = self._get('/api/v1/sales?partner_id=%d' % self.test_partner.id, token=tok)
+        self.assertEqual(listed.status_code, 200)
+
+        single = self._get('/api/v1/sales/%d' % order_id, token=tok)
+        self.assertEqual(single.status_code, 200)
+        self.assertEqual(len(single.json()['order_line']), 1)
+
+        confirmed = self._post('/api/v1/sales/%d/action_confirm' % order_id, {}, token=tok)
+        self.assertEqual(confirmed.status_code, 200)
+        self.assertEqual(confirmed.json()['state'], 'sale')
+
+    # ---- Invoices ----
+
+    def test_invoices_endpoints(self):
+        """Customer invoice CRUD or 422 module_not_installed fallback."""
+        tok = self._token(scope='invoices:read invoices:write').json()['access_token']
+        if 'account.move' not in self.env:
+            res = self._get('/api/v1/invoices', token=tok)
+            self.assertEqual(res.status_code, 422)
+            self.assertEqual(res.json()['error']['code'], 'module_not_installed')
+            return
+
+        created = self._post('/api/v1/invoices', {
+            'partner_id': self.test_partner.id,
+            'invoice_line_ids': [{
+                'name': 'API Consultation Line',
+                'quantity': 2.0,
+                'price_unit': 1500.0,
+            }],
+        }, token=tok)
+        self.assertEqual(created.status_code, 201, created.text)
+        move_id = created.json()['id']
+
+        listed = self._get('/api/v1/invoices?partner_id=%d' % self.test_partner.id, token=tok)
+        self.assertEqual(listed.status_code, 200)
+
+        single = self._get('/api/v1/invoices/%d' % move_id, token=tok)
+        self.assertEqual(single.status_code, 200)
+        self.assertEqual(single.json()['state'], 'draft')
+
+    # ---- Stock Levels ----
+
+    def test_stock_levels_endpoint(self):
+        """Stock level queries or 422 module_not_installed fallback."""
+        tok = self._token(scope='stock:read').json()['access_token']
+        if 'stock.quant' not in self.env:
+            res = self._get('/api/v1/stock/levels', token=tok)
+            self.assertEqual(res.status_code, 422)
+            self.assertEqual(res.json()['error']['code'], 'module_not_installed')
+            return
+
+        res = self._get('/api/v1/stock/levels', token=tok)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('results', res.json())
+
+    # ---- CRM Leads ----
+
+    def test_crm_leads_endpoints(self):
+        """CRM lead CRUD or 422 module_not_installed fallback."""
+        tok = self._token(scope='crm:read crm:write').json()['access_token']
+        if 'crm.lead' not in self.env:
+            res = self._get('/api/v1/crm/leads', token=tok)
+            self.assertEqual(res.status_code, 422)
+            self.assertEqual(res.json()['error']['code'], 'module_not_installed')
+            return
+
+        created = self._post('/api/v1/crm/leads', {
+            'name': 'Big Enterprise Prospect',
+            'partner_id': self.test_partner.id,
+            'expected_revenue': 50000.0,
+            'email_from': 'prospect@enterprise.com',
+        }, token=tok)
+        self.assertEqual(created.status_code, 201, created.text)
+        lead_id = created.json()['id']
+
+        listed = self._get('/api/v1/crm/leads', token=tok)
+        self.assertEqual(listed.status_code, 200)
+
+        single = self._get('/api/v1/crm/leads/%d' % lead_id, token=tok)
+        self.assertEqual(single.status_code, 200)
+        self.assertEqual(single.json()['expected_revenue'], 50000.0)
+
+        updated = self._put('/api/v1/crm/leads/%d' % lead_id, {
+            'expected_revenue': 60000.0,
+        }, token=tok)
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()['expected_revenue'], 60000.0)
+
+    # ---- OpenAPI Spec ----
+
+    def test_openapi_specification_endpoint(self):
+        """OpenAPI 3.1 specification dynamic generation."""
+        res = self._get('/api/v1/openapi.json')
+        self.assertEqual(res.status_code, 200, res.text)
+        spec = res.json()
+        self.assertEqual(spec.get('openapi'), '3.1.0')
+        self.assertIn('info', spec)
+        self.assertIn('paths', spec)
+        self.assertIn('/contacts', spec['paths'])
+        self.assertIn('/products', spec['paths'])
+        self.assertIn('/sales', spec['paths'])
+        self.assertIn('/invoices', spec['paths'])
+        self.assertIn('/stock/levels', spec['paths'])
+        self.assertIn('/crm/leads', spec['paths'])
+        self.assertIn('/oauth/token', spec['paths'])
+        self.assertIn('components', spec)
