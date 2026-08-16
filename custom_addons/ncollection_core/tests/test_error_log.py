@@ -22,14 +22,14 @@ class TestErrorLog(TransactionCase):
     def test_traceback_sanitization(self):
         """Sanitizer must redact passwords, bearer tokens, DSNs, and card numbers."""
         dirty_text = (
-            "User login failed: password='superSecret123!' with token=nc_tok_998124\n"
+            "User login failed: password='placeholderSecret123!' with token=example_token_998124\n"
             "Auth Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xyz\n"
             "Database: postgres://nc_admin:topSecretP@ss@127.0.0.1:5432/ncdb\n"
             "Customer PAN: 4111 2222 3333 4444"
         )
         clean = self.ErrorLog._nc_sanitize_traceback(dirty_text)
 
-        self.assertNotIn("superSecret123!", clean)
+        self.assertNotIn("placeholderSecret123!", clean)
         self.assertNotIn("topSecretP@ss", clean)
         self.assertNotIn("4111 2222 3333 4444", clean)
         self.assertIn("password=***", clean)
