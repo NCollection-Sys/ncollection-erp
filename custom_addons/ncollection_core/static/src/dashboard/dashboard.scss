@@ -81,13 +81,19 @@
     flex-direction: column;
     gap: 10px;
     min-width: 0;
-    padding: 18px 20px;
+    padding: 22px 24px;
     background: var(--nc-surface-raised, #ffffff);
     border: 1px solid var(--nc-surface-border, #e2e8f0);
     // Logical property, so the accent flips automatically under RTL (P3-T08).
     border-inline-start: 4px solid var(--nc-color-primary, #1f5f8f);
-    border-radius: var(--nc-radius-md, 10px);
-    box-shadow: var(--nc-shadow-card, 0 1px 3px rgba(15, 23, 42, 0.08));
+    border-radius: var(--nc-radius-bento, 24px);
+    box-shadow: var(--nc-shadow-bento, 0 10px 25px -4px rgba(0, 0, 0, 0.05));
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+
+    &:hover {
+        transform: scale(1.015);
+        box-shadow: var(--nc-shadow-bento-hover, 0 20px 38px -8px rgba(0, 0, 0, 0.12));
+    }
 
     &__label {
         font-size: 11px;

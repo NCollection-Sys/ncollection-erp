@@ -178,7 +178,12 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
 
 .o_nc_login__card {
     width: 100%;
-    max-width: 400px;
+    max-width: 440px;
+    background: var(--nc-surface-raised, #FFFFFF);
+    border: 1px solid var(--nc-surface-border, #E2E8F0);
+    border-radius: var(--nc-radius-bento, 26px);
+    box-shadow: var(--nc-shadow-bento, 0 10px 25px -4px rgba(0, 0, 0, 0.05));
+    padding: 44px 38px;
 }
 
 .o_nc_login__card-logo {
