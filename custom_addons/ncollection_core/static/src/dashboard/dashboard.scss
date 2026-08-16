@@ -81,13 +81,19 @@
     flex-direction: column;
     gap: 10px;
     min-width: 0;
-    padding: 18px 20px;
+    padding: 20px 22px;
     background: var(--nc-surface-raised, #ffffff);
     border: 1px solid var(--nc-surface-border, #e2e8f0);
     // Logical property, so the accent flips automatically under RTL (P3-T08).
     border-inline-start: 4px solid var(--nc-color-primary, #1f5f8f);
-    border-radius: var(--nc-radius-md, 10px);
+    border-radius: var(--nc-radius-lg, 14px);
     box-shadow: var(--nc-shadow-card, 0 1px 3px rgba(15, 23, 42, 0.08));
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--nc-shadow-hover, 0 12px 28px -6px rgba(15, 23, 42, 0.12));
+    }
 
     &__label {
         font-size: 11px;
@@ -99,7 +105,7 @@
 
     &__value {
         font-size: 26px;
-        font-weight: 600;
+        font-weight: 700;
         line-height: 1.1;
         color: var(--nc-text, #0f172a);
         // Tabular figures keep digits from jittering as values refresh.
@@ -119,14 +125,21 @@
 // growth, red for decline — the two states a reader actually acts on.
 .nc-trend {
     font-weight: 600;
+    font-size: 11px;
     font-variant-numeric: tabular-nums;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
 
     &--up {
         color: var(--nc-status-success, #2e7d5b);
+        background: rgba(46, 125, 91, 0.1);
     }
 
     &--down {
         color: var(--nc-status-error, #b4453c);
+        background: rgba(180, 69, 60, 0.1);
     }
 }
 

@@ -19,8 +19,14 @@
     padding: var(--nc-space-5);
     background: var(--nc-surface-raised);
     border: 1px solid var(--nc-surface-border);
-    border-radius: var(--nc-radius-md);
+    border-radius: var(--nc-radius-lg);
     box-shadow: var(--nc-shadow-card);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--nc-shadow-hover);
+    }
 
     // Logical property so the accent flips under RTL (§21 / P3-T08).
     &--accent {
@@ -67,7 +73,7 @@
     padding: var(--nc-space-5);
     background: var(--nc-surface-raised);
     border: 1px solid var(--nc-surface-border);
-    border-radius: var(--nc-radius-md);
+    border-radius: var(--nc-radius-lg);
     box-shadow: var(--nc-shadow-card);
     min-width: 0;
 }
@@ -91,7 +97,7 @@
     display: inline-flex;
     align-items: center;
     padding: 2px var(--nc-space-2);
-    border-radius: var(--nc-radius-sm);
+    border-radius: var(--nc-radius-md);
     font-size: var(--nc-font-size-xs);
     font-weight: var(--nc-font-weight-semibold);
     line-height: 1.5;
@@ -128,15 +134,17 @@
     padding: var(--nc-space-2) var(--nc-space-4);
     background: var(--nc-surface-raised);
     border: 1px solid var(--nc-surface-border);
-    border-radius: var(--nc-radius-sm);
+    border-radius: var(--nc-radius-md);
     color: var(--nc-text);
     font-size: var(--nc-font-size-sm);
     font-weight: var(--nc-font-weight-medium);
     cursor: pointer;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: all 0.2s ease;
 
     &:hover {
         border-color: var(--nc-color-primary);
+        transform: translateY(-1px);
+        box-shadow: var(--nc-shadow-sm);
     }
 
     &:focus-visible {

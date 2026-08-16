@@ -76,8 +76,13 @@ $nc-primitive-series-5:    #13CD3C;
     // Radius + elevation scales (…-md / …-card already defined above).
     --nc-radius-sm: 6px;
     --nc-radius-lg: 16px;
+    --nc-radius-xl: 20px;
     --nc-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
     --nc-shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.12);
+    --nc-shadow-glass: 0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 0 1px rgba(15, 23, 42, 0.1);
+    --nc-shadow-hover: 0 16px 32px -8px rgba(15, 23, 42, 0.12), 0 0 1px rgba(15, 23, 42, 0.1);
+    --nc-surface-glass: rgba(255, 255, 255, 0.88);
+    --nc-surface-glass-border: rgba(226, 232, 240, 0.8);
     // Typography. Family stays a system stack until the reference face (Gilroy)
     // is licensed — swap this ONE value then, no component edits. Deliberately
     // NOT applied to <body> here (that would restyle every existing screen).
