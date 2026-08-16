@@ -355,6 +355,33 @@ class OpenApiSpecificationController(ApiControllerBase):
                         },
                         "responses": {"200": {"description": "Lead updated"}}
                     }
+                },
+                "/webhooks/subscriptions": {
+                    "get": {
+                        "summary": "List Webhook Subscriptions",
+                        "security": [{"bearerAuth": []}],
+                        "responses": {"200": {"description": "List of subscriptions"}}
+                    },
+                    "post": {
+                        "summary": "Create Webhook Subscription",
+                        "security": [{"bearerAuth": []}],
+                        "requestBody": {
+                            "required": True,
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/WebhookSubscriptionInput"}
+                                }
+                            }
+                        },
+                        "responses": {"201": {"description": "Subscription created"}}
+                    }
+                },
+                "/webhooks/deliveries": {
+                    "get": {
+                        "summary": "Query Webhook Delivery Logs",
+                        "security": [{"bearerAuth": []}],
+                        "responses": {"200": {"description": "List of deliveries"}}
+                    }
                 }
             },
             "components": {
@@ -366,6 +393,16 @@ class OpenApiSpecificationController(ApiControllerBase):
                     }
                 },
                 "schemas": {
+                    "WebhookSubscriptionInput": {
+                        "type": "object",
+                        "required": ["name", "target_url"],
+                        "properties": {
+                            "name": {"type": "string"},
+                            "target_url": {"type": "string"},
+                            "event_types": {"type": "string", "example": "sale.order.confirmed,invoice.posted"},
+                            "secret": {"type": "string"}
+                        }
+                    },
                     "ErrorResponse": {
                         "type": "object",
                         "properties": {

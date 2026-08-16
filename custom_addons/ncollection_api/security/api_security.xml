@@ -59,5 +59,26 @@
             <field name="code">crm:write</field>
             <field name="description">Create, update, and progress CRM leads (crm.lead)</field>
         </record>
+
+        <!-- Webhooks -->
+        <record id="scope_webhooks_read" model="ncollection.api.scope">
+            <field name="code">webhooks:read</field>
+            <field name="description">Read webhook subscriptions and delivery logs</field>
+        </record>
+        <record id="scope_webhooks_write" model="ncollection.api.scope">
+            <field name="code">webhooks:write</field>
+            <field name="description">Manage webhook subscriptions and trigger manual retries</field>
+        </record>
+
+        <!-- Background Delivery Retry Cron -->
+        <record id="ir_cron_webhook_queue" model="ir.cron">
+            <field name="name">NCollection: Process Webhook Delivery Queue</field>
+            <field name="model_id" ref="model_ncollection_webhook_dispatcher"/>
+            <field name="state">code</field>
+            <field name="code">model._nc_cron_process_pending_webhooks()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
     </data>
 </odoo>
