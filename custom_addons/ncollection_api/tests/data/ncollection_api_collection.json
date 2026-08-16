@@ -1,0 +1,318 @@
+{
+  "info": {
+    "name": "NCollection ERP Public REST API",
+    "description": "Complete endpoint test collection for NCollection REST API (OAuth2, Contacts, Products, Sales, Invoices, Stock, CRM, OpenAPI)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "OAuth2",
+      "item": [
+        {
+          "name": "Request Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/x-www-form-urlencoded"}
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {"key": "grant_type", "value": "client_credentials"},
+                {"key": "client_id", "value": "{{client_id}}"},
+                {"key": "client_secret", "value": "{{client_secret}}"},
+                {"key": "scope", "value": "contacts:read contacts:write products:read products:write sales:read sales:write invoices:read invoices:write stock:read crm:read crm:write"}
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/oauth/token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "oauth", "token"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "List Contacts",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacts?limit=50&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacts"],
+              "query": [{"key": "limit", "value": "50"}, {"key": "offset", "value": "0"}]
+            }
+          }
+        },
+        {
+          "name": "Create Contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Acme Corp\", \"email\": \"info@acme.com\", \"phone\": \"+971501234567\", \"is_company\": true, \"city\": \"Dubai\", \"vat\": \"100123456789012\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacts"]
+            }
+          }
+        },
+        {
+          "name": "Get Contact",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacts/{{contact_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacts", "{{contact_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Contact",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"phone\": \"+971509998877\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacts/{{contact_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacts", "{{contact_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Archive Contact",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacts/{{contact_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacts", "{{contact_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "products"]
+            }
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Enterprise Software License\", \"default_code\": \"ESL-001\", \"list_price\": 1500.0, \"type\": \"service\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "products"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "item": [
+        {
+          "name": "List Sales Orders",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sales",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sales"]
+            }
+          }
+        },
+        {
+          "name": "Create Sales Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"partner_id\": 1, \"order_line\": [{\"product_id\": 1, \"product_uom_qty\": 2, \"price_unit\": 1500.0}]}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/sales",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sales"]
+            }
+          }
+        },
+        {
+          "name": "Confirm Sales Order",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sales/{{order_id}}/action_confirm",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sales", "{{order_id}}", "action_confirm"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "item": [
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "invoices"]
+            }
+          }
+        },
+        {
+          "name": "Create Customer Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"partner_id\": 1, \"invoice_line_ids\": [{\"name\": \"Consulting Services\", \"quantity\": 1, \"price_unit\": 3000.0}]}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "invoices"]
+            }
+          }
+        },
+        {
+          "name": "Post Invoice",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/invoices/{{move_id}}/action_post",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "invoices", "{{move_id}}", "action_post"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stock",
+      "item": [
+        {
+          "name": "Query Stock Levels",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/stock/levels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "stock", "levels"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM",
+      "item": [
+        {
+          "name": "List Leads",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/crm/leads",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crm", "leads"]
+            }
+          }
+        },
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Enterprise Expansion Opportunity\", \"expected_revenue\": 75000.0, \"email_from\": \"lead@prospect.ae\", \"phone\": \"+971501112233\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/crm/leads",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crm", "leads"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "OpenAPI",
+      "item": [
+        {
+          "name": "Get OpenAPI 3.1 Spec",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/openapi.json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "openapi.json"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
