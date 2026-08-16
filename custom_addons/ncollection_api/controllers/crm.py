@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """P8-T02: CRM leads business endpoints (/api/v1/crm/leads)."""
+import logging
 import time
 
 from odoo import http
@@ -7,6 +8,8 @@ from odoo.exceptions import AccessError, ValidationError
 from odoo.http import request
 
 from .common import API_ROOT, ApiControllerBase, _error, _json
+
+_logger = logging.getLogger(__name__)
 
 CRM_LEAD_FIELDS = [
     'id', 'name', 'partner_id', 'stage_id', 'expected_revenue', 'email_from',
@@ -117,6 +120,10 @@ class CrmApiController(ApiControllerBase):
             return _error('validation_error', str(exc), 400)
 
         self._log(route, 201, started, client=client, scope='crm:write')
+        try:
+            request.env['ncollection.webhook.dispatcher'].dispatch_event('crm.lead.created', res)
+        except Exception as exc:
+            _logger.debug("api: webhook dispatch error on crm lead create: %s", exc)
         return _json(res, status=201)
 
     @http.route('%s/crm/leads/<int:lead_id>' % API_ROOT, type='http',

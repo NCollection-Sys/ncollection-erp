@@ -8,3 +8,4 @@ from . import invoices
 from . import stock
 from . import crm
 from . import openapi
+from . import webhooks

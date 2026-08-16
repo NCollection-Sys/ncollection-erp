@@ -4,3 +4,7 @@ access_nc_api_scope_system,ncollection.api.scope.system,model_ncollection_api_sc
 access_nc_api_client_system,ncollection.api.client.system,model_ncollection_api_client,base.group_system,1,1,1,1
 access_nc_api_token_system,ncollection.api.token.system,model_ncollection_api_token,base.group_system,1,0,0,1
 access_nc_api_log_system,ncollection.api.request.log.system,model_ncollection_api_request_log,base.group_system,1,0,0,0
+access_nc_webhook_subscription_user,ncollection.webhook.subscription.user,model_ncollection_webhook_subscription,base.group_user,1,0,0,0
+access_nc_webhook_subscription_system,ncollection.webhook.subscription.system,model_ncollection_webhook_subscription,base.group_system,1,1,1,1
+access_nc_webhook_delivery_user,ncollection.webhook.delivery.user,model_ncollection_webhook_delivery,base.group_user,1,0,0,0
+access_nc_webhook_delivery_system,ncollection.webhook.delivery.system,model_ncollection_webhook_delivery,base.group_system,1,1,1,1

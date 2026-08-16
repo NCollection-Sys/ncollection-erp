@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """P8-T02: Contacts business endpoints (/api/v1/contacts)."""
+import logging
 import time
 
 from odoo import http
@@ -7,6 +8,8 @@ from odoo.exceptions import AccessError, ValidationError
 from odoo.http import request
 
 from .common import API_ROOT, ApiControllerBase, _error, _json
+
+_logger = logging.getLogger(__name__)
 
 CONTACT_READ_FIELDS = [
     'id', 'name', 'email', 'phone', 'is_company', 'street', 'city', 'vat',
@@ -99,6 +102,10 @@ class ContactsApiController(ApiControllerBase):
             return _error('validation_error', str(exc), 400)
 
         self._log(route, 201, started, client=client, scope='contacts:write')
+        try:
+            request.env['ncollection.webhook.dispatcher'].dispatch_event('contact.created', res)
+        except Exception as exc:
+            _logger.debug("api: webhook dispatch error on contact create: %s", exc)
         return _json(res, status=201)
 
     @http.route('%s/contacts/<int:partner_id>' % API_ROOT, type='http',

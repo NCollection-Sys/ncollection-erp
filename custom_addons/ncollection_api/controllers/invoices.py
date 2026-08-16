@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """P8-T02: Customer invoices business endpoints (/api/v1/invoices)."""
+import logging
 import time
 
 from odoo import http
@@ -7,6 +8,8 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.http import request
 
 from .common import API_ROOT, ApiControllerBase, _error, _json
+
+_logger = logging.getLogger(__name__)
 
 INVOICE_READ_FIELDS = [
     'id', 'name', 'partner_id', 'invoice_date', 'state', 'payment_state',
@@ -130,6 +133,10 @@ class InvoicesApiController(ApiControllerBase):
             return _error('validation_error', str(exc), 400)
 
         self._log(route, 201, started, client=client, scope='invoices:write')
+        try:
+            request.env['ncollection.webhook.dispatcher'].dispatch_event('invoice.created', res)
+        except Exception as exc:
+            _logger.debug("api: webhook dispatch error on invoice create: %s", exc)
         return _json(res, status=201)
 
     @http.route('%s/invoices/<int:move_id>' % API_ROOT, type='http',
@@ -200,4 +207,8 @@ class InvoicesApiController(ApiControllerBase):
             return _error('validation_error', str(exc), 400)
 
         self._log(route, 200, started, client=client, scope='invoices:write')
+        try:
+            request.env['ncollection.webhook.dispatcher'].dispatch_event('invoice.posted', res)
+        except Exception as exc:
+            _logger.debug("api: webhook dispatch error on invoice post: %s", exc)
         return _json(res)

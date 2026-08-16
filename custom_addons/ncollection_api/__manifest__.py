@@ -53,5 +53,6 @@
         'security/ir.model.access.csv',
         'security/api_security.xml',
         'views/api_client_views.xml',
+        'views/webhook_views.xml',
     ],
 }

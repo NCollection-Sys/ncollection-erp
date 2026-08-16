@@ -9,7 +9,11 @@ controller methods directly — a route that works when called as a Python
 function and 404s over the wire has passed nothing.
 """
 import datetime
-from unittest.mock import patch
+import hashlib
+import hmac
+import json
+from unittest.mock import MagicMock, patch
+import requests
 
 from odoo.tests import HttpCase, tagged
 
@@ -899,4 +903,329 @@ class TestApiBusinessEndpoints(HttpCase):
         self.assertIn('/stock/levels', spec['paths'])
         self.assertIn('/crm/leads', spec['paths'])
         self.assertIn('/oauth/token', spec['paths'])
+        self.assertIn('/webhooks/subscriptions', spec['paths'])
+        self.assertIn('/webhooks/deliveries', spec['paths'])
         self.assertIn('components', spec)
+
+
+@tagged('post_install', '-at_install')
+class TestApiWebhooks(HttpCase):
+    """P8-T03: Webhooks System Tests (Subscriptions, HMAC Signing, Retries, Dead-Letter, REST API)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.Client = cls.env['ncollection.api.client']
+        cls.Scope = cls.env['ncollection.api.scope']
+        cls.Sub = cls.env['ncollection.webhook.subscription']
+        cls.Delivery = cls.env['ncollection.webhook.delivery']
+        cls.Dispatcher = cls.env['ncollection.webhook.dispatcher']
+
+        cls.all_scopes = cls.Scope.search([])
+
+        group_xml_ids = [
+            'base.group_user',
+            'base.group_system',
+        ]
+        groups = []
+        for xml_id in group_xml_ids:
+            g = cls.env.ref(xml_id, raise_if_not_found=False)
+            if g:
+                groups.append(g.id)
+
+        cls.service_user = cls.env['res.users'].create({
+            'name': 'API Webhooks Service User',
+            'login': 'nc_api_webhooks_user',
+            'group_ids': [(6, 0, groups)],
+        })
+
+        cls.client_rec = cls.Client.create({
+            'name': 'Webhooks API Test Client',
+            'user_id': cls.service_user.id,
+            'scope_ids': [(6, 0, cls.all_scopes.ids)],
+        })
+        cls.secret = cls.client_rec._nc_rotate_secret()
+
+    def setUp(self):
+        super().setUp()
+        self.env['ncollection.api.throttle']._nc_reset()
+
+    def _token(self, scope=None):
+        requested_scope = scope or " ".join(sorted(self.all_scopes.mapped('code')))
+        response = self.url_open(
+            '/api/v1/oauth/token',
+            data={'grant_type': 'client_credentials',
+                  'client_id': self.client_rec.client_id,
+                  'client_secret': self.secret,
+                  'scope': requested_scope})
+        return response
+
+    def _get(self, path, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, headers=headers)
+
+    def _post(self, path, data, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, json=data, headers=headers, method='POST')
+
+    def _put(self, path, data, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, json=data, headers=headers, method='PUT')
+
+    def _delete(self, path, token=None):
+        headers = {'Authorization': 'Bearer %s' % token} if token else {}
+        return self.url_open(path, headers=headers, method='DELETE')
+
+    # ---- Unit / ORM Tests ----
+
+    def test_webhook_subscription_crud_and_secret(self):
+        """Test subscription model creation, secret generation, and event matching."""
+        sub = self.Sub.create({
+            'name': 'Test Zapier Webhook',
+            'target_url': 'https://hooks.zapier.com/hooks/catch/123/abc',
+            'event_types': 'sale.order.confirmed,invoice.posted',
+        })
+        self.assertTrue(sub.secret.startswith('nc_whsec_'))
+        self.assertEqual(sub.state, 'active')
+        self.assertTrue(sub._nc_matches_event('sale.order.confirmed'))
+        self.assertTrue(sub._nc_matches_event('invoice.posted'))
+        self.assertFalse(sub._nc_matches_event('crm.lead.created'))
+
+        # Deactivate
+        sub.active = False
+        self.assertFalse(sub._nc_matches_event('sale.order.confirmed'))
+
+    def test_webhook_signature_calculation(self):
+        """Test HMAC-SHA256 signature algorithm."""
+        sub = self.Sub.create({
+            'name': 'Signature Test',
+            'target_url': 'https://example.com/webhook',
+            'secret': 'secret_key_12345',
+        })
+        ts = '1700000000'
+        payload = '{"event": "test"}'
+        sig = sub._nc_sign_payload(ts, payload)
+        expected = 'sha256=' + hmac.new(
+            b'secret_key_12345',
+            f"{ts}.{payload}".encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+        self.assertEqual(sig, expected)
+
+    def test_webhook_delivery_success_mock(self):
+        """Test successful HTTP 200 delivery."""
+        sub = self.Sub.create({
+            'name': 'Delivery Success Test',
+            'target_url': 'https://example.com/webhook/success',
+        })
+        delivery = self.Delivery.create({
+            'subscription_id': sub.id,
+            'event': 'sale.order.confirmed',
+            'payload': json.dumps({'order_id': 42, 'amount': 100.0}),
+        })
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = '{"status": "ok"}'
+
+        with patch('requests.post', return_value=mock_resp) as mock_post:
+            result = delivery._nc_deliver()
+            self.assertTrue(result)
+            self.assertEqual(delivery.state, 'delivered')
+            self.assertEqual(delivery.attempt, 1)
+            self.assertEqual(delivery.response_code, 200)
+            self.assertFalse(delivery.next_retry)
+            self.assertEqual(sub.failure_count, 0)
+            mock_post.assert_called_once()
+
+    def test_webhook_delivery_flaky_retry_and_backoff(self):
+        """Test delivery retry with exponential backoff on 500 error."""
+        sub = self.Sub.create({
+            'name': 'Flaky Webhook Test',
+            'target_url': 'https://example.com/webhook/flaky',
+        })
+        delivery = self.Delivery.create({
+            'subscription_id': sub.id,
+            'event': 'invoice.posted',
+            'payload': json.dumps({'invoice_id': 99}),
+        })
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 500
+        mock_resp.text = 'Internal Server Error'
+
+        with patch('requests.post', return_value=mock_resp):
+            # Attempt 1
+            res = delivery._nc_deliver()
+            self.assertFalse(res)
+            self.assertEqual(delivery.state, 'failed')
+            self.assertEqual(delivery.attempt, 1)
+            self.assertTrue(delivery.next_retry)
+            self.assertEqual(sub.failure_count, 1)
+
+            # Attempt 2
+            res2 = delivery._nc_deliver()
+            self.assertFalse(res2)
+            self.assertEqual(delivery.attempt, 2)
+            self.assertEqual(sub.failure_count, 2)
+
+    def test_webhook_delivery_dead_letter_ceiling(self):
+        """Test transition to dead_letter when max attempts are exceeded."""
+        sub = self.Sub.create({
+            'name': 'Dead Letter Test',
+            'target_url': 'https://example.com/webhook/dead',
+        })
+        delivery = self.Delivery.create({
+            'subscription_id': sub.id,
+            'event': 'crm.lead.created',
+            'payload': json.dumps({'lead_id': 1}),
+            'attempt': 4,
+            'max_attempts': 5,
+        })
+
+        with patch('requests.post', side_effect=requests.RequestException("Connection timeout")):
+            res = delivery._nc_deliver()
+            self.assertFalse(res)
+            self.assertEqual(delivery.attempt, 5)
+            self.assertEqual(delivery.state, 'dead_letter')
+            self.assertFalse(delivery.next_retry)
+
+    def test_webhook_delivery_manual_retry(self):
+        """Test manual action_retry on dead_letter delivery."""
+        sub = self.Sub.create({
+            'name': 'Manual Retry Test',
+            'target_url': 'https://example.com/webhook/retry',
+        })
+        delivery = self.Delivery.create({
+            'subscription_id': sub.id,
+            'event': 'contact.created',
+            'payload': json.dumps({'partner_id': 5}),
+            'state': 'dead_letter',
+            'attempt': 5,
+        })
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = '{"received": true}'
+
+        with patch('requests.post', return_value=mock_resp):
+            delivery.action_retry()
+            self.assertEqual(delivery.state, 'delivered')
+
+    def test_webhook_dispatcher_and_cron(self):
+        """Test dispatcher event broadcasting and cron queue processing."""
+        sub = self.Sub.create({
+            'name': 'Broadcaster Test',
+            'target_url': 'https://example.com/webhook/broadcast',
+            'event_types': 'sale.order.confirmed',
+        })
+        self.assertTrue(sub.exists())
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = 'OK'
+
+        with patch('requests.post', return_value=mock_resp):
+            deliveries = self.Dispatcher.dispatch_event(
+                'sale.order.confirmed',
+                {'order_id': 123, 'total': 450.0}
+            )
+            self.assertEqual(len(deliveries), 1)
+            self.assertEqual(deliveries.state, 'delivered')
+
+        # Test cron processor
+        cron_res = self.Dispatcher._nc_cron_process_pending_webhooks()
+        self.assertTrue(cron_res)
+
+    # ---- REST API Endpoints Tests ----
+
+    def test_webhook_subscriptions_rest_api_crud(self):
+        """Test full REST API lifecycle for webhook subscriptions."""
+        tok = self._token().json()['access_token']
+
+        # 1. Create Subscription
+        create_res = self._post('/api/v1/webhooks/subscriptions', {
+            'name': 'REST API Webhook',
+            'target_url': 'https://webhook.site/test-uuid',
+            'event_types': 'sale.order.confirmed,invoice.posted',
+        }, token=tok)
+        self.assertEqual(create_res.status_code, 201, create_res.text)
+        sub_data = create_res.json()
+        sub_id = sub_data['id']
+        self.assertEqual(sub_data['name'], 'REST API Webhook')
+        self.assertTrue(sub_data['secret'].startswith('nc_whsec_'))
+
+        # 2. List Subscriptions
+        list_res = self._get('/api/v1/webhooks/subscriptions', token=tok)
+        self.assertEqual(list_res.status_code, 200)
+        self.assertGreaterEqual(list_res.json()['total'], 1)
+
+        # 3. Get Single Subscription
+        get_res = self._get('/api/v1/webhooks/subscriptions/%d' % sub_id, token=tok)
+        self.assertEqual(get_res.status_code, 200)
+        self.assertEqual(get_res.json()['id'], sub_id)
+
+        # 4. Update Subscription
+        upd_res = self._put('/api/v1/webhooks/subscriptions/%d' % sub_id, {
+            'name': 'Updated REST Webhook',
+            'active': False,
+        }, token=tok)
+        self.assertEqual(upd_res.status_code, 200)
+        self.assertEqual(upd_res.json()['name'], 'Updated REST Webhook')
+        self.assertFalse(upd_res.json()['active'])
+
+        # 5. Delete Subscription
+        del_res = self._delete('/api/v1/webhooks/subscriptions/%d' % sub_id, token=tok)
+        self.assertEqual(del_res.status_code, 200)
+
+        # Confirm 404
+        get_after = self._get('/api/v1/webhooks/subscriptions/%d' % sub_id, token=tok)
+        self.assertEqual(get_after.status_code, 404)
+
+    def test_webhook_deliveries_rest_api_list_and_retry(self):
+        """Test listing webhook deliveries and manual retry via REST API."""
+        tok = self._token().json()['access_token']
+
+        sub = self.Sub.create({
+            'name': 'API Delivery Log Test',
+            'target_url': 'https://example.com/api/webhook',
+        })
+        delivery = self.Delivery.create({
+            'subscription_id': sub.id,
+            'event': 'test.event',
+            'payload': json.dumps({'foo': 'bar'}),
+            'state': 'failed',
+        })
+
+        # List deliveries
+        list_res = self._get('/api/v1/webhooks/deliveries?subscription_id=%d' % sub.id, token=tok)
+        self.assertEqual(list_res.status_code, 200)
+        self.assertEqual(list_res.json()['count'], 1)
+
+        # Action Retry via API
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = 'OK'
+
+        with patch('requests.post', return_value=mock_resp):
+            retry_res = self._post(
+                '/api/v1/webhooks/deliveries/%d/action_retry' % delivery.id,
+                {},
+                token=tok
+            )
+            self.assertEqual(retry_res.status_code, 200, retry_res.text)
+            self.assertEqual(retry_res.json()['state'], 'delivered')
+
+    def test_webhook_rest_api_scope_enforcement(self):
+        """Test that unauthorized scopes are rejected with 403."""
+        # Issue token with only contacts:read scope
+        tok = self._token(scope='contacts:read').json()['access_token']
+
+        list_res = self._get('/api/v1/webhooks/subscriptions', token=tok)
+        self.assertEqual(list_res.status_code, 403)
+
+        create_res = self._post('/api/v1/webhooks/subscriptions', {
+            'name': 'Forbidden Webhook',
+            'target_url': 'https://example.com/forbidden',
+        }, token=tok)
+        self.assertEqual(create_res.status_code, 403)

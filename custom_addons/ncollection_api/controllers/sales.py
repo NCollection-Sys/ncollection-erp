@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """P8-T02: Sales orders business endpoints (/api/v1/sales)."""
+import logging
 import time
 
 from odoo import http
@@ -7,6 +8,8 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.http import request
 
 from .common import API_ROOT, ApiControllerBase, _error, _json
+
+_logger = logging.getLogger(__name__)
 
 SALE_READ_FIELDS = [
     'id', 'name', 'partner_id', 'date_order', 'state', 'amount_untaxed',
@@ -127,6 +130,10 @@ class SalesApiController(ApiControllerBase):
             return _error('validation_error', str(exc), 400)
 
         self._log(route, 201, started, client=client, scope='sales:write')
+        try:
+            request.env['ncollection.webhook.dispatcher'].dispatch_event('sale.order.created', res)
+        except Exception as exc:
+            _logger.debug("api: webhook dispatch error on sale create: %s", exc)
         return _json(res, status=201)
 
     @http.route('%s/sales/<int:order_id>' % API_ROOT, type='http',
@@ -243,4 +250,8 @@ class SalesApiController(ApiControllerBase):
             return _error('validation_error', str(exc), 400)
 
         self._log(route, 200, started, client=client, scope='sales:write')
+        try:
+            request.env['ncollection.webhook.dispatcher'].dispatch_event('sale.order.confirmed', res)
+        except Exception as exc:
+            _logger.debug("api: webhook dispatch error on sale confirm: %s", exc)
         return _json(res)
