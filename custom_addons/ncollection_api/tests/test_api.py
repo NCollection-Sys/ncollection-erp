@@ -622,12 +622,9 @@ class TestApiBusinessEndpoints(HttpCase):
         ]
         groups = []
         for xml_id in group_xml_ids:
-            try:
-                g = cls.env.ref(xml_id, raise_if_not_found=False)
-                if g:
-                    groups.append(g.id)
-            except Exception:
-                pass
+            g = cls.env.ref(xml_id, raise_if_not_found=False)
+            if g:
+                groups.append(g.id)
 
         cls.service_user = cls.env['res.users'].create({
             'name': 'API Business Service User',
