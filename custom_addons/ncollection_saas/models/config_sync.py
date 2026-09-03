@@ -1039,8 +1039,45 @@ class SubscriptionPlanConfigSync(models.Model):
 
     def write(self, vals):
         """A plan edit (module set / seat cap) propagates to every ready tenant
-        on that plan (plan upgrade/downgrade at the plan level)."""
+        on that plan (plan upgrade/downgrade at the plan level).
+
+        #461: it now propagates BOTH halves. Licensing alone was the whole
+        defect — a module added here became visible in the tenant's launcher
+        while never existing in their database, because #459's install engine
+        had no automatic trigger and its button was an undiscoverable second
+        step.
+
+        The trigger lives HERE, in the one plan-write hook this model already
+        has, rather than in a second override: two write() overrides on the
+        same model competing to react to the same field is exactly the
+        overlapping-lifecycle problem that produced this bug.
+        """
+        # Captured BEFORE the write: "which modules are new" cannot be answered
+        # afterwards, and it is what keeps a no-op save (re-saving an unchanged
+        # plan, or editing only the price) from queueing installs.
+        modules_before = {}
+        if 'allowed_module_names' in vals:
+            modules_before = {
+                plan.id: set(plan.get_allowed_module_list()) for plan in self
+            }
+
         res = super().write(vals)
+
         if 'allowed_module_names' in vals or 'max_users' in vals:
             self.mapped('tenant_ids')._config_sync_enqueue()
+
+        if 'allowed_module_names' in vals:
+            for plan in self:
+                added = (set(plan.get_allowed_module_list())
+                         - modules_before.get(plan.id, set()))
+                if not added:
+                    # Removal-only, or a re-save with no change: licensing is
+                    # already re-pushed above, and a REMOVAL must never trigger
+                    # an install — nor an uninstall (customer data stays; see
+                    # module_install.py's module docstring).
+                    continue
+                _logger.info(
+                    "Plan %s gained %s — queueing installs for its ready tenants",
+                    plan.code, ', '.join(sorted(added)))
+                plan.tenant_ids._nc_enqueue_module_install()
         return res

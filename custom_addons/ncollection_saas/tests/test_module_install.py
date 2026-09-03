@@ -144,6 +144,142 @@ class TestTenantModuleInstall(TransactionCase):
         self.assertNotIn('cmd', captured, "no subprocess for an empty set")
         self.assertEqual(self.tenant.module_install_state, 'none')
 
+    # ------------------------------- the plan-save trigger (#461)
+    def _capture_enqueued_installs(self):
+        """Record which tenants a plan save queues an install for."""
+        queued = []
+
+        def fake_enqueue(recs):
+            queued.extend(recs.mapped('database_name'))
+
+        patcher = patch('%s._nc_enqueue_module_install' % TENANT, new=fake_enqueue)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return queued
+
+    def test_adding_a_module_to_a_plan_queues_installs_automatically(self):
+        """THE #461 DEFECT. The plan write hook enqueued LICENSING only, so a
+        module added to a plan became visible in the launcher while never
+        existing in the tenant's database. Adding one must now start the
+        install lifecycle without a second, undiscoverable click."""
+        queued = self._capture_enqueued_installs()
+        self.plan.allowed_module_names = 'crm,calendar,sale_management'
+        self.assertIn('instco', queued,
+                      "a plan gaining a module must queue installs for its "
+                      "ready tenants")
+
+    def test_resaving_without_a_module_change_queues_nothing(self):
+        """Idempotence at the TRIGGER, not just in `odoo -i`. Re-saving a plan
+        (or editing only its price) must not spawn installs across every
+        tenant on it."""
+        queued = self._capture_enqueued_installs()
+        self.plan.allowed_module_names = 'crm,calendar'   # same set, rewritten
+        self.plan.monthly_price = 999
+        self.plan.max_users = 9
+        self.assertEqual(queued, [],
+                         "no module was added — nothing should be queued")
+
+    def test_reordering_or_respacing_the_same_modules_queues_nothing(self):
+        """The comparison is on the PARSED set, so cosmetic edits to the
+        stored string are not mistaken for new modules."""
+        queued = self._capture_enqueued_installs()
+        self.plan.allowed_module_names = ' calendar , crm '
+        self.assertEqual(queued, [])
+
+    def test_removing_a_module_queues_no_install_and_no_uninstall(self):
+        """Removal is licensing-only: Ring 1 hides it, Ring 2 blocks it, and
+        the database keeps its data."""
+        queued = self._capture_enqueued_installs()
+        self.plan.allowed_module_names = 'crm'   # calendar removed
+        self.assertEqual(queued, [],
+                         "a removal must not start an install lifecycle")
+
+    def test_adding_several_modules_at_once_is_one_queued_install_per_tenant(self):
+        """The engine installs the tenant's whole licensed set, so several new
+        modules need one job — not one per module, which would race on the
+        same database."""
+        queued = self._capture_enqueued_installs()
+        self.plan.allowed_module_names = 'crm,calendar,sale_management,contacts'
+        self.assertEqual(queued.count('instco'), 1)
+
+    def test_each_tenant_on_the_plan_gets_its_own_job(self):
+        """THE INDEPENDENCE REQUIREMENT. Per-tenant jobs are what stop one
+        tenant's failure deciding the outcome for the others — a single
+        plan-wide job would have one state for many databases."""
+        second = self.env['ncollection.tenant'].create({
+            'company_name': 'Second Co', 'database_name': 'secondco',
+            'plan_id': self.plan.id, 'database_status': 'ready'})
+        queued = self._capture_enqueued_installs()
+        self.plan.allowed_module_names = 'crm,calendar,sale_management'
+        self.assertEqual(sorted(queued), ['instco', 'secondco'])
+        self.assertTrue(second.exists())
+
+    def test_only_ready_tenants_are_queued(self):
+        """A tenant with no database yet gets its modules from provisioning;
+        queueing an install at nothing would fail for a reason that is not a
+        fault.
+
+        Exercises the REAL enqueue rather than the patched one — the readiness
+        filter lives inside `_nc_enqueue_module_install`, so patching it out
+        (as the trigger tests above do) would assert nothing about it. First
+        version of this test did exactly that and passed a tenant it should
+        have skipped."""
+        pending = self.env['ncollection.tenant'].create({
+            'company_name': 'Pending Co', 'database_name': 'pendingco',
+            'plan_id': self.plan.id, 'database_status': 'not_provisioned'})
+
+        (self.tenant + pending)._nc_enqueue_module_install()
+
+        self.assertEqual(pending.module_install_state, 'none',
+                         "an unprovisioned tenant must not be queued")
+        self.assertEqual(self.tenant.module_install_state, 'queued')
+        self.assertFalse(self.env['queue.job'].search_count([
+            ('identity_key', '=', 'nc-module-install-%s' % pending.id)]))
+        self.assertTrue(self.env['queue.job'].search_count([
+            ('identity_key', '=', 'nc-module-install-%s' % self.tenant.id)]))
+
+    def test_the_real_enqueue_marks_the_tenant_queued_and_is_deduplicated(self):
+        """Exercises the real `_nc_enqueue_module_install` (not the patched
+        one): the tenant must show 'queued' so the admin sees work pending,
+        and a second save must not stack a duplicate job."""
+        self.tenant._nc_enqueue_module_install()
+        self.assertEqual(self.tenant.module_install_state, 'queued')
+        jobs = self.env['queue.job'].search([
+            ('identity_key', '=', 'nc-module-install-%s' % self.tenant.id)])
+        self.assertEqual(len(jobs), 1)
+        self.tenant._nc_enqueue_module_install()
+        self.assertEqual(len(self.env['queue.job'].search([
+            ('identity_key', '=', 'nc-module-install-%s' % self.tenant.id)])), 1,
+            "identity_key must de-duplicate a pending install")
+
+    def test_a_failing_tenant_does_not_change_another_tenants_state(self):
+        """#461's per-tenant independence, asserted on the STATE rather than
+        on the queueing: one database failing must leave the other's result
+        untouched and its own failure visible."""
+        healthy = self.env['ncollection.tenant'].create({
+            'company_name': 'Healthy Co', 'database_name': 'healthyco',
+            'plan_id': self.plan.id, 'database_status': 'ready'})
+
+        def selective(_self, cmd, label, stdin=None, env=None, timeout=None):
+            if 'instco' in cmd:
+                raise UserError(_self.env._("odoo exited 1: boom"))
+            return "Modules loaded."
+
+        patcher = patch(
+            'odoo.addons.ncollection_saas.models.saas_subprocess'
+            '.SaasSubprocessMixin._run_odoo_subprocess', new=selective)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.tenant.run_module_install()
+        healthy.run_module_install()
+
+        self.assertEqual(self.tenant.module_install_state, 'failed')
+        self.assertTrue(self.tenant.module_install_last_error)
+        self.assertEqual(healthy.module_install_state, 'done',
+                         "one tenant's failure must not affect another's")
+        self.assertFalse(healthy.module_install_last_error)
+
     # --------------------------------------------- revocation is not removal
     def test_revoking_a_module_never_uninstalls_it(self):
         """DELIBERATE PRODUCT BEHAVIOUR, pinned so nobody 'completes' the
