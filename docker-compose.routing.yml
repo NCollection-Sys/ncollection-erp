@@ -18,7 +18,11 @@
 #    - proxy_mode = True  -> trust Nginx's forwarded Host/scheme.
 #
 #  `make up` (base + dev) is UNCHANGED and stays permissive (list_db=True) for
-#  everyday work — this overlay is only for the routing proof (see docs/ROUTING.md).
+#  everyday work — this overlay is the routing proof AND the demo/SaaS stack
+#  (`make saas-up` is an alias for `routing-up`; #453). Entry points, the
+#  platform-vs-tenant URL map and the login flow are documented in
+#  docs/markdown/ROUTING.md — the path this comment used to give (docs/ROUTING.md)
+#  never existed.
 #
 #  NOTE: `$$` escapes compose interpolation so Odoo receives a literal `$`.
 # ============================================================================

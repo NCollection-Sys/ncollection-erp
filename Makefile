@@ -32,6 +32,12 @@ COMPOSE       ?= docker compose $(COMPOSE_FILES)
 # NOT affect `make up`.
 ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml
 
+# The platform/admin database, i.e. the one carrying ncollection_saas. On the
+# SaaS-routing stack the HOSTNAME is the database (db_filter=^%d$), so this is
+# also the platform's subdomain: http://$(NC_PLATFORM_DB).localhost/ (#453).
+# Override per environment: `make saas-urls NC_PLATFORM_DB=ncplatform`.
+NC_PLATFORM_DB ?= ncollection
+
 # Opt-in cron-starvation harness stack (#310): base + the cronstall overlay. Its
 # services are entirely self-contained (own Postgres, own network, own volumes),
 # so this does NOT affect `make up` and the harness cannot disturb the dev stack.
@@ -49,6 +55,7 @@ OCA_VENV := .oca-venv
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
+        saas-up saas-down saas-urls \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
         cron-starvation-verify cron-starvation-clean orphan-dbs \
@@ -270,6 +277,27 @@ routing-verify: ## Create rtclienta/rtclientb/rtadmin test DBs and run the isola
 
 routing-down: ## Stop the routing stack (keeps the test DBs; back to a normal `make up`)
 	$(ROUTING_COMPOSE) down
+
+## ---- SaaS / demo routing (#453) --------------------------------------------
+# The SAME stack `routing-up` starts -- one overlay, not two (Rule 2: extend
+# before replacing). These aliases exist because the routing overlay is framed
+# as the P1-T06 *proof*, and "bring the demo up" is a different question with
+# the same answer. Platform and tenants are told apart ONLY by hostname here,
+# exactly as production does it with db_filter=^%d$.
+saas-up: ## Start the SaaS-routing stack for a demo (subdomain -> database; selector off)
+	@$(MAKE) --no-print-directory routing-up
+	@$(MAKE) --no-print-directory saas-urls
+
+saas-down: ## Stop the SaaS-routing stack (back to the permissive `make up` dev stack)
+	@$(MAKE) --no-print-directory routing-down
+
+saas-urls: ## Print the platform + tenant entry points for the SaaS-routing stack
+	@echo "SaaS-routing entry points (db_filter=^%d$$ — the hostname IS the database):"
+	@echo "  platform admin : http://$(NC_PLATFORM_DB).localhost/       (db: $(NC_PLATFORM_DB))"
+	@echo "  a tenant       : http://<tenant-db>.localhost/     e.g. http://wasla.localhost/"
+	@echo "  bare localhost : redirects to the platform host (nginx, dev only)"
+	@echo "  database selector: disabled (list_db=False) and 403'd at the edge"
+	@echo "Back to everyday dev (selector on, no db_filter):  make saas-down && make up"
 
 # FIXTURE NAMESPACES — each suite owns its own DB prefix and may only drop its
 # own. routing: rt* · e2e: e2e* · provisioning: prov*.
