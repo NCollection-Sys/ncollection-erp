@@ -4,6 +4,8 @@
 #  P1-T11 apps/settings stripping, P1-T12 owner workspace settings).
 from . import workspace_config
 from . import ir_ui_menu
+# #459: module management belongs to the platform, never to the tenant.
+from . import ir_module
 from . import license_enforcement
 from . import ir_http
 from . import subscription_gate

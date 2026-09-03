@@ -16,3 +16,4 @@ from . import test_exchange_rate
 from . import test_admin_menu_acl_alignment
 from . import test_regex_anchors
 from . import test_tenant_module_management
+from . import test_module_install

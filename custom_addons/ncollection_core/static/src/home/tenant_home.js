@@ -26,6 +26,11 @@ export class NcTenantHome extends Component {
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
+        // #459: navigation goes through the MENU service, not a bare doAction,
+        // so a card behaves exactly like clicking the app in the sidebar —
+        // including setting the current-app highlight. selectMenu() is Odoo's
+        // own entry point; nothing here builds a URL.
+        this.menu = useService("menu");
         // #457: this used to request a "company" service. There is NO such
         // service in Odoo 19, so it threw "Service company is not available"
         // from setup() — before the first render — and every tenant home load
@@ -62,12 +67,13 @@ export class NcTenantHome extends Component {
         return (app.name || "?").trim().charAt(0).toUpperCase();
     }
 
-    openApp(app) {
-        if (app.action_id) {
-            // doAction on the menu's own action keeps breadcrumbs and the
-            // menu highlight identical to clicking it in the sidebar.
-            this.action.doAction(app.action_id, { clearBreadcrumbs: true });
-        }
+    async openApp(app) {
+        // `menu_id` is the menu that OWNS the action — the app root itself when
+        // it has one, otherwise its first actionable child (CRM, Calendar and
+        // Contacts are all containers). The server resolved that; every app in
+        // the payload is guaranteed to have one, because one without a
+        // reachable action is not returned at all (#459).
+        await this.menu.selectMenu(app.menu_id);
     }
 }
 

@@ -15,3 +15,6 @@ from . import domain
 from . import backup
 from . import fleet_migration
 from . import fleet_migration_line
+# #459: installing a plan's newly licensed modules into an EXISTING tenant DB.
+# After provisioning_job (it imports CORE_TENANT_MODULES/PROVISION_CHANNEL from it).
+from . import module_install
