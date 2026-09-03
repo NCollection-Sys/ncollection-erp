@@ -59,6 +59,73 @@ class SubscriptionPlan(models.Model):
                     self.env._('Trial Days and Grace Days cannot be negative (plan "%s").', plan.name)
                 )
 
+    # Installed into EVERY tenant regardless of plan. Mirrors
+    # ncollection_saas.provisioning_job.CORE_TENANT_MODULES, which is the
+    # authority; this copy exists because ncollection_subscription must not
+    # import the SaaS layer (it is installable without it), and it is pinned
+    # equal by test_module_catalog.test_the_core_list_matches_provisionings.
+    CORE_TENANT_MODULES = ('base', 'ncollection_core', 'ncollection_branding',
+                           'ncollection_auth')
+
+    # Platform-layer addons: they run on the PLATFORM database and must never be
+    # offered to a tenant (Rule 3 two-layer separation). Same set the CI
+    # architecture guard calls PLATFORM_ADDONS.
+    PLATFORM_ONLY_MODULES = ('ncollection_saas', 'ncollection_subscription',
+                             'ncollection_billing', 'ncollection_reseller')
+
+    @api.model
+    def get_selectable_modules(self):
+        """The real modules an admin may license, for the plan module picker (#457).
+
+        Read straight off ``ir.module.module`` — the platform's actual addons
+        path — so the picker can never offer something that does not exist, and
+        never needs a catalog table to be kept in step (``ncollection.module``
+        stays dead code, see its docstring). ``icon_image`` is each module's own
+        official icon, the same one Odoo's Apps kanban renders.
+
+        Returns ``{'core': [...], 'optional': [...]}``:
+
+        * **core** — installed into every tenant whatever the plan says, so the
+          UI can show them as always-included and refuse to toggle them.
+        * **optional** — what the plan actually decides.
+
+        ``application=True`` keeps the list to real apps rather than the
+        hundreds of technical dependencies underneath them; a plan that names a
+        wrapper module still licenses its dependencies, because Ring 1 expands
+        the dependency closure at read time (`_ncollection_expand_dependencies`).
+        """
+        Module = self.env['ir.module.module'].sudo()
+        fields_ = ['name', 'shortdesc', 'summary', 'icon_image', 'state', 'application']
+
+        def payload(record):
+            return {
+                'name': record.name,
+                'label': record.shortdesc or record.name,
+                'summary': record.summary or '',
+                'icon': record.icon_image.decode() if record.icon_image else '',
+                'state': record.state,
+            }
+
+        core = Module.search_read(
+            [('name', 'in', list(self.CORE_TENANT_MODULES))], fields_)
+        never_offer = list(self.CORE_TENANT_MODULES) + list(self.PLATFORM_ONLY_MODULES)
+        optional = Module.search_read([
+            ('application', '=', True),
+            ('state', '!=', 'uninstallable'),
+            ('name', 'not in', never_offer),
+        ], fields_)
+
+        # search_read gives dicts; re-browse for the computed icon rather than
+        # duplicating _get_icon_image's logic here.
+        def rows(records):
+            out = []
+            for data in records:
+                module = Module.browse(data['id'])
+                out.append(payload(module))
+            return sorted(out, key=lambda m: m['label'].lower())
+
+        return {'core': rows(core), 'optional': rows(optional)}
+
     def get_allowed_module_list(self):
         """Return the plan's allowed modules as a clean, de-duplicated list.
 

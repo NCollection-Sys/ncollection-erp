@@ -150,6 +150,17 @@ class TestTenantModuleManagement(TransactionCase):
             "re-creates a module-management surface that licenses nothing — "
             "wire it to the plan's allowed_module_names, or leave it unloaded.")
 
+    def test_the_plans_core_module_list_matches_provisionings(self):
+        """#457: the picker shows a CORE_TENANT_MODULES list that lives on the
+        plan model, because ncollection_subscription installs without the SaaS
+        layer and cannot import it. That makes it a second copy of
+        provisioning's tuple — pinned equal HERE (this module depends on
+        subscription, so both are always present) so the two cannot drift into
+        disagreeing about what every tenant is given."""
+        from ..models.provisioning_job import CORE_TENANT_MODULES
+        plan_copy = self.env['ncollection.subscription.plan'].CORE_TENANT_MODULES
+        self.assertEqual(tuple(plan_copy), CORE_TENANT_MODULES)
+
     def test_licensing_comes_only_from_the_plan(self):
         """The positive half of the statement above: the module set a tenant
         receives is a pure function of its plan, with no other contributor."""

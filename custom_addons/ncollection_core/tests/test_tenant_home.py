@@ -14,7 +14,12 @@ Same synthetic-app technique as test_menu_visibility.py: a root menu whose
 xml-id belongs to a made-up module, so nothing depends on which real Odoo apps
 this database happens to have installed.
 """
+import pathlib
+
 from odoo.tests import TransactionCase, tagged
+
+_HOME_JS = (pathlib.Path(__file__).resolve().parent.parent
+            / 'static' / 'src' / 'home' / 'tenant_home.js')
 
 
 @tagged('post_install', '-at_install')
@@ -112,6 +117,41 @@ class TestTenantHomeApps(TransactionCase):
             self.assertIn(key, app)
         self.assertEqual(app['action_id'], self.action.id,
                          "the card must open the menu's own action")
+
+    # ------------------------------------------- the setup() crash (#457)
+    def test_the_component_asks_for_no_service_that_does_not_exist(self):
+        """THE #457 CRASH, PINNED.
+
+        `setup()` called `useService("company")`. There is no `company` service
+        in Odoo 19 — the current company is on `user.activeCompany` — so the
+        component threw "Service company is not available" before its first
+        render and EVERY tenant home load failed.
+
+        Reading the source is crude, and it is the only check available: this
+        repo has no JS test infrastructure, and #455's tests all exercised the
+        server method (`nc_tenant_apps`), which is exactly why a broken
+        `setup()` shipped with a green suite. A test that mounted the component
+        would be better; until that infrastructure exists, this pins the
+        specific mistake and its fix rather than pretending the gap is closed.
+        """
+        source = _HOME_JS.read_text(encoding='utf-8')
+        self.assertNotIn(
+            'useService("company")', source,
+            "there is no `company` service in Odoo 19 — read the active "
+            "company from user.activeCompany (@web/core/user) instead.")
+        self.assertIn(
+            'user.activeCompany', source,
+            "the launcher must read the company from user.activeCompany, the "
+            "source Odoo's own components use.")
+
+    def test_the_launcher_does_not_swallow_its_own_errors(self):
+        """#457 asked for the crash to be fixed, not hidden. A try/catch around
+        setup() would turn the next missing dependency into a silently empty
+        home page — the failure mode that is harder to diagnose, not easier."""
+        source = _HOME_JS.read_text(encoding='utf-8')
+        self.assertNotIn('try {', source,
+                         "no try/catch in the launcher: a swallowed startup "
+                         "error becomes a blank page with no explanation.")
 
     # ------------------------------------------------------- permissions
     def test_a_user_only_sees_apps_their_groups_allow(self):
