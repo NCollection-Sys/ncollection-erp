@@ -77,8 +77,13 @@
                                 are always installed and are not listed here.
                                 A module listed here also licenses whatever it depends on.
                             </div>
+                            <!-- #457: was a raw Text field an admin typed
+                                 "crm,stock" into. The widget writes the SAME
+                                 comma-separated technical names, so the
+                                 licensing contract is untouched — it only
+                                 stops a SaaS operator having to know them. -->
                             <field name="allowed_module_names"
-                                   placeholder="crm,sale,stock"
+                                   widget="nc_module_picker"
                                    nolabel="1"/>
                         </page>
                         <page string="Description">

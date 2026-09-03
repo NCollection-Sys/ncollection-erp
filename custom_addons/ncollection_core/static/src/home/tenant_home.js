@@ -26,7 +26,15 @@ export class NcTenantHome extends Component {
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
-        this.company = useService("company");
+        // #457: this used to request a "company" service. There is NO such
+        // service in Odoo 19, so it threw "Service company is not available"
+        // from setup() — before the first render — and every tenant home load
+        // failed. The current company lives on `user.activeCompany`, which is
+        // how switch_company_item.js, pivot_renderer.js and graph_model.js all
+        // read it in the shipped code. Deliberately NOT wrapped in try/catch:
+        // swallowing a missing dependency would hide the next one exactly the
+        // same way, and a blank home page is harder to diagnose than a crash.
+        // test_tenant_home.py pins both halves of that.
         this.state = useState({ apps: [], loaded: false });
 
         onWillStart(async () => {
@@ -36,7 +44,7 @@ export class NcTenantHome extends Component {
     }
 
     get workspaceName() {
-        return this.company.currentCompany.name || "";
+        return user.activeCompany?.name || "";
     }
 
     get userName() {

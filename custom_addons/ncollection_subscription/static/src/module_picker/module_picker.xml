@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_subscription.ModulePicker">
+        <div class="o_nc_modpick">
+
+            <div t-if="!state.loaded" class="o_nc_modpick__loading">
+                Loading available modules…
+            </div>
+
+            <t t-else="">
+                <!-- Always-included set, shown so an admin can see what a tenant
+                     gets before any choice is made. Not toggleable: provisioning
+                     installs these whatever the plan says. -->
+                <div class="o_nc_modpick__section">
+                    <div class="o_nc_modpick__section-head">
+                        <span class="o_nc_modpick__section-title">Always included</span>
+                        <span class="o_nc_modpick__section-note">
+                            Installed in every tenant, on every plan — not part of the selection.
+                        </span>
+                    </div>
+                    <div class="o_nc_modpick__grid">
+                        <t t-foreach="state.core" t-as="mod" t-key="mod.name">
+                            <div class="o_nc_modpick__card o_nc_modpick__card--core"
+                                 t-att-title="mod.name">
+                                <span class="o_nc_modpick__icon">
+                                    <img t-if="mod.icon" t-att-src="iconSrc(mod)" t-att-alt="mod.label"/>
+                                    <span t-else="" class="o_nc_modpick__lettermark"
+                                          t-esc="initials(mod)"/>
+                                </span>
+                                <span class="o_nc_modpick__label" t-esc="mod.label"/>
+                                <span class="o_nc_modpick__badge">Core</span>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <div class="o_nc_modpick__section">
+                    <div class="o_nc_modpick__section-head">
+                        <span class="o_nc_modpick__section-title">
+                            Included in this plan
+                            <span class="o_nc_modpick__count" t-esc="selected.length"/>
+                        </span>
+                        <input type="text" class="o_nc_modpick__search form-control form-control-sm"
+                               placeholder="Search modules…" t-model="state.query"/>
+                    </div>
+
+                    <div t-if="!visibleOptional.length" class="o_nc_modpick__empty">
+                        No module matches “<t t-esc="state.query"/>”.
+                    </div>
+
+                    <div t-else="" class="o_nc_modpick__grid">
+                        <t t-foreach="visibleOptional" t-as="mod" t-key="mod.name">
+                            <button type="button"
+                                    t-attf-class="o_nc_modpick__card {{ isSelected(mod) ? 'o_nc_modpick__card--on' : '' }}"
+                                    t-att-disabled="props.readonly"
+                                    t-att-title="mod.name"
+                                    t-att-data-module="mod.name"
+                                    t-att-aria-pressed="isSelected(mod) ? 'true' : 'false'"
+                                    t-on-click="() => this.toggle(mod)">
+                                <span class="o_nc_modpick__icon">
+                                    <img t-if="mod.icon" t-att-src="iconSrc(mod)" t-att-alt="mod.label"/>
+                                    <span t-else="" class="o_nc_modpick__lettermark"
+                                          t-esc="initials(mod)"/>
+                                </span>
+                                <span class="o_nc_modpick__label" t-esc="mod.label"/>
+                                <span t-if="mod.summary" class="o_nc_modpick__summary"
+                                      t-esc="mod.summary"/>
+                                <span t-if="isSelected(mod)" class="o_nc_modpick__check">✓</span>
+                            </button>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>

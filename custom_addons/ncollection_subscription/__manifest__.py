@@ -33,6 +33,10 @@ SaaS management platform for NCollection ERP administrators:
     'assets': {
         'web.assets_backend': [
             'ncollection_subscription/static/src/scss/dashboard.scss',
+            # #457 plan module picker (replaces typing technical module names).
+            'ncollection_subscription/static/src/module_picker/module_picker.scss',
+            'ncollection_subscription/static/src/module_picker/module_picker.js',
+            'ncollection_subscription/static/src/module_picker/module_picker.xml',
         ],
     },
     'images': ['static/description/icon.png'],
