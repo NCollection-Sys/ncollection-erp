@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_core.TenantHome">
+        <div class="o_nc_home">
+            <div class="o_nc_home__header">
+                <h1 class="o_nc_home__title">
+                    <t t-esc="workspaceName"/>
+                </h1>
+                <p class="o_nc_home__subtitle">Your applications</p>
+            </div>
+
+            <div t-if="!state.loaded" class="o_nc_home__loading">Loading your applications…</div>
+
+            <div t-elif="!state.apps.length" class="o_nc_home__empty">
+                <h2>No applications yet</h2>
+                <p>
+                    Your workspace has no applications enabled on its current plan.
+                    Contact your administrator to add them to your subscription.
+                </p>
+            </div>
+
+            <div t-else="" class="o_nc_home__grid">
+                <t t-foreach="state.apps" t-as="app" t-key="app.id">
+                    <button class="o_nc_home__card" t-on-click="() => this.openApp(app)"
+                            t-att-data-xmlid="app.xmlid" t-att-title="app.name">
+                        <span class="o_nc_home__icon">
+                            <!-- The module's OWN icon. No substitute is shipped:
+                                 a module without one gets a lettermark. -->
+                            <img t-if="app.web_icon_data" t-att-src="iconSrc(app)"
+                                 t-att-alt="app.name"/>
+                            <span t-else="" class="o_nc_home__lettermark"
+                                  t-esc="initials(app)"/>
+                        </span>
+                        <span class="o_nc_home__label" t-esc="app.name"/>
+                    </button>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

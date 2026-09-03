@@ -60,6 +60,11 @@
         'views/workspace_appearance_views.xml',
         'views/subscription_blocked_templates.xml',
         'views/dashboard_action.xml',
+        # #455: loaded AFTER the dashboard so the launcher's sequence="0" menu
+        # is created against an existing sibling set; order here is not
+        # load-bearing for the sort itself (sequence decides that), only for
+        # readability of the data files.
+        'views/home_action.xml',
         'data/kpi_data.xml',
         # P5-T04 anomaly detection. (Order is cosmetic here: init_models()
         # reflects every Python model into ir.model before ANY of a module's
@@ -85,6 +90,10 @@
             'ncollection_core/static/src/dashboard/dashboard.scss',
             'ncollection_core/static/src/dashboard/dashboard.js',
             'ncollection_core/static/src/dashboard/dashboard.xml',
+            # #455 tenant application launcher.
+            'ncollection_core/static/src/home/tenant_home.scss',
+            'ncollection_core/static/src/home/tenant_home.js',
+            'ncollection_core/static/src/home/tenant_home.xml',
         ],
     },
     'post_init_hook': 'post_init_hook',

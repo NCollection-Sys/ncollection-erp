@@ -62,6 +62,13 @@
                             <field name="tenant_uuid" readonly="1"/>
                             <field name="domain"/>
                             <field name="plan_id"/>
+                            <!-- #455: what the plan licenses, so an admin can
+                                 answer "which modules does this customer have?"
+                                 without opening the plan. Read-only on purpose —
+                                 the plan is the single source of truth, and a
+                                 per-tenant override would be a second one. -->
+                            <field name="effective_module_names" readonly="1"
+                                   placeholder="Core modules only"/>
                             <field name="subscription_id"/>
                             <field name="trial_end_date"/>
                         </group>

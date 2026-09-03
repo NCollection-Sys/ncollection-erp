@@ -52,6 +52,8 @@
         'data/backup_data.xml',
         'data/fleet_migration_data.xml',
         'views/provisioning_job_views.xml',
+        # #455: module + config-sync visibility on the tenant form.
+        'views/tenant_views.xml',
         'views/subscription_views.xml',
         'views/config_sync_views.xml',
         # after config_sync_views: inherits view_tenant_form_config_sync

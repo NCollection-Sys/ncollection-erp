@@ -70,6 +70,21 @@ class Tenant(models.Model):
         required=True,
         tracking=True,
     )
+    # #455: what this tenant's plan actually licenses, shown read-only on the
+    # tenant form. Computed, never stored: the plan is the single source of
+    # truth (provisioning installs CORE_TENANT_MODULES + this, config sync
+    # pushes this into the tenant's workspace config), so a stored copy here
+    # would be a second version of the answer that drifts the moment a plan is
+    # edited. Empty means "core modules only" — which is a valid plan, not an
+    # error, and the reason provisioning must tolerate a blank list (#451).
+    effective_module_names = fields.Char(
+        string='Licensed Modules',
+        compute='_compute_effective_module_names',
+        help="Modules this tenant's plan licenses, on top of the core modules "
+             "every tenant always gets. Set them on the plan — saving there "
+             "queues a config-sync push to every tenant using it.",
+    )
+
     subscription_ids = fields.One2many('ncollection.subscription', 'tenant_id', string='Subscriptions')
     provisioning_job_ids = fields.One2many('ncollection.provisioning.job', 'tenant_id', string='Provisioning Jobs')
     active = fields.Boolean(default=True)
@@ -141,6 +156,20 @@ class Tenant(models.Model):
                     )
                 )
         self.write({'status': new_status})
+
+    @api.depends('plan_id', 'plan_id.allowed_module_names')
+    def _compute_effective_module_names(self):
+        """Read the plan's list through its own parser (#455).
+
+        get_allowed_module_list() already strips whitespace, drops empties and
+        de-duplicates, so this cannot disagree with what provisioning and
+        config sync send — which is the point of not re-splitting the string
+        here.
+        """
+        for tenant in self:
+            plan = tenant.plan_id
+            modules = plan.get_allowed_module_list() if plan else []
+            tenant.effective_module_names = ', '.join(modules)
 
     def action_activate(self):
         """trial/suspended -> active."""

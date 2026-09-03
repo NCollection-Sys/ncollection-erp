@@ -50,6 +50,37 @@
                         </group>
                     </group>
                     <notebook>
+                        <!--
+                            #455: allowed_module_names is THE control for what
+                            every tenant on this plan gets, and it appeared in
+                            no view at all — the one field that decides each
+                            tenant's module set could not be seen or edited
+                            anywhere in the UI. It is not a display mirror of
+                            something else: provisioning installs
+                            CORE_TENANT_MODULES + this list, and config sync
+                            pushes this list into each tenant's
+                            ncollection.workspace.config, where Ring 1 (menus)
+                            and Ring 2 (ORM) enforce it.
+                        -->
+                        <page string="Modules">
+                            <div class="alert alert-info" role="status">
+                                <strong>Saving this list takes effect on every tenant of this plan.</strong>
+                                A config-sync push is queued automatically on save
+                                (no re-provisioning, no manual step). Each tenant's
+                                sync result is shown on its own form; already-provisioned
+                                tenants pick up menu/access changes on their next
+                                session, and newly provisioned tenants get these
+                                modules installed at creation.
+                                <br/>
+                                Core modules (<code>base</code>, <code>ncollection_core</code>,
+                                <code>ncollection_branding</code>, <code>ncollection_auth</code>)
+                                are always installed and are not listed here.
+                                A module listed here also licenses whatever it depends on.
+                            </div>
+                            <field name="allowed_module_names"
+                                   placeholder="crm,sale,stock"
+                                   nolabel="1"/>
+                        </page>
                         <page string="Description">
                             <field name="description" placeholder="Plan description for client demos..."/>
                         </page>
