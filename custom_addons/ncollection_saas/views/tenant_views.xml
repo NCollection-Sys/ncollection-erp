@@ -58,11 +58,10 @@
                         tenant's own result.
                         <br/>
                         Newly provisioned tenants get these modules <strong>installed</strong>
-                        at creation. For a tenant that already exists, the config push only
-                        updates <strong>licensing</strong> (menus and ORM access) — use
-                        <strong>Install Licensed Modules</strong> above to actually install
-                        them into the database, or the applications will be visible but
-                        not usable (#459).
+                        at creation. For a tenant that already exists, <strong>adding</strong> a
+                        module to the plan now queues the installation automatically for every
+                        ready tenant on it, then re-syncs licensing (#461) — the button above
+                        stays for retrying a failure or forcing a re-run.
                         <br/>
                         Removing a module from the plan hides it and blocks its data; it is
                         <strong>not</strong> uninstalled, because dropping a module's tables

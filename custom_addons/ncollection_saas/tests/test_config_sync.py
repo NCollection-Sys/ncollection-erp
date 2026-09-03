@@ -74,11 +74,17 @@ class TestConfigSync(TransactionCase):
                          "duplicate pending syncs for one tenant are de-duplicated")
 
     def test_plan_edit_fans_out_to_tenants(self):
+        """Scoped to CONFIG-SYNC jobs (#461). A plan edit that ADDS a module now
+        also queues a module install per ready tenant, so a bare
+        `search_count([])` counts both lifecycles and no longer says anything
+        about the one this test is named for. The install half has its own
+        coverage in test_module_install.py."""
         self._tenant(database_status='ready', database_name='syncfana')
         self._tenant(database_status='ready', database_name='syncfanb')
-        before = self.env['queue.job'].search_count([])
+        sync_jobs = [('method_name', '=', 'sync_workspace_config')]
+        before = self.env['queue.job'].search_count(sync_jobs)
         self.plan.write({'allowed_module_names': 'crm,sale,account'})
-        self.assertEqual(self.env['queue.job'].search_count([]), before + 2,
+        self.assertEqual(self.env['queue.job'].search_count(sync_jobs), before + 2,
                          "a plan edit fans out to both ready tenants")
 
     def test_subscription_plan_change_updates_tenant_and_enqueues(self):

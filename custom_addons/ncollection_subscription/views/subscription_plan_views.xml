@@ -65,12 +65,11 @@
                         <page string="Modules">
                             <div class="alert alert-info" role="status">
                                 <strong>Saving this list takes effect on every tenant of this plan.</strong>
-                                A config-sync push is queued automatically on save
-                                (no re-provisioning, no manual step). Each tenant's
-                                sync result is shown on its own form; already-provisioned
-                                tenants pick up menu/access changes on their next
-                                session, and newly provisioned tenants get these
-                                modules installed at creation.
+                                Adding a module queues its <strong>installation</strong> into every
+                                ready tenant's database and re-syncs licensing; removing one
+                                revokes access but never uninstalls, so customer data is kept.
+                                Both run in the background — the save does not wait — and each
+                                tenant's own result is shown on its form.
                                 <br/>
                                 Core modules (<code>base</code>, <code>ncollection_core</code>,
                                 <code>ncollection_branding</code>, <code>ncollection_auth</code>)

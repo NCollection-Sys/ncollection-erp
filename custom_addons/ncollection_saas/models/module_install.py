@@ -174,6 +174,34 @@ class TenantModuleInstall(models.Model):
         return [m for m in plan.get_allowed_module_list()
                 if m not in CORE_TENANT_MODULES]
 
+    def _nc_enqueue_module_install(self):
+        """Queue the install for the ready tenants in `self`, one job EACH.
+
+        Per-tenant jobs on purpose (#461): a single job covering a whole plan
+        would make one tenant's failure decide the outcome for all of them, and
+        the state fields are per tenant. Separate jobs keep the failures
+        independent and individually retryable.
+
+        Mirrors `_config_sync_enqueue` exactly — same channel, same
+        identity_key shape, same "ready tenants only" rule — so the two halves
+        of a plan change behave the same way and there is only one queueing
+        idiom in this module to understand.
+        """
+        for tenant in self:
+            if tenant.database_status != 'ready' or not tenant.database_name:
+                continue
+            if not tenant._nc_licensed_module_list():
+                continue
+            tenant.module_install_state = 'queued'
+            tenant.with_delay(
+                channel=PROVISION_CHANNEL,
+                description=self.env._(
+                    "Install licensed modules -> '%s'", tenant.database_name),
+                # De-duplicates: while one install is pending for this tenant,
+                # a second plan save does not stack another.
+                identity_key='nc-module-install-%s' % tenant.id,
+            ).run_module_install()
+
     @api.model
     def _nc_tenants_needing_module_install(self, plan):
         """Ready tenants on `plan` that license something beyond the core set.
