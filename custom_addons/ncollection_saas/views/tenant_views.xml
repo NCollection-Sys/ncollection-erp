@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tenant module/config-sync visibility for the Platform Admin (#455).
+
+    The SaaS layer owns the config_sync_* fields (ncollection_saas extends the
+    tenant), so this view extension lives here rather than in
+    ncollection_subscription, whose form cannot reference fields that do not
+    exist when it is installed alone.
+
+    This answers the question an admin could not previously answer at all:
+    "I changed the plan's modules — did that actually reach the customer?"
+-->
+<odoo>
+
+    <record id="view_ncollection_tenant_form_modules" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form.modules</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Retry lives beside the status it repairs, not in a menu. -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_config_sync_now" type="object"
+                            string="Sync Configuration Now"
+                            invisible="database_status != 'ready'"
+                            help="Push this tenant's plan configuration (modules, limits,
+                                  subscription status) into its database now. Same push a
+                                  plan change queues automatically — use it to retry after
+                                  a failure."/>
+                </header>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Modules &amp; Config Sync">
+                    <div class="alert alert-info" role="status">
+                        Modules come from the <strong>subscription plan</strong>
+                        (<field name="plan_id" readonly="1" nolabel="1" class="oe_inline"/>) —
+                        edit them on the plan's <em>Modules</em> tab. Saving there queues a
+                        push to every tenant on that plan; the state below is this
+                        tenant's own result.
+                        <br/>
+                        Newly provisioned tenants get these modules <strong>installed</strong>
+                        at creation. For a tenant that already exists, the push updates its
+                        licensing (menus and ORM access) — it does not install new Odoo
+                        modules into a live database, which stays a provisioning-time
+                        operation.
+                    </div>
+                    <group>
+                        <group string="Licensed Modules">
+                            <field name="effective_module_names" readonly="1"
+                                   placeholder="Core modules only"/>
+                        </group>
+                        <group string="Last Push To This Tenant">
+                            <field name="config_sync_state" widget="badge"
+                                   decoration-success="config_sync_state == 'ok'"
+                                   decoration-warning="config_sync_state == 'transient'"
+                                   decoration-danger="config_sync_state == 'needs_attention'"/>
+                            <field name="config_sync_last_ok" readonly="1"/>
+                            <field name="config_sync_failure_count" readonly="1"/>
+                            <field name="config_sync_last_error" readonly="1"
+                                   invisible="not config_sync_last_error"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

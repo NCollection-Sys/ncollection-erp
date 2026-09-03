@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tenant application launcher — the customer landing page (#455).
+
+    WHY THIS IS A ROOT MENU AT sequence="0": Odoo opens the first root menu a
+    user can see, which is how the P1-T17 dashboard (sequence="1") became the
+    landing page. Rather than patch the web client's home behaviour, this menu
+    simply sorts ahead of it, so a tenant lands on their apps and the dashboard
+    stays one click away at sequence 1. No core override, nothing to keep in
+    step with an upstream change.
+
+    Like the dashboard menu, this is owned by ncollection_core, whose modules
+    _ncollection_blocked_module_names() skips (the "ncollection_" prefix rule) —
+    so the launcher itself is never filtered out by the very plan gating it
+    renders. It excludes ITSELF from its own grid via LAUNCHER_EXCLUDED_MENUS.
+
+    The apps shown come from ir.ui.menu.nc_tenant_apps(), i.e. from
+    get_user_roots() — group permissions and Ring 1 licensing already applied.
+    There is no module list in this file on purpose.
+-->
+<odoo>
+
+    <record id="action_ncollection_home" model="ir.actions.client">
+        <field name="name">Home</field>
+        <field name="tag">ncollection_core.tenant_home</field>
+    </record>
+
+    <menuitem id="menu_ncollection_home_root"
+              name="Home"
+              action="action_ncollection_home"
+              sequence="0"/>
+
+</odoo>

@@ -40,6 +40,22 @@ NCOLLECTION_PREFIX = 'ncollection_'
 # another app AND must be plan-gated.
 MENU_NESTED_GATED_MODULES = {'account_financial_report', 'mis_builder'}
 
+# Root menus that are NOT customer applications and are therefore left out of
+# the tenant app launcher (#455). They are not hidden — a user who may see them
+# still reaches them from the sidebar, and Apps/Settings remain owner-only via
+# _OWNER_ONLY_MENUS below. This list only decides what belongs on a CUSTOMER's
+# home grid: administration surfaces and internal/dev tooling do not.
+#
+# The launcher's own menu is excluded for the obvious reason — a home screen
+# that lists itself as one of its apps is a loop.
+LAUNCHER_EXCLUDED_MENUS = frozenset({
+    'base.menu_management',                        # Apps
+    'base.menu_administration',                    # Settings
+    'base.menu_tests',                             # Odoo's own test menu
+    'ncollection_branding.menu_component_playground',  # internal design tooling
+    'ncollection_core.menu_ncollection_home_root',  # the launcher itself
+})
+
 # P1-T09 risk note: _visible_menu_ids is an Odoo-internal method. Pin the
 # exact Odoo 19 signature and refuse to filter if upstream drifts.
 _EXPECTED_PARAMS = ('self', 'debug')
@@ -110,6 +126,56 @@ class IrUiMenu(models.Model):
                     Menu.search([('parent_path', '=like', root.parent_path + '%')]).ids
                 )
         return menu_ids
+
+    # ------------------------------------------------------------------
+    # Tenant app launcher (#455)
+    # ------------------------------------------------------------------
+    @api.model
+    def nc_tenant_apps(self):
+        """The apps to show a tenant user on their home launcher.
+
+        DERIVED, never declared. The source is ``get_user_roots()`` — Odoo's
+        own "root menus this user may see" — which runs through
+        ``_filter_visible_menus`` -> ``_visible_menu_ids``, i.e. THIS class's
+        override. So every app returned here has already passed:
+
+          * the user's group permissions (core behaviour),
+          * Ring 1 plan licensing, ``allowed_module_names`` + its dependency
+            closure (``_ncollection_blocked_menu_ids`` above), and
+          * the owner-only Apps/Settings subtraction (P1-T11).
+
+        That is the whole point: there is no second list to keep in step, so a
+        module cannot appear here that the tenant is not licensed for, and
+        nothing needs re-checking when the plan changes — the sync that
+        rewrites ``allowed_module_names`` moves this too.
+
+        ``web_icon_data`` is the module's OWN official icon as Odoo already
+        stores it; no icon is invented here.
+        """
+        roots = self.get_user_roots()
+        if not roots:
+            return []
+        xmlids = roots._get_menuitems_xmlids()
+        apps = []
+        for menu in roots:
+            xmlid = xmlids.get(menu.id, '')
+            if xmlid in LAUNCHER_EXCLUDED_MENUS:
+                continue
+            action = menu.action
+            apps.append({
+                'id': menu.id,
+                'xmlid': xmlid,
+                'name': menu.name,
+                # `action` is a reference field ("ir.actions.act_window,42");
+                # the client needs the bare id to open it.
+                'action_id': action.id if action else False,
+                'action_model': action._name if action else False,
+                'web_icon': menu.web_icon or '',
+                'web_icon_data': menu.web_icon_data.decode() if menu.web_icon_data else '',
+                'sequence': menu.sequence,
+            })
+        apps.sort(key=lambda a: (a['sequence'], a['name'] or ''))
+        return apps
 
     # ------------------------------------------------------------------
     # Blocking computation (split for testability)

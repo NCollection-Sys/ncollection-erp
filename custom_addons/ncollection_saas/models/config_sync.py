@@ -26,6 +26,7 @@ import time
 import requests
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -273,6 +274,25 @@ class TenantConfigSync(models.Model):
         }
 
     # ---- trigger + async -------------------------------------------------
+
+    def action_config_sync_now(self):
+        """Push this tenant's plan config to its database, on demand (#455).
+
+        The same enqueue a plan edit already triggers — NOT a second path, so
+        there is nothing that can behave differently from the automatic one.
+        It exists because an admin who has just fixed a failed sync (or a
+        credential) needs a way to retry without editing the plan to force it.
+
+        Refuses on a tenant with no database: pushing config at nothing is not
+        a no-op worth pretending succeeded, it is a mistake worth naming.
+        """
+        for tenant in self:
+            if tenant.database_status != 'ready' or not tenant.database_name:
+                raise UserError(self.env._(
+                    "Tenant '%s' has no ready database to sync into.",
+                    tenant.company_name))
+        self._config_sync_enqueue()
+        return True
 
     def _config_sync_enqueue(self):
         """Enqueue a config push for the ready tenants in self (off HTTP

@@ -25,3 +25,4 @@ from . import test_financial_gate
 from . import test_portal_isolation
 # P8-T10 (#444) — error log & incident correlation tests
 from . import test_error_log
+from . import test_tenant_home
