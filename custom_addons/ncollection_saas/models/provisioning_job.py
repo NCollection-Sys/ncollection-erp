@@ -245,7 +245,12 @@ class ProvisioningJob(models.Model):
         env_vars.update({
             'NC_COMPANY': tenant.company_name or 'Tenant',
             'NC_ADMIN_EMAIL': tenant.email or '',
-            'NC_ALLOWED_MODULES': plan.allowed_module_names if plan else '',
+            # #451: an unset Text field is ORM False, not '' -- os.fsencode()
+            # (used by subprocess.run's env= encoding) then raises "expected
+            # str, bytes or os.PathLike object, not bool" and the whole
+            # provisioning run is rolled back. Coalesce like config_sync.py:269
+            # already does for this same field.
+            'NC_ALLOWED_MODULES': (plan.allowed_module_names or '') if plan else '',
             'NC_PLAN_CODE': plan.code if plan else '',
             'NC_MAX_USERS': str(plan.max_users if plan else 1),
             # Project the TENANT status (trial/active/suspended/expired) — the
