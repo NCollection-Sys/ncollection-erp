@@ -118,6 +118,69 @@ class TestTenantHomeApps(TransactionCase):
         self.assertEqual(app['action_id'], self.action.id,
                          "the card must open the menu's own action")
 
+    # ------------------------------------------ inert cards (#459)
+    def test_an_app_whose_root_menu_has_no_action_still_opens(self):
+        """THE #459 DEFECT, PINNED. CRM, Calendar and Contacts all have root
+        menus with `action = False` — they are containers, and the action lives
+        on a child. The launcher returned that empty action, so those cards did
+        nothing when clicked while Dashboard and Discuss (which own actions)
+        worked. Every app must resolve to the menu that actually owns an
+        action."""
+        container = self.Menu.create({'name': 'Container App'})
+        child = self.Menu.create({
+            'name': 'Container App / Things', 'parent_id': container.id,
+            'action': 'ir.actions.act_window,%s' % self.action.id,
+            'sequence': 5,
+        })
+        self.env['ir.model.data'].create({
+            'name': 'menu_root', 'module': 'container_app',
+            'model': 'ir.ui.menu', 'res_id': container.id})
+        self.Config.create({
+            'plan_code': 'TEST', 'allowed_module_names': 'container_app'})
+        self.env.registry.clear_cache()
+
+        apps = [a for a in self.Menu.nc_tenant_apps() if a['name'] == 'Container App']
+        self.assertEqual(len(apps), 1, "the container app must still be offered")
+        app = apps[0]
+        self.assertFalse(container.action, "fixture check: the root owns no action")
+        self.assertEqual(app['menu_id'], child.id,
+                         "the card must navigate to the child that owns the action")
+        self.assertEqual(app['action_id'], self.action.id)
+
+    def test_an_app_with_no_reachable_action_is_not_offered_at_all(self):
+        """A card that can open nothing is worse than an absent one: it
+        advertises a feature and then does nothing. Such an app is dropped
+        rather than rendered dead."""
+        empty = self.Menu.create({'name': 'Empty App'})
+        self.env['ir.model.data'].create({
+            'name': 'menu_root', 'module': 'empty_app',
+            'model': 'ir.ui.menu', 'res_id': empty.id})
+        self.env.registry.clear_cache()
+        self.assertNotIn('Empty App', self._app_names())
+
+    def test_the_actionable_menu_is_the_one_the_sidebar_would_open(self):
+        """Ordered by (sequence, id), so the launcher and the sidebar agree on
+        where a click lands rather than picking different children."""
+        container = self.Menu.create({'name': 'Ordered App'})
+        second = self.Menu.create({
+            'name': 'Second', 'parent_id': container.id, 'sequence': 20,
+            'action': 'ir.actions.act_window,%s' % self.action.id})
+        first = self.Menu.create({
+            'name': 'First', 'parent_id': container.id, 'sequence': 1,
+            'action': 'ir.actions.act_window,%s' % self.action.id})
+        self.assertEqual(container._nc_actionable_menu(), first)
+        self.assertNotEqual(container._nc_actionable_menu(), second)
+
+    def test_the_launcher_navigates_through_the_menu_service(self):
+        """#459 asked for real Odoo navigation, not hand-built URLs. The
+        component must call the menu service's selectMenu with the resolved
+        menu id — that is what also sets the current-app highlight."""
+        source = _HOME_JS.read_text(encoding='utf-8')
+        self.assertIn('useService("menu")', source)
+        self.assertIn('selectMenu', source)
+        self.assertNotIn('window.location', source,
+                         "navigate through the menu service, never a URL")
+
     # ------------------------------------------- the setup() crash (#457)
     def test_the_component_asks_for_no_service_that_does_not_exist(self):
         """THE #457 CRASH, PINNED.

@@ -21,6 +21,20 @@
             <!-- Retry lives beside the status it repairs, not in a menu. -->
             <xpath expr="//sheet" position="before">
                 <header>
+                    <!-- #459: licensing a module never installed it. This is
+                         the supported way to close that gap for an EXISTING
+                         tenant; new tenants still get everything at
+                         provisioning time. -->
+                    <button name="action_install_licensed_modules" type="object"
+                            string="Install Licensed Modules" class="btn-primary"
+                            invisible="database_status != 'ready'"
+                            confirm="This installs the plan's modules into the tenant's
+                                     database. It runs in an isolated process and is safe
+                                     to repeat — already-installed modules are untouched.
+                                     Continue?"
+                            help="Install this plan's modules into the tenant database so
+                                  the licensed applications actually work. Licensing alone
+                                  only makes them visible."/>
                     <button name="action_config_sync_now" type="object"
                             string="Sync Configuration Now"
                             invisible="database_status != 'ready'"
@@ -28,6 +42,9 @@
                                   subscription status) into its database now. Same push a
                                   plan change queues automatically — use it to retry after
                                   a failure."/>
+                    <field name="module_install_state" widget="statusbar"
+                           statusbar_visible="none,queued,running,done"
+                           invisible="database_status != 'ready'"/>
                 </header>
             </xpath>
 
@@ -41,10 +58,15 @@
                         tenant's own result.
                         <br/>
                         Newly provisioned tenants get these modules <strong>installed</strong>
-                        at creation. For a tenant that already exists, the push updates its
-                        licensing (menus and ORM access) — it does not install new Odoo
-                        modules into a live database, which stays a provisioning-time
-                        operation.
+                        at creation. For a tenant that already exists, the config push only
+                        updates <strong>licensing</strong> (menus and ORM access) — use
+                        <strong>Install Licensed Modules</strong> above to actually install
+                        them into the database, or the applications will be visible but
+                        not usable (#459).
+                        <br/>
+                        Removing a module from the plan hides it and blocks its data; it is
+                        <strong>not</strong> uninstalled, because dropping a module's tables
+                        would destroy customer data that cannot be restored.
                     </div>
                     <group>
                         <group string="Licensed Modules">
@@ -61,6 +83,21 @@
                             <field name="config_sync_last_error" readonly="1"
                                    invisible="not config_sync_last_error"/>
                         </group>
+                        <!-- #459: installation is a separate fact from licensing,
+                             so it gets its own state rather than being implied by
+                             a green sync. -->
+                        <group string="Installation Into The Database">
+                            <field name="module_install_state" widget="badge"
+                                   decoration-success="module_install_state == 'done'"
+                                   decoration-info="module_install_state in ('queued', 'running')"
+                                   decoration-danger="module_install_state == 'failed'"/>
+                            <field name="module_install_last_ok" readonly="1"/>
+                            <field name="module_install_last_error" readonly="1"
+                                   invisible="not module_install_last_error"/>
+                        </group>
+                    </group>
+                    <group string="Installation Log" invisible="not module_install_log">
+                        <field name="module_install_log" readonly="1" nolabel="1"/>
                     </group>
                 </page>
             </xpath>

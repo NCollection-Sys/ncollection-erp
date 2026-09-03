@@ -161,21 +161,59 @@ class IrUiMenu(models.Model):
             xmlid = xmlids.get(menu.id, '')
             if xmlid in LAUNCHER_EXCLUDED_MENUS:
                 continue
-            action = menu.action
+            target = menu._nc_actionable_menu()
+            if not target:
+                # NO REACHABLE ACTION -> NOT AN APP (#459). A card that cannot
+                # open anything is worse than an absent one: it advertises a
+                # feature and then does nothing when clicked.
+                continue
+            action = target.action
             apps.append({
                 'id': menu.id,
+                # The menu that actually OWNS the action. For CRM, Calendar and
+                # Contacts this is a CHILD: their root menus are containers with
+                # no action of their own, which is exactly why every such card
+                # was inert (#459). The client hands this to the menu service so
+                # navigation and the current-app highlight match a sidebar click.
+                'menu_id': target.id,
                 'xmlid': xmlid,
                 'name': menu.name,
                 # `action` is a reference field ("ir.actions.act_window,42");
                 # the client needs the bare id to open it.
-                'action_id': action.id if action else False,
-                'action_model': action._name if action else False,
+                'action_id': action.id,
+                'action_model': action._name,
                 'web_icon': menu.web_icon or '',
                 'web_icon_data': menu.web_icon_data.decode() if menu.web_icon_data else '',
                 'sequence': menu.sequence,
             })
         apps.sort(key=lambda a: (a['sequence'], a['name'] or ''))
         return apps
+
+    def _nc_actionable_menu(self):
+        """This menu if it carries an action, else its first descendant that
+        does — the menu a click should actually open (#459).
+
+        Odoo's app roots are frequently pure containers (`crm.crm_menu_root`,
+        `contacts.menu_contacts`, `calendar.mail_menu_calendar` all have
+        `action = False`), with the action living on a child. The sidebar
+        resolves this by drilling into the tree; the launcher has to do the
+        same or its cards do nothing.
+
+        Ordered by (sequence, id) so the target is the same menu the sidebar
+        would land on, and searched through ``self`` — NOT sudo — so a
+        descendant the user may not see is never chosen as their entry point.
+        """
+        self.ensure_one()
+        if self.action:
+            return self
+        if not self.parent_path:
+            return self.browse()
+        descendants = self.search(
+            [('parent_path', '=like', self.parent_path + '%'),
+             ('id', '!=', self.id),
+             ('action', '!=', False)],
+            order='sequence, id')
+        return descendants[:1]
 
     # ------------------------------------------------------------------
     # Blocking computation (split for testability)
