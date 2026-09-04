@@ -10,13 +10,24 @@
     # (ARCHITECTURE_DATA_PLATFORM.md §7 — Phase 2), so for already-provisioned
     # tenants that is currently a manual ops step. The version bump exists so
     # that orchestrator, when it lands, has a signal to detect.
-    'version': '19.0.1.1.1',
+    'version': '19.0.1.2.0',
     'category': 'Accounting/Dashboard',
     'summary': 'Finance, Accountant and Cash financial dashboards '
                '(presentation only — consumes the executive report services)',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
+    # SELECTABLE IN A SUBSCRIPTION PLAN (#467). `application` is what
+    # ncollection.subscription.plan.get_selectable_modules() filters on, so
+    # until now not one native NCollection accounting module could be licensed
+    # to a tenant at all: the picker offered only Odoo/OCA apps, ENTERPRISE
+    # therefore named only those, and every ncollection_account_* module was
+    # `uninstalled` in every tenant database. This flag is the whole fix — it
+    # changes no behaviour inside the module, only whether an operator can
+    # choose it. Modules with no menus of their own stay dependency-only
+    # (ncollection_account_core), because offering them would imply a choice
+    # that does nothing.
+    'application': True,
     # ncollection_account_reports: the F2-T08 executive report SERVICES this
     # module consumes for every figure (never re-computed here — FPA §7
     # "Must Never Own: Report Generation, Accounting Rules"). ncollection_branding:

@@ -1,10 +1,19 @@
-// Plan module picker (#457).
+// Plan module picker (#457, redesigned #467).
 //
 // Brand tokens with defaults, and logical properties only — test_rtl_conformance
 // scans every ncollection_* stylesheet and this grid has to mirror for Arabic.
 
+// The plan form's sheet is width-capped like every Odoo form, which left the
+// module grid in a narrow column with the page's whole right-hand side empty.
+// Scoped with :has() so ONLY a form that actually renders this widget widens —
+// no other admin form is touched.
+.o_form_sheet_bg:has(.o_nc_modpick) .o_form_sheet {
+    max-width: 100%;
+}
+
 .o_nc_modpick {
     font-family: var(--nc-font-family, inherit);
+    inline-size: 100%;
 
     &__loading,
     &__empty {
@@ -14,24 +23,96 @@
         font-size: var(--nc-font-size-sm, 0.8125rem);
     }
 
+    &__toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--nc-space-2, 0.5rem);
+        margin-block-end: var(--nc-space-3, 0.75rem);
+        padding-block-end: var(--nc-space-3, 0.75rem);
+        border-block-end: 1px solid var(--nc-border, #e2e8f0);
+    }
+
+    &__tabs {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    &__tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: var(--nc-radius-sm, 0.25rem);
+        color: var(--nc-text-muted, #64748b);
+        font-size: var(--nc-font-size-sm, 0.8125rem);
+        font-weight: var(--nc-font-weight-medium, 500);
+        cursor: pointer;
+
+        &--on {
+            background: var(--nc-surface-bg, #F7F9FC);
+            border-color: var(--nc-border, #e2e8f0);
+            color: var(--nc-text, #0F172A);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--nc-focus-ring, rgba(45, 122, 183, 0.4));
+            outline-offset: 2px;
+        }
+    }
+
+    // The search bar takes the slack, so it is usable on a wide screen instead
+    // of staying a 16rem stub next to 60% empty space.
+    &__search {
+        flex: 1 1 14rem;
+        min-inline-size: 10rem;
+    }
+
+    &__category {
+        flex: 0 1 12rem;
+    }
+
+    &__bulk {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-inline-start: auto;
+    }
+
+    &__hint {
+        color: var(--nc-text-muted, #64748b);
+        font-size: var(--nc-font-size-xs, 0.75rem);
+        margin-block-end: var(--nc-space-3, 0.75rem);
+    }
+
+    &__count {
+        display: inline-block;
+        padding: 0.05rem 0.45rem;
+        border-radius: 999px;
+        background: var(--nc-color-primary, #1F5F8F);
+        color: #fff;
+        font-size: var(--nc-font-size-xs, 0.75rem);
+        line-height: 1.4;
+    }
+
     &__section {
-        margin-block-end: var(--nc-space-5, 1.5rem);
+        margin-block-end: var(--nc-space-4, 1rem);
     }
 
     &__section-head {
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
+        align-items: baseline;
         gap: var(--nc-space-2, 0.5rem);
-        margin-block-end: var(--nc-space-3, 0.75rem);
-        padding-block-end: 0.5rem;
-        border-block-end: 1px solid var(--nc-border, #e2e8f0);
+        margin-block-end: var(--nc-space-2, 0.5rem);
     }
 
     &__section-title {
         font-weight: var(--nc-font-weight-semibold, 600);
         color: var(--nc-text, #0F172A);
+        font-size: var(--nc-font-size-sm, 0.8125rem);
     }
 
     &__section-note {
@@ -39,42 +120,33 @@
         font-size: var(--nc-font-size-xs, 0.75rem);
     }
 
-    &__count {
-        display: inline-block;
-        margin-inline-start: 0.4rem;
-        padding: 0.05rem 0.45rem;
-        border-radius: 999px;
-        background: var(--nc-color-primary, #1F5F8F);
-        color: #fff;
-        font-size: var(--nc-font-size-xs, 0.75rem);
-    }
-
-    &__search {
-        max-width: 16rem;
-    }
-
+    // auto-fill + a min track: as many equal columns as the available width
+    // allows, collapsing to one on a phone with no media query to keep in step.
     &__grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
         gap: var(--nc-space-3, 0.75rem);
+        align-items: stretch;
     }
 
+    // Horizontal card: icon, text block, state marker. Equal height because
+    // every card is a grid item stretched to its row.
     &__card {
         position: relative;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        gap: 0.5rem;
-        padding: var(--nc-space-4, 1rem) var(--nc-space-3, 0.75rem);
-        text-align: center;
+        gap: var(--nc-space-3, 0.75rem);
+        inline-size: 100%;
+        padding: var(--nc-space-3, 0.75rem);
+        text-align: start;
         background: var(--nc-surface, #fff);
         border: 1px solid var(--nc-border, #e2e8f0);
         border-radius: var(--nc-radius-md, 0.5rem);
         cursor: pointer;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
         &:hover:not(:disabled):not(&--core) {
-            transform: translateY(-1px);
             border-color: var(--nc-color-secondary, #2D7AB7);
             box-shadow: var(--nc-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
         }
@@ -94,21 +166,42 @@
             background: rgba(31, 95, 143, 0.05);
         }
 
+        // Licensed because something else selected depends on it. Distinct from
+        // both states above, so an operator is not told a plan names something
+        // it does not.
+        &--implied {
+            border-style: dashed;
+            border-color: var(--nc-color-secondary, #2D7AB7);
+        }
+
         &--core {
             cursor: default;
             background: var(--nc-surface-bg, #F7F9FC);
             border-style: dashed;
         }
+
+        &--unlisted {
+            border-color: var(--nc-color-warning, #B45309);
+        }
     }
 
     &__icon {
-        width: 2.75rem;
-        height: 2.75rem;
+        flex: 0 0 auto;
+        width: 2.25rem;
+        height: 2.25rem;
         display: flex;
         align-items: center;
         justify-content: center;
 
         img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    }
+
+    &__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-inline-size: 0;
+        flex: 1 1 auto;
     }
 
     &__lettermark {
@@ -141,6 +234,7 @@
     }
 
     &__badge {
+        flex: 0 0 auto;
         font-size: var(--nc-font-size-xs, 0.75rem);
         color: var(--nc-text-muted, #64748b);
         border: 1px solid var(--nc-border, #e2e8f0);
@@ -148,19 +242,27 @@
         padding: 0 0.45rem;
     }
 
-    &__check {
-        position: absolute;
-        inset-block-start: 0.4rem;
-        inset-inline-end: 0.5rem;
+    // Reserved even when empty, so a card does not resize on selection and the
+    // grid does not reflow under the pointer.
+    &__state {
+        flex: 0 0 auto;
         width: 1.25rem;
         height: 1.25rem;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background: var(--nc-color-primary, #1F5F8F);
-        color: #fff;
         font-size: 0.75rem;
         line-height: 1;
+
+        &--on {
+            background: var(--nc-color-primary, #1F5F8F);
+            color: #fff;
+        }
+
+        &--implied {
+            border: 1px dashed var(--nc-color-secondary, #2D7AB7);
+            color: var(--nc-color-secondary, #2D7AB7);
+        }
     }
 }

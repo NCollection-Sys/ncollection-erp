@@ -82,3 +82,133 @@ class TestSelectableModuleCatalog(TransactionCase):
         picked = sorted(list(self.optional_names)[:3])
         plan.allowed_module_names = ','.join(picked)
         self.assertEqual(plan.get_allowed_module_list(), picked)
+
+
+@tagged('post_install', '-at_install')
+class TestNativeFinancialModulesAreSelectable(TransactionCase):
+    """#467: the native accounting modules can actually be licensed.
+
+    Until this ticket not one ``ncollection_account_*`` module declared
+    ``application``, and ``get_selectable_modules()`` filters on exactly that
+    — so the picker offered only Odoo and OCA apps, the ENTERPRISE plan could
+    therefore name only those, and every native accounting module sat
+    ``uninstalled`` in every tenant database while its code, menus and 348
+    tests shipped and passed.
+
+    The failure mode was silent in both directions: nothing errored, and no
+    test asked the question. These do.
+    """
+
+    # The user-facing financial apps. ncollection_account_core is deliberately
+    # absent — it ships no menu and no action, so it is dependency-only.
+    NATIVE_FINANCIAL_APPS = (
+        'ncollection_account_reports',
+        'ncollection_account_dashboard',
+        'ncollection_account_analytics',
+        'ncollection_account_budget',
+        'ncollection_account_assets',
+        'ncollection_account_localization_uae',
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.Plan = cls.env['ncollection.subscription.plan']
+        cls.Module = cls.env['ir.module.module'].sudo()
+        cls.catalog = cls.Plan.get_selectable_modules()
+        cls.optional_names = {m['name'] for m in cls.catalog['optional']}
+
+    def _installable(self, name):
+        """Only assert about modules this addons path can actually install.
+
+        ncollection_account_assets needs OCA account_asset_management, which
+        exists only once ./oca has been aggregated (`make oca`), and ./oca is
+        generated and gitignored. Skipping it there keeps this test honest
+        rather than red for an environment reason — and the modules that ARE
+        installable still carry the assertion, so it cannot pass vacuously
+        (see the control below).
+        """
+        module = self.Module.search([('name', '=', name)], limit=1)
+        return bool(module) and self.Plan._nc_module_is_installable(module)
+
+    def test_the_native_financial_apps_are_offered_in_the_picker(self):
+        checked = 0
+        for name in self.NATIVE_FINANCIAL_APPS:
+            if not self._installable(name):
+                continue
+            checked += 1
+            self.assertIn(
+                name, self.optional_names,
+                "%s is not selectable — a plan cannot license it, so it can "
+                "never be installed into a tenant (#467)" % name)
+        self.assertGreaterEqual(
+            checked, 4,
+            "control: the financial modules are missing from this addons path, "
+            "so the assertion above proved nothing")
+
+    def test_the_dependency_only_base_is_not_offered_as_a_choice(self):
+        """ncollection_account_core has no menu and no action. Offering it
+        would present a checkbox that changes nothing an operator can see,
+        while every sibling already pulls it in as a dependency."""
+        self.assertNotIn('ncollection_account_core', self.optional_names)
+
+    def test_each_entry_carries_the_grouping_and_dependency_keys(self):
+        """The picker groups by category and shows why a card counts as
+        included. A missing key renders a blank filter rather than failing."""
+        for module in self.catalog['optional'][:20]:
+            self.assertIn('category', module)
+            self.assertIn('depends', module)
+            self.assertIsInstance(module['depends'], list)
+
+    def test_a_reported_dependency_is_a_real_module_name(self):
+        """The picker expands `depends` client-side for display. A name that
+        matches no module would render a permanently-unexplained card."""
+        # Any offered module that declares a dependency will do — naming one
+        # would make this test SKIP wherever that module is absent, and a
+        # skipped test counts as a passing one.
+        with_deps = [m for m in self.catalog['optional'] if m['depends']]
+        self.assertTrue(with_deps,
+                        "control: no offered module declares a dependency, so "
+                        "the assertion below would prove nothing")
+        known = set(self.Module.search([]).mapped('name'))
+        for module in with_deps[:10]:
+            for dep in module['depends']:
+                self.assertIn(
+                    dep, known,
+                    "%s reports a dependency on %r, which is not a module on "
+                    "this platform" % (module['name'], dep))
+
+    def test_a_module_whose_dependency_is_missing_is_never_offered(self):
+        """A module that cannot be installed must not be licensable.
+
+        `state != 'uninstallable'` does not catch this: a module whose manifest
+        names a dependency that is not on the addons path stays plainly
+        `uninstalled`, and Odoo records the gap on the DEPENDENCY row as
+        `state == 'unknown'`. Offering it would let an operator queue an
+        install job that can only fail — on every ready tenant of the plan, in
+        the background, long after the click.
+
+        The live subject is ncollection_account_assets on a tree where ./oca
+        has not been aggregated — but CI aggregates it, so searching for a
+        real unresolvable module would make this test SKIP exactly where it
+        matters most, and a skipped test counts as a passing one. The subject
+        is therefore synthesised: an application whose one dependency names no
+        module at all, created inside the test transaction and rolled back
+        with it.
+        """
+        ghost = self.Module.create({
+            'name': 'nc_test_ghost_dependency_module',
+            'shortdesc': 'Ghost Dependency Module',
+            'state': 'uninstalled',
+            'application': True,
+            'dependencies_id': [(0, 0, {'name': 'nc_test_module_that_does_not_exist'})],
+        })
+        # The control: Odoo leaves such a module plainly `uninstalled`, so the
+        # state filter alone would have offered it.
+        self.assertEqual(ghost.state, 'uninstalled')
+        self.assertFalse(self.Plan._nc_module_is_installable(ghost))
+        self.assertNotIn(
+            ghost.name,
+            {m['name'] for m in self.Plan.get_selectable_modules()['optional']},
+            "a module with an unresolvable dependency must not be licensable — "
+            "its install job could only fail, on every ready tenant of the plan")
