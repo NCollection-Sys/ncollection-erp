@@ -10,7 +10,7 @@
     # (ARCHITECTURE_DATA_PLATFORM.md §7 — Phase 2), so for already-provisioned
     # tenants that is currently a manual ops step. The version bump exists so
     # that orchestrator, when it lands, has a signal to detect.
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'category': 'Accounting/Dashboard',
     'summary': 'Finance, Accountant and Cash financial dashboards '
                '(presentation only — consumes the executive report services)',
