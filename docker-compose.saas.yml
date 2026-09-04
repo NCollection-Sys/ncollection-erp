@@ -50,6 +50,17 @@ services:
       # Config-sync bearer key (P2-T03): the reconcile cron + queued live syncs
       # run here, so the runner needs the same key as the odoo service.
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+      # WHERE TO PUSH TENANT CONFIG (#465). Not localhost: this container's own
+      # HTTP server is scoped `-d ${PLATFORM_DB} --db-filter=^${PLATFORM_DB}$$`
+      # (see the command below), so a push carrying a TENANT's Host header
+      # matches no database there and Odoo answers "No database is selected"
+      # -> HTTP 404. Every config sync from this runner failed that way until
+      # #463 made the runner run and the failure became visible.
+      #
+      # `odoo` is the multi-tenant service on this compose network and is
+      # reachable from every container, including itself, so this value is
+      # correct for the whole stack rather than just for the runner.
+      NC_INTERNAL_BASE_URL: ${NC_INTERNAL_BASE_URL:-http://odoo:8069}
     # --load starts the queue_job jobrunner thread. It shells out (odoo
     # subprocess) to build tenant DBs — never a cross-DB ORM call.
     #

@@ -7,6 +7,8 @@ client's request shape + failure handling, and the reconcile selection. The
 real platform->tenant json2 round-trip is proven by
 scripts/provisioning/verify_config_sync.sh (evidence in the PR).
 """
+import os
+
 from unittest.mock import MagicMock, patch
 
 from odoo.tests import TransactionCase, tagged
@@ -167,3 +169,66 @@ class TestConfigSync(TransactionCase):
         before = self.env['queue.job'].search_count([])
         self.env['ncollection.tenant']._cron_reconcile_config()
         self.assertGreaterEqual(self.env['queue.job'].search_count([]), before + 1)
+
+
+@tagged('post_install', '-at_install')
+class TestInternalBaseUrlPrecedence(TransactionCase):
+    """Where a config-sync push is addressed, per container (#465).
+
+    The answer depends on WHICH PROCESS is pushing, not on admin preference:
+    from the odoo container `localhost:8069` is the multi-tenant server, but
+    from the provisioning-runner it is the runner's OWN server, scoped
+    `-d <platform> --db-filter=^<platform>$`. A push carrying a tenant's Host
+    header matched no database there and Odoo answered "No database is
+    selected" -> HTTP 404, so EVERY config sync from the runner failed while
+    module installs (subprocesses, not HTTP) succeeded.
+
+    Invisible until #463 made the runner actually run, which is why the env
+    override and these tests exist.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.Tenant = self.env['ncollection.tenant']
+        self.env['ir.config_parameter'].sudo().set_param(
+            'ncollection_saas.internal_base_url', 'http://param-host:8069')
+
+    def _clear_env(self):
+        os.environ.pop('NC_INTERNAL_BASE_URL', None)
+
+    def test_the_env_var_wins_when_set(self):
+        """The deployment fact beats the global parameter — this is what
+        points the runner at the multi-tenant server."""
+        os.environ['NC_INTERNAL_BASE_URL'] = 'http://odoo:8069'
+        self.addCleanup(self._clear_env)
+        self.assertEqual(self.Tenant._config_sync_base_url(), 'http://odoo:8069')
+
+    def test_the_parameter_is_used_when_the_env_var_is_absent(self):
+        """The admin knob still works — the override is additive, so an
+        existing deployment that sets nothing is unaffected."""
+        self._clear_env()
+        self.assertEqual(self.Tenant._config_sync_base_url(),
+                         'http://param-host:8069')
+
+    def test_an_empty_or_whitespace_env_var_does_not_win(self):
+        """An unset-but-present variable (a common compose accident) must not
+        silently blank the endpoint — that would turn a misconfiguration into
+        a request to nowhere."""
+        for blank in ('', '   '):
+            os.environ['NC_INTERNAL_BASE_URL'] = blank
+            self.addCleanup(self._clear_env)
+            self.assertEqual(self.Tenant._config_sync_base_url(),
+                             'http://param-host:8069')
+
+    def test_the_default_survives_with_neither_set(self):
+        self._clear_env()
+        self.env['ir.config_parameter'].sudo().search(
+            [('key', '=', 'ncollection_saas.internal_base_url')]).unlink()
+        self.assertEqual(self.Tenant._config_sync_base_url(),
+                         'http://localhost:8069')
+
+    # The other half of this fix — that the RUNNER is actually given the
+    # variable — is asserted by scripts/ci/invariants.py's SaaS-stack rule, not
+    # here: the odoo container mounts only custom_addons/ and oca/, so an Odoo
+    # test physically cannot read docker-compose.saas.yml (the same reason
+    # ci.yml runs the role-matrix guard on the host).

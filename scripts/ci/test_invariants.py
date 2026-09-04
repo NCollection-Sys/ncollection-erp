@@ -822,6 +822,8 @@ class TestR13SaasStackRunsTheQueueWorker(GuardTestCase):
     )
     GOOD_OVERLAY = (
         "services:\n  provisioning-runner:\n"
+        "    environment:\n"
+        "      NC_INTERNAL_BASE_URL: http://odoo:8069\n"
         "    command: odoo --load=base,web,queue_job -d ncollection\n"
     )
 
@@ -864,6 +866,18 @@ class TestR13SaasStackRunsTheQueueWorker(GuardTestCase):
         found = self._findings()
         self.assertTrue(found)
         self.assertIn("queue_job", found[0])
+
+    def test_a_runner_with_no_push_target_is_reported(self):
+        """#465: a worker that runs but cannot REACH tenants. Its own server is
+        scoped to the platform DB, so a push to localhost carrying a tenant
+        Host matches nothing and 404s — every config sync failing while module
+        installs (subprocesses, not HTTP) succeed."""
+        self._files(overlay=(
+            "services:\n  provisioning-runner:\n"
+            "    command: odoo --load=base,web,queue_job -d ncollection\n"))
+        found = self._findings()
+        self.assertTrue(found)
+        self.assertIn("NC_INTERNAL_BASE_URL", found[0])
 
     def test_an_unreadable_makefile_REFUSES_rather_than_passing(self):
         """A guard that cannot read its subject must say so; silence would

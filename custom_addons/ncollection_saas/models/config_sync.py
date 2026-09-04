@@ -61,6 +61,29 @@ def derive_tenant_key(master: str, db: str) -> str:
 # Non-secret loopback base URL for the local Odoo (overridable per deployment).
 _BASE_URL_PARAM = 'ncollection_saas.internal_base_url'
 _DEFAULT_BASE_URL = 'http://localhost:8069'
+# Deployment override, read like HOST/USER/PASSWORD already are (#465).
+#
+# WHY AN ENV VAR AND NOT JUST THE PARAMETER. The parameter is ONE global value,
+# but the correct value depends on WHICH CONTAINER is pushing — a deployment
+# fact, not an admin preference:
+#
+#   from the odoo container            localhost:8069 IS the multi-tenant server
+#   from the provisioning-runner       localhost:8069 is the RUNNER's own server,
+#                                      started `-d ncollection
+#                                      --db-filter=^ncollection$`, so a request
+#                                      carrying Host: <tenant>.<domain> matches no
+#                                      database and Odoo answers
+#                                      "No database is selected" -> HTTP 404.
+#
+# That 404 was invisible until #463 made the runner actually run: nothing
+# drained the queue, so no push had ever left that container. Module installs
+# succeeded (they are subprocesses, not HTTP) while every sync failed, which is
+# the shape of bug worth naming — one half of a lifecycle working.
+#
+# The env var wins when set; the parameter remains the admin-facing knob and the
+# default is unchanged, so a deployment that sets nothing behaves exactly as
+# before.
+_BASE_URL_ENV = 'NC_INTERNAL_BASE_URL'
 # Base domain tenant subdomains hang off (<db>.<base-domain>). The loopback push
 # targets a fixed IP:port, but the RECEIVING Odoo routes the DB by Host under
 # db_filter=^%d$ (production + the routing stack) — so the request MUST present
@@ -274,6 +297,19 @@ class TenantConfigSync(models.Model):
         }
 
     # ---- trigger + async -------------------------------------------------
+
+    def _config_sync_base_url(self):
+        """Where THIS process should push tenant config (#465).
+
+        Precedence: NC_INTERNAL_BASE_URL (deployment) > the config parameter
+        (admin) > the loopback default. See _BASE_URL_ENV for why the answer
+        is per-container and therefore cannot live only in the parameter.
+        """
+        env_url = (os.environ.get(_BASE_URL_ENV) or '').strip()
+        if env_url:
+            return env_url
+        return self.env['ir.config_parameter'].sudo().get_param(
+            _BASE_URL_PARAM, _DEFAULT_BASE_URL)
 
     def action_config_sync_now(self):
         """Push this tenant's plan config to its database, on demand (#455).
@@ -910,8 +946,7 @@ class TenantConfigSync(models.Model):
             self._config_sync_record(
                 'permanent', "%s is not set" % _SYNC_KEY_ENV)
             return False
-        base = self.env['ir.config_parameter'].sudo().get_param(
-            _BASE_URL_PARAM, _DEFAULT_BASE_URL)
+        base = self._config_sync_base_url()
         base_domain = (self.env['ir.config_parameter'].sudo().get_param(
             _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN) or '').strip().lower()
         try:

@@ -1315,6 +1315,20 @@ def rule_saas_stack_runs_the_queue_worker(out: list[str]) -> None:
             "`--load=`/server_wide_modules — otherwise the container runs and "
             "drains nothing (#463).")
 
+    # #465: a running worker that cannot REACH tenants is the next failure
+    # along. The runner's own HTTP server is scoped to the platform DB
+    # (`-d $PLATFORM_DB --db-filter=^$PLATFORM_DB$`), so a config-sync push to
+    # `localhost` carries a tenant Host that matches no database there and Odoo
+    # answers "No database is selected" -> HTTP 404. Every sync from the runner
+    # failed that way, silently, until the worker started running at all.
+    # Checked here rather than in an Odoo test because the odoo container
+    # mounts only custom_addons/ and oca/ and cannot read this file.
+    if "NC_INTERNAL_BASE_URL" not in overlay_text:
+        out.append(
+            f"{saas_overlay}: the runner does not set NC_INTERNAL_BASE_URL, so "
+            "its config-sync pushes go to its own single-database server and "
+            "404. Point it at the multi-tenant service (#465).")
+
 
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
