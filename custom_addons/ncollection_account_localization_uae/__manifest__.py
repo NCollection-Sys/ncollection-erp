@@ -1,13 +1,24 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection UAE Localization',
-    'version': '19.0.1.3.0',
+    'version': '19.0.1.4.0',
     'category': 'Accounting/Localizations',
     'summary': 'UAE localization scaffold: TRN validation + FTA compliance '
                'tracking; the home for the NCollection UAE VAT/CoA/invoice work',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
+    # SELECTABLE IN A SUBSCRIPTION PLAN (#467). `application` is what
+    # ncollection.subscription.plan.get_selectable_modules() filters on, so
+    # until now not one native NCollection accounting module could be licensed
+    # to a tenant at all: the picker offered only Odoo/OCA apps, ENTERPRISE
+    # therefore named only those, and every ncollection_account_* module was
+    # `uninstalled` in every tenant database. This flag is the whole fix — it
+    # changes no behaviour inside the module, only whether an operator can
+    # choose it. Modules with no menus of their own stay dependency-only
+    # (ncollection_account_core), because offering them would imply a choice
+    # that does nothing.
+    'application': True,
     # F5-T01 (FINANCIAL_PLATFORM_ARCHITECTURE.md §7). The UAE localization
     # module home. This ticket ships only the SCAFFOLD slice — TRN validation +
     # the FTA compliance checklist — and is the module that #44 (VAT config),

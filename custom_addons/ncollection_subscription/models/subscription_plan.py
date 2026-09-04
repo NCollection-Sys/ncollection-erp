@@ -95,7 +95,8 @@ class SubscriptionPlan(models.Model):
         the dependency closure at read time (`_ncollection_expand_dependencies`).
         """
         Module = self.env['ir.module.module'].sudo()
-        fields_ = ['name', 'shortdesc', 'summary', 'icon_image', 'state', 'application']
+        fields_ = ['name', 'shortdesc', 'summary', 'icon_image', 'state',
+                   'application', 'category_id']
 
         def payload(record):
             return {
@@ -104,6 +105,18 @@ class SubscriptionPlan(models.Model):
                 'summary': record.summary or '',
                 'icon': record.icon_image.decode() if record.icon_image else '',
                 'state': record.state,
+                # Grouping/filtering only — the picker needs a stable label to
+                # bucket a long catalog by. Never consulted for licensing.
+                'category': record.category_id.display_name or '',
+                # DIRECT manifest dependencies. The picker uses them to SHOW
+                # that picking a wrapper already licenses what it needs, so an
+                # operator can see why a card counts as included instead of
+                # being able to save a plan that names a module without its
+                # base. It is NOT a second resolver: the authoritative
+                # expansion stays server-side in ncollection_core's Ring 1
+                # (_ncollection_expand_dependencies), and provisioning installs
+                # the closure whatever this list says.
+                'depends': record.dependencies_id.mapped('name'),
             }
 
         core = Module.search_read(
@@ -117,14 +130,40 @@ class SubscriptionPlan(models.Model):
 
         # search_read gives dicts; re-browse for the computed icon rather than
         # duplicating _get_icon_image's logic here.
-        def rows(records):
+        def rows(records, drop_uninstallable=False):
             out = []
             for data in records:
                 module = Module.browse(data['id'])
+                if drop_uninstallable and not self._nc_module_is_installable(module):
+                    continue
                 out.append(payload(module))
             return sorted(out, key=lambda m: m['label'].lower())
 
-        return {'core': rows(core), 'optional': rows(optional)}
+        return {'core': rows(core),
+                'optional': rows(optional, drop_uninstallable=True)}
+
+    @api.model
+    def _nc_module_is_installable(self, module):
+        """Can this module actually be installed on this platform?
+
+        ``state != 'uninstallable'`` is NOT enough. A module whose manifest
+        names a dependency that is not on the addons path stays plainly
+        ``uninstalled`` — Odoo records the gap on the DEPENDENCY row instead,
+        as ``state == 'unknown'`` (``ir.module.module.dependency._compute_state``:
+        ``depend_id.state or 'unknown'``).
+
+        ncollection_account_assets is exactly that case: it needs OCA
+        ``account_asset_management``, which exists only once ``./oca`` has been
+        aggregated (``make oca``), and ``./oca`` is generated and gitignored.
+        Offering it on a platform without the engine would let an operator
+        license a module whose install job can only fail — on every ready
+        tenant of the plan, in the background, long after the click.
+
+        The dependency ``state`` is computed and unstored, so this is a Python
+        filter rather than a search domain.
+        """
+        return not any(dep.state == 'unknown'
+                       for dep in module.dependencies_id)
 
     def get_allowed_module_list(self):
         """Return the plan's allowed modules as a clean, de-duplicated list.

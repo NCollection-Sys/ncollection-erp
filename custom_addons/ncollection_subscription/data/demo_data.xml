@@ -35,8 +35,23 @@
              run a Trial Balance / GL / BS-P&L immediately. account_financial_report
              (Trial Balance, GL, aged balance) + ncollection_mis_templates (pulls
              mis_builder -> interim Balance Sheet / P&L). Each retires as its native
-             F2 equivalent reaches parity (#117 F2-T07). -->
-        <field name="allowed_module_names">account,account_financial_report,ncollection_mis_templates</field>
+             F2 equivalent reaches parity (#117 F2-T07).
+
+             #467 adds the NATIVE financial stack alongside them. Only the
+             user-facing apps are named; each pulls its own dependencies, and
+             Ring 1 expands the closure at read time, so listing
+             ncollection_account_reports also licenses
+             ncollection_account_analytics and ncollection_account_core. The two
+             OCA entries stay until #117 retires them — the native and interim
+             reports coexist rather than one silently replacing the other.
+
+             ncollection_account_assets is deliberately NOT here: it depends on
+             OCA account_asset_management, which only exists once ./oca has been
+             aggregated (`make oca`). Naming it in the default plan would turn a
+             missing generated directory into a failing install job on every
+             Enterprise tenant. It remains selectable in the picker for
+             deployments that have the engine. -->
+        <field name="allowed_module_names">account,account_financial_report,ncollection_mis_templates,ncollection_account_reports,ncollection_account_dashboard,ncollection_account_budget,ncollection_account_localization_uae</field>
     </record>
 
     <!-- Tenants -->

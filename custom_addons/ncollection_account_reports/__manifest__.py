@@ -5,7 +5,7 @@
     # 19.0.1.4.0 (#315/F2-T09): Department / Cost Centre / Profit Centre
     # analysis. New models + views + ACL rows + a new dependency, so `-u` is
     # what applies it to an existing tenant database.
-    'version': '19.0.1.4.0',
+    'version': '19.0.1.5.0',
     'category': 'Accounting/Accounting',
     'summary': 'Native financial report engine: definition, filters, drill-down, '
                'PDF + XLSX export (F2-T01) — the permanent replacement for the '
@@ -13,6 +13,17 @@
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
+    # SELECTABLE IN A SUBSCRIPTION PLAN (#467). `application` is what
+    # ncollection.subscription.plan.get_selectable_modules() filters on, so
+    # until now not one native NCollection accounting module could be licensed
+    # to a tenant at all: the picker offered only Odoo/OCA apps, ENTERPRISE
+    # therefore named only those, and every ncollection_account_* module was
+    # `uninstalled` in every tenant database. This flag is the whole fix — it
+    # changes no behaviour inside the module, only whether an operator can
+    # choose it. Modules with no menus of their own stay dependency-only
+    # (ncollection_account_core), because offering them would imply a choice
+    # that does nothing.
+    'application': True,
     # FPA §7: ncollection_account_reports depends ONLY on Odoo's accounting
     # engine + the shared financial base. XLSX export uses `xlsxwriter` (a plain
     # Python lib already shipped in Odoo 19's requirements) and PDF uses native

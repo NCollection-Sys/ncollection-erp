@@ -2,13 +2,24 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Account Budget',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Accounting',
     'summary': 'Budget planning, revision, approval and Budget-vs-Actual '
                'reporting (F4-T02)',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
+    # SELECTABLE IN A SUBSCRIPTION PLAN (#467). `application` is what
+    # ncollection.subscription.plan.get_selectable_modules() filters on, so
+    # until now not one native NCollection accounting module could be licensed
+    # to a tenant at all: the picker offered only Odoo/OCA apps, ENTERPRISE
+    # therefore named only those, and every ncollection_account_* module was
+    # `uninstalled` in every tenant database. This flag is the whole fix — it
+    # changes no behaviour inside the module, only whether an operator can
+    # choose it. Modules with no menus of their own stay dependency-only
+    # (ncollection_account_core), because offering them would imply a choice
+    # that does nothing.
+    'application': True,
     # FPA §7 lists Budget Planning / Revision / Approval / Monitoring /
     # Budget vs Actual here, and — unlike ncollection_account_analytics — gives
     # this module no "Must Never Own: Reports", so the report ships here.

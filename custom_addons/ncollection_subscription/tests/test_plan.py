@@ -48,3 +48,61 @@ class TestSubscriptionPlan(TransactionCase):
             self.assertIn(
                 m, modules,
                 "the Enterprise plan must provision %s (Trial Balance / reports)" % m)
+
+
+@tagged("post_install", "-at_install")
+class TestEnterprisePlanLicensesTheNativeFinancialStack(TransactionCase):
+    """#467: the shipped ENTERPRISE plan actually names the native modules.
+
+    Making them selectable is only half the fix — the default plan still named
+    only `account`, `account_financial_report` and `ncollection_mis_templates`,
+    so a fresh Enterprise tenant got the interim OCA reports and none of the
+    native financial stack. This asserts the DATA, because that is the half a
+    picker test cannot see.
+    """
+
+    NATIVE = (
+        "ncollection_account_reports",
+        "ncollection_account_dashboard",
+        "ncollection_account_budget",
+        "ncollection_account_localization_uae",
+    )
+    # The interim OCA bootstrap. #117 retires it; until then removing it here
+    # would revoke working reports from every live Enterprise tenant, so its
+    # continued presence is asserted rather than assumed.
+    INTERIM = ("account", "account_financial_report", "ncollection_mis_templates")
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.plan = cls.env["ncollection.subscription.plan"].search(
+            [("code", "=", "ENTERPRISE")], limit=1)
+
+    def test_the_enterprise_plan_names_the_native_financial_apps(self):
+        if not self.plan:
+            self.skipTest("no ENTERPRISE plan on this database")
+        licensed = self.plan.get_allowed_module_list()
+        for name in self.NATIVE:
+            self.assertIn(name, licensed,
+                          "%s is not licensed on ENTERPRISE (#467)" % name)
+
+    def test_the_interim_oca_reports_are_still_licensed(self):
+        """Additive, not a swap: #117 owns the retirement, not this ticket."""
+        if not self.plan:
+            self.skipTest("no ENTERPRISE plan on this database")
+        licensed = self.plan.get_allowed_module_list()
+        for name in self.INTERIM:
+            self.assertIn(name, licensed)
+
+    def test_every_licensed_name_is_a_module_that_exists(self):
+        """A typo here is invisible until a provisioning job fails on a
+        customer's tenant: Ring 1 just ignores an unknown name, and the install
+        job is the first thing that cares."""
+        if not self.plan:
+            self.skipTest("no ENTERPRISE plan on this database")
+        Module = self.env["ir.module.module"].sudo()
+        for name in self.plan.get_allowed_module_list():
+            self.assertTrue(
+                Module.search_count([("name", "=", name)]),
+                "ENTERPRISE licenses %r, which is not a module on this "
+                "addons path" % name)

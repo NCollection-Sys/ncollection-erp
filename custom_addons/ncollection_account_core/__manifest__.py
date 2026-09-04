@@ -32,6 +32,13 @@
     # or view data. The "SaaS Configuration / Configuration UI" responsibility
     # (FPA §7) is acknowledged and DEFERRED to the first downstream consumer that
     # needs a real setting — see README.rst.
-    # installable/application/auto_install are intentionally omitted: each would
-    # only repeat an Odoo default (True / False / False).
+    # DEPENDENCY-ONLY, deliberately (#467). Every ncollection_account_* sibling
+    # gained 'application': True so a SaaS operator can license it from the plan
+    # module picker; this one does NOT. It ships no menu, no action and no
+    # concrete model, so offering it as a plan choice would present a checkbox
+    # that changes nothing an operator can see — while every module that needs
+    # it already pulls it in as a dependency, and Ring 1 expands the dependency
+    # closure at read time, so licensing a sibling licenses this too.
+    # installable/application/auto_install stay omitted: each would only repeat
+    # an Odoo default (True / False / False).
 }
