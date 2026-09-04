@@ -16,9 +16,19 @@ choices and the interim OCA reports keep working until #117 retires them. Order
 is preserved (existing names first, then the additions in declaration order) so
 the stored string does not churn.
 
-Idempotent: a second run adds nothing and writes nothing, which matters because
-a plan write fans out a config sync AND a module-install job to every ready
-tenant on the plan (ncollection_saas/models/config_sync.py).
+Idempotent: a second run adds nothing and writes nothing.
+
+THIS WRITE DOES NOT FAN OUT, and that is not a choice made here. A plan write
+normally queues a config sync and a module install for every ready tenant, via
+the `write()` override in ncollection_saas/models/config_sync.py — but
+ncollection_saas DEPENDS ON this module, so this post-migrate runs BEFORE that
+`_inherit` is merged into the model, and the write goes through the plain
+`write()`. Measured: upgrading the platform DB produced zero new queue jobs.
+
+Licensing a module without installing it is exactly the defect #461 fixed, so
+the fan-out is done by ncollection_saas's own 19.0.6.8.0 migration, which runs
+later and therefore has the full model. Keep the two in step: this file owns
+the DATA, that one owns reaching the tenants.
 
 ncollection_account_assets is deliberately absent — see demo_data.xml.
 """
