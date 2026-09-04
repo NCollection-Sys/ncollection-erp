@@ -28,6 +28,10 @@ import { TENANTS, authenticate, callKw, loginViaRpc } from '../fixtures/tenants'
 const PLATFORM = TENANTS.e2eadmin;
 const PICKER = '.o_nc_modpick';
 const CARD = '.o_nc_modpick__card';
+// Selected state, as a class matcher: toHaveClass auto-waits, so assertions
+// built on it cannot sample a half-rendered grid the way an immediate
+// evaluateAll can.
+const SELECTED = /o_nc_modpick__card--on/;
 
 /** The field's raw value, read out of the widget's own DOM state. */
 async function selectedModules(page: Page): Promise<string[]> {
@@ -102,31 +106,39 @@ test.describe('subscription plan module picker (#467)', () => {
   });
 
   test('select all, then clear, keeps the module the catalog does not offer', async ({ page }) => {
+    const reports = page.locator(`${CARD}[data-module="ncollection_account_reports"]`);
+
     await page.getByRole('button', { name: 'Select all' }).click();
-    const all = await selectedModules(page);
-    expect(all.length, 'select all must select the whole catalog').toBeGreaterThan(3);
-    expect(all).toContain('ncollection_account_reports');
+    // Auto-waiting assertion, not a snapshot read: OWL re-renders on the next
+    // frame, so an immediate evaluateAll can sample the DOM mid-update and
+    // report either state.
+    await expect(reports).toHaveClass(SELECTED);
+    expect((await selectedModules(page)).length).toBeGreaterThan(3);
 
     await page.getByRole('button', { name: 'Clear selection' }).click();
-    const remaining = await selectedModules(page);
+    await expect(reports).not.toHaveClass(SELECTED);
     // The whole point: a bulk convenience must not revoke a live licence.
-    expect(remaining).toEqual(['ncollection_mis_templates']);
+    expect(await selectedModules(page)).toEqual(['ncollection_mis_templates']);
   });
 
   test('select visible results follows the search box', async ({ page }) => {
-    await page.getByRole('button', { name: 'Clear selection' }).click();
-    await page.getByPlaceholder('Search modules…').fill('ncollection_account_report');
+    const reports = page.locator(`${CARD}[data-module="ncollection_account_reports"]`);
+    const crm = page.locator(`${CARD}[data-module="crm"]`);
 
-    const visible = await page
-      .locator(`${CARD}[data-module]`)
-      .evaluateAll((els) => els.map((el) => el.getAttribute('data-module') || ''));
-    expect(visible).toContain('ncollection_account_reports');
+    await page.getByRole('button', { name: 'Clear selection' }).click();
+    await expect(reports).not.toHaveClass(SELECTED);
+
+    await page.getByPlaceholder('Search modules…').fill('ncollection_account_report');
+    // Wait for the FILTER to have settled — both halves, so the state is
+    // unambiguous — before clicking. Clicking against an unsettled grid is
+    // what made this test read either the pre- or post-filter card set.
+    await expect(reports).toBeVisible();
+    await expect(crm).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Select visible results' }).click();
-    const selected = await selectedModules(page);
-    expect(selected).toContain('ncollection_account_reports');
+    await expect(reports).toHaveClass(SELECTED);
     // Nothing outside the filtered result may be swept in.
-    expect(selected).not.toContain('crm');
+    expect(await selectedModules(page)).not.toContain('crm');
   });
 
   test('a core module is never selectable by click or by select all', async ({ page }) => {
