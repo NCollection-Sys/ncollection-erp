@@ -13,6 +13,16 @@ class SubscriptionPlan(models.Model):
     code = fields.Char(required=True, copy=False)
     monthly_price = fields.Monetary(string='Monthly Price')
     yearly_price = fields.Monetary(string='Yearly Price')
+    # One-time membership price (#471). A separate field rather than reusing
+    # monthly/yearly, because a perpetual licence is not a period price: reusing
+    # one would make the plan read as "this much per month" everywhere the other
+    # two are shown, and would put a recurring figure into an MRR that is zero
+    # by definition for a one-time subscription.
+    one_time_price = fields.Monetary(
+        string='One-Time Price',
+        help='Charged once when a One Time subscription on this plan is '
+             'activated. Not a recurring amount — it never renews and it is '
+             'excluded from MRR.')
     max_users = fields.Integer(string='Max Users', default=1)
     max_companies = fields.Integer(string='Max Companies', default=1)
     trial_days = fields.Integer(

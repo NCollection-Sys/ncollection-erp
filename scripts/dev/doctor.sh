@@ -130,6 +130,10 @@ if [ -n "$db_cid" ]; then
   # only on upgrade. Scoped to our ncollection_* modules (the ones whose versions
   # bump during development); severity WARN, since the module still loads and
   # throwaway fixtures should not fail the whole check.
+  # The databases CLAUDE.md's fixture table marks "persistent, do not drop".
+  # They accumulate history, they are what the admin UI and the provisioning
+  # suites run against, and they are the only ones where drift is a blocker.
+  PERSISTENT_DBS="${NC_PLATFORM_DB:-ncollection} saastest ncplatform"
   drift_total=0
   for manifest in custom_addons/ncollection_*/__manifest__.py; do
     [ -f "$manifest" ] || continue
@@ -146,8 +150,25 @@ if [ -n "$db_cid" ]; then
       # theoretical reverse.
       newest="$(printf '%s\n%s\n' "$db_ver" "$code_ver" | sort -V | tail -1)"
       if [ "$newest" = "$code_ver" ]; then
-        warn "db '$db': '$mod' installed at $db_ver but code is $code_ver (schema behind)" \
-             "make upgrade m=$mod db=$db"
+        # On a PERSISTENT platform database this is a blocker, not a warning
+        # (#473). Drift there does not merely leave a column unmigrated: if the
+        # newer code adds a model or an _inherit whose parent the stale schema
+        # has not reflected, `ir.model.inherit._reflect_inherits` aborts the
+        # whole registry rebuild with a NOT NULL violation on parent_id. Odoo's
+        # HTTP workers then keep serving the LAST registry that loaded, so the
+        # admin UI silently shows an old model — which is how a field that
+        # existed in the code, in ir_model_fields AND as a column was still
+        # "undefined" in the web client, surfacing as an unrelated OwlError on
+        # a form that referenced it. A warning is not enough for a state that
+        # presents as a bug somewhere else entirely.
+        case " $PERSISTENT_DBS " in
+          *" $db "*)
+            bad "db '$db' (persistent platform db): '$mod' installed at $db_ver but code is $code_ver — the registry may be failing to rebuild" \
+                "make upgrade m=$mod db=$db" ;;
+          *)
+            warn "db '$db': '$mod' installed at $db_ver but code is $code_ver (schema behind)" \
+                 "make upgrade m=$mod db=$db" ;;
+        esac
         drift_total=$((drift_total + 1))
       fi
     done

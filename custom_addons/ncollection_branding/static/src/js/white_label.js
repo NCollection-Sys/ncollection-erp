@@ -94,3 +94,31 @@ ErrorDialog.title = _t("%s Error", BRAND);
 ClientErrorDialog.title = _t("%s Client Error", BRAND);
 NetworkErrorDialog.title = _t("%s Network Error", BRAND);
 RPCErrorDialog.title = _t("%s Server Error", BRAND);
+
+/* 4 — remove the Odoo "Onboarding" tour trigger (#472).
+ *
+ * `web_tour`'s tour service registers an OnboardingItem into
+ * registry.category("debug").category("default") from inside its own `start()`,
+ * which runs AFTER every module's top-level code. A plain remove() here would
+ * therefore run first and find nothing, and the entry would appear anyway —
+ * which is why this listens instead of removing once.
+ *
+ * Registries emit "UPDATE" on every add, so this drops the entry the moment it
+ * is added and stays correct however the tour service is loaded or reloaded. It
+ * touches ONLY that one key: every other debug entry, and the tour service
+ * itself, are left alone (the server-side `tour_enabled` override in
+ * models/res_users.py is what actually stops tours running — this removes the
+ * Odoo-branded control, not the machinery the test tours need).
+ *
+ * No CSS, no core file edit, no monkey-patch of an unexported symbol.
+ */
+const debugDefaultRegistry = registry.category("debug").category("default");
+const ONBOARDING_ITEM = "onboardingItem";
+
+function dropOnboardingItem() {
+    if (debugDefaultRegistry.contains(ONBOARDING_ITEM)) {
+        debugDefaultRegistry.remove(ONBOARDING_ITEM);
+    }
+}
+debugDefaultRegistry.addEventListener("UPDATE", dropOnboardingItem);
+dropOnboardingItem();

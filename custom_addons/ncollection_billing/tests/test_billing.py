@@ -179,3 +179,52 @@ class TestBilling(TransactionCase):
             active_model='account.move', active_ids=inv.ids,
         ).create({}).action_create_payments()
         self.assertEqual(sub.payment_status, 'paid')
+
+
+@tagged('post_install', '-at_install')
+class TestOneTimeBilling(TransactionCase):
+    """A One Time membership is invoiced ONCE, at its own price (#471)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.plan = cls.env['ncollection.subscription.plan'].create({
+            'name': 'Perpetual', 'code': 'BILL_ONETIME',
+            'monthly_price': 100.0, 'yearly_price': 1000.0,
+            'one_time_price': 2500.0, 'max_users': 5})
+        cls.tenant = cls.env['ncollection.tenant'].create({
+            'company_name': 'OT Co', 'database_name': 'otco',
+            'email': 'owner@otco.example', 'plan_id': cls.plan.id,
+            'status': 'trial', 'database_status': 'ready'})
+
+    def _sub(self):
+        return self.env['ncollection.subscription'].create({
+            'name': 'SUB-OT-BILL', 'tenant_id': self.tenant.id,
+            'plan_id': self.plan.id, 'billing_cycle': 'one_time',
+            'start_date': fields.Date.context_today(self.env.user)})
+
+    def test_it_is_charged_the_one_time_price_not_a_period_price(self):
+        """Falling back to monthly_price would charge a perpetual licence at
+        one month's rate — the silent kind of wrong."""
+        sub = self._sub()
+        self.assertEqual(sub._nc_period_amount(), 2500.0)
+
+    def test_activation_raises_exactly_one_invoice_with_no_period_end(self):
+        sub = self._sub()
+        sub.action_activate()
+        invoices = sub.invoice_ids.filtered(lambda m: m.move_type == 'out_invoice')
+        self.assertEqual(len(invoices), 1)
+        self.assertEqual(invoices.amount_untaxed, 2500.0)
+        self.assertFalse(invoices.nc_period_end,
+                         'a perpetual charge covers no period')
+
+    def test_paying_it_does_not_stamp_an_end_date(self):
+        """_nc_apply_payment extends end_date to the invoice's period end. With
+        no period end there is nothing to extend — which is what keeps the
+        membership perpetual after payment rather than only before it."""
+        sub = self._sub()
+        sub.action_activate()
+        invoice = sub.invoice_ids.filtered(lambda m: m.move_type == 'out_invoice')[:1]
+        sub._nc_apply_payment(invoice)
+        self.assertFalse(sub.end_date)
+        self.assertEqual(sub.status, 'active')

@@ -14,6 +14,7 @@
                 <field name="plan_id"/>
                 <field name="billing_cycle"/>
                 <field name="start_date"/>
+                <!-- Empty for a One Time membership, by design (#471). -->
                 <field name="end_date"/>
                 <field name="status" widget="badge"
                        decoration-success="status == 'active'"
@@ -34,8 +35,11 @@
                             class="btn-primary" invisible="status != 'draft'"/>
                     <button name="action_activate" type="object" string="Activate"
                             class="btn-primary" invisible="status not in ('draft', 'trial')"/>
+                    <!-- #471: renewing a One Time membership would stamp an end
+                         date and raise a second invoice for a customer who has
+                         already paid in full. The model refuses it too. -->
                     <button name="action_renew" type="object" string="Renew"
-                            invisible="status not in ('active', 'expired')"/>
+                            invisible="status not in ('active', 'expired') or is_one_time"/>
                     <button name="action_suspend" type="object" string="Suspend"
                             invisible="status not in ('active', 'expired')"/>
                     <button name="action_reactivate" type="object" string="Reactivate"
@@ -60,8 +64,20 @@
                             <field name="billing_cycle"/>
                         </group>
                         <group string="Validity">
+                            <field name="is_one_time" invisible="1"/>
                             <field name="start_date"/>
-                            <field name="end_date"/>
+                            <!-- #471: a perpetual membership HAS no end date.
+                                 Showing an empty date field would invite
+                                 someone to fill it in, which the model
+                                 constraint then refuses. -->
+                            <field name="end_date" invisible="is_one_time"/>
+                            <div colspan="2" class="text-muted"
+                                 invisible="not is_one_time">
+                                <i class="fa fa-infinity me-1" role="img"/>
+                                <strong>Perpetual membership.</strong>
+                                Paid once, never renewed, no expiry date. Access ends only
+                                when an administrator suspends, cancels or terminates it.
+                            </div>
                             <field name="trial_end_date" invisible="status != 'trial'"/>
                             <field name="grace_end_date" invisible="not end_date"/>
                         </group>
