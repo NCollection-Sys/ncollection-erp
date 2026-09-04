@@ -3,6 +3,8 @@ import uuid
 from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import ValidationError
 
+from .localization import localization_package
+
 
 class Tenant(models.Model):
     _name = 'ncollection.tenant'
@@ -53,6 +55,34 @@ class Tenant(models.Model):
         tracking=True,
         string='Onboarding Stage',
     )
+    # #469: the tenant's country DRIVES provisioning, it does not describe it.
+    # A country with a localization package (see models/localization.py) makes
+    # provisioning install that package in the SAME `-i` as `account`, so the
+    # real chart of accounts is loaded while the database is still empty — the
+    # only moment loading one is safe. Left empty, the tenant provisions with
+    # no localization, exactly as before.
+    country_id = fields.Many2one(
+        'res.country', string='Country',
+        help='Drives localization at provisioning: chart of accounts, '
+             'currency and tax setup. Changing it after the database exists '
+             'does NOT re-localize it — use "Apply localization" for that.')
+    localization_status = fields.Char(
+        string='Localization', compute='_compute_localization_status',
+        help='Which localization package this tenant provisions with.')
+
+    @api.depends('country_id')
+    def _compute_localization_status(self):
+        for tenant in self:
+            package = tenant._nc_localization_package()
+            if package:
+                tenant.localization_status = '%s (%s)' % (
+                    package['name'], package['chart_template'])
+            elif tenant.country_id:
+                tenant.localization_status = self.env._(
+                    'No localization package for %s', tenant.country_id.code)
+            else:
+                tenant.localization_status = self.env._('No country set')
+
     domain = fields.Char(string='Domain / Subdomain')
     contact_name = fields.Char(string='Contact Name')
     email = fields.Char(string='Email')
@@ -157,19 +187,54 @@ class Tenant(models.Model):
                 )
         self.write({'status': new_status})
 
-    @api.depends('plan_id', 'plan_id.allowed_module_names')
+    @api.depends('plan_id', 'plan_id.allowed_module_names', 'country_id')
     def _compute_effective_module_names(self):
-        """Read the plan's list through its own parser (#455).
-
-        get_allowed_module_list() already strips whitespace, drops empties and
-        de-duplicates, so this cannot disagree with what provisioning and
-        config sync send — which is the point of not re-splitting the string
-        here.
-        """
+        """Display mirror of ``_nc_effective_module_list()`` (#455, #469)."""
         for tenant in self:
-            plan = tenant.plan_id
-            modules = plan.get_allowed_module_list() if plan else []
-            tenant.effective_module_names = ', '.join(modules)
+            tenant.effective_module_names = ', '.join(
+                tenant._nc_effective_module_list())
+
+    # ------------------------------------------------------------------
+    # Country localization (#469)
+    # ------------------------------------------------------------------
+    def _nc_localization_package(self):
+        """This tenant's localization package, or None.
+
+        None is a normal state: a tenant in a country we ship no package for
+        provisions with no localization, exactly as every tenant did before
+        #469. Nothing downstream branches on the country itself — only on
+        whether a package came back — which is what keeps adding Saudi Arabia
+        or Egypt a table entry rather than an engine change.
+        """
+        self.ensure_one()
+        return localization_package(self.country_id.code)
+
+    def _nc_localization_modules(self):
+        """The modules this tenant's country requires, or []."""
+        package = self._nc_localization_package()
+        return list(package['modules']) if package else []
+
+    def _nc_effective_module_list(self):
+        """EVERY module this tenant is entitled to: plan UNION localization.
+
+        THE SINGLE AUTHORITY, deliberately. Four things independently answered
+        this question before #469 — provisioning's ``_module_list``, the
+        module-install job's ``_nc_licensed_module_list``, config sync's
+        ``_config_sync_vals`` and the display field above — and adding a second
+        SOURCE (the country) to four separate readers is exactly how a module
+        ends up installed but unlicensed, or licensed but never installed
+        (#461). They all read this now.
+
+        Core modules are NOT included: they are installed unconditionally and
+        each consumer subtracts or adds them per its own contract.
+        """
+        self.ensure_one()
+        plan = self.plan_id
+        modules = plan.get_allowed_module_list() if plan else []
+        for name in self._nc_localization_modules():
+            if name not in modules:
+                modules.append(name)
+        return modules
 
     def action_activate(self):
         """trial/suspended -> active."""

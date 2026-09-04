@@ -107,7 +107,12 @@ class TestNativeFinancialModulesAreSelectable(TransactionCase):
         'ncollection_account_analytics',
         'ncollection_account_budget',
         'ncollection_account_assets',
-        'ncollection_account_localization_uae',
+        # ncollection_account_localization_uae is deliberately NOT here. #469
+        # made it country-driven: provisioning installs it from the tenant's
+        # localization package and it is never plan-selectable, because a
+        # chart of accounts is not a feature an operator buys and cannot be
+        # un-loaded by re-ticking a box. Its exclusion is asserted in
+        # test_localization.py.
     )
 
     @classmethod

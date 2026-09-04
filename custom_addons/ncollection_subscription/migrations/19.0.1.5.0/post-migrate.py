@@ -38,8 +38,14 @@ _NATIVE_FINANCIAL_MODULES = (
     'ncollection_account_reports',
     'ncollection_account_dashboard',
     'ncollection_account_budget',
-    'ncollection_account_localization_uae',
 )
+# NOT here, and not removed from a plan that already names it (#469).
+# ncollection_account_localization_uae is now country-driven: the tenant's
+# country decides it at provisioning and it is not plan-selectable. This
+# migration is historical and already ran on some platforms, so it is left
+# describing what it did; a platform that has it in ENTERPRISE keeps it, which
+# is harmless — the union with the localization package is what actually
+# licenses it.
 
 
 def migrate(cr, version):

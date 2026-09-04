@@ -1,6 +1,8 @@
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
+from .localization import PLAN_EXCLUDED_MODULES
+
 
 class SubscriptionPlan(models.Model):
     _name = 'ncollection.subscription.plan'
@@ -73,6 +75,16 @@ class SubscriptionPlan(models.Model):
     PLATFORM_ONLY_MODULES = ('ncollection_saas', 'ncollection_subscription',
                              'ncollection_billing', 'ncollection_reseller')
 
+    # Country localization (#469). NOT a feature an operator buys — it is what
+    # makes a tenant's books legal, and it is decided by the tenant's country at
+    # provisioning. Offering it here would let someone deselect a live tenant's
+    # chart of accounts (which cannot be un-loaded by re-ticking the box), or
+    # select the wrong country's for a tenant. The tenant is still LICENSED for
+    # these: the licensed set is the plan UNION the tenant's package
+    # (ncollection.tenant._nc_effective_module_list), so Ring 1 shows the
+    # localization menus without anyone picking a technical module.
+    LOCALIZATION_MODULES = PLAN_EXCLUDED_MODULES
+
     @api.model
     def get_selectable_modules(self):
         """The real modules an admin may license, for the plan module picker (#457).
@@ -121,7 +133,9 @@ class SubscriptionPlan(models.Model):
 
         core = Module.search_read(
             [('name', 'in', list(self.CORE_TENANT_MODULES))], fields_)
-        never_offer = list(self.CORE_TENANT_MODULES) + list(self.PLATFORM_ONLY_MODULES)
+        never_offer = (list(self.CORE_TENANT_MODULES)
+                       + list(self.PLATFORM_ONLY_MODULES)
+                       + list(self.LOCALIZATION_MODULES))
         optional = Module.search_read([
             ('application', '=', True),
             ('state', '!=', 'uninstallable'),

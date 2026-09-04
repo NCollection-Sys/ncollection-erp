@@ -42,9 +42,28 @@
                                   subscription status) into its database now. Same push a
                                   plan change queues automatically — use it to retry after
                                   a failure."/>
+                    <!-- #469: a BUTTON, never a migration. Nothing schedules
+                         this — changing a live tenant's chart of accounts and
+                         currency is a business decision with tax consequences,
+                         and Odoo's loader either deletes their books or stacks
+                         a second chart on the first. A database holding
+                         accounting entries is refused outright; one already on
+                         the target chart is a no-op, so retrying is safe. -->
+                    <button name="action_apply_localization" type="object"
+                            string="Apply Country Localization"
+                            invisible="database_status != 'ready' or not country_id"
+                            confirm="This loads the country's chart of accounts and
+                                     currency into the tenant's EXISTING database. It is
+                                     refused if the tenant already has accounting entries,
+                                     and does nothing if the localization is already
+                                     applied. Continue?"
+                            help="For a tenant provisioned before its country was set.
+                                  New tenants are localized at provisioning, which is the
+                                  only moment a chart of accounts can be loaded safely."/>
                     <field name="module_install_state" widget="statusbar"
                            statusbar_visible="none,queued,running,done"
                            invisible="database_status != 'ready'"/>
+                    <field name="country_id" invisible="1"/>
                 </header>
             </xpath>
 

@@ -31,7 +31,7 @@
     # Pure Python, no schema change — a restart is enough and `-u` is not
     # required — but it is a real behaviour change on the platform's only
     # outbound call, so it gets traceability like #275's and #243's.
-    'version': '19.0.6.8.0',
+    'version': '19.0.6.9.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

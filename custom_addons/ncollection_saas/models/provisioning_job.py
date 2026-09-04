@@ -58,6 +58,11 @@ PROVISION_CHANNEL = 'root.provisioning'
 SEED_SCRIPT = os.path.join(
     os.path.dirname(__file__), '..', 'scripts', 'provisioning', 'seed_tenant.py'
 )
+# #469: proves the country localization actually took, in the tenant DB.
+VERIFY_LOCALIZATION_SCRIPT = os.path.join(
+    os.path.dirname(__file__), '..', 'scripts', 'provisioning',
+    'verify_localization.py'
+)
 # NOTE: the 30-min subprocess cap now lives with the runner it belongs to,
 # saas_subprocess.SUBPROCESS_TIMEOUT. A copy left here would be read as
 # authoritative and edited by someone expecting it to take effect — which is
@@ -156,6 +161,15 @@ class ProvisioningJob(models.Model):
             self._append_log(
                 self.env._("Database created; modules installed: %s", ', '.join(modules)))
 
+            # #469: prove the localization TOOK, before the tenant is seeded and
+            # handed over. The localization hook is fail-soft by design (it must
+            # never break an install), so a silent failure leaves a UAE tenant on
+            # the generic USD chart with every module reporting success — which
+            # is exactly what happened before this ticket. A failure here rolls
+            # the database back and leaves the job retryable, rather than
+            # delivering books that are wrong for the country.
+            self._verify_localization(db)
+
             setup_url = self._seed_tenant(db)
             self._append_log(
                 self.env._("Tenant seeded: admin (forced reset), workspace config, branding."))
@@ -204,13 +218,22 @@ class ProvisioningJob(models.Model):
             raise ValidationError(self.env._("Database '%s' already exists (collision).", db))
 
     def _module_list(self):
-        """Core tenant modules + the plan's allowed modules (deduped, ordered)."""
+        """Core tenant modules + everything the tenant is entitled to.
+
+        `_nc_effective_module_list` is the plan's modules UNION the country's
+        localization package (#469). The localization modules HAVE to be in
+        this list rather than arriving later as a module install: Odoo's
+        `account` install schedules a deferred `try_loading('generic_coa')`, so
+        a tenant that gets its l10n module afterwards has already taken the USD
+        placeholder chart, and loading the real chart then means loading it
+        OVER existing accounting data — the one case that is genuinely unsafe.
+        Installing them in the SAME `-i` means the localization post_init runs
+        while the database is still empty and cancels that pending fallback.
+        """
         modules = list(CORE_TENANT_MODULES)
-        plan = self.tenant_id.plan_id
-        if plan:
-            for m in plan.get_allowed_module_list():
-                if m not in modules:
-                    modules.append(m)
+        for m in self.tenant_id._nc_effective_module_list():
+            if m not in modules:
+                modules.append(m)
         return modules
 
     def _run_odoo_init(self, db, modules):
@@ -221,6 +244,34 @@ class ProvisioningJob(models.Model):
             '--max-cron-threads=0',
         ]
         self._run_odoo_subprocess(cmd, self.env._("database init"))
+
+    def _verify_localization(self, db):
+        """Assert the tenant really ended up on its country's chart + currency.
+
+        No-op for a tenant with no localization package — that is a normal,
+        supported state, and it is how every tenant provisioned before #469.
+        """
+        package = self.tenant_id._nc_localization_package()
+        if not package:
+            return
+        with open(VERIFY_LOCALIZATION_SCRIPT, encoding='utf-8') as fh:
+            script = fh.read()
+        env_vars = os.environ.copy()
+        # Scrub the config-sync master exactly as _seed_tenant does: no
+        # subprocess touching a tenant database ever needs it.
+        env_vars.pop(_SYNC_KEY_ENV, None)
+        env_vars.update({
+            'NC_LOC_CHART': package['chart_template'],
+            'NC_LOC_CURRENCY': package['currency'],
+        })
+        cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
+        out = self._run_odoo_subprocess(
+            cmd, self.env._("localization check"), stdin=script, env=env_vars)
+        detail = next((line for line in (out or '').splitlines()
+                       if line.startswith('LOCALIZATION_OK=')), '')
+        self._append_log(self.env._(
+            "Localization verified (%s): %s", package['name'],
+            detail[len('LOCALIZATION_OK='):] or 'ok'))
 
     def _seed_tenant(self, db):
         """Seed admin (forced reset) + workspace.config + branding via odoo shell.
@@ -250,7 +301,9 @@ class ProvisioningJob(models.Model):
             # str, bytes or os.PathLike object, not bool" and the whole
             # provisioning run is rolled back. Coalesce like config_sync.py:269
             # already does for this same field.
-            'NC_ALLOWED_MODULES': (plan.allowed_module_names or '') if plan else '',
+            # #469: plan UNION localization package, same value config sync
+            # pushes — so the first seed and the first reconcile agree.
+            'NC_ALLOWED_MODULES': ','.join(tenant._nc_effective_module_list()),
             'NC_PLAN_CODE': plan.code if plan else '',
             'NC_MAX_USERS': str(plan.max_users if plan else 1),
             # Project the TENANT status (trial/active/suspended/expired) — the

@@ -65,7 +65,9 @@ class TestEnterprisePlanLicensesTheNativeFinancialStack(TransactionCase):
         "ncollection_account_reports",
         "ncollection_account_dashboard",
         "ncollection_account_budget",
-        "ncollection_account_localization_uae",
+        # ncollection_account_localization_uae was dropped from the shipped
+        # plan by #469: it is country-driven now, added to a tenant's
+        # entitlement by its localization package rather than bought.
     )
     # The interim OCA bootstrap. #117 retires it; until then removing it here
     # would revoke working reports from every live Enterprise tenant, so its

@@ -290,7 +290,11 @@ class TenantConfigSync(models.Model):
         self.ensure_one()
         plan = self.plan_id
         return {
-            'allowed_module_names': (plan.allowed_module_names or '') if plan else '',
+            # #469: the plan's modules UNION the country's localization
+            # package, through the tenant's one authority. A localization
+            # module is never plan-selectable, so without this union Ring 1
+            # would hide the very menus the tenant was provisioned with.
+            'allowed_module_names': ','.join(self._nc_effective_module_list()),
             'plan_code': (plan.code or '') if plan else '',
             'subscription_status': self.status or 'active',
             'max_users': (plan.max_users if plan else 0) or 0,

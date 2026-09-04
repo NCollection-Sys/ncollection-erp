@@ -162,16 +162,14 @@ class TenantModuleInstall(models.Model):
     def _nc_licensed_module_list(self):
         """The plan's modules, minus the ones every tenant already has.
 
-        THE SECURITY BOUNDARY: read from the tenant's own plan, never from a
-        caller. `get_allowed_module_list()` is the plan's own parser, so this
-        cannot disagree with what provisioning installs or what config sync
-        pushes.
+        THE SECURITY BOUNDARY: read from the tenant's own record, never from a
+        caller. `_nc_effective_module_list()` is the one authority on what a
+        tenant is entitled to — the plan's modules UNION its country's
+        localization package (#469) — so this cannot disagree with what
+        provisioning installs or what config sync pushes.
         """
         self.ensure_one()
-        plan = self.plan_id
-        if not plan:
-            return []
-        return [m for m in plan.get_allowed_module_list()
+        return [m for m in self._nc_effective_module_list()
                 if m not in CORE_TENANT_MODULES]
 
     def _nc_enqueue_module_install(self):
