@@ -270,8 +270,9 @@ class ProvisioningJob(models.Model):
         detail = next((line for line in (out or '').splitlines()
                        if line.startswith('LOCALIZATION_OK=')), '')
         self._append_log(self.env._(
-            "Localization verified (%s): %s", package['name'],
-            detail[len('LOCALIZATION_OK='):] or 'ok'))
+            "Localization verified (%(country)s): %(result)s",
+            country=package['name'],
+            result=detail[len('LOCALIZATION_OK='):] or 'ok'))
 
     def _seed_tenant(self, db):
         """Seed admin (forced reset) + workspace.config + branding via odoo shell.

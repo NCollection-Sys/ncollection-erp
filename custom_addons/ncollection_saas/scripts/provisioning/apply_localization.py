@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=print-used
+# (stdout IS the transport back to the platform process — see seed_tenant.py.)
 """Apply a country localization to an EXISTING tenant database (#469).
 
 Runs inside an `odoo shell` subprocess against the tenant database (never a

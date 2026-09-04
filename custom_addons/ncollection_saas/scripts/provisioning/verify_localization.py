@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=print-used
+# (stdout IS the transport back to the platform process — see seed_tenant.py.)
 """Assert a tenant database is ACTUALLY localized (#469).
 
 Runs inside an `odoo shell` subprocess against the tenant database (never a
