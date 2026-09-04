@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
                'restriction hooks, common mixins and the accounting engine '
@@ -27,6 +27,9 @@
     # (FPA §4/§6). The engine-boundary guard lives in tests/test_engine_boundary.
     'data': [
         # #474: the single financial application, named "Accounting".
+        # #474: readonly < user < manager, so an accounting Administrator can
+        # actually READ the native reports (measured: they could not).
+        'views/accounting_security.xml',
         'views/accounting_app_menus.xml',
     ],
     'post_init_hook': 'post_init_hook',

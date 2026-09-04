@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Make the Odoo accounting groups a hierarchy (#474).
+
+        MEASURED on a live tenant: a user in "Accounting / Administrator"
+        (account.group_account_manager) had
+
+            has_group('account.group_account_manager') -> True
+            has_group('account.group_account_user')    -> False
+            has_group('account.group_account_readonly')-> False
+
+        In Odoo 19 these three groups are declared independently. Every ACL in
+        ncollection_account_reports is keyed on group_account_readonly ("Show
+        Accounting Features - Readonly"), so the entire native report suite —
+        Trial Balance, General Ledger, Balance Sheet, P&L, the VAT 201, all of
+        it — raised AccessError for the MOST privileged accounting role, and
+        Odoo's menu filter then hid every one of those menus. The reports were
+        installed, licensed and unreachable.
+
+        This restores the conventional containment readonly < user < manager.
+        It widens nothing that matters: `readonly` is a feature-VISIBILITY
+        group, and a user who already holds `manager` has full access to
+        account.move. ACLs and record rules are untouched and still apply — a
+        reader still cannot write a report run, and the ir.rule from #413 still
+        scopes each run to its creator.
+
+        Done here rather than by rewriting 24 ACL rows: one statement of the
+        group relationship, in the base module every ncollection_account_*
+        depends on, instead of the same decision repeated per model.
+    -->
+    <record id="account.group_account_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('account.group_account_readonly'))]"/>
+    </record>
+
+    <record id="account.group_account_manager" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('account.group_account_user'))]"/>
+    </record>
+</odoo>

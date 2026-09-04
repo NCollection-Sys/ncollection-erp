@@ -116,3 +116,48 @@ class TestAccountCoreMixin(TransactionCase):
     def test_require_feature_passes_when_licensed(self):
         self._set_allowed('account')
         self.Gated._nc_require_feature('account')  # must NOT raise
+
+
+@tagged('post_install', '-at_install')
+class TestAccountingGroupHierarchy(TransactionCase):
+    """readonly < user < manager, so the native reports are reachable (#474).
+
+    Odoo 19 declares the three accounting groups independently. Every ACL in
+    ncollection_account_reports is keyed on `group_account_readonly`, so
+    without this containment an "Accounting / Administrator" gets AccessError
+    on Trial Balance, General Ledger, Balance Sheet, the VAT 201 — and Odoo's
+    menu filter then hides every one of those menus. Measured on a live tenant
+    before the fix: manager=True, user=False, readonly=False.
+    """
+
+    def _user(self, xmlid):
+        return self.env['res.users'].create({
+            'name': 'Acc Role', 'login': 'accrole-%s@example.test' % xmlid.split('.')[-1],
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref(xmlid).id])]})
+
+    def test_an_accounting_manager_holds_the_readonly_feature_group(self):
+        user = self._user('account.group_account_manager')
+        self.assertTrue(user.has_group('account.group_account_user'))
+        self.assertTrue(user.has_group('account.group_account_readonly'))
+
+    def test_an_accountant_holds_the_readonly_feature_group(self):
+        self.assertTrue(
+            self._user('account.group_account_user').has_group(
+                'account.group_account_readonly'))
+
+    def test_a_manager_can_actually_read_a_native_report_model(self):
+        """The reachability this exists for. Skipped only where the report
+        engine is absent, so it cannot pass vacuously where it is present."""
+        if 'ncollection.account.report.trial.balance' not in self.env:
+            self.skipTest('ncollection_account_reports is not installed here')
+        user = self._user('account.group_account_manager')
+        self.env['ncollection.account.report.trial.balance'].with_user(
+            user).check_access('read')
+
+    def test_a_plain_employee_still_cannot(self):
+        """The control: the fix must not have opened the reports to everyone."""
+        user = self.env['res.users'].create({
+            'name': 'Plain', 'login': 'plain-acc@example.test',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
+        self.assertFalse(user.has_group('account.group_account_readonly'))
