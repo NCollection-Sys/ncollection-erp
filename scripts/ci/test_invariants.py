@@ -805,5 +805,81 @@ class TestR12AddonsPathMatchesPins(GuardTestCase):
             "or an addons_path names a repo that is not pinned")
 
 
+class TestR13SaasStackRunsTheQueueWorker(GuardTestCase):
+    """`make saas-up` must start the queue worker (#463).
+
+    The bug was an ABSENCE: `saas-up` aliased the routing stack, which brings
+    up Odoo, Postgres and nginx and nothing that drains queue_job. The platform
+    kept enqueueing correctly, so the stack looked healthy while module
+    installs, config sync and provisioning sat pending for weeks. Nothing
+    failed and nothing logged — which is exactly what this guard file is for.
+    """
+
+    GOOD_MAKE = (
+        "COMPOSE ?= docker compose -f docker-compose.yml\n"
+        "ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml\n"
+        "SAAS_COMPOSE ?= $(ROUTING_COMPOSE) -f docker-compose.saas.yml\n"
+    )
+    GOOD_OVERLAY = (
+        "services:\n  provisioning-runner:\n"
+        "    command: odoo --load=base,web,queue_job -d ncollection\n"
+    )
+
+    def _files(self, make=None, overlay=None):
+        self.write("Makefile", self.GOOD_MAKE if make is None else make)
+        self.write("docker-compose.saas.yml",
+                   self.GOOD_OVERLAY if overlay is None else overlay)
+
+    def _findings(self):
+        found = []
+        invariants.rule_saas_stack_runs_the_queue_worker(found)
+        return found
+
+    def test_a_correctly_wired_stack_is_clean(self):
+        """The fixture itself — without this, every assertion below could be
+        measuring a broken fixture rather than the rule."""
+        self._files()
+        self.assertEqual(self._findings(), [])
+
+    def test_a_saas_compose_without_the_overlay_is_reported(self):
+        """THE ACTUAL BUG: routing stack only, so no worker."""
+        self._files(make=(
+            "ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml\n"
+            "SAAS_COMPOSE ?= $(ROUTING_COMPOSE)\n"))
+        found = self._findings()
+        self.assertTrue(found)
+        self.assertIn("queue worker", found[0])
+
+    def test_a_missing_saas_compose_definition_is_reported(self):
+        self._files(make="COMPOSE ?= docker compose -f docker-compose.yml\n")
+        self.assertTrue(self._findings())
+
+    def test_a_runner_that_does_not_load_queue_job_is_reported(self):
+        """A container that runs but drains nothing is the same outage with
+        more moving parts: the jobrunner thread only starts when queue_job is
+        in --load / server_wide_modules."""
+        self._files(overlay=(
+            "services:\n  provisioning-runner:\n"
+            "    command: odoo -d ncollection\n"))
+        found = self._findings()
+        self.assertTrue(found)
+        self.assertIn("queue_job", found[0])
+
+    def test_an_unreadable_makefile_REFUSES_rather_than_passing(self):
+        """A guard that cannot read its subject must say so; silence would
+        report 'clean' for a tree it never checked."""
+        self.write("docker-compose.saas.yml", self.GOOD_OVERLAY)
+        self.assertTrue(self._findings())
+
+    def test_THIS_repo_currently_satisfies_the_rule(self):
+        """The rule's own subject, checked for real rather than in a fixture —
+        i.e. `make saas-up` in THIS tree really does start the worker."""
+        invariants.REPO_ROOT = self._real_root
+        self.assertEqual(
+            self._findings(), [],
+            "make saas-up does not compose in the queue worker; SaaS jobs "
+            "would queue and never run")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
