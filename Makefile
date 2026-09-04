@@ -32,6 +32,20 @@ COMPOSE       ?= docker compose $(COMPOSE_FILES)
 # NOT affect `make up`.
 ROUTING_COMPOSE ?= $(COMPOSE) -f docker-compose.routing.yml
 
+# The FULL SaaS development stack (#463): the routing stack PLUS the
+# provisioning-runner satellite from docker-compose.saas.yml, which runs OCA
+# queue_job's jobrunner. Without that container the platform still ENQUEUES
+# work correctly and nothing ever drains it — module installs (#461), config
+# sync and provisioning all sit `pending`, so the SaaS lifecycle cannot be
+# exercised at all. `saas-up` used to be a thin alias over ROUTING_COMPOSE and
+# inherited exactly that gap.
+#
+# One overlay per concern, layered — no duplicated flags: base (services) +
+# dev (dev command/nginx) + routing (db_filter/list_db/proxy_mode) + saas
+# (the runner). docker-compose.saas.yml defines the runner ONCE and is shared
+# with the prod stack.
+SAAS_COMPOSE ?= $(ROUTING_COMPOSE) -f docker-compose.saas.yml
+
 # The platform/admin database, i.e. the one carrying ncollection_saas. On the
 # SaaS-routing stack the HOSTNAME is the database (db_filter=^%d$), so this is
 # also the platform's subdomain: http://$(NC_PLATFORM_DB).localhost/ (#453).
@@ -55,7 +69,7 @@ OCA_VENV := .oca-venv
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
         routing-up routing-verify routing-down routing-clean e2e-clean \
-        saas-up saas-down saas-urls \
+        saas-up saas-down saas-urls saas-jobs saas-runner-logs \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
         cron-starvation-verify cron-starvation-clean orphan-dbs \
@@ -278,18 +292,39 @@ routing-verify: ## Create rtclienta/rtclientb/rtadmin test DBs and run the isola
 routing-down: ## Stop the routing stack (keeps the test DBs; back to a normal `make up`)
 	$(ROUTING_COMPOSE) down
 
-## ---- SaaS / demo routing (#453) --------------------------------------------
-# The SAME stack `routing-up` starts -- one overlay, not two (Rule 2: extend
-# before replacing). These aliases exist because the routing overlay is framed
-# as the P1-T06 *proof*, and "bring the demo up" is a different question with
-# the same answer. Platform and tenants are told apart ONLY by hostname here,
-# exactly as production does it with db_filter=^%d$.
-saas-up: ## Start the SaaS-routing stack for a demo (subdomain -> database; selector off)
-	@$(MAKE) --no-print-directory routing-up
+## ---- SaaS development / demo stack (#453, #463) ----------------------------
+# THE command for realistic SaaS work: routing (subdomain -> database, selector
+# off) PLUS the queue worker that actually drains the jobs the platform
+# enqueues. `make up` stays the lightweight permissive stack -- see
+# docs/markdown/ROUTING.md for which mode does what.
+#
+# Platform and tenants are told apart ONLY by hostname, exactly as production
+# does it with db_filter=^%d$.
+saas-up: ## Start the FULL SaaS dev stack (routing + queue worker) — use this for SaaS work
+	@./scripts/dev/assert_oca_present.sh "the SaaS stack"
+	$(SAAS_COMPOSE) up -d
 	@$(MAKE) --no-print-directory saas-urls
 
-saas-down: ## Stop the SaaS-routing stack (back to the permissive `make up` dev stack)
-	@$(MAKE) --no-print-directory routing-down
+saas-down: ## Stop the SaaS stack (back to the permissive `make up` dev stack)
+	$(SAAS_COMPOSE) down
+
+# Job observability (#463). A stack whose worker is up but silently failing
+# looks identical to one that is working until someone asks a tenant.
+saas-jobs: ## List queue jobs on the platform DB with their state (queued/started/done/failed)
+	@echo "== queue_job on $(NC_PLATFORM_DB) =="
+	@$(COMPOSE) exec -T db psql -U $(DB_USER) -d $(NC_PLATFORM_DB) -c \
+		"SELECT id, state, channel, method_name, identity_key, \
+		        date_created, exc_message \
+		   FROM queue_job ORDER BY id DESC LIMIT 30;" \
+	 || echo "  (no queue_job table — is ncollection_saas installed on $(NC_PLATFORM_DB)?)"
+	@echo "== tenant-side lifecycle state =="
+	@$(COMPOSE) exec -T db psql -U $(DB_USER) -d $(NC_PLATFORM_DB) -c \
+		"SELECT database_name, database_status, module_install_state, \
+		        config_sync_state, module_install_last_error \
+		   FROM ncollection_tenant ORDER BY id;" || true
+
+saas-runner-logs: ## Follow the queue worker's logs (the container that runs the jobs)
+	$(SAAS_COMPOSE) logs -f provisioning-runner
 
 saas-urls: ## Print the platform + tenant entry points for the SaaS-routing stack
 	@echo "SaaS-routing entry points (db_filter=^%d$$ — the hostname IS the database):"
@@ -297,7 +332,10 @@ saas-urls: ## Print the platform + tenant entry points for the SaaS-routing stac
 	@echo "  a tenant       : http://<tenant-db>.localhost/     e.g. http://wasla.localhost/"
 	@echo "  bare localhost : redirects to the platform host (nginx, dev only)"
 	@echo "  database selector: disabled (list_db=False) and 403'd at the edge"
-	@echo "Back to everyday dev (selector on, no db_filter):  make saas-down && make up"
+	@echo "Background jobs ARE processed on this stack (provisioning-runner):"
+	@echo "  inspect : make saas-jobs        (states: pending/enqueued/started/done/failed)"
+	@echo "  logs    : make saas-runner-logs"
+	@echo "Back to everyday dev (selector on, no db_filter, NO worker):  make saas-down && make up"
 
 # FIXTURE NAMESPACES — each suite owns its own DB prefix and may only drop its
 # own. routing: rt* · e2e: e2e* · provisioning: prov*.

@@ -36,13 +36,19 @@ unroutable. `ncollection_saas` enforces that regex before it creates anything.
 `db_filter` is deliberately **off** in everyday development and **on** for
 demos, the routing proof and production.
 
-| | `make up` (default dev) | `make saas-up` (= `routing-up`) | production |
+| | `make up` (default dev) | `make saas-up` | production |
 |---|---|---|---|
 | Config | `config/odoo.conf` | same + routing overlay flags | `config/odoo.prod.conf` |
 | `db_filter` | none | `^%d$` | `^%d$` |
 | `list_db` (selector) | `True` | `False` | `False` |
 | `proxy_mode` | off | on | on |
 | Reach a DB by | picking it from the selector, or `?db=<name>` | its hostname only | its hostname only |
+| **Background jobs run?** | **No** | **Yes** (`provisioning-runner`) | Yes |
+
+**Which mode to use.** `make up` for ordinary addon work — it is faster and lets
+you address any database. `make saas-up` for anything touching the tenant
+lifecycle: without its worker, provisioning, config sync and module installs
+queue and never execute (#463).
 
 **Why the default stays permissive.** Every local workflow depends on being able
 to address an arbitrary database: `make test` (`nctest`), the `verify_*.sh`
@@ -54,18 +60,79 @@ everyday loop to fix a demo-only concern.
 
 ---
 
-## 3. Demo / SaaS-routing stack
+## 3. SaaS development / demo stack
+
+**This is the stack to use for any SaaS work** — anything involving tenants,
+plans, provisioning, module installs or config sync.
 
 ```bash
-make saas-up      # start it, then print the entry points
-make saas-urls    # print the entry points again
-make saas-down    # back to the permissive dev stack (then: make up)
+make saas-up            # routing + the queue worker; prints the entry points
+make saas-urls          # print the entry points again
+make saas-jobs          # inspect background jobs + per-tenant lifecycle state
+make saas-runner-logs   # follow the worker that executes them
+make saas-down          # back to the permissive dev stack (then: make up)
 ```
 
-`saas-up` is a thin alias over `routing-up` — **one overlay**
-(`docker-compose.routing.yml`), not a second copy of the same flags. The overlay
-is framed as the P1-T06 routing *proof*; "bring the demo up" is a different
-question with the same answer.
+It layers four overlays, one per concern, with no duplicated flags:
+
+| Overlay | Adds |
+|---|---|
+| `docker-compose.yml` | db, odoo, (dev) nginx, pgadmin |
+| `docker-compose.dev.yml` | the dev command + the dev nginx conf |
+| `docker-compose.routing.yml` | `db_filter=^%d$`, `list_db=False`, `proxy_mode` |
+| `docker-compose.saas.yml` | **`provisioning-runner`** — the queue_job worker |
+
+`routing-up` still exists and starts the first three: it is the P1-T06 routing
+*proof*, which needs no worker. `saas-up` is the superset, and the difference
+between them is exactly the thing that made the SaaS lifecycle untestable
+before #463.
+
+### Why the worker matters (#463)
+
+Everything the platform does to a live tenant is **queued**, never done inline
+in the web request: provisioning, config sync, and the module installs a plan
+change triggers (#461). Without `provisioning-runner` the platform still
+enqueues perfectly and *nothing drains the queue* — jobs sit `pending`, the
+stack looks healthy, and the feature simply never happens. That is not
+hypothetical: pending `sync_workspace_config` rows in this repo's `saastest`
+fixture sat unprocessed for **weeks** before anyone looked.
+
+`scripts/ci/invariants.py` now fails if `SAAS_COMPOSE` stops composing the
+runner in, because an absence like that produces no error to notice.
+
+### Inspecting jobs
+
+`make saas-jobs` prints the queue and the per-tenant lifecycle state.
+
+| `queue_job.state` | Meaning |
+|---|---|
+| `pending` | created, waiting for a free channel slot |
+| `enqueued` | claimed by the runner, about to start |
+| `started` | running now |
+| `done` | finished successfully |
+| `failed` | raised; `exc_message` says why, and it stays visible |
+
+Per-tenant columns tell you the *business* outcome rather than the job's:
+`module_install_state` (`none`/`queued`/`running`/`done`/`failed` +
+`module_install_last_error`) and `config_sync_state` (`ok`/`transient`/
+`permanent`).
+
+### Troubleshooting a failed job
+
+1. `make saas-jobs` — find the row and read `exc_message`.
+2. `make saas-runner-logs` — the runner logs the full traceback and, for module
+   installs, the `odoo -i` subprocess output.
+3. The tenant form (platform admin → Tenants) shows the same state plus
+   **Install Licensed Modules** and **Sync Configuration Now** to retry a single
+   tenant; both use the same engines as the automatic path, so a retry cannot
+   behave differently from the original.
+4. Channel capacity is `root:2,root.provisioning:2,root.outbound:1` — if jobs
+   stay `pending` while the runner is healthy, something long-running is
+   holding a slot; `make saas-jobs` shows what.
+
+If the runner container is not up at all, `make saas-jobs` still works (it
+reads the database) and every job will be `pending` — that is the #463
+signature.
 
 ### Entry points
 

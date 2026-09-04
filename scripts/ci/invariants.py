@@ -285,7 +285,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 12  # 12th: rule_addons_path_matches_pins (#424)
+RULE_COUNT = 13  # 13th: rule_saas_stack_runs_the_queue_worker (#463)
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -1257,6 +1257,65 @@ def rule_addons_path_matches_pins(out: list[str]) -> None:
                 f"directory, so the entry is dead.")
 
 
+def rule_saas_stack_runs_the_queue_worker(out: list[str]) -> None:
+    """`make saas-up` must start the queue worker, not just the web stack (#463).
+
+    THE BUG THIS ENCODES. `saas-up` was a thin alias over the routing stack
+    (base + dev + routing). That brings up Odoo, Postgres and nginx — and
+    nothing that drains queue_job. The platform kept enqueueing correctly, so
+    the stack looked healthy while module installs, config sync and
+    provisioning sat `pending` indefinitely; the oldest such rows in this repo
+    were WEEKS old before anyone noticed.
+
+    That is the failure signature this guard file exists for: not an error, an
+    absence. Nothing fails, nothing logs, and the feature simply never happens.
+
+    The check is deliberately about the WIRING, not the runner: the runner
+    itself (docker-compose.saas.yml's provisioning-runner) is correct and
+    predates this rule. What was missing — and what a future refactor of the
+    Makefile could silently drop again — is that the SaaS stack composes that
+    overlay in.
+    """
+    makefile = REPO_ROOT / "Makefile"
+    saas_overlay = "docker-compose.saas.yml"
+    try:
+        text = makefile.read_text(encoding="utf-8", errors="ignore")
+    except OSError as exc:
+        out.append(f"Makefile: unreadable ({exc}); cannot verify the SaaS stack "
+                   f"starts a queue worker.")
+        return
+
+    saas_compose = [ln for ln in text.splitlines()
+                    if ln.startswith("SAAS_COMPOSE")]
+    if not saas_compose:
+        out.append(
+            "Makefile: no SAAS_COMPOSE definition. `make saas-up` must layer "
+            f"{saas_overlay} so the queue worker runs; without it the SaaS "
+            "stack enqueues jobs that nothing ever executes (#463).")
+        return
+    if saas_overlay not in saas_compose[0]:
+        out.append(
+            f"Makefile: SAAS_COMPOSE does not include {saas_overlay}, so "
+            "`make saas-up` starts no queue worker. Jobs would queue and never "
+            "run — silently, which is why this is a guard and not a comment "
+            "(#463).")
+
+    # The overlay must actually still define the runner it is included for.
+    overlay = REPO_ROOT / saas_overlay
+    try:
+        overlay_text = overlay.read_text(encoding="utf-8", errors="ignore")
+    except OSError as exc:
+        out.append(f"{saas_overlay}: unreadable ({exc}); the SaaS stack's queue "
+                   f"worker cannot be verified.")
+        return
+    if "queue_job" not in overlay_text:
+        out.append(
+            f"{saas_overlay}: no queue_job in the runner's command. The "
+            "jobrunner thread only starts when queue_job is in "
+            "`--load=`/server_wide_modules — otherwise the container runs and "
+            "drains nothing (#463).")
+
+
 def rule_ci_module_coverage(out: list[str]) -> None:
     """Every custom_addons module must appear in ci.yml's -i AND --test-tags."""
     workflow = REPO_ROOT / CI_WORKFLOW
@@ -1527,6 +1586,7 @@ def main() -> int:
     rule_ai_gateway_kdf_agrees(findings)
     rule_workflow_actions_sha_pinned(findings)
     rule_portal_suite_models_reachable(findings)
+    rule_saas_stack_runs_the_queue_worker(findings)
 
     if findings:
         print("invariants: violations found\n")
