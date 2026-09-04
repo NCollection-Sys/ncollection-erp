@@ -8,6 +8,9 @@ __pycache__/
 
 # Root-level backup output dir only — must NOT swallow scripts/backup/ (P2-T04).
 /backup/
+# Loose pg_dump output dropped at the repo root by the backup job. An 18MB
+# database dump is not source, and one was very nearly committed here.
+/*.backup
 *.zip
 
 .vscode/

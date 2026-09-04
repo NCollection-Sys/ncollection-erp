@@ -320,7 +320,29 @@ class ProvisioningJob(models.Model):
         cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
         out = self._run_odoo_subprocess(
             cmd, self.env._("tenant seed"), stdin=script, env=env_vars)
+        self._log_dev_credentials(out)
         return self._parse_setup_url(out)
+
+    def _log_dev_credentials(self, stdout):
+        """DEV ONLY (#475): surface the seed's temporary credentials.
+
+        Reached only when NC_DEV_SEED_PASSWORD is set, because the seed prints
+        this line only on that path — there is no production code path here.
+        Recorded on the job log (where an operator looks) and at WARNING level
+        (so it is impossible to miss in a log that was never meant to carry a
+        password).
+        """
+        detail = next((line[len('SEED_DEV_CREDENTIALS='):]
+                       for line in (stdout or '').splitlines()
+                       if line.startswith('SEED_DEV_CREDENTIALS=')), '')
+        if not detail:
+            return
+        _logger.warning(
+            "DEV MODE: tenant '%s' was seeded with the NC_DEV_SEED_PASSWORD "
+            "temporary password and NO forced reset — %s. Never set this "
+            "variable outside local development.", self.database_name, detail)
+        self._append_log(self.env._(
+            "DEV MODE — temporary credentials (no forced reset): %s", detail))
 
     @staticmethod
     def _parse_setup_url(stdout):

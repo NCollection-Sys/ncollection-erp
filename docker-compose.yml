@@ -60,6 +60,14 @@ services:
       # platform uses it to push plan changes into tenant DBs. Empty by default
       # (config sync then fails soft + logs).
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+      # DEV ONLY (#475) — temporary tenant-admin password for local testing.
+      # EMPTY BY DEFAULT AND MUST STAY EMPTY OUTSIDE LOCAL DEVELOPMENT. When it
+      # holds a value, tenant provisioning gives the new admin THAT password and
+      # skips the forced reset, so a developer can log in immediately. Unset (a
+      # production .env simply does not define it) leaves the hardened default:
+      # an unguessable random password that is never disclosed, plus a forced
+      # reset. Same shape as the keys above — the value lives only in .env.
+      NC_DEV_SEED_PASSWORD: ${NC_DEV_SEED_PASSWORD:-}
       # Same master the ai-gateway satellite holds (#373). The tenant side
       # derives HMAC(master, 'nc-ai-gateway:' + dbname) per request and never
       # stores a per-tenant secret anywhere.

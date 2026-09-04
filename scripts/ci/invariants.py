@@ -285,7 +285,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 13  # 13th: rule_saas_stack_runs_the_queue_worker (#463)
+RULE_COUNT = 14  # 14th: rule_dev_seed_password_never_shipped (#475)
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -1567,6 +1567,53 @@ def run_self_test() -> list[str]:
     return failures
 
 
+def rule_dev_seed_password_never_shipped(out: list[str]) -> None:
+    """No compose file may ship a VALUE for NC_DEV_SEED_PASSWORD (#475).
+
+    The variable turns off the two things that make a provisioned tenant safe:
+    the unguessable random admin password and the forced reset. Empty, it does
+    nothing; given a value, EVERY tenant provisioned afterwards is born with a
+    known credential, and the credential is written into the provisioning job
+    log at WARNING level.
+
+    "Dev only" therefore has to be a property of the repository rather than a
+    sentence in a comment. Every declaration must resolve to the empty default
+    `${NC_DEV_SEED_PASSWORD:-}`, so enabling it always requires an explicit
+    local `.env` and can never arrive by pulling the repo — including via a
+    staging or production overlay, which is the case that would matter.
+
+    This lives here rather than in the Odoo suite because the odoo test
+    container mounts only custom_addons/ and oca/: a test there cannot read a
+    compose file, so it would pass while checking nothing.
+    """
+    allowed = "NC_DEV_SEED_PASSWORD: ${NC_DEV_SEED_PASSWORD:-}"
+    declarations = 0
+    for path in sorted(REPO_ROOT.glob("docker-compose*.yml")):
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError as exc:
+            out.append(f"{path.name}: unreadable ({exc}); cannot verify "
+                       f"NC_DEV_SEED_PASSWORD ships no value.")
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            stripped = line.strip()
+            if not stripped.startswith("NC_DEV_SEED_PASSWORD:"):
+                continue
+            declarations += 1
+            if stripped != allowed:
+                out.append(
+                    f"{path.name}:{lineno}: NC_DEV_SEED_PASSWORD must be "
+                    f"declared exactly as `{allowed}` (empty default). Found "
+                    f"`{stripped}` — a shipped value would give every tenant "
+                    f"provisioned from this checkout a known admin password "
+                    f"and skip the forced reset.")
+    if not declarations:
+        out.append(
+            "no compose file declares NC_DEV_SEED_PASSWORD — the dev-only "
+            "tenant password cannot reach the provisioning containers, so the "
+            "documented local-testing flow silently does nothing.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--files", nargs="*", help="explicit file list instead of a repo scan")
@@ -1601,6 +1648,7 @@ def main() -> int:
     rule_workflow_actions_sha_pinned(findings)
     rule_portal_suite_models_reachable(findings)
     rule_saas_stack_runs_the_queue_worker(findings)
+    rule_dev_seed_password_never_shipped(findings)
 
     if findings:
         print("invariants: violations found\n")
