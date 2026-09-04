@@ -62,7 +62,9 @@ class Tenant(models.Model):
     # only moment loading one is safe. Left empty, the tenant provisions with
     # no localization, exactly as before.
     country_id = fields.Many2one(
-        'res.country', string='Country',
+        # No string=: pylint-odoo strips the _id suffix, so 'Country' is
+        # exactly what Odoo labels this anyway (W8113).
+        'res.country',
         help='Drives localization at provisioning: chart of accounts, '
              'currency and tax setup. Changing it after the database exists '
              'does NOT re-localize it — use "Apply localization" for that.')
