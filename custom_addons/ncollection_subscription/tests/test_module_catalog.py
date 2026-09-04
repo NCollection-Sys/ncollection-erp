@@ -163,11 +163,20 @@ class TestNativeFinancialModulesAreSelectable(TransactionCase):
     def test_a_reported_dependency_is_a_real_module_name(self):
         """The picker expands `depends` client-side for display. A name that
         matches no module would render a permanently-unexplained card."""
-        row = next((m for m in self.catalog['optional']
-                    if m['name'] == 'ncollection_account_reports'), None)
-        if not row:
-            self.skipTest("ncollection_account_reports is not on this addons path")
-        self.assertIn('ncollection_account_core', row['depends'])
+        # Any offered module that declares a dependency will do — naming one
+        # would make this test SKIP wherever that module is absent, and a
+        # skipped test counts as a passing one.
+        with_deps = [m for m in self.catalog['optional'] if m['depends']]
+        self.assertTrue(with_deps,
+                        "control: no offered module declares a dependency, so "
+                        "the assertion below would prove nothing")
+        known = set(self.Module.search([]).mapped('name'))
+        for module in with_deps[:10]:
+            for dep in module['depends']:
+                self.assertIn(
+                    dep, known,
+                    "%s reports a dependency on %r, which is not a module on "
+                    "this platform" % (module['name'], dep))
 
     def test_a_module_whose_dependency_is_missing_is_never_offered(self):
         """A module that cannot be installed must not be licensable.
@@ -180,19 +189,26 @@ class TestNativeFinancialModulesAreSelectable(TransactionCase):
         the background, long after the click.
 
         The live subject is ncollection_account_assets on a tree where ./oca
-        has not been aggregated. Where it HAS been, the module is installable
-        and the general assertion above covers it, so this checks the rule
-        against whatever unresolvable module the platform actually has.
+        has not been aggregated — but CI aggregates it, so searching for a
+        real unresolvable module would make this test SKIP exactly where it
+        matters most, and a skipped test counts as a passing one. The subject
+        is therefore synthesised: an application whose one dependency names no
+        module at all, created inside the test transaction and rolled back
+        with it.
         """
-        unresolvable = [
-            module.name
-            for module in self.Module.search([('application', '=', True),
-                                              ('state', '!=', 'uninstallable')])
-            if not self.Plan._nc_module_is_installable(module)
-        ]
-        if not unresolvable:
-            self.skipTest("every application on this addons path is installable")
-        for name in unresolvable:
-            self.assertNotIn(
-                name, self.optional_names,
-                "%s has an unresolvable dependency and must not be offered" % name)
+        ghost = self.Module.create({
+            'name': 'nc_test_ghost_dependency_module',
+            'shortdesc': 'Ghost Dependency Module',
+            'state': 'uninstalled',
+            'application': True,
+            'dependencies_id': [(0, 0, {'name': 'nc_test_module_that_does_not_exist'})],
+        })
+        # The control: Odoo leaves such a module plainly `uninstalled`, so the
+        # state filter alone would have offered it.
+        self.assertEqual(ghost.state, 'uninstalled')
+        self.assertFalse(self.Plan._nc_module_is_installable(ghost))
+        self.assertNotIn(
+            ghost.name,
+            {m['name'] for m in self.Plan.get_selectable_modules()['optional']},
+            "a module with an unresolvable dependency must not be licensable — "
+            "its install job could only fail, on every ready tenant of the plan")
