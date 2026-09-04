@@ -18,3 +18,6 @@ from . import fleet_migration_line
 # #459: installing a plan's newly licensed modules into an EXISTING tenant DB.
 # After provisioning_job (it imports CORE_TENANT_MODULES/PROVISION_CHANNEL from it).
 from . import module_install
+# #469: the deliberate, guarded path for localizing an EXISTING tenant DB.
+# After module_install so the tenant model's SaaS extensions are all in place.
+from . import tenant_localization

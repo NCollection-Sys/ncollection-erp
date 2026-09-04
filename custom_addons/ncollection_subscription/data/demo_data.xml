@@ -51,7 +51,7 @@
              missing generated directory into a failing install job on every
              Enterprise tenant. It remains selectable in the picker for
              deployments that have the engine. -->
-        <field name="allowed_module_names">account,account_financial_report,ncollection_mis_templates,ncollection_account_reports,ncollection_account_dashboard,ncollection_account_budget,ncollection_account_localization_uae</field>
+        <field name="allowed_module_names">account,account_financial_report,ncollection_mis_templates,ncollection_account_reports,ncollection_account_dashboard,ncollection_account_budget</field>
     </record>
 
     <!-- Tenants -->

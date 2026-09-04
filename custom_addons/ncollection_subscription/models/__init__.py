@@ -1,3 +1,4 @@
+from . import localization
 from . import subscription_plan
 from . import tenant
 from . import subscription

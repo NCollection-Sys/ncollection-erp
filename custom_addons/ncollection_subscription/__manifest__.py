@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Subscription Management',
-    'version': '19.0.1.5.0',
+    'version': '19.0.1.6.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS subscription, tenant and plan management for NCollection ERP',
     'description': """
