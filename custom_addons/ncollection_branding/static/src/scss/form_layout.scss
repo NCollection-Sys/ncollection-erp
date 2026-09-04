@@ -1,0 +1,46 @@
+// Backend form layout: stop the side chatter starving the form sheet (#474).
+//
+// THE BUG. On a wide viewport the form renderer lays the sheet and the chatter
+// out as a flex ROW:
+//
+//     .o_form_renderer.flex-nowrap
+//       ├── .o_form_sheet_bg   flex: 2 1 990px
+//       └── .oe_chatter        flex: 0 1 auto
+//
+// A flex item's default `min-width` is `auto`, which means "never shrink below
+// my content". The chatter's content is wide, so it refuses to give any width
+// back; the whole deficit lands on the only item that CAN shrink, and the sheet
+// collapses. Measured on the Tenant form at a 1440px viewport, before this fix:
+//
+//     .oe_chatter        1407px
+//     .o_form_sheet_bg      33px   <- the entire form, 33 pixels wide
+//     .o_notebook            0px
+//
+// WHY IT LOOKED LIKE A ZOOM BUG. Browser zoom changes the CSS-pixel viewport:
+// 110% on a 1440px window is ~1309px, which is below the breakpoint where the
+// renderer uses the row layout at all — it stacks into a column instead, the
+// chatter goes full width, and nothing has to shrink. So the same page looked
+// broken at 100% and correct at 110%. Zoom was the symptom; `min-width: auto`
+// was the cause, and it is viewport-independent.
+//
+// THE FIX is the standard flexbox correction, scoped to the row layout only so
+// the stacked (column) layout is untouched: let both items shrink, and bound
+// the chatter so it can occupy a share rather than everything it wants.
+.o_form_renderer.flex-nowrap {
+    // Without this the sheet cannot shrink either, and a genuinely narrow
+    // window overflows horizontally instead of reflowing.
+    > .o_form_sheet_bg {
+        min-width: 0;
+    }
+
+    > .oe_chatter {
+        // `1 1 380px` is Odoo's own intent for a side chatter: a preferred
+        // width that both grows and shrinks, rather than `0 1 auto`, which
+        // sizes to content and then declines to give it back.
+        flex: 1 1 380px;
+        min-width: 0;
+        // The sheet is the primary content. Cap the chatter so no amount of
+        // message history can push it past a third of the form.
+        max-width: 33%;
+    }
+}

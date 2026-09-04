@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        ONE financial application, named "Accounting" (#474).
+
+        Odoo Community labels the `account` app "Invoicing". Every NCollection
+        financial module already nests inside it — reports under
+        account.menu_finance_reports, budgets under account.menu_finance_entries,
+        analytics and the UAE compliance checklist under
+        account.menu_finance_configuration — so the product was one app already,
+        under the wrong name, with the dashboards as the single stray root.
+
+        Renaming the EXISTING root rather than creating a new one is what keeps
+        this a rename: account.menu_finance already carries Odoo's official
+        Accounting icon (account/static/description/icon.png), every action and
+        every access rule underneath it is untouched, and no menu is duplicated.
+        A new root would have meant a second app with the same contents.
+
+        This lives in ncollection_account_core because it is the base every
+        ncollection_account_* module depends on and it depends on `account`, so
+        it is guaranteed to load after the menu it renames and before every
+        sibling that hangs items off it.
+    -->
+    <record id="account.menu_finance" model="ir.ui.menu">
+        <field name="name">Accounting</field>
+    </record>
+
+</odoo>

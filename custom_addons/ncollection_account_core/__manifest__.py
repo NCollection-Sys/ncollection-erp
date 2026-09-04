@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
                'restriction hooks, common mixins and the accounting engine '
@@ -25,6 +25,10 @@
     # provisioning via a post_init hook (hooks.py -> res.company). It only sets
     # Odoo's own native fields — no fiscal-year model, no posting/tax logic
     # (FPA §4/§6). The engine-boundary guard lives in tests/test_engine_boundary.
+    'data': [
+        # #474: the single financial application, named "Accounting".
+        'views/accounting_app_menus.xml',
+    ],
     'post_init_hook': 'post_init_hook',
     # Scaffold: the load-bearing deliverable is the shared AbstractModel mixin
     # (models/account_mixin.py). It is abstract (no records) and there is no

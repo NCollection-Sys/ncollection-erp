@@ -21,10 +21,17 @@
          gate is mirrored where the claim said it already was. "The ACL
          mirrors it" is a hypothesis about every module a tenant might
          install, not a property of this module — do not re-derive it here. -->
+    <!-- #474: INSIDE Accounting, not beside it. This was the last NCollection
+         financial menu still registered as its own launcher app — reports,
+         budgets, analytics and the UAE checklist already nested under
+         account.menu_finance. Reparenting the SAME record rather than creating
+         a new one keeps its groups= gate and every action below it untouched,
+         and produces no duplicate. -->
     <menuitem id="menu_account_dashboard_root"
-              name="Financial Dashboards"
+              name="Dashboards"
+              parent="account.menu_finance"
               groups="ncollection_core.group_role_accountant,ncollection_core.group_role_ceo,ncollection_core.group_role_owner"
-              sequence="12"/>
+              sequence="5"/>
 
     <menuitem id="menu_finance_dashboard"
               name="Finance"
