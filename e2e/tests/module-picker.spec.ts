@@ -71,7 +71,8 @@ test.describe('subscription plan module picker (#467)', () => {
       `${PLATFORM}/odoo/action-ncollection_subscription.action_ncollection_subscription_plan/${planId}`,
       { waitUntil: 'domcontentloaded' },
     );
-    await page.getByRole('tab', { name: 'Modules' }).click();
+    // exact: the toolbar inside the widget also renders a tab called "All modules".
+    await page.getByRole('tab', { name: 'Modules', exact: true }).click();
     // The catalog is fetched over RPC; cards only exist after it lands.
     await expect(page.locator(PICKER)).toBeVisible({ timeout: 30_000 });
     await expect(page.locator(CARD).first()).toBeVisible({ timeout: 20_000 });
