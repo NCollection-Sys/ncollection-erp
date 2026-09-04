@@ -23,6 +23,21 @@ by the odoo shell runtime.
 import os
 import secrets
 
+# DEV ONLY (#475). When NC_DEV_SEED_PASSWORD holds a non-empty value, the seed
+# gives the tenant admin THAT password and does not force a reset, so a
+# developer can log into a freshly provisioned database immediately.
+#
+# THE VARIABLE IS THE PASSWORD, deliberately — there is no boolean "dev mode"
+# and no default credential anywhere in this repository. A generic flag could
+# be switched on for an unrelated reason and would silently weaken every tenant
+# provisioned afterwards; a variable that must be given a real password cannot
+# be enabled by accident, and there is no committed default for a leak to find.
+#
+# Unset — the default in every compose file, including every production overlay
+# — leaves the original behaviour untouched: an unguessable random password
+# that is never disclosed, plus a forced reset.
+dev_password = (os.environ.get('NC_DEV_SEED_PASSWORD') or '').strip()
+
 company_name = os.environ.get('NC_COMPANY', 'Tenant')
 admin_email = (os.environ.get('NC_ADMIN_EMAIL') or '').strip()
 allowed_modules = os.environ.get('NC_ALLOWED_MODULES', '')
@@ -45,13 +60,18 @@ if portal_url:
 admin = env.ref('base.user_admin')  # noqa: F821
 admin_vals = {
     'name': '%s Admin' % company_name,
-    'password': secrets.token_urlsafe(32),  # unguessable; never disclosed
+    # PRODUCTION PATH (unchanged): unguessable, never disclosed.
+    'password': dev_password or secrets.token_urlsafe(32),
 }
 if admin_email:
     admin_vals['login'] = admin_email
     admin_vals['email'] = admin_email
 admin.write(admin_vals)
-admin.partner_id.signup_prepare(signup_type='reset')
+if not dev_password:
+    # The forced reset is what makes the tenant "born hardened". It is skipped
+    # ONLY on the dev path, because a reset token would immediately invalidate
+    # the very password the developer was handed.
+    admin.partner_id.signup_prepare(signup_type='reset')
 
 # 3. Workspace config projection (the tenant-side copy of what the plan allows).
 Config = env['ncollection.workspace.config']  # noqa: F821
@@ -106,8 +126,17 @@ else:
 
 env.cr.commit()  # noqa: F821
 
-# Reset URL for the welcome email (valid in THIS tenant DB). auth_signup builds
-# it from the reset token + web.base.url + signup_type.
-setup_url = admin.partner_id._get_signup_url() or ''
-print("SEED_SETUP_URL=%s" % setup_url)
-print("SEED_OK")
+if dev_password:
+    # DEV ONLY. Printed so the credentials reach the provisioning job log, which
+    # is where an operator actually looks — one line, parsed platform-side.
+    # There is no production path to this print: it is inside the same guard
+    # that set the password.
+    print("SEED_DEV_CREDENTIALS=url=%s login=%s password=%s"
+          % (portal_url or '(unset)', admin.login, dev_password))
+    print("SEED_OK")
+else:
+    # Reset URL for the welcome email (valid in THIS tenant DB). auth_signup
+    # builds it from the reset token + web.base.url + signup_type.
+    setup_url = admin.partner_id._get_signup_url() or ''
+    print("SEED_SETUP_URL=%s" % setup_url)
+    print("SEED_OK")

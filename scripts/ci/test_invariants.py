@@ -897,3 +897,58 @@ class TestR13SaasStackRunsTheQueueWorker(GuardTestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestDevSeedPasswordNeverShipped(GuardTestCase):
+    """The dev-only tenant password must never arrive with a checkout (#475).
+
+    Given a value, it turns off BOTH things that make a provisioned tenant
+    safe — the unguessable random admin password and the forced reset — for
+    every tenant provisioned afterwards. So the guard's job is to keep "dev
+    only" a property of the repository rather than a sentence in a comment.
+    """
+
+    ALLOWED = "      NC_DEV_SEED_PASSWORD: ${NC_DEV_SEED_PASSWORD:-}\n"
+
+    def _run(self):
+        findings = []
+        invariants.rule_dev_seed_password_never_shipped(findings)
+        return findings
+
+    def test_the_empty_default_is_clean(self):
+        self.write("docker-compose.yml", "services:\n  odoo:\n    environment:\n" + self.ALLOWED)
+        self.assertEqual(self._run(), [])
+
+    def test_a_shipped_value_is_refused(self):
+        self.write("docker-compose.yml",
+                   "services:\n  odoo:\n    environment:\n"
+                   "      NC_DEV_SEED_PASSWORD: NCollection123!\n")
+        findings = self._run()
+        self.assertEqual(len(findings), 1)
+        self.assertIn("known admin password", findings[0])
+
+    def test_a_shipped_value_in_a_production_overlay_is_refused(self):
+        """The case that would actually matter: not the dev overlay, but the
+        one a deploy uses."""
+        self.write("docker-compose.yml", "services:\n  odoo:\n    environment:\n" + self.ALLOWED)
+        self.write("docker-compose.prod.yml",
+                   "services:\n  odoo:\n    environment:\n"
+                   "      NC_DEV_SEED_PASSWORD: hunter2\n")
+        findings = self._run()
+        self.assertEqual(len(findings), 1)
+        self.assertIn("docker-compose.prod.yml", findings[0])
+
+    def test_a_default_that_is_not_empty_is_refused(self):
+        """`${VAR:-something}` ships the something."""
+        self.write("docker-compose.yml",
+                   "services:\n  odoo:\n    environment:\n"
+                   "      NC_DEV_SEED_PASSWORD: ${NC_DEV_SEED_PASSWORD:-NCollection123!}\n")
+        self.assertEqual(len(self._run()), 1)
+
+    def test_declaring_it_nowhere_is_refused_too(self):
+        """The other direction: if no container receives the variable, the
+        documented local-testing flow silently does nothing."""
+        self.write("docker-compose.yml", "services:\n  odoo:\n    image: odoo:19\n")
+        findings = self._run()
+        self.assertEqual(len(findings), 1)
+        self.assertIn("cannot reach the provisioning containers", findings[0])

@@ -7,6 +7,7 @@ full create->login->rollback path is proven locally (see
 tests/test_provisioning_engine.py, tagged out of the default CI run, and the
 evidence in the PR).
 """
+import os
 from unittest.mock import patch
 
 from odoo.exceptions import UserError, ValidationError
@@ -207,3 +208,94 @@ class TestSeedTenantEnv(TransactionCase):
         self.tenant.plan_id = plan.id
         env = self._seed_env()
         self.assertEqual(env['NC_ALLOWED_MODULES'], 'crm,sale')
+
+
+@tagged('post_install', '-at_install')
+class TestDevSeedPassword(TransactionCase):
+    """The DEV-ONLY temporary tenant password (#475).
+
+    What must hold, in order of how badly it fails if it does not:
+
+      1. OFF BY DEFAULT — with the variable unset, the seed still sets an
+         unguessable password and still forces a reset. That is the production
+         behaviour and nothing here may weaken it.
+      2. No committed default — the repository must contain no compose file
+         that ships a value, or "dev only" is a comment rather than a fact.
+      3. When ON, the developer actually gets a usable credential, and it is
+         written where an operator will see it.
+
+    The seed script itself runs inside an `odoo shell` subprocess against a
+    real tenant database, so its BEHAVIOUR is proven by the provisioning suite
+    end to end; what is asserted here is the guard's shape and the platform
+    side that forwards and records it.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.tenant = cls.env['ncollection.tenant'].create({
+            'company_name': 'Dev Seed Co', 'database_name': 'devseedco',
+            'email': 'owner@devseed.example', 'status': 'trial'})
+        cls.job = cls.env['ncollection.provisioning.job'].create({
+            'tenant_id': cls.tenant.id, 'database_name': 'devseedco',
+            'status': 'queued'})
+
+    @staticmethod
+    def _seed_source():
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'scripts', 'provisioning', 'seed_tenant.py')
+        with open(path, encoding='utf-8') as handle:
+            return handle.read()
+
+    # ---- 1. off by default ----------------------------------------------
+
+    def test_the_hardened_path_is_what_runs_when_the_variable_is_unset(self):
+        """The random password and the forced reset are both conditional on the
+        variable being EMPTY — asserted on the source, because the alternative
+        is running a real subprocess against a real database."""
+        source = self._seed_source()
+        self.assertIn("dev_password or secrets.token_urlsafe(32)", source)
+        self.assertIn("if not dev_password:", source)
+        self.assertIn("signup_prepare(signup_type='reset')", source)
+
+    def test_the_variable_is_the_password_not_a_boolean_flag(self):
+        """A generic `NC_DEV_MODE` could be switched on for an unrelated reason
+        and would silently weaken every tenant provisioned afterwards."""
+        source = self._seed_source()
+        self.assertIn("os.environ.get('NC_DEV_SEED_PASSWORD')", source)
+        for boolish in ("== '1'", "== 'true'", "== 'True'"):
+            self.assertNotIn("NC_DEV_SEED_PASSWORD') %s" % boolish, source)
+
+    # ---- 2. nothing ships enabled ---------------------------------------
+
+    # The "no compose file ships a value" half of this contract is asserted by
+    # scripts/ci/invariants.py, NOT here: the odoo test container mounts only
+    # custom_addons/ and oca/, so an Odoo test physically cannot read a compose
+    # file — it would pass vacuously, which is worse than no check at all. Same
+    # reason the SaaS-stack rule lives there (#463).
+
+    # ---- 3. when on, the credentials are recorded ------------------------
+
+    def test_the_credentials_reach_the_job_log(self):
+        """The provisioning log is where an operator looks. A password that is
+        only ever printed into a subprocess's stdout helps nobody."""
+        self.job._log_dev_credentials(
+            'SEED_DEV_CREDENTIALS=url=http://devseedco.localhost '
+            'login=owner@devseed.example password=NCollection123!\nSEED_OK')
+        self.assertIn('NCollection123!', self.job.log or '')
+        self.assertIn('DEV MODE', self.job.log or '')
+
+    def test_a_normal_seed_writes_nothing_about_dev_credentials(self):
+        """The production path must leave no trace of this mechanism at all."""
+        before = self.job.log or ''
+        self.job._log_dev_credentials('SEED_SETUP_URL=http://x/reset\nSEED_OK')
+        self.assertEqual(self.job.log or '', before)
+
+    def test_the_seed_prints_credentials_only_inside_the_dev_guard(self):
+        """The print must sit under the same condition that set the password;
+        an unguarded one would leak a random production password into a log."""
+        source = self._seed_source()
+        guard = source.index('if dev_password:')
+        self.assertLess(guard, source.index('SEED_DEV_CREDENTIALS='),
+                        "the credentials print must follow the dev guard")
