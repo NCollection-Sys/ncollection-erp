@@ -126,6 +126,11 @@ class Subscription(models.Model):
         """Plan price for this subscription's billing cycle."""
         self.ensure_one()
         plan = plan or self.plan_id
+        if self.billing_cycle == 'one_time':
+            # #471: its own price, not a period price. Falling back to
+            # monthly_price would charge a perpetual licence at one month's
+            # rate; the plan carries one_time_price for exactly this.
+            return plan.one_time_price
         return plan.yearly_price if self.billing_cycle == 'yearly' else plan.monthly_price
 
     def _nc_bill_period(self, reason, period_start, period_end):
@@ -187,8 +192,13 @@ class Subscription(models.Model):
             'invoice_origin': self.name,
             'invoice_line_ids': [(0, 0, {
                 'product_id': product.id,
-                'name': '%s — %s (%s → %s)' % (
-                    self.plan_id.name, reason, period_start, period_end),
+                # #471: a one-time charge covers no period, so it gets a
+                # perpetual label rather than "start → False".
+                'name': ('%s — %s (perpetual, from %s)'
+                         % (self.plan_id.name, reason, period_start)
+                         if not period_end else
+                         '%s — %s (%s → %s)' % (
+                             self.plan_id.name, reason, period_start, period_end)),
                 'quantity': 1.0,
                 'price_unit': amount,
                 'tax_ids': [(6, 0, tax.ids)],

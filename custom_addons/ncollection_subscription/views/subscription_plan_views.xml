@@ -38,6 +38,9 @@
                             <field name="currency_id" groups="base.group_multi_currency"/>
                             <field name="monthly_price" widget="monetary"/>
                             <field name="yearly_price" widget="monetary"/>
+                            <!-- #471: charged once for a One Time membership.
+                                 Never renewed and excluded from MRR. -->
+                            <field name="one_time_price" widget="monetary"/>
                         </group>
                         <group string="Limits">
                             <field name="max_users"/>

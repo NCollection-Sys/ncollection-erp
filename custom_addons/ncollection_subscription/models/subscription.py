@@ -34,10 +34,27 @@ class Subscription(models.Model):
         selection=[
             ('monthly', 'Monthly'),
             ('yearly', 'Yearly'),
+            # #471: a perpetual membership. Paid once, never renewed, and it
+            # has NO end_date — the absence of a date is what encodes "no
+            # expiry", not a date far in the future. Every recurring path in
+            # the platform is already keyed on `end_date != False`
+            # (_nc_expire_due, the expiry warnings, grace_end_date,
+            # days_remaining), so a subscription with no end date is invisible
+            # to all of them by construction rather than by a special case
+            # bolted onto each. `is_one_time` below is what the parts that DO
+            # need to know ask.
+            ('one_time', 'One Time'),
         ],
         default='monthly',
         required=True,
+        help='One Time is a perpetual membership: charged once, never renewed, '
+             'and it stays active until an administrator cancels, suspends or '
+             'terminates it.',
     )
+    is_one_time = fields.Boolean(
+        string='Perpetual',
+        compute='_compute_is_one_time', store=True,
+        help='This subscription never expires and is never renewed.')
     # MRR (P2-T15): the plan price normalized to a monthly amount. Stored so the
     # revenue graph/pivot can aggregate it natively. currency comes from the plan.
     currency_id = fields.Many2one(
@@ -91,11 +108,19 @@ class Subscription(models.Model):
             else:
                 sub.days_remaining = 0
 
+    @api.depends('billing_cycle')
+    def _compute_is_one_time(self):
+        for sub in self:
+            sub.is_one_time = sub.billing_cycle == 'one_time'
+
     @api.depends('plan_id', 'plan_id.monthly_price', 'plan_id.yearly_price', 'billing_cycle')
     def _compute_mrr(self):
         for sub in self:
             plan = sub.plan_id
-            if not plan:
+            if not plan or sub.billing_cycle == 'one_time':
+                # A perpetual membership has no recurring revenue by
+                # definition (#471). Spreading its one-time price over months
+                # would inflate MRR with money that will never come again.
                 sub.mrr = 0.0
             elif sub.billing_cycle == 'yearly':
                 sub.mrr = (plan.yearly_price or 0.0) / 12.0
@@ -109,6 +134,24 @@ class Subscription(models.Model):
                 raise ValidationError(
                     self.env._('End date must be after start date (subscription "%s").', sub.name)
                 )
+
+    @api.constrains('billing_cycle', 'end_date')
+    def _check_one_time_never_expires(self):
+        """A One Time subscription must have NO end date (#471).
+
+        This is the whole guarantee, enforced rather than documented: every
+        recurring path — expiry, grace, suspension, warnings, renewal billing —
+        keys on `end_date != False`, so an end date is exactly what would make a
+        perpetual membership start behaving like a recurring one. Blocking it
+        here means the promise cannot be broken by a form edit, an import, or a
+        payment webhook writing a period end.
+        """
+        for sub in self:
+            if sub.billing_cycle == 'one_time' and sub.end_date:
+                raise ValidationError(self.env._(
+                    'A One Time subscription never expires, so it cannot have '
+                    'an end date (subscription "%s"). Cancel, suspend or '
+                    'terminate it instead.', sub.name))
 
     # ------------------------------------------------------------------
     # Guarded lifecycle transitions
@@ -181,6 +224,14 @@ class Subscription(models.Model):
         end_date, so renewing early does not shorten the running period.
         """
         for sub in self:
+            if sub.billing_cycle == 'one_time':
+                # #471: refused, not silently ignored. A renewal here would
+                # stamp an end_date and turn a perpetual membership into a
+                # recurring one — and the billing layer would raise a renewal
+                # invoice for a customer who already paid once, in full.
+                raise ValidationError(self.env._(
+                    'A One Time subscription is perpetual and cannot be '
+                    'renewed (subscription "%s").', sub.name))
             if sub.status not in self._RENEWABLE_STATUSES:
                 raise ValidationError(
                     self.env._(

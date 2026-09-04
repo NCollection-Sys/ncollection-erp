@@ -113,3 +113,44 @@ class TestWebclientBranding(TransactionCase):
                 os.path.exists(os.path.join(module_dir, *rel_path.split("/"))),
                 "%s must exist (declared in web.assets_backend)" % rel_path,
             )
+
+
+@tagged('post_install', '-at_install')
+class TestOdooTourIsOff(TransactionCase):
+    """The Odoo onboarding tour feature is disabled (#472).
+
+    Two halves, both asserted, because either alone is a half-fix: the server
+    flag is what stops tours being SERVED (web_tour/models/tour.py gates on
+    `tour_enabled`), and the frontend removal is what takes the Odoo-branded
+    "Onboarding" control out of the UI.
+    """
+
+    def test_tours_are_disabled_for_an_admin(self):
+        """web_tour enables them for exactly this user — an admin on a
+        database with no demo data, which is every NCollection platform and
+        every provisioned tenant."""
+        user = self.env.ref('base.user_admin')
+        self.assertIn('tour_enabled', user._fields,
+                      'control: web_tour is not installed, so this proves nothing')
+        user.invalidate_recordset(['tour_enabled'])
+        self.assertFalse(user.tour_enabled)
+
+    def test_a_new_user_gets_tours_disabled_too(self):
+        user = self.env['res.users'].create({
+            'name': 'Tourless', 'login': 'tourless@example.test',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
+        self.assertFalse(user.tour_enabled)
+
+    def test_the_onboarding_control_is_removed_in_the_client(self):
+        """The registry entry web_tour's service adds. Asserted on the asset
+        source because the repo has no JS unit runner — the browser behaviour
+        is covered by the live verification in the PR."""
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'static', 'src', 'js', 'white_label.js')
+        with open(path, encoding='utf-8') as handle:
+            source = handle.read()
+        self.assertIn('debugDefaultRegistry.remove(ONBOARDING_ITEM)', source)
+        self.assertIn('addEventListener("UPDATE"', source,
+                      'a one-shot remove() would run before the tour service '
+                      'registers the item and so do nothing at all')

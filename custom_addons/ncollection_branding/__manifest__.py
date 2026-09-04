@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.6.0',
+    'version': '19.0.1.7.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection corporate branding: logo, colors, favicon',
     'description': """
@@ -19,7 +19,15 @@ Applies NCollection corporate identity across the Odoo backend:
     # pages; auth_signup: the login page injects the reset-password / signup
     # links that P1-T14 relabels. All three are auto-installed core addons,
     # always present.
-    'depends': ['web', 'mail', 'base_setup', 'http_routing', 'auth_signup'],
+    # web_tour: DECLARED, not inherited (#472). models/res_users.py overrides
+    # its `_compute_tour_enabled`, so web_tour must load BEFORE this module or
+    # the super() call has nothing to reach. It is a core Odoo module that
+    # `web` already pulls in — naming it adds no dependency, it fixes the order.
+    'depends': ['web', 'web_tour', 'mail', 'base_setup', 'http_routing', 'auth_signup'],
+    # #472: existing users keep whatever web_tour computed at ITS install, and
+    # the compute only fires on user creation — so a fresh install needs this
+    # to reach the admin account that already exists.
+    'post_init_hook': 'post_init_hook',
     'data': [
         'views/webclient_templates.xml',
         'views/login_templates.xml',
