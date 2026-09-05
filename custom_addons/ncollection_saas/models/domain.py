@@ -102,8 +102,11 @@ class NcollectionDomain(models.Model):
 
     @api.model
     def _base_domain(self):
-        return (self.env['ir.config_parameter'].sudo().get_param(
-            _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN) or '').strip().lower()
+        # ONE definition (#476). It moved to ncollection.tenant so the tenant
+        # model — which this module depends on, not the reverse — can build a
+        # tenant URL from it too. A second copy here is how a platform ends up
+        # with the domain configured in one place and read from another.
+        return self.env['ncollection.tenant']._nc_base_domain()
 
     @api.model
     def _wildcard_expiry(self):
@@ -119,9 +122,14 @@ class NcollectionDomain(models.Model):
 
     @api.model
     def _fqdn_for_tenant(self, tenant):
-        """Subdomain FQDN for a tenant: <db>.<base-domain>. tenant key ===
-        subdomain === database name (CLAUDE.md), so database_name is the label."""
-        label = (tenant.database_name or '').strip().lower()
+        """Subdomain FQDN for a tenant: <label>.<base-domain>.
+
+        #476: the label is now `tenant.subdomain`, which FALLS BACK to
+        database_name — so every tenant provisioned before that field existed
+        keeps exactly the FQDN it already had, and the records this model
+        maintains need no migration.
+        """
+        label = tenant._nc_subdomain_label()
         return '%s.%s' % (label, self._base_domain()) if label else False
 
     # ---- provisioning hook + reconciliation ------------------------------

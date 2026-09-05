@@ -21,3 +21,4 @@ from . import module_install
 # #469: the deliberate, guarded path for localizing an EXISTING tenant DB.
 # After module_install so the tenant model's SaaS extensions are all in place.
 from . import tenant_localization
+from . import res_config_settings

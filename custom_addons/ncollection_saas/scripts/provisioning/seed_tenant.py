@@ -38,6 +38,19 @@ import secrets
 # that is never disclosed, plus a forced reset.
 dev_password = (os.environ.get('NC_DEV_SEED_PASSWORD') or '').strip()
 
+# #476. The administrator signs in with a USERNAME. `res.users.login` has always
+# been a username field that merely accepts an address, so using the email as
+# the credential was a choice, not a constraint — and it welded the customer's
+# contact address to their login: change one and you changed the other.
+#
+# NC_ADMIN_LOGIN falls back to the email platform-side, so a tenant created by a
+# flow that sets no username gets exactly the login it always got.
+admin_login = (os.environ.get('NC_ADMIN_LOGIN') or '').strip()
+# An operator-chosen password. Distinct from NC_DEV_SEED_PASSWORD (#475), which
+# is a blanket local-development switch: this one is per-tenant, deliberate, and
+# erased from the platform record as soon as it has been applied here.
+admin_password = os.environ.get('NC_ADMIN_PASSWORD') or ''
+
 company_name = os.environ.get('NC_COMPANY', 'Tenant')
 admin_email = (os.environ.get('NC_ADMIN_EMAIL') or '').strip()
 allowed_modules = os.environ.get('NC_ALLOWED_MODULES', '')
@@ -58,16 +71,23 @@ if portal_url:
 #    token is generated WITHOUT sending mail (no SMTP dependency at provisioning
 #    time). The reset URL is printed below for the platform-side welcome email.
 admin = env.ref('base.user_admin')  # noqa: F821
+# Precedence, most specific first: the password an operator typed for THIS
+# tenant, then the local-development blanket (#475), then the hardened default.
+chosen_password = admin_password or dev_password
 admin_vals = {
     'name': '%s Admin' % company_name,
-    # PRODUCTION PATH (unchanged): unguessable, never disclosed.
-    'password': dev_password or secrets.token_urlsafe(32),
+    # PRODUCTION PATH (unchanged when nothing was chosen): unguessable, never
+    # disclosed, and paired with the forced reset below.
+    'password': chosen_password or secrets.token_urlsafe(32),
 }
+# #476: LOGIN and EMAIL are set independently. The login is the username; the
+# email is contact information that notifications and password recovery use.
+if admin_login:
+    admin_vals['login'] = admin_login
 if admin_email:
-    admin_vals['login'] = admin_email
     admin_vals['email'] = admin_email
 admin.write(admin_vals)
-if not dev_password:
+if not chosen_password:
     # The forced reset is what makes the tenant "born hardened". It is skipped
     # ONLY on the dev path, because a reset token would immediately invalidate
     # the very password the developer was handed.
@@ -126,11 +146,18 @@ else:
 
 env.cr.commit()  # noqa: F821
 
-if dev_password:
-    # DEV ONLY. Printed so the credentials reach the provisioning job log, which
-    # is where an operator actually looks — one line, parsed platform-side.
-    # There is no production path to this print: it is inside the same guard
-    # that set the password.
+if admin_password:
+    # #476: an operator set this password deliberately, so they already know
+    # it — the LOGIN is what the job log needs to report, and the password is
+    # deliberately NOT echoed. It is about to be erased from the platform
+    # record; printing it into a log would put it straight back.
+    print("SEED_ADMIN_LOGIN=%s" % admin.login)
+    print("SEED_OK")
+elif dev_password:
+    # DEV ONLY (#475). Printed so the credentials reach the provisioning job
+    # log, which is where an operator actually looks — one line, parsed
+    # platform-side. There is no production path to this print: it is inside
+    # the same guard that set the password.
     print("SEED_DEV_CREDENTIALS=url=%s login=%s password=%s"
           % (portal_url or '(unset)', admin.login, dev_password))
     print("SEED_OK")

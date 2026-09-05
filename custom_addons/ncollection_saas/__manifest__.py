@@ -31,7 +31,7 @@
     # Pure Python, no schema change — a restart is enough and `-u` is not
     # required — but it is a real behaviour change on the platform's only
     # outbound call, so it gets traceability like #275's and #243's.
-    'version': '19.0.6.9.0',
+    'version': '19.0.6.10.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',
@@ -42,7 +42,8 @@
     #   drive. ncollection_branding: installed into every tenant DB. queue_job:
     #   OCA async runner (repos.yml, pinned) that runs provisioning OFF the HTTP
     #   workers — the isolation guarantee (ARCHITECTURE_DATA_PLATFORM §10).
-    'depends': ['ncollection_subscription', 'ncollection_branding', 'queue_job'],
+    # base_setup: the settings form this module adds its SaaS section to (#476).
+    'depends': ['ncollection_subscription', 'ncollection_branding', 'base_setup', 'queue_job'],
     'data': [
         'security/ir.model.access.csv',
         'data/provisioning_data.xml',
@@ -51,6 +52,8 @@
         'data/domain_data.xml',
         'data/backup_data.xml',
         'data/fleet_migration_data.xml',
+        # #476: surfaces the base domain, which drives every tenant URL.
+        'views/res_config_settings_views.xml',
         'views/provisioning_job_views.xml',
         # #455: module + config-sync visibility on the tenant form.
         'views/tenant_views.xml',

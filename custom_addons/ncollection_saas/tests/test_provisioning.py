@@ -255,8 +255,14 @@ class TestDevSeedPassword(TransactionCase):
         variable being EMPTY — asserted on the source, because the alternative
         is running a real subprocess against a real database."""
         source = self._seed_source()
-        self.assertIn("dev_password or secrets.token_urlsafe(32)", source)
-        self.assertIn("if not dev_password:", source)
+        # #476 added a SECOND way to choose a password (an operator setting one
+        # for this tenant), so the guard is now `chosen_password` — the union of
+        # both — rather than the dev variable alone. The property being pinned
+        # is unchanged: with nothing chosen, the password is random and the
+        # reset is forced.
+        self.assertIn("chosen_password = admin_password or dev_password", source)
+        self.assertIn("chosen_password or secrets.token_urlsafe(32)", source)
+        self.assertIn("if not chosen_password:", source)
         self.assertIn("signup_prepare(signup_type='reset')", source)
 
     def test_the_variable_is_the_password_not_a_boolean_flag(self):

@@ -128,7 +128,10 @@ class CheckoutController(http.Controller):
             'company_name': company,
             'contact_name': contact,
             'email': email,
-            'domain': subdomain,
+            # #476: this was writing to a dead free-text Char that nothing
+            # read. The signup form always collected a real subdomain; it now
+            # lands in the field that actually builds the tenant's URL.
+            'subdomain': subdomain,
             'database_name': subdomain,
             'plan_id': plan_rec.id,
             'status': 'trial',

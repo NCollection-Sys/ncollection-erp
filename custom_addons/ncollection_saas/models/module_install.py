@@ -211,3 +211,29 @@ class TenantModuleInstall(models.Model):
             ('plan_id', '=', plan.id),
             ('database_status', '=', 'ready'),
         ]).filtered(lambda t: t._nc_licensed_module_list())
+
+
+class TenantEntitlementPush(models.Model):
+    """Deliver an entitlement change to the tenant (#476).
+
+    `ncollection.tenant._nc_push_entitlement_change()` is a no-op stub in
+    ncollection_subscription, which cannot reach the queue or the install
+    engine. This is where it does the work — through the SAME two hooks a plan
+    edit already uses, so a per-tenant override reaches the tenant by exactly
+    the route a plan change does: queued, deduplicated by identity_key, and
+    retryable. No second install path, no second sync.
+    """
+    _inherit = 'ncollection.tenant'
+
+    def _nc_push_entitlement_change(self):
+        ready = self.filtered(
+            lambda t: t.database_status == 'ready' and t.database_name)
+        if not ready:
+            return True
+        # Licensing first: it is what Ring 1/Ring 2 read, so a REVOKED module
+        # stops being reachable immediately rather than after an install job
+        # that has nothing to do. A newly GRANTED module then needs installing,
+        # and installing one that is already present is a no-op.
+        ready._config_sync_enqueue()
+        ready._nc_enqueue_module_install()
+        return True

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ncollection_saas_config_settings" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.ncollection.saas</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="NCollection SaaS" name="ncollection_saas"
+                     logo="/ncollection_subscription/static/description/icon.png">
+                    <block title="Tenant Addressing"
+                           help="Every tenant is reachable at &lt;subdomain&gt;.&lt;base domain&gt;. Changing the base domain changes the URL of every tenant at once.">
+                        <setting id="nc_base_domain_setting" string="Base Domain"
+                                 help="Production routing also needs wildcard DNS for *.&lt;base domain&gt;, a matching wildcard certificate, and a reverse proxy that forwards the Host header — see docs/markdown/ROUTING.md.">
+                            <field name="nc_base_domain" placeholder="ncollectionerp.com"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_ncollection_saas_settings" model="ir.actions.act_window">
+        <field name="name">SaaS Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'module': 'ncollection_saas'}</field>
+    </record>
+
+    <menuitem id="menu_ncollection_saas_settings"
+              name="Settings"
+              parent="ncollection_subscription.menu_ncollection_saas_root"
+              action="action_ncollection_saas_settings"
+              groups="base.group_system"
+              sequence="90"/>
+
+</odoo>

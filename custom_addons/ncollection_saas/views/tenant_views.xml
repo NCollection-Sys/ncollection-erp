@@ -28,10 +28,7 @@
                     <button name="action_install_licensed_modules" type="object"
                             string="Install Licensed Modules" class="btn-primary"
                             invisible="database_status != 'ready'"
-                            confirm="This installs the plan's modules into the tenant's
-                                     database. It runs in an isolated process and is safe
-                                     to repeat — already-installed modules are untouched.
-                                     Continue?"
+                            confirm="Install this plan's modules into the tenant's database? It runs in an isolated process and is safe to repeat — modules that are already installed are left untouched."
                             help="Install this plan's modules into the tenant database so
                                   the licensed applications actually work. Licensing alone
                                   only makes them visible."/>
@@ -49,14 +46,15 @@
                          a second chart on the first. A database holding
                          accounting entries is refused outright; one already on
                          the target chart is a no-op, so retrying is safe. -->
+                    <!-- #476: the confirm text is ONE line in the source on
+                         purpose. Odoo renders the attribute verbatim, so the
+                         indented continuation lines this used to have became
+                         runs of whitespace inside the modal and the sentence
+                         broke across the dialog at arbitrary points. -->
                     <button name="action_apply_localization" type="object"
                             string="Apply Country Localization"
                             invisible="database_status != 'ready' or not country_id"
-                            confirm="This loads the country's chart of accounts and
-                                     currency into the tenant's EXISTING database. It is
-                                     refused if the tenant already has accounting entries,
-                                     and does nothing if the localization is already
-                                     applied. Continue?"
+                            confirm="Load this country's accounting localization — chart of accounts and currency — into the tenant's existing database? This is refused if the tenant already has accounting entries, and does nothing if the localization has already been applied."
                             help="For a tenant provisioned before its country was set.
                                   New tenants are localized at provisioning, which is the
                                   only moment a chart of accounts can be loaded safely."/>
@@ -68,54 +66,88 @@
             </xpath>
 
             <xpath expr="//notebook" position="inside">
-                <page string="Modules &amp; Config Sync">
+                <!-- #476: modules and config sync were one undifferentiated tab
+                     with the module set rendered as a comma-separated blob. They
+                     are two different questions — "what is this customer
+                     entitled to" and "did the last push land" — so they are now
+                     two tabs, and entitlement is a table rather than a string. -->
+                <page string="Modules" name="modules">
                     <div class="alert alert-info" role="status">
-                        Modules come from the <strong>subscription plan</strong>
-                        (<field name="plan_id" readonly="1" nolabel="1" class="oe_inline"/>) —
-                        edit them on the plan's <em>Modules</em> tab. Saving there queues a
-                        push to every tenant on that plan; the state below is this
-                        tenant's own result.
-                        <br/>
-                        Newly provisioned tenants get these modules <strong>installed</strong>
-                        at creation. For a tenant that already exists, <strong>adding</strong> a
-                        module to the plan now queues the installation automatically for every
-                        ready tenant on it, then re-syncs licensing (#461) — the button above
-                        stays for retrying a failure or forcing a re-run.
-                        <br/>
-                        Removing a module from the plan hides it and blocks its data; it is
-                        <strong>not</strong> uninstalled, because dropping a module's tables
-                        would destroy customer data that cannot be restored.
+                        Entitlement is the <strong>plan</strong>
+                        (<field name="plan_id" readonly="1" nolabel="1" class="oe_inline"/>)
+                        plus the country localization, minus anything disabled for this
+                        tenant below. Editing the plan changes it for
+                        <strong>every</strong> tenant on that plan; the overrides below
+                        change only this one.
                     </div>
+
                     <group>
-                        <group string="Licensed Modules">
+                        <group string="Entitlement">
                             <field name="effective_module_names" readonly="1"
                                    placeholder="Core modules only"/>
                         </group>
-                        <group string="Last Push To This Tenant">
-                            <field name="config_sync_state" widget="badge"
-                                   decoration-success="config_sync_state == 'ok'"
-                                   decoration-warning="config_sync_state == 'transient'"
-                                   decoration-danger="config_sync_state == 'needs_attention'"/>
-                            <field name="config_sync_last_ok" readonly="1"/>
-                            <field name="config_sync_failure_count" readonly="1"/>
-                            <field name="config_sync_last_error" readonly="1"
-                                   invisible="not config_sync_last_error"/>
-                        </group>
-                        <!-- #459: installation is a separate fact from licensing,
-                             so it gets its own state rather than being implied by
-                             a green sync. -->
-                        <group string="Installation Into The Database">
+                        <group string="Installation">
+                            <!-- #459: installation is a separate fact from
+                                 licensing, so it gets its own state rather than
+                                 being implied by a green sync. -->
                             <field name="module_install_state" widget="badge"
                                    decoration-success="module_install_state == 'done'"
                                    decoration-info="module_install_state in ('queued', 'running')"
                                    decoration-danger="module_install_state == 'failed'"/>
-                            <field name="module_install_last_ok" readonly="1"/>
+                            <field name="module_install_last_ok" readonly="1"
+                                   invisible="not module_install_last_ok"/>
                             <field name="module_install_last_error" readonly="1"
                                    invisible="not module_install_last_error"/>
                         </group>
                     </group>
+
+                    <separator string="Overrides For This Tenant Only"/>
+                    <div class="text-muted mb-2">
+                        A row here is a deliberate exception to the plan.
+                        <strong>Disabled</strong> withdraws a module the plan grants;
+                        <strong>Added</strong> grants one it does not. Removing the row
+                        restores exactly what the plan says. Disabling withdraws the
+                        licence and hides the app — it never uninstalls the module or
+                        deletes any data.
+                    </div>
+                    <field name="module_override_ids" nolabel="1"
+                           context="{'default_tenant_id': id}">
+                        <list editable="bottom">
+                            <field name="module_name" placeholder="e.g. crm"/>
+                            <field name="mode" widget="badge"
+                                   decoration-danger="mode == 'disable'"
+                                   decoration-success="mode == 'enable'"/>
+                            <field name="reason" placeholder="Why this tenant differs"/>
+                        </list>
+                    </field>
+
                     <group string="Installation Log" invisible="not module_install_log">
                         <field name="module_install_log" readonly="1" nolabel="1"/>
+                    </group>
+                </page>
+
+                <page string="Config Sync" name="config_sync">
+                    <div class="text-muted mb-3">
+                        Configuration synchronisation pushes this tenant's entitlement,
+                        limits and subscription status into its own database, where
+                        licensing is enforced. It runs automatically on every change and
+                        is retried by a reconciliation cron; the buttons in the header
+                        force it now.
+                    </div>
+                    <group>
+                        <group string="Last Push">
+                            <field name="config_sync_state" widget="badge"
+                                   decoration-success="config_sync_state == 'ok'"
+                                   decoration-warning="config_sync_state == 'transient'"
+                                   decoration-danger="config_sync_state == 'needs_attention'"/>
+                            <field name="config_sync_last_ok" readonly="1"
+                                   invisible="not config_sync_last_ok"/>
+                        </group>
+                        <group string="Failures">
+                            <field name="config_sync_failure_count" readonly="1"/>
+                            <field name="config_sync_last_error" readonly="1"
+                                   invisible="not config_sync_last_error"/>
+                        </group>
                     </group>
                 </page>
             </xpath>

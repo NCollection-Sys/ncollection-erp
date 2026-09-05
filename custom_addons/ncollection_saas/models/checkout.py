@@ -20,7 +20,8 @@ import secrets
 
 import requests
 
-from odoo import fields, models
+from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -91,6 +92,59 @@ class TenantCheckout(models.Model):
         if deep and self.env['ncollection.provisioning.job'].sudo()._database_exists(subdomain):
             return False, 'taken'
         return True, ''
+
+    # ---- the same rule, applied to the admin form (#476) ------------------
+
+    _SUBDOMAIN_REASONS = {
+        'invalid': "'%s' is not a valid subdomain. Use 3-63 characters — "
+                   "lowercase letters and digits, starting with a letter (no "
+                   "spaces, dots, hyphens, underscores or capitals).",
+        'reserved': "The subdomain '%s' is reserved by the platform and cannot "
+                    "be given to a tenant.",
+        'taken': "The subdomain '%s' is already in use by another tenant or "
+                 "database.",
+    }
+
+    @api.constrains('subdomain')
+    def _nc_check_subdomain(self):
+        """Validate the admin-entered subdomain with the SAME rule the public
+        signup uses (#476).
+
+        The field is declared in ncollection_subscription, which cannot import
+        this layer; the check therefore lives here, where the format rule, the
+        reserved lists and the availability probe already exist for checkout. A
+        second copy over there would be two answers to one question — and the
+        divergence would show up as a tenant the signup flow would have refused
+        but an operator was allowed to create.
+
+        `deep=False`: an operator is editing a record, not racing the cluster
+        for a name, and the physical probe opens a connection per call. The
+        authoritative deep check still runs at register/provisioning time.
+        """
+        for tenant in self:
+            raw = tenant.subdomain
+            if not raw:
+                # Empty is legal: the label falls back to database_name, which
+                # is how every tenant created before this field behaves.
+                continue
+            label = self._nc_normalize_subdomain(raw)
+            available, reason = tenant._nc_subdomain_availability(label, deep=False)
+            if available:
+                continue
+            # 'taken' is checked against database_name by the shared helper (the
+            # two are the same label under db_filter=^%d$); a tenant whose own
+            # database carries this name is not a collision with itself.
+            if reason == 'taken' and tenant.database_name == label:
+                continue
+            clash = self.sudo().search(
+                [('id', '!=', tenant.id), ('subdomain', '=', label)], limit=1)
+            if reason == 'taken' and clash:
+                raise ValidationError(self.env._(
+                    "The subdomain '%(label)s' is already used by tenant "
+                    "'%(other)s'.", label=label, other=clash.company_name))
+            raise ValidationError(self.env._(
+                self._SUBDOMAIN_REASONS.get(reason, "Invalid subdomain '%s'."),
+                label))
 
     # ---- abuse controls (§11) --------------------------------------------
 

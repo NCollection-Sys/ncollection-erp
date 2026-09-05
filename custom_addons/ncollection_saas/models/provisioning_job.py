@@ -297,6 +297,15 @@ class ProvisioningJob(models.Model):
         env_vars.update({
             'NC_COMPANY': tenant.company_name or 'Tenant',
             'NC_ADMIN_EMAIL': tenant.email or '',
+            # #476: USERNAME and EMAIL are now separate. The login falls back to
+            # the email, so a tenant created by any flow that does not set a
+            # username (the public checkout, an import) gets exactly the login
+            # it would have got before this field existed.
+            'NC_ADMIN_LOGIN': tenant._nc_admin_login(),
+            # An operator-chosen password, applied ONCE and then erased from the
+            # platform record (see _mark_done). Empty keeps the hardened default:
+            # an unguessable password nobody is told, plus a forced reset.
+            'NC_ADMIN_PASSWORD': tenant.sudo().admin_password or '',
             # #451: an unset Text field is ORM False, not '' -- os.fsencode()
             # (used by subprocess.run's env= encoding) then raises "expected
             # str, bytes or os.PathLike object, not bool" and the whole
@@ -446,6 +455,10 @@ class ProvisioningJob(models.Model):
             'database_status': 'ready',
             'portal_url': tenant.portal_url or self._portal_url(db),
         })
+        # #476: the tenant's own database now holds the credential, so the
+        # platform stops holding it. The window in which a usable tenant password
+        # sits on the platform database is exactly the queue latency, not forever.
+        tenant._nc_clear_admin_password()
         if tenant.onboarding_stage == 'signup':
             tenant.onboarding_stage = 'setup'
         # Align the tenant lifecycle with its now-active subscription (guarded:

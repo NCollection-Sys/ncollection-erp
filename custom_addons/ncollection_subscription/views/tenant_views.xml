@@ -10,10 +10,15 @@
                   decoration-warning="status == 'suspended'"
                   decoration-muted="status == 'expired'">
                 <field name="company_name"/>
-                <field name="domain"/>
-                <field name="contact_name"/>
-                <field name="email"/>
-                <field name="plan_id"/>
+                <field name="tenant_url" widget="url" optional="show"/>
+                <field name="plan_id" optional="show"/>
+                <field name="contact_name" optional="show"/>
+                <field name="email" optional="hide"/>
+                <field name="database_status" widget="badge" optional="show"
+                       decoration-success="database_status == 'ready'"
+                       decoration-info="database_status == 'provisioning'"
+                       decoration-muted="database_status == 'not_provisioned'"
+                       decoration-danger="database_status == 'error'"/>
                 <field name="status" widget="badge"
                        decoration-success="status == 'active'"
                        decoration-info="status == 'trial'"
@@ -30,72 +35,122 @@
             <form string="Tenant">
                 <header>
                     <!-- Quick lifecycle actions (P2-T15). Shown only for valid
-                         transitions (see tenant._TRANSITIONS). -->
+                         transitions (see tenant._ALLOWED_TRANSITIONS). -->
                     <button name="action_activate" string="Activate" type="object"
                             class="btn-primary" invisible="status not in ('trial', 'suspended')"/>
                     <button name="action_suspend" string="Suspend" type="object"
                             invisible="status != 'active'"/>
                     <button name="action_expire" string="Expire" type="object"
                             invisible="status not in ('trial', 'active', 'suspended')"/>
-                    <field name="status" widget="statusbar" statusbar_visible="trial,active,suspended,expired"/>
+                    <!-- COMMERCIAL status only. The database/provisioning status is
+                         a different axis and gets its own badge below; rendering
+                         both as statusbars made them read as one flow. -->
+                    <field name="status" widget="statusbar"
+                           statusbar_visible="trial,active,suspended,expired"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
+                        <label for="company_name" class="oe_edit_only"/>
                         <h1>
-                            <field name="company_name" placeholder="e.g. ABC Trading LLC"/>
+                            <field name="company_name" placeholder="e.g. Atlas Trading LLC"/>
                         </h1>
-                    </div>
-                    <group>
-                        <group string="Tenant Information">
-                            <!-- The name IS the tenant's database + subdomain identity.
-                                 Read-only while provisioning or once ready (immutable — see
-                                 the ORM mirror in ncollection_saas Tenant.write, #214-G);
-                                 still editable when not_provisioned or after an error, so an
-                                 admin can correct it and retry. -->
-                            <field name="database_name"
-                                   readonly="database_status in ('provisioning', 'ready')"/>
+                        <!-- The tenant's front door, where an operator looks for it:
+                             under the name, not buried in a list of fields. -->
+                        <h3 class="d-flex align-items-center gap-2 mt-1">
                             <field name="database_status" widget="badge"
                                    decoration-success="database_status == 'ready'"
                                    decoration-info="database_status == 'provisioning'"
                                    decoration-muted="database_status == 'not_provisioned'"
                                    decoration-danger="database_status == 'error'"/>
-                            <field name="tenant_uuid" readonly="1"/>
-                            <field name="domain"/>
-                            <field name="plan_id"/>
-                            <!-- #469: DRIVES provisioning, does not describe
-                                 it. Set before provisioning: the localization
-                                 package is installed in the same step that
-                                 creates the database, because that is the only
-                                 moment a chart of accounts can be loaded
-                                 safely. Changing it afterwards does NOT
-                                 re-localize an existing database. -->
-                            <field name="country_id"/>
+                            <field name="tenant_url" widget="url" readonly="1"
+                                   nolabel="1" class="oe_inline"
+                                   invisible="not tenant_url"/>
+                        </h3>
+                    </div>
+
+                    <!-- EMPTY STATE. A tenant with no database is the normal state
+                         right after creation, and a page of blank technical fields
+                         reads as broken rather than as "nothing has happened yet". -->
+                    <div class="alert alert-info d-flex align-items-center gap-3"
+                         role="status" invisible="database_status != 'not_provisioned'">
+                        <i class="fa fa-database fa-2x" role="img" aria-label="Database"/>
+                        <div>
+                            <strong>This tenant has no database yet.</strong>
+                            <div class="text-muted">
+                                Provisioning creates it, installs the plan's modules and seeds
+                                the administrator account. Start it from the
+                                <em>Modules &amp; Config Sync</em> tab.
+                            </div>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="Tenant Overview">
+                            <field name="plan_id" placeholder="No subscription plan yet"/>
+                            <field name="subscription_id" invisible="not subscription_id"/>
+                            <field name="trial_end_date" invisible="status != 'trial'"/>
+                            <field name="country_id" placeholder="No country set"/>
                             <field name="localization_status" readonly="1"/>
-                            <!-- #455: what the plan licenses, so an admin can
-                                 answer "which modules does this customer have?"
-                                 without opening the plan. Read-only on purpose —
-                                 the plan is the single source of truth, and a
-                                 per-tenant override would be a second one. -->
-                            <field name="effective_module_names" readonly="1"
-                                   placeholder="Core modules only"/>
-                            <field name="subscription_id"/>
-                            <field name="trial_end_date"/>
+                        </group>
+                        <group string="Address">
+                            <!-- #476: subdomain, base domain and the resulting URL
+                                 shown together, because the operator is choosing a
+                                 LABEL and needs to see the host it produces. The
+                                 base domain is platform configuration, not a
+                                 per-tenant choice, so it is read-only here. -->
+                            <field name="subdomain"
+                                   placeholder="e.g. atlas (defaults to the database name)"/>
+                            <field name="base_domain" readonly="1"/>
+                            <field name="tenant_url" widget="url" readonly="1"/>
                         </group>
                         <group string="Contact">
-                            <field name="contact_name"/>
-                            <field name="email" widget="email"/>
-                            <field name="phone" widget="phone"/>
+                            <field name="contact_name" placeholder="No contact name"/>
+                            <!-- CONTACT information, never a credential (#476). The
+                                 administrator signs in with a username; this address
+                                 is for notices and password recovery. -->
+                            <field name="email" widget="email" placeholder="No email on file"/>
+                            <field name="phone" widget="phone" placeholder="No phone on file"/>
+                        </group>
+                        <!-- #476: the administrator account, stated as its own
+                             thing. Editable only until the database exists —
+                             afterwards the credential lives in the tenant's own
+                             database and is changed from the user's profile
+                             there, not from here. -->
+                        <group string="Administrator Account"
+                               groups="ncollection_subscription.group_platform_admin">
+                            <field name="admin_login"
+                                   placeholder="e.g. atlasadmin (defaults to the email)"
+                                   readonly="database_status in ('provisioning', 'ready')"/>
+                            <field name="admin_password" password="True"
+                                   invisible="database_status in ('provisioning', 'ready')"
+                                   placeholder="Leave empty to send a reset link instead"/>
+                            <field name="admin_password_confirm" password="True"
+                                   invisible="database_status in ('provisioning', 'ready') or not admin_password"/>
+                            <field name="admin_credentials_state" readonly="1"/>
+                            <div colspan="2" class="text-muted small"
+                                 invisible="database_status in ('provisioning', 'ready')">
+                                Leave the password empty and the tenant is born hardened:
+                                an unguessable password nobody is told, and the owner sets
+                                their own through the emailed reset link.
+                            </div>
+                            <div colspan="2" class="text-muted small"
+                                 invisible="database_status != 'ready'">
+                                The password now lives in the tenant's own database and was
+                                erased from here. It is changed from the user's profile
+                                inside the workspace.
+                            </div>
                         </group>
                     </group>
+
                     <notebook>
-                        <page string="Subscriptions">
+                        <page string="Subscriptions" name="subscriptions">
                             <field name="subscription_ids">
                                 <list>
                                     <field name="name"/>
                                     <field name="plan_id"/>
                                     <field name="billing_cycle"/>
                                     <field name="start_date"/>
-                                    <field name="end_date"/>
+                                    <field name="end_date" optional="show"/>
                                     <field name="status" widget="badge"
                                            decoration-success="status == 'active'"
                                            decoration-info="status == 'draft'"
@@ -104,27 +159,62 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Provisioning Jobs">
-                            <field name="provisioning_job_ids">
-                                <list>
-                                    <field name="database_name"/>
-                                    <field name="created_at"/>
-                                    <field name="completed_at"/>
-                                    <field name="status" widget="badge"
-                                           decoration-success="status == 'done'"
-                                           decoration-info="status == 'queued'"
-                                           decoration-warning="status == 'running'"
-                                           decoration-danger="status == 'failed'"/>
-                                </list>
-                            </field>
+                        <!-- SYSTEM / TECHNICAL, deliberately its own tab. These
+                             fields answer "what is this record doing" for an operator
+                             debugging it; answering that on the front page is what
+                             made the front page unreadable. -->
+                        <page string="System" name="system">
+                            <group>
+                                <group string="Database">
+                                    <!-- The name IS the tenant's Postgres identity.
+                                         Read-only while provisioning or once ready
+                                         (immutable — ORM mirror in ncollection_saas
+                                         Tenant.write, #214-G); editable when
+                                         not_provisioned or after an error so an admin
+                                         can correct it and retry. -->
+                                    <field name="database_name"
+                                           readonly="database_status in ('provisioning', 'ready')"
+                                           placeholder="Generated at provisioning"/>
+                                    <field name="database_status" widget="badge"
+                                           decoration-success="database_status == 'ready'"
+                                           decoration-info="database_status == 'provisioning'"
+                                           decoration-muted="database_status == 'not_provisioned'"
+                                           decoration-danger="database_status == 'error'"/>
+                                    <field name="portal_url" widget="url" readonly="1"
+                                           invisible="not portal_url"/>
+                                </group>
+                                <group string="Identity">
+                                    <field name="tenant_uuid" readonly="1"/>
+                                    <field name="onboarding_stage"/>
+                                    <field name="active"/>
+                                </group>
+                            </group>
+                            <group string="Provisioning Jobs">
+                                <field name="provisioning_job_ids" nolabel="1">
+                                    <list>
+                                        <field name="database_name"/>
+                                        <field name="created_at"/>
+                                        <field name="completed_at" optional="show"/>
+                                        <field name="status" widget="badge"
+                                               decoration-success="status == 'done'"
+                                               decoration-info="status == 'queued'"
+                                               decoration-warning="status == 'running'"
+                                               decoration-danger="status == 'failed'"/>
+                                    </list>
+                                </field>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <!-- Odoo 19's chatter element. This form was the LAST view in the
+                     repo still using the legacy `<div class="oe_chatter">`, which the
+                     form renderer does not recognise as the chatter slot: it rendered
+                     as a plain full-width block inside the renderer's flex row and
+                     squeezed the form sheet to ~33px on a wide viewport. That is the
+                     layout bug that presented as "broken at 100% zoom, fine at 110%" —
+                     at 110% the viewport is narrow enough that the renderer stacks
+                     into a column instead of using the row. -->
+                <chatter/>
             </form>
         </field>
     </record>
@@ -133,7 +223,26 @@
         <field name="name">ncollection.tenant.search</field>
         <field name="model">ncollection.tenant</field>
         <field name="arch" type="xml">
-            <search/>
+            <search string="Tenants">
+                <!-- One box that finds a tenant by any of the three names it
+                     legitimately has (#476): what a human calls it, its
+                     database, and the host it answers on. -->
+                <field name="company_name" string="Tenant"
+                       filter_domain="['|', '|', ('company_name', 'ilike', self), ('database_name', 'ilike', self), ('subdomain', 'ilike', self)]"/>
+                <field name="plan_id"/>
+                <field name="country_id"/>
+                <filter name="status_trial" string="Trial" domain="[('status', '=', 'trial')]"/>
+                <filter name="status_active" string="Active" domain="[('status', '=', 'active')]"/>
+                <filter name="status_suspended" string="Suspended" domain="[('status', '=', 'suspended')]"/>
+                <separator/>
+                <filter name="db_ready" string="Provisioned" domain="[('database_status', '=', 'ready')]"/>
+                <filter name="db_pending" string="Not Provisioned" domain="[('database_status', '=', 'not_provisioned')]"/>
+                <filter name="db_error" string="Provisioning Failed" domain="[('database_status', '=', 'error')]"/>
+                <separator/>
+                <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                <filter name="group_db_status" string="Database Status" context="{'group_by': 'database_status'}"/>
+                <filter name="group_plan" string="Plan" context="{'group_by': 'plan_id'}"/>
+            </search>
         </field>
     </record>
 
