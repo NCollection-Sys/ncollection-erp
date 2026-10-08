@@ -175,3 +175,23 @@ class TestReportHub(AccountTestInvoicingCommon):
             category = self.env.ref('ncollection_account_reports.menu_nc_reports_%s' % key)
             names += category.child_id.filtered('active').mapped('name')
         self.assertEqual(len(names), len(set(names)), names)
+
+    def test_filing_a_report_never_widens_who_can_see_it(self):
+        """A menu is visible only if its parent is, so moving a report out of
+        its app's 'Reporting' folder used to expose it to everyone allowed to
+        see the new parent (a Sales user got Sales Analysis, which natively
+        needs Sales / Administrator). The origin folder's groups travel with it."""
+        from odoo.addons.ncollection_account_reports.models.report_service import (
+            _ORIGIN_FOLDER_BY_MODULE,
+        )
+        self.Service._nc_arrange_menus()
+        for _key, entries in self.Service._nc_catalog():
+            for xmlid, _name in entries:
+                menu = self.env.ref(xmlid, raise_if_not_found=False)
+                folder_xmlid = _ORIGIN_FOLDER_BY_MODULE.get(xmlid.split('.')[0])
+                folder = folder_xmlid and self.env.ref(folder_xmlid, raise_if_not_found=False)
+                if not menu or not folder or not folder.group_ids:
+                    continue
+                self.assertTrue(
+                    menu.group_ids,
+                    '%s was filed out of a restricted folder and lost its restriction' % xmlid)

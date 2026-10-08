@@ -64,6 +64,29 @@ _CATEGORY_ICONS = {
 }
 
 
+# A menu is visible only if its PARENT is. Re-filing a report out of its app's
+# "Reporting" folder therefore silently widens who sees it (a Sales user would
+# suddenly see Sales Analysis, which natively needs Sales / Administrator). The
+# folder a menu used to live under is known by the module that owns it, and the
+# groups on that folder are carried onto the menu so moving it changes where it
+# is shown, never who is shown it. The underlying ACL/record rules already
+# refused such users; this keeps the menu consistent with them.
+_ORIGIN_FOLDER_BY_MODULE = {
+    'sale': 'sale.menu_sale_report',
+    'purchase': 'purchase.purchase_report_main',
+    'stock': 'stock.menu_warehouse_report',
+    'crm': 'crm.crm_menu_report',
+    'project': 'project.menu_project_report',
+    'hr': 'hr.hr_menu_hr_reports',
+    'hr_skills': 'hr.hr_menu_hr_reports',
+    'mis_builder': 'mis_builder.mis_report_finance_menu',
+    'account': 'account.menu_finance_reports',
+    'account_financial_report': 'account.menu_finance_reports',
+    'ncollection_account_assets': 'account.menu_finance_reports',
+    'ncollection_account_budget': 'account.menu_finance_reports',
+}
+
+
 class NcReportService(models.AbstractModel):
     _name = 'ncollection.report.service'
     _description = 'NCollection report hub and viewer service'
@@ -180,7 +203,8 @@ class NcReportService(models.AbstractModel):
             action = base.action.sudo().copy({'name': title, 'context': repr(context), 'path': False})
             menu = self.env['ir.ui.menu'].sudo().create({
                 'name': title, 'parent_id': base.parent_id.id,
-                'action': '%s,%s' % (action._name, action.id), 'sequence': 90})
+                'action': '%s,%s' % (action._name, action.id), 'sequence': 90,
+                'group_ids': [(6, 0, base.group_ids.ids)]})
             for name, rec in ((action_name, action), (menu_name, menu)):
                 IMD.create({'module': 'ncollection_account_reports', 'name': name,
                             'model': rec._name, 'res_id': rec.id, 'noupdate': True})
@@ -214,6 +238,9 @@ class NcReportService(models.AbstractModel):
                     vals['parent_id'] = category.id
                 if menu.sequence != seq * 10:
                     vals['sequence'] = seq * 10
+                inherited = self._nc_origin_groups(xmlid, menu)
+                if inherited:
+                    vals['group_ids'] = [(6, 0, inherited.ids)]
                 if not menu.active:
                     # A report we catalogued must be reachable; if an operator
                     # hid it on purpose they hide it via groups, not archiving.
@@ -240,6 +267,17 @@ class NcReportService(models.AbstractModel):
             _logger.info("ncollection_account_reports: re-filed %s report menu field(s)",
                          changed)
         return changed
+
+    @api.model
+    def _nc_origin_groups(self, xmlid, menu):
+        """Groups to carry onto a menu from the folder it was filed out of.
+        Only when the menu has none of its own (its own groups, if any, were
+        always part of the effective rule and stay)."""
+        if menu.group_ids:
+            return self.env['res.groups']
+        folder_xmlid = _ORIGIN_FOLDER_BY_MODULE.get(xmlid.split('.')[0])
+        folder = folder_xmlid and self.env.ref(folder_xmlid, raise_if_not_found=False)
+        return folder.sudo().group_ids if folder else self.env['res.groups']
 
     # ------------------------------------------------------------------
     # Landing page
@@ -290,7 +328,10 @@ class NcReportService(models.AbstractModel):
                      .get('nc_report_model')) or False
         if not model or model not in self.env:
             return True   # server/URL/other action: Odoo's own menu filter decided
-        return self.env[model].has_access('read') if model else True
+        # a report run CREATES its (private, transient) wizard, so that is the
+        # right to test for the engine viewer; a plain action only needs read
+        right = 'create' if action._name == 'ir.actions.client' else 'read'
+        return self.env[model].has_access(right)
 
     @api.model
     def _nc_eval_ctx(self, text):
