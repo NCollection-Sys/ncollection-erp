@@ -1,0 +1,28 @@
+// Shared scroll contract for NCollection client actions (the app shell).
+//
+// ROOT CAUSE this fixes. Odoo's `.o_action_manager` is a fixed-height box with
+// `overflow: hidden`. A native view scrolls because Odoo wraps it in `.o_action`
+// / `.o_content` (flex children that own the overflow). Our OWL client actions
+// are mounted DIRECTLY in `.o_action_manager` and each declared
+// `overflow-y: auto` with `min-height: 100%` but no height: the component grew to
+// its content (clientHeight == scrollHeight), so its own overflow never engaged
+// while the parent silently clipped it. On Home, the Reports hub, every report and
+// the dashboards the bottom of the page was unreachable.
+//
+// The contract: a client action root fills the action manager and owns the
+// vertical scroll. Every root MUST be listed here; test_app_shell_scroll.py walks
+// the registered client actions and fails when one is missing, so a new page
+// cannot ship with the same bug.
+.o_action_manager > :is(
+    .o_nc_home,
+    .o_nc_hub,
+    .o_nc_rep,
+    .nc-dashboard,
+    .nc-fin-dashboard,
+    .nc-playground
+) {
+    block-size: 100%;
+    min-block-size: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}

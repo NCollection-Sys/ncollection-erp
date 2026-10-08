@@ -8,3 +8,4 @@ from . import test_component_library
 from . import test_rtl_conformance
 from . import test_translations
 from . import test_language_switch_session
+from . import test_app_shell_scroll

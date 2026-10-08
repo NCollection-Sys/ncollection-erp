@@ -49,6 +49,8 @@ Applies NCollection corporate identity across the Odoo backend:
             'ncollection_branding/static/src/scss/theme_colors.scss',
             # #474: backend form layout correction (side chatter vs form sheet).
             'ncollection_branding/static/src/scss/form_layout.scss',
+            # Shared scroll contract for client-action roots (Home, hub, reports, dashboards).
+            'ncollection_branding/static/src/scss/app_shell.scss',
             # Shared OWL component library (UI-T02/#129) + its dev playground.
             'ncollection_branding/static/src/components/components.scss',
             'ncollection_branding/static/src/components/playground.scss',
