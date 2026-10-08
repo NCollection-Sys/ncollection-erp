@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    "Customize modules": the toggle list behind the tenant's Modules tab.
+
+    One row per module an administrator could switch on. The switch shows what
+    THIS TENANT will have; the "In the plan" column shows the shared baseline it
+    is measured against, and "Change" says in words what saving will do. Saving
+    writes per-tenant override rows only — it never edits the plan.
+-->
+<odoo>
+    <record id="view_ncollection_tenant_module_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.module.wizard.form</field>
+        <field name="model">ncollection.tenant.module.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Customize modules">
+                <field name="tenant_id" invisible="1"/>
+                <div class="alert alert-info" role="status">
+                    Switch modules on or off for <strong><field name="tenant_id" readonly="1" nolabel="1" class="oe_inline" options="{'no_open': True}"/></strong>
+                    only. <em>In the plan</em> is the shared baseline; <em>Change</em> shows how
+                    this tenant will differ from it. The plan and other tenants are not touched,
+                    and switching a module off never deletes its data.
+                </div>
+                <group>
+                    <field name="reason" placeholder="Why does this tenant differ from its plan? (optional)"/>
+                </group>
+                <field name="line_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0" no_open="1">
+                        <field name="label" force_save="1"/>
+                        <field name="module_name" optional="hide" force_save="1"/>
+                        <field name="in_plan" widget="boolean" string="In the plan" force_save="1"/>
+                        <field name="enabled" widget="boolean_toggle" readonly="locked"/>
+                        <field name="locked" column_invisible="1" force_save="1"/>
+                        <field name="change" widget="badge"
+                               decoration-info="change == 'added'"
+                               decoration-warning="change == 'removed'"/>
+                    </list>
+                </field>
+                <footer>
+                    <button string="Save changes" name="action_apply" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
