@@ -173,6 +173,8 @@ class NcollectionPartnerLedger(models.TransientModel):
                     'is_initial': False, 'partner_id': partner.id,
                     'label': line.name or line.move_id.ref or '',
                     'date': line.date, 'move_name': line.move_id.name,
+                    'move_id': line.move_id.id, 'move_line_id': line.id,
+                    **self._nc_source_ids(line),
                     'journal_id': line.journal_id.id,
                     'journal_name': line.journal_id.name,
                     'account_id': line.account_id.id,

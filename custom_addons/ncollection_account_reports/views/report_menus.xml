@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        The Reports app: one hub, seven business categories, and every report
+        client action. The ARRANGEMENT of other modules' report menus into these
+        categories lives in ncollection.report.service (one catalog drives the
+        menu tree, the landing page and the hidden duplicates) — this file only
+        creates the containers and this module's own entries.
+
+        Each engine report opens the shared client viewer; the report itself is
+        chosen by context.nc_report_model, so there is one viewer and no
+        per-report screen to keep in step.
+    -->
+    <record id="action_nc_report_hub" model="ir.actions.client">
+        <field name="name">Reports</field>
+        <field name="tag">ncollection_account_reports.report_hub</field>
+    </record>
+
+    <menuitem id="menu_nc_reports_root" name="Reports"
+              action="action_nc_report_hub" sequence="57"
+              web_icon="ncollection_account_reports,static/description/icon.png"/>
+    <menuitem id="menu_nc_reports_financial" name="Financial &amp; Accounting" parent="menu_nc_reports_root" sequence="10"/>
+    <menuitem id="menu_nc_reports_receivables" name="Receivables &amp; Payables" parent="menu_nc_reports_root" sequence="20"/>
+    <menuitem id="menu_nc_reports_sales" name="Sales" parent="menu_nc_reports_root" sequence="30"/>
+    <menuitem id="menu_nc_reports_purchases" name="Purchases" parent="menu_nc_reports_root" sequence="40"/>
+    <menuitem id="menu_nc_reports_inventory" name="Inventory" parent="menu_nc_reports_root" sequence="50"/>
+    <menuitem id="menu_nc_reports_tax" name="Tax" parent="menu_nc_reports_root" sequence="60"/>
+    <menuitem id="menu_nc_reports_management" name="Management &amp; Analytics" parent="menu_nc_reports_root" sequence="70"/>
+
+    <!-- The old flat folder is kept as a record (other modules parent their report menu to it) but is no longer shown. -->
+    <record id="menu_ncollection_account_reports" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <record id="action_nc_view_reference" model="ir.actions.client">
+        <field name="name">Account Balances</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.reference'}</field>
+    </record>
+    <menuitem id="menu_report_reference" name="Account Balances" parent="menu_nc_reports_root" action="action_nc_view_reference"/>
+    <record id="action_nc_view_trial_balance" model="ir.actions.client">
+        <field name="name">Trial Balance</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.trial.balance'}</field>
+    </record>
+    <menuitem id="menu_report_trial_balance" name="Trial Balance" parent="menu_nc_reports_root" action="action_nc_view_trial_balance"/>
+    <record id="action_nc_view_general_ledger" model="ir.actions.client">
+        <field name="name">General Ledger</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.general.ledger'}</field>
+    </record>
+    <menuitem id="menu_report_general_ledger" name="General Ledger" parent="menu_nc_reports_root" action="action_nc_view_general_ledger"/>
+    <record id="action_nc_view_balance_sheet" model="ir.actions.client">
+        <field name="name">Balance Sheet</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.balance.sheet'}</field>
+    </record>
+    <menuitem id="menu_report_balance_sheet" name="Balance Sheet" parent="menu_nc_reports_root" action="action_nc_view_balance_sheet"/>
+    <record id="action_nc_view_profit_loss" model="ir.actions.client">
+        <field name="name">Profit &amp; Loss</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.profit.loss'}</field>
+    </record>
+    <menuitem id="menu_report_profit_loss" name="Profit &amp; Loss" parent="menu_nc_reports_root" action="action_nc_view_profit_loss"/>
+    <record id="action_nc_view_cash_flow" model="ir.actions.client">
+        <field name="name">Cash Flow Statement</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.cash.flow'}</field>
+    </record>
+    <menuitem id="menu_report_cash_flow" name="Cash Flow Statement" parent="menu_nc_reports_root" action="action_nc_view_cash_flow"/>
+    <record id="action_nc_view_equity_changes" model="ir.actions.client">
+        <field name="name">Statement of Changes in Equity</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.equity.changes'}</field>
+    </record>
+    <menuitem id="menu_report_equity_changes" name="Statement of Changes in Equity" parent="menu_nc_reports_root" action="action_nc_view_equity_changes"/>
+    <record id="action_nc_view_financial_summary" model="ir.actions.client">
+        <field name="name">Financial Summary</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.summary'}</field>
+    </record>
+    <menuitem id="menu_report_financial_summary" name="Financial Summary" parent="menu_nc_reports_root" action="action_nc_view_financial_summary"/>
+    <record id="action_nc_view_partner_ledger" model="ir.actions.client">
+        <field name="name">Partner Ledger</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.partner.ledger'}</field>
+    </record>
+    <menuitem id="menu_report_partner_ledger" name="Partner Ledger" parent="menu_nc_reports_root" action="action_nc_view_partner_ledger"/>
+    <record id="action_nc_view_partner_statement" model="ir.actions.client">
+        <field name="name">Customer / Vendor Statement</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.statement'}</field>
+    </record>
+    <menuitem id="menu_report_partner_statement" name="Customer / Vendor Statement" parent="menu_nc_reports_root" action="action_nc_view_partner_statement"/>
+    <record id="action_nc_view_aged_partner" model="ir.actions.client">
+        <field name="name">Aged Receivable / Payable</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.aged.partner'}</field>
+    </record>
+    <menuitem id="menu_report_aged_partner" name="Aged Receivable / Payable" parent="menu_nc_reports_root" action="action_nc_view_aged_partner"/>
+    <record id="action_nc_view_profitability" model="ir.actions.client">
+        <field name="name">Profitability Report</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.profitability'}</field>
+    </record>
+    <menuitem id="menu_report_profitability" name="Profitability Report" parent="menu_nc_reports_root" action="action_nc_view_profitability"/>
+    <record id="action_nc_view_revenue_analysis" model="ir.actions.client">
+        <field name="name">Revenue Analysis</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.revenue'}</field>
+    </record>
+    <menuitem id="menu_report_revenue_analysis" name="Revenue Analysis" parent="menu_nc_reports_root" action="action_nc_view_revenue_analysis"/>
+    <record id="action_nc_view_expense_analysis" model="ir.actions.client">
+        <field name="name">Expense Analysis</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.expense'}</field>
+    </record>
+    <menuitem id="menu_report_expense_analysis" name="Expense Analysis" parent="menu_nc_reports_root" action="action_nc_view_expense_analysis"/>
+    <record id="action_nc_view_cost_center" model="ir.actions.client">
+        <field name="name">Cost Center Analysis</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.cost.center'}</field>
+    </record>
+    <menuitem id="menu_report_cost_center" name="Cost Center Analysis" parent="menu_nc_reports_root" action="action_nc_view_cost_center"/>
+    <record id="action_nc_view_profit_center" model="ir.actions.client">
+        <field name="name">Profit Center Analysis</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.profit.center'}</field>
+    </record>
+    <menuitem id="menu_report_profit_center" name="Profit Center Analysis" parent="menu_nc_reports_root" action="action_nc_view_profit_center"/>
+    <record id="action_nc_view_department" model="ir.actions.client">
+        <field name="name">Department Analysis</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.department'}</field>
+    </record>
+    <menuitem id="menu_report_department" name="Department Analysis" parent="menu_nc_reports_root" action="action_nc_view_department"/>
+    <record id="action_nc_view_uae_vat" model="ir.actions.client">
+        <field name="name">UAE FTA VAT 201 Return</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.uae.vat'}</field>
+    </record>
+    <menuitem id="menu_report_uae_vat" name="UAE FTA VAT 201 Return" parent="menu_nc_reports_root" action="action_nc_view_uae_vat"/>
+</odoo>

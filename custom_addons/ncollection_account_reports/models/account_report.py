@@ -15,7 +15,7 @@ import base64
 import io
 import logging
 
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -319,3 +319,31 @@ class NcollectionAccountReport(models.AbstractModel):
                     sheet.write(r, col, val or '')
         book.close()
         return base64.b64encode(stream.getvalue())
+
+    @api.model
+    def _nc_source_ids(self, line):
+        """Exact source records behind a journal item, for report drill-down.
+
+        Only ids that really exist are returned — a link is never fabricated.
+        Sale/purchase links are read when those apps are installed (this module
+        does not depend on them), and come from the invoice line's own link, the
+        same one Odoo's invoice form follows.
+        """
+        ids = {'payment_id': line.move_id.origin_payment_id.id or False,
+               'sale_order_id': False, 'purchase_order_id': False}
+        if 'sale_line_ids' in line._fields:
+            ids['sale_order_id'] = line.sale_line_ids[:1].order_id.id or False
+        if 'purchase_line_id' in line._fields:
+            ids['purchase_order_id'] = line.purchase_line_id.order_id.id or False
+        return ids
+
+    # ---- optional per-row detail (lazy, for the on-screen viewer) --------
+
+    def _nc_has_row_detail(self):
+        """True when ``_nc_row_detail`` can expand a summary row into the
+        documents behind it (Aged: a partner's open invoices)."""
+        return False
+
+    def _nc_row_detail(self, row_key):
+        """Rows behind one summary row, loaded only when the user opens it."""
+        raise NotImplementedError

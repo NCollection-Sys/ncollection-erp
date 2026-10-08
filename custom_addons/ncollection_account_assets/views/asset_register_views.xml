@@ -77,7 +77,14 @@
         <field name="target">new</field>
     </record>
 
+    <!-- Opens the shared NCollection report viewer (ncollection_account_reports);
+         the wizard action above stays for exports and direct use. -->
+    <record id="action_nc_view_asset_register" model="ir.actions.client">
+        <field name="name">Fixed Asset Register</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.asset.register'}</field>
+    </record>
     <menuitem id="menu_report_asset_register" name="Asset Register"
               parent="ncollection_account_reports.menu_ncollection_account_reports"
-              action="action_report_asset_register_wizard" sequence="90"/>
+              action="action_nc_view_asset_register" sequence="90"/>
 </odoo>

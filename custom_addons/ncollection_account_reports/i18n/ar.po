@@ -1,0 +1,646 @@
+# Arabic (ar) translation of ncollection_account_reports.
+# NCollection ERP — reporting hub and viewer. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_reports\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_account_reports
+msgid "Reports"
+msgstr "التقارير"
+
+#. module: ncollection_account_reports
+msgid "Financial & Accounting"
+msgstr "المالية والمحاسبة"
+
+#. module: ncollection_account_reports
+msgid "Receivables & Payables"
+msgstr "الذمم المدينة والدائنة"
+
+#. module: ncollection_account_reports
+msgid "Sales"
+msgstr "المبيعات"
+
+#. module: ncollection_account_reports
+msgid "Purchases"
+msgstr "المشتريات"
+
+#. module: ncollection_account_reports
+msgid "Inventory"
+msgstr "المخزون"
+
+#. module: ncollection_account_reports
+msgid "Tax"
+msgstr "الضرائب"
+
+#. module: ncollection_account_reports
+msgid "Management & Analytics"
+msgstr "الإدارة والتحليلات"
+
+#. module: ncollection_account_reports
+msgid "Statements, ledgers and account balances"
+msgstr "القوائم المالية ودفاتر الأستاذ وأرصدة الحسابات"
+
+#. module: ncollection_account_reports
+msgid "Partner ledgers, statements and ageing"
+msgstr "دفاتر الشركاء وكشوف الحساب وأعمار الديون"
+
+#. module: ncollection_account_reports
+msgid "Revenue by customer, product and salesperson"
+msgstr "الإيرادات حسب العميل والمنتج والبائع"
+
+#. module: ncollection_account_reports
+msgid "Spend by vendor and product"
+msgstr "المشتريات حسب المورّد والمنتج"
+
+#. module: ncollection_account_reports
+msgid "Stock levels, valuation and movements"
+msgstr "مستويات المخزون وتقييمه وحركاته"
+
+#. module: ncollection_account_reports
+msgid "VAT returns and tax reporting"
+msgstr "إقرارات ضريبة القيمة المضافة والتقارير الضريبية"
+
+#. module: ncollection_account_reports
+msgid "Profitability, budgets and analytical views"
+msgstr "الربحية والموازنات والتقارير التحليلية"
+
+#. module: ncollection_account_reports
+msgid "Financial statements, ledgers and business analysis, organised by area."
+msgstr "القوائم المالية ودفاتر الأستاذ وتحليلات الأعمال، مصنّفة حسب المجال."
+
+#. module: ncollection_account_reports
+msgid "Find a report…"
+msgstr "ابحث عن تقرير…"
+
+#. module: ncollection_account_reports
+msgid "Find a report"
+msgstr "ابحث عن تقرير"
+
+#. module: ncollection_account_reports
+msgid "Loading reports…"
+msgstr "جارٍ تحميل التقارير…"
+
+#. module: ncollection_account_reports
+msgid "Loading the report…"
+msgstr "جارٍ تحميل التقرير…"
+
+#. module: ncollection_account_reports
+msgid "No report matches your search."
+msgstr "لا يوجد تقرير مطابق لبحثك."
+
+#. module: ncollection_account_reports
+msgid "No reports are available for your account."
+msgstr "لا توجد تقارير متاحة لحسابك."
+
+#. module: ncollection_account_reports
+msgid "No entries for these filters"
+msgstr "لا توجد قيود لهذه المرشّحات"
+
+#. module: ncollection_account_reports
+msgid "Widen the period or clear a filter, then apply again."
+msgstr "وسّع الفترة أو أزل أحد المرشّحات ثم طبّق مرة أخرى."
+
+#. module: ncollection_account_reports
+msgid "Trial Balance"
+msgstr "ميزان المراجعة"
+
+#. module: ncollection_account_reports
+msgid "General Ledger"
+msgstr "دفتر الأستاذ العام"
+
+#. module: ncollection_account_reports
+msgid "Balance Sheet"
+msgstr "الميزانية العمومية"
+
+#. module: ncollection_account_reports
+msgid "Profit & Loss"
+msgstr "الأرباح والخسائر"
+
+#. module: ncollection_account_reports
+msgid "Cash Flow Statement"
+msgstr "قائمة التدفقات النقدية"
+
+#. module: ncollection_account_reports
+msgid "Statement of Changes in Equity"
+msgstr "قائمة التغيّرات في حقوق الملكية"
+
+#. module: ncollection_account_reports
+msgid "Account Balances"
+msgstr "أرصدة الحسابات"
+
+#. module: ncollection_account_reports
+msgid "Financial Summary"
+msgstr "الملخّص المالي"
+
+#. module: ncollection_account_reports
+msgid "Partner Ledger"
+msgstr "دفتر الأستاذ للشركاء"
+
+#. module: ncollection_account_reports
+msgid "Customer / Vendor Statement"
+msgstr "كشف حساب العميل / المورّد"
+
+#. module: ncollection_account_reports
+msgid "Aged Receivable / Payable"
+msgstr "أعمار الذمم المدينة / الدائنة"
+
+#. module: ncollection_account_reports
+msgid "Aged Receivable"
+msgstr "أعمار الذمم المدينة"
+
+#. module: ncollection_account_reports
+msgid "Aged Payable"
+msgstr "أعمار الذمم الدائنة"
+
+#. module: ncollection_account_reports
+msgid "Aged Partner Balance"
+msgstr "أعمار أرصدة الشركاء"
+
+#. module: ncollection_account_reports
+msgid "Partner Ledger — Customers"
+msgstr "دفتر الأستاذ للشركاء — العملاء"
+
+#. module: ncollection_account_reports
+msgid "Partner Ledger — Vendors"
+msgstr "دفتر الأستاذ للشركاء — الموردون"
+
+#. module: ncollection_account_reports
+msgid "Profitability Report"
+msgstr "تقرير الربحية"
+
+#. module: ncollection_account_reports
+msgid "Revenue Analysis"
+msgstr "تحليل الإيرادات"
+
+#. module: ncollection_account_reports
+msgid "Expense Analysis"
+msgstr "تحليل المصروفات"
+
+#. module: ncollection_account_reports
+msgid "Cost Center Analysis"
+msgstr "تحليل مراكز التكلفة"
+
+#. module: ncollection_account_reports
+msgid "Profit Center Analysis"
+msgstr "تحليل مراكز الربح"
+
+#. module: ncollection_account_reports
+msgid "Department Analysis"
+msgstr "تحليل الأقسام"
+
+#. module: ncollection_account_reports
+msgid "UAE FTA VAT 201 Return"
+msgstr "إقرار ضريبة القيمة المضافة (نموذج 201) — الهيئة الاتحادية للضرائب"
+
+#. module: ncollection_account_reports
+msgid "UAE VAT 201 Return"
+msgstr "إقرار ضريبة القيمة المضافة 201 — الإمارات"
+
+#. module: ncollection_account_reports
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_reports
+msgid "Period"
+msgstr "الفترة"
+
+#. module: ncollection_account_reports
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_account_reports
+msgid "Entries"
+msgstr "القيود"
+
+#. module: ncollection_account_reports
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_account_reports
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_account_reports
+msgid "Compare"
+msgstr "مقارنة"
+
+#. module: ncollection_account_reports
+msgid "Compare from"
+msgstr "مقارنة من"
+
+#. module: ncollection_account_reports
+msgid "Compare to"
+msgstr "مقارنة إلى"
+
+#. module: ncollection_account_reports
+msgid "Compare From"
+msgstr "مقارنة من"
+
+#. module: ncollection_account_reports
+msgid "Compare To"
+msgstr "مقارنة إلى"
+
+#. module: ncollection_account_reports
+msgid "Compare With"
+msgstr "قارن مع"
+
+#. module: ncollection_account_reports
+msgid "Comparison"
+msgstr "المقارنة"
+
+#. module: ncollection_account_reports
+msgid "No Comparison"
+msgstr "بدون مقارنة"
+
+#. module: ncollection_account_reports
+msgid "Previous Period"
+msgstr "الفترة السابقة"
+
+#. module: ncollection_account_reports
+msgid "Same Period Last Year"
+msgstr "الفترة نفسها من العام الماضي"
+
+#. module: ncollection_account_reports
+msgid "Custom Period"
+msgstr "فترة مخصّصة"
+
+#. module: ncollection_account_reports
+msgid "Journals"
+msgstr "اليوميات"
+
+#. module: ncollection_account_reports
+msgid "Accounts"
+msgstr "الحسابات"
+
+#. module: ncollection_account_reports
+msgid "Partners"
+msgstr "الشركاء"
+
+#. module: ncollection_account_reports
+msgid "Journal"
+msgstr "اليومية"
+
+#. module: ncollection_account_reports
+msgid "Account"
+msgstr "الحساب"
+
+#. module: ncollection_account_reports
+msgid "Partner"
+msgstr "الشريك"
+
+#. module: ncollection_account_reports
+msgid "Search…"
+msgstr "بحث…"
+
+#. module: ncollection_account_reports
+msgid "Apply"
+msgstr "تطبيق"
+
+#. module: ncollection_account_reports
+msgid "Reset"
+msgstr "إعادة الضبط"
+
+#. module: ncollection_account_reports
+msgid "Refresh"
+msgstr "تحديث"
+
+#. module: ncollection_account_reports
+msgid "Export"
+msgstr "تصدير"
+
+#. module: ncollection_account_reports
+msgid "Print"
+msgstr "طباعة"
+
+#. module: ncollection_account_reports
+msgid "Expand all"
+msgstr "إظهار الكل"
+
+#. module: ncollection_account_reports
+msgid "Collapse all"
+msgstr "طيّ الكل"
+
+#. module: ncollection_account_reports
+msgid "Excel (.xlsx)"
+msgstr "إكسل (.xlsx)"
+
+#. module: ncollection_account_reports
+msgid "PDF"
+msgstr "PDF"
+
+#. module: ncollection_account_reports
+msgid "Entry"
+msgstr "القيد"
+
+#. module: ncollection_account_reports
+msgid "Date"
+msgstr "التاريخ"
+
+#. module: ncollection_account_reports
+msgid "Label"
+msgstr "البيان"
+
+#. module: ncollection_account_reports
+msgid "Debit"
+msgstr "مدين"
+
+#. module: ncollection_account_reports
+msgid "Credit"
+msgstr "دائن"
+
+#. module: ncollection_account_reports
+msgid "Balance"
+msgstr "الرصيد"
+
+#. module: ncollection_account_reports
+msgid "Opening balance"
+msgstr "الرصيد الافتتاحي"
+
+#. module: ncollection_account_reports
+msgid "Opening Balance"
+msgstr "الرصيد الافتتاحي"
+
+#. module: ncollection_account_reports
+msgid "Closing Balance"
+msgstr "الرصيد الختامي"
+
+#. module: ncollection_account_reports
+msgid "Closing balance"
+msgstr "الرصيد الختامي"
+
+#. module: ncollection_account_reports
+msgid "Total / closing balance"
+msgstr "الإجمالي / الرصيد الختامي"
+
+#. module: ncollection_account_reports
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_reports
+msgid "Opening"
+msgstr "افتتاحي"
+
+#. module: ncollection_account_reports
+msgid "Closing"
+msgstr "ختامي"
+
+#. module: ncollection_account_reports
+msgid "entries"
+msgstr "قيود"
+
+#. module: ncollection_account_reports
+msgid "Item"
+msgstr "البند"
+
+#. module: ncollection_account_reports
+msgid "Payment"
+msgstr "دفعة"
+
+#. module: ncollection_account_reports
+msgid "Sale order"
+msgstr "أمر بيع"
+
+#. module: ncollection_account_reports
+msgid "Purchase order"
+msgstr "أمر شراء"
+
+#. module: ncollection_account_reports
+msgid "Open journal item"
+msgstr "فتح بند اليومية"
+
+#. module: ncollection_account_reports
+msgid "Show more (%s remaining)"
+msgstr "عرض المزيد (%s متبقٍّ)"
+
+#. module: ncollection_account_reports
+msgid "Posted Entries"
+msgstr "القيود المرحّلة"
+
+#. module: ncollection_account_reports
+msgid "All Entries"
+msgstr "جميع القيود"
+
+#. module: ncollection_account_reports
+msgid "Target Moves"
+msgstr "القيود المستهدفة"
+
+#. module: ncollection_account_reports
+msgid "Current"
+msgstr "الحالي"
+
+#. module: ncollection_account_reports
+msgid "Previous"
+msgstr "السابق"
+
+#. module: ncollection_account_reports
+msgid "Variance"
+msgstr "الفرق"
+
+#. module: ncollection_account_reports
+msgid "Variance %"
+msgstr "نسبة الفرق %"
+
+#. module: ncollection_account_reports
+msgid "Current Amount"
+msgstr "المبلغ الحالي"
+
+#. module: ncollection_account_reports
+msgid "Previous Amount"
+msgstr "المبلغ السابق"
+
+#. module: ncollection_account_reports
+msgid "As Of"
+msgstr "كما في"
+
+#. module: ncollection_account_reports
+msgid "As at"
+msgstr "كما في"
+
+#. module: ncollection_account_reports
+msgid "Period Start"
+msgstr "بداية الفترة"
+
+#. module: ncollection_account_reports
+msgid "Bucket size (days)"
+msgstr "طول الفترة (أيام)"
+
+#. module: ncollection_account_reports
+msgid "Report"
+msgstr "التقرير"
+
+#. module: ncollection_account_reports
+msgid "Customers"
+msgstr "العملاء"
+
+#. module: ncollection_account_reports
+msgid "Vendors"
+msgstr "الموردون"
+
+#. module: ncollection_account_reports
+msgid "Both"
+msgstr "كلاهما"
+
+#. module: ncollection_account_reports
+msgid "Revenue"
+msgstr "الإيرادات"
+
+#. module: ncollection_account_reports
+msgid "Expense"
+msgstr "المصروفات"
+
+#. module: ncollection_account_reports
+msgid "Gross Profit"
+msgstr "إجمالي الربح"
+
+#. module: ncollection_account_reports
+msgid "Net profit for the period"
+msgstr "صافي ربح الفترة"
+
+#. module: ncollection_account_reports
+msgid "TOTAL REVENUE"
+msgstr "إجمالي الإيرادات"
+
+#. module: ncollection_account_reports
+msgid "TOTAL EXPENSES"
+msgstr "إجمالي المصروفات"
+
+#. module: ncollection_account_reports
+msgid "TOTAL EQUITY"
+msgstr "إجمالي حقوق الملكية"
+
+#. module: ncollection_account_reports
+msgid "EQUITY"
+msgstr "حقوق الملكية"
+
+#. module: ncollection_account_reports
+msgid "TOTAL"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_reports
+msgid "OPERATING ACTIVITIES"
+msgstr "الأنشطة التشغيلية"
+
+#. module: ncollection_account_reports
+msgid "INVESTING ACTIVITIES"
+msgstr "الأنشطة الاستثمارية"
+
+#. module: ncollection_account_reports
+msgid "FINANCING ACTIVITIES"
+msgstr "الأنشطة التمويلية"
+
+#. module: ncollection_account_reports
+msgid "NET CHANGE IN CASH"
+msgstr "صافي التغيّر في النقد"
+
+#. module: ncollection_account_reports
+msgid "Cash at the beginning of the period"
+msgstr "النقد في بداية الفترة"
+
+#. module: ncollection_account_reports
+msgid "Cash at the end of the period"
+msgstr "النقد في نهاية الفترة"
+
+#. module: ncollection_account_reports
+msgid "Net cash from operating activities"
+msgstr "صافي النقد من الأنشطة التشغيلية"
+
+#. module: ncollection_account_reports
+msgid "Net cash from investing activities"
+msgstr "صافي النقد من الأنشطة الاستثمارية"
+
+#. module: ncollection_account_reports
+msgid "Net cash from financing activities"
+msgstr "صافي النقد من الأنشطة التمويلية"
+
+#. module: ncollection_account_reports
+msgid "Cost of Goods Sold"
+msgstr "تكلفة البضاعة المباعة"
+
+#. module: ncollection_account_reports
+msgid "Cost of Sales"
+msgstr "تكلفة المبيعات"
+
+#. module: ncollection_account_reports
+msgid "Operating Expenses"
+msgstr "المصروفات التشغيلية"
+
+#. module: ncollection_account_reports
+msgid "Other Operating Income"
+msgstr "إيرادات تشغيلية أخرى"
+
+#. module: ncollection_account_reports
+msgid "Sales Revenue"
+msgstr "إيرادات المبيعات"
+
+#. module: ncollection_account_reports
+msgid "Margin %"
+msgstr "الهامش %"
+
+#. module: ncollection_account_reports
+msgid "% of Revenue"
+msgstr "% من الإيرادات"
+
+#. module: ncollection_account_reports
+msgid "Over %d"
+msgstr "أكثر من %d"
+
+#. module: ncollection_account_reports
+msgid "Over 120"
+msgstr "أكثر من 120"
+
+#. module: ncollection_account_reports
+msgid "The report run expired — apply the filters again."
+msgstr "انتهت صلاحية تشغيل التقرير — طبّق المرشّحات مرة أخرى."
+
+#. module: ncollection_account_reports
+msgid "This is not a financial report."
+msgstr "هذا ليس تقريرًا ماليًا."
+
+#. module: ncollection_account_reports
+msgid "Bucket size must be a positive number of days."
+msgstr "يجب أن يكون طول الفترة عددًا موجبًا من الأيام."
+
+#. module: ncollection_account_reports
+msgid "A custom comparison needs both a Compare From and a Compare To date."
+msgstr "تتطلّب المقارنة المخصّصة تاريخَي بداية ونهاية للمقارنة."
+
+#. module: ncollection_account_reports
+msgid "The custom comparison period starts after it ends."
+msgstr "فترة المقارنة المخصّصة تبدأ بعد انتهائها."
+
+#. module: ncollection_account_reports
+msgid "The report period must fall within a single fiscal year — the From/To range crosses a fiscal-year boundary. Run one report per fiscal year."
+msgstr "يجب أن تقع فترة التقرير ضمن سنة مالية واحدة — النطاق يتجاوز حدود السنة المالية. شغّل تقريرًا لكل سنة مالية."
+
+#. module: ncollection_account_reports
+msgid "Export PDF"
+msgstr "تصدير PDF"
+
+#. module: ncollection_account_reports
+msgid "Export XLSX"
+msgstr "تصدير XLSX"
+
+#. module: ncollection_account_reports
+msgid "View"
+msgstr "عرض"
+
+#. module: ncollection_account_reports
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_account_reports
+msgid "Filters"
+msgstr "المرشّحات"
+
+#. module: ncollection_account_reports
+msgid "Position"
+msgstr "المركز المالي"
+
+#. module: ncollection_account_reports
+msgid "Scope"
+msgstr "النطاق"

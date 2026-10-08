@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_account_reports.ReportViewer">
+        <div class="o_nc_rep">
+            <t t-if="state.data">
+                <header class="o_nc_rep__head">
+                    <div class="o_nc_rep__titles">
+                        <h1 class="o_nc_rep__title" t-esc="state.data.title"/>
+                        <ul class="o_nc_rep__meta">
+                            <li><span class="o_nc_rep__meta-k">Company</span> <t t-esc="state.data.company"/></li>
+                            <li t-if="periodText"><span class="o_nc_rep__meta-k">Period</span> <t t-esc="periodText"/></li>
+                            <li><span class="o_nc_rep__meta-k">Currency</span> <t t-esc="state.data.currency.name"/></li>
+                            <li t-if="state.data.target_move"><span class="o_nc_rep__meta-k">Entries</span> <t t-esc="state.data.target_move"/></li>
+                        </ul>
+                    </div>
+                    <div class="o_nc_rep__actions">
+                        <button class="btn btn-secondary" type="button" t-on-click="apply" title="Refresh">
+                            <i class="fa fa-refresh" aria-hidden="true"/> Refresh
+                        </button>
+                        <button t-if="showExpand" class="btn btn-secondary" type="button" t-on-click="expandAll">Expand all</button>
+                        <button t-if="showExpand" class="btn btn-secondary" type="button" t-on-click="collapseAll">Collapse all</button>
+                        <div class="o_nc_rep__menu">
+                            <button class="btn btn-secondary" type="button"
+                                    t-on-click="() => this.state.exportOpen = !this.state.exportOpen"
+                                    t-att-aria-expanded="state.exportOpen">
+                                <i class="fa fa-download" aria-hidden="true"/> Export
+                            </button>
+                            <div t-if="state.exportOpen" class="o_nc_rep__dropdown" role="menu">
+                                <button type="button" role="menuitem" t-on-click="() => this.exportReport('xlsx')">Excel (.xlsx)</button>
+                                <button type="button" role="menuitem" t-on-click="() => this.exportReport('pdf')">PDF</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" type="button" t-on-click="() => this.exportReport('pdf')">
+                            <i class="fa fa-print" aria-hidden="true"/> Print
+                        </button>
+                    </div>
+                </header>
+
+                <form class="o_nc_rep__filters" t-on-submit.prevent="apply">
+                    <div t-if="has('date_from')" class="o_nc_rep__f">
+                        <label for="f_df">From</label>
+                        <input id="f_df" type="date" t-model="state.values.date_from"/>
+                    </div>
+                    <div t-if="has('date_to')" class="o_nc_rep__f">
+                        <label for="f_dt">To</label>
+                        <input id="f_dt" type="date" t-model="state.values.date_to"/>
+                    </div>
+                    <div t-if="has('target_move')" class="o_nc_rep__f">
+                        <label for="f_tm">Entries</label>
+                        <select id="f_tm" t-model="state.values.target_move">
+                            <t t-foreach="field('target_move').options" t-as="opt" t-key="opt[0]">
+                                <option t-att-value="opt[0]" t-esc="opt[1]"/>
+                            </t>
+                        </select>
+                    </div>
+                    <div t-if="has('comparison_type')" class="o_nc_rep__f">
+                        <label for="f_cmp">Compare</label>
+                        <select id="f_cmp" t-model="state.values.comparison_type">
+                            <t t-foreach="field('comparison_type').options" t-as="opt" t-key="opt[0]">
+                                <option t-att-value="opt[0]" t-esc="opt[1]"/>
+                            </t>
+                        </select>
+                    </div>
+                    <t t-if="has('comparison_type') and state.values.comparison_type === 'custom'">
+                        <div class="o_nc_rep__f">
+                            <label for="f_cf">Compare from</label>
+                            <input id="f_cf" type="date" t-model="state.values.comparison_date_from"/>
+                        </div>
+                        <div class="o_nc_rep__f">
+                            <label for="f_ct">Compare to</label>
+                            <input id="f_ct" type="date" t-model="state.values.comparison_date_to"/>
+                        </div>
+                    </t>
+                    <div t-if="has('company_id') and multiCompany" class="o_nc_rep__f">
+                        <label for="f_co">Company</label>
+                        <select id="f_co" t-model.number="state.values.company_id">
+                            <t t-foreach="companies" t-as="co" t-key="co.id">
+                                <option t-att-value="co.id" t-esc="co.name"/>
+                            </t>
+                        </select>
+                    </div>
+                    <t t-foreach="['journal_ids', 'account_ids', 'partner_ids']" t-as="fname" t-key="fname">
+                        <div t-if="has(fname)" class="o_nc_rep__f o_nc_rep__f--picker">
+                            <label t-esc="field(fname).label"/>
+                            <div class="o_nc_rep__tags">
+                                <t t-foreach="state.values[fname]" t-as="rec" t-key="rec.id">
+                                    <span class="o_nc_rep__tag">
+                                        <t t-esc="rec.name"/>
+                                        <button type="button" t-att-aria-label="'Remove ' + rec.name"
+                                                t-on-click="() => this.unpick(field(fname), rec.id)">×</button>
+                                    </span>
+                                </t>
+                                <input type="text" autocomplete="off" placeholder="Search…"
+                                       t-att-value="state.picker.field === fname ? state.picker.term : ''"
+                                       t-on-input="(ev) => this.searchRelation(field(fname), ev.target.value)"/>
+                            </div>
+                            <ul t-if="state.picker.field === fname and state.picker.options.length" class="o_nc_rep__options">
+                                <t t-foreach="state.picker.options" t-as="opt" t-key="opt.id">
+                                    <li><button type="button" t-on-click="() => this.pick(field(fname), opt)" t-esc="opt.name"/></li>
+                                </t>
+                            </ul>
+                        </div>
+                    </t>
+                    <t t-foreach="extraFilters" t-as="xf" t-key="xf.name">
+                        <div t-if="xf.type === 'selection'" class="o_nc_rep__f">
+                            <label t-att-for="'f_' + xf.name" t-esc="xf.label"/>
+                            <select t-att-id="'f_' + xf.name" t-model="state.values[xf.name]">
+                                <t t-foreach="xf.options" t-as="opt" t-key="opt[0]">
+                                    <option t-att-value="opt[0]" t-esc="opt[1]"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div t-elif="xf.type === 'integer' or xf.type === 'float'" class="o_nc_rep__f">
+                            <label t-att-for="'f_' + xf.name" t-esc="xf.label"/>
+                            <input t-att-id="'f_' + xf.name" type="number" min="1" t-model.number="state.values[xf.name]"/>
+                        </div>
+                        <div t-elif="xf.type === 'boolean'" class="o_nc_rep__f o_nc_rep__f--check">
+                            <label><input type="checkbox" t-model="state.values[xf.name]"/> <t t-esc="xf.label"/></label>
+                        </div>
+                        <div t-elif="xf.type === 'many2many'" class="o_nc_rep__f o_nc_rep__f--picker">
+                            <label t-esc="xf.label"/>
+                            <div class="o_nc_rep__tags">
+                                <t t-foreach="state.values[xf.name]" t-as="rec" t-key="rec.id">
+                                    <span class="o_nc_rep__tag">
+                                        <t t-esc="rec.name"/>
+                                        <button type="button" t-on-click="() => this.unpick(xf, rec.id)">×</button>
+                                    </span>
+                                </t>
+                                <input type="text" autocomplete="off" placeholder="Search…"
+                                       t-att-value="state.picker.field === xf.name ? state.picker.term : ''"
+                                       t-on-input="(ev) => this.searchRelation(xf, ev.target.value)"/>
+                            </div>
+                            <ul t-if="state.picker.field === xf.name and state.picker.options.length" class="o_nc_rep__options">
+                                <t t-foreach="state.picker.options" t-as="opt" t-key="opt.id">
+                                    <li><button type="button" t-on-click="() => this.pick(xf, opt)" t-esc="opt.name"/></li>
+                                </t>
+                            </ul>
+                        </div>
+                    </t>
+                    <div class="o_nc_rep__f o_nc_rep__f--buttons">
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                        <button type="button" class="btn btn-secondary" t-on-click="reset">Reset</button>
+                    </div>
+                </form>
+                <div t-if="chips.length" class="o_nc_rep__chips">
+                    <span t-foreach="chips" t-as="chip" t-key="chip_index" class="o_nc_rep__chip">
+                        <b t-esc="chip.label"/>: <t t-esc="chip.text"/>
+                    </span>
+                </div>
+            </t>
+
+            <div t-if="state.error" class="o_nc_rep__alert" role="alert" t-esc="state.error"/>
+            <div t-if="state.loading" class="o_nc_rep__state" aria-live="polite">Loading the report…</div>
+
+            <div t-elif="state.data" class="o_nc_rep__scroll">
+                <div t-if="!state.data.rows.length" class="o_nc_rep__state o_nc_rep__state--empty">
+                    <h2>No entries for these filters</h2>
+                    <p>Widen the period or clear a filter, then apply again.</p>
+                </div>
+                <table t-else="" class="o_nc_rep__table">
+                    <thead>
+                        <tr>
+                            <t t-foreach="columns" t-as="col" t-key="col.key">
+                                <th t-att-class="isMoney(col) ? 'is-num' : ''" scope="col" t-esc="col.label"/>
+                            </t>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="body" t-as="item" t-key="item.key">
+
+                            <!-- ============ LEDGER ============ -->
+                            <tr t-if="item.kind === 'section'" class="o_nc_rep__section">
+                                <td t-att-colspan="columns.length">
+                                    <button type="button" class="o_nc_rep__caret"
+                                            t-att-aria-expanded="!item.closed"
+                                            t-on-click="() => this.toggle(item.key)">
+                                        <i t-att-class="'fa ' + (item.closed ? 'fa-caret-right' : 'fa-caret-down')" aria-hidden="true"/>
+                                    </button>
+                                    <t t-set="slink" t-value="sectionLink(item.row)"/>
+                                    <button t-if="slink" type="button" class="o_nc_rep__link o_nc_rep__section-name"
+                                            t-on-click="() => this.openRecord(slink)" t-esc="sectionLabel(item.row)"/>
+                                    <span t-else="" class="o_nc_rep__section-name" t-esc="sectionLabel(item.row)"/>
+                                    <span class="o_nc_rep__count"><t t-esc="item.count"/> entries</span>
+                                    <span t-if="item.closed" class="o_nc_rep__closing">Closing balance <b t-att-class="isNegative(item.closing) ? 'is-neg' : ''" t-esc="money(item.closing)"/></span>
+                                </td>
+                            </tr>
+                            <tr t-elif="item.kind === 'opening'" class="o_nc_rep__opening">
+                                <t t-foreach="columns" t-as="col" t-key="col.key">
+                                    <td t-if="col.key === 'label'" t-att-colspan="columns.length - 1 - (columns.some(c => c.key === 'running_balance') ? 0 : 0)">Opening balance</td>
+                                    <td t-elif="col.key === 'running_balance'" class="is-num"><span t-att-class="isNegative(item.row.running_balance) ? 'is-neg' : ''" t-esc="money(item.row.running_balance)"/></td>
+                                </t>
+                            </tr>
+                            <tr t-elif="item.kind === 'line'" class="o_nc_rep__line">
+                                <t t-foreach="columns" t-as="col" t-key="col.key">
+                                    <td t-att-class="isMoney(col) ? 'is-num' : ''">
+                                        <t t-if="isMoney(col)">
+                                            <span t-if="col.key === 'running_balance' or item.row[col.key]" t-att-class="isNegative(item.row[col.key]) ? 'is-neg' : ''" t-esc="amount(item.row[col.key], col)"/>
+                                            <span t-else="" class="o_nc_rep__nil" aria-label="zero">—</span>
+                                        </t>
+                                        <t t-else="">
+                                            <t t-set="lnk" t-value="link(item.row, col)"/>
+                                            <button t-if="lnk" type="button" class="o_nc_rep__link" t-on-click="() => this.openRecord(lnk)" t-esc="cell(item.row, col)"/>
+                                            <t t-else="" t-esc="cell(item.row, col)"/>
+                                            <t t-if="col.key === 'move_name'">
+                                                <t t-foreach="sources(item.row)" t-as="src" t-key="src.model">
+                                                    <button type="button" class="o_nc_rep__chiplink" t-on-click="() => this.openRecord(src)" t-esc="src.label"/>
+                                                </t>
+                                                <button t-if="item.row.move_line_id" type="button" class="o_nc_rep__chiplink" title="Open journal item" t-on-click="() => this.openMoveLine(item.row)">Item</button>
+                                            </t>
+                                        </t>
+                                    </td>
+                                </t>
+                            </tr>
+                            <tr t-elif="item.kind === 'more'" class="o_nc_rep__more">
+                                <td t-att-colspan="columns.length">
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.showMore(item.group)">
+                                        <t t-esc="showMoreLabel(item.left)"/>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr t-elif="item.kind === 'total'" class="o_nc_rep__total">
+                                <t t-foreach="columns" t-as="col" t-key="col.key">
+                                    <td t-if="col.key === 'label'" t-att-colspan="columns.length - 3">Total / closing balance</td>
+                                    <td t-elif="col.key === 'debit'" class="is-num"><span t-esc="money(item.debit)"/></td>
+                                    <td t-elif="col.key === 'credit'" class="is-num"><span t-esc="money(item.credit)"/></td>
+                                    <td t-elif="col.key === 'running_balance'" class="is-num"><span t-att-class="isNegative(item.closing) ? 'is-neg' : ''" t-esc="money(item.closing)"/></td>
+                                </t>
+                            </tr>
+
+                            <tr t-elif="item.kind === 'loading'" class="o_nc_rep__more">
+                                <td t-att-colspan="columns.length">Loading the report…</td>
+                            </tr>
+                            <tr t-elif="item.kind === 'detail'" class="o_nc_rep__detail">
+                                <t t-foreach="columns" t-as="col" t-key="col.key">
+                                    <td t-if="col_index === 0" class="is-label">
+                                        <span class="o_nc_rep__indent" style="--nc-depth:2"/>
+                                        <button type="button" class="o_nc_rep__link"
+                                                t-on-click="() => this.openRecord({model: 'account.move', id: item.line.move_id})"
+                                                t-esc="item.line.move_name"/>
+                                        <span class="o_nc_rep__count" t-if="item.line.ref" t-esc="item.line.ref"/>
+                                        <button t-if="item.line.payment_id" type="button" class="o_nc_rep__chiplink"
+                                                t-on-click="() => this.openRecord({model: 'account.payment', id: item.line.payment_id})">Payment</button>
+                                    </td>
+                                    <td t-elif="col.key === item.line.bucket or col.key === 'total'" class="is-num">
+                                        <span t-att-class="isNegative(item.line.amount) ? 'is-neg' : ''" t-esc="money(item.line.amount)"/>
+                                    </td>
+                                    <td t-else="" class="is-num"/>
+                                </t>
+                            </tr>
+                            <tr t-elif="item.kind === 'row'"
+                                t-att-class="'o_nc_rep__row level-' + Math.min(item.level, 3)">
+                                <t t-foreach="columns" t-as="col" t-key="col.key">
+                                    <td t-att-class="isMoney(col) ? 'is-num' : 'is-label'">
+                                        <t t-if="isMoney(col)">
+                                            <span t-if="item.row[col.key] !== undefined" t-att-class="isNegative(item.row[col.key]) ? 'is-neg' : ''" t-esc="amount(item.row[col.key], col)"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="o_nc_rep__indent" t-att-style="'--nc-depth:' + item.level" t-if="col_index === 0"/>
+                                            <button t-if="item.hasDetail and col_index === 0" type="button" class="o_nc_rep__caret"
+                                                    t-att-aria-expanded="!item.closed" t-on-click="() => this.toggleDetail(item.row)">
+                                                <i t-att-class="'fa ' + (item.closed ? 'fa-caret-right' : 'fa-caret-down')" aria-hidden="true"/>
+                                            </button>
+                                            <button t-if="item.hasChildren and col_index === 0" type="button" class="o_nc_rep__caret"
+                                                    t-att-aria-expanded="!item.closed" t-on-click="() => this.toggle(item.key)">
+                                                <i t-att-class="'fa ' + (item.closed ? 'fa-caret-right' : 'fa-caret-down')" aria-hidden="true"/>
+                                            </button>
+                                            <t t-set="lnk2" t-value="link(item.row, col)"/>
+                                            <button t-if="lnk2" type="button" class="o_nc_rep__link" t-on-click="() => this.openRecord(lnk2)" t-esc="cell(item.row, col)"/>
+                                            <t t-else="" t-esc="cell(item.row, col)"/>
+                                        </t>
+                                    </td>
+                                </t>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </t>
+
+</templates>
