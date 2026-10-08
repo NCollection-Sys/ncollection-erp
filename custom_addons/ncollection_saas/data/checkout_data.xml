@@ -22,6 +22,19 @@
             <field name="key">ncollection_saas.trial_quota_window_hours</field>
             <field name="value">24</field>
         </record>
+        <record id="ir_config_pending_registration_days" model="ir.config_parameter">
+            <field name="key">ncollection_saas.pending_registration_days</field>
+            <field name="value">30</field>
+        </record>
+        <record id="cron_expire_pending_registrations" model="ir.cron">
+            <field name="name">NCollection: release subdomains of undecided registrations</field>
+            <field name="model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_expire_pending_registrations()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
         <record id="ir_config_recaptcha_secret" model="ir.config_parameter">
             <field name="key">ncollection_saas.recaptcha_secret</field>
             <field name="value"></field>

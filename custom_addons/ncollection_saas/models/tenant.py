@@ -325,28 +325,60 @@ class Tenant(models.Model):
     def action_reject(self):
         self._nc_check_platform_admin()
         for tenant in self:
-            if tenant.database_status in ('provisioning', 'ready'):
-                raise UserError(self.env._(
-                    "'%s' already has a workspace; it cannot be rejected.",
-                    tenant.company_name))
-            requested = tenant.subdomain or tenant.database_name
-            note = tenant.registration_decision_note or ''
-            # Release the subdomain: a rejected request must not hold the name
-            # hostage (database_name is unique, and the availability probe would
-            # report it 'taken' forever). What they asked for is kept in the
-            # decision note so the record still tells the whole story.
-            tenant.write({
-                'registration_state': 'rejected',
-                'subdomain': False,
-                'database_name': False,
-                'admin_password_hash': False,
-                'registration_decision_note': ('%s [requested subdomain: %s]' % (
-                    note, requested)).strip() if requested else note,
-            })
-            tenant.message_post(body=self.env._(
-                "Registration rejected by %(user)s. %(note)s",
-                user=self.env.user.name, note=note))
+            tenant._nc_release_registration(
+                self.env._("Registration rejected by %(user)s.", user=self.env.user.name))
         return True
+
+    def _nc_release_registration(self, message):
+        """Reject ONE request and release its subdomain. The single path for
+        both an administrator's Reject and the automatic expiry, so the two can
+        never disagree about what rejecting means."""
+        self.ensure_one()
+        if self.database_status in ('provisioning', 'ready'):
+            raise UserError(self.env._(
+                "'%s' already has a workspace; it cannot be rejected.",
+                self.company_name))
+        requested = self.subdomain or self.database_name
+        note = self.registration_decision_note or ''
+        # Release the subdomain: a rejected request must not hold the name
+        # hostage (database_name is unique, and the availability probe would
+        # report it 'taken' forever). What they asked for is kept in the
+        # decision note so the record still tells the whole story.
+        self.write({
+            'registration_state': 'rejected',
+            'subdomain': False,
+            'database_name': False,
+            'admin_password_hash': False,
+            'registration_decision_note': ('%s [requested subdomain: %s]' % (
+                note, requested)).strip() if requested else note,
+        })
+        self.message_post(body='%s %s' % (message, note))
+
+    @api.model
+    def _cron_expire_pending_registrations(self):
+        """Release subdomains held by requests nobody decided on.
+
+        A pending request reserves its subdomain, and nothing else ever lets go
+        of it, so an abandoned sign-up would hold the name forever. After
+        `ncollection_saas.pending_registration_days` (default 30; 0 disables) the
+        request is rejected through the SAME path an administrator's Reject uses:
+        nothing is deleted, no database was ever created, the record keeps the
+        subdomain it asked for in its decision note.
+        """
+        days = int(self.env['ir.config_parameter'].sudo().get_param(
+            'ncollection_saas.pending_registration_days', '30') or 0)
+        if days <= 0:
+            return 0
+        cutoff = fields.Datetime.subtract(fields.Datetime.now(), days=days)
+        stale = self.search([
+            ('registration_state', '=', 'pending'),
+            ('database_status', '=', 'not_provisioned'),
+            ('registration_date', '<', cutoff),
+        ])
+        for tenant in stale:
+            tenant._nc_release_registration(self.env._(
+                "Registration expired: no decision within %(days)s days.", days=days))
+        return len(stale)
 
     def action_provision(self):
         """Approve (if pending) and create the tenant's workspace — one click."""

@@ -172,6 +172,60 @@ class TestApprovalGate(TransactionCase):
         tenant.subscription_id = sub.id
         return tenant
 
+    # --------------------------------------------------- pending expiry (#reservation)
+    def _age(self, tenant, days):
+        self.env.cr.execute(
+            "UPDATE ncollection_tenant SET registration_date = now() - %s * interval '1 day' "
+            "WHERE id = %s", (days, tenant.id))
+        tenant.invalidate_recordset(['registration_date'])
+
+    def test_an_undecided_request_expires_and_releases_its_subdomain(self):
+        stale = self._tenant(name='stalerq')
+        self._age(stale, 45)
+        self.assertEqual(self.Tenant._cron_expire_pending_registrations(), 1)
+        self.assertEqual(stale.registration_state, 'rejected')
+        self.assertFalse(stale.subdomain)
+        self.assertFalse(stale.database_name)
+        self.assertFalse(stale.admin_password_hash)
+        self.assertIn('stalerq', stale.registration_decision_note)   # what they asked for is kept
+        # the name is free again for a new request
+        self.assertTrue(self._tenant(name='stalerq', login='newadmin'))
+
+    def test_recent_approved_and_built_requests_are_left_alone(self):
+        recent = self._tenant(name='recentrq')
+        self._age(recent, 3)
+        approved = self._tenant(name='approvedrq', pending=False)
+        self._age(approved, 90)
+        self.assertEqual(self.Tenant._cron_expire_pending_registrations(), 0)
+        self.assertEqual(recent.registration_state, 'pending')
+        self.assertEqual(approved.registration_state, 'approved')
+
+    def test_expiry_can_be_switched_off(self):
+        stale = self._tenant(name='offrq')
+        self._age(stale, 400)
+        self.env['ir.config_parameter'].sudo().set_param(
+            'ncollection_saas.pending_registration_days', '0')
+        self.assertEqual(self.Tenant._cron_expire_pending_registrations(), 0)
+        self.assertEqual(stale.registration_state, 'pending')
+
+    def test_expiry_creates_no_database_and_no_job(self):
+        stale = self._tenant(name='nodbrq')
+        self._age(stale, 45)
+        with patch('%s.action_run' % JOB) as run:
+            self.Tenant._cron_expire_pending_registrations()
+        run.assert_not_called()
+        self.assertFalse(self.Job.search([('tenant_id', '=', stale.id)]))
+
+    def test_manual_reject_and_expiry_are_the_same_path(self):
+        a = self._tenant(name='pathrqa')
+        b = self._tenant(name='pathrqb', login='pathb')
+        self._age(b, 45)
+        a.action_reject()
+        self.Tenant._cron_expire_pending_registrations()
+        for t in (a, b):
+            self.assertEqual((t.registration_state, bool(t.subdomain), bool(t.database_name)),
+                             ('rejected', False, False))
+
     # ------------------------------------------------------------ the gate
     def test_the_trigger_creates_no_job_for_a_pending_tenant(self):
         tenant = self._tenant()
