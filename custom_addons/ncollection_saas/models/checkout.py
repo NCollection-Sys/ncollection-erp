@@ -204,10 +204,14 @@ class TenantCheckout(models.Model):
                             self.id, exc_info=True)
 
     def _nc_confirm_checkout(self, token):
-        """Consume a verification token: mark the tenant verified and activate
-        its draft subscription, which triggers provisioning (P2-T02). Idempotent
-        — a second click on an already-verified tenant is a no-op that still
-        resolves. Returns the tenant (or empty recordset for a bad token)."""
+        """Consume a verification token: mark the contact email verified.
+
+        It no longer provisions. A public registration now waits for an
+        administrator's approval, and approval is the ONLY thing that starts
+        provisioning (``action_provision``); verification just tells the
+        reviewer the address belongs to a real person. Idempotent — a second
+        click on an already-verified tenant is a no-op that still resolves.
+        Returns the tenant (or empty recordset for a bad token)."""
         token = (token or '').strip()
         if not token:
             return self.browse()
@@ -216,7 +220,4 @@ class TenantCheckout(models.Model):
             return self.browse()
         if not tenant.checkout_email_verified:
             tenant.checkout_email_verified = True
-            sub = tenant.subscription_id or tenant.subscription_ids[:1]
-            if sub and sub.status == 'draft':
-                sub.action_activate()  # -> provisioning (SaaS override)
         return tenant

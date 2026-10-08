@@ -43,13 +43,19 @@ dev_password = (os.environ.get('NC_DEV_SEED_PASSWORD') or '').strip()
 # the credential was a choice, not a constraint — and it welded the customer's
 # contact address to their login: change one and you changed the other.
 #
-# NC_ADMIN_LOGIN falls back to the email platform-side, so a tenant created by a
-# flow that sets no username gets exactly the login it always got.
+# NC_ADMIN_LOGIN is ALWAYS a username. The platform refuses to provision a tenant
+# that has none, and never substitutes the email, so an address can never become
+# the login.
 admin_login = (os.environ.get('NC_ADMIN_LOGIN') or '').strip()
 # An operator-chosen password. Distinct from NC_DEV_SEED_PASSWORD (#475), which
 # is a blanket local-development switch: this one is per-tenant, deliberate, and
 # erased from the platform record as soon as it has been applied here.
 admin_password = os.environ.get('NC_ADMIN_PASSWORD') or ''
+# A self-registered customer's password, as the one-way hash the platform made
+# when they registered. Never plaintext: it sat in the platform database while the
+# request awaited approval, so it was hashed on arrival and is installed here as
+# the hash it already is.
+admin_password_hash = (os.environ.get('NC_ADMIN_PASSWORD_HASH') or '').strip()
 
 company_name = os.environ.get('NC_COMPANY', 'Tenant')
 admin_email = (os.environ.get('NC_ADMIN_EMAIL') or '').strip()
@@ -73,7 +79,14 @@ if portal_url:
 admin = env.ref('base.user_admin')  # noqa: F821
 # Precedence, most specific first: the password an operator typed for THIS
 # tenant, then the local-development blanket (#475), then the hardened default.
-chosen_password = admin_password or dev_password
+# A password the CUSTOMER chose (the hash) outranks the local-development
+# blanket: a dev stack with NC_DEV_SEED_PASSWORD set must still let a registered
+# customer sign in with the password they typed, not the shared dev one.
+chosen_password = admin_password or ('' if admin_password_hash else dev_password)
+if admin_password_hash and not env['res.users']._crypt_context().identify(  # noqa: F821
+        admin_password_hash):
+    # Refuse rather than store something the tenant could never verify.
+    raise SystemExit("SEED_ERROR NC_ADMIN_PASSWORD_HASH is not a recognised password hash")
 admin_vals = {
     'name': '%s Admin' % company_name,
     # PRODUCTION PATH (unchanged when nothing was chosen): unguessable, never
@@ -87,7 +100,15 @@ if admin_login:
 if admin_email:
     admin_vals['email'] = admin_email
 admin.write(admin_vals)
-if not chosen_password:
+if admin_password_hash and not chosen_password:
+    # Install the hash itself. Writing it through the ORM would hash it a second
+    # time and the customer could never sign in; this is the same statement
+    # res.users._set_password runs, with the hash we were handed.
+    env.cr.execute(  # noqa: F821
+        "UPDATE res_users SET password = %s WHERE id = %s",
+        (admin_password_hash, admin.id))
+    admin.invalidate_recordset(['password'])
+if not (chosen_password or admin_password_hash):
     # The forced reset is what makes the tenant "born hardened". It is skipped
     # ONLY on the dev path, because a reset token would immediately invalidate
     # the very password the developer was handed.
@@ -122,6 +143,16 @@ from odoo.addons.ncollection_core.hooks import (  # noqa: E402
 _sync_role_implications(env)  # noqa: F821
 _sync_scheduler_read_access(env)  # noqa: F821
 
+# 4b. The registrant is the company's OWNER. Without the role the Owner-only
+#     Settings app is hidden from them (Ring 1 subtracts it from everyone but
+#     the Owner) — so the Home "Settings" card, and Settings itself, would be
+#     unreachable by the one person who must configure the workspace. The role
+#     implies base.group_system, which this account already holds, so it widens
+#     nothing. Idempotent.
+owner_group = env.ref('ncollection_core.group_role_owner', raise_if_not_found=False)  # noqa: F821
+if owner_group and owner_group not in admin.group_ids:
+    admin.write({'group_ids': [(4, owner_group.id)]})
+
 # 5. Config-sync service account (P2-T03). A dedicated, non-interactive user
 #    scoped to ncollection.workspace.config writes (group_config_sync — NOT a
 #    system admin) that the platform authenticates as over json2/bearer to push
@@ -146,7 +177,7 @@ else:
 
 env.cr.commit()  # noqa: F821
 
-if admin_password:
+if admin_password or admin_password_hash:
     # #476: an operator set this password deliberately, so they already know
     # it — the LOGIN is what the job log needs to report, and the password is
     # deliberately NOT echoed. It is about to be erased from the platform

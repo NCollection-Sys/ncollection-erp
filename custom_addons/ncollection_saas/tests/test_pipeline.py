@@ -37,7 +37,10 @@ class TestAutoProvisioningPipeline(TransactionCase):
         })
 
     def _make_tenant(self, name='Al Barari Trading', **kw):
+        # admin_login is REQUIRED to provision (a username, never the email),
+        # so every fixture that reaches the engine carries one.
         vals = {'company_name': name, 'email': 'owner@example.com',
+                'admin_login': 'owneradmin',
                 'plan_id': self.plan.id, 'status': 'trial'}
         vals.update(kw)
         return self.env['ncollection.tenant'].create(vals)

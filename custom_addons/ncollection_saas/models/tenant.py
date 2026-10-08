@@ -12,8 +12,8 @@ import logging
 import re
 import unicodedata
 
-from odoo import api, models
-from odoo.exceptions import ValidationError
+from odoo import api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -185,6 +185,17 @@ class Tenant(models.Model):
         none (or an unroutable one). Idempotent: a name that already validates
         is kept."""
         self.ensure_one()
+        # THE SUBDOMAIN IS THE DATABASE IDENTITY. Under db_filter=^%d$ a request
+        # for <label>.<base-domain> reaches the database named <label> and no
+        # other, so a tenant whose database_name differs from its subdomain has
+        # a URL that routes nowhere. When the operator (or the customer) chose a
+        # valid subdomain it therefore wins over a name generated from the
+        # company; the generator only runs when no subdomain was chosen.
+        subdomain = (self.subdomain or '').strip().lower()
+        if subdomain and _GENERATED_NAME_RE.fullmatch(subdomain):
+            if self.database_name != subdomain:
+                self.database_name = subdomain
+            return subdomain
         current = self.database_name
         if current and _GENERATED_NAME_RE.fullmatch(current):
             return current
@@ -278,3 +289,141 @@ class Tenant(models.Model):
         except Exception:  # noqa: BLE001 - alerting must never mask the failure
             _logger.warning("Could not post provisioning-failure alert for tenant %s",
                             self.id, exc_info=True)
+
+    # ------------------------------------------------------------------
+    # Approval + ONE-CLICK provisioning
+    # ------------------------------------------------------------------
+    # The administrator's whole job is one button. Every state it can meet maps
+    # to one outcome, and none of them needs a terminal, SQL or the Odoo shell:
+    #
+    #   pending   -> approve, then provision          ("Approve & Provision")
+    #   rejected  -> refused: a rejection is a decision, not a retryable fault
+    #   approved  -> create the subscription if absent, then provision
+    #   failed    -> re-run the SAME failed job (see _trigger_provisioning)
+    #   running / ready -> nothing to do; say so rather than build a second one
+    #
+    # It calls the EXISTING engine (subscription -> _trigger_provisioning ->
+    # job.action_run). There is no second provisioning implementation here.
+
+    def _nc_check_platform_admin(self):
+        """Rule 4: the menu hides these buttons, but the ORM is the control."""
+        if not (self.env.su or self.env.user.has_group(
+                'ncollection_subscription.group_platform_admin')):
+            raise UserError(self.env._(
+                "Only a platform administrator can approve or provision a tenant."))
+
+    def action_approve(self):
+        self._nc_check_platform_admin()
+        for tenant in self:
+            if tenant.registration_state == 'approved':
+                continue
+            tenant.write({'registration_state': 'approved'})
+            tenant.message_post(body=self.env._(
+                "Registration approved by %s.", self.env.user.name))
+        return True
+
+    def action_reject(self):
+        self._nc_check_platform_admin()
+        for tenant in self:
+            if tenant.database_status in ('provisioning', 'ready'):
+                raise UserError(self.env._(
+                    "'%s' already has a workspace; it cannot be rejected.",
+                    tenant.company_name))
+            requested = tenant.subdomain or tenant.database_name
+            note = tenant.registration_decision_note or ''
+            # Release the subdomain: a rejected request must not hold the name
+            # hostage (database_name is unique, and the availability probe would
+            # report it 'taken' forever). What they asked for is kept in the
+            # decision note so the record still tells the whole story.
+            tenant.write({
+                'registration_state': 'rejected',
+                'subdomain': False,
+                'database_name': False,
+                'admin_password_hash': False,
+                'registration_decision_note': ('%s [requested subdomain: %s]' % (
+                    note, requested)).strip() if requested else note,
+            })
+            tenant.message_post(body=self.env._(
+                "Registration rejected by %(user)s. %(note)s",
+                user=self.env.user.name, note=note))
+        return True
+
+    def action_provision(self):
+        """Approve (if pending) and create the tenant's workspace — one click."""
+        self._nc_check_platform_admin()
+        messages = []
+        for tenant in self:
+            messages.append(tenant._nc_provision_one())
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': self.env._("Tenant provisioning"),
+                'message': ' '.join(messages),
+                'type': 'info',
+                'sticky': False,
+                # The button changed the record (approval, stage, buttons), and a
+                # client action leaves the open form as it was — so a customer
+                # would still see "Pending Approval" and an "Approve" button
+                # after approving. Reload the record's data, keep the page.
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
+
+    def _nc_provision_one(self):
+        self.ensure_one()
+        name = self.company_name
+        if self.registration_state == 'rejected':
+            raise UserError(self.env._(
+                "'%s' was rejected. Reopen the request before provisioning.", name))
+        if self.database_status == 'ready':
+            return self.env._("'%s' is already provisioned; nothing was created.", name)
+        if self.database_status == 'provisioning':
+            return self.env._("'%s' is already being provisioned.", name)
+        if not self.plan_id:
+            raise UserError(self.env._(
+                "Choose a subscription plan for '%s' before provisioning.", name))
+        # Fail on a bad username HERE, with the form still open, rather than
+        # later in a queue job nobody is watching.
+        self._nc_require_admin_login()
+
+        if self.registration_state == 'pending':
+            self.action_approve()
+
+        sub = self.subscription_id or self.subscription_ids[:1]
+        if not sub:
+            sub = self.env['ncollection.subscription'].sudo().create({
+                'tenant_id': self.id,
+                'plan_id': self.plan_id.id,
+                'status': 'draft',
+                'start_date': fields.Date.context_today(self),
+            })
+            self.sudo().subscription_id = sub.id
+        retry = self.database_status == 'error'
+        if sub.status == 'draft':
+            # The same default the public registration uses — one definition.
+            from odoo.addons.ncollection_saas.controllers.checkout import TRIAL_DAYS
+            trial_end = fields.Date.add(
+                fields.Date.context_today(self),
+                days=self.plan_id.trial_days or TRIAL_DAYS)
+            # draft -> trial starts the lifecycle AND triggers provisioning
+            # (see subscription.action_start_trial), exactly once.
+            sub.action_start_trial()
+            # action_start_trial stamps trial_end_date = today + plan.trial_days,
+            # and every seeded plan has trial_days = 0 — which the daily sweep
+            # reads as "this trial ends today", expiring a customer the moment
+            # they are approved. So the trial clock is set explicitly, and it
+            # starts NOW (at approval), not when the request was filed: a request
+            # that waited three days for a decision must not lose three days of
+            # the trial it was promised.
+            sub.trial_end_date = trial_end
+            self.sudo().trial_end_date = trial_end
+        else:
+            sub._trigger_provisioning()
+        if retry:
+            return self.env._(
+                "Retrying provisioning for '%s'. The previous attempt's job is "
+                "re-run; no second database or user is created.", name)
+        return self.env._(
+            "Provisioning started for '%s'. The workspace will be ready in a "
+            "few minutes.", name)

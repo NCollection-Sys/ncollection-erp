@@ -34,18 +34,20 @@
         <record id="mail_template_checkout_verify" model="mail.template">
             <field name="name">NCollection: Verify your workspace email</field>
             <field name="model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
-            <field name="subject">Confirm your email to create {{ object.company_name }}</field>
+            <field name="subject">Confirm your email — registration request for {{ object.company_name }}</field>
             <field name="email_from">{{ (object.env.company.email or 'noreply@ncollection.com') }}</field>
             <field name="email_to">{{ object.email }}</field>
             <field name="body_html" type="html">
                 <div style="font-family:Arial,sans-serif;color:#0F172A;">
                     <p>Hi <t t-out="object.contact_name or object.company_name"/>,</p>
-                    <p>Thanks for choosing NCollection. Confirm your email to start
-                       provisioning your workspace <strong t-out="object.database_name"/>.</p>
+                    <p>Thanks for registering <strong t-out="object.company_name"/>. Confirm your
+                       contact email so we can review your request. Your workspace
+                       <strong t-out="object.database_name"/> is created once an
+                       administrator approves it.</p>
                     <p>
                         <a t-attf-href="{{ object.get_base_url() }}/nc/checkout/verify/{{ object.checkout_token }}"
                            style="display:inline-block;padding:10px 18px;background:#1F5F8F;color:#fff;
-                                  text-decoration:none;border-radius:6px;">Confirm &amp; create my workspace</a>
+                                  text-decoration:none;border-radius:6px;">Confirm my email</a>
                     </p>
                     <p style="color:#64748B;font-size:13px;">If you didn't request this, you can ignore this email.</p>
                 </div>

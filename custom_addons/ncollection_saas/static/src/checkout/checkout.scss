@@ -152,3 +152,30 @@
 @media (prefers-reduced-motion: reduce) {
     .nc-checkout__spinner { animation: none; }
 }
+
+// ---- Language toggle, request-status icon, RTL ----------------------------
+// The toggle floats top-end so it works in both directions; the status icon is
+// a quiet disc whose colour carries the stage (pending is neutral on purpose:
+// "awaiting approval" is a normal state, not a warning).
+.nc-checkout__lang {
+    position: fixed; top: 16px; inset-inline-end: 16px; z-index: 10;
+    padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    border: 1px solid #DDE2E9; background: #fff; color: #1F5F8F;
+    font: inherit; font-size: 14px;
+    &:hover { background: #F2F7FB; }
+}
+.nc-checkout__icon {
+    width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 28px;
+    background: #E7F0F8; color: #1F5F8F;
+    &.is-ready, &.is-approved { background: #E3F4EC; color: #2E8B63; }
+    &.is-failed { background: #FBEDE3; color: #B4571E; }
+    &.is-rejected { background: #F3F4F6; color: #6B7280; }
+    &.is-provisioning { animation: nc-pulse 1.4s ease-in-out infinite; }
+}
+@keyframes nc-pulse { 50% { opacity: .45; } }
+[dir="rtl"] .nc-checkout {
+    text-align: start;
+    label { text-align: start; }
+    &__card--center { text-align: center; }
+}

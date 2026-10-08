@@ -111,6 +111,10 @@ class Subscription(models.Model):
         tenant = self.tenant_id
         if not tenant or tenant.database_status not in ('not_provisioned', 'error'):
             return
+        # The approval gate, enforced at the trigger as well as in the engine:
+        # a pending (or rejected) registration never even gets a job record.
+        if tenant.registration_state != 'approved':
+            return
         Job = self.env['ncollection.provisioning.job']
         live = Job.search([
             ('tenant_id', '=', tenant.id),
@@ -118,8 +122,23 @@ class Subscription(models.Model):
         ], limit=1)
         if live:
             return  # a job is already pending / running / succeeded
-        db_name = tenant._ensure_database_name()
-        job = Job.create({'tenant_id': tenant.id, 'database_name': db_name})
-        _logger.info("Auto-provisioning tenant %s -> database '%s' (job %s)",
-                     tenant.company_name, db_name, job.id)
+        # A RETRY re-runs the job that failed instead of stacking a second
+        # record beside it: the engine already knows how to heal its own failed
+        # attempt (it clears the zombie database that attempt left behind), so
+        # reusing the job keeps one record, one log and one identity_key per
+        # tenant no matter how many times the administrator presses retry.
+        job = Job.search([
+            ('tenant_id', '=', tenant.id),
+            ('status', '=', 'failed'),
+        ], order='id desc', limit=1)
+        if job:
+            # Back to queued, so the workspace shows "Provisioning" again while
+            # the retry runs instead of "Failed" until it finishes.
+            job.write({'status': 'queued', 'completed_at': False})
+            job._append_log(tenant.env._("Retry requested by %s.", tenant.env.user.name))
+        else:
+            db_name = tenant._ensure_database_name()
+            job = Job.create({'tenant_id': tenant.id, 'database_name': db_name})
+        _logger.info("Provisioning tenant %s -> database '%s' (job %s)",
+                     tenant.company_name, job.database_name, job.id)
         job.action_run()
