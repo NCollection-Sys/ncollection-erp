@@ -117,6 +117,16 @@ class IrUiMenu(models.Model):
             return set()
         if user.has_group('ncollection_core.group_role_owner'):
             return set()
+        # The SaaS platform's own administrators run the platform database,
+        # where no tenant Owner role is ever assigned. Core cannot depend on
+        # the platform addon, so the group is looked up by xml-id and simply
+        # absent (=> no exemption) in a tenant database. Settings itself stays
+        # gated by base.group_system on its action/ACL, so this widens nothing.
+        platform_group = self.env.ref(
+            'ncollection_subscription.group_platform_admin', raise_if_not_found=False)
+        if (platform_group and user.has_group('base.group_system')
+                and user.has_group('ncollection_subscription.group_platform_admin')):
+            return set()
         roots = self.sudo().browse([
             m.id for xmlid in self._OWNER_ONLY_MENUS
             if (m := self.env.ref(xmlid, raise_if_not_found=False))

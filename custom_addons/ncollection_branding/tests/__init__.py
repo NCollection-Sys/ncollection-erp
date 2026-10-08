@@ -7,3 +7,4 @@ from . import test_design_tokens
 from . import test_component_library
 from . import test_rtl_conformance
 from . import test_translations
+from . import test_language_switch_session

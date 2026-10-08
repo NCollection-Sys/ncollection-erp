@@ -16,6 +16,7 @@ this database happens to have installed.
 """
 import pathlib
 
+from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
 _HOME_JS = (pathlib.Path(__file__).resolve().parent.parent
@@ -128,6 +129,12 @@ class TestTenantHomeApps(TransactionCase):
         self.assertEqual(
             self.env['ir.ui.menu'].search_count(
                 [('name', '=', 'Settings'), ('parent_id', '=', False)]), 1)
+
+    def test_an_unauthorised_user_cannot_open_settings_directly(self):
+        """Hiding the card is not the control — the server refusing is."""
+        clerk = self._user_with_role('settings_clerk2', 'ncollection_core.group_role_employee')
+        with self.assertRaises(AccessError):
+            self.env['res.config.settings'].with_user(clerk).create({})
 
     def test_the_launcher_never_lists_itself(self):
         """A home screen that offers itself as one of its apps is a loop."""

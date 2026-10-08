@@ -38,6 +38,35 @@ class ResUsers(models.Model):
         """
         self.tour_enabled = False
 
+    def write(self, vals):
+        res = super().write(vals)
+        if 'lang' in vals:
+            self._nc_refresh_session_language()
+        return res
+
+    def _nc_refresh_session_language(self):
+        """Make the NEXT page render use the language just saved.
+
+        Odoo refreshes ``request.session.context`` only inside
+        ``session_info()`` — which runs while the page is being rendered, AFTER
+        the stylesheet bundle (LTR vs RTL) was already chosen from the stale
+        session language. So the first reload after a language change came back
+        in the old direction and only a second, manual reload fixed it. Writing
+        the new language into the session here, in the request that saves it,
+        means the reload that follows is already rendered correctly.
+        """
+        if len(self) != 1 or self != self.env.user:
+            return
+        try:
+            from odoo.http import request
+            session = request.session if request else None
+        except RuntimeError:  # no HTTP request (cron, shell, tests)
+            return
+        if session and session.uid == self.id:
+            context = dict(session.context)
+            context['lang'] = self.lang
+            session.context = context
+
 
 def post_init_hook(env):
     """Turn tours off for users that already exist (#472).
