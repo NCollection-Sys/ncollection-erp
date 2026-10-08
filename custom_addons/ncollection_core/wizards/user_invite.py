@@ -12,11 +12,16 @@ pre-flight) and in res.users.create (the real control).
 """
 
 import logging
+import re
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
+
+# The same rule the tenant administrator is held to (ncollection_subscription):
+# no @, so an email address can never become a login.
+USERNAME_RE = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]{2,63}')
 
 # role key -> (label, group xml-id). Single source: ROLE_MATRIX.md roles.
 ROLE_GROUPS = {
@@ -36,7 +41,11 @@ class UserInvite(models.TransientModel):
     _description = 'NCollection Invite Workspace User'
 
     name = fields.Char(string='Full Name', required=True)
-    email = fields.Char(required=True)
+    username = fields.Char(
+        required=True,
+        help='What this person types to sign in. A username, never an email '
+             'address - their email is only a contact detail.')
+    email = fields.Char(string='Contact Email', required=True)
     role = fields.Selection(
         selection=[(key, label) for key, (label, _xmlid) in ROLE_GROUPS.items()],
         required=True,
@@ -44,6 +53,14 @@ class UserInvite(models.TransientModel):
         help='One of the 8 predefined NCollection workspace roles '
              '(see docs/ROLE_MATRIX.md).',
     )
+
+    @api.constrains('username')
+    def _check_username(self):
+        for wizard in self:
+            if not USERNAME_RE.fullmatch(wizard.username or ''):
+                raise ValidationError(self.env._(
+                    'The username cannot be an email address. Use 3-64 letters, '
+                    'digits, dots, dashes or underscores, such as sara.m.'))
 
     @api.constrains('email')
     def _check_email(self):
@@ -68,10 +85,15 @@ class UserInvite(models.TransientModel):
                     limit=max_users,
                 ))
 
+        if Users.sudo().with_context(active_test=False).search_count(
+                [('login', '=', self.username)]):
+            raise ValidationError(self.env._(
+                "The username '%s' is already taken.", self.username))
+
         role_group = self.env.ref(ROLE_GROUPS[self.role][1])
         user = Users.create({
             'name': self.name,
-            'login': self.email,
+            'login': self.username,
             'email': self.email,
             'group_ids': [
                 (4, self.env.ref('base.group_user').id),

@@ -31,10 +31,10 @@ class TestWorkspaceSettings(TransactionCase):
 
     def test_owner_invites_user_with_role(self):
         wizard = self.Invite.with_user(self.owner).create({
-            "name": "New Hire", "email": "hire@example.com", "role": "warehouse",
+            "name": "New Hire", "username": "newhire", "email": "hire@example.com", "role": "warehouse",
         })
         wizard.action_invite()
-        user = self.env["res.users"].sudo().search([("login", "=", "hire@example.com")])
+        user = self.env["res.users"].sudo().search([("login", "=", "newhire")])
         self.assertTrue(user)
         self.assertIn(
             self.env.ref("ncollection_core.group_role_warehouse"),
@@ -48,20 +48,20 @@ class TestWorkspaceSettings(TransactionCase):
         self.assertNotIn("group_ids", fields)
         self.assertEqual(
             sorted(f for f in fields if not f.startswith(("create_", "write_", "id", "display_"))),
-            ["email", "name", "role"],
+            ["email", "name", "role", "username"],
         )
 
     def test_non_owner_denied_wizard(self):
         """ACL mirror: Sales cannot even create the invite wizard."""
         with self.assertRaises(AccessError):
             self.Invite.with_user(self.sales).create({
-                "name": "X", "email": "x@example.com", "role": "employee",
+                "name": "X", "username": "xuser", "email": "x@example.com", "role": "employee",
             })
 
     def test_invalid_email_rejected(self):
         with self.assertRaises(ValidationError):
             self.Invite.with_user(self.owner).create({
-                "name": "X", "email": "not-an-email", "role": "employee",
+                "name": "X", "username": "xuser", "email": "not-an-email", "role": "employee",
             })
 
     # ---------------- max-user limit ----------------
@@ -69,7 +69,7 @@ class TestWorkspaceSettings(TransactionCase):
     def test_limit_blocks_invite_with_upgrade_message(self):
         self.Config.create({"max_users": self._active_internal_count()})
         wizard = self.Invite.with_user(self.owner).create({
-            "name": "Over Limit", "email": "over@example.com", "role": "employee",
+            "name": "Over Limit", "username": "overlimit", "email": "over@example.com", "role": "employee",
         })
         with self.assertRaises(ValidationError) as cm:
             wizard.action_invite()
@@ -80,18 +80,18 @@ class TestWorkspaceSettings(TransactionCase):
         self.Config.create({"max_users": self._active_internal_count()})
         with self.assertRaises(ValidationError):
             self.env["res.users"].with_user(self.owner).create({
-                "name": "Bypass Attempt", "login": "bypass@example.com",
+                "name": "Bypass Attempt", "login": "bypassuser",
                 "group_ids": [(4, self.env.ref("base.group_user").id)],
             })
 
     def test_limit_zero_means_unlimited(self):
         self.Config.create({"max_users": 0})
         wizard = self.Invite.with_user(self.owner).create({
-            "name": "Free Seat", "email": "free@example.com", "role": "employee",
+            "name": "Free Seat", "username": "freeseat", "email": "free@example.com", "role": "employee",
         })
         wizard.action_invite()  # must not raise
         self.assertTrue(
-            self.env["res.users"].sudo().search([("login", "=", "free@example.com")])
+            self.env["res.users"].sudo().search([("login", "=", "freeseat")])
         )
 
     def test_reactivation_counts_against_limit(self):
@@ -138,3 +138,56 @@ class TestWorkspaceSettings(TransactionCase):
         visible_sales = self.env["ir.ui.menu"].with_user(self.sales)._visible_menu_ids()
         self.assertIn(menu.id, visible_owner)
         self.assertNotIn(menu.id, visible_sales)
+
+    # ---------------- usernames, not email addresses ----------------
+
+    def test_invited_user_logs_in_with_the_username_not_the_email(self):
+        wizard = self.Invite.with_user(self.owner).create({
+            "name": "Sara", "username": "sara.m", "email": "sara@example.com", "role": "sales",
+        })
+        wizard.action_invite()
+        user = self.env["res.users"].sudo().search([("login", "=", "sara.m")])
+        self.assertEqual(user.email, "sara@example.com")      # contact detail only
+        self.assertFalse(self.env["res.users"].sudo().search(
+            [("login", "=", "sara@example.com")]))
+
+    def test_an_email_is_refused_as_the_username(self):
+        with self.assertRaises(ValidationError):
+            self.Invite.with_user(self.owner).create({
+                "name": "X", "username": "x@example.com", "email": "x@example.com",
+                "role": "employee",
+            })
+
+    def test_a_taken_username_is_refused_before_anything_is_created(self):
+        self.Invite.with_user(self.owner).create({
+            "name": "A", "username": "dupuser", "email": "a@example.com", "role": "employee",
+        }).action_invite()
+        wizard = self.Invite.with_user(self.owner).create({
+            "name": "B", "username": "dupuser", "email": "b@example.com", "role": "employee",
+        })
+        with self.assertRaises(ValidationError):
+            wizard.action_invite()
+
+    def test_the_orm_refuses_an_email_login_for_a_human_user(self):
+        """Rule 4: the wizard is not the control, res.users is."""
+        Users = self.env["res.users"].with_context(no_reset_password=True)
+        group = [(6, 0, [self.env.ref("base.group_user").id])]
+        with self.assertRaises(ValidationError):
+            Users.create({"name": "E", "login": "e@example.com", "group_ids": group})
+        user = Users.create({"name": "U", "login": "plainuser", "group_ids": group})
+        with self.assertRaises(ValidationError):
+            user.login = "plainuser@example.com"
+
+    def test_portal_customers_and_service_users_keep_email_style_logins(self):
+        """The rule is about the people who run the ERP. A portal customer signs
+        in with their email; the cron and config-sync service accounts are
+        addressed by internal-domain logins."""
+        Users = self.env["res.users"].with_context(no_reset_password=True)
+        portal = Users.create({
+            "name": "Customer", "login": "customer@example.com",
+            "group_ids": [(6, 0, [self.env.ref("base.group_portal").id])]})
+        self.assertTrue(portal)
+        service = Users.create({
+            "name": "Svc", "login": "svc-test@ncollection.internal",
+            "group_ids": [(6, 0, [self.env.ref("base.group_user").id])]})
+        self.assertTrue(service)

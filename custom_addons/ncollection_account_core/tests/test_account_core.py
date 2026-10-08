@@ -132,7 +132,7 @@ class TestAccountingGroupHierarchy(TransactionCase):
 
     def _user(self, xmlid):
         return self.env['res.users'].create({
-            'name': 'Acc Role', 'login': 'accrole-%s@example.test' % xmlid.split('.')[-1],
+            'name': 'Acc Role', 'login': 'accrole-%s' % xmlid.split('.')[-1],
             'group_ids': [(6, 0, [self.env.ref('base.group_user').id,
                                   self.env.ref(xmlid).id])]})
 
@@ -158,6 +158,6 @@ class TestAccountingGroupHierarchy(TransactionCase):
     def test_a_plain_employee_still_cannot(self):
         """The control: the fix must not have opened the reports to everyone."""
         user = self.env['res.users'].create({
-            'name': 'Plain', 'login': 'plain-acc@example.test',
+            'name': 'Plain', 'login': 'plain-acc',
             'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
         self.assertFalse(user.has_group('account.group_account_readonly'))

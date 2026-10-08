@@ -71,13 +71,16 @@ class NCollectionAuthSignup(http.Controller):
         # Internal User group. The `password` value is hashed by the field's
         # inverse; plaintext is never stored.
         group_user = request.env.ref('base.group_user')
-        user = request.env['res.users'].sudo().create({
-            'name': name,
-            'login': email,
-            'email': email,
-            'password': password,
-            'group_ids': [(6, 0, [group_user.id])],
-        })
+        # The demo form has no username field; this off-by-default route is the
+        # one documented exemption from the username-only login rule.
+        user = request.env['res.users'].sudo().with_context(
+            ncollection_allow_email_login=True).create({
+                'name': name,
+                'login': email,
+                'email': email,
+                'password': password,
+                'group_ids': [(6, 0, [group_user.id])],
+            })
 
         _logger.info("Demo signup: created user %s (id %s)", email, user.id)
         return {'success': True}

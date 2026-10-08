@@ -52,6 +52,7 @@
                 <sheet>
                     <group>
                         <field name="name" placeholder="e.g. Sara Mahmoud"/>
+                        <field name="username" placeholder="e.g. sara.m"/>
                         <field name="email" placeholder="e.g. sara@yourcompany.com"/>
                         <field name="role" widget="radio"/>
                     </group>

@@ -137,7 +137,7 @@ class TestOdooTourIsOff(TransactionCase):
 
     def test_a_new_user_gets_tours_disabled_too(self):
         user = self.env['res.users'].create({
-            'name': 'Tourless', 'login': 'tourless@example.test',
+            'name': 'Tourless', 'login': 'tourless',
             'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
         self.assertFalse(user.tour_enabled)
 

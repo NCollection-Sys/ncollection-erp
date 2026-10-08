@@ -14,14 +14,44 @@ Two ORM-layer controls (Rule 4 — the UI mirrors these, never replaces them):
    last-Owner protection.
 """
 
+
 from odoo import api, models
 from odoo.exceptions import AccessError, ValidationError
 
 _OWNER_GROUP = 'ncollection_core.group_role_owner'
 
 
+# Accounts that are addressed by an internal mailbox-style login on purpose.
+_SERVICE_LOGIN_SUFFIX = '@ncollection.internal'
+# Set ONLY by the (off-by-default) demo signup route, which has no username field.
+ALLOW_EMAIL_LOGIN_CTX = 'ncollection_allow_email_login'
+
+
 class ResUsers(models.Model):
     _inherit = 'res.users'
+
+    @api.constrains('login')
+    def _check_login_is_a_username(self):
+        """The login of a person who runs the ERP is a username, never an email.
+
+        An email is a contact detail; welding it to the credential made the
+        two inseparable. Customers (portal/public users, who sign in with their
+        email), the platform service accounts and any login that existed before
+        this rule are untouched: a constraint only fires when the login is set
+        or changed.
+        """
+        if self.env.context.get(ALLOW_EMAIL_LOGIN_CTX):
+            return
+        for user in self:
+            login = user.login or ''
+            if '@' not in login or user.share:
+                continue
+            if login.endswith(_SERVICE_LOGIN_SUFFIX) or login == '__system__':
+                continue
+            raise ValidationError(self.env._(
+                "The login '%s' looks like an email address. A login is a "
+                "username (for example sara.m); put the email in the contact "
+                "email field instead.", login))
 
     # ------------------------------------------------------------------
     # Max-user enforcement (plan limit)
