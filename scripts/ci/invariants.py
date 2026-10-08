@@ -1614,6 +1614,9 @@ def rule_dev_seed_password_never_shipped(out: list[str]) -> None:
             "documented local-testing flow silently does nothing.")
 
 
+KNOWN_DEV_MASTER_PASSWORDS = ("ncollection_dev", "admin", "odoo", "password")
+
+
 def rule_prod_admin_passwd_is_not_a_secret(out: list[str]) -> None:
     """config/odoo.prod.conf must not carry a usable DB-manager master password.
 
@@ -1642,6 +1645,22 @@ def rule_prod_admin_passwd_is_not_a_secret(out: list[str]) -> None:
             out.append("config/odoo.prod.conf: admin_passwd is not a PBKDF2 hash "
                        "- a plaintext master password must never be committed "
                        "to the production config.")
+            continue
+        # A hash of a KNOWN password is a known password. Verified when passlib
+        # is importable (it is wherever Odoo is); the shape check above is what
+        # runs everywhere else.
+        try:
+            from passlib.hash import pbkdf2_sha512
+        except ImportError:                                  # pragma: no cover
+            continue
+        for known in KNOWN_DEV_MASTER_PASSWORDS:
+            try:
+                matches = pbkdf2_sha512.verify(known, value)
+            except (ValueError, TypeError):
+                break                                        # not Odoo's hash format
+            if matches:
+                out.append("config/odoo.prod.conf: admin_passwd is the hash of the "
+                           f"known development password {known!r}.")
 
 
 RUNNER_TIME_HEADROOM_SECONDS = 300

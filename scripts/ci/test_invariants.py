@@ -980,6 +980,17 @@ class TestProdAdminPasswdIsNotASecret(GuardTestCase):
         self.assertEqual(len(findings), 1)
         self.assertIn("'admin'", findings[0])
 
+    def test_a_hash_of_the_dev_password_is_refused(self):
+        try:
+            from passlib.hash import pbkdf2_sha512
+        except ImportError:
+            return      # the shape check still ran; passlib only adds this one
+        hashed = pbkdf2_sha512.using(rounds=1000).hash("ncollection_dev")
+        self.write("config/odoo.prod.conf", "[options]\nadmin_passwd = %s\n" % hashed)
+        findings = self._run()
+        self.assertEqual(len(findings), 1)
+        self.assertIn("known development password", findings[0])
+
     def test_the_real_file_passes(self):
         """The guard must be satisfied by what is actually committed."""
         real = (Path(__file__).resolve().parents[2] / "config" / "odoo.prod.conf")

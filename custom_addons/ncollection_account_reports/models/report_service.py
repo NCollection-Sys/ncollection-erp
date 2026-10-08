@@ -231,7 +231,12 @@ class NcReportService(models.AbstractModel):
             return
         IMD = self.env['ir.model.data'].sudo()
         for action_name, menu_name, title, group in self._GROUPED_PURCHASE:
-            if self.env.ref('ncollection_account_reports.%s' % menu_name, raise_if_not_found=False):
+            existing = self.env.ref(
+                'ncollection_account_reports.%s' % menu_name, raise_if_not_found=False)
+            if existing:
+                # menus created before they carried the base menu's groups
+                if not existing.group_ids and base.group_ids:
+                    existing.sudo().write({'group_ids': [(6, 0, base.group_ids.ids)]})
                 continue
             context = dict(self._nc_eval_ctx(base.action.context), group_by=group)
             action = base.action.sudo().copy({'name': title, 'context': repr(context), 'path': False})

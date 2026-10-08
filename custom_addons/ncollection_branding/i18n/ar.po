@@ -149,3 +149,8 @@ msgstr "اسم المستخدم"
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
 msgid "Enter your username"
 msgstr "أدخل اسم المستخدم"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__nc_active_language_ids
+msgid "Installed languages"
+msgstr "اللغات المثبّتة"

@@ -181,7 +181,7 @@
                                     <button t-if="slink" type="button" class="o_nc_rep__link o_nc_rep__section-name"
                                             t-on-click="() => this.openRecord(slink)" t-esc="sectionLabel(item.row)"/>
                                     <span t-else="" class="o_nc_rep__section-name" t-esc="sectionLabel(item.row)"/>
-                                    <span class="o_nc_rep__count"><t t-esc="item.count"/> entries</span>
+                                    <span class="o_nc_rep__count"><t>Entries</t>: <t t-esc="item.count"/></span>
                                     <span t-if="item.closed" class="o_nc_rep__closing">Closing balance <b t-att-class="isNegative(item.closing) ? 'is-neg' : ''" t-esc="money(item.closing)"/></span>
                                 </td>
                             </tr>

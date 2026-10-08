@@ -195,3 +195,12 @@ class TestReportHub(AccountTestInvoicingCommon):
                 self.assertTrue(
                     menu.group_ids,
                     '%s was filed out of a restricted folder and lost its restriction' % xmlid)
+
+    def test_grouped_purchase_menus_carry_the_base_menus_groups(self):
+        base = self.env.ref('purchase.purchase_report', raise_if_not_found=False)
+        if not base or not base.group_ids:
+            return
+        self.Service._nc_ensure_grouped_menus()
+        for name in ('menu_purchase_by_vendor', 'menu_purchase_by_product'):
+            menu = self.env.ref('ncollection_account_reports.' + name)
+            self.assertEqual(menu.group_ids, base.group_ids, name)

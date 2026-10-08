@@ -29,7 +29,7 @@ msgid ""
 "%(title)s is computed over the complete books and cannot be filtered by "
 "%(filters)s — the resulting figures would not reconcile. Remove the filter, "
 "or use the General Ledger, which is meaningful over any subset."
-msgstr "يُحتسب %(title)s على الدفاتر كاملةً ولا يمكن ترشيحه حسب %(filters)s — فالأرقام الناتجة لن تتطابق. أزل المرشّح أو استخدم دفتر الأستاذ العام الذي له معنى على أي مجموعة جزئية."
+msgstr "يُحتسب %(title)s على الدفاتر كاملةً ولا يمكن تصفيته حسب %(filters)s — فالأرقام الناتجة لن تتطابق. أزل عامل التصفية أو استخدم دفتر الأستاذ العام الذي له معنى على أي مجموعة جزئية."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -729,7 +729,7 @@ msgstr "التوريدات المعفاة"
 #. odoo-javascript
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 msgid "Expand all"
-msgstr "إظهار الكل"
+msgstr "توسيع الكل"
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -819,7 +819,7 @@ msgstr "الأنشطة التمويلية"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
 msgid "Filters"
-msgstr "المرشّحات"
+msgstr "عوامل التصفية"
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -1358,7 +1358,7 @@ msgstr "لا يوجد تحليل للمشتريات"
 #. odoo-javascript
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 msgid "No entries for these filters"
-msgstr "لا توجد قيود لهذه المرشّحات"
+msgstr "لا توجد قيود وفق عوامل التصفية هذه"
 
 #. module: ncollection_account_reports
 #. odoo-javascript
@@ -1499,7 +1499,7 @@ msgstr "دفتر الأستاذ للشركاء — العملاء"
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
 msgid "Partner Ledger — Vendors"
-msgstr "دفتر الأستاذ للشركاء — الموردون"
+msgstr "دفتر الأستاذ للشركاء — المورّدون"
 
 #. module: ncollection_account_reports
 #: model:ir.actions.report,name:ncollection_account_reports.action_report_partner_statement
@@ -1803,7 +1803,7 @@ msgstr "تحليل الإيرادات"
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
 msgid "Revenue by customer, product and salesperson"
-msgstr "الإيرادات حسب العميل والمنتج والبائع"
+msgstr "الإيرادات حسب العميل والمنتج ومندوب المبيعات"
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__running_balance
@@ -1873,7 +1873,7 @@ msgstr "إرسال بالبريد الإلكتروني"
 #. odoo-javascript
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
 msgid "Show more (%s remaining)"
-msgstr "عرض المزيد (%s متبقٍّ)"
+msgstr "عرض المزيد (المتبقي: %s)"
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -1885,13 +1885,13 @@ msgstr "المشتريات حسب المورّد والمنتج"
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
 msgid "Standard rated expenses (5%)"
-msgstr "المصروفات الخاضعة للنسبة الأساسية (5%)"
+msgstr "المصروفات الخاضعة للضريبة بالنسبة الأساسية (5%)"
 
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
 msgid "Standard rated supplies in %s (5%%)"
-msgstr "التوريدات الخاضعة للنسبة الأساسية في %s (5%%)"
+msgstr "التوريدات الخاضعة للضريبة بالنسبة الأساسية في %s (5%%)"
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -2019,7 +2019,7 @@ msgstr "يجب أن تقع فترة التقرير ضمن سنة مالية وا
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
 msgid "The report run expired — apply the filters again."
-msgstr "انتهت صلاحية تشغيل التقرير — طبّق المرشّحات مرة أخرى."
+msgstr "انتهت صلاحية تشغيل التقرير — طبّق عوامل التصفية مرة أخرى."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -2207,7 +2207,7 @@ msgstr "كشف حساب المورّد"
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_partner_ledger__partner_scope__payable
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_statement__partner_scope__payable
 msgid "Vendors"
-msgstr "الموردون"
+msgstr "المورّدون"
 
 #. module: ncollection_account_reports
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
@@ -2251,7 +2251,7 @@ msgstr "أي جانب من الدفتر يُعرض. دفتر الشركاء لا
 #. odoo-javascript
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 msgid "Widen the period or clear a filter, then apply again."
-msgstr "وسّع الفترة أو أزل أحد المرشّحات ثم طبّق مرة أخرى."
+msgstr "وسّع الفترة أو أزل أحد عوامل التصفية ثم طبّق مرة أخرى."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -2263,19 +2263,13 @@ msgstr "يتطلّب تصدير XLSX مكتبة 'xlsxwriter' الخاصة بلغ
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
 msgid "Zero rated supplies (0%)"
-msgstr "التوريدات الخاضعة لنسبة الصفر (0%)"
+msgstr "التوريدات الخاضعة للضريبة بنسبة الصفر (0%)"
 
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
 msgid "cogs"
 msgstr "تكلفة البضاعة المباعة"
-
-#. module: ncollection_account_reports
-#. odoo-javascript
-#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
-msgid "entries"
-msgstr "قيود"
 
 #. module: ncollection_account_reports
 #. odoo-python
