@@ -104,7 +104,10 @@ services:
     volumes:
       - ./custom_addons:/mnt/extra-addons:ro
       - ./oca:/mnt/oca-addons:ro
-      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      # NC_RUNNER_CONF lets a PRODUCTION deploy run this container on
+      # config/odoo.prod.conf (no dev master password) without forking this
+      # overlay. Unset = the dev config, which is what local stacks want.
+      - ${NC_RUNNER_CONF:-./config/odoo.conf}:/etc/odoo/odoo.conf:ro
       - odoo_data:/var/lib/odoo
     # Egress backstop (#311): db-plane (direct to db) + egress `default`. This is
     # the container where the `root.outbound` queue_job channel runs, so the ECB

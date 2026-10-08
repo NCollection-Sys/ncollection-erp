@@ -128,6 +128,23 @@ Provisioning installs **only** the plan's modules. What isn't installed cannot b
 
 ---
 
+### 4.4 Settings access model
+
+Settings (`base.menu_administration`) is the one Odoo app a customer's owner reaches to
+configure the workspace, and it is also the surface that can grant rights. Its card on
+the Home launcher follows the same rule as the menu: it is shown only to a user the
+Ring 1 filter already lets see it.
+
+| Who | Settings card / menu | Direct URL or RPC |
+|---|---|---|
+| Tenant Owner | shown | allowed (`base.group_system`, implied by the Owner role) |
+| Platform administrator (system admin **and** `ncollection_subscription.group_platform_admin`) | shown | allowed |
+| Every other tenant role (Sales, Employee, ...) | hidden | `AccessError` from the ORM, whatever the menu does |
+
+The platform-admin exemption is looked up by xml-id and is simply absent in a tenant
+database, so it cannot widen anything there. Hiding the card is never the control: the
+ORM refusal is, and both are covered by tests.
+
 ## 5. Tenant Isolation Guarantees & Continuous Verification
 
 | # | Guarantee | Mechanism | Automated check (P1-T20/P1-T21) |
@@ -164,6 +181,23 @@ Provisioning installs **only** the plan's modules. What isn't installed cannot b
 
 ---
 
+### 6.5 Login identity is a username
+
+A person who runs the ERP signs in with a **username**; their email is a contact detail
+and never a credential. Enforced where it cannot be bypassed:
+
+* `res.users` refuses an `@` in the login of an internal (non-portal) user when it is
+  created or changed. Portal customers (who sign in with their email), the platform
+  service accounts (`*@ncollection.internal`) and logins that already existed are
+  untouched until someone edits the login.
+* The tenant registration, the tenant administrator seed and the Owner's *Invite User*
+  wizard all take a separate username field; nothing derives a login from an email.
+* The one exemption is the off-by-default demo signup route (`public_signup_enabled`).
+
+The language a user picks is saved on the user and also written into the live session in
+the same request, so the page reload that follows is rendered in the right direction
+(LTR/RTL) the first time; Odoo alone refreshes the session language only while rendering.
+
 ## 7. Secrets Management
 
 **Lifecycle by stage** — the rule is *never in git, ever* (enforced by `.gitignore` + CI secret scanning):
@@ -180,6 +214,20 @@ Provisioning installs **only** the plan's modules. What isn't installed cannot b
 **Blast-radius rule**: no satellite container gets a secret outside its job — the AI gateway holds LLM keys but no DB credentials; the backup agent holds B2 write keys but no payment secrets ([ARCHITECTURE_DATA_PLATFORM.md §10.4](ARCHITECTURE_DATA_PLATFORM.md)).
 
 ---
+
+### 7.5 Production configuration requirements
+
+* `config/odoo.prod.conf` ships `admin_passwd` as a **PBKDF2 hash of a random secret that
+  was never recorded**. Odoo's option is file-only and defaults to the literal `admin`,
+  so neither a plaintext value nor a missing line is acceptable
+  (`rule_prod_admin_passwd_is_not_a_secret`). A deployment that needs the master
+  password mounts its own config with its own hash.
+* The queue/provisioning runner's `--limit-time-real` must exceed the engine's subprocess
+  cap with headroom (`rule_runner_timeout_exceeds_subprocess_cap`), or the worker is killed
+  before the engine can report a legible failure. The runner reads `config/odoo.conf` unless
+  `NC_RUNNER_CONF=./config/odoo.prod.conf` is set - a production deploy sets it.
+* `NC_DEV_SEED_PASSWORD` may only be declared with an empty default in any compose file
+  (`rule_dev_seed_password_never_shipped`); a value exists only in a developer's own `.env`.
 
 ## 8. Data Protection: Encryption & Backups
 

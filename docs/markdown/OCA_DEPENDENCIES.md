@@ -16,7 +16,7 @@ OCA repo, because the pins are commit hashes, not branch names.
 
 | Repo | Branch line | Modules we consume | Consumer | Sunset |
 |---|---|---|---|---|
-| `OCA/account-financial-reporting` | 19.0 | `account_financial_report` | financial reports (demo + P3) | **#117** [F2-T07] — retired when native `ncollection_account_reports` reaches parity |
+| `OCA/account-financial-reporting` | 19.0 | `account_financial_report` | financial reports (demo + P3) | **#117** [F2-T07] — retired when native `ncollection_account_reports` reaches parity. **Interim (reports hub):** the native reports are canonical; the OCA General Ledger / Trial Balance / Aged Partner menus are hidden (not uninstalled). Journal Ledger, Open Items and VAT Report have no native equivalent and are kept, filed under the hub categories. |
 | `OCA/account-financial-tools` | 19.0 (pinned `fde45b2c`) | `account_asset_management` | `ncollection_account_assets` (F4-T03 / #122) | keep — see the decision record below |
 | `OCA/mis-builder` | 19.0 | `mis_builder`, `mis_builder_budget` (+`mis_builder_demo` in demo DBs) | `ncollection_mis_templates` | **#117** |
 | `OCA/reporting-engine` | 19.0 | `report_xlsx`, `report_xlsx_helper` | XLSX rendering for the reports above | with #117 |

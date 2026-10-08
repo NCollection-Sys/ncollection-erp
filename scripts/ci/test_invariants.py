@@ -895,10 +895,6 @@ class TestR13SaasStackRunsTheQueueWorker(GuardTestCase):
             "would queue and never run")
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-
-
 class TestDevSeedPasswordNeverShipped(GuardTestCase):
     """The dev-only tenant password must never arrive with a checkout (#475).
 
@@ -952,3 +948,84 @@ class TestDevSeedPasswordNeverShipped(GuardTestCase):
         findings = self._run()
         self.assertEqual(len(findings), 1)
         self.assertIn("cannot reach the provisioning containers", findings[0])
+
+
+class TestProdAdminPasswdIsNotASecret(GuardTestCase):
+    """The production config must not ship a guessable DB master password."""
+
+    HASH = "admin_passwd = $pbkdf2-sha512$600000$abc$def\n"
+
+    def _run(self):
+        findings = []
+        invariants.rule_prod_admin_passwd_is_not_a_secret(findings)
+        return findings
+
+    def test_a_hash_is_clean(self):
+        self.write("config/odoo.prod.conf", "[options]\n" + self.HASH)
+        self.assertEqual(self._run(), [])
+
+    def test_the_dev_placeholder_is_refused(self):
+        self.write("config/odoo.prod.conf", "[options]\nadmin_passwd = ncollection_dev\n")
+        findings = self._run()
+        self.assertEqual(len(findings), 1)
+        self.assertIn("PBKDF2", findings[0])
+
+    def test_any_plaintext_is_refused(self):
+        self.write("config/odoo.prod.conf", "[options]\nadmin_passwd = S3cret-and-real!\n")
+        self.assertEqual(len(self._run()), 1)
+
+    def test_a_missing_line_is_refused_because_odoo_defaults_to_admin(self):
+        self.write("config/odoo.prod.conf", "[options]\nworkers = 4\n")
+        findings = self._run()
+        self.assertEqual(len(findings), 1)
+        self.assertIn("'admin'", findings[0])
+
+    def test_the_real_file_passes(self):
+        """The guard must be satisfied by what is actually committed."""
+        real = (Path(__file__).resolve().parents[2] / "config" / "odoo.prod.conf")
+        self.write("config/odoo.prod.conf", real.read_text(encoding="utf-8"))
+        self.assertEqual(self._run(), [])
+
+
+class TestRunnerTimeoutExceedsSubprocessCap(GuardTestCase):
+    """Outer limit > inner cap, or the worker dies before the engine can fail."""
+
+    SUB = "custom_addons/ncollection_saas/models/saas_subprocess.py"
+
+    def _run(self):
+        findings = []
+        invariants.rule_runner_timeout_exceeds_subprocess_cap(findings)
+        return findings
+
+    def _setup(self, limit, cap=1800):
+        self.write(self.SUB, "SUBPROCESS_TIMEOUT = %d  # cap\n" % cap)
+        self.write("docker-compose.saas.yml",
+                   "services:\n  r:\n    command: >\n      odoo --limit-time-real=%s\n" % limit)
+
+    def test_headroom_is_clean(self):
+        self._setup(3600)
+        self.assertEqual(self._run(), [])
+
+    def test_equal_to_the_cap_is_refused(self):
+        self._setup(1800)
+        self.assertEqual(len(self._run()), 1)
+
+    def test_lower_than_the_cap_is_refused(self):
+        self._setup(1200)
+        self.assertIn("killed before", self._run()[0])
+
+    def test_no_limit_at_all_is_refused(self):
+        self.write(self.SUB, "SUBPROCESS_TIMEOUT = 1800\n")
+        self.write("docker-compose.saas.yml", "services:\n  r:\n    command: odoo\n")
+        self.assertIn("120 s default", self._run()[0])
+
+    def test_the_real_repo_passes(self):
+        root = Path(__file__).resolve().parents[2]
+        self.write(self.SUB, (root / self.SUB).read_text(encoding="utf-8"))
+        self.write("docker-compose.saas.yml",
+                   (root / "docker-compose.saas.yml").read_text(encoding="utf-8"))
+        self.assertEqual(self._run(), [])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
