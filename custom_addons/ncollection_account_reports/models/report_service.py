@@ -325,6 +325,69 @@ class NcReportService(models.AbstractModel):
         folder = folder_xmlid and self.env.ref(folder_xmlid, raise_if_not_found=False)
         return folder.sudo().group_ids if folder else self.env['res.groups']
 
+    @api.model
+    def _nc_report_purposes(self):
+        """One line on what each report is FOR (shown on the hub card). Literals,
+        so they are translatable; a report without an entry simply shows none."""
+        _ = self.env._
+        p = 'ncollection_account_reports.menu_report_'
+        return {
+            p + 'trial_balance': _("Opening, movement and closing balance of every account for a period."),
+            p + 'general_ledger': _("Every journal item by account, with a running balance."),
+            p + 'balance_sheet': _("Assets, liabilities and equity as of a date, with comparison."),
+            p + 'profit_loss': _("Income and expenses for a period, with comparison."),
+            p + 'cash_flow': _("Cash movements by operating, investing and financing activity."),
+            p + 'equity_changes': _("How equity moved over the period."),
+            p + 'reference': _("Debit, credit and balance per account - the quickest check."),
+            p + 'financial_summary': _("The key financial figures on one page."),
+            p + 'asset_register': _("Fixed assets with depreciation and net book value."),
+            p + 'partner_ledger': _("Receivable and payable movements per customer or vendor."),
+            p + 'partner_statement': _("A printable statement to send to a customer or vendor."),
+            p + 'aged_partner': _("Outstanding receivables or payables, by age."),
+            p + 'profitability': _("Revenue, cost and margin."),
+            p + 'revenue_analysis': _("Where revenue comes from, with comparison."),
+            p + 'expense_analysis': _("Where the money goes, with comparison."),
+            p + 'cost_center': _("Results by cost centre."),
+            p + 'profit_center': _("Results by profit centre."),
+            p + 'department': _("Results by department."),
+            p + 'budget_actual': _("Approved budget against actual, with variance."),
+            p + 'uae_vat': _("The FTA VAT 201 return, box by box."),
+            'sale.menu_reporting_sales': _("Sales revenue and quantities over time."),
+            'sale.menu_reporting_customer': _("Sales grouped by customer."),
+            'sale.menu_reporting_product': _("Sales grouped by product."),
+            'sale.menu_reporting_salespeople': _("Sales grouped by salesperson."),
+            'account.menu_action_account_invoice_report_all': _("Invoiced amounts by period, partner and product."),
+            'purchase.purchase_report': _("Purchase orders and spend over time."),
+            'ncollection_account_reports.menu_purchase_by_vendor': _("Purchases grouped by vendor."),
+            'ncollection_account_reports.menu_purchase_by_product': _("Purchases grouped by product."),
+            'stock.menu_product_stock': _("Stock on hand by product and location."),
+            'stock.menu_valuation': _("Value of the stock on hand."),
+            'stock.stock_move_line_menu': _("Every stock movement, line by line."),
+            'stock.stock_move_menu': _("Stock movements analysed by product, location and period."),
+            'account.menu_action_analytic_reporting': _("Analytic items by account and plan."),
+            'account_financial_report.menu_journal_ledger_wizard': _("Every entry of a journal, in order."),
+            'account_financial_report.menu_open_items_wizard': _("Unreconciled items per partner at a date."),
+            'account_financial_report.menu_vat_report_wizard': _("Tax base and tax amount per tax code."),
+        }
+
+    @api.model
+    def _nc_report_badges(self, action):
+        """What a user can DO with a report, as short labels - derived from the
+        action, never declared: the viewer reports offer PDF, Excel and
+        drill-down; Odoo's analysis views offer pivot, graph and export."""
+        _ = self.env._
+        if action._name == 'ir.actions.client' and 'report_viewer' in (action.tag or ''):
+            return [_("PDF"), _("Excel"), _("Drill-down")]
+        modes = (getattr(action, 'view_mode', '') or '').split(',')
+        badges = []
+        if 'pivot' in modes:
+            badges.append(_("Pivot"))
+        if 'graph' in modes:
+            badges.append(_("Graph"))
+        if modes and badges:
+            badges.append(_("Export"))
+        return badges
+
     # ------------------------------------------------------------------
     # Landing page
     # ------------------------------------------------------------------
@@ -337,6 +400,7 @@ class NcReportService(models.AbstractModel):
         action opens — so a user never sees a card that ends in an access error.
         """
         meta = self._nc_category_meta()
+        purposes = self._nc_report_purposes()
         Menu = self.env['ir.ui.menu']
         visible = Menu._visible_menu_ids(self.env.user.has_group('base.group_no_one'))
         categories = []
@@ -357,6 +421,8 @@ class NcReportService(models.AbstractModel):
                     'name': menu.name,
                     'action_id': menu.action.id,
                     'action_type': menu.action._name,
+                    'purpose': purposes.get(xmlid, ''),
+                    'badges': self._nc_report_badges(menu.action),
                 })
             if reports:
                 name, description = meta[key]

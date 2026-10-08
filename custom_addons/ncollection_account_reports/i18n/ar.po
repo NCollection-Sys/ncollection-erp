@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ncollection_account_reports\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 04:36+0000\n"
-"PO-Revision-Date: 2026-10-08 04:36+0000\n"
+"POT-Creation-Date: 2026-10-08 19:20+0000\n"
+"PO-Revision-Date: 2026-10-08 19:20+0000\n"
 "Last-Translator: \n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
@@ -36,6 +36,12 @@ msgstr "يُحتسب %(title)s على الدفاتر كاملةً ولا يمك�
 #: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
 msgid "A custom comparison needs both a Compare From and a Compare To date."
 msgstr "تتطلّب المقارنة المخصّصة تاريخَي بداية ونهاية للمقارنة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "A printable statement to send to a customer or vendor."
+msgstr "كشف حساب قابل للطباعة لإرساله إلى عميل أو مورّد."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -177,10 +183,22 @@ msgid "Amount (AED)"
 msgstr "المبلغ (درهم)"
 
 #. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Analytic items by account and plan."
+msgstr "البنود التحليلية حسب الحساب والخطة."
+
+#. module: ncollection_account_reports
 #. odoo-javascript
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 msgid "Apply"
 msgstr "تطبيق"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Approved budget against actual, with variance."
+msgstr "الموازنة المعتمدة مقابل الفعلي مع الفروقات."
 
 #. module: ncollection_account_reports
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
@@ -191,6 +209,12 @@ msgstr "كما في"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
 msgid "As at"
 msgstr "كما في"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Assets, liabilities and equity as of a date, with comparison."
+msgstr "الأصول والخصوم وحقوق الملكية كما في تاريخ محدد، مع المقارنة."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -293,6 +317,12 @@ msgstr "النقد في بداية الفترة"
 #: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
 msgid "Cash at the end of the period"
 msgstr "النقد في نهاية الفترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Cash movements by operating, investing and financing activity."
+msgstr "الحركات النقدية حسب الأنشطة التشغيلية والاستثمارية والتمويلية."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -625,6 +655,12 @@ msgstr "مدين"
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Debit, credit and balance per account - the quickest check."
+msgstr "المدين والدائن والرصيد لكل حساب — أسرع طريقة للمراجعة."
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
 msgid "Department"
 msgstr "القسم"
@@ -693,6 +729,12 @@ msgstr "الاسم المعروض"
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Drill-down"
+msgstr "تفاصيل المصدر"
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
 msgid "EQUITY"
 msgstr "حقوق الملكية"
@@ -712,6 +754,30 @@ msgstr "القيود"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
 msgid "Entry"
 msgstr "القيد"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Every entry of a journal, in order."
+msgstr "كل قيود اليومية بالترتيب."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Every journal item by account, with a running balance."
+msgstr "كل بنود اليومية حسب الحساب مع الرصيد الجاري."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Every stock movement, line by line."
+msgstr "كل حركات المخزون سطرًا بسطر."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Excel"
+msgstr "إكسل"
 
 #. module: ncollection_account_reports
 #. odoo-javascript
@@ -750,6 +816,8 @@ msgstr "تحليل المصروفات"
 
 #. module: ncollection_account_reports
 #. odoo-javascript
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 msgid "Export"
 msgstr "تصدير"
@@ -867,6 +935,12 @@ msgid "Find a report…"
 msgstr "ابحث عن تقرير…"
 
 #. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Fixed assets with depreciation and net book value."
+msgstr "الأصول الثابتة مع الإهلاك وصافي القيمة الدفترية."
+
+#. module: ncollection_account_reports
 #. odoo-javascript
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__date_from
@@ -911,9 +985,21 @@ msgstr "السلع المستوردة إلى الإمارات عبر الجما�
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Graph"
+msgstr "رسم بياني"
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
 msgid "Gross Profit"
 msgstr "إجمالي الربح"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "How equity moved over the period."
+msgstr "كيف تغيّرت حقوق الملكية خلال الفترة."
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ir_ui_menu__id
@@ -958,9 +1044,21 @@ msgstr "الأنشطة الاستثمارية"
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Income and expenses for a period, with comparison."
+msgstr "الإيرادات والمصروفات عن فترة، مع المقارنة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
 #: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_inventory
 msgid "Inventory"
 msgstr "المخزون"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Invoiced amounts by period, partner and product."
+msgstr "المبالغ المفوترة حسب الفترة والشريك والمنتج."
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__is_initial
@@ -1432,6 +1530,12 @@ msgstr "الرصيد الافتتاحي"
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Opening, movement and closing balance of every account for a period."
+msgstr "الرصيد الافتتاحي وحركة الفترة والرصيد الختامي لكل حساب."
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
 #: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
 msgid "Operating Expenses"
@@ -1450,6 +1554,12 @@ msgstr "إيرادات تشغيلية أخرى"
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Outstanding receivables or payables, by age."
+msgstr "الذمم المدينة أو الدائنة القائمة حسب العمر."
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
 msgid "Over %d"
 msgstr "أكثر من %d"
@@ -1462,6 +1572,8 @@ msgstr "أكثر من 120"
 
 #. module: ncollection_account_reports
 #. odoo-javascript
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 msgid "PDF"
 msgstr "PDF"
@@ -1576,6 +1688,12 @@ msgstr "الفترة"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
 msgid "Period Start"
 msgstr "بداية الفترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Pivot"
+msgstr "جدول محوري"
 
 #. module: ncollection_account_reports
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
@@ -1703,6 +1821,12 @@ msgstr "أمر شراء"
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Purchase orders and spend over time."
+msgstr "أوامر الشراء والإنفاق عبر الزمن."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
 #: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_purchases
 msgid "Purchases"
 msgstr "المشتريات"
@@ -1720,9 +1844,27 @@ msgid "Purchases by Vendor"
 msgstr "المشتريات حسب المورّد"
 
 #. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Purchases grouped by product."
+msgstr "المشتريات مجمّعة حسب المنتج."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Purchases grouped by vendor."
+msgstr "المشتريات مجمّعة حسب المورّد."
+
+#. module: ncollection_account_reports
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__ratio_pct
 msgid "Ratio Pct"
 msgstr "النسبة %"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Receivable and payable movements per customer or vendor."
+msgstr "حركات الذمم المدينة والدائنة لكل عميل أو مورّد."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -1784,6 +1926,24 @@ msgstr "إعادة الضبط"
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Results by cost centre."
+msgstr "النتائج حسب مركز التكلفة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Results by department."
+msgstr "النتائج حسب القسم."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Results by profit centre."
+msgstr "النتائج حسب مركز الربح."
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
 msgid "Revenue"
 msgstr "الإيرادات"
@@ -1804,6 +1964,12 @@ msgstr "تحليل الإيرادات"
 #: code:addons/ncollection_account_reports/models/report_service.py:0
 msgid "Revenue by customer, product and salesperson"
 msgstr "الإيرادات حسب العميل والمنتج ومندوب المبيعات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Revenue, cost and margin."
+msgstr "الإيرادات والتكلفة والهامش."
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__running_balance
@@ -1829,6 +1995,30 @@ msgstr "المبيعات"
 #: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
 msgid "Sales Revenue"
 msgstr "إيرادات المبيعات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Sales grouped by customer."
+msgstr "المبيعات مجمّعة حسب العميل."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Sales grouped by product."
+msgstr "المبيعات مجمّعة حسب المنتج."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Sales grouped by salesperson."
+msgstr "المبيعات مجمّعة حسب مندوب المبيعات."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Sales revenue and quantities over time."
+msgstr "إيرادات المبيعات والكميات عبر الزمن."
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__comparison_type__previous_year
@@ -1926,6 +2116,18 @@ msgstr "مستويات المخزون وتقييمه وحركاته"
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Stock movements analysed by product, location and period."
+msgstr "تحليل حركات المخزون حسب المنتج والموقع والفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Stock on hand by product and location."
+msgstr "المخزون المتاح حسب المنتج والموقع."
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
 msgid "Supplies subject to reverse charge provisions (Input Tax)"
 msgstr "التوريدات الخاضعة لآلية الاحتساب العكسي (ضريبة المدخلات)"
@@ -2003,9 +2205,27 @@ msgstr "مبالغ الضريبة المستردّة للسياح بموجب ن�
 
 #. module: ncollection_account_reports
 #. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Tax base and tax amount per tax code."
+msgstr "الوعاء الضريبي ومبلغ الضريبة لكل رمز ضريبة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "The FTA VAT 201 return, box by box."
+msgstr "إقرار ضريبة القيمة المضافة 201 للهيئة الاتحادية للضرائب، خانة بخانة."
+
+#. module: ncollection_account_reports
+#. odoo-python
 #: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
 msgid "The custom comparison period starts after it ends."
 msgstr "فترة المقارنة المخصّصة تبدأ بعد انتهائها."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "The key financial figures on one page."
+msgstr "أهم الأرقام المالية في صفحة واحدة."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -2145,6 +2365,12 @@ msgid "UAE VAT 201 Return"
 msgstr "إقرار ضريبة القيمة المضافة 201 — الإمارات"
 
 #. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Unreconciled items per partner at a date."
+msgstr "البنود غير المسوّاة لكل شريك في تاريخ محدد."
+
+#. module: ncollection_account_reports
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__vat_amount
 msgid "VAT Amount"
 msgstr "مبلغ الضريبة"
@@ -2173,6 +2399,12 @@ msgstr "ضريبة القيمة المضافة على المبيعات وجمي�
 #: code:addons/ncollection_account_reports/models/report_service.py:0
 msgid "VAT returns and tax reporting"
 msgstr "إقرارات ضريبة القيمة المضافة والتقارير الضريبية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Value of the stock on hand."
+msgstr "قيمة المخزون المتاح."
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -2238,6 +2470,18 @@ msgstr "عرض السطور"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
 msgid "View Return"
 msgstr "عرض الإقرار"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Where revenue comes from, with comparison."
+msgstr "مصادر الإيرادات، مع المقارنة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Where the money goes, with comparison."
+msgstr "أين تُصرف الأموال، مع المقارنة."
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_partner_ledger__partner_scope

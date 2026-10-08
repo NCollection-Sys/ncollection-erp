@@ -33,7 +33,15 @@
                                 <li>
                                     <button type="button" class="o_nc_hub__link" t-on-click="() => this.openReport(report)"
                                             t-att-data-xmlid="report.xmlid">
-                                        <span t-esc="report.name"/>
+                                        <span class="o_nc_hub__link-text">
+                                            <span class="o_nc_hub__link-name" t-esc="report.name"/>
+                                            <span t-if="report.purpose" class="o_nc_hub__link-purpose" t-esc="report.purpose"/>
+                                            <span t-if="report.badges.length" class="o_nc_hub__badges">
+                                                <t t-foreach="report.badges" t-as="badge" t-key="badge_index">
+                                                    <span class="o_nc_hub__badge" t-esc="badge"/>
+                                                </t>
+                                            </span>
+                                        </span>
                                         <i class="fa fa-angle-right" aria-hidden="true"/>
                                     </button>
                                 </li>

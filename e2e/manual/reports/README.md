@@ -8,6 +8,8 @@ data and a Chrome install) — run them by hand after touching
     cd e2e && node manual/reports/dd1.js        # drill-down: account, entry, item, payment, partner
     node manual/reports/all1.js                 # every report in the hub opens without an error
     node manual/reports/lang_rep.js             # EN<->AR from each report keeps report + filters
+    node manual/reports/reach.js [480x800,1366x768]  # every page: nothing clipped, header not overlapping, no hidden overflow (EN + AR)
+    node manual/reports/search.js               # partner search, clear, pick, date, language, reload, back/forward
     node manual/reports/qa1.js                  # no overflow / clipping at 1366, 1920, 1024, 768, 480 (EN + AR)
 
 Defaults: `http://ncollection.localhost:8069`, login `admin`/`admin` (the dev

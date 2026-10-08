@@ -499,6 +499,32 @@
         [dir="rtl"] & .fa-angle-right { transform: scaleX(-1); }
     }
 
+    &__link-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        min-inline-size: 0;
+    }
+
+    &__link-name { font-weight: 500; }
+
+    &__link-purpose {
+        font-size: var(--nc-font-size-xs, 0.75rem);
+        color: var(--nc-text-muted, #64748b);
+        line-height: 1.35;
+    }
+
+    &__badges { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-block-start: 0.2rem; }
+
+    &__badge {
+        padding: 0 0.4rem;
+        border: 1px solid var(--nc-border, #e2e8f0);
+        border-radius: 999px;
+        font-size: 0.6875rem;
+        color: var(--nc-text-muted, #64748b);
+        background: #fff;
+    }
+
     &__empty {
         max-inline-size: 78rem;
         margin: 0 auto;
