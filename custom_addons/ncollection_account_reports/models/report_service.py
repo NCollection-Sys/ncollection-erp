@@ -53,6 +53,40 @@ _FOLDER_MENUS = (
     'hr.hr_menu_hr_reports',
 )
 
+# Arabic for the report names this module sets on OTHER modules' menus. A menu
+# name is record data, not a code string, so renaming it in English alone leaves
+# Odoo's own Arabic name behind - and Odoo's names are the wrong ones here ("Sales"
+# for what is now "Sales Analysis"). Keyed by the English name written above.
+_ARABIC_NAMES = {
+    'Account Balances': 'أرصدة الحسابات',
+    'Fixed Asset Register': 'سجل الأصول الثابتة',
+    'Sales Analysis': 'تحليل المبيعات',
+    'Sales by Customer': 'المبيعات حسب العميل',
+    'Sales by Product': 'المبيعات حسب المنتج',
+    'Sales by Salesperson': 'المبيعات حسب مندوب المبيعات',
+    'Invoice Analysis': 'تحليل الفواتير',
+    'Purchase Analysis': 'تحليل المشتريات',
+    'Purchases by Vendor': 'المشتريات حسب المورّد',
+    'Purchases by Product': 'المشتريات حسب المنتج',
+    'Stock Analysis': 'تحليل المخزون',
+    'Inventory Valuation': 'تقييم المخزون',
+    'Stock Movement History': 'سجل حركة المخزون',
+    'Stock Move Analysis': 'تحليل حركات المخزون',
+    'VAT Report': 'تقرير ضريبة القيمة المضافة',
+    'UAE VAT 201 Return': 'إقرار ضريبة القيمة المضافة 201 — الإمارات',
+    'Sales Pipeline': 'مسار المبيعات',
+    'Lead Analysis': 'تحليل العملاء المحتملين',
+    'Activity Analysis': 'تحليل الأنشطة',
+    'Sales Forecast': 'توقعات المبيعات',
+    'Task Analysis': 'تحليل المهام',
+    'Budget vs Actual': 'الموازنة مقابل الفعلي',
+    'MIS Reports': 'تقارير MIS',
+    'Last Reports Generated': 'آخر التقارير المُنشأة',
+    'Journal Ledger': 'دفتر اليومية',
+    'Open Items': 'البنود المفتوحة',
+}
+_ARABIC_LANG = 'ar_001'
+
 _CATEGORY_ICONS = {
     'financial': 'fa-balance-scale',
     'receivables': 'fa-exchange',
@@ -222,6 +256,7 @@ class NcReportService(models.AbstractModel):
         Menu = self.env['ir.ui.menu'].sudo().with_context(active_test=False)
         changed = 0
         self._nc_ensure_grouped_menus()
+        installed_langs = {code for code, _name in self.env['res.lang'].get_installed()}
         for key, entries in self._nc_catalog():
             category = self.env.ref(
                 'ncollection_account_reports.menu_nc_reports_%s' % key,
@@ -250,6 +285,12 @@ class NcReportService(models.AbstractModel):
                     changed += 1
                 if new_name and menu.with_context(lang='en_US').name != new_name:
                     menu.with_context(lang='en_US').write({'name': new_name})
+                    changed += 1
+                english = new_name or menu.with_context(lang='en_US').name
+                arabic = _ARABIC_NAMES.get(english)
+                if arabic and _ARABIC_LANG in installed_langs \
+                        and menu.with_context(lang=_ARABIC_LANG).name != arabic:
+                    menu.update_field_translations('name', {_ARABIC_LANG: arabic})
                     changed += 1
         for xmlid in _SUPERSEDED_OCA_MENUS:
             menu = self.env.ref(xmlid, raise_if_not_found=False)

@@ -1,646 +1,2337 @@
-# Arabic (ar) translation of ncollection_account_reports.
-# NCollection ERP — reporting hub and viewer. Engineering draft; pending native review.
+# Arabic (ar) translation of ncollection_account_reports. Engineering draft; pending native review.
+# This file contains the translation of the following modules:
+# 	* ncollection_account_reports
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: ncollection_account_reports\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-08 04:36+0000\n"
+"PO-Revision-Date: 2026-10-08 04:36+0000\n"
+"Last-Translator: \n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_account_reports
-msgid "Reports"
-msgstr "التقارير"
-
-#. module: ncollection_account_reports
-msgid "Financial & Accounting"
-msgstr "المالية والمحاسبة"
-
-#. module: ncollection_account_reports
-msgid "Receivables & Payables"
-msgstr "الذمم المدينة والدائنة"
-
-#. module: ncollection_account_reports
-msgid "Sales"
-msgstr "المبيعات"
-
-#. module: ncollection_account_reports
-msgid "Purchases"
-msgstr "المشتريات"
-
-#. module: ncollection_account_reports
-msgid "Inventory"
-msgstr "المخزون"
-
-#. module: ncollection_account_reports
-msgid "Tax"
-msgstr "الضرائب"
-
-#. module: ncollection_account_reports
-msgid "Management & Analytics"
-msgstr "الإدارة والتحليلات"
-
-#. module: ncollection_account_reports
-msgid "Statements, ledgers and account balances"
-msgstr "القوائم المالية ودفاتر الأستاذ وأرصدة الحسابات"
-
-#. module: ncollection_account_reports
-msgid "Partner ledgers, statements and ageing"
-msgstr "دفاتر الشركاء وكشوف الحساب وأعمار الديون"
-
-#. module: ncollection_account_reports
-msgid "Revenue by customer, product and salesperson"
-msgstr "الإيرادات حسب العميل والمنتج والبائع"
-
-#. module: ncollection_account_reports
-msgid "Spend by vendor and product"
-msgstr "المشتريات حسب المورّد والمنتج"
-
-#. module: ncollection_account_reports
-msgid "Stock levels, valuation and movements"
-msgstr "مستويات المخزون وتقييمه وحركاته"
-
-#. module: ncollection_account_reports
-msgid "VAT returns and tax reporting"
-msgstr "إقرارات ضريبة القيمة المضافة والتقارير الضريبية"
-
-#. module: ncollection_account_reports
-msgid "Profitability, budgets and analytical views"
-msgstr "الربحية والموازنات والتقارير التحليلية"
-
-#. module: ncollection_account_reports
-msgid "Financial statements, ledgers and business analysis, organised by area."
-msgstr "القوائم المالية ودفاتر الأستاذ وتحليلات الأعمال، مصنّفة حسب المجال."
-
-#. module: ncollection_account_reports
-msgid "Find a report…"
-msgstr "ابحث عن تقرير…"
-
-#. module: ncollection_account_reports
-msgid "Find a report"
-msgstr "ابحث عن تقرير"
-
-#. module: ncollection_account_reports
-msgid "Loading reports…"
-msgstr "جارٍ تحميل التقارير…"
-
-#. module: ncollection_account_reports
-msgid "Loading the report…"
-msgstr "جارٍ تحميل التقرير…"
-
-#. module: ncollection_account_reports
-msgid "No report matches your search."
-msgstr "لا يوجد تقرير مطابق لبحثك."
-
-#. module: ncollection_account_reports
-msgid "No reports are available for your account."
-msgstr "لا توجد تقارير متاحة لحسابك."
-
-#. module: ncollection_account_reports
-msgid "No entries for these filters"
-msgstr "لا توجد قيود لهذه المرشّحات"
-
-#. module: ncollection_account_reports
-msgid "Widen the period or clear a filter, then apply again."
-msgstr "وسّع الفترة أو أزل أحد المرشّحات ثم طبّق مرة أخرى."
-
-#. module: ncollection_account_reports
-msgid "Trial Balance"
-msgstr "ميزان المراجعة"
-
-#. module: ncollection_account_reports
-msgid "General Ledger"
-msgstr "دفتر الأستاذ العام"
-
-#. module: ncollection_account_reports
-msgid "Balance Sheet"
-msgstr "الميزانية العمومية"
-
-#. module: ncollection_account_reports
-msgid "Profit & Loss"
-msgstr "الأرباح والخسائر"
-
-#. module: ncollection_account_reports
-msgid "Cash Flow Statement"
-msgstr "قائمة التدفقات النقدية"
-
-#. module: ncollection_account_reports
-msgid "Statement of Changes in Equity"
-msgstr "قائمة التغيّرات في حقوق الملكية"
-
-#. module: ncollection_account_reports
-msgid "Account Balances"
-msgstr "أرصدة الحسابات"
-
-#. module: ncollection_account_reports
-msgid "Financial Summary"
-msgstr "الملخّص المالي"
-
-#. module: ncollection_account_reports
-msgid "Partner Ledger"
-msgstr "دفتر الأستاذ للشركاء"
-
-#. module: ncollection_account_reports
-msgid "Customer / Vendor Statement"
-msgstr "كشف حساب العميل / المورّد"
-
-#. module: ncollection_account_reports
-msgid "Aged Receivable / Payable"
-msgstr "أعمار الذمم المدينة / الدائنة"
-
-#. module: ncollection_account_reports
-msgid "Aged Receivable"
-msgstr "أعمار الذمم المدينة"
-
-#. module: ncollection_account_reports
-msgid "Aged Payable"
-msgstr "أعمار الذمم الدائنة"
-
-#. module: ncollection_account_reports
-msgid "Aged Partner Balance"
-msgstr "أعمار أرصدة الشركاء"
-
-#. module: ncollection_account_reports
-msgid "Partner Ledger — Customers"
-msgstr "دفتر الأستاذ للشركاء — العملاء"
-
-#. module: ncollection_account_reports
-msgid "Partner Ledger — Vendors"
-msgstr "دفتر الأستاذ للشركاء — الموردون"
-
-#. module: ncollection_account_reports
-msgid "Profitability Report"
-msgstr "تقرير الربحية"
-
-#. module: ncollection_account_reports
-msgid "Revenue Analysis"
-msgstr "تحليل الإيرادات"
-
-#. module: ncollection_account_reports
-msgid "Expense Analysis"
-msgstr "تحليل المصروفات"
-
-#. module: ncollection_account_reports
-msgid "Cost Center Analysis"
-msgstr "تحليل مراكز التكلفة"
-
-#. module: ncollection_account_reports
-msgid "Profit Center Analysis"
-msgstr "تحليل مراكز الربح"
-
-#. module: ncollection_account_reports
-msgid "Department Analysis"
-msgstr "تحليل الأقسام"
-
-#. module: ncollection_account_reports
-msgid "UAE FTA VAT 201 Return"
-msgstr "إقرار ضريبة القيمة المضافة (نموذج 201) — الهيئة الاتحادية للضرائب"
-
-#. module: ncollection_account_reports
-msgid "UAE VAT 201 Return"
-msgstr "إقرار ضريبة القيمة المضافة 201 — الإمارات"
-
-#. module: ncollection_account_reports
-msgid "Company"
-msgstr "الشركة"
-
-#. module: ncollection_account_reports
-msgid "Period"
-msgstr "الفترة"
-
-#. module: ncollection_account_reports
-msgid "Currency"
-msgstr "العملة"
-
-#. module: ncollection_account_reports
-msgid "Entries"
-msgstr "القيود"
-
-#. module: ncollection_account_reports
-msgid "From"
-msgstr "من"
-
-#. module: ncollection_account_reports
-msgid "To"
-msgstr "إلى"
-
-#. module: ncollection_account_reports
-msgid "Compare"
-msgstr "مقارنة"
-
-#. module: ncollection_account_reports
-msgid "Compare from"
-msgstr "مقارنة من"
-
-#. module: ncollection_account_reports
-msgid "Compare to"
-msgstr "مقارنة إلى"
-
-#. module: ncollection_account_reports
-msgid "Compare From"
-msgstr "مقارنة من"
-
-#. module: ncollection_account_reports
-msgid "Compare To"
-msgstr "مقارنة إلى"
-
-#. module: ncollection_account_reports
-msgid "Compare With"
-msgstr "قارن مع"
-
-#. module: ncollection_account_reports
-msgid "Comparison"
-msgstr "المقارنة"
-
-#. module: ncollection_account_reports
-msgid "No Comparison"
-msgstr "بدون مقارنة"
-
-#. module: ncollection_account_reports
-msgid "Previous Period"
-msgstr "الفترة السابقة"
-
-#. module: ncollection_account_reports
-msgid "Same Period Last Year"
-msgstr "الفترة نفسها من العام الماضي"
-
-#. module: ncollection_account_reports
-msgid "Custom Period"
-msgstr "فترة مخصّصة"
-
-#. module: ncollection_account_reports
-msgid "Journals"
-msgstr "اليوميات"
-
-#. module: ncollection_account_reports
-msgid "Accounts"
-msgstr "الحسابات"
-
-#. module: ncollection_account_reports
-msgid "Partners"
-msgstr "الشركاء"
-
-#. module: ncollection_account_reports
-msgid "Journal"
-msgstr "اليومية"
-
-#. module: ncollection_account_reports
-msgid "Account"
-msgstr "الحساب"
-
-#. module: ncollection_account_reports
-msgid "Partner"
-msgstr "الشريك"
-
-#. module: ncollection_account_reports
-msgid "Search…"
-msgstr "بحث…"
-
-#. module: ncollection_account_reports
-msgid "Apply"
-msgstr "تطبيق"
-
-#. module: ncollection_account_reports
-msgid "Reset"
-msgstr "إعادة الضبط"
-
-#. module: ncollection_account_reports
-msgid "Refresh"
-msgstr "تحديث"
-
-#. module: ncollection_account_reports
-msgid "Export"
-msgstr "تصدير"
-
-#. module: ncollection_account_reports
-msgid "Print"
-msgstr "طباعة"
-
-#. module: ncollection_account_reports
-msgid "Expand all"
-msgstr "إظهار الكل"
-
-#. module: ncollection_account_reports
-msgid "Collapse all"
-msgstr "طيّ الكل"
-
-#. module: ncollection_account_reports
-msgid "Excel (.xlsx)"
-msgstr "إكسل (.xlsx)"
-
-#. module: ncollection_account_reports
-msgid "PDF"
-msgstr "PDF"
-
-#. module: ncollection_account_reports
-msgid "Entry"
-msgstr "القيد"
-
-#. module: ncollection_account_reports
-msgid "Date"
-msgstr "التاريخ"
-
-#. module: ncollection_account_reports
-msgid "Label"
-msgstr "البيان"
-
-#. module: ncollection_account_reports
-msgid "Debit"
-msgstr "مدين"
-
-#. module: ncollection_account_reports
-msgid "Credit"
-msgstr "دائن"
-
-#. module: ncollection_account_reports
-msgid "Balance"
-msgstr "الرصيد"
-
-#. module: ncollection_account_reports
-msgid "Opening balance"
-msgstr "الرصيد الافتتاحي"
-
-#. module: ncollection_account_reports
-msgid "Opening Balance"
-msgstr "الرصيد الافتتاحي"
-
-#. module: ncollection_account_reports
-msgid "Closing Balance"
-msgstr "الرصيد الختامي"
-
-#. module: ncollection_account_reports
-msgid "Closing balance"
-msgstr "الرصيد الختامي"
-
-#. module: ncollection_account_reports
-msgid "Total / closing balance"
-msgstr "الإجمالي / الرصيد الختامي"
-
-#. module: ncollection_account_reports
-msgid "Total"
-msgstr "الإجمالي"
-
-#. module: ncollection_account_reports
-msgid "Opening"
-msgstr "افتتاحي"
-
-#. module: ncollection_account_reports
-msgid "Closing"
-msgstr "ختامي"
-
-#. module: ncollection_account_reports
-msgid "entries"
-msgstr "قيود"
-
-#. module: ncollection_account_reports
-msgid "Item"
-msgstr "البند"
-
-#. module: ncollection_account_reports
-msgid "Payment"
-msgstr "دفعة"
-
-#. module: ncollection_account_reports
-msgid "Sale order"
-msgstr "أمر بيع"
-
-#. module: ncollection_account_reports
-msgid "Purchase order"
-msgstr "أمر شراء"
-
-#. module: ncollection_account_reports
-msgid "Open journal item"
-msgstr "فتح بند اليومية"
-
-#. module: ncollection_account_reports
-msgid "Show more (%s remaining)"
-msgstr "عرض المزيد (%s متبقٍّ)"
-
-#. module: ncollection_account_reports
-msgid "Posted Entries"
-msgstr "القيود المرحّلة"
-
-#. module: ncollection_account_reports
-msgid "All Entries"
-msgstr "جميع القيود"
-
-#. module: ncollection_account_reports
-msgid "Target Moves"
-msgstr "القيود المستهدفة"
-
-#. module: ncollection_account_reports
-msgid "Current"
-msgstr "الحالي"
-
-#. module: ncollection_account_reports
-msgid "Previous"
-msgstr "السابق"
-
-#. module: ncollection_account_reports
-msgid "Variance"
-msgstr "الفرق"
-
-#. module: ncollection_account_reports
-msgid "Variance %"
-msgstr "نسبة الفرق %"
-
-#. module: ncollection_account_reports
-msgid "Current Amount"
-msgstr "المبلغ الحالي"
-
-#. module: ncollection_account_reports
-msgid "Previous Amount"
-msgstr "المبلغ السابق"
-
-#. module: ncollection_account_reports
-msgid "As Of"
-msgstr "كما في"
-
-#. module: ncollection_account_reports
-msgid "As at"
-msgstr "كما في"
-
-#. module: ncollection_account_reports
-msgid "Period Start"
-msgstr "بداية الفترة"
-
-#. module: ncollection_account_reports
-msgid "Bucket size (days)"
-msgstr "طول الفترة (أيام)"
-
-#. module: ncollection_account_reports
-msgid "Report"
-msgstr "التقرير"
-
-#. module: ncollection_account_reports
-msgid "Customers"
-msgstr "العملاء"
-
-#. module: ncollection_account_reports
-msgid "Vendors"
-msgstr "الموردون"
-
-#. module: ncollection_account_reports
-msgid "Both"
-msgstr "كلاهما"
-
-#. module: ncollection_account_reports
-msgid "Revenue"
-msgstr "الإيرادات"
-
-#. module: ncollection_account_reports
-msgid "Expense"
-msgstr "المصروفات"
-
-#. module: ncollection_account_reports
-msgid "Gross Profit"
-msgstr "إجمالي الربح"
-
-#. module: ncollection_account_reports
-msgid "Net profit for the period"
-msgstr "صافي ربح الفترة"
-
-#. module: ncollection_account_reports
-msgid "TOTAL REVENUE"
-msgstr "إجمالي الإيرادات"
-
-#. module: ncollection_account_reports
-msgid "TOTAL EXPENSES"
-msgstr "إجمالي المصروفات"
-
-#. module: ncollection_account_reports
-msgid "TOTAL EQUITY"
-msgstr "إجمالي حقوق الملكية"
-
-#. module: ncollection_account_reports
-msgid "EQUITY"
-msgstr "حقوق الملكية"
-
-#. module: ncollection_account_reports
-msgid "TOTAL"
-msgstr "الإجمالي"
-
-#. module: ncollection_account_reports
-msgid "OPERATING ACTIVITIES"
-msgstr "الأنشطة التشغيلية"
-
-#. module: ncollection_account_reports
-msgid "INVESTING ACTIVITIES"
-msgstr "الأنشطة الاستثمارية"
-
-#. module: ncollection_account_reports
-msgid "FINANCING ACTIVITIES"
-msgstr "الأنشطة التمويلية"
-
-#. module: ncollection_account_reports
-msgid "NET CHANGE IN CASH"
-msgstr "صافي التغيّر في النقد"
-
-#. module: ncollection_account_reports
-msgid "Cash at the beginning of the period"
-msgstr "النقد في بداية الفترة"
-
-#. module: ncollection_account_reports
-msgid "Cash at the end of the period"
-msgstr "النقد في نهاية الفترة"
-
-#. module: ncollection_account_reports
-msgid "Net cash from operating activities"
-msgstr "صافي النقد من الأنشطة التشغيلية"
-
-#. module: ncollection_account_reports
-msgid "Net cash from investing activities"
-msgstr "صافي النقد من الأنشطة الاستثمارية"
-
-#. module: ncollection_account_reports
-msgid "Net cash from financing activities"
-msgstr "صافي النقد من الأنشطة التمويلية"
-
-#. module: ncollection_account_reports
-msgid "Cost of Goods Sold"
-msgstr "تكلفة البضاعة المباعة"
-
-#. module: ncollection_account_reports
-msgid "Cost of Sales"
-msgstr "تكلفة المبيعات"
-
-#. module: ncollection_account_reports
-msgid "Operating Expenses"
-msgstr "المصروفات التشغيلية"
-
-#. module: ncollection_account_reports
-msgid "Other Operating Income"
-msgstr "إيرادات تشغيلية أخرى"
-
-#. module: ncollection_account_reports
-msgid "Sales Revenue"
-msgstr "إيرادات المبيعات"
-
-#. module: ncollection_account_reports
-msgid "Margin %"
-msgstr "الهامش %"
-
-#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/profitability.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
 msgid "% of Revenue"
 msgstr "% من الإيرادات"
 
 #. module: ncollection_account_reports
-msgid "Over %d"
-msgstr "أكثر من %d"
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/whole_entity.py:0
+msgid ""
+"%(title)s is computed over the complete books and cannot be filtered by "
+"%(filters)s — the resulting figures would not reconcile. Remove the filter, "
+"or use the General Ledger, which is meaningful over any subset."
+msgstr "يُحتسب %(title)s على الدفاتر كاملةً ولا يمكن ترشيحه حسب %(filters)s — فالأرقام الناتجة لن تتطابق. أزل المرشّح أو استخدم دفتر الأستاذ العام الذي له معنى على أي مجموعة جزئية."
 
 #. module: ncollection_account_reports
-msgid "Over 120"
-msgstr "أكثر من 120"
-
-#. module: ncollection_account_reports
-msgid "The report run expired — apply the filters again."
-msgstr "انتهت صلاحية تشغيل التقرير — طبّق المرشّحات مرة أخرى."
-
-#. module: ncollection_account_reports
-msgid "This is not a financial report."
-msgstr "هذا ليس تقريرًا ماليًا."
-
-#. module: ncollection_account_reports
-msgid "Bucket size must be a positive number of days."
-msgstr "يجب أن يكون طول الفترة عددًا موجبًا من الأيام."
-
-#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
 msgid "A custom comparison needs both a Compare From and a Compare To date."
 msgstr "تتطلّب المقارنة المخصّصة تاريخَي بداية ونهاية للمقارنة."
 
 #. module: ncollection_account_reports
-msgid "The custom comparison period starts after it ends."
-msgstr "فترة المقارنة المخصّصة تبدأ بعد انتهائها."
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_reference.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+#: code:addons/ncollection_account_reports/wizard/trial_balance.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__account_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__account_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__account_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_tb_list
+msgid "Account"
+msgstr "الحساب"
 
 #. module: ncollection_account_reports
-msgid "The report period must fall within a single fiscal year — the From/To range crosses a fiscal-year boundary. Run one report per fiscal year."
-msgstr "يجب أن تقع فترة التقرير ضمن سنة مالية واحدة — النطاق يتجاوز حدود السنة المالية. شغّل تقريرًا لكل سنة مالية."
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_reference.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_reference
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_reference
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_reference
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
+msgid "Account Balances"
+msgstr "أرصدة الحسابات"
 
 #. module: ncollection_account_reports
-msgid "Export PDF"
-msgstr "تصدير PDF"
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid ""
+"Account type(s) %s are classified into more than one cash-flow section and "
+"would be counted twice."
+msgstr "أنواع الحسابات %s مصنّفة في أكثر من قسم من أقسام التدفقات النقدية وستُحتسب مرتين."
 
 #. module: ncollection_account_reports
-msgid "Export XLSX"
-msgstr "تصدير XLSX"
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid ""
+"Account type(s) %s are not classified into a cash-flow section. The "
+"statement cannot be produced without deciding where they belong — an "
+"unclassified type would silently break the reconciliation with cash "
+"movements."
+msgstr "أنواع الحسابات %s غير مصنّفة ضمن أي قسم من أقسام التدفقات النقدية. لا يمكن إنتاج القائمة قبل تحديد موضعها — فالنوع غير المصنّف سيُخلّ بصمت بالتسوية مع الحركات النقدية."
 
 #. module: ncollection_account_reports
-msgid "View"
-msgstr "عرض"
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__account_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__account_ids
+msgid "Accounts"
+msgstr "الحسابات"
 
 #. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Add back: depreciation (non-cash)"
+msgstr "يُضاف: الإهلاك (غير نقدي)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Adjustments to goods imported into the UAE"
+msgstr "تعديلات على السلع المستوردة إلى الإمارات"
+
+#. module: ncollection_account_reports
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_aged_partner_wizard
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_aged_partner
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+msgid "Aged Partner Balance"
+msgstr "أعمار أرصدة الشركاء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_aged_partner__partner_scope__payable
+msgid "Aged Payable"
+msgstr "أعمار الذمم الدائنة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_aged_partner__partner_scope__receivable
+msgid "Aged Receivable"
+msgstr "أعمار الذمم المدينة"
+
+#. module: ncollection_account_reports
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_aged_partner
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_aged_partner
+msgid "Aged Receivable / Payable"
+msgstr "أعمار الذمم المدينة / الدائنة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_aged_partner__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_asset_register__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_budget_actual__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cash_flow__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cost_center__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_department__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_equity_changes__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_expense__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_general_ledger__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_partner_ledger__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_center__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_loss__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profitability__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_reference__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_revenue__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_statement__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_trial_balance__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_uae_vat__target_move__all
+msgid "All Entries"
+msgstr "جميع القيود"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_uae_vat_list
+msgid "Amount (AED)"
+msgstr "المبلغ (درهم)"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Apply"
+msgstr "تطبيق"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+msgid "As Of"
+msgstr "كما في"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+msgid "As at"
+msgstr "كما في"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_reference.py:0
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__balance
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_list
+msgid "Balance"
+msgstr "الرصيد"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+msgid "Balance Due"
+msgstr "الرصيد المستحق"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/balance_sheet.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_balance_sheet_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_balance_sheet
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_balance_sheet
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_balance_sheet
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+msgid "Balance Sheet"
+msgstr "الميزانية العمومية"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_partner_ledger__partner_scope__both
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_statement__partner_scope__both
+msgid "Both"
+msgstr "كلاهما"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__box
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_uae_vat_list
+msgid "Box"
+msgstr "الخانة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__bucket_current
+msgid "Bucket Current"
+msgstr "الحالي"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__period_length
+msgid "Bucket size (days)"
+msgstr "طول الفترة (أيام)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+msgid "Bucket size must be a positive number of days."
+msgstr "يجب أن يكون طول الفترة عددًا موجبًا من الأيام."
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cash_flow_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cost_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_department_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_equity_changes_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_general_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_statement_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
 msgid "Cancel"
 msgstr "إلغاء"
 
 #. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_cash_flow_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_cash_flow
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_cash_flow
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_cash_flow
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cash_flow_form
+msgid "Cash Flow Statement"
+msgstr "قائمة التدفقات النقدية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Cash at the beginning of the period"
+msgstr "النقد في بداية الفترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Cash at the end of the period"
+msgstr "النقد في نهاية الفترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+#: code:addons/ncollection_account_reports/wizard/profit_and_loss.py:0
+msgid "Category"
+msgstr "الفئة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/trial_balance.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_equity_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_tb_list
+msgid "Closing"
+msgstr "الختامي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__closing_balance
+msgid "Closing Balance"
+msgstr "الرصيد الختامي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Closing balance"
+msgstr "الرصيد الختامي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Collapse all"
+msgstr "طيّ الكل"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__company_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Compare"
+msgstr "مقارنة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_comparison__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__comparison_date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__comparison_date_from
+msgid "Compare From"
+msgstr "مقارنة من"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_comparison__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__comparison_date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__comparison_date_to
+msgid "Compare To"
+msgstr "مقارنة إلى"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_comparison__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__comparison_type
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__comparison_type
+msgid "Compare With"
+msgstr "قارن مع"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Compare from"
+msgstr "مقارنة من"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Compare to"
+msgstr "مقارنة إلى"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cash_flow_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cost_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_department_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+msgid "Comparison"
+msgstr "المقارنة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_equity_list
+msgid "Component"
+msgstr "المكوّن"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_cost_center_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_cost_center
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_cost_center
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_cost_center
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cost_center_form
+msgid "Cost Center Analysis"
+msgstr "تحليل مراكز التكلفة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "Cost Centre"
+msgstr "مركز التكلفة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "Cost of Goods Sold"
+msgstr "تكلفة البضاعة المباعة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "Cost of Sales"
+msgstr "تكلفة المبيعات"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__create_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__create_date
+msgid "Created on"
+msgstr "تاريخ الإنشاء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_reference.py:0
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/trial_balance.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__credit
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__credit
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__credit
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_gl_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_tb_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_line_list
+msgid "Credit"
+msgstr "دائن"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__currency_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__currency_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__currency_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__currency_id
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+#: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_dimension_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
+msgid "Current"
+msgstr "الحالي"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__current_amount
+msgid "Current Amount"
+msgstr "المبلغ الحالي"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_budget_actual__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cash_flow__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_comparison__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cost_center__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_department__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_expense__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_center__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_loss__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profitability__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_revenue__comparison_type__custom
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__comparison_type__custom
+msgid "Custom Period"
+msgstr "فترة مخصّصة"
+
+#. module: ncollection_account_reports
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_partner_statement_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_partner_statement
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_partner_statement
+msgid "Customer / Vendor Statement"
+msgstr "كشف حساب العميل / المورّد"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_statement.py:0
+msgid "Customer Statement"
+msgstr "كشف حساب العميل"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_partner_ledger__partner_scope__receivable
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_statement__partner_scope__receivable
+msgid "Customers"
+msgstr "العملاء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__date
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+msgid "Date"
+msgstr "التاريخ"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_reference.py:0
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/trial_balance.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__debit
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__debit
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__debit
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_gl_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_tb_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_line_list
+msgid "Debit"
+msgstr "مدين"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "Department"
+msgstr "القسم"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_department_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_department
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_department
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_department
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_department_form
+msgid "Department Analysis"
+msgstr "تحليل الأقسام"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_uae_vat_list
+msgid "Description / Supply Category"
+msgstr "الوصف / فئة التوريد"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_dimension_list
+msgid "Dimension"
+msgstr "البُعد"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_dimension_list
+msgid "Dimension Analysis"
+msgstr "تحليل الأبعاد"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ir_ui_menu__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_analysis_base__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_comparison__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_dimension_base__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_executive__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_whole_entity__display_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_report_service__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
+msgid "EQUITY"
+msgstr "حقوق الملكية"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Entries"
+msgstr "القيود"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__move_name
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__move_name
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+msgid "Entry"
+msgstr "القيد"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Excel (.xlsx)"
+msgstr "إكسل (.xlsx)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Exempt supplies"
+msgstr "التوريدات المعفاة"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Expand all"
+msgstr "إظهار الكل"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "Expense"
+msgstr "المصروفات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_expense_analysis_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_expense_analysis
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_expense_analysis
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_expense_analysis
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+msgid "Expense Analysis"
+msgstr "تحليل المصروفات"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Export"
+msgstr "تصدير"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
+msgid "Export FTA Audit File (FAF)"
+msgstr "تصدير ملف التدقيق للهيئة الاتحادية للضرائب (FAF)"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cash_flow_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cost_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_department_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_equity_changes_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_general_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
+msgid "Export PDF"
+msgstr "تصدير PDF"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cash_flow_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cost_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_department_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_equity_changes_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_general_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
+msgid "Export XLSX"
+msgstr "تصدير XLSX"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "FINANCING ACTIVITIES"
+msgstr "الأنشطة التمويلية"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_general_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
 msgid "Filters"
 msgstr "المرشّحات"
 
 #. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_financial
+msgid "Financial & Accounting"
+msgstr "المالية والمحاسبة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/account_report.py:0
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_financial
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+msgid "Financial Report"
+msgstr "تقرير مالي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/financial_summary.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_financial_summary_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_financial_summary
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_financial_summary
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_financial_summary
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+msgid "Financial Summary"
+msgstr "الملخّص المالي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/hub/report_hub.xml:0
+msgid ""
+"Financial statements, ledgers and business analysis, organised by area."
+msgstr "القوائم المالية ودفاتر الأستاذ وتحليلات الأعمال، مصنّفة حسب المجال."
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/hub/report_hub.xml:0
+msgid "Find a report"
+msgstr "ابحث عن تقرير"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/hub/report_hub.xml:0
+msgid "Find a report…"
+msgstr "ابحث عن تقرير…"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__date_from
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__date_from
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_general_ledger_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_general_ledger
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_general_ledger
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_general_ledger
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_general_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_gl_line_list
+msgid "General Ledger"
+msgstr "دفتر الأستاذ العام"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Goods imported into the UAE via UAE Customs"
+msgstr "السلع المستوردة إلى الإمارات عبر الجمارك"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "Gross Profit"
+msgstr "إجمالي الربح"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ir_ui_menu__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_analysis_base__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_comparison__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_dimension_base__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_executive__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_whole_entity__id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_report_service__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "INVESTING ACTIVITIES"
+msgstr "الأنشطة الاستثمارية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_inventory
+msgid "Inventory"
+msgstr "المخزون"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__is_initial
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__is_initial
+msgid "Is Initial"
+msgstr "افتتاحي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Item"
+msgstr "البند"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__journal_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__journal_id
+msgid "Journal"
+msgstr "اليومية"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_gl_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_equity_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_tb_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_line_list
+msgid "Journal Items"
+msgstr "بنود اليومية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_line.py:0
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+msgid "Journal Items — %s"
+msgstr "بنود اليومية — %s"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__journal_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__journal_ids
+msgid "Journals"
+msgstr "اليوميات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/financial_summary.py:0
+msgid "KPI"
+msgstr "مؤشر الأداء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__label
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__label
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__label
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_gl_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_line_list
+msgid "Label"
+msgstr "البيان"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__write_date
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__level
+msgid "Level"
+msgstr "المستوى"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/hub/report_hub.xml:0
+msgid "Loading reports…"
+msgstr "جارٍ تحميل التقارير…"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Loading the report…"
+msgstr "جارٍ تحميل التقرير…"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_management
+msgid "Management & Analytics"
+msgstr "الإدارة والتحليلات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_dimension_list
+msgid "Margin %"
+msgstr "الهامش %"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ir_ui_menu
+msgid "Menu"
+msgstr "القائمة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/profitability.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
+msgid "Metric"
+msgstr "المقياس"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_equity_list
+msgid "Movement"
+msgstr "الحركة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Movement in working capital"
+msgstr "الحركة في رأس المال العامل"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_aged_partner
+msgid "NCollection Aged Partner Balance"
+msgstr "أعمار أرصدة الشركاء — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_aged_line
+msgid "NCollection Aged Partner Balance Line"
+msgstr "سطر أعمار أرصدة الشركاء — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_dimension_base
+msgid "NCollection Analytic Dimension Analysis Base"
+msgstr "أساس تحليل الأبعاد التحليلية — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_balance_sheet
+msgid "NCollection Balance Sheet"
+msgstr "الميزانية العمومية — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_cash_flow
+msgid "NCollection Cash Flow Statement"
+msgstr "قائمة التدفقات النقدية — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_cost_center
+msgid "NCollection Cost Center Analysis"
+msgstr "تحليل مراكز التكلفة — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_statement
+msgid "NCollection Customer / Vendor Statement"
+msgstr "كشف حساب العميل / المورّد — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_department
+msgid "NCollection Department Analysis"
+msgstr "تحليل الأقسام — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_executive
+msgid "NCollection Executive Report Composition"
+msgstr "تركيب التقرير التنفيذي — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_expense
+msgid "NCollection Expense Analysis"
+msgstr "تحليل المصروفات — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_comparison
+msgid "NCollection Financial Report Comparison Period"
+msgstr "فترة مقارنة التقرير المالي — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report
+msgid "NCollection Financial Report Engine"
+msgstr "محرّك التقارير المالية — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_line
+msgid "NCollection Financial Report Line"
+msgstr "سطر التقرير المالي — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_summary
+msgid "NCollection Financial Summary"
+msgstr "الملخّص المالي — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_general_ledger
+msgid "NCollection General Ledger"
+msgstr "دفتر الأستاذ العام — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_gl_line
+msgid "NCollection General Ledger Line"
+msgstr "سطر دفتر الأستاذ العام — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_partner_ledger
+msgid "NCollection Partner Ledger"
+msgstr "دفتر الأستاذ للشركاء — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_partner_line
+msgid "NCollection Partner Ledger Line"
+msgstr "سطر دفتر الأستاذ للشركاء — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_profit_center
+msgid "NCollection Profit Center Analysis"
+msgstr "تحليل مراكز الربح — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_profit_loss
+msgid "NCollection Profit and Loss"
+msgstr "الأرباح والخسائر — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_profitability
+msgid "NCollection Profitability Report"
+msgstr "تقرير الربحية — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_reference
+msgid "NCollection Reference Report (Account Balances)"
+msgstr "تقرير مرجعي (أرصدة الحسابات) — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_whole_entity
+msgid "NCollection Report Requiring the Complete Books"
+msgstr "تقرير يتطلّب الدفاتر كاملة — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_ncollection_account_reports
+msgid "NCollection Reports"
+msgstr "تقارير NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_revenue
+msgid "NCollection Revenue Analysis"
+msgstr "تحليل الإيرادات — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_analysis_base
+msgid "NCollection Revenue/Expense Analysis Base"
+msgstr "أساس تحليل الإيرادات والمصروفات — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_equity_changes
+msgid "NCollection Statement of Changes in Equity"
+msgstr "قائمة التغيّرات في حقوق الملكية — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_trial_balance
+msgid "NCollection Trial Balance"
+msgstr "ميزان المراجعة — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_report_service
+msgid "NCollection report hub and viewer service"
+msgstr "خدمة مركز التقارير وعارضها — NCollection"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "NET CHANGE IN CASH"
+msgstr "صافي التغيّر في النقد"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "NET VAT DUE / (REFUNDABLE)"
+msgstr "صافي ضريبة القيمة المضافة المستحقة / (المستردّة)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Net cash from financing activities"
+msgstr "صافي النقد من الأنشطة التمويلية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Net cash from investing activities"
+msgstr "صافي النقد من الأنشطة الاستثمارية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Net cash from operating activities"
+msgstr "صافي النقد من الأنشطة التشغيلية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "Net profit for the period"
+msgstr "صافي ربح الفترة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_budget_actual__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cash_flow__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_comparison__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cost_center__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_department__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_expense__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_center__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_loss__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profitability__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_revenue__comparison_type__none
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__comparison_type__none
+msgid "No Comparison"
+msgstr "بدون مقارنة"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.actions.act_window,help:ncollection_account_reports.action_purchase_by_product
+#: model_terms:ir.actions.act_window,help:ncollection_account_reports.action_purchase_by_vendor
+msgid "No Purchase Analysis"
+msgstr "لا يوجد تحليل للمشتريات"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "No entries for these filters"
+msgstr "لا توجد قيود لهذه المرشّحات"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/hub/report_hub.xml:0
+msgid "No report matches your search."
+msgstr "لا يوجد تقرير مطابق لبحثك."
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/hub/report_hub.xml:0
+msgid "No reports are available for your account."
+msgstr "لا توجد تقارير متاحة لحسابك."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_statement.py:0
+msgid "No transactions in this period — there is nothing to send."
+msgstr "لا توجد معاملات في هذه الفترة — لا يوجد ما يُرسل."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/cash_flow.py:0
+msgid "OPERATING ACTIVITIES"
+msgstr "الأنشطة التشغيلية"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_line_list
+msgid "Open Items"
+msgstr "البنود المفتوحة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+msgid "Open Items — %s"
+msgstr "البنود المفتوحة — %s"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Open journal item"
+msgstr "فتح بند اليومية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/trial_balance.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_equity_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_tb_list
+msgid "Opening"
+msgstr "الافتتاحي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__opening_balance
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
+msgid "Opening Balance"
+msgstr "الرصيد الافتتاحي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+msgid "Opening Balance — %s"
+msgstr "الرصيد الافتتاحي — %s"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Opening balance"
+msgstr "الرصيد الافتتاحي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "Operating Expenses"
+msgstr "المصروفات التشغيلية"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+msgid "Options"
+msgstr "خيارات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "Other Operating Income"
+msgstr "إيرادات تشغيلية أخرى"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+msgid "Over %d"
+msgstr "أكثر من %d"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__bucket_over
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_line_list
+msgid "Over 120"
+msgstr "أكثر من 120"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "PDF"
+msgstr "PDF"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__partner_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__partner_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__partner_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__partner_id
+msgid "Partner"
+msgstr "الشريك"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_partner_ledger_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_partner_ledger
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_partner_ledger
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_partner_ledger
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_line_list
+msgid "Partner Ledger"
+msgstr "دفتر الأستاذ للشركاء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+msgid "Partner Ledger — Customers"
+msgstr "دفتر الأستاذ للشركاء — العملاء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+msgid "Partner Ledger — Vendors"
+msgstr "دفتر الأستاذ للشركاء — الموردون"
+
+#. module: ncollection_account_reports
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_partner_statement
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_statement_form
+msgid "Partner Statement"
+msgstr "كشف حساب الشريك"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Partner ledgers, statements and ageing"
+msgstr "دفاتر الشركاء وكشوف الحساب وأعمار الديون"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__partner_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_statement_form
+msgid "Partners"
+msgstr "الشركاء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Payable tax for the period (or reclaimable if negative)"
+msgstr "الضريبة المستحقة عن الفترة (أو القابلة للاسترداد إن كانت سالبة)"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Payment"
+msgstr "دفعة"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cash_flow_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cost_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_department_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_equity_changes_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_general_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_statement_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
+msgid "Period"
+msgstr "الفترة"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+msgid "Period Start"
+msgstr "بداية الفترة"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
 msgid "Position"
 msgstr "المركز المالي"
 
 #. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_aged_partner__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_asset_register__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_budget_actual__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cash_flow__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cost_center__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_department__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_equity_changes__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_expense__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_general_ledger__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_partner_ledger__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_center__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_loss__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profitability__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_reference__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_revenue__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_statement__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_trial_balance__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_uae_vat__target_move__posted
+msgid "Posted Entries"
+msgstr "القيود المرحّلة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_dimension_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
+msgid "Previous"
+msgstr "السابق"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__previous_amount
+msgid "Previous Amount"
+msgstr "المبلغ السابق"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_budget_actual__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cash_flow__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_comparison__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cost_center__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_department__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_expense__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_center__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_loss__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profitability__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_revenue__comparison_type__previous_period
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__comparison_type__previous_period
+msgid "Previous Period"
+msgstr "الفترة السابقة"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_statement_form
+msgid "Print"
+msgstr "طباعة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/profit_and_loss.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_profit_loss_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_profit_loss
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_profit_loss
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_profit_loss
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+msgid "Profit & Loss"
+msgstr "الأرباح والخسائر"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_profit_center_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_profit_center
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_profit_center
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_profit_center
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_center_form
+msgid "Profit Center Analysis"
+msgstr "تحليل مراكز الربح"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "Profit Centre"
+msgstr "مركز الربح"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
+msgid "Profitability"
+msgstr "الربحية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/profitability.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_profitability_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_profitability
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_profitability
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_profitability
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+msgid "Profitability Report"
+msgstr "تقرير الربحية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Profitability, budgets and analytical views"
+msgstr "الربحية والموازنات والتقارير التحليلية"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "Purchase order"
+msgstr "أمر شراء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_purchases
+msgid "Purchases"
+msgstr "المشتريات"
+
+#. module: ncollection_account_reports
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_purchase_by_product
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_purchase_by_product
+msgid "Purchases by Product"
+msgstr "المشتريات حسب المنتج"
+
+#. module: ncollection_account_reports
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_purchase_by_vendor
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_purchase_by_vendor
+msgid "Purchases by Vendor"
+msgstr "المشتريات حسب المورّد"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__ratio_pct
+msgid "Ratio Pct"
+msgstr "النسبة %"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_receivables
+msgid "Receivables & Payables"
+msgstr "الذمم المدينة والدائنة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__recoverable_vat
+msgid "Recoverable VAT"
+msgstr "ضريبة القيمة المضافة القابلة للاسترداد"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_uae_vat_list
+msgid "Recoverable VAT (AED)"
+msgstr "ضريبة القيمة المضافة القابلة للاسترداد (درهم)"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Refresh"
+msgstr "تحديث"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__partner_scope
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_list
+msgid "Report"
+msgstr "التقرير"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__report_model
+msgid "Report Model"
+msgstr "نموذج التقرير"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__report_res_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__report_res_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__report_res_id
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__report_res_id
+msgid "Report Res"
+msgstr "معرّف تشغيل التقرير"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/hub/report_hub.xml:0
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_report_hub
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_root
+msgid "Reports"
+msgstr "التقارير"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Reset"
+msgstr "إعادة الضبط"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "Revenue"
+msgstr "الإيرادات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_revenue_analysis_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_revenue_analysis
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_revenue_analysis
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_revenue_analysis
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+msgid "Revenue Analysis"
+msgstr "تحليل الإيرادات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Revenue by customer, product and salesperson"
+msgstr "الإيرادات حسب العميل والمنتج والبائع"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_gl_line__running_balance
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_line__running_balance
+msgid "Running Balance"
+msgstr "الرصيد الجاري"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "Sale order"
+msgstr "أمر بيع"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_sales
+msgid "Sales"
+msgstr "المبيعات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "Sales Revenue"
+msgstr "إيرادات المبيعات"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_budget_actual__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cash_flow__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_comparison__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_cost_center__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_department__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_expense__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_center__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profit_loss__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_profitability__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_revenue__comparison_type__previous_year
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__comparison_type__previous_year
+msgid "Same Period Last Year"
+msgstr "الفترة نفسها من العام الماضي"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__partner_scope
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__partner_scope
 msgid "Scope"
 msgstr "النطاق"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Search…"
+msgstr "بحث…"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_statement.py:0
+msgid "Send Statement"
+msgstr "إرسال كشف الحساب"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_statement_form
+msgid "Send by Email"
+msgstr "إرسال بالبريد الإلكتروني"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "Show more (%s remaining)"
+msgstr "عرض المزيد (%s متبقٍّ)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Spend by vendor and product"
+msgstr "المشتريات حسب المورّد والمنتج"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Standard rated expenses (5%)"
+msgstr "المصروفات الخاضعة للنسبة الأساسية (5%)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Standard rated supplies in %s (5%%)"
+msgstr "التوريدات الخاضعة للنسبة الأساسية في %s (5%%)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_equity_changes_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_equity_changes
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_equity_changes
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_equity_changes
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_equity_changes_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_equity_list
+msgid "Statement of Changes in Equity"
+msgstr "قائمة التغيّرات في حقوق الملكية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Statements, ledgers and account balances"
+msgstr "القوائم المالية ودفاتر الأستاذ وأرصدة الحسابات"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_aged_partner__period_length
+msgid ""
+"Step between ageing buckets. 30 gives the standard Current / 1-30 / 31-60 / "
+"61-90 / 91-120 / Over 120 columns."
+msgstr "المدة بين فترات الأعمار. القيمة 30 تعطي الأعمدة القياسية: الحالي / 1-30 / 31-60 / 61-90 / 91-120 / أكثر من 120."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Stock levels, valuation and movements"
+msgstr "مستويات المخزون وتقييمه وحركاته"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Supplies subject to reverse charge provisions (Input Tax)"
+msgstr "التوريدات الخاضعة لآلية الاحتساب العكسي (ضريبة المدخلات)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Supplies subject to the reverse charge provisions"
+msgstr "التوريدات الخاضعة لأحكام الاحتساب العكسي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "TOTAL"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/equity_changes.py:0
+msgid "TOTAL EQUITY"
+msgstr "إجمالي حقوق الملكية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "TOTAL EXPENSES"
+msgstr "إجمالي المصروفات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "TOTAL REVENUE"
+msgstr "إجمالي الإيرادات"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__target_move
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__target_move
+msgid "Target Moves"
+msgstr "القيود المستهدفة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_nc_reports_tax
+msgid "Tax"
+msgstr "الضرائب"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
+msgid "Tax Period"
+msgstr "الفترة الضريبية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Tax Refunds provided to Tourists under the Tourist Scheme"
+msgstr "مبالغ الضريبة المستردّة للسياح بموجب نظام استرداد ضريبة السياح"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
+msgid "The custom comparison period starts after it ends."
+msgstr "فترة المقارنة المخصّصة تبدأ بعد انتهائها."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/account_report.py:0
+msgid ""
+"The report period must fall within a single fiscal year — the From/To range "
+"crosses a fiscal-year boundary. Run one report per fiscal year."
+msgstr "يجب أن تقع فترة التقرير ضمن سنة مالية واحدة — النطاق يتجاوز حدود السنة المالية. شغّل تقريرًا لكل سنة مالية."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "The report run expired — apply the filters again."
+msgstr "انتهت صلاحية تشغيل التقرير — طبّق المرشّحات مرة أخرى."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_line.py:0
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+#: code:addons/ncollection_account_reports/wizard/general_ledger.py:0
+#: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
+msgid "The report run expired — re-generate the report to drill down."
+msgstr "انتهت صلاحية تشغيل التقرير — أعد إنشاء التقرير للتعمّق في التفاصيل."
+
+#. module: ncollection_account_reports
+#: model_terms:ir.actions.act_window,help:ncollection_account_reports.action_purchase_by_product
+#: model_terms:ir.actions.act_window,help:ncollection_account_reports.action_purchase_by_vendor
+msgid ""
+"This analysis allows you to easily check and analyse your company purchase history and performance.\n"
+"                You can track your negotiation performance, the delivery performance of your vendors, etc"
+msgstr "يتيح لك هذا التحليل مراجعة وتحليل سجل مشتريات شركتك وأدائها بسهولة.\nيمكنك تتبّع أداء التفاوض وأداء التسليم لدى مورّديك وغير ذلك."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "This is not a financial report."
+msgstr "هذا ليس تقريرًا ماليًا."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_line.py:0
+msgid "This report line does not point at a financial report."
+msgstr "هذا السطر لا يشير إلى تقرير مالي."
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cash_flow__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_equity_changes__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profitability__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_summary__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__date_to
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_uae_vat__date_to
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/account_report_reference.py:0
+#: code:addons/ncollection_account_reports/wizard/aged_partner_balance.py:0
+#: code:addons/ncollection_account_reports/wizard/trial_balance.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_line__total
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_line_list
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Total / closing balance"
+msgstr "الإجمالي / الرصيد الختامي"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Total value of due tax for the period"
+msgstr "إجمالي الضريبة المستحقة عن الفترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Total value of recoverable tax for the period"
+msgstr "إجمالي الضريبة القابلة للاسترداد عن الفترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Totals: Total value of expenses and input tax"
+msgstr "الإجماليات: إجمالي قيمة المصروفات وضريبة المدخلات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Totals: Total value of supplies and output tax"
+msgstr "الإجماليات: إجمالي قيمة التوريدات وضريبة المخرجات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/trial_balance.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_trial_balance_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_trial_balance
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_trial_balance
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_trial_balance
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_tb_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
+msgid "Trial Balance"
+msgstr "ميزان المراجعة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+#: model:ir.actions.act_window,name:ncollection_account_reports.action_report_uae_vat_wizard
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_uae_vat
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_uae_vat
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_uae_vat
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_uae_vat_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
+msgid "UAE FTA VAT 201 Return"
+msgstr "إقرار ضريبة القيمة المضافة (نموذج 201) — الهيئة الاتحادية للضرائب"
+
+#. module: ncollection_account_reports
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_uae_vat
+msgid "UAE VAT 201 Return"
+msgstr "إقرار ضريبة القيمة المضافة 201 — الإمارات"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__vat_amount
+msgid "VAT Amount"
+msgstr "مبلغ الضريبة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_uae_vat_list
+msgid "VAT Amount (AED)"
+msgstr "مبلغ الضريبة (درهم)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "VAT ON EXPENSES AND ALL OTHER INPUTS"
+msgstr "ضريبة القيمة المضافة على المصروفات وجميع المدخلات الأخرى"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "VAT ON SALES AND ALL OTHER OUTPUTS"
+msgstr "ضريبة القيمة المضافة على المبيعات وجميع المخرجات الأخرى"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "VAT returns and tax reporting"
+msgstr "إقرارات ضريبة القيمة المضافة والتقارير الضريبية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__variance
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_dimension_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
+msgid "Variance"
+msgstr "الفرق"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/report_comparison.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
+msgid "Variance %"
+msgstr "نسبة الفرق %"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__variance_pct
+msgid "Variance Pct"
+msgstr "نسبة الفرق %"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_statement.py:0
+msgid "Vendor Statement"
+msgstr "كشف حساب المورّد"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_partner_ledger__partner_scope__payable
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_statement__partner_scope__payable
+msgid "Vendors"
+msgstr "الموردون"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_aged_partner_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_balance_sheet_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cash_flow_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_cost_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_department_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_equity_changes_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_expense_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_financial_summary_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_general_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_ledger_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_center_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profit_loss_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_profitability_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
+msgid "View"
+msgstr "عرض"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_partner_statement_form
+msgid "View Lines"
+msgstr "عرض السطور"
+
+#. module: ncollection_account_reports
+#: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_uae_vat_form
+msgid "View Return"
+msgstr "عرض الإقرار"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_partner_ledger__partner_scope
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_statement__partner_scope
+msgid ""
+"Which side of the ledger to report. A partner ledger is only meaningful over"
+" receivable/payable accounts."
+msgstr "أي جانب من الدفتر يُعرض. دفتر الشركاء لا معنى له إلا على حسابات الذمم المدينة / الدائنة."
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Widen the period or clear a filter, then apply again."
+msgstr "وسّع الفترة أو أزل أحد المرشّحات ثم طبّق مرة أخرى."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/account_report.py:0
+msgid "XLSX export needs the 'xlsxwriter' Python library."
+msgstr "يتطلّب تصدير XLSX مكتبة 'xlsxwriter' الخاصة بلغة Python."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/uae_vat_report.py:0
+msgid "Zero rated supplies (0%)"
+msgstr "التوريدات الخاضعة لنسبة الصفر (0%)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "cogs"
+msgstr "تكلفة البضاعة المباعة"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "entries"
+msgstr "قيود"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "expense"
+msgstr "مصروف"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "gross_profit"
+msgstr "إجمالي الربح"
+
+#. module: ncollection_account_reports
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_aged_partner
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_balance_sheet
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_cash_flow
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_cost_center
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_department
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_equity_changes
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_expense_analysis
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_financial
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_financial_summary
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_general_ledger
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_partner_ledger
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_partner_statement
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_profit_center
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_profit_loss
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_profitability
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_revenue_analysis
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_trial_balance
+#: model:ir.actions.report,print_report_name:ncollection_account_reports.action_report_uae_vat
+msgid "object._nc_report_title()"
+msgstr "object._nc_report_title()"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "operating_expenses"
+msgstr "المصروفات التشغيلية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/dimension_analysis.py:0
+msgid "opex"
+msgstr "المصروفات التشغيلية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/revenue_expense_analysis.py:0
+msgid "other_income"
+msgstr "إيرادات أخرى"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "zero"
+msgstr "صفر"
+

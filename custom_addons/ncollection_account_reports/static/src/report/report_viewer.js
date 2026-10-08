@@ -404,9 +404,6 @@ export class NcReportViewer extends Component {
         if ((k === "label") && row.account_id && !this.isLedger) {
             return { model: "account.account", id: row.account_id };
         }
-        if (k === "partner_name" && !row.partner_id) {
-            return null;
-        }
         return null;
     }
 

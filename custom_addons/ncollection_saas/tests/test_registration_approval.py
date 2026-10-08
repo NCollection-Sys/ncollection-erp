@@ -226,6 +226,23 @@ class TestApprovalGate(TransactionCase):
             self.assertEqual((t.registration_state, bool(t.subdomain), bool(t.database_name)),
                              ('rejected', False, False))
 
+    # ------------------------------------------------------- welcome email
+    def test_the_welcome_email_names_the_username_and_does_not_ask_for_a_new_password(self):
+        tenant = self._tenant(name='mailrq', pending=False, login='mailadmin')
+        template = self.env.ref('ncollection_saas.mail_template_tenant_welcome')
+        body = template.with_context(nc_setup_url='')._render_field('body_html', [tenant.id])[tenant.id]
+        self.assertIn('mailadmin', body)
+        self.assertNotIn('set your password here', body)
+        self.assertIn('password you chose', body)
+
+    def test_the_welcome_email_offers_the_setup_link_only_when_there_is_one(self):
+        tenant = self._tenant(name='mailrq2', pending=False, login='mailadmin2')
+        template = self.env.ref('ncollection_saas.mail_template_tenant_welcome')
+        body = template.with_context(nc_setup_url='https://x.example/setup')._render_field(
+            'body_html', [tenant.id])[tenant.id]
+        self.assertIn('https://x.example/setup', body)
+        self.assertNotIn('password you chose', body)
+
     # ------------------------------------------------------------ the gate
     def test_the_trigger_creates_no_job_for_a_pending_tenant(self):
         tenant = self._tenant()
