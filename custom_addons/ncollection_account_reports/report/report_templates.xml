@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Wide, row-heavy reports (ledgers, ageing) print on A4 LANDSCAPE so their
+         eight columns are not squeezed; the statements stay on the company's
+         portrait A4. Margins leave room for the branded external layout. -->
+    <record id="paperformat_nc_landscape" model="report.paperformat">
+        <field name="name">NCollection A4 Landscape</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">38</field>
+        <field name="margin_bottom">22</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">32</field>
+        <field name="dpi">90</field>
+    </record>
+
     <!-- F2-T01: native QWeb PDF for any report built on the engine. It renders
          from the report's own _nc_columns() + _nc_compute_lines() — so every
          F2-T02+ report gets PDF for free. -->
@@ -34,51 +51,76 @@
         <field name="report_name">ncollection_account_reports.report_general_ledger</field>
         <field name="report_file">ncollection_account_reports.report_general_ledger</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_landscape"/>
     </record>
 
+    <!-- The shared body. It formats NOTHING itself: every figure arrives
+         pre-formatted from o._nc_export_payload(), the same payload the XLSX uses.
+         (A Python % inside a QWeb attribute is mangled by QWeb's own % pass, which
+         is what crashed every report with a percent column.) Logical CSS so the
+         page mirrors under dir="rtl"; the table header repeats on every page and a
+         row never splits across one. -->
     <template id="report_financial">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
+                <t t-set="p" t-value="o._nc_export_payload()"/>
                 <t t-call="web.external_layout">
-                    <div class="page">
-                        <h2 t-out="o._nc_report_title()"/>
-                        <p class="text-muted">
-                            <span t-out="o.company_id.name"/> ·
-                            <span t-out="o.date_from"/> → <span t-out="o.date_to"/> ·
-                            <span t-out="dict(o._fields['target_move'].selection).get(o.target_move)"/>
+                    <div class="page nc-pdf" t-att-dir="p['direction']">
+                        <style>
+                            .nc-pdf { font-size: 10pt; color: #0f172a; }
+                            .nc-pdf h2 { font-size: 16pt; margin: 0 0 4px 0; }
+                            .nc-pdf__meta { color: #475569; margin: 0 0 8px 0; font-size: 9pt; }
+                            .nc-pdf__meta b { color: #0f172a; font-weight: 600; }
+                            .nc-pdf table { width: 100%; border-collapse: collapse; }
+                            .nc-pdf thead { display: table-header-group; }
+                            .nc-pdf tfoot { display: table-footer-group; }
+                            .nc-pdf tr { page-break-inside: avoid; }
+                            .nc-pdf th { background: #f1f5f9; border-bottom: 1px solid #94a3b8; padding: 3px 6px;
+                                         text-align: start; font-size: 8.5pt; text-transform: uppercase; }
+                            .nc-pdf td { border-bottom: 1px solid #e2e8f0; padding: 3px 6px; text-align: start; }
+                            .nc-pdf th.num, .nc-pdf td.num { text-align: end; white-space: nowrap; }
+                            .nc-pdf td.num span { unicode-bidi: isolate; direction: ltr; display: inline-block; }
+                            .nc-pdf tr.lvl-0 td { font-weight: 700; background: #f8fafc; border-top: 1px solid #94a3b8; }
+                            .nc-pdf tr.lvl-1 td { font-weight: 600; }
+                            .nc-pdf tr.opening td { font-style: italic; color: #475569; }
+                            .nc-pdf__foot { margin-top: 8px; color: #64748b; font-size: 8pt; }
+                        </style>
+                        <h2 t-out="p['title']"/>
+                        <p class="nc-pdf__meta">
+                            <b t-out="p['company']"/>
+                            <t t-if="p['date_from'] or p['date_to']"> · <span t-out="p['date_from']"/> → <span t-out="p['date_to']"/></t>
+                            · <span t-out="p['currency']"/>
+                            <t t-if="p['entries']"> · <span t-out="p['entries']"/></t>
                         </p>
-                        <table class="table table-sm o_main_table">
+                        <p t-if="p['filters']" class="nc-pdf__meta">
+                            <t t-foreach="p['filters']" t-as="flt">
+                                <b t-out="flt[0]"/>: <span t-out="flt[1]"/><t t-if="not flt_last"> · </t>
+                            </t>
+                        </p>
+                        <table class="o_main_table">
                             <thead>
                                 <tr>
-                                    <t t-foreach="o._nc_columns()" t-as="col">
-                                        <th t-att-class="'text-end' if col['type'] == 'monetary' else ''"
-                                            t-out="col['label']"/>
+                                    <t t-foreach="p['columns']" t-as="col">
+                                        <th t-att-class="'num' if col['numeric'] else ''" t-out="col['label']"/>
                                     </t>
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-foreach="o._nc_compute_lines()" t-as="line">
-                                    <tr t-att-style="'font-weight:bold' if not line.get('level') else ''">
-                                        <t t-foreach="o._nc_columns()" t-as="col">
-                                            <td t-att-class="'text-end' if col['type'] in ('monetary', 'percent') else ''">
-                                                <t t-if="col['type'] == 'monetary'">
-                                                    <span t-out="line.get(col['key'], 0.0)"
-                                                          t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                                </t>
-                                                <t t-elif="col['type'] == 'percent'">
-                                                    <!-- F2-T03: a percentage is not money; never render it
-                                                         with a currency symbol. -->
-                                                    <span t-out="'%.2f%%' % (line.get(col['key']) or 0.0)"/>
-                                                </t>
-                                                <t t-else="">
-                                                    <span t-out="line.get(col['key'], '')"/>
-                                                </t>
+                                <t t-foreach="p['rows']" t-as="line">
+                                    <tr t-att-class="'opening' if line['opening'] else ('lvl-' + str(min(line['level'], 2)))">
+                                        <t t-foreach="line['cells']" t-as="cell">
+                                            <td t-att-class="'num' if p['columns'][cell_index]['numeric'] else ''"
+                                                t-att-style="('padding-inline-start:' + str(6 + line['level'] * 12) + 'px') if cell_index == 0 and line['level'] else None">
+                                                <span t-out="cell['text']"/>
                                             </td>
                                         </t>
                                     </tr>
                                 </t>
                             </tbody>
                         </table>
+                        <p class="nc-pdf__foot">
+                            <span t-out="p['generated']"/> · <span t-out="p['user']"/>
+                        </p>
                     </div>
                 </t>
             </t>
@@ -189,6 +231,7 @@
         <field name="report_name">ncollection_account_reports.report_partner_ledger</field>
         <field name="report_file">ncollection_account_reports.report_partner_ledger</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_landscape"/>
     </record>
 
     <template id="report_partner_ledger">
@@ -202,6 +245,7 @@
         <field name="report_name">ncollection_account_reports.report_aged_partner</field>
         <field name="report_file">ncollection_account_reports.report_aged_partner</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_landscape"/>
     </record>
 
     <template id="report_aged_partner">
@@ -227,7 +271,7 @@
             <t t-foreach="docs" t-as="o">
                 <t t-foreach="o._nc_statement_docs()" t-as="st">
                     <t t-call="web.external_layout">
-                        <div class="page">
+                        <div class="page" t-att-dir="o.env['res.lang']._get_data(code=o.env.lang or 'en_US').direction or 'ltr'">
                             <h2 t-out="o._nc_report_title()"/>
                             <div class="row mb-3">
                                 <div class="col-6">

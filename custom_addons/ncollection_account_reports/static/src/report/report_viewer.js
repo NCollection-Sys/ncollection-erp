@@ -512,11 +512,16 @@ export class NcReportViewer extends Component {
     async searchRelation(field, term) {
         this.state.picker.field = field.name;
         this.state.picker.term = term;
+        // answers can arrive out of order; only the latest keystroke may paint
+        const ticket = (this.searchTicket = (this.searchTicket || 0) + 1);
         if (!term || term.length < 1) {
             this.state.picker.options = [];
             return;
         }
         const recs = await this.orm.call(field.relation, "name_search", [term], { limit: 8 });
+        if (ticket !== this.searchTicket) {
+            return;
+        }
         const taken = new Set((this.state.values[field.name] || []).map((r) => r.id));
         this.state.picker.options = recs
             .filter(([id]) => !taken.has(id))

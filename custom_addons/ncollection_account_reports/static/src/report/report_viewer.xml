@@ -88,16 +88,16 @@
                                     <span class="o_nc_rep__tag">
                                         <t t-esc="rec.name"/>
                                         <button type="button" t-att-aria-label="'Remove ' + rec.name"
-                                                t-on-click="() => this.unpick(field(fname), rec.id)">×</button>
+                                                t-on-click="() => this.unpick(this.field(fname), rec.id)">×</button>
                                     </span>
                                 </t>
                                 <input type="text" autocomplete="off" placeholder="Search…"
                                        t-att-value="state.picker.field === fname ? state.picker.term : ''"
-                                       t-on-input="(ev) => this.searchRelation(field(fname), ev.target.value)"/>
+                                       t-on-input="(ev) => this.searchRelation(this.field(fname), ev.target.value)"/>
                             </div>
                             <ul t-if="state.picker.field === fname and state.picker.options.length" class="o_nc_rep__options">
                                 <t t-foreach="state.picker.options" t-as="opt" t-key="opt.id">
-                                    <li><button type="button" t-on-click="() => this.pick(field(fname), opt)" t-esc="opt.name"/></li>
+                                    <li><button type="button" t-on-click="() => this.pick(this.field(fname), opt)" t-esc="opt.name"/></li>
                                 </t>
                             </ul>
                         </div>
