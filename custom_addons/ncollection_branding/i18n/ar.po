@@ -139,3 +139,13 @@ msgstr "هياكل التحميل"
 #. module: ncollection_branding
 msgid "Any content composes inside a section card via the default slot."
 msgstr "يمكن تركيب أي محتوى داخل بطاقة القسم عبر الفتحة الافتراضية."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
+msgid "Enter your username"
+msgstr "أدخل اسم المستخدم"

@@ -46,11 +46,18 @@ MENU_NESTED_GATED_MODULES = {'account_financial_report', 'mis_builder'}
 # _OWNER_ONLY_MENUS below. This list only decides what belongs on a CUSTOMER's
 # home grid: administration surfaces and internal/dev tooling do not.
 #
+# SETTINGS IS DELIBERATELY NOT HERE (it was, until the delivery pass). The
+# existing Settings app (base.menu_administration) is what a company owner
+# reaches to configure their workspace, so it earns a card on Home. This adds
+# no new module and no new access path: the card is only produced for a user
+# whose menu set already contains it, and _OWNER_ONLY_MENUS strips it from
+# everyone who is not the owner / an administrator — so a Sales user's Home
+# still has no Settings card, and neither does a user the plan does not allow.
+#
 # The launcher's own menu is excluded for the obvious reason — a home screen
 # that lists itself as one of its apps is a loop.
 LAUNCHER_EXCLUDED_MENUS = frozenset({
     'base.menu_management',                        # Apps
-    'base.menu_administration',                    # Settings
     'base.menu_tests',                             # Odoo's own test menu
     'ncollection_branding.menu_component_playground',  # internal design tooling
     'ncollection_core.menu_ncollection_home_root',  # the launcher itself

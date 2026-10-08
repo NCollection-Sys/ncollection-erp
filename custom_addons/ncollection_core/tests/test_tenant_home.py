@@ -94,10 +94,40 @@ class TestTenantHomeApps(TransactionCase):
         self.Config.create({'plan_code': 'TEST', 'allowed_module_names': 'lic_app'})
         self.env.registry.clear_cache()
         xmlids = self._app_xmlids()
-        for excluded in ('base.menu_management', 'base.menu_administration',
-                         'base.menu_tests',
+        for excluded in ('base.menu_management', 'base.menu_tests',
                          'ncollection_branding.menu_component_playground'):
             self.assertNotIn(excluded, xmlids)
+
+    def _user_with_role(self, login, role_xmlid):
+        return self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': login, 'login': login,
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref(role_xmlid).id])],
+        })
+
+    def test_settings_is_a_home_card_for_the_owner_and_nobody_else(self):
+        """THE SETTINGS SHORTCUT. The existing Settings app gets a card on Home —
+        but only for a user the existing Ring-1 rule already lets see it. The
+        control matters as much as the card: a launcher that showed Settings to
+        everyone would pass a test that only looked at the owner."""
+        self.Config.create({'plan_code': 'TEST', 'allowed_module_names': 'lic_app'})
+        self.env.registry.clear_cache()
+        owner = self._user_with_role('settings_owner', 'ncollection_core.group_role_owner')
+        clerk = self._user_with_role('settings_clerk', 'ncollection_core.group_role_employee')
+        owner_apps = {a['xmlid']: a for a in self.Menu.with_user(owner).nc_tenant_apps()}
+        clerk_apps = {a['xmlid'] for a in self.Menu.with_user(clerk).nc_tenant_apps()}
+        self.assertIn('base.menu_administration', owner_apps)
+        self.assertNotIn('base.menu_administration', clerk_apps)
+        # And it is a REAL, openable card — the #477 invariant, for this one too.
+        web_menus = self.Menu.with_user(owner).load_web_menus(False)
+        card = owner_apps['base.menu_administration']
+        self.assertEqual(card['name'], 'Settings')
+        self.assertIn(card['id'], web_menus)
+        self.assertTrue(web_menus[card['id']]['actionID'])
+        # No second Settings module was created to make this work.
+        self.assertEqual(
+            self.env['ir.ui.menu'].search_count(
+                [('name', '=', 'Settings'), ('parent_id', '=', False)]), 1)
 
     def test_the_launcher_never_lists_itself(self):
         """A home screen that offers itself as one of its apps is a loop."""
