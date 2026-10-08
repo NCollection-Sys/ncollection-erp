@@ -178,7 +178,7 @@ probe_role(){   # probe_role <login> <role> <exp_acct> <exp_sale> <exp_settings>
     no "$role: account=$acct/exp=$ea  sale=$sale/exp=$es  settings=$settings/exp=$eset"
   fi
 }
-probe_role owner@albarari.ae   owner      yes yes yes
+probe_role owner              owner      yes yes yes
 probe_role omar@albarari.ae    ceo        yes yes no
 probe_role sara@albarari.ae    manager    yes yes no
 probe_role yousef@albarari.ae  sales      yes yes no
