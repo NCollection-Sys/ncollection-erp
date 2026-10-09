@@ -136,6 +136,13 @@ class NcollectionAccountReport(models.AbstractModel):
         # _get_pl_initial_balance (sum of reset-account balances before fy_from).
         unaffected = accounts.filtered(
             lambda a: a.account_type == 'equity_unaffected')[:1]
+        # An explicit account filter means exactly those accounts: the roll-up row
+        # is added only when the user did not narrow the list, or asked for it.
+        # (Found by the Trial Balance pilot: with an account filter the native
+        # report grew a Current Year Earnings row the user had excluded, which the
+        # OCA engine - and the totals - did not have.)
+        if unaffected and self.account_ids and unaffected not in self.account_ids:
+            unaffected = unaffected.browse()
         if unaffected:
             pl_prior = sum(
                 bal for _account, bal in AML._read_group(

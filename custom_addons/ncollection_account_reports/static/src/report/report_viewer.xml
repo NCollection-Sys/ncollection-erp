@@ -11,6 +11,7 @@
                             <li><span class="o_nc_rep__meta-k">Company</span> <t t-esc="state.data.company"/></li>
                             <li t-if="periodText"><span class="o_nc_rep__meta-k">Period</span> <t t-esc="periodText"/></li>
                             <li><span class="o_nc_rep__meta-k">Currency</span> <t t-esc="state.data.currency.name"/></li>
+                            <li t-if="state.data.source === 'oca'"><span class="o_nc_rep__meta-k">Engine</span> OCA</li>
                             <li t-if="state.data.target_move"><span class="o_nc_rep__meta-k">Entries</span> <t t-esc="state.data.target_move"/></li>
                         </ul>
                     </div>

@@ -2573,3 +2573,14 @@ msgstr "إيرادات أخرى"
 msgid "zero"
 msgstr "صفر"
 
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Engine"
+msgstr "المحرّك"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "You are not allowed to report on this company."
+msgstr "غير مسموح لك بإعداد التقارير لهذه الشركة."

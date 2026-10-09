@@ -308,7 +308,7 @@ export class NcReportViewer extends Component {
         if (d.open && d.rows === null) {
             d.loading = true;
             d.rows = await this.orm.call("ncollection.report.service", "nc_report_detail", [
-                this.model, this.state.data.wizard.id, id,
+                this.state.data.wizard.model, this.state.data.wizard.id, id,
             ]);
             d.loading = false;
         }
@@ -541,7 +541,7 @@ export class NcReportViewer extends Component {
     async exportReport(kind) {
         this.state.exportOpen = false;
         const act = await this.orm.call("ncollection.report.service", "nc_report_export", [
-            this.model, this.state.data.wizard.id, kind,
+            this.state.data.wizard.model, this.state.data.wizard.id, kind,
         ]);
         return this.action.doAction(act);
     }

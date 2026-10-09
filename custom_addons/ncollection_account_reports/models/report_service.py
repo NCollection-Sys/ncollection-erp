@@ -87,6 +87,17 @@ _ARABIC_NAMES = {
 }
 _ARABIC_LANG = 'ar_001'
 
+# Reports whose calculation source can be switched. {native model: (adapter model,
+# system parameter)}. The adapter lives in ncollection_account_reports_oca and
+# implements the SAME report contract, so the viewer, PDF, XLSX, drill-down and
+# privacy rule are the same code either way. Default is always the native engine;
+# the switch is one system parameter, so rollback is changing a value back.
+SOURCE_PARAM_PREFIX = 'ncollection_account_reports.source.'
+ALTERNATIVE_SOURCES = {
+    'ncollection.account.report.trial.balance': (
+        'ncollection.account.report.tb.oca', 'trial_balance'),
+}
+
 _CATEGORY_ICONS = {
     'financial': 'fa-balance-scale',
     'receivables': 'fa-exchange',
@@ -465,6 +476,19 @@ class NcReportService(models.AbstractModel):
         return Model
 
     @api.model
+    def _nc_resolve_source(self, model):
+        """The model that really computes ``model``: the native engine unless the
+        report has an adapter AND the ``source`` parameter selects it AND the
+        adapter module is installed. Anything else falls back to native - a
+        misconfigured switch can never leave a report without an engine."""
+        alt = ALTERNATIVE_SOURCES.get(model)
+        if not alt or alt[0] not in self.env:
+            return model
+        chosen = self.env['ir.config_parameter'].sudo().get_param(
+            SOURCE_PARAM_PREFIX + alt[1], 'native')
+        return alt[0] if chosen == 'oca' else model
+
+    @api.model
     def nc_report_run(self, model, filters=None):
         """Build the engine wizard for ``filters`` and return its rows.
 
@@ -472,10 +496,12 @@ class NcReportService(models.AbstractModel):
         so what the user sees is what they export. Access is the wizard's own:
         a user without the report's ACL gets the normal AccessError.
         """
-        Model = self._nc_engine_model(model)
+        Model = self._nc_engine_model(self._nc_resolve_source(model))
         vals = self._nc_clean_filters(Model, filters or {})
         try:
             wizard = Model.create(vals)
+            if wizard.company_id not in self.env.user.company_ids:
+                raise AccessError(self.env._("You are not allowed to report on this company."))
             columns = wizard._nc_columns()
             rows = wizard._nc_compute_lines()
         except (UserError, ValidationError) as err:   # AccessError is a UserError
@@ -560,6 +586,7 @@ class NcReportService(models.AbstractModel):
             if 'target_move' in wizard._fields else {}
         return {
             'wizard': {'model': wizard._name, 'id': wizard.id},
+            'source': 'oca' if wizard._name in {a[0] for a in ALTERNATIVE_SOURCES.values()} else 'native',
             'title': wizard._nc_report_title(),
             'company': wizard.company_id.name,
             'currency': {'id': currency.id, 'symbol': currency.symbol,
