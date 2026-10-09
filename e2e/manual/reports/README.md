@@ -10,6 +10,7 @@ data and a Chrome install) — run them by hand after touching
     node manual/reports/lang_rep.js             # EN<->AR from each report keeps report + filters
     node manual/reports/reach.js [480x800,1366x768]  # every page: nothing clipped, header not overlapping, no hidden overflow (EN + AR)
     node manual/reports/search.js               # partner search, clear, pick, date, language, reload, back/forward
+    node manual/reports/pilot_trial_balance.js  # Trial Balance pilot (adapter installed): viewer, totals vs SQL, drill-down, EN<->AR, exports
     node manual/reports/qa1.js                  # no overflow / clipping at 1366, 1920, 1024, 768, 480 (EN + AR)
 
 Defaults: `http://ncollection.localhost:8069`, login `admin`/`admin` (the dev
