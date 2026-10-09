@@ -5,6 +5,8 @@ async function open(page, k) { await page.goto(ACT(k)); await page.waitForSelect
 async function formTitle(page) { await page.waitForSelector('.o_form_view', { timeout: 15000 }); await page.waitForTimeout(300); return page.url().replace(BASE, ''); }
 (async () => {
   const { browser, page, problems } = await launch({ width: 1366, height: 768 }); await login(page, 'admin', 'admin');
+  // the link texts asserted below ("Item", "Payment") are English: do not depend on the language the last run left behind
+  await switchLang(page, 'English');
   await open(page, 'general_ledger');
   // account
   await page.click('.o_nc_rep__section .o_nc_rep__link >> nth=0'); let u = await formTitle(page); ck('GL account link opens account form', /account\.account\/\d+/.test(u), u);
