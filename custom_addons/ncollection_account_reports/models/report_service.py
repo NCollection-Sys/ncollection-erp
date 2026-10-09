@@ -211,6 +211,9 @@ _OCA_REPORT_WIZARDS = (
     'aged.partner.balance.report.wizard',
     'journal.ledger.report.wizard',
     'vat.report.wizard',
+    # not ledger readers, but anyone could rewrite the ageing buckets of every report
+    'account.age.report.configuration',
+    'account.age.report.configuration.line',
 )
 
 
@@ -797,7 +800,8 @@ class IrUiMenu(models.Model):
         # (a report filed in the wrong folder is cosmetic) -- log and finish.
         for step in (service._nc_arrange_menus, service._nc_harden_oca_wizards):
             try:
-                step()
+                with self.env.cr.savepoint():       # a SQL error must not poison the next step
+                    step()
             except Exception:                               # pragma: no cover
                 _logger.exception("ncollection_account_reports: %s failed", step.__name__)
         return result

@@ -97,6 +97,33 @@ class TestTaxAnalysis(AccountTestInvoicingCommon):
                 self.assertFalse(row.get('tax_id') or row.get('account_id') or row.get('partner_id'),
                                  "a total row must not drill into a record")
 
+    def test_every_view_agrees_on_the_period_totals(self):
+        """Receipts and a multi-scope period must not make one view differ from another."""
+        out = {}
+        for view in ('tax', 'account', 'customer'):
+            rows = {r['label']: r for r in self._run(view)._nc_compute_lines()}
+            out[view] = rows['Output tax — sales']['tax_amount']
+        self.assertAlmostEqual(out['tax'], out['account'], 2)
+        self.assertAlmostEqual(out['tax'], out['customer'], 2)
+
+    def test_a_sales_receipt_counts_in_every_view(self):
+        receipt = self.env['account.move'].create({
+            'move_type': 'out_receipt', 'partner_id': self.cust_a.id, 'invoice_date': '2026-04-01',
+            'date': '2026-04-01', 'invoice_line_ids': [(0, 0, {
+                'name': 'r', 'quantity': 1, 'price_unit': 500.0,
+                'account_id': self.company_data['default_account_revenue'].id,
+                'tax_ids': [(6, 0, self.tax_sale_a.ids)]})]})
+        receipt.action_post()
+        expected = self.output_tax + receipt.amount_tax
+        for view in ('tax', 'account', 'customer'):
+            rows = {r['label']: r for r in self._run(view)._nc_compute_lines()}
+            self.assertAlmostEqual(rows['Output tax — sales']['tax_amount'], expected, 2, view)
+
+    def test_the_section_base_is_not_summed_per_tax(self):
+        rows = {r['label']: r for r in self._run('tax')._nc_compute_lines()}
+        self.assertFalse(rows['Output tax — sales']['base'],
+                         'a multi-tax line would be counted once per tax')
+
     # ---- by account ----------------------------------------------------
     def test_by_tax_account_matches_the_tax_lines(self):
         w, rows = self._rows('account')

@@ -87,7 +87,10 @@ export class NcReportViewer extends Component {
             try {
                 Object.assign(filters, JSON.parse(cur.nc_x));
                 any = true;
-            } catch {
+            } catch (error) {
+            if (error && error.data && error.data.name) {
+                throw error; // a real server error (AccessError, QWeb ...) is not a blocked download
+            }
                 // a hand-edited URL: ignore the extras, keep the rest
             }
         }

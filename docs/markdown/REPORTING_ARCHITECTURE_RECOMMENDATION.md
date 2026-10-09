@@ -169,6 +169,9 @@ Purchases · Inventory · Tax · Management & Analytics.
 * **D-2 Journal items readable by Sales / Manager.** Odoo core grants `account.move.line` read to those roles,
   which contradicts "Manager gets no financial visibility" (D5). The reports are protected; the raw model is not.
   Proposal: a global record rule limiting journal items to Accounting groups plus the user's own documents.
+* **D-2b MIS Builder read access** (found by the isolation review). `mis.report` / `mis.report.instance` are readable by
+  every internal user and compute with the caller's own journal-item rights, so a Sales user can reach P&L / balance-sheet
+  totals by that route. Same remedy as D-2; not changed here.
 * **D-3 Stock moves/quants readable by every internal user** (Odoo default). Proposal: tighten only if a role
   that needs them is confirmed not to — Sales needs availability.
 * **D-4** Pin `OCA/sale-reporting` and/or install `sale_margin` (Sales vs Target; margin).

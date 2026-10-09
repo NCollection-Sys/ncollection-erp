@@ -30,8 +30,8 @@ never shows purchase tax and vice versa.
 """
 from odoo import fields, models
 
-SALE_TYPES = ('out_invoice', 'out_refund')
-PURCHASE_TYPES = ('in_invoice', 'in_refund')
+SALE_TYPES = ('out_invoice', 'out_refund', 'out_receipt')
+PURCHASE_TYPES = ('in_invoice', 'in_refund', 'in_receipt')
 
 
 class NcollectionTaxAnalysis(models.TransientModel):
@@ -78,7 +78,11 @@ class NcollectionTaxAnalysis(models.TransientModel):
     # aggregates
     # ------------------------------------------------------------------
     def _nc_tax_domain(self):
-        return self._nc_move_line_domain()
+        """ONE scope for every view, so their totals agree: sales and purchase documents
+        (invoices, credit notes, receipts). Manual journal entries that carry a tax are
+        deliberately out of scope - they have no customer/vendor side to report on."""
+        return self._nc_move_line_domain() + [
+            ('move_id.move_type', 'in', SALE_TYPES + PURCHASE_TYPES)]
 
     @staticmethod
     def _signed(side, value):
@@ -145,7 +149,8 @@ class NcollectionTaxAnalysis(models.TransientModel):
                 for (tax, s), vals in sorted(per_tax.items(), key=lambda kv: kv[0][0].display_name)
                 if s == side]
             if rows:
-                lines += self._nc_section(titles[side], rows)
+                # a line carrying two taxes shows its base under each, so a section base would double count
+                lines += self._nc_section(titles[side], rows, base=False)
             totals[side] = sum(r['tax_amount'] for r in rows)
         if lines:
             lines.append(self._nc_net_row(totals['sale'], totals['purchase']))
@@ -209,9 +214,9 @@ class NcollectionTaxAnalysis(models.TransientModel):
         AML = self.env['account.move.line']
         categories = (
             ('taxable', self.env._("Taxable (standard rated)"),
-             [('tax_ids', 'any', [('amount', '>', 0)])]),
+             [('tax_ids', 'any', [('amount', '!=', 0)])]),
             ('zero', self.env._("Zero-rated / exempt (tax at 0 %)"),
-             [('tax_ids', '!=', False), ('tax_ids', 'not any', [('amount', '>', 0)])]),
+             [('tax_ids', '!=', False), ('tax_ids', 'not any', [('amount', '!=', 0)])]),
             ('none', self.env._("Outside tax scope (no tax)"),
              [('tax_ids', '=', False)]),
         )
