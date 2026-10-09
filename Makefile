@@ -439,6 +439,9 @@ hooks-install: ## Enable the repo's git hooks (fast gates run on pre-push)
 doctor: ## Diagnose the local dev environment ("why doesn't this work on my machine?")
 	@bash scripts/dev/doctor.sh
 
+pdf-hosts: ## Let the odoo container resolve <tenant>.localhost (without it report PDFs are unstyled in dev)
+	@bash scripts/dev/pdf_hosts.sh
+
 stack-settled: ## Was db/odoo just (re)started? Sanity check before trusting a scary finding (R-018)
 	@bash scripts/dev/stack_settled.sh
 

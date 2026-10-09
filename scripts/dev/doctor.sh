@@ -69,6 +69,21 @@ else
        "add to /etc/hosts: 127.0.0.1 rtclienta.localhost rtclientb.localhost rtadmin.localhost e2eclienta.localhost e2eclientb.localhost e2eadmin.localhost"
 fi
 
+# --- 6b. Can the ODOO CONTAINER resolve tenant hostnames? --------------------
+# The check above is about the HOST (the browser). wkhtmltopdf runs inside the
+# container and fetches the report stylesheet/header/logo from web.base.url
+# (<tenant>.localhost). If the container cannot resolve it, Odoo still returns a
+# PDF and exits 0 -- an UNSTYLED one: no letterhead, no table borders, different
+# pagination. Nothing fails, so nothing says so.
+odoo_cid=$(docker compose -f docker-compose.yml -f docker-compose.dev.yml ps -q odoo 2>/dev/null)
+if [ -n "$odoo_cid" ]; then
+  if docker exec "$odoo_cid" getent hosts ncollection.localhost >/dev/null 2>&1; then
+    ok "odoo container resolves <tenant>.localhost (report PDFs are styled)"
+  else
+    warn "odoo container cannot resolve ncollection.localhost — report PDFs come out unstyled" "make pdf-hosts"
+  fi
+fi
+
 # --- 7. Lint tooling (used by the pre-push hook and CI) ----------------------
 if python3 -m flake8 --version >/dev/null 2>&1 || command -v flake8 >/dev/null 2>&1 \
    || compgen -G "$HOME/Library/Python/*/bin/flake8" >/dev/null; then

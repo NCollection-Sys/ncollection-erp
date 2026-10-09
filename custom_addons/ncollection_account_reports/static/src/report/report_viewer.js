@@ -24,6 +24,7 @@ import { Component, onMounted, onWillStart, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { router } from "@web/core/browser/router";
+import { browser } from "@web/core/browser/browser";
 import { _t } from "@web/core/l10n/translation";
 import { formatFloat } from "@web/core/utils/numbers";
 import { formatDate, deserializeDate } from "@web/core/l10n/dates";
@@ -50,6 +51,7 @@ export class NcReportViewer extends Component {
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
+        this.notification = useService("notification");
         this.model = this.props.action.context.nc_report_model;
         this.state = useState({
             loading: true,
@@ -401,6 +403,12 @@ export class NcReportViewer extends Component {
         if (k === "account_name" && row.account_id) {
             return { model: "account.account", id: row.account_id };
         }
+        if (k === "label" && row.tax_id) {
+            return { model: "account.tax", id: row.tax_id };
+        }
+        if (k === "label" && row.link_partner && row.partner_id) {
+            return { model: "res.partner", id: row.partner_id };
+        }
         if ((k === "label") && row.account_id && !this.isLedger) {
             return { model: "account.account", id: row.account_id };
         }
@@ -543,7 +551,24 @@ export class NcReportViewer extends Component {
         const act = await this.orm.call("ncollection.report.service", "nc_report_export", [
             this.state.data.wizard.model, this.state.data.wizard.id, kind,
         ]);
-        return this.action.doAction(act);
+        if (kind !== "pdf") {
+            return this.action.doAction(act);
+        }
+        // Odoo downloads a PDF with a background request. A download manager or a
+        // browser policy can swallow that response (seen: IDM answering 204), and
+        // Odoo then reports it as "Arbitrary Uncaught Python Exception" although
+        // the server produced a valid PDF. Say what happened and open the same
+        // report in a tab instead of leaving the user with a stack-trace dialog.
+        try {
+            return await this.action.doAction(act);
+        } catch {
+            const ids = (act.context && act.context.active_ids) || [this.state.data.wizard.id];
+            this.notification.add(
+                _t("The PDF download was blocked by the browser or a download manager. Opening the report in a new tab instead."),
+                { type: "warning", sticky: false }
+            );
+            browser.open(`/report/pdf/${act.report_name}/${ids.join(",")}`, "_blank");
+        }
     }
 }
 
