@@ -84,6 +84,11 @@ _ARABIC_NAMES = {
     'Last Reports Generated': 'آخر التقارير المُنشأة',
     'Journal Ledger': 'دفتر اليومية',
     'Open Items': 'البنود المفتوحة',
+    'Customer Payments': 'مدفوعات العملاء',
+    'Vendor Payments': 'مدفوعات الموردين',
+    'Vendor Bill Analysis': 'تحليل فواتير الموردين',
+    'Vendor On-time Delivery': 'التسليم في الموعد — الموردون',
+    'Scrap Analysis': 'تحليل الهالك',
 }
 _ARABIC_LANG = 'ar_001'
 
@@ -161,8 +166,36 @@ _REPORT_MENU_GROUPS = {
     "stock.menu_product_stock": ("stock.group_stock_user",),
     "stock.stock_move_line_menu": ("stock.group_stock_user",),
     "stock.stock_move_menu": ("stock.group_stock_user",),
+    "ncollection_account_reports.menu_customer_payments": ("account.group_account_readonly",),
+    "ncollection_account_reports.menu_vendor_payments": ("account.group_account_readonly",),
+    "ncollection_account_reports.menu_vendor_bill_analysis": ("account.group_account_readonly",),
+    "ncollection_account_reports.menu_vendor_on_time": ("purchase.group_purchase_user",),
+    "ncollection_account_reports.menu_scrap_analysis": ("stock.group_stock_user",),
 }
 
+
+# Native screens that already exist and answer a reporting question but are not reachable from the hub, because
+# their own menu lives in a workflow folder (Customers > Payments) or does not exist at all (the vendor delay
+# action has no menu). The hub gets ITS OWN menu pointing at the SAME action -- the native menu is not moved and
+# nothing is copied or rebuilt. {menu name: (action xml id, English title, category, groups)}; created only when
+# the module that owns the action is installed, and only once.
+_NATIVE_REPORT_MENUS = {
+    'menu_customer_payments': (
+        'account.action_account_payments', 'Customer Payments', 'receivables',
+        ('account.group_account_readonly',)),
+    'menu_vendor_payments': (
+        'account.action_account_payments_payable', 'Vendor Payments', 'receivables',
+        ('account.group_account_readonly',)),
+    'menu_vendor_bill_analysis': (
+        'account.action_account_invoice_report_all_supp', 'Vendor Bill Analysis', 'receivables',
+        ('account.group_account_readonly',)),
+    'menu_vendor_on_time': (
+        'purchase_stock.action_purchase_vendor_delay_report', 'Vendor On-time Delivery', 'purchases',
+        ('purchase.group_purchase_user',)),
+    'menu_scrap_analysis': (
+        'stock.action_stock_scrap', 'Scrap Analysis', 'inventory',
+        ('stock.group_stock_user',)),
+}
 
 # The OCA financial-report wizards (account_financial_report) ship their access rule
 # on base.group_user -- any internal user. The menus are hidden from non-accountants,
@@ -213,6 +246,9 @@ class NcReportService(models.AbstractModel):
                 ('ncollection_account_reports.menu_report_partner_statement', None),
                 ('ncollection_account_reports.menu_report_aged_partner', None),
                 ('account_financial_report.menu_open_items_wizard', None),
+                ('ncollection_account_reports.menu_customer_payments', None),
+                ('ncollection_account_reports.menu_vendor_payments', None),
+                ('ncollection_account_reports.menu_vendor_bill_analysis', None),
             ]),
             ('sales', [
                 ('sale.menu_reporting_sales', 'Sales Analysis'),
@@ -225,12 +261,14 @@ class NcReportService(models.AbstractModel):
                 ('purchase.purchase_report', 'Purchase Analysis'),
                 ('ncollection_account_reports.menu_purchase_by_vendor', 'Purchases by Vendor'),
                 ('ncollection_account_reports.menu_purchase_by_product', 'Purchases by Product'),
+                ('ncollection_account_reports.menu_vendor_on_time', None),
             ]),
             ('inventory', [
                 ('stock.menu_product_stock', 'Stock Analysis'),
                 ('stock.menu_valuation', 'Inventory Valuation'),
                 ('stock.stock_move_line_menu', 'Stock Movement History'),
                 ('stock.stock_move_menu', 'Stock Move Analysis'),
+                ('ncollection_account_reports.menu_scrap_analysis', None),
             ]),
             ('tax', [
                 ('account_financial_report.menu_vat_report_wizard', 'VAT Report'),
@@ -309,6 +347,27 @@ class NcReportService(models.AbstractModel):
                             'model': rec._name, 'res_id': rec.id, 'noupdate': True})
 
     @api.model
+    def _nc_ensure_native_menus(self):
+        """Create the hub-owned menus of ``_NATIVE_REPORT_MENUS`` (idempotent)."""
+        IMD = self.env['ir.model.data'].sudo()
+        for name, (action_xmlid, title, category, group_xmlids) in _NATIVE_REPORT_MENUS.items():
+            if self.env.ref('ncollection_account_reports.%s' % name, raise_if_not_found=False):
+                continue
+            action = self.env.ref(action_xmlid, raise_if_not_found=False)
+            parent = self.env.ref(
+                'ncollection_account_reports.menu_nc_reports_%s' % category, raise_if_not_found=False)
+            groups = self.env['res.groups']
+            for group_xmlid in group_xmlids:
+                groups |= self.env.ref(group_xmlid, raise_if_not_found=False) or groups.browse()
+            if not action or not parent or not groups:
+                continue        # the owning module (or its group) is not installed: nothing to show
+            menu = self.env['ir.ui.menu'].sudo().create({
+                'name': title, 'parent_id': parent.id, 'sequence': 95,
+                'action': '%s,%s' % (action._name, action.id), 'group_ids': [(6, 0, groups.ids)]})
+            IMD.create({'module': 'ncollection_account_reports', 'name': name,
+                        'model': 'ir.ui.menu', 'res_id': menu.id, 'noupdate': True})
+
+    @api.model
     def _nc_arrange_menus(self):
         """File every catalogued report under its category and hide what the
         native engine supersedes. Safe to run repeatedly: it writes only what
@@ -321,6 +380,7 @@ class NcReportService(models.AbstractModel):
         Menu = self.env['ir.ui.menu'].sudo().with_context(active_test=False)
         changed = 0
         self._nc_ensure_grouped_menus()
+        self._nc_ensure_native_menus()
         installed_langs = {code for code, _name in self.env['res.lang'].get_installed()}
         for key, entries in self._nc_catalog():
             category = self.env.ref(
@@ -441,6 +501,16 @@ class NcReportService(models.AbstractModel):
             p + 'department': _("Results by department."),
             p + 'budget_actual': _("Approved budget against actual, with variance."),
             p + 'uae_vat': _("The FTA VAT 201 return, box by box."),
+            'ncollection_account_reports.menu_customer_payments': _(
+                "Payments received from customers, by partner, journal and date."),
+            'ncollection_account_reports.menu_vendor_payments': _(
+                "Payments made to vendors, by partner, journal and date."),
+            'ncollection_account_reports.menu_vendor_bill_analysis': _(
+                "Vendor bills and credit notes by vendor, month and payment state."),
+            'ncollection_account_reports.menu_vendor_on_time': _(
+                "How reliably each vendor delivers on the promised date."),
+            'ncollection_account_reports.menu_scrap_analysis': _(
+                "Scrapped quantities and value, by product and reason."),
             'sale.menu_reporting_sales': _("Sales revenue and quantities over time."),
             'sale.menu_reporting_customer': _("Sales grouped by customer."),
             'sale.menu_reporting_product': _("Sales grouped by product."),

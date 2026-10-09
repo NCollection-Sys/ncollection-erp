@@ -264,3 +264,56 @@ class TestReportHub(AccountTestInvoicingCommon):
     def test_curated_groups_do_not_touch_menus_that_are_not_curated(self):
         self.assertFalse(self.Service._nc_curated_groups('account.menu_action_account_invoice_report_all'))
 
+    # ------------------------------------------- native screens exposed through the hub
+    def _native_menu(self, name):
+        return self.env.ref('ncollection_account_reports.' + name, raise_if_not_found=False)
+
+    def test_native_screens_get_a_hub_menu_over_the_same_action(self):
+        """Payments, vendor bills, vendor on-time delivery and scrap already exist as native
+        screens but were not reachable from the hub. The hub gets its OWN menu pointing at the
+        SAME action: nothing is moved out of its workflow folder and nothing is copied."""
+        from odoo.addons.ncollection_account_reports.models.report_service import _NATIVE_REPORT_MENUS
+        self.Service._nc_ensure_native_menus()
+        for name, (action_xmlid, _title, category, group_xmlids) in _NATIVE_REPORT_MENUS.items():
+            with self.subTest(menu=name):
+                action = self.env.ref(action_xmlid, raise_if_not_found=False)
+                groups_present = all(self.env.ref(g, raise_if_not_found=False) for g in group_xmlids)
+                menu = self._native_menu(name)
+                if not action or not groups_present:
+                    self.assertFalse(menu, "a menu was created although its module is not installed")
+                    continue
+                self.assertTrue(menu, "%s should exist: its module is installed" % name)
+                self.assertEqual(menu.action, action, "must reuse the native action, not a copy")
+                self.assertEqual(menu.parent_id,
+                                 self.env.ref('ncollection_account_reports.menu_nc_reports_%s' % category))
+                self.assertEqual(menu.group_ids, self.env.ref(group_xmlids[0]),
+                                 "only the group that already holds the ORM right may see it")
+
+    def test_creating_the_native_menus_is_idempotent(self):
+        Menu = self.env['ir.ui.menu'].with_context(active_test=False)
+        self.Service._nc_ensure_native_menus()
+        before = Menu.search_count([])
+        self.Service._nc_ensure_native_menus()
+        self.assertEqual(Menu.search_count([]), before)
+
+    def test_the_native_payment_menu_does_not_leave_its_workflow_folder(self):
+        native = self.env.ref('account.menu_action_account_payments_receivable', raise_if_not_found=False)
+        parent_before = native.parent_id
+        self.Service._nc_arrange_menus()
+        self.assertEqual(native.parent_id, parent_before, "the Accounting > Customers > Payments menu must stay")
+
+    def test_the_payment_cards_reach_an_accountant_and_nobody_else(self):
+        self.Service._nc_arrange_menus()
+        accountant = self.env['res.users'].create({
+            'name': 'Hub Accountant', 'login': 'nc_hub_native_acct',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref('account.group_account_readonly').id])]})
+        plain = self.env['res.users'].create({
+            'name': 'Hub Plain', 'login': 'nc_hub_native_plain',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
+
+        def names(user):
+            cat = self.Service.with_user(user).nc_report_catalog()
+            return {r['name'] for c in cat['categories'] for r in c['reports']}
+        self.assertLessEqual({'Customer Payments', 'Vendor Payments', 'Vendor Bill Analysis'}, names(accountant))
+        self.assertFalse({'Customer Payments', 'Vendor Payments', 'Vendor Bill Analysis'} & names(plain))
