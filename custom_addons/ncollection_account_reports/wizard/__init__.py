@@ -22,3 +22,5 @@ from . import equity_changes
 from . import dimension_analysis
 # F2-T06 UAE FTA VAT 201 Return (#116)
 from . import uae_vat_report
+# Tax Analysis: output vs input tax by tax / account / customer / vendor / taxability
+from . import tax_analysis

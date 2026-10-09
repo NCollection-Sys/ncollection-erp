@@ -158,4 +158,11 @@
     </record>
     <menuitem id="menu_report_uae_vat" name="UAE FTA VAT 201 Return" parent="menu_nc_reports_root"
               action="action_nc_view_uae_vat" groups="account.group_account_readonly"/>
+    <record id="action_nc_view_tax_analysis" model="ir.actions.client">
+        <field name="name">Tax Analysis</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.tax.analysis'}</field>
+    </record>
+    <menuitem id="menu_report_tax_analysis" name="Tax Analysis" parent="menu_nc_reports_root"
+              action="action_nc_view_tax_analysis" groups="account.group_account_readonly"/>
 </odoo>

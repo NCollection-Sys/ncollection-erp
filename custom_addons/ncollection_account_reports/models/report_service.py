@@ -272,6 +272,7 @@ class NcReportService(models.AbstractModel):
             ]),
             ('tax', [
                 ('account_financial_report.menu_vat_report_wizard', 'VAT Report'),
+                ('ncollection_account_reports.menu_report_tax_analysis', None),
                 ('ncollection_account_reports.menu_report_uae_vat', 'UAE VAT 201 Return'),
             ]),
             ('management', [
@@ -511,6 +512,7 @@ class NcReportService(models.AbstractModel):
                 "How reliably each vendor delivers on the promised date."),
             'ncollection_account_reports.menu_scrap_analysis': _(
                 "Scrapped quantities and value, by product and reason."),
+            p + 'tax_analysis': _("Output and input tax by tax, tax account, customer, vendor or taxability."),
             'sale.menu_reporting_sales': _("Sales revenue and quantities over time."),
             'sale.menu_reporting_customer': _("Sales grouped by customer."),
             'sale.menu_reporting_product': _("Sales grouped by product."),

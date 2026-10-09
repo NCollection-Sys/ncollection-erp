@@ -2458,6 +2458,7 @@ msgstr "المورّدون"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_reference_form
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_revenue_analysis_form
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_trial_balance_form
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_tax_analysis__group_by
 msgid "View"
 msgstr "عرض"
 
@@ -2584,3 +2585,168 @@ msgstr "المحرّك"
 #: code:addons/ncollection_account_reports/models/report_service.py:0
 msgid "You are not allowed to report on this company."
 msgstr "غير مسموح لك بإعداد التقارير لهذه الشركة."
+
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "The PDF download was blocked by the browser or a download manager. Opening the report in a new tab instead."
+msgstr "تم حجب تنزيل ملف PDF بواسطة المتصفح أو أحد برامج التنزيل. سيتم فتح التقرير في تبويب جديد."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+#: model:ir.ui.menu,name:ncollection_account_reports.menu_report_tax_analysis
+#: model:ir.actions.client,name:ncollection_account_reports.action_nc_view_tax_analysis
+#: model:ir.actions.report,name:ncollection_account_reports.action_report_tax_analysis
+msgid "Tax Analysis"
+msgstr "تحليل الضريبة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Tax Analysis — by tax account"
+msgstr "تحليل الضريبة — حسب حساب الضريبة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Tax Analysis — by customer"
+msgstr "تحليل الضريبة — حسب العميل"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Tax Analysis — by vendor"
+msgstr "تحليل الضريبة — حسب المورّد"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Tax Analysis — taxable vs non-taxable"
+msgstr "تحليل الضريبة — الخاضع وغير الخاضع"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Taxable amount"
+msgstr "المبلغ الخاضع للضريبة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Description"
+msgstr "الوصف"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Output tax — sales"
+msgstr "ضريبة المخرجات — المبيعات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Input tax — purchases"
+msgstr "ضريبة المدخلات — المشتريات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Net tax payable (output − input)"
+msgstr "صافي الضريبة المستحقة (المخرجات − المدخلات)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Taxable (standard rated)"
+msgstr "خاضع للضريبة (النسبة الأساسية)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Zero-rated / exempt (tax at 0 %)"
+msgstr "خاضع بنسبة صفر / معفى (ضريبة 0٪)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "Outside tax scope (no tax)"
+msgstr "خارج نطاق الضريبة (بدون ضريبة)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/tax_analysis.py:0
+msgid "(no partner)"
+msgstr "(بدون شريك)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Output and input tax by tax, tax account, customer, vendor or taxability."
+msgstr "ضريبة المخرجات والمدخلات حسب الضريبة أو حساب الضريبة أو العميل أو المورّد أو قابلية الخضوع للضريبة."
+
+#. module: ncollection_account_reports
+#: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_tax_analysis
+msgid "NCollection Tax Analysis"
+msgstr "تحليل الضريبة — NCollection"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_tax_analysis__group_by
+msgid "How the tax is broken down. Every view reads the same journal items, so their totals agree."
+msgstr "كيفية تفصيل الضريبة. تقرأ جميع العروض نفس بنود اليومية، لذا تتطابق إجمالياتها."
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__group_by__tax
+msgid "By tax"
+msgstr "حسب الضريبة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__group_by__account
+msgid "By tax account"
+msgstr "حسب حساب الضريبة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__group_by__customer
+msgid "By customer"
+msgstr "حسب العميل"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__group_by__vendor
+msgid "By vendor"
+msgstr "حسب المورّد"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__group_by__taxability
+msgid "Taxable vs non-taxable"
+msgstr "الخاضع مقابل غير الخاضع"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Payments received from customers, by partner, journal and date."
+msgstr "المدفوعات المستلمة من العملاء، حسب الشريك واليومية والتاريخ."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Payments made to vendors, by partner, journal and date."
+msgstr "المدفوعات المسددة للموردين، حسب الشريك واليومية والتاريخ."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Vendor bills and credit notes by vendor, month and payment state."
+msgstr "فواتير الموردين والإشعارات الدائنة حسب المورّد والشهر وحالة الدفع."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "How reliably each vendor delivers on the promised date."
+msgstr "مدى التزام كل مورّد بالتسليم في الموعد المحدد."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Scrapped quantities and value, by product and reason."
+msgstr "الكميات والقيمة المستبعدة (الهالك) حسب المنتج والسبب."
