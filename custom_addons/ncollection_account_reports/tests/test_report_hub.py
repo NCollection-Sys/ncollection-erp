@@ -204,3 +204,63 @@ class TestReportHub(AccountTestInvoicingCommon):
         for name in ('menu_purchase_by_vendor', 'menu_purchase_by_product'):
             menu = self.env.ref('ncollection_account_reports.' + name)
             self.assertEqual(menu.group_ids, base.group_ids, name)
+
+    # ------------------------------------------------ who is shown a native report
+    def test_every_curated_menu_is_a_catalogued_report(self):
+        """A curated entry for a menu the hub does not list would be dead config."""
+        from odoo.addons.ncollection_account_reports.models.report_service import (
+            _REPORT_MENU_GROUPS,
+        )
+        catalogued = {xmlid for _k, entries in self.Service._nc_catalog() for xmlid, _n in entries}
+        self.assertFalse(set(_REPORT_MENU_GROUPS) - catalogued)
+
+    def _fixture_native_menu(self, admin_group):
+        """A native-style analysis menu gated on an 'Administrator' group, filed under
+        a catalogued xml id so the arranger treats it like Sales Analysis."""
+        menu = self.env['ir.ui.menu'].create({
+            'name': 'Fixture analysis', 'group_ids': [(6, 0, admin_group.ids)],
+            'action': 'ir.actions.act_window,%s' % self.env.ref('base.action_res_users').id})
+        self.env['ir.model.data'].create({
+            'module': 'ncollection_account_reports', 'name': 'fixture_native_menu',
+            'model': 'ir.ui.menu', 'res_id': menu.id, 'noupdate': True})
+        return menu
+
+    def test_a_native_menu_is_aligned_to_the_least_group_that_can_read_it(self):
+        """Sales / Purchase / Inventory Analysis were gated on an Administrator group no
+        role carries, so those hub categories were empty for EVERYONE, Owner and CEO
+        included. The curated map moves the gate to the app's ordinary user group."""
+        from unittest.mock import patch
+        from odoo.addons.ncollection_account_reports.models import report_service as svc
+        admin_group = self.env['res.groups'].create({'name': 'Fixture / Administrator'})
+        user_group = self.env['res.groups'].create({'name': 'Fixture / User'})
+        self.env['ir.model.data'].create({
+            'module': 'ncollection_account_reports', 'name': 'fixture_user_group',
+            'model': 'res.groups', 'res_id': user_group.id, 'noupdate': True})
+        menu = self._fixture_native_menu(admin_group)
+        xmlid = 'ncollection_account_reports.fixture_native_menu'
+        catalog = [('financial', [(xmlid, None)])]
+        with patch.object(type(self.Service), '_nc_catalog', lambda _self: catalog), \
+                patch.dict(svc._REPORT_MENU_GROUPS,
+                           {xmlid: ('ncollection_account_reports.fixture_user_group',)}):
+            self.Service._nc_arrange_menus()
+        self.assertEqual(menu.group_ids, user_group,
+                         "the Administrator gate must be replaced, not added to")
+
+    def test_a_curated_group_from_a_missing_module_never_widens_the_menu(self):
+        """If the app is not installed its group does not resolve; the menu keeps
+        whatever its own module gave it rather than becoming visible to all."""
+        from unittest.mock import patch
+        from odoo.addons.ncollection_account_reports.models import report_service as svc
+        admin_group = self.env['res.groups'].create({'name': 'Fixture2 / Administrator'})
+        menu = self._fixture_native_menu(admin_group)
+        xmlid = 'ncollection_account_reports.fixture_native_menu'
+        catalog = [('financial', [(xmlid, None)])]
+        with patch.object(type(self.Service), '_nc_catalog', lambda _self: catalog), \
+                patch.dict(svc._REPORT_MENU_GROUPS, {xmlid: ('no_such_module.group_user',)}):
+            self.assertFalse(self.Service._nc_curated_groups(xmlid))
+            self.Service._nc_arrange_menus()
+        self.assertEqual(menu.group_ids, admin_group)
+
+    def test_curated_groups_do_not_touch_menus_that_are_not_curated(self):
+        self.assertFalse(self.Service._nc_curated_groups('account.menu_action_account_invoice_report_all'))
+

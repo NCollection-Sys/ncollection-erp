@@ -19,3 +19,4 @@ from . import test_dimension_analysis
 from . import test_uae_vat_report
 from . import test_report_hub
 from . import test_report_print
+from . import test_oca_wizard_access

@@ -132,6 +132,55 @@ _ORIGIN_FOLDER_BY_MODULE = {
 }
 
 
+# WHO IS SHOWN a native analysis report in the hub (found by a per-role audit:
+# the Sales, Purchases and Inventory categories were EMPTY for every role,
+# Owner and CEO included).
+#
+# Odoo gates these menus on its *Administrator* groups (Sales / Purchase /
+# Inventory Administrator). No NCollection role carries those, so the reports
+# existed and nobody but a superuser could reach them -- while the ORM already
+# lets the ordinary user of each app read the underlying report model:
+#
+#   sale.report      read: Sales "Own Documents Only"; record rules scope it
+#                    (own documents for a salesperson, all for a manager)
+#   purchase.report  read: Purchase User
+#   stock.move(.line) / product stock: Inventory User
+#
+# So the menu is aligned to the LEAST group that already has the ORM right. No
+# data access is granted: the UI was stricter than the ORM, never looser (the
+# CLAUDE.md Rule 4 direction), and the hub still hides a card whose model the
+# user cannot read. Invoice Analysis keeps its accounting groups; CRM its own.
+_REPORT_MENU_GROUPS = {
+    "sale.menu_reporting_sales": ("sales_team.group_sale_salesman",),
+    "sale.menu_reporting_customer": ("sales_team.group_sale_salesman",),
+    "sale.menu_reporting_product": ("sales_team.group_sale_salesman",),
+    "sale.menu_reporting_salespeople": ("sales_team.group_sale_salesman",),
+    "purchase.purchase_report": ("purchase.group_purchase_user",),
+    "ncollection_account_reports.menu_purchase_by_vendor": ("purchase.group_purchase_user",),
+    "ncollection_account_reports.menu_purchase_by_product": ("purchase.group_purchase_user",),
+    "stock.menu_product_stock": ("stock.group_stock_user",),
+    "stock.stock_move_line_menu": ("stock.group_stock_user",),
+    "stock.stock_move_menu": ("stock.group_stock_user",),
+}
+
+
+# The OCA financial-report wizards (account_financial_report) ship their access rule
+# on base.group_user -- any internal user. The menus are hidden from non-accountants,
+# but a menu is a hint, not a control: the ORM let a salesperson or a department
+# manager create the wizard and pull the whole general ledger / trial balance (both
+# hold read access to journal items through Odoo core). ROLE_MATRIX D5 says Manager
+# gets no financial visibility. The rule is therefore moved to the accounting
+# read-only group on every registry load (an upgrade of the OCA module resets it).
+_OCA_REPORT_WIZARDS = (
+    'general.ledger.report.wizard',
+    'trial.balance.report.wizard',
+    'open.items.report.wizard',
+    'aged.partner.balance.report.wizard',
+    'journal.ledger.report.wizard',
+    'vat.report.wizard',
+)
+
+
 class NcReportService(models.AbstractModel):
     _name = 'ncollection.report.service'
     _description = 'NCollection report hub and viewer service'
@@ -289,9 +338,9 @@ class NcReportService(models.AbstractModel):
                     vals['parent_id'] = category.id
                 if menu.sequence != seq * 10:
                     vals['sequence'] = seq * 10
-                inherited = self._nc_origin_groups(xmlid, menu)
-                if inherited:
-                    vals['group_ids'] = [(6, 0, inherited.ids)]
+                target = self._nc_curated_groups(xmlid) or self._nc_origin_groups(xmlid, menu)
+                if target and set(menu.group_ids.ids) != set(target.ids):
+                    vals['group_ids'] = [(6, 0, target.ids)]
                 if not menu.active:
                     # A report we catalogued must be reachable; if an operator
                     # hid it on purpose they hide it via groups, not archiving.
@@ -324,6 +373,35 @@ class NcReportService(models.AbstractModel):
             _logger.info("ncollection_account_reports: re-filed %s report menu field(s)",
                          changed)
         return changed
+
+    @api.model
+    def _nc_harden_oca_wizards(self):
+        """Restrict each OCA report wizard from "any internal user" to the accounting
+        read-only group. Idempotent; a module that is not installed is skipped."""
+        readonly = self.env.ref('account.group_account_readonly', raise_if_not_found=False)
+        internal = self.env.ref('base.group_user', raise_if_not_found=False)
+        if not readonly or not internal:
+            return 0
+        rows = self.env['ir.model.access'].sudo().search([
+            ('model_id.model', 'in', list(_OCA_REPORT_WIZARDS)),
+            ('group_id', '=', internal.id)])
+        if rows:
+            rows.write({'group_id': readonly.id})
+            _logger.info("ncollection_account_reports: restricted %s OCA report wizard "
+                         "access rule(s) to accounting read-only", len(rows))
+        return len(rows)
+
+    @api.model
+    def _nc_curated_groups(self, xmlid):
+        """The groups ``_REPORT_MENU_GROUPS`` names for this menu, resolved. Only the
+        groups whose module is installed count; if none resolve the menu is left as
+        its own module defined it (never widened to everyone by a missing module)."""
+        groups = self.env['res.groups']
+        for group_xmlid in _REPORT_MENU_GROUPS.get(xmlid, ()):
+            group = self.env.ref(group_xmlid, raise_if_not_found=False)
+            if group:
+                groups |= group
+        return groups
 
     @api.model
     def _nc_origin_groups(self, xmlid, menu):
@@ -616,6 +694,10 @@ class NcReportService(models.AbstractModel):
         """Expand one summary row of the run the user is looking at."""
         Model = self._nc_engine_model(model)
         wizard = Model.browse(int(wizard_id)).exists()
+        if wizard:
+            # exists() skips record rules: without this a foreign run id would be
+            # "found" and only fail later, in whatever route consumes it.
+            wizard.check_access("read")
         if not wizard or not wizard._nc_has_row_detail():
             raise UserError(self.env._("The report run expired — apply the filters again."))
         return wizard._nc_row_detail(row_key)
@@ -625,6 +707,8 @@ class NcReportService(models.AbstractModel):
         """The wizard the user is LOOKING at, exported — never a re-run."""
         Model = self._nc_engine_model(model)
         wizard = Model.browse(int(wizard_id)).exists()
+        if wizard:
+            wizard.check_access("read")      # exists() skips record rules; see nc_report_detail
         if not wizard:
             raise UserError(self.env._("The report run expired — apply the filters again."))
         return wizard.action_export_pdf() if kind == 'pdf' else wizard.action_export_xlsx()
@@ -635,10 +719,13 @@ class IrUiMenu(models.Model):
 
     def _register_hook(self):
         result = super()._register_hook()
-        try:
-            self.env['ncollection.report.service']._nc_arrange_menus()
-        except Exception:                                   # pragma: no cover
-            # A registry load that dies here takes the database down; a report
-            # filed in the wrong folder is cosmetic. Log and let it finish.
-            _logger.exception("ncollection_account_reports: arranging report menus failed")
+        service = self.env['ncollection.report.service']
+        # Two independent steps: a failure arranging menus must not skip the
+        # access hardening, nor the reverse. Neither may take the registry down
+        # (a report filed in the wrong folder is cosmetic) -- log and finish.
+        for step in (service._nc_arrange_menus, service._nc_harden_oca_wizards):
+            try:
+                step()
+            except Exception:                               # pragma: no cover
+                _logger.exception("ncollection_account_reports: %s failed", step.__name__)
         return result
