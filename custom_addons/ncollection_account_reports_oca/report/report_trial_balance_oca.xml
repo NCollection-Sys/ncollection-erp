@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Own report action (own report_name): an ir.actions.report resolves its
+         documents through its model, so the adapter's wizard needs its own, exactly
+         as every other NCollection report does. The body is the shared print
+         template - the PDF is the same as the native one. -->
+    <record id="action_report_trial_balance_oca" model="ir.actions.report">
+        <field name="name">Trial Balance</field>
+        <field name="model">ncollection.account.report.tb.oca</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports_oca.report_trial_balance_oca</field>
+        <field name="report_file">ncollection_account_reports_oca.report_trial_balance_oca</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+    </record>
+
+    <template id="report_trial_balance_oca">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+</odoo>

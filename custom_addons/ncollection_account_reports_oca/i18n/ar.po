@@ -1,0 +1,161 @@
+# Arabic (ar) translation. Engineering draft; pending native review.
+# This file contains the translation of the following modules:
+# 	* ncollection_account_reports_oca
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_reports_oca\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-09 05:04+0000\n"
+"PO-Revision-Date: 2026-10-09 05:04+0000\n"
+"Last-Translator: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+msgid "Account"
+msgstr "الحساب"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__account_ids
+msgid "Accounts"
+msgstr "الحسابات"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+msgid "Closing"
+msgstr "الختامي"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__create_date
+msgid "Created on"
+msgstr "تاريخ الإنشاء"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+msgid "Credit"
+msgstr "دائن"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+msgid "Debit"
+msgstr "مدين"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__date_from
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,help:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__show_hierarchy
+msgid "Group accounts under their account-group hierarchy."
+msgstr "تجميع الحسابات تحت هرم مجموعات الحسابات."
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__hide_zero
+msgid "Hide accounts at zero"
+msgstr "إخفاء الحسابات ذات الرصيد الصفري"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__journal_ids
+msgid "Journals"
+msgstr "اليوميات"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,help:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__hide_zero
+msgid "Leave out accounts with no opening balance and no movement."
+msgstr "استبعاد الحسابات التي لا رصيد افتتاحي لها ولا حركة."
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model,name:ncollection_account_reports_oca.model_ncollection_account_report_tb_oca
+msgid "NCollection Trial Balance (OCA engine)"
+msgstr "ميزان المراجعة — NCollection (محرّك OCA)"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+msgid "Opening"
+msgstr "الافتتاحي"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__partner_ids
+msgid "Partners"
+msgstr "الشركاء"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__show_hierarchy
+msgid "Show account groups"
+msgstr "إظهار مجموعات الحسابات"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__target_move
+msgid "Target Moves"
+msgstr "القيود المستهدفة"
+
+#. module: ncollection_account_reports_oca
+#: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__date_to
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+#: model:ir.actions.report,name:ncollection_account_reports_oca.action_report_trial_balance_oca
+msgid "Trial Balance"
+msgstr "ميزان المراجعة"
+
+#. module: ncollection_account_reports_oca
+#. odoo-python
+#: code:addons/ncollection_account_reports_oca/models/trial_balance_oca.py:0
+msgid "You are not allowed to report on this company."
+msgstr "غير مسموح لك بإعداد التقارير لهذه الشركة."
+
+#. module: ncollection_account_reports_oca
+#: model:ir.actions.report,print_report_name:ncollection_account_reports_oca.action_report_trial_balance_oca
+msgid "object._nc_report_title()"
+msgstr "object._nc_report_title()"
+
