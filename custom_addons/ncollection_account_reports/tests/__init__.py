@@ -21,3 +21,4 @@ from . import test_report_hub
 from . import test_report_print
 from . import test_tax_analysis
 from . import test_oca_wizard_access
+from . import test_hub_roles

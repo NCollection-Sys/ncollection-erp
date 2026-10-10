@@ -2750,3 +2750,81 @@ msgstr "مدى التزام كل مورّد بالتسليم في الموعد �
 #: code:addons/ncollection_account_reports/models/report_service.py:0
 msgid "Scrapped quantities and value, by product and reason."
 msgstr "الكميات والقيمة المستبعدة (الهالك) حسب المنتج والسبب."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Quotations sent to customers, with status and amounts."
+msgstr "عروض الأسعار المرسلة إلى العملاء مع الحالة والمبالغ."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Confirmed sales orders: customer, salesperson, amounts, delivery and invoice status."
+msgstr "أوامر البيع المؤكدة: العميل ومندوب المبيعات والمبالغ وحالة التسليم والفوترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Orders that are still waiting to be invoiced."
+msgstr "الأوامر التي ما زالت بانتظار الفوترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Every sales order line with the quantities delivered and invoiced."
+msgstr "كل بند في أوامر البيع مع الكميات المسلّمة والمفوترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Purchase orders by vendor, with receipt and billing status."
+msgstr "أوامر الشراء حسب المورّد مع حالة الاستلام والفوترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Requests for quotation waiting for a vendor reply or a confirmation."
+msgstr "طلبات عروض الأسعار بانتظار رد المورّد أو التأكيد."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Every purchase order line: product, quantity, price and receipt status."
+msgstr "كل بند في أوامر الشراء: المنتج والكمية والسعر وحالة الاستلام."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Incoming transfers from vendors: ready, waiting and late."
+msgstr "التحويلات الواردة من الموردين: الجاهزة والمنتظِرة والمتأخرة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Outgoing transfers to customers: ready, waiting and late."
+msgstr "التحويلات الصادرة إلى العملاء: الجاهزة والمنتظِرة والمتأخرة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Count the stock on hand and apply inventory adjustments."
+msgstr "جرد المخزون الفعلي وتطبيق تسويات المخزون."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Stock on hand, reserved and available quantities by product and location."
+msgstr "المخزون الفعلي والمحجوز والمتاح حسب المنتج والموقع."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Products below their reordering rules, with the quantity to order."
+msgstr "المنتجات الأقل من قواعد إعادة الطلب مع الكمية المطلوبة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "List"
+msgstr "قائمة"

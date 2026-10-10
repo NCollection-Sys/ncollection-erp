@@ -89,6 +89,18 @@ _ARABIC_NAMES = {
     'Vendor Bill Analysis': 'تحليل فواتير الموردين',
     'Vendor On-time Delivery': 'التسليم في الموعد — الموردون',
     'Scrap Analysis': 'تحليل الهالك',
+    'Quotations': 'عروض الأسعار',
+    'Sales Orders': 'أوامر البيع',
+    'Orders to Invoice': 'أوامر بانتظار الفوترة',
+    'Sales Order Lines': 'بنود أوامر البيع',
+    'Purchase Orders': 'أوامر الشراء',
+    'Requests for Quotation': 'طلبات عروض الأسعار',
+    'Purchase Order Lines': 'بنود أوامر الشراء',
+    'Receipts': 'الاستلامات',
+    'Deliveries': 'التسليمات',
+    'Inventory Adjustments': 'تسويات المخزون',
+    'Stock by Location': 'المخزون حسب الموقع',
+    'Replenishment': 'التزويد',
 }
 _ARABIC_LANG = 'ar_001'
 
@@ -166,11 +178,6 @@ _REPORT_MENU_GROUPS = {
     "stock.menu_product_stock": ("stock.group_stock_user",),
     "stock.stock_move_line_menu": ("stock.group_stock_user",),
     "stock.stock_move_menu": ("stock.group_stock_user",),
-    "ncollection_account_reports.menu_customer_payments": ("account.group_account_readonly",),
-    "ncollection_account_reports.menu_vendor_payments": ("account.group_account_readonly",),
-    "ncollection_account_reports.menu_vendor_bill_analysis": ("account.group_account_readonly",),
-    "ncollection_account_reports.menu_vendor_on_time": ("purchase.group_purchase_user",),
-    "ncollection_account_reports.menu_scrap_analysis": ("stock.group_stock_user",),
 }
 
 
@@ -195,7 +202,41 @@ _NATIVE_REPORT_MENUS = {
     'menu_scrap_analysis': (
         'stock.action_stock_scrap', 'Scrap Analysis', 'inventory',
         ('stock.group_stock_user',)),
+    # --- operational screens (the documents themselves, list-first), Step 1 of the exposure plan -------------
+    # Each reuses the native action; the group is the one that already holds the ORM read right, so the
+    # record rules (Sales own/all documents, company rules) keep deciding WHICH rows a user sees.
+    'menu_quotations': (
+        'sale.action_quotations_with_onboarding', 'Quotations', 'sales', ('sales_team.group_sale_salesman',)),
+    'menu_sales_orders': (
+        'sale.action_orders', 'Sales Orders', 'sales', ('sales_team.group_sale_salesman',)),
+    'menu_orders_to_invoice': (
+        'sale.action_orders_to_invoice', 'Orders to Invoice', 'sales', ('sales_team.group_sale_salesman',)),
+    # sale.report one row per order line, opened on its LIST tab: Community has no sale.order.line screen
+    'menu_sales_order_lines': (
+        'sale.report_all_channels_sales_action', 'Sales Order Lines', 'sales', ('sales_team.group_sale_salesman',)),
+    'menu_purchase_orders': (
+        'purchase.purchase_form_action', 'Purchase Orders', 'purchases', ('purchase.group_purchase_user',)),
+    'menu_rfq': (
+        'purchase.purchase_rfq', 'Requests for Quotation', 'purchases', ('purchase.group_purchase_user',)),
+    'menu_purchase_order_lines': (
+        'purchase.action_purchase_history', 'Purchase Order Lines', 'purchases', ('purchase.group_purchase_user',)),
+    'menu_receipts': (
+        'stock.method_action_picking_tree_incoming', 'Receipts', 'inventory', ('stock.group_stock_user',)),
+    'menu_deliveries': (
+        'stock.method_action_picking_tree_outgoing', 'Deliveries', 'inventory', ('stock.group_stock_user',)),
+    'menu_physical_inventory': (
+        'stock.action_view_inventory_tree', 'Inventory Adjustments', 'inventory', ('stock.group_stock_user',)),
+    'menu_stock_by_location': (
+        'stock.action_view_quants', 'Stock by Location', 'inventory', ('stock.group_stock_user',)),
+    # Odoo gates Replenishment on the Inventory ADMINISTRATOR group (it carries configuration); keep that.
+    'menu_replenishment': (
+        'stock.action_replenishment', 'Replenishment', 'inventory', ('stock.group_stock_manager',)),
 }
+
+# One source of truth: the group of every hub-owned menu IS the group in the table above (it used to be
+# written twice, and a manual edit of one was silently reverted by the other).
+_REPORT_MENU_GROUPS.update({
+    'ncollection_account_reports.%s' % _name: _spec[3] for _name, _spec in _NATIVE_REPORT_MENUS.items()})
 
 # The OCA financial-report wizards (account_financial_report) ship their access rule
 # on base.group_user -- any internal user. The menus are hidden from non-accountants,
@@ -254,6 +295,10 @@ class NcReportService(models.AbstractModel):
                 ('ncollection_account_reports.menu_vendor_bill_analysis', None),
             ]),
             ('sales', [
+                ('ncollection_account_reports.menu_quotations', None),
+                ('ncollection_account_reports.menu_sales_orders', None),
+                ('ncollection_account_reports.menu_orders_to_invoice', None),
+                ('ncollection_account_reports.menu_sales_order_lines', None),
                 ('sale.menu_reporting_sales', 'Sales Analysis'),
                 ('sale.menu_reporting_customer', 'Sales by Customer'),
                 ('sale.menu_reporting_product', 'Sales by Product'),
@@ -261,12 +306,20 @@ class NcReportService(models.AbstractModel):
                 ('account.menu_action_account_invoice_report_all', 'Invoice Analysis'),
             ]),
             ('purchases', [
+                ('ncollection_account_reports.menu_purchase_orders', None),
+                ('ncollection_account_reports.menu_rfq', None),
+                ('ncollection_account_reports.menu_purchase_order_lines', None),
                 ('purchase.purchase_report', 'Purchase Analysis'),
                 ('ncollection_account_reports.menu_purchase_by_vendor', 'Purchases by Vendor'),
                 ('ncollection_account_reports.menu_purchase_by_product', 'Purchases by Product'),
                 ('ncollection_account_reports.menu_vendor_on_time', None),
             ]),
             ('inventory', [
+                ('ncollection_account_reports.menu_receipts', None),
+                ('ncollection_account_reports.menu_deliveries', None),
+                ('ncollection_account_reports.menu_stock_by_location', None),
+                ('ncollection_account_reports.menu_physical_inventory', None),
+                ('ncollection_account_reports.menu_replenishment', None),
                 ('stock.menu_product_stock', 'Stock Analysis'),
                 ('stock.menu_valuation', 'Inventory Valuation'),
                 ('stock.stock_move_line_menu', 'Stock Movement History'),
@@ -515,6 +568,30 @@ class NcReportService(models.AbstractModel):
                 "How reliably each vendor delivers on the promised date."),
             'ncollection_account_reports.menu_scrap_analysis': _(
                 "Scrapped quantities and value, by product and reason."),
+            'ncollection_account_reports.menu_quotations': _(
+                "Quotations sent to customers, with status and amounts."),
+            'ncollection_account_reports.menu_sales_orders': _(
+                "Confirmed sales orders: customer, salesperson, amounts, delivery and invoice status."),
+            'ncollection_account_reports.menu_orders_to_invoice': _(
+                "Orders that are still waiting to be invoiced."),
+            'ncollection_account_reports.menu_sales_order_lines': _(
+                "Every sales order line with the quantities delivered and invoiced."),
+            'ncollection_account_reports.menu_purchase_orders': _(
+                "Purchase orders by vendor, with receipt and billing status."),
+            'ncollection_account_reports.menu_rfq': _(
+                "Requests for quotation waiting for a vendor reply or a confirmation."),
+            'ncollection_account_reports.menu_purchase_order_lines': _(
+                "Every purchase order line: product, quantity, price and receipt status."),
+            'ncollection_account_reports.menu_receipts': _(
+                "Incoming transfers from vendors: ready, waiting and late."),
+            'ncollection_account_reports.menu_deliveries': _(
+                "Outgoing transfers to customers: ready, waiting and late."),
+            'ncollection_account_reports.menu_physical_inventory': _(
+                "Count the stock on hand and apply inventory adjustments."),
+            'ncollection_account_reports.menu_stock_by_location': _(
+                "Stock on hand, reserved and available quantities by product and location."),
+            'ncollection_account_reports.menu_replenishment': _(
+                "Products below their reordering rules, with the quantity to order."),
             p + 'tax_analysis': _("Output and input tax by tax, tax account, customer, vendor or taxability."),
             'sale.menu_reporting_sales': _("Sales revenue and quantities over time."),
             'sale.menu_reporting_customer': _("Sales grouped by customer."),
@@ -542,8 +619,12 @@ class NcReportService(models.AbstractModel):
         _ = self.env._
         if action._name == 'ir.actions.client' and 'report_viewer' in (action.tag or ''):
             return [_("PDF"), _("Excel"), _("Drill-down")]
+        if action._name == 'ir.actions.server':
+            return [_("List"), _("Export")]       # the native transfer / count / stock screens open a list
         modes = (getattr(action, 'view_mode', '') or '').split(',')
         badges = []
+        if modes and modes[0] == 'list':
+            badges.append(_("List"))
         if 'pivot' in modes:
             badges.append(_("Pivot"))
         if 'graph' in modes:
@@ -599,6 +680,10 @@ class NcReportService(models.AbstractModel):
     @api.model
     def _nc_can_open(self, action):
         model = getattr(action, 'res_model', False)
+        if action._name == 'ir.actions.server':
+            model = action.model_id.model     # a card must not lead to an AccessError either
+            if not model:
+                return False                  # no model to check: fail closed, never open
         if action._name == 'ir.actions.client':
             model = (action.context and self._nc_eval_ctx(action.context)
                      .get('nc_report_model')) or False
