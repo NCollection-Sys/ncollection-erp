@@ -408,11 +408,15 @@ class TestLicenseEnforcement(TransactionCase):
         blocked_models = self.Menu.sudo()._ncollection_blocked_models_cached()
         self.assertIn("account.age.report.configuration", blocked_models)
         self.assertNotIn("account.move", blocked_models)  # core account NOT gated
-        # the AFR model carries base.group_user ACL, so a non-system user passes
+        # ncollection_account_reports moves the AFR configuration models from
+        # base.group_user to accounting read-only (any internal user could rewrite every
+        # report's ageing buckets). A non-system accounting user therefore still passes
         # core's check and hits OUR license denial:
+        accountant = self.user.with_context(no_reset_password=True)
+        accountant.sudo().group_ids = [(4, self.env.ref("account.group_account_readonly").id)]
         with self.assertRaises(AccessError) as cm:
             self.env["account.age.report.configuration"].with_user(
-                self.user).check_access("read")
+                accountant).check_access("read")
         self.assertIn("NCollection plan", str(cm.exception))
 
     def test_derivation_error_fails_open(self):
