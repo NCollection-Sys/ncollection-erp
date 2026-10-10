@@ -168,3 +168,15 @@ Requires additional module 1 · Missing from Community 5 · **Total 64**.
 
 Suggested split if you approve in parts: **Step 1a** (Sales rows 1–4, Inventory rows 12–15 and 17–18; row 5 is HIDE) needs no
 role decision; **Step 1b** (Purchase rows 6–11 and Replenishment) waits for Step 2.
+
+## 6. Implementation status (2026-10-10) — Steps 1 and 2
+
+Implemented as approved; see [REPORTING_ROLE_MAPPING.md](REPORTING_ROLE_MAPPING.md) for the security evidence.
+
+* **Exposed (12 hub cards, all on existing native actions):** Quotations, Sales Orders, Orders to Invoice, Sales Order Lines
+  (list-first); Purchase Orders, Requests for Quotation, Purchase Order Lines; Receipts, Deliveries, Stock by Location,
+  Inventory Adjustments, Replenishment.
+* **Deliberately not exposed:** Sales by Sales Team (HIDE), Customer/Vendor Order History as separate cards (served by the
+  orders cards), Internal Transfers (multi-location only), and the three gap items of the next phase.
+* **Role change:** only Owner gained Purchase manager + Inventory administrator. A Manager → Purchase User link was tried and
+  **withdrawn** because it gave Manager/CEO a vendor-bill write (D5/D2).
