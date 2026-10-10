@@ -41,6 +41,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/report_security.xml',
+        'report/nc_print.xml',            # paper formats + design system: report_templates.xml references them
         'report/report_templates.xml',
         'views/account_report_views.xml',
         'views/report_menus.xml',

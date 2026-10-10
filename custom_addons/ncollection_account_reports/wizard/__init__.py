@@ -24,3 +24,5 @@ from . import dimension_analysis
 from . import uae_vat_report
 # Tax Analysis: output vs input tax by tax / account / customer / vendor / taxability
 from . import tax_analysis
+# print forms extend every report above, so they load last
+from . import print_forms

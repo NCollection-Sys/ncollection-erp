@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ======================================================================
+         NCollection Professional Print Design System
+
+         One CSS, one layout, one table renderer. Every report prints through them.
+         The templates only RENDER what models/print_payload.py prepared: no figure is
+         computed here and no number is formatted here (see _nc_print_payload).
+
+         wkhtmltopdf 0.12.6 runs a 2011 WebKit: no flexbox, no CSS grid, no custom
+         properties, no logical properties (padding-inline-*), no `isolate`. Layout is
+         therefore TABLES, alignment is explicit per direction, and numbers sit in a
+         left-to-right embedding so a minus sign never wanders in Arabic.
+         ====================================================================== -->
+
+    <!-- A4 portrait / landscape: small margins, because the letterhead is a compact running
+         header (about 17 mm), not the 38-52 mm Odoo's boxed layouts reserve on every page. -->
+    <record id="paperformat_nc_portrait" model="report.paperformat">
+        <field name="name">NCollection A4 Portrait</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">23</field>
+        <field name="margin_bottom">17</field>
+        <field name="margin_left">11</field>
+        <field name="margin_right">11</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">19</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- The Pro-forma colours, fonts and rules, once. Scope: .nc-print (body, header, footer all
+         carry it, because wkhtmltopdf renders header and footer as separate documents). -->
+    <template id="nc_print_css">
+        <style>
+            @font-face { font-family: 'NCLato'; font-weight: normal; src: url('/web/static/fonts/lato/Lato-Reg-webfont.ttf') format('truetype'); }
+            @font-face { font-family: 'NCLato'; font-weight: bold; src: url('/web/static/fonts/lato/Lato-Bol-webfont.ttf') format('truetype'); }
+            @font-face { font-family: 'NCTajawal'; font-weight: normal; src: url('/web/static/fonts/google/Tajawal/Tajawal-Regular.ttf') format('truetype'); }
+            @font-face { font-family: 'NCTajawal'; font-weight: bold; src: url('/web/static/fonts/google/Tajawal/Tajawal-Bold.ttf') format('truetype'); }
+            .nc-print { font-family: 'NCLato', 'NCTajawal', 'DejaVu Sans', sans-serif; font-size: 8.4pt; color: #1b2a3a; line-height: 1.32; }
+            .nc-print.nc-rtl { font-family: 'NCTajawal', 'NCLato', 'DejaVu Sans', sans-serif; font-size: 9pt; }
+            /* Odoo's report stylesheet boxes every cell: start from nothing, then draw only the rules we want */
+            .nc-print table, .nc-print tr, .nc-print td, .nc-print th { border: 0; background: transparent; margin: 0; }
+            /* NOT `collapse`: with collapsed borders wkhtmltopdf's PDF backend draws a hairline outline around every table even at border:0 (found by rendering variants) */
+            .nc-print table { border-collapse: separate; border-spacing: 0; }
+            .nc-print td, .nc-print th { padding: 0; vertical-align: top; }
+            .nc-print .muted { color: #5f7185; }
+
+            /* ---- running header (every page) ---- */
+            .nc-hd { width: 100%; }
+            .nc-hd td { vertical-align: middle; }
+            .nc-hd .logo { height: 10.5mm; max-width: 42mm; }
+            .nc-hd .co { font-size: 10.5pt; font-weight: bold; color: #1b2a3a; }
+            .nc-hd .addr { font-size: 7pt; color: #5f7185; line-height: 1.3; }
+            .nc-hd .ttl { font-size: 13pt; font-weight: bold; }
+            .nc-hd .sub { font-size: 7.6pt; color: #5f7185; }
+            .nc-ltr .nc-hd .tr { text-align: right; }
+            .nc-rtl .nc-hd .tr { text-align: left; }
+            .nc-hd-rule { height: 0; font-size: 0; line-height: 0; margin-top: 3px; }
+
+            /* ---- running footer (every page) ---- */
+            .nc-ft { width: 100%; border-top: 0.6pt solid #b9c5d3; font-size: 7pt; color: #5f7185; }
+            .nc-ft td { padding-top: 3px; }
+            .nc-ltr .nc-ft .r { text-align: right; }
+            .nc-rtl .nc-ft .r { text-align: left; }
+            .nc-ft .c { text-align: center; }
+
+            /* ---- title block ---- */
+            .nc-title { width: 100%; margin-bottom: 7px; }
+            .nc-title h1 { font-size: 16pt; margin: 0 0 1px 0; font-weight: bold; }
+            .nc-title .party { font-size: 12pt; font-weight: bold; margin: 0; }
+            .nc-title .kicker { font-size: 7.4pt; color: #5f7185; }
+            .nc-meta { width: 100%; }
+            .nc-meta td { padding: 0.9px 0; font-size: 7.8pt; }
+            .nc-meta td.k { color: #5f7185; white-space: nowrap; width: 1%; }
+            .nc-ltr .nc-meta td.k { padding-right: 9px; text-align: left; }
+            .nc-rtl .nc-meta td.k { padding-left: 9px; text-align: right; }
+            .nc-meta td.v { font-weight: bold; }
+            .nc-ltr .nc-meta td.v { text-align: left; }
+            .nc-rtl .nc-meta td.v { text-align: right; }
+
+            /* ---- summary band ---- */
+            .nc-sum { width: 100%; border-collapse: separate; border-spacing: 0; margin: 2px 0 9px 0; }
+            .nc-sum td { padding: 5px 9px 5px 9px; background: #f4f7fa; border-top: 2px solid #c9d5e2; }
+            .nc-sum td.strong { background: #eaf1f8; border-top: 2px solid <t t-out="p['brand']['color']"/>; }
+            .nc-sum .l { font-size: 7.2pt; color: #5f7185; }
+            .nc-sum .v { font-size: 12pt; font-weight: bold; }
+            .nc-ltr .nc-sum td { border-right: 4px solid #ffffff; }
+            .nc-rtl .nc-sum td { border-left: 4px solid #ffffff; }
+
+            /* ---- tables ---- */
+            .nc-sec { margin-top: 10px; }
+            .nc-t { width: 100%; table-layout: fixed; }
+            .nc-t thead { display: table-header-group; }
+            .nc-t tr { page-break-inside: avoid; }
+            .nc-t th { background: #e8eef5; font-size: 7.4pt; font-weight: bold; padding: 3.2px 5px; color: #1b2a3a; border-top: 1px solid <t t-out="p['brand']['color']"/>; border-bottom: 1px solid #9fb1c5; }
+            .nc-ltr .nc-t th { text-align: left; }
+            .nc-rtl .nc-t th { text-align: right; }
+            .nc-ltr .nc-t th.num, .nc-ltr .nc-t td.num { text-align: right; }
+            .nc-rtl .nc-t th.num, .nc-rtl .nc-t td.num { text-align: left; }
+            .nc-t td { padding: 2.3px 5px; border-bottom: 1px solid #e1e8f0; }
+            .nc-ltr .nc-t td { text-align: left; }
+            .nc-rtl .nc-t td { text-align: right; }
+            .nc-t td.num, .nc-t td.dt { white-space: nowrap; }
+            .nc-t .n { direction: ltr; unicode-bidi: embed; display: inline-block; }
+            .nc-t td.zero { color: #9aa8b8; }
+            .nc-t td.txt { word-wrap: break-word; }
+            .nc-t tr.sec-title th { background: #ffffff; border-top: 0; border-bottom: 1px solid <t t-out="p['brand']['color']"/>; font-size: 9pt; padding: 5px 5px 3px 5px; color: <t t-out="p['brand']['color']"/>; }
+            .nc-t tr.sec-title th .cont { font-weight: normal; font-size: 7pt; color: #5f7185; }
+
+            /* accounting hierarchy: weight and rules, not boxes */
+            .nc-t tr.opening td { background: #f6f8fb; color: #43566b; font-style: italic; }
+            .nc-t tr.sub td { font-weight: bold; background: #f0f4f8; border-top: 0.8pt solid #9fb1c5; border-bottom: 0.8pt solid #9fb1c5; }
+            .nc-t tr.section td { font-weight: bold; background: #eef3f8; border-top: 0.8pt solid #9fb1c5; }
+            .nc-t tr.grand td { font-weight: bold; font-size: 9pt; background: #e8eef5; border-top: 1.2pt solid #1b2a3a; border-bottom: 3pt double #1b2a3a; }
+            .nc-t tr.l1 td { font-weight: bold; }
+            .nc-t tr.l3 td { color: #2d3b4b; }
+            .nc-ltr .nc-t tr.l1 td:first-child { padding-left: 15px; }
+            .nc-ltr .nc-t tr.l2 td:first-child { padding-left: 26px; }
+            .nc-ltr .nc-t tr.l3 td:first-child { padding-left: 37px; }
+            .nc-rtl .nc-t tr.l1 td:first-child { padding-right: 15px; }
+            .nc-rtl .nc-t tr.l2 td:first-child { padding-right: 26px; }
+            .nc-rtl .nc-t tr.l3 td:first-child { padding-right: 37px; }
+        </style>
+    </template>
+
+    <!-- The page frame: a compact running header, the article, a running footer with page X of Y.
+         Odoo extracts div.header / div.article / div.footer and hands header and footer to
+         wkhtmltopdf as separate documents, hence the repeated css + scope class. -->
+    <template id="nc_print_layout">
+        <t t-set="dir" t-value="'rtl' if p['rtl'] else 'ltr'"/>
+        <div class="header">
+            <div t-attf-class="nc-print nc-#{dir}" t-att-dir="dir">
+                <t t-call="ncollection_account_reports.nc_print_css"/>
+                <table border="0" cellspacing="0" cellpadding="0" class="nc-hd">
+                    <tr>
+                        <td width="55%">
+                            <table border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td t-if="o.company_id.logo" style="padding-right:8px;padding-left:8px;">
+                                        <img class="logo" t-att-src="image_data_uri(o.company_id.logo)" alt=""/>
+                                    </td>
+                                    <td>
+                                        <div class="co" t-out="p['co']['name']"/>
+                                        <div class="addr">
+                                            <span t-out="' · '.join(p['co']['lines'])"/>
+                                        </div>
+                                        <div class="addr" t-if="p['co']['vat'] or p['co']['registry']">
+                                            <span t-if="p['co']['vat']"><span t-out="p['co']['vat']['label']"/>: <span t-out="p['co']['vat']['value']"/></span>
+                                            <span t-if="p['co']['vat'] and p['co']['registry']"> · </span>
+                                            <span t-if="p['co']['registry']" t-out="p['co']['registry']"/>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td class="tr" width="45%">
+                            <div class="ttl" t-out="p['title']"/>
+                            <div class="sub" t-if="p['period']">
+                                <span t-out="p['period']"/> · <span t-out="p['currency']"/>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <div class="nc-hd-rule" t-attf-style="border-bottom: 1.6pt solid #{p['brand']['color']};"/>
+            </div>
+        </div>
+        <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+             t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <div t-attf-class="nc-print nc-#{dir}" t-att-dir="dir">
+                <t t-call="ncollection_account_reports.nc_print_css"/>
+                <t t-out="0"/>
+            </div>
+        </div>
+        <div class="footer">
+            <div t-attf-class="nc-print nc-#{dir}" t-att-dir="dir">
+                <t t-call="ncollection_account_reports.nc_print_css"/>
+                <table border="0" cellspacing="0" cellpadding="0" class="nc-ft">
+                    <tr>
+                        <td width="38%">
+                            <span t-out="p['co']['name']"/>
+                            <span t-if="p['co']['contacts']"> · <span t-out="' · '.join(p['co']['contacts'])"/></span>
+                        </td>
+                        <td class="c" width="34%">
+                            <span t-out="p['generated']"/> · <span t-out="p['user']"/>
+                        </td>
+                        <td class="r" width="28%">
+                            Page <span class="page"/> of <span class="topage"/>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </template>
+
+    <!-- Title block (+ optional party), meta list, summary band. -->
+    <template id="nc_print_head">
+        <table border="0" cellspacing="0" cellpadding="0" class="nc-title">
+            <tr>
+                <td>
+                    <t t-if="party">
+                        <div class="kicker" t-out="p['party_label']"/>
+                        <p class="party" t-out="party['name']"/>
+                        <div class="muted" t-if="party['code']"><span t-out="p['code_label']"/>: <span t-out="party['code']"/></div>
+                        <div class="muted" t-foreach="party['lines']" t-as="ln"><span t-out="ln"/></div>
+                        <div class="muted" t-if="party['vat']"><span t-out="party['vat']['label']"/>: <span t-out="party['vat']['value']"/></div>
+                    </t>
+                    <t t-else="">
+                        <h1 t-out="p['title']"/>
+                    </t>
+                </td>
+                <td class="m" width="40%">
+                    <table border="0" cellspacing="0" cellpadding="0" class="nc-meta">
+                        <tr t-foreach="p['meta']" t-as="m">
+                            <td class="k"><span t-out="m[0]"/></td>
+                            <td class="v"><span t-out="m[1]"/></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <table border="0" cellspacing="0" cellpadding="0" class="nc-sum" t-if="summary">
+            <tr>
+                <td t-foreach="summary" t-as="s" t-attf-class="#{s[2]}" t-attf-width="#{int(100 / len(summary))}%">
+                    <div class="l" t-out="s[0]"/>
+                    <div class="v"><span class="n" t-attf-style="direction:ltr;unicode-bidi:embed;" t-out="s[1]"/></div>
+                </td>
+            </tr>
+        </table>
+    </template>
+
+    <!-- A section: optional title row (repeats with the column header on every page, so a long
+         section is never orphaned from its name), the column header, the rows. -->
+    <template id="nc_print_table">
+        <div class="nc-sec">
+            <table border="0" cellspacing="0" cellpadding="0" class="nc-t">
+                <colgroup>
+                    <col t-foreach="range(len(p['columns']))" t-as="i" t-attf-style="width:#{p['widths'][i]}%"/>
+                </colgroup>
+                <thead>
+                    <tr class="sec-title" t-if="sec['title']">
+                        <th t-att-colspan="len(p['columns'])">
+                            <span t-out="sec['title']"/>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th t-foreach="p['columns']" t-as="col" t-att-class="'num' if col['numeric'] else ''" t-out="col['label']"/>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="sec['rows']" t-as="row" t-att-class="row['cls']">
+                        <td t-foreach="row['cells']" t-as="cell" t-att-class="cell['cls'] or 'txt'">
+                            <span t-if="cell['numeric']" class="n" t-out="cell['text']"/>
+                            <t t-else="" t-out="cell['text']"/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </template>
+
+    <!-- The shared body of every engine report. -->
+    <template id="report_financial">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="p" t-value="o._nc_print_payload()"/>
+                <t t-set="party" t-value="False"/>
+                <t t-set="summary" t-value="p['summary']"/>
+                <t t-call="ncollection_account_reports.nc_print_layout">
+                    <t t-call="ncollection_account_reports.nc_print_head"/>
+                    <t t-foreach="p['sections']" t-as="sec">
+                        <t t-call="ncollection_account_reports.nc_print_table"/>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- A statement is ONE DOCUMENT PER PARTNER: the same frame, a party block instead of the plain
+         title, a summary band, then the transactions. -->
+    <template id="report_partner_statement">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="p" t-value="o._nc_print_payload()"/>
+                <!-- ONE header and footer for the whole run: wkhtmltopdf re-renders the header document on
+                     every page, so a header per partner (what a layout-per-partner would emit) makes the
+                     cost grow with partners x pages and a full customer list never finishes. -->
+                <t t-call="ncollection_account_reports.nc_print_layout">
+                    <t t-foreach="p['docs']" t-as="d">
+                        <div t-att-style="'page-break-before: always;' if not d_first else ''">
+                            <t t-set="party" t-value="d['party']"/>
+                            <t t-set="summary" t-value="d['summary']"/>
+                            <t t-call="ncollection_account_reports.nc_print_head"/>
+                            <t t-foreach="d['sections']" t-as="sec">
+                                <t t-call="ncollection_account_reports.nc_print_table"/>
+                            </t>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

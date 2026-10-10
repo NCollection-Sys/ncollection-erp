@@ -438,6 +438,39 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-030 — Every printed report drew a hairline box around every cell, and a PDF per partner hung wkhtmltopdf ✅ FIXED
+
+**Symptom.** After the print redesign the first PDFs looked "boxed": hairline outlines around every table
+cell although every border was set to `0`. Separately, a statement run for all customers (header and
+footer repeated once per partner) never finished (>120 s) where one partner took 2 s.
+
+**Root cause.**
+1. **`border-collapse: collapse` in wkhtmltopdf 0.12.6 (patched Qt, PDF backend).** With a collapsed border
+   model the backend strokes every cell edge as a hairline *even at `border: 0`*. Found by bisecting the
+   stylesheet with `wkhtmltopdf` run directly, not through Odoo. Browsers do not show it, so an HTML
+   preview of the same template looks clean.
+2. **One layout per partner.** wkhtmltopdf's cost grows with (header/footer instances × pages); N layouts for
+   N partners multiplied it. The same engine ignores flexbox, grid, CSS variables and logical properties
+   (`margin-inline`, `inset-*`) and has no `unicode-bidi: isolate`.
+
+**Fix.** Every table uses `border-collapse: separate; border-spacing: 0` plus `border="0" cellspacing="0"
+cellpadding="0"` and a reset rule; a statement is ONE layout for the whole run with
+`page-break-before: always` per partner (all-customers run: 81 pages ~9 s vs ~27 s before; 120 partners /
+120 pages 13 s; 152-page General Ledger 25 s, linear at ~0.17 s/page). Bidi: dates are wrapped in an LRE…PDF
+run so an Arabic page does not print the end date first.
+
+**Guard.** `ncollection_account_reports/tests/test_print_system.py`:
+`test_css_stays_inside_what_wkhtmltopdf_can_draw` (bans `border-collapse: collapse`, flex/grid/var(--)/
+logical properties/`isolate`), `test_every_table_switches_the_border_attributes_off`,
+`test_a_statement_renders_one_layout_for_the_whole_run`,
+`test_dates_are_left_to_right_islands_so_arabic_pages_keep_their_order`.
+
+**Known limit (documented, not fixed).** In an RTL cell the Qt bidi engine places a leading account code to the
+LEFT of an Arabic name but to the RIGHT of an English one ("Main Safe 101005" vs "حساب تحويل وسيط 100001").
+Both read correctly; `isolate`, RLM and RLE do not change it.
+
+---
+
 ## R-029 — "Arbitrary Uncaught Python Exception" on PDF export was not Python, and dev PDFs were silently unstyled ✅ FIXED (client) / ⚠️ STRUCTURAL (the download manager)
 
 **Symptom.** Print → PDF showed `RPC_ERROR — Arbitrary Uncaught Python Exception`. The previous fix (a QWeb `%` formatting

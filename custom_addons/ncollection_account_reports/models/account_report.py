@@ -330,7 +330,7 @@ class NcollectionAccountReport(models.AbstractModel):
                 out.append((self._fields[name].get_description(env, ['string'])['string'], label))
         return out
 
-    def _nc_export_payload(self):
+    def _nc_export_payload(self, lines=None):
         """Everything a printed copy needs, formatted ONCE.
 
         Both the PDF template and the XLSX builder read this, so the two cannot
@@ -347,14 +347,15 @@ class NcollectionAccountReport(models.AbstractModel):
         self.ensure_one()
         env = self.env
         currency = self.company_id.currency_id
-        lang = env['res.lang']._get_data(code=env.lang or 'en_US')
         columns = []
         for col in self._nc_columns():
             kind = self._nc_export_kind(col)
             columns.append({'key': col['key'], 'label': col['label'], 'kind': kind,
                             'numeric': kind in ('amount', 'percent')})
         rows = []
-        for row in self._nc_compute_lines():
+        # ``lines``: rows the caller already computed (the print layer groups the same rows into
+        # sections), so a report is never computed twice for one PDF.
+        for row in (lines if lines is not None else self._nc_compute_lines()):
             cells = []
             for col in columns:
                 value = row.get(col['key'])
@@ -369,6 +370,15 @@ class NcollectionAccountReport(models.AbstractModel):
                 cells.append({'value': value, 'text': text})
             rows.append({'level': row.get('level', 0) or 0,
                          'opening': bool(row.get('is_initial')), 'cells': cells})
+        return dict(self._nc_header_payload(), columns=columns, rows=rows)
+
+    def _nc_header_payload(self):
+        """The facts every printed copy states about itself, formatted once: shared by the PDF/XLSX payload
+        and by the designed print layer, so a statement and a ledger describe their period, currency, scope,
+        author and time identically."""
+        env = self.env
+        currency = self.company_id.currency_id
+        lang = env['res.lang']._get_data(code=env.lang or 'en_US')
         entries = ''
         if 'target_move' in self._fields:
             entries = dict(self._fields['target_move']._description_selection(env)).get(
@@ -386,8 +396,6 @@ class NcollectionAccountReport(models.AbstractModel):
             'generated': stamp.strftime('%Y-%m-%d %H:%M'),
             'user': env.user.name,
             'direction': lang.direction or 'ltr',
-            'columns': columns,
-            'rows': rows,
         }
 
     def _nc_build_xlsx(self):
