@@ -64,13 +64,13 @@ class TestPlatformEntry(TransactionCase):
         self.assertTrue(url.netloc.startswith('atlas.'), url.netloc)
         self.assertEqual(url.path, '/ncollection/platform/enter')
         self.assertEqual(url.scheme, 'http')                  # follows how the platform itself is served
-        token = parse_qs(url.query)['token'][0]
+        token = parse_qs(url.fragment)['token'][0]
         self.assertGreaterEqual(len(token), 40)
         self.assertEqual(post.call_count, 1)
 
     def test_only_the_hash_of_the_token_is_sent_to_the_tenant(self):
         action, post = self._enter(self.atlas, self.alice)
-        token = parse_qs(urlparse(action['url']).query)['token'][0]
+        token = parse_qs(urlparse(action['url']).fragment)['token'][0]
         _args, kwargs = post.call_args
         sent = json.loads(kwargs['data'])['vals']
         self.assertEqual(sent['token_hash'], hashlib.sha256(token.encode()).hexdigest())

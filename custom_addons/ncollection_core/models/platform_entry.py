@@ -10,7 +10,8 @@ NO password is stored or replayed. The flow is:
 1. The platform (``ncollection_saas``) checks that the platform user is authorised for that tenant,
    makes a one-time random token and pushes ONLY ITS SHA-256 to this database over the existing
    per-tenant, workspace-scoped service channel (json2 + HMAC-derived bearer): :meth:`grant_from_platform`.
-2. The browser opens ``/ncollection/platform/enter?token=...`` on this tenant. The token is the credential
+2. The browser opens ``/ncollection/platform/enter#token=...`` on this tenant (a URL fragment, so no server, proxy
+   or log ever sees it; a bridge page POSTs it). The token is the credential
    of a dedicated, passwordless *proxy user* (one per platform administrator, ``platform.<ref>``) and is
    redeemed atomically, exactly once, within its short lifetime (:meth:`_redeem`).
 3. Everything the administrator then does is written by that proxy user, so create_uid / write_uid /
@@ -30,7 +31,7 @@ CREDENTIAL_TYPE = 'ncollection_platform_entry'
 PROXY_LOGIN_PREFIX = 'platform.'
 SESSION_MAX_SECONDS = 8 * 3600
 
-_REF_RE = re.compile(r'^[a-z0-9]{1,24}$')
+_REF_RE = re.compile(r'^u[0-9]{1,23}$')                           # what the platform emits: 'u<user id>'
 _HASH_RE = re.compile(r'^[0-9a-f]{64}$')
 _URL_RE = re.compile(r'^https?://[^\s/?#@]+(?:[/?#]\S*)?$')       # no user-info ("https://trusted@evil")
 _MIN_TTL, _MAX_TTL, _DEFAULT_TTL = 10, 120, 60
@@ -78,6 +79,20 @@ class PlatformEntry(models.Model):
         or an arbitrary redirect in.
         """
         self.check_access('create')            # first of all: only the service account holds this right
+        # Stale, never-used grants are noise: drop them. Used grants stay: they are the audit trail.
+        stale = fields.Datetime.subtract(fields.Datetime.now(), days=1)
+        self.sudo().search([('used_at', '=', False), ('expires_at', '<', stale)]).unlink()
+        entry = self.sudo().create(self._grant_vals(vals))     # create() runs the same check for any other caller
+        return {'ok': True, 'id': entry.id}
+
+    @api.model
+    def _grant_vals(self, vals):
+        """The ONLY values a grant may be created from: validated shape, a clamped lifetime, nothing else.
+
+        Every caller that is not the superuser goes through here (see :meth:`create`), so the service account
+        cannot skip these checks by calling the public ``create`` over json2 instead of ``grant_from_platform``:
+        it cannot set an expiry, a used flag, a user or an address of its own.
+        """
         if not isinstance(vals, dict) or set(vals) - _GRANT_KEYS:
             raise UserError(self.env._("Malformed entry grant."))
         token_hash = str(vals.get('token_hash') or '')
@@ -93,14 +108,17 @@ class PlatformEntry(models.Model):
         except (TypeError, ValueError):
             ttl = _DEFAULT_TTL
         ttl = max(_MIN_TTL, min(_MAX_TTL, ttl))
-        # Unused, long-expired grants are noise: drop them. Used grants stay: they are the audit trail.
-        stale = fields.Datetime.subtract(fields.Datetime.now(), days=1)
-        self.sudo().search([('used_at', '=', False), ('expires_at', '<', stale)]).unlink()
-        entry = self.create({
+        return {
             'token_hash': token_hash, 'platform_ref': ref, 'platform_name': name, 'return_url': return_url,
             'expires_at': fields.Datetime.add(fields.Datetime.now(), seconds=ttl),
-        })
-        return {'ok': True, 'id': entry.id}
+        }
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not self.env.su:
+            vals_list = [self._grant_vals(vals) for vals in vals_list]
+            self = self.sudo()                 # the right to create was checked by the ACL; the values are now ours
+        return super().create(vals_list)
 
     # ------------------------------------------------------------------ browser -> tenant
     @api.model

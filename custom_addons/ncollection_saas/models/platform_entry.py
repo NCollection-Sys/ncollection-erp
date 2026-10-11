@@ -84,13 +84,13 @@ class Tenant(models.Model):
         return url + '/odoo' if url else ''
 
     def _nc_entry_url(self, token):
-        """https://<tenant host>/ncollection/platform/enter?token=... (scheme follows how the platform is served)."""
+        """https://<tenant host>/ncollection/platform/enter#token=... (scheme follows how the platform is served)."""
         self.ensure_one()
         host = urlparse(self.tenant_url or '').netloc
         if not host:
             raise UserError(self.env._("%s has no address to enter.", self.company_name))
         scheme = urlparse(self.env['ir.config_parameter'].sudo().get_param('web.base.url') or '').scheme or 'https'
-        return '%s://%s%s?token=%s' % (scheme, host, _ENTER_PATH, token)
+        return '%s://%s%s#token=%s' % (scheme, host, _ENTER_PATH, token)       # fragment: never sent to any server
 
     def _nc_push_entry_grant(self, db, grant):
         """Register one grant in the tenant database over json2 + the tenant's own derived bearer."""

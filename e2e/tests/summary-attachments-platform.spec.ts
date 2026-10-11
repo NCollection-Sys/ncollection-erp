@@ -151,7 +151,7 @@ test.describe('Platform Admin Mode', () => {
     const errors = collectErrors(page);
     const token = 'e2e-' + createHash('sha1').update(String(Date.now())).digest('hex') + 'x'.repeat(12);
     grantEntry(token);
-    await page.goto(`${TENANTS[TENANT]}/ncollection/platform/enter?token=${token}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${TENANTS[TENANT]}/ncollection/platform/enter#token=${token}`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector(NAVBAR, { timeout: 60_000 });
 
     const bar = page.locator('.nc-platform-bar');
@@ -162,7 +162,7 @@ test.describe('Platform Admin Mode', () => {
     expect(await page.evaluate(() => document.body.classList.contains('nc-platform-mode'))).toBe(true);
 
     // the token cannot be used a second time
-    const replay = await page.request.get(`${TENANTS[TENANT]}/ncollection/platform/enter?token=${token}`, { maxRedirects: 0 });
+    const replay = await page.request.post(`${TENANTS[TENANT]}/ncollection/platform/enter`, { form: { token }, maxRedirects: 0 });
     expect(replay.status()).toBe(403);
 
     // Back to Platform: ends THIS tenant session and goes to the platform

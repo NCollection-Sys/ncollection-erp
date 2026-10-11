@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Browser endpoints of the platform-administrator entry (tenant side).
 
-``/ncollection/platform/enter?token=...``  redeems the one-time token the platform pushed to this database
+``/ncollection/platform/enter#token=...`` (the token is in the URL FRAGMENT; a GET serves a bridge page that POSTs it)
+redeems the one-time token the platform pushed to this database
 (``ncollection.platform.entry``), signs the browser in as the administrator's passwordless proxy user and lands
 on the Summary. ``/ncollection/platform/exit`` ends that session and returns to the platform.
 
@@ -25,8 +26,30 @@ def _denied():
 
 class NCollectionPlatformEntry(http.Controller):
 
-    @http.route('/ncollection/platform/enter', type='http', auth='none', methods=['GET'], readonly=False,
-                sitemap=False)
+    @http.route('/ncollection/platform/enter', type='http', auth='none', methods=['GET'], sitemap=False)
+    def enter_page(self, **_ignored):
+        """The bridge: moves the token from the URL fragment into a POST body. Looks nothing up, reveals nothing.
+
+        A fragment is never sent to a server, a proxy or an access log, and never appears in a Referer; a query
+        string would be all four.
+        """
+        html = (
+            '<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="no-referrer">'
+            '<title>Platform</title></head><body>'
+            '<form id="f" method="post" action="/ncollection/platform/enter">'
+            '<input type="hidden" name="token" id="t"/><noscript>JavaScript is required.</noscript></form>'
+            '<script>(function(){var m=/^#token=([A-Za-z0-9_-]{1,200})$/.exec(location.hash);'
+            'history.replaceState(null,"",location.pathname);'          # off the address bar and out of history
+            'if(!m){document.body.textContent="Forbidden";return;}'
+            'document.getElementById("t").value=m[1];document.getElementById("f").submit();})();</script>'
+            '</body></html>')
+        return request.make_response(html, headers=[
+            ('Content-Type', 'text/html; charset=utf-8'), ('Cache-Control', 'no-store'),
+            ('Referrer-Policy', 'no-referrer')])
+
+    # csrf=False: the one-time token IS the credential (a forged cross-site POST cannot know it).
+    @http.route('/ncollection/platform/enter', type='http', auth='none', methods=['POST'], readonly=False,
+                csrf=False, sitemap=False)
     def enter(self, token=None, **_ignored):
         # auth='none' has no user: do the registry work as the real superuser (a user-less env.sudo() breaks code
         # that reads env.user), and let the session sign in as the PROXY below.

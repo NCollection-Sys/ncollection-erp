@@ -1,0 +1,66 @@
+import { test, expect, Page } from '@playwright/test';
+import { callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
+
+/**
+ * Release smoke: walk the main screens repeatedly, in both languages, across reloads and a logout/login, and
+ * assert the browser never reports an uncaught promise / IndexedDB error (the "database connection is
+ * closing" InvalidStateError of the mail unread-badge store) or an Odoo error dialog.
+ */
+const TENANT = 'e2eclienta' as const;
+const SCREENS = [
+  'ncollection_core.action_ncollection_dashboard',           // Summary
+  'sale.action_quotations_with_onboarding',                  // Quotations (attachment column)
+  'sale.action_orders',                                      // Sales orders
+  'account.action_move_out_invoice_type',                    // Invoices
+  'ncollection_account_reports.action_nc_report_hub',        // Reports hub
+  'ncollection_account_reports.action_nc_view_balance_sheet',
+];
+const BAD = /IndexedDB|InvalidStateError|UncaughtPromiseError|connection is closing/i;
+
+function watch(page: Page) {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  page.on('console', (m) => { if (m.type() === 'error' && BAD.test(m.text())) errors.push(m.text()); });
+  return errors;
+}
+
+async function walk(page: Page, errors: string[]) {
+  for (const xmlid of SCREENS) {
+    await page.goto(`${TENANTS[TENANT]}/odoo/action-${xmlid}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector(NAVBAR, { timeout: 60_000 });
+    await page.waitForTimeout(800);                          // let the unread-badge write and the view settle
+    await expect(page.locator('.o_error_dialog')).toHaveCount(0);
+  }
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector(NAVBAR, { timeout: 60_000 });
+  expect(errors.filter((e) => BAD.test(e)), 'IndexedDB / uncaught promise errors').toEqual([]);
+}
+
+async function setLang(page: Page, lang: string) {
+  const res = await callKw(page.request, TENANT, 'res.users', 'write', [[2], { lang }]);
+  expect(res.error, JSON.stringify(res.error)).toBeUndefined();
+}
+
+test('screens, reload, language switch and logout/login raise no IndexedDB or uncaught errors', async ({ page }) => {
+  test.setTimeout(8 * 60_000);
+  const errors = watch(page);
+  await loginViaRpc(page, TENANT);
+  for (let round = 0; round < 2; round++) {
+    await walk(page, errors);
+  }
+  try {
+    await setLang(page, 'ar_001');
+    await walk(page, errors);
+    const dir = await page.evaluate(() => (window as any).odoo.loader.modules.get('@web/core/l10n/localization')?.localization?.direction);
+    expect(dir).toBe('rtl');
+  } finally {
+    await setLang(page, 'en_US');                            // never leave the shared fixture user in Arabic
+  }
+  await walk(page, errors);
+
+  // logout / login again, then once more through everything
+  await page.goto(`${TENANTS[TENANT]}/web/session/logout`, { waitUntil: 'domcontentloaded' });
+  await loginViaRpc(page, TENANT);
+  await walk(page, errors);
+  expect(errors.filter((e) => BAD.test(e))).toEqual([]);
+});

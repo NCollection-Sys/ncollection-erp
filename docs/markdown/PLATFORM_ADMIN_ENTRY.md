@@ -9,7 +9,7 @@ Platform Summary ── My Companies ── [Enter Company]
         ▼
 ncollection_saas  ── one-time token; only its SHA-256 is pushed ──►  tenant DB: ncollection.platform.entry
         │                  (existing per-tenant HMAC-derived service channel, json2)
-        ▼  browser → https://<tenant>/ncollection/platform/enter?token=…
+        ▼  browser → https://<tenant>/ncollection/platform/enter#token=…  (fragment → bridge page → POST)
 tenant: redeem once (atomic UPDATE … RETURNING) → sign in as the admin's passwordless proxy user
         ▼
 Atlas Summary ── "Atlas · Platform Admin Mode · <name> · Back to Platform"
@@ -42,13 +42,26 @@ installs itself next to `sale`.
 * Platform → tenant reachability is the existing service channel: a tenant that is down cannot be entered.
 * Removing an administrator from the allow-list stops *new* entries immediately; an open tenant session ends at the
   8-hour window, or when they use **Back to Platform**.
-* The one-time token travels in the `GET /ncollection/platform/enter?token=` query string (a browser navigation
-  cannot carry a header). It is single-use, lives at most 120 s, only its SHA-256 is stored, and the redirect answers
-  `Referrer-Policy: no-referrer`; it can still appear in front-end access logs, where it is already worthless.
+* The one-time token travels in the URL **fragment** (`#token=`), which a browser never sends to a server, proxy or access
+  log and never puts in a Referer. `GET /ncollection/platform/enter` serves a bridge page whose script moves the
+  fragment into a POST body and clears the address bar; only the POST redeems. A `?token=` query string is ignored.
+  The token is single-use, lives at most 120 s, and only its SHA-256 is stored. Remaining hardening for production:
+  a platform-signed audience-bound assertion instead of a shared-channel grant (needs a wider auth redesign).
 * The service account that registers grants is the existing config-sync account. Its extra right is **create** on
   `ncollection.platform.entry` only (no read, write or delete); it is wider than `workspace.config` in that it
   can *register* an entry for any platform administrator ref, which is why the platform checks the per-tenant
   allow-list first and the tenant validates the shape of every grant.
 * The proxy user is not deactivated after the window; its session token simply stops matching, and it holds no password.
-* The Summary page runs the Balance Sheet and Profit & Loss engines once each per load (aggregate queries, not
-  per-row); it is not cached.
+* The Summary page calls each engine exactly once per load (one Balance Sheet pass, one P&L pass; measured), and
+  shows the engine's own rows (levels 0-1): nothing is re-added in the dashboard. It is not cached.
+* **Trust root.** Whoever holds the config-sync key (the per-tenant derived bearer reaches one tenant; the master
+  `NC_CONFIG_SYNC_KEY` reaches every tenant) can register a grant and so obtain an Owner + system session there. That key
+  is already the root of trust of the platform -> tenant channel (it can rewrite the workspace config), but this
+  feature raises what it can reach. `create` itself validates every grant (expiry clamped to 10-120 s, no used flag, no
+  user, `platform_ref` = `u<digits>`, URL shape), so the public json2 `create` is no bypass. Keep the key env-only and
+  rotate it with the re-key flow. Production hardening: a separate signing key for grants.
+* **MFA.** The proxy is signed in with `mfa: 'default'`; it has no TOTP enrolled and cannot enrol one (no password), so
+  no second factor is asked tenant-side. The control is the platform administrator's own authentication on the platform.
+* **Revocation lag.** Removing an administrator from the allow-list stops new entries at once; a live tenant session ends
+  at the 8 h window. Proxy users are never deleted (inert: no password, need a grant). `return_url` is platform-set.
+* **Migration 19.0.1.9.0** is a one-time, add-only grant of existing platform admins to existing tenants.

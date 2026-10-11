@@ -108,7 +108,7 @@ PY
   echo "$out" | sed -n 's/^URL //p' | tail -1 > "$URLS/$db"     # a file: enter runs in a subshell
   [ -s "$URLS/$db" ] || { echo "000"; return; }
   curl -s -o /dev/null -w "%{http_code}" -c "$jar" -b "$jar" -H "Host: $db.$BASE_DOMAIN" \
-    "$EDGE$(sed 's#^[a-z]*://[^/]*##' "$URLS/$db")" || true
+    --data-urlencode "token=$(sed "s/.*#token=//" "$URLS/$db")" "$EDGE/ncollection/platform/enter" || true
 }
 rpc(){     # rpc <db> <jar> <model> <method> <args-json> [kwargs-json]
   curl -s -c "$2" -b "$2" -H "Host: $1.$BASE_DOMAIN" -H 'Content-Type: application/json' \
@@ -160,12 +160,12 @@ except AccessError:
 PY
 )"
 echo "$OUT" | grep -q REFUSED && ok "an unauthorised platform admin cannot enter A" || no "unauthorised entry was allowed: $OUT"
-REPLAY="$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $DB_A.$BASE_DOMAIN" "$EDGE$(sed 's#^[a-z]*://[^/]*##' "$URLS/$DB_A")" || true)"
+REPLAY="$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $DB_A.$BASE_DOMAIN" --data-urlencode "token=$(sed "s/.*#token=//" "$URLS/$DB_A")" "$EDGE/ncollection/platform/enter" || true)"
 [ "$REPLAY" = "403" ] && ok "a replayed token is refused (403)" || no "replay answered $REPLAY"
-TOK="$(sed 's/.*token=//' "$URLS/$DB_B")"     # B's token (already used once)
-FOREIGN="$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $DB_A.$BASE_DOMAIN" "$EDGE/ncollection/platform/enter?token=$TOK&db=$DB_B" || true)"
+TOK="$(sed 's/.*#token=//' "$URLS/$DB_B")"     # B's token (already used once)
+FOREIGN="$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $DB_A.$BASE_DOMAIN" --data-urlencode "token=$TOK" "$EDGE/ncollection/platform/enter?db=$DB_B" || true)"
 [ "$FOREIGN" = "403" ] && ok "a token for B presented to A (with db=B in the URL) is refused" || no "foreign token answered $FOREIGN"
-UNKNOWN="$(curl -s -o /dev/null -w "%{http_code}" -H "Host: nosuchtenant.$BASE_DOMAIN" "$EDGE/ncollection/platform/enter?token=$TOK&db=$DB_B" || true)"
+UNKNOWN="$(curl -s -o /dev/null -w "%{http_code}" -H "Host: nosuchtenant.$BASE_DOMAIN" --data-urlencode "token=$TOK" "$EDGE/ncollection/platform/enter?db=$DB_B" || true)"
 [ "$UNKNOWN" != "303" ] && [ "$UNKNOWN" != "200" ] && ok "an unregistered host/database name opens nothing ($UNKNOWN)" || no "unknown database answered $UNKNOWN"
 hr
 

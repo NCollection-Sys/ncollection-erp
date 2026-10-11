@@ -71,6 +71,19 @@ class TestPlatformEntryModel(TransactionCase):
             with self.cr.savepoint():
                 self.Entry.grant_from_platform(_grant())
 
+    def test_the_service_account_cannot_skip_the_checks_by_calling_create_directly(self):
+        """json2 exposes the public ``create``: it must run the same validation as ``grant_from_platform``."""
+        Entry = self.Entry.with_user(self.sync_user)
+        far = '2099-01-01 00:00:00'
+        for forged in ({'expires_at': far}, {'used_at': far}, {'user_id': 1}, {'platform_ref': 'admin'},
+                       {'return_url': 'javascript:alert(1)'}, {'token_hash': 'abc'}):
+            with self.assertRaises(UserError, msg=str(forged)):
+                Entry.create({'platform_name': 'X', **_grant('j' * 40), **forged})
+        entry = Entry.create({'token_hash': _hash('k' * 40), 'platform_ref': 'u9', 'platform_name': 'Z'})
+        entry = entry.sudo()
+        self.assertFalse(entry.used_at)
+        self.assertLessEqual(entry.expires_at, fields.Datetime.add(fields.Datetime.now(), seconds=121))
+
     def test_only_the_config_sync_service_may_create_grants(self):
         self.assertTrue(self.Entry.with_user(self.sync_user).grant_from_platform(_grant())['ok'])
         with self.assertRaises(AccessError):
@@ -212,25 +225,38 @@ class TestPlatformEntryEndpoints(HttpCase):
 
     def test_enter_signs_in_once_and_lands_on_the_summary(self):
         self._grant(NONCE)
-        response = self.url_open('/ncollection/platform/enter?token=' + NONCE, allow_redirects=False)
+        response = self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
         self.assertEqual(response.status_code, 303)
         self.assertTrue(response.headers['Location'].endswith('/odoo'))
         info = self.url_open('/web/session/get_session_info', headers={'Content-Type': 'application/json'},
                              data='{"jsonrpc": "2.0", "params": {}}').json()['result']
         self.assertEqual(info['username'], PROXY_LOGIN_PREFIX + 'u7')
-        replay = self.url_open('/ncollection/platform/enter?token=' + NONCE, allow_redirects=False)
+        replay = self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
         self.assertEqual(replay.status_code, 403)
 
     def test_every_refusal_is_the_same_bare_403(self):
-        for url in ('/ncollection/platform/enter', '/ncollection/platform/enter?token=',
-                    '/ncollection/platform/enter?token=nope', '/ncollection/platform/enter?token=' + 'z' * 500):
-            response = self.url_open(url, allow_redirects=False)
-            self.assertEqual(response.status_code, 403, url)
-            self.assertEqual(response.text, 'Forbidden', url)
+        for token in (None, '', 'nope', 'z' * 500):
+            body = {'token': token} if token is not None else {'other': '1'}      # an empty body would be a GET
+            response = self.url_open('/ncollection/platform/enter', data=body, allow_redirects=False)
+            self.assertEqual(response.status_code, 403, token)
+            self.assertEqual(response.text, 'Forbidden', token)
+
+    def test_the_token_is_never_accepted_in_the_query_string(self):
+        """A GET carrying ?token= is just the bridge page: it neither looks the token up nor signs anyone in, and
+        the page itself reads the token from the URL fragment only."""
+        self._grant(NONCE)
+        response = self.url_open('/ncollection/platform/enter?token=' + NONCE, allow_redirects=False)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(NONCE, response.text)
+        self.assertEqual(response.headers['Referrer-Policy'], 'no-referrer')
+        self.assertIn('location.hash', response.text)
+        self.assertNotIn('location.search', response.text)
+        entry = self.env['ncollection.platform.entry'].search([])
+        self.assertFalse(entry.used_at)                        # nothing was redeemed
 
     def test_exit_ends_the_session_and_returns_to_the_platform(self):
         self._grant(NONCE)
-        self.url_open('/ncollection/platform/enter?token=' + NONCE, allow_redirects=False)
+        self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
         response = self.url_open('/ncollection/platform/exit', allow_redirects=False)
         self.assertEqual(response.status_code, 303)
         self.assertEqual(response.headers['Location'], 'https://platform.example/odoo')
