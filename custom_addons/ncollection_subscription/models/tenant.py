@@ -1,9 +1,16 @@
+import re
 import uuid
 
 from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import ValidationError
 
 from .localization import localization_package
+
+# The administrator's login is a USERNAME, never an email address. Lower-case
+# letters, digits and . _ - ; must start with a letter; 3-32 characters. An '@'
+# is therefore impossible, which is the point: the email is contact information
+# and is deliberately a different value from the credential.
+USERNAME_RE = re.compile(r'^[a-z][a-z0-9._-]{2,31}$')
 
 # Platform base domain (#476). The KEY is the one ncollection_saas.domain has
 # always used — the definition moved, the configuration did not, so no
@@ -217,10 +224,10 @@ class Tenant(models.Model):
         help="Whether a password is waiting to be applied, has been applied and "
              "erased from here, or was never set.")
 
-    @api.depends('admin_password', 'database_status')
+    @api.depends('admin_password', 'admin_password_hash', 'database_status')
     def _compute_admin_credentials_state(self):
         for tenant in self:
-            if tenant.admin_password:
+            if tenant.admin_password or tenant.admin_password_hash:
                 tenant.admin_credentials_state = 'pending'
             elif tenant.database_status == 'ready':
                 tenant.admin_credentials_state = 'applied'
@@ -230,12 +237,44 @@ class Tenant(models.Model):
     def _nc_admin_login(self):
         """The username the tenant administrator signs in with.
 
-        Falls back to the email so that a tenant created before `admin_login`
-        existed — or by any flow that does not set it, such as the public
-        checkout — gets exactly the login it would have got before.
+        NO fallback to the email. Until now an unset username silently became
+        the contact address, which welded the credential to the contact detail
+        and let an email be typed into the login box. A tenant that reaches
+        provisioning without a username is refused there with a clear message
+        (see ``_nc_require_admin_login``) rather than being given a guess.
         """
         self.ensure_one()
-        return ((self.admin_login or self.email) or '').strip()
+        return (self.admin_login or '').strip()
+
+    def _nc_require_admin_login(self):
+        """Refuse to provision a tenant that has no valid administrator
+        username. Called by the provisioning engine, before any side effect."""
+        self.ensure_one()
+        login = self._nc_admin_login()
+        if not login or not USERNAME_RE.fullmatch(login):
+            raise ValidationError(self.env._(
+                "Tenant '%s' has no valid administrator username. Set one on "
+                "the tenant (3-32 characters: lowercase letters, digits, '.', "
+                "'_' or '-', starting with a letter; an email address is not a "
+                "username) before provisioning.", self.company_name))
+        return login
+
+    @api.constrains('admin_login')
+    def _check_admin_login_is_a_username(self):
+        for tenant in self:
+            login = (tenant.admin_login or '').strip()
+            if not login:
+                continue
+            if '@' in login:
+                raise ValidationError(self.env._(
+                    "The administrator username cannot be an email address. "
+                    "Choose a username such as 'atlasadmin'; the email is "
+                    "contact information only."))
+            if not USERNAME_RE.fullmatch(login):
+                raise ValidationError(self.env._(
+                    "The administrator username must be 3-32 characters: "
+                    "lowercase letters, digits, '.', '_' or '-', starting with "
+                    "a letter."))
 
     @api.constrains('admin_password', 'admin_password_confirm')
     def _check_admin_password_confirmation(self):
@@ -267,10 +306,85 @@ class Tenant(models.Model):
         the only place it needs to be.
         """
         holding = self.filtered(
-            lambda t: t.admin_password or t.admin_password_confirm)
+            lambda t: t.admin_password or t.admin_password_confirm
+            or t.admin_password_hash)
         if holding:
             holding.sudo().write({
-                'admin_password': False, 'admin_password_confirm': False})
+                'admin_password': False, 'admin_password_confirm': False,
+                'admin_password_hash': False})
+
+    # A self-registered customer picks their password on a PUBLIC page, and the
+    # tenant then waits for approval — possibly for days. The plaintext must
+    # never sit in the platform database that long (or at all), so the
+    # registration endpoint stores only a one-way hash, produced by Odoo's own
+    # password context. Provisioning hands the HASH to the seed, which installs
+    # it in the tenant's res_users row; the tenant verifies it with its own
+    # context, so the customer signs in with the password they chose and no one
+    # — including the platform — can read it back. Erased with the rest.
+    admin_password_hash = fields.Char(
+        string='Administrator Password (hashed)', copy=False,
+        groups='ncollection_subscription.group_platform_admin',
+        help="One-way hash of the password a customer chose when registering. "
+             "Applied at provisioning, then erased.")
+
+    # ------------------------------------------------------------------
+    # Registration approval (the gate in front of provisioning)
+    # ------------------------------------------------------------------
+    # `approved` is the DEFAULT so every tenant that already exists — and every
+    # tenant an administrator creates by hand — behaves exactly as before. Only
+    # the public registration endpoint sets `pending`. Provisioning refuses any
+    # tenant that is not `approved` (ncollection_saas), so the database cannot
+    # exist before an administrator has said yes.
+    registration_state = fields.Selection(
+        selection=[
+            ('pending', 'Pending Approval'),
+            ('approved', 'Approved'),
+            ('rejected', 'Rejected'),
+        ],
+        default='approved', required=True, copy=False, tracking=True,
+        help="Self-registered companies wait here until an administrator "
+             "approves them. No database exists until then.")
+    registration_date = fields.Datetime(
+        string='Registered On', readonly=True, copy=False)
+    registration_decision_note = fields.Char(
+        string='Decision Note', copy=False,
+        help="Why a request was rejected, or any note for the record.")
+
+    provision_stage = fields.Selection(
+        selection=[
+            ('pending', 'Pending Approval'),
+            ('rejected', 'Rejected'),
+            ('approved', 'Approved'),
+            ('provisioning', 'Provisioning'),
+            ('ready', 'Ready'),
+            ('failed', 'Failed'),
+        ],
+        string='Workspace Stage', compute='_compute_provision_stage',
+        help="One answer to 'where is this company in getting its workspace?', "
+             "derived from the approval state and the database status.")
+
+    @api.depends('registration_state', 'database_status', 'provisioning_job_ids.status')
+    def _compute_provision_stage(self):
+        for tenant in self:
+            # A job that is queued or running IS provisioning, even though the
+            # engine only writes database_status='provisioning' inside its own
+            # (long) transaction — so without this the badge read "Approved" for
+            # the whole build, and kept reading "Failed" while a retry ran.
+            live_job = any(job.status in ('queued', 'running')
+                           for job in tenant.provisioning_job_ids)
+            if tenant.registration_state == 'pending':
+                tenant.provision_stage = 'pending'
+            elif tenant.registration_state == 'rejected':
+                tenant.provision_stage = 'rejected'
+            elif tenant.database_status == 'ready':
+                tenant.provision_stage = 'ready'
+            elif tenant.database_status == 'provisioning' or live_job:
+                tenant.provision_stage = 'provisioning'
+            elif tenant.database_status == 'error':
+                tenant.provision_stage = 'failed'
+            else:
+                tenant.provision_stage = 'approved'
+
     plan_id = fields.Many2one('ncollection.subscription.plan', string='Subscription Plan', tracking=True)
     subscription_id = fields.Many2one('ncollection.subscription', string='Current Subscription')
     status = fields.Selection(

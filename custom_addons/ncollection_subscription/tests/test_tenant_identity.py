@@ -89,16 +89,41 @@ class TestTenantAdminCredentials(TransactionCase):
         tenant = self._tenant(admin_login='atlasadmin')
         self.assertEqual(tenant._nc_admin_login(), 'atlasadmin')
 
-    def test_the_login_falls_back_to_the_email(self):
-        """Every flow that sets no username — the public checkout, an import —
-        must produce exactly the login it produced before this field."""
-        self.assertEqual(self._tenant()._nc_admin_login(), 'atlas@example.test')
+    def test_the_login_never_falls_back_to_the_email(self):
+        """REVERSED ON PURPOSE. This used to assert the fallback — an unset
+        username silently became the contact address. That welded the credential
+        to the contact detail and let an email be used as a login. An unset
+        username is now just unset; provisioning refuses it."""
+        tenant = self._tenant()
+        self.assertEqual(tenant._nc_admin_login(), '')
+        self.assertNotEqual(tenant._nc_admin_login(), tenant.email)
+        with self.assertRaises(ValidationError):
+            tenant._nc_require_admin_login()
+
+    def test_an_email_address_is_not_a_valid_username(self):
+        for bad in ('atlas@example.test', 'a@b'):
+            with self.assertRaises(ValidationError, msg=bad):
+                self._tenant(admin_login=bad)
+
+    def test_a_malformed_username_is_refused(self):
+        for bad in ('ab', '1atlas', 'Atlas', 'at las', 'x' * 33, 'at/las'):
+            with self.assertRaises(ValidationError, msg=bad):
+                self._tenant(admin_login=bad)
+
+    def test_well_formed_usernames_are_accepted(self):
+        for good in ('atlasadmin', 'atlas.admin', 'atlas-admin_1', 'abc'):
+            self.assertEqual(self._tenant(admin_login=good, database_name='ok%s' % abs(hash(good))).admin_login, good)
+
+    def test_provisioning_accepts_a_valid_username(self):
+        self.assertEqual(
+            self._tenant(admin_login='atlasadmin')._nc_require_admin_login(),
+            'atlasadmin')
 
     def test_a_mistyped_confirmation_is_refused(self):
         """Caught here, where it can still be corrected. Otherwise the customer
         discovers it at first login, against a database already built."""
         with self.assertRaises(ValidationError):
-            self._tenant(admin_password='Secret123!',
+            self._tenant(admin_password='Secret123!',  # example password (test fixture)
                          admin_password_confirm='Secret124!')
 
     def test_a_short_password_is_refused(self):
@@ -106,14 +131,14 @@ class TestTenantAdminCredentials(TransactionCase):
             self._tenant(admin_password='short', admin_password_confirm='short')
 
     def test_a_matching_password_is_accepted_and_reported_as_pending(self):
-        tenant = self._tenant(admin_password='Secret123!',
+        tenant = self._tenant(admin_password='Secret123!',  # example password (test fixture)
                               admin_password_confirm='Secret123!')
         self.assertEqual(tenant.admin_credentials_state, 'pending')
 
     def test_the_password_is_erased_once_the_database_holds_it(self):
         """The platform holds a usable tenant credential for the queue latency,
         not forever."""
-        tenant = self._tenant(admin_password='Secret123!',
+        tenant = self._tenant(admin_password='Secret123!',  # example password (test fixture)
                               admin_password_confirm='Secret123!')
         tenant._nc_clear_admin_password()
         self.assertFalse(tenant.admin_password)

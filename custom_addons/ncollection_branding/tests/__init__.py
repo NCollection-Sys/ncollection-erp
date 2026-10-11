@@ -7,3 +7,6 @@ from . import test_design_tokens
 from . import test_component_library
 from . import test_rtl_conformance
 from . import test_translations
+from . import test_language_switch_session
+from . import test_app_shell_scroll
+from . import test_owl_template_rules

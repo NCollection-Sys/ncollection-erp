@@ -12,7 +12,7 @@ make demo-tenant     # build/refresh it (a few minutes on first run)
 | | |
 |---|---|
 | **URL** | http://albarari.localhost |
-| **Owner** | `owner@albarari.ae` / `demo1234` |
+| **Owner** | `owner` / `demo1234` (the login is a username; `owner@albarari.ae` is only the contact email) |
 | **Company** | Al Barari Trading (currency **AED**) |
 | **Plan** | `DEMO` — licensed `crm,sale,account` |
 

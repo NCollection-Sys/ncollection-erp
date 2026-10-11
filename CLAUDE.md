@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **22**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **23**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -98,7 +98,14 @@ adding a module fails CI until someone updates this list.
 
 **Financial** (`ncollection_account_*` + MIS):
 - `ncollection_account_core` — shared financial base, subscription restriction hooks.
-- `ncollection_account_reports` — native report engine: filters, drill-down, PDF + XLSX.
+- `ncollection_account_reports` — native report engine: filters, drill-down, PDF + XLSX. Also the **Reports hub**
+  (7 categories; native Odoo analysis menus are re-filed into it with the group that already holds the ORM right),
+  **Tax Analysis**, and the hardening of the OCA report wizards (restricted to accounting read-only on every registry
+  load). Capability audit: `docs/markdown/ACCOUNTING_REPORTING_CAPABILITY_MATRIX.md`.
+- `ncollection_account_reports_oca` — the OCA-engine ADAPTER (pilot: Trial Balance). Runs OCA's
+  `account_financial_report` and maps it onto the NCollection report contract, so the NCollection
+  viewer/PDF/XLSX/drill-down are unchanged and no OCA screen is shown. Off by default (a system
+  parameter selects the source); see the ADR amendment in `docs/markdown/OCA_DEPENDENCIES.md`.
 - `ncollection_account_dashboard` — Finance / Accountant / Cash / CEO dashboards
   (presentation only — consumes the report services).
 - `ncollection_account_analytics` — cost/profit centres on Odoo's own analytic
@@ -228,7 +235,8 @@ STOP and ask before changing the architecture.
 ## Make cheat-sheet (`make help` for all)
 `up` `down` `restart` `logs` `ps` · `bootstrap db=<db>` · `install m=<mod> db=<db>` ·
 `upgrade m=<mod> db=<db>` · `psql db=<db>` · `shell` · `demo` (runs the React app).
-**First run:** `make hooks-install` (pre-push gates) · `make doctor` (diagnose the env).
+**First run:** `make hooks-install` (pre-push gates) · `make doctor` (diagnose the env) · `make pdf-hosts` (after every
+odoo container restart — see the PDF note below).
 **Tests:** `make test` runs the SAME suite CI runs, locally (`m=<module>` to scope). Its
 module list is derived from `ci.yml` by `scripts/dev/ci_matrix.py`, never copied, so local
 and CI cannot drift. It owns `nctest` and drops it at both ends.
@@ -299,6 +307,18 @@ So tenant key === subdomain === database name, always.
   installed module on the database, so an unrelated broken row makes the check blame the
   module you are upgrading. `scripts/dev/assert_modules_settled.sh` runs first on the
   persistent platform DBs and names the real culprit (#388).
+- **A report PDF that "works" may be unstyled, and "Arbitrary Uncaught Python Exception" may not be Python.** wkhtmltopdf runs
+  *inside* the odoo container and loads the stylesheet/letterhead from `<tenant>.localhost`; the container cannot resolve it, so
+  Odoo returns a PDF with exit 0 and a log line `HostNotFoundError` — no letterhead, no borders, different pagination (`make
+  pdf-hosts`; `make doctor` warns). Separately, a Windows download manager (IDM) answers `POST /report/download` with an empty
+  `204 Intercepted by the IDM Advanced Integration`; Odoo's client then prints that exact message though the server returned a
+  valid PDF. Read the network response and the Odoo log before assuming a traceback.
+- **A visible menu is not an authorised report, and a hidden menu is not a control.** A role audit found the Sales / Purchases /
+  Inventory hub categories empty for *every* role (native menus gated on Administrator groups) and the OCA ledger wizards open
+  to any internal user. Test each role server-side (`nc_report_run`, direct `create`, the PDF/XLSX routes), never as `admin`:
+  a superuser holds every group and passes every check.
+- **Language and config set by raw SQL are invisible to a running server** (`res.users.context_get`, `ir.config_parameter` are
+  cached). Change them through the ORM / RPC, or the next request still sees the old value.
 - **A skipped Odoo test counts as a passing one** (`0 failed, 0 error(s) of N tests`).
   `scripts/ci/check_skips.py` fails CI on any skip not in `expected_skips.txt`, keyed on test
   identity rather than reason text — allowlisting a reason string would allowlist the

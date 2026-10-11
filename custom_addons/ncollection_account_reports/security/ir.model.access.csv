@@ -21,4 +21,4 @@ access_nc_report_cost_center,ncollection.account.report.cost.center,model_ncolle
 access_nc_report_profit_center,ncollection.account.report.profit.center,model_ncollection_account_report_profit_center,account.group_account_readonly,1,1,1,1
 access_nc_report_department,ncollection.account.report.department,model_ncollection_account_report_department,account.group_account_readonly,1,1,1,1
 access_nc_report_uae_vat,ncollection.account.report.uae.vat,model_ncollection_account_report_uae_vat,account.group_account_readonly,1,1,1,1
-
+access_nc_report_tax_analysis,ncollection.account.report.tax.analysis,model_ncollection_account_report_tax_analysis,account.group_account_readonly,1,1,1,1

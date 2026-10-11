@@ -14,6 +14,12 @@
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <!-- Without this the browser asks the host for /favicon.ico, which
+                     this standalone layout does not serve, and logs a 404 on every
+                     page view of the customer's first impression. The branded
+                     company icon is already publicly served. -->
+                <link rel="icon" type="image/png"
+                      t-att-href="'/web/image/res.company/%s/favicon' % request.env.company.id"/>
                 <title><t t-esc="title or 'NCollection'"/></title>
                 <t t-call-assets="web.assets_frontend" t-js="false"/>
             </head>
@@ -60,36 +66,54 @@
     </template>
 
     <!-- ===================== Registration form ===================== -->
+    <!-- A REQUEST, not an instant workspace: submitting creates a pending
+         registration that an administrator approves. Every user-visible string
+         carries data-i18n so checkout.js can switch English/Arabic (RTL) without a
+         reload; the server-rendered English is the fallback. -->
     <template id="checkout_form" name="NCollection Checkout">
         <t t-call="ncollection_saas.checkout_layout">
-            <t t-set="title">Create your workspace — NCollection</t>
+            <t t-set="title">Register your company</t>
             <div class="nc-checkout" data-nc-checkout="form"
                  t-att-data-recaptcha-site-key="recaptcha_site_key or ''">
                 <div class="nc-checkout__card">
-                    <h1>Create your workspace</h1>
-                    <p class="nc-checkout__sub">14-day free trial of the
-                        <strong t-esc="selected_plan.name"/> plan.</p>
+                    <h1 data-i18n="form.title">Register your company</h1>
+                    <p class="nc-checkout__sub"><span data-i18n="form.sub">Request a workspace on the</span>
+                        <strong t-esc="selected_plan.name"/>
+                        <span data-i18n="form.sub2">plan. We review every request before the workspace is created.</span></p>
 
-                    <form class="nc-checkout__form" data-nc-form="register">
+                    <form class="nc-checkout__form" data-nc-form="register" novalidate="novalidate">
                         <input type="hidden" name="plan" t-att-value="selected_plan.code"/>
                         <input type="hidden" name="cycle" t-att-value="billing_cycle"/>
 
-                        <label>Company name
+                        <label><span data-i18n="f.company">Company name</span>
                             <input type="text" name="company" required="required" maxlength="200" autocomplete="organization"/>
                         </label>
-                        <label>Your name
+                        <label><span data-i18n="f.contact">Your name</span>
                             <input type="text" name="contact" maxlength="200" autocomplete="name"/>
                         </label>
-                        <label>Work email
+                        <label><span data-i18n="f.email">Contact email</span>
                             <input type="email" name="email" required="required" maxlength="200" autocomplete="email"/>
+                            <small class="nc-checkout__hint" data-i18n="f.email.hint">For notices and password recovery. This is not your login.</small>
                         </label>
-                        <label>Workspace address
-                            <span class="nc-checkout__subdomain">
+                        <label><span data-i18n="f.subdomain">Workspace address (subdomain)</span>
+                            <span class="nc-checkout__subdomain" dir="ltr">
                                 <input type="text" name="subdomain" required="required"
-                                       autocomplete="off" spellcheck="false"/>
-                                <span class="nc-checkout__subdomain-suffix">.ncollectionerp.com</span>
+                                       autocomplete="off" spellcheck="false" autocapitalize="off"/>
+                                <span class="nc-checkout__subdomain-suffix">.<t t-esc="base_domain or 'ncollectionerp.com'"/></span>
                             </span>
                             <small class="nc-checkout__hint" data-nc-availability=""></small>
+                        </label>
+                        <label><span data-i18n="f.username">Username</span>
+                            <input type="text" name="username" required="required" maxlength="32"
+                                   autocomplete="username" spellcheck="false" autocapitalize="off" dir="ltr"
+                                   placeholder="atlasadmin"/>
+                            <small class="nc-checkout__hint" data-i18n="f.username.hint">You sign in with this username, not your email. Lowercase letters, digits, . _ -</small>
+                        </label>
+                        <label><span data-i18n="f.password">Password</span>
+                            <input type="password" name="password" required="required" minlength="8" maxlength="128" autocomplete="new-password" dir="ltr"/>
+                        </label>
+                        <label><span data-i18n="f.password2">Confirm password</span>
+                            <input type="password" name="password_confirm" required="required" minlength="8" maxlength="128" autocomplete="new-password" dir="ltr"/>
                         </label>
 
                         <t t-if="recaptcha_site_key">
@@ -97,8 +121,8 @@
                             <script src="https://www.google.com/recaptcha/api.js" async="async" defer="defer"></script>
                         </t>
 
-                        <button type="submit" class="nc-checkout__cta" data-nc-submit="">
-                            Create my workspace
+                        <button type="submit" class="nc-checkout__cta" data-nc-submit="" data-i18n="f.submit">
+                            Submit registration request
                         </button>
                         <p class="nc-checkout__error" data-nc-error="" role="alert"></p>
                     </form>
@@ -107,20 +131,23 @@
         </t>
     </template>
 
-    <!-- ===================== "Being prepared" progress ===================== -->
-    <template id="checkout_pending" name="NCollection Provisioning Progress">
+    <!-- ===================== Request status ===================== -->
+    <!-- Lands here right after submitting. The default and by far the most common
+         state is "awaiting approval"; the page then follows the request through
+         approved -> provisioning -> ready (or failed / rejected). -->
+    <template id="checkout_pending" name="NCollection Registration Status">
         <t t-call="ncollection_saas.checkout_layout">
-            <t t-set="title">Preparing your workspace — NCollection</t>
+            <t t-set="title">Registration request</t>
             <div class="nc-checkout" data-nc-checkout="pending"
                  t-att-data-tenant-uuid="tenant_uuid">
                 <div class="nc-checkout__card nc-checkout__card--center">
-                    <div class="nc-checkout__spinner" data-nc-spinner=""></div>
-                    <h1 data-nc-pending-title="">Check your email</h1>
-                    <p class="nc-checkout__sub" data-nc-pending-msg="">
-                        We sent a confirmation link to verify your email. Your workspace
-                        <strong t-esc="company_name"/> starts building the moment you confirm.
+                    <div class="nc-checkout__icon" data-nc-icon="">&#9719;</div>
+                    <h1 data-nc-pending-title="" data-i18n="pending.title">Registration submitted</h1>
+                    <p class="nc-checkout__sub" data-nc-pending-msg="" data-i18n="pending.msg">
+                        Your registration request has been submitted and is awaiting approval.
                     </p>
-                    <a class="nc-checkout__cta nc-checkout__cta--hidden" data-nc-login="" href="#">
+                    <p class="nc-checkout__sub" data-nc-company="" t-att-data-company="company_name"/>
+                    <a class="nc-checkout__cta nc-checkout__cta--hidden" data-nc-login="" href="#" data-i18n="ready.cta">
                         Open my workspace
                     </a>
                 </div>

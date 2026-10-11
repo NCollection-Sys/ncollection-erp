@@ -16,10 +16,13 @@ this database happens to have installed.
 """
 import pathlib
 
+from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
 _HOME_JS = (pathlib.Path(__file__).resolve().parent.parent
             / 'static' / 'src' / 'home' / 'tenant_home.js')
+_MODEL_PY = (pathlib.Path(__file__).resolve().parent.parent
+             / 'models' / 'ir_ui_menu.py')
 
 
 @tagged('post_install', '-at_install')
@@ -92,10 +95,46 @@ class TestTenantHomeApps(TransactionCase):
         self.Config.create({'plan_code': 'TEST', 'allowed_module_names': 'lic_app'})
         self.env.registry.clear_cache()
         xmlids = self._app_xmlids()
-        for excluded in ('base.menu_management', 'base.menu_administration',
-                         'base.menu_tests',
+        for excluded in ('base.menu_management', 'base.menu_tests',
                          'ncollection_branding.menu_component_playground'):
             self.assertNotIn(excluded, xmlids)
+
+    def _user_with_role(self, login, role_xmlid):
+        return self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': login, 'login': login,
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref(role_xmlid).id])],
+        })
+
+    def test_settings_is_a_home_card_for_the_owner_and_nobody_else(self):
+        """THE SETTINGS SHORTCUT. The existing Settings app gets a card on Home —
+        but only for a user the existing Ring-1 rule already lets see it. The
+        control matters as much as the card: a launcher that showed Settings to
+        everyone would pass a test that only looked at the owner."""
+        self.Config.create({'plan_code': 'TEST', 'allowed_module_names': 'lic_app'})
+        self.env.registry.clear_cache()
+        owner = self._user_with_role('settings_owner', 'ncollection_core.group_role_owner')
+        clerk = self._user_with_role('settings_clerk', 'ncollection_core.group_role_employee')
+        owner_apps = {a['xmlid']: a for a in self.Menu.with_user(owner).nc_tenant_apps()}
+        clerk_apps = {a['xmlid'] for a in self.Menu.with_user(clerk).nc_tenant_apps()}
+        self.assertIn('base.menu_administration', owner_apps)
+        self.assertNotIn('base.menu_administration', clerk_apps)
+        # And it is a REAL, openable card — the #477 invariant, for this one too.
+        web_menus = self.Menu.with_user(owner).load_web_menus(False)
+        card = owner_apps['base.menu_administration']
+        self.assertEqual(card['name'], 'Settings')
+        self.assertIn(card['id'], web_menus)
+        self.assertTrue(web_menus[card['id']]['actionID'])
+        # No second Settings module was created to make this work.
+        self.assertEqual(
+            self.env['ir.ui.menu'].search_count(
+                [('name', '=', 'Settings'), ('parent_id', '=', False)]), 1)
+
+    def test_an_unauthorised_user_cannot_open_settings_directly(self):
+        """Hiding the card is not the control — the server refusing is."""
+        clerk = self._user_with_role('settings_clerk2', 'ncollection_core.group_role_employee')
+        with self.assertRaises(AccessError):
+            self.env['res.config.settings'].with_user(clerk).create({})
 
     def test_the_launcher_never_lists_itself(self):
         """A home screen that offers itself as one of its apps is a loop."""
@@ -112,11 +151,13 @@ class TestTenantHomeApps(TransactionCase):
         apps = [a for a in self.Menu.nc_tenant_apps() if a['name'] == 'Licensed App']
         self.assertEqual(len(apps), 1)
         app = apps[0]
-        for key in ('id', 'xmlid', 'name', 'action_id', 'web_icon',
+        for key in ('id', 'menu_id', 'xmlid', 'name', 'web_icon',
                     'web_icon_data', 'sequence'):
             self.assertIn(key, app)
-        self.assertEqual(app['action_id'], self.action.id,
-                         "the card must open the menu's own action")
+        # #477: no action id is published. The client holds the per-user action
+        # for every app root in its own menu data; a second answer computed
+        # server-side is what made the launcher and the menu service disagree.
+        self.assertNotIn('action_id', app)
 
     # ------------------------------------------ inert cards (#459)
     def test_an_app_whose_root_menu_has_no_action_still_opens(self):
@@ -127,7 +168,10 @@ class TestTenantHomeApps(TransactionCase):
         worked. Every app must resolve to the menu that actually owns an
         action."""
         container = self.Menu.create({'name': 'Container App'})
-        child = self.Menu.create({
+        # The child that owns the action. Not asserted on directly any more —
+        # #477 navigates to the ROOT — but it is what gives Odoo an action to
+        # resolve onto the root, so the fixture still needs it.
+        self.Menu.create({
             'name': 'Container App / Things', 'parent_id': container.id,
             'action': 'ir.actions.act_window,%s' % self.action.id,
             'sequence': 5,
@@ -143,9 +187,13 @@ class TestTenantHomeApps(TransactionCase):
         self.assertEqual(len(apps), 1, "the container app must still be offered")
         app = apps[0]
         self.assertFalse(container.action, "fixture check: the root owns no action")
-        self.assertEqual(app['menu_id'], child.id,
-                         "the card must navigate to the child that owns the action")
-        self.assertEqual(app['action_id'], self.action.id)
+        # #477: the card navigates to the APP ROOT, not to the resolved child.
+        # Odoo's menu service keys on the root and has already attached the
+        # resolved action to it; a descendant id need not exist in that map at
+        # all, which is what made every Sales click throw.
+        self.assertEqual(app['menu_id'], container.id,
+                         "the card must navigate to the app root")
+        self.assertEqual(app['id'], container.id)
 
     def test_an_app_with_no_reachable_action_is_not_offered_at_all(self):
         """A card that can open nothing is worse than an absent one: it
@@ -158,18 +206,59 @@ class TestTenantHomeApps(TransactionCase):
         self.env.registry.clear_cache()
         self.assertNotIn('Empty App', self._app_names())
 
-    def test_the_actionable_menu_is_the_one_the_sidebar_would_open(self):
-        """Ordered by (sequence, id), so the launcher and the sidebar agree on
-        where a click lands rather than picking different children."""
-        container = self.Menu.create({'name': 'Ordered App'})
-        second = self.Menu.create({
-            'name': 'Second', 'parent_id': container.id, 'sequence': 20,
-            'action': 'ir.actions.act_window,%s' % self.action.id})
-        first = self.Menu.create({
-            'name': 'First', 'parent_id': container.id, 'sequence': 1,
-            'action': 'ir.actions.act_window,%s' % self.action.id})
-        self.assertEqual(container._nc_actionable_menu(), first)
-        self.assertNotEqual(container._nc_actionable_menu(), second)
+    def test_every_app_is_navigable_with_the_clients_own_menu_data(self):
+        """THE #477 CRASH, PINNED.
+
+        `menu.selectMenu(id)` does `menusData[id].actionID` with no guard, and
+        `menusData` is `load_web_menus()` keyed by menu id. So every id this
+        payload offers for navigation MUST be a key in that map with a resolved
+        action — otherwise the client reads `.actionID` off undefined and the
+        whole app crashes with a TypeError.
+
+        Before the fix the payload offered a resolved DESCENDANT. For Sales
+        that descendant was "Quotation Templates" (a Configuration item, chosen
+        because the old resolver took a global (sequence, id) minimum over the
+        subtree instead of Odoo's first-child descent) and it is not in the
+        client's menu data at all.
+        """
+        web_menus = self.Menu.sudo().load_web_menus(False)
+        apps = self.Menu.nc_tenant_apps()
+        self.assertTrue(apps, "control: no apps, so this asserts nothing")
+        for app in apps:
+            self.assertIn(
+                app['id'], web_menus,
+                "app %r offers menu id %s, which the client's menu service "
+                "does not know — selectMenu() would throw" % (app['name'], app['id']))
+            self.assertTrue(
+                web_menus[app['id']]['actionID'],
+                "app %r resolves to a menu with no action" % app['name'])
+            self.assertEqual(app['menu_id'], app['id'],
+                             "navigation must target the app root")
+
+    def test_the_launcher_renders_for_a_tenant_whose_plan_is_narrow(self):
+        """`nc_tenant_apps` must not go through Odoo's `load_web_menus()`.
+
+        That walks `_load_menus_blacklist()`, and `hr`'s hook there does an
+        unconditional `hr.department` read for any user outside
+        `hr.group_hr_user`. Ring 2 refuses that on a tenant whose plan does not
+        license `hr` — which is every tenant that had `hr` REVOKED, since
+        revocation deliberately never uninstalls. Reading the authoritative
+        source would therefore raise AccessError for exactly the tenants whose
+        entitlement is narrowest, and their home page would not render at all.
+
+        Caught by the CI matrix rather than by review: this test class runs
+        with `hr` installed and a deliberately narrow plan.
+        """
+        self.Config.create({'plan_code': 'TEST', 'allowed_module_names': 'lic_app'})
+        self.env.registry.clear_cache()
+        probe = self.env['res.users'].create({
+            'name': 'Narrow Plan Probe', 'login': 'nc_narrow_probe',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
+        })
+        # Must not raise. The assertion is that the call COMPLETES; what it
+        # returns is covered by the tests above.
+        apps = self.Menu.with_user(probe).nc_tenant_apps()
+        self.assertIsInstance(apps, list)
 
     def test_the_launcher_navigates_through_the_menu_service(self):
         """#459 asked for real Odoo navigation, not hand-built URLs. The
@@ -177,7 +266,9 @@ class TestTenantHomeApps(TransactionCase):
         menu id — that is what also sets the current-app highlight."""
         source = _HOME_JS.read_text(encoding='utf-8')
         self.assertIn('useService("menu")', source)
-        self.assertIn('selectMenu', source)
+        # #477: the ROOT id. `app.menu_id` was a resolved descendant that the
+        # menu service need not know about.
+        self.assertIn('selectMenu(app.id)', source)
         self.assertNotIn('window.location', source,
                          "navigate through the menu service, never a URL")
 

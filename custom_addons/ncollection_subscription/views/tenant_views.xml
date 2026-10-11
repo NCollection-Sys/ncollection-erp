@@ -14,11 +14,16 @@
                 <field name="plan_id" optional="show"/>
                 <field name="contact_name" optional="show"/>
                 <field name="email" optional="hide"/>
-                <field name="database_status" widget="badge" optional="show"
-                       decoration-success="database_status == 'ready'"
-                       decoration-info="database_status == 'provisioning'"
-                       decoration-muted="database_status == 'not_provisioned'"
-                       decoration-danger="database_status == 'error'"/>
+                <!-- ONE column answering "where is this company in getting its
+                     workspace?": Pending Approval / Approved / Provisioning /
+                     Ready / Failed. The raw database status stays available. -->
+                <field name="provision_stage" widget="badge" optional="show"
+                       decoration-warning="provision_stage == 'pending'"
+                       decoration-info="provision_stage in ('approved', 'provisioning')"
+                       decoration-success="provision_stage == 'ready'"
+                       decoration-danger="provision_stage == 'failed'"
+                       decoration-muted="provision_stage == 'rejected'"/>
+                <field name="database_status" optional="hide"/>
                 <field name="status" widget="badge"
                        decoration-success="status == 'active'"
                        decoration-info="status == 'trial'"
@@ -49,6 +54,7 @@
                            statusbar_visible="trial,active,suspended,expired"/>
                 </header>
                 <sheet>
+                    <field name="registration_state" invisible="1"/>
                     <div class="oe_title">
                         <label for="company_name" class="oe_edit_only"/>
                         <h1>
@@ -57,11 +63,12 @@
                         <!-- The tenant's front door, where an operator looks for it:
                              under the name, not buried in a list of fields. -->
                         <h3 class="d-flex align-items-center gap-2 mt-1">
-                            <field name="database_status" widget="badge"
-                                   decoration-success="database_status == 'ready'"
-                                   decoration-info="database_status == 'provisioning'"
-                                   decoration-muted="database_status == 'not_provisioned'"
-                                   decoration-danger="database_status == 'error'"/>
+                            <field name="provision_stage" widget="badge"
+                                   decoration-warning="provision_stage == 'pending'"
+                                   decoration-info="provision_stage in ('approved', 'provisioning')"
+                                   decoration-success="provision_stage == 'ready'"
+                                   decoration-danger="provision_stage == 'failed'"
+                                   decoration-muted="provision_stage == 'rejected'"/>
                             <field name="tenant_url" widget="url" readonly="1"
                                    nolabel="1" class="oe_inline"
                                    invisible="not tenant_url"/>
@@ -71,15 +78,41 @@
                     <!-- EMPTY STATE. A tenant with no database is the normal state
                          right after creation, and a page of blank technical fields
                          reads as broken rather than as "nothing has happened yet". -->
+                    <div class="alert alert-warning d-flex align-items-center gap-3"
+                         role="status" invisible="registration_state != 'pending'">
+                        <i class="fa fa-hourglass-half fa-2x" role="img" aria-label="Pending"/>
+                        <div>
+                            <strong>This registration is awaiting your approval.</strong>
+                            <div class="text-muted">
+                                No database exists yet and none will be created until you
+                                approve. Review the details below, then use
+                                <em>Approve &amp; Provision</em> (or <em>Reject</em>) above.
+                            </div>
+                        </div>
+                    </div>
                     <div class="alert alert-info d-flex align-items-center gap-3"
-                         role="status" invisible="database_status != 'not_provisioned'">
+                         role="status"
+                         invisible="database_status != 'not_provisioned' or registration_state != 'approved'">
                         <i class="fa fa-database fa-2x" role="img" aria-label="Database"/>
                         <div>
                             <strong>This tenant has no database yet.</strong>
                             <div class="text-muted">
                                 Provisioning creates it, installs the plan's modules and seeds
-                                the administrator account. Start it from the
-                                <em>Modules &amp; Config Sync</em> tab.
+                                the administrator account. Use <em>Create &amp; Provision Tenant</em>
+                                above — one click, nothing else to run.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-flex align-items-center gap-3"
+                         role="alert" invisible="provision_stage != 'failed'">
+                        <i class="fa fa-exclamation-triangle fa-2x" role="img" aria-label="Failed"/>
+                        <div>
+                            <strong>Provisioning failed.</strong>
+                            <div>
+                                Nothing was left half-built. The reason is in the latest job under
+                                <em>System → Provisioning Jobs</em> and in the chatter. Fix the cause
+                                and press <em>Retry Provisioning</em>; it re-runs the same job and
+                                never creates a second database or user.
                             </div>
                         </div>
                     </div>
@@ -118,8 +151,10 @@
                              there, not from here. -->
                         <group string="Administrator Account"
                                groups="ncollection_subscription.group_platform_admin">
+                            <!-- A USERNAME, never the email: required to provision,
+                                 and an address is refused. -->
                             <field name="admin_login"
-                                   placeholder="e.g. atlasadmin (defaults to the email)"
+                                   placeholder="e.g. atlasadmin (required — not an email)"
                                    readonly="database_status in ('provisioning', 'ready')"/>
                             <field name="admin_password" password="True"
                                    invisible="database_status in ('provisioning', 'ready')"
@@ -231,6 +266,10 @@
                        filter_domain="['|', '|', ('company_name', 'ilike', self), ('database_name', 'ilike', self), ('subdomain', 'ilike', self)]"/>
                 <field name="plan_id"/>
                 <field name="country_id"/>
+                <!-- The first thing an administrator opens this screen for. -->
+                <filter name="awaiting_approval" string="Pending Approval"
+                        domain="[('registration_state', '=', 'pending')]"/>
+                <separator/>
                 <filter name="status_trial" string="Trial" domain="[('status', '=', 'trial')]"/>
                 <filter name="status_active" string="Active" domain="[('status', '=', 'active')]"/>
                 <filter name="status_suspended" string="Suspended" domain="[('status', '=', 'suspended')]"/>
@@ -239,6 +278,7 @@
                 <filter name="db_pending" string="Not Provisioned" domain="[('database_status', '=', 'not_provisioned')]"/>
                 <filter name="db_error" string="Provisioning Failed" domain="[('database_status', '=', 'error')]"/>
                 <separator/>
+                <filter name="group_stage" string="Workspace Stage" context="{'group_by': 'provision_stage'}"/>
                 <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
                 <filter name="group_db_status" string="Database Status" context="{'group_by': 'database_status'}"/>
                 <filter name="group_plan" string="Plan" context="{'group_by': 'plan_id'}"/>
@@ -252,10 +292,13 @@
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Add your first tenant company
+                No tenants yet
             </p>
             <p>
-                Tenants represent client companies using NCollection ERP.
+                Companies that register on the public page appear here as
+                <em>Pending Approval</em> — use that filter to find the ones
+                waiting for you. You can also create a tenant yourself and
+                provision it with a single click.
             </p>
         </field>
     </record>

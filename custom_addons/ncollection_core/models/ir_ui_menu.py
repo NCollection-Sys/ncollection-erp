@@ -46,11 +46,18 @@ MENU_NESTED_GATED_MODULES = {'account_financial_report', 'mis_builder'}
 # _OWNER_ONLY_MENUS below. This list only decides what belongs on a CUSTOMER's
 # home grid: administration surfaces and internal/dev tooling do not.
 #
+# SETTINGS IS DELIBERATELY NOT HERE (it was, until the delivery pass). The
+# existing Settings app (base.menu_administration) is what a company owner
+# reaches to configure their workspace, so it earns a card on Home. This adds
+# no new module and no new access path: the card is only produced for a user
+# whose menu set already contains it, and _OWNER_ONLY_MENUS strips it from
+# everyone who is not the owner / an administrator — so a Sales user's Home
+# still has no Settings card, and neither does a user the plan does not allow.
+#
 # The launcher's own menu is excluded for the obvious reason — a home screen
 # that lists itself as one of its apps is a loop.
 LAUNCHER_EXCLUDED_MENUS = frozenset({
     'base.menu_management',                        # Apps
-    'base.menu_administration',                    # Settings
     'base.menu_tests',                             # Odoo's own test menu
     'ncollection_branding.menu_component_playground',  # internal design tooling
     'ncollection_core.menu_ncollection_home_root',  # the launcher itself
@@ -110,6 +117,16 @@ class IrUiMenu(models.Model):
             return set()
         if user.has_group('ncollection_core.group_role_owner'):
             return set()
+        # The SaaS platform's own administrators run the platform database,
+        # where no tenant Owner role is ever assigned. Core cannot depend on
+        # the platform addon, so the group is looked up by xml-id and simply
+        # absent (=> no exemption) in a tenant database. Settings itself stays
+        # gated by base.group_system on its action/ACL, so this widens nothing.
+        platform_group = self.env.ref(
+            'ncollection_subscription.group_platform_admin', raise_if_not_found=False)
+        if (platform_group and user.has_group('base.group_system')
+                and user.has_group('ncollection_subscription.group_platform_admin')):
+            return set()
         roots = self.sudo().browse([
             m.id for xmlid in self._OWNER_ONLY_MENUS
             if (m := self.env.ref(xmlid, raise_if_not_found=False))
@@ -161,27 +178,34 @@ class IrUiMenu(models.Model):
             xmlid = xmlids.get(menu.id, '')
             if xmlid in LAUNCHER_EXCLUDED_MENUS:
                 continue
-            target = menu._nc_actionable_menu()
-            if not target:
+            if not menu._nc_has_reachable_action():
                 # NO REACHABLE ACTION -> NOT AN APP (#459). A card that cannot
                 # open anything is worse than an absent one: it advertises a
                 # feature and then does nothing when clicked.
                 continue
-            action = target.action
             apps.append({
+                # THE APP ROOT — and the ONLY id the client navigates with
+                # (#477). Odoo's menu service keys `menusData` by menu id and
+                # resolves an app root's action onto the root itself
+                # (web/models/ir_ui_menu.py `load_web_menus`), so a root is
+                # always both present in that map and openable.
+                #
+                # This used to carry a resolved DESCENDANT id as `menu_id`, and
+                # `selectMenu` does `menusData[id].actionID` with no guard. A
+                # descendant need not be in that map: for Sales the resolution
+                # picked "Quotation Templates", which is not, so every click
+                # threw "Cannot read properties of undefined (reading
+                # 'actionID')". `menu_id` is kept as an alias of `id` so the
+                # payload shape is stable, and both are the root.
                 'id': menu.id,
-                # The menu that actually OWNS the action. For CRM, Calendar and
-                # Contacts this is a CHILD: their root menus are containers with
-                # no action of their own, which is exactly why every such card
-                # was inert (#459). The client hands this to the menu service so
-                # navigation and the current-app highlight match a sidebar click.
-                'menu_id': target.id,
+                'menu_id': menu.id,
                 'xmlid': xmlid,
                 'name': menu.name,
-                # `action` is a reference field ("ir.actions.act_window,42");
-                # the client needs the bare id to open it.
-                'action_id': action.id,
-                'action_model': action._name,
+                # NO action id is published. The client already holds the
+                # per-user action for every root in its own menu data, and a
+                # second answer computed here is exactly what produced the
+                # crash — the launcher and the menu service disagreeing about
+                # where an app opens.
                 'web_icon': menu.web_icon or '',
                 'web_icon_data': menu.web_icon_data.decode() if menu.web_icon_data else '',
                 'sequence': menu.sequence,
@@ -189,31 +213,32 @@ class IrUiMenu(models.Model):
         apps.sort(key=lambda a: (a['sequence'], a['name'] or ''))
         return apps
 
-    def _nc_actionable_menu(self):
-        """This menu if it carries an action, else its first descendant that
-        does — the menu a click should actually open (#459).
+    def _nc_has_reachable_action(self):
+        """Would clicking this app open anything at all? (#459, #477)
 
-        Odoo's app roots are frequently pure containers (`crm.crm_menu_root`,
-        `contacts.menu_contacts`, `calendar.mail_menu_calendar` all have
-        `action = False`), with the action living on a child. The sidebar
-        resolves this by drilling into the tree; the launcher has to do the
-        same or its cards do nothing.
+        Reachability only — deliberately NOT which menu, and NOT which action.
+        Odoo resolves both onto the app root itself and the client already has
+        that answer per user; recomputing it here is what #477 fixed.
 
-        Ordered by (sequence, id) so the target is the same menu the sidebar
-        would land on, and searched through ``self`` — NOT sudo — so a
-        descendant the user may not see is never chosen as their entry point.
+        Searched through ``self`` — NOT sudo — so an app is offered only when
+        the user can actually reach an action inside it.
+
+        This does not call Odoo's `load_web_menus()`, which would be the
+        authoritative answer, because that walks `_load_menus_blacklist()` and
+        `hr`'s hook there does an unconditional `hr.department` read. Ring 2
+        refuses that for a tenant whose plan does not license `hr`, so asking
+        the authoritative source would raise AccessError for exactly the
+        tenants whose entitlement is narrowest.
         """
         self.ensure_one()
         if self.action:
-            return self
+            return True
         if not self.parent_path:
-            return self.browse()
-        descendants = self.search(
+            return False
+        return bool(self.search_count(
             [('parent_path', '=like', self.parent_path + '%'),
              ('id', '!=', self.id),
-             ('action', '!=', False)],
-            order='sequence, id')
-        return descendants[:1]
+             ('action', '!=', False)], limit=1))
 
     # ------------------------------------------------------------------
     # Blocking computation (split for testability)

@@ -120,6 +120,22 @@
                 <p class="o_nc_login__sub">Welcome back. Please enter your details.</p>
             </div>
         </xpath>
+        <!-- THE LOGIN IS A USERNAME. Stock Odoo labels this field "Email" and
+             prompts "Enter your email", which invites people to type their
+             contact address into a credential field. Tenant administrators are
+             given a username (never their email) as their login, so the form
+             says so. The input keeps name="login" and its autocomplete, so
+             password managers and Odoo's own authentication are untouched.
+             Anchored on the label's `for` and the input's name rather than on
+             position, so an upstream layout change cannot silently misplace it. -->
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="form-label d-flex justify-content-between">Username</label>
+        </xpath>
+        <xpath expr="//input[@name='login']" position="attributes">
+            <attribute name="placeholder">Enter your username</attribute>
+            <attribute name="autocapitalize">off</attribute>
+            <attribute name="spellcheck">false</attribute>
+        </xpath>
         <!-- Relabel the reset link injected by auth_signup.login; keep its
              guard, keep_query() and tabindex. auth_signup writes it with
              t-attf-href (no static href), so it is matched by its unique

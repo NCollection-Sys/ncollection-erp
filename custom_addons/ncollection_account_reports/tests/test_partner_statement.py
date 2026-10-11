@@ -105,7 +105,7 @@ class TestPartnerStatement(AccountTestInvoicingCommon):
         Asserting the returned action is the composer is what pins that
         decision; a future change that dispatched mail directly would fail here.
         """
-        action = self._st().action_send()
+        action = self._st(partner_ids=[(6, 0, [self.partner_a.id])]).action_send()
         self.assertEqual(action['res_model'], 'mail.compose.message')
         ctx = action['context']
         self.assertIn(self.partner_a.id, ctx['default_partner_ids'])
@@ -116,6 +116,26 @@ class TestPartnerStatement(AccountTestInvoicingCommon):
         self.assertFalse(attachment.public,
                          "the statement attachment is public — anyone guessing "
                          "the id could read another partner's balances")
+
+    def test_send_refuses_a_multi_partner_run_so_no_customer_receives_another_partners_balances(self):
+        """The PDF of a run holds every partner's statement and the composer is addressed to all of them:
+        sending it would e-mail each customer everyone else's balances."""
+        wizard = self._st()
+        self.assertGreater(len(wizard._nc_statement_docs()), 1)
+        with self.assertRaises(UserError):
+            wizard.action_send()
+        single = self._st(partner_ids=[(6, 0, [self.partner_b.id])]).action_send()
+        self.assertEqual(single['context']['default_partner_ids'], [self.partner_b.id])
+
+    def test_the_multi_partner_refusal_is_actionable_in_english_and_arabic(self):
+        self.env['res.lang']._activate_lang('ar_001')
+        for lang, expected in ((None, 'single partner'), ('ar_001', 'شريكًا واحدًا')):
+            wizard = self.St.with_context(lang=lang).create({
+                'date_from': self.date_from, 'date_to': self.date_to,
+                'target_move': 'posted', 'partner_scope': 'receivable'}) if lang else self._st()
+            with self.assertRaises(UserError) as caught:
+                wizard.action_send()
+            self.assertIn(expected, str(caught.exception), lang)
 
     def test_a_period_with_no_movements_still_states_the_balance(self):
         """"No activity, you still owe X" is a legitimate statement.

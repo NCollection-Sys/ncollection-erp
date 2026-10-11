@@ -79,7 +79,9 @@ tenant = env['ncollection.tenant'].search([('database_name','=','${DEMO_DB}')], 
 if not tenant:
     tenant = env['ncollection.tenant'].create({
         'company_name': 'Al Barari Trading', 'database_name': '${DEMO_DB}',
-        'email': 'owner@albarari.ae', 'plan_id': plan.id, 'status': 'active'})
+        # The login is a USERNAME; the email is contact information only.
+        'email': 'owner@albarari.ae', 'admin_login': 'owner',
+        'plan_id': plan.id, 'status': 'active'})
 job = env['ncollection.provisioning.job'].create({
     'tenant_id': tenant.id, 'database_name': '${DEMO_DB}'})
 env.cr.commit()
@@ -115,7 +117,7 @@ cat <<MSG
 ✅ Demo tenant ready.
 
    URL      http://${DEMO_DB}.localhost
-   Owner    owner@albarari.ae / ${DEMO_PW}
+   Owner    owner / ${DEMO_PW}   (username; contact email owner@albarari.ae)
    Staff    layla@ (Owner) · fatima@ (Accountant) · yousef@ (Sales) · aisha@ (Employee)
             …all @albarari.ae, same password
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Same rule as every NCollection report run: a run is private to the user
+         who created it (the wizard rows carry the user's own figures). -->
+    <record id="rule_report_trial_balance_oca_own" model="ir.rule">
+        <field name="name">Trial Balance (OCA engine) runs: own only</field>
+        <field name="model_id" ref="model_ncollection_account_report_tb_oca"/>
+        <field name="domain_force">[('create_uid', '=', user.id)]</field>
+        <field name="global" eval="True"/>
+    </record>
+</odoo>

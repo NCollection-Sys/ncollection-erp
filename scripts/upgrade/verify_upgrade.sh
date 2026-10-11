@@ -143,11 +143,11 @@ build_fixture "$GREEN_DB"
 # Raw SQL: today's constraints would reject these names, which is the point.
 "${DC[@]}" exec -T db psql -U odoo -d "$GREEN_DB" -c "
 INSERT INTO ncollection_tenant
-  (company_name, database_status, onboarding_stage, status, database_name)
+  (company_name, database_status, onboarding_stage, status, database_name, registration_state)
 VALUES
-  ('Live Legacy Co',  'ready',           'done', 'active', 'live_legacy_db'),
-  ('Pending Cruft Co','not_provisioned', 'done', 'trial',  'bad__name__cruft'),
-  ('Valid Co',        'ready',           'done', 'active', 'validco');
+  ('Live Legacy Co',  'ready',           'done', 'active', 'live_legacy_db', 'approved'),
+  ('Pending Cruft Co','not_provisioned', 'done', 'trial',  'bad__name__cruft', 'approved'),
+  ('Valid Co',        'ready',           'done', 'active', 'validco', 'approved');
 " >/dev/null 2>&1
 
 before_live="$(q "$GREEN_DB" "SELECT database_name FROM ncollection_tenant WHERE company_name='Live Legacy Co'")"
@@ -212,10 +212,10 @@ dropped="$(q "$RED_DB" "SELECT count(*) FROM pg_constraint WHERE conrelid='ncoll
 
 "${DC[@]}" exec -T db psql -U odoo -d "$RED_DB" -c "
 INSERT INTO ncollection_tenant
-  (company_name, database_status, onboarding_stage, status, database_name)
+  (company_name, database_status, onboarding_stage, status, database_name, registration_state)
 VALUES
-  ('Dupe One', 'ready', 'done', 'active', 'sharedname'),
-  ('Dupe Two', 'ready', 'done', 'active', 'sharedname');
+  ('Dupe One', 'ready', 'done', 'active', 'sharedname', 'approved'),
+  ('Dupe Two', 'ready', 'done', 'active', 'sharedname', 'approved');
 " >/dev/null 2>&1
 seeded="$(q "$RED_DB" "SELECT count(*) FROM ncollection_tenant WHERE database_name='sharedname'")"
 [ "$seeded" = "2" ] && ok "two tenants now share a database_name" \

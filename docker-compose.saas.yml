@@ -83,16 +83,31 @@ services:
     # here), so `--max-cron-threads=0` would silently stop that job instead.
     # Neither odoo.conf nor odoo.prod.conf sets `db_name`, so `-d` on the
     # command line is the only thing that scopes it.
+    #
+    # `--limit-time-real` IS LOAD-BEARING TOO. A queue job is served as an HTTP
+    # request by one of these workers, and Odoo kills a worker whose request runs
+    # past `limit_time_real` — 120 seconds when nothing sets it, which is what
+    # this runner had. Provisioning builds a database and installs the plan's
+    # modules (2+ minutes for a plain plan), so EVERY real provisioning died
+    # mid-run: "WorkerHTTP timeout after 120s", the job re-queued as "dead", the
+    # re-run colliding with the half-built database it had itself left behind.
+    # The limit must exceed the engine's own subprocess cap
+    # (saas_subprocess.SUBPROCESS_TIMEOUT, 30 min), or the worker is shot before
+    # the engine can time out cleanly and report a legible failure.
     command: >
       odoo -c /etc/odoo/odoo.conf
            --load=base,web,queue_job
            --workers=2 --max-cron-threads=1
+           --limit-time-real=3600
            -d ${PLATFORM_DB:-ncollection}
            --db-filter=^${PLATFORM_DB:-ncollection}$$
     volumes:
       - ./custom_addons:/mnt/extra-addons:ro
       - ./oca:/mnt/oca-addons:ro
-      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      # NC_RUNNER_CONF lets a PRODUCTION deploy run this container on
+      # config/odoo.prod.conf (no dev master password) without forking this
+      # overlay. Unset = the dev config, which is what local stacks want.
+      - ${NC_RUNNER_CONF:-./config/odoo.conf}:/etc/odoo/odoo.conf:ro
       - odoo_data:/var/lib/odoo
     # Egress backstop (#311): db-plane (direct to db) + egress `default`. This is
     # the container where the `root.outbound` queue_job channel runs, so the ECB

@@ -76,12 +76,21 @@ class NcollectionPartnerStatement(models.TransientModel):
         Deliberately opens a draft rather than sending: a statement is a
         financial communication to a customer, and a report wizard is not the
         place to dispatch one unseen.
+
+        ONE PARTNER PER SEND. The PDF of a multi-partner run holds every partner's statement, and the
+        composer is addressed to its partners: attaching that PDF would e-mail each customer the balances
+        of all the others. So a multi-partner run is refused; print it, or send one partner at a time.
         """
         self.ensure_one()
         docs = self._nc_statement_docs()
         if not docs:
             raise UserError(self.env._(
                 "No transactions in this period — there is nothing to send."))
+        if len(docs) > 1:
+            raise UserError(self.env._(
+                "This run covers %(count)s partners, and the PDF would contain every partner's statement. "
+                "Select a single partner to send a statement by email; to share several, print the run.",
+                count=len(docs)))
 
         report = self.env.ref(self._nc_report_action_ref())
         pdf, _ = self.env['ir.actions.report']._render_qweb_pdf(

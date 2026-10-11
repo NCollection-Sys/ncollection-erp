@@ -26,11 +26,22 @@
             <field name="value">http://{db}.localhost:8069</field>
         </record>
 
+    </data>
+
+    <data noupdate="0">
+
         <!-- Welcome email (P2-T02): sent when a tenant becomes login-ready.
              Rendered through the P1-T18 branded notification layout
-             (email_layout_xmlid at send time). Carries the workspace URL and
-             the first-login password-setup link (ctx.nc_setup_url, computed in
-             the tenant DB). Never carries a credential (SECURITY §6/§11). -->
+             (email_layout_xmlid at send time). Carries the workspace URL, the
+             USERNAME to sign in with, and - only when the customer did not
+             choose a password at registration - the first-login password-setup
+             link (ctx.nc_setup_url, computed in the tenant DB). Never carries a
+             credential (SECURITY §6/§11).
+
+             Outside the noupdate block on purpose: this text described a flow
+             that no longer exists (it told every customer to "set your
+             password", and never named the username), and a noupdate template is
+             never refreshed on an existing database. -->
         <record id="mail_template_tenant_welcome" model="mail.template">
             <field name="name">Tenant Welcome</field>
             <field name="model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
@@ -40,7 +51,7 @@
             <field name="body_html" type="html">
                 <div style="margin:0;padding:0;">
                     <p>Hi <t t-out="object.contact_name or object.company_name or ''"/>,</p>
-                    <p>Your NCollection workspace for
+                    <p>Your registration was approved and your NCollection workspace for
                         <strong t-out="object.company_name or ''"/> is ready.</p>
                     <p>
                         <a t-att-href="object.portal_url"
@@ -48,14 +59,17 @@
                             Open your workspace
                         </a>
                     </p>
+                    <p>Workspace address: <t t-out="object.portal_url or ''"/></p>
+                    <p t-if="object.admin_login">Username: <strong t-out="object.admin_login"/></p>
                     <p t-if="ctx.get('nc_setup_url')">
                         To get started, set your password here:
                         <a t-att-href="ctx.get('nc_setup_url')" t-out="ctx.get('nc_setup_url')"/>
                     </p>
                     <p t-else="">
-                        On the login page, use “Forgot password?” to set your password.
+                        Sign in with this username and the password you chose when you
+                        registered. If you have forgotten it, use “Forgot password?” on the
+                        login page.
                     </p>
-                    <p>Workspace address: <t t-out="object.portal_url or ''"/></p>
                 </div>
             </field>
             <field name="lang">{{ object.env.user.lang }}</field>

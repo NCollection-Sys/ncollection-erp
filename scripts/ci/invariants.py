@@ -285,7 +285,7 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 14  # 14th: rule_dev_seed_password_never_shipped (#475)
+RULE_COUNT = 16  # 16th: rule_runner_timeout_exceeds_subprocess_cap
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -1614,6 +1614,97 @@ def rule_dev_seed_password_never_shipped(out: list[str]) -> None:
             "documented local-testing flow silently does nothing.")
 
 
+KNOWN_DEV_MASTER_PASSWORDS = ("ncollection_dev", "admin", "odoo", "password")
+
+
+def rule_prod_admin_passwd_is_not_a_secret(out: list[str]) -> None:
+    """config/odoo.prod.conf must not carry a usable DB-manager master password.
+
+    It used to read `admin_passwd = ncollection_dev`, the dev placeholder, in the
+    file a production deploy mounts. Odoo's option is file-only and defaults to
+    the literal `admin` when absent, so BOTH a plaintext value and a missing line
+    leave a guessable master password (list_db = False hides the UI, not the
+    RPC). The only value that is safe to commit is a PBKDF2 hash: it identifies
+    no secret anyone knows.
+    """
+    path = REPO_ROOT / "config" / "odoo.prod.conf"
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError as exc:
+        out.append(f"config/odoo.prod.conf: unreadable ({exc}); cannot verify "
+                   f"it ships no master password.")
+        return
+    values = [m.group(1).strip() for m in re.finditer(
+        r"^\s*admin_passwd\s*=\s*(.*)$", text, re.MULTILINE)]
+    if not values:
+        out.append("config/odoo.prod.conf: no admin_passwd line, so Odoo falls "
+                   "back to its default master password 'admin'. Set it to a "
+                   "PBKDF2 hash (odoo.tools.config.set_admin_password).")
+    for value in values:
+        if not value.startswith("$pbkdf2-"):
+            out.append("config/odoo.prod.conf: admin_passwd is not a PBKDF2 hash "
+                       "- a plaintext master password must never be committed "
+                       "to the production config.")
+            continue
+        # A hash of a KNOWN password is a known password. Verified when passlib
+        # is importable (it is wherever Odoo is); the shape check above is what
+        # runs everywhere else.
+        try:
+            from passlib.hash import pbkdf2_sha512
+        except ImportError:                                  # pragma: no cover
+            continue
+        for known in KNOWN_DEV_MASTER_PASSWORDS:
+            try:
+                matches = pbkdf2_sha512.verify(known, value)
+            except (ValueError, TypeError):
+                break                                        # not Odoo's hash format
+            if matches:
+                out.append("config/odoo.prod.conf: admin_passwd is the hash of the "
+                           f"known development password {known!r}.")
+
+
+RUNNER_TIME_HEADROOM_SECONDS = 300
+
+
+def rule_runner_timeout_exceeds_subprocess_cap(out: list[str]) -> None:
+    """The queue runner must outlive the provisioning subprocess it supervises.
+
+    A queue job is served as an HTTP request by a runner worker, and Odoo kills
+    a worker whose request outlasts `limit_time_real`. Provisioning shells out
+    to an `odoo` subprocess capped at saas_subprocess.SUBPROCESS_TIMEOUT. If the
+    worker's limit is lower, the worker is shot first: the job is re-queued as
+    "dead" and the re-run meets the half-built database the killed one left
+    behind (what happened with the 120 s default). The runner's limit therefore
+    has to exceed the subprocess cap with real headroom, and this keeps the two
+    numbers from drifting apart in separate files.
+    """
+    compose = REPO_ROOT / "docker-compose.saas.yml"
+    sub = REPO_ROOT / "custom_addons" / "ncollection_saas" / "models" / "saas_subprocess.py"
+    try:
+        compose_text = compose.read_text(encoding="utf-8", errors="ignore")
+        sub_text = sub.read_text(encoding="utf-8", errors="ignore")
+    except OSError as exc:
+        out.append(f"cannot compare the runner timeout with the subprocess cap ({exc}).")
+        return
+    cap = re.search(r"^SUBPROCESS_TIMEOUT\s*=\s*(\d+)", sub_text, re.MULTILINE)
+    limit = re.search(r"--limit-time-real=(\d+)", compose_text)
+    if not cap:
+        out.append("saas_subprocess.py: SUBPROCESS_TIMEOUT not found; the runner "
+                   "timeout guard has nothing to compare against.")
+        return
+    if not limit:
+        out.append("docker-compose.saas.yml: the provisioning runner sets no "
+                   "--limit-time-real, so Odoo's 120 s default kills every real "
+                   "provisioning mid-run.")
+        return
+    if int(limit.group(1)) < int(cap.group(1)) + RUNNER_TIME_HEADROOM_SECONDS:
+        out.append(
+            f"docker-compose.saas.yml: --limit-time-real={limit.group(1)} must be "
+            f"at least SUBPROCESS_TIMEOUT ({cap.group(1)}) + "
+            f"{RUNNER_TIME_HEADROOM_SECONDS} s, or the worker is killed before the "
+            f"engine can time out cleanly and report a legible failure.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--files", nargs="*", help="explicit file list instead of a repo scan")
@@ -1649,6 +1740,8 @@ def main() -> int:
     rule_portal_suite_models_reachable(findings)
     rule_saas_stack_runs_the_queue_worker(findings)
     rule_dev_seed_password_never_shipped(findings)
+    rule_prod_admin_passwd_is_not_a_secret(findings)
+    rule_runner_timeout_exceeds_subprocess_cap(findings)
 
     if findings:
         print("invariants: violations found\n")

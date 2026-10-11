@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_report_trial_balance_oca,ncollection.account.report.tb.oca,model_ncollection_account_report_tb_oca,account.group_account_readonly,1,1,1,1

@@ -16,7 +16,7 @@ OCA repo, because the pins are commit hashes, not branch names.
 
 | Repo | Branch line | Modules we consume | Consumer | Sunset |
 |---|---|---|---|---|
-| `OCA/account-financial-reporting` | 19.0 | `account_financial_report` | financial reports (demo + P3) | **#117** [F2-T07] — retired when native `ncollection_account_reports` reaches parity |
+| `OCA/account-financial-reporting` | 19.0 | `account_financial_report` | financial reports (demo + P3) | **#117** [F2-T07] — retired when native `ncollection_account_reports` reaches parity. **Interim (reports hub):** the native reports are canonical; the OCA General Ledger / Trial Balance / Aged Partner menus are hidden (not uninstalled). Journal Ledger, Open Items and VAT Report have no native equivalent and are kept, filed under the hub categories. |
 | `OCA/account-financial-tools` | 19.0 (pinned `fde45b2c`) | `account_asset_management` | `ncollection_account_assets` (F4-T03 / #122) | keep — see the decision record below |
 | `OCA/mis-builder` | 19.0 | `mis_builder`, `mis_builder_budget` (+`mis_builder_demo` in demo DBs) | `ncollection_mis_templates` | **#117** |
 | `OCA/reporting-engine` | 19.0 | `report_xlsx`, `report_xlsx_helper` | XLSX rendering for the reports above | with #117 |
@@ -246,3 +246,62 @@ filed separately rather than smuggled into this ticket.
   this repo's majority pattern. We therefore add **no** `ir.rule`; instead
   `test_ticket_portal_isolation.py` pins that domain, so an OCA bump that weakens it fails a
   test rather than silently widening who can read a customer's tickets.
+
+---
+
+## ADR #15 / #117 — amendment: selective OCA adoption (2026-10-09)
+
+*The original decision below is preserved unchanged. This section records what changed, why, and how it
+is being tested.*
+
+**Original decision (ADR #15, executed by #117).** `account_financial_report` and `mis_builder` are a
+*tactical bootstrap* that native `ncollection_account_reports` / `_analytics` would replace; "OCA
+Reporting Sunset" retires them once native parity is reached. Financial computation is NCollection-owned
+(FPA §7), so the platform is not coupled to modules it does not control and the LGPL `ncollection_*`
+modules carry no AGPL dependency.
+
+**Why it was made.** Odoo 19 Community ships no financial-statement renderer (the `account.report`
+definitions exist, the renderer is Enterprise), so something had to supply Trial Balance, General Ledger,
+Aged, Balance Sheet and P&L; OCA covered it fastest and was designated temporary to avoid long-term
+coupling and licence mixing.
+
+**What changed.** The native engine now exists and is the customer-facing experience (hub, viewer, drill-
+down, PDF/XLSX, Arabic). The reporting audit (`REPORTING_ARCHITECTURE_AUDIT.md`) found OCA modules that
+are materially richer in places (account-group hierarchy, foreign-currency columns, analytic grouping,
+partner statements, tax balances) and asked whether *retiring* them wholesale is still the best rule.
+
+**New principle (this amendment).**
+
+```
+Odoo native + official OCA where justified  →  NCollection adapter  →  NCollection viewer / UX / branding / security
+```
+
+NCollection remains the canonical customer-facing reporting experience. Raw OCA report screens are never
+exposed to customers. The #117 sunset is **not deleted**: it becomes "OCA is adopted *selectively*, behind
+the adapter, only where it materially exceeds the native implementation; everything else stays native and
+OCA reports that have a native equivalent stay hidden".
+
+**Why selective adoption is being evaluated now.** The adapter pattern makes a bounded, reversible
+experiment possible without changing any user-facing screen, and a measured comparison is cheaper than an
+argument.
+
+**Trial Balance pilot** — module `ncollection_account_reports_oca`, off by default, switched by the system
+parameter `ncollection_account_reports.source.trial_balance` (`native` | `oca`).
+
+*Acceptance criteria (all measured on one dataset and filter set):*
+1. identical figures for every account under every filter (correctness gate);
+2. no regression in the viewer: same UX, language state, URL state, drill-down, PDF, XLSX;
+3. tenant isolation and role boundaries unchanged (re-run after the change);
+4. performance within the same order of magnitude at small/medium/large sizes;
+5. a clear functional advantage that is cheaper to adopt than to build natively.
+
+*Result:* 1–4 met; 5 not met → **keep native as default** (see `REPORTING_TRIAL_BALANCE_PILOT.md`). The
+adapter stays as an opt-in option; no further report is migrated.
+
+**Rollback strategy.** (a) Set the parameter to `native` (or delete it) — instant, no deploy; an unknown
+value or a missing adapter module also falls back to native. (b) Uninstall `ncollection_account_reports_oca`
+— nothing else depends on it. (c) Remove the module from the CI matrix and `CLAUDE.md`. The OCA modules
+themselves are untouched (their menus for superseded reports stay hidden, not removed).
+
+**Still not approved / not done:** installing `partner_statement`, `account_tax_balance` or `report_csv`;
+migrating General Ledger, Aged or any other report.

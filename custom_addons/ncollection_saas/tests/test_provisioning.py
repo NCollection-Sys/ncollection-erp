@@ -248,6 +248,15 @@ class TestDevSeedPassword(TransactionCase):
         with open(path, encoding='utf-8') as handle:
             return handle.read()
 
+    def test_the_seed_makes_the_registrant_the_workspace_owner(self):
+        """Without the Owner role the Owner-only Settings app is hidden from
+        the one person who must configure the workspace (found by the
+        click-through: Home had no Settings card for a freshly provisioned
+        tenant's administrator)."""
+        src = self._seed_source()
+        self.assertIn('ncollection_core.group_role_owner', src)
+        self.assertIn("admin.write({'group_ids': [(4, owner_group.id)]})", src)
+
     # ---- 1. off by default ----------------------------------------------
 
     def test_the_hardened_path_is_what_runs_when_the_variable_is_unset(self):
@@ -259,10 +268,14 @@ class TestDevSeedPassword(TransactionCase):
         # for this tenant), so the guard is now `chosen_password` — the union of
         # both — rather than the dev variable alone. The property being pinned
         # is unchanged: with nothing chosen, the password is random and the
-        # reset is forced.
-        self.assertIn("chosen_password = admin_password or dev_password", source)
+        # reset is forced. A customer-chosen password (the registration HASH) is
+        # a third way to choose one and, being the customer's own, outranks the
+        # dev blanket; it too skips the forced reset, because they already know it.
+        self.assertIn(
+            "chosen_password = admin_password or ('' if admin_password_hash else dev_password)",
+            source)
         self.assertIn("chosen_password or secrets.token_urlsafe(32)", source)
-        self.assertIn("if not chosen_password:", source)
+        self.assertIn("if not (chosen_password or admin_password_hash):", source)
         self.assertIn("signup_prepare(signup_type='reset')", source)
 
     def test_the_variable_is_the_password_not_a_boolean_flag(self):

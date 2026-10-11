@@ -179,6 +179,32 @@ class NcollectionAgedPartnerBalance(models.TransientModel):
     def _nc_compute_lines(self):
         return self._nc_aged_rows()
 
+    def _nc_has_row_detail(self):
+        return True
+
+    def _nc_row_detail(self, row_key):
+        """A partner's open items, each with the bucket the report put it in.
+
+        Reuses the report's own domain and bucket rule, so the detail can never
+        disagree with the summary row it expands.
+        """
+        self.ensure_one()
+        keys = ('bucket_current', 'bucket_1', 'bucket_2', 'bucket_3',
+                'bucket_4', 'bucket_over')
+        domain = self._nc_open_line_domain() + [('partner_id', '=', int(row_key))]
+        out = []
+        for line in self.env['account.move.line'].search(domain, order='date_maturity, date, id'):
+            out.append({
+                'move_id': line.move_id.id, 'move_name': line.move_id.name,
+                'ref': line.move_id.ref or line.name or '',
+                'date': str(line.date),
+                'due': str(line.date_maturity or line.date),
+                'bucket': keys[self._nc_bucket_index(line)],
+                'amount': line.amount_residual,
+                'payment_id': line.move_id.origin_payment_id.id or False,
+            })
+        return out
+
     def action_view(self):
         self.ensure_one()
         Line = self.env['ncollection.account.report.aged.line']

@@ -329,3 +329,39 @@ msgstr "أدوار مساحة عمل المستأجر القياسية لنظا�
 #. module: ncollection_core
 msgid "Standard tenant workspace roles."
 msgstr "أدوار مساحة عمل المستأجر القياسية."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__username
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__email
+msgid "Contact Email"
+msgstr "البريد الإلكتروني للتواصل"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid ""
+"The username cannot be an email address. Use 3-64 letters, digits, dots, "
+"dashes or underscores, such as sara.m."
+msgstr ""
+"لا يمكن أن يكون اسم المستخدم عنوان بريد إلكتروني. استخدم من 3 إلى 64 حرفًا "
+"أو رقمًا أو نقطة أو شرطة أو شرطة سفلية، مثل sara.m."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "The username '%s' is already taken."
+msgstr "اسم المستخدم '%s' مستخدم بالفعل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid ""
+"The login '%s' looks like an email address. A login is a username (for "
+"example sara.m); put the email in the contact email field instead."
+msgstr ""
+"اسم الدخول '%s' يبدو كعنوان بريد إلكتروني. اسم الدخول هو اسم مستخدم (مثل "
+"sara.m)؛ ضع البريد الإلكتروني في حقل البريد الإلكتروني للتواصل بدلًا من ذلك."

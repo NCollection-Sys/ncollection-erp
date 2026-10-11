@@ -15,8 +15,9 @@ import base64
 import io
 import logging
 
-from odoo import fields, models
-from odoo.exceptions import UserError
+from odoo import api, fields, models
+from odoo.exceptions import AccessError, UserError
+from odoo.tools.misc import format_date, formatLang
 
 _logger = logging.getLogger(__name__)
 
@@ -44,6 +45,35 @@ class NcollectionAccountReport(models.AbstractModel):
     target_move = fields.Selection(
         [('posted', 'Posted Entries'), ('all', 'All Entries')],
         default='posted', required=True, string='Target Moves')
+
+    def _check_company_allowed(self):
+        """A report can only be run for a company the user belongs to.
+
+        Every other path already refuses (journal items carry a company record rule), but the letterhead
+        (name, address, tax id, logo) is read from the wizard's company, so a direct `create` with another
+        company's id would otherwise print that company's identity. `nc_report_run` made the same check
+        AFTER creating the wizard; it now holds for every way of making or editing one. Sudo (system jobs) is
+        exempt. This is NOT an `@api.constrains`: Odoo runs constraints as superuser, which would see every
+        company as allowed.
+        """
+        if self.env.su:
+            return
+        allowed = self.env.user.company_ids
+        for wizard in self:
+            if wizard.company_id not in allowed:
+                raise AccessError(self.env._("You are not allowed to report on this company."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._check_company_allowed()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'company_id' in vals:
+            self._check_company_allowed()
+        return result
 
     # ---- filters -> account.move.line domain ----------------------------
 
@@ -135,6 +165,13 @@ class NcollectionAccountReport(models.AbstractModel):
         # _get_pl_initial_balance (sum of reset-account balances before fy_from).
         unaffected = accounts.filtered(
             lambda a: a.account_type == 'equity_unaffected')[:1]
+        # An explicit account filter means exactly those accounts: the roll-up row
+        # is added only when the user did not narrow the list, or asked for it.
+        # (Found by the Trial Balance pilot: with an account filter the native
+        # report grew a Current Year Earnings row the user had excluded, which the
+        # OCA engine - and the totals - did not have.)
+        if unaffected and self.account_ids and unaffected not in self.account_ids:
+            unaffected = unaffected.browse()
         if unaffected:
             pl_prior = sum(
                 bal for _account, bal in AML._read_group(
@@ -288,34 +325,220 @@ class NcollectionAccountReport(models.AbstractModel):
             title = title.replace(ch, ' ')
         return (title.strip() or 'Report')[:31]
 
-    def _nc_build_xlsx(self):
-        """Render the report to an XLSX workbook (base64 bytes)."""
+    # ---- one payload for the two print channels (PDF + XLSX) -------------
+
+    _NC_PCT_KEYS = ('variance_pct', 'ratio_pct')
+
+    def _nc_export_kind(self, col):
+        """How a column is rendered in print: amount | percent | date | text."""
+        if col.get('type') == 'percent' or col['key'] in self._NC_PCT_KEYS:
+            return 'percent'
+        if col.get('type') == 'monetary':
+            return 'amount'
+        if col['key'] == 'date':
+            return 'date'
+        return 'text'
+
+    def _nc_export_filters(self):
+        """The active filters a printed report must state, as [(label, text)]."""
         self.ensure_one()
-        columns = self._nc_columns()
-        lines = self._nc_compute_lines()
+        env = self.env
+        out = []
+        for name in ('journal_ids', 'account_ids', 'partner_ids'):
+            if name in self._fields and self[name]:
+                out.append((self._fields[name].get_description(env, ['string'])['string'],
+                            ', '.join(self[name].mapped('display_name'))))
+        if 'comparison_type' in self._fields and self.comparison_type \
+                and self.comparison_type != 'none':
+            label = dict(self._fields['comparison_type']._description_selection(env)).get(
+                self.comparison_type, '')
+            out.append((self._fields['comparison_type'].get_description(env, ['string'])['string'], label))
+        for name in ('partner_scope',):
+            if name in self._fields and self[name]:
+                label = dict(self._fields[name]._description_selection(env)).get(self[name], '')
+                out.append((self._fields[name].get_description(env, ['string'])['string'], label))
+        return out
+
+    def _nc_export_payload(self, lines=None):
+        """Everything a printed copy needs, formatted ONCE.
+
+        Both the PDF template and the XLSX builder read this, so the two cannot
+        disagree and neither formats a number itself. The previous PDF template
+        formatted percentages with a Python `%` inside a QWeb attribute; QWeb
+        runs its own `%` pass over the compiled expression, which turned
+        `'%.2f%%'` into `'%.2f%'` and crashed EVERY report that has a percent
+        column ("ValueError: incomplete format").
+
+        Numbers are rendered with the user's language separators and Latin
+        digits, with the company currency's decimals; the currency is stated in
+        the header rather than repeated in every cell.
+        """
+        self.ensure_one()
+        env = self.env
+        currency = self.company_id.currency_id
+        columns = []
+        for col in self._nc_columns():
+            kind = self._nc_export_kind(col)
+            columns.append({'key': col['key'], 'label': col['label'], 'kind': kind,
+                            'numeric': kind in ('amount', 'percent')})
+        rows = []
+        # ``lines``: rows the caller already computed (the print layer groups the same rows into
+        # sections), so a report is never computed twice for one PDF.
+        for row in (lines if lines is not None else self._nc_compute_lines()):
+            cells = []
+            for col in columns:
+                value = row.get(col['key'])
+                if col['kind'] == 'amount':
+                    text = formatLang(env, value or 0.0, digits=currency.decimal_places)
+                elif col['kind'] == 'percent':
+                    text = formatLang(env, value or 0.0, digits=2) + '%'
+                elif col['kind'] == 'date':
+                    text = format_date(env, value) if value else ''
+                else:
+                    text = '' if value in (None, False) else str(value)
+                cells.append({'value': value, 'text': text})
+            rows.append({'level': row.get('level', 0) or 0,
+                         'opening': bool(row.get('is_initial')), 'cells': cells})
+        return dict(self._nc_header_payload(), columns=columns, rows=rows)
+
+    def _nc_header_payload(self):
+        """The facts every printed copy states about itself, formatted once: shared by the PDF/XLSX payload
+        and by the designed print layer, so a statement and a ledger describe their period, currency, scope,
+        author and time identically."""
+        env = self.env
+        currency = self.company_id.currency_id
+        lang = env['res.lang']._get_data(code=env.lang or 'en_US')
+        entries = ''
+        if 'target_move' in self._fields:
+            entries = dict(self._fields['target_move']._description_selection(env)).get(
+                self.target_move, '')
+        stamp = fields.Datetime.context_timestamp(self, fields.Datetime.now())
+        return {
+            'title': self._nc_report_title(),
+            'company': self.company_id.name,
+            'currency': currency.name,
+            'decimals': currency.decimal_places,
+            'date_from': format_date(env, self.date_from) if self.date_from else '',
+            'date_to': format_date(env, self.date_to) if self.date_to else '',
+            'entries': entries,
+            'filters': self._nc_export_filters(),
+            'generated': stamp.strftime('%Y-%m-%d %H:%M'),
+            'user': env.user.name,
+            'direction': lang.direction or 'ltr',
+        }
+
+    def _nc_build_xlsx(self):
+        """Render the report to an XLSX workbook (base64 bytes).
+
+        Real numbers (not text) with the currency's decimals, real dates, a
+        header block, bold totals, a frozen and repeating header row, widths
+        sized to the content, A4 landscape fit-to-width, and a right-to-left
+        sheet when the user's language is right-to-left.
+        """
+        self.ensure_one()
+        data = self._nc_export_payload()
+        decimals = data['decimals']
         stream = io.BytesIO()
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
         sheet = book.add_worksheet(self._nc_sheet_name())
-        f_title = book.add_format({'bold': True, 'font_size': 14})
-        f_head = book.add_format({'bold': True, 'bottom': 1, 'bg_color': '#F2F2F2'})
-        f_money = book.add_format({'num_format': '#,##0.00'})
-        # F2-T03: a percentage is not money — its own format, no currency.
-        f_pct = book.add_format({'num_format': '#,##0.00"%"'})
-        sheet.write(0, 0, self._nc_report_title(), f_title)
-        sheet.write(1, 0, '%s → %s' % (self.date_from, self.date_to))
-        header_row = 3
-        for col, cdef in enumerate(columns):
-            sheet.write(header_row, col, cdef['label'], f_head)
-            sheet.set_column(col, col, 22 if col == 0 else 16)
-        for i, row in enumerate(lines):
-            r = header_row + 1 + i
-            for col, cdef in enumerate(columns):
-                val = row.get(cdef['key'], '')
-                if cdef.get('type') == 'monetary':
-                    sheet.write_number(r, col, val or 0.0, f_money)
-                elif cdef.get('type') == 'percent':
-                    sheet.write_number(r, col, val or 0.0, f_pct)
+        if data['direction'] == 'rtl':
+            sheet.right_to_left()
+        num = '#,##0.%s;-#,##0.%s' % ('0' * decimals, '0' * decimals) if decimals else '#,##0;-#,##0'
+
+        def fmt(**kw):
+            return book.add_format(dict({'font_size': 10, 'valign': 'vcenter'}, **kw))
+
+        f_title = fmt(bold=True, font_size=14)
+        f_meta = fmt(font_color='#475569')
+        f_head = fmt(bold=True, bottom=1, bg_color='#F1F5F9', text_wrap=True)
+        f_head_num = fmt(bold=True, bottom=1, bg_color='#F1F5F9', align='right', text_wrap=True)
+        styles = {}
+
+        def style(kind, bold, italic):
+            key = (kind, bold, italic)
+            if key not in styles:
+                props = {'bold': bold, 'italic': italic}
+                if kind == 'amount':
+                    props.update(num_format=num, align='right')
+                elif kind == 'percent':
+                    props.update(num_format='0.00"%"', align='right')
+                elif kind == 'date':
+                    props.update(num_format='yyyy-mm-dd', align='left')
+                if bold:
+                    props.update(top=1)
+                styles[key] = fmt(**props)
+            return styles[key]
+
+        ncols = len(data['columns'])
+        r = 0
+        sheet.write(r, 0, data['title'], f_title)
+        r += 1
+        sheet.write(r, 0, data['company'], f_meta)
+        r += 1
+        period = ' → '.join(x for x in (data['date_from'], data['date_to']) if x)
+        sheet.write(r, 0, '%s    %s' % (period, data['currency']), f_meta)
+        if data['entries']:
+            r += 1
+            sheet.write(r, 0, data['entries'], f_meta)
+        for label, text in data['filters']:
+            r += 1
+            sheet.write(r, 0, '%s: %s' % (label, text), f_meta)
+        r += 1
+        sheet.write(r, 0, '%s · %s' % (data['generated'], data['user']), f_meta)
+        header_row = r + 2
+        widths = [len(c['label']) for c in data['columns']]
+        for col, cdef in enumerate(data['columns']):
+            sheet.write(header_row, col, cdef['label'], f_head_num if cdef['numeric'] else f_head)
+        hierarchical = any(r['level'] for r in data['rows'])
+        for i, row in enumerate(data['rows']):
+            rr = header_row + 1 + i
+            bold = hierarchical and row['level'] == 0 and not row['opening']
+            italic = row['opening']
+            for col, (cdef, cell) in enumerate(zip(data['columns'], row['cells'])):
+                value, kind = cell['value'], cdef['kind']
+                st = style(kind, bold and kind != 'date', italic)
+                if kind in ('amount', 'percent'):
+                    sheet.write_number(rr, col, float(value or 0.0), st)
+                elif kind == 'date' and value:
+                    sheet.write_datetime(rr, col, fields.Datetime.to_datetime(value), st)
                 else:
-                    sheet.write(r, col, val or '')
+                    sheet.write_string(rr, col, cell['text'], st)
+                widths[col] = max(widths[col], min(len(cell['text']), 60))
+        for col, width in enumerate(widths):
+            sheet.set_column(col, col, min(max(width + 3, 12), 62))
+        sheet.freeze_panes(header_row + 1, 1 if ncols > 1 else 0)
+        sheet.repeat_rows(header_row)
+        sheet.set_landscape()
+        sheet.set_paper(9)  # A4
+        sheet.fit_to_pages(1, 0)
+        sheet.set_footer('&C&P / &N')
         book.close()
         return base64.b64encode(stream.getvalue())
+
+    @api.model
+    def _nc_source_ids(self, line):
+        """Exact source records behind a journal item, for report drill-down.
+
+        Only ids that really exist are returned — a link is never fabricated.
+        Sale/purchase links are read when those apps are installed (this module
+        does not depend on them), and come from the invoice line's own link, the
+        same one Odoo's invoice form follows.
+        """
+        ids = {'payment_id': line.move_id.origin_payment_id.id or False,
+               'sale_order_id': False, 'purchase_order_id': False}
+        if 'sale_line_ids' in line._fields:
+            ids['sale_order_id'] = line.sale_line_ids[:1].order_id.id or False
+        if 'purchase_line_id' in line._fields:
+            ids['purchase_order_id'] = line.purchase_line_id.order_id.id or False
+        return ids
+
+    # ---- optional per-row detail (lazy, for the on-screen viewer) --------
+
+    def _nc_has_row_detail(self):
+        """True when ``_nc_row_detail`` can expand a summary row into the
+        documents behind it (Aged: a partner's open invoices)."""
+        return False
+
+    def _nc_row_detail(self, row_key):
+        """Rows behind one summary row, loaded only when the user opens it."""
+        raise NotImplementedError

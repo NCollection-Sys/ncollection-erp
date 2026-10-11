@@ -142,7 +142,14 @@
               parent="account.menu_finance_entries" sequence="90"/>
     <menuitem id="menu_budget" name="Budgets"
               parent="menu_budget_root" action="action_budget" sequence="10"/>
+    <!-- Opens the shared NCollection report viewer (ncollection_account_reports);
+         the wizard action above stays for exports and direct use. -->
+    <record id="action_nc_view_budget_actual" model="ir.actions.client">
+        <field name="name">Budget vs Actual</field>
+        <field name="tag">ncollection_account_reports.report_viewer</field>
+        <field name="context">{'nc_report_model': 'ncollection.account.report.budget.actual'}</field>
+    </record>
     <menuitem id="menu_report_budget_actual" name="Budget vs Actual"
               parent="ncollection_account_reports.menu_ncollection_account_reports"
-              action="action_report_budget_actual_wizard" sequence="80"/>
+              action="action_nc_view_budget_actual" sequence="80"/>
 </odoo>

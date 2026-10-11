@@ -28,6 +28,8 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Fixture namespace separation | `Makefile`, `e2e/` | structural |
 | Config-sync push carries `Host: <db>.<base-domain>` (db_filter routing) | `ncollection_saas/tests/test_config_sync.py` + `.../scripts/provisioning/verify_config_sync.sh` | CI `test` + `make verify-all` |
 | Shared-stack races → false CRITICALs (R-018) | CLAUDE.md Rule 14, `scripts/dev/stack_settled.sh`, `.claude/agents/verify-runner.md` | agent convention + `verify-runner` retry-before-escalate |
+| Report menus aligned to the ORM; OCA report wizards restricted to accounting read-only; per-role hub (R-027, R-028) | `ncollection_account_reports` (`_REPORT_MENU_GROUPS`, `_nc_harden_oca_wizards`), `tests/test_report_hub.py`, `tests/test_oca_wizard_access.py` | CI `test` + `e2e/manual/reports/*` |
+| PDF is styled in dev, and a blocked download is explained (R-029) | `scripts/dev/pdf_hosts.sh`, `make doctor`, `report_viewer.js` | `make doctor` + manual |
 
 ---
 
@@ -433,6 +435,130 @@ pointer to `make e2e-clean` instead of `>/dev/null 2>&1` (Rule 10 — a swallowe
 what made the original symptom unreadable). Proven rather than asserted: `config_sync_activity_id`
 was dropped from `e2eadmin` by hand (5 `config_sync*` columns → 4), the script re-run, and it
 exited 0 having healed all three fixtures back to 5.
+
+---
+
+## R-031 — A multi-partner statement could be e-mailed to every partner, and a report could be built for a company the user is not in ✅ FIXED
+
+**Symptom.** (1) "Send by Email" on a statement run for several customers attached ONE PDF holding every
+customer's statement and addressed the composer to all of them: each customer would have received everyone
+else's balances. (2) `ncollection.account.report.*.create({'company_id': <another company>})` succeeded; the
+company check lived only in `nc_report_run`, `AFTER` the wizard was created, while the letterhead (name,
+address, tax id, logo) is read from the wizard's company.
+
+**Root cause.** (1) `action_send` was written for one partner and never asked how many documents the run held.
+(2) The rule was enforced in one entry point instead of on the model. An `@api.constrains` cannot do it: Odoo
+runs constraints as superuser, so `env.user.company_ids` is every company.
+
+**Fix.** `action_send` refuses a run of more than one partner with an actionable (translated) message.
+`NcollectionAccountReport.create`/`write` call `_check_company_allowed` (sudo callers exempt), so it holds for
+every report model and every way of creating or editing a wizard.
+
+**Guard.** `test_partner_statement.py`: `test_send_refuses_a_multi_partner_run...`,
+`test_the_multi_partner_refusal_is_actionable_in_english_and_arabic`. `test_print_system.py`:
+`test_a_user_of_company_a_cannot_print_company_b`, `test_every_report_model_refuses_a_company_the_user_is_not_in`
+(a model that overrode `create` without `super()` would fail it), `test_a_user_of_both_companies_prints_each_company...`.
+
+---
+
+## R-030 — Every printed report drew a hairline box around every cell, and a PDF per partner hung wkhtmltopdf ✅ FIXED
+
+**Symptom.** After the print redesign the first PDFs looked "boxed": hairline outlines around every table
+cell although every border was set to `0`. Separately, a statement run for all customers (header and
+footer repeated once per partner) never finished (>120 s) where one partner took 2 s.
+
+**Root cause.**
+1. **`border-collapse: collapse` in wkhtmltopdf 0.12.6 (patched Qt, PDF backend).** With a collapsed border
+   model the backend strokes every cell edge as a hairline *even at `border: 0`*. Found by bisecting the
+   stylesheet with `wkhtmltopdf` run directly, not through Odoo. Browsers do not show it, so an HTML
+   preview of the same template looks clean.
+2. **One layout per partner.** wkhtmltopdf's cost grows with (header/footer instances × pages); N layouts for
+   N partners multiplied it. The same engine ignores flexbox, grid, CSS variables and logical properties
+   (`margin-inline`, `inset-*`) and has no `unicode-bidi: isolate`.
+
+**Fix.** Every table uses `border-collapse: separate; border-spacing: 0` plus `border="0" cellspacing="0"
+cellpadding="0"` and a reset rule; a statement is ONE layout for the whole run with
+`page-break-before: always` per partner (all-customers run: 81 pages ~9 s vs ~27 s before; 120 partners /
+120 pages 13 s; 152-page General Ledger 25 s, linear at ~0.17 s/page). Bidi: dates are wrapped in an LRE…PDF
+run so an Arabic page does not print the end date first.
+
+**Guard.** `ncollection_account_reports/tests/test_print_system.py`:
+`test_css_stays_inside_what_wkhtmltopdf_can_draw` (bans `border-collapse: collapse`, flex/grid/var(--)/
+logical properties/`isolate`), `test_every_table_switches_the_border_attributes_off`,
+`test_a_statement_renders_one_layout_for_the_whole_run`,
+`test_dates_are_left_to_right_islands_so_arabic_pages_keep_their_order`.
+
+**Known limit (documented, not fixed).** In an RTL cell the Qt bidi engine places a leading account code to the
+LEFT of an Arabic name but to the RIGHT of an English one ("Main Safe 101005" vs "حساب تحويل وسيط 100001").
+Both read correctly; `isolate`, RLM and RLE do not change it.
+
+---
+
+## R-029 — "Arbitrary Uncaught Python Exception" on PDF export was not Python, and dev PDFs were silently unstyled ✅ FIXED (client) / ⚠️ STRUCTURAL (the download manager)
+
+**Symptom.** Print → PDF showed `RPC_ERROR — Arbitrary Uncaught Python Exception`. The previous fix (a QWeb `%` formatting
+crash) was real but did not touch it. Separately, PDFs generated in development had no letterhead, no borders and
+paginated differently (377 pages instead of 232 for the same ledger) — with exit status 0.
+
+**Root cause — two independent things.**
+
+1. *Internet Download Manager* hooks the network stack of every browser on the machine and answers `POST /report/download`
+   with `HTTP/1.0 204 Intercepted by the IDM Advanced Integration` and an empty body (captured with the Chrome DevTools
+   Protocol; Odoo's own log shows `200` and "The PDF report has been generated"). Odoo's client helper treats any non-200 as a
+   server error and, failing to parse JSON from an empty body, prints that literal message. There is no Python exception.
+2. wkhtmltopdf runs *inside* the odoo container and loads the stylesheet/letterhead from `<tenant>.localhost`. glibc in the
+   container does not resolve `*.localhost` (browsers do), so every asset fetch failed (`wkhtmltopdf: Exit with code 1 due to
+   network error: HostNotFoundError`) and Odoo still returned an unstyled PDF with exit 0.
+
+**Guards.** (2): `scripts/dev/pdf_hosts.sh` (`make pdf-hosts`, idempotent — 17 added, then 0) + a `make doctor` check that fails
+loudly where the PDF would silently degrade. (1): the viewer catches the failed download, explains it (Arabic included) and
+opens the report in a tab. **No guard can be built for the download manager itself** — it is software on the user's machine; the
+remedy (exclude `localhost` in IDM) is documented in `e2e/manual/reports/README.md` and CLAUDE.md. `pdf_quality.js` /
+`xlsx_quality.js` inspect the real files (pages, size, text, RTL, numeric cells) so "a PDF came back" is no longer the test.
+
+---
+
+## R-028 — The OCA ledger wizards were open to every internal user ✅ FIXED
+
+**Symptom.** None visible. A server-side audit as each role found that a **Sales** user and a **Manager** could create the OCA
+General Ledger and Trial Balance wizards and read the whole ledger over RPC, contradicting ROLE_MATRIX D5.
+
+**Root cause.** `account_financial_report` grants its wizards to `base.group_user`; the menus were hidden from non-accountants, and
+a menu is not a control. Core also grants those roles read on `account.move.line`, so the wizard ran.
+
+**Guard.** `_nc_harden_oca_wizards` moves the six wizards to Accounting read-only on every registry load (an OCA upgrade resets
+them, the hook re-applies). `tests/test_oca_wizard_access.py` *attempts* the create as a plain internal user and as an
+accountant, proves idempotence and the post-upgrade reset, and fails (7 failures) if the hardening is removed — measured.
+Open decision: core's own read on journal items for those roles (D-2 in REPORTING_ARCHITECTURE_RECOMMENDATION.md).
+
+---
+
+## R-027 — Sales, Purchases and Inventory reports existed but no role could open them ✅ FIXED (Sales, Inventory) / decision open (Purchases)
+
+**Symptom.** The user reported Sales, Purchases and Inventory reporting as missing. They were not missing: they were invisible.
+Every earlier test passed because it ran as `admin`.
+
+**Root cause.** The native analysis menus are gated on Odoo's *Administrator* groups (`Sales / Administrator`, `Purchase /
+Administrator`, `Inventory / Administrator`). No NCollection role carries them, so the three hub categories were empty for Owner and
+CEO too. A superuser holds every group, so an admin-run check proves nothing about roles.
+
+**Guard.** A curated menu→group map (`_REPORT_MENU_GROUPS`) aligns each menu to the least group that already holds the ORM read right
+(no data access granted; the hub still hides a card whose model the user cannot read). `test_report_hub.py` pins: the Administrator
+gate is replaced, a missing module never widens a menu, every curated menu is catalogued. `roles_ui.js` opens the hub as each of the
+8 roles in a real browser and asserts the exact categories. **Purchases** stays empty for Owner/CEO/Manager because no role holds a
+Purchase group — a role-matrix change (D-1), not taken unilaterally.
+
+---
+
+## R-026 — The report service accepted another user's run id ✅ FIXED
+
+**Symptom.** `nc_report_export` / `nc_report_detail` returned an export action for a run that belonged to someone else.
+
+**Root cause.** `browse(id).exists()` skips record rules, so a foreign id was "found". The download routes refused it (403 for every
+role but the creator, owner and CEO included — measured), so no data leaked; the service was simply not the place that said no.
+
+**Guard.** `check_access('read')` after `exists()`; `test_tax_analysis.test_another_accountant_cannot_read_my_run` asserts the
+`AccessError` through the service.
 
 ---
 

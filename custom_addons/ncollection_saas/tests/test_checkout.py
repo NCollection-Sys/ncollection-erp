@@ -85,7 +85,10 @@ class TestCheckoutModel(TransactionCase):
         self.assertTrue(self.Tenant._nc_trial_quota_exceeded('9.9.9.9', 'b@y.com'))
         self.assertFalse(self.Tenant._nc_trial_quota_exceeded('1.2.3.4', 'b@y.com'))
 
-    def test_verify_triggers_provisioning_only_after_confirm(self):
+    def test_verify_marks_the_email_but_never_provisions(self):
+        """Email verification used to activate the subscription and so START
+        provisioning. Registration is now approval-gated: verification only tells
+        the reviewer the address is real. Nothing here may provision."""
         token = self.Tenant._nc_new_checkout_token()
         tenant = self.Tenant.create({
             'company_name': 'Verify Co', 'database_name': 'verifyco',
@@ -99,14 +102,13 @@ class TestCheckoutModel(TransactionCase):
         # before verify: not verified, subscription still draft
         self.assertFalse(tenant.checkout_email_verified)
         self.assertEqual(sub.status, 'draft')
-        # confirm -> subscription activates (which triggers provisioning). Patch
-        # the trigger so nothing spawns; assert it was invoked.
         with patch('%s._trigger_provisioning' % SUBSCR) as trig:
             confirmed = self.Tenant._nc_confirm_checkout(token)
         self.assertEqual(confirmed, tenant)
         self.assertTrue(tenant.checkout_email_verified)
-        self.assertEqual(sub.status, 'active')
-        trig.assert_called()
+        # ...and that is ALL it did: the subscription is untouched, no job.
+        self.assertEqual(sub.status, 'draft')
+        trig.assert_not_called()
 
     def test_confirm_bad_token_is_noop(self):
         self.assertFalse(self.Tenant._nc_confirm_checkout('nope'))
@@ -114,6 +116,10 @@ class TestCheckoutModel(TransactionCase):
 
 @tagged('post_install', '-at_install')
 class TestCheckoutHttp(HttpCase):
+
+    # Credentials every registration now carries. A USERNAME, never an email.
+    CREDS = {'username': 'ownerone', 'password': 'S3cure-pass!',
+             'password_confirm': 'S3cure-pass!'}
 
     def setUp(self):
         super().setUp()
@@ -139,6 +145,7 @@ class TestCheckoutHttp(HttpCase):
         result = self._rpc('/nc/checkout/register', {
             'company': 'Stranger LLC', 'contact': 'Sam', 'email': 'sam@stranger.example',
             'subdomain': 'strangerllc', 'plan': 'CHKSTARTER', 'cycle': 'monthly',
+            **self.CREDS,
         })
         self.assertTrue(result.get('success'), result)
         tenant = self.env['ncollection.tenant'].sudo().search(
@@ -153,6 +160,7 @@ class TestCheckoutHttp(HttpCase):
     def test_register_rejects_reserved_subdomain(self):
         result = self._rpc('/nc/checkout/register', {
             'company': 'X', 'email': 'x@x.example', 'subdomain': 'admin', 'plan': 'CHKSTARTER',
+            **self.CREDS,
         })
         self.assertFalse(result.get('success'))
         self.assertEqual(result.get('error'), 'subdomain_reserved')
@@ -161,7 +169,7 @@ class TestCheckoutHttp(HttpCase):
         # #226 M-3: a defensive length cap on the unbounded free-text fields.
         result = self._rpc('/nc/checkout/register', {
             'company': 'X' * 201, 'email': 'x@x.example', 'subdomain': 'longco',
-            'plan': 'CHKSTARTER',
+            'plan': 'CHKSTARTER', **self.CREDS,
         })
         self.assertFalse(result.get('success'))
         self.assertEqual(result.get('error'), 'field_too_long')
@@ -170,7 +178,7 @@ class TestCheckoutHttp(HttpCase):
         # the cap is `> 200`, so exactly 200 chars must be ACCEPTED (boundary).
         result = self._rpc('/nc/checkout/register', {
             'company': 'C' * 200, 'contact': 'N' * 200, 'email': 'ok@x.example',
-            'subdomain': 'boundaryco', 'plan': 'CHKSTARTER',
+            'subdomain': 'boundaryco', 'plan': 'CHKSTARTER', **self.CREDS,
         })
         self.assertNotEqual(result.get('error'), 'field_too_long', result)
 

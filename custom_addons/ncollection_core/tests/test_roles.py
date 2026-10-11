@@ -75,6 +75,8 @@ MATRIX_ALLOWED_DIRECT = {
         'ncollection_core.group_role_ceo',
         'base.group_system',
         'account.group_account_user',
+        'purchase.group_purchase_manager',
+        'stock.group_stock_manager',
     },
 }
 

@@ -20,6 +20,11 @@ EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 # Defensive length cap on the free-text checkout fields before Tenant.create()
 # (#226 M-3) — they are unbounded Char otherwise.
 _MAX_FIELD_LEN = 200
+# The login is a USERNAME, never an email: the same rule the tenant model
+# enforces (ncollection_subscription USERNAME_RE).
+USERNAME_RE = re.compile(r'^[a-z][a-z0-9._-]{2,31}$')
+_MIN_PASSWORD_LEN = 8
+_MAX_PASSWORD_LEN = 128
 TRIAL_DAYS = 14
 # The canonical base domain param, shared with the domain layer + config-sync
 # (models/domain.py, models/config_sync.py) and seeded to 'ncollectionerp.com' in
@@ -52,6 +57,8 @@ class CheckoutController(http.Controller):
             'selected_plan': selected,
             'billing_cycle': 'yearly' if cycle == 'yearly' else 'monthly',
             'recaptcha_site_key': site_key,
+            # The ONE base-domain definition (never a literal in the template).
+            'base_domain': request.env['ncollection.tenant'].sudo()._nc_base_domain(),
         })
 
     @http.route('/nc/checkout/pending/<string:tenant_uuid>', type='http',
@@ -90,22 +97,41 @@ class CheckoutController(http.Controller):
 
     @http.route('/nc/checkout/register', type='jsonrpc', auth='public', methods=['POST'])
     def register(self, company=None, contact=None, email=None, subdomain=None,
-                 plan=None, cycle='monthly', recaptcha_token=None, **kw):
+                 plan=None, cycle='monthly', recaptcha_token=None,
+                 username=None, password=None, password_confirm=None, **kw):
         Tenant = request.env['ncollection.tenant'].sudo()
         company = (company or '').strip()
         contact = (contact or '').strip()
         email = (email or '').strip().lower()
+        username = (username or '').strip().lower()
+        password = password or ''
+        password_confirm = password_confirm or ''
         subdomain = Tenant._nc_normalize_subdomain(subdomain)
         source_ip = request.httprequest.remote_addr
 
         # --- validation (stable error keys the UI translates) ---
-        if not company or not email:
+        if not company or not email or not username or not password:
             return {'success': False, 'error': 'missing_fields'}
         if (len(company) > _MAX_FIELD_LEN or len(contact) > _MAX_FIELD_LEN
                 or len(email) > _MAX_FIELD_LEN):
             return {'success': False, 'error': 'field_too_long'}
         if not EMAIL_RE.fullmatch(email):
             return {'success': False, 'error': 'invalid_email'}
+        # --- credentials: a real username, and a password typed twice ---
+        # The username is validated, never derived: an address is refused
+        # outright rather than quietly turned into a login.
+        if '@' in username:
+            return {'success': False, 'error': 'username_is_email'}
+        if not USERNAME_RE.fullmatch(username):
+            return {'success': False, 'error': 'invalid_username'}
+        if password != password_confirm:
+            return {'success': False, 'error': 'password_mismatch'}
+        if len(password) < _MIN_PASSWORD_LEN:
+            return {'success': False, 'error': 'password_too_short'}
+        if len(password) > _MAX_PASSWORD_LEN:
+            return {'success': False, 'error': 'field_too_long'}
+        if password.lower() == username:
+            return {'success': False, 'error': 'password_same_as_username'}
         if not Tenant._nc_verify_recaptcha(recaptcha_token, source_ip):
             return {'success': False, 'error': 'captcha_failed'}
         available, reason = Tenant._nc_subdomain_availability(subdomain)
@@ -124,7 +150,18 @@ class CheckoutController(http.Controller):
         # when a plan sets no trial_days, preserving prior checkout behaviour.
         trial_days = plan_rec.trial_days or TRIAL_DAYS
         trial_end = fields.Date.add(today, days=trial_days)
+        # Hash on arrival: the request waits for approval, possibly for days,
+        # and the plaintext must never be stored. Odoo's own password context,
+        # so the tenant's res.users verifies it natively once it is installed.
+        password_hash = request.env['res.users'].sudo()._crypt_context().hash(password)
         tenant = Tenant.create({
+            # PENDING APPROVAL: nothing is provisioned until an administrator
+            # approves this request (action_provision). The database does not
+            # exist yet and cannot be created by anyone else.
+            'registration_state': 'pending',
+            'registration_date': fields.Datetime.now(),
+            'admin_login': username,
+            'admin_password_hash': password_hash,
             'company_name': company,
             'contact_name': contact,
             'email': email,
@@ -151,7 +188,8 @@ class CheckoutController(http.Controller):
         })
         tenant.subscription_id = sub.id
         tenant._nc_send_verification_email()
-        return {'success': True, 'tenant_uuid': tenant.tenant_uuid}
+        return {'success': True, 'tenant_uuid': tenant.tenant_uuid,
+                'state': 'pending'}
 
     @http.route('/nc/checkout/status', type='jsonrpc', auth='public', methods=['POST'])
     def status(self, tenant_uuid=None, **kw):
@@ -159,7 +197,12 @@ class CheckoutController(http.Controller):
             [('tenant_uuid', '=', tenant_uuid)], limit=1)
         if not tenant:
             return {'status': 'unknown'}
-        result = {'status': tenant.database_status, 'verified': tenant.checkout_email_verified}
+        # `stage` is the one answer the page needs: pending / rejected /
+        # approved / provisioning / ready / failed. `status` is kept for older
+        # callers.
+        result = {'status': tenant.database_status,
+                  'stage': tenant.provision_stage,
+                  'verified': tenant.checkout_email_verified}
         if tenant.database_status == 'ready':
             base_domain = request.env['ir.config_parameter'].sudo().get_param(
                 _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN)

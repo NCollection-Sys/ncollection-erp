@@ -141,7 +141,7 @@ class TestConfigSyncKey(TransactionCase):
         # is UNIQUE, so the rename must reach the DB before the new row can claim
         # the string — flush, or the INSERT collides with the still-cached old
         # value. (That constraint is also why this takes two writes, not one.)
-        real.sudo().write({'login': 'retired-config-sync@example.com'})
+        real.sudo().write({'login': 'retired-config-sync'})
         self.env.flush_all()
         impostor = self.env['res.users'].sudo().create({
             'name': 'Impostor', 'login': SERVICE_LOGIN,

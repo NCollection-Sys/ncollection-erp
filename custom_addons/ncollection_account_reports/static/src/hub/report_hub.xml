@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_account_reports.ReportHub">
+        <div class="o_nc_hub">
+            <header class="o_nc_hub__head">
+                <div>
+                    <h1 class="o_nc_hub__title">Reports</h1>
+                    <p class="o_nc_hub__subtitle">Financial statements, ledgers and business analysis, organised by area.</p>
+                </div>
+                <input class="o_nc_hub__search" type="search" placeholder="Find a report…"
+                       aria-label="Find a report" t-model="state.query"/>
+            </header>
+
+            <div t-if="!state.loaded" class="o_nc_hub__empty">Loading reports…</div>
+            <div t-elif="!visibleCategories.length" class="o_nc_hub__empty">
+                <t t-if="state.query">No report matches your search.</t>
+                <t t-else="">No reports are available for your account.</t>
+            </div>
+            <div t-else="" class="o_nc_hub__grid">
+                <t t-foreach="visibleCategories" t-as="cat" t-key="cat.key">
+                    <section class="o_nc_hub__card" t-att-data-category="cat.key">
+                        <div class="o_nc_hub__card-head">
+                            <span class="o_nc_hub__icon"><i t-att-class="'fa ' + cat.icon" aria-hidden="true"/></span>
+                            <div>
+                                <h2 class="o_nc_hub__card-title" t-esc="cat.name"/>
+                                <p class="o_nc_hub__card-desc" t-esc="cat.description"/>
+                            </div>
+                            <span class="o_nc_hub__count" t-esc="cat.reports.length"/>
+                        </div>
+                        <ul class="o_nc_hub__list">
+                            <t t-foreach="cat.reports" t-as="report" t-key="report.menu_id">
+                                <li>
+                                    <button type="button" class="o_nc_hub__link" t-on-click="() => this.openReport(report)"
+                                            t-att-data-xmlid="report.xmlid">
+                                        <span class="o_nc_hub__link-text">
+                                            <span class="o_nc_hub__link-name" t-esc="report.name"/>
+                                            <span t-if="report.purpose" class="o_nc_hub__link-purpose" t-esc="report.purpose"/>
+                                            <span t-if="report.badges.length" class="o_nc_hub__badges">
+                                                <t t-foreach="report.badges" t-as="badge" t-key="badge_index">
+                                                    <span class="o_nc_hub__badge" t-esc="badge"/>
+                                                </t>
+                                            </span>
+                                        </span>
+                                        <i class="fa fa-angle-right" aria-hidden="true"/>
+                                    </button>
+                                </li>
+                            </t>
+                        </ul>
+                    </section>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

@@ -17,3 +17,9 @@ from . import test_report_security
 from . import test_dimension_analysis
 # F2-T06 UAE FTA VAT 201 Return (#116)
 from . import test_uae_vat_report
+from . import test_report_hub
+from . import test_report_print
+from . import test_print_system
+from . import test_tax_analysis
+from . import test_oca_wizard_access
+from . import test_hub_roles

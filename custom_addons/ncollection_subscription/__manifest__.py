@@ -24,6 +24,7 @@ SaaS management platform for NCollection ERP administrators:
         'data/mail_data.xml',
         'views/subscription_plan_views.xml',
         'views/tenant_views.xml',
+        'views/tenant_module_wizard_views.xml',
         'views/subscription_views.xml',
         'views/provisioning_job_views.xml',
         'views/dashboard_views.xml',

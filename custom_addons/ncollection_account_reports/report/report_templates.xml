@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Wide, row-heavy reports (ledgers, ageing) print on A4 LANDSCAPE so their
+         eight columns are not squeezed; the statements stay on the company's
+         portrait A4. Margins leave room for the branded external layout. -->
+    <record id="paperformat_nc_landscape" model="report.paperformat">
+        <field name="name">NCollection A4 Landscape</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">23</field>
+        <field name="margin_bottom">17</field>
+        <field name="margin_left">11</field>
+        <field name="margin_right">11</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">19</field>
+        <field name="dpi">90</field>
+    </record>
+
     <!-- F2-T01: native QWeb PDF for any report built on the engine. It renders
          from the report's own _nc_columns() + _nc_compute_lines() — so every
          F2-T02+ report gets PDF for free. -->
@@ -11,6 +28,7 @@
         <field name="report_name">ncollection_account_reports.report_financial</field>
         <field name="report_file">ncollection_account_reports.report_financial</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <!-- F2-T02: per-model report actions. Each needs a UNIQUE report_name —
@@ -25,6 +43,7 @@
         <field name="report_name">ncollection_account_reports.report_trial_balance</field>
         <field name="report_file">ncollection_account_reports.report_trial_balance</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_landscape"/>
     </record>
 
     <record id="action_report_general_ledger" model="ir.actions.report">
@@ -34,56 +53,17 @@
         <field name="report_name">ncollection_account_reports.report_general_ledger</field>
         <field name="report_file">ncollection_account_reports.report_general_ledger</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_landscape"/>
     </record>
 
-    <template id="report_financial">
-        <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="o">
-                <t t-call="web.external_layout">
-                    <div class="page">
-                        <h2 t-out="o._nc_report_title()"/>
-                        <p class="text-muted">
-                            <span t-out="o.company_id.name"/> ·
-                            <span t-out="o.date_from"/> → <span t-out="o.date_to"/> ·
-                            <span t-out="dict(o._fields['target_move'].selection).get(o.target_move)"/>
-                        </p>
-                        <table class="table table-sm o_main_table">
-                            <thead>
-                                <tr>
-                                    <t t-foreach="o._nc_columns()" t-as="col">
-                                        <th t-att-class="'text-end' if col['type'] == 'monetary' else ''"
-                                            t-out="col['label']"/>
-                                    </t>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-foreach="o._nc_compute_lines()" t-as="line">
-                                    <tr t-att-style="'font-weight:bold' if not line.get('level') else ''">
-                                        <t t-foreach="o._nc_columns()" t-as="col">
-                                            <td t-att-class="'text-end' if col['type'] in ('monetary', 'percent') else ''">
-                                                <t t-if="col['type'] == 'monetary'">
-                                                    <span t-out="line.get(col['key'], 0.0)"
-                                                          t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                                </t>
-                                                <t t-elif="col['type'] == 'percent'">
-                                                    <!-- F2-T03: a percentage is not money; never render it
-                                                         with a currency symbol. -->
-                                                    <span t-out="'%.2f%%' % (line.get(col['key']) or 0.0)"/>
-                                                </t>
-                                                <t t-else="">
-                                                    <span t-out="line.get(col['key'], '')"/>
-                                                </t>
-                                            </td>
-                                        </t>
-                                    </tr>
-                                </t>
-                            </tbody>
-                        </table>
-                    </div>
-                </t>
-            </t>
-        </t>
-    </template>
+    <!-- The shared body. It formats NOTHING itself: every figure arrives
+         pre-formatted from o._nc_export_payload(), the same payload the XLSX uses.
+         (A Python % inside a QWeb attribute is mangled by QWeb's own % pass, which
+         is what crashed every report with a percent column.) Logical CSS so the
+         page mirrors under dir="rtl"; the table header repeats on every page and a
+         row never splits across one. -->
+    <!-- The shared body of every engine report is `report_financial` in nc_print.xml (the NCollection print
+         design system). Each action below only names its own report_name and its paper. -->
 
     <!-- Thin per-report wrappers: give each action a UNIQUE report_name while
          reusing the generic body above (docs/o come from the render context). -->
@@ -104,6 +84,7 @@
         <field name="report_name">ncollection_account_reports.report_balance_sheet</field>
         <field name="report_file">ncollection_account_reports.report_balance_sheet</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <record id="action_report_profit_loss" model="ir.actions.report">
@@ -113,6 +94,7 @@
         <field name="report_name">ncollection_account_reports.report_profit_loss</field>
         <field name="report_file">ncollection_account_reports.report_profit_loss</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_balance_sheet">
@@ -133,6 +115,7 @@
         <field name="report_name">ncollection_account_reports.report_financial_summary</field>
         <field name="report_file">ncollection_account_reports.report_financial_summary</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <record id="action_report_revenue_analysis" model="ir.actions.report">
@@ -142,6 +125,7 @@
         <field name="report_name">ncollection_account_reports.report_revenue_analysis</field>
         <field name="report_file">ncollection_account_reports.report_revenue_analysis</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <record id="action_report_expense_analysis" model="ir.actions.report">
@@ -151,6 +135,7 @@
         <field name="report_name">ncollection_account_reports.report_expense_analysis</field>
         <field name="report_file">ncollection_account_reports.report_expense_analysis</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <record id="action_report_profitability" model="ir.actions.report">
@@ -160,6 +145,7 @@
         <field name="report_name">ncollection_account_reports.report_profitability</field>
         <field name="report_file">ncollection_account_reports.report_profitability</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_financial_summary">
@@ -189,6 +175,7 @@
         <field name="report_name">ncollection_account_reports.report_partner_ledger</field>
         <field name="report_file">ncollection_account_reports.report_partner_ledger</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_landscape"/>
     </record>
 
     <template id="report_partner_ledger">
@@ -202,6 +189,7 @@
         <field name="report_name">ncollection_account_reports.report_aged_partner</field>
         <field name="report_file">ncollection_account_reports.report_aged_partner</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_landscape"/>
     </record>
 
     <template id="report_aged_partner">
@@ -215,80 +203,10 @@
         <field name="report_name">ncollection_account_reports.report_partner_statement</field>
         <field name="report_file">ncollection_account_reports.report_partner_statement</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
-    <!-- A statement is ONE DOCUMENT PER PARTNER, so `web.external_layout` is
-         called inside the partner loop — each partner gets its own branded
-         page rather than all of them sharing one header. Branding (logo,
-         colours) comes from that layout via ncollection_branding: this adds no
-         layout of its own, which is what "branded per #49" means here. -->
-    <template id="report_partner_statement">
-        <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="o">
-                <t t-foreach="o._nc_statement_docs()" t-as="st">
-                    <t t-call="web.external_layout">
-                        <div class="page">
-                            <h2 t-out="o._nc_report_title()"/>
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <strong t-out="st['partner'].display_name"/>
-                                    <div t-out="st['partner'].contact_address"/>
-                                </div>
-                                <div class="col-6 text-end">
-                                    <div><span t-out="o.date_from"/> → <span t-out="o.date_to"/></div>
-                                </div>
-                            </div>
-                            <table class="table table-sm o_main_table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th><th>Entry</th><th>Label</th>
-                                        <th class="text-end">Debit</th>
-                                        <th class="text-end">Credit</th>
-                                        <th class="text-end">Balance</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr style="font-weight:bold">
-                                        <td colspan="5">Opening Balance</td>
-                                        <td class="text-end">
-                                            <span t-out="st['opening']"
-                                                  t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                        </td>
-                                    </tr>
-                                    <t t-foreach="st['lines']" t-as="line">
-                                        <tr>
-                                            <td t-out="line['date']"/>
-                                            <td t-out="line['move_name']"/>
-                                            <td t-out="line['label']"/>
-                                            <td class="text-end">
-                                                <span t-out="line['debit']"
-                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                            </td>
-                                            <td class="text-end">
-                                                <span t-out="line['credit']"
-                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                            </td>
-                                            <td class="text-end">
-                                                <span t-out="line['running_balance']"
-                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                            </td>
-                                        </tr>
-                                    </t>
-                                    <tr style="font-weight:bold">
-                                        <td colspan="5">Balance Due</td>
-                                        <td class="text-end">
-                                            <span t-out="st['closing']"
-                                                  t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </t>
-                </t>
-            </t>
-        </t>
-    </template>
+    <!-- report_partner_statement: see nc_print.xml (one document per partner, same design system). -->
 
     <!-- ==== F2-T04: Cash Flow + Statement of Changes in Equity (#114) ====
          A UNIQUE report_name per action, each a thin wrapper over the shared
@@ -301,6 +219,7 @@
         <field name="report_name">ncollection_account_reports.report_cash_flow</field>
         <field name="report_file">ncollection_account_reports.report_cash_flow</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_cash_flow">
@@ -314,6 +233,7 @@
         <field name="report_name">ncollection_account_reports.report_equity_changes</field>
         <field name="report_file">ncollection_account_reports.report_equity_changes</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_equity_changes">
@@ -331,6 +251,7 @@
         <field name="report_name">ncollection_account_reports.report_cost_center</field>
         <field name="report_file">ncollection_account_reports.report_cost_center</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_cost_center">
@@ -344,6 +265,7 @@
         <field name="report_name">ncollection_account_reports.report_profit_center</field>
         <field name="report_file">ncollection_account_reports.report_profit_center</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_profit_center">
@@ -357,6 +279,7 @@
         <field name="report_name">ncollection_account_reports.report_department</field>
         <field name="report_file">ncollection_account_reports.report_department</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_department">
@@ -371,9 +294,25 @@
         <field name="report_name">ncollection_account_reports.report_uae_vat</field>
         <field name="report_file">ncollection_account_reports.report_uae_vat</field>
         <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
     </record>
 
     <template id="report_uae_vat">
+        <t t-call="ncollection_account_reports.report_financial"/>
+    </template>
+
+    <!-- Tax Analysis (by tax / account / customer / vendor / taxability) -->
+    <record id="action_report_tax_analysis" model="ir.actions.report">
+        <field name="name">Tax Analysis</field>
+        <field name="model">ncollection.account.report.tax.analysis</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_account_reports.report_tax_analysis</field>
+        <field name="report_file">ncollection_account_reports.report_tax_analysis</field>
+        <field name="print_report_name">object._nc_report_title()</field>
+        <field name="paperformat_id" ref="paperformat_nc_portrait"/>
+    </record>
+
+    <template id="report_tax_analysis">
         <t t-call="ncollection_account_reports.report_financial"/>
     </template>
 

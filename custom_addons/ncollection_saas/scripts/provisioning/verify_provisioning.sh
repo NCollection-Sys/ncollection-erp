@@ -129,7 +129,8 @@ plan = env['ncollection.subscription.plan'].create({
     'name': 'Prov Plan', 'code': 'PROV', 'allowed_module_names': 'crm, account', 'max_users': 3})
 tenant = env['ncollection.tenant'].create({
     'company_name': 'Prov Co', 'database_name': 'provclient',
-    'email': 'owner@prov.example', 'plan_id': plan.id, 'status': 'trial'})
+    'email': 'owner@prov.example', 'admin_login': 'provadmin',
+    'plan_id': plan.id, 'status': 'trial'})
 job = env['ncollection.provisioning.job'].create({
     'tenant_id': tenant.id, 'database_name': 'provclient'})
 env.cr.commit()
@@ -151,8 +152,12 @@ db_exists provclient && ok "database 'provclient' created" || no "database not c
   && ok "auth_session_timeout (OCA dep) auto-installed" || no "auth_session_timeout not installed"
 [ "$(tq provclient "SELECT plan_code FROM ncollection_workspace_config LIMIT 1")" = "PROV" ] \
   && ok "workspace.config projection written (plan_code=PROV)" || no "workspace config missing"
-[ "$(tq provclient "SELECT login FROM res_users WHERE login='owner@prov.example'")" = "owner@prov.example" ] \
-  && ok "tenant admin seeded (login set from tenant email)" || no "admin not seeded"
+# The login is the USERNAME the tenant was given, and the contact email must NOT
+# have become a login: that was the old behaviour and is now forbidden.
+[ "$(tq provclient "SELECT login FROM res_users WHERE login='provadmin'")" = "provadmin" ] \
+  && ok "tenant admin seeded (login is the username, not the email)" || no "admin not seeded"
+[ "$(tq provclient "SELECT COUNT(*) FROM res_users WHERE login='owner@prov.example'")" = "0" ] \
+  && ok "the contact email was NOT turned into a login" || no "the email became a login"
 # R-014 guard: the seed re-runs _sync_role_implications AFTER the plan modules
 # install, so the Accountant role must now imply account.group_account_user
 # (core's post_init_hook alone links nothing — account did not exist yet).
@@ -174,7 +179,8 @@ from unittest.mock import patch
 plan = env['ncollection.subscription.plan'].create({
     'name': 'Fail Plan', 'code': 'FAIL', 'allowed_module_names': ''})
 tenant = env['ncollection.tenant'].create({
-    'company_name': 'Fail Co', 'database_name': 'provfail', 'plan_id': plan.id, 'status': 'trial'})
+    'company_name': 'Fail Co', 'database_name': 'provfail', 'admin_login': 'failadmin',
+    'plan_id': plan.id, 'status': 'trial'})
 job = env['ncollection.provisioning.job'].create({'tenant_id': tenant.id, 'database_name': 'provfail'})
 env.cr.commit()
 try:

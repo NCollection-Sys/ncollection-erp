@@ -164,6 +164,13 @@
             <field name="domain_force">[('create_uid', '=', user.id)]</field>
             <field name="global" eval="True"/>
         </record>
+        <!-- Tax Analysis: same per-user scoping as every other report run. -->
+        <record id="rule_report_tax_analysis_own" model="ir.rule">
+            <field name="name">Tax Analysis runs: own only</field>
+            <field name="model_id" ref="model_ncollection_account_report_tax_analysis"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="global" eval="True"/>
+        </record>
     </data>
 </odoo>
 

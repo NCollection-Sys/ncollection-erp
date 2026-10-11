@@ -164,6 +164,29 @@ under *Management Reports*, not Executive, and it needs an analytic/department
 dimension that does not exist in the financial data model. Building it means
 introducing that dimension — an architecture decision, tracked separately.
 
+Reports hub and viewer
+======================
+
+One catalog (`ncollection.report.service._nc_catalog`) drives three things so they cannot
+drift apart: the **menu tree** (every report filed under one of seven business categories,
+whichever module owns it), the **Reports landing page** (category cards listing only what
+the current user may open) and the **duplicates that are hidden** (OCA General Ledger,
+Trial Balance and Aged Partner - hidden, never uninstalled; OCA Journal Ledger, Open Items
+and VAT Report have no native equivalent and stay).
+
+Every engine report renders in ONE client viewer (`report_viewer`), chosen by
+`context.nc_report_model`. The viewer computes nothing: `nc_report_run` builds the same
+wizard the PDF/XLSX exports read and returns its rows. Each row carries the ids of the
+records behind it, and a click opens that record's own form - account, journal entry,
+journal item, partner, payment, sale/purchase order, and for Aged the open invoices. A
+value with no id is plain text, never a link.
+
+Report state (filters, report) lives in the URL, so a reload - including the one Odoo does
+when the user switches language - returns to the same report with the same filters.
+
+Re-filing a menu out of its app's "Reporting" folder would widen who can see it (a menu is
+visible only if its parent is), so the origin folder's groups travel with the menu.
+
 What this does NOT own
 ======================
 

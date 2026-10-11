@@ -19,8 +19,9 @@ from datetime import timedelta
 
 import psycopg2
 
-from odoo import fields, models
+from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import config
 
 # Intra-package (platform-layer) import — the KDF + master env-var name live with
 # the config-sync push code. The PLATFORM derives each tenant's config-sync key and
@@ -125,6 +126,14 @@ class ProvisioningJob(models.Model):
         failure — a pre-existing database (a live tenant, or the platform DB
         itself) is never touched. A retry of a failed job first clears the
         zombie left by its own previous attempt, so retries heal cleanly.
+
+        "ITS OWN" IS PROVEN, NOT GUESSED. Before creating a database the engine
+        durably records that THIS job is about to (see _nc_mark_db_owned). A
+        database that carries that record is this job's leftover — from a failed
+        rollback, or from a worker killed mid-run and re-queued — and is cleared
+        before the retry. A database WITHOUT it is somebody else's: a live
+        tenant, a restore, a name collision. That one is never dropped, on the
+        first run or on any retry, however many times the button is pressed.
         """
         self.ensure_one()
         # Status guard: never re-run a completed job; skip one already running
@@ -134,7 +143,15 @@ class ProvisioningJob(models.Model):
                 "Job for database '%s' is already done; refusing to re-run.", self.database_name))
         if self.status == 'running':
             return True
-        retry = self.status == 'failed'
+        # THE APPROVAL GATE. A self-registered company has no database until an
+        # administrator approves it, and this is the one place every path —
+        # queue runner, manual button, tests — passes through, so the rule is
+        # enforced here and not merely hidden in the UI. Refused BEFORE the job
+        # is marked running: an unapproved request is not a failed provisioning.
+        if self.tenant_id.registration_state != 'approved':
+            raise UserError(self.env._(
+                "Tenant '%s' has not been approved; refusing to create its "
+                "database.", self.tenant_id.company_name))
         db = self.database_name
         self._set_status('running', self.env._("Provisioning started for database '%s'.", db))
         # sudo(): authorises the guarded 'provisioning'/'ready' status transitions
@@ -143,19 +160,30 @@ class ProvisioningJob(models.Model):
         self.tenant_id.sudo().write({'database_status': 'provisioning'})
         created = False
         try:
-            if retry and self._safe_to_drop(db):
-                # This job failed before and left a database behind (rollback
-                # could not complete). It is this job's own DB — drop it so the
-                # retry starts from a clean slate.
+            if self._nc_db_is_owned(db) and self._safe_to_drop(db):
+                # An earlier attempt of THIS job began building this database
+                # and never finished — its rollback failed, or its worker was
+                # killed and the job re-queued. The ownership record is what
+                # makes it safe to drop: start from a clean slate rather than
+                # fail on our own leftovers or, worse, build on a half-installed
+                # database.
                 self._drop_database(db)
                 self._append_log(self.env._(
-                    "Retry: cleared the database left by a previous failed run."))
+                    "Cleared the database left by this job's previous, "
+                    "unfinished attempt."))
 
             self._validate_db_name(db)
             self._append_log(self.env._("Name validated."))
+            # A valid administrator USERNAME is required (never the email), and
+            # it is checked here — before the database exists — so a missing
+            # one fails fast, visibly, and leaves nothing behind to clean up.
+            self.tenant_id._nc_require_admin_login()
 
             modules = self._module_list()
             created = True  # from here on, a failure owns the DB we are creating
+            # Durable BEFORE the database exists, in its own transaction, so it
+            # survives a killed worker (this job's own transaction would not).
+            self._nc_mark_db_owned(db)
             setup_url = None
             self._run_odoo_init(db, modules)
             self._append_log(
@@ -297,15 +325,19 @@ class ProvisioningJob(models.Model):
         env_vars.update({
             'NC_COMPANY': tenant.company_name or 'Tenant',
             'NC_ADMIN_EMAIL': tenant.email or '',
-            # #476: USERNAME and EMAIL are now separate. The login falls back to
-            # the email, so a tenant created by any flow that does not set a
-            # username (the public checkout, an import) gets exactly the login
-            # it would have got before this field existed.
+            # USERNAME and EMAIL are separate and the login NEVER falls back to
+            # the email: run_provisioning refuses a tenant without a valid
+            # username before any side effect (_nc_require_admin_login).
             'NC_ADMIN_LOGIN': tenant._nc_admin_login(),
             # An operator-chosen password, applied ONCE and then erased from the
             # platform record (see _mark_done). Empty keeps the hardened default:
             # an unguessable password nobody is told, plus a forced reset.
             'NC_ADMIN_PASSWORD': tenant.sudo().admin_password or '',
+            # A self-registered customer's password arrives as a one-way HASH
+            # (never plaintext — see Tenant.admin_password_hash). The seed
+            # installs it directly, so the customer signs in with the password
+            # they chose.
+            'NC_ADMIN_PASSWORD_HASH': tenant.sudo().admin_password_hash or '',
             # #451: an unset Text field is ORM False, not '' -- os.fsencode()
             # (used by subprocess.run's env= encoding) then raises "expected
             # str, bytes or os.PathLike object, not bool" and the whole
@@ -361,6 +393,41 @@ class ProvisioningJob(models.Model):
                 return line[len('SEED_SETUP_URL='):].strip() or None
         return None
 
+    # ---- ownership of a database we are building ---------------------------
+    # Stored as a system parameter (one row per database name) rather than a
+    # column on the job: the job row is locked by the running transaction, and a
+    # second connection writing it would wait forever for the very transaction
+    # that is waiting on it. A parameter row is a different lock entirely.
+    _OWNED_DB_PREFIX = 'ncollection_saas.owned_db.'
+
+    def _nc_set_owned_param(self, db, value):
+        """Write the ownership record in a transaction of its OWN, so it is
+        durable the moment it is written and survives this job being killed.
+        Under --test-enable everything shares the test's single transaction
+        (Odoo core makes the same distinction), so the record also rolls back
+        with the test instead of leaking into the database."""
+        key = self._OWNED_DB_PREFIX + db
+        if config['test_enable']:
+            self.env['ir.config_parameter'].sudo().set_param(key, value)
+            return
+        with self.env.registry.cursor() as cr:
+            api.Environment(cr, SUPERUSER_ID, {})['ir.config_parameter'].set_param(key, value)
+
+    def _nc_mark_db_owned(self, db):
+        """Record, durably, that this job is about to create `db`."""
+        self._nc_set_owned_param(db, str(self.id))
+
+    def _nc_db_is_owned(self, db):
+        """True only if the record says THIS job began building `db`."""
+        row = self.env['ir.config_parameter'].sudo().search(
+            [('key', '=', self._OWNED_DB_PREFIX + db)], limit=1)
+        return bool(row) and row.value == str(self.id)
+
+    def _nc_unmark_db_owned(self, db):
+        """The database is finished (or deliberately dropped): the record has
+        done its job and must not outlive it."""
+        self._nc_set_owned_param(db, False)
+
     def _safe_to_drop(self, db):
         """Destructive-cleanup gate. Only ever drop a name that (a) this engine
         could have created, (b) is NOT a reserved word or the platform DB itself,
@@ -386,6 +453,7 @@ class ProvisioningJob(models.Model):
         try:
             if self._safe_to_drop(db):
                 self._drop_database(db)
+                self._nc_unmark_db_owned(db)
                 self._append_log(self.env._("Rolled back: dropped database '%s'.", db))
         except Exception as exc:  # noqa: BLE001
             self._append_log(self.env._(
@@ -448,6 +516,7 @@ class ProvisioningJob(models.Model):
         """Success: job done, tenant ready + active, portal URL set, welcome
         email queued (P2-T02 point 3)."""
         db = self.database_name
+        self._nc_unmark_db_owned(db)
         self.write({'status': 'done', 'completed_at': fields.Datetime.now()})
         tenant = self.tenant_id
         # sudo(): authorises the guarded 'ready' transition (#228, not RPC-spoofable).

@@ -13,7 +13,7 @@ class NcollectionAccountReportReference(models.TransientModel):
     _description = 'NCollection Reference Report (Account Balances)'
 
     def _nc_report_title(self):
-        return self.env._("Account Balances (reference)")
+        return self.env._("Account Balances")
 
     def _nc_columns(self):
         return [

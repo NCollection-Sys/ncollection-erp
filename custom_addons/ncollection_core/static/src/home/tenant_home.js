@@ -68,12 +68,19 @@ export class NcTenantHome extends Component {
     }
 
     async openApp(app) {
-        // `menu_id` is the menu that OWNS the action — the app root itself when
-        // it has one, otherwise its first actionable child (CRM, Calendar and
-        // Contacts are all containers). The server resolved that; every app in
-        // the payload is guaranteed to have one, because one without a
-        // reachable action is not returned at all (#459).
-        await this.menu.selectMenu(app.menu_id);
+        // THE APP ROOT id (#477). Odoo's menu service keys `menusData` by menu
+        // id and resolves an app root's action itself (web/models/ir_ui_menu.py
+        // `load_web_menus`: "the action of its first child menu that is
+        // associated with an action (recursively)"), so a root is always both
+        // present and openable — which is what makes this behave exactly like
+        // clicking the app in the sidebar, current-app highlight included.
+        //
+        // It used to pass a resolved DESCENDANT id. `selectMenu` does
+        // `menusData[id].actionID` with no guard, and a descendant need not be
+        // in that map: for Sales the server resolved "Quotation Templates",
+        // which is not, so every click threw
+        // "Cannot read properties of undefined (reading 'actionID')".
+        await this.menu.selectMenu(app.id);
     }
 }
 

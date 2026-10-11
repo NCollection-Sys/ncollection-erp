@@ -18,9 +18,36 @@
         <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_form"/>
         <field name="arch" type="xml">
 
-            <!-- Retry lives beside the status it repairs, not in a menu. -->
-            <xpath expr="//sheet" position="before">
-                <header>
+            <!-- ONE header. This used to inject a second <header> before the
+                 sheet, a layout hack; everything now goes into the form's own
+                 header, with the workflow buttons first because they are the
+                 administrator's actual job. -->
+            <xpath expr="//header/button[@name='action_activate']" position="before">
+                <!-- THE ONE-CLICK ACTION. The same method serves every state, and
+                     only the label changes, so there is exactly one thing to
+                     press whether the request is pending, freshly created, or
+                     failed. It calls the existing provisioning engine; there is
+                     no terminal, SQL or Odoo shell step anywhere in this flow. -->
+                <button name="action_provision" type="object" class="btn-primary"
+                        string="Approve &amp; Provision"
+                        groups="ncollection_subscription.group_platform_admin"
+                        invisible="registration_state != 'pending'"
+                        confirm="Approve this registration and create the company's workspace now?"/>
+                <button name="action_provision" type="object" class="btn-primary"
+                        string="Create &amp; Provision Tenant"
+                        groups="ncollection_subscription.group_platform_admin"
+                        invisible="registration_state != 'approved' or provision_stage != 'approved'"
+                        confirm="Create this tenant's database and workspace now?"/>
+                <button name="action_provision" type="object" class="btn-primary"
+                        string="Retry Provisioning"
+                        groups="ncollection_subscription.group_platform_admin"
+                        invisible="provision_stage != 'failed'"/>
+                <button name="action_reject" type="object" string="Reject"
+                        groups="ncollection_subscription.group_platform_admin"
+                        invisible="registration_state != 'pending'"
+                        confirm="Reject this registration request? The requested subdomain is released."/>
+            </xpath>
+            <xpath expr="//header/field[@name='status']" position="before">
                     <!-- #459: licensing a module never installed it. This is
                          the supported way to close that gap for an EXISTING
                          tenant; new tenants still get everything at
@@ -58,11 +85,23 @@
                             help="For a tenant provisioned before its country was set.
                                   New tenants are localized at provisioning, which is the
                                   only moment a chart of accounts can be loaded safely."/>
-                    <field name="module_install_state" widget="statusbar"
-                           statusbar_visible="none,queued,running,done"
-                           invisible="database_status != 'ready'"/>
                     <field name="country_id" invisible="1"/>
-                </header>
+            </xpath>
+
+            <!-- What the customer submitted on the public page, kept apart from
+                 the technical tabs because it is what an approver reads. -->
+            <xpath expr="//notebook" position="before">
+                <group string="Registration Request" invisible="not registration_date">
+                    <group>
+                        <field name="registration_date"/>
+                        <field name="checkout_email_verified" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="registration_decision_note"
+                               readonly="registration_state != 'pending'"
+                               placeholder="Optional note for the record (kept if you reject)"/>
+                    </group>
+                </group>
             </xpath>
 
             <xpath expr="//notebook" position="inside">
@@ -72,20 +111,26 @@
                      entitled to" and "did the last push land" — so they are now
                      two tabs, and entitlement is a table rather than a string. -->
                 <page string="Modules" name="modules">
-                    <div class="alert alert-info" role="status">
-                        Entitlement is the <strong>plan</strong>
-                        (<field name="plan_id" readonly="1" nolabel="1" class="oe_inline"/>)
-                        plus the country localization, minus anything disabled for this
-                        tenant below. Editing the plan changes it for
-                        <strong>every</strong> tenant on that plan; the overrides below
-                        change only this one.
+                    <div class="alert alert-info d-flex align-items-center justify-content-between gap-3" role="status">
+                        <div>
+                            The <strong>plan</strong>
+                            (<field name="plan_id" readonly="1" nolabel="1" class="oe_inline"/>)
+                            is the shared baseline for every tenant that uses it. Anything
+                            changed on this tab applies to <strong>this tenant only</strong>
+                            — the plan and every other tenant stay exactly as they were.
+                        </div>
+                        <button name="action_customize_modules" type="object"
+                                string="Customize modules" class="btn-primary flex-shrink-0"
+                                groups="ncollection_subscription.group_platform_admin"
+                                invisible="not plan_id"/>
                     </div>
 
+                    <separator string="Module entitlement"/>
+                    <!-- Plan status, this tenant's change, and the result — as a
+                         table, not a comma-separated string. -->
+                    <field name="module_matrix_html" nolabel="1" readonly="1"/>
+
                     <group>
-                        <group string="Entitlement">
-                            <field name="effective_module_names" readonly="1"
-                                   placeholder="Core modules only"/>
-                        </group>
                         <group string="Installation">
                             <!-- #459: installation is a separate fact from
                                  licensing, so it gets its own state rather than
@@ -101,23 +146,27 @@
                         </group>
                     </group>
 
-                    <separator string="Overrides For This Tenant Only"/>
+                    <separator string="Changes made for this tenant"/>
                     <div class="text-muted mb-2">
-                        A row here is a deliberate exception to the plan.
-                        <strong>Disabled</strong> withdraws a module the plan grants;
-                        <strong>Added</strong> grants one it does not. Removing the row
-                        restores exactly what the plan says. Disabling withdraws the
-                        licence and hides the app — it never uninstalls the module or
-                        deletes any data.
+                        Each row is a deliberate exception to the plan, with who made it
+                        and why. Deleting a row restores exactly what the plan says.
+                        Removing a module withdraws the licence and hides the app — it
+                        never uninstalls the module or deletes any data.
                     </div>
-                    <field name="module_override_ids" nolabel="1"
-                           context="{'default_tenant_id': id}">
-                        <list editable="bottom">
-                            <field name="module_name" placeholder="e.g. crm"/>
+                    <div class="text-muted fst-italic mb-2" invisible="module_override_ids">
+                        No changes: this tenant has exactly the modules its plan grants.
+                    </div>
+                    <field name="module_override_ids" nolabel="1" invisible="not module_override_ids">
+                        <!-- Edited through "Customize modules"; here it is a record of
+                             what was changed, deletable to revert one change. -->
+                        <list create="0" edit="0" delete="1">
+                            <field name="module_name"/>
                             <field name="mode" widget="badge"
-                                   decoration-danger="mode == 'disable'"
-                                   decoration-success="mode == 'enable'"/>
-                            <field name="reason" placeholder="Why this tenant differs"/>
+                                   decoration-warning="mode == 'disable'"
+                                   decoration-info="mode == 'enable'"/>
+                            <field name="reason"/>
+                            <field name="create_uid" string="Changed by"/>
+                            <field name="create_date" string="On" widget="date"/>
                         </list>
                     </field>
 
