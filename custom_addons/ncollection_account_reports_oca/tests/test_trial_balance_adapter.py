@@ -262,10 +262,13 @@ class TestTrialBalanceAdapter(_Data):
         accountant = self._user('tb_oca_single', 'account.group_account_user')
         accountant.company_ids = [(6, 0, self.env.company.ids)]
         accountant.company_id = self.env.company
-        wizard = self.env[OCA].with_user(accountant).create(
-            dict(self.base, company_id=other_company.id))
+        # the engine refuses to even CREATE a wizard for a company the user is not in...
         with self.assertRaises(AccessError):
-            wizard._nc_compute_lines()
+            self.env[OCA].with_user(accountant).create(dict(self.base, company_id=other_company.id))
+        # ...and, defence in depth, a wizard that exists anyway still computes nothing for that user
+        wizard = self.env[OCA].sudo().create(dict(self.base, company_id=other_company.id))
+        with self.assertRaises(AccessError):
+            wizard.with_user(accountant)._nc_compute_lines()
         with self.assertRaises(AccessError):
             self.Service.with_user(accountant).nc_report_run(
                 NATIVE, dict(self.base, company_id=other_company.id))

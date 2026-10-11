@@ -38,6 +38,7 @@ class TestPrintSystem(AccountTestInvoicingCommon):
                     (0, 0, {'account_id': recv.id, 'debit': amount, 'credit': 0.0, 'partner_id': partner.id}),
                     (0, 0, {'account_id': rev.id, 'debit': 0.0, 'credit': amount})]}).action_post()
         cls.filters = {'date_from': date(2026, 1, 1), 'date_to': date(2026, 12, 31)}
+        cls.company_data_2 = cls.setup_other_company()      # a second company with its own chart
 
     def _print(self, model, **extra):
         wiz = self.env[model].create(dict(self.filters, **extra))
@@ -143,7 +144,7 @@ class TestPrintSystem(AccountTestInvoicingCommon):
 
     # ----------------------------------------------------------- the rendered pages
     def _html(self, wizard, lang=None):
-        action = self.env.ref(wizard._nc_report_action_ref()).with_context(
+        action = wizard.env.ref(wizard._nc_report_action_ref()).with_context(
             force_report_rendering=True, **({'lang': lang} if lang else {}))
         out = action._render_qweb_html(action.report_name, [wizard.id])[0]
         return out.decode() if isinstance(out, bytes) else out
@@ -213,7 +214,7 @@ class TestPrintSystem(AccountTestInvoicingCommon):
         for lang in (None, 'ar_001'):
             wiz = self.env['ncollection.account.report.statement'].with_context(lang=lang).create(
                 dict(self.filters, partner_ids=[(6, 0, partner.ids)]))
-            html = self._html(wiz, lang=lang)
+            html = self._html(wiz, lang=lang).replace('‪', '').replace('‬', '')   # bidi runs
             self.assertIn(name, html)
             self.assertIn('INV/2026/9001', html)
 
@@ -233,3 +234,121 @@ class TestPrintSystem(AccountTestInvoicingCommon):
         payload = wiz._nc_print_payload()
         for label, text in payload['meta']:
             self.assertTrue(text, 'empty meta value for %r' % label)
+
+    # ----------------------------------------------------------- company access
+    def _company_b_run(self):
+        """A posted entry in the second company, and a user who belongs to the FIRST company only."""
+        data_b = self.company_data_2
+        self.company_b = data_b['company']
+        self.partner_b_only = self.env['res.partner'].create({
+            'name': 'Company B Only Customer', 'company_id': self.company_b.id})
+        self.env['account.move'].with_company(self.company_b).create({
+            'move_type': 'entry', 'journal_id': data_b['default_journal_misc'].id, 'date': date(2026, 3, 3),
+            'line_ids': [
+                (0, 0, {'account_id': data_b['default_account_receivable'].id, 'debit': 777.0,
+                        'partner_id': self.partner_b_only.id}),
+                (0, 0, {'account_id': data_b['default_account_revenue'].id, 'credit': 777.0})]}).action_post()
+        groups = [self.env.ref('base.group_user').id, self.env.ref('account.group_account_readonly').id]
+        self.user_a = self.env['res.users'].create({
+            'name': 'A only', 'login': 'company_a_only_print', 'company_id': self.env.company.id,
+            'company_ids': [(6, 0, self.env.company.ids)], 'group_ids': [(6, 0, groups)]})
+        self.user_ab = self.env['res.users'].create({
+            'name': 'A and B', 'login': 'company_ab_print', 'company_id': self.env.company.id,
+            'company_ids': [(6, 0, (self.env.company | self.company_b).ids)], 'group_ids': [(6, 0, groups)]})
+
+    def test_a_user_of_company_a_cannot_print_company_b(self):
+        """Creating the wizard directly with company B (bypassing the service) is refused outright, so
+        neither B's letterhead (name, address, tax id, logo) nor B's figures can be printed. This is a
+        constraint on the engine, not only a check in `nc_report_run`."""
+        from odoo.exceptions import AccessError
+        self._company_b_run()
+        for model in ('ncollection.account.report.general.ledger', 'ncollection.account.report.statement',
+                      'ncollection.account.report.trial.balance'):
+            with self.assertRaises(AccessError, msg=model):
+                self.env[model].with_user(self.user_a).create(dict(self.filters, company_id=self.company_b.id))
+            wiz = self.env[model].with_user(self.user_a).create(dict(self.filters))      # its own company: fine
+            self.assertEqual(wiz.company_id, self.env.company)
+            with self.assertRaises(AccessError, msg=model):                              # nor by editing it later
+                wiz.write({'company_id': self.company_b.id})
+            html = self._html(wiz)
+            self.assertNotIn('Company B Only Customer', html, model)
+            self.assertNotIn('777.00', html, model)
+            self.assertNotIn(self.company_b.name, html, model)
+
+    def test_a_user_of_both_companies_prints_each_company_with_its_own_letterhead(self):
+        self._company_b_run()
+        wiz = self.env['ncollection.account.report.statement'].with_user(self.user_ab).with_context(
+            allowed_company_ids=(self.env.company | self.company_b).ids).create(
+            dict(self.filters, company_id=self.company_b.id, partner_ids=[(6, 0, self.partner_b_only.ids)]))
+        payload = wiz._nc_print_payload()
+        self.assertEqual(payload['co']['name'], self.company_b.name)
+        self.assertEqual(payload['docs'][0]['party']['name'], 'Company B Only Customer')
+        self.assertEqual(payload['docs'][0]['summary'][1][1], '777.00')
+
+    # ----------------------------------------------------------- the page prints the payload, nothing else
+    def test_the_rendered_page_prints_exactly_the_payload_cells_including_percentages(self):
+        """Trial Balance, Balance Sheet and P&L: every cell of every row (values, section totals, grand
+        total, zero rows and the variance percentages) is printed as the prepared string, in order."""
+        from lxml import html as lhtml
+        for model in ('ncollection.account.report.trial.balance', 'ncollection.account.report.balance.sheet',
+                      'ncollection.account.report.profit.loss'):
+            vals = dict(self.filters)
+            if model.endswith(('balance.sheet', 'profit.loss')):
+                vals['comparison_type'] = 'previous_period'
+            wiz = self.env[model].create(vals)
+            payload = wiz._nc_print_payload()
+            page = lhtml.fromstring(self._html(wiz))
+            printed = [[''.join(td.itertext()).strip() for td in tr.findall('td')]
+                       for tr in page.xpath("//table[contains(@class,'nc-t')]/tbody/tr")]
+            expected = [[c['text'] for c in row['cells']] for s in payload['sections'] for row in s['rows']]
+            self.assertEqual(printed, expected, model)
+            if 'comparison_type' in vals:
+                self.assertTrue(any(t.endswith('%') for r in expected for t in r), 'no % cell: ' + model)
+            # and the payload rows ARE the engine rows (headings only lose their muted zero)
+            engine = wiz._nc_export_payload()['rows']
+            self.assertEqual(len(expected), len(engine), model)
+            for mine, theirs, row in zip(expected, engine, [r for s in payload['sections'] for r in s['rows']]):
+                for text, cell in zip(mine, theirs['cells']):
+                    if row['cls'] == 'section' and not text:
+                        continue                      # a heading's blank where the engine has 0
+                    self.assertEqual(text, cell['text'], (model, theirs))
+
+    def test_latin_phrases_in_arabic_text_are_left_to_right_runs(self):
+        bidi = self.env['ncollection.account.report']._nc_bidi
+        self.assertEqual(bidi('الإمارات Trading LLC (12)'), 'الإمارات ‪Trading LLC (12)‬')
+        self.assertEqual(bidi('دفعة (50%) لمشروع Tower-B'), 'دفعة ‪(50%)‬ لمشروع ‪Tower-B‬')
+        self.assertEqual(bidi('شركة (فرع)'), 'شركة (فرع)')            # an Arabic bracket is left alone
+        self.assertEqual(bidi('‪01/01/2026‬'), '‪01/01/2026‬')     # no nesting
+        self.assertEqual(bidi(''), '')
+
+    def test_english_pages_are_not_decorated_with_bidi_marks(self):
+        wiz = self.env['ncollection.account.report.general.ledger'].create(self.filters)
+        payload = wiz._nc_print_payload()
+        self.assertNotIn('‪', str(payload['sections']))
+
+    def test_the_arabic_letterhead_and_party_details_are_bidi_safe_too(self):
+        self.env.company.name = 'Al Barari Trading LLC (Dubai)'
+        self.env['res.lang']._activate_lang('ar_001')
+        wiz = self.env['ncollection.account.report.statement'].with_context(lang='ar_001').create(
+            dict(self.filters, partner_ids=[(6, 0, self.partner_a.ids)]))
+        payload = wiz._nc_print_payload()
+        self.assertEqual(payload['co']['name'], '‪Al Barari Trading LLC (Dubai)‬')
+        self.assertTrue(payload['docs'])
+        english = self.env['ncollection.account.report.statement'].create(
+            dict(self.filters, partner_ids=[(6, 0, self.partner_a.ids)]))._nc_print_payload()
+        self.assertEqual(english['co']['name'], 'Al Barari Trading LLC (Dubai)')   # left-to-right pages untouched
+
+    def test_every_report_model_refuses_a_company_the_user_is_not_in(self):
+        """A report model that overrode `create` without calling super() would silently skip the check."""
+        from odoo.exceptions import AccessError
+        self._company_b_run()
+        engine = type(self.env['ncollection.account.report'])
+        names = sorted(
+            name for name, model in self.env.registry.items()
+            if name.startswith('ncollection.account.report.') and issubclass(model, engine)
+            and not self.env[name]._abstract and hasattr(self.env[name], '_nc_columns')
+            and not name.endswith('.line'))
+        self.assertGreaterEqual(len(names), 15, names)
+        for name in names:
+            with self.assertRaises(AccessError, msg=name):
+                self.env[name].with_user(self.user_a).create(dict(self.filters, company_id=self.company_b.id))

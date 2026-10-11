@@ -438,6 +438,29 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-031 — A multi-partner statement could be e-mailed to every partner, and a report could be built for a company the user is not in ✅ FIXED
+
+**Symptom.** (1) "Send by Email" on a statement run for several customers attached ONE PDF holding every
+customer's statement and addressed the composer to all of them: each customer would have received everyone
+else's balances. (2) `ncollection.account.report.*.create({'company_id': <another company>})` succeeded; the
+company check lived only in `nc_report_run`, `AFTER` the wizard was created, while the letterhead (name,
+address, tax id, logo) is read from the wizard's company.
+
+**Root cause.** (1) `action_send` was written for one partner and never asked how many documents the run held.
+(2) The rule was enforced in one entry point instead of on the model. An `@api.constrains` cannot do it: Odoo
+runs constraints as superuser, so `env.user.company_ids` is every company.
+
+**Fix.** `action_send` refuses a run of more than one partner with an actionable (translated) message.
+`NcollectionAccountReport.create`/`write` call `_check_company_allowed` (sudo callers exempt), so it holds for
+every report model and every way of creating or editing a wizard.
+
+**Guard.** `test_partner_statement.py`: `test_send_refuses_a_multi_partner_run...`,
+`test_the_multi_partner_refusal_is_actionable_in_english_and_arabic`. `test_print_system.py`:
+`test_a_user_of_company_a_cannot_print_company_b`, `test_every_report_model_refuses_a_company_the_user_is_not_in`
+(a model that overrode `create` without `super()` would fail it), `test_a_user_of_both_companies_prints_each_company...`.
+
+---
+
 ## R-030 — Every printed report drew a hairline box around every cell, and a PDF per partner hung wkhtmltopdf ✅ FIXED
 
 **Symptom.** After the print redesign the first PDFs looked "boxed": hairline outlines around every table

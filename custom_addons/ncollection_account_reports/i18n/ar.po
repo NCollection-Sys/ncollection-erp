@@ -172,6 +172,7 @@ msgstr "أعمار الذمم المدينة / الدائنة"
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__target_move__all
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_trial_balance__target_move__all
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_uae_vat__target_move__all
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__target_move__all
 msgid "All Entries"
 msgstr "جميع القيود"
 
@@ -1739,6 +1740,7 @@ msgstr "المركز المالي"
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_summary__target_move__posted
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_trial_balance__target_move__posted
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_uae_vat__target_move__posted
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__target_move__posted
 msgid "Posted Entries"
 msgstr "القيود المرحّلة"
 
@@ -2918,3 +2920,15 @@ msgstr "الرقم الضريبي"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.nc_print_layout
 msgid "Page <span class=\"page\"/> of <span class=\"topage\"/>"
 msgstr "صفحة <span class=\"page\"/> من <span class=\"topage\"/>"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/wizard/partner_statement.py:0
+msgid ""
+"This run covers %(count)s partners, and the PDF would contain every partner's "
+"statement. Select a single partner to send a statement by email; to share "
+"several, print the run."
+msgstr ""
+"يشمل هذا التشغيل %(count)s شركاء، وسيحتوي ملف PDF على كشف حساب كل شريك. اختر "
+"شريكًا واحدًا لإرسال كشف الحساب بالبريد الإلكتروني، أو اطبع التشغيل لمشاركة "
+"عدة كشوف."

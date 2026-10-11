@@ -23,6 +23,9 @@ _HEX = re.compile(r'^#[0-9a-fA-F]{6}$')
 # Column width weights: wkhtmltopdf has no flexbox, so widths are decided here and printed as percentages.
 _WEIGHT = {'date': 1.45, 'amount': 1.7, 'percent': 1.0}
 _WIDE_TEXT = ('label', 'description', 'name', 'account', 'partner')
+# A Latin phrase inside Arabic text: starts at a letter/digit (or a '(' before one), runs over Latin
+# punctuation and spaces, and ends on a letter, digit, ')', '%' or '.' - never on a trailing space.
+_LATIN_RUN = re.compile(r"(?:\((?=[A-Za-z0-9]))?[A-Za-z0-9](?:[A-Za-z0-9 .,&/_()%:+#@'-]*[A-Za-z0-9)%.])?")
 
 
 def _mix(hex_color, ratio):
@@ -62,6 +65,41 @@ class NcPrintPayload(models.AbstractModel):
     def _nc_ltr(text):
         """``text`` as one left-to-right run, so a date or a time keeps its order on a right-to-left page."""
         return '‪%s‬' % text if text else ''
+
+    @staticmethod
+    def _nc_bidi(text):
+        """Each Latin phrase in ``text`` as its own left-to-right run. On a right-to-left page the bidi algorithm
+        otherwise flips the brackets and moves the numbers of \"Trading LLC (12)\" or \"(50%)\" when they sit
+        beside Arabic words. Pure presentation: the stored value is untouched."""
+        if not text or '‪' in text:           # empty, or already an explicit left-to-right run
+            return text
+        return _LATIN_RUN.sub(lambda m: '‪%s‬' % m.group(0), text)
+
+    def _nc_bidi_payload(self, payload):
+        """Apply ``_nc_bidi`` to every free-text string a right-to-left page prints (not numbers or dates)."""
+        bidi = self._nc_bidi
+        co = payload['co']
+        co['name'] = bidi(co['name'])
+        co['lines'] = [bidi(x) for x in co['lines']]
+        co['contacts'] = [bidi(x) for x in co['contacts']]
+        co['registry'] = bidi(co['registry'])
+        if co['vat']:
+            co['vat'] = dict(co['vat'], value=bidi(co['vat']['value']))
+        for doc in payload.get('docs', []):
+            party = doc['party']
+            party['name'] = bidi(party['name'])
+            party['lines'] = [bidi(x) for x in party['lines']]
+            party['code'] = bidi(party['code'])
+            if party['vat']:
+                party['vat'] = dict(party['vat'], value=bidi(party['vat']['value']))
+        for sec in payload.get('sections', []) + [s for d in payload.get('docs', []) for s in d['sections']]:
+            sec['title'] = bidi(sec['title'])
+            for row in sec['rows']:
+                for cell in row['cells']:
+                    if not cell['numeric'] and cell['cls'] != 'dt':
+                        cell['text'] = bidi(cell['text'])
+        payload['meta'] = [(label, bidi(text)) for label, text in payload['meta']]
+        return payload
 
     @staticmethod
     def _nc_period(payload):
@@ -234,4 +272,4 @@ class NcPrintPayload(models.AbstractModel):
             summary=self._nc_print_summary(payload, lines, sections),
             widths=self._nc_print_widths(payload['columns']),
         )
-        return payload
+        return self._nc_bidi_payload(payload) if payload['rtl'] else payload

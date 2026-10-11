@@ -98,7 +98,7 @@ plan = env['ncollection.subscription.plan'].create({
     'name': 'Sync Starter', 'code': '$PLAN_CODE', 'allowed_module_names': 'crm', 'max_users': 3})
 tenant = env['ncollection.tenant'].create({
     'company_name': 'Sync Co', 'database_name': '$TENANT_DB',
-    'email': 'owner@sync.example', 'plan_id': plan.id, 'status': 'trial'})
+    'email': 'owner@sync.example', 'admin_login': 'syncadmin', 'plan_id': plan.id, 'status': 'trial'})
 sub = env['ncollection.subscription'].create({
     'name': 'SUB', 'tenant_id': tenant.id, 'plan_id': plan.id, 'status': 'draft'})
 tenant.subscription_id = sub.id

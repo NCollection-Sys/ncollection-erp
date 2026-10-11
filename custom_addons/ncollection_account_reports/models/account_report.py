@@ -16,8 +16,8 @@ import io
 import logging
 
 from odoo import api, fields, models
+from odoo.exceptions import AccessError, UserError
 from odoo.tools.misc import format_date, formatLang
-from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -45,6 +45,35 @@ class NcollectionAccountReport(models.AbstractModel):
     target_move = fields.Selection(
         [('posted', 'Posted Entries'), ('all', 'All Entries')],
         default='posted', required=True, string='Target Moves')
+
+    def _check_company_allowed(self):
+        """A report can only be run for a company the user belongs to.
+
+        Every other path already refuses (journal items carry a company record rule), but the letterhead
+        (name, address, tax id, logo) is read from the wizard's company, so a direct `create` with another
+        company's id would otherwise print that company's identity. `nc_report_run` made the same check
+        AFTER creating the wizard; it now holds for every way of making or editing one. Sudo (system jobs) is
+        exempt. This is NOT an `@api.constrains`: Odoo runs constraints as superuser, which would see every
+        company as allowed.
+        """
+        if self.env.su:
+            return
+        allowed = self.env.user.company_ids
+        for wizard in self:
+            if wizard.company_id not in allowed:
+                raise AccessError(self.env._("You are not allowed to report on this company."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._check_company_allowed()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'company_id' in vals:
+            self._check_company_allowed()
+        return result
 
     # ---- filters -> account.move.line domain ----------------------------
 
