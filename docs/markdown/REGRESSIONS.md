@@ -438,6 +438,30 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-032 — "UncaughtPromiseError > InvalidStateError: The database connection is closing" on every screen ✅ FIXED
+
+**Symptom.** The web client's error dialog: `Failed to execute 'transaction' on 'IDBDatabase': The database
+connection is closing`, stack `web.assets_web.min.js` (an `idb-keyval` frame, line 15596 of bundle `cc2d725`).
+
+**Root cause.** Not NCollection code and not Odoo's `@web` IndexedDB layer (that one is mutex-serialised and
+reopens per call). It is the *mail* module: `@mail/core/web/store_service_patch` builds ONE idb-keyval 3.2.0 `Store`
+at load time. That library opens a single `IDBDatabase` connection in its constructor and keeps it for the life of
+the page; `Store.updateAppBadge()` then calls `idbKeyval.set("unread", n, store)` and drops the promise. When the
+browser closes that connection under the page (site data cleared or evicted, a frozen/restored tab, another context
+deleting the database) the next badge update runs `db.transaction()` on a closing connection and nothing handles the
+rejection. Intermittent by nature: a clean profile with 25 navigate/reload cycles never raises it; closing the
+connection and updating the badge raises it every time (reproduced RED before the fix).
+
+**Fix.** `ncollection_branding/static/src/js/mail_unread_store_patch.js` overrides only `updateAppBadge`: on
+`InvalidStateError` it drops the dead store and reopens ONCE. Any other error is not swallowed and a second failure
+is not retried (no reconnect loop, no leaked connection). IndexedDB stays enabled; nothing in Odoo core is edited.
+A browser holding the OLD bundle keeps the old behaviour until the new bundle (new hash) is loaded: one hard reload.
+
+**Guard.** `e2e/tests/idb-unread-store.spec.ts`: simulates the browser closing the connection and asserts no uncaught
+error and that the value is written through the reopened connection; plus repeated navigation/reload cycles.
+
+---
+
 ## R-031 — A multi-partner statement could be e-mailed to every partner, and a report could be built for a company the user is not in ✅ FIXED
 
 **Symptom.** (1) "Send by Email" on a statement run for several customers attached ONE PDF holding every

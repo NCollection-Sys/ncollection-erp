@@ -18,3 +18,27 @@ msgid ""
 msgstr ""
 "الميزة '%s' غير متضمّنة في خطة NCollection الخاصة بك. قم بترقية اشتراكك "
 "لإتاحتها."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title_enabled
+msgid "Custom print title"
+msgstr "عنوان الطباعة المخصّص"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title
+msgid "Custom title"
+msgstr "العنوان المخصّص"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Enter the custom print title, or switch the option off."
+msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخيار."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "The custom print title must be one line of at most %(max)s characters."
+msgstr "يجب أن يكون عنوان الطباعة المخصّص سطرًا واحدًا لا يزيد عن %(max)s حرفًا."

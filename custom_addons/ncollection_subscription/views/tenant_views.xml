@@ -178,6 +178,14 @@
                     </group>
 
                     <notebook>
+                        <page string="Platform access" name="platform_access" groups="ncollection_subscription.group_platform_admin">
+                            <group>
+                                <field name="platform_admin_ids" widget="many2many_tags"/>
+                            </group>
+                            <p class="text-muted">Only the platform administrators listed here can see this company in
+                                their Summary and enter it. Entering signs them in to this company's own database as a
+                                named Platform Admin account; no password is shared or stored.</p>
+                        </page>
                         <page string="Subscriptions" name="subscriptions">
                             <field name="subscription_ids">
                                 <list>

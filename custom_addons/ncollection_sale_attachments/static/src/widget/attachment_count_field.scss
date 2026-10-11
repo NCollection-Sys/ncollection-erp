@@ -1,0 +1,11 @@
+.o-NcAttachmentCount {
+    color: var(--nc-primary, var(--o-brand-primary, #1f5f8f));
+    gap: .25rem;
+    display: inline-flex;
+    align-items: center;
+
+    .o-NcAttachmentCount-n {
+        font-size: .8em;
+        font-weight: 600;
+    }
+}

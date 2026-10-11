@@ -10,6 +10,7 @@ from . import license_enforcement
 from . import ir_http
 from . import subscription_gate
 from . import res_groups
+from . import platform_entry
 from . import res_users
 # #374 the financial-data role gate, shared by ncollection_account_dashboard
 # and ncollection_ai so the rule has ONE definition rather than two that drift.

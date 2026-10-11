@@ -8,7 +8,7 @@
               web_icon="ncollection_subscription,static/description/icon.png"/>
 
     <menuitem id="menu_ncollection_saas_dashboard"
-              name="Dashboard"
+              name="Summary"
               parent="menu_ncollection_saas_root"
               action="action_ncollection_subscription_dashboard"
               sequence="10"/>

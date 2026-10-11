@@ -15,13 +15,13 @@
 <odoo>
 
     <record id="action_ncollection_dashboard" model="ir.actions.client">
-        <field name="name">Dashboard</field>
+        <field name="name">Summary</field>
         <field name="tag">ncollection_core.dashboard</field>
     </record>
 
     <!-- sequence 1: the landing page sorts ahead of the ERP apps. -->
     <menuitem id="menu_ncollection_dashboard_root"
-              name="Dashboard"
+              name="Summary"
               action="action_ncollection_dashboard"
               sequence="1"/>
 

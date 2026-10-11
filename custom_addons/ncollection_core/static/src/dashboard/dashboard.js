@@ -77,6 +77,10 @@ export class NcDashboard extends Component {
         return this.state.widgets.filter((w) => w.type === "kpi");
     }
 
+    get statements() {
+        return this.state.widgets.filter((w) => w.type === "statement");
+    }
+
     get charts() {
         return this.state.widgets.filter((w) => w.type === "chart");
     }
@@ -93,6 +97,16 @@ export class NcDashboard extends Component {
             return symbol ? `${symbol} ${compact}` : compact;
         }
         return new Intl.NumberFormat().format(value);
+    }
+
+    /** Full-precision amount for a statement row (a statement is read to the cent, not compacted). */
+    formatMoney(value) {
+        const symbol = this.state.meta.currency || "";
+        const text = new Intl.NumberFormat(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(value ?? 0);
+        return symbol ? `${symbol} ${text}` : text;
     }
 
     /** Trend chip text; null when there is no prior period to compare against. */

@@ -98,7 +98,10 @@ create_tenant(){
 
     if [ -n "$missing" ]; then
       echo "  • $db already provisioned — INSTALLING newly-listed: ${missing}"
-      if ! "${DC[@]}" exec -T odoo odoo -d "$db" -i "$missing" --without-demo=True \
+      # `-u` in the SAME run: the code already carries the new schema (e.g. a column on res.users from
+      # ncollection_core), and installing a module on a DB whose ncollection_* modules are not yet upgraded
+      # fails on the first res.users query.
+      if ! "${DC[@]}" exec -T odoo odoo -d "$db" -i "$missing" -u "$nc_modules" --without-demo=True \
            --no-http --stop-after-init "${DBARGS[@]}" >"/tmp/e2e_install_$db.log" 2>&1; then
         echo "ERROR: installing $missing on $db failed." >&2
         tail -20 "/tmp/e2e_install_$db.log" >&2
@@ -167,7 +170,7 @@ echo "Setting up E2E tenants…"
 # existing `sale` is what actually brings the rule under test into existence.
 # Licensed too, so the menu is reachable rather than merely installed.
 create_tenant e2eclienta \
-  "base,ncollection_core,ncollection_branding,crm,sale,account,stock,ncollection_account_dashboard" \
+  "base,ncollection_core,ncollection_branding,crm,sale,account,stock,ncollection_account_dashboard,ncollection_sale_attachments" \
   "crm,sale,account,stock,ncollection_account_dashboard"
 create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
 

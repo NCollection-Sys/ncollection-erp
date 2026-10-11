@@ -585,3 +585,27 @@ msgstr "⚠ تجهيز فاشل"
 #. module: ncollection_subscription
 msgid "⏳ At-risk Subscriptions"
 msgstr "⏳ الاشتراكات المعرّضة للخطر"
+
+#. module: ncollection_subscription
+#. odoo-python
+#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
+msgid "Platform access"
+msgstr "صلاحية المنصّة"
+
+#. module: ncollection_subscription
+#. odoo-python
+#: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant__platform_admin_ids
+msgid "Platform administrators"
+msgstr "مديرو المنصّة"
+
+#. module: ncollection_subscription
+#. odoo-python
+#: model:ir.ui.menu,name:ncollection_subscription.menu_ncollection_saas_dashboard
+msgid "Summary"
+msgstr "الملخّص"
+
+#. module: ncollection_subscription
+#. odoo-python
+#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_dashboard_form
+msgid "Platform Summary"
+msgstr "ملخّص المنصّة"

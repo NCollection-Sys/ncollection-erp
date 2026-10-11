@@ -27,3 +27,4 @@ from . import test_portal_isolation
 from . import test_error_log
 from . import test_tenant_home
 from . import test_module_management_lockout
+from . import test_platform_entry

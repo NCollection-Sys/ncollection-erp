@@ -1,0 +1,43 @@
+# Arabic (ar_001) translation of ncollection_sale_attachments.
+# NCollection ERP. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_sale_attachments\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_sale_attachments
+#: code:addons/ncollection_sale_attachments/static/src/viewer/nc_file_viewer.xml:0
+msgid "This file type cannot be previewed here."
+msgstr "لا يمكن معاينة هذا النوع من الملفات هنا."
+
+#. module: ncollection_sale_attachments
+#: code:addons/ncollection_sale_attachments/static/src/viewer/nc_file_viewer.xml:0
+msgid "Download"
+msgstr "تنزيل"
+
+#. module: ncollection_sale_attachments
+#: code:addons/ncollection_sale_attachments/static/src/widget/attachment_count_field.js:0
+msgid "No attachments."
+msgstr "لا توجد مرفقات."
+
+#. module: ncollection_sale_attachments
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_attachments.sale_order_tree_nc_attachments
+msgid "Files"
+msgstr "الملفات"
+
+#. module: ncollection_sale_attachments
+#. odoo-python
+#: model:ir.model.fields,field_description:ncollection_sale_attachments.field_sale_order__nc_attachment_count
+msgid "Attachments"
+msgstr "المرفقات"
+
+#. module: ncollection_sale_attachments
+#. odoo-javascript
+#: code:addons/ncollection_sale_attachments/static/src/widget/attachment_count_field.js:0
+msgid "Show attachments"
+msgstr "عرض المرفقات"

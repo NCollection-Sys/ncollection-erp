@@ -1,0 +1,19 @@
+// The stock viewer places its arrows with start/end, which already follow the document direction; only the
+// chevron glyphs must mirror so each one points the way it will go.
+[dir="rtl"] .o-FileViewer .o-FileViewer-navigation .oi {
+    transform: scaleX(-1);
+}
+
+.o-NcFileViewer-fallback {
+    color: var(--nc-text-inverse, #fff);
+    max-width: min(32rem, 90vw);
+    padding: 1.5rem;
+
+    .text-muted {
+        color: rgba(255, 255, 255, .72) !important;
+    }
+}
+
+.o-NcFileViewer-position {
+    flex: none;
+}

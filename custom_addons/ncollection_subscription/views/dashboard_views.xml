@@ -5,10 +5,10 @@
         <field name="name">ncollection.subscription.dashboard.form</field>
         <field name="model">ncollection.subscription.dashboard</field>
         <field name="arch" type="xml">
-            <form string="NCollection SaaS Dashboard" create="false" edit="false" delete="false">
+            <form string="NCollection Platform Summary" create="false" edit="false" delete="false">
                 <field name="currency_id" invisible="1"/>
                 <div class="o_ncollection_dashboard">
-                    <h1 class="o_ncollection_dashboard_title">NCollection SaaS Overview</h1>
+                    <h1 class="o_ncollection_dashboard_title">Platform Summary</h1>
 
                     <!-- OPERATIONS -->
                     <div class="o_ncollection_kpi_row">
@@ -103,7 +103,7 @@
 
     <!-- Open the dashboard on a fresh transient record each time -->
     <record id="action_ncollection_subscription_dashboard" model="ir.actions.act_window">
-        <field name="name">Dashboard</field>
+        <field name="name">Summary</field>
         <field name="res_model">ncollection.subscription.dashboard</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>

@@ -59,6 +59,7 @@ Applies NCollection corporate identity across the Odoo backend:
             'ncollection_branding/static/src/components/playground.js',
             'ncollection_branding/static/src/components/playground.xml',
             'ncollection_branding/static/src/js/white_label.js',
+            'ncollection_branding/static/src/js/mail_unread_store_patch.js',
             'ncollection_branding/static/src/xml/error_dialogs_patch.xml',
         ],
         'web.assets_frontend': [

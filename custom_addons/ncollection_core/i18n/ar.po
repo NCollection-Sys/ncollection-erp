@@ -365,3 +365,72 @@ msgid ""
 msgstr ""
 "اسم الدخول '%s' يبدو كعنوان بريد إلكتروني. اسم الدخول هو اسم مستخدم (مثل "
 "sara.m)؛ ضع البريد الإلكتروني في حقل البريد الإلكتروني للتواصل بدلًا من ذلك."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Summary"
+msgstr "الملخّص"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Welcome back,"
+msgstr "مرحبًا بعودتك،"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Loading your summary…"
+msgstr "جارٍ تحميل الملخّص…"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "The summary could not be loaded. Please refresh the page."
+msgstr "تعذّر تحميل الملخّص. يُرجى تحديث الصفحة."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Nothing to summarise for your role yet."
+msgstr "لا يوجد ما يُلخَّص لدورك بعد."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Open full report"
+msgstr "فتح التقرير الكامل"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "No posted entries in this period yet."
+msgstr "لا توجد قيود مرحّلة في هذه الفترة بعد."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Balance Sheet"
+msgstr "الميزانية العمومية"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Profit & Loss"
+msgstr "الأرباح والخسائر"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
+msgid "Platform Admin Mode"
+msgstr "وضع مدير المنصّة"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
+msgid "Back to Platform"
+msgstr "العودة إلى المنصّة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/platform_entry.py:0
+msgid "Platform Admin: %s"
+msgstr "مدير المنصّة: %s"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/platform_entry.py:0
+msgid "Malformed entry grant."
+msgstr "طلب دخول غير صالح."

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Custom print title of one customer document (invoice / credit note). -->
+    <record id="view_move_form_nc_print_title" model="ir.ui.view">
+        <field name="name">account.move.form.nc.print.title</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='sale_info_group']" position="inside">
+                <field name="nc_print_title_enabled" string="Custom print title"
+                       invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="nc_print_title" string="Custom title" placeholder="TAX INVOICE"
+                       invisible="move_type not in ('out_invoice', 'out_refund') or not nc_print_title_enabled"
+                       required="nc_print_title_enabled and move_type in ('out_invoice', 'out_refund')"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

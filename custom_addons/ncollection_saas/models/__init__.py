@@ -22,3 +22,5 @@ from . import module_install
 # After module_install so the tenant model's SaaS extensions are all in place.
 from . import tenant_localization
 from . import res_config_settings
+# Platform administrator -> tenant entry ("Enter Company"): allow-list, one-time grant, Summary list.
+from . import platform_entry

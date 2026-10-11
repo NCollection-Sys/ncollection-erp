@@ -12,11 +12,10 @@
 
             <div class="nc-dashboard__header">
                 <div>
-                    <h1 class="nc-dashboard__title">
-                        Welcome back<t t-if="firstName">, <t t-esc="firstName"/></t>
-                    </h1>
-                    <p class="nc-dashboard__subtitle" t-if="state.meta.company_name">
-                        <t t-esc="state.meta.company_name"/>
+                    <h1 class="nc-dashboard__title">Summary</h1>
+                    <p class="nc-dashboard__subtitle">
+                        <span class="nc-dashboard__company" t-if="state.meta.company_name" t-esc="state.meta.company_name"/>
+                        <span t-if="firstName" class="nc-dashboard__welcome">Welcome back, <t t-esc="firstName"/></span>
                     </p>
                 </div>
                 <!-- Only actions for apps this tenant has AND licenses. -->
@@ -30,11 +29,11 @@
             </div>
 
             <div t-if="state.loading" class="nc-dashboard__status">
-                Loading your dashboard…
+                Loading your summary…
             </div>
 
             <div t-elif="state.failed" class="nc-dashboard__status nc-dashboard__status--error">
-                The dashboard could not be loaded. Please refresh the page.
+                The summary could not be loaded. Please refresh the page.
             </div>
 
             <!--
@@ -43,13 +42,20 @@
                 these widgets read.
             -->
             <div t-elif="!state.widgets.length" class="nc-dashboard__status">
-                No dashboard widgets are available for your role yet.
+                Nothing to summarise for your role yet.
             </div>
 
             <t t-else="">
                 <div class="nc-kpi-grid" t-if="kpis.length">
                     <t t-foreach="kpis" t-as="widget" t-key="widget.key">
                         <t t-call="ncollection_core.DashboardKpiCard"/>
+                    </t>
+                </div>
+
+                <!-- Balance Sheet and Profit & Loss: the report engine's own rows, with a link to the full report. -->
+                <div class="nc-statement-grid" t-if="statements.length">
+                    <t t-foreach="statements" t-as="widget" t-key="widget.key">
+                        <t t-call="ncollection_core.DashboardStatementCard"/>
                     </t>
                 </div>
 
@@ -78,6 +84,33 @@
                       t-esc="formatTrend(widget)"/>
                 <span t-if="widget.sub"><t t-esc="widget.sub"/></span>
             </div>
+        </div>
+    </t>
+
+    <t t-name="ncollection_core.DashboardStatementCard">
+        <div class="nc-statement-card" t-att-data-widget="widget.key">
+            <div class="nc-statement-card__head">
+                <div>
+                    <div class="nc-statement-card__title"><t t-esc="widget.label"/></div>
+                    <div class="nc-statement-card__period" dir="ltr"><t t-esc="widget.period"/></div>
+                </div>
+                <button t-if="widget.action_id" class="btn btn-link nc-statement-card__open"
+                        t-on-click="() => this.onQuickAction(widget.action_id)">
+                    Open full report
+                </button>
+            </div>
+            <div t-if="widget.empty" class="nc-statement-card__empty">
+                No posted entries in this period yet.
+            </div>
+            <table t-else="" class="nc-statement-table">
+                <tbody>
+                    <tr t-foreach="widget.rows" t-as="row" t-key="row_index"
+                        t-att-class="'nc-statement-row nc-statement-row--l' + row.level">
+                        <td class="nc-statement-row__label" t-esc="row.label"/>
+                        <td class="nc-statement-row__value" dir="ltr" t-esc="formatMoney(row.value)"/>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </t>
 

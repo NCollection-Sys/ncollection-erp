@@ -52,6 +52,14 @@ ALL_WIDGET_GROUPS = (GROUP_FINANCIAL, GROUP_PIPELINE, GROUP_OPERATIONS, GROUP_PE
 
 TYPE_KPI = 'kpi'
 TYPE_CHART = 'chart'
+TYPE_STATEMENT = 'statement'
+
+# The two financial statements the Summary shows come from the NCollection report engine (the single source of
+# accounting numbers). Soft dependency: absent when ncollection_account_reports is not installed.
+STATEMENT_BALANCE_SHEET = 'ncollection.account.report.balance.sheet'
+STATEMENT_PROFIT_LOSS = 'ncollection.account.report.profit.loss'
+# Section headings and group subtotals only; the individual accounts stay in the full report (drill-down).
+STATEMENT_MAX_LEVEL = 1
 
 # Which widget groups each of the 8 P1-T08 roles grants (security/role_groups.xml).
 #
@@ -190,6 +198,17 @@ class NCollectionDashboardData(models.AbstractModel):
                 'key': 'top_customers', 'type': TYPE_CHART, 'group': GROUP_PIPELINE,
                 'label': self.env._('Top Customers'), 'chart': 'bar',
                 'model': 'sale.order', 'compute': '_compute_top_customers',
+            },
+            # The financial statements: the report engine's own rows, never a second calculation.
+            {
+                'key': 'balance_sheet_summary', 'type': TYPE_STATEMENT, 'group': GROUP_FINANCIAL,
+                'label': self.env._('Balance Sheet'), 'model': STATEMENT_BALANCE_SHEET,
+                'compute': '_compute_balance_sheet_summary',
+            },
+            {
+                'key': 'profit_loss_summary', 'type': TYPE_STATEMENT, 'group': GROUP_FINANCIAL,
+                'label': self.env._('Profit & Loss'), 'model': STATEMENT_PROFIT_LOSS,
+                'compute': '_compute_profit_loss_summary',
             },
         ]
 
@@ -353,6 +372,53 @@ class NCollectionDashboardData(models.AbstractModel):
             'data': [total or 0.0 for _partner, total in rows],
             'format': 'currency',
         }
+
+    # -- financial statements (from the report engine) ----------------------
+
+    @api.model
+    def _statement_summary(self, model_name, action_xmlid):
+        """Section and group rows of one engine statement, as inert data for the client.
+
+        ONE engine call per statement: the rows are the engine's own export payload (the one the PDF and XLSX
+        print), cut at ``STATEMENT_MAX_LEVEL``. Nothing is added up here, so the Summary can only ever show
+        what the full report shows, to the cent. Plain ``current period`` (no comparison columns) keeps it to a
+        single pass over the ledger.
+        """
+        today = date.today()
+        wizard = self.env[model_name].create({
+            'date_from': today.replace(month=1, day=1), 'date_to': today,
+            'target_move': 'posted', 'comparison_type': 'none',
+        })
+        payload = wizard._nc_export_payload()
+        value_index = next(i for i, column in enumerate(payload['columns']) if column['numeric'])
+        rows = []
+        for row in payload['rows']:
+            if row['level'] > STATEMENT_MAX_LEVEL:
+                continue
+            label_cell, value_cell = row['cells'][0], row['cells'][value_index]
+            rows.append({
+                'label': label_cell['text'],
+                'value': value_cell['value'] if isinstance(value_cell['value'], (int, float)) else 0.0,
+                'level': row['level'],
+            })
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        return {
+            'rows': rows,
+            'empty': not any(row['value'] for row in rows),
+            'action_id': action.id if action else False,
+            'period': '%s → %s' % (payload['date_from'], payload['date_to']),
+            'as_of': payload['date_to'],
+        }
+
+    @api.model
+    def _compute_balance_sheet_summary(self):
+        return self._statement_summary(
+            STATEMENT_BALANCE_SHEET, 'ncollection_account_reports.action_nc_view_balance_sheet')
+
+    @api.model
+    def _compute_profit_loss_summary(self):
+        return self._statement_summary(
+            STATEMENT_PROFIT_LOSS, 'ncollection_account_reports.action_nc_view_profit_loss')
 
     # -- quick actions ------------------------------------------------------
 
