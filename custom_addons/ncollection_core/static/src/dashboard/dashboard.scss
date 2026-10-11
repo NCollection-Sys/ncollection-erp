@@ -184,7 +184,8 @@
 .nc-statement-grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    // unquote(): Sass would evaluate min(100%, 22rem) itself and refuse the mixed units, failing the whole bundle.
+    grid-template-columns: unquote("repeat(auto-fit, minmax(min(100%, 22rem), 1fr))");
     margin-bottom: 1.25rem;
 }
 

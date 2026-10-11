@@ -24,12 +24,32 @@ function watch(page: Page) {
   return errors;
 }
 
+/**
+ * A SCSS compile error does not throw: Odoo serves a stub bundle that paints "A css error occured, using an old style
+ * to render this page" over the page. Neither a pageerror listener nor an element probe sees that, so look for it.
+ */
+async function expectStylesheetsCompiled(page: Page, where: string) {
+  const banner = await page.evaluate(() => getComputedStyle(document.body, '::before').content);
+  expect(banner, `${where}: css error banner`).not.toMatch(/css error/i);
+  const bad = await page.evaluate(async () => {
+    const out: string[] = [];
+    for (const link of Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel=stylesheet][href*="/web/assets/"]'))) {
+      const text = await (await fetch(link.href)).text();
+      if (text.includes('css_error_message') || text.includes('A css error occured')) out.push(link.href);
+    }
+    return out;
+  });
+  expect(bad, `${where}: stylesheet bundle compiled with an error`).toEqual([]);
+}
+
 async function walk(page: Page, errors: string[]) {
   for (const xmlid of SCREENS) {
     await page.goto(`${TENANTS[TENANT]}/odoo/action-${xmlid}`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector(NAVBAR, { timeout: 60_000 });
     await page.waitForTimeout(800);                          // let the unread-badge write and the view settle
     await expect(page.locator('.o_error_dialog')).toHaveCount(0);
+    await expect(page.locator('.o_notification'), `${xmlid}: error notification`).toHaveCount(0);
+    await expectStylesheetsCompiled(page, xmlid);
   }
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector(NAVBAR, { timeout: 60_000 });

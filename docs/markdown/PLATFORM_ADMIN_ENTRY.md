@@ -65,3 +65,13 @@ installs itself next to `sale`.
 * **Revocation lag.** Removing an administrator from the allow-list stops new entries at once; a live tenant session ends
   at the 8 h window. Proxy users are never deleted (inert: no password, need a grant). `return_url` is platform-set.
 * **Migration 19.0.1.9.0** is a one-time, add-only grant of existing platform admins to existing tenants.
+* **No persistent credential from an entry session (verified in a real proxy session).** The proxy cannot create an
+  API key by any path: Odoo's key wizard hands it no key (the identity check needs a password it does not have), and
+  `res.users.apikeys._generate`, the one funnel for core keys and NCollection API tokens, refuses the proxy even under
+  `sudo()` (which keeps the acting user); the private method is not an RPC endpoint. It cannot set a password for itself,
+  for a real user, or on a user it creates (`res.users.write/create` refuse `password`), and a password stored on it would
+  still not log in. Signup/reset links are unreachable (`auth_signup` is not installed in tenants; a reset only e-mails
+  the real user). After the 8 h window the session token stops matching and ORM calls and `/odoo` are refused. A named
+  tenant user keeps every right. Tests: `ncollection_core/tests/test_platform_proxy_credentials.py`.
+* Not guarded on purpose: an Owner-level proxy can still create an ordinary tenant user (no password) or an API client
+  record; an API client has no usable secret until `_nc_rotate_secret` (private, not RPC-callable) runs.

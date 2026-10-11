@@ -1029,3 +1029,23 @@ becomes routine rather than incidental, revisit this.
 
 `KNOWN_PENDING` in `scripts/ci/invariants.py` is currently **empty** — no known violation is
 being shipped. If an entry appears there, it belongs in this table too.
+
+## R-033 — "A css error occured, using an old style to render this page" + a view error toast on every screen ✅ FIXED
+
+**Symptom.** Red banner at the bottom of every backend page, unstyled/fallback look, and repeated "View error"
+notifications (Arabic UI: «خطأ في الشكل…»). Reproduced on the dev `ncollection` DB and the `e2eclienta/b` fixtures.
+
+**Root cause.** Two Sass errors, both mine: `grid-template-columns: …minmax(min(100%, 22rem), 1fr)` in
+`ncollection_core/static/src/dashboard/dashboard.scss` and `max-width: min(32rem, 90vw)` in
+`ncollection_sale_attachments/static/src/viewer/nc_file_viewer.scss`. Sass evaluates `min()` itself and rejects
+mixed units ("Incompatible units: 'rem' and '%'", then 'vw' and 'rem'). A SCSS failure does not raise: Odoo stores a
+**stub bundle** that paints the banner, and keeps serving it. It went unseen because Python tests and Playwright
+`pageerror` listeners cannot see it, and because the bundle is compiled lazily on first page load.
+
+**Fix.** `unquote("min(…)")` so the browser, not Sass, evaluates `min()`. Odoo caches the asset checksum in memory, so
+the new bundle appears after the registry cache is invalidated (module upgrade of the two modules, no Docker restart).
+
+**Guards.** `ncollection_core/tests/test_assets_compile.py` compiles the real `web.assets_web` bundle (LTR and RTL,
+never the cached attachment) and fails on any compile error (RED proven: the old line fails both). `release-smoke.spec.ts`
+now also fails on the banner, on a stylesheet bundle containing `css_error_message`, and on any error notification.
+Rule of thumb for new SCSS: never write bare `min()/max()/clamp()` with mixed units; wrap them in `unquote("...")`.

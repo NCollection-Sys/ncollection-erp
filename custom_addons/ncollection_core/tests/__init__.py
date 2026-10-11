@@ -28,3 +28,5 @@ from . import test_error_log
 from . import test_tenant_home
 from . import test_module_management_lockout
 from . import test_platform_entry
+from . import test_assets_compile
+from . import test_platform_proxy_credentials

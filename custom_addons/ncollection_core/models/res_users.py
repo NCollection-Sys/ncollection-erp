@@ -15,7 +15,7 @@ Two ORM-layer controls (Rule 4 — the UI mirrors these, never replaces them):
 """
 
 
-from odoo import api, fields, models
+from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import AccessDenied, AccessError, ValidationError
 
 from .platform_entry import CREDENTIAL_TYPE
@@ -95,6 +95,7 @@ class ResUsers(models.Model):
     # ------------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
+        self._nc_refuse_credentials_from_proxy(vals_list)
         if not self.env.su and any(self._nc_proxy_keys(vals) for vals in vals_list):
             raise AccessError(self.env._("Platform administrator accounts are managed by the platform."))
         users = super().create(vals_list)
@@ -105,11 +106,25 @@ class ResUsers(models.Model):
             self._ncollection_check_user_limit()
         return users
 
+    @api.model
+    def _nc_actor_is_platform_proxy(self):
+        """True when the user making this call is a platform administrator's entry proxy. ``sudo()`` does not change
+        the acting user, so it cannot be used to step around a check built on this."""
+        return bool(self.env.uid != SUPERUSER_ID and self.env.user.sudo().nc_platform_proxy)
+
+    def _nc_refuse_credentials_from_proxy(self, vals_list):
+        """A platform proxy session may not set any user's password: that would be a persistent credential (for
+        itself, or for a real account) that outlives the session. Real tenant users keep every right they have."""
+        if self._nc_actor_is_platform_proxy() and any('password' in vals for vals in vals_list):
+            raise AccessError(self.env._(
+                "A platform administrator session cannot set passwords. Ask the workspace Owner."))
+
     @staticmethod
     def _nc_proxy_keys(vals):
         return {'nc_platform_proxy', 'nc_platform_ref'} & set(vals)
 
     def write(self, vals):
+        self._nc_refuse_credentials_from_proxy([vals])
         # `readonly=True` is only a UI hint: a tenant admin must not be able to mark a real user as a proxy (it would
         # leave the seat count) or create/alter a proxy by hand. Only the entry flow (superuser env) may.
         if self._nc_proxy_keys(vals) and not self.env.su:
