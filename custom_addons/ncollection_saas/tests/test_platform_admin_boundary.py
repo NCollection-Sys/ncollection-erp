@@ -143,6 +143,5 @@ class TestPlatformAdminBoundary(TransactionCase):
         for forbidden in ('button_install', 'button_immediate_install', 'allowed_module_names'):
             self.assertNotIn(forbidden, view)
         self.assertIn('widget="boolean_toggle"', view)
-        self.assertIn('allowed_module_names', self.env.ref('ncollection_subscription.view_ncollection_subscription_plan_form').arch
-                      if self.env.ref('ncollection_subscription.view_ncollection_subscription_plan_form', raise_if_not_found=False)
-                      else 'allowed_module_names')
+        plan_form = self.env.ref('ncollection_subscription.view_ncollection_subscription_plan_form')
+        self.assertIn('allowed_module_names', plan_form.arch)
