@@ -69,6 +69,11 @@ class IrModuleModule(models.Model):
         """
         if self.env.su:
             return
+        # The platform administrator operates ABOVE the tenant layer, on the platform's own database: this rule is
+        # the tenant workspace's (a tenant Owner must not install what the plan did not sell), not theirs. The group
+        # does not exist in a tenant database, so no tenant user can ever take this branch.
+        if self.env['res.users']._nc_actor_is_platform_admin():
+            return
         _logger.warning(
             "Refused module operation %r by user %s (%s) — module management "
             "belongs to the platform, not the tenant (#459).",

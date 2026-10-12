@@ -107,6 +107,23 @@ class ResUsers(models.Model):
         return users
 
     @api.model
+    def _nc_actor_is_platform_admin(self):
+        """True when the user making this call is an NCollection PLATFORM administrator: a member of the platform
+        administrator group AND a system administrator, in a database where that group exists (the platform's own).
+
+        The group lives in ``ncollection_subscription``, which is never installed in a tenant database, so in a tenant
+        this is always False: a tenant Owner (who implies base.group_system) can neither be one nor create the group.
+        It is the acting user that counts (``sudo()`` keeps it), never a display name or a client-sent flag.
+        """
+        user = self.env.user
+        group = self.env.ref('ncollection_subscription.group_platform_admin', raise_if_not_found=False)
+        # base.group_system implies the platform group wherever it exists, so the tenant Owner ROLE (which also
+        # implies base.group_system, and which platform staff never hold) is what tells the two contexts apart.
+        return bool(group and self.env.uid != SUPERUSER_ID and user.has_group('base.group_system')
+                    and user.has_group('ncollection_subscription.group_platform_admin')
+                    and not user.has_group('ncollection_core.group_role_owner'))
+
+    @api.model
     def _nc_actor_is_platform_proxy(self):
         """True when the user making this call is a platform administrator's entry proxy. ``sudo()`` does not change
         the acting user, so it cannot be used to step around a check built on this."""
