@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Settings > Applications: what the plan includes, what is installed, and what shows on Home.
+        The Owner changes only "Show on Home" and "Home order" (the ORM enforces exactly that); status comes from
+        the platform. See models/launcher_app.py.
+    -->
+    <record id="view_nc_launcher_app_list" model="ir.ui.view">
+        <field name="name">ncollection.launcher.app.list</field>
+        <field name="model">ncollection.launcher.app</field>
+        <field name="arch" type="xml">
+            <list string="Applications" editable="bottom" create="false" delete="false">
+                <field name="icon" widget="image" options="{'size': [32, 32]}" readonly="1"/>
+                <field name="name"/>
+                <field name="module_name" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'active'"
+                       decoration-info="state == 'pending'"
+                       decoration-muted="state == 'locked'"/>
+                <field name="visible" widget="boolean_toggle" readonly="state != 'active'"/>
+                <field name="sequence" readonly="state != 'active'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_nc_launcher_app_search" model="ir.ui.view">
+        <field name="name">ncollection.launcher.app.search</field>
+        <field name="model">ncollection.launcher.app</field>
+        <field name="arch" type="xml">
+            <search string="Applications">
+                <field name="name" string="Application" filter_domain="[('name', 'ilike', self)]"/>
+                <filter name="in_plan" string="In my plan" domain="[('state', 'in', ('active', 'pending'))]"/>
+                <filter name="active_apps" string="Active" domain="[('state', '=', 'active')]"/>
+                <filter name="hidden_apps" string="Hidden on Home" domain="[('visible', '=', False)]"/>
+                <filter name="not_in_plan" string="Not in my plan" domain="[('state', '=', 'locked')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_nc_launcher_app_manager" model="ir.actions.server">
+        <field name="name">Applications</field>
+        <field name="model_id" ref="model_ncollection_launcher_app"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_manager()</field>
+    </record>
+
+    <menuitem id="menu_nc_launcher_apps" name="Applications"
+              parent="base.menu_administration" sequence="5"
+              action="action_nc_launcher_app_manager"
+              groups="ncollection_core.group_role_owner,base.group_system"/>
+</odoo>

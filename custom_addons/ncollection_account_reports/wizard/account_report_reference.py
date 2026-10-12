@@ -9,7 +9,7 @@ from odoo import models
 
 class NcollectionAccountReportReference(models.TransientModel):
     _name = 'ncollection.account.report.reference'
-    _inherit = ['ncollection.account.report']
+    _inherit = ['ncollection.account.report.zero', 'ncollection.account.report']
     _description = 'NCollection Reference Report (Account Balances)'
 
     def _nc_report_title(self):
@@ -33,7 +33,7 @@ class NcollectionAccountReportReference(models.TransientModel):
                 domain=self._nc_move_line_domain(),
                 groupby=['account_id'],
                 aggregates=['debit:sum', 'credit:sum', 'balance:sum']):
-            if not account:
+            if not account or self._nc_skip_zero(debit, credit, balance):
                 continue
             total_debit += debit
             total_credit += credit

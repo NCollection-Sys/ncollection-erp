@@ -68,7 +68,7 @@ class NcollectionAgedLine(models.TransientModel):
 
 class NcollectionAgedPartnerBalance(models.TransientModel):
     _name = 'ncollection.account.report.aged.partner'
-    _inherit = ['ncollection.account.report']
+    _inherit = ['ncollection.account.report.zero', 'ncollection.account.report']
     _description = 'NCollection Aged Partner Balance'
 
     partner_scope = fields.Selection(
@@ -134,6 +134,10 @@ class NcollectionAgedPartnerBalance(models.TransientModel):
             domain.append(('journal_id', 'in', self.journal_ids.ids))
         return domain
 
+    def _nc_drill_domain(self, account=None, partner=None):
+        domain = self._nc_open_line_domain()
+        return domain + [('partner_id', '=', partner.id)] if partner else domain
+
     def _nc_bucket_index(self, line):
         """Which bucket a line falls in: 0 = current, 5 = over 4×period.
 
@@ -168,6 +172,8 @@ class NcollectionAgedPartnerBalance(models.TransientModel):
         rows = []
         for partner in sorted(by_partner, key=lambda p: p.display_name or ''):
             row = by_partner[partner]
+            if self._nc_skip_zero(*row.values()):
+                continue                  # every bucket nets to nothing (a +100 current / -100 overdue pair is kept)
             rows.append({
                 'partner_id': partner.id,
                 'partner_name': partner.display_name,

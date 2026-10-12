@@ -254,7 +254,12 @@
                                 <t t-foreach="columns" t-as="col" t-key="col.key">
                                     <td t-att-class="isMoney(col) ? 'is-num' : 'is-label'">
                                         <t t-if="isMoney(col)">
-                                            <span t-if="item.row[col.key] !== undefined" t-att-class="isNegative(item.row[col.key]) ? 'is-neg' : ''" t-esc="amount(item.row[col.key], col)"/>
+                                            <!-- An account row's amount opens the journal items it is made of (the report's own
+                                                 filters, the user's own access); a total or a group has no single account. -->
+                                            <button t-if="item.row[col.key] !== undefined and canDrill(item.row, col)" type="button"
+                                                    class="o_nc_rep__amount" t-att-class="isNegative(item.row[col.key]) ? 'is-neg' : ''"
+                                                    t-on-click="() => this.drillRow(item.row)" t-esc="amount(item.row[col.key], col)"/>
+                                            <span t-elif="item.row[col.key] !== undefined" t-att-class="isNegative(item.row[col.key]) ? 'is-neg' : ''" t-esc="amount(item.row[col.key], col)"/>
                                         </t>
                                         <t t-else="">
                                             <span class="o_nc_rep__indent" t-att-style="'--nc-depth:' + item.level" t-if="col_index === 0"/>

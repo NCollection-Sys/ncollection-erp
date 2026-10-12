@@ -1,242 +1,107 @@
-// Customer Workspace Dashboard (P1-T17).
+// Summary: layout only.
 //
-// Ported from the prototype: demo/src/pages/pages.css (.nc-kpi-grid) and
-// demo/src/components/ui/ui.css (.nc-kpi). The prototype's own comment notes
-// the tile is "the visual descendant of the Odoo .o_ncollection_kpi_card", so
-// porting it back keeps this consistent with the existing SaaS dashboard.
+// The CARDS are the shared NCollection cards (ncollection_branding/components): KPI card, statement card, chart
+// card, quick action. They live in ONE place; nothing here restyles them. This file is the page frame: header,
+// section rhythm and the two responsive grids around the cards.
 //
-// Every colour is read through a --nc-* custom property WITH a fallback. The
-// fallbacks are the NCollection defaults from demo/src/theme/tokens.css, so the
-// dashboard looks right today; when P1-T16 (#17) writes per-tenant values onto
-// :root, these tiles pick up the tenant's brand automatically with no change
-// here. That is the whole "charts render with the tenant's brand colors"
-// acceptance criterion, satisfied by construction rather than by a hard-coded
-// palette.
+// min()/max()/clamp() with mixed units must go through unquote(): Sass would evaluate them itself, refuse the
+// units, and the whole backend stylesheet bundle would fall back to the "css error" stub (R-033). None is needed.
 
 .nc-dashboard {
-    padding: 20px;
+    padding: var(--nc-space-5);
 
     &__header {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 16px;
+        gap: var(--nc-space-4);
         flex-wrap: wrap;
-        margin-bottom: 20px;
+        margin-block-end: var(--nc-space-5);
     }
 
     &__actions {
         display: flex;
-        gap: 8px;
+        gap: var(--nc-space-2);
         flex-wrap: wrap;
     }
 
     &__title {
-        font-size: 22px;
-        font-weight: 600;
+        font-size: var(--nc-font-size-xl);
+        font-weight: var(--nc-font-weight-semibold);
         margin: 0;
-        color: var(--nc-text, #0f172a);
+        color: var(--nc-text);
     }
 
     &__subtitle {
-        margin: 4px 0 0;
-        font-size: 13px;
-        color: var(--nc-text-muted, #64748b);
+        margin: var(--nc-space-1) 0 0;
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+    }
+
+    &__company {
+        font-weight: var(--nc-font-weight-semibold);
+        margin-inline-end: var(--nc-space-3);
+    }
+
+    &__welcome {
+        opacity: 0.75;
+    }
+
+    &__section {
+        margin-block-end: var(--nc-space-5);
+    }
+
+    &__section-title {
+        margin: 0 0 var(--nc-space-3);
+        font-size: var(--nc-font-size-xs);
+        font-weight: var(--nc-font-weight-semibold);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--nc-text-muted);
+
+        // Arabic letters join: no letter-spacing or casing.
+        .o_rtl & {
+            letter-spacing: normal;
+            text-transform: none;
+        }
     }
 
     &__status {
-        padding: 24px;
-        border-radius: var(--nc-radius-md, 10px);
-        background: var(--nc-surface-raised, #ffffff);
-        border: 1px solid var(--nc-surface-border, #e2e8f0);
-        color: var(--nc-text-muted, #64748b);
-        font-size: 14px;
+        padding: var(--nc-space-6);
+        border-radius: var(--nc-radius-md);
+        background: var(--nc-surface-raised);
+        border: 1px solid var(--nc-surface-border);
+        color: var(--nc-text-muted);
+        font-size: var(--nc-font-size-md);
 
         &--error {
-            border-color: var(--nc-status-error, #b4453c);
-            color: var(--nc-status-error, #b4453c);
+            border-color: var(--nc-status-error);
+            color: var(--nc-status-error);
         }
     }
 }
 
-// 4 across on desktop, 2 on tablet, 1 on phone — the prototype's breakpoints.
-.nc-kpi-grid {
+// Both statements side by side where there is room, stacked on a phone.
+.nc-statement-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
-
-    @media (max-width: 1180px) {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    @media (max-width: 560px) {
-        grid-template-columns: 1fr;
-    }
+    gap: var(--nc-space-4);
+    // unquote(): Sass would evaluate min(100%, 20rem) itself and refuse the mixed units (R-033); the browser must.
+    grid-template-columns: unquote("repeat(auto-fit, minmax(min(100%, 20rem), 1fr))");
+    align-items: start;
 }
 
-.nc-kpi-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
-    padding: 18px 20px;
-    background: var(--nc-surface-raised, #ffffff);
-    border: 1px solid var(--nc-surface-border, #e2e8f0);
-    // Logical property, so the accent flips automatically under RTL (P3-T08).
-    border-inline-start: 4px solid var(--nc-color-primary, #1f5f8f);
-    border-radius: var(--nc-radius-md, 10px);
-    box-shadow: var(--nc-shadow-card, 0 1px 3px rgba(15, 23, 42, 0.08));
-
-    &__label {
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--nc-text-muted, #64748b);
-    }
-
-    &__value {
-        font-size: 26px;
-        font-weight: 600;
-        line-height: 1.1;
-        color: var(--nc-text, #0f172a);
-        // Tabular figures keep digits from jittering as values refresh.
-        font-variant-numeric: tabular-nums;
-    }
-
-    &__sub {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: var(--nc-text-muted, #64748b);
-    }
-}
-
-// Trend chip on the sales tile. Colour is semantic, not decorative: green for
-// growth, red for decline — the two states a reader actually acts on.
-.nc-trend {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-
-    &--up {
-        color: var(--nc-status-success, #2e7d5b);
-    }
-
-    &--down {
-        color: var(--nc-status-error, #b4453c);
-    }
-}
-
-// Charts sit two-up on desktop and stack below tablet, matching the
-// prototype's .nc-grid-2.
+// Charts sit two-up on desktop and stack below tablet.
 .nc-chart-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: var(--nc-space-4);
 
     @media (max-width: 1000px) {
         grid-template-columns: 1fr;
     }
 }
 
-.nc-chart-card {
-    padding: 18px 20px;
-    background: var(--nc-surface-raised, #ffffff);
-    border: 1px solid var(--nc-surface-border, #e2e8f0);
-    border-radius: var(--nc-radius-md, 10px);
-    box-shadow: var(--nc-shadow-card, 0 1px 3px rgba(15, 23, 42, 0.08));
-    min-width: 0;
-
-    &__title {
-        font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--nc-text, #0f172a);
-    }
-
-    // Chart.js runs with maintainAspectRatio:false, so the canvas needs a
-    // bounded parent or it grows without limit on every resize.
-    &__canvas {
-        position: relative;
-        height: 240px;
-    }
-}
-
 .nc-chart {
     width: 100%;
     height: 100%;
-}
-
-// ---- Summary: financial statements ---------------------------------------------------------------
-.nc-dashboard__company {
-    font-weight: 600;
-    margin-inline-end: 0.75rem;
-}
-
-.nc-dashboard__welcome {
-    opacity: 0.75;
-}
-
-.nc-statement-grid {
-    display: grid;
-    gap: 1rem;
-    // unquote(): Sass would evaluate min(100%, 22rem) itself and refuse the mixed units, failing the whole bundle.
-    grid-template-columns: unquote("repeat(auto-fit, minmax(min(100%, 22rem), 1fr))");
-    margin-bottom: 1.25rem;
-}
-
-.nc-statement-card {
-    background: var(--nc-surface, #fff);
-    border: 1px solid var(--nc-border, rgba(0, 0, 0, 0.1));
-    border-radius: 0.75rem;
-    padding: 1rem 1.25rem;
-}
-
-.nc-statement-card__head {
-    align-items: flex-start;
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-}
-
-.nc-statement-card__title {
-    font-size: 1.05rem;
-    font-weight: 700;
-}
-
-.nc-statement-card__period {
-    font-size: 0.8rem;
-    opacity: 0.65;
-}
-
-.nc-statement-card__empty {
-    opacity: 0.7;
-    padding: 1rem 0;
-}
-
-.nc-statement-table {
-    width: 100%;
-}
-
-.nc-statement-row td {
-    border-bottom: 1px solid var(--nc-border, rgba(0, 0, 0, 0.06));
-    padding: 0.3rem 0;
-}
-
-.nc-statement-row__value {
-    font-variant-numeric: tabular-nums;
-    text-align: end;
-    white-space: nowrap;
-}
-
-.nc-statement-row--l0 td {
-    font-weight: 700;
-}
-
-.nc-statement-row--l1 .nc-statement-row__label {
-    padding-inline-start: 1rem;
 }

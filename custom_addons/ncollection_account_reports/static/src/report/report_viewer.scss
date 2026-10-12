@@ -333,6 +333,26 @@
         &:focus-visible { outline: 2px solid var(--nc-rep-focus); outline-offset: 2px; }
     }
 
+    // An account amount that opens its journal items: looks like the number, reads as a link on hover/focus.
+    &__amount {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        font: inherit;
+        color: inherit;
+        font-variant-numeric: tabular-nums;
+        cursor: pointer;
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+        &.is-neg { color: var(--nc-status-error, #b4453c); }
+        &:hover, &:focus-visible {
+            color: var(--nc-color-primary, #1f5f8f);
+            text-decoration-style: solid;
+            outline: none;
+        }
+        &:focus-visible { outline: 2px solid var(--nc-rep-focus); outline-offset: 2px; }
+    }
+
     &__chiplink {
         margin-inline-start: 0.35rem;
         padding: 0 0.4rem;

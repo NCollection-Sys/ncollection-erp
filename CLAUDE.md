@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **24**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **25**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -94,6 +94,11 @@ adding a module fails CI until someone updates this list.
 - `ncollection_sale_attachments` — a paperclip column in the Quotations / Sales Orders lists that opens ONE modal
   viewer on that document's attachments (Odoo's own FileViewer, extended: position "2 / 5", fallback card, RTL).
   No model, no ACL, no route: it reads `ir.attachment` as the user. `auto_install` with `sale`.
+- `ncollection_stock_barcode` — the warehouse barcode workflow Community lacks (`stock_barcode` is Enterprise, the OCA
+  `stock_barcodes` port is not merged on 19.0): scan receipts / deliveries / transfers (products, lots, serials,
+  locations), correct a mis-scan, validate with the stock engine's own `button_validate`, and count inventory with its
+  own `action_apply_inventory`. Inside the Inventory app (no new tile); every call runs as the user, no sudo.
+  `auto_install` with `stock`. Decision record: `docs/markdown/APPLICATIONS_AND_BARCODE.md`.
 - `ncollection_helpdesk` — SLA response/resolution timers on top of OCA
   `helpdesk_mgmt` (+ `helpdesk_mgmt_rating`), which is what P6-T03 adopts for the
   ticket itself. Also carries the ownership guard on OCA's `/ticket/close`, whose

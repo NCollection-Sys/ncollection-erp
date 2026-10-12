@@ -58,7 +58,8 @@ class NcollectionBalanceSheet(models.TransientModel):
     _name = 'ncollection.account.report.balance.sheet'
     # Comparison mixin first: it supplies _nc_columns()/_nc_list_view_ref(),
     # which the engine declares abstract.
-    _inherit = ['ncollection.account.report.comparison', 'ncollection.account.report']
+    _inherit = ['ncollection.account.report.comparison', 'ncollection.account.report.zero',
+                'ncollection.account.report']
     _description = 'NCollection Balance Sheet'
 
     def _nc_report_title(self):
@@ -124,21 +125,23 @@ class NcollectionBalanceSheet(models.TransientModel):
 
         rows = []
         for _section, section_label, buckets, total_label in _BS_SECTIONS:
-            rows.append(self._nc_comparison_row(section_label, 0.0, 0.0, level=0))
+            rows.append(self._nc_comparison_row(section_label, 0.0, 0.0, level=0, key='section_' + _section))
             section_current = section_previous = 0.0
             for key, bucket_label, _sign, _types in buckets:
                 cur, prev = current.get(key, 0.0), previous.get(key, 0.0)
                 section_current += cur
                 section_previous += prev
-                rows.append(self._nc_comparison_row(bucket_label, cur, prev, level=1))
+                rows.append(self._nc_comparison_row(bucket_label, cur, prev, level=1, key=key))
                 for account, balance, prior in self._nc_detail_rows(
                         detail.get(key, ()), _pdetail.get(key, ()),
                         previous_by_account):
+                    if self._nc_skip_zero(balance, prior):
+                        continue
                     rows.append(self._nc_comparison_row(
                         account.display_name, balance, prior,
                         level=2, account_id=account.id))
             rows.append(self._nc_comparison_row(
-                total_label, section_current, section_previous, level=0))
+                total_label, section_current, section_previous, level=0, key=_section + '_total'))
         return rows
 
     def _nc_detail_rows(self, current_rows, previous_rows, previous_by_account):

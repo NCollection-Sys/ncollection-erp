@@ -32,7 +32,7 @@
     # data/view/security records, so unlike every entry above it needs NO `-u`:
     # a restart picks it up, and a tenant left un-upgraded behaves identically
     # because the admitted group set is unchanged.
-    'version': '19.0.1.17.0',
+    'version': '19.0.1.18.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -59,6 +59,7 @@
         'views/workspace_settings_views.xml',
         'views/workspace_appearance_views.xml',
         'views/subscription_blocked_templates.xml',
+        'views/launcher_app_views.xml',
         'views/dashboard_action.xml',
         # #455: loaded AFTER the dashboard so the launcher's sequence="0" menu
         # is created against an existing sibling set; order here is not

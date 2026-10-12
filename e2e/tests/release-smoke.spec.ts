@@ -14,6 +14,10 @@ const SCREENS = [
   'account.action_move_out_invoice_type',                    // Invoices
   'ncollection_account_reports.action_nc_report_hub',        // Reports hub
   'ncollection_account_reports.action_nc_view_balance_sheet',
+  'ncollection_account_reports.action_nc_view_profit_loss',
+  'ncollection_core.action_nc_launcher_app_manager',          // Settings > Applications
+  'ncollection_account_core.action_nc_accounting_defaults',   // Settings > Accounting Defaults
+  'ncollection_stock_barcode.action_nc_barcode_scanner',      // Barcode scanner
 ];
 const BAD = /IndexedDB|InvalidStateError|UncaughtPromiseError|connection is closing/i;
 

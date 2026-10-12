@@ -50,7 +50,7 @@ class NcollectionGLLine(models.TransientModel):
 
 class NcollectionGeneralLedger(models.TransientModel):
     _name = 'ncollection.account.report.general.ledger'
-    _inherit = ['ncollection.account.report']
+    _inherit = ['ncollection.account.report.zero', 'ncollection.account.report']
     _description = 'NCollection General Ledger'
 
     def _nc_report_title(self):
@@ -92,6 +92,8 @@ class NcollectionGeneralLedger(models.TransientModel):
         rows = []
         for account in accounts:
             running = opening.get(account.id, 0.0)
+            if not by_account.get(account.id) and self._nc_skip_zero(running):
+                continue                  # no opening and no movement: nothing to show for this account
             rows.append({
                 'is_initial': True, 'account_id': account.id,
                 'label': self.env._("Opening Balance — %s", account.display_name),

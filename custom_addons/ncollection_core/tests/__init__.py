@@ -30,3 +30,4 @@ from . import test_module_management_lockout
 from . import test_platform_entry
 from . import test_assets_compile
 from . import test_platform_proxy_credentials
+from . import test_launcher_apps

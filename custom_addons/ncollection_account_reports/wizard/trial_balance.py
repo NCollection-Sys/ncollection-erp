@@ -12,7 +12,7 @@ from odoo import models
 
 class NcollectionTrialBalance(models.TransientModel):
     _name = 'ncollection.account.report.trial.balance'
-    _inherit = ['ncollection.account.report']
+    _inherit = ['ncollection.account.report.zero', 'ncollection.account.report']
     _description = 'NCollection Trial Balance'
 
     def _nc_report_title(self):
@@ -61,6 +61,8 @@ class NcollectionTrialBalance(models.TransientModel):
             opn = opening.get(account.id, 0.0)
             deb, cred = period.get(account.id, (0.0, 0.0))
             close = opn + deb - cred
+            if self._nc_skip_zero(opn, deb, cred, close):
+                continue
             t_open += opn
             t_deb += deb
             t_cred += cred

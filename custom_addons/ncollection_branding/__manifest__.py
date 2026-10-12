@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.7.0',
+    'version': '19.0.1.8.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection corporate branding: logo, colors, favicon',
     'description': """

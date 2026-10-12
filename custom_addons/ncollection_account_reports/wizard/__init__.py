@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from . import report_zero
 from . import account_report_line
 from . import account_report_reference
 from . import report_comparison

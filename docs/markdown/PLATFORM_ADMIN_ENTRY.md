@@ -75,3 +75,10 @@ installs itself next to `sale`.
   tenant user keeps every right. Tests: `ncollection_core/tests/test_platform_proxy_credentials.py`.
 * Not guarded on purpose: an Owner-level proxy can still create an ordinary tenant user (no password) or an API client
   record; an API client has no usable secret until `_nc_rotate_secret` (private, not RPC-callable) runs.
+* **Where the browser is sent is system configuration, never tenant data.** The entry URL host comes from the system
+  parameter `ncollection_saas.entry_url_template` (e.g. `http://{db}.localhost:8069` on a dev stack); without it, the
+  computed public name `<subdomain>.<base domain>`. A tenant's own fields (including `portal_url`, writable by any platform
+  administrator) never choose it: otherwise a platform administrator not on a tenant's allow-list could redirect an
+  authorised colleague's one-time token to their own server. Userinfo (`user@host`) and non-http(s) schemes are refused.
+* **"did not accept the entry (HTTP 403)"** means the tenant's modules are older than the platform (no
+  `ncollection.platform.entry` model yet). Upgrade `ncollection_core` on it (Fleet Migration, or `odoo -u` per tenant).

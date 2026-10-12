@@ -19,9 +19,11 @@ from odoo.tests import HttpCase, TransactionCase, tagged
 _MODULE_DIR = os.path.dirname(os.path.dirname(__file__))
 _COMP_DIR = os.path.join(_MODULE_DIR, "static", "src", "components")
 
-# The seven components #129 requires.
+# The components #129 requires, plus the shared KPI body and statement card.
 _EXPECTED_TEMPLATES = (
     "ncollection_branding.NcKpiCard",
+    "ncollection_branding.NcKpiCardBody",
+    "ncollection_branding.NcStatementCard",
     "ncollection_branding.NcSectionCard",
     "ncollection_branding.NcBadge",
     "ncollection_branding.NcQuickActionCard",

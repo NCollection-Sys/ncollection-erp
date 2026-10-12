@@ -6,15 +6,92 @@
 -->
 <templates xml:space="preserve">
 
+    <!--
+        The one KPI card. A card with a destination is a real <button> (keyboard, focus ring, chevron); one
+        without is a plain tile. Both share the same body, so the two can never drift apart.
+    -->
     <t t-name="ncollection_branding.NcKpiCard">
-        <div class="nc-kpi-card" t-att-class="{ 'nc-kpi-card--accent': props.accent }">
-            <div class="nc-kpi-card__label"><t t-esc="props.label"/></div>
-            <div class="nc-kpi-card__value"><t t-esc="props.value"/></div>
-            <div class="nc-kpi-card__sub" t-if="props.trend or props.sub">
+        <button t-if="props.onClick" type="button" class="nc-kpi-card" t-att-class="classes"
+                t-att-title="props.title or undefined" t-on-click="onClick">
+            <t t-call="ncollection_branding.NcKpiCardBody"/>
+            <i class="fa fa-chevron-right nc-kpi-card__go" role="img" aria-hidden="true"/>
+        </button>
+        <div t-else="" class="nc-kpi-card" t-att-class="classes" t-att-title="props.title or undefined">
+            <t t-call="ncollection_branding.NcKpiCardBody"/>
+        </div>
+    </t>
+
+    <t t-name="ncollection_branding.NcKpiCardBody">
+        <span t-if="props.icon" class="nc-kpi-card__icon" aria-hidden="true">
+            <i class="fa" t-att-class="props.icon"/>
+        </span>
+        <span class="nc-kpi-card__main">
+            <span class="nc-kpi-card__label"><t t-esc="props.label"/></span>
+            <t t-if="props.state === 'loading'">
+                <span class="nc-kpi-card__skeleton" aria-hidden="true"/>
+            </t>
+            <t t-elif="props.state === 'noaccess'">
+                <span class="nc-kpi-card__value nc-kpi-card__value--state">
+                    <i class="fa fa-lock" role="img" aria-hidden="true"/> No access
+                </span>
+            </t>
+            <t t-elif="props.state === 'error'">
+                <span class="nc-kpi-card__value nc-kpi-card__value--state">
+                    <i class="fa fa-exclamation-triangle" role="img" aria-hidden="true"/> Unavailable
+                </span>
+            </t>
+            <t t-elif="props.state === 'empty'">
+                <span class="nc-kpi-card__value nc-kpi-card__value--state">—</span>
+            </t>
+            <t t-else="">
+                <span class="nc-kpi-card__value" dir="auto"><t t-esc="props.value"/></span>
+            </t>
+            <span class="nc-kpi-card__sub" t-if="props.trend or props.sub or props.period">
                 <span t-if="props.trend" t-att-class="trendClass" t-esc="props.trend.value"/>
                 <span t-if="props.sub"><t t-esc="props.sub"/></span>
-            </div>
-        </div>
+                <span t-if="props.period" class="nc-kpi-card__period" dir="ltr"><t t-esc="props.period"/></span>
+            </span>
+        </span>
+    </t>
+
+    <!-- A financial statement as a card: bold sections, indented groups, collapsible accounts, clickable amounts. -->
+    <t t-name="ncollection_branding.NcStatementCard">
+        <section class="nc-statement-card nc-card">
+            <header class="nc-statement-card__head">
+                <div>
+                    <h3 class="nc-statement-card__title"><t t-esc="props.title"/></h3>
+                    <div class="nc-statement-card__period" t-if="props.period" dir="ltr"><t t-esc="props.period"/></div>
+                </div>
+                <button t-if="props.onOpen" type="button" class="nc-statement-card__open" t-on-click="props.onOpen">
+                    <t t-esc="openLabelText"/>
+                    <i class="fa fa-chevron-right" role="img" aria-hidden="true"/>
+                </button>
+            </header>
+            <div t-if="props.empty" class="nc-statement-card__empty"><t t-esc="props.emptyText"/></div>
+            <table t-else="" class="nc-statement-table">
+                <tbody>
+                    <tr t-foreach="visibleRows" t-as="item" t-key="item.index" t-att-class="rowClass(item)">
+                        <td class="nc-statement-row__label">
+                            <button t-if="item.hasKids" type="button" class="nc-statement-row__toggle"
+                                    t-att-aria-expanded="item.expanded ? 'true' : 'false'"
+                                    t-att-title="expandLabelText"
+                                    t-on-click="() => this.toggle(item.index)">
+                                <i class="fa" t-att-class="item.expanded ? 'fa-chevron-down' : 'fa-chevron-right'"
+                                   role="img" aria-hidden="true"/>
+                            </button>
+                            <span dir="auto"><t t-esc="item.row.label"/></span>
+                        </td>
+                        <td class="nc-statement-row__value" dir="ltr">
+                            <button t-if="item.row.drill" type="button" class="nc-statement-row__amount"
+                                    t-on-click="() => this.onRowClick(item.row)">
+                                <t t-esc="item.row.display"/>
+                            </button>
+                            <t t-else=""><t t-esc="item.row.display"/></t>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
     </t>
 
     <t t-name="ncollection_branding.NcSectionCard">

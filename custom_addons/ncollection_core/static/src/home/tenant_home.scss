@@ -1,52 +1,52 @@
 // Tenant application launcher (#455).
 //
-// Brand tokens only (var(--nc-*, fallback)) so a tenant's theme restyles this
-// with no edit here — the same contract ncollection_branding's tokens.scss
-// establishes and backend.scss follows. Logical properties throughout, because
-// test_rtl_conformance scans every ncollection_* stylesheet and the Arabic
-// interface has to mirror this grid.
+// Brand tokens only, so a tenant's theme restyles this with no edit here. The TILES are the shared NCollection
+// card surface (.nc-card / .nc-card--interactive, ncollection_branding): the same border, radius, shadow, hover and
+// keyboard focus as every other card in the product. This file only lays the tiles out. Logical properties
+// throughout, because test_rtl_conformance scans every ncollection_* stylesheet and the Arabic interface has to
+// mirror this grid.
 
 .o_nc_home {
-    padding: var(--nc-space-6, 2rem) var(--nc-space-5, 1.5rem);
-    background: var(--nc-surface-bg, #F7F9FC);
+    padding: var(--nc-space-6) var(--nc-space-5);
+    background: var(--nc-surface-bg);
     min-height: 100%;
     font-family: var(--nc-font-family, inherit);
     overflow-y: auto;
 
     &__header {
         max-width: 72rem;
-        margin: 0 auto var(--nc-space-5, 1.5rem);
+        margin: 0 auto var(--nc-space-5);
     }
 
     &__title {
         margin: 0;
-        font-size: var(--nc-font-size-2xl, 1.75rem);
-        font-weight: var(--nc-font-weight-bold, 700);
-        color: var(--nc-text, #0F172A);
+        font-size: var(--nc-font-size-xl);
+        font-weight: var(--nc-font-weight-semibold);
+        color: var(--nc-text);
     }
 
     &__subtitle {
-        margin: 0.25rem 0 0;
-        color: var(--nc-text-muted, #64748b);
-        font-size: var(--nc-font-size-sm, 0.8125rem);
+        margin: var(--nc-space-1) 0 0;
+        color: var(--nc-text-muted);
+        font-size: var(--nc-font-size-sm);
     }
 
     &__loading,
     &__empty {
         max-width: 72rem;
         margin: 0 auto;
-        padding: var(--nc-space-6, 2rem);
+        padding: var(--nc-space-6);
         text-align: center;
-        color: var(--nc-text-muted, #64748b);
-        background: var(--nc-surface, #fff);
-        border: 1px solid var(--nc-border, #e2e8f0);
-        border-radius: var(--nc-radius-lg, 0.75rem);
+        color: var(--nc-text-muted);
+        background: var(--nc-surface-raised);
+        border: 1px solid var(--nc-surface-border);
+        border-radius: var(--nc-radius-md);
 
         h2 {
-            font-size: var(--nc-font-size-lg, 1.125rem);
-            font-weight: var(--nc-font-weight-semibold, 600);
-            color: var(--nc-text, #0F172A);
-            margin: 0 0 0.5rem;
+            font-size: var(--nc-font-size-lg);
+            font-weight: var(--nc-font-weight-semibold);
+            color: var(--nc-text);
+            margin: 0 0 var(--nc-space-2);
         }
 
         p { margin: 0; }
@@ -56,66 +56,51 @@
         max-width: 72rem;
         margin: 0 auto;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-        gap: var(--nc-space-4, 1rem);
+        grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+        gap: var(--nc-space-3);
     }
 
+    // The tile: surface, hover and focus come from .nc-card--interactive. Compact, centred, no heavy padding.
     &__card {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.75rem;
-        padding: var(--nc-space-5, 1.5rem) var(--nc-space-3, 0.75rem);
-        background: var(--nc-surface, #fff);
-        border: 1px solid var(--nc-border, #e2e8f0);
-        border-radius: var(--nc-radius-lg, 0.75rem);
-        box-shadow: var(--nc-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
-        cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-
-        &:hover {
-            transform: translateY(-2px);
-            border-color: var(--nc-color-secondary, #2D7AB7);
-            box-shadow: var(--nc-shadow-lg, 0 8px 24px rgba(15, 23, 42, 0.12));
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--nc-focus-ring, rgba(45, 122, 183, 0.4));
-            outline-offset: 2px;
-        }
+        gap: var(--nc-space-2);
+        padding: var(--nc-space-4) var(--nc-space-3);
     }
 
     &__icon {
-        width: 3.5rem;
-        height: 3.5rem;
+        // 2.5rem: a launcher icon is larger than a card chip, and stays one size for every app.
+        inline-size: 2.5rem;
+        block-size: 2.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
 
         img {
-            max-width: 100%;
-            max-height: 100%;
+            max-inline-size: 100%;
+            max-block-size: 100%;
             object-fit: contain;
         }
     }
 
     &__lettermark {
-        width: 100%;
-        height: 100%;
+        inline-size: 100%;
+        block-size: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: var(--nc-radius-md, 0.5rem);
-        background: var(--nc-color-primary, #1F5F8F);
-        color: #fff;
-        font-size: var(--nc-font-size-xl, 1.375rem);
-        font-weight: var(--nc-font-weight-semibold, 600);
+        border-radius: var(--nc-radius-md);
+        background: var(--nc-color-primary);
+        color: var(--nc-surface-raised);
+        font-size: var(--nc-font-size-lg);
+        font-weight: var(--nc-font-weight-semibold);
     }
 
     &__label {
-        font-size: var(--nc-font-size-sm, 0.8125rem);
-        font-weight: var(--nc-font-weight-medium, 500);
-        color: var(--nc-text, #0F172A);
+        font-size: var(--nc-font-size-sm);
+        font-weight: var(--nc-font-weight-medium);
+        color: var(--nc-text);
         text-align: center;
         overflow-wrap: anywhere;
     }

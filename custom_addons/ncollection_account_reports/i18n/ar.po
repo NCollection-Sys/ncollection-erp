@@ -2932,3 +2932,65 @@ msgstr ""
 "يشمل هذا التشغيل %(count)s شركاء، وسيحتوي ملف PDF على كشف حساب كل شريك. اختر "
 "شريكًا واحدًا لإرسال كشف الحساب بالبريد الإلكتروني، أو اطبع التشغيل لمشاركة "
 "عدة كشوف."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/account_report.py:0
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_zero__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_trial_balance__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_general_ledger__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_balance_sheet__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_loss__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_partner_ledger__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_statement__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_aged_partner__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_reference__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_revenue__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_expense__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_cost_center__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_profit_center__exclude_zero
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_department__exclude_zero
+msgid "Exclude Zero Balances"
+msgstr "استبعاد الأرصدة الصفرية"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_zero__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_trial_balance__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_general_ledger__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_balance_sheet__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_profit_loss__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_partner_ledger__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_statement__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_aged_partner__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_reference__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_revenue__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_expense__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_cost_center__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_profit_center__exclude_zero
+#: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_department__exclude_zero
+msgid ""
+"Leave out rows whose every amount is zero. Rows that show any movement or "
+"balance, and all totals, are kept."
+msgstr ""
+"استبعاد الصفوف التي تكون جميع مبالغها صفرًا. تبقى الصفوف التي تُظهر أي حركة أو "
+"رصيد، وجميع الإجماليات."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/account_report.py:0
+msgid "Yes"
+msgstr "نعم"
+
+#. module: ncollection_account_reports
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "These journal items cannot be opened."
+msgstr "تعذّر فتح قيود اليومية هذه."
+
+#. module: ncollection_account_reports
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service_drill.py:0
+msgid "This row has no journal items to open."
+msgstr "لا توجد قيود يومية لهذا الصف."

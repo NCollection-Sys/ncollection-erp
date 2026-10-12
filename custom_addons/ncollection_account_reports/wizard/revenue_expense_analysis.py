@@ -88,6 +88,8 @@ class NcollectionRevenueExpenseAnalysisBase(models.AbstractModel):
             for account, balance, prior in self._nc_union_accounts(
                     current_detail.get(key, ()), previous_detail.get(key, ()),
                     previous_by_account):
+                if self._nc_skip_zero(balance, prior):
+                    continue
                 rows.append(self._nc_comparison_row(
                     account.display_name, balance, prior,
                     level=2, account_id=account.id))
@@ -115,6 +117,7 @@ class NcollectionRevenueAnalysis(models.TransientModel):
     # concrete implementations below are shadowed by NotImplementedError.
     _inherit = ['ncollection.account.report.analysis.base',
                 'ncollection.account.report.comparison',
+                'ncollection.account.report.zero',
                 'ncollection.account.report',
                 'ncollection.account.report.executive']
     _description = 'NCollection Revenue Analysis'
@@ -145,6 +148,7 @@ class NcollectionExpenseAnalysis(models.TransientModel):
     # concrete implementations below are shadowed by NotImplementedError.
     _inherit = ['ncollection.account.report.analysis.base',
                 'ncollection.account.report.comparison',
+                'ncollection.account.report.zero',
                 'ncollection.account.report',
                 'ncollection.account.report.executive']
     _description = 'NCollection Expense Analysis'

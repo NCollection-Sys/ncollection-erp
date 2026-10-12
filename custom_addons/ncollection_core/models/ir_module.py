@@ -75,8 +75,11 @@ class IrModuleModule(models.Model):
             operation, self.env.user.id, self.env.user.login)
         raise AccessError(self.env._(
             "Applications are managed by NCollection, not from inside your "
-            "workspace. To add or remove an application, change your "
-            "subscription plan — your workspace is updated for you.\n\n"
+            "workspace. Your subscription plan decides which applications are "
+            "installed: open Settings > Applications to see what it includes and "
+            "to choose what appears on your Home screen. To add or remove an "
+            "application, change your subscription plan — your workspace is "
+            "updated for you.\n\n"
             "(Installing modules directly would bypass the plan your "
             "workspace is licensed under.)"))
 

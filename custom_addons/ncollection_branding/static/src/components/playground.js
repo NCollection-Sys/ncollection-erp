@@ -14,6 +14,7 @@ import { Component } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import {
     NcKpiCard,
+    NcStatementCard,
     NcSectionCard,
     NcBadge,
     NcQuickActionCard,
@@ -27,6 +28,7 @@ export class NcComponentPlayground extends Component {
     static props = ["*"];
     static components = {
         NcKpiCard,
+        NcStatementCard,
         NcSectionCard,
         NcBadge,
         NcQuickActionCard,
@@ -34,6 +36,17 @@ export class NcComponentPlayground extends Component {
         NcEmptyState,
         NcLoadingSkeleton,
     };
+
+    get sampleRows() {
+        return [
+            { key: "a", label: "ASSETS", display: "AED 0.00", level: 0, amount: 0 },
+            { key: "b", label: "Current Assets", display: "AED 53,816.70", level: 1, amount: 1, drill: true },
+            { key: "c", label: "1010 Bank", display: "AED 40,000.00", level: 2, amount: 1, drill: true },
+            { key: "d", label: "1100 Receivable", display: "AED 13,816.70", level: 2, amount: 1, drill: true },
+            { key: "e", label: "TOTAL ASSETS", display: "AED 65,816.70", level: 0, amount: 1, drill: true },
+            { key: "f", label: "Net result", display: "-AED 1,250.00", level: 0, amount: -1, drill: true },
+        ];
+    }
 
     noop() {
         // Playground quick-actions are inert.

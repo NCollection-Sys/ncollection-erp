@@ -63,10 +63,43 @@ class TestPlatformEntry(TransactionCase):
         self.assertEqual(action['type'], 'ir.actions.act_url')
         self.assertTrue(url.netloc.startswith('atlas.'), url.netloc)
         self.assertEqual(url.path, '/ncollection/platform/enter')
-        self.assertEqual(url.scheme, 'http')                  # follows how the platform itself is served
+        self.assertEqual(url.scheme, 'https')                 # the computed public name (no entry_url_template set)
         token = parse_qs(url.fragment)['token'][0]
         self.assertGreaterEqual(len(token), 40)
         self.assertEqual(post.call_count, 1)
+
+    def test_the_entry_host_comes_from_system_configuration_only(self):
+        """The deployment's entry_url_template (a system parameter) decides where the browser goes; with none, the
+        computed public name is used."""
+        Param = self.env['ir.config_parameter'].sudo()
+        Param.set_param('ncollection_saas.entry_url_template', 'http://{db}.localhost:8069')
+        tenant = self._tenant('Gamma', 'gamma', self.alice)
+        url = urlparse(self._enter(tenant, self.alice)[0]['url'])
+        self.assertEqual((url.scheme, url.netloc, url.path),
+                         ('http', 'gamma.localhost:8069', '/ncollection/platform/enter'))
+        Param.set_param('ncollection_saas.entry_url_template', '')
+        url = urlparse(self._enter(self._tenant('Delta', 'delta', self.alice), self.alice)[0]['url'])
+        self.assertTrue(url.netloc.startswith('delta.'), url.netloc)
+
+    def test_a_hostile_portal_url_or_tenant_field_cannot_redirect_the_token(self):
+        """Any platform administrator can write a tenant's own fields. None of them may choose the host that
+        receives the one-time token: only system configuration does."""
+        tenant = self._tenant('Evil', 'evilco', self.alice, portal_url='https://evil.example')
+        url = urlparse(self._enter(tenant, self.alice)[0]['url'])
+        self.assertNotIn('evil.example', url.netloc)
+        self.assertTrue(url.netloc.startswith('evilco.'), url.netloc)
+        # a malformed system template is refused rather than followed (userinfo trick, wrong scheme)
+        Param = self.env['ir.config_parameter'].sudo()
+        for bad in ('http://trusted@evil.example/{db}', 'javascript:alert(1)//{db}', 'ftp://{db}.example'):
+            Param.set_param('ncollection_saas.entry_url_template', bad)
+            with self.assertRaises(UserError, msg=bad):
+                self._enter(tenant, self.alice)
+
+    def test_a_refusal_names_the_http_status_and_the_remedy(self):
+        with self.assertRaises(UserError) as caught:
+            self._enter(self.atlas, self.alice, reply=_reply(403, b''))
+        self.assertIn('HTTP 403', str(caught.exception))
+        self.assertIn('ncollection_core', str(caught.exception))
 
     def test_only_the_hash_of_the_token_is_sent_to_the_tenant(self):
         action, post = self._enter(self.atlas, self.alice)

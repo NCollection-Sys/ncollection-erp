@@ -21,3 +21,5 @@ access_alert_cron_service,ncollection.alert.cron.service,model_ncollection_alert
 access_error_log_system,ncollection.error.log.system,model_ncollection_error_log,base.group_system,1,1,1,1
 access_platform_entry_system,ncollection.platform.entry.system,model_ncollection_platform_entry,base.group_system,1,0,0,0
 access_platform_entry_sync,ncollection.platform.entry.sync,model_ncollection_platform_entry,ncollection_core.group_config_sync,0,0,1,0
+access_launcher_app_owner,ncollection.launcher.app.owner,model_ncollection_launcher_app,ncollection_core.group_role_owner,1,1,0,0
+access_launcher_app_system,ncollection.launcher.app.system,model_ncollection_launcher_app,base.group_system,1,1,0,0

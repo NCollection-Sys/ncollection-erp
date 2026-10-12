@@ -58,8 +58,16 @@ TYPE_STATEMENT = 'statement'
 # accounting numbers). Soft dependency: absent when ncollection_account_reports is not installed.
 STATEMENT_BALANCE_SHEET = 'ncollection.account.report.balance.sheet'
 STATEMENT_PROFIT_LOSS = 'ncollection.account.report.profit.loss'
-# Section headings and group subtotals only; the individual accounts stay in the full report (drill-down).
-STATEMENT_MAX_LEVEL = 1
+# Statement rows whose amount is derived (no accounts of their own): which accounts a click on them opens.
+_RUNNING_RESULT_KEYS = ('gross_profit', 'net_profit')
+_SECTION_TOTAL_KEYS = ('total_income', 'assets_total')
+# Totals that include a bucket with no accounts of its own (Accumulated Earnings is computed, not posted), so no
+# list of accounts adds up to them.
+_NO_DRILL_KEYS = ('liabilities_equity_total',)
+# Most accounts one drill-down may name (the report service caps it at the same figure).
+DRILL_MAX_ACCOUNTS = 500
+# The model a drill-down opens; statement rows are only clickable for a user who can read it.
+MOVE_LINE_MODEL = 'account.move.line'
 
 # Which widget groups each of the 8 P1-T08 roles grants (security/role_groups.xml).
 #
@@ -176,6 +184,28 @@ class NCollectionDashboardData(models.AbstractModel):
                 'label': self.env._('Cash & Bank'), 'icon': 'wallet',
                 'model': 'account.move.line', 'compute': '_compute_cash_bank',
             },
+            # Expenses and Net Profit are DERIVED in get_dashboard_payload from the same P&L statement pass the
+            # Profit & Loss card uses: no second engine run, no recomputation here.
+            {
+                'key': 'open_quotations', 'type': TYPE_KPI, 'group': GROUP_PIPELINE,
+                'label': self.env._('Open Quotations'), 'icon': 'sales',
+                'model': 'sale.order', 'compute': '_compute_open_quotations',
+            },
+            {
+                'key': 'purchases_this_month', 'type': TYPE_KPI, 'group': GROUP_OPERATIONS,
+                'label': self.env._('Purchases This Month'), 'icon': 'purchase',
+                'model': 'purchase.order', 'compute': '_compute_purchases_this_month',
+            },
+            {
+                'key': 'stock_on_hand', 'type': TYPE_KPI, 'group': GROUP_OPERATIONS,
+                'label': self.env._('Stock on Hand'), 'icon': 'inventory',
+                'model': 'stock.quant', 'compute': '_compute_stock_on_hand',
+            },
+            {
+                'key': 'pending_deliveries', 'type': TYPE_KPI, 'group': GROUP_OPERATIONS,
+                'label': self.env._('Pending Transfers'), 'icon': 'inventory',
+                'model': 'stock.picking', 'compute': '_compute_pending_deliveries',
+            },
             {
                 'key': 'open_activities', 'type': TYPE_KPI, 'group': GROUP_PERSONAL,
                 'label': self.env._('Open Activities'), 'icon': 'activity',
@@ -245,31 +275,47 @@ class NCollectionDashboardData(models.AbstractModel):
         this_start = today.replace(day=1)
         last_start = this_start - relativedelta(months=1)
 
-        def _total(start, end):
-            return self._sum(
-                'sale.order',
-                [('state', '=', 'sale'), ('date_order', '>=', start), ('date_order', '<', end)],
-                'amount_total:sum',
-            )
+        def _total(domain):
+            return self._sum('sale.order', domain, 'amount_total:sum')
 
-        current = _total(this_start, this_start + relativedelta(months=1))
-        previous = _total(last_start, this_start)
+        current = _total(self._domain_sales_this_month())
+        previous = _total([('state', '=', 'sale'), ('date_order', '>=', last_start),
+                           ('date_order', '<', this_start)])
         trend = ((current - previous) / previous * 100.0) if previous else None
         return {
             'value': current, 'format': 'currency', 'trend': trend,
             'sub': self.env._('vs last month'),
         }
 
+    # The domains below are the ONE definition of what each KPI counts: the number (via _sum / search_count) and
+    # its drill-down (drill_kpi) both read them, so the list a click opens is exactly the figure on the card.
+    @api.model
+    def _domain_residual(self, account_type):
+        return [('account_id.account_type', '=', account_type),
+                ('parent_state', '=', 'posted'),
+                ('amount_residual', '!=', 0)]
+
+    @api.model
+    def _domain_cash_bank(self):
+        return [('account_id.account_type', '=', 'asset_cash'), ('parent_state', '=', 'posted')]
+
+    @api.model
+    def _domain_sales_this_month(self):
+        start = date.today().replace(day=1)
+        return [('state', '=', 'sale'), ('date_order', '>=', start),
+                ('date_order', '<', start + relativedelta(months=1))]
+
+    @api.model
+    def _domain_purchases_this_month(self):
+        start = date.today().replace(day=1)
+        return [('state', 'in', ('purchase', 'done')), ('date_approve', '>=', start),
+                ('date_approve', '<', start + relativedelta(months=1))]
+
     @api.model
     def _residual_by_account_type(self, account_type):
         """Sum of open residual amounts for one account type. Thin by design."""
         return abs(self._sum(
-            'account.move.line',
-            [('account_id.account_type', '=', account_type),
-             ('parent_state', '=', 'posted'),
-             ('amount_residual', '!=', 0)],
-            'amount_residual:sum',
-        ))
+            'account.move.line', self._domain_residual(account_type), 'amount_residual:sum'))
 
     @api.model
     def _compute_receivables(self):
@@ -298,12 +344,40 @@ class NCollectionDashboardData(models.AbstractModel):
         # the cash/bank ledger accounts represent money actually held.
         # Found by seeding real data — an empty tenant reports 0 either way,
         # so the bug was invisible until INFRA-07.
-        total = self._sum(
-            'account.move.line',
-            [('account_id.account_type', '=', 'asset_cash'), ('parent_state', '=', 'posted')],
-            'balance:sum',
-        )
+        total = self._sum('account.move.line', self._domain_cash_bank(), 'balance:sum')
         return {'value': total, 'format': 'currency', 'sub': self.env._('Across cash & bank accounts')}
+
+    @api.model
+    def _compute_open_quotations(self):
+        count = self.env['sale.order'].search_count([('state', 'in', ('draft', 'sent'))])
+        return {'value': count, 'format': 'integer', 'sub': self.env._('Awaiting customer confirmation')}
+
+    @api.model
+    def _compute_purchases_this_month(self):
+        """Confirmed purchases this month, with the trend against last month."""
+        start = date.today().replace(day=1)
+        last = start - relativedelta(months=1)
+
+        def _total(domain):
+            return self._sum('purchase.order', domain, 'amount_total:sum')
+
+        current = _total(self._domain_purchases_this_month())
+        previous = _total([('state', 'in', ('purchase', 'done')), ('date_approve', '>=', last),
+                           ('date_approve', '<', start)])
+        trend = ((current - previous) / previous * 100.0) if previous else None
+        return {'value': current, 'format': 'currency', 'trend': trend, 'sub': self.env._('vs last month')}
+
+    @api.model
+    def _compute_stock_on_hand(self):
+        """Units held in the company's own (internal) locations."""
+        total = self._sum('stock.quant', [('location_id.usage', '=', 'internal')], 'quantity:sum')
+        return {'value': total, 'format': 'integer', 'sub': self.env._('Units in your warehouses')}
+
+    @api.model
+    def _compute_pending_deliveries(self):
+        count = self.env['stock.picking'].search_count(
+            [('state', 'in', ('assigned', 'confirmed', 'waiting'))])
+        return {'value': count, 'format': 'integer', 'sub': self.env._('Transfers waiting to be processed')}
 
     @api.model
     def _compute_open_activities(self):
@@ -377,38 +451,74 @@ class NCollectionDashboardData(models.AbstractModel):
 
     @api.model
     def _statement_summary(self, model_name, action_xmlid):
-        """Section and group rows of one engine statement, as inert data for the client.
+        """One engine statement as inert data for the client: its OWN rows, the way the full report shows them.
 
-        ONE engine call per statement: the rows are the engine's own export payload (the one the PDF and XLSX
-        print), cut at ``STATEMENT_MAX_LEVEL``. Nothing is added up here, so the Summary can only ever show
-        what the full report shows, to the cent. Plain ``current period`` (no comparison columns) keeps it to a
-        single pass over the ledger.
+        ONE engine pass per statement (``_nc_compute_lines``); nothing is added up here, so the Summary can only ever
+        show what the report shows, to the cent. Zero-balance accounts are left out (the engine's own
+        ``exclude_zero`` option) so the card stays short; totals are the engine's. Every row carries the account ids
+        it is made of, so a click can open exactly those journal items through the report service's drill.
         """
         today = date.today()
-        wizard = self.env[model_name].create({
-            'date_from': today.replace(month=1, day=1), 'date_to': today,
-            'target_move': 'posted', 'comparison_type': 'none',
-        })
-        payload = wizard._nc_export_payload()
-        value_index = next(i for i, column in enumerate(payload['columns']) if column['numeric'])
+        vals = {'date_from': today.replace(month=1, day=1), 'date_to': today,
+                'target_move': 'posted', 'comparison_type': 'none'}
+        Wizard = self.env[model_name]
+        if 'exclude_zero' in Wizard._fields:
+            vals['exclude_zero'] = True
+        wizard = Wizard.create(vals)
+        lines = wizard._nc_compute_lines()
+        can_drill = self._model_readable(MOVE_LINE_MODEL)
         rows = []
-        for row in payload['rows']:
-            if row['level'] > STATEMENT_MAX_LEVEL:
-                continue
-            label_cell, value_cell = row['cells'][0], row['cells'][value_index]
-            rows.append({
-                'label': label_cell['text'],
-                'value': value_cell['value'] if isinstance(value_cell['value'], (int, float)) else 0.0,
-                'level': row['level'],
-            })
+        for line, account_ids in zip(lines, self._statement_row_accounts(lines)):
+            row = {
+                'label': line['label'],
+                'value': line.get('current_amount') or 0.0,
+                'level': line.get('level') or 0,
+                'key': line.get('key') or '',
+            }
+            if can_drill and account_ids:
+                row['account_ids'] = account_ids
+            rows.append(row)
         action = self.env.ref(action_xmlid, raise_if_not_found=False)
         return {
             'rows': rows,
             'empty': not any(row['value'] for row in rows),
             'action_id': action.id if action else False,
-            'period': '%s → %s' % (payload['date_from'], payload['date_to']),
-            'as_of': payload['date_to'],
+            'period': '%s → %s' % (wizard.date_from, wizard.date_to),
+            'as_of': wizard.date_to,
+            'wizard': {'model': model_name, 'id': wizard.id} if can_drill else False,
         }
+
+    @api.model
+    def _statement_row_accounts(self, lines):
+        """For each statement row, the account ids its amount is made of (the scope of its drill-down).
+
+        An account row is itself; a group or section is the accounts beneath it; a derived total takes the last
+        section's accounts, except the profit lines (gross / net), which are running results and take every
+        account above them. Capped at DRILL_MAX_ACCOUNTS (the report service refuses more)."""
+        out, seen_above, last_section = [], [], []
+        for index, line in enumerate(lines):
+            level = line.get('level') or 0
+            own = [line['account_id']] if line.get('account_id') else []
+            beneath = []
+            for later in lines[index + 1:]:
+                if (later.get('level') or 0) <= level:
+                    break
+                if later.get('account_id'):
+                    beneath.append(later['account_id'])
+            ids = own or beneath
+            if (line.get('key') or '').startswith('section_') or line.get('key') in _NO_DRILL_KEYS:
+                ids = []                              # a heading, or a total no account list can reproduce
+            elif not ids and line.get('key') in _RUNNING_RESULT_KEYS:
+                ids = seen_above                      # a running result: every account above it
+            elif not ids and line.get('key') in _SECTION_TOTAL_KEYS:
+                ids = last_section                    # a section total: the accounts of the section it closes
+            if level == 0 and beneath:
+                last_section = beneath
+            seen_above = seen_above + own
+            ids = list(dict.fromkeys(ids))
+            # more accounts than a drill may carry: no drill, never a silently truncated (wrong) one
+            out.append(ids if len(ids) <= DRILL_MAX_ACCOUNTS else [])
+        return out
 
     @api.model
     def _compute_balance_sheet_summary(self):
@@ -419,6 +529,86 @@ class NCollectionDashboardData(models.AbstractModel):
     def _compute_profit_loss_summary(self):
         return self._statement_summary(
             STATEMENT_PROFIT_LOSS, 'ncollection_account_reports.action_nc_view_profit_loss')
+
+    @api.model
+    def _add_derived_kpis(self, widgets):
+        """Expenses and Net Profit as KPI cards, read off the Profit & Loss statement already in ``widgets``.
+
+        They are the engine's own rows (cost of sales + operating expenses, and the NET PROFIT row), so they can
+        never disagree with the statement beneath them and cost no engine pass of their own. Placed right after
+        Cash & Bank so the financial cards read together.
+        """
+        pl = next((w for w in widgets if w['key'] == 'profit_loss_summary'), None)
+        if not pl:
+            return
+        by_key = {row['key']: row for row in pl['rows'] if row.get('key')}
+        net = by_key.get('net_profit')
+        if not net:
+            return
+        expense_rows = [by_key[k] for k in ('cogs', 'operating_expenses') if k in by_key]
+        period = pl['period']
+        derived = [
+            {'key': 'expenses', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL, 'label': self.env._('Expenses'),
+             'icon': 'wallet', 'value': sum(r['value'] for r in expense_rows), 'format': 'currency',
+             'sub': self.env._('Year to date'), 'tone': 'neutral', 'period': period,
+             'drill': self._derived_drill(pl, expense_rows, self.env._('Expenses'))},
+            {'key': 'net_profit', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL, 'label': self.env._('Net Profit'),
+             'icon': 'chart', 'value': net['value'], 'format': 'currency',
+             'sub': self.env._('Year to date'), 'tone': 'positive' if net['value'] > 0 else (
+                 'negative' if net['value'] < 0 else 'neutral'), 'period': period,
+             'drill': self._derived_drill(pl, [net], self.env._('Net Profit'))},
+        ]
+        position = next((i for i, w in enumerate(widgets) if w['key'] == 'cash_bank'), len(widgets) - 1) + 1
+        widgets[position:position] = derived
+
+    @api.model
+    def _derived_drill(self, statement, rows, label):
+        """The drill descriptor of a KPI built from statement rows: the statement's wizard + the rows' accounts."""
+        accounts = list(dict.fromkeys(a for row in rows for a in row.get('account_ids', ())))
+        if not (statement.get('wizard') and accounts) or len(accounts) > DRILL_MAX_ACCOUNTS:
+            return False
+        return {'kind': 'accounts', 'wizard': statement['wizard'], 'account_ids': accounts, 'label': label}
+
+    # -- KPI drill-down -----------------------------------------------------
+
+    @api.model
+    def _kpi_drill_specs(self):
+        """What each KPI opens: the model, the SAME domain the figure counts, and a title."""
+        env = self.env
+        return {
+            'receivables': (MOVE_LINE_MODEL, self._domain_residual('asset_receivable'), env._('Open receivables')),
+            'payables': (MOVE_LINE_MODEL, self._domain_residual('liability_payable'), env._('Open payables')),
+            'cash_bank': (MOVE_LINE_MODEL, self._domain_cash_bank(), env._('Cash & bank')),
+            'sales_this_month': ('sale.order', self._domain_sales_this_month(), env._('Sales this month')),
+            'open_quotations': ('sale.order', [('state', 'in', ('draft', 'sent'))], env._('Open quotations')),
+            'purchases_this_month': ('purchase.order', self._domain_purchases_this_month(),
+                                     env._('Purchases this month')),
+            'stock_on_hand': ('stock.quant', [('location_id.usage', '=', 'internal')], env._('Stock on hand')),
+            'pending_deliveries': ('stock.picking', [('state', 'in', ('assigned', 'confirmed', 'waiting'))],
+                                   env._('Pending transfers')),
+            'open_activities': ('mail.activity', [('user_id', '=', env.uid)], env._('My activities')),
+        }
+
+    @api.model
+    def drill_kpi(self, key):
+        """The action behind one KPI card.
+
+        The key must be a widget this user may see (role group AND readable model, the same gates as the
+        payload), and the domain comes from the server-side table above, never from the client; the returned
+        action is a plain list, so the user's ACL and record rules still apply when it opens.
+        """
+        spec = self._kpi_drill_specs().get(key)
+        provider = next((p for p in self._provider_specs() if p['key'] == key), None)
+        if not spec or not provider or provider['group'] not in self._widget_groups_for_user():
+            raise AccessError(self.env._("This figure has no detail for you."))
+        model_name, domain, title = spec
+        if not self._model_readable(model_name):
+            raise AccessError(self.env._("This figure has no detail for you."))
+        return {
+            'type': 'ir.actions.act_window', 'name': title, 'res_model': model_name,
+            'view_mode': 'list,form', 'views': [(False, 'list'), (False, 'form')],
+            'domain': domain, 'target': 'current',
+        }
 
     # -- quick actions ------------------------------------------------------
 
@@ -448,6 +638,7 @@ class NCollectionDashboardData(models.AbstractModel):
         """
         allowed_groups = self._widget_groups_for_user()
         widgets = []
+        kpi_drills = self._kpi_drill_specs()
 
         for spec in self._provider_specs():
             if spec['group'] not in allowed_groups:
@@ -475,8 +666,14 @@ class NCollectionDashboardData(models.AbstractModel):
             if spec.get('chart'):
                 widget['chart'] = spec['chart']
             widget.update(computed)
+            # A card with a destination is a button: the server says so only for a figure whose source list this
+            # user may open (drill_kpi re-checks, and builds the domain itself).
+            if (widget['type'] == TYPE_KPI and spec['key'] in kpi_drills and 'drill' not in widget
+                    and self._model_readable(kpi_drills[spec['key']][0])):
+                widget['drill'] = {'kind': 'kpi'}
             widgets.append(widget)
 
+        self._add_derived_kpis(widgets)
         return {
             'widgets': widgets,
             'actions': self._quick_actions_for_user(allowed_groups),

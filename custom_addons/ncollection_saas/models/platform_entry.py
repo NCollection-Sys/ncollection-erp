@@ -37,6 +37,7 @@ _logger = logging.getLogger(__name__)
 
 _GRANT_ENDPOINT = '/json/2/ncollection.platform.entry/grant_from_platform'
 _ENTER_PATH = '/ncollection/platform/enter'
+_ENTRY_TEMPLATE_PARAM = 'ncollection_saas.entry_url_template'
 _PLATFORM_GROUP = 'ncollection_subscription.group_platform_admin'
 _DB_RE = re.compile(r'^[a-z][a-z0-9]{1,62}$')            # a tenant key is also its subdomain: alphanumeric
 _GRANT_TTL = 60
@@ -86,11 +87,19 @@ class Tenant(models.Model):
     def _nc_entry_url(self, token):
         """https://<tenant host>/ncollection/platform/enter#token=... (scheme follows how the platform is served)."""
         self.ensure_one()
-        host = urlparse(self.tenant_url or '').netloc
-        if not host:
-            raise UserError(self.env._("%s has no address to enter.", self.company_name))
-        scheme = urlparse(self.env['ir.config_parameter'].sudo().get_param('web.base.url') or '').scheme or 'https'
-        return '%s://%s%s#token=%s' % (scheme, host, _ENTER_PATH, token)       # fragment: never sent to any server
+        # WHO RECEIVES THE TOKEN is decided by system-owned configuration ONLY. A tenant's own fields are writable by
+        # every platform administrator (tenant_url is derived from a constrained subdomain + the system-only base
+        # domain, but portal_url is a plain Char), so none of them may choose the host: an administrator who is not on
+        # this tenant's allow-list could otherwise point it at their own server, wait for an authorised administrator
+        # to click "Enter Company", read the one-time token from the fragment and redeem it here. The deployment sets
+        # ``ncollection_saas.entry_url_template`` (a system parameter, e.g. "http://{db}.localhost:8069" on a dev
+        # stack); without it the computed public name (<subdomain>.<base domain>) is used.
+        template = (self.env['ir.config_parameter'].sudo().get_param(_ENTRY_TEMPLATE_PARAM) or '').strip()
+        raw = template.replace('{db}', self.database_name) if template else (self.tenant_url or '')
+        address = urlparse(raw)
+        if address.scheme not in ('http', 'https') or not address.netloc or '@' in address.netloc:
+            raise UserError(self.env._("%s has no safe address to enter.", self.company_name))
+        return '%s://%s%s#token=%s' % (address.scheme, address.netloc, _ENTER_PATH, token)   # fragment: never sent
 
     def _nc_push_entry_grant(self, db, grant):
         """Register one grant in the tenant database over json2 + the tenant's own derived bearer."""
@@ -121,7 +130,9 @@ class Tenant(models.Model):
         if not ok:
             _logger.error("Platform entry grant to %s refused (HTTP %s)", db, resp.status_code)
             raise UserError(self.env._(
-                "%s did not accept the entry. It may need its modules updated (ncollection_core).", self.company_name))
+                "%(company)s did not accept the entry (HTTP %(status)s). Its workspace modules are probably out of "
+                "date: upgrade ncollection_core on it (Fleet Migration), then try again.",
+                company=self.company_name, status=resp.status_code))
 
     @api.model
     def _nc_enterable_for(self, user=None):

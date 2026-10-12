@@ -72,7 +72,7 @@ class NcollectionPartnerLedgerLine(models.TransientModel):
 
 class NcollectionPartnerLedger(models.TransientModel):
     _name = 'ncollection.account.report.partner.ledger'
-    _inherit = ['ncollection.account.report']
+    _inherit = ['ncollection.account.report.zero', 'ncollection.account.report']
     _description = 'NCollection Partner Ledger'
 
     partner_scope = fields.Selection(
@@ -141,6 +141,11 @@ class NcollectionPartnerLedger(models.TransientModel):
                 opening[partner.id] = balance
         return opening
 
+    def _nc_drill_domain(self, account=None, partner=None):
+        # partner-scoped but NOT account-type scoped by the base domain: add it, as the line drill does
+        return self._nc_move_line_domain(account=account, partner=partner) + [
+            ('account_id.account_type', 'in', self._nc_account_types())]
+
     def _nc_partner_rows(self):
         """Ordered rows: per partner an opening row then its period items."""
         self.ensure_one()
@@ -161,6 +166,8 @@ class NcollectionPartnerLedger(models.TransientModel):
         rows = []
         for partner in partners:
             running = opening.get(partner.id, 0.0)
+            if not by_partner.get(partner.id) and self._nc_skip_zero(running):
+                continue                  # no opening and no movement: nothing to show for this partner
             rows.append({
                 'is_initial': True, 'partner_id': partner.id,
                 'label': self.env._("Opening Balance — %s", partner.display_name),

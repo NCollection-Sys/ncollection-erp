@@ -76,8 +76,8 @@ msgstr "تجميع الحسابات تحت هرم مجموعات الحسابا�
 
 #. module: ncollection_account_reports_oca
 #: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__hide_zero
-msgid "Hide accounts at zero"
-msgstr "إخفاء الحسابات ذات الرصيد الصفري"
+msgid "Exclude Zero Balances"
+msgstr "استبعاد الأرصدة الصفرية"
 
 #. module: ncollection_account_reports_oca
 #: model:ir.model.fields,field_description:ncollection_account_reports_oca.field_ncollection_account_report_tb_oca__id

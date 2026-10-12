@@ -22,7 +22,7 @@
 
             <div t-else="" class="o_nc_home__grid">
                 <t t-foreach="state.apps" t-as="app" t-key="app.id">
-                    <button class="o_nc_home__card" t-on-click="() => this.openApp(app)"
+                    <button class="o_nc_home__card nc-card nc-card--interactive" t-on-click="() => this.openApp(app)"
                             t-att-data-xmlid="app.xmlid" t-att-title="app.name">
                         <span class="o_nc_home__icon">
                             <!-- The module's OWN icon. No substitute is shipped:

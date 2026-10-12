@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_stock_barcode.Scanner">
+        <div class="o_content nc-barcode">
+
+            <header class="nc-barcode__header">
+                <h1 class="nc-barcode__title">Barcode Scanner</h1>
+                <nav class="nc-barcode__modes" aria-label="Mode">
+                    <button type="button" class="nc-barcode__mode" t-att-class="{ 'is-active': state.mode !== 'count' }"
+                            t-on-click="backToList">Operations</button>
+                    <button type="button" class="nc-barcode__mode" t-att-class="{ 'is-active': state.mode === 'count' }"
+                            t-on-click="showCount">Inventory count</button>
+                </nav>
+            </header>
+
+            <!-- The scan bar: always focused, so a hardware scanner (a keyboard that presses Enter) just works. -->
+            <div class="nc-barcode__scanbar nc-card">
+                <i class="fa fa-barcode nc-barcode__scanicon" role="img" aria-hidden="true"/>
+                <input class="nc-barcode__input" type="text" t-ref="scan" autocomplete="off" autocapitalize="off"
+                       spellcheck="false" inputmode="text" dir="ltr" aria-label="Scan a barcode"
+                       t-att-placeholder="hint" t-on-keydown="onKeydown"/>
+                <label class="nc-barcode__qty" t-if="state.mode !== 'operations'">
+                    <span>Qty</span>
+                    <input type="number" min="1" step="1" dir="ltr" t-model.number="state.qty"/>
+                </label>
+                <button t-if="cameraSupported" type="button" class="nc-barcode__camera" t-on-click="camera"
+                        title="Scan with the camera" aria-label="Scan with the camera">
+                    <i class="fa fa-camera" role="img" aria-hidden="true"/>
+                </button>
+            </div>
+
+            <div t-if="state.message" class="nc-barcode__message" role="status" aria-live="polite"
+                 t-att-class="'nc-barcode__message--' + state.message.level">
+                <t t-esc="state.message.text"/>
+            </div>
+
+            <!-- Operations -->
+            <section t-if="state.mode === 'operations'" class="nc-barcode__operations">
+                <div class="nc-barcode__filters">
+                    <button type="button" class="nc-barcode__chip" t-att-class="{ 'is-active': !state.filter }"
+                            t-on-click="() => this.setFilter('')">All</button>
+                    <button type="button" class="nc-barcode__chip" t-att-class="{ 'is-active': state.filter === 'incoming' }"
+                            t-on-click="() => this.setFilter('incoming')">Receipts</button>
+                    <button type="button" class="nc-barcode__chip" t-att-class="{ 'is-active': state.filter === 'outgoing' }"
+                            t-on-click="() => this.setFilter('outgoing')">Deliveries</button>
+                    <button type="button" class="nc-barcode__chip" t-att-class="{ 'is-active': state.filter === 'internal' }"
+                            t-on-click="() => this.setFilter('internal')">Transfers</button>
+                </div>
+                <NcEmptyState t-if="!state.operations.length" title="texts.nothingTitle"
+                              description="texts.nothingText" icon="'fa-check-circle'"/>
+                <div t-else="" class="nc-barcode__list">
+                    <button type="button" t-foreach="state.operations" t-as="op" t-key="op.id"
+                            class="nc-barcode__op nc-card nc-card--interactive" t-on-click="() => this.openPicking(op.id)">
+                        <span class="nc-barcode__op-main">
+                            <span class="nc-barcode__op-name" dir="ltr"><t t-esc="op.name"/></span>
+                            <span class="nc-barcode__op-partner" t-if="op.partner" dir="auto"><t t-esc="op.partner"/></span>
+                        </span>
+                        <NcBadge label="typeLabel(op.type)" variant="typeBadge(op.type)"/>
+                        <span class="nc-barcode__op-lines"><t t-esc="op.lines"/> <i class="fa fa-cubes" role="img" aria-hidden="true"/></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- One operation -->
+            <section t-elif="state.mode === 'picking' and state.picking" class="nc-barcode__picking">
+                <div class="nc-barcode__picking-head nc-card">
+                    <div>
+                        <div class="nc-barcode__op-name" dir="ltr"><t t-esc="state.picking.name"/></div>
+                        <div class="nc-barcode__op-partner" t-if="state.picking.partner" dir="auto"><t t-esc="state.picking.partner"/></div>
+                        <div class="nc-barcode__route" dir="auto">
+                            <t t-esc="state.picking.location_src"/> <i class="fa fa-long-arrow-right nc-barcode__arrow" role="img" aria-hidden="true"/> <t t-esc="state.picking.location_dest"/>
+                        </div>
+                    </div>
+                    <div class="nc-barcode__picking-actions">
+                        <span t-if="state.location" class="nc-barcode__location">
+                            <i class="fa fa-map-marker" role="img" aria-hidden="true"/>
+                            <span dir="auto"><t t-esc="state.location.name"/></span>
+                            <button type="button" class="nc-barcode__clear" t-on-click="clearLocation" aria-label="Forget this location">×</button>
+                        </span>
+                        <button type="button" class="nc-barcode__back" t-on-click="backToList">Back</button>
+                        <button type="button" class="nc-barcode__validate" t-att-disabled="!state.picking.any_picked or state.busy"
+                                t-on-click="validate">Validate</button>
+                    </div>
+                </div>
+
+                <ul class="nc-barcode__lines">
+                    <li t-foreach="state.picking.lines" t-as="line" t-key="line.move_id"
+                        class="nc-barcode__line nc-card" t-att-class="{ 'is-complete': line.complete }">
+                        <div class="nc-barcode__line-main">
+                            <span class="nc-barcode__line-name" dir="auto"><t t-esc="line.name"/></span>
+                            <span class="nc-barcode__line-barcode" t-if="line.barcode" dir="ltr"><t t-esc="line.barcode"/></span>
+                            <span class="nc-barcode__line-lots" t-if="line.lots.length" dir="ltr"><t t-esc="line.lots.join(', ')"/></span>
+                        </div>
+                        <div class="nc-barcode__line-qty" dir="ltr">
+                            <button type="button" class="nc-barcode__step" t-on-click="() => this.adjust(line, -1)"
+                                    t-att-disabled="!line.picked" aria-label="One less">−</button>
+                            <span class="nc-barcode__count">
+                                <strong><t t-esc="line.picked"/></strong> / <t t-esc="line.demand"/> <t t-esc="line.uom"/>
+                            </span>
+                            <button type="button" class="nc-barcode__step" t-on-click="() => this.adjust(line, 1)"
+                                    t-att-disabled="!line.picked" aria-label="One more">+</button>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Inventory count -->
+            <section t-elif="state.mode === 'count'" class="nc-barcode__count-view">
+                <NcEmptyState t-if="!state.count" title="texts.chooseTitle"
+                              description="texts.chooseText" icon="'fa-map-marker'"/>
+                <t t-else="">
+                    <div class="nc-barcode__picking-head nc-card">
+                        <div>
+                            <div class="nc-barcode__route" dir="auto"><i class="fa fa-map-marker" role="img" aria-hidden="true"/> <t t-esc="state.count.location.name"/></div>
+                        </div>
+                        <div class="nc-barcode__picking-actions">
+                            <button type="button" class="nc-barcode__validate" t-att-disabled="!state.count.rows.length or state.busy"
+                                    t-on-click="applyCount">Apply count</button>
+                        </div>
+                    </div>
+                    <p class="nc-barcode__note" t-if="state.count.rows.length"><t t-esc="texts.countNote"/></p>
+                    <table class="nc-barcode__table nc-card" t-if="state.count.rows.length">
+                        <thead>
+                            <tr><th>Product</th><th>Lot</th><th class="nc-barcode__num">Counted</th><th class="nc-barcode__num">On hand</th><th class="nc-barcode__num">Difference</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="state.count.rows" t-as="row" t-key="row.quant_id">
+                                <td dir="auto"><t t-esc="row.name"/></td>
+                                <td dir="ltr"><t t-esc="row.lot"/></td>
+                                <td class="nc-barcode__num" dir="ltr"><t t-esc="row.counted"/></td>
+                                <td class="nc-barcode__num" dir="ltr"><t t-esc="row.on_hand"/></td>
+                                <td class="nc-barcode__num" dir="ltr" t-att-class="{ 'is-diff': row.diff }"><t t-esc="row.diff"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+            </section>
+
+        </div>
+    </t>
+
+</templates>
