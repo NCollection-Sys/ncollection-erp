@@ -51,7 +51,8 @@ _PL_LAYOUT = [
 class NcollectionProfitAndLoss(models.TransientModel):
     _name = 'ncollection.account.report.profit.loss'
     # Comparison mixin first — it supplies _nc_columns()/_nc_list_view_ref().
-    _inherit = ['ncollection.account.report.comparison', 'ncollection.account.report']
+    _inherit = ['ncollection.account.report.comparison', 'ncollection.account.report.zero',
+                'ncollection.account.report']
     _description = 'NCollection Profit and Loss'
 
     def _nc_report_title(self):
@@ -102,10 +103,11 @@ class NcollectionProfitAndLoss(models.TransientModel):
         rows = []
         for label, level, key in _PL_LAYOUT:
             if key is None:                      # section header
-                rows.append(self._nc_comparison_row(label, 0.0, 0.0, level=level))
+                rows.append(self._nc_comparison_row(
+                    label, 0.0, 0.0, level=level, key='section_' + label.lower().replace(' ', '_')))
                 continue
             rows.append(self._nc_comparison_row(
-                label, current.get(key, 0.0), previous.get(key, 0.0), level=level))
+                label, current.get(key, 0.0), previous.get(key, 0.0), level=level, key=key))
             # Per-account detail under the leaf buckets only (mis'
             # auto_expand_accounts) — subtotals have no accounts of their own.
             # Union of both periods: an account active only in the comparison
@@ -120,6 +122,8 @@ class NcollectionProfitAndLoss(models.TransientModel):
                        if account.id not in seen]
             for account, balance, prior in sorted(
                     merged, key=lambda row: row[0].code or ''):
+                if self._nc_skip_zero(balance, prior):
+                    continue
                 rows.append(self._nc_comparison_row(
                     account.display_name, balance, prior,
                     level=level + 1, account_id=account.id))

@@ -18,3 +18,100 @@ msgid ""
 msgstr ""
 "الميزة '%s' غير متضمّنة في خطة NCollection الخاصة بك. قم بترقية اشتراكك "
 "لإتاحتها."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title_enabled
+msgid "Custom print title"
+msgstr "عنوان الطباعة المخصّص"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title
+msgid "Custom title"
+msgstr "العنوان المخصّص"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Enter the custom print title, or switch the option off."
+msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخيار."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "The custom print title must be one line of at most %(max)s characters."
+msgstr "يجب أن يكون عنوان الطباعة المخصّص سطرًا واحدًا لا يزيد عن %(max)s حرفًا."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_defaults.py:0
+msgid "%(account)s cannot be the %(field)s of %(company)s."
+msgstr "%(account)s لا يمكن أن يكون %(field)s لـ %(company)s."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_defaults.py:0
+#: model:ir.actions.server,name:ncollection_account_core.action_nc_accounting_defaults
+#: model:ir.ui.menu,name:ncollection_account_core.menu_nc_accounting_defaults
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Accounting Defaults"
+msgstr "الإعدادات الافتراضية للمحاسبة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Bank, cash and transfers"
+msgstr "البنك والنقد والتحويلات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Currency differences and early-payment discounts"
+msgstr "فروق العملة وخصومات الدفع المبكر"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Customers and vendors"
+msgstr "العملاء والموردون"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__nc_default_payable_id
+msgid "Default payable account"
+msgstr "حساب الدائنين الافتراضي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__nc_default_receivable_id
+msgid "Default receivable account"
+msgstr "حساب المدينين الافتراضي"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Deferrals and accruals (Change Period)"
+msgstr "التأجيلات والاستحقاقات (تغيير الفترة)"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid ""
+"Odoo Community has no automatic deferred revenue or expense engine. These are the\n"
+"                                accounts and journal the manual \"Change Period\" action on journal items uses to\n"
+"                                spread an entry across periods."
+msgstr ""
+"لا يتضمن Odoo Community محركًا تلقائيًا للإيرادات أو المصروفات المؤجلة. هذه هي الحسابات واليومية التي يستخدمها إجراء «تغيير الفترة» اليدوي على قيود اليومية لتوزيع القيد على الفترات."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_payable_id
+msgid ""
+"Payable account of every vendor that has none set on its own record (including new vendors). A vendor with an account set on its own record keeps it."
+msgstr ""
+"حساب الدائنين لكل مورد ليس له حساب خاص في سجله (بما في ذلك الموردون الجدد). المورد الذي له حساب في سجله يحتفظ به."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_receivable_id
+msgid ""
+"Receivable account of every customer that has none set on its own record (including new customers). A customer with an account set on its own record keeps it."
+msgstr ""
+"حساب المدينين لكل عميل ليس له حساب خاص في سجله (بما في ذلك العملاء الجدد). العميل الذي له حساب في سجله يحتفظ به."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Sales, purchases and products"
+msgstr "المبيعات والمشتريات والمنتجات"

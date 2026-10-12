@@ -661,3 +661,39 @@ msgstr "مسؤول المنصّة"
 #. module: ncollection_saas
 msgid "NCollection platform staff: the SaaS-admin dashboard, tenants, subscriptions, plans and the provisioning queue."
 msgstr "موظفو منصّة NCollection: لوحة معلومات مسؤول SaaS، والمستأجرون، والاشتراكات، والخطط، وقائمة انتظار التجهيز."
+
+#. module: ncollection_saas
+#. odoo-python
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
+msgid "My Companies"
+msgstr "شركاتي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
+msgid "Enter Company"
+msgstr "دخول الشركة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "Only a Platform Administrator can enter a company."
+msgstr "يمكن لمدير المنصّة فقط دخول الشركة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "You are not authorised to enter %s."
+msgstr "غير مصرّح لك بدخول %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%s entered this company as Platform Administrator."
+msgstr "دخل %s هذه الشركة بصفته مدير المنصّة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%s could not be reached. Try again in a moment."
+msgstr "تعذّر الوصول إلى %s. حاول مرة أخرى بعد قليل."

@@ -16,7 +16,8 @@
  * consume them is deliberately out of scope here (accepted, documented debt).
  */
 
-import { Component } from "@odoo/owl";
+import { Component, useState } from "@odoo/owl";
+import { _t } from "@web/core/l10n/translation";
 
 /** Read a design token off :root, with a fallback. Used by chart consumers to
  *  pull the frozen --nc-chart-* series palette (§16) at render time so charts
@@ -37,22 +38,141 @@ export function ncChartSeries() {
     ];
 }
 
-/** KPI tile: label, big value, optional trend chip + sub-text, optional accent
- *  bar. Seeded from ncollection_core.DashboardKpiCard. */
+/**
+ * THE KPI card of the whole product (one design, every module): a compact tile with an optional icon chip,
+ * a small label, the figure, and a quiet line for trend / context / period.
+ *
+ *  - `state`: "loaded" (default) | "loading" | "empty" | "noaccess" | "error". A figure of 0 is "loaded" and is
+ *    simply drawn muted (zero is an answer, not a failure).
+ *  - `tone`: "neutral" | "positive" | "negative" | "warning" | "info": SEMANTIC only (it colours the icon chip
+ *    and the figure; never decoration).
+ *  - `onClick`: makes the whole card one real <button> with a chevron, hover and a keyboard focus ring. Give it
+ *    only when there is a meaningful destination; a card without it is a plain, non-interactive tile.
+ *  - `period` / `sub` / `trend`: context. `trend` is { value: String, dir: "up"|"down" }.
+ * Pure presentation: no ORM/RPC. Styled by components.scss through --nc-* tokens only.
+ */
 export class NcKpiCard extends Component {
     static template = "ncollection_branding.NcKpiCard";
     static props = {
         label: { type: String },
-        value: { type: [String, Number] },
-        trend: { type: Object, optional: true },   // { value: String, dir: "up"|"down" }
+        value: { type: [String, Number], optional: true },
+        trend: { type: Object, optional: true },
         sub: { type: String, optional: true },
-        accent: { type: Boolean, optional: true },  // show the primary accent bar
+        period: { type: String, optional: true },
+        icon: { type: String, optional: true },     // a fa-* class name
+        tone: {
+            type: String,
+            optional: true,
+            validate: (v) => ["neutral", "positive", "negative", "warning", "info"].includes(v),
+        },
+        state: {
+            type: String,
+            optional: true,
+            validate: (v) => ["loaded", "loading", "empty", "noaccess", "error"].includes(v),
+        },
+        accent: { type: Boolean, optional: true },  // legacy: a primary accent bar (off by default)
+        onClick: { type: Function, optional: true },
+        title: { type: String, optional: true },
     };
-    static defaultProps = { accent: true };
+    static defaultProps = { accent: false, state: "loaded", tone: "neutral" };
 
     get trendClass() {
         const dir = this.props.trend && this.props.trend.dir;
         return dir === "down" ? "nc-trend nc-trend--down" : "nc-trend nc-trend--up";
+    }
+
+    get classes() {
+        return {
+            "nc-card": true,
+            "nc-card--interactive": !!this.props.onClick,
+            "nc-kpi-card--accent": this.props.accent,
+            [`nc-kpi-card--${this.props.tone}`]: this.props.tone !== "neutral",
+            [`nc-kpi-card--${this.props.state}`]: this.props.state !== "loaded",
+            "nc-kpi-card--zero": this.isZero,
+        };
+    }
+
+    get isZero() {
+        const v = this.props.value;
+        return this.props.state === "loaded" && (v === 0 || /^[^\d]*0([.,]0+)?[^\d]*$/.test(String(v ?? "")));
+    }
+
+    onClick() {
+        if (this.props.onClick) {
+            this.props.onClick();
+        }
+    }
+}
+
+/**
+ * A financial statement as a card (Balance Sheet, Profit & Loss, any report summary): a title, a period, and
+ * rows of label + amount. Rows come pre-formatted; this component only lays them out.
+ *   row: { key, label, display, level (0|1|2), amount (number, for the sign), drill (bool) }
+ * Level 0 = section / total (bold), 1 = group, 2 = account. Level-2 rows are collapsed under their group and a
+ * group with accounts gets a toggle. A row with `drill` shows its amount as a button that calls
+ * `onRowClick(row)`: the caller decides what opens (the existing report drill-down); this component never does
+ * a fetch. `onOpen` is the "open the full report" link in the header.
+ */
+export class NcStatementCard extends Component {
+    static template = "ncollection_branding.NcStatementCard";
+    static props = {
+        title: { type: String },
+        period: { type: String, optional: true },
+        rows: { type: Array },
+        empty: { type: Boolean, optional: true },
+        emptyText: { type: String, optional: true },
+        openLabel: { type: String, optional: true },
+        onOpen: { type: Function, optional: true },
+        onRowClick: { type: Function, optional: true },
+        expandLabel: { type: String, optional: true },
+    };
+
+    setup() {
+        this.state = useState({ open: {} });
+    }
+
+    get openLabelText() {
+        return this.props.openLabel || _t("Open full report");
+    }
+
+    get expandLabelText() {
+        return this.props.expandLabel || _t("Show accounts");
+    }
+
+    /** The rows to draw: levels 0 and 1 always, level-2 rows only under an expanded group (the nearest
+     *  preceding level-1 row). */
+    get visibleRows() {
+        const out = [];
+        let group = -1;
+        this.props.rows.forEach((row, index) => {
+            if (row.level === 1) {
+                group = index;
+            } else if (row.level === 0) {
+                group = -1;
+            }
+            const hasKids = row.level === 1 && this.props.rows[index + 1]?.level === 2;
+            if (row.level >= 2 && !this.state.open[group]) {
+                return;
+            }
+            out.push({ row, index, hasKids, expanded: !!this.state.open[index] });
+        });
+        return out;
+    }
+
+    toggle(index) {
+        this.state.open[index] = !this.state.open[index];
+    }
+
+    onRowClick(row) {
+        if (this.props.onRowClick) {
+            this.props.onRowClick(row);
+        }
+    }
+
+    rowClass(item) {
+        const { row } = item;
+        return `nc-statement-row nc-statement-row--l${row.level}`
+            + (row.amount < 0 ? " nc-statement-row--negative" : "");
     }
 }
 

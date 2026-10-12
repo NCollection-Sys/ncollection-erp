@@ -220,6 +220,9 @@ class NcollectionDimensionAnalysisBase(models.AbstractModel):
                               key=lambda a: a.display_name):
             now = current.get(account, {})
             before = previous.get(account, {})
+            if self._nc_skip_zero(*(v for figures in (now, before) for key, v in figures.items()
+                                    if key != 'margin' and isinstance(v, (int, float)))):
+                continue                  # a cost/profit centre with no figure at all in either period
             # account_id is NOT set. It is a Many2one to `account.account`
             # (the FINANCIAL account) on ncollection.account.report.line, and
             # `account` here is an `account.analytic.account` — a different
@@ -264,6 +267,7 @@ class NcollectionCostCenterAnalysis(models.TransientModel):
     _name = 'ncollection.account.report.cost.center'
     _inherit = ['ncollection.account.report.dimension.base',
                 'ncollection.account.report.comparison',
+                'ncollection.account.report.zero',
                 'ncollection.account.report']
     _description = 'NCollection Cost Center Analysis'
 
@@ -286,6 +290,7 @@ class NcollectionProfitCenterAnalysis(models.TransientModel):
     _name = 'ncollection.account.report.profit.center'
     _inherit = ['ncollection.account.report.dimension.base',
                 'ncollection.account.report.comparison',
+                'ncollection.account.report.zero',
                 'ncollection.account.report']
     _description = 'NCollection Profit Center Analysis'
 
@@ -316,6 +321,7 @@ class NcollectionDepartmentAnalysis(models.TransientModel):
     _name = 'ncollection.account.report.department'
     _inherit = ['ncollection.account.report.dimension.base',
                 'ncollection.account.report.comparison',
+                'ncollection.account.report.zero',
                 'ncollection.account.report']
     _description = 'NCollection Department Analysis'
 

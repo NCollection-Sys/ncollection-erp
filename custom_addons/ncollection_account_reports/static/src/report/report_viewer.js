@@ -44,6 +44,9 @@ const PAGE = 400; // rows shown per section before "show more"
 const PCT_KEYS = ["variance_pct", "ratio_pct"];
 const DATE_KEYS = ["date"];
 
+// The amount columns whose figure IS the sum of the journal items a drill opens (the report's own period / date range).
+const DRILL_COLUMNS = ["current_amount", "debit", "credit", "balance"];
+
 export class NcReportViewer extends Component {
     static template = "ncollection_account_reports.ReportViewer";
     static props = ["*"];
@@ -416,6 +419,29 @@ export class NcReportViewer extends Component {
             return { model: "account.account", id: row.account_id };
         }
         return null;
+    }
+
+    /** A summary row that stands for ONE account (never a group or a total) can open its journal items. */
+    canDrill(row, col) {
+        // Only the figures the drill domain reproduces: the current / period amounts. Opening, closing, previous
+        // period and variance columns are other sums, and opening the current period's items under them would lie.
+        return !!(row.account_id && !row.is_initial && !this.isLedger && DRILL_COLUMNS.includes(col.key)
+            && this.state.data && this.state.data.wizard);
+    }
+
+    /** Open the journal items behind a row: the server builds the domain (the report's own filters + the row's
+     *  account) and checks the run; this only opens what it returns. */
+    async drillRow(row) {
+        try {
+            const action = await this.orm.call(
+                "ncollection.report.service", "nc_report_drill",
+                [this.state.data.wizard.model, this.state.data.wizard.id],
+                { account_id: row.account_id, label: row.label || "" }
+            );
+            await this.action.doAction(action);
+        } catch {
+            this.notification.add(_t("These journal items cannot be opened."), { type: "warning" });
+        }
     }
 
     openRecord(link) {

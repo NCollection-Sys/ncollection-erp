@@ -98,8 +98,12 @@ class NcollectionAccountReportComparison(models.AbstractModel):
         variance = current - previous
         return variance, (variance / abs(previous) * 100.0) if previous else 0.0
 
-    def _nc_comparison_row(self, label, current, previous, level=0, account_id=False):
-        """One rendered row carrying all four FPA comparison columns."""
+    def _nc_comparison_row(self, label, current, previous, level=0, account_id=False, key=False):
+        """One rendered row carrying all four FPA comparison columns.
+
+        ``key`` is the row's stable identity in the report layout (e.g. ``net_profit``, ``current_assets``):
+        a label is translated, so a consumer that has to recognise a row (the Summary's drill-down and its Net
+        Profit / Expenses figures) matches on this, never on text."""
         variance, variance_pct = self._nc_variance(current, previous)
         return {
             'label': label,
@@ -112,6 +116,7 @@ class NcollectionAccountReportComparison(models.AbstractModel):
             # anything reading the common column) meaningful for these reports.
             'balance': current,
             'level': level,
+            'key': key,
         }
 
     def _nc_columns(self):

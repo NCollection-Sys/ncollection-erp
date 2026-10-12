@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_sale_attachments.AttachmentCountField">
+        <button t-if="count" type="button" class="o-NcAttachmentCount btn btn-link p-0 text-nowrap"
+                t-on-click="onClick" t-att-title="title" t-att-aria-label="title">
+            <i class="fa fa-paperclip" role="img"/>
+            <span class="o-NcAttachmentCount-n" t-out="count"/>
+        </button>
+    </t>
+
+</templates>

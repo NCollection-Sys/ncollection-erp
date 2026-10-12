@@ -44,3 +44,15 @@ class IrHttp(models.AbstractModel):
             # Uncertain -> fall through and fail closed (strip debug).
             _logger.debug("Owner debug-gate check failed; stripping debug", exc_info=True)
         request.session.debug = ''
+
+    def session_info(self):
+        """Tell the web client when this session is a Platform Administrator's, so it can say so on every screen."""
+        info = super().session_info()
+        user = self.env.user
+        if request and request.session.uid and user.nc_platform_proxy:
+            info['nc_platform_mode'] = {
+                'company': self.env.company.name,
+                'admin': self.env['ncollection.platform.entry']._session_admin_name(user),
+                'exit_url': '/ncollection/platform/exit',
+            }
+        return info

@@ -154,3 +154,15 @@ msgstr "أدخل اسم المستخدم"
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__nc_active_language_ids
 msgid "Installed languages"
 msgstr "اللغات المثبّتة"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/components.xml:0
+msgid "No access"
+msgstr "لا صلاحية"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/components.xml:0
+msgid "Unavailable"
+msgstr "غير متاح"

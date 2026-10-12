@@ -43,7 +43,7 @@ class NcTrialBalanceOca(models.TransientModel):
     _description = 'NCollection Trial Balance (OCA engine)'
 
     hide_zero = fields.Boolean(
-        string='Hide accounts at zero', default=True,
+        string='Exclude Zero Balances', default=True,
         help="Leave out accounts with no opening balance and no movement.")
     show_hierarchy = fields.Boolean(
         string='Show account groups',

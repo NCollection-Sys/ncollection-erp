@@ -5,48 +5,64 @@
         <field name="name">ncollection.subscription.dashboard.form</field>
         <field name="model">ncollection.subscription.dashboard</field>
         <field name="arch" type="xml">
-            <form string="NCollection SaaS Dashboard" create="false" edit="false" delete="false">
+            <form string="NCollection Platform Summary" create="false" edit="false" delete="false">
                 <field name="currency_id" invisible="1"/>
                 <div class="o_ncollection_dashboard">
-                    <h1 class="o_ncollection_dashboard_title">NCollection SaaS Overview</h1>
+                    <h1 class="o_ncollection_dashboard_title">Platform Summary</h1>
 
                     <!-- OPERATIONS -->
-                    <div class="o_ncollection_kpi_row">
-                        <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Total Tenants</span>
-                            <field name="total_tenants" class="o_ncollection_kpi_value" nolabel="1"/>
+                    <div class="o_ncollection_kpi_row nc-kpi-grid">
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Total Tenants</span>
+                                <field name="total_tenants" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
-                        <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Active Tenants</span>
-                            <field name="active_tenants" class="o_ncollection_kpi_value" nolabel="1"/>
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Active Tenants</span>
+                                <field name="active_tenants" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
-                        <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Trial Accounts</span>
-                            <field name="trial_tenants" class="o_ncollection_kpi_value" nolabel="1"/>
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Trial Accounts</span>
+                                <field name="trial_tenants" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
-                        <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Active Subscriptions</span>
-                            <field name="active_subscriptions" class="o_ncollection_kpi_value" nolabel="1"/>
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Active Subscriptions</span>
+                                <field name="active_subscriptions" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
                     </div>
 
                     <!-- REVENUE + GROWTH -->
-                    <div class="o_ncollection_kpi_row">
-                        <div class="o_ncollection_kpi_card o_ncollection_kpi_revenue">
-                            <span class="o_ncollection_kpi_label">MRR (monthly)</span>
-                            <field name="monthly_revenue" widget="monetary" class="o_ncollection_kpi_value" nolabel="1"/>
+                    <div class="o_ncollection_kpi_row nc-kpi-grid">
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">MRR (monthly)</span>
+                                <field name="monthly_revenue" widget="monetary" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
-                        <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Trial Conversion</span>
-                            <field name="trial_conversion_rate" widget="percentage" class="o_ncollection_kpi_value" nolabel="1"/>
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Trial Conversion</span>
+                                <field name="trial_conversion_rate" widget="percentage" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
-                        <div class="o_ncollection_kpi_card">
-                            <span class="o_ncollection_kpi_label">Churn</span>
-                            <field name="churn_rate" widget="percentage" class="o_ncollection_kpi_value" nolabel="1"/>
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Churn</span>
+                                <field name="churn_rate" widget="percentage" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
-                        <div class="o_ncollection_kpi_card o_ncollection_kpi_alert">
-                            <span class="o_ncollection_kpi_label">Expiring ≤ 30 days</span>
-                            <field name="expiring_soon" class="o_ncollection_kpi_value" nolabel="1"/>
+                        <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                            <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Expiring ≤ 30 days</span>
+                                <field name="expiring_soon" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                         </div>
                     </div>
 
@@ -84,14 +100,18 @@
                     <!-- STORAGE HEALTH -->
                     <div class="o_ncollection_storage">
                         <h2 class="o_ncollection_section_title">Storage Health</h2>
-                        <div class="o_ncollection_kpi_row">
-                            <div class="o_ncollection_kpi_card">
-                                <span class="o_ncollection_kpi_label">Databases</span>
-                                <field name="db_count" class="o_ncollection_kpi_value" nolabel="1"/>
+                        <div class="o_ncollection_kpi_row nc-kpi-grid">
+                            <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                                <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Databases</span>
+                                <field name="db_count" class="nc-kpi-card__value" nolabel="1"/>
                             </div>
-                            <div class="o_ncollection_kpi_card">
-                                <span class="o_ncollection_kpi_label">Total Storage (MB)</span>
-                                <field name="db_storage_total_mb" class="o_ncollection_kpi_value" nolabel="1"/>
+                            </div>
+                            <div class="o_ncollection_kpi_card nc-kpi-card nc-card">
+                                <div class="nc-kpi-card__main">
+                                <span class="nc-kpi-card__label">Total Storage (MB)</span>
+                                <field name="db_storage_total_mb" class="nc-kpi-card__value" nolabel="1"/>
+                            </div>
                             </div>
                         </div>
                         <field name="db_storage_html" nolabel="1" readonly="1"/>
@@ -103,7 +123,7 @@
 
     <!-- Open the dashboard on a fresh transient record each time -->
     <record id="action_ncollection_subscription_dashboard" model="ir.actions.act_window">
-        <field name="name">Dashboard</field>
+        <field name="name">Summary</field>
         <field name="res_model">ncollection.subscription.dashboard</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>

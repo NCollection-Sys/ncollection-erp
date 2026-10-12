@@ -13,7 +13,7 @@ the same record.
 import logging
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -113,6 +113,15 @@ class WorkspaceConfig(models.Model):
         return records
 
     def write(self, vals):
+        # The four entitlement fields are the PLATFORM's decision (pushed by config sync, set by provisioning, edited
+        # by the platform administrator on the platform's own database). A tenant Owner, who implies
+        # base.group_system, must not widen their own licence by writing them: Rule 4 at the ORM, not just in a view.
+        if not self.env.su and _SYNCABLE_FIELDS & set(vals):
+            user = self.env.user
+            if not (user.has_group('ncollection_core.group_config_sync')
+                    or self.env['res.users']._nc_actor_is_platform_admin()):
+                raise AccessError(self.env._(
+                    "Your plan and licence are set by NCollection, not from inside your workspace."))
         result = super().write(vals)
         # Menu visibility (and its ormcached layers, including
         # ir.ui.menu.load_menus) must recompute after any config change.

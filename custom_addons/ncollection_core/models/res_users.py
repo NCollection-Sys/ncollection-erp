@@ -15,8 +15,10 @@ Two ORM-layer controls (Rule 4 — the UI mirrors these, never replaces them):
 """
 
 
-from odoo import api, models
-from odoo.exceptions import AccessError, ValidationError
+from odoo import SUPERUSER_ID, api, fields, models
+from odoo.exceptions import AccessDenied, AccessError, ValidationError
+
+from .platform_entry import CREDENTIAL_TYPE
 
 _OWNER_GROUP = 'ncollection_core.group_role_owner'
 
@@ -29,6 +31,41 @@ ALLOW_EMAIL_LOGIN_CTX = 'ncollection_allow_email_login'
 
 class ResUsers(models.Model):
     _inherit = 'res.users'
+
+    nc_platform_proxy = fields.Boolean(
+        string='Platform administrator proxy', readonly=True, copy=False, index=True,
+        help="Passwordless account a Platform Administrator enters this workspace as. It signs in only "
+             "with a one-time grant from the platform (models/platform_entry.py), never with a password.")
+    nc_platform_ref = fields.Char(string='Platform administrator ref', readonly=True, copy=False, index=True)
+
+    def _compute_session_token(self, sid):
+        """A platform administrator's session ends on its own, ``SESSION_MAX_SECONDS`` after the entry.
+
+        Odoo compares this token on every request, so once the window has passed the token no longer matches
+        the one stored in the session and the user is signed out. Removing someone from the platform allow-list
+        therefore cannot leave a tenant session open for the cookie's lifetime. Ordinary users are untouched.
+        """
+        session_hash = super()._compute_session_token(sid)
+        if self.nc_platform_proxy and not self.env['ncollection.platform.entry']._session_is_fresh(self):
+            return 'expired:' + session_hash
+        return session_hash
+
+    def _check_credentials(self, credential, env):
+        """A platform proxy signs in ONLY with its own one-time entry grant, and nobody else may present that
+        credential type. The grant is verified and consumed atomically in ``ncollection.platform.entry``.
+
+        MFA is NOT skipped (``'mfa': 'default'``): whatever second-factor policy this workspace has still
+        applies. The platform administrator's own strong authentication happened on the platform.
+        """
+        if credential.get('type') == CREDENTIAL_TYPE:
+            self.ensure_one()
+            user = self
+            self.env['ncollection.platform.entry']._redeem(
+                user, credential.get('token'), (env or {}).get('REMOTE_ADDR', ''))
+            return {'uid': user.id, 'auth_method': CREDENTIAL_TYPE, 'mfa': 'default'}
+        if self.nc_platform_proxy:
+            raise AccessDenied()                  # no password path for a proxy, whatever is stored on it
+        return super()._check_credentials(credential, env)
 
     @api.constrains('login')
     def _check_login_is_a_username(self):
@@ -58,6 +95,9 @@ class ResUsers(models.Model):
     # ------------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
+        self._nc_refuse_credentials_from_proxy(vals_list)
+        if not self.env.su and any(self._nc_proxy_keys(vals) for vals in vals_list):
+            raise AccessError(self.env._("Platform administrator accounts are managed by the platform."))
         users = super().create(vals_list)
         if self.env.su:
             return users  # platform/provisioning/install flows are exempt
@@ -66,7 +106,46 @@ class ResUsers(models.Model):
             self._ncollection_check_user_limit()
         return users
 
+    @api.model
+    def _nc_actor_is_platform_admin(self):
+        """True when the user making this call is an NCollection PLATFORM administrator: a member of the platform
+        administrator group AND a system administrator, in a database where that group exists (the platform's own).
+
+        The group lives in ``ncollection_subscription``, which is never installed in a tenant database, so in a tenant
+        this is always False: a tenant Owner (who implies base.group_system) can neither be one nor create the group.
+        It is the acting user that counts (``sudo()`` keeps it), never a display name or a client-sent flag.
+        """
+        user = self.env.user
+        group = self.env.ref('ncollection_subscription.group_platform_admin', raise_if_not_found=False)
+        # base.group_system implies the platform group wherever it exists, so the tenant Owner ROLE (which also
+        # implies base.group_system, and which platform staff never hold) is what tells the two contexts apart.
+        return bool(group and self.env.uid != SUPERUSER_ID and user.has_group('base.group_system')
+                    and user.has_group('ncollection_subscription.group_platform_admin')
+                    and not user.has_group('ncollection_core.group_role_owner'))
+
+    @api.model
+    def _nc_actor_is_platform_proxy(self):
+        """True when the user making this call is a platform administrator's entry proxy. ``sudo()`` does not change
+        the acting user, so it cannot be used to step around a check built on this."""
+        return bool(self.env.uid != SUPERUSER_ID and self.env.user.sudo().nc_platform_proxy)
+
+    def _nc_refuse_credentials_from_proxy(self, vals_list):
+        """A platform proxy session may not set any user's password: that would be a persistent credential (for
+        itself, or for a real account) that outlives the session. Real tenant users keep every right they have."""
+        if self._nc_actor_is_platform_proxy() and any('password' in vals for vals in vals_list):
+            raise AccessError(self.env._(
+                "A platform administrator session cannot set passwords. Ask the workspace Owner."))
+
+    @staticmethod
+    def _nc_proxy_keys(vals):
+        return {'nc_platform_proxy', 'nc_platform_ref'} & set(vals)
+
     def write(self, vals):
+        self._nc_refuse_credentials_from_proxy([vals])
+        # `readonly=True` is only a UI hint: a tenant admin must not be able to mark a real user as a proxy (it would
+        # leave the seat count) or create/alter a proxy by hand. Only the entry flow (superuser env) may.
+        if self._nc_proxy_keys(vals) and not self.env.su:
+            raise AccessError(self.env._("Platform administrator accounts are managed by the platform."))
         result = super().write(vals)
         # Re-activating an archived user also consumes a seat.
         if not self.env.su and vals.get('active'):
@@ -81,6 +160,7 @@ class ResUsers(models.Model):
             return  # unlimited
         active_internal = self.sudo().search_count([
             ('active', '=', True), ('share', '=', False),
+            ('nc_platform_proxy', '=', False),   # a platform administrator's proxy is not a customer seat
         ])
         if active_internal > max_users:
             raise ValidationError(self.env._(

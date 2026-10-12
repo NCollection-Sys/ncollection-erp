@@ -18,6 +18,22 @@
                                trend="{ value: '-1.1%', dir: 'down' }" sub="'vs last month'"/>
                     <NcKpiCard label="'Open activities'" value="'17'" accent="false"/>
                 </div>
+                <h3>States, tones and interaction</h3>
+                <div class="nc-kpi-grid">
+                    <NcKpiCard label="'Cash &amp; Bank'" value="'AED 240.0K'" icon="'fa-money'" sub="'Across cash &amp; bank accounts'"
+                               onClick="() => this.noop()"/>
+                    <NcKpiCard label="'Net Profit'" value="'AED 6.3K'" icon="'fa-pie-chart'" tone="'positive'" period="'2026-01-01 → 2026-10-12'"/>
+                    <NcKpiCard label="'Net Profit'" value="'-AED 1.2K'" icon="'fa-pie-chart'" tone="'negative'"/>
+                    <NcKpiCard label="'Overdue'" value="'3'" icon="'fa-clock-o'" tone="'warning'" sub="'invoices'"/>
+                    <NcKpiCard label="'Pending'" value="'0'" icon="'fa-check-circle'"/>
+                    <NcKpiCard label="'Loading'" icon="'fa-cubes'" state="'loading'"/>
+                    <NcKpiCard label="'Empty'" icon="'fa-cubes'" state="'empty'"/>
+                    <NcKpiCard label="'Restricted'" icon="'fa-lock'" state="'noaccess'"/>
+                    <NcKpiCard label="'Failed'" icon="'fa-bolt'" state="'error'"/>
+                </div>
+                <h3>Statement card</h3>
+                <NcStatementCard title="'Balance Sheet'" period="'2026-01-01 → 2026-10-12'" rows="sampleRows"
+                                 onOpen="() => this.noop()" onRowClick="() => this.noop()"/>
             </section>
 
             <section class="nc-playground__section">

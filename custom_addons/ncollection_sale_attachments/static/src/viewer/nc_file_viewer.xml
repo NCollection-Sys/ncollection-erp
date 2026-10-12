@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_sale_attachments.NcFileViewer" t-inherit="web.FileViewer" t-inherit-mode="primary">
+        <!-- file name: its own bidi run, so an Arabic name never reorders the "2 / 5" beside it -->
+        <xpath expr="//span[hasclass('text-truncate')]" position="attributes">
+            <attribute name="dir">auto</attribute>
+        </xpath>
+        <xpath expr="//span[hasclass('text-truncate')]" position="after">
+            <span t-if="props.files.length &gt; 1" class="o-NcFileViewer-position ms-3 badge text-bg-secondary" dir="ltr" t-out="position"/>
+        </xpath>
+        <!-- fallback card for a type that cannot be previewed -->
+        <xpath expr="//div[hasclass('o-FileViewer-main')]" position="inside">
+            <div t-if="!canPreview" class="o-NcFileViewer-fallback text-center" t-on-click.stop="">
+                <i class="fa fa-file-o fa-4x mb-3" role="img"/>
+                <div class="h5 text-break" dir="auto" t-out="state.file.name"/>
+                <div class="text-muted mb-3">This file type cannot be previewed here.</div>
+                <a class="btn btn-primary" t-att-href="state.file.downloadUrl" download="">
+                    <i class="fa fa-download me-1" role="img"/>Download
+                </a>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

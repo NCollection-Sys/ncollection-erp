@@ -19,3 +19,5 @@ from . import test_tenant_module_management
 from . import test_module_install
 from . import test_localization_provisioning
 from . import test_registration_approval
+from . import test_platform_entry
+from . import test_platform_admin_boundary

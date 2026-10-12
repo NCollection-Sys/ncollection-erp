@@ -217,3 +217,21 @@ class TestNativeFinancialModulesAreSelectable(TransactionCase):
             {m['name'] for m in self.Plan.get_selectable_modules()['optional']},
             "a module with an unresolvable dependency must not be licensable — "
             "its install job could only fail, on every ready tenant of the plan")
+
+    # ------------------------------------------------- the Community applications NCollection offers
+    def test_the_seven_community_applications_can_be_licensed_from_the_picker(self):
+        """Point of Sale, Manufacturing, Recruitment, Fleet, Live Chat, Attendances and SMS Marketing are real Odoo
+        Community applications. Licensing one is naming its technical module in the plan (the picker writes exactly
+        that), so each must be OFFERED; the entitlement stays the platform's, and the tenant never installs it."""
+        wanted = {
+            'point_of_sale': 'Point of Sale', 'mrp': 'Manufacturing', 'hr_recruitment': 'Recruitment',
+            'fleet': 'Fleet', 'im_livechat': 'Live Chat', 'hr_attendance': 'Attendances',
+            'mass_mailing_sms': 'SMS Marketing',
+        }
+        offered = {m['name']: m for m in self.catalog['optional']}
+        for name, label in wanted.items():
+            self.assertIn(name, offered, "%s must be licensable from the plan picker" % label)
+            self.assertTrue(offered[name]['label'], name)
+        # the control: an Enterprise-only app is not a module this database has, so it is never offered
+        self.assertNotIn('stock_barcode', offered)
+        self.assertNotIn('account_accountant', offered)

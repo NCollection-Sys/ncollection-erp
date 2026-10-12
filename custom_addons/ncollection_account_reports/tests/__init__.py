@@ -20,6 +20,8 @@ from . import test_uae_vat_report
 from . import test_report_hub
 from . import test_report_print
 from . import test_print_system
+from . import test_summary
 from . import test_tax_analysis
 from . import test_oca_wizard_access
 from . import test_hub_roles
+from . import test_exclude_zero

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.3.0',
+    'version': '19.0.1.5.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
                'restriction hooks, common mixins and the accounting engine '
@@ -31,6 +31,11 @@
         # actually READ the native reports (measured: they could not).
         'views/accounting_security.xml',
         'views/accounting_app_menus.xml',
+        # Custom print title of ONE invoice (presentation only; the stock heading is the default).
+        'views/account_move_views.xml',
+        # Settings > Accounting Defaults: the default accounts Community already has, reachable by the Owner.
+        'views/accounting_defaults_views.xml',
+        'report/invoice_title.xml',
     ],
     'post_init_hook': 'post_init_hook',
     # Scaffold: the load-bearing deliverable is the shared AbstractModel mixin

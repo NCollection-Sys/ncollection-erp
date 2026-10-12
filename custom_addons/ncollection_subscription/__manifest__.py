@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Subscription Management',
-    'version': '19.0.1.8.0',
+    'version': '19.0.1.10.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS subscription, tenant and plan management for NCollection ERP',
     'description': """
@@ -17,7 +17,7 @@ SaaS management platform for NCollection ERP administrators:
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail'],
+    'depends': ['base', 'mail', 'ncollection_branding'],
     'data': [
         'security/saas_security.xml',
         'security/ir.model.access.csv',

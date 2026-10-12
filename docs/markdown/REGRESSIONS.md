@@ -438,6 +438,30 @@ exited 0 having healed all three fixtures back to 5.
 
 ---
 
+## R-032 — "UncaughtPromiseError > InvalidStateError: The database connection is closing" on every screen ✅ FIXED
+
+**Symptom.** The web client's error dialog: `Failed to execute 'transaction' on 'IDBDatabase': The database
+connection is closing`, stack `web.assets_web.min.js` (an `idb-keyval` frame, line 15596 of bundle `cc2d725`).
+
+**Root cause.** Not NCollection code and not Odoo's `@web` IndexedDB layer (that one is mutex-serialised and
+reopens per call). It is the *mail* module: `@mail/core/web/store_service_patch` builds ONE idb-keyval 3.2.0 `Store`
+at load time. That library opens a single `IDBDatabase` connection in its constructor and keeps it for the life of
+the page; `Store.updateAppBadge()` then calls `idbKeyval.set("unread", n, store)` and drops the promise. When the
+browser closes that connection under the page (site data cleared or evicted, a frozen/restored tab, another context
+deleting the database) the next badge update runs `db.transaction()` on a closing connection and nothing handles the
+rejection. Intermittent by nature: a clean profile with 25 navigate/reload cycles never raises it; closing the
+connection and updating the badge raises it every time (reproduced RED before the fix).
+
+**Fix.** `ncollection_branding/static/src/js/mail_unread_store_patch.js` overrides only `updateAppBadge`: on
+`InvalidStateError` it drops the dead store and reopens ONCE. Any other error is not swallowed and a second failure
+is not retried (no reconnect loop, no leaked connection). IndexedDB stays enabled; nothing in Odoo core is edited.
+A browser holding the OLD bundle keeps the old behaviour until the new bundle (new hash) is loaded: one hard reload.
+
+**Guard.** `e2e/tests/idb-unread-store.spec.ts`: simulates the browser closing the connection and asserts no uncaught
+error and that the value is written through the reopened connection; plus repeated navigation/reload cycles.
+
+---
+
 ## R-031 — A multi-partner statement could be e-mailed to every partner, and a report could be built for a company the user is not in ✅ FIXED
 
 **Symptom.** (1) "Send by Email" on a statement run for several customers attached ONE PDF holding every
@@ -1005,3 +1029,23 @@ becomes routine rather than incidental, revisit this.
 
 `KNOWN_PENDING` in `scripts/ci/invariants.py` is currently **empty** — no known violation is
 being shipped. If an entry appears there, it belongs in this table too.
+
+## R-033 — "A css error occured, using an old style to render this page" + a view error toast on every screen ✅ FIXED
+
+**Symptom.** Red banner at the bottom of every backend page, unstyled/fallback look, and repeated "View error"
+notifications (Arabic UI: «خطأ في الشكل…»). Reproduced on the dev `ncollection` DB and the `e2eclienta/b` fixtures.
+
+**Root cause.** Two Sass errors, both mine: `grid-template-columns: …minmax(min(100%, 22rem), 1fr)` in
+`ncollection_core/static/src/dashboard/dashboard.scss` and `max-width: min(32rem, 90vw)` in
+`ncollection_sale_attachments/static/src/viewer/nc_file_viewer.scss`. Sass evaluates `min()` itself and rejects
+mixed units ("Incompatible units: 'rem' and '%'", then 'vw' and 'rem'). A SCSS failure does not raise: Odoo stores a
+**stub bundle** that paints the banner, and keeps serving it. It went unseen because Python tests and Playwright
+`pageerror` listeners cannot see it, and because the bundle is compiled lazily on first page load.
+
+**Fix.** `unquote("min(…)")` so the browser, not Sass, evaluates `min()`. Odoo caches the asset checksum in memory, so
+the new bundle appears after the registry cache is invalidated (module upgrade of the two modules, no Docker restart).
+
+**Guards.** `ncollection_core/tests/test_assets_compile.py` compiles the real `web.assets_web` bundle (LTR and RTL,
+never the cached attachment) and fails on any compile error (RED proven: the old line fails both). `release-smoke.spec.ts`
+now also fails on the banner, on a stylesheet bundle containing `css_error_message`, and on any error notification.
+Rule of thumb for new SCSS: never write bare `min()/max()/clamp()` with mixed units; wrap them in `unquote("...")`.

@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Account Reports - OCA engine adapter',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Accounting',
     'summary': 'Lets the NCollection report viewer use the official OCA '
                'account_financial_report engine as the calculation source for a '

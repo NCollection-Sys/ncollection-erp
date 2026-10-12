@@ -18,11 +18,28 @@ is the property that path relies on.
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
+from unittest.mock import patch
+
+from odoo import api
 from odoo.addons.ncollection_core.models import ir_module as ir_module_mod
 
 
 @tagged('post_install', '-at_install')
 class TestTenantModuleLockout(TransactionCase):
+
+    def setUp(self):
+        super().setUp()
+        # These tests model a TENANT database, where ncollection_subscription (and so the platform administrator
+        # group) is not installed. The shared test database has it, so say so: nobody here is a platform admin.
+        original = api.Environment.ref
+
+        def ref(env, xmlid, raise_if_not_found=True):
+            if xmlid == 'ncollection_subscription.group_platform_admin' and not raise_if_not_found:
+                return env['res.groups']
+            return original(env, xmlid, raise_if_not_found)
+        patcher = patch.object(api.Environment, 'ref', ref)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     @classmethod
     def setUpClass(cls):

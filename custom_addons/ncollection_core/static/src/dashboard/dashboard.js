@@ -1,10 +1,7 @@
 /** @odoo-module **/
 
 /**
- * Customer Workspace Dashboard (P1-T17).
- *
- * Ported from the reviewed prototype at demo/src/pages/Dashboard.tsx, which
- * demo/README.md designates as the design reference for this screen.
+ * Summary: the company's executive home (P1-T17, extended).
  *
  * This component deliberately performs NO filtering of its own. The server
  * decides which widgets the user may see — by role, and by whether the plan
@@ -12,11 +9,21 @@
  * (ncollection.dashboard.data.get_dashboard_payload). Filtering here as well
  * would imply the client is a security boundary, which it is not (Standing
  * Rule 4).
+ *
+ * It also does no accounting. Statement rows and the Net Profit / Expenses figures are the report engine's own
+ * rows; a click opens the source journal items through the report service's drill (`nc_report_drill`) or, for
+ * the operational cards, `drill_kpi`: both server-side, both access-checked, neither takes a domain from here.
  */
 
 import { Component, onMounted, onWillStart, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
+import { _t } from "@web/core/l10n/translation";
 import { useService } from "@web/core/utils/hooks";
+import {
+    NcKpiCard,
+    NcQuickActionCard,
+    NcStatementCard,
+} from "@ncollection_branding/components/components";
 
 /** Read a brand token so charts inherit tenant colours (P1-T16-ready). */
 function brandColor(name, fallback) {
@@ -24,15 +31,39 @@ function brandColor(name, fallback) {
     return (value || "").trim() || fallback;
 }
 
+// Server icon keys -> Font Awesome 4.7 (the set Odoo ships).
+const ICONS = {
+    sales: "fa-line-chart",
+    invoicing: "fa-file-text-o",
+    wallet: "fa-money",
+    activity: "fa-clock-o",
+    check: "fa-check-circle",
+    purchase: "fa-shopping-cart",
+    inventory: "fa-cubes",
+    chart: "fa-pie-chart",
+};
+const QUICK_ICONS = {
+    new_quotation: "fa-plus",
+    new_invoice: "fa-file-text-o",
+    new_po: "fa-shopping-cart",
+};
+
 export class NcDashboard extends Component {
     static template = "ncollection_core.Dashboard";
     static props = ["*"];
+    static components = { NcKpiCard, NcQuickActionCard, NcStatementCard };
 
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
+        this.notification = useService("notification");
         this.chartsRoot = useRef("charts");
         this._charts = [];
+        this.texts = {
+            statementEmpty: _t("No posted entries in this period yet."),
+            openReport: _t("Open full report"),
+            showAccounts: _t("Show accounts"),
+        };
 
         this.state = useState({
             loading: true,
@@ -77,8 +108,20 @@ export class NcDashboard extends Component {
         return this.state.widgets.filter((w) => w.type === "kpi");
     }
 
+    get statements() {
+        return this.state.widgets.filter((w) => w.type === "statement");
+    }
+
     get charts() {
         return this.state.widgets.filter((w) => w.type === "chart");
+    }
+
+    iconFor(widget) {
+        return ICONS[widget.icon] || ICONS.activity;
+    }
+
+    quickIcon(key) {
+        return QUICK_ICONS[key];
     }
 
     /** Currency/integer formatting, mirroring the prototype's compact tiles. */
@@ -95,17 +138,69 @@ export class NcDashboard extends Component {
         return new Intl.NumberFormat().format(value);
     }
 
-    /** Trend chip text; null when there is no prior period to compare against. */
-    formatTrend(widget) {
-        if (widget.trend === null || widget.trend === undefined) {
-            return null;
-        }
-        const rounded = Math.round(widget.trend);
-        return `${rounded >= 0 ? "▲" : "▼"} ${Math.abs(rounded)}%`;
+    /** Full-precision amount for a statement row (a statement is read to the cent, not compacted). */
+    formatMoney(value) {
+        const symbol = this.state.meta.currency || "";
+        const text = new Intl.NumberFormat(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(value ?? 0);
+        return symbol ? `${symbol} ${text}` : text;
     }
 
-    trendClass(widget) {
-        return (widget.trend ?? 0) >= 0 ? "nc-trend--up" : "nc-trend--down";
+    /** The trend chip for the shared KPI card; undefined when there is no prior period to compare against. */
+    trendFor(widget) {
+        if (widget.trend === null || widget.trend === undefined) {
+            return undefined;
+        }
+        const rounded = Math.round(widget.trend);
+        return {
+            value: `${rounded >= 0 ? "▲" : "▼"} ${Math.abs(rounded)}%`,
+            dir: rounded >= 0 ? "up" : "down",
+        };
+    }
+
+    /** The statement's rows for the shared statement card. A row is clickable only when the server gave it accounts. */
+    statementRows(widget) {
+        return (widget.rows || []).map((row, index) => ({
+            key: row.key || String(index),
+            label: row.label,
+            display: this.formatMoney(row.value),
+            level: row.level,
+            amount: row.value,
+            drill: !!(widget.wizard && row.account_ids && row.account_ids.length),
+            account_ids: row.account_ids || [],
+        }));
+    }
+
+    /** Open an action produced by a server drill; a refusal is a notice, never a blank page. */
+    async _open(fetchAction) {
+        try {
+            await this.action.doAction(await fetchAction());
+        } catch {
+            this.notification.add(_t("This figure cannot be opened."), { type: "warning" });
+        }
+    }
+
+    drill(widget) {
+        const drill = widget.drill;
+        return this._open(() =>
+            drill.kind === "accounts"
+                ? this.orm.call("ncollection.report.service", "nc_report_drill", [drill.wizard.model, drill.wizard.id], {
+                      account_ids: drill.account_ids,
+                      label: drill.label,
+                  })
+                : this.orm.call("ncollection.dashboard.data", "drill_kpi", [widget.key])
+        );
+    }
+
+    drillStatement(widget, row) {
+        return this._open(() =>
+            this.orm.call("ncollection.report.service", "nc_report_drill", [widget.wizard.model, widget.wizard.id], {
+                account_ids: row.account_ids,
+                label: row.label,
+            })
+        );
     }
 
     _destroyCharts() {

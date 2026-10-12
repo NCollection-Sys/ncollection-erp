@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- sale_order_tree is the parent of BOTH list views (quotations and sales orders), so one inheritance
+         puts the paperclip in both. Hidden when there is nothing attached. -->
+    <record id="sale_order_tree_nc_attachments" model="ir.ui.view">
+        <field name="name">sale.order.list.nc.attachments</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.sale_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="nc_attachment_count" string="Files" widget="nc_attachment_count" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

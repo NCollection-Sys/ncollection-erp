@@ -2,7 +2,7 @@ import re
 import uuid
 
 from odoo import SUPERUSER_ID, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 from .localization import localization_package
 
@@ -421,6 +421,15 @@ class Tenant(models.Model):
         string='Module Overrides')
     active = fields.Boolean(default=True)
 
+    # Platform administrators who may ENTER this tenant to administer it ("Enter Company"). Explicit and
+    # per tenant: a platform administrator sees, and can enter, only the tenants listed here. The entry itself
+    # is done by ncollection_saas (the only layer allowed to reach a tenant database).
+    platform_admin_ids = fields.Many2many(
+        'res.users', 'ncollection_tenant_platform_admin_rel', 'tenant_id', 'user_id',
+        string='Platform administrators', tracking=True,
+        domain=lambda self: [('all_group_ids', 'in', self.env.ref('ncollection_subscription.group_platform_admin').id)],
+        help="Who may enter this company from the platform. Leave a person out and they cannot see or enter it.")
+
     # Odoo 19 dropped `_sql_constraints` (silently ignored) — use models.Constraint.
     _tenant_uuid_unique = models.Constraint(
         'unique(tenant_uuid)',
@@ -465,13 +474,34 @@ class Tenant(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        creator = self.env.user
+        is_platform_admin = creator.has_group('ncollection_subscription.group_platform_admin')
         for vals in vals_list:
             self._nc_check_engine_only_status(vals.get('database_status'))
+            self._nc_check_platform_admin_ids_change(vals)
+            # The person who creates a tenant is authorised to enter it unless the allow-list is given explicitly.
+            if is_platform_admin and 'platform_admin_ids' not in vals and not creator._is_superuser():
+                vals['platform_admin_ids'] = [(4, creator.id)]
         return super().create(vals_list)
 
     def write(self, vals):
         self._nc_check_engine_only_status(vals.get('database_status'))
+        self._nc_check_platform_admin_ids_change(vals)
         return super().write(vals)
+
+    @api.model
+    def _nc_check_platform_admin_ids_change(self, vals):
+        """Only a Settings administrator decides who may ENTER a tenant.
+
+        The allow-list is what stops a platform administrator from administering a tenant nobody gave them. If
+        a platform administrator could edit it, they could add themselves and the list would mean nothing, so a
+        change needs ``base.group_system`` (which implies the platform group but is not implied by it). System
+        flows (``env.su``) are exempt.
+        """
+        if 'platform_admin_ids' in vals and not (
+                self.env.su or self.env.user.has_group('base.group_system')):
+            raise AccessError(self.env._(
+                "Only an Administrator can change who may enter a company from the platform."))
 
     # ------------------------------------------------------------------
     # Guarded lifecycle transitions

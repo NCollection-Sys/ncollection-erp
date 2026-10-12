@@ -365,3 +365,362 @@ msgid ""
 msgstr ""
 "اسم الدخول '%s' يبدو كعنوان بريد إلكتروني. اسم الدخول هو اسم مستخدم (مثل "
 "sara.m)؛ ضع البريد الإلكتروني في حقل البريد الإلكتروني للتواصل بدلًا من ذلك."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Summary"
+msgstr "الملخّص"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Welcome back,"
+msgstr "مرحبًا بعودتك،"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Loading your summary…"
+msgstr "جارٍ تحميل الملخّص…"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "The summary could not be loaded. Please refresh the page."
+msgstr "تعذّر تحميل الملخّص. يُرجى تحديث الصفحة."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Nothing to summarise for your role yet."
+msgstr "لا يوجد ما يُلخَّص لدورك بعد."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Open full report"
+msgstr "فتح التقرير الكامل"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "No posted entries in this period yet."
+msgstr "لا توجد قيود مرحّلة في هذه الفترة بعد."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Balance Sheet"
+msgstr "الميزانية العمومية"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Profit & Loss"
+msgstr "الأرباح والخسائر"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
+msgid "Platform Admin Mode"
+msgstr "وضع مدير المنصّة"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
+msgid "Back to Platform"
+msgstr "العودة إلى المنصّة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/platform_entry.py:0
+msgid "Platform Admin: %s"
+msgstr "مدير المنصّة: %s"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/platform_entry.py:0
+msgid "Malformed entry grant."
+msgstr "طلب دخول غير صالح."
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_launcher_app__sequence
+msgid ""
+"0 keeps the natural order. Give applications 1, 2, 3 ... to put them first, in that order."
+msgstr ""
+"0 يُبقي الترتيب الطبيعي. أعطِ التطبيقات 1 و2 و3 ... لوضعها أولًا بهذا الترتيب."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_apikeys.py:0
+msgid ""
+"A platform administrator session cannot create API keys. Use a named tenant user."
+msgstr ""
+"لا يمكن لجلسة مدير المنصة إنشاء مفاتيح API. استخدم مستخدمًا مسمّى في المستأجر."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid ""
+"A platform administrator session cannot set passwords. Ask the workspace Owner."
+msgstr ""
+"لا يمكن لجلسة مدير المنصة تعيين كلمات المرور. اطلب ذلك من مالك مساحة العمل."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__active
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_launcher_app__state__active
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_launcher_app__state
+msgid ""
+"Active: in your plan and installed. In your plan, being installed: the platform installs it. Not in your plan: change your subscription to add it."
+msgstr ""
+"نشط: ضمن خطتك ومثبّت. ضمن خطتك، قيد التثبيت: تقوم المنصة بتثبيته. غير مضمّن في خطتك: غيّر اشتراكك لإضافته."
+
+#. module: ncollection_core
+#: model:ir.model.constraint,message:ncollection_core.constraint_ncollection_launcher_app_module_uniq
+msgid "An application is listed once."
+msgstr "يُدرج التطبيق مرة واحدة."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__name
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
+msgid "Application"
+msgstr "التطبيق"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/launcher_app.py:0
+#: model:ir.actions.server,name:ncollection_core.action_nc_launcher_app_manager
+#: model:ir.ui.menu,name:ncollection_core.menu_nc_launcher_apps
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_list
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
+msgid "Applications"
+msgstr "التطبيقات"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Awaiting customer confirmation"
+msgstr "بانتظار تأكيد العميل"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Cash & bank"
+msgstr "النقد والبنوك"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Expenses"
+msgstr "المصروفات"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Financial statements"
+msgstr "القوائم المالية"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
+msgid "Hidden on Home"
+msgstr "مخفي من الرئيسية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__sequence
+msgid "Home order"
+msgstr "ترتيب الرئيسية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__icon
+msgid "Icon"
+msgstr "الأيقونة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
+msgid "In my plan"
+msgstr "ضمن خطتي"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_launcher_app__state__pending
+msgid "In your plan, being installed"
+msgstr "ضمن خطتك، قيد التثبيت"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Key figures"
+msgstr "الأرقام الرئيسية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__module_name
+msgid "Module Name"
+msgstr "اسم الوحدة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "My activities"
+msgstr "أنشطتي"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Net Profit"
+msgstr "صافي الربح"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
+msgid "Not in my plan"
+msgstr "خارج خطتي"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_launcher_app__state__locked
+msgid "Not in your plan"
+msgstr "غير مضمّن في خطتك"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/launcher_app.py:0
+msgid "Only the workspace Owner can manage applications."
+msgstr "يمكن لمالك مساحة العمل فقط إدارة التطبيقات."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/launcher_app.py:0
+msgid ""
+"Only whether an application shows on Home, and its order, can be changed."
+msgstr "يمكن تغيير ظهور التطبيق في الشاشة الرئيسية وترتيبه فقط."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Open Quotations"
+msgstr "عروض الأسعار المفتوحة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Open payables"
+msgstr "الذمم الدائنة المفتوحة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Open quotations"
+msgstr "عروض الأسعار المفتوحة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Open receivables"
+msgstr "الذمم المدينة المفتوحة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Pending Transfers"
+msgstr "عمليات نقل معلّقة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Pending transfers"
+msgstr "عمليات نقل معلّقة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid "Platform administrator accounts are managed by the platform."
+msgstr "تُدار حسابات مديري المنصة بواسطة المنصة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Purchases This Month"
+msgstr "مشتريات هذا الشهر"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Purchases this month"
+msgstr "مشتريات هذا الشهر"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Sales this month"
+msgstr "مبيعات هذا الشهر"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.js:0
+msgid "Show accounts"
+msgstr "عرض الحسابات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__visible
+msgid "Show on Home"
+msgstr "إظهار في الرئيسية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_launcher_app__visible
+msgid ""
+"Show this application on the Home screen. Hiding it only removes the tile: access, menus and data are unchanged."
+msgstr ""
+"إظهار هذا التطبيق في الشاشة الرئيسية. الإخفاء يزيل البطاقة فقط: الصلاحيات والقوائم والبيانات لا تتغير."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__state
+msgid "Status"
+msgstr "الحالة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Stock on Hand"
+msgstr "المخزون المتوفر"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Stock on hand"
+msgstr "المخزون المتوفر"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/launcher_app.py:0
+msgid "The application list is maintained by the workspace itself."
+msgstr "قائمة التطبيقات تُدار بواسطة مساحة العمل نفسها."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.js:0
+msgid "This figure cannot be opened."
+msgstr "لا يمكن فتح هذا الرقم."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "This figure has no detail for you."
+msgstr "لا توجد تفاصيل لهذا الرقم لك."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Transfers waiting to be processed"
+msgstr "عمليات نقل بانتظار المعالجة"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Trends"
+msgstr "الاتجاهات"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Units in your warehouses"
+msgstr "وحدات في مستودعاتك"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Year to date"
+msgstr "منذ بداية السنة"

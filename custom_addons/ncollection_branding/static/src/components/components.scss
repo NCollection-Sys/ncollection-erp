@@ -9,22 +9,82 @@
 // here, and it is enforced by tests/test_component_library.py.
 // =============================================================================
 
-// ---- KPI card ---------------------------------------------------------------
-.nc-kpi-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: var(--nc-space-2);
-    min-width: 0;
-    padding: var(--nc-space-5);
+// ---- Card surface -----------------------------------------------------------
+// ONE surface for every card in the product (KPI, statement, app tile, section). A card that goes somewhere adds
+// --interactive: hover, press and keyboard focus are defined here once.
+.nc-card {
     background: var(--nc-surface-raised);
     border: 1px solid var(--nc-surface-border);
     border-radius: var(--nc-radius-md);
-    box-shadow: var(--nc-shadow-card);
+    box-shadow: var(--nc-shadow-sm);
+    min-width: 0;
 
-    // Logical property so the accent flips under RTL (§21 / P3-T08).
+    &--interactive {
+        cursor: pointer;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+
+        &:hover {
+            border-color: color-mix(in srgb, var(--nc-color-primary) 55%, var(--nc-surface-border));
+            box-shadow: var(--nc-shadow-card);
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: none;
+        }
+
+        &:focus-visible {
+            outline: none;
+            box-shadow: var(--nc-focus-ring);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+
+            &:hover {
+                transform: none;
+            }
+        }
+    }
+}
+
+// ---- KPI card ---------------------------------------------------------------
+// Compact on purpose: an icon chip, a small label, the figure, one quiet context line. Tone is semantic only.
+.nc-kpi-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--nc-space-3);
+    inline-size: 100%;
+    padding: var(--nc-space-3) var(--nc-space-4);
+    text-align: start;
+    font: inherit;
+    color: inherit;
+
+    // Logical property so the accent flips under RTL (§21 / P3-T08). Off by default; kept for old callers.
     &--accent {
         border-inline-start: 4px solid var(--nc-color-primary);
+    }
+
+    &__icon {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        inline-size: var(--nc-space-8);
+        block-size: var(--nc-space-8);
+        border-radius: var(--nc-radius-sm);
+        font-size: var(--nc-font-size-md);
+        color: var(--nc-color-primary);
+        background: color-mix(in srgb, var(--nc-color-primary) 10%, transparent);
+    }
+
+    &__main {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: var(--nc-space-1);
+        min-width: 0;
     }
 
     &__label {
@@ -33,23 +93,112 @@
         letter-spacing: 0.04em;
         text-transform: uppercase;
         color: var(--nc-text-muted);
+
+        // Arabic letters join: letter-spacing and upper-casing would break the word apart.
+        .o_rtl & {
+            letter-spacing: normal;
+            text-transform: none;
+        }
     }
 
     &__value {
-        font-size: var(--nc-font-size-2xl);
+        font-size: var(--nc-font-size-xl);
         font-weight: var(--nc-font-weight-semibold);
-        line-height: 1.1;
+        line-height: 1.15;
         color: var(--nc-text);
         font-variant-numeric: tabular-nums;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &--state {
+            font-size: var(--nc-font-size-md);
+            font-weight: var(--nc-font-weight-medium);
+            color: var(--nc-text-muted);
+        }
     }
 
     &__sub {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        gap: var(--nc-space-2);
-        font-size: var(--nc-font-size-sm);
+        gap: var(--nc-space-1) var(--nc-space-2);
+        font-size: var(--nc-font-size-xs);
         color: var(--nc-text-muted);
     }
+
+    &__period {
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__go {
+        flex: none;
+        font-size: var(--nc-font-size-xs);
+        color: var(--nc-text-muted);
+
+        .o_rtl & {
+            transform: scaleX(-1);
+        }
+    }
+
+    // A zero figure is an answer, not a failure: drawn quieter.
+    &--zero &__value {
+        color: var(--nc-text-muted);
+    }
+
+    &--loading &__label {
+        opacity: 0.7;
+    }
+
+    &__skeleton {
+        display: block;
+        block-size: var(--nc-space-5);
+        inline-size: 60%;
+        border-radius: var(--nc-radius-sm);
+        background: var(--nc-surface-border);
+        animation: nc-skeleton-pulse 1.4s ease-in-out infinite;
+    }
+
+    &--positive &__icon {
+        color: var(--nc-status-success);
+        background: color-mix(in srgb, var(--nc-status-success) 12%, transparent);
+    }
+
+    &--positive &__value {
+        color: var(--nc-status-success);
+    }
+
+    &--negative &__icon {
+        color: var(--nc-status-error);
+        background: color-mix(in srgb, var(--nc-status-error) 12%, transparent);
+    }
+
+    &--negative &__value {
+        color: var(--nc-status-error);
+    }
+
+    &--warning &__icon {
+        color: var(--nc-status-warning);
+        background: color-mix(in srgb, var(--nc-status-warning) 12%, transparent);
+    }
+
+    &--info &__icon {
+        color: var(--nc-status-info);
+        background: color-mix(in srgb, var(--nc-status-info) 12%, transparent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        &__skeleton {
+            animation: none;
+        }
+    }
+}
+
+// The grid every KPI row uses (Summary, dashboards, any module): auto-fills, never a giant empty tile.
+.nc-kpi-grid {
+    display: grid;
+    gap: var(--nc-space-3);
+    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
 }
 
 // Trend chip — meaning is semantic (growth/decline), never brand colour.
@@ -59,6 +208,161 @@
 
     &--up { color: var(--nc-status-success); }
     &--down { color: var(--nc-status-error); }
+}
+
+// ---- Statement card (Balance Sheet, Profit & Loss, any report summary) --------
+.nc-statement-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nc-space-2);
+    padding: var(--nc-space-4);
+
+    &__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--nc-space-3);
+    }
+
+    &__title {
+        margin: 0;
+        font-size: var(--nc-font-size-md);
+        font-weight: var(--nc-font-weight-semibold);
+        color: var(--nc-text);
+    }
+
+    &__period {
+        font-size: var(--nc-font-size-xs);
+        color: var(--nc-text-muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__open {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--nc-space-1);
+        padding: 0;
+        border: 0;
+        background: none;
+        border-radius: var(--nc-radius-sm);
+        color: var(--nc-color-primary);
+        font-size: var(--nc-font-size-sm);
+        font-weight: var(--nc-font-weight-medium);
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+
+        &:focus-visible {
+            outline: none;
+            box-shadow: var(--nc-focus-ring);
+        }
+
+        .o_rtl & .fa {
+            transform: scaleX(-1);
+        }
+    }
+
+    &__empty {
+        padding-block: var(--nc-space-4);
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+    }
+}
+
+.nc-statement-table {
+    inline-size: 100%;
+    border-collapse: collapse;
+}
+
+.nc-statement-row {
+    td {
+        padding-block: var(--nc-space-1);
+        border-block-end: 1px solid color-mix(in srgb, var(--nc-surface-border) 60%, transparent);
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text);
+    }
+
+    &__label {
+        overflow-wrap: anywhere;
+    }
+
+    &__value {
+        inline-size: 1%;
+        padding-inline-start: var(--nc-space-3);
+        text-align: end;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &--l0 td {
+        font-weight: var(--nc-font-weight-semibold);
+    }
+
+    &--l1 &__label {
+        padding-inline-start: var(--nc-space-4);
+    }
+
+    &--l2 &__label {
+        padding-inline-start: var(--nc-space-8);
+    }
+
+    &--l2 td {
+        color: var(--nc-text-muted);
+    }
+
+    &--negative &__value {
+        color: var(--nc-status-error);
+    }
+
+    &__toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        inline-size: var(--nc-space-5);
+        margin-inline-end: var(--nc-space-1);
+        padding: 0;
+        border: 0;
+        background: none;
+        border-radius: var(--nc-radius-sm);
+        color: var(--nc-text-muted);
+        font-size: var(--nc-font-size-xs);
+        cursor: pointer;
+
+        &:focus-visible {
+            outline: none;
+            box-shadow: var(--nc-focus-ring);
+        }
+
+        .o_rtl & .fa-chevron-right {
+            transform: scaleX(-1);
+        }
+    }
+
+    // An amount that opens its source: reads as a link (dotted), says so on hover, reachable by keyboard.
+    &__amount {
+        padding: 0 var(--nc-space-1);
+        border: 0;
+        background: none;
+        border-radius: var(--nc-radius-sm);
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+
+        &:hover {
+            color: var(--nc-color-primary);
+            text-decoration-style: solid;
+            background: color-mix(in srgb, var(--nc-color-primary) 8%, transparent);
+        }
+
+        &:focus-visible {
+            outline: none;
+            box-shadow: var(--nc-focus-ring);
+        }
+    }
 }
 
 // ---- Section card + chart wrapper -------------------------------------------

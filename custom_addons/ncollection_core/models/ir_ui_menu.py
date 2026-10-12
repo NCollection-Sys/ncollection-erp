@@ -173,10 +173,16 @@ class IrUiMenu(models.Model):
         if not roots:
             return []
         xmlids = roots._get_menuitems_xmlids()
+        # What the workspace Owner chose to hide / order (Settings > Applications). A PREFERENCE about tiles only:
+        # it removes a card from this grid and changes nothing about access, menus or licensing.
+        Preferences = self.env['ncollection.launcher.app']
+        hidden, ordered = Preferences._nc_hidden_modules(), Preferences._nc_home_order()
         apps = []
         for menu in roots:
             xmlid = xmlids.get(menu.id, '')
             if xmlid in LAUNCHER_EXCLUDED_MENUS:
+                continue
+            if xmlid.split('.')[0] in hidden:
                 continue
             if not menu._nc_has_reachable_action():
                 # NO REACHABLE ACTION -> NOT AN APP (#459). A card that cannot
@@ -210,7 +216,10 @@ class IrUiMenu(models.Model):
                 'web_icon_data': menu.web_icon_data.decode() if menu.web_icon_data else '',
                 'sequence': menu.sequence,
             })
-        apps.sort(key=lambda a: (a['sequence'], a['name'] or ''))
+        # Explicitly ordered apps first, in the Owner's order; the rest in their natural order.
+        apps.sort(key=lambda a: (
+            (0, ordered[a['xmlid'].split('.')[0]], a['name'] or '') if a['xmlid'].split('.')[0] in ordered
+            else (1, a['sequence'], a['name'] or '')))
         return apps
 
     def _nc_has_reachable_action(self):

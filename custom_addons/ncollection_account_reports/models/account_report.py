@@ -104,6 +104,12 @@ class NcollectionAccountReport(models.AbstractModel):
         return self._nc_filter_domain(account=account, partner=partner) + [
             ('date', '>=', self.date_from), ('date', '<=', self.date_to)]
 
+    def _nc_drill_domain(self, account=None, partner=None):
+        """The journal items one row of this report is made of. The default is the report's own period
+        domain scoped to the row; a report whose rows are counted differently (open items, account-type
+        scoped partner ledgers) overrides it so a drill shows exactly the items the row counted."""
+        return self._nc_move_line_domain(account=account, partner=partner)
+
     def _nc_assert_single_fiscal_year(self):
         """A report period must lie within ONE fiscal year. The opening logic
         resets P&L accounts at the fiscal-year start, which is only well-defined
@@ -353,6 +359,12 @@ class NcollectionAccountReport(models.AbstractModel):
             label = dict(self._fields['comparison_type']._description_selection(env)).get(
                 self.comparison_type, '')
             out.append((self._fields['comparison_type'].get_description(env, ['string'])['string'], label))
+        # The zero-balance option (native mixin, or the OCA engine's own hide_zero): a printed copy must say so,
+        # or a reader cannot tell a short ledger from a complete one.
+        # (the label is a source term, translated for every report at once; a field label would need one
+        # translation entry per report model)
+        if any(name in self._fields and self[name] for name in ('exclude_zero', 'hide_zero')):
+            out.append((env._("Exclude Zero Balances"), env._("Yes")))
         for name in ('partner_scope',):
             if name in self._fields and self[name]:
                 label = dict(self._fields[name]._description_selection(env)).get(self[name], '')

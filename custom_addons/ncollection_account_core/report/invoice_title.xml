@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Replaces ONLY the heading text of the stock invoice document, when the document asks for it.
+         The stock template sets `layout_document_title`; setting it again right after, conditionally, wins
+         and leaves every other part of the invoice (and the stock heading, when off) untouched. The number
+         stays; a long title wraps instead of widening the header. -->
+    <template id="report_invoice_document_nc_title" inherit_id="account.report_invoice_document">
+        <xpath expr="//t[@t-set='layout_document_title']" position="after">
+            <t t-if="o._nc_document_title()" t-set="layout_document_title">
+                <span class="o_nc_document_title" dir="auto"
+                      style="overflow-wrap: anywhere; word-break: break-word;"
+                      t-out="o._nc_document_title()"/>
+                <span t-if="o.name and o.name != '/'" t-field="o.name">INV/2023/0001</span>
+            </t>
+        </xpath>
+    </template>
+</odoo>

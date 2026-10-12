@@ -1,0 +1,451 @@
+# Arabic (ar_001) translation of ncollection_stock_barcode.
+# NCollection ERP. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_stock_barcode\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%(location)s is outside this operation's %(where)s (%(anchor)s)."
+msgstr "%(location)s خارج %(where)s هذه العملية (%(anchor)s)."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%(product)s counted."
+msgstr "تم جرد %(product)s."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%(product)s is not part of operation %(picking)s."
+msgstr "%(product)s ليس جزءًا من العملية %(picking)s."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%(product)s: %(picked)s of %(demand)s"
+msgstr "%(product)s: %(picked)s من %(demand)s"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%s corrected."
+msgstr "تم تصحيح %s."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%s is not a product barcode."
+msgstr "%s ليس باركود منتج."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%s is not a product, lot or location of this operation."
+msgstr "%s ليس منتجًا أو دفعة أو موقعًا في هذه العملية."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "%s is not an open operation."
+msgstr "%s ليست عملية مفتوحة."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "%s is tracked: scan its lot or serial number."
+msgstr "%s منتج متتبَّع: امسح رقم الدفعة أو الرقم التسلسلي."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "(more than demanded)"
+msgstr "(أكثر من المطلوب)"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "All"
+msgstr "الكل"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Apply count"
+msgstr "تطبيق الجرد"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Back"
+msgstr "رجوع"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+#: model:ir.actions.client,name:ncollection_stock_barcode.action_nc_barcode_scanner
+#: model:ir.ui.menu,name:ncollection_stock_barcode.menu_nc_barcode_scanner
+msgid "Barcode Scanner"
+msgstr "ماسح الباركود"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Choose a location"
+msgstr "اختر موقعًا"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Choose an internal location to count."
+msgstr "اختر موقعًا داخليًا للجرد."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Counted"
+msgstr "المعدود"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Counting %s"
+msgstr "جرد %s"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Deliveries"
+msgstr "التسليمات"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Delivery"
+msgstr "تسليم"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Difference"
+msgstr "الفرق"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Forget this location"
+msgstr "نسيان هذا الموقع"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Inventory adjusted."
+msgstr "تمت تسوية المخزون."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Inventory count"
+msgstr "جرد المخزون"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Location %s selected."
+msgstr "تم اختيار الموقع %s."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Lot"
+msgstr "الدفعة"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Mode"
+msgstr "الوضع"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Nothing has been counted in this location yet."
+msgstr "لم يتم جرد أي شيء في هذا الموقع بعد."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Nothing has been scanned for this product yet."
+msgstr "لم يتم مسح أي كمية لهذا المنتج بعد."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Nothing to process"
+msgstr "لا شيء للمعالجة"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Nothing was scanned."
+msgstr "لم يتم مسح أي شيء."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Odoo needs a decision to finish this operation."
+msgstr "يحتاج النظام إلى قرار لإنهاء هذه العملية."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "On hand"
+msgstr "المتوفر"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "One less"
+msgstr "واحد أقل"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "One more"
+msgstr "واحد أكثر"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Only an inventory manager can apply a count. Your count is saved."
+msgstr "يمكن لمدير المخزون فقط تطبيق الجرد. تم حفظ جردك."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Operation %s is ready to scan."
+msgstr "العملية %s جاهزة للمسح."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Operation %s selected."
+msgstr "تم اختيار العملية %s."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Operation %s validated."
+msgstr "تم اعتماد العملية %s."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Operations"
+msgstr "العمليات"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Product"
+msgstr "المنتج"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Qty"
+msgstr "الكمية"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Receipt"
+msgstr "استلام"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Receipts"
+msgstr "الاستلامات"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Scan a barcode"
+msgstr "امسح باركود"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Scan a product, lot or location"
+msgstr "امسح منتجًا أو دفعة أو موقعًا"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Scan an internal location to start"
+msgstr "امسح موقعًا داخليًا للبدء"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Scan an internal location to start counting."
+msgstr "امسح موقعًا داخليًا لبدء الجرد."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Scan an operation reference, or pick one below"
+msgstr "امسح مرجع عملية، أو اختر واحدة أدناه"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Scan at least one item before validating."
+msgstr "امسح عنصرًا واحدًا على الأقل قبل الاعتماد."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Scan products to count them"
+msgstr "امسح المنتجات لجردها"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Scan the barcode of an internal location to count it."
+msgstr "امسح باركود موقع داخلي لجرده."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Scan the barcode of an internal location, then scan what you count."
+msgstr "امسح باركود موقع داخلي، ثم امسح ما تجرده."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Scan the lot / serial of %s"
+msgstr "امسح الدفعة / الرقم التسلسلي لـ %s"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Scan with the camera"
+msgstr "المسح بالكاميرا"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Serial number %s was already scanned on this operation."
+msgstr "تم مسح الرقم التسلسلي %s مسبقًا في هذه العملية."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "The camera could not be used."
+msgstr "تعذّر استخدام الكاميرا."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "The quantity must be a number."
+msgstr "يجب أن تكون الكمية رقمًا."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "The quantity must be positive."
+msgstr "يجب أن تكون الكمية موجبة."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "The server refused this scan."
+msgstr "رفض الخادم هذا المسح."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "There are no open operations right now."
+msgstr "لا توجد عمليات مفتوحة حاليًا."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "This line is not part of the operation."
+msgstr "هذا السطر ليس جزءًا من العملية."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "This location no longer exists."
+msgstr "هذا الموقع لم يعد موجودًا."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "This operation is already %s."
+msgstr "هذه العملية %s بالفعل."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "This operation no longer exists."
+msgstr "هذه العملية لم تعد موجودة."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "This request is not valid."
+msgstr "هذا الطلب غير صالح."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Transfer"
+msgstr "نقل"
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Transfers"
+msgstr "عمليات النقل"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "Unknown lot or serial %s."
+msgstr "دفعة أو رقم تسلسلي غير معروف %s."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+msgid "Validate"
+msgstr "اعتماد"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "You are not allowed to apply a count. Your count is saved."
+msgstr "لا يُسمح لك بتطبيق الجرد. تم حفظ جردك."
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "destination"
+msgstr "الوجهة"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
+msgid "source"
+msgstr "المصدر"
