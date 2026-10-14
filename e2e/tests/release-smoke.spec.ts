@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
+import { activateLanguage, callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
 
 /**
  * Release smoke: walk the main screens repeatedly, in both languages, across reloads and a logout/login, and
@@ -61,10 +61,7 @@ async function walk(page: Page, errors: string[]) {
 }
 
 async function setLang(page: Page, lang: string) {
-  // a fresh tenant has the language record but not active: Odoo refuses a user language that is not active
-  const rec = (await callKw(page.request, TENANT, 'res.lang', 'search_read',
-    [[['code', '=', lang], ['active', 'in', [true, false]]]], { fields: ['id', 'active'] })).result?.[0];
-  if (rec && !rec.active) await callKw(page.request, TENANT, 'res.lang', 'write', [[rec.id], { active: true }]);
+  await activateLanguage(page.request, TENANT, lang);
   const res = await callKw(page.request, TENANT, 'res.users', 'write', [[2], { lang }]);
   expect(res.error, JSON.stringify(res.error)).toBeUndefined();
 }

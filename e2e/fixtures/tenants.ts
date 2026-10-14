@@ -162,3 +162,16 @@ export async function callKw(
   });
   return res.json();
 }
+
+/**
+ * Make `lang` usable as a user language on a tenant. A freshly provisioned tenant has the language record but it is
+ * not active, and Odoo refuses a user language that is not active ("Invalid language code").
+ */
+export async function activateLanguage(request: APIRequestContext, tenant: TenantKey, lang: string): Promise<void> {
+  const found = await callKw(request, tenant, 'res.lang', 'search_read',
+    [[['code', '=', lang], ['active', 'in', [true, false]]]], { fields: ['id', 'active'] });
+  const rec = found.result?.[0];
+  if (rec && !rec.active) {
+    await callKw(request, tenant, 'res.lang', 'write', [[rec.id], { active: true }]);
+  }
+}

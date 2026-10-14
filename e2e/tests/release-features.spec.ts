@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
+import { activateLanguage, callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
 
 /**
  * Release features, in a real browser, on the e2eclienta tenant (admin = workspace Owner):
@@ -37,6 +37,7 @@ async function rpc(page: Page, model: string, method: string, args: unknown[], k
 }
 
 async function setLang(page: Page, lang: string) {
+  await activateLanguage(page.request, TENANT, lang);
   await rpc(page, 'res.users', 'write', [[2], { lang }]);
 }
 
