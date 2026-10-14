@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nc_cheque_template_list" model="ir.ui.view">
+        <field name="name">ncollection.cheque.template.list</field>
+        <field name="model">ncollection.cheque.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="bank_name"/>
+                <field name="width_mm"/>
+                <field name="height_mm"/>
+                <field name="currency_id"/>
+                <field name="field_count"/>
+                <field name="dimensions_confirmed" widget="boolean"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_nc_cheque_template_form" model="ir.ui.view">
+        <field name="name">ncollection.cheque.template.form</field>
+        <field name="model">ncollection.cheque.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_preview_design" type="object" string="Design preview" invisible="not id"/>
+                    <button name="action_preview_print" type="object" string="Print preview" invisible="not id"/>
+                    <button name="action_calibration_sheet" type="object" string="Calibration sheet" invisible="not id"/>
+                    <button name="action_confirm_dimensions" type="object" string="Confirm dimensions"
+                            class="btn-primary" invisible="dimensions_confirmed or not id"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="alert alert-warning" role="alert" invisible="dimensions_confirmed or not id">
+                        <strong>Provisional layout.</strong> The size and the positions of this template are not confirmed.
+                        Print the calibration sheet on plain paper at 100%, check it against a physical cheque, correct the
+                        template, then press Confirm dimensions.
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Acme Bank - Business cheque"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="bank_name"/>
+                            <field name="currency_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="width_mm"/>
+                            <field name="height_mm"/>
+                            <field name="orientation"/>
+                            <field name="dimensions_confirmed"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Designer" name="designer">
+                            <div class="alert alert-info" role="status" invisible="id">Save the template first, then design it here.</div>
+                            <widget name="nc_cheque_designer" invisible="not id"/>
+                        </page>
+                        <page string="Fields" name="fields">
+                            <field name="field_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="key"/>
+                                    <field name="static_text" column_invisible="False"/>
+                                    <field name="x_mm"/>
+                                    <field name="y_mm"/>
+                                    <field name="width_mm"/>
+                                    <field name="height_mm"/>
+                                    <field name="font" optional="show"/>
+                                    <field name="size_pt"/>
+                                    <field name="bold" optional="show"/>
+                                    <field name="align"/>
+                                    <field name="direction"/>
+                                    <field name="case" optional="hide"/>
+                                    <field name="digits" optional="hide"/>
+                                    <field name="date_format" optional="hide"/>
+                                    <field name="words_lang" optional="hide"/>
+                                    <field name="prefix" optional="hide"/>
+                                    <field name="suffix" optional="hide"/>
+                                    <field name="fit" optional="hide"/>
+                                    <field name="max_lines" optional="hide"/>
+                                    <field name="visible"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Reference image and printing" name="image">
+                            <group>
+                                <group>
+                                    <field name="printer_profile_id"/>
+                                    <field name="include_background"/>
+                                </group>
+                            </group>
+                            <div class="text-muted mb-2">
+                                The reference image is only a background in the designer. The printed cheque contains the
+                                variable text only: the bank's logo, security artwork, MICR line and QR code are pre-printed
+                                on the paper and are never generated here.
+                            </div>
+                            <field name="reference_image" widget="image" options="{'size': [0, 240]}"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="description" placeholder="What this cheque is, and which bank and series it belongs to"/>
+                            <field name="notes" placeholder="Calibration notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_nc_cheque_template_search" model="ir.ui.view">
+        <field name="name">ncollection.cheque.template.search</field>
+        <field name="model">ncollection.cheque.template</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="bank_name"/>
+                <filter name="unconfirmed" string="Dimensions not confirmed" domain="[('dimensions_confirmed', '=', False)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_nc_cheque_template" model="ir.actions.act_window">
+        <field name="name">Cheque Templates</field>
+        <field name="res_model">ncollection.cheque.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first cheque template</p>
+            <p>A template is the layout of one bank's cheque: its physical size and where the date, payee, amount and
+               amount in words are printed.</p>
+        </field>
+    </record>
+</odoo>

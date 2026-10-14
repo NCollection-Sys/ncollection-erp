@@ -40,6 +40,11 @@ class TestTenantAddressing(TransactionCase):
         vals.update(kw)
         return self.env['ncollection.tenant'].create(vals)
 
+    def setUp(self):
+        super().setUp()
+        # the base domain is the platform's one configured value; there is no built-in default to lean on
+        self.env['ir.config_parameter'].sudo().set_param('ncollection_saas.base_domain', 'example.com')
+
     def test_the_url_is_built_from_the_subdomain(self):
         tenant = self._tenant(subdomain='atlas')
         self.assertEqual(tenant.base_domain,

@@ -12,61 +12,328 @@ msgstr ""
 "&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_branding
-msgid "Primary Colour"
-msgstr "اللون الأساسي"
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_company.py:0
+msgid "%(value)r is not a valid colour for '%(field)s'. Use a 6-digit hex colour such as #1F5F8F."
+msgstr "%(value)r ليس لونًا صالحًا لـ '%(field)s'. استخدم لونًا سداسيًا عشريًا من 6 خانات مثل #1F5F8F."
 
 #. module: ncollection_branding
-msgid ""
-"Primary brand colour — drives the navbar and primary buttons. 6-digit hex, "
-"e.g. #1F5F8F. Leave empty for the NCollection default."
-msgstr ""
-"لون العلامة التجارية الأساسي — يتحكّم في شريط التنقّل والأزرار الأساسية. رمز "
-"سداسي عشري من 6 خانات، مثل #1F5F8F. اتركه فارغًا لاستخدام لون NCollection "
-"الافتراضي."
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/js/white_label.js:0
+msgid "%s Client Error"
+msgstr "خطأ عميل %s"
 
 #. module: ncollection_branding
-msgid "Secondary Colour"
-msgstr "اللون الثانوي"
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/js/white_label.js:0
+msgid "%s Error"
+msgstr "خطأ %s"
 
 #. module: ncollection_branding
-msgid "Secondary/accent colour — links and highlights. 6-digit hex."
-msgstr "اللون الثانوي/التمييزي — الروابط والعناصر المميّزة. رمز سداسي عشري من 6 خانات."
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/js/white_label.js:0
+msgid "%s Network Error"
+msgstr "خطأ شبكة %s"
 
 #. module: ncollection_branding
-msgid "Sidebar Colour"
-msgstr "لون الشريط الجانبي"
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/js/white_label.js:0
+msgid "%s Server Error"
+msgstr "خطأ خادم %s"
 
 #. module: ncollection_branding
-msgid "Sidebar/side-navigation background colour. 6-digit hex."
-msgstr "لون خلفية الشريط الجانبي. رمز سداسي عشري من 6 خانات."
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_branded
+msgid "<small class=\"text-muted\">\n                        Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the source distribution).\n                    </small>"
+msgstr "<small class=\"text-muted\">مبني على تقنيات مفتوحة المصدر (GNU LGPL v3 — راجع docs/LEGAL.md في حزمة المصدر).</small>"
 
 #. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+msgid "<span class=\"o_nc_login__wordmark-text\">NCollection<span class=\"o_nc_login__wordmark-suffix\">ERP</span></span>"
+msgstr "<span class=\"o_nc_login__wordmark-text\">NCollection<span class=\"o_nc_login__wordmark-suffix\">ERP</span></span>"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_branded
+msgid "<span class=\"text-muted\">NCollection ERP</span>"
+msgstr "<span class=\"text-muted\">NCollection ERP</span>"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "<span id=\"ncCopiedFeedback\" style=\"display:none; color:#16A34A; font-weight:600;\">✓ Copied</span>"
+msgstr "<span id=\"ncCopiedFeedback\" style=\"display:none; color:#16A34A; font-weight:600;\">✓ تم النسخ</span>"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+msgid "<span>Fully white-labeled to your company</span>"
+msgstr "<span>هوية بصرية كاملة تحمل علامة شركتك</span>"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+msgid "<span>Role-based access for every team</span>"
+msgstr "<span>صلاحيات حسب الدور لكل فريق</span>"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+msgid "<span>VAT &amp; TRN-ready invoicing</span>"
+msgstr "<span>فوترة جاهزة لضريبة القيمة المضافة والرقم الضريبي</span>"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "<span>•</span>"
+msgstr "<span>•</span>"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "Any content composes inside a section card via the default slot."
+msgstr "يمكن تركيب أي محتوى داخل بطاقة القسم عبر الفتحة الافتراضية."
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "Badges"
+msgstr "الشارات"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.webclient_offline_branded
+msgid "Check your network connection and come back here. NCollection ERP will load as soon as you're back online."
+msgstr "تحقّق من اتصالك بالشبكة وعُد إلى هنا. سيتم تحميل NCollection ERP بمجرّد عودتك للاتصال."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "Click to copy Incident ID"
+msgstr "انقر لنسخ معرّف الحادثة"
+
+#. module: ncollection_branding
+#: model:ir.actions.client,name:ncollection_branding.action_component_playground
+#: model:ir.ui.menu,name:ncollection_branding.menu_component_playground
+msgid "Component Library"
+msgstr "مكتبة المكوّنات"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "Contact Support"
+msgstr "الاتصال بالدعم"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "Empty state"
+msgstr "حالة فارغة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
+msgid "Enter your username"
+msgstr "أدخل اسم المستخدم"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
+msgid "Forgot password?"
+msgstr "نسيت كلمة المرور؟"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "Incident Reference:"
+msgstr "مرجع الحادثة:"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__nc_active_language_ids
+msgid "Installed languages"
+msgstr "اللغات المثبّتة"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "KPI cards"
+msgstr "بطاقات مؤشّرات الأداء"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "Loading skeletons"
+msgstr "هياكل التحميل"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "Log out"
+msgstr "تسجيل الخروج"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_login_background
 msgid "Login Background"
 msgstr "خلفية تسجيل الدخول"
 
 #. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "NCollection"
+msgstr "NCollection"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "NCollection Component Library"
+msgstr "مكتبة مكوّنات NCollection"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.brand_promotion_message_branded
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.mail_notification_layout_branded
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.mail_notification_light_branded
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.nc_email_logo_header
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_branded
+msgid "NCollection ERP"
+msgstr "NCollection ERP"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/xml/error_dialogs_patch.xml:0
+msgid "NCollection ERP Session Expired"
+msgstr "انتهت جلسة NCollection ERP"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.webclient_offline_branded
+msgid "NCollection logo"
+msgstr "شعار NCollection"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+msgid "NCollection. All rights reserved."
+msgstr "NCollection. جميع الحقوق محفوظة."
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/components.xml:0
+msgid "No access"
+msgstr "لا صلاحية"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/components.js:0
+msgid "Open full report"
+msgstr "فتح التقرير الكامل"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_res_company__nc_login_background
 msgid "Optional full-page background image for the login screen."
 msgstr "صورة خلفية اختيارية بملء الصفحة لشاشة تسجيل الدخول."
 
 #. module: ncollection_branding
-msgid ""
-"%(value)r is not a valid colour for '%(field)s'. Use a 6-digit hex colour "
-"such as #1F5F8F."
-msgstr ""
-"%(value)r ليس لونًا صالحًا لـ '%(field)s'. استخدم لونًا سداسيًا عشريًا من 6 "
-"خانات مثل #1F5F8F."
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_primary_color
+msgid "Primary Colour"
+msgstr "اللون الأساسي"
 
 #. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_res_company__nc_primary_color
+msgid "Primary brand colour — drives the navbar and primary buttons. 6-digit hex, e.g. #1F5F8F. Leave empty for the NCollection default."
+msgstr "لون العلامة التجارية الأساسي — يتحكّم في شريط التنقّل والأزرار الأساسية. رمز سداسي عشري من 6 خانات، مثل #1F5F8F. اتركه فارغًا لاستخدام لون NCollection الافتراضي."
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "Quick actions"
+msgstr "إجراءات سريعة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+msgid "Return to Workspace"
+msgstr "العودة إلى مساحة العمل"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+msgid "Sales, inventory, invoicing, and people — one workspace, your brand,\n                               running on infrastructure built for the region."
+msgstr "المبيعات والمخزون والفوترة والأفراد — مساحة عمل واحدة وعلامتك التجارية، تعمل على بنية تحتية مصممة للمنطقة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_secondary_color
+msgid "Secondary Colour"
+msgstr "اللون الثانوي"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_res_company__nc_secondary_color
+msgid "Secondary/accent colour — links and highlights. 6-digit hex."
+msgstr "اللون الثانوي/التمييزي — الروابط والعناصر المميّزة. رمز سداسي عشري من 6 خانات."
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "Section & chart cards"
+msgstr "بطاقات الأقسام والمخططات"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/components.js:0
+msgid "Show accounts"
+msgstr "إظهار الحسابات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_sidebar_color
+msgid "Sidebar Colour"
+msgstr "لون الشريط الجانبي"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_res_company__nc_sidebar_color
+msgid "Sidebar/side-navigation background colour. 6-digit hex."
+msgstr "لون خلفية الشريط الجانبي. رمز سداسي عشري من 6 خانات."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
+msgid "Sign in to your workspace"
+msgstr "سجّل الدخول إلى مساحة عملك"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "Statement card"
+msgstr "بطاقة القائمة المالية"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/playground.xml:0
+msgid "States, tones and interaction"
+msgstr "الحالات والنغمات والتفاعل"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
 msgid "The unified business platform for GCC companies."
 msgstr "منصّة الأعمال الموحّدة لشركات دول مجلس التعاون الخليجي."
 
 #. module: ncollection_branding
-msgid ""
-"Sales, inventory, invoicing, and people — one workspace, your brand, running "
-"on infrastructure built for the region."
-msgstr ""
-"المبيعات والمخزون والفوترة والموظفون — مساحة عمل واحدة بعلامتك التجارية، تعمل "
-"على بنية تحتية مصمَّمة للمنطقة."
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/components/components.xml:0
+msgid "Unavailable"
+msgstr "غير متاح"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_res_users
+msgid "User"
+msgstr "المستخدم"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
+msgid "Welcome back. Please enter your details."
+msgstr "مرحبًا بعودتك. الرجاء إدخال بياناتك."
+
+#. module: ncollection_branding
+msgid "Sales, inventory, invoicing, and people — one workspace, your brand, running on infrastructure built for the region."
+msgstr "المبيعات والمخزون والفوترة والموظفون — مساحة عمل واحدة بعلامتك التجارية، تعمل على بنية تحتية مصمَّمة للمنطقة."
 
 #. module: ncollection_branding
 msgid "VAT & TRN-ready invoicing"
@@ -81,88 +348,15 @@ msgid "Fully white-labeled to your company"
 msgstr "علامة بيضاء بالكامل لشركتك"
 
 #. module: ncollection_branding
-msgid "Sign in to your workspace"
-msgstr "سجّل الدخول إلى مساحة عملك"
+msgid "Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the source distribution)."
+msgstr "مبني على تقنية مفتوحة المصدر (GNU LGPL v3 — راجع docs/LEGAL.md في توزيعة الكود المصدري)."
 
 #. module: ncollection_branding
-msgid "Welcome back. Please enter your details."
-msgstr "مرحبًا بعودتك. الرجاء إدخال بياناتك."
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
 
 #. module: ncollection_branding
-msgid "Forgot password?"
-msgstr "هل نسيت كلمة المرور؟"
-
-#. module: ncollection_branding
-msgid ""
-"Check your network connection and come back here. NCollection ERP will load "
-"as soon as you're back online."
-msgstr ""
-"تحقّق من اتصالك بالشبكة وعُد إلى هنا. سيتم تحميل NCollection ERP بمجرّد عودتك "
-"للاتصال."
-
-#. module: ncollection_branding
-msgid ""
-"Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the "
-"source distribution)."
-msgstr ""
-"مبني على تقنية مفتوحة المصدر (GNU LGPL v3 — راجع docs/LEGAL.md في توزيعة "
-"الكود المصدري)."
-
-#. module: ncollection_branding
-msgid "NCollection ERP Session Expired"
-msgstr "انتهت جلسة NCollection ERP"
-
-#. module: ncollection_branding
-msgid "Component Library"
-msgstr "مكتبة المكوّنات"
-
-#. module: ncollection_branding
-msgid "KPI cards"
-msgstr "بطاقات مؤشّرات الأداء"
-
-#. module: ncollection_branding
-msgid "Badges"
-msgstr "الشارات"
-
-#. module: ncollection_branding
-msgid "Quick actions"
-msgstr "إجراءات سريعة"
-
-#. module: ncollection_branding
-msgid "Empty state"
-msgstr "حالة فارغة"
-
-#. module: ncollection_branding
-msgid "Loading skeletons"
-msgstr "هياكل التحميل"
-
-#. module: ncollection_branding
-msgid "Any content composes inside a section card via the default slot."
-msgstr "يمكن تركيب أي محتوى داخل بطاقة القسم عبر الفتحة الافتراضية."
-
-#. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
-msgid "Username"
-msgstr "اسم المستخدم"
-
-#. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_form_branded
-msgid "Enter your username"
-msgstr "أدخل اسم المستخدم"
-
-#. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__nc_active_language_ids
-msgid "Installed languages"
-msgstr "اللغات المثبّتة"
-
-#. module: ncollection_branding
-#. odoo-javascript
-#: code:addons/ncollection_branding/static/src/components/components.xml:0
-msgid "No access"
-msgstr "لا صلاحية"
-
-#. module: ncollection_branding
-#. odoo-javascript
-#: code:addons/ncollection_branding/static/src/components/components.xml:0
-msgid "Unavailable"
-msgstr "غير متاح"
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__id
+msgid "ID"
+msgstr "المعرّف"

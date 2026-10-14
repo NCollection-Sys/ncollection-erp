@@ -232,7 +232,28 @@ class TestPlatformEntryEndpoints(HttpCase):
                              data='{"jsonrpc": "2.0", "params": {}}').json()['result']
         self.assertEqual(info['username'], PROXY_LOGIN_PREFIX + 'u7')
         replay = self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
+        self.assertEqual(replay.status_code, 303, "the same signed-in browser repeating the POST just goes on")
+        self.env.cr.execute("UPDATE ncollection_platform_entry SET used_at = used_at - interval '1 minute'")
+        self.env.invalidate_all()
+        late = self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
+        self.assertEqual(late.status_code, 403, "a used link is refused once the moment has passed")
+
+    def test_a_used_link_is_refused_to_anyone_not_signed_in_as_that_proxy(self):
+        self._grant(NONCE)
+        self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
+        self.authenticate(None, None)                              # another browser: no session
+        replay = self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
         self.assertEqual(replay.status_code, 403)
+
+    def test_a_browser_gets_a_page_that_says_what_to_do_and_everyone_else_the_bare_word(self):
+        page = self.url_open('/ncollection/platform/enter', data={'token': 'nope'}, allow_redirects=False,
+                             headers={'Accept': 'text/html,application/xhtml+xml'})
+        self.assertEqual(page.status_code, 403)
+        self.assertIn('text/html', page.headers['Content-Type'])
+        self.assertIn('Enter Company', page.text)
+        self.assertNotIn('nope', page.text)
+        bare = self.url_open('/ncollection/platform/enter', data={'token': 'nope'}, allow_redirects=False)
+        self.assertEqual(bare.text, 'Forbidden')
 
     def test_every_refusal_is_the_same_bare_403(self):
         for token in (None, '', 'nope', 'z' * 500):
@@ -253,6 +274,17 @@ class TestPlatformEntryEndpoints(HttpCase):
         self.assertNotIn('location.search', response.text)
         entry = self.env['ncollection.platform.entry'].search([])
         self.assertFalse(entry.used_at)                        # nothing was redeemed
+
+    def test_a_bridge_without_a_fragment_goes_on_instead_of_showing_a_bare_forbidden(self):
+        """A reload or a replayed link has no fragment: the page sends an anonymous browser to the login and a
+        signed-in one into the app. It grants nothing, so isolation is unchanged."""
+        anonymous = self.url_open('/ncollection/platform/enter', allow_redirects=False)
+        self.assertEqual(anonymous.status_code, 200)
+        self.assertIn('location.replace("/web/login")', anonymous.text)
+        self.assertNotIn('"Forbidden"', anonymous.text)
+        self.authenticate('admin', 'admin')
+        signed_in = self.url_open('/ncollection/platform/enter', allow_redirects=False)
+        self.assertIn('location.replace("/odoo")', signed_in.text)
 
     def test_exit_ends_the_session_and_returns_to_the_platform(self):
         self._grant(NONCE)

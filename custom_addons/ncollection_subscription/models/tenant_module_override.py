@@ -29,6 +29,8 @@ cannot be restored.
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
+from .companions import COMPANION_MODULES
+
 
 class TenantModuleOverride(models.Model):
     _name = 'ncollection.tenant.module.override'
@@ -75,6 +77,10 @@ class TenantModuleOverride(models.Model):
             name = (override.module_name or '').strip()
             if not name:
                 continue
+            if name in COMPANION_MODULES:
+                raise ValidationError(self.env._(
+                    "'%(module)s' follows '%(host)s' and has no switch of its own: enable or disable '%(host)s' "
+                    "instead.", module=name, host=COMPANION_MODULES[name]))
             if not Module.search_count([('name', '=', name)]):
                 raise ValidationError(self.env._(
                     "'%s' is not a module on this platform.", name))

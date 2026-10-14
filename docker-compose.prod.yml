@@ -41,6 +41,9 @@ services:
     # entrypoint still appends db_host/user/password from the HOST/USER/PASSWORD
     # env vars, so DB secrets continue to come from .env.
     command: odoo -c /etc/odoo/odoo.prod.conf
+    environment:
+      # Production's base domain is the DOMAIN this deployment is served on, not a value baked into the code.
+      NC_BASE_DOMAIN: ${NC_BASE_DOMAIN:-${DOMAIN:-}}
     volumes:
       - ./config/odoo.prod.conf:/etc/odoo/odoo.prod.conf:ro
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nc_cheque_profile_list" model="ir.ui.view">
+        <field name="name">ncollection.cheque.printer.profile.list</field>
+        <field name="model">ncollection.cheque.printer.profile</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="offset_x_mm"/>
+                <field name="offset_y_mm"/>
+                <field name="scale_pct"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_nc_cheque_profile" model="ir.actions.act_window">
+        <field name="name">Printer Profiles</field>
+        <field name="res_model">ncollection.cheque.printer.profile</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Add a printer profile</p>
+            <p>Print the calibration sheet of a template, measure how far this printer is off, and enter the offsets
+               here. The template itself stays correct in millimetres.</p>
+        </field>
+    </record>
+</odoo>

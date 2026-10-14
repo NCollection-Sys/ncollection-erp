@@ -39,3 +39,9 @@ scripts/perf/results/
 # and got it swept into a feature commit by a `git add -A` on #244.
 .DS_Store
 **/.DS_Store
+
+# Local database dumps and filestore archives (db-backups/ holds full tenant databases: real customer data
+# when it is taken from a live stack). Never source, never committed. Existing files are left where they are.
+/db-backups/
+*.dump
+*.dump.gz

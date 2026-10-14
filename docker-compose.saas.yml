@@ -50,6 +50,10 @@ services:
       # Config-sync bearer key (P2-T03): the reconcile cron + queued live syncs
       # run here, so the runner needs the same key as the odoo service.
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+      # The platform base domain tenant hosts hang off (<tenant>.<NC_BASE_DOMAIN>). ONE authority: SaaS Settings
+      # overrides it, this is what the deployment IS, and there is no built-in default. Dev: ncollection.localhost.
+      # Production sets its real domain in .env. docs/markdown/TENANT_URLS.md
+      NC_BASE_DOMAIN: ${NC_BASE_DOMAIN:-ncollection.localhost}
       # DEV ONLY (#475) — temporary tenant-admin password for local testing.
       # EMPTY BY DEFAULT AND MUST STAY EMPTY OUTSIDE LOCAL DEVELOPMENT. When it
       # holds a value, tenant provisioning gives the new admin THAT password and

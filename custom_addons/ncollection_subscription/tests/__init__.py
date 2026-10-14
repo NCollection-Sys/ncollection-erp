@@ -11,3 +11,4 @@ from . import test_one_time_subscription
 from . import test_tenant_identity
 from . import test_module_customization
 from . import test_platform_settings_card
+from . import test_companion_modules

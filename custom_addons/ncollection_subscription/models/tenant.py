@@ -1,9 +1,11 @@
+import os
 import re
 import uuid
 
 from odoo import SUPERUSER_ID, api, fields, models
-from odoo.exceptions import AccessError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
+from .companions import COMPANION_MODULES, companions_of
 from .localization import localization_package
 
 # The administrator's login is a USERNAME, never an email address. Lower-case
@@ -13,10 +15,18 @@ from .localization import localization_package
 USERNAME_RE = re.compile(r'^[a-z][a-z0-9._-]{2,31}$')
 
 # Platform base domain (#476). The KEY is the one ncollection_saas.domain has
-# always used — the definition moved, the configuration did not, so no
-# deployment needs re-configuring.
+# always used — the definition moved, the configuration did not.
+#
+# ONE AUTHORITY, TWO PLACES, ONE ORDER (docs/markdown/TENANT_URLS.md):
+#   1. the system parameter (Settings > SaaS: an operator's explicit choice), else
+#   2. the NC_BASE_DOMAIN environment variable (what the deployment is: dev compose says
+#      "ncollection.localhost", production says its real domain), else
+#   3. NOTHING. There is deliberately no built-in default: a built-in production domain is what made a local
+#      workspace advertise itself as test11.ncollectionerp.com, and "silently use production" is never right.
 BASE_DOMAIN_PARAM = 'ncollection_saas.base_domain'
-DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
+BASE_DOMAIN_ENV = 'NC_BASE_DOMAIN'
+# Optional: only for a stack that serves tenants on a non-standard port (e.g. Odoo directly on 8069, no edge proxy).
+URL_PORT_PARAM = 'ncollection_saas.url_port'
 
 # NOTE ON VALIDATION. The subdomain format rule, the reserved/offensive word
 # lists and the availability probe already exist, battle-tested, in
@@ -135,15 +145,14 @@ class Tenant(models.Model):
         help="Platform base domain, configured once in SaaS Settings.")
     tenant_url = fields.Char(
         string='Tenant URL', compute='_compute_tenant_url',
-        help="Where this tenant is reachable: <subdomain>.<base domain>.")
+        help="Where this tenant is reachable: <subdomain>.<base domain>. Empty until the base domain is configured.")
 
     @api.depends('subdomain', 'database_name')
     def _compute_tenant_url(self):
         base = self._nc_base_domain()
         for tenant in self:
             tenant.base_domain = base
-            label = tenant._nc_subdomain_label()
-            tenant.tenant_url = 'https://%s.%s' % (label, base) if label else False
+            tenant.tenant_url = tenant._nc_public_origin()
 
     def _nc_subdomain_label(self):
         """The host label, falling back to the database name.
@@ -166,8 +175,61 @@ class Tenant(models.Model):
         moved here and `ncollection.domain._base_domain()` delegates to it. The
         PARAMETER KEY is unchanged, so no deployment has to be re-configured.
         """
-        return (self.env['ir.config_parameter'].sudo().get_param(
-            BASE_DOMAIN_PARAM, DEFAULT_BASE_DOMAIN) or '').strip().lower()
+        value = self.env['ir.config_parameter'].sudo().get_param(BASE_DOMAIN_PARAM) or os.environ.get(BASE_DOMAIN_ENV)
+        return (value or '').strip().lower()
+
+    @api.model
+    def _nc_require_base_domain(self):
+        """The base domain, or a clear refusal. For callers that cannot proceed without one (entry, config sync)."""
+        base = self._nc_base_domain()
+        if not base:
+            raise UserError(self.env._(
+                "The platform base domain is not configured. Set it in SaaS Settings, or set NC_BASE_DOMAIN in the "
+                "deployment environment (e.g. ncollection.localhost for local development)."))
+        return base
+
+    @api.model
+    def _nc_url_scheme(self, base):
+        """http for loopback names, https for everything else.
+
+        `*.localhost` is reserved for loopback (RFC 6761): no certificate authority issues a certificate for it, so
+        https there can never work, and nothing outside this machine can reach it. Every other base domain is a
+        real, public one and is https.
+        """
+        return 'http' if base == 'localhost' or base.endswith('.localhost') else 'https'
+
+    @api.model
+    def _nc_service_host(self, db):
+        """Host header for the platform's OWN calls into a tenant (config sync, entry grant).
+
+        Those connect to a fixed internal address; the receiving Odoo only needs the first label to be the database
+        (db_filter=^%d$). The public base domain is therefore cosmetic here and must not be a reason for sync to stop
+        working, so with none configured the label is paired with the loopback name instead of failing.
+        """
+        return '%s.%s' % (db, self._nc_base_domain() or 'localhost')
+
+    def _nc_host(self, label=None):
+        """<label>.<base domain>, no scheme or port; False until both are known. The routing identity: under
+        db_filter=^%d$ the FIRST label picks the database. ``label`` is for the one moment the record has no name yet
+        (a provisioning job that is naming the database): the same builder, never a second one."""
+        self.ensure_one()
+        label, base = label or self._nc_subdomain_label(), self._nc_base_domain()
+        return '%s.%s' % (label, base) if label and base else False
+
+    def _nc_public_origin(self, label=None):
+        """scheme://<label>.<base domain>[:port] — the ONE place a tenant's public address is built.
+
+        Tenant URL, "Enter Company", the signup login link, the provisioning portal URL and the service-channel Host
+        all come from here, so they cannot disagree with each other or with the routing layer.
+        """
+        self.ensure_one()
+        host = self._nc_host(label)
+        if not host:
+            return False
+        port = (self.env['ir.config_parameter'].sudo().get_param(URL_PORT_PARAM) or '').strip()
+        if port.isdigit():
+            host = '%s:%s' % (host, port)
+        return '%s://%s' % (self._nc_url_scheme(self._nc_base_domain()), host)
 
     @api.onchange('subdomain')
     def _onchange_subdomain_normalise(self):
@@ -427,7 +489,8 @@ class Tenant(models.Model):
     platform_admin_ids = fields.Many2many(
         'res.users', 'ncollection_tenant_platform_admin_rel', 'tenant_id', 'user_id',
         string='Platform administrators', tracking=True,
-        domain=lambda self: [('all_group_ids', 'in', self.env.ref('ncollection_subscription.group_platform_admin').id)],
+        domain=lambda self: [
+            ('all_group_ids', 'in', self.env.ref('ncollection_subscription.group_platform_admin').id)],
         help="Who may enter this company from the platform. Leave a person out and they cannot see or enter it.")
 
     # Odoo 19 dropped `_sql_constraints` (silently ignored) — use models.Constraint.
@@ -479,10 +542,24 @@ class Tenant(models.Model):
         for vals in vals_list:
             self._nc_check_engine_only_status(vals.get('database_status'))
             self._nc_check_platform_admin_ids_change(vals)
-            # The person who creates a tenant is authorised to enter it unless the allow-list is given explicitly.
-            if is_platform_admin and 'platform_admin_ids' not in vals and not creator._is_superuser():
+            # The person who creates a tenant is authorised to enter it unless the allow-list NAMES someone. "Not
+            # given" is not the same as "key absent": the platform form posts the field with an empty value on every
+            # create, so testing only for absence skipped this default for every company made from the UI — it was
+            # created, provisioned, and listed for nobody (test11 never reached its creator's My Companies).
+            if (is_platform_admin and not creator._is_superuser()
+                    and not self._nc_commands_name_users(vals.get('platform_admin_ids'))):
                 vals['platform_admin_ids'] = [(4, creator.id)]
         return super().create(vals_list)
+
+    @api.model
+    def _nc_commands_name_users(self, commands):
+        """Does this many2many command list link at least one record? (empty / unset / a cleared set: no)"""
+        for command in commands or ():
+            if not isinstance(command, (list, tuple)) or not command:
+                continue
+            if command[0] in (4, 0) or (command[0] == 6 and len(command) > 2 and command[2]):
+                return True
+        return False
 
     def write(self, vals):
         self._nc_check_engine_only_status(vals.get('database_status'))
@@ -552,6 +629,7 @@ class Tenant(models.Model):
         """EVERY module this tenant is entitled to.
 
             plan  UNION  localization package  MINUS  disabled  UNION  added
+                  UNION  the companions of whatever is left (cheque printing follows Accounting)
 
         THE SINGLE AUTHORITY, deliberately. Four things independently answered
         this question before #469 — provisioning's ``_module_list``, the
@@ -563,20 +641,31 @@ class Tenant(models.Model):
 
         ORDER MATTERS. Disabling is applied before adding, so an override that
         both disables and adds the same module is impossible to express (the
-        unique constraint) rather than resolved by luck.
+        unique constraint) rather than resolved by luck. Companions come LAST,
+        because they follow what the tenant ends up with: take Accounting away
+        (plan or override) and the module that follows it goes too.
+
+        A COMPANION IS NEVER SOURCED FROM A LIST. A plan that names one has the
+        name ignored (it is derived from its host or not at all), so no plan can
+        license it without its host, which would license the host through the
+        dependency closure: see companions.py.
 
         Core modules are NOT included: they are installed unconditionally and
         each consumer subtracts or adds them per its own contract.
         """
         self.ensure_one()
         plan = self.plan_id
-        modules = plan.get_allowed_module_list() if plan else []
+        modules = [name for name in (plan.get_allowed_module_list() if plan else [])
+                   if name not in COMPANION_MODULES]
         for name in self._nc_localization_modules():
             if name not in modules:
                 modules.append(name)
         disabled, added = self._nc_module_overrides()
         modules = [name for name in modules if name not in disabled]
         for name in added:
+            if name not in modules:
+                modules.append(name)
+        for name in companions_of(modules):
             if name not in modules:
                 modules.append(name)
         return modules
@@ -595,7 +684,8 @@ class Tenant(models.Model):
         disabled, added = set(), []
         for override in self.module_override_ids:
             name = (override.module_name or '').strip()
-            if not name:
+            if not name or name in COMPANION_MODULES:
+                # a companion follows its host and has no switch of its own: to withhold it, withhold the host
                 continue
             if override.mode == 'disable':
                 if name not in protected:

@@ -149,6 +149,7 @@
     <menuitem id="menu_ncollection_alert"
               name="Anomaly Alerts"
               action="action_ncollection_alert"
+              web_icon="ncollection_core,static/description/icon_alerts.png"
               sequence="90"
               groups="ncollection_core.group_role_sales,ncollection_core.group_role_accountant,ncollection_core.group_role_hr,ncollection_core.group_role_warehouse,ncollection_core.group_role_manager,ncollection_core.group_role_ceo,ncollection_core.group_role_owner,base.group_system"/>
 </odoo>

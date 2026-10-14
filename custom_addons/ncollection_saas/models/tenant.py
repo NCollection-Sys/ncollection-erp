@@ -329,6 +329,27 @@ class Tenant(models.Model):
                 self.env._("Registration rejected by %(user)s.", user=self.env.user.name))
         return True
 
+    @api.model
+    def _nc_repair_legacy_portal_urls(self):
+        """Rewrite the stored ``portal_url`` of tenants that still carry the RETIRED dev template.
+
+        ``portal_url`` is a snapshot taken at provisioning. Until the one URL builder existed it was filled from a
+        template whose built-in value was ``http://<db>.localhost:8069``, so a tenant provisioned then keeps that
+        address next to its (correct) ``tenant_url``. Only that exact legacy value is replaced, and only by what the
+        builder says (nothing is rewritten when no base domain is configured). Any other value, including one an
+        operator typed, is left alone. Idempotent.
+        """
+        fixed = self.browse()
+        for tenant in self.sudo().search([('portal_url', '=like', 'http://%.localhost:8069')]):
+            label = tenant.database_name
+            if not label or tenant.portal_url != 'http://%s.localhost:8069' % label:
+                continue
+            origin = tenant._nc_public_origin()
+            if origin and origin != tenant.portal_url:
+                tenant.portal_url = origin
+                fixed |= tenant
+        return fixed
+
     def _nc_release_registration(self, message):
         """Reject ONE request and release its subdomain. The single path for
         both an administrator's Reject and the automatic expiry, so the two can

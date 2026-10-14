@@ -99,7 +99,8 @@ test.describe('Summary', () => {
     const toggle = statement.locator('.nc-statement-row__toggle').first();
     if (await toggle.count()) {
       await toggle.click();
-      expect(await statement.locator('.nc-statement-row--l2').count()).toBeGreaterThan(0);
+      // web-first: the expanded rows are drawn on the next render, not inside the click
+      await expect(statement.locator('.nc-statement-row--l2').first()).toBeVisible();
     }
     const amount = statement.locator('.nc-statement-row__amount').first();
     await expect(amount).toBeVisible();

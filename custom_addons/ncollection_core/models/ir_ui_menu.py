@@ -40,6 +40,13 @@ NCOLLECTION_PREFIX = 'ncollection_'
 # another app AND must be plan-gated.
 MENU_NESTED_GATED_MODULES = {'account_financial_report', 'mis_builder'}
 
+# NCollection-native modules are never plan-gated by name (NCOLLECTION_PREFIX below): a native module is a feature, not
+# a sellable app. A few are a FRONT DOOR onto a sellable app, though, and own a root menu of their own (a Home tile):
+# that tile must be exactly as licensed as the app it fronts, or an unlicensed tenant would see a card for something
+# its plan does not include. {native module: the module whose licence it follows}. The follower's Home tile is also
+# hidden and ordered with its host app (Settings > Applications).
+NATIVE_FOLLOWS_LICENCE = {'ncollection_stock_barcode': 'stock'}
+
 # Root menus that are NOT customer applications and are therefore left out of
 # the tenant app launcher (#455). They are not hidden — a user who may see them
 # still reaches them from the sidebar, and Apps/Settings remain owner-only via
@@ -81,6 +88,12 @@ if not SIGNATURE_OK:  # pragma: no cover
         "(fail-open). Re-pin ncollection_core/models/ir_ui_menu.py.",
         _EXPECTED_PARAMS, _actual if '_actual' in dir() else '?',
     )
+
+
+def _tile_module(xmlid):
+    """The application a Home tile belongs to for hide/order purposes (a front door counts as its host app)."""
+    module = (xmlid or '').split('.')[0]
+    return NATIVE_FOLLOWS_LICENCE.get(module, module)
 
 
 class IrUiMenu(models.Model):
@@ -182,7 +195,8 @@ class IrUiMenu(models.Model):
             xmlid = xmlids.get(menu.id, '')
             if xmlid in LAUNCHER_EXCLUDED_MENUS:
                 continue
-            if xmlid.split('.')[0] in hidden:
+            module = NATIVE_FOLLOWS_LICENCE.get(xmlid.split('.')[0], xmlid.split('.')[0])
+            if module in hidden:
                 continue
             if not menu._nc_has_reachable_action():
                 # NO REACHABLE ACTION -> NOT AN APP (#459). A card that cannot
@@ -218,7 +232,7 @@ class IrUiMenu(models.Model):
             })
         # Explicitly ordered apps first, in the Owner's order; the rest in their natural order.
         apps.sort(key=lambda a: (
-            (0, ordered[a['xmlid'].split('.')[0]], a['name'] or '') if a['xmlid'].split('.')[0] in ordered
+            (0, ordered[_tile_module(a['xmlid'])], a['name'] or '') if _tile_module(a['xmlid']) in ordered
             else (1, a['sequence'], a['name'] or '')))
         return apps
 
@@ -325,6 +339,10 @@ class IrUiMenu(models.Model):
             blocked_modules = self._ncollection_blocked_module_names()
         if not blocked_modules:
             return set()
+        # A native front door's menus are hidden with the app it fronts. This is a MENU decision, made here: the
+        # blocked-MODULE set above never names an ncollection_* module (that invariant is tested and stays true).
+        blocked_modules = set(blocked_modules) | {
+            native for native, host in NATIVE_FOLLOWS_LICENCE.items() if host in blocked_modules}
 
         # Menus OWNED by a blocked module — root OR nested (#240). A root-menu
         # module hides its whole app tree; a menu-nested module (whose menus live

@@ -11,452 +11,69 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_core
-msgid "Your plan allows a maximum of %(limit)s users and you already have %(count)s. Upgrade your subscription to add more users."
-msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين ولديك بالفعل %(count)s. قم بترقية اشتراكك لإضافة المزيد من المستخدمين."
-
-#. module: ncollection_core
-msgid "Only the workspace Owner can deactivate users."
-msgstr "يمكن لمالك مساحة العمل وحده إلغاء تفعيل المستخدمين."
-
-#. module: ncollection_core
-msgid "You cannot deactivate your own account."
-msgstr "لا يمكنك إلغاء تفعيل حسابك الخاص."
-
-#. module: ncollection_core
-msgid "You cannot deactivate the last workspace Owner."
-msgstr "لا يمكنك إلغاء تفعيل آخر مالك لمساحة العمل."
-
-#. module: ncollection_core
-msgid "Allowed Modules"
-msgstr "الوحدات المسموح بها"
-
-#. module: ncollection_core
-msgid "Only one workspace configuration record may exist per tenant database."
-msgstr "لا يجوز وجود أكثر من سجل واحد لإعدادات مساحة العمل لكل قاعدة بيانات مستأجر."
-
-#. module: ncollection_core
-msgid "Employee"
-msgstr "موظف"
-
-#. module: ncollection_core
-msgid "Sales"
-msgstr "المبيعات"
-
-#. module: ncollection_core
-msgid "Warehouse"
-msgstr "المستودع"
-
-#. module: ncollection_core
-msgid "HR"
-msgstr "الموارد البشرية"
-
-#. module: ncollection_core
-msgid "Accountant"
-msgstr "محاسب"
-
-#. module: ncollection_core
-msgid "Manager"
-msgstr "مدير"
-
-#. module: ncollection_core
-msgid "CEO"
-msgstr "الرئيس التنفيذي"
-
-#. module: ncollection_core
-msgid "Owner"
-msgstr "المالك"
-
-#. module: ncollection_core
-msgid "Full Name"
-msgstr "الاسم الكامل"
-
-#. module: ncollection_core
-msgid "Please enter a valid email address."
-msgstr "يُرجى إدخال عنوان بريد إلكتروني صالح."
-
-#. module: ncollection_core
-msgid "Your plan allows a maximum of %(limit)s users. Upgrade your subscription to invite more."
-msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين. قم بترقية اشتراكك لدعوة المزيد."
-
-#. module: ncollection_core
-msgid "User invited"
-msgstr "تمت دعوة المستخدم"
-
-#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
 msgid "%(name)s was added with the %(role)s role."
 msgstr "تمت إضافة %(name)s بالدور %(role)s."
 
 #. module: ncollection_core
-msgid "New Quotation"
-msgstr "عرض سعر جديد"
-
-#. module: ncollection_core
-msgid "New Invoice"
-msgstr "فاتورة جديدة"
-
-#. module: ncollection_core
-msgid "New Purchase Order"
-msgstr "أمر شراء جديد"
-
-#. module: ncollection_core
-msgid "Sales This Month"
-msgstr "المبيعات هذا الشهر"
-
-#. module: ncollection_core
-msgid "Receivables"
-msgstr "الذمم المدينة"
-
-#. module: ncollection_core
-msgid "Payables"
-msgstr "الذمم الدائنة"
-
-#. module: ncollection_core
-msgid "Cash & Bank"
-msgstr "النقد والبنك"
-
-#. module: ncollection_core
-msgid "Open Activities"
-msgstr "الأنشطة المفتوحة"
-
-#. module: ncollection_core
-msgid "Pending Approvals"
-msgstr "الموافقات المعلقة"
-
-#. module: ncollection_core
-msgid "Revenue (last 6 months)"
-msgstr "الإيرادات (آخر 6 أشهر)"
-
-#. module: ncollection_core
-msgid "Top Customers"
-msgstr "أبرز العملاء"
-
-#. module: ncollection_core
-msgid "vs last month"
-msgstr "مقارنةً بالشهر الماضي"
-
-#. module: ncollection_core
-msgid "Open invoices"
-msgstr "الفواتير المفتوحة"
-
-#. module: ncollection_core
-msgid "Open bills"
-msgstr "فواتير الموردين المفتوحة"
-
-#. module: ncollection_core
-msgid "Across cash & bank accounts"
-msgstr "عبر حسابات النقد والبنك"
-
-#. module: ncollection_core
-msgid "Assigned to you"
-msgstr "المسندة إليك"
-
-#. module: ncollection_core
-msgid "Awaiting sign-off"
-msgstr "بانتظار الاعتماد"
-
-#. module: ncollection_core
-msgid "Unknown"
-msgstr "غير معروف"
-
-#. module: ncollection_core
-msgid "Workspace Users"
-msgstr "مستخدمو مساحة العمل"
-
-#. module: ncollection_core
-msgid "Email"
-msgstr "البريد الإلكتروني"
-
-#. module: ncollection_core
-msgid "Deactivate"
-msgstr "إلغاء التفعيل"
-
-#. module: ncollection_core
-msgid "Deactivate this user? They will no longer be able to log in."
-msgstr "هل تريد إلغاء تفعيل هذا المستخدم؟ لن يتمكن بعد ذلك من تسجيل الدخول."
-
-#. module: ncollection_core
-msgid "Users"
-msgstr "المستخدمون"
-
-#. module: ncollection_core
-msgid "Invite your first team member"
-msgstr "ادعُ أول عضو في فريقك"
-
-#. module: ncollection_core
-msgid "Use \"Invite User\" to add teammates with a predefined role."
-msgstr "استخدم \"دعوة مستخدم\" لإضافة أعضاء الفريق بدور محدد مسبقًا."
-
-#. module: ncollection_core
-msgid "Invite User"
-msgstr "دعوة مستخدم"
-
-#. module: ncollection_core
-msgid "Send Invitation"
-msgstr "إرسال الدعوة"
-
-#. module: ncollection_core
-msgid "Cancel"
-msgstr "إلغاء"
-
-#. module: ncollection_core
-msgid "Company Information"
-msgstr "معلومات الشركة"
-
-#. module: ncollection_core
-msgid "Company Name"
-msgstr "اسم الشركة"
-
-#. module: ncollection_core
-msgid "Identity"
-msgstr "الهوية"
-
-#. module: ncollection_core
-msgid "Contact"
-msgstr "جهة الاتصال"
-
-#. module: ncollection_core
-msgid "TRN"
-msgstr "الرقم الضريبي"
-
-#. module: ncollection_core
-msgid "Address"
-msgstr "العنوان"
-
-#. module: ncollection_core
-msgid "Street"
-msgstr "الشارع"
-
-#. module: ncollection_core
-msgid "Street 2"
-msgstr "الشارع 2"
-
-#. module: ncollection_core
-msgid "City"
-msgstr "المدينة"
-
-#. module: ncollection_core
-msgid "Emirate / State"
-msgstr "الإمارة / الولاية"
-
-#. module: ncollection_core
-msgid "ZIP"
-msgstr "الرمز البريدي"
-
-#. module: ncollection_core
-msgid "Country"
-msgstr "الدولة"
-
-#. module: ncollection_core
-msgid "Company"
-msgstr "الشركة"
-
-#. module: ncollection_core
-msgid "Workspace Settings"
-msgstr "إعدادات مساحة العمل"
-
-#. module: ncollection_core
-msgid "Workspace Appearance"
-msgstr "مظهر مساحة العمل"
-
-#. module: ncollection_core
-msgid "Brand Colours"
-msgstr "ألوان العلامة التجارية"
-
-#. module: ncollection_core
-msgid "Login Screen"
-msgstr "شاشة تسجيل الدخول"
-
-#. module: ncollection_core
-msgid "Colours use 6-digit hex (for example #1F5F8F). Changes apply on the next page reload. Leave a colour empty to use the NCollection default."
-msgstr "تُستخدم الألوان بصيغة سداسية عشرية من 6 خانات (على سبيل المثال ‎#1F5F8F). تُطبَّق التغييرات عند إعادة تحميل الصفحة التالية. اترك اللون فارغًا لاستخدام الإعداد الافتراضي لـ NCollection."
-
-#. module: ncollection_core
-msgid "Appearance"
-msgstr "المظهر"
-
-#. module: ncollection_core
-msgid "Dashboard"
-msgstr "لوحة المعلومات"
-
-#. module: ncollection_core
-msgid "Workspace paused — NCollection"
-msgstr "مساحة العمل متوقفة مؤقتًا — NCollection"
-
-#. module: ncollection_core
-msgid "Your subscription has expired"
-msgstr "انتهت صلاحية اشتراكك"
-
-#. module: ncollection_core
-msgid "Your workspace is paused"
-msgstr "مساحة عملك متوقفة مؤقتًا"
-
-#. module: ncollection_core
-msgid "Please renew to restore access — your data is safe."
-msgstr "يُرجى التجديد لاستعادة الوصول — بياناتك آمنة."
-
-#. module: ncollection_core
-msgid "Renew subscription"
-msgstr "تجديد الاشتراك"
-
-#. module: ncollection_core
-msgid "Log out"
-msgstr "تسجيل الخروج"
-
-#. module: ncollection_core
-msgid "Welcome back"
-msgstr "مرحبًا بعودتك"
-
-#. module: ncollection_core
-msgid "Loading your dashboard…"
-msgstr "جارٍ تحميل لوحة المعلومات…"
-
-#. module: ncollection_core
-msgid "The dashboard could not be loaded. Please refresh the page."
-msgstr "تعذّر تحميل لوحة المعلومات. يُرجى إعادة تحميل الصفحة."
-
-#. module: ncollection_core
-msgid "No dashboard widgets are available for your role yet."
-msgstr "لا تتوفر أي أدوات في لوحة المعلومات لدورك حتى الآن."
-
-#. module: ncollection_core
-msgid "NCollection Roles"
-msgstr "أدوار NCollection"
-
-#. module: ncollection_core
-msgid "Standard tenant workspace roles for NCollection ERP."
-msgstr "أدوار مساحة عمل المستأجر القياسية لنظام NCollection ERP."
-
-#. module: ncollection_core
-msgid "Standard tenant workspace roles."
-msgstr "أدوار مساحة عمل المستأجر القياسية."
-
-#. module: ncollection_core
-#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__username
-msgid "Username"
-msgstr "اسم المستخدم"
-
-#. module: ncollection_core
-#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__email
-msgid "Contact Email"
-msgstr "البريد الإلكتروني للتواصل"
-
-#. module: ncollection_core
-#. odoo-python
-#: code:addons/ncollection_core/wizards/user_invite.py:0
-msgid ""
-"The username cannot be an email address. Use 3-64 letters, digits, dots, "
-"dashes or underscores, such as sara.m."
-msgstr ""
-"لا يمكن أن يكون اسم المستخدم عنوان بريد إلكتروني. استخدم من 3 إلى 64 حرفًا "
-"أو رقمًا أو نقطة أو شرطة أو شرطة سفلية، مثل sara.m."
-
-#. module: ncollection_core
-#. odoo-python
-#: code:addons/ncollection_core/wizards/user_invite.py:0
-msgid "The username '%s' is already taken."
-msgstr "اسم المستخدم '%s' مستخدم بالفعل."
-
-#. module: ncollection_core
-#. odoo-python
-#: code:addons/ncollection_core/models/res_users.py:0
-msgid ""
-"The login '%s' looks like an email address. A login is a username (for "
-"example sara.m); put the email in the contact email field instead."
-msgstr ""
-"اسم الدخول '%s' يبدو كعنوان بريد إلكتروني. اسم الدخول هو اسم مستخدم (مثل "
-"sara.m)؛ ضع البريد الإلكتروني في حقل البريد الإلكتروني للتواصل بدلًا من ذلك."
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
-msgid "Summary"
-msgstr "الملخّص"
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
-msgid "Welcome back,"
-msgstr "مرحبًا بعودتك،"
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
-msgid "Loading your summary…"
-msgstr "جارٍ تحميل الملخّص…"
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
-msgid "The summary could not be loaded. Please refresh the page."
-msgstr "تعذّر تحميل الملخّص. يُرجى تحديث الصفحة."
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
-msgid "Nothing to summarise for your role yet."
-msgstr "لا يوجد ما يُلخَّص لدورك بعد."
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
-msgid "Open full report"
-msgstr "فتح التقرير الكامل"
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
-msgid "No posted entries in this period yet."
-msgstr "لا توجد قيود مرحّلة في هذه الفترة بعد."
-
-#. module: ncollection_core
-#. odoo-python
-#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
-msgid "Balance Sheet"
-msgstr "الميزانية العمومية"
-
-#. module: ncollection_core
-#. odoo-python
-#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
-msgid "Profit & Loss"
-msgstr "الأرباح والخسائر"
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
-msgid "Platform Admin Mode"
-msgstr "وضع مدير المنصّة"
-
-#. module: ncollection_core
-#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
-msgid "Back to Platform"
-msgstr "العودة إلى المنصّة"
-
-#. module: ncollection_core
-#. odoo-python
-#: code:addons/ncollection_core/models/platform_entry.py:0
-msgid "Platform Admin: %s"
-msgstr "مدير المنصّة: %s"
-
-#. module: ncollection_core
-#. odoo-python
-#: code:addons/ncollection_core/models/platform_entry.py:0
-msgid "Malformed entry grant."
-msgstr "طلب دخول غير صالح."
-
-#. module: ncollection_core
 #: model:ir.model.fields,help:ncollection_core.field_ncollection_launcher_app__sequence
-msgid ""
-"0 keeps the natural order. Give applications 1, 2, 3 ... to put them first, in that order."
-msgstr ""
-"0 يُبقي الترتيب الطبيعي. أعطِ التطبيقات 1 و2 و3 ... لوضعها أولًا بهذا الترتيب."
+msgid "0 keeps the natural order. Give applications 1, 2, 3 ... to put them first, in that order."
+msgstr "0 يُبقي الترتيب الطبيعي. أعطِ التطبيقات 1 و2 و3 ... لوضعها أولًا بهذا الترتيب."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_search
+msgid "4xx Client Errors"
+msgstr "أخطاء العميل 4xx"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_search
+msgid "5xx Server Errors"
+msgstr "أخطاء الخادم 5xx"
+
+#. module: ncollection_core
+#: model:ir.model.constraint,message:ncollection_core.constraint_ncollection_platform_entry_token_hash_unique
+msgid "A grant token can only be registered once."
+msgstr "يمكن تسجيل رمز المنح مرة واحدة فقط."
 
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/res_users_apikeys.py:0
-msgid ""
-"A platform administrator session cannot create API keys. Use a named tenant user."
-msgstr ""
-"لا يمكن لجلسة مدير المنصة إنشاء مفاتيح API. استخدم مستخدمًا مسمّى في المستأجر."
+msgid "A platform administrator session cannot create API keys. Use a named tenant user."
+msgstr "لا يمكن لجلسة مدير المنصة إنشاء مفاتيح API. استخدم مستخدمًا مسمّى في المستأجر."
 
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/res_users.py:0
-msgid ""
-"A platform administrator session cannot set passwords. Ask the workspace Owner."
-msgstr ""
-"لا يمكن لجلسة مدير المنصة تعيين كلمات المرور. اطلب ذلك من مالك مساحة العمل."
+msgid "A platform administrator session cannot set passwords. Ask the workspace Owner."
+msgstr "لا يمكن لجلسة مدير المنصة تعيين كلمات المرور. اطلب ذلك من مالك مساحة العمل."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "Access to"
+msgstr "الوصول إلى"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__accountant
+#: model:res.groups,name:ncollection_core.group_role_accountant
+msgid "Accountant"
+msgstr "محاسب"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_alert__state__acknowledged
+msgid "Acknowledged"
+msgstr "تم الإقرار"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_alert__state
+msgid "Acknowledged alerts stay for audit but drop out of the digest."
+msgstr "تبقى التنبيهات المُقَرّ بها للتدقيق لكنها تُستبعد من الملخص."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Across cash & bank accounts"
+msgstr "عبر حسابات النقد والبنك"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__active
@@ -467,15 +84,51 @@ msgstr "نشط"
 
 #. module: ncollection_core
 #: model:ir.model.fields,help:ncollection_core.field_ncollection_launcher_app__state
-msgid ""
-"Active: in your plan and installed. In your plan, being installed: the platform installs it. Not in your plan: change your subscription to add it."
-msgstr ""
-"نشط: ضمن خطتك ومثبّت. ضمن خطتك، قيد التثبيت: تقوم المنصة بتثبيته. غير مضمّن في خطتك: غيّر اشتراكك لإضافته."
+msgid "Active: in your plan and installed. In your plan, being installed: the platform installs it. Not in your plan: change your subscription to add it."
+msgstr "نشط: ضمن خطتك ومثبّت. ضمن خطتك، قيد التثبيت: تقوم المنصة بتثبيته. غير مضمّن في خطتك: غيّر اشتراكك لإضافته."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Address"
+msgstr "العنوان"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__allowed_module_names
+msgid "Allowed Modules"
+msgstr "الوحدات المسموح بها"
+
+#. module: ncollection_core
+#: model:ir.model.constraint,message:ncollection_core.constraint_ncollection_alert_dedup_key_uniq
+msgid "An alert for this detector, subject and period already exists."
+msgstr "يوجد تنبيه لهذا الكاشف والموضوع والفترة بالفعل."
 
 #. module: ncollection_core
 #: model:ir.model.constraint,message:ncollection_core.constraint_ncollection_launcher_app_module_uniq
 msgid "An application is listed once."
 msgstr "يُدرج التطبيق مرة واحدة."
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_ncollection_alert
+msgid "Anomalies are detected once a day. You see the alerts for your\n               role only; an administrator sees all of them."
+msgstr "يتم رصد الحالات الشاذة مرة واحدة يوميًا. ترى التنبيهات الخاصة بدورك فقط؛ ويرى المسؤول جميعها."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_form
+msgid "Anomaly Alert"
+msgstr "تنبيه شذوذ"
+
+#. module: ncollection_core
+#: model:ir.actions.act_window,name:ncollection_core.action_ncollection_alert
+#: model:ir.ui.menu,name:ncollection_core.menu_ncollection_alert
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_list
+msgid "Anomaly Alerts"
+msgstr "تنبيهات الشذوذ"
+
+#. module: ncollection_core
+#: model:ir.actions.server,name:ncollection_core.action_workspace_appearance
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_appearance
+msgid "Appearance"
+msgstr "المظهر"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__name
@@ -495,9 +148,82 @@ msgstr "التطبيقات"
 
 #. module: ncollection_core
 #. odoo-python
+#: code:addons/ncollection_core/models/ir_module.py:0
+msgid "Applications are managed by NCollection, not from inside your workspace. Your subscription plan decides which applications are installed: open Settings > Applications to see what it includes and to choose what appears on your Home screen. To add or remove an application, change your subscription plan — your workspace is updated for you.\n\n(Installing modules directly would bypass the plan your workspace is licensed under.)"
+msgstr "تتم إدارة التطبيقات بواسطة NCollection وليس من داخل مساحة عملك. تحدد خطة اشتراكك التطبيقات المثبّتة: افتح الإعدادات > التطبيقات لمعرفة ما تتضمنه ولاختيار ما يظهر على شاشتك الرئيسية. لإضافة تطبيق أو إزالته، غيّر خطة اشتراكك — وسيتم تحديث مساحة عملك تلقائيًا.\n\n(تثبيت الوحدات مباشرةً يتجاوز الخطة المرخّصة لمساحة عملك.)"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Assigned to you"
+msgstr "المسندة إليك"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__key__avg_deal_size
+#: model:ncollection.kpi,name:ncollection_core.kpi_avg_deal_size
+msgid "Average Deal Size"
+msgstr "متوسط حجم الصفقة"
+
+#. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Awaiting customer confirmation"
 msgstr "بانتظار تأكيد العميل"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Awaiting sign-off"
+msgstr "بانتظار الاعتماد"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
+msgid "Back to Platform"
+msgstr "العودة إلى المنصّة"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi_threshold__state__bad
+msgid "Bad"
+msgstr "سيئ"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Balance Sheet"
+msgstr "الميزانية العمومية"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_base
+msgid "Base"
+msgstr "الأساس"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__baseline_value
+msgid "Baseline Value"
+msgstr "القيمة الأساسية"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_appearance_form
+msgid "Brand Colours"
+msgstr "ألوان العلامة التجارية"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__ceo
+#: model:res.groups,name:ncollection_core.group_role_ceo
+msgid "CEO"
+msgstr "الرئيس التنفيذي"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Cash & Bank"
+msgstr "النقد والبنك"
 
 #. module: ncollection_core
 #. odoo-python
@@ -506,10 +232,200 @@ msgid "Cash & bank"
 msgstr "النقد والبنوك"
 
 #. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "City"
+msgstr "المدينة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_form
+msgid "Client & Context"
+msgstr "العميل والسياق"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_appearance_form
+msgid "Colours use 6-digit hex (for example #1F5F8F). Changes apply\n                        on the next page reload. Leave a colour empty to use the\n                        NCollection default."
+msgstr "تستخدم الألوان رمزًا سداسيًا من 6 خانات (مثل #1F5F8F). تُطبَّق التغييرات عند إعادة تحميل الصفحة التالية. اترك اللون فارغًا لاستخدام الافتراضي من NCollection."
+
+#. module: ncollection_core
+#: model:ir.actions.server,name:ncollection_core.action_workspace_company
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_company
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Company Information"
+msgstr "معلومات الشركة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Company Name"
+msgstr "اسم الشركة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__email
+msgid "Contact Email"
+msgstr "البريد الإلكتروني للتواصل"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Country"
+msgstr "الدولة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_alert__severity__critical
+#: model:ncollection.kpi.threshold,name:ncollection_core.kpi_turnover_band_bad
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_search
+msgid "Critical"
+msgstr "حرج"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__unit__currency
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Deactivate"
+msgstr "إلغاء التفعيل"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Deactivate this user? They will no longer be able to log in."
+msgstr "هل تريد إلغاء تفعيل هذا المستخدم؟ لن يتمكن بعد ذلك من تسجيل الدخول."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__dedup_key
+msgid "Dedup Key"
+msgstr "مفتاح منع التكرار"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__detected_at
+msgid "Detected At"
+msgstr "وقت الاكتشاف"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__detector_key
+msgid "Detector Key"
+msgstr "مفتاح الكاشف"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_http__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_module_module__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_ui_menu__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_engine__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_anomaly_detector__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_config_sync_key__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_dashboard_data__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_financial_gate_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_groups__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_core
+#: model:ncollection.kpi.threshold,name:ncollection_core.kpi_turnover_band_warning
+msgid "Elevated"
+msgstr "مرتفع"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Emirate / State"
+msgstr "الإمارة / الولاية"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__employee
+#: model:res.groups,name:ncollection_core.group_role_employee
+msgid "Employee"
+msgstr "موظف"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__key__employee_turnover
+#: model:ncollection.kpi,name:ncollection_core.kpi_employee_turnover
+msgid "Employee Turnover"
+msgstr "معدل دوران الموظفين"
+
+#. module: ncollection_core
+#: model:ir.actions.act_window,name:ncollection_core.action_ncollection_error_log
+msgid "Error & Incident Logs"
+msgstr "سجلات الأخطاء والحوادث"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_form
+msgid "Error Incident"
+msgstr "حادثة خطأ"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_list
+msgid "Error Incidents"
+msgstr "حوادث الأخطاء"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__error_type
+msgid "Error Type"
+msgstr "نوع الخطأ"
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Expenses"
 msgstr "المصروفات"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_platform_entry__state__expired
+msgid "Expired"
+msgstr "منتهي الصلاحية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__expires_at
+msgid "Expires At"
+msgstr "ينتهي في"
 
 #. module: ncollection_core
 #. odoo-javascript
@@ -518,9 +434,81 @@ msgid "Financial statements"
 msgstr "القوائم المالية"
 
 #. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__name
+msgid "Full Name"
+msgstr "الاسم الكامل"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi_threshold__state__good
+msgid "Good"
+msgstr "جيد"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_platform_entry__state__granted
+msgid "Granted"
+msgstr "ممنوح"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_search
+msgid "Group by Date"
+msgstr "تجميع حسب التاريخ"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_search
+msgid "Group by Detector"
+msgstr "تجميع حسب الكاشف"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_search
+msgid "Group by Error Type"
+msgstr "تجميع حسب نوع الخطأ"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_search
+msgid "Group by HTTP Status"
+msgstr "تجميع حسب حالة HTTP"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_search
+msgid "Group by Severity"
+msgstr "تجميع حسب الخطورة"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__hr
+#: model:res.groups,name:ncollection_core.group_role_hr
+msgid "HR"
+msgstr "الموارد البشرية"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_form
+msgid "HTTP & Request Info"
+msgstr "معلومات HTTP والطلب"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__has_max
+msgid "Has Max"
+msgstr "له حد أقصى"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__has_min
+msgid "Has Min"
+msgstr "له حد أدنى"
+
+#. module: ncollection_core
+#: model:ncollection.kpi.threshold,name:ncollection_core.kpi_turnover_band_good
+msgid "Healthy"
+msgstr "سليم"
+
+#. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
 msgid "Hidden on Home"
 msgstr "مخفي من الرئيسية"
+
+#. module: ncollection_core
+#: model:ir.actions.client,name:ncollection_core.action_ncollection_home
+#: model:ir.ui.menu,name:ncollection_core.menu_ncollection_home_root
+msgid "Home"
+msgstr "الرئيسية"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__sequence
@@ -528,9 +516,43 @@ msgid "Home order"
 msgstr "ترتيب الرئيسية"
 
 #. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__http_status
+msgid "Http Status"
+msgstr "حالة HTTP"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_http__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_module_module__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_ui_menu__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_engine__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_anomaly_detector__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_config_sync_key__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_dashboard_data__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_financial_gate_mixin__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_groups__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__icon
 msgid "Icon"
 msgstr "الأيقونة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Identity"
+msgstr "الهوية"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
@@ -543,15 +565,168 @@ msgid "In your plan, being installed"
 msgstr "ضمن خطتك، قيد التثبيت"
 
 #. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_form
+msgid "Incident Correlation ID"
+msgstr "معرّف ارتباط الحادثة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_list
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_search
+msgid "Incident ID"
+msgstr "معرّف الحادثة"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_alert__severity__info
+msgid "Info"
+msgstr "معلومة"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__key__inventory_turnover
+#: model:ncollection.kpi,name:ncollection_core.kpi_inventory_turnover
+msgid "Inventory Turnover"
+msgstr "معدل دوران المخزون"
+
+#. module: ncollection_core
+#: model:ir.actions.act_window,name:ncollection_core.action_user_invite
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_invite
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+msgid "Invite User"
+msgstr "دعوة مستخدم"
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_workspace_users
+msgid "Invite your first team member"
+msgstr "ادعُ أول عضو في فريقك"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__key
+msgid "Key"
+msgstr "المفتاح"
+
+#. module: ncollection_core
 #. odoo-javascript
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
 msgid "Key figures"
 msgstr "الأرقام الرئيسية"
 
 #. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__kpi_id
+msgid "Kpi"
+msgstr "مؤشر الأداء"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/home/tenant_home.xml:0
+msgid "Loading your applications…"
+msgstr "جارٍ تحميل تطبيقاتك…"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "Log out"
+msgstr "تسجيل الخروج"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_appearance_form
+msgid "Login Screen"
+msgstr "شاشة تسجيل الدخول"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_kpi_threshold__value_min
+msgid "Lower bound, inclusive. Empty = unbounded."
+msgstr "الحد الأدنى، شاملًا. فارغ = بلا حد."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/platform_entry.py:0
+msgid "Malformed entry grant."
+msgstr "طلب دخول غير صالح."
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__manager
+#: model:res.groups,name:ncollection_core.group_role_manager
+msgid "Manager"
+msgstr "مدير"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_form
+msgid "Masked Traceback"
+msgstr "أثر التتبع المُقنَّع"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__max_users
+msgid "Max Users"
+msgstr "الحد الأقصى للمستخدمين"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_form
+msgid "Measurement"
+msgstr "القياس"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_ir_ui_menu
+msgid "Menu"
+msgstr "القائمة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__message
+msgid "Message"
+msgstr "الرسالة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_form
+msgid "Message Summary"
+msgstr "ملخص الرسالة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__method
+msgid "Method"
+msgstr "الطريقة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__model_name
+msgid "Model Name"
+msgstr "اسم النموذج"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_ir_module_module
+msgid "Module"
+msgstr "الوحدة"
+
+#. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__module_name
 msgid "Module Name"
 msgstr "اسم الوحدة"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__period_type__month
+msgid "Month"
+msgstr "الشهر"
 
 #. module: ncollection_core
 #. odoo-python
@@ -560,10 +735,70 @@ msgid "My activities"
 msgstr "أنشطتي"
 
 #. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "NCollection"
+msgstr "NCollection"
+
+#. module: ncollection_core
+#: model:ir.module.category,name:ncollection_core.module_category_ncollection_roles
+#: model:res.groups.privilege,name:ncollection_core.privilege_ncollection_roles
+msgid "NCollection Roles"
+msgstr "أدوار NCollection"
+
+#. module: ncollection_core
+#: model:ir.actions.server,name:ncollection_core.cron_detect_anomalies_ir_actions_server
+msgid "NCollection: detect anomalies"
+msgstr "NCollection: رصد الحالات الشاذة"
+
+#. module: ncollection_core
+#: model:ir.actions.server,name:ncollection_core.cron_send_alert_digest_ir_actions_server
+msgid "NCollection: email the anomaly alert digest"
+msgstr "NCollection: إرسال ملخص تنبيهات الشذوذ بالبريد"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "Need help? Contact"
+msgstr "هل تحتاج إلى مساعدة؟ تواصل مع"
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Net Profit"
 msgstr "صافي الربح"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_alert__state__new
+msgid "New"
+msgstr "جديد"
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_ncollection_alert
+msgid "No alerts — nothing unusual detected."
+msgstr "لا توجد تنبيهات — لم يُرصد أي شيء غير معتاد."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/home/tenant_home.xml:0
+msgid "No applications yet"
+msgstr "لا توجد تطبيقات بعد"
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_ncollection_error_log
+msgid "No error incidents recorded. System health is optimal!"
+msgstr "لم تُسجَّل أي حوادث أخطاء. حالة النظام ممتازة!"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.js:0
+msgid "No posted entries in this period yet."
+msgstr "لا توجد قيود مرحّلة في هذه الفترة بعد."
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
@@ -576,6 +811,34 @@ msgid "Not in your plan"
 msgstr "غير مضمّن في خطتك"
 
 #. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Nothing to summarise for your role yet."
+msgstr "لا يوجد ما يُلخَّص لدورك بعد."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__observed_value
+msgid "Observed Value"
+msgstr "القيمة المرصودة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_form
+msgid "Occurred At"
+msgstr "وقت الحدوث"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/workspace_config.py:0
+msgid "Only one workspace configuration record may exist per tenant database."
+msgstr "لا يجوز وجود أكثر من سجل واحد لإعدادات مساحة العمل لكل قاعدة بيانات مستأجر."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid "Only the workspace Owner can deactivate users."
+msgstr "يمكن لمالك مساحة العمل وحده إلغاء تفعيل المستخدمين."
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/launcher_app.py:0
 msgid "Only the workspace Owner can manage applications."
@@ -584,15 +847,49 @@ msgstr "يمكن لمالك مساحة العمل فقط إدارة التطبي
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/launcher_app.py:0
-msgid ""
-"Only whether an application shows on Home, and its order, can be changed."
+msgid "Only whether an application shows on Home, and its order, can be changed."
 msgstr "يمكن تغيير ظهور التطبيق في الشاشة الرئيسية وترتيبه فقط."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_search
+msgid "Open"
+msgstr "فتح"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Open Activities"
+msgstr "الأنشطة المفتوحة"
 
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Open Quotations"
 msgstr "عروض الأسعار المفتوحة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/anomaly/alert.py:0
+msgid "Open anomaly alerts:"
+msgstr "تنبيهات الشذوذ المفتوحة:"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Open bills"
+msgstr "فواتير الموردين المفتوحة"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.js:0
+msgid "Open full report"
+msgstr "فتح التقرير الكامل"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Open invoices"
+msgstr "الفواتير المفتوحة"
 
 #. module: ncollection_core
 #. odoo-python
@@ -613,6 +910,24 @@ msgid "Open receivables"
 msgstr "الذمم المدينة المفتوحة"
 
 #. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__owner
+#: model:res.groups,name:ncollection_core.group_role_owner
+msgid "Owner"
+msgstr "المالك"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Payables"
+msgstr "الذمم الدائنة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Pending Approvals"
+msgstr "الموافقات المعلقة"
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Pending Transfers"
@@ -625,10 +940,84 @@ msgid "Pending transfers"
 msgstr "عمليات نقل معلّقة"
 
 #. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__unit__percent
+msgid "Percent"
+msgstr "نسبة مئوية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__period_type
+msgid "Period Type"
+msgstr "نوع الفترة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__plan_code
+msgid "Plan Code"
+msgstr "رمز الخطة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_workspace_config__plan_code
+msgid "Plan code as defined on the platform (e.g. STARTER)."
+msgstr "رمز الخطة كما هو معرّف في المنصة (مثل STARTER)."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/platform/platform_mode.xml:0
+msgid "Platform Admin Mode"
+msgstr "وضع مدير المنصّة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/platform_entry.py:0
+msgid "Platform Admin: %s"
+msgstr "مدير المنصّة: %s"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__platform_name
+msgid "Platform Name"
+msgstr "اسم المنصة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__platform_ref
+msgid "Platform Ref"
+msgstr "مرجع المنصة"
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/res_users.py:0
 msgid "Platform administrator accounts are managed by the platform."
 msgstr "تُدار حسابات مديري المنصة بواسطة المنصة."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__nc_platform_proxy
+msgid "Platform administrator proxy"
+msgstr "وكيل مسؤول المنصة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__nc_platform_ref
+msgid "Platform administrator ref"
+msgstr "مرجع مسؤول المنصة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "Please enter a valid email address."
+msgstr "يُرجى إدخال عنوان بريد إلكتروني صالح."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "Please renew to restore access — your data is safe."
+msgstr "يُرجى التجديد لاستعادة الوصول — بياناتك آمنة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Profit & Loss"
+msgstr "الأرباح والخسائر"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__user_id
+msgid "Proxy user"
+msgstr "المستخدم الوكيل"
 
 #. module: ncollection_core
 #. odoo-python
@@ -643,10 +1032,105 @@ msgid "Purchases this month"
 msgstr "مشتريات هذا الشهر"
 
 #. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__period_type__quarter
+msgid "Quarter"
+msgstr "ربع السنة"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__unit__ratio
+msgid "Ratio"
+msgstr "نسبة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Receivables"
+msgstr "الذمم المدينة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__remote_addr
+msgid "Remote Addr"
+msgstr "عنوان المصدر"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__remote_ip
+msgid "Remote Ip"
+msgstr "عنوان IP البعيد"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "Renew subscription"
+msgstr "تجديد الاشتراك"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__return_url
+msgid "Return Url"
+msgstr "رابط العودة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Revenue (last 6 months)"
+msgstr "الإيرادات (آخر 6 أشهر)"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__role
+msgid "Role"
+msgstr "الدور"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__route
+msgid "Route"
+msgstr "المسار"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__sales
+#: model:res.groups,name:ncollection_core.group_role_sales
+msgid "Sales"
+msgstr "المبيعات"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Sales This Month"
+msgstr "المبيعات هذا الشهر"
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Sales this month"
 msgstr "مبيعات هذا الشهر"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_search
+msgid "Search Error Incidents"
+msgstr "البحث في حوادث الأخطاء"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+msgid "Send Invitation"
+msgstr "إرسال الدعوة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__sequence
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__sequence_sort
+msgid "Sequence Sort"
+msgstr "ترتيب التسلسل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__severity
+msgid "Severity"
+msgstr "الخطورة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__severity_rank
+msgid "Severity Rank"
+msgstr "ترتيب الخطورة"
 
 #. module: ncollection_core
 #. odoo-javascript
@@ -661,10 +1145,25 @@ msgstr "إظهار في الرئيسية"
 
 #. module: ncollection_core
 #: model:ir.model.fields,help:ncollection_core.field_ncollection_launcher_app__visible
-msgid ""
-"Show this application on the Home screen. Hiding it only removes the tile: access, menus and data are unchanged."
-msgstr ""
-"إظهار هذا التطبيق في الشاشة الرئيسية. الإخفاء يزيل البطاقة فقط: الصلاحيات والقوائم والبيانات لا تتغير."
+msgid "Show this application on the Home screen. Hiding it only removes the tile: access, menus and data are unchanged."
+msgstr "إظهار هذا التطبيق في الشاشة الرئيسية. الإخفاء يزيل البطاقة فقط: الصلاحيات والقوائم والبيانات لا تتغير."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_form
+msgid "Standard deviations from the baseline."
+msgstr "الانحرافات المعيارية عن خط الأساس."
+
+#. module: ncollection_core
+#: model:ir.module.category,description:ncollection_core.module_category_ncollection_roles
+msgid "Standard tenant workspace roles for NCollection ERP."
+msgstr "أدوار مساحة عمل المستأجر القياسية لنظام NCollection ERP."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__state
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__state
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__state
+msgid "State"
+msgstr "الحالة"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__state
@@ -684,10 +1183,88 @@ msgid "Stock on hand"
 msgstr "المخزون المتوفر"
 
 #. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Street"
+msgstr "الشارع"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "Street 2"
+msgstr "الشارع 2"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__subscription_status
+msgid "Subscription Status"
+msgstr "حالة الاشتراك"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__suggested_action
+msgid "Suggested Action"
+msgstr "الإجراء المقترح"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_alert_form
+msgid "Suggested action"
+msgstr "الإجراء المقترح"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+#: model:ir.actions.client,name:ncollection_core.action_ncollection_dashboard
+#: model:ir.ui.menu,name:ncollection_core.menu_ncollection_dashboard_root
+msgid "Summary"
+msgstr "الملخّص"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "TRN"
+msgstr "الرقم الضريبي"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__target_value
+msgid "Target Value"
+msgstr "القيمة المستهدفة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/tests/test_dashboard.py:0
+msgid "The 'x.y' feature is not included in your NCollection plan."
+msgstr "الميزة 'x.y' غير مضمّنة في خطة NCollection الخاصة بك."
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/launcher_app.py:0
 msgid "The application list is maintained by the workspace itself."
 msgstr "قائمة التطبيقات تُدار بواسطة مساحة العمل نفسها."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid "The login '%s' looks like an email address. A login is a username (for example sara.m); put the email in the contact email field instead."
+msgstr "اسم الدخول '%s' يبدو كعنوان بريد إلكتروني. اسم الدخول هو اسم مستخدم (مثل sara.m)؛ ضع البريد الإلكتروني في حقل البريد الإلكتروني للتواصل بدلًا من ذلك."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "The summary could not be loaded. Please refresh the page."
+msgstr "تعذّر تحميل الملخّص. يُرجى تحديث الصفحة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "The username '%s' is already taken."
+msgstr "اسم المستخدم '%s' مستخدم بالفعل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "The username cannot be an email address. Use 3-64 letters, digits, dots, dashes or underscores, such as sara.m."
+msgstr "لا يمكن أن يكون اسم المستخدم عنوان بريد إلكتروني. استخدم من 3 إلى 64 حرفًا أو رقمًا أو نقطة أو شرطة أو شرطة سفلية، مثل sara.m."
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_alert__observed_value
+msgid "The value that triggered the alert."
+msgstr "القيمة التي أدّت إلى التنبيه."
 
 #. module: ncollection_core
 #. odoo-javascript
@@ -702,6 +1279,38 @@ msgid "This figure has no detail for you."
 msgstr "لا توجد تفاصيل لهذا الرقم لك."
 
 #. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__threshold_ids
+msgid "Threshold"
+msgstr "الحد"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/kpi/kpi_threshold.py:0
+msgid "Threshold band %(name)s covers no values: its minimum (%(minimum)s) is not below its maximum (%(maximum)s). Leave a bound unset to make the band open-ended."
+msgstr "نطاق العتبة %(name)s لا يغطي أي قيم: حده الأدنى (%(minimum)s) ليس أقل من حده الأقصى (%(maximum)s). اترك حدًا غير محدد لجعل النطاق مفتوحًا."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_ncollection_error_log_list
+msgid "Timestamp"
+msgstr "الطابع الزمني"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__token_hash
+msgid "Token Hash"
+msgstr "تجزئة الرمز"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Top Customers"
+msgstr "أبرز العملاء"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__traceback_masked
+msgid "Traceback Masked"
+msgstr "أثر التتبع المُقنَّع"
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Transfers waiting to be processed"
@@ -714,6 +1323,11 @@ msgid "Trends"
 msgstr "الاتجاهات"
 
 #. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__unit
+msgid "Unit"
+msgstr "الوحدة"
+
+#. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Units in your warehouses"
@@ -722,5 +1336,274 @@ msgstr "وحدات في مستودعاتك"
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Unknown"
+msgstr "غير معروف"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_kpi_threshold__value_max
+msgid "Upper bound, exclusive. Empty = unbounded."
+msgstr "الحد الأعلى، غير شامل. فارغ = بلا حد."
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_workspace_users
+msgid "Use \"Invite User\" to add teammates with a predefined role."
+msgstr "استخدم \"دعوة مستخدم\" لإضافة أعضاء الفريق بدور محدد مسبقًا."
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_platform_entry__state__used
+msgid "Used"
+msgstr "مستخدَم"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__used_at
+msgid "Used At"
+msgstr "استُخدم في"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_res_users
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__user_id
+msgid "User"
+msgstr "المستخدم"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__user_agent
+msgid "User Agent"
+msgstr "وكيل المستخدم"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "User invited"
+msgstr "تمت دعوة المستخدم"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__username
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#. module: ncollection_core
+#: model:ir.actions.act_window,name:ncollection_core.action_workspace_users
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_users
+msgid "Users"
+msgstr "المستخدمون"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__uuid
+msgid "Uuid"
+msgstr "المعرّف الفريد"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__value_max
+msgid "Value Max"
+msgstr "القيمة القصوى"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__value_min
+msgid "Value Min"
+msgstr "القيمة الدنيا"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__version
+msgid "Version"
+msgstr "الإصدار"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__warehouse
+#: model:res.groups,name:ncollection_core.group_role_warehouse
+msgid "Warehouse"
+msgstr "المستودع"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_alert__severity__warning
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi_threshold__state__warning
+msgid "Warning"
+msgstr "تحذير"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Welcome back,"
+msgstr "مرحبًا بعودتك،"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_alert__suggested_action
+msgid "What a human should do about it. Written by the detector, because the detector is the only thing that knows why it fired."
+msgstr "ما ينبغي أن يفعله الشخص حيال ذلك. يكتبه الكاشف لأنه الوحيد الذي يعرف سبب تفعيله."
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_user_invite__username
+msgid "What this person types to sign in. A username, never an email address - their email is only a contact detail."
+msgstr "ما يكتبه هذا الشخص لتسجيل الدخول. اسم مستخدم وليس بريدًا إلكترونيًا؛ فالبريد مجرد بيانات اتصال."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_appearance_form
+msgid "Workspace Appearance"
+msgstr "مظهر مساحة العمل"
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_settings_root
+msgid "Workspace Settings"
+msgstr "إعدادات مساحة العمل"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Workspace Users"
+msgstr "مستخدمو مساحة العمل"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__period_type__year
+msgid "Year"
+msgstr "السنة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
 msgid "Year to date"
 msgstr "منذ بداية السنة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid "You cannot deactivate the last workspace Owner."
+msgstr "لا يمكنك إلغاء تفعيل آخر مالك لمساحة العمل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid "You cannot deactivate your own account."
+msgstr "لا يمكنك إلغاء تفعيل حسابك الخاص."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/home/tenant_home.xml:0
+msgid "Your applications"
+msgstr "تطبيقاتك"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users.py:0
+msgid "Your plan allows a maximum of %(limit)s users and you already have %(count)s. Upgrade your subscription to add more users."
+msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين ولديك بالفعل %(count)s. قم بترقية اشتراكك لإضافة المزيد من المستخدمين."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "Your plan allows a maximum of %(limit)s users. Upgrade your subscription to invite more."
+msgstr "تسمح خطتك بحد أقصى %(limit)s من المستخدمين. قم بترقية اشتراكك لدعوة المزيد."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/workspace_config.py:0
+msgid "Your plan and licence are set by NCollection, not from inside your workspace."
+msgstr "يتم تحديد خطتك وترخيصك بواسطة NCollection وليس من داخل مساحة عملك."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "Your subscription has expired"
+msgstr "انتهت صلاحية اشتراكك"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/home/tenant_home.xml:0
+msgid "Your workspace has no applications enabled on its current plan.\n                    Contact your administrator to add them to your subscription."
+msgstr "لا توجد تطبيقات مفعّلة في مساحة عملك ضمن خطتها الحالية. تواصل مع مسؤولك لإضافتها إلى اشتراكك."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "Your workspace is paused"
+msgstr "مساحة عملك متوقفة مؤقتًا"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+msgid "ZIP"
+msgstr "الرمز البريدي"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__zscore
+msgid "Zscore"
+msgstr "الدرجة المعيارية (Z)"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "because the subscription has expired."
+msgstr "لأن الاشتراك منتهي الصلاحية."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+msgid "e.g. Sara Mahmoud"
+msgstr "مثال: سارة محمود"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+msgid "e.g. sara.m"
+msgstr "مثال: sara.m"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+msgid "e.g. sara@yourcompany.com"
+msgstr "مثال: sara@yourcompany.com"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "is currently\n                        unavailable"
+msgstr "غير متاح حاليًا"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "vs last month"
+msgstr "مقارنةً بالشهر الماضي"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.subscription_blocked
+msgid "while the subscription is suspended."
+msgstr "بينما الاشتراك معلّق."
+
+#. module: ncollection_core
+msgid "New Quotation"
+msgstr "عرض سعر جديد"
+
+#. module: ncollection_core
+msgid "New Invoice"
+msgstr "فاتورة جديدة"
+
+#. module: ncollection_core
+msgid "New Purchase Order"
+msgstr "أمر شراء جديد"
+
+#. module: ncollection_core
+msgid "Colours use 6-digit hex (for example #1F5F8F). Changes apply on the next page reload. Leave a colour empty to use the NCollection default."
+msgstr "تُستخدم الألوان بصيغة سداسية عشرية من 6 خانات (على سبيل المثال ‎#1F5F8F). تُطبَّق التغييرات عند إعادة تحميل الصفحة التالية. اترك اللون فارغًا لاستخدام الإعداد الافتراضي لـ NCollection."
+
+#. module: ncollection_core
+msgid "Dashboard"
+msgstr "لوحة المعلومات"
+
+#. module: ncollection_core
+msgid "Workspace paused — NCollection"
+msgstr "مساحة العمل متوقفة مؤقتًا — NCollection"
+
+#. module: ncollection_core
+msgid "Welcome back"
+msgstr "مرحبًا بعودتك"
+
+#. module: ncollection_core
+msgid "Loading your dashboard…"
+msgstr "جارٍ تحميل لوحة المعلومات…"
+
+#. module: ncollection_core
+msgid "The dashboard could not be loaded. Please refresh the page."
+msgstr "تعذّر تحميل لوحة المعلومات. يُرجى إعادة تحميل الصفحة."
+
+#. module: ncollection_core
+msgid "No dashboard widgets are available for your role yet."
+msgstr "لا تتوفر أي أدوات في لوحة المعلومات لدورك حتى الآن."
+
+#. module: ncollection_core
+msgid "Standard tenant workspace roles."
+msgstr "أدوار مساحة عمل المستأجر القياسية."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Loading your summary…"
+msgstr "جارٍ تحميل الملخّص…"

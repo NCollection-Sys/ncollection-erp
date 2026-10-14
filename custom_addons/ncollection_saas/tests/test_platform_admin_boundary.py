@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """The platform administrator operates ABOVE the tenant layer; a tenant Owner never does.
 
-Two contexts, never one role: the platform administrator (group ``ncollection_subscription.group_platform_admin`` on the
-platform's own database) is not subject to the TENANT rule "applications are managed by NCollection"; a tenant Owner,
+Two contexts, never one role: the platform administrator (group
+``ncollection_subscription.group_platform_admin`` on the platform's own database) is not subject to the TENANT
+rule "applications are managed by NCollection"; a tenant Owner,
 who implies ``base.group_system``, is. The group does not exist in a tenant database, so no tenant user can take the
 platform branch. The ORM enforces it, not a view.
 """

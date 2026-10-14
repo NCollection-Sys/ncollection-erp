@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_cheque_print.Designer">
+        <div class="nc-chq" t-if="state.loaded">
+            <div class="nc-chq__toolbar">
+                <div class="nc-chq__add">
+                    <select class="form-select form-select-sm" t-model="state.newKey" aria-label="Field to add">
+                        <option t-foreach="state.options.keys" t-as="opt" t-key="opt[0]" t-att-value="opt[0]" t-esc="opt[1]"/>
+                    </select>
+                    <button type="button" class="btn btn-primary btn-sm" t-on-click="addField">Add field</button>
+                </div>
+                <label class="nc-chq__check"><input type="checkbox" t-model="state.showImage"/> Reference image</label>
+                <label class="nc-chq__check"><input type="checkbox" t-model="state.showGrid"/> 10 mm grid</label>
+                <span class="nc-chq__spacer"/>
+                <button type="button" class="btn btn-secondary btn-sm" t-on-click="() => this.openPdf('design')">Design preview</button>
+                <button type="button" class="btn btn-secondary btn-sm" t-on-click="() => this.openPdf('print')">Print preview</button>
+                <button type="button" class="btn btn-secondary btn-sm" t-on-click="() => this.openPdf('calibration')">Calibration sheet</button>
+                <span class="nc-chq__status" t-att-data-status="state.status" t-esc="statusLabel"/>
+            </div>
+
+            <div class="nc-chq__banner">
+                <span class="nc-chq__badge nc-chq__badge--design">Design view</span>
+                The reference image and the boxes below are for designing only and are not printed. The printed cheque
+                contains the variable text only; the bank's logo, MICR line and security elements are already on the
+                paper. Positions are in millimetres from the top-left corner.
+            </div>
+
+            <div class="nc-chq__body">
+                <div class="nc-chq__stage" t-ref="host">
+                    <!-- the canvas is PHYSICAL: millimetres from the left edge whatever the interface language -->
+                    <div class="nc-chq__canvas" dir="ltr" t-att-style="canvasStyle">
+                        <img t-if="imageUrl and state.showImage" class="nc-chq__image" t-att-src="imageUrl" alt="" draggable="false"/>
+                        <div t-foreach="state.fields" t-as="field" t-key="field.id"
+                             class="nc-chq__box" tabindex="0"
+                             t-att-class="{'is-selected': field.id === state.selectedId, 'is-hidden': !field.visible}"
+                             t-att-style="boxStyle(field)"
+                             t-on-pointerdown="(ev) => this.startMove(ev, field)"
+                             t-on-keydown="(ev) => this.onKeydown(ev, field)"
+                             t-on-focus="() => this.select(field.id)">
+                            <span class="nc-chq__tag" t-esc="label(field)"/>
+                            <span class="nc-chq__text" t-att-style="textStyle(field)" t-esc="sample(field)"/>
+                            <span class="nc-chq__handle" t-on-pointerdown="(ev) => this.startResize(ev, field)"/>
+                        </div>
+                    </div>
+                    <div class="nc-chq__dims" dir="ltr" t-esc="state.tpl.width_mm + ' × ' + state.tpl.height_mm + ' mm'"/>
+                </div>
+
+                <div class="nc-chq__panel nc-card">
+                    <t t-if="selected" t-set="f" t-value="selected"/>
+                    <t t-if="selected">
+                        <div class="nc-chq__panel-title" t-esc="label(f)"/>
+                        <div class="nc-chq__grid">
+                            <label>X (mm)<input type="number" step="0.1" t-att-value="f.x_mm" t-on-change="(ev) => this.setProp(f, 'x_mm', ev.target.value)"/></label>
+                            <label>Y (mm)<input type="number" step="0.1" t-att-value="f.y_mm" t-on-change="(ev) => this.setProp(f, 'y_mm', ev.target.value)"/></label>
+                            <label>Width (mm)<input type="number" step="0.1" t-att-value="f.width_mm" t-on-change="(ev) => this.setProp(f, 'width_mm', ev.target.value)"/></label>
+                            <label>Height (mm)<input type="number" step="0.1" t-att-value="f.height_mm" t-on-change="(ev) => this.setProp(f, 'height_mm', ev.target.value)"/></label>
+                        </div>
+                        <label t-if="f.key === 'static_text'" class="nc-chq__row">Text
+                            <input type="text" t-att-value="f.static_text" t-on-change="(ev) => this.setProp(f, 'static_text', ev.target.value)"/>
+                        </label>
+                        <label class="nc-chq__row">Font
+                            <select t-on-change="(ev) => this.setProp(f, 'font', ev.target.value)">
+                                <option t-foreach="state.options.font" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.font" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <div class="nc-chq__grid">
+                            <label>Size (pt)<input type="number" step="0.5" t-att-value="f.size_pt" t-on-change="(ev) => this.setProp(f, 'size_pt', ev.target.value)"/></label>
+                            <label class="nc-chq__inline"><input type="checkbox" t-att-checked="f.bold" t-on-change="(ev) => this.setProp(f, 'bold', ev.target.checked)"/> Bold</label>
+                        </div>
+                        <label class="nc-chq__row">Alignment
+                            <select t-on-change="(ev) => this.setProp(f, 'align', ev.target.value)">
+                                <option t-foreach="state.options.align" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.align" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <label class="nc-chq__row">Text direction
+                            <select t-on-change="(ev) => this.setProp(f, 'direction', ev.target.value)">
+                                <option t-foreach="state.options.direction" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.direction" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <label t-if="f.key === 'payment_date'" class="nc-chq__row">Date format
+                            <select t-on-change="(ev) => this.setProp(f, 'date_format', ev.target.value)">
+                                <option t-foreach="state.options.date_format" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.date_format" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <label t-if="f.key === 'amount_words'" class="nc-chq__row">Words language
+                            <select t-on-change="(ev) => this.setProp(f, 'words_lang', ev.target.value)">
+                                <option t-foreach="state.options.words_lang" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.words_lang" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <label class="nc-chq__row">Letter case
+                            <select t-on-change="(ev) => this.setProp(f, 'case', ev.target.value)">
+                                <option t-foreach="state.options.case" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.case" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <label class="nc-chq__row">Digits
+                            <select t-on-change="(ev) => this.setProp(f, 'digits', ev.target.value)">
+                                <option t-foreach="state.options.digits" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.digits" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <div class="nc-chq__grid">
+                            <label>Before<input type="text" t-att-value="f.prefix || ''" t-on-change="(ev) => this.setProp(f, 'prefix', ev.target.value)"/></label>
+                            <label>After<input type="text" t-att-value="f.suffix || ''" t-on-change="(ev) => this.setProp(f, 'suffix', ev.target.value)"/></label>
+                        </div>
+                        <label class="nc-chq__row">Long text
+                            <select t-on-change="(ev) => this.setProp(f, 'fit', ev.target.value)">
+                                <option t-foreach="state.options.fit" t-as="o" t-key="o[0]" t-att-value="o[0]" t-att-selected="o[0] === f.fit" t-esc="o[1]"/>
+                            </select>
+                        </label>
+                        <label t-if="f.fit === 'wrap'" class="nc-chq__row">Maximum lines
+                            <input type="number" min="1" max="6" t-att-value="f.max_lines" t-on-change="(ev) => this.setProp(f, 'max_lines', ev.target.value)"/>
+                        </label>
+                        <label class="nc-chq__inline"><input type="checkbox" t-att-checked="f.visible" t-on-change="(ev) => this.setProp(f, 'visible', ev.target.checked)"/> Printed</label>
+                        <button type="button" class="btn btn-link text-danger px-0" t-on-click="() => this.removeField(f)">Remove this field</button>
+                    </t>
+                    <div t-else="" class="nc-chq__empty">Select a field on the cheque, or add one.</div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

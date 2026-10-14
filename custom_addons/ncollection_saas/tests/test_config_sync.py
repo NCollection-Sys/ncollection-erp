@@ -106,6 +106,7 @@ class TestConfigSync(TransactionCase):
 
     def test_push_builds_bearer_request(self):
         tenant = self._tenant(database_name='acme')
+        self.env['ir.config_parameter'].sudo().set_param('ncollection_saas.base_domain', 'ncollectionerp.com')
         vals = tenant._config_sync_vals()
         with patch.dict('os.environ', {'NC_CONFIG_SYNC_KEY': 'secret-key'}), \
                 patch('%s.requests.post' % SYNC) as post:
@@ -121,8 +122,8 @@ class TestConfigSync(TransactionCase):
         self.assertEqual(kwargs['headers']['X-Odoo-Database'], 'acme')
         # The Host MUST carry the tenant subdomain: the receiver routes the DB by
         # Host under db_filter=^%d$, so `localhost` would select no DB -> 404 and
-        # the sync would silently no-op (REGRESSIONS.md R-015). base_domain param
-        # defaults to ncollectionerp.com (data/domain_data.xml).
+        # the sync would silently no-op (REGRESSIONS.md R-015). The base domain is the
+        # platform's one configured value (set above); there is no built-in default.
         self.assertEqual(kwargs['headers']['Host'], 'acme.ncollectionerp.com')
 
     def test_derive_tenant_key_is_per_tenant(self):

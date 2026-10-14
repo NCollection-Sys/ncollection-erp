@@ -263,7 +263,7 @@ class TestSummaryStatements(AccountTestInvoicingCommon):
         self.assertTrue(widgets['profit_loss_summary']['wizard'])
         report_only = self._user('nc_sum_noaml', ['ncollection_core.group_role_ceo'])
         with patch.object(type(self.env[DASH]), '_model_readable',
-                          lambda self, model: model != 'account.move.line'):
+                          lambda self, model: model != 'account.move.line' and model in self.env.registry):
             payload = self.env[DASH].with_user(report_only).get_dashboard_payload()
         pl = next((w for w in payload['widgets'] if w['key'] == 'profit_loss_summary'), None)
         if pl:
@@ -292,7 +292,7 @@ class TestSummaryStatements(AccountTestInvoicingCommon):
         _payload, employee = self._widgets(self.employee)
         self.assertEqual(employee['open_activities']['drill'], {'kind': 'kpi'})        # a personal card still opens
         with patch.object(type(self.env[DASH]), '_model_readable',
-                          lambda self, model: model != 'account.move.line'):
+                          lambda self, model: model != 'account.move.line' and model in self.env.registry):
             payload = self.env[DASH].with_user(self.accountant).get_dashboard_payload()
         cards = {w['key']: w for w in payload['widgets']}
         self.assertNotIn('drill', cards.get('cash_bank', {}))                           # no readable list: no button

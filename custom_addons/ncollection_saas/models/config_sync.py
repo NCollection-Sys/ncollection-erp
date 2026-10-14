@@ -90,9 +90,8 @@ _BASE_URL_ENV = 'NC_INTERNAL_BASE_URL'
 # `Host: <db>.<base-domain>` or the tenant DB is rejected (no DB selected -> 404,
 # and the sync silently no-ops). X-Odoo-Database does NOT bypass db_filter: it is
 # itself filtered by the request Host (odoo/http.py). Same param the domain layer
-# uses; only the first Host label matters to ^%d$, so the value is env-agnostic.
-_BASE_DOMAIN_PARAM = 'ncollection_saas.base_domain'
-_DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
+# uses (ncollection.tenant._nc_base_domain — one definition, no built-in default); only
+# the first Host label matters to ^%d$, so the value is env-agnostic.
 _SYNC_ENDPOINT = '/json/2/ncollection.workspace.config/sync_from_platform'
 _SYNC_CHANNEL = 'root.provisioning'
 # requests' `timeout=` is the CONNECT timeout and the IDLE GAP between reads --
@@ -951,8 +950,6 @@ class TenantConfigSync(models.Model):
                 'permanent', "%s is not set" % _SYNC_KEY_ENV)
             return False
         base = self._config_sync_base_url()
-        base_domain = (self.env['ir.config_parameter'].sudo().get_param(
-            _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN) or '').strip().lower()
         try:
             # Derived here as part of the push attempt. It is total on (str, str)
             # — master is guarded non-empty above, db is the sanitized
@@ -966,7 +963,7 @@ class TenantConfigSync(models.Model):
                     # selects the DB by Host under db_filter=^%d$ — present the
                     # tenant subdomain so ITS db (not 'localhost') is chosen.
                     # X-Odoo-Database must agree (it, too, is Host-filtered).
-                    'Host': '%s.%s' % (db, base_domain),
+                    'Host': self._nc_service_host(db),
                     'Authorization': 'Bearer %s' % key,
                     'X-Odoo-Database': db,
                     'Content-Type': 'application/json',

@@ -11,157 +11,296 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_billing
-msgid "NC Subscription Advanced"
-msgstr "اشتراك NC المتقدم"
+#: model:mail.template,body_html:ncollection_billing.mail_template_payment_received
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>We received your payment<t t-if=\"ctx.get('invoice_name')\"> for invoice\n                       <strong><t t-out=\"ctx.get('invoice_name')\"/></strong></t>. Your\n                       <strong><t t-out=\"object.plan_id.name or ''\"/></strong> subscription is active\n                       through <t t-out=\"object.end_date or ''\"/>. Thank you.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>استلمنا دفعتك<t t-if=\"ctx.get('invoice_name')\"> للفاتورة <strong><t t-out=\"ctx.get('invoice_name')\"/></strong></t>. اشتراكك في <strong><t t-out=\"object.plan_id.name or ''\"/></strong> نشط حتى <t t-out=\"object.end_date or ''\"/>. شكرًا لك.</p></div>"
 
 #. module: ncollection_billing
-msgid "Billing Contact"
-msgstr "جهة اتصال الفوترة"
+#: model:mail.template,body_html:ncollection_billing.mail_template_dunning
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>We were unable to collect payment for your\n                       <strong><t t-out=\"object.plan_id.name or ''\"/></strong> subscription.</p>\n                    <p>Please settle the outstanding invoice to keep your workspace active.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>تعذّر علينا تحصيل الدفعة الخاصة باشتراكك في <strong><t t-out=\"object.plan_id.name or ''\"/></strong>.</p><p>يُرجى تسوية الفاتورة المستحقة للحفاظ على نشاط مساحة عملك.</p></div>"
 
 #. module: ncollection_billing
-msgid "The customer record this tenant is invoiced against (admin DB)."
-msgstr "سجل العميل الذي تُصدَر عليه فواتير هذا المستأجر (قاعدة بيانات المسؤول)."
+#: model:mail.template,body_html:ncollection_billing.mail_template_payment_failed
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>We were unable to process a payment for your\n                       <strong><t t-out=\"object.plan_id.name or ''\"/></strong> subscription. Please\n                       update your payment method and try again to avoid any interruption.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>تعذّرت معالجة دفعة اشتراكك في <strong><t t-out=\"object.plan_id.name or ''\"/></strong>. يُرجى تحديث وسيلة الدفع والمحاولة مرة أخرى لتجنّب أي انقطاع.</p></div>"
 
 #. module: ncollection_billing
-msgid "NC Subscription"
-msgstr "اشتراك NC"
+#: model:mail.template,body_html:ncollection_billing.mail_template_expiry_warning
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>Your <strong><t t-out=\"object.plan_id.name or ''\"/></strong> subscription\n                       expires on <t t-out=\"object.end_date or ''\"/>\n                       (in <t t-out=\"object.days_remaining\"/> days).</p>\n                    <p>Please renew to avoid any interruption to your workspace.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>ينتهي اشتراكك في <strong><t t-out=\"object.plan_id.name or ''\"/></strong> بتاريخ <t t-out=\"object.end_date or ''\"/> (خلال <t t-out=\"object.days_remaining\"/> يومًا).</p><p>يُرجى التجديد لتجنّب أي انقطاع في مساحة عملك.</p></div>"
 
 #. module: ncollection_billing
-msgid "NC Tenant"
-msgstr "مستأجر NC"
+#: model:mail.template,body_html:ncollection_billing.mail_template_expired
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>Your <strong><t t-out=\"object.plan_id.name or ''\"/></strong> subscription has\n                       expired. You are within the grace period — renew now to restore full access\n                       before your workspace is suspended.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>انتهى اشتراكك في <strong><t t-out=\"object.plan_id.name or ''\"/></strong>. أنت ضمن فترة السماح — جدّد الآن لاستعادة الوصول الكامل قبل تعليق مساحة عملك.</p></div>"
 
 #. module: ncollection_billing
-msgid "NC Period Start"
-msgstr "بداية فترة NC"
+#: model:mail.template,body_html:ncollection_billing.mail_template_trial_ending
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>Your free trial of the <strong><t t-out=\"object.plan_id.name or ''\"/></strong>\n                       plan ends on <t t-out=\"object.trial_end_date or ''\"/>\n                       <t t-if=\"ctx.get('days_left') is not None\">(in <t t-out=\"ctx.get('days_left')\"/> days)</t>.</p>\n                    <p>Add a payment method to keep your workspace running without interruption.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>تنتهي تجربتك المجانية لخطة <strong><t t-out=\"object.plan_id.name or ''\"/></strong> بتاريخ <t t-out=\"object.trial_end_date or ''\"/> <t t-if=\"ctx.get('days_left') is not None\">(خلال <t t-out=\"ctx.get('days_left')\"/> يومًا)</t>.</p><p>أضف وسيلة دفع لتستمر مساحة عملك دون انقطاع.</p></div>"
 
 #. module: ncollection_billing
-msgid "NC Period End"
-msgstr "نهاية فترة NC"
+#: model:mail.template,body_html:ncollection_billing.mail_template_plan_change
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>Your subscription plan has been changed<t t-if=\"ctx.get('old_plan')\"> from\n                       <strong><t t-out=\"ctx.get('old_plan')\"/></strong></t> to\n                       <strong><t t-out=\"ctx.get('new_plan') or object.plan_id.name or ''\"/></strong>.\n                       Any price difference is prorated on your next invoice.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>تم تغيير خطة اشتراكك<t t-if=\"ctx.get('old_plan')\"> من <strong><t t-out=\"ctx.get('old_plan')\"/></strong></t> إلى <strong><t t-out=\"ctx.get('new_plan') or object.plan_id.name or ''\"/></strong>. تُحتسب أي فروقات في السعر بالتناسب على فاتورتك القادمة.</p></div>"
 
 #. module: ncollection_billing
+#: model:mail.template,body_html:ncollection_billing.mail_template_suspended
+msgid "<div>\n                    <p>Hello <t t-out=\"object.tenant_id.company_name or ''\"/>,</p>\n                    <p>Your workspace has been suspended after the grace period ended. Your data is\n                       safe. Settle the outstanding balance to reactivate your\n                       <strong><t t-out=\"object.plan_id.name or ''\"/></strong> subscription.</p>\n                </div>\n            "
+msgstr "<div><p>مرحبًا <t t-out=\"object.tenant_id.company_name or ''\"/>،</p><p>تم تعليق مساحة عملك بعد انتهاء فترة السماح. بياناتك بأمان. سدّد الرصيد المستحق لإعادة تفعيل اشتراكك في <strong><t t-out=\"object.plan_id.name or ''\"/></strong>.</p></div>"
+
+#. module: ncollection_billing
+#: model:ir.model.constraint,message:ncollection_billing.constraint_account_move_nc_billing_period_uniq
 msgid "A subscription can only be invoiced once per billing period (NCollection billing idempotency)."
 msgstr "لا يمكن إصدار فاتورة للاشتراك سوى مرة واحدة لكل فترة فوترة (عدم تكرارية فوترة NCollection)."
 
 #. module: ncollection_billing
-msgid "Invoices"
-msgstr "الفواتير"
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_tenant__partner_id
+msgid "Billing Contact"
+msgstr "جهة اتصال الفوترة"
 
 #. module: ncollection_billing
-msgid "No Invoice"
-msgstr "لا توجد فاتورة"
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_move__display_name
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__display_name
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_tenant__display_name
+#: model:ir.model.fields,field_description:ncollection_billing.field_payment_transaction__display_name
+#: model:ir.model.fields,field_description:ncollection_billing.field_res_company__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
 
 #. module: ncollection_billing
-msgid "Invoiced"
-msgstr "تمت الفوترة"
-
-#. module: ncollection_billing
-msgid "Paid"
-msgstr "مدفوع"
-
-#. module: ncollection_billing
-msgid "Overdue"
-msgstr "متأخر السداد"
-
-#. module: ncollection_billing
-msgid "Payment received for invoice %(inv)s — subscription active through %(end)s."
-msgstr "تم استلام الدفع للفاتورة %(inv)s — الاشتراك نشط حتى %(end)s."
-
-#. module: ncollection_billing
-msgid "Payment attempt failed for this subscription (transaction %(ref)s, %(state)s)."
-msgstr "فشلت محاولة الدفع لهذا الاشتراك (المعاملة %(ref)s، %(state)s)."
-
-#. module: ncollection_billing
-msgid "Expiry warning sent (%(d)s days before expiry)."
-msgstr "تم إرسال تحذير انتهاء الصلاحية (%(d)s أيام قبل انتهاء الصلاحية)."
-
-#. module: ncollection_billing
-msgid "Trial-ending reminder sent."
-msgstr "تم إرسال تذكير بانتهاء الفترة التجريبية."
-
-#. module: ncollection_billing
+#. odoo-python
+#: code:addons/ncollection_billing/models/subscription.py:0
 msgid "Dunning reminder sent (%(d)s days overdue)."
 msgstr "تم إرسال تذكير مطالبات السداد (%(d)s أيام تأخير)."
 
 #. module: ncollection_billing
+#. odoo-python
+#: code:addons/ncollection_billing/models/subscription.py:0
+msgid "Expiry warning sent (%(d)s days before expiry)."
+msgstr "تم إرسال تحذير انتهاء الصلاحية (%(d)s أيام قبل انتهاء الصلاحية)."
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_move__id
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__id
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_tenant__id
+#: model:ir.model.fields,field_description:ncollection_billing.field_payment_transaction__id
+#: model:ir.model.fields,field_description:ncollection_billing.field_res_company__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__invoice_count
+msgid "Invoice Count"
+msgstr "عدد الفواتير"
+
+#. module: ncollection_billing
+#: model:ir.model.fields.selection,name:ncollection_billing.selection__ncollection_subscription__payment_status__invoiced
+msgid "Invoiced"
+msgstr "تمت الفوترة"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__invoice_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_billing.view_ncollection_subscription_form_billing
+msgid "Invoices"
+msgstr "الفواتير"
+
+#. module: ncollection_billing
+#: model_terms:ir.ui.view,arch_db:ncollection_billing.view_ncollection_subscription_form_billing
 msgid "Lifecycle Scheduler"
 msgstr "مُجدوِل دورة الحياة"
 
 #. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_bank_statement_line__nc_period_end
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_move__nc_period_end
+msgid "NC Period End"
+msgstr "نهاية فترة NC"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_bank_statement_line__nc_period_start
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_move__nc_period_start
+msgid "NC Period Start"
+msgstr "بداية فترة NC"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_bank_statement_line__nc_subscription_id
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_move__nc_subscription_id
+msgid "NC Subscription"
+msgstr "اشتراك NC"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_payment_transaction__nc_renewal_processed
+msgid "NC Subscription Advanced"
+msgstr "اشتراك NC المتقدم"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_bank_statement_line__nc_tenant_id
+#: model:ir.model.fields,field_description:ncollection_billing.field_account_move__nc_tenant_id
+msgid "NC Tenant"
+msgstr "مستأجر NC"
+
+#. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_payment_failed
+msgid "NCollection: Payment Failed"
+msgstr "NCollection: فشل الدفع"
+
+#. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_payment_received
+msgid "NCollection: Payment Received"
+msgstr "NCollection: تم استلام الدفع"
+
+#. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_plan_change
+msgid "NCollection: Plan Change Confirmation"
+msgstr "NCollection: تأكيد تغيير الخطة"
+
+#. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_expired
+msgid "NCollection: Subscription Expired"
+msgstr "NCollection: انتهت صلاحية الاشتراك"
+
+#. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_expiry_warning
 msgid "NCollection: Subscription Expiry Warning"
 msgstr "NCollection: تحذير انتهاء صلاحية الاشتراك"
 
 #. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_dunning
+msgid "NCollection: Subscription Payment Reminder"
+msgstr "NCollection: تذكير بدفع الاشتراك"
+
+#. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_suspended
+msgid "NCollection: Subscription Suspended"
+msgstr "NCollection: تم تعليق الاشتراك"
+
+#. module: ncollection_billing
+#: model:mail.template,name:ncollection_billing.mail_template_trial_ending
+msgid "NCollection: Trial Ending Soon"
+msgstr "NCollection: الفترة التجريبية تنتهي قريباً"
+
+#. module: ncollection_billing
+#: model:ir.actions.server,name:ncollection_billing.cron_lifecycle_sweep_ir_actions_server
+msgid "NCollection: subscription lifecycle & dunning sweep"
+msgstr "NCollection: دورة حياة الاشتراك وجولة مطالبات السداد"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__nc_dunning_sent
+msgid "Nc Dunning Sent"
+msgstr "تم إرسال إشعار التحصيل المتأخر"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__nc_last_lifecycle_mail_date
+msgid "Nc Last Lifecycle Mail Date"
+msgstr "تاريخ آخر بريد لدورة الحياة"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__nc_trial_ending_sent
+msgid "Nc Trial Ending Sent"
+msgstr "تم إرسال تنبيه انتهاء التجربة"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__nc_warnings_sent
+msgid "Nc Warnings Sent"
+msgstr "عدد التحذيرات المُرسلة"
+
+#. module: ncollection_billing
+#: model:ir.model.fields.selection,name:ncollection_billing.selection__ncollection_subscription__payment_status__no_invoice
+msgid "No Invoice"
+msgstr "لا توجد فاتورة"
+
+#. module: ncollection_billing
+#: model:ir.model.fields.selection,name:ncollection_billing.selection__ncollection_subscription__payment_status__overdue
+msgid "Overdue"
+msgstr "متأخر السداد"
+
+#. module: ncollection_billing
+#: model:ir.model.fields.selection,name:ncollection_billing.selection__ncollection_subscription__payment_status__paid
+msgid "Paid"
+msgstr "مدفوع"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,field_description:ncollection_billing.field_ncollection_subscription__payment_status
+msgid "Payment Status"
+msgstr "حالة الدفع"
+
+#. module: ncollection_billing
+#. odoo-python
+#: code:addons/ncollection_billing/models/subscription.py:0
+msgid "Payment attempt failed for this subscription (transaction %(ref)s, %(state)s)."
+msgstr "فشلت محاولة الدفع لهذا الاشتراك (المعاملة %(ref)s، %(state)s)."
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_dunning
+msgid "Payment overdue for your NCollection subscription"
+msgstr "دفعة متأخرة لاشتراكك في NCollection"
+
+#. module: ncollection_billing
+#. odoo-python
+#: code:addons/ncollection_billing/models/subscription.py:0
+msgid "Payment received for invoice %(inv)s — subscription active through %(end)s."
+msgstr "تم استلام الدفع للفاتورة %(inv)s — الاشتراك نشط حتى %(end)s."
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_payment_received
+msgid "Payment received — thank you"
+msgstr "تم استلام الدفع — شكراً لك"
+
+#. module: ncollection_billing
+#: model:ir.model.fields,help:ncollection_billing.field_payment_transaction__nc_renewal_processed
+msgid "Set once this transaction has extended its subscription — the idempotency guard against webhook replay / post-process re-runs."
+msgstr "يُضبط بعد أن مدّدت هذه المعاملة اشتراكها — وهو حارس عدم التكرار ضد إعادة تشغيل الويب هوك أو إعادة المعالجة."
+
+#. module: ncollection_billing
+#: model:ir.model.fields,help:ncollection_billing.field_ncollection_tenant__partner_id
+msgid "The customer record this tenant is invoiced against (admin DB)."
+msgstr "سجل العميل الذي تُصدَر عليه فواتير هذا المستأجر (قاعدة بيانات المسؤول)."
+
+#. module: ncollection_billing
+#. odoo-python
+#: code:addons/ncollection_billing/models/subscription.py:0
+msgid "Trial-ending reminder sent."
+msgstr "تم إرسال تذكير بانتهاء الفترة التجريبية."
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_payment_failed
+msgid "We couldn't process your payment"
+msgstr "لم نتمكن من معالجة دفعتك"
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_plan_change
+msgid "Your NCollection plan has changed"
+msgstr "تم تغيير خطتك في NCollection"
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_expiry_warning
 msgid "Your NCollection subscription expires soon ({{ object.days_remaining }} days)"
 msgstr "تنتهي صلاحية اشتراكك في NCollection قريباً ({{ object.days_remaining }} أيام)"
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_expired
+msgid "Your NCollection subscription has expired"
+msgstr "انتهت صلاحية اشتراكك في NCollection"
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_trial_ending
+msgid "Your NCollection trial ends soon"
+msgstr "تنتهي فترتك التجريبية في NCollection قريباً"
+
+#. module: ncollection_billing
+#: model:mail.template,subject:ncollection_billing.mail_template_suspended
+msgid "Your NCollection workspace has been suspended"
+msgstr "تم تعليق مساحة عملك في NCollection"
 
 #. module: ncollection_billing
 msgid "Please renew to avoid any interruption to your workspace."
 msgstr "يرجى التجديد لتجنب أي انقطاع في مساحة عملك."
 
 #. module: ncollection_billing
-msgid "NCollection: Subscription Payment Reminder"
-msgstr "NCollection: تذكير بدفع الاشتراك"
-
-#. module: ncollection_billing
-msgid "Payment overdue for your NCollection subscription"
-msgstr "دفعة متأخرة لاشتراكك في NCollection"
-
-#. module: ncollection_billing
 msgid "Please settle the outstanding invoice to keep your workspace active."
 msgstr "يرجى تسوية الفاتورة المستحقة للحفاظ على نشاط مساحة عملك."
 
 #. module: ncollection_billing
-msgid "NCollection: Trial Ending Soon"
-msgstr "NCollection: الفترة التجريبية تنتهي قريباً"
-
-#. module: ncollection_billing
-msgid "Your NCollection trial ends soon"
-msgstr "تنتهي فترتك التجريبية في NCollection قريباً"
-
-#. module: ncollection_billing
 msgid "Add a payment method to keep your workspace running without interruption."
 msgstr "أضف طريقة دفع للحفاظ على تشغيل مساحة عملك دون انقطاع."
-
-#. module: ncollection_billing
-msgid "NCollection: Subscription Expired"
-msgstr "NCollection: انتهت صلاحية الاشتراك"
-
-#. module: ncollection_billing
-msgid "Your NCollection subscription has expired"
-msgstr "انتهت صلاحية اشتراكك في NCollection"
-
-#. module: ncollection_billing
-msgid "NCollection: Subscription Suspended"
-msgstr "NCollection: تم تعليق الاشتراك"
-
-#. module: ncollection_billing
-msgid "Your NCollection workspace has been suspended"
-msgstr "تم تعليق مساحة عملك في NCollection"
-
-#. module: ncollection_billing
-msgid "NCollection: Payment Received"
-msgstr "NCollection: تم استلام الدفع"
-
-#. module: ncollection_billing
-msgid "Payment received — thank you"
-msgstr "تم استلام الدفع — شكراً لك"
-
-#. module: ncollection_billing
-msgid "NCollection: Payment Failed"
-msgstr "NCollection: فشل الدفع"
-
-#. module: ncollection_billing
-msgid "We couldn't process your payment"
-msgstr "لم نتمكن من معالجة دفعتك"
-
-#. module: ncollection_billing
-msgid "NCollection: Plan Change Confirmation"
-msgstr "NCollection: تأكيد تغيير الخطة"
-
-#. module: ncollection_billing
-msgid "Your NCollection plan has changed"
-msgstr "تم تغيير خطتك في NCollection"
-
-#. module: ncollection_billing
-msgid "NCollection: subscription lifecycle & dunning sweep"
-msgstr "NCollection: دورة حياة الاشتراك وجولة مطالبات السداد"

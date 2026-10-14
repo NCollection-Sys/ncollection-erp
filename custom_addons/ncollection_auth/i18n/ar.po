@@ -12,21 +12,137 @@ msgstr ""
 "&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_auth
-msgid "Login success"
-msgstr "نجاح تسجيل الدخول"
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
 
 #. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__db_name
+msgid "Db Name"
+msgstr "اسم قاعدة البيانات"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__display_name
+#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__event_type
+msgid "Event Type"
+msgstr "نوع الحدث"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__id
+#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__ip_address
+msgid "Ip Address"
+msgstr "عنوان IP"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__login
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__login_failed
 msgid "Login failed"
 msgstr "فشل تسجيل الدخول"
 
 #. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__login_success
+msgid "Login success"
+msgstr "نجاح تسجيل الدخول"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__logout
 msgid "Logout"
 msgstr "تسجيل الخروج"
 
 #. module: ncollection_auth
+#: model:ir.actions.server,name:ncollection_auth.cron_gc_auth_log_ir_actions_server
+msgid "NCollection: auth log retention purge"
+msgstr "NCollection: تنظيف سجل المصادقة وفق مدة الاحتفاظ"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__reset_complete
+msgid "Password reset completed"
+msgstr "تم إكمال إعادة تعيين كلمة المرور"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__reset_request
 msgid "Password reset requested"
 msgstr "تم طلب إعادة تعيين كلمة المرور"
 
 #. module: ncollection_auth
-msgid "Password reset completed"
-msgstr "تم إكمال إعادة تعيين كلمة المرور"
+#: model:ir.model,name:ncollection_auth.model_res_users
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__user_id
+msgid "User"
+msgstr "المستخدم"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__user_agent
+msgid "User Agent"
+msgstr "وكيل المستخدم"
+
+#. module: ncollection_auth
+#. odoo-python
+#: code:addons/ncollection_auth/controllers/reset_password.py:0
+msgid ""
+"If an account matches, password reset instructions have been sent to its "
+"email address."
+msgstr "إذا كان هناك حساب مطابق، فقد أُرسلت تعليمات إعادة تعيين كلمة المرور إلى بريده الإلكتروني."
+
+#. module: ncollection_auth
+#. odoo-python
+#: code:addons/ncollection_auth/controllers/reset_password.py:0
+msgid ""
+"Password reset by email is not set up for this workspace. Please ask your "
+"administrator to reset it."
+msgstr "إعادة تعيين كلمة المرور عبر البريد الإلكتروني غير مفعّلة لمساحة العمل هذه. يرجى طلب إعادة التعيين من المسؤول."
+
+#. module: ncollection_auth
+#: model:ir.model,name:ncollection_auth.model_ncollection_auth_spent_token
+msgid "Used password-reset / signup link"
+msgstr "رابط إعادة تعيين كلمة المرور / التسجيل المستخدَم"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__display_name
+#: model:ir.model.fields,field_description:ncollection_auth.field_res_partner__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__id
+#: model:ir.model.fields,field_description:ncollection_auth.field_res_partner__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__digest
+msgid "Digest"
+msgstr "البصمة"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__used_at
+msgid "Used At"
+msgstr "تاريخ الاستخدام"

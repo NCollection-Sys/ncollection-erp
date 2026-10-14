@@ -218,16 +218,18 @@ class NcollectionDataImportOnboarding(models.TransientModel):
     def _format_result(self, messages, created):
         errors = [m for m in messages if m.get('type') == 'error']
         if not errors:
-            return ('<p class="text-success"><b>✓ Looks good.</b> %s row(s) '
-                    'validated with no blocking errors — you can import this '
-                    'file now.</p>' % created)
+            return ('<p class="text-success"><b>%s</b> %s</p>' % (
+                tools.html_escape(self.env._("✓ Looks good.")),
+                tools.html_escape(self.env._(
+                    "%s row(s) validated with no blocking errors — you can import this file now.", created))))
         rows = ''.join(
             '<li>%s</li>' % tools.html_escape(nc_friendly_error(m.get('message') or ''))
             for m in errors[:50])
-        more = ('<p>…and %s more.</p>' % (len(errors) - 50)) if len(errors) > 50 else ''
-        return ('<p class="text-danger"><b>%s issue(s) found — nothing was '
-                'imported.</b> Fix these and validate again:</p><ul>%s</ul>%s'
-                % (len(errors), rows, more))
+        more = ('<p>%s</p>' % tools.html_escape(self.env._("…and %s more.", len(errors) - 50))
+                if len(errors) > 50 else '')
+        return ('<p class="text-danger"><b>%s</b> %s</p><ul>%s</ul>%s' % (
+            tools.html_escape(self.env._("%s issue(s) found — nothing was imported.", len(errors))),
+            tools.html_escape(self.env._("Fix these and validate again:")), rows, more))
 
     # ---- open the native importer for this data set ---------------------
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Stock Barcode',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Inventory/Inventory',
     'summary': 'Barcode scanning workflow for receipts, deliveries, transfers and inventory counts, '
                'on Odoo Community stock (hardware scanner or camera).',
@@ -21,9 +21,10 @@ rights, in the user's own company. See models/stock_barcode.py.
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
     # stock: the engine this drives. barcodes: the scanner service. ncollection_branding: the shared card design
-    # system (the screen is built from it, with no card CSS of its own). Pure tenant layer: never queried from the
+    # system (the screen is built from it, with no card CSS of its own). ncollection_core: the Home launcher and the
+    # plan licensing its tile follows (ir_ui_menu NATIVE_FOLLOWS_LICENCE). Pure tenant layer: never queried from the
     # platform layer (Standing Rule 3).
-    'depends': ['stock', 'barcodes', 'ncollection_branding'],
+    'depends': ['stock', 'barcodes', 'ncollection_core', 'ncollection_branding'],
     'data': [
         'views/barcode_menus.xml',
     ],

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Cheque printing is an extra action on the payment you make. The payment workflow is untouched. -->
+    <record id="view_account_payment_form_nc_cheque" model="ir.ui.view">
+        <field name="name">account.payment.form.nc.cheque</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_nc_print_cheque" type="object" string="Print Cheque"
+                        invisible="payment_type != 'outbound' or state in ('canceled', 'rejected') or not id"
+                        groups="account.group_account_user"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_nc_open_cheque_jobs" type="object" class="oe_stat_button" icon="fa-money"
+                        invisible="nc_cheque_job_count == 0" groups="account.group_account_readonly">
+                    <field name="nc_cheque_job_count" widget="statinfo" string="Cheques"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

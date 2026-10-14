@@ -1,0 +1,1689 @@
+# Arabic (ar_001) translation of ncollection_cheque_print.
+# NCollection ERP. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_cheque_print\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/values.py:0
+msgid "%(name)s   |   page %(w).1f x %(h).1f mm   |   print at 100 percent (Actual size)"
+msgstr "%(name)s | الصفحة %(w).1f × %(h).1f مم | اطبع بنسبة 100 بالمائة (الحجم الفعلي)"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template.py:0
+msgid "%s (copy)"
+msgstr "%s (نسخة)"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "10 mm grid"
+msgstr "شبكة 10 مم"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_printer_profile__scale_pct
+msgid "100 prints at actual size. Use a value like 99.6 only if the calibration sheet measures short."
+msgstr "القيمة 100 تطبع بالحجم الفعلي. استخدم قيمة مثل 99.6 فقط إذا ظهر قياس ورقة المعايرة أقصر من المطلوب."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "<strong>Provisional layout.</strong> The size and the positions of this template are not confirmed.\n                        Print the calibration sheet on plain paper at 100%, check it against a physical cheque, correct the\n                        template, then press Confirm dimensions."
+msgstr "<strong>تخطيط مبدئي.</strong> لم يتم اعتماد مقاس هذا القالب ومواضع الحقول فيه. اطبع ورقة المعايرة على ورق عادي بنسبة 100%، وقارنها بشيك فعلي، ثم صحّح القالب واضغط «اعتماد الأبعاد»."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "A cancelled or rejected payment cannot be paid by cheque."
+msgstr "لا يمكن سداد دفعة ملغاة أو مرفوضة بشيك."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "A cheque is already prepared for this payment (%(job)s). Reprint it with a reason, or void it first; a second cheque is never created silently."
+msgstr "تم إعداد شيك لهذه الدفعة مسبقًا (%(job)s). أعد طباعته مع ذكر السبب، أو أبطله أولًا؛ ولا يُنشأ شيك ثانٍ بصمت أبدًا."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/wizard/print_wizard.py:0
+msgid "A cheque is already prepared for this payment (%s). Open it to reprint with a reason or to void it."
+msgstr "تم إعداد شيك لهذه الدفعة مسبقًا (%s). افتحه لإعادة طباعته مع ذكر السبب أو لإبطاله."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template.py:0
+msgid "A cheque is between 50 and 400 mm on each side; check the physical dimensions."
+msgstr "يتراوح طول كل ضلع من أضلاع الشيك بين 50 و400 مم؛ تحقق من الأبعاد الفعلية."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "A cheque is printed for a payment you make (an outbound payment)."
+msgstr "يُطبع الشيك لدفعة تسدّدها أنت (دفعة صادرة)."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template_field.py:0
+msgid "A field cannot start left of or above the cheque."
+msgstr "لا يمكن أن يبدأ الحقل خارج حدود الشيك من جهة اليسار أو من الأعلى."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template_field.py:0
+msgid "A field holds between 1 and 6 lines."
+msgstr "يتسع الحقل لما بين سطر واحد و6 أسطر."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template_field.py:0
+msgid "A field needs a width and a height greater than zero."
+msgstr "يجب أن يكون عرض الحقل وارتفاعه أكبر من صفر."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_event__pdf_sha256
+msgid "A hash of the PDF that was produced; the PDF itself is not kept."
+msgstr "بصمة رقمية لملف PDF الذي تم إنشاؤه؛ ولا يتم حفظ الملف نفسه."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "A print job is part of the audit trail and cannot be deleted. Void it instead."
+msgstr "مهمة الطباعة جزء من سجل التدقيق ولا يمكن حذفها. أبطلها بدلًا من ذلك."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__reference_image
+msgid "A scan or photo of the cheque, cropped to the paper edges, used only as a background in the designer. It is NOT printed unless 'Print the reference image' is ticked."
+msgstr "مسح ضوئي أو صورة للشيك، مقصوصة عند حافة الورقة، تُستخدم كخلفية في المصمم فقط. لا تُطبع إلا إذا تم تفعيل «طباعة الصورة المرجعية»."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template_field.py:0
+msgid "A static text field needs its text."
+msgstr "يحتاج حقل النص الثابت إلى نص."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.actions.act_window,help:ncollection_cheque_print.action_nc_cheque_template
+msgid "A template is the layout of one bank's cheque: its physical size and where the date, payee, amount and\n               amount in words are printed."
+msgstr "القالب هو تخطيط شيك بنك واحد: مقاسه الفعلي ومواضع طباعة التاريخ والمستفيد والمبلغ والمبلغ بالحروف."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__account_last4
+msgid "Account (last 4)"
+msgstr "الحساب (آخر 4 أرقام)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__account_number
+msgid "Account Number"
+msgstr "رقم الحساب"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_needaction
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__active
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.actions.act_window,help:ncollection_cheque_print.action_nc_cheque_profile
+msgid "Add a printer profile"
+msgstr "إضافة ملف تعريف طابعة"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Add field"
+msgstr "إضافة حقل"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "After"
+msgstr "بعد"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__align
+msgid "Align"
+msgstr "المحاذاة"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Alignment"
+msgstr "المحاذاة"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.js:0
+msgid "All changes saved"
+msgstr "تم حفظ جميع التغييرات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__amount
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__amount
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__amount
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__amount_words
+msgid "Amount in Words"
+msgstr "المبلغ بالحروف"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__amount_words_ar
+msgid "Amount in words (Arabic)"
+msgstr "المبلغ بالحروف (بالعربية)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__amount_words_en
+msgid "Amount in words (English)"
+msgstr "المبلغ بالحروف (بالإنجليزية)"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/printer_profile.py:0
+msgid "An offset larger than 25 mm is not a printer shift; check the page."
+msgstr "الإزاحة التي تتجاوز 25 مم ليست انحرافًا في الطابعة؛ تحقق من الصفحة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_job__output_lang__ar
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_wizard__output_lang__ar
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__words_lang__ar
+msgid "Arabic"
+msgstr "العربية"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__digits__arabic
+msgid "Arabic-Indic (٠١٢٣)"
+msgstr "هندية عربية (٠١٢٣)"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_search
+msgid "Archived"
+msgstr "مؤرشف"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__case__as_is
+msgid "As typed"
+msgstr "كما أُدخل"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_attachment_count
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__direction__auto
+msgid "Automatic"
+msgstr "تلقائي"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__align__auto
+msgid "Automatic (follows the text)"
+msgstr "تلقائي (حسب النص)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__bank_name
+msgid "Bank"
+msgstr "البنك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__bank_name
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__bank_name
+msgid "Bank Name"
+msgstr "اسم البنك"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Before"
+msgstr "قبل"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__bold
+msgid "Bold"
+msgstr "غامق"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Calibration notes"
+msgstr "ملاحظات المعايرة"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Calibration sheet"
+msgstr "ورقة المعايرة"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_reason_wizard_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_event__kind__cancel
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_job__state__cancelled
+msgid "Cancelled"
+msgstr "ملغى"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__case
+msgid "Case"
+msgstr "حالة الأحرف"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__align__center
+msgid "Center"
+msgstr "وسط"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+msgid "Cheque"
+msgstr "شيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__cheque_number
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__cheque_number
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__cheque_number
+msgid "Cheque Number"
+msgstr "رقم الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.actions.act_window,name:ncollection_cheque_print.action_nc_cheque_job
+msgid "Cheque Print Jobs"
+msgstr "مهام طباعة الشيكات"
+
+#. module: ncollection_cheque_print
+#: model:ir.ui.menu,name:ncollection_cheque_print.menu_nc_cheque_root
+msgid "Cheque Printing"
+msgstr "طباعة الشيكات"
+
+#. module: ncollection_cheque_print
+#: model:ir.actions.act_window,name:ncollection_cheque_print.action_nc_cheque_template
+#: model:ir.ui.menu,name:ncollection_cheque_print.menu_nc_cheque_template
+msgid "Cheque Templates"
+msgstr "قوالب الشيكات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__currency_id
+msgid "Cheque currency"
+msgstr "عملة الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_print_event
+msgid "Cheque print event"
+msgstr "حدث طباعة الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_print_job
+msgid "Cheque print job"
+msgstr "مهمة طباعة الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_account_payment__nc_cheque_job_ids
+msgid "Cheque print jobs"
+msgstr "مهام طباعة الشيكات"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Cheque printed by %s."
+msgstr "تمت طباعة الشيك بواسطة %s."
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_printer_profile
+msgid "Cheque printer profile"
+msgstr "ملف تعريف طابعة الشيكات"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Cheque reprinted by %(user)s. Reason: %(reason)s"
+msgstr "أعاد %(user)s طباعة الشيك. السبب: %(reason)s"
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_template
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__template_id
+msgid "Cheque template"
+msgstr "قالب الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_template_field
+msgid "Cheque template field"
+msgstr "حقل قالب الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_values
+msgid "Cheque values"
+msgstr "بيانات الشيك"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Cheque voided by %(user)s. Reason: %(reason)s"
+msgstr "أبطل %(user)s الشيك. السبب: %(reason)s"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/account_payment.py:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_account_payment__nc_cheque_job_count
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_account_payment_form_nc_cheque
+msgid "Cheques"
+msgstr "الشيكات"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/wizard/print_wizard.py:0
+msgid "Choose a cheque template."
+msgstr "اختر قالب شيك."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+msgid "Close"
+msgstr "إغلاق"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__company_id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__company_id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__company_id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_reason_wizard_form
+msgid "Confirm"
+msgstr "تأكيد"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Confirm dimensions"
+msgstr "اعتماد الأبعاد"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__font__courier
+msgid "Courier (Latin only)"
+msgstr "Courier (لاتيني فقط)"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.actions.act_window,help:ncollection_cheque_print.action_nc_cheque_template
+msgid "Create your first cheque template"
+msgstr "أنشئ أول قالب شيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_event__kind__created
+msgid "Created"
+msgstr "تم الإنشاء"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__create_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__create_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__create_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__create_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__create_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__create_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__create_uid
+msgid "Created by"
+msgstr "أنشأه"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__create_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__create_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__create_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__create_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__create_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__create_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__create_date
+msgid "Created on"
+msgstr "تاريخ الإنشاء"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__currency_id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__currency_id
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__currency
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/values.py:0
+msgid "DESIGN PREVIEW - the reference image and the boxes are NOT printed"
+msgstr "معاينة التصميم - الصورة المرجعية والمربعات لا تُطبع"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__date_format
+msgid "Date Format"
+msgstr "تنسيق التاريخ"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Date format"
+msgstr "تنسيق التاريخ"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__date_format__dd_mmm_yyyy
+msgid "Day Mon Year (05 Jan 2026)"
+msgstr "يوم شهر سنة (05 يناير 2026)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__date_format__dd-mm-yyyy
+msgid "Day-Month-Year (05-01-2026)"
+msgstr "يوم-شهر-سنة (05-01-2026)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__date_format__dd_mm_yyyy
+msgid "Day.Month.Year (05.01.2026)"
+msgstr "يوم.شهر.سنة (05.01.2026)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__date_format__dd/mm/yyyy
+msgid "Day/Month/Year (05/01/2026)"
+msgstr "يوم/شهر/سنة (05/01/2026)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__printer_profile_id
+msgid "Default printer profile"
+msgstr "ملف تعريف الطابعة الافتراضي"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__font__dejavu
+msgid "DejaVu Sans (Arabic and Latin)"
+msgstr "DejaVu Sans (عربي ولاتيني)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__font__dejavu_mono
+msgid "DejaVu Sans Mono (Arabic and Latin)"
+msgstr "DejaVu Sans Mono (عربي ولاتيني)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__description
+msgid "Description"
+msgstr "الوصف"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Design preview"
+msgstr "معاينة التصميم"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Design view"
+msgstr "عرض التصميم"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Designer"
+msgstr "المصمم"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__digits
+msgid "Digits"
+msgstr "الأرقام"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__dimensions_confirmed
+msgid "Dimensions confirmed"
+msgstr "تم اعتماد الأبعاد"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_search
+msgid "Dimensions not confirmed"
+msgstr "الأبعاد غير معتمدة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__direction
+msgid "Direction"
+msgstr "الاتجاه"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_account_payment__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__display_name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_values__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__x_mm
+msgid "Distance from the left edge."
+msgstr "المسافة من الحافة اليسرى."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__y_mm
+msgid "Distance from the top edge."
+msgstr "المسافة من الحافة العلوية."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_job__state__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/values.py:0
+msgid "Each cross is exactly 10 mm from two edges. Measure from the paper edge to a cross: any difference is the printer shift. Enter it as the horizontal / vertical offset in the printer profile."
+msgstr "تبعد كل علامة (+) عشرة مليمترات بالضبط عن حافتين من حواف الورقة. قِس المسافة من حافة الورقة إلى العلامة: أي فرق هو انحراف الطابعة. أدخله كإزاحة أفقية / رأسية في ملف تعريف الطابعة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_job__output_lang__en
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_wizard__output_lang__en
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__words_lang__en
+msgid "English"
+msgstr "الإنجليزية"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__key
+msgid "Field"
+msgstr "الحقل"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__field_count
+msgid "Field Count"
+msgstr "عدد الحقول"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Field to add"
+msgstr "الحقل المراد إضافته"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__field_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Fields"
+msgstr "الحقول"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__printed_at
+msgid "First printed"
+msgstr "أول طباعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__fit
+msgid "Fit"
+msgstr "الملاءمة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__words_lang__auto
+msgid "Follow the print language"
+msgstr "حسب لغة الطباعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_follower_ids
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_partner_ids
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (الشركاء)"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__font
+msgid "Font"
+msgstr "الخط"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Give a reason (at least %s characters)."
+msgstr "اذكر السبب (%s أحرف على الأقل)."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__has_message
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__has_message
+msgid "Has Message"
+msgstr "يحتوي على رسالة"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__height_mm
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__height_mm
+msgid "Height (mm)"
+msgstr "الارتفاع (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__font__helvetica
+msgid "Helvetica (Latin only)"
+msgstr "Helvetica (لاتيني فقط)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__event_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+msgid "History"
+msgstr "السجل"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__offset_x_mm
+msgid "Horizontal offset (mm)"
+msgstr "الإزاحة الأفقية (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_account_payment__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_values__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_job__message_needaction
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "إذا تم تحديده، فإن الرسائل الجديدة تتطلب انتباهك."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_job__message_has_error
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_job__message_has_sms_error
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__message_has_error
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "إذا تم تحديده، فإن بعض الرسائل بها خطأ في التسليم."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_is_follower
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_is_follower
+msgid "Is Follower"
+msgstr "متابع"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__job_id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__job_id
+msgid "Job"
+msgstr "المهمة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__kind
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__kind
+msgid "Kind"
+msgstr "النوع"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template__orientation__landscape
+msgid "Landscape"
+msgstr "أفقي"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__write_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__write_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__write_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__write_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__write_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__write_uid
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__write_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__write_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__write_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__write_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__write_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__write_date
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__write_date
+msgid "Last Updated on"
+msgstr "تاريخ آخر تحديث"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__last_printed_at
+msgid "Last printed"
+msgstr "آخر طباعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_printer_profile__company_id
+msgid "Leave empty for a profile every company may use."
+msgstr "اتركه فارغًا ليكون ملف التعريف متاحًا لكل الشركات."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__company_id
+msgid "Leave empty to make the template available to every company; set it to keep it to one."
+msgstr "اتركه فارغًا ليكون القالب متاحًا لكل الشركات، أو حدّد شركة لتقييده بها."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__align__left
+msgid "Left"
+msgstr "يسار"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__direction__ltr
+msgid "Left to right"
+msgstr "من اليسار إلى اليمين"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Letter case"
+msgstr "حالة الأحرف"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Long text"
+msgstr "النص الطويل"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__fit
+msgid "Long text either shrinks onto one line or wraps onto several (up to the maximum)."
+msgstr "إما أن يتقلص النص الطويل في سطر واحد أو يلتف على عدة أسطر (حتى الحد الأقصى)."
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__max_lines
+msgid "Maximum lines"
+msgstr "الحد الأقصى للأسطر"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_has_error
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ في تسليم الرسالة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_ids
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/values.py:0
+msgid "NCollection cheque calibration"
+msgstr "معايرة شيكات NCollection"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__name
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.actions.act_window,help:ncollection_cheque_print.action_nc_cheque_job
+msgid "No cheque printed yet"
+msgstr "لم تتم طباعة أي شيك بعد"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__date_format__ddmmyyyy
+msgid "No separators (05012026)"
+msgstr "بدون فواصل (05012026)"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/controllers/main.py:0
+msgid "No such cheque template."
+msgstr "قالب الشيك غير موجود."
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.js:0
+msgid "Not saved"
+msgstr "لم يتم الحفظ"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__notes
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__notes
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Notes"
+msgstr "ملاحظات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__notice
+msgid "Notice"
+msgstr "تنبيه"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_needaction_counter
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_has_error_counter
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_job__message_needaction_counter
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلب إجراءً"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_job__message_has_error_counter
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ في التسليم"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__include_background
+msgid "Off for a pre-printed cheque (the normal case): only the variable text is printed. Turn it on only to print a copy on plain paper."
+msgstr "يُترك معطّلًا للشيك المطبوع مسبقًا (الحالة المعتادة): تُطبع النصوص المتغيرة فقط. فعّله فقط لطباعة نسخة على ورق عادي."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__offset_x_mm
+msgid "Offset X Mm"
+msgstr "الإزاحة الأفقية (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__offset_y_mm
+msgid "Offset Y Mm"
+msgstr "الإزاحة الرأسية (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__fit__shrink
+msgid "One line, shrink to fit"
+msgstr "سطر واحد مع تصغير الخط ليناسب"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Only a draft can be cancelled; void a printed cheque instead."
+msgstr "يمكن إلغاء المسودة فقط؛ أما الشيك المطبوع فيُبطل."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Only a printed cheque can be reprinted."
+msgstr "يمكن إعادة طباعة الشيك المطبوع فقط."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Only a printed cheque can be voided; cancel a draft instead."
+msgstr "يمكن إبطال الشيك المطبوع فقط؛ أما المسودة فتُلغى."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Only an accountant can print a cheque."
+msgstr "المحاسب فقط يمكنه طباعة الشيك."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__date_format
+msgid "Only used by a Payment Date field."
+msgstr "يُستخدم فقط في حقل تاريخ الدفعة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__words_lang
+msgid "Only used by an Amount in Words field."
+msgstr "يُستخدم فقط في حقل المبلغ بالحروف."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.actions.act_window,help:ncollection_cheque_print.action_nc_cheque_job
+msgid "Open a payment you make and press Print Cheque. Every print, reprint and void is kept here."
+msgstr "افتح دفعة صادرة واضغط «طباعة الشيك». تُحفظ هنا كل عملية طباعة وإعادة طباعة وإبطال."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__orientation
+msgid "Orientation"
+msgstr "الاتجاه"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__pdf_sha256
+msgid "PDF fingerprint"
+msgstr "بصمة ملف PDF"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/values.py:0
+msgid "PREVIEW - NOT A PRINT"
+msgstr "معاينة - ليست طباعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__payee
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__payee
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__payee
+msgid "Payee"
+msgstr "المستفيد"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__payment_id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__payment_id
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+msgid "Payment"
+msgstr "الدفعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__payment_date
+msgid "Payment Date"
+msgstr "تاريخ الدفعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__date
+msgid "Payment date"
+msgstr "تاريخ الدفعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_account_payment
+msgid "Payments"
+msgstr "الدفعات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template__orientation__portrait
+msgid "Portrait"
+msgstr "رأسي"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_printer_profile__offset_y_mm
+msgid "Positive moves everything down. Measure it with the calibration sheet."
+msgstr "القيمة الموجبة تنزل بكل المحتوى للأسفل. قِسها بواسطة ورقة المعايرة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_printer_profile__offset_x_mm
+msgid "Positive moves everything to the right. Measure it with the calibration sheet."
+msgstr "القيمة الموجبة تنقل كل المحتوى لليمين. قِسها بواسطة ورقة المعايرة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__prefix
+msgid "Prefix"
+msgstr "بادئة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__user_id
+msgid "Prepared by"
+msgstr "أعدّه"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+msgid "Preview first: the print preview shows exactly what will be printed (watermarked so it is never mistaken\n                    for a print). Printing records the cheque; printing it again later needs a reason."
+msgstr "عاين أولًا: تعرض معاينة الطباعة بالضبط ما سيُطبع (وعليها علامة مائية حتى لا تُحسب طباعة فعلية). تسجّل الطباعة الشيك، وتحتاج إعادة طباعته لاحقًا إلى ذكر السبب."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+msgid "Print"
+msgstr "طباعة"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_account_payment_form_nc_cheque
+msgid "Print Cheque"
+msgstr "طباعة الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__print_count
+msgid "Print Count"
+msgstr "عدد مرات الطباعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.ui.menu,name:ncollection_cheque_print.menu_nc_cheque_job
+msgid "Print Jobs"
+msgstr "مهام الطباعة"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/account_payment.py:0
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_print_wizard
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+msgid "Print cheque"
+msgstr "طباعة الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__output_lang
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__output_lang
+msgid "Print language"
+msgstr "لغة الطباعة"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_print_wizard_form
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Print preview"
+msgstr "معاينة الطباعة"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.actions.act_window,help:ncollection_cheque_print.action_nc_cheque_profile
+msgid "Print the calibration sheet of a template, measure how far this printer is off, and enter the offsets\n               here. The template itself stays correct in millimetres."
+msgstr "اطبع ورقة المعايرة لأحد القوالب، وقِس مقدار انحراف هذه الطابعة، ثم أدخل قيم الإزاحة هنا. يبقى القالب نفسه صحيحًا بالمليمتر."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__include_background
+msgid "Print the reference image"
+msgstr "طباعة الصورة المرجعية"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__visible
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_event__kind__print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_job__state__printed
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_search
+msgid "Printed"
+msgstr "مطبوع"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__suffix
+msgid "Printed after the value."
+msgstr "تُطبع بعد القيمة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__prefix
+msgid "Printed before the value, e.g. '**' or '#'. A guard against adding digits."
+msgstr "تُطبع قبل القيمة، مثل «**» أو «#». وهي وسيلة حماية من إضافة أرقام."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+msgid "Printed on the cheque"
+msgstr "مطبوع على الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.actions.act_window,name:ncollection_cheque_print.action_nc_cheque_profile
+#: model:ir.ui.menu,name:ncollection_cheque_print.menu_nc_cheque_profile
+msgid "Printer Profiles"
+msgstr "ملفات تعريف الطابعات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__profile_id
+msgid "Printer profile"
+msgstr "ملف تعريف الطابعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__profile_id
+msgid "Profile"
+msgstr "ملف التعريف"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__profile_offset_x_mm
+msgid "Profile Offset X Mm"
+msgstr "إزاحة ملف التعريف الأفقية (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__profile_offset_y_mm
+msgid "Profile Offset Y Mm"
+msgstr "إزاحة ملف التعريف الرأسية (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__profile_scale_pct
+msgid "Profile Scale Pct"
+msgstr "نسبة مقياس ملف التعريف"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/values.py:0
+msgid "Profile in use: x %(x)+.1f mm   y %(y)+.1f mm   scale %(s).1f percent   (not applied to this sheet)"
+msgstr "ملف التعريف المستخدم: س %(x)+.1f مم ص %(y)+.1f مم المقياس %(s).1f بالمائة (لا يُطبَّق على هذه الورقة)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__reason
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__reason
+msgid "Reason"
+msgstr "السبب"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__reference
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__reference
+msgid "Reference"
+msgstr "المرجع"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__reference_image
+msgid "Reference image"
+msgstr "الصورة المرجعية"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Reference image and printing"
+msgstr "الصورة المرجعية والطباعة"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Remove this field"
+msgstr "إزالة هذا الحقل"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_reason_wizard__kind__reprint
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+msgid "Reprint"
+msgstr "إعادة طباعة"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Reprint cheque"
+msgstr "إعادة طباعة الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model,name:ncollection_cheque_print.model_ncollection_cheque_reason_wizard
+msgid "Reprint or void a cheque"
+msgstr "إعادة طباعة شيك أو إبطاله"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_event__kind__reprint
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_job__state__reprinted
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_search
+msgid "Reprinted"
+msgstr "أُعيدت طباعته"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__align__right
+msgid "Right"
+msgstr "يمين"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__direction__rtl
+msgid "Right to left"
+msgstr "من اليمين إلى اليسار"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__direction
+msgid "Right to left for Arabic text. Automatic decides from the first letter."
+msgstr "من اليمين إلى اليسار للنص العربي. يحدد الوضع التلقائي الاتجاه من أول حرف."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__message_has_sms_error
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "خطأ في تسليم الرسالة النصية"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "Save the template first, then design it here."
+msgstr "احفظ القالب أولًا، ثم صمّمه هنا."
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.js:0
+msgid "Saving…"
+msgstr "جارٍ الحفظ…"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__scale_pct
+msgid "Scale (%)"
+msgstr "المقياس (%)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__scale_pct
+msgid "Scale Pct"
+msgstr "نسبة المقياس"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Select a field on the cheque, or add one."
+msgstr "اختر حقلًا على الشيك أو أضف حقلًا."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__sequence
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__sequence
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__currency_id
+msgid "Set it when the cheque paper is pre-printed for one currency (the word 'Dirhams'): a payment in another currency is then refused. Leave empty for a currency-neutral cheque."
+msgstr "حدّدها عندما تكون ورقة الشيك مطبوعة مسبقًا لعملة واحدة (كلمة «درهم» مثلًا)؛ فتُرفض عندها أي دفعة بعملة أخرى. اتركها فارغة لشيك لا يرتبط بعملة معينة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__date_format__d/m/yy
+msgid "Short (5/1/26)"
+msgstr "مختصر (5/1/26)"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__size_pt
+msgid "Size (pt)"
+msgstr "الحجم (نقطة)"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+msgid "Source"
+msgstr "المصدر"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__static_text
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__key__static_text
+msgid "Static Text"
+msgstr "نص ثابت"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_search
+msgid "Status"
+msgstr "الحالة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__suffix
+msgid "Suffix"
+msgstr "لاحقة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__template_id
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__template_id
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_search
+msgid "Template"
+msgstr "القالب"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__template_confirmed
+msgid "Template was confirmed"
+msgstr "كان القالب معتمدًا"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.js:0
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Text"
+msgstr "النص"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "Text direction"
+msgstr "اتجاه النص"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.js:0
+msgid "That field is already on the cheque. Select it and move it instead."
+msgstr "هذا الحقل موجود بالفعل على الشيك. حدّده وحرّكه بدلًا من ذلك."
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.js:0
+msgid "The change was refused."
+msgstr "تم رفض التغيير."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "The cheque paper of '%(template)s' is printed for %(paper)s, but the payment is in %(pay)s."
+msgstr "ورقة الشيك الخاصة بالقالب «%(template)s» مطبوعة بعملة %(paper)s، بينما الدفعة بعملة %(pay)s."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template_field.py:0
+msgid "The field '%(name)s' extends past the cheque (%(w)s x %(h)s mm). Move or shrink it."
+msgstr "الحقل «%(name)s» يتجاوز حدود الشيك (%(w)s × %(h)s مم). انقله أو صغّره."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template_field.py:0
+msgid "The field '%(name)s' is already on this template; move it instead of adding it twice."
+msgstr "الحقل «%(name)s» موجود بالفعل في هذا القالب؛ انقله بدلًا من إضافته مرتين."
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.js:0
+msgid "The field could not be added."
+msgstr "تعذّرت إضافة الحقل."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__static_text
+msgid "The fixed text to print (only for a 'Static Text' field)."
+msgstr "النص الثابت المراد طباعته (لحقل «نص ثابت» فقط)."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/template_field.py:0
+msgid "The font size must be between 0 and 72 points."
+msgstr "يجب أن يكون حجم الخط بين 0 و72 نقطة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_wizard__output_lang
+msgid "The language the cheque is printed in: the month name of the date and an automatic amount in words. It is chosen here, whatever language the screen is in."
+msgstr "اللغة التي يُطبع بها الشيك: اسم شهر التاريخ والمبلغ بالحروف التلقائي. تُحدَّد هنا مهما كانت لغة الشاشة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_job__output_lang
+msgid "The language this cheque is printed in: it decides the month name of the date and an automatic amount in words. It is what was chosen when printing, not the language of the screen."
+msgstr "اللغة التي طُبع بها هذا الشيك: تحدد اسم شهر التاريخ والمبلغ بالحروف التلقائي. وهي ما تم اختياره عند الطباعة، لا لغة الشاشة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_wizard__cheque_number
+msgid "The number of the physical cheque leaf, if you want it printed or recorded."
+msgstr "رقم ورقة الشيك الفعلية، إذا أردت طباعته أو تسجيله."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "The payment has no amount to print."
+msgstr "لا يوجد مبلغ في الدفعة ليُطبع."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_wizard__currency_id
+msgid "The payment's currency."
+msgstr "عملة الدفعة."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "The print history cannot be deleted."
+msgstr "لا يمكن حذف سجل الطباعة."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "The print history is append-only and cannot be edited."
+msgstr "سجل الطباعة للإضافة فقط ولا يمكن تعديله."
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+msgid "The reference image and the boxes below are for designing only and are not printed. The printed cheque\n                contains the variable text only; the bank's logo, MICR line and security elements are already on the\n                paper. Positions are in millimetres from the top-left corner."
+msgstr "الصورة المرجعية والمربعات أدناه مخصصة للتصميم فقط ولا تُطبع. يحتوي الشيك المطبوع على النص المتغير فقط؛ أما شعار البنك وسطر MICR والعناصر الأمنية فهي مطبوعة مسبقًا على الورقة. المواضع بالمليمتر من الزاوية العلوية اليسرى."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "The reference image is only a background in the designer. The printed cheque contains the\n                                variable text only: the bank's logo, security artwork, MICR line and QR code are pre-printed\n                                on the paper and are never generated here."
+msgstr "الصورة المرجعية خلفية في المصمم فقط. يحتوي الشيك المطبوع على النص المتغير فقط؛ أما شعار البنك والرسومات الأمنية وسطر MICR ورمز QR فهي مطبوعة مسبقًا على الورقة ولا يتم إنشاؤها هنا أبدًا."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/printer_profile.py:0
+msgid "The scale must be between 90 and 110 percent."
+msgstr "يجب أن يكون المقياس بين 90 و110 بالمائة."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/wizard/print_wizard.py:0
+msgid "The size and positions of this template are PROVISIONAL. Print the calibration sheet on plain paper, check it against a physical cheque, and confirm the template before printing a real one."
+msgstr "مقاس هذا القالب ومواضع حقوله مبدئية. اطبع ورقة المعايرة على ورق عادي، وقارنها بشيك فعلي، واعتمد القالب قبل طباعة شيك حقيقي."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "The template '%(template)s' belongs to another company than the payment."
+msgstr "القالب «%(template)s» يتبع شركة أخرى غير شركة الدفعة."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "The template '%s' is archived."
+msgstr "القالب «%s» مؤرشف."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/controllers/main.py:0
+msgid "The template or the payment changed after this print. Reprint the cheque."
+msgstr "تغيّر القالب أو الدفعة بعد هذه الطباعة. أعد طباعة الشيك."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/controllers/main.py:0
+msgid "This cheque download is not available."
+msgstr "تنزيل هذا الشيك غير متاح."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "This cheque was already printed. Use Reprint and give a reason."
+msgstr "تمت طباعة هذا الشيك مسبقًا. استخدم «إعادة طباعة» واذكر السبب."
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+msgid ""
+"The dimensions of this cheque template are not confirmed yet. Print the calibration sheet, check it on paper, and confirm the template."
+msgstr "لم تُعتمد أبعاد قالب الشيك هذا بعد. اطبع ورقة المعايرة وتحقق منها على الورق ثم اعتمد القالب."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/controllers/main.py:0
+msgid "This download has expired. Reprint the cheque (with a reason) to get a new copy."
+msgstr "انتهت صلاحية هذا التنزيل. أعد طباعة الشيك (مع ذكر السبب) للحصول على نسخة جديدة."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__font__times
+msgid "Times (Latin only)"
+msgstr "Times (لاتيني فقط)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__case__title
+msgid "Title Case"
+msgstr "أول حرف كبير في كل كلمة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__case__upper
+msgid "UPPER CASE"
+msgstr "أحرف كبيرة"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/controllers/main.py:0
+msgid "Unknown preview mode."
+msgstr "وضع المعاينة غير معروف."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__dimensions_confirmed
+msgid "Untick means the size and field positions are provisional: print the calibration sheet, measure the physical cheque, correct the template, then confirm it."
+msgstr "عدم التحديد يعني أن المقاس ومواضع الحقول مبدئية: اطبع ورقة المعايرة، وقِس الشيك الفعلي، وصحّح القالب، ثم اعتمده."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template_field__visible
+msgid "Untick to keep the field in the template but not print it."
+msgstr "ألغِ التحديد لإبقاء الحقل في القالب دون طباعته."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__user_id
+msgid "User"
+msgstr "المستخدم"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_printer_profile__offset_y_mm
+msgid "Vertical offset (mm)"
+msgstr "الإزاحة الرأسية (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_job__state__void
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_reason_wizard__kind__void
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_form
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_job_search
+msgid "Void"
+msgstr "إبطال"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "Void cheque"
+msgstr "إبطال الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_print_event__kind__void
+msgid "Voided"
+msgstr "مُبطل"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__warnings
+msgid "Warnings"
+msgstr "تحذيرات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__website_message_ids
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_print_job__website_message_ids
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_template__website_message_ids
+msgid "Website communication history"
+msgstr "سجل تواصل الموقع"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__digits__western
+msgid "Western (0123)"
+msgstr "غربية (0123)"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "What this cheque is, and which bank and series it belongs to"
+msgstr "ما هذا الشيك، وأي بنك وأي دفتر يتبع"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid "What was printed is a snapshot and cannot be changed."
+msgstr "ما تمت طباعته لقطة محفوظة ولا يمكن تغييرها."
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_event__at
+msgid "When"
+msgstr "الوقت"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,help:ncollection_cheque_print.field_ncollection_cheque_reason_wizard__reason
+msgid "Why is this cheque being reprinted or voided? It is kept in the history."
+msgstr "لماذا تتم إعادة طباعة هذا الشيك أو إبطاله؟ يُحفظ السبب في السجل."
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__width_mm
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__width_mm
+msgid "Width (mm)"
+msgstr "العرض (مم)"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__words_lang
+msgid "Words language"
+msgstr "لغة المبلغ بالحروف"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__fit__wrap
+msgid "Wrap onto several lines"
+msgstr "التفاف على عدة أسطر"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__x_mm
+msgid "X (mm)"
+msgstr "س (مم)"
+
+#. module: ncollection_cheque_print
+#. odoo-javascript
+#: code:addons/ncollection_cheque_print/static/src/designer/designer.xml:0
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template_field__y_mm
+msgid "Y (mm)"
+msgstr "ص (مم)"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__date_format__yyyy-mm-dd
+msgid "Year-Month-Day (2026-01-05)"
+msgstr "سنة-شهر-يوم (2026-01-05)"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_template_form
+msgid "e.g. Acme Bank - Business cheque"
+msgstr "مثال: بنك المثال - شيك الأعمال"
+
+#. module: ncollection_cheque_print
+#: model_terms:ir.ui.view,arch_db:ncollection_cheque_print.view_nc_cheque_reason_wizard_form
+msgid "e.g. paper jam, misaligned print, cheque spoiled"
+msgstr "مثال: انحشار الورق، أو طباعة غير محاذية، أو تلف الشيك"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields.selection,name:ncollection_cheque_print.selection__ncollection_cheque_template_field__case__lower
+msgid "lower case"
+msgstr "أحرف صغيرة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__rating_ids
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_template__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__payment_date
+msgid "Payment date"
+msgstr "تاريخ الدفعة"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_wizard__template_confirmed
+msgid "Dimensions confirmed"
+msgstr "تم اعتماد الأبعاد"
+
+#. module: ncollection_cheque_print
+#: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__template_confirmed_now
+msgid "Template confirmed now"
+msgstr "القالب معتمد الآن"
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/wizard/print_wizard.py:0
+msgid "Choose the payment to print a cheque for."
+msgstr "اختر الدفعة التي تريد طباعة شيك لها."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/wizard/print_wizard.py:0
+msgid ""
+"Choose a cheque template. If the list is empty, no template fits this "
+"payment's company and currency: add or unarchive one under Cheque Printing > "
+"Cheque Templates."
+msgstr "اختر قالب شيك. إذا كانت القائمة فارغة فلا يوجد قالب يناسب شركة هذه الدفعة وعملتها: أضف قالبًا أو أعد تفعيله من الطباعة على الشيكات > قوالب الشيكات."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/wizard/print_wizard.py:0
+msgid ""
+"No cheque template can be used for this payment. Add one under Cheque "
+"Printing > Cheque Templates, or unarchive one, for this company and for %s."
+msgstr "لا يوجد قالب شيك يمكن استخدامه لهذه الدفعة. أضف قالبًا من الطباعة على الشيكات > قوالب الشيكات أو أعد تفعيل قالب لهذه الشركة وللعملة %s."
+
+#. module: ncollection_cheque_print
+#. odoo-python
+#: code:addons/ncollection_cheque_print/models/print_job.py:0
+msgid ""
+"The payment has no partner, so there is no payee to print. Set the partner "
+"on the payment first."
+msgstr "لا يوجد شريك في الدفعة، لذلك لا يوجد مستفيد لطباعته. حدّد الشريك في الدفعة أولاً."
+
+#. module: ncollection_cheque_print
+#: model:ir.actions.act_window,name:ncollection_cheque_print.action_nc_cheque_print_new
+msgid "Print cheque"
+msgstr "طباعة شيك"

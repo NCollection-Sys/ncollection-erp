@@ -11,6 +11,143 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model,name:ncollection_account_localization_uae.model_res_partner
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__display_name
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__ncollection_fta_compliance_item__state__done
+msgid "Done"
+msgstr "تم"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_company__fta_item_ids
+msgid "FTA Compliance Items"
+msgstr "عناصر الامتثال للهيئة الاتحادية للضرائب"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_company__fta_readiness
+msgid "FTA Readiness %"
+msgstr "نسبة الجاهزية للهيئة الاتحادية للضرائب %"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__id
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__key
+msgid "Key"
+msgstr "المفتاح"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__ncollection_fta_compliance_item__state__not_applicable
+msgid "Not applicable"
+msgstr "غير قابل للتطبيق"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__note
+msgid "Note"
+msgstr "ملاحظة"
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_fta_compliance_item_form
+msgid "Notes"
+msgstr "ملاحظات"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__ncollection_fta_compliance_item__state__pending
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_company__fta_readiness
+msgid "Percentage of applicable UAE FTA compliance items marked done (items marked \"not applicable\" are excluded from the base)."
+msgstr "النسبة المئوية لعناصر الامتثال المطبّقة للهيئة الاتحادية للضرائب في الإمارات المُعلّمة كمكتملة (تُستثنى العناصر المُعلّمة \"غير قابل للتطبيق\" من الأساس)."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__key
+msgid "Stable technical identifier for the requirement (used for idempotent seeding)."
+msgstr "معرّف تقني ثابت للمتطلب (يُستخدم للتعبئة الأولية غير المكرّرة)."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.actions.act_window,help:ncollection_account_localization_uae.action_fta_compliance_item
+msgid "These items are seeded automatically and updated as VAT, chart of\n               accounts and FTA-compliant invoicing are configured."
+msgstr "تُنشأ هذه البنود تلقائيًا وتُحدَّث عند إعداد ضريبة القيمة المضافة ودليل الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.constraint,message:ncollection_account_localization_uae.constraint_ncollection_fta_compliance_item_unique_company_key
+msgid "This FTA compliance item already exists for this company."
+msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب هذا موجود بالفعل لهذه الشركة."
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.actions.act_window,help:ncollection_account_localization_uae.action_fta_compliance_item
+msgid "Track this company's UAE FTA readiness."
+msgstr "تتبّع جاهزية هذه الشركة للامتثال للهيئة الاتحادية للضرائب في الإمارات."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.actions.act_window,name:ncollection_account_localization_uae.action_fta_compliance_item
+#: model:ir.ui.menu,name:ncollection_account_localization_uae.menu_fta_compliance
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_fta_compliance_item_list
+msgid "UAE FTA Compliance"
+msgstr "الامتثال للهيئة الاتحادية للضرائب في الإمارات"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model,name:ncollection_account_localization_uae.model_ncollection_fta_compliance_item
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_fta_compliance_item_form
+msgid "UAE FTA Compliance Item"
+msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب في الإمارات"
+
+#. module: ncollection_account_localization_uae
 msgid "TRN registered with the FTA"
 msgstr "رقم التسجيل الضريبي (TRN) مسجّل لدى الهيئة الاتحادية للضرائب"
 
@@ -29,54 +166,6 @@ msgstr "الفواتير الضريبية مطابقة لصيغة الهيئة �
 #. module: ncollection_account_localization_uae
 msgid "E-invoicing readiness (structured data / QR)"
 msgstr "الجاهزية للفوترة الإلكترونية (بيانات منظمة / رمز الاستجابة السريعة)"
-
-#. module: ncollection_account_localization_uae
-msgid "Stable technical identifier for the requirement (used for idempotent seeding)."
-msgstr "معرّف تقني ثابت للمتطلب (يُستخدم للتعبئة الأولية غير المكرّرة)."
-
-#. module: ncollection_account_localization_uae
-msgid "Pending"
-msgstr "قيد الانتظار"
-
-#. module: ncollection_account_localization_uae
-msgid "Done"
-msgstr "تم"
-
-#. module: ncollection_account_localization_uae
-msgid "Not applicable"
-msgstr "غير قابل للتطبيق"
-
-#. module: ncollection_account_localization_uae
-msgid "This FTA compliance item already exists for this company."
-msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب هذا موجود بالفعل لهذه الشركة."
-
-#. module: ncollection_account_localization_uae
-msgid "FTA Compliance Items"
-msgstr "عناصر الامتثال للهيئة الاتحادية للضرائب"
-
-#. module: ncollection_account_localization_uae
-msgid "FTA Readiness %"
-msgstr "نسبة الجاهزية للهيئة الاتحادية للضرائب %"
-
-#. module: ncollection_account_localization_uae
-msgid "Percentage of applicable UAE FTA compliance items marked done (items marked \"not applicable\" are excluded from the base)."
-msgstr "النسبة المئوية لعناصر الامتثال المطبّقة للهيئة الاتحادية للضرائب في الإمارات المُعلّمة كمكتملة (تُستثنى العناصر المُعلّمة \"غير قابل للتطبيق\" من الأساس)."
-
-#. module: ncollection_account_localization_uae
-msgid "UAE FTA Compliance"
-msgstr "الامتثال للهيئة الاتحادية للضرائب في الإمارات"
-
-#. module: ncollection_account_localization_uae
-msgid "UAE FTA Compliance Item"
-msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب في الإمارات"
-
-#. module: ncollection_account_localization_uae
-msgid "Notes"
-msgstr "ملاحظات"
-
-#. module: ncollection_account_localization_uae
-msgid "Track this company's UAE FTA readiness."
-msgstr "تتبّع جاهزية هذه الشركة للامتثال للهيئة الاتحادية للضرائب في الإمارات."
 
 #. module: ncollection_account_localization_uae
 msgid "These items are seeded automatically and updated as VAT, chart of accounts and FTA-compliant invoicing are configured."

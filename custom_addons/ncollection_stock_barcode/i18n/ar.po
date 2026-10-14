@@ -84,9 +84,20 @@ msgstr "تطبيق الجرد"
 
 #. module: ncollection_stock_barcode
 #. odoo-javascript
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.js:0
+msgid "Applying adds up every counted quantity in this location, including counts entered elsewhere."
+msgstr "يجمع التطبيق كل الكميات المعدودة في هذا الموقع، بما فيها ما أُدخل في أماكن أخرى."
+
+#. module: ncollection_stock_barcode
+#. odoo-javascript
 #: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
 msgid "Back"
 msgstr "رجوع"
+
+#. module: ncollection_stock_barcode
+#: model:ir.ui.menu,name:ncollection_stock_barcode.menu_nc_barcode_root
+msgid "Barcode"
+msgstr "الباركود"
 
 #. module: ncollection_stock_barcode
 #. odoo-javascript
@@ -139,10 +150,20 @@ msgid "Difference"
 msgstr "الفرق"
 
 #. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_stock_barcode__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_stock_barcode
 #. odoo-javascript
 #: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
 msgid "Forget this location"
 msgstr "نسيان هذا الموقع"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_stock_barcode__id
+msgid "ID"
+msgstr "المعرّف"
 
 #. module: ncollection_stock_barcode
 #. odoo-python

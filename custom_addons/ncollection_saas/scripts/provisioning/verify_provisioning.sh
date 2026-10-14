@@ -7,6 +7,9 @@
 #    1. HAPPY PATH: a queued job produces a login-ready tenant DB (plan modules
 #       installed, workspace.config written, admin renamed + reset-forced),
 #    2. ROLLBACK: a job whose install fails drops the half-created DB — no zombie.
+#    3. COMPANION MODULES: cheque printing follows Accounting. A plan with `account` provisions
+#       ncollection_cheque_print; a plan without it provisions neither (see ncollection_subscription
+#       models/companions.py). The REAL engine, a real database: the unit tests only prove the decision.
 #
 #  The CI-safe unit tests (tests/test_provisioning.py) cover the pure logic;
 #  THIS exercises the real odoo subprocesses + psycopg2 rollback, which is why
@@ -18,7 +21,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../../../.."   # repo root
 
 PLATFORM_DB="${PLATFORM_DB:-saastest}"
-# Safety: this script DELETES fixture rows (plans PROV/FAIL, provclient/provfail
+# Safety: this script DELETES fixture rows (plans PROV/PROVNOA/FAIL, provclient/provnoacct/provfail
 # tenants) from the platform DB. Unlike tenant db_names, the plan codes have no
 # reserved-code registry, so refuse to run unless PLATFORM_DB is obviously a test
 # DB — a guard against PLATFORM_DB ever being pointed at real/shared platform data.
@@ -90,8 +93,8 @@ platform_schema_sync(){
 }
 platform_schema_sync
 
-# Remove THIS script's fixture rows from the PLATFORM DB (plans PROV/FAIL, the
-# provclient/provfail tenants + their jobs). Idempotency (Rule 12): without this
+# Remove THIS script's fixture rows from the PLATFORM DB (plans PROV/PROVNOA/FAIL, the
+# provclient/provnoacct/provfail tenants + their jobs). Idempotency (Rule 12): without this
 # a re-run collides on the unique plan code 'PROV'. ORM unlink (not raw psql) so
 # FK/ondelete cascades are respected; jobs -> tenants -> plans is FK-safe; an
 # empty search is a no-op, so this is itself idempotent.
@@ -105,11 +108,11 @@ platform_cleanup(){
   if ! out=$("${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http \
              --log-level=warn "${DBARGS[@]}" 2>&1 <<'PY'
 env['ncollection.provisioning.job'].with_context(active_test=False).search(
-    [('database_name', 'in', ['provclient', 'provfail'])]).unlink()
+    [('database_name', 'in', ['provclient', 'provnoacct', 'provfail'])]).unlink()
 env['ncollection.tenant'].with_context(active_test=False).search(
-    [('database_name', 'in', ['provclient', 'provfail'])]).unlink()
+    [('database_name', 'in', ['provclient', 'provnoacct', 'provfail'])]).unlink()
 env['ncollection.subscription.plan'].with_context(active_test=False).search(
-    [('code', 'in', ['PROV', 'FAIL'])]).unlink()
+    [('code', 'in', ['PROV', 'PROVNOA', 'FAIL'])]).unlink()
 env.cr.commit()
 PY
   ); then
@@ -120,7 +123,7 @@ PY
 }
 
 echo "== cleanup any prior run =="
-drop_db provclient; drop_db provfail
+drop_db provclient; drop_db provnoacct; drop_db provfail
 platform_cleanup
 
 echo "== HAPPY PATH: provision 'provclient' (plan modules: crm, account) =="
@@ -130,6 +133,7 @@ plan = env['ncollection.subscription.plan'].create({
 tenant = env['ncollection.tenant'].create({
     'company_name': 'Prov Co', 'database_name': 'provclient',
     'email': 'owner@prov.example', 'admin_login': 'provadmin',
+    'admin_password': 'ProvKnown-Pass-77!', 'admin_password_confirm': 'ProvKnown-Pass-77!',
     'plan_id': plan.id, 'status': 'trial'})
 job = env['ncollection.provisioning.job'].create({
     'tenant_id': tenant.id, 'database_name': 'provclient'})
@@ -158,6 +162,21 @@ db_exists provclient && ok "database 'provclient' created" || no "database not c
   && ok "tenant admin seeded (login is the username, not the email)" || no "admin not seeded"
 [ "$(tq provclient "SELECT COUNT(*) FROM res_users WHERE login='owner@prov.example'")" = "0" ] \
   && ok "the contact email was NOT turned into a login" || no "the email became a login"
+# The credentials typed at creation must be the ones that work at the tenant, and a wrong one must not.
+cred=$("${DC[@]}" exec -T odoo odoo shell -d provclient --no-http --log-level=error "${DBARGS[@]}" <<'PY' 2>/dev/null
+user = env['res.users'].search([('login', '=', 'provadmin')])
+def good(pw):
+    try:
+        user.with_user(user)._check_credentials({'type': 'password', 'password': pw}, {'interactive': True})
+        return True
+    except Exception:
+        return False
+print('CRED', good('ProvKnown-Pass-77!'), good('ProvKnown-Pass-78!'), user.active)
+PY
+)
+echo "$cred" | grep -q "CRED True False True" \
+  && ok "the password entered at tenant creation authenticates at the tenant; a wrong one is refused" \
+  || no "creation credentials do not work at the provisioned tenant: $cred"
 # R-014 guard: the seed re-runs _sync_role_implications AFTER the plan modules
 # install, so the Accountant role must now imply account.group_account_user
 # (core's post_init_hook alone links nothing — account did not exist yet).
@@ -168,6 +187,46 @@ db_exists provclient && ok "database 'provclient' created" || no "database not c
     AND acc.name='group_account_user' AND acc.res_id=r.hid")" = "1" ] \
   && ok "R-014: Accountant role linked to account.group_account_user post-install" \
   || no "R-014: accountant role NOT linked to the account group"
+hr
+
+echo "== COMPANION MODULES: cheque printing follows Accounting (real provisioning, real databases) =="
+# 'provclient' was provisioned from a plan that names `account` and does NOT name ncollection_cheque_print: the module can
+# only be there because the entitlement authority derived it from its host.
+[ "$(tq provclient "SELECT state FROM ir_module_module WHERE name='account'")" = "installed" ] \
+  && ok "plan with Accounting: account installed" || no "account not installed"
+[ "$(tq provclient "SELECT state FROM ir_module_module WHERE name='ncollection_cheque_print'")" = "installed" ] \
+  && ok "plan with Accounting: ncollection_cheque_print provisioned automatically" \
+  || no "ncollection_cheque_print NOT installed although the plan has Accounting"
+[ "$(tq provclient "SELECT COUNT(*) FROM ncollection_cheque_template")" = "3" ] \
+  && ok "the three provisional cheque templates were seeded" || no "cheque templates not seeded"
+[ "$(tq provclient "SELECT COUNT(*) FROM ncollection_cheque_template WHERE dimensions_confirmed")" = "0" ] \
+  && ok "every shipped template is still UNCONFIRMED (dimensions_confirmed = false)" || no "a template claims confirmed dimensions"
+tq provclient "SELECT allowed_module_names FROM ncollection_workspace_config LIMIT 1" | tr "," "\n" | grep -qx ncollection_cheque_print \
+  && ok "the tenant's licence names it (Ring 1/2 follow Accounting)" || no "the tenant's allowed list does not name it"
+
+echo "-- the other side of the boundary: a plan WITHOUT Accounting provisions neither --"
+"${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http --log-level=warn "${DBARGS[@]}" <<'PY' 2>/dev/null
+plan = env['ncollection.subscription.plan'].create({
+    'name': 'Prov NoAcct', 'code': 'PROVNOA', 'allowed_module_names': 'crm', 'max_users': 3})
+tenant = env['ncollection.tenant'].create({
+    'company_name': 'Prov NoAcct Co', 'database_name': 'provnoacct',
+    'email': 'owner@provnoacct.example', 'admin_login': 'provnoadmin',
+    'plan_id': plan.id, 'status': 'trial'})
+job = env['ncollection.provisioning.job'].create({
+    'tenant_id': tenant.id, 'database_name': 'provnoacct'})
+env.cr.commit()
+job.action_run_sync()
+print('RESULT job=%s tenant_db_status=%s' % (job.status, tenant.database_status))
+env.cr.commit()
+PY
+db_exists provnoacct && ok "database 'provnoacct' created" || no "provnoacct not created"
+[ "$(tq provnoacct "SELECT state FROM ir_module_module WHERE name='crm'")" = "installed" ] \
+  && ok "plan without Accounting: its own module (crm) installed" || no "crm not installed"
+[ "$(tq provnoacct "SELECT state FROM ir_module_module WHERE name='account'")" != "installed" ] \
+  && ok "plan without Accounting: account NOT installed (no plan was widened)" || no "account installed without being licensed"
+[ "$(tq provnoacct "SELECT COALESCE((SELECT state FROM ir_module_module WHERE name='ncollection_cheque_print'),'absent')")" != "installed" ] \
+  && ok "plan without Accounting: ncollection_cheque_print NOT installed" \
+  || no "ncollection_cheque_print installed in a tenant without Accounting"
 hr
 
 echo "== ROLLBACK: DB created then a step fails -> must drop the half-built DB =="
@@ -199,7 +258,7 @@ db_exists provfail && no "'provfail' still exists — ZOMBIE (rollback failed)" 
 hr
 
 echo "== cleanup =="
-drop_db provclient; drop_db provfail
+drop_db provclient; drop_db provnoacct; drop_db provfail
 platform_cleanup
 echo "SUMMARY: ${pass} passed, ${fail} failed."
 [ "$fail" -eq 0 ] && echo "✅ Provisioning engine verified (create + rollback)." || echo "❌ FAILURES above."

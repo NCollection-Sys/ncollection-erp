@@ -1,0 +1,363 @@
+# Arabic (ar_001) translation of ncollection_account_assets.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_assets\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+msgid "A transfer changes where value sits, never how much.\n                        Net book value is unchanged and the P&amp;L is not\n                        touched — a gain or loss belongs to a disposal, not a\n                        transfer. The depreciation schedule is never re-planned:\n                        moving an asset between departments does not restart its\n                        useful life."
+msgstr "التحويل يغيّر موضع القيمة وليس مقدارها. القيمة الدفترية الصافية لا تتغير ولا تتأثر الأرباح والخسائر — فالربح أو الخسارة يخصّان الاستبعاد وليس التحويل. ولا يُعاد تخطيط جدول الإهلاك: فنقل أصل بين الأقسام لا يعيد بدء عمره الإنتاجي."
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__account_ids
+msgid "Accounts"
+msgstr "الحسابات"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_line_asset_register_list
+msgid "Accumulated Depr."
+msgstr "مجمع الإهلاك"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__analytic_distribution
+msgid "Analytic Distribution"
+msgstr "التوزيع التحليلي"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__analytic_precision
+msgid "Analytic Precision"
+msgstr "دقة التحليل"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+#: model:ir.model,name:ncollection_account_assets.model_account_asset
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__asset_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_line_asset_register_list
+msgid "Asset"
+msgstr "الأصل"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Asset %(asset)s belongs to %(owner)s, which is not among your allowed companies."
+msgstr "الأصل %(asset)s يتبع %(owner)s، وهي ليست ضمن شركاتك المسموح بها."
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Asset %(asset)s is %(state)s. Only a draft or running asset can be transferred — a closed or removed asset has already left the balance sheet, and moving it between accounts would resurrect a value that is no longer there."
+msgstr "الأصل %(asset)s في حالة %(state)s. لا يمكن تحويل إلا الأصل المسودة أو الجاري — فالأصل المغلق أو المحذوف غادر الميزانية العمومية بالفعل، ونقله بين الحسابات سيعيد قيمة لم تعد موجودة."
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__group_ids
+msgid "Asset Groups"
+msgstr "مجموعات الأصول"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__profile_ids
+msgid "Asset Profiles"
+msgstr "ملفات الأصول"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+#: model:ir.actions.act_window,name:ncollection_account_assets.action_report_asset_register_wizard
+#: model:ir.actions.report,name:ncollection_account_assets.action_report_asset_register
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_asset_register_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_line_asset_register_list
+msgid "Asset Register"
+msgstr "سجل الأصول"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Asset profile %(profile)s belongs to %(owner)s but the asset belongs to %(asset_owner)s. A transfer moves an asset between accounts, never between companies."
+msgstr "ملف الأصل %(profile)s يتبع %(owner)s لكن الأصل يتبع %(asset_owner)s. التحويل ينقل الأصل بين الحسابات وليس بين الشركات."
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/models/asset_profile.py:0
+msgid "Asset profile %(profile)s: %(label)s is set to %(account)s, which is typed '%(actual)s'. It must be one of: %(allowed)s.\n\nThis account is %(why)s"
+msgstr "ملف الأصل %(profile)s: %(label)s مضبوط على %(account)s، وهو من النوع '%(actual)s'. يجب أن يكون أحد: %(allowed)s.\n\nهذا الحساب %(why)s"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Asset transfer: %(asset)s"
+msgstr "تحويل أصل: %(asset)s"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Asset transferred on %(date)s."
+msgstr "تم تحويل الأصل في %(date)s."
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_asset_register_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_line_asset_register_list
+msgid "Closing NBV"
+msgstr "صافي القيمة الدفترية الختامي"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__create_date
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,help:ncollection_account_assets.field_ncollection_account_asset_transfer__date
+msgid "Date of the reclassification entry, when one is needed."
+msgstr "تاريخ قيد إعادة التصنيف، عند الحاجة إليه."
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_line_asset_register_list
+msgid "Depreciation"
+msgstr "الإهلاك"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+msgid "Destination"
+msgstr "الوجهة"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_account_asset__display_name
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_account_asset_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_account_asset_profile__display_name
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__display_name
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,help:ncollection_account_assets.field_ncollection_account_report_asset_register__include_removed
+msgid "Disposed assets are included by default: an asset sold during the window still explains part of the movement, and hiding it makes the register stop reconciling to the balance sheet."
+msgstr "تُضمَّن الأصول المستبعدة افتراضيًا: فالأصل المباع خلال المدة لا يزال يفسّر جزءًا من الحركة، وإخفاؤه يجعل السجل لا يتطابق مع الميزانية العمومية."
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__distribution_analytic_account_ids
+msgid "Distribution Analytic Account"
+msgstr "الحساب التحليلي للتوزيع"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_asset_register_form
+msgid "Export PDF"
+msgstr "تصدير PDF"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_asset_register_form
+msgid "Export XLSX"
+msgstr "تصدير XLSX"
+
+#. module: ncollection_account_assets
+#: model:ir.actions.client,name:ncollection_account_assets.action_nc_view_asset_register
+#: model:ir.ui.menu,name:ncollection_account_assets.menu_report_asset_register
+msgid "Fixed Asset Register"
+msgstr "سجل الأصول الثابتة"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__date_from
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_account_asset__id
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_account_asset_line__id
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_account_asset_profile__id
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__id
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__include_removed
+msgid "Include Disposed Assets"
+msgstr "تضمين الأصول المستبعدة"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__journal_id
+msgid "Journal"
+msgstr "دفتر اليومية"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Journal %(journal)s belongs to %(owner)s but the asset belongs to %(asset_owner)s."
+msgstr "دفتر اليومية %(journal)s يتبع %(owner)s لكن الأصل يتبع %(asset_owner)s."
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,help:ncollection_account_assets.field_ncollection_account_asset_transfer__journal_id
+msgid "Journal for the reclassification entry. Defaults to the destination profile's journal."
+msgstr "دفتر يومية قيد إعادة التصنيف. الافتراضي هو دفتر يومية ملف الوجهة."
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__journal_ids
+msgid "Journals"
+msgstr "دفاتر اليومية"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__write_date
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,help:ncollection_account_assets.field_ncollection_account_report_asset_register__group_ids
+msgid "Leave empty to include every group."
+msgstr "اتركه فارغًا لتضمين كل المجموعات."
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,help:ncollection_account_assets.field_ncollection_account_report_asset_register__profile_ids
+msgid "Leave empty to include every profile."
+msgstr "اتركه فارغًا لتضمين كل الملفات."
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,help:ncollection_account_assets.field_ncollection_account_asset_transfer__profile_id
+msgid "Leave empty to keep the current profile — use this to move the asset between GL asset accounts. The depreciation SCHEDULE is never re-planned by a transfer."
+msgstr "اتركه فارغًا للإبقاء على الملف الحالي — استخدمه لنقل الأصل بين حسابات الأصول في الأستاذ العام. ولا يُعاد تخطيط جدول الإهلاك عند التحويل."
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+msgid "Moved to the Dubai branch"
+msgstr "نُقل إلى فرع دبي"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+msgid "New Analytic Distribution"
+msgstr "توزيع تحليلي جديد"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__profile_id
+msgid "New Asset Profile"
+msgstr "ملف أصل جديد"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Nothing to transfer: set a new profile, a new analytic distribution, or both."
+msgstr "لا شيء لتحويله: حدّد ملفًا جديدًا أو توزيعًا تحليليًا جديدًا أو كليهما."
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_line_asset_register_list
+msgid "Opening NBV"
+msgstr "صافي القيمة الدفترية الافتتاحي"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__partner_ids
+msgid "Partners"
+msgstr "الشركاء"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_asset_register_form
+msgid "Period"
+msgstr "الفترة"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_line_asset_register_list
+msgid "Purchase Value"
+msgstr "قيمة الشراء"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__note
+msgid "Reason"
+msgstr "السبب"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Reason: %(note)s"
+msgstr "السبب: %(note)s"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Reclassification Entry"
+msgstr "قيد إعادة التصنيف"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_transfer.py:0
+msgid "Reclassification entry: %(move)s"
+msgstr "قيد إعادة التصنيف: %(move)s"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_asset_register_form
+msgid "Scope"
+msgstr "النطاق"
+
+#. module: ncollection_account_assets
+#. odoo-python
+#: code:addons/ncollection_account_assets/wizard/asset_register.py:0
+msgid "TOTAL"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__target_move
+msgid "Target Moves"
+msgstr "الحركات المستهدفة"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_report_asset_register__date_to
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+msgid "Transfer"
+msgstr "تحويل"
+
+#. module: ncollection_account_assets
+#: model:ir.actions.act_window,name:ncollection_account_assets.action_asset_transfer
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_asset_transfer_form
+msgid "Transfer Asset"
+msgstr "تحويل أصل"
+
+#. module: ncollection_account_assets
+#: model:ir.model.fields,field_description:ncollection_account_assets.field_ncollection_account_asset_transfer__date
+msgid "Transfer Date"
+msgstr "تاريخ التحويل"
+
+#. module: ncollection_account_assets
+#: model_terms:ir.ui.view,arch_db:ncollection_account_assets.view_report_asset_register_form
+msgid "View"
+msgstr "عرض"

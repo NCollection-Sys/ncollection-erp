@@ -32,7 +32,7 @@
     # data/view/security records, so unlike every entry above it needs NO `-u`:
     # a restart picks it up, and a tenant left un-upgraded behaves identically
     # because the admitted group set is unchanged.
-    'version': '19.0.1.18.0',
+    'version': '19.0.1.19.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',

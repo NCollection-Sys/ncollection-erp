@@ -12,38 +12,6 @@ msgstr ""
 "&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_account_core
-msgid ""
-"The '%s' feature is not included in your NCollection plan. Upgrade your "
-"subscription to unlock it."
-msgstr ""
-"الميزة '%s' غير متضمّنة في خطة NCollection الخاصة بك. قم بترقية اشتراكك "
-"لإتاحتها."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title_enabled
-msgid "Custom print title"
-msgstr "عنوان الطباعة المخصّص"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title
-msgid "Custom title"
-msgstr "العنوان المخصّص"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Enter the custom print title, or switch the option off."
-msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخيار."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_move.py:0
-msgid "The custom print title must be one line of at most %(max)s characters."
-msgstr "يجب أن يكون عنوان الطباعة المخصّص سطرًا واحدًا لا يزيد عن %(max)s حرفًا."
-
-#. module: ncollection_account_core
 #. odoo-python
 #: code:addons/ncollection_account_core/models/res_company_defaults.py:0
 msgid "%(account)s cannot be the %(field)s of %(company)s."
@@ -69,6 +37,20 @@ msgid "Currency differences and early-payment discounts"
 msgstr "فروق العملة وخصومات الدفع المبكر"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_print_title_enabled
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title_enabled
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
+msgid "Custom print title"
+msgstr "عنوان الطباعة المخصّص"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_print_title
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
+msgid "Custom title"
+msgstr "العنوان المخصّص"
+
+#. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
 msgid "Customers and vendors"
 msgstr "العملاء والموردون"
@@ -89,29 +71,122 @@ msgid "Deferrals and accruals (Change Period)"
 msgstr "التأجيلات والاستحقاقات (تغيير الفترة)"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Enter the custom print title, or switch the option off."
+msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخيار."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_title
+msgid "INV/2023/0001"
+msgstr "INV/2023/0001"
+
+#. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
-msgid ""
-"Odoo Community has no automatic deferred revenue or expense engine. These are the\n"
-"                                accounts and journal the manual \"Change Period\" action on journal items uses to\n"
-"                                spread an entry across periods."
-msgstr ""
-"لا يتضمن Odoo Community محركًا تلقائيًا للإيرادات أو المصروفات المؤجلة. هذه هي الحسابات واليومية التي يستخدمها إجراء «تغيير الفترة» اليدوي على قيود اليومية لتوزيع القيد على الفترات."
+msgid "Odoo Community has no automatic deferred revenue or expense engine. These are the\n                                accounts and journal the manual \"Change Period\" action on journal items uses to\n                                spread an entry across periods."
+msgstr "لا يتضمن Odoo Community محركًا تلقائيًا للإيرادات أو المصروفات المؤجلة. هذه هي الحسابات واليومية التي يستخدمها إجراء «تغيير الفترة» اليدوي على قيود اليومية لتوزيع القيد على الفترات."
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_payable_id
-msgid ""
-"Payable account of every vendor that has none set on its own record (including new vendors). A vendor with an account set on its own record keeps it."
-msgstr ""
-"حساب الدائنين لكل مورد ليس له حساب خاص في سجله (بما في ذلك الموردون الجدد). المورد الذي له حساب في سجله يحتفظ به."
+msgid "Payable account of every vendor that has none set on its own record (including new vendors). A vendor with an account set on its own record keeps it."
+msgstr "حساب الدائنين لكل مورد ليس له حساب خاص في سجله (بما في ذلك الموردون الجدد). المورد الذي له حساب في سجله يحتفظ به."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_print_title_enabled
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_print_title_enabled
+msgid "Print the title below instead of the standard one (Invoice, Credit Note, ...) on this document only."
+msgstr "اطبع العنوان أدناه بدلاً من العنوان القياسي (فاتورة، إشعار دائن، ...) على هذا المستند فقط."
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_receivable_id
-msgid ""
-"Receivable account of every customer that has none set on its own record (including new customers). A customer with an account set on its own record keeps it."
-msgstr ""
-"حساب المدينين لكل عميل ليس له حساب خاص في سجله (بما في ذلك العملاء الجدد). العميل الذي له حساب في سجله يحتفظ به."
+msgid "Receivable account of every customer that has none set on its own record (including new customers). A customer with an account set on its own record keeps it."
+msgstr "حساب المدينين لكل عميل ليس له حساب خاص في سجله (بما في ذلك العملاء الجدد). العميل الذي له حساب في سجله يحتفظ به."
 
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
 msgid "Sales, purchases and products"
 msgstr "المبيعات والمشتريات والمنتجات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
+msgid "TAX INVOICE"
+msgstr "فاتورة ضريبية"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_mixin.py:0
+msgid "The '%s' feature is not included in your NCollection plan. Upgrade your subscription to unlock it."
+msgstr "الميزة '%s' غير متضمّنة في خطة NCollection الخاصة بك. قم بترقية اشتراكك لإتاحتها."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "The accounts new records start with, and the accounts the accounting engine posts to.\n                            These apply to this company only."
+msgstr "الحسابات التي تبدأ بها السجلات الجديدة، والحسابات التي يرحّل إليها محرك المحاسبة. تسري هذه على هذه الشركة فقط."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "The custom print title must be one line of at most %(max)s characters."
+msgstr "يجب أن يكون عنوان الطباعة المخصّص سطرًا واحدًا لا يزيد عن %(max)s حرفًا."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_print_title
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_print_title
+msgid "e.g. TAX INVOICE or فاتورة ضريبية. The document number is still printed after it."
+msgstr "مثال: TAX INVOICE أو فاتورة ضريبية. يُطبع رقم المستند بعده كالمعتاد."
+
+#. module: ncollection_account_core
+#: model:ir.ui.menu,name:account.menu_finance
+msgid "Accounting"
+msgstr "المحاسبة"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/amount_words.py:0
+msgid "A negative amount cannot be written in words."
+msgstr "لا يمكن كتابة مبلغ سالب بالحروف."
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_ncollection_amount_words
+msgid "Amount in words"
+msgstr "المبلغ بالحروف"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/amount_words.py:0
+msgid "Amount in words is available in English and Arabic, not '%s'."
+msgstr "المبلغ بالحروف متاح بالإنجليزية والعربية فقط، وليس بلغة «%s»."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ir_ui_menu__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ir_ui_menu__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/amount_words.py:0
+msgid ""
+"Arabic wording is not available for this currency. Use English, or add it to"
+" the currency table."
+msgstr "الكتابة بالحروف العربية غير متاحة لهذه العملة. استخدم الإنجليزية، أو أضف العملة إلى جدول العملات."

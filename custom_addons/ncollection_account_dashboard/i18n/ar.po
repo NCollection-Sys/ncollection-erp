@@ -1,0 +1,393 @@
+# Arabic (ar_001) translation of ncollection_account_dashboard.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_dashboard\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_accountant_dashboard
+msgid "Accountant"
+msgstr "المحاسب"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/accountant_dashboard.js:0
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_accountant_dashboard
+msgid "Accountant Dashboard"
+msgstr "لوحة المحاسب"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "Apply"
+msgstr "تطبيق"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Approved Leave by Type"
+msgstr "الإجازات المعتمدة حسب النوع"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Assets"
+msgstr "الأصول"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Average Deal Size"
+msgstr "متوسط حجم الصفقة"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_ceo_dashboard
+msgid "CEO"
+msgstr "الرئيس التنفيذي"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.js:0
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_ceo_dashboard
+msgid "CEO Dashboard"
+msgstr "لوحة الرئيس التنفيذي"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_cash_dashboard
+msgid "Cash"
+msgstr "النقد"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/cash_dashboard.js:0
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_cash_dashboard
+msgid "Cash Dashboard"
+msgstr "لوحة النقد"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Cash Position"
+msgstr "المركز النقدي"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Cost of Sales"
+msgstr "تكلفة المبيعات"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_account_dashboard_root
+msgid "Dashboards"
+msgstr "لوحات المعلومات"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_department_dashboard_root
+msgid "Department Dashboards"
+msgstr "لوحات الأقسام"
+
+#. module: ncollection_account_dashboard
+#: model:ir.model.fields,field_description:ncollection_account_dashboard.field_ncollection_account_dashboard_service__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Employee Turnover"
+msgstr "معدل دوران الموظفين"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Expenses"
+msgstr "المصروفات"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "Export PDF"
+msgstr "تصدير PDF"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_finance_dashboard
+msgid "Finance"
+msgstr "المالية"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/finance_dashboard.js:0
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_finance_dashboard
+msgid "Finance Dashboard"
+msgstr "اللوحة المالية"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Gross Margin"
+msgstr "هامش الربح الإجمالي"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Gross Profit"
+msgstr "مجمل الربح"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_hr_dashboard
+msgid "HR"
+msgstr "الموارد البشرية"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/hr_dashboard.js:0
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_hr_dashboard
+msgid "HR Dashboard"
+msgstr "لوحة الموارد البشرية"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Headcount by Department"
+msgstr "عدد الموظفين حسب القسم"
+
+#. module: ncollection_account_dashboard
+#: model:ir.model.fields,field_description:ncollection_account_dashboard.field_ncollection_account_dashboard_service__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Inventory Turnover"
+msgstr "معدل دوران المخزون"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Liabilities"
+msgstr "الالتزامات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Movement Velocity"
+msgstr "سرعة حركة المخزون"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Net Margin"
+msgstr "هامش الربح الصافي"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Net Profit"
+msgstr "صافي الربح"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "Open the underlying records"
+msgstr "فتح السجلات الأصلية"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Operating Expenses"
+msgstr "المصروفات التشغيلية"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "P&L Composition"
+msgstr "تركيبة الأرباح والخسائر"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Payables"
+msgstr "الذمم الدائنة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "Period end"
+msgstr "نهاية الفترة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "Period start"
+msgstr "بداية الفترة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "Pick both dates to apply a range."
+msgstr "اختر التاريخين لتطبيق نطاق."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "Print or save this dashboard as a PDF"
+msgstr "اطبع هذه اللوحة أو احفظها بصيغة PDF"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Receivables"
+msgstr "الذمم المدينة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "Reset"
+msgstr "إعادة تعيين"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Revenue"
+msgstr "الإيرادات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Revenue vs Expenses"
+msgstr "الإيرادات مقابل المصروفات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Revenue vs Net Profit"
+msgstr "الإيرادات مقابل صافي الربح"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_dashboard
+msgid "Sales"
+msgstr "المبيعات"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/sales_dashboard.js:0
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_sales_dashboard
+msgid "Sales Dashboard"
+msgstr "لوحة المبيعات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Sales Pipeline"
+msgstr "مسار المبيعات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Salesperson Leaderboard"
+msgstr "ترتيب مندوبي المبيعات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Stock Valuation by Product"
+msgstr "تقييم المخزون حسب المنتج"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Target: %s"
+msgstr "الهدف: %s"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "The CEO dashboard is available to the CEO and the workspace owner."
+msgstr "لوحة الرئيس التنفيذي متاحة للرئيس التنفيذي ولمالك مساحة العمل."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "The HR dashboard is available to the HR role."
+msgstr "لوحة الموارد البشرية متاحة لدور الموارد البشرية."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "The Sales dashboard is available to the Sales role."
+msgstr "لوحة المبيعات متاحة لدور المبيعات."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "The Warehouse dashboard is available to the Warehouse role."
+msgstr "لوحة المستودع متاحة لدور المستودع."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "The financial dashboards are available to the Accountant, the CEO and the workspace owner."
+msgstr "اللوحات المالية متاحة للمحاسب والرئيس التنفيذي ومالك مساحة العمل."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "The start date is after the end date."
+msgstr "تاريخ البدء بعد تاريخ الانتهاء."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Top Customers"
+msgstr "أفضل العملاء"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Unassigned"
+msgstr "غير مُسنَد"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Unknown"
+msgstr "غير معروف"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_warehouse_dashboard
+msgid "Warehouse"
+msgstr "المستودع"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/warehouse_dashboard.js:0
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_warehouse_dashboard
+msgid "Warehouse Dashboard"
+msgstr "لوحة المستودع"

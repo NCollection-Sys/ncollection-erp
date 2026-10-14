@@ -386,7 +386,7 @@ class NCollectionAlert(models.Model):
                 )
                 for alert in alerts
             )
-            body = '<p>Open anomaly alerts:</p><ul>%s</ul>' % lines
+            body = '<p>%s</p><ul>%s</ul>' % (escape(self.env._("Open anomaly alerts:")), lines)
             # QUEUED, NOT SENT. `.send()` here would do a synchronous SMTP
             # round-trip per recipient, on the cron thread, with no budget —
             # and a tenant database has no queue_job runner to escalate to

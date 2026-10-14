@@ -21,3 +21,6 @@ from . import test_localization_provisioning
 from . import test_registration_approval
 from . import test_platform_entry
 from . import test_platform_admin_boundary
+from . import test_tenant_urls
+from . import test_my_companies
+from . import test_companion_provisioning

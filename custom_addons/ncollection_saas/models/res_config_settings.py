@@ -19,9 +19,9 @@ class ResConfigSettings(models.TransientModel):
     nc_base_domain = fields.Char(
         string='Base Domain',
         config_parameter='ncollection_saas.base_domain',
-        default='ncollectionerp.com',
-        help="The platform's root domain. Every tenant is reachable at "
-             "<subdomain>.<base domain>, e.g. atlas.ncollectionerp.com.")
+        help="The platform's root domain. Every tenant is reachable at <subdomain>.<base domain>. Leave empty to use "
+             "the deployment's NC_BASE_DOMAIN (local development: ncollection.localhost). There is no built-in "
+             "default.")
 
     @api.constrains('nc_base_domain')
     def _check_nc_base_domain(self):
@@ -42,5 +42,5 @@ class ResConfigSettings(models.TransientModel):
                     for label in labels):
                 raise ValidationError(self.env._(
                     "'%s' is not a valid base domain. Use a hostname with at "
-                    "least two labels, e.g. ncollectionerp.com.",
+                    "least two labels, e.g. example.com.",
                     record.nc_base_domain))

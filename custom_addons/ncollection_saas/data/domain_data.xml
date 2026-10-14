@@ -18,11 +18,9 @@
             <field name="active" eval="True"/>
         </record>
 
-        <!-- Base domain tenant subdomains hang off (<db>.<base-domain>).
-             Non-secret; overridable per deployment. -->
-        <record id="param_base_domain" model="ir.config_parameter">
-            <field name="key">ncollection_saas.base_domain</field>
-            <field name="value">ncollectionerp.com</field>
-        </record>
+        <!-- The base domain tenant subdomains hang off is deliberately NOT seeded here: a built-in production value made
+             local workspaces advertise themselves as <db>.ncollectionerp.com. It comes from SaaS Settings
+             (ncollection_saas.base_domain) or the NC_BASE_DOMAIN environment variable. See
+             docs/markdown/TENANT_URLS.md. -->
     </data>
 </odoo>

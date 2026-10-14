@@ -41,7 +41,9 @@ class TestSaleOrderAttachments(TransactionCase):
     def test_multiple_attachments_keep_their_order_and_types(self):
         self._attach(self.order, 'photo.png', 'image/png', base64.b64decode(PNG))
         self._attach(self.order, 'contract.pdf', 'application/pdf')
-        self._attach(self.order, 'data.bin', 'application/octet-stream')       # unsupported: still listed
+        # raw bytes that are plainly not text: where libmagic is present Odoo re-derives the type from the content, and
+        # b'x' would come back as text/plain
+        self._attach(self.order, 'data.bin', 'application/octet-stream', b'\x00\x01\x02\xfe\xff')  # still listed
         files = self.order.nc_get_attachments()
         self.assertEqual([a['name'] for a in files], ['photo.png', 'contract.pdf', 'data.bin'])
         self.assertEqual([a['mimetype'] for a in files], ['image/png', 'application/pdf', 'application/octet-stream'])

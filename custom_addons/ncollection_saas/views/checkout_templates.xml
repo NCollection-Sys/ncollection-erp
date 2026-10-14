@@ -99,7 +99,7 @@
                             <span class="nc-checkout__subdomain" dir="ltr">
                                 <input type="text" name="subdomain" required="required"
                                        autocomplete="off" spellcheck="false" autocapitalize="off"/>
-                                <span class="nc-checkout__subdomain-suffix">.<t t-esc="base_domain or 'ncollectionerp.com'"/></span>
+                                <span class="nc-checkout__subdomain-suffix">.<t t-esc="base_domain"/></span>
                             </span>
                             <small class="nc-checkout__hint" data-nc-availability=""></small>
                         </label>

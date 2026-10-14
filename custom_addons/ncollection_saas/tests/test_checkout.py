@@ -184,9 +184,10 @@ class TestCheckoutHttp(HttpCase):
 
     def test_status_login_url_uses_base_domain_not_localhost(self):
         """#210: a ready tenant's login_url must be built from the canonical
-        ncollection_saas.base_domain param (seeded 'ncollectionerp.com'), NOT the
-        orphan 'tenant_base_domain' key that nothing seeds and so fell back to
-        'localhost' in every environment including production."""
+        ncollection_saas.base_domain param, NOT the orphan 'tenant_base_domain' key
+        that nothing seeds and so fell back to 'localhost' in every environment
+        including production."""
+        self.env['ir.config_parameter'].sudo().set_param('ncollection_saas.base_domain', 'ncollectionerp.com')
         tenant = self.env['ncollection.tenant'].sudo().create({
             'company_name': 'Ready Co', 'database_name': 'readyco',
             'plan_id': self.plan.id, 'database_status': 'ready',

@@ -1,0 +1,134 @@
+# Arabic (ar_001) translation of ncollection_audit.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_audit\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_audit
+#: model:ir.actions.act_window,name:ncollection_audit.action_nc_audit_seal
+#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_seal
+#: model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_seal_list
+msgid "Audit Seals"
+msgstr "أختام التدقيق"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_remote_addr
+msgid "Client IP"
+msgstr "عنوان IP للعميل"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,help:ncollection_audit.field_auditlog_log__nc_remote_addr
+msgid "Client address of the request that caused this entry. Empty for writes with no HTTP request — crons, queue jobs and scheduled work legitimately have none."
+msgstr "عنوان العميل للطلب الذي تسبب في هذا الإدخال. يكون فارغًا في عمليات الكتابة التي لا طلب HTTP لها — فالمهام المجدولة ومهام الطوابير والأعمال المجدولة لا يكون لها عنوان بحق."
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_content_hash
+msgid "Content Digest"
+msgstr "تجزئة المحتوى"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__digest
+msgid "Digest"
+msgstr "التجزئة"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__display_name
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__display_name
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__display_name
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_audit
+#: model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_seal_list
+msgid "Entries"
+msgstr "الإدخالات"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__from_log_id
+msgid "From Log"
+msgstr "من السجل"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__id
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__id
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__id
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__log_count
+msgid "Log Count"
+msgstr "عدد السجلات"
+
+#. module: ncollection_audit
+#: model:ir.actions.server,name:ncollection_audit.ir_cron_nc_audit_retention_ir_actions_server
+msgid "NCollection: prune audit logs past retention"
+msgstr "NCollection: حذف سجلات التدقيق التي تجاوزت مدة الاحتفاظ"
+
+#. module: ncollection_audit
+#: model:ir.actions.server,name:ncollection_audit.ir_cron_nc_audit_seal_ir_actions_server
+msgid "NCollection: seal audit log ranges"
+msgstr "NCollection: ختم نطاقات سجل التدقيق"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__prev_digest
+msgid "Prev Digest"
+msgstr "التجزئة السابقة"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__pruned_at
+msgid "Pruned At"
+msgstr "وقت الحذف"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__pruned_count
+msgid "Pruned Count"
+msgstr "عدد المحذوف"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,help:ncollection_audit.field_auditlog_log__nc_content_hash
+msgid "SHA-256 over this entry's own content. A mismatch means the row was altered after it was written."
+msgstr "SHA-256 لمحتوى هذا الإدخال نفسه. عدم التطابق يعني أن الصف عُدِّل بعد كتابته."
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__sealed_at
+msgid "Sealed At"
+msgstr "وقت الختم"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,help:ncollection_audit.field_ncollection_audit_seal__pruned_at
+msgid "Set when the retention policy removed logs this seal covers. The range then verifies as PRUNED rather than TAMPERED — retention is a trusted operation and destroys its own evidence."
+msgstr "يُضبط عندما تُزيل سياسة الاحتفاظ سجلات يغطيها هذا الختم. يُعتبر النطاق حينها «محذوفًا» وليس «معبوثًا به» — فالاحتفاظ عملية موثوقة وتُتلف أدلتها بنفسها."
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__to_log_id
+msgid "To Log"
+msgstr "إلى السجل"

@@ -7,6 +7,12 @@
 // mirror this grid.
 
 .o_nc_home {
+    // ONE knob for the size of an application tile: the card, its icon, the spacing and the label all scale together,
+    // so they stay in proportion (enlarging only the icon inside an unchanged card is the thing to avoid). 1.2 is the
+    // size the tiles were raised to for readability, from the 1.0 baseline below (8.5rem column, 2.5rem icon, base
+    // tokens). Everything else is the existing token set.
+    --o-nc-home-scale: 1.2;
+
     padding: var(--nc-space-6) var(--nc-space-5);
     background: var(--nc-surface-bg);
     min-height: 100%;
@@ -56,8 +62,8 @@
         max-width: 72rem;
         margin: 0 auto;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-        gap: var(--nc-space-3);
+        grid-template-columns: repeat(auto-fill, minmax(calc(8.5rem * var(--o-nc-home-scale)), 1fr));
+        gap: calc(var(--nc-space-3) * var(--o-nc-home-scale));
     }
 
     // The tile: surface, hover and focus come from .nc-card--interactive. Compact, centred, no heavy padding.
@@ -65,14 +71,14 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: var(--nc-space-2);
-        padding: var(--nc-space-4) var(--nc-space-3);
+        gap: calc(var(--nc-space-2) * var(--o-nc-home-scale));
+        padding: calc(var(--nc-space-4) * var(--o-nc-home-scale)) calc(var(--nc-space-3) * var(--o-nc-home-scale));
     }
 
     &__icon {
-        // 2.5rem: a launcher icon is larger than a card chip, and stays one size for every app.
-        inline-size: 2.5rem;
-        block-size: 2.5rem;
+        // 2.5rem at scale 1: a launcher icon is larger than a card chip, and stays one size for every app.
+        inline-size: calc(2.5rem * var(--o-nc-home-scale));
+        block-size: calc(2.5rem * var(--o-nc-home-scale));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -93,12 +99,12 @@
         border-radius: var(--nc-radius-md);
         background: var(--nc-color-primary);
         color: var(--nc-surface-raised);
-        font-size: var(--nc-font-size-lg);
+        font-size: calc(var(--nc-font-size-lg) * var(--o-nc-home-scale));
         font-weight: var(--nc-font-weight-semibold);
     }
 
     &__label {
-        font-size: var(--nc-font-size-sm);
+        font-size: calc(var(--nc-font-size-sm) * var(--o-nc-home-scale));
         font-weight: var(--nc-font-weight-medium);
         color: var(--nc-text);
         text-align: center;

@@ -5,7 +5,14 @@
         <field name="tag">ncollection_stock_barcode.scanner</field>
     </record>
 
-    <!-- Inside the Inventory app (no new app tile): licensing follows stock, rights follow stock. -->
+    <!-- A real application on Home: its own tile, opening the scanner itself (not a shortcut to a list). Rights follow
+         stock (Inventory users); licensing follows stock too (ncollection_core ir_ui_menu NATIVE_FOLLOWS_LICENCE), so a
+         plan without Inventory shows no tile, and the ORM refuses the stock models either way. -->
+    <menuitem id="menu_nc_barcode_root" name="Barcode"
+              sequence="45" action="action_nc_barcode_scanner" groups="stock.group_stock_user"
+              web_icon="ncollection_stock_barcode,static/description/icon.png"/>
+
+    <!-- ...and still inside Inventory, where a warehouse user already looks for it. -->
     <menuitem id="menu_nc_barcode_scanner" name="Barcode Scanner"
               parent="stock.menu_stock_warehouse_mgmt" sequence="5"
               action="action_nc_barcode_scanner" groups="stock.group_stock_user"/>

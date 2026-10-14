@@ -11,19 +11,20 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_sale_attachments
-#: code:addons/ncollection_sale_attachments/static/src/viewer/nc_file_viewer.xml:0
-msgid "This file type cannot be previewed here."
-msgstr "لا يمكن معاينة هذا النوع من الملفات هنا."
+#: model:ir.model.fields,field_description:ncollection_sale_attachments.field_sale_order__nc_attachment_count
+msgid "Attachments"
+msgstr "المرفقات"
 
 #. module: ncollection_sale_attachments
+#: model:ir.model.fields,field_description:ncollection_sale_attachments.field_sale_order__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_sale_attachments
+#. odoo-javascript
 #: code:addons/ncollection_sale_attachments/static/src/viewer/nc_file_viewer.xml:0
 msgid "Download"
 msgstr "تنزيل"
-
-#. module: ncollection_sale_attachments
-#: code:addons/ncollection_sale_attachments/static/src/widget/attachment_count_field.js:0
-msgid "No attachments."
-msgstr "لا توجد مرفقات."
 
 #. module: ncollection_sale_attachments
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_attachments.sale_order_tree_nc_attachments
@@ -31,13 +32,29 @@ msgid "Files"
 msgstr "الملفات"
 
 #. module: ncollection_sale_attachments
-#. odoo-python
-#: model:ir.model.fields,field_description:ncollection_sale_attachments.field_sale_order__nc_attachment_count
-msgid "Attachments"
-msgstr "المرفقات"
+#: model:ir.model.fields,field_description:ncollection_sale_attachments.field_sale_order__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_sale_attachments
+#. odoo-javascript
+#: code:addons/ncollection_sale_attachments/static/src/widget/attachment_count_field.js:0
+msgid "No attachments."
+msgstr "لا توجد مرفقات."
+
+#. module: ncollection_sale_attachments
+#: model:ir.model.fields,help:ncollection_sale_attachments.field_sale_order__nc_attachment_count
+msgid "Number of files attached to this document (not the binary fields stored as attachments)."
+msgstr "عدد الملفات المرفقة بهذا المستند (وليس الحقول الثنائية المخزّنة كمرفقات)."
 
 #. module: ncollection_sale_attachments
 #. odoo-javascript
 #: code:addons/ncollection_sale_attachments/static/src/widget/attachment_count_field.js:0
 msgid "Show attachments"
 msgstr "عرض المرفقات"
+
+#. module: ncollection_sale_attachments
+#. odoo-javascript
+#: code:addons/ncollection_sale_attachments/static/src/viewer/nc_file_viewer.xml:0
+msgid "This file type cannot be previewed here."
+msgstr "لا يمكن معاينة هذا النوع من الملفات هنا."

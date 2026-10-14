@@ -15,6 +15,7 @@ Isolation (ARCHITECTURE_DATA_PLATFORM §10, ARCHITECTURE_SECURITY §11):
 import logging
 import os
 import re
+import time
 from datetime import timedelta
 
 import psycopg2
@@ -179,13 +180,16 @@ class ProvisioningJob(models.Model):
             # one fails fast, visibly, and leaves nothing behind to clean up.
             self.tenant_id._nc_require_admin_login()
 
+            timings = []
             modules = self._module_list()
             created = True  # from here on, a failure owns the DB we are creating
             # Durable BEFORE the database exists, in its own transaction, so it
             # survives a killed worker (this job's own transaction would not).
             self._nc_mark_db_owned(db)
             setup_url = None
+            started = time.monotonic()
             self._run_odoo_init(db, modules)
+            timings.append(('database + modules', time.monotonic() - started))
             self._append_log(
                 self.env._("Database created; modules installed: %s", ', '.join(modules)))
 
@@ -196,11 +200,21 @@ class ProvisioningJob(models.Model):
             # is exactly what happened before this ticket. A failure here rolls
             # the database back and leaves the job retryable, rather than
             # delivering books that are wrong for the country.
+            step = time.monotonic()
             self._verify_localization(db)
+            timings.append(('localization check', time.monotonic() - step))
 
+            step = time.monotonic()
             setup_url = self._seed_tenant(db)
+            timings.append(('seed', time.monotonic() - step))
             self._append_log(
                 self.env._("Tenant seeded: admin (forced reset), workspace config, branding."))
+            # Measured, not guessed: where a provisioning run spends its time (the install dominates; see
+            # docs/markdown/TENANT_URLS.md "Provisioning time").
+            self._append_log(self.env._(
+                "Timing: %(detail)s; total %(total)ss.",
+                detail='; '.join('%s %ds' % (label, seconds) for label, seconds in timings),
+                total=int(time.monotonic() - started)))
 
             self._mark_done(setup_url=setup_url)
         except Exception as exc:  # noqa: BLE001 - engine must catch to roll back
@@ -505,12 +519,10 @@ class ProvisioningJob(models.Model):
         self.log = (self.log + "\n" + line) if self.log else line
 
     def _portal_url(self, db):
-        """The tenant's workspace URL. Dev default routes by subdomain on
-        localhost; P2-T06 productionises real domains/SSL. Overridable via the
-        ncollection_saas.portal_url_template config parameter ({db} is filled)."""
-        template = self.env['ir.config_parameter'].sudo().get_param(
-            'ncollection_saas.portal_url_template', 'http://{db}.localhost:8069')
-        return template.format(db=db)
+        """The tenant's workspace URL: the platform's one tenant-URL builder, so what the welcome email and the
+        tenant's own web.base.url say is what the tenant list, Company Entry and the routing layer say. Empty when no
+        base domain is configured (the caller then simply has no portal URL to record; nothing is invented)."""
+        return self.tenant_id._nc_public_origin(label=self.tenant_id._nc_subdomain_label() or db) or ''
 
     def _mark_done(self, setup_url=None):
         """Success: job done, tenant ready + active, portal URL set, welcome

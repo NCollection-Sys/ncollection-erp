@@ -1,0 +1,535 @@
+# Arabic (ar_001) translation of ncollection_api.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_api\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_api
+#: model:ir.model.constraint,message:ncollection_api.constraint_ncollection_api_scope_code_uniq
+msgid "A scope code must be unique."
+msgstr "يجب أن يكون رمز النطاق فريدًا."
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__client_id
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_nc_api_client_form
+msgid "API Client"
+msgstr "عميل API"
+
+#. module: ncollection_api
+#: model:ir.actions.act_window,name:ncollection_api.action_nc_api_client
+#: model:ir.ui.menu,name:ncollection_api.menu_nc_api_client
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_nc_api_client_list
+msgid "API Clients"
+msgstr "عملاء API"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__active
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__active
+#: model:ir.model.fields.selection,name:ncollection_api.selection__ncollection_webhook_subscription__state__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__user_id
+msgid "Acts As"
+msgstr "يتصرف باسم"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__scope_ids
+msgid "Allowed Scopes"
+msgstr "النطاقات المسموح بها"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__attempt
+msgid "Attempt Count"
+msgstr "عدد المحاولات"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_nc_api_client_form
+msgid "Authorisation"
+msgstr "التفويض"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__client_id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__client_id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__client_id
+msgid "Client"
+msgstr "العميل"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__code
+msgid "Code"
+msgstr "الرمز"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_webhook_subscription__event_types
+msgid "Comma-separated event names (e.g. sale.order.confirmed,account.move.posted) or * for all"
+msgstr "أسماء أحداث مفصولة بفواصل (مثل sale.order.confirmed,account.move.posted) أو * للجميع"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__failure_count
+msgid "Consecutive Failures"
+msgstr "حالات الفشل المتتالية"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_subscription_form
+msgid "Created"
+msgstr "تاريخ الإنشاء"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__create_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__create_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__create_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__create_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__create_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__create_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__create_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__create_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__create_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__create_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_nc_api_client_form
+msgid "Credentials"
+msgstr "بيانات الاعتماد"
+
+#. module: ncollection_api
+#: model:ir.model.fields.selection,name:ncollection_api.selection__ncollection_webhook_delivery__state__dead_letter
+msgid "Dead Letter"
+msgstr "قائمة الرسائل الميتة"
+
+#. module: ncollection_api
+#: model:ir.model.fields.selection,name:ncollection_api.selection__ncollection_webhook_subscription__state__degraded
+msgid "Degraded"
+msgstr "متدهور"
+
+#. module: ncollection_api
+#: model:ir.model.fields.selection,name:ncollection_api.selection__ncollection_webhook_delivery__state__delivered
+msgid "Delivered"
+msgstr "تم التسليم"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__delivered_at
+msgid "Delivered At"
+msgstr "وقت التسليم"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_subscription_form
+msgid "Deliveries"
+msgstr "عمليات التسليم"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__delivery_count
+msgid "Delivery Count"
+msgstr "عدد عمليات التسليم"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_form
+msgid "Delivery Info"
+msgstr "معلومات التسليم"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__delivery_ids
+#: model:ir.ui.menu,name:ncollection_api.menu_webhook_deliveries
+msgid "Delivery Logs"
+msgstr "سجلات التسليم"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__description
+msgid "Description"
+msgstr "الوصف"
+
+#. module: ncollection_api
+#: model:ir.model.fields.selection,name:ncollection_api.selection__ncollection_webhook_subscription__state__disabled
+msgid "Disabled"
+msgstr "معطّل"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_throttle__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_dispatcher__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__display_name
+#: model:ir.model.fields,field_description:ncollection_api.field_res_users_apikeys__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__duration_ms
+msgid "Duration (ms)"
+msgstr "المدة (مللي ثانية)"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__duration_ms
+msgid "Duration Ms"
+msgstr "المدة (مللي ثانية)"
+
+#. module: ncollection_api
+#: model:ir.model.constraint,message:ncollection_api.constraint_ncollection_api_client_user_uniq
+msgid "Each API client needs its own service user."
+msgstr "يحتاج كل عميل API إلى مستخدم خدمة خاص به."
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_subscription_form
+msgid "Endpoint Details"
+msgstr "تفاصيل نقطة النهاية"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__error_message
+msgid "Error Details"
+msgstr "تفاصيل الخطأ"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__event
+msgid "Event Name"
+msgstr "اسم الحدث"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_form
+msgid "Execution Details"
+msgstr "تفاصيل التنفيذ"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__expires_at
+msgid "Expires At"
+msgstr "ينتهي في"
+
+#. module: ncollection_api
+#: model:ir.model.fields.selection,name:ncollection_api.selection__ncollection_webhook_delivery__state__failed
+msgid "Failed"
+msgstr "فشل"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__scope_ids
+msgid "Granted Scopes"
+msgstr "النطاقات الممنوحة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_webhook_subscription__target_url
+msgid "HTTPS URL endpoint where signed event payloads will be delivered"
+msgstr "عنوان HTTPS الذي ستُسلَّم إليه حمولات الأحداث الموقّعة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_api_client__secret_hash
+msgid "Hashed with the same context core uses for API keys. The plaintext is shown once at creation and is not recoverable."
+msgstr "مُجزّأ بالسياق نفسه الذي تستخدمه النواة لمفاتيح API. يظهر النص الأصلي مرة واحدة عند الإنشاء ولا يمكن استرجاعه."
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_subscription_form
+msgid "Health & Security"
+msgstr "الصحة والأمان"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_throttle__id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_dispatcher__id
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__id
+#: model:ir.model.fields,field_description:ncollection_api.field_res_users_apikeys__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__write_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__write_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__write_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__write_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__write_uid
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__write_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__write_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_scope__write_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__write_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__write_date
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__max_attempts
+msgid "Max Attempts"
+msgstr "الحد الأقصى للمحاولات"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__method
+msgid "Method"
+msgstr "الطريقة"
+
+#. module: ncollection_api
+#: model:ir.actions.server,name:ncollection_api.ir_cron_webhook_queue_ir_actions_server
+msgid "NCollection: Process Webhook Delivery Queue"
+msgstr "NCollection: معالجة طابور تسليم الويب هوك"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__name
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__next_retry
+msgid "Next Retry"
+msgstr "المحاولة التالية"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_webhook_subscription__failure_count
+msgid "Number of consecutive failed delivery attempts"
+msgstr "عدد محاولات التسليم الفاشلة المتتالية"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_webhook_subscription__client_id
+msgid "Optional API client that owns this webhook subscription"
+msgstr "عميل API اختياري يملك اشتراك الويب هوك هذا"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_form
+msgid "Payload"
+msgstr "الحمولة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__payload
+msgid "Payload JSON"
+msgstr "حمولة JSON"
+
+#. module: ncollection_api
+#: model:ir.model.fields.selection,name:ncollection_api.selection__ncollection_webhook_delivery__state__pending
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+#. module: ncollection_api
+#: model:ir.ui.menu,name:ncollection_api.menu_nc_api_root
+msgid "Public API"
+msgstr "واجهة API العامة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__rate_count
+msgid "Rate Count"
+msgstr "عدد الطلبات"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__rate_limit_per_minute
+msgid "Rate Limit Per Minute"
+msgstr "حد الطلبات في الدقيقة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__rate_window_start
+msgid "Rate Window Start"
+msgstr "بداية نافذة الحد"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__remote_addr
+msgid "Remote Addr"
+msgstr "عنوان المصدر"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_api_client__rate_limit_per_minute
+msgid "Requests per minute for this client. 0 disables the app-layer limit; nginx's limit_req (P1-T03) still applies."
+msgstr "عدد الطلبات في الدقيقة لهذا العميل. القيمة 0 تعطّل حد طبقة التطبيق؛ ويظل حد limit_req في nginx (P1-T03) ساريًا."
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_form
+msgid "Response & Error"
+msgstr "الاستجابة والخطأ"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__response_body
+msgid "Response Body"
+msgstr "نص الاستجابة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__response_code
+msgid "Response Code"
+msgstr "رمز الاستجابة"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_form
+msgid "Retry Delivery"
+msgstr "إعادة محاولة التسليم"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_token__revoked_at
+msgid "Revoked At"
+msgstr "وقت الإلغاء"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__route
+msgid "Route"
+msgstr "المسار"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__scope_checked
+msgid "Scope Checked"
+msgstr "النطاق الذي تم فحصه"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_client__secret_hash
+msgid "Secret Hash"
+msgstr "تجزئة السر"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_webhook_subscription__secret
+msgid "Secret key used to compute HMAC-SHA256 signatures"
+msgstr "المفتاح السري المستخدم لحساب توقيعات HMAC-SHA256"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__secret
+msgid "Signing Secret"
+msgstr "سر التوقيع"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__state
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_webhook_subscription__state
+msgid "State of the webhook subscription based on recent delivery health"
+msgstr "حالة اشتراك الويب هوك بناءً على صحة التسليم الأخيرة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_api_request_log__status
+msgid "Status"
+msgstr "الحالة"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__event_types
+msgid "Subscribed Events"
+msgstr "الأحداث المشترك بها"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__subscription_id
+msgid "Subscription"
+msgstr "الاشتراك"
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_subscription__target_url
+msgid "Target URL"
+msgstr "الرابط المستهدف"
+
+#. module: ncollection_api
+#. odoo-python
+#: code:addons/ncollection_api/models/webhook_subscription.py:0
+msgid "Target URL cannot be blank."
+msgstr "لا يمكن أن يكون الرابط المستهدف فارغًا."
+
+#. module: ncollection_api
+#. odoo-python
+#: code:addons/ncollection_api/models/webhook_subscription.py:0
+msgid "Target URL cannot point to internal or private IP addresses."
+msgstr "لا يمكن أن يشير الرابط المستهدف إلى عناوين IP داخلية أو خاصة."
+
+#. module: ncollection_api
+#. odoo-python
+#: code:addons/ncollection_api/models/webhook_subscription.py:0
+msgid "Target URL cannot point to localhost."
+msgstr "لا يمكن أن يشير الرابط المستهدف إلى localhost."
+
+#. module: ncollection_api
+#. odoo-python
+#: code:addons/ncollection_api/models/webhook_subscription.py:0
+msgid "Target URL must have a valid hostname."
+msgstr "يجب أن يحتوي الرابط المستهدف على اسم مضيف صالح."
+
+#. module: ncollection_api
+#. odoo-python
+#: code:addons/ncollection_api/models/webhook_subscription.py:0
+msgid "Target URL scheme must be HTTP or HTTPS."
+msgstr "يجب أن يكون بروتوكول الرابط المستهدف HTTP أو HTTPS."
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_nc_api_client_form
+msgid "The API acts with the selected user's access rights. A\n                        client can never read what that user could not read —\n                        there is no second permission model."
+msgstr "تعمل واجهة API بصلاحيات المستخدم المحدد. لا يستطيع العميل أبدًا قراءة ما لا يستطيع ذلك المستخدم قراءته — فلا يوجد نموذج صلاحيات ثانٍ."
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_api_client__user_id
+msgid "The API acts with this user's access rights. A client can never read what this user could not read — the permission model is Odoo's, not a second one."
+msgstr "تعمل واجهة API بصلاحيات هذا المستخدم. لا يستطيع العميل أبدًا قراءة ما لا يستطيع هذا المستخدم قراءته — فنموذج الصلاحيات هو نموذج Odoo وليس نموذجًا ثانيًا."
+
+#. module: ncollection_api
+#: model:ir.model.fields,help:ncollection_api.field_ncollection_api_client__scope_ids
+msgid "The most a token for this client may be granted. A token request asking for more is refused rather than quietly narrowed."
+msgstr "أقصى ما يمكن منحه لرمز هذا العميل. يُرفض طلب الرمز الذي يطلب أكثر بدلًا من تقليصه بصمت."
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_list
+msgid "Timestamp"
+msgstr "الطابع الزمني"
+
+#. module: ncollection_api
+#: model:ir.model.constraint,message:ncollection_api.constraint_ncollection_api_client_client_id_uniq
+msgid "Two clients cannot share a client_id."
+msgstr "لا يمكن لعميلين مشاركة client_id نفسه."
+
+#. module: ncollection_api
+#: model:ir.model.fields,field_description:ncollection_api.field_ncollection_webhook_delivery__uuid
+msgid "Uuid"
+msgstr "المعرّف الفريد"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_nc_api_client_form
+msgid "Warehouse sync"
+msgstr "مزامنة المستودع"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_list
+msgid "Webhook Deliveries"
+msgstr "عمليات تسليم الويب هوك"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_delivery_form
+msgid "Webhook Delivery Log"
+msgstr "سجل تسليم الويب هوك"
+
+#. module: ncollection_api
+#: model:ir.actions.act_window,name:ncollection_api.action_webhook_deliveries
+msgid "Webhook Delivery Logs"
+msgstr "سجلات تسليم الويب هوك"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_subscription_form
+msgid "Webhook Subscription"
+msgstr "اشتراك ويب هوك"
+
+#. module: ncollection_api
+#: model:ir.actions.act_window,name:ncollection_api.action_webhook_subscriptions
+#: model:ir.ui.menu,name:ncollection_api.menu_webhook_subscriptions
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_subscription_list
+msgid "Webhook Subscriptions"
+msgstr "اشتراكات الويب هوك"
+
+#. module: ncollection_api
+#: model_terms:ir.ui.view,arch_db:ncollection_api.view_webhook_subscription_form
+msgid "e.g. Zapier Sales Integration"
+msgstr "مثال: تكامل مبيعات Zapier"
+
+#. module: ncollection_api
+#. odoo-python
+#: code:addons/ncollection_api/models/api_client.py:0
+msgid "scope not allowed for this client: %(scopes)s"
+msgstr "النطاق غير مسموح به لهذا العميل: %(scopes)s"

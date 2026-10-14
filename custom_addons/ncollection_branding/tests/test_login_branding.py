@@ -55,6 +55,15 @@ class TestLoginRedesignHttp(HttpCase):
         # the native "Reset Password" label is gone (relabelled, not duplicated)
         self.assertNotIn("Reset Password", res.text)
 
+    def test_forgot_password_is_offered_twice_and_never_hidden_when_enabled(self):
+        """One beside the Password label and one, larger, under the Log in button: the way back in is unmissable."""
+        body = self.url_open("/web/login").text
+        self.assertGreaterEqual(body.count(">Forgot password?</a>"), 2)
+        self.assertIn("o_nc_login__forgot--below", body)
+        self.env["ir.config_parameter"].sudo().set_param("auth_signup.reset_password", "False")
+        self.env.flush_all()
+        self.assertNotIn("Forgot password?", self.url_open("/web/login").text, "off means off, in both places")
+
     def test_no_remember_me_control(self):
         """Remember-Me is intentionally omitted (no native support; a cosmetic
         checkbox would be misleading). Assert no checkbox leaked in."""
