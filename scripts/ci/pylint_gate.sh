@@ -87,8 +87,16 @@ set -uo pipefail
 #      Worth recording HOW it was caught: not by the author, but by the
 #      odoo-reviewer subagent, which ran this gate on both branches and reported
 #      64-vs-56 before the PR was opened.
+#    57 → 205 (2026-10-15, PR #482): ACCOUNTING CORRECTION, not new debt. The count on develop (merge 3c8fa95)
+#      measures 205 with the same pylint 4.0.10 / pylint-odoo 10.0.12 the lint job installs, so the 57 above had
+#      gone stale: PR #479 merged with the lint job red at the flake8 step, which stops the job BEFORE this gate
+#      runs, so the gate never reported the drift (125 prefer-env-translation, 24 attribute-string-redundant, 18
+#      manifest-superfluous-key, 13 manifest-required-author, 9 odoo-addons-relative-import, 9 missing-readme ...).
+#      PR #482's head measures the same 205, and the two finding sets are IDENTICAL once line numbers are ignored
+#      (sorted file:rule lists diffed), so the PR introduces none. The baseline is set to the measured base count
+#      with no slack; paying the backlog down is separate work and lowers this number as it goes.
 # ---------------------------------------------------------------------------
-PYLINT_BASELINE=57
+PYLINT_BASELINE=205
 
 # The scanned tree and the finding-count pattern. Both callers MUST use the
 # same ones or the two environments would count differently — the subtlest way
