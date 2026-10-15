@@ -26,13 +26,9 @@ USERNAME_RE = re.compile(r'^[a-z][a-z0-9._-]{2,31}$')
 _MIN_PASSWORD_LEN = 8
 _MAX_PASSWORD_LEN = 128
 TRIAL_DAYS = 14
-# The canonical base domain param, shared with the domain layer + config-sync
-# (models/domain.py, models/config_sync.py) and seeded to 'ncollectionerp.com' in
-# data/domain_data.xml. This previously read an orphan 'tenant_base_domain' key
-# that nothing seeds, so the customer login URL fell back to 'localhost' in every
-# environment including production (#210). Keep this in sync with those two.
-_BASE_DOMAIN_PARAM = 'ncollection_saas.base_domain'
-_DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
+# The base domain and every tenant address come from ONE place: ncollection.tenant._nc_base_domain() /
+# _nc_public_origin() (no copy of the parameter key, no built-in default). This used to read an orphan
+# 'tenant_base_domain' key (#210) and then a second, hardcoded production default.
 
 
 class CheckoutController(http.Controller):
@@ -204,7 +200,7 @@ class CheckoutController(http.Controller):
                   'stage': tenant.provision_stage,
                   'verified': tenant.checkout_email_verified}
         if tenant.database_status == 'ready':
-            base_domain = request.env['ir.config_parameter'].sudo().get_param(
-                _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN)
-            result['login_url'] = 'https://%s.%s/odoo' % (tenant.database_name, base_domain)
+            origin = tenant._nc_public_origin()
+            if origin:
+                result['login_url'] = origin + '/odoo'
         return result

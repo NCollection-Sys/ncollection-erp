@@ -1,0 +1,113 @@
+# Arabic (ar_001) translation of ncollection_ai.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_ai\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "Ask a question to search for."
+msgstr "اكتب سؤالًا للبحث عنه."
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/ai_question.py:0
+msgid "Natural-language questions are not enabled on this workspace. The AI context engine is available, but sending free-typed text to an external provider must be switched on deliberately — see the AI section of the workspace settings."
+msgstr "الأسئلة بلغة طبيعية غير مفعّلة في مساحة العمل هذه. محرك سياق الذكاء الاصطناعي متاح، لكن إرسال نص حر إلى مزوّد خارجي يجب تفعيله عمدًا — راجع قسم الذكاء الاصطناعي في إعدادات مساحة العمل."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "Natural-language search covers: %s."
+msgstr "يشمل البحث بلغة طبيعية: %s."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "Natural-language search is available to the Accountant, the CEO and the workspace owner."
+msgstr "البحث بلغة طبيعية متاح للمحاسب والرئيس التنفيذي ومالك مساحة العمل."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "Natural-language search is limited to the test provider on this deployment. Using a live AI provider requires the provider terms and a recorded administrator acknowledgement that are not in place yet."
+msgstr "البحث بلغة طبيعية مقتصر على المزوّد التجريبي في هذا النشر. يتطلب استخدام مزوّد ذكاء اصطناعي حقيقي شروط المزوّد وإقرارًا مسجّلًا من المسؤول غير متوفرين بعد."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "Natural-language search is not enabled on this workspace. Sending typed text to an external provider must be switched on deliberately."
+msgstr "البحث بلغة طبيعية غير مفعّل في مساحة العمل هذه. يجب تفعيل إرسال النص المكتوب إلى مزوّد خارجي عمدًا."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "That question could not be turned into a safe search. Try describing what you are looking for in simpler terms."
+msgstr "تعذّر تحويل هذا السؤال إلى بحث آمن. جرّب وصف ما تبحث عنه بعبارات أبسط."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "That question could not be turned into a search over %s."
+msgstr "تعذّر تحويل هذا السؤال إلى بحث في %s."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/domain_mapper.py:0
+msgid "That question is too long to search with (limit %s characters)."
+msgstr "هذا السؤال أطول من أن يُبحث به (الحد %s حرفًا)."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/ai_question.py:0
+msgid "The AI assistant is available to the Accountant, the CEO and the workspace owner."
+msgstr "مساعد الذكاء الاصطناعي متاح للمحاسب والرئيس التنفيذي ومالك مساحة العمل."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI service is not configured on this deployment (%s is unset), so this workspace cannot prove its identity to it. Nothing was sent."
+msgstr "خدمة الذكاء الاصطناعي غير مهيأة في هذا النشر (%s غير مضبوط)، لذا لا تستطيع مساحة العمل هذه إثبات هويتها لها. لم يُرسل شيء."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI service is not reachable (%s). If this is a development environment, start it with `make ai-up`."
+msgstr "خدمة الذكاء الاصطناعي غير متاحة (%s). إن كانت هذه بيئة تطوير، فشغّلها بالأمر `make ai-up`."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI service returned an unreadable response (%s)."
+msgstr "أعادت خدمة الذكاء الاصطناعي ردًّا غير قابل للقراءة (%s)."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/ai_question.py:0
+msgid "Your question looks like it contains a password, key or token. Nothing was sent. Please remove it and ask in plain words — this assistant works from your workspace data, so it does not need one."
+msgstr "يبدو أن سؤالك يتضمن كلمة مرور أو مفتاحًا أو رمزًا. لم يُرسل شيء. أزله واسأل بكلمات بسيطة — فهذا المساعد يعمل من بيانات مساحة عملك ولا يحتاج إلى ذلك."

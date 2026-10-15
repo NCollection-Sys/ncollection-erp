@@ -11,6 +11,7 @@ the same record.
 """
 
 import logging
+import os
 
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
@@ -132,6 +133,26 @@ class WorkspaceConfig(models.Model):
         result = super().unlink()
         self.env.registry.clear_cache()
         return result
+
+    @api.model
+    def _nc_repair_legacy_base_url(self):
+        """Replace this database's ``web.base.url`` when it is the RETIRED dev-template value.
+
+        Provisioning used to write ``http://<db>.localhost:8069`` here, and password-reset and notification links
+        are built from it. A tenant keeps that address unless it is moved to the platform's base domain. This replaces
+        exactly that value, only when the deployment states its domain (NC_BASE_DOMAIN), and only with this database's
+        own name as the label: no other value, and nothing when the domain is unknown. The tenant layer cannot ask the
+        platform (Standing Rule 3), so it uses the environment the platform and tenants share. Idempotent.
+        """
+        base = (os.environ.get('NC_BASE_DOMAIN') or '').strip().lower()
+        db = self.env.cr.dbname
+        params = self.env['ir.config_parameter'].sudo()
+        if not base or params.get_param('web.base.url') != 'http://%s.localhost:8069' % db:
+            return False
+        loopback = base == 'localhost' or base.endswith('.localhost')      # same rule as ncollection.tenant
+        url = '%s://%s.%s' % ('http' if loopback else 'https', db, base)
+        params.set_param('web.base.url', url)
+        return url
 
     @api.model
     def get_max_users(self):

@@ -30,14 +30,12 @@ import requests
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
 
-from .config_sync import (
-    _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN, _RPC_TIMEOUT, _SYNC_KEY_ENV, derive_tenant_key)
+from .config_sync import _RPC_TIMEOUT, _SYNC_KEY_ENV, derive_tenant_key
 
 _logger = logging.getLogger(__name__)
 
 _GRANT_ENDPOINT = '/json/2/ncollection.platform.entry/grant_from_platform'
 _ENTER_PATH = '/ncollection/platform/enter'
-_ENTRY_TEMPLATE_PARAM = 'ncollection_saas.entry_url_template'
 _PLATFORM_GROUP = 'ncollection_subscription.group_platform_admin'
 _DB_RE = re.compile(r'^[a-z][a-z0-9]{1,62}$')            # a tenant key is also its subdomain: alphanumeric
 _GRANT_TTL = 60
@@ -91,12 +89,10 @@ class Tenant(models.Model):
         # every platform administrator (tenant_url is derived from a constrained subdomain + the system-only base
         # domain, but portal_url is a plain Char), so none of them may choose the host: an administrator who is not on
         # this tenant's allow-list could otherwise point it at their own server, wait for an authorised administrator
-        # to click "Enter Company", read the one-time token from the fragment and redeem it here. The deployment sets
-        # ``ncollection_saas.entry_url_template`` (a system parameter, e.g. "http://{db}.localhost:8069" on a dev
-        # stack); without it the computed public name (<subdomain>.<base domain>) is used.
-        template = (self.env['ir.config_parameter'].sudo().get_param(_ENTRY_TEMPLATE_PARAM) or '').strip()
-        raw = template.replace('{db}', self.database_name) if template else (self.tenant_url or '')
-        address = urlparse(raw)
+        # to click "Enter Company", read the one-time token from the fragment and redeem it here. The address is the
+        # platform's one tenant-URL builder (<subdomain>.<base domain>, base domain from system configuration):
+        # the same value the tenant list shows and the routing layer resolves. There is no second, entry-only template.
+        address = urlparse(self._nc_public_origin() or '')
         if address.scheme not in ('http', 'https') or not address.netloc or '@' in address.netloc:
             raise UserError(self.env._("%s has no safe address to enter.", self.company_name))
         return '%s://%s%s#token=%s' % (address.scheme, address.netloc, _ENTER_PATH, token)   # fragment: never sent
@@ -106,13 +102,11 @@ class Tenant(models.Model):
         master = os.environ.get(_SYNC_KEY_ENV)
         if not master:
             raise UserError(self.env._("The platform is not configured to reach tenants (service key missing)."))
-        base_domain = (self.env['ir.config_parameter'].sudo().get_param(
-            _BASE_DOMAIN_PARAM, _DEFAULT_BASE_DOMAIN) or '').strip().lower()
         try:
             resp = requests.post(
                 self._config_sync_base_url() + _GRANT_ENDPOINT,
                 headers={
-                    'Host': '%s.%s' % (db, base_domain),
+                    'Host': self._nc_service_host(db),
                     'Authorization': 'Bearer %s' % derive_tenant_key(master, db),
                     'X-Odoo-Database': db, 'Content-Type': 'application/json', 'Accept-Encoding': 'identity',
                 },
@@ -136,12 +130,22 @@ class Tenant(models.Model):
 
     @api.model
     def _nc_enterable_for(self, user=None):
-        """The tenants ``user`` may enter, ready to be listed: no tenant database is touched."""
+        """The tenants ``user`` may enter right now: no tenant database is touched."""
+        return self._nc_my_companies_for(user).filtered(lambda t: t.database_status == 'ready')
+
+    @api.model
+    def _nc_my_companies_for(self, user=None):
+        """The companies ``user`` is authorised for, whatever stage their workspace is at.
+
+        A company that is not built yet (awaiting approval, queued, building, or whose build failed) is LISTED, with
+        its stage, rather than hidden:
+        "I created it and it is not there" is the worst answer a list can give. Only a ready one can be entered
+        (``action_enter_company`` re-checks that on the server); the rest show their stage instead of a button.
+        """
         user = user or self.env.user
         if not user.has_group(_PLATFORM_GROUP):
             return self.browse()
-        return self.search([('platform_admin_ids', 'in', user.id), ('database_status', '=', 'ready'),
-                            ('status', 'in', ('trial', 'active'))])
+        return self.search([('platform_admin_ids', 'in', user.id), ('status', 'in', ('trial', 'active'))])
 
 
 class PlatformSummary(models.TransientModel):
@@ -152,6 +156,6 @@ class PlatformSummary(models.TransientModel):
         'ncollection.tenant', compute='_compute_enterable_tenant_ids', string='My Companies')
 
     def _compute_enterable_tenant_ids(self):
-        tenants = self.env['ncollection.tenant']._nc_enterable_for()
+        tenants = self.env['ncollection.tenant']._nc_my_companies_for()
         for summary in self:
             summary.enterable_tenant_ids = tenants

@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_cheque_template_read,ncollection.cheque.template.read,model_ncollection_cheque_template,account.group_account_readonly,1,0,0,0
+access_nc_cheque_template_user,ncollection.cheque.template.user,model_ncollection_cheque_template,account.group_account_user,1,1,1,0
+access_nc_cheque_template_manager,ncollection.cheque.template.manager,model_ncollection_cheque_template,account.group_account_manager,1,1,1,1
+access_nc_cheque_field_read,ncollection.cheque.template.field.read,model_ncollection_cheque_template_field,account.group_account_readonly,1,0,0,0
+access_nc_cheque_field_user,ncollection.cheque.template.field.user,model_ncollection_cheque_template_field,account.group_account_user,1,1,1,1
+access_nc_cheque_profile_read,ncollection.cheque.printer.profile.read,model_ncollection_cheque_printer_profile,account.group_account_readonly,1,0,0,0
+access_nc_cheque_profile_user,ncollection.cheque.printer.profile.user,model_ncollection_cheque_printer_profile,account.group_account_user,1,1,1,0
+access_nc_cheque_profile_manager,ncollection.cheque.printer.profile.manager,model_ncollection_cheque_printer_profile,account.group_account_manager,1,1,1,1
+access_nc_cheque_job_read,ncollection.cheque.print.job.read,model_ncollection_cheque_print_job,account.group_account_readonly,1,0,0,0
+access_nc_cheque_job_user,ncollection.cheque.print.job.user,model_ncollection_cheque_print_job,account.group_account_user,1,1,1,0
+access_nc_cheque_event_read,ncollection.cheque.print.event.read,model_ncollection_cheque_print_event,account.group_account_readonly,1,0,0,0
+access_nc_cheque_print_wizard_user,ncollection.cheque.print.wizard.user,model_ncollection_cheque_print_wizard,account.group_account_user,1,1,1,1
+access_nc_cheque_reason_wizard_user,ncollection.cheque.reason.wizard.user,model_ncollection_cheque_reason_wizard,account.group_account_user,1,1,1,1

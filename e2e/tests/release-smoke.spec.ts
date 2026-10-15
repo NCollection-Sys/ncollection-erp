@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
+import { activateLanguage, callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
 
 /**
  * Release smoke: walk the main screens repeatedly, in both languages, across reloads and a logout/login, and
@@ -61,6 +61,7 @@ async function walk(page: Page, errors: string[]) {
 }
 
 async function setLang(page: Page, lang: string) {
+  await activateLanguage(page.request, TENANT, lang);
   const res = await callKw(page.request, TENANT, 'res.users', 'write', [[2], { lang }]);
   expect(res.error, JSON.stringify(res.error)).toBeUndefined();
 }

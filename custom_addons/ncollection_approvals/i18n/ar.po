@@ -11,212 +11,355 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_approvals
-msgid "Countries"
-msgstr "الدول"
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__active
+msgid "Active"
+msgstr "نشط"
 
 #. module: ncollection_approvals
-msgid "States/Regions"
-msgstr "الولايات/المناطق"
-
-#. module: ncollection_approvals
-msgid "Salesperson"
-msgstr "مندوب المبيعات"
-
-#. module: ncollection_approvals
-msgid "Leads in this territory are assigned to this salesperson."
-msgstr "يتم إسناد العملاء المحتملين في هذه المنطقة إلى مندوب المبيعات هذا."
-
-#. module: ncollection_approvals
-msgid "Sales Team"
-msgstr "فريق المبيعات"
-
-#. module: ncollection_approvals
-msgid "Territory"
-msgstr "المنطقة"
-
-#. module: ncollection_approvals
-msgid "New lead assigned: %s"
-msgstr "تم إسناد عميل محتمل جديد: %s"
-
-#. module: ncollection_approvals
-msgid "Auto-assigned from territory '%s'."
-msgstr "تم الإسناد تلقائياً من المنطقة '%s'."
-
-#. module: ncollection_approvals
-msgid "Not Required"
-msgstr "غير مطلوب"
-
-#. module: ncollection_approvals
-msgid "Pending Department"
-msgstr "قيد موافقة القسم"
-
-#. module: ncollection_approvals
-msgid "Pending Finance"
-msgstr "قيد موافقة المالية"
-
-#. module: ncollection_approvals
-msgid "Approved"
-msgstr "معتمد"
-
-#. module: ncollection_approvals
-msgid "Rejected"
-msgstr "مرفوض"
-
-#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_purchase_order__approval_state
+#: model:ir.model.fields,field_description:ncollection_approvals.field_sale_order__approval_state
 msgid "Approval"
 msgstr "موافقة"
 
 #. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_purchase_order__nc_approval_required
+#: model:ir.model.fields,field_description:ncollection_approvals.field_sale_order__nc_approval_required
 msgid "Approval Required"
 msgstr "الموافقة مطلوبة"
 
 #. module: ncollection_approvals
-msgid "Approved Amount"
-msgstr "المبلغ المعتمد"
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_company_form_nc_approvals
+msgid "Approval Thresholds"
+msgstr "حدود الموافقة"
 
 #. module: ncollection_approvals
-msgid "This purchase order's total (%(total)s) exceeds the approval threshold."
-msgstr "يتجاوز إجمالي أمر الشراء هذا (%(total)s) حد الموافقة."
-
-#. module: ncollection_approvals
-msgid "Only a %s approver may act on this purchase order."
-msgstr "يمكن فقط لمعتمِد %s اتخاذ إجراء بشأن أمر الشراء هذا."
-
-#. module: ncollection_approvals
-msgid "Only a finance approver may set a purchase order to Approved."
-msgstr "يمكن فقط لمعتمِد المالية تعيين أمر الشراء إلى معتمد."
-
-#. module: ncollection_approvals
-msgid "Only a department approver may advance a purchase order to finance approval."
-msgstr "يمكن فقط لمعتمِد القسم تمرير أمر الشراء إلى موافقة المالية."
-
-#. module: ncollection_approvals
-msgid "Order total increased beyond the approved amount; approval was reset and must be requested again."
-msgstr "ارتفع إجمالي الأمر بما يتجاوز المبلغ المعتمد؛ تمت إعادة تعيين الموافقة ويجب طلبها من جديد."
-
-#. module: ncollection_approvals
-msgid "Department approval: purchase order %s"
-msgstr "موافقة القسم: أمر الشراء %s"
-
-#. module: ncollection_approvals
-msgid "Finance approval: purchase order %s"
-msgstr "موافقة المالية: أمر الشراء %s"
-
-#. module: ncollection_approvals
-msgid "Department approval granted."
-msgstr "تم منح موافقة القسم."
-
-#. module: ncollection_approvals
-msgid "Finance approval granted."
-msgstr "تم منح موافقة المالية."
-
-#. module: ncollection_approvals
-msgid "Only a department or finance approver may reject this order."
-msgstr "يمكن فقط لمعتمِد القسم أو المالية رفض هذا الأمر."
-
-#. module: ncollection_approvals
-msgid "Approval rejected."
-msgstr "تم رفض الموافقة."
-
-#. module: ncollection_approvals
-msgid "These purchase orders exceed the approval threshold and need two-level approval before confirmation (use 'Request Approval'): %s"
-msgstr "تتجاوز أوامر الشراء هذه حد الموافقة وتحتاج إلى موافقة من مستويين قبل التأكيد (استخدم 'طلب الموافقة'): %s"
-
-#. module: ncollection_approvals
-msgid "Sale Approval Threshold"
-msgstr "حد موافقة البيع"
-
-#. module: ncollection_approvals
-msgid "Sale orders above this total require manager approval before they can be confirmed. Set to 0 to disable the gate."
-msgstr "تتطلب أوامر البيع التي تتجاوز هذا الإجمالي موافقة المدير قبل أن يمكن تأكيدها. اضبطه على 0 لتعطيل البوابة."
-
-#. module: ncollection_approvals
-msgid "Purchase Approval Threshold"
-msgstr "حد موافقة الشراء"
-
-#. module: ncollection_approvals
-msgid "Purchase orders above this total require two-level (department, then finance) approval before confirmation. Set to 0 to disable."
-msgstr "تتطلب أوامر الشراء التي تتجاوز هذا الإجمالي موافقة من مستويين (القسم ثم المالية) قبل التأكيد. اضبطه على 0 للتعطيل."
-
-#. module: ncollection_approvals
-msgid "To Approve"
-msgstr "بانتظار الموافقة"
-
-#. module: ncollection_approvals
-msgid "Only a Sales Manager may approve sale orders."
-msgstr "يمكن فقط لمدير المبيعات اعتماد أوامر البيع."
-
-#. module: ncollection_approvals
-msgid "Approve sale order %s"
-msgstr "اعتماد أمر البيع %s"
-
-#. module: ncollection_approvals
-msgid "This order's total (%(total)s) exceeds the approval threshold and needs Sales Manager approval."
-msgstr "يتجاوز إجمالي هذا الأمر (%(total)s) حد الموافقة ويحتاج إلى موافقة مدير المبيعات."
-
-#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/sale_order.py:0
 msgid "Approval granted."
 msgstr "تم منح الموافقة."
 
 #. module: ncollection_approvals
-msgid "These sale orders exceed the approval threshold and need Sales Manager approval before confirmation (use 'Request Approval'): %s"
-msgstr "تتجاوز أوامر البيع هذه حد الموافقة وتحتاج إلى موافقة مدير المبيعات قبل التأكيد (استخدم 'طلب الموافقة'): %s"
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+#: code:addons/ncollection_approvals/models/sale_order.py:0
+msgid "Approval rejected."
+msgstr "تم رفض الموافقة."
 
 #. module: ncollection_approvals
+#: model:ir.module.category,name:ncollection_approvals.module_category_approvals
+msgid "Approvals"
+msgstr "الموافقات"
+
+#. module: ncollection_approvals
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_order_form_nc_approval
+msgid "Approve"
+msgstr "اعتماد"
+
+#. module: ncollection_approvals
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_purchase_order_form_nc_approval
+msgid "Approve (Department)"
+msgstr "اعتماد (القسم)"
+
+#. module: ncollection_approvals
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_purchase_order_form_nc_approval
+msgid "Approve (Finance)"
+msgstr "اعتماد (المالية)"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/sale_order.py:0
+msgid "Approve sale order %s"
+msgstr "اعتماد أمر البيع %s"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__purchase_order__approval_state__approved
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__sale_order__approval_state__approved
+msgid "Approved"
+msgstr "معتمد"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_purchase_order__nc_approved_amount
+#: model:ir.model.fields,field_description:ncollection_approvals.field_sale_order__nc_approved_amount
+msgid "Approved Amount"
+msgstr "المبلغ المعتمد"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/crm_lead.py:0
+msgid "Auto-assigned from territory '%s'."
+msgstr "تم الإسناد تلقائياً من المنطقة '%s'."
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__country_ids
+msgid "Countries"
+msgstr "الدول"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_approvals
+#: model_terms:ir.actions.act_window,help:ncollection_approvals.action_lead_territory
+msgid "Define a territory"
+msgstr "تعريف منطقة"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Department approval granted."
+msgstr "تم منح موافقة القسم."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Department approval: purchase order %s"
+msgstr "موافقة القسم: أمر الشراء %s"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_crm_lead__display_name
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__display_name
+#: model:ir.model.fields,field_description:ncollection_approvals.field_purchase_order__display_name
+#: model:ir.model.fields,field_description:ncollection_approvals.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_approvals.field_sale_order__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Finance approval granted."
+msgstr "تم منح موافقة المالية."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Finance approval: purchase order %s"
+msgstr "موافقة المالية: أمر الشراء %s"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_crm_lead__id
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__id
+#: model:ir.model.fields,field_description:ncollection_approvals.field_purchase_order__id
+#: model:ir.model.fields,field_description:ncollection_approvals.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_approvals.field_sale_order__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_approvals
+#: model:ir.model,name:ncollection_approvals.model_crm_lead
+msgid "Lead"
+msgstr "العميل المحتمل"
+
+#. module: ncollection_approvals
+#: model:ir.actions.act_window,name:ncollection_approvals.action_lead_territory
+#: model:ir.ui.menu,name:ncollection_approvals.menu_lead_territory
 msgid "Lead Territories"
 msgstr "مناطق العملاء المحتملين"
 
 #. module: ncollection_approvals
-msgid "Define a territory"
-msgstr "تعريف منطقة"
+#: model:ir.model.fields,help:ncollection_approvals.field_ncollection_lead_territory__user_id
+msgid "Leads in this territory are assigned to this salesperson."
+msgstr "يتم إسناد العملاء المحتملين في هذه المنطقة إلى مندوب المبيعات هذا."
+
+#. module: ncollection_approvals
+#: model_terms:ir.actions.act_window,help:ncollection_approvals.action_lead_territory
+msgid "Leads whose state or country matches a territory are auto-assigned\n               to its salesperson (state before country; rules ordered by sequence)."
+msgstr "تُسند العملاء المحتملون الذين تطابق ولايتهم أو دولتهم منطقةً ما تلقائيًا إلى مندوب مبيعاتها (الولاية قبل الدولة؛ والقواعد مرتبة بحسب التسلسل)."
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/crm_lead.py:0
+msgid "New lead assigned: %s"
+msgstr "تم إسناد عميل محتمل جديد: %s"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__purchase_order__approval_state__none
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__sale_order__approval_state__none
+msgid "Not Required"
+msgstr "غير مطلوب"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Only a %s approver may act on this purchase order."
+msgstr "يمكن فقط لمعتمِد %s اتخاذ إجراء بشأن أمر الشراء هذا."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/sale_order.py:0
+msgid "Only a Sales Manager may approve sale orders."
+msgstr "يمكن فقط لمدير المبيعات اعتماد أوامر البيع."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Only a department approver may advance a purchase order to finance approval."
+msgstr "يمكن فقط لمعتمِد القسم تمرير أمر الشراء إلى موافقة المالية."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Only a department or finance approver may reject this order."
+msgstr "يمكن فقط لمعتمِد القسم أو المالية رفض هذا الأمر."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "Only a finance approver may set a purchase order to Approved."
+msgstr "يمكن فقط لمعتمِد المالية تعيين أمر الشراء إلى معتمد."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+#: code:addons/ncollection_approvals/models/sale_order.py:0
+msgid "Order total increased beyond the approved amount; approval was reset and must be requested again."
+msgstr "ارتفع إجمالي الأمر بما يتجاوز المبلغ المعتمد؛ تمت إعادة تعيين الموافقة ويجب طلبها من جديد."
+
+#. module: ncollection_approvals
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__purchase_order__approval_state__pending_department
+msgid "Pending Department"
+msgstr "قيد موافقة القسم"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__purchase_order__approval_state__pending_finance
+msgid "Pending Finance"
+msgstr "قيد موافقة المالية"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_res_company__nc_purchase_approval_threshold
+msgid "Purchase Approval Threshold"
+msgstr "حد موافقة الشراء"
+
+#. module: ncollection_approvals
+#: model:res.groups.privilege,name:ncollection_approvals.privilege_purchase_approvals
+msgid "Purchase Approvals"
+msgstr "موافقات الشراء"
+
+#. module: ncollection_approvals
+#: model:res.groups,name:ncollection_approvals.group_approval_purchase_department
+msgid "Purchase Approver: Department"
+msgstr "معتمِد الشراء: القسم"
+
+#. module: ncollection_approvals
+#: model:res.groups,name:ncollection_approvals.group_approval_purchase_finance
+msgid "Purchase Approver: Finance"
+msgstr "معتمِد الشراء: المالية"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,help:ncollection_approvals.field_res_company__nc_purchase_approval_threshold
+msgid "Purchase orders above this total require two-level (department, then finance) approval before confirmation. Set to 0 to disable."
+msgstr "تتطلب أوامر الشراء التي تتجاوز هذا الإجمالي موافقة من مستويين (القسم ثم المالية) قبل التأكيد. اضبطه على 0 للتعطيل."
+
+#. module: ncollection_approvals
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_order_form_nc_approval
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_purchase_order_form_nc_approval
+msgid "Reject"
+msgstr "رفض"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__purchase_order__approval_state__rejected
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__sale_order__approval_state__rejected
+msgid "Rejected"
+msgstr "مرفوض"
+
+#. module: ncollection_approvals
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_order_form_nc_approval
+#: model_terms:ir.ui.view,arch_db:ncollection_approvals.view_purchase_order_form_nc_approval
+msgid "Request Approval"
+msgstr "طلب الموافقة"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_res_company__nc_sale_approval_threshold
+msgid "Sale Approval Threshold"
+msgstr "حد موافقة البيع"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,help:ncollection_approvals.field_res_company__nc_sale_approval_threshold
+msgid "Sale orders above this total require manager approval before they can be confirmed. Set to 0 to disable the gate."
+msgstr "تتطلب أوامر البيع التي تتجاوز هذا الإجمالي موافقة المدير قبل أن يمكن تأكيدها. اضبطه على 0 لتعطيل البوابة."
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__team_id
+msgid "Sales Team"
+msgstr "فريق المبيعات"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__user_id
+msgid "Salesperson"
+msgstr "مندوب المبيعات"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_ncollection_lead_territory__state_ids
+msgid "States/Regions"
+msgstr "الولايات/المناطق"
+
+#. module: ncollection_approvals
+#: model:ir.model.fields,field_description:ncollection_approvals.field_crm_lead__nc_territory_id
+msgid "Territory"
+msgstr "المنطقة"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "These purchase orders exceed the approval threshold and need two-level approval before confirmation (use 'Request Approval'): %s"
+msgstr "تتجاوز أوامر الشراء هذه حد الموافقة وتحتاج إلى موافقة من مستويين قبل التأكيد (استخدم 'طلب الموافقة'): %s"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/sale_order.py:0
+msgid "These sale orders exceed the approval threshold and need Sales Manager approval before confirmation (use 'Request Approval'): %s"
+msgstr "تتجاوز أوامر البيع هذه حد الموافقة وتحتاج إلى موافقة مدير المبيعات قبل التأكيد (استخدم 'طلب الموافقة'): %s"
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/sale_order.py:0
+msgid "This order's total (%(total)s) exceeds the approval threshold and needs Sales Manager approval."
+msgstr "يتجاوز إجمالي هذا الأمر (%(total)s) حد الموافقة ويحتاج إلى موافقة مدير المبيعات."
+
+#. module: ncollection_approvals
+#. odoo-python
+#: code:addons/ncollection_approvals/models/purchase_order.py:0
+msgid "This purchase order's total (%(total)s) exceeds the approval threshold."
+msgstr "يتجاوز إجمالي أمر الشراء هذا (%(total)s) حد الموافقة."
+
+#. module: ncollection_approvals
+#: model:ir.model.fields.selection,name:ncollection_approvals.selection__sale_order__approval_state__to_approve
+msgid "To Approve"
+msgstr "بانتظار الموافقة"
 
 #. module: ncollection_approvals
 msgid "Leads whose state or country matches a territory are auto-assigned to its salesperson (state before country; rules ordered by sequence)."
 msgstr "يتم إسناد العملاء المحتملين الذين تتطابق ولايتهم أو دولتهم مع منطقة تلقائياً إلى مندوب مبيعاتها (الولاية قبل الدولة؛ القواعد مرتبة حسب التسلسل)."
 
 #. module: ncollection_approvals
-msgid "Request Approval"
-msgstr "طلب الموافقة"
-
-#. module: ncollection_approvals
-msgid "Approve (Department)"
-msgstr "اعتماد (القسم)"
-
-#. module: ncollection_approvals
-msgid "Approve (Finance)"
-msgstr "اعتماد (المالية)"
-
-#. module: ncollection_approvals
-msgid "Reject"
-msgstr "رفض"
-
-#. module: ncollection_approvals
-msgid "Approve"
-msgstr "اعتماد"
-
-#. module: ncollection_approvals
-msgid "Approval Thresholds"
-msgstr "حدود الموافقة"
-
-#. module: ncollection_approvals
-msgid "Approvals"
-msgstr "الموافقات"
-
-#. module: ncollection_approvals
-msgid "Purchase Approvals"
-msgstr "موافقات الشراء"
-
-#. module: ncollection_approvals
-msgid "Purchase Approver: Department"
-msgstr "معتمِد الشراء: القسم"
-
-#. module: ncollection_approvals
 msgid "First-level (department) approver in the two-level purchase approval workflow (P3-T07)."
 msgstr "المعتمِد من المستوى الأول (القسم) في سير موافقات الشراء من مستويين (P3-T07)."
-
-#. module: ncollection_approvals
-msgid "Purchase Approver: Finance"
-msgstr "معتمِد الشراء: المالية"
 
 #. module: ncollection_approvals
 msgid "Second-level (finance) approver in the two-level purchase approval workflow (P3-T07)."

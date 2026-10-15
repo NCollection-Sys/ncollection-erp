@@ -134,6 +134,7 @@ action = {
     <!-- ============ Menus (Owner-only) ============ -->
     <menuitem id="menu_workspace_settings_root"
               name="Workspace Settings"
+              web_icon="ncollection_core,static/description/icon_workspace.png"
               sequence="540"
               groups="ncollection_core.group_role_owner"/>
 

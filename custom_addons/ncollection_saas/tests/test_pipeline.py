@@ -239,11 +239,12 @@ class TestAutoProvisioningPipeline(TransactionCase):
         job = self.env['ncollection.provisioning.job'].create({
             'tenant_id': tenant.id, 'database_name': 'albararitrading'})
         mails_before = self.env['mail.mail'].search_count([])
-        job._mark_done(setup_url='http://albararitrading.localhost:8069/web/reset?token=x')
+        self.env['ir.config_parameter'].sudo().set_param('ncollection_saas.base_domain', 'ncollection.localhost')
+        job._mark_done(setup_url='http://albararitrading.ncollection.localhost/web/reset?token=x')
         self.assertEqual(job.status, 'done')
         self.assertEqual(tenant.database_status, 'ready')
         self.assertEqual(tenant.status, 'active', "tenant activated on success")
-        self.assertEqual(tenant.portal_url, 'http://albararitrading.localhost:8069')
+        self.assertEqual(tenant.portal_url, 'http://albararitrading.ncollection.localhost')
         self.assertGreater(self.env['mail.mail'].search_count([]), mails_before,
                            "a welcome email was queued")
 

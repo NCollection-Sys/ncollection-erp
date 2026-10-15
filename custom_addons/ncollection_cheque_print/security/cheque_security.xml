@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Multi-company: a template, a profile or a print job of another company is invisible. A template or a profile
+         with no company is shared by every company. The template FIELDS and the print EVENTS inherit the rule through
+         the record they belong to. -->
+    <record id="rule_cheque_template_company" model="ir.rule">
+        <field name="name">Cheque template: own or shared company</field>
+        <field name="model_id" ref="model_ncollection_cheque_template"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_cheque_field_company" model="ir.rule">
+        <field name="name">Cheque template field: own or shared company</field>
+        <field name="model_id" ref="model_ncollection_cheque_template_field"/>
+        <field name="domain_force">['|', ('template_id.company_id', '=', False), ('template_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_cheque_profile_company" model="ir.rule">
+        <field name="name">Cheque printer profile: own or shared company</field>
+        <field name="model_id" ref="model_ncollection_cheque_printer_profile"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_cheque_job_company" model="ir.rule">
+        <field name="name">Cheque print job: own company</field>
+        <field name="model_id" ref="model_ncollection_cheque_print_job"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_cheque_event_company" model="ir.rule">
+        <field name="name">Cheque print event: own company</field>
+        <field name="model_id" ref="model_ncollection_cheque_print_event"/>
+        <field name="domain_force">[('job_id.company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

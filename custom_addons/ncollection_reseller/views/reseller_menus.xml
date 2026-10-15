@@ -11,6 +11,7 @@
     <!-- ============ Reseller portal root (partner-facing) ============ -->
     <menuitem id="menu_reseller_root"
               name="Reseller"
+              web_icon="ncollection_reseller,static/description/icon.png"
               sequence="15"
               groups="group_reseller"/>
 
@@ -32,5 +33,13 @@
               parent="ncollection_subscription.menu_ncollection_saas_root"
               action="action_reseller"
               sequence="45"/>
+
+    <!-- The Home card of this app reads "العملاء" (Customers) in Arabic. The English source stays "Reseller", and every other
+         "Reseller" string (the field, the group, the form) keeps its own wording, so only THIS menu is renamed. The
+         catalogue carries it for new installs; this writes it on every load for databases that already hold the old
+         Arabic, because loading a catalogue never overwrites an existing translation. Idempotent; a language that is not
+         installed is simply not touched. -->
+    <function model="ir.ui.menu" name="_nc_set_menu_translation"
+              eval="('ncollection_reseller.menu_reseller_root', 'ar_001', 'العملاء')"/>
 
 </odoo>

@@ -1,0 +1,319 @@
+# Arabic (ar_001) translation of ncollection_helpdesk.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_helpdesk\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_helpdesk
+#: model_terms:ir.ui.view,arch_db:ncollection_helpdesk.view_nc_sla_policy_list
+msgid "All teams"
+msgstr "جميع الفرق"
+
+#. module: ncollection_helpdesk
+#: model_terms:ir.ui.view,arch_db:ncollection_helpdesk.view_nc_sla_policy_form
+msgid "All teams (fallback)"
+msgstr "جميع الفرق (احتياطي)"
+
+#. module: ncollection_helpdesk
+#: model_terms:ir.ui.view,arch_db:ncollection_helpdesk.view_nc_sla_policy_form
+msgid "Applies to"
+msgstr "ينطبق على"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__helpdesk_ticket__nc_sla_state__breached
+msgid "Breached"
+msgstr "متجاوَز"
+
+#. module: ncollection_helpdesk
+#: model_terms:ir.ui.view,arch_db:ncollection_helpdesk.view_nc_sla_policy_form
+msgid "Commitment (elapsed hours)"
+msgstr "الالتزام (بالساعات المنقضية)"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_helpdesk_ticket__display_name
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__helpdesk_ticket__nc_sla_state__due_soon
+msgid "Due Soon"
+msgstr "تستحق قريبًا"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_helpdesk_ticket__nc_sla_first_response
+msgid "First Response"
+msgstr "الاستجابة الأولى"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (الشركاء)"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__has_message
+msgid "Has Message"
+msgstr "يحتوي على رسالة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__ncollection_helpdesk_sla_policy__priority__2
+msgid "High"
+msgstr "عالٍ"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__response_hours
+msgid "Hours from ticket creation within which someone must respond."
+msgstr "عدد الساعات منذ إنشاء التذكرة التي يجب خلالها الرد."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__resolution_hours
+msgid "Hours from ticket creation within which the ticket must reach a closing stage."
+msgstr "عدد الساعات منذ إنشاء التذكرة التي يجب خلالها أن تصل التذكرة إلى مرحلة الإغلاق."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_helpdesk_ticket__id
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "إذا تم تحديده، فإن الرسائل الجديدة تتطلب انتباهك."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_has_error
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "إذا تم تحديده، فإن بعض الرسائل بها خطأ في التسليم."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__team_id
+msgid "Leave empty for the fallback policy used by any team that has no policy of its own."
+msgstr "اتركه فارغًا للسياسة الاحتياطية التي يستخدمها أي فريق ليس لديه سياسة خاصة."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__ncollection_helpdesk_sla_policy__priority__0
+msgid "Low"
+msgstr "منخفض"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ في تسليم الرسالة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__helpdesk_ticket__nc_sla_state__met
+msgid "Met"
+msgstr "مستوفى"
+
+#. module: ncollection_helpdesk
+#: model:ir.actions.server,name:ncollection_helpdesk.cron_nc_sla_scan_ir_actions_server
+msgid "NCollection: helpdesk SLA scan"
+msgstr "NCollection: فحص اتفاقية مستوى الخدمة لمكتب المساعدة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__helpdesk_ticket__nc_sla_state__none
+msgid "No Policy"
+msgstr "بلا سياسة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__ncollection_helpdesk_sla_policy__priority__1
+msgid "Normal"
+msgstr "عادي"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلب إجراءً"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ في التسليم"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__helpdesk_ticket__nc_sla_state__on_track
+msgid "On Track"
+msgstr "على المسار الصحيح"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__priority
+msgid "Priority"
+msgstr "الأولوية"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_helpdesk_ticket__nc_sla_state
+msgid "Refreshed by the SLA scan cron and on every write that can change it. May lag reality by up to one cron interval."
+msgstr "تُحدَّث بواسطة مهمة فحص اتفاقية مستوى الخدمة وعند كل كتابة قد تغيّرها. قد تتأخر عن الواقع بما يصل إلى فترة جدولة واحدة."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__resolution_hours
+msgid "Resolution (hours)"
+msgstr "المعالجة (بالساعات)"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_helpdesk_ticket__nc_sla_resolution_deadline
+msgid "Resolution Due"
+msgstr "موعد المعالجة"
+
+#. module: ncollection_helpdesk
+#. odoo-python
+#: code:addons/ncollection_helpdesk/models/sla_policy.py:0
+msgid "Resolution hours cannot be shorter than response hours (policy \"%s\")."
+msgstr "زمن المعالجة لا يمكن أن يكون أقصر من زمن الاستجابة (السياسة \"%s\")."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__response_hours
+msgid "Response (hours)"
+msgstr "الاستجابة (بالساعات)"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_helpdesk_ticket__nc_sla_response_deadline
+msgid "Response Due"
+msgstr "موعد الاستجابة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_helpdesk_ticket__nc_sla_state
+msgid "SLA"
+msgstr "اتفاقية مستوى الخدمة"
+
+#. module: ncollection_helpdesk
+#: model:ir.actions.act_window,name:ncollection_helpdesk.action_nc_sla_policy
+#: model:ir.ui.menu,name:ncollection_helpdesk.menu_nc_sla_policy
+#: model_terms:ir.ui.view,arch_db:ncollection_helpdesk.view_nc_sla_policy_list
+msgid "SLA Policies"
+msgstr "سياسات اتفاقية مستوى الخدمة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_helpdesk_ticket__nc_sla_policy_id
+#: model_terms:ir.ui.view,arch_db:ncollection_helpdesk.view_nc_sla_policy_form
+msgid "SLA Policy"
+msgstr "سياسة اتفاقية مستوى الخدمة"
+
+#. module: ncollection_helpdesk
+#. odoo-python
+#: code:addons/ncollection_helpdesk/models/sla_policy.py:0
+msgid "SLA hours must be greater than zero (policy \"%s\")."
+msgstr "يجب أن تكون ساعات اتفاقية مستوى الخدمة أكبر من صفر (السياسة \"%s\")."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "خطأ في تسليم الرسائل القصيرة"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__team_id
+msgid "Team"
+msgstr "الفريق"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.constraint,message:ncollection_helpdesk.constraint_ncollection_helpdesk_sla_policy_nc_sla_unique_combo
+msgid "There is already an SLA policy for this company, team and priority."
+msgstr "توجد بالفعل سياسة اتفاقية مستوى خدمة لهذه الشركة وهذا الفريق وهذه الأولوية."
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields.selection,name:ncollection_helpdesk.selection__ncollection_helpdesk_sla_policy__priority__3
+msgid "Urgent"
+msgstr "عاجل"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,field_description:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع الإلكتروني"
+
+#. module: ncollection_helpdesk
+#: model:ir.model.fields,help:ncollection_helpdesk.field_ncollection_helpdesk_sla_policy__website_message_ids
+msgid "Website communication history"
+msgstr "سجل التواصل على الموقع الإلكتروني"
+
+#. module: ncollection_helpdesk
+#: model_terms:ir.ui.view,arch_db:ncollection_helpdesk.view_nc_sla_policy_form
+msgid "e.g. Finance — Urgent"
+msgstr "مثال: المالية — عاجل"

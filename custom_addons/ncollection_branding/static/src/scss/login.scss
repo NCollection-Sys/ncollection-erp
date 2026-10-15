@@ -330,3 +330,15 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
         padding: 32px 16px;
     }
 }
+
+// the copy under the Log in button: larger and always underlined, so the way back in is never hard to find
+.o_nc_login__forgot--below {
+    display: inline-block;
+    font-size: 0.95rem;
+    text-decoration: underline;
+}
+
+.o_nc_login__lang {
+    font-size: 0.85rem;
+    color: var(--nc-color-secondary, #{$ncollection-secondary});
+}

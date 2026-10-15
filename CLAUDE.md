@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **25**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **26**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -135,6 +135,15 @@ adding a module fails CI until someone updates this list.
   lacks: the **account-type guard** (a profile pointed at a plain `expense` account
   leaves #114's cash flow balanced and reconciling while its Operating/Investing split
   is silently wrong), the **transfer** flow, and the **Asset Register** on the F2 engine.
+- `ncollection_cheque_print` — prints the variable data of an `account.payment` onto a PRE-PRINTED bank cheque. Templates are
+  data (`ncollection.cheque.template` + fields in millimetres; Mashreq NeoBiz / ADCB / FAB ship as records, a fourth bank
+  needs no Python), a drag-and-drop designer (OWL view widget), an exact-size reportlab PDF (no A4 wrapper, no browser
+  scaling; pure-Python Arabic shaping), printer calibration, and an append-only print-job audit (reprint / void need a
+  reason). Never generates MICR, logos or security elements. Shared words service lives in `ncollection_account_core`
+  (`ncollection.amount.words`). Shipped sizes are PROVISIONAL (`dimensions_confirmed=False`) until measured on paper.
+  **A companion module**: entitled exactly when its tenant has Accounting (`ncollection_subscription/models/companions.py`,
+  applied in the one authority `_nc_effective_module_list`); never named in a plan, never in the plan picker.
+  Docs: `docs/markdown/CHEQUE_PRINTING.md`.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
 

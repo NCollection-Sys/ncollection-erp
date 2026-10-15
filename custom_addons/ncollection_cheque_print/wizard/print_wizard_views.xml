@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nc_cheque_print_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.cheque.print.wizard.form</field>
+        <field name="model">ncollection.cheque.print.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="notice" readonly="1" invisible="not notice" nolabel="1"/>
+                <group>
+                    <group string="Payment">
+                        <field name="payment_id" options="{'no_create': True}" readonly="context.get('default_payment_id')"/>
+                        <field name="payee"/>
+                        <field name="payment_date"/>
+                        <field name="amount"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="Cheque">
+                        <field name="template_id" options="{'no_create': True}"/>
+                        <field name="template_confirmed" widget="boolean" readonly="1"/>
+                        <field name="profile_id" options="{'no_create': True}"/>
+                        <field name="output_lang"/>
+                        <field name="cheque_number"/>
+                    </group>
+                </group>
+                <div class="text-muted">
+                    Preview first: the print preview shows exactly what will be printed (watermarked so it is never mistaken
+                    for a print). Printing records the cheque; printing it again later needs a reason.
+                </div>
+                <footer>
+                    <button name="action_print" type="object" string="Print cheque" class="btn-primary" data-hotkey="q"/>
+                    <button name="action_preview" type="object" string="Print preview" class="btn-secondary"/>
+                    <button name="action_preview_design" type="object" string="Design preview" class="btn-secondary"/>
+                    <button name="action_calibration" type="object" string="Calibration sheet" class="btn-secondary"/>
+                    <button string="Close" class="btn-link" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,208 @@
+// The cheque template designer. Brand tokens only, the shared card surface for the side panel, logical properties
+// throughout (test_rtl_conformance). The CANVAS itself is a direction:ltr island set in the template (dir="ltr"), because
+// it is a physical page measured in millimetres from the left edge: inside it, "inline-start" IS the left edge.
+
+.nc-chq {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nc-space-3);
+    font-family: var(--nc-font-family, inherit);
+
+    &__toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--nc-space-2);
+    }
+
+    &__add {
+        display: flex;
+        gap: var(--nc-space-2);
+        align-items: center;
+    }
+
+    &__check {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--nc-space-1);
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+        margin: 0;
+    }
+
+    &__spacer {
+        flex: 1 1 auto;
+    }
+
+    &__status {
+        min-inline-size: 7rem;
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+
+        &[data-status="saved"] { color: var(--nc-color-success, #1a7f4b); }
+        &[data-status="error"] { color: var(--nc-color-danger, #b3261e); }
+    }
+
+    &__banner {
+        padding: var(--nc-space-2) var(--nc-space-3);
+        border-radius: var(--nc-radius-md);
+        background: var(--nc-surface-raised);
+        border: 1px dashed var(--nc-surface-border);
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+    }
+
+    &__badge {
+        display: inline-block;
+        padding: 0 var(--nc-space-2);
+        margin-inline-end: var(--nc-space-2);
+        border-radius: var(--nc-radius-md);
+        font-weight: var(--nc-font-weight-semibold);
+        color: var(--nc-surface-raised);
+        background: var(--nc-color-primary);
+    }
+
+    &__body {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--nc-space-3);
+        align-items: flex-start;
+    }
+
+    &__stage {
+        flex: 1 1 32rem;
+        min-inline-size: 0;
+    }
+
+    &__canvas {
+        position: relative;
+        background-color: var(--nc-surface-raised);
+        border: 1px solid var(--nc-surface-border);
+        box-shadow: var(--nc-shadow-sm, 0 1px 3px rgba(0, 0, 0, .12));
+        overflow: hidden;
+        user-select: none;
+        touch-action: none;
+    }
+
+    &__image {
+        position: absolute;
+        inset: 0;
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: fill;
+        opacity: .75;
+        pointer-events: none;
+    }
+
+    &__box {
+        position: absolute;
+        box-sizing: border-box;
+        border: 1px dashed var(--nc-color-primary);
+        background: rgba(31, 95, 143, .08);
+        cursor: move;
+        display: flex;
+        align-items: center;
+        overflow: visible;
+        color: #000;
+        line-height: 1.1;
+
+        &.is-selected {
+            border-style: solid;
+            border-width: 2px;
+            background: rgba(31, 95, 143, .18);
+            z-index: 2;
+        }
+
+        &.is-hidden {
+            opacity: .45;
+            border-color: var(--nc-text-muted);
+        }
+    }
+
+    &__tag {
+        position: absolute;
+        inset-block-end: 100%;
+        inset-inline-start: 0;
+        font-size: 9px;
+        line-height: 1;
+        padding: 1px 3px;
+        color: var(--nc-surface-raised);
+        background: var(--nc-color-primary);
+        white-space: nowrap;
+        pointer-events: none;
+    }
+
+    &__text {
+        inline-size: 100%;
+        overflow: hidden;
+        text-overflow: clip;
+        pointer-events: none;
+    }
+
+    &__handle {
+        position: absolute;
+        inset-inline-end: -5px;
+        inset-block-end: -5px;
+        inline-size: 10px;
+        block-size: 10px;
+        background: var(--nc-color-primary);
+        border: 1px solid var(--nc-surface-raised);
+        cursor: nwse-resize;
+    }
+
+    &__dims {
+        margin-block-start: var(--nc-space-1);
+        font-size: var(--nc-font-size-xs);
+        color: var(--nc-text-muted);
+    }
+
+    &__panel {
+        flex: 0 0 18rem;
+        display: flex;
+        flex-direction: column;
+        gap: var(--nc-space-2);
+        padding: var(--nc-space-3);
+    }
+
+    &__panel-title {
+        font-weight: var(--nc-font-weight-semibold);
+        color: var(--nc-text);
+    }
+
+    &__grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--nc-space-2);
+
+        label, input { inline-size: 100%; }
+    }
+
+    &__row,
+    &__grid label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+        margin: 0;
+    }
+
+    &__row input,
+    &__row select,
+    &__grid input {
+        font-size: var(--nc-font-size-sm);
+    }
+
+    &__inline {
+        display: flex;
+        align-items: center;
+        gap: var(--nc-space-1);
+        font-size: var(--nc-font-size-sm);
+        color: var(--nc-text-muted);
+    }
+
+    &__empty {
+        color: var(--nc-text-muted);
+        font-size: var(--nc-font-size-sm);
+    }
+}

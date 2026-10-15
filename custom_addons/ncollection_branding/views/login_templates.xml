@@ -144,6 +144,18 @@
             <a t-if="reset_password_enabled" class="o_nc_login__forgot" tabindex="1"
                t-attf-href="/web/reset_password?{{ keep_query() }}">Forgot password?</a>
         </xpath>
+        <!-- A second, unmissable copy under the Log in button: the small link beside the Password label was easy to
+             overlook, and on a new workspace nobody has a way back in without it. Same guard, same target. -->
+        <xpath expr="//div[hasclass('oe_login_buttons')]" position="after">
+            <div class="text-center mt-3" t-if="reset_password_enabled">
+                <a class="o_nc_login__forgot o_nc_login__forgot--below" tabindex="2"
+                   t-attf-href="/web/reset_password?{{ keep_query() }}">Forgot password?</a>
+            </div>
+            <div class="text-center mt-2" t-if="nc_lang_toggle">
+                <a class="o_nc_login__lang" tabindex="3" t-attf-href="/web/login?lang={{ nc_lang_toggle['code'] }}"
+                   t-out="nc_lang_toggle['name']"/>
+            </div>
+        </xpath>
     </template>
 
 </odoo>

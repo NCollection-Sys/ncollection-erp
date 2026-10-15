@@ -1,0 +1,421 @@
+# Arabic (ar_001) translation of ncollection_reseller.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_reseller\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/reseller.py:0
+msgid "%(value)r is not a valid colour for '%(field)s'. Use a 6-digit hex colour such as #1F5F8F."
+msgstr "%(value)r ليس لونًا صالحًا للحقل '%(field)s'. استخدم لونًا سداسيًا من 6 خانات مثل #1F5F8F."
+
+#. module: ncollection_reseller
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_form
+msgid "Account"
+msgstr "الحساب"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__billing_cycle
+msgid "Billing Cycle"
+msgstr "دورة الفوترة"
+
+#. module: ncollection_reseller
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_form
+msgid "Brand (cascaded to sub-tenants)"
+msgstr "العلامة التجارية (تنتقل إلى المستأجرين الفرعيين)"
+
+#. module: ncollection_reseller
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_provision_wizard_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__company_name
+msgid "Company Name"
+msgstr "اسم الشركة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__email
+msgid "Contact Email"
+msgstr "البريد الإلكتروني للتواصل"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__contact_name
+msgid "Contact Name"
+msgstr "اسم جهة الاتصال"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__create_uid
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__create_date
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__currency_id
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__display_name
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__display_name
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__display_name
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_tenant__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (الشركاء)"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__has_message
+msgid "Has Message"
+msgstr "يحتوي على رسالة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__id
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__id
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__id
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_tenant__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "إذا تم تحديده، فإن الرسائل الجديدة تتطلب انتباهك."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__message_has_error
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "إذا تم تحديده، فإن بعض الرسائل بها خطأ في التسليم."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__write_uid
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__write_date
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__brand_login_background
+msgid "Login Background"
+msgstr "خلفية شاشة الدخول"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__max_subtenants
+msgid "Max Sub-Tenants"
+msgstr "الحد الأقصى للمستأجرين الفرعيين"
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/reseller.py:0
+msgid "Max sub-tenants cannot be negative (use 0 for unlimited)."
+msgstr "لا يمكن أن يكون الحد الأقصى للمستأجرين الفرعيين سالبًا (استخدم 0 لغير محدود)."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__max_subtenants
+msgid "Maximum number of sub-tenants this reseller may provision. 0 = unlimited (fail-open, like plan seat limits)."
+msgstr "الحد الأقصى لعدد المستأجرين الفرعيين الذين يمكن لهذا الموزّع إنشاؤهم. القيمة 0 تعني غير محدود."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ في تسليم الرسالة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields.selection,name:ncollection_reseller.selection__ncollection_reseller_provision_wizard__billing_cycle__monthly
+msgid "Monthly"
+msgstr "شهري"
+
+#. module: ncollection_reseller
+#: model:ir.actions.act_window,name:ncollection_reseller.action_reseller_subtenants
+msgid "My Sub-Tenants"
+msgstr "المستأجرون الفرعيون التابعون لي"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلب إجراءً"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ في التسليم"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__brand_login_background
+msgid "Optional login-screen background cascaded to sub-tenants."
+msgstr "خلفية اختيارية لشاشة الدخول تنتقل إلى المستأجرين الفرعيين."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__partner_id
+msgid "Partner"
+msgstr "الشريك"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__revenue_share_pct
+msgid "Percentage of sub-tenant MRR owed to this reseller, used by the revenue-share report."
+msgstr "النسبة المئوية من الإيرادات الشهرية المتكررة للمستأجرين الفرعيين المستحقة لهذا الموزّع، وتُستخدم في تقرير اقتسام الإيرادات."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__plan_id
+msgid "Plan"
+msgstr "الخطة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__user_id
+msgid "Portal Login"
+msgstr "تسجيل دخول البوابة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__brand_primary_color
+msgid "Primary Colour"
+msgstr "اللون الأساسي"
+
+#. module: ncollection_reseller
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_provision_wizard_form
+msgid "Provision"
+msgstr "تهيئة"
+
+#. module: ncollection_reseller
+#: model:ir.actions.act_window,name:ncollection_reseller.action_reseller_provision_wizard
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_form
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_provision_wizard_form
+msgid "Provision Sub-Tenant"
+msgstr "تهيئة مستأجر فرعي"
+
+#. module: ncollection_reseller
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_form
+msgid "Quota & Revenue"
+msgstr "الحصة والإيرادات"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__reseller_id
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__reseller_id
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_tenant__reseller_id
+#: model:res.groups,name:ncollection_reseller.group_reseller
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_form
+msgid "Reseller"
+msgstr "الموزّع"
+
+#. module: ncollection_reseller
+# The Home card only: reads "Customers" in Arabic; every other "Reseller" keeps its own wording above.
+#: model:ir.ui.menu,name:ncollection_reseller.menu_reseller_root
+msgid "Reseller"
+msgstr "العملاء"
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/tenant.py:0
+msgid "Reseller '%(name)s' has reached its sub-tenant quota (%(max)s). Provisioning is blocked until the limit is raised."
+msgstr "وصل الموزّع '%(name)s' إلى حصة المستأجرين الفرعيين (%(max)s). التهيئة متوقفة حتى رفع الحد."
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/revenue_share.py:0
+msgid "Reseller Revenue Share"
+msgstr "اقتسام إيرادات الموزّع"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__brand_secondary_color
+msgid "Reseller accent colour. 6-digit hex."
+msgstr "لون التمييز للموزّع. لون سداسي من 6 خانات."
+
+#. module: ncollection_reseller
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_form
+msgid "Reseller name"
+msgstr "اسم الموزّع"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__brand_primary_color
+msgid "Reseller primary brand colour cascaded onto each sub-tenant (overrides the NCollection default). 6-digit hex, e.g. #1F5F8F."
+msgstr "اللون الأساسي للعلامة التجارية للموزّع، ينتقل إلى كل مستأجر فرعي (ويتجاوز الافتراضي لدى NCollection). لون سداسي من 6 خانات، مثل #1F5F8F."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__brand_sidebar_color
+msgid "Reseller sidebar colour. 6-digit hex."
+msgstr "لون الشريط الجانبي للموزّع. لون سداسي من 6 خانات."
+
+#. module: ncollection_reseller
+#: model:ir.actions.act_window,name:ncollection_reseller.action_reseller
+#: model:ir.ui.menu,name:ncollection_reseller.menu_saas_resellers
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_list
+msgid "Resellers"
+msgstr "الموزّعون"
+
+#. module: ncollection_reseller
+#: model:ir.actions.act_window,name:ncollection_reseller.action_revenue_share
+#: model:ir.ui.menu,name:ncollection_reseller.menu_reseller_revenue_share
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_revenue_share_list
+msgid "Revenue Share"
+msgstr "اقتسام الإيرادات"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__revenue_share_pct
+msgid "Revenue Share (%)"
+msgstr "اقتسام الإيرادات (%)"
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/reseller.py:0
+msgid "Revenue share must be between 0 and 100 percent."
+msgstr "يجب أن تكون حصة الإيرادات بين 0 و100 بالمئة."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "خطأ في تسليم الرسائل القصيرة"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__brand_secondary_color
+msgid "Secondary Colour"
+msgstr "اللون الثانوي"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__revenue_share_pct
+msgid "Share (%)"
+msgstr "الحصة (%)"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__share_amount
+msgid "Share Owed (monthly)"
+msgstr "الحصة المستحقة (شهريًا)"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__brand_sidebar_color
+msgid "Sidebar Colour"
+msgstr "لون الشريط الجانبي"
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/reseller.py:0
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__subtenant_count
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__tenant_ids
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__subtenant_count
+#: model:ir.ui.menu,name:ncollection_reseller.menu_reseller_subtenants
+#: model_terms:ir.ui.view,arch_db:ncollection_reseller.view_reseller_form
+msgid "Sub-Tenants"
+msgstr "المستأجرون الفرعيون"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__partner_id
+msgid "The business partner (admin DB) this reseller account belongs to."
+msgstr "الشريك التجاري (في قاعدة بيانات الإدارة) الذي ينتمي إليه حساب هذا الموزّع."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__user_id
+msgid "The platform user who signs in to manage this reseller's sub-tenants. Record rules scope the reseller dashboard to the tenants owned by this user's reseller."
+msgstr "مستخدم المنصة الذي يسجّل الدخول لإدارة المستأجرين الفرعيين لهذا الموزّع. تحصر قواعد السجلات لوحة الموزّع بالمستأجرين الذين يملكهم موزّع هذا المستخدم."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_tenant__reseller_id
+msgid "The white-label reseller that provisioned this sub-tenant. Empty for direct (non-reseller) tenants — the standard checkout flow is unchanged."
+msgstr "الموزّع ذو العلامة البيضاء الذي هيّأ هذا المستأجر الفرعي. يكون فارغًا للمستأجرين المباشرين (غير الموزّعين) — فمسار الدفع القياسي لا يتغير."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_revenue_share__total_mrr
+msgid "Total MRR"
+msgstr "إجمالي الإيرادات الشهرية المتكررة"
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/reseller.py:0
+msgid "Unknown or inactive plan."
+msgstr "خطة غير معروفة أو غير نشطة."
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع الإلكتروني"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__website_message_ids
+msgid "Website communication history"
+msgstr "سجل التواصل على الموقع الإلكتروني"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields,field_description:ncollection_reseller.field_ncollection_reseller_provision_wizard__subdomain
+msgid "Workspace Address"
+msgstr "عنوان مساحة العمل"
+
+#. module: ncollection_reseller
+#: model:ir.model.fields.selection,name:ncollection_reseller.selection__ncollection_reseller_provision_wizard__billing_cycle__yearly
+msgid "Yearly"
+msgstr "سنوي"
+
+#. module: ncollection_reseller
+#. odoo-python
+#: code:addons/ncollection_reseller/models/reseller.py:0
+msgid "You may only provision sub-tenants under your own reseller account."
+msgstr "لا يمكنك تهيئة مستأجرين فرعيين إلا تحت حساب الموزّع الخاص بك."

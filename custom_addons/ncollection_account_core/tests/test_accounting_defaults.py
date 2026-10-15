@@ -100,12 +100,13 @@ class TestAccountingDefaults(AccountTestInvoicingCommon):
             'company_ids': [(6, 0, self.company_b.ids)]})
         from odoo.exceptions import AccessError
         refused = False
-        try:                                                         # the record rule or the ORM check, whichever first
+        try:                                                  # the record rule or the ORM check, whichever first
             self.company.with_user(self.owner).write({'nc_default_receivable_id': foreign.id})
         except (ValidationError, AccessError):
             refused = True
         self.assertTrue(refused)
-        self.assertNotEqual(self._defaults(self.company)[('res.partner', 'property_account_receivable_id')], foreign.id)
+        stored = self._defaults(self.company)[('res.partner', 'property_account_receivable_id')]
+        self.assertNotEqual(stored, foreign.id)
 
     def test_clearing_a_default_removes_it(self):
         self.company.with_user(self.owner).write({'nc_default_payable_id': self.pay_new.id})

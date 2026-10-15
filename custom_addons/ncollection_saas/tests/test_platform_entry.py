@@ -32,6 +32,7 @@ class TestPlatformEntry(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.env['ir.config_parameter'].sudo().set_param('web.base.url', 'http://localhost:8069')
+        cls.env['ir.config_parameter'].sudo().set_param('ncollection_saas.base_domain', 'ncollectionerp.com')
         group = cls.env.ref(PLATFORM_GROUP).id
         internal = cls.env.ref('base.group_user').id
         cls.alice = cls.env['res.users'].create({
@@ -63,23 +64,24 @@ class TestPlatformEntry(TransactionCase):
         self.assertEqual(action['type'], 'ir.actions.act_url')
         self.assertTrue(url.netloc.startswith('atlas.'), url.netloc)
         self.assertEqual(url.path, '/ncollection/platform/enter')
-        self.assertEqual(url.scheme, 'https')                 # the computed public name (no entry_url_template set)
+        self.assertEqual(url.scheme, 'https')                 # a real (non-loopback) base domain is served over https
         token = parse_qs(url.fragment)['token'][0]
         self.assertGreaterEqual(len(token), 40)
         self.assertEqual(post.call_count, 1)
 
-    def test_the_entry_host_comes_from_system_configuration_only(self):
-        """The deployment's entry_url_template (a system parameter) decides where the browser goes; with none, the
-        computed public name is used."""
+    def test_the_entry_host_comes_from_the_one_tenant_url_builder(self):
+        """Entry uses the same builder as the tenant list: <subdomain>.<base domain> (scheme and port from system
+        configuration). There is no second, entry-only template to disagree with it."""
         Param = self.env['ir.config_parameter'].sudo()
-        Param.set_param('ncollection_saas.entry_url_template', 'http://{db}.localhost:8069')
+        Param.set_param('ncollection_saas.base_domain', 'ncollection.localhost')
         tenant = self._tenant('Gamma', 'gamma', self.alice)
         url = urlparse(self._enter(tenant, self.alice)[0]['url'])
         self.assertEqual((url.scheme, url.netloc, url.path),
-                         ('http', 'gamma.localhost:8069', '/ncollection/platform/enter'))
-        Param.set_param('ncollection_saas.entry_url_template', '')
-        url = urlparse(self._enter(self._tenant('Delta', 'delta', self.alice), self.alice)[0]['url'])
-        self.assertTrue(url.netloc.startswith('delta.'), url.netloc)
+                         ('http', 'gamma.ncollection.localhost', '/ncollection/platform/enter'))
+        self.assertEqual(self._enter(tenant, self.alice)[0]['url'].split('/ncollection')[0], tenant.tenant_url)
+        Param.set_param('ncollection_saas.url_port', '8069')
+        url = urlparse(self._enter(tenant, self.alice)[0]['url'])
+        self.assertEqual(url.netloc, 'gamma.ncollection.localhost:8069')
 
     def test_a_hostile_portal_url_or_tenant_field_cannot_redirect_the_token(self):
         """Any platform administrator can write a tenant's own fields. None of them may choose the host that
@@ -88,12 +90,14 @@ class TestPlatformEntry(TransactionCase):
         url = urlparse(self._enter(tenant, self.alice)[0]['url'])
         self.assertNotIn('evil.example', url.netloc)
         self.assertTrue(url.netloc.startswith('evilco.'), url.netloc)
-        # a malformed system template is refused rather than followed (userinfo trick, wrong scheme)
+        # a malformed system base domain is refused rather than followed (userinfo trick), and so is none at all
         Param = self.env['ir.config_parameter'].sudo()
-        for bad in ('http://trusted@evil.example/{db}', 'javascript:alert(1)//{db}', 'ftp://{db}.example'):
-            Param.set_param('ncollection_saas.entry_url_template', bad)
-            with self.assertRaises(UserError, msg=bad):
-                self._enter(tenant, self.alice)
+        Param.set_param('ncollection_saas.base_domain', 'trusted@evil.example')
+        with self.assertRaises(UserError):
+            self._enter(tenant, self.alice)
+        Param.set_param('ncollection_saas.base_domain', '')
+        with patch.dict(os.environ, {'NC_BASE_DOMAIN': ''}), self.assertRaises(UserError):
+            self._enter(tenant, self.alice)
 
     def test_a_refusal_names_the_http_status_and_the_remedy(self):
         with self.assertRaises(UserError) as caught:
@@ -205,7 +209,8 @@ class TestPlatformEntry(TransactionCase):
             self.atlas.with_user(self.bob).write({'platform_admin_ids': [(4, self.bob.id)]})
         with self.assertRaises(AccessError):
             self.env['ncollection.tenant'].with_user(self.bob).create({
-                'company_name': 'Self granted', 'database_name': 'selfgrant', 'platform_admin_ids': [(4, self.bob.id)]})
+                'company_name': 'Self granted', 'database_name': 'selfgrant',
+                'platform_admin_ids': [(4, self.bob.id)]})
         self.assertNotIn(self.bob, self.atlas.platform_admin_ids)
         admin = self.env['res.users'].create({
             'name': 'Settings admin', 'login': 'plat_settings', 'group_ids': [(6, 0, [

@@ -18,14 +18,6 @@
             <field name="value">20</field>
         </record>
 
-        <!-- Portal-URL template for a provisioned tenant. {db} is substituted
-             with the tenant database/subdomain. Dev routes by subdomain on
-             localhost; P2-T06 productionises real domains + SSL. -->
-        <record id="param_portal_url_template" model="ir.config_parameter">
-            <field name="key">ncollection_saas.portal_url_template</field>
-            <field name="value">http://{db}.localhost:8069</field>
-        </record>
-
     </data>
 
     <data noupdate="0">

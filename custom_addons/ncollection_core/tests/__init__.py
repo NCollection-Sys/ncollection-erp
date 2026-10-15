@@ -31,3 +31,5 @@ from . import test_platform_entry
 from . import test_assets_compile
 from . import test_platform_proxy_credentials
 from . import test_launcher_apps
+from . import test_legacy_base_url
+from . import test_home_ui

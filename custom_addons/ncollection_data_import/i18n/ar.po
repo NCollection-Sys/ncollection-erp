@@ -1,0 +1,224 @@
+# Arabic (ar_001) translation of ncollection_data_import.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_data_import\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "%s issue(s) found — nothing was imported."
+msgstr "تم العثور على %s مشكلة — لم يُستورد شيء."
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "%s row(s) validated with no blocking errors — you can import this file now."
+msgstr "تم التحقق من %s صف دون أخطاء مانعة — يمكنك استيراد هذا الملف الآن."
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "A guided path over Odoo's own importer. Recommended order —\n                            each step can reference the ones before it:\n                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>."
+msgstr "مسار موجَّه فوق أداة الاستيراد الأصلية في Odoo. الترتيب الموصى به — يمكن لكل خطوة الإشارة إلى الخطوات التي قبلها: <b>المنتجات ← العملاء ← الموردون ← المخزون الافتتاحي ← الأرصدة الافتتاحية</b>."
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "Check a file before importing (optional)"
+msgstr "تحقق من ملف قبل الاستيراد (اختياري)"
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "Close"
+msgstr "إغلاق"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__customers
+msgid "Customers"
+msgstr "العملاء"
+
+#. module: ncollection_data_import
+#: model:ir.ui.menu,name:ncollection_data_import.menu_data_import_root
+msgid "Data Import"
+msgstr "استيراد البيانات"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__entity
+msgid "Data set"
+msgstr "مجموعة البيانات"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__data_fname
+msgid "File name"
+msgstr "اسم الملف"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__data_file
+msgid "File to validate"
+msgstr "الملف المراد التحقق منه"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "Fix these and validate again:"
+msgstr "أصلح هذه المشكلات ثم تحقق مجددًا:"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_data_import
+#: model:ir.actions.act_window,name:ncollection_data_import.action_data_import_onboarding
+#: model:ir.ui.menu,name:ncollection_data_import.menu_data_import_onboarding
+msgid "Import Tenant Data"
+msgstr "استيراد بيانات مساحة العمل"
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "Import your data"
+msgstr "استورد بياناتك"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "Open Odoo import →"
+msgstr "فتح الاستيراد في Odoo ←"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__opening_balances
+msgid "Opening Balances"
+msgstr "الأرصدة الافتتاحية"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "Opening Balances (Chart of Accounts)"
+msgstr "الأرصدة الافتتاحية (دليل الحسابات)"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__opening_stock
+msgid "Opening Stock"
+msgstr "المخزون الافتتاحي"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "Opening Stock (Physical Inventory)"
+msgstr "المخزون الافتتاحي (الجرد الفعلي)"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "Pick a data set first."
+msgstr "اختر مجموعة بيانات أولًا."
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__products
+msgid "Products"
+msgstr "المنتجات"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "Some rows share the same External ID (%(ids)s). Each row must point to a DIFFERENT record — rows with the same ID overwrite each other instead of creating/updating separately."
+msgstr "تتشارك بعض الصفوف المعرّف الخارجي نفسه (%(ids)s). يجب أن يشير كل صف إلى سجل مختلف — فالصفوف ذات المعرّف نفسه تستبدل بعضها بدلًا من الإنشاء أو التحديث بشكل منفصل."
+
+#. module: ncollection_data_import
+#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__suppliers
+msgid "Suppliers"
+msgstr "الموردون"
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "Tenant Data Import"
+msgstr "استيراد بيانات مساحة العمل"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "The External ID column still contains the placeholder text. Export your Chart of Accounts first to get each account's real External ID, then paste them in (one distinct ID per row)."
+msgstr "عمود المعرّف الخارجي لا يزال يحتوي على النص النموذجي. صدّر دليل حساباتك أولًا للحصول على المعرّف الخارجي الحقيقي لكل حساب، ثم الصقها (معرّف مختلف لكل صف)."
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "This file is too large to validate here. Import it on Odoo's own import screen, which loads large files in batches."
+msgstr "هذا الملف كبير جدًا للتحقق منه هنا. استورده في شاشة الاستيراد الأصلية في Odoo التي تحمّل الملفات الكبيرة على دفعات."
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "Upload a CSV file to validate first."
+msgstr "ارفع ملف CSV للتحقق منه أولًا."
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "Upload a filled-in CSV to dry-run it: no data is written, and any\n                        problems are reported per row in plain language."
+msgstr "ارفع ملف CSV معبّأ لتجربته دون كتابة أي بيانات؛ وتُبلَّغ أي مشكلات لكل صف بلغة واضحة."
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "Validate file"
+msgstr "التحقق من الملف"
+
+#. module: ncollection_data_import
+#: model:ir.model.fields,field_description:ncollection_data_import.field_ncollection_data_import_onboarding__result_html
+msgid "Validation result"
+msgstr "نتيجة التحقق"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "Vendors"
+msgstr "الموردون"
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "…and %s more."
+msgstr "…و%s أخرى."
+
+#. module: ncollection_data_import
+#. odoo-python
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0
+msgid "✓ Looks good."
+msgstr "✓ يبدو سليمًا."
+
+#. module: ncollection_data_import
+#: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
+msgid "⬇ Download template"
+msgstr "⬇ تنزيل القالب"

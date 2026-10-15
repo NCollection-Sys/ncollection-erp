@@ -1,0 +1,553 @@
+# Arabic (ar_001) translation of ncollection_account_budget.
+# NCollection ERP — P3-T08. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_budget\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget_line.py:0
+msgid "%(budget)s is %(state)s — its lines cannot be deleted. Revise it to make a new version."
+msgstr "%(budget)s في حالة %(state)s — لا يمكن حذف بنودها. راجِعها لإنشاء إصدار جديد."
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget_line.py:0
+msgid "%(budget)s is %(state)s — only a draft budget's lines can be changed. Revise it to make a new version."
+msgstr "%(budget)s في حالة %(state)s — لا يمكن تعديل إلا بنود الميزانية المسودة. راجِعها لإنشاء إصدار جديد."
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget.py:0
+msgid "%s (revised)"
+msgstr "%s (منقّحة)"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget.py:0
+msgid "%s has already been superseded by a revision; reopening it would leave two live budgets for one period."
+msgstr "%s استُبدلت بالفعل بمراجعة؛ وإعادة فتحها ستترك ميزانيتين فعّالتين لفترة واحدة."
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget.py:0
+msgid "%s has no lines, so approving it would approve nothing."
+msgstr "%s لا تحتوي على بنود، لذا فاعتمادها لن يعتمد شيئًا."
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+msgid "2026 Operating Budget"
+msgstr "ميزانية التشغيل 2026"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget.py:0
+msgid "A budget cannot end before it starts."
+msgstr "لا يمكن أن تنتهي الميزانية قبل أن تبدأ."
+
+#. module: ncollection_account_budget
+#: model:ir.model.constraint,message:ncollection_account_budget.constraint_ncollection_account_budget_line_amount_not_zero
+msgid "A budget line of zero budgets nothing — leave it out instead."
+msgstr "بند الميزانية الصفري لا يرصد شيئًا — اتركه خارج الميزانية."
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/wizard/budget_report.py:0
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__account_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_line_budget_list
+msgid "Account"
+msgstr "الحساب"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__account_ids
+msgid "Accounts"
+msgstr "الحسابات"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_ids
+msgid "Activities"
+msgstr "الأنشطة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "تمييز الأنشطة المستثناة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_state
+msgid "Activity State"
+msgstr "حالة النشاط"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "أيقونة نوع النشاط"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/wizard/budget_report.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_line_budget_list
+msgid "Actual"
+msgstr "الفعلي"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__amount
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__analytic_distribution
+msgid "Analytic Distribution"
+msgstr "التوزيع التحليلي"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__analytic_precision
+msgid "Analytic Precision"
+msgstr "دقة التحليل"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+msgid "Approve"
+msgstr "اعتماد"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields.selection,name:ncollection_account_budget.selection__ncollection_account_budget__state__approved
+msgid "Approved"
+msgstr "معتمدة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/wizard/budget_report.py:0
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__budget_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_line_budget_list
+msgid "Budget"
+msgstr "الميزانية"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+msgid "Budget Lines"
+msgstr "بنود الميزانية"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/wizard/budget_report.py:0
+#: model:ir.actions.act_window,name:ncollection_account_budget.action_report_budget_actual_wizard
+#: model:ir.actions.client,name:ncollection_account_budget.action_nc_view_budget_actual
+#: model:ir.actions.report,name:ncollection_account_budget.action_report_budget_actual
+#: model:ir.ui.menu,name:ncollection_account_budget.menu_report_budget_actual
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_budget_actual_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_line_budget_list
+msgid "Budget vs Actual"
+msgstr "الميزانية مقابل الفعلي"
+
+#. module: ncollection_account_budget
+#: model:ir.actions.act_window,name:ncollection_account_budget.action_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__budget_ids
+#: model:ir.ui.menu,name:ncollection_account_budget.menu_budget
+#: model:ir.ui.menu,name:ncollection_account_budget.menu_budget_root
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_list
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_budget_actual_form
+msgid "Budgets"
+msgstr "الميزانيات"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_budget_actual_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__company_id
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__company_id
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__comparison_date_from
+msgid "Compare From"
+msgstr "المقارنة من"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__comparison_date_to
+msgid "Compare To"
+msgstr "المقارنة إلى"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__comparison_type
+msgid "Compare With"
+msgstr "المقارنة مع"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__create_date
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__create_date
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__currency_id
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__date_from
+msgid "Date From"
+msgstr "من تاريخ"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__date_to
+msgid "Date To"
+msgstr "إلى تاريخ"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__display_name
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__distribution_analytic_account_ids
+msgid "Distribution Analytic Account"
+msgstr "الحساب التحليلي للتوزيع"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields.selection,name:ncollection_account_budget.selection__ncollection_account_budget__state__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_budget_actual_form
+msgid "Export PDF"
+msgstr "تصدير PDF"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_budget_actual_form
+msgid "Export XLSX"
+msgstr "تصدير XLSX"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (الشركاء)"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "أيقونة Font Awesome مثل fa-tasks"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__date_from
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__has_message
+msgid "Has Message"
+msgstr "يحتوي على رسالة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__id
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__id
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_exception_icon
+msgid "Icon"
+msgstr "الأيقونة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "أيقونة تشير إلى نشاط استثنائي."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "إذا تم تحديده، فإن الرسائل الجديدة تتطلب انتباهك."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__message_has_error
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "إذا تم تحديده، فإن بعض الرسائل بها خطأ في التسليم."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_line_budget_list
+msgid "Journal Items"
+msgstr "عناصر دفتر اليومية"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__journal_ids
+msgid "Journals"
+msgstr "دفاتر اليومية"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__write_date
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__write_date
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_report_budget_actual__budget_ids
+msgid "Leave empty to include every approved budget covering the period."
+msgstr "اتركه فارغًا لتضمين كل ميزانية معتمدة تغطي الفترة."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__line_ids
+msgid "Line"
+msgstr "البند"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ في تسليم الرسالة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "الموعد النهائي لنشاطي"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__name
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget_line__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr "حدث التقويم للنشاط التالي"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "الموعد النهائي للنشاط التالي"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_summary
+msgid "Next Activity Summary"
+msgstr "ملخص النشاط التالي"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_type_id
+msgid "Next Activity Type"
+msgstr "نوع النشاط التالي"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+msgid "Note"
+msgstr "ملاحظة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلب إجراءً"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ في التسليم"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget.py:0
+msgid "Only a draft budget can be approved; %(name)s is %(state)s."
+msgstr "لا يمكن اعتماد إلا الميزانية المسودة؛ %(name)s في حالة %(state)s."
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget.py:0
+msgid "Only an approved budget can be revised; %(name)s is %(state)s."
+msgstr "لا يمكن مراجعة إلا الميزانية المعتمدة؛ %(name)s في حالة %(state)s."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__partner_ids
+msgid "Partners"
+msgstr "الشركاء"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_budget_actual_form
+msgid "Period"
+msgstr "الفترة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+msgid "Reset to Draft"
+msgstr "إعادة التعيين إلى مسودة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__activity_user_id
+msgid "Responsible User"
+msgstr "المستخدم المسؤول"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+msgid "Revise"
+msgstr "مراجعة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields.selection,name:ncollection_account_budget.selection__ncollection_account_budget__state__revised
+msgid "Revised"
+msgstr "منقّحة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__revised_from_id
+msgid "Revised From"
+msgstr "منقّحة من"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/models/budget.py:0
+msgid "Revised by %s."
+msgstr "تمت المراجعة بواسطة %s."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__revision_ids
+msgid "Revision"
+msgstr "المراجعة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "خطأ في تسليم الرسائل القصيرة"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_budget_form
+msgid "Scope"
+msgstr "النطاق"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__activity_state
+msgid "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities."
+msgstr "الحالة بناءً على الأنشطة\nمتأخر: تاريخ الاستحقاق قد مضى\nاليوم: تاريخ النشاط هو اليوم\nمخطط: أنشطة مستقبلية."
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/wizard/budget_report.py:0
+msgid "TOTAL"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__target_move
+msgid "Target Moves"
+msgstr "الحركات المستهدفة"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__revised_from_id
+msgid "The approved budget this one revises."
+msgstr "الميزانية المعتمدة التي تراجعها هذه الميزانية."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget_line__account_id
+msgid "The financial account this line budgets."
+msgstr "الحساب المالي الذي ترصد له هذا البند ميزانية."
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_report_budget_actual__date_to
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "نوع النشاط الاستثنائي في السجل."
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/wizard/budget_report.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_line_budget_list
+msgid "Variance"
+msgstr "الانحراف"
+
+#. module: ncollection_account_budget
+#. odoo-python
+#: code:addons/ncollection_account_budget/wizard/budget_report.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_line_budget_list
+msgid "Variance %"
+msgstr "الانحراف %"
+
+#. module: ncollection_account_budget
+#: model_terms:ir.ui.view,arch_db:ncollection_account_budget.view_report_budget_actual_form
+msgid "View"
+msgstr "عرض"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,field_description:ncollection_account_budget.field_ncollection_account_budget__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع الإلكتروني"
+
+#. module: ncollection_account_budget
+#: model:ir.model.fields,help:ncollection_account_budget.field_ncollection_account_budget__website_message_ids
+msgid "Website communication history"
+msgstr "سجل التواصل على الموقع الإلكتروني"

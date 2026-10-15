@@ -26,4 +26,12 @@
         <field name="name">Accounting</field>
     </record>
 
+    <!-- Renaming changes the ENGLISH source only. Odoo keeps whatever Arabic the menu already had, so without this the
+         Arabic Home card for this app kept saying "Invoicing" (الفوترة) while the English one said "Accounting". A
+         catalogue entry cannot fix an existing database either: loading a catalogue never overwrites a translation that
+         is already there. So the Arabic name is written alongside the rename, on every load, through Odoo's own
+         translation API (idempotent; a language that is not installed is simply not touched). -->
+    <function model="ir.ui.menu" name="_nc_set_menu_translation"
+              eval="('account.menu_finance', 'ar_001', 'المحاسبة')"/>
+
 </odoo>

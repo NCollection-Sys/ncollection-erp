@@ -11,48 +11,2531 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_saas
-msgid "Tenant Backup"
-msgstr "النسخة الاحتياطية للمستأجر"
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid " %(n)s tenant(s) skipped (no config-sync account — they predate it and hold no key to rotate): %(names)s."
+msgstr "تم تخطي %(n)s مستأجر (لا يوجد حساب لمزامنة الإعدادات — فهم سابقون له ولا يملكون مفتاحًا لتدويره): %(names)s."
 
 #. module: ncollection_saas
-msgid "Daily"
-msgstr "يومي"
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "%(body)s\n\nThis failure cannot heal itself — the nightly reconcile will keep retrying without success until the cause is fixed (typically a stale per-tenant key; see #221)."
+msgstr "%(body)s\n\nلا يمكن لهذا الفشل أن يُصلح نفسه — ستواصل المطابقة الليلية المحاولة دون نجاح إلى أن يُعالج السبب (غالبًا مفتاح قديم خاص بالمستأجر؛ راجع #221)."
 
 #. module: ncollection_saas
-msgid "Weekly"
-msgstr "أسبوعي"
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%(company)s did not accept the entry (HTTP %(status)s). Its workspace modules are probably out of date: upgrade ncollection_core on it (Fleet Migration), then try again."
+msgstr "%(company)s لم تقبل الدخول (HTTP %(status)s). وحدات مساحة عملها على الأرجح قديمة: حدّث ncollection_core عليها (ترحيل الأسطول) ثم أعد المحاولة."
 
 #. module: ncollection_saas
-msgid "Monthly"
-msgstr "شهري"
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%s cannot be entered right now (it is not provisioned, or it is suspended or expired)."
+msgstr "لا يمكن دخول %s الآن (لم تتم تهيئتها، أو أنها معلّقة أو منتهية)."
 
 #. module: ncollection_saas
-msgid "Pending"
-msgstr "قيد الانتظار"
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%s could not be reached. Try again in a moment."
+msgstr "تعذّر الوصول إلى %s. حاول مرة أخرى بعد قليل."
 
 #. module: ncollection_saas
-msgid "Running"
-msgstr "قيد التشغيل"
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%s entered this company as Platform Administrator."
+msgstr "دخل %s هذه الشركة بصفته مدير المنصّة."
 
 #. module: ncollection_saas
-msgid "Done"
-msgstr "تم"
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%s has no safe address to enter."
+msgstr "%s ليس لها عنوان آمن للدخول."
 
 #. module: ncollection_saas
-msgid "Failed"
-msgstr "فشل"
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%s has no valid database registered."
+msgstr "%s ليس لها قاعدة بيانات صالحة مسجّلة."
 
 #. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "%s is not set, so no per-tenant key can be derived. Set it in the secrets store / .env and retry — refusing rather than reporting a rotation that did not happen."
+msgstr "%s غير مضبوط، لذا لا يمكن اشتقاق مفتاح لكل مستأجر. اضبطه في مخزن الأسرار أو ملف .env ثم أعد المحاولة — فنحن نرفض بدلًا من الإبلاغ عن تدوير لم يحدث."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "'%s' already has a workspace; it cannot be rejected."
+msgstr "'%s' لديها مساحة عمل بالفعل؛ لا يمكن رفضها."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/backup_restore.py:0
+msgid "'%s' is a live tenant database. Choose a scratch/staging name — THIS WIZARD never overwrites a live tenant. (An in-place rollback of a tenant's OWN snapshot is a different path: action_restore_in_place, #244.)"
+msgstr "'%s' قاعدة بيانات مستأجر فعّالة. اختر اسمًا لبيئة تجريبية أو اختبار — هذا المعالج لا يستبدل مستأجرًا فعّالًا أبدًا. (الاستعادة في المكان من لقطة المستأجر نفسه مسار مختلف: action_restore_in_place، #244.)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "'%s' is already being provisioned."
+msgstr "'%s' قيد التهيئة بالفعل."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "'%s' is already provisioned; nothing was created."
+msgstr "'%s' مُهيّأة بالفعل؛ لم يُنشأ شيء."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/res_config_settings.py:0
+msgid "'%s' is not a valid base domain. Use a hostname with at least two labels, e.g. example.com."
+msgstr "'%s' ليس نطاقًا أساسيًا صالحًا. استخدم اسم مضيف من جزأين على الأقل، مثل example.com."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "'%s' was rejected. Reopen the request before provisioning."
+msgstr "تم رفض '%s'. أعد فتح الطلب قبل التهيئة."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid ")\n                            is the shared baseline for every tenant that uses it. Anything\n                            changed on this tab applies to <strong>this tenant only</strong>\n                            — the plan and every other tenant stay exactly as they were."
+msgstr ") هي الأساس المشترك لكل مستأجر يستخدمها. أي تغيير على هذا التبويب يسري على <strong>هذا المستأجر فقط</strong> — وتبقى الخطة وكل مستأجر آخر كما هي تمامًا."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration_line__wave
+msgid "0 = canary; 1..N = rolling waves."
+msgstr "0 = تجريبي؛ 1..N = موجات تدريجية."
+
+#. module: ncollection_saas
+#: model:mail.template,body_html:ncollection_saas.mail_template_checkout_verify
+msgid "<div style=\"font-family:Arial,sans-serif;color:#0F172A;\">\n                    <p>Hi <t t-out=\"object.contact_name or object.company_name\"/>,</p>\n                    <p>Thanks for registering <strong t-out=\"object.company_name\"/>. Confirm your\n                       contact email so we can review your request. Your workspace\n                       <strong t-out=\"object.database_name\"/> is created once an\n                       administrator approves it.</p>\n                    <p>\n                        <a t-attf-href=\"{{ object.get_base_url() }}/nc/checkout/verify/{{ object.checkout_token }}\" style=\"display:inline-block;padding:10px 18px;background:#1F5F8F;color:#fff;                                   text-decoration:none;border-radius:6px;\">Confirm my email</a>\n                    </p>\n                    <p style=\"color:#64748B;font-size:13px;\">If you didn't request this, you can ignore this email.</p>\n                </div>\n            "
+msgstr "<div style=\"font-family:Arial,sans-serif;color:#0F172A;\"><p>مرحبًا <t t-out=\"object.contact_name or object.company_name\"/>،</p><p>شكرًا لتسجيل <strong t-out=\"object.company_name\"/>. أكّد بريدك الإلكتروني للتواصل حتى نراجع طلبك. يتم إنشاء مساحة عملك <strong t-out=\"object.database_name\"/> بعد موافقة المسؤول.</p><p><a t-attf-href=\"{{ object.get_base_url() }}/nc/checkout/verify/{{ object.checkout_token }}\" style=\"display:inline-block;padding:10px 18px;background:#1F5F8F;color:#fff; text-decoration:none;border-radius:6px;\">تأكيد بريدي الإلكتروني</a></p><p style=\"color:#64748B;font-size:13px;\">إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة.</p></div>"
+
+#. module: ncollection_saas
+#: model:mail.template,body_html:ncollection_saas.mail_template_tenant_welcome
+msgid "<div style=\"margin:0;padding:0;\">\n                    <p>Hi <t t-out=\"object.contact_name or object.company_name or ''\"/>,</p>\n                    <p>Your registration was approved and your NCollection workspace for\n                        <strong t-out=\"object.company_name or ''\"/> is ready.</p>\n                    <p>\n                        <a t-att-href=\"object.portal_url\" t-att-style=\"'background:%s;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;' % (object.create_uid.company_id.email_secondary_color or '#1F5F8F')\">\n                            Open your workspace\n                        </a>\n                    </p>\n                    <p>Workspace address: <t t-out=\"object.portal_url or ''\"/></p>\n                    <p t-if=\"object.admin_login\">Username: <strong t-out=\"object.admin_login\"/></p>\n                    <p t-if=\"ctx.get('nc_setup_url')\">\n                        To get started, set your password here:\n                        <a t-att-href=\"ctx.get('nc_setup_url')\" t-out=\"ctx.get('nc_setup_url')\"/>\n                    </p>\n                    <p t-else=\"\">\n                        Sign in with this username and the password you chose when you\n                        registered. If you have forgotten it, use “Forgot password?” on the\n                        login page.\n                    </p>\n                </div>\n            "
+msgstr "<div style=\"margin:0;padding:0;\"><p>مرحبًا <t t-out=\"object.contact_name or object.company_name or ''\"/>،</p><p>تمت الموافقة على تسجيلك وأصبحت مساحة عمل NCollection الخاصة بـ <strong t-out=\"object.company_name or ''\"/> جاهزة.</p><p><a t-att-href=\"object.portal_url\" t-att-style=\"'background:%s;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;' % (object.create_uid.company_id.email_secondary_color or '#1F5F8F')\">افتح مساحة عملك</a></p><p>عنوان مساحة العمل: <t t-out=\"object.portal_url or ''\"/></p><p t-if=\"object.admin_login\">اسم المستخدم: <strong t-out=\"object.admin_login\"/></p><p t-if=\"ctx.get('nc_setup_url')\">للبدء، عيّن كلمة مرورك هنا: <a t-att-href=\"ctx.get('nc_setup_url')\" t-out=\"ctx.get('nc_setup_url')\"/></p><p t-else=\"\">سجّل الدخول بهذا الاسم وكلمة المرور التي اخترتها عند التسجيل. وإذا نسيتها فاستخدم «نسيت كلمة المرور؟» في صفحة الدخول.</p></div>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<small class=\"nc-checkout__hint\" data-i18n=\"f.email.hint\">For notices and password recovery. This is not your login.</small>"
+msgstr "<small class=\"nc-checkout__hint\" data-i18n=\"f.email.hint\">للإشعارات واستعادة كلمة المرور. هذا ليس اسم الدخول.</small>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<small class=\"nc-checkout__hint\" data-i18n=\"f.username.hint\">You sign in with this username, not your email. Lowercase letters, digits, . _ -</small>"
+msgstr "<small class=\"nc-checkout__hint\" data-i18n=\"f.username.hint\">تسجّل الدخول بهذا الاسم وليس ببريدك. أحرف صغيرة وأرقام و . _ -</small>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+msgid "<span class=\"nc-checkout__per\">/ mo</span>"
+msgstr "<span class=\"nc-checkout__per\">/ شهريًا</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"f.company\">Company name</span>"
+msgstr "<span data-i18n=\"f.company\">اسم الشركة</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"f.contact\">Your name</span>"
+msgstr "<span data-i18n=\"f.contact\">اسمك</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"f.email\">Contact email</span>"
+msgstr "<span data-i18n=\"f.email\">البريد الإلكتروني للتواصل</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"f.password\">Password</span>"
+msgstr "<span data-i18n=\"f.password\">كلمة المرور</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"f.password2\">Confirm password</span>"
+msgstr "<span data-i18n=\"f.password2\">تأكيد كلمة المرور</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"f.subdomain\">Workspace address (subdomain)</span>"
+msgstr "<span data-i18n=\"f.subdomain\">عنوان مساحة العمل (النطاق الفرعي)</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"f.username\">Username</span>"
+msgstr "<span data-i18n=\"f.username\">اسم المستخدم</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"form.sub\">Request a workspace on the</span>"
+msgstr "<span data-i18n=\"form.sub\">اطلب مساحة عمل على خطة</span>"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "<span data-i18n=\"form.sub2\">plan. We review every request before the workspace is created.</span>"
+msgstr "<span data-i18n=\"form.sub2\">. نراجع كل طلب قبل إنشاء مساحة العمل.</span>"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup_restore_wizard__target_db
+msgid "A NON-live database name. The restore refuses to overwrite an existing tenant's database."
+msgstr "اسم قاعدة بيانات غير مباشرة. ترفض الاستعادة الكتابة فوق قاعدة بيانات مستأجر قائم."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "A backup's tenant cannot be reassigned. Snapshot '%(b)s' belongs to '%(t)s'; repointing it would let a restore claim another tenant's database as its own."
+msgstr "لا يمكن إعادة إسناد مستأجر النسخة الاحتياطية. اللقطة '%(b)s' تخص '%(t)s'؛ وإعادة توجيهها ستسمح لاستعادة بادّعاء قاعدة بيانات مستأجر آخر على أنها قاعدتها."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "A backup's tenant database name is stamped at creation and can never be written (snapshot %r). It is what the restore guard resolves the file's directory from, so rewriting it would let a restore claim another tenant's dump."
+msgstr "اسم قاعدة بيانات مستأجر النسخة الاحتياطية يُختم عند الإنشاء ولا يمكن كتابته أبدًا (اللقطة %r). فمنه يحدّد حارس الاستعادة مجلد الملف، وإعادة كتابته ستسمح لاستعادة بادّعاء ملف مستأجر آخر."
+
+#. module: ncollection_saas
+#: model:ir.model.constraint,message:ncollection_saas.constraint_ncollection_domain_fqdn_uniq
+msgid "A domain record for this FQDN already exists."
+msgstr "يوجد بالفعل سجلّ نطاق لهذا الـ FQDN."
+
+#. module: ncollection_saas
+#: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_domain
+msgid "A domain record is created for every provisioned tenant. Platform\n                subdomains ride the wildcard certificate automatically."
+msgstr "يُنشأ سجل نطاق لكل مستأجر مُهيّأ. وتعتمد النطاقات الفرعية للمنصة تلقائيًا على الشهادة العامة (wildcard)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "A manual restore-in-place of %(db)s dropped the database and then FAILED to restore it. Recover from off-box backup or PITR (see RUNBOOK_FLEET_MIGRATION)."
+msgstr "فشلت استعادة %(db)s في المكان يدويًا بعد حذف قاعدة البيانات. استرجع من نسخة خارج الجهاز أو PITR (راجع RUNBOOK_FLEET_MIGRATION)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "A required job is DISABLED on %(db)s: %(detail)s\n\nOdoo deactivates a cron by itself after repeated failures, so this is usually a symptom rather than someone switching it off. The job stays off until re-enabled by hand."
+msgstr "مهمة مطلوبة معطّلة على %(db)s: %(detail)s\n\nيعطّل Odoo المهمة المجدولة بنفسه بعد إخفاقات متكررة، لذا فهذا عادةً عَرَض وليس إيقافًا متعمدًا. وتبقى المهمة متوقفة حتى تُعاد يدويًا."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__cron_health_state__degraded
+msgid "A required job is off"
+msgstr "مهمة مطلوبة متوقفة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_accepts_rate
+msgid "Accepts Pushed Rates"
+msgstr "يقبل الأسعار المُرسَلة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_needaction
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_needaction
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_subscription_form_saas
+msgid "Activate"
+msgstr "تفعيل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_ids
+msgid "Activities"
+msgstr "الأنشطة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_exception_decoration
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_exception_decoration
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "تمييز الأنشطة المستثناة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_state
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_state
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_state
+msgid "Activity State"
+msgstr "حالة النشاط"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_type_icon
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_type_icon
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "أيقونة نوع النشاط"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Already installed: %s. Nothing to do."
+msgstr "مثبّتة بالفعل: %s. لا شيء للقيام به."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__localization_applied_state__done
+msgid "Applied"
+msgstr "مُطبَّق"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Apply Country Localization"
+msgstr "تطبيق توطين الدولة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__upgrading
+msgid "Applying"
+msgstr "جارٍ التطبيق"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Approve & Provision"
+msgstr "موافقة وتهيئة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Approve this registration and create the company's workspace now?"
+msgstr "الموافقة على هذا التسجيل وإنشاء مساحة عمل الشركة الآن؟"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_attachment_count
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_attachment_count
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Audit Log"
+msgstr "سجلّ التدقيق"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__auto_restore
+msgid "Auto-restore on failure"
+msgstr "استعادة تلقائية عند الفشل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_verify_invalid
+msgid "Back to pricing"
+msgstr "العودة إلى التسعير"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__backup_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__backup_id
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+msgid "Backup"
+msgstr "نسخة احتياطية"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Backup '%s' has no tenant database, so the file it points at cannot be attributed to anyone. Refusing to restore it."
+msgstr "النسخة الاحتياطية '%s' ليس لها قاعدة بيانات مستأجر، فلا يمكن نسب الملف الذي تشير إليه إلى أحد. نرفض استعادتها."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__file_path
 msgid "Backup File"
 msgstr "ملف النسخة الاحتياطية"
 
 #. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__backup_type
+msgid "Backup Type"
+msgstr "نوع النسخة الاحتياطية"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Backup file %(f)s does not belong to tenant '%(db)s' (expected it under %(root)s). Restoring a dump this record did not produce would serve another tenant's data."
+msgstr "الملف %(f)s لا يتبع المستأجر '%(db)s' (كان متوقعًا تحت %(root)s). استعادة ملف لم ينتجه هذا السجل ستعرض بيانات مستأجر آخر."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__nc_base_domain
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "Base Domain"
+msgstr "النطاق الأساسي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__canary_failed
+msgid "Canary Failed"
+msgstr "فشل الاختبار التجريبي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__canary
+msgid "Canary Running"
+msgstr "الاختبار التجريبي قيد التشغيل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__canary_tenant_ids
+msgid "Canary Tenants"
+msgstr "المستأجرون التجريبيون (Canary)"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Canary Tenants (verification gate)"
+msgstr "المستأجرون التجريبيون (بوابة التحقق)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Canary failed — fleet rollout halted."
+msgstr "فشل الاختبار التجريبي — توقّف طرح الأسطول."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__cancelled
+msgid "Cancelled"
+msgstr "ملغى"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Cannot create a backup for a tenant with no database name — it could never be taken or restored."
+msgstr "لا يمكن إنشاء نسخة احتياطية لمستأجر بلا اسم قاعدة بيانات — فلن تُؤخذ ولن تُستعاد أبدًا."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Changed by"
+msgstr "تم التغيير بواسطة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Changes made for this tenant"
+msgstr "التغييرات الخاصة بهذا المستأجر"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__checkout_email_verified
+msgid "Checkout Email Verified"
+msgstr "تم التحقق من بريد التسجيل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__checkout_source_ip
+msgid "Checkout Source Ip"
+msgstr "عنوان IP لمصدر التسجيل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__checkout_token
+msgid "Checkout Token"
+msgstr "رمز التسجيل"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Choose a subscription plan for '%s' before provisioning."
+msgstr "اختر خطة اشتراك لـ '%s' قبل التهيئة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Cleared the database left by this job's previous, unfinished attempt."
+msgstr "تم مسح قاعدة البيانات المتبقية من المحاولة السابقة غير المكتملة لهذه المهمة."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__module_names
+msgid "Comma-separated technical module names to act on across every ready tenant."
+msgstr "أسماء الوحدات التقنية مفصولة بفواصل ليُطبَّق عليها عبر كل مستأجر جاهز."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__completed_at
+msgid "Completed At"
+msgstr "اكتمل في"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_state
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Config Sync"
+msgstr "مزامنة الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_last_error
+msgid "Config Sync Last Error"
+msgstr "آخر خطأ في مزامنة الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_last_ok
+msgid "Config Sync Last OK"
+msgstr "آخر مزامنة ناجحة للإعدادات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Config sync FAILED for %(db)s (%(state)s): %(error)s"
+msgstr "فشلت مزامنة الإعدادات لـ %(db)s (%(state)s): %(error)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Config sync RECOVERED for %(db)s."
+msgstr "تعافت مزامنة الإعدادات لـ %(db)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Config sync recovered for %(db)s."
+msgstr "تعافت مزامنة الإعدادات لـ %(db)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Config sync to %(db)s has returned an unreadable required-job report %(n)s times in a row (%(detail)s).\n\nThe pushes themselves SUCCEEDED — the configuration is being applied. What is missing is the tenant's self-report, so the platform currently cannot tell whether that tenant's compliance jobs are running. The job-health shown for it is stale, not healthy."
+msgstr "أعادت مزامنة الإعدادات إلى %(db)s تقرير مهام مطلوبة غير قابل للقراءة %(n)s مرات متتالية (%(detail)s).\n\nنجحت عمليات الدفع نفسها — فالإعدادات تُطبَّق. الناقص هو التقرير الذاتي للمستأجر، لذا لا تستطيع المنصة حاليًا معرفة ما إذا كانت مهام الامتثال لديه تعمل. حالة صحة المهام المعروضة له قديمة وليست سليمة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "Config-sync key re-key: %(outcome)s (%(detail)s)"
+msgstr "إعادة مفتاح مزامنة الإعدادات: %(outcome)s (%(detail)s)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "Config-sync re-key"
+msgstr "إعادة مفتاح مزامنة الإعدادات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Configuration synchronisation pushes this tenant's entitlement,\n                        limits and subscription status into its own database, where\n                        licensing is enforced. It runs automatically on every change and\n                        is retried by a reconciliation cron; the buttons in the header\n                        force it now."
+msgstr "تدفع مزامنة الإعدادات استحقاق هذا المستأجر وحدوده وحالة اشتراكه إلى قاعدة بياناته، حيث يُفرض الترخيص. وتعمل تلقائيًا عند كل تغيير ويُعاد محاولتها بمهمة مطابقة؛ وأزرار الترويسة تفرضها الآن."
+
+#. module: ncollection_saas
+#: model:mail.template,subject:ncollection_saas.mail_template_checkout_verify
+msgid "Confirm your email — registration request for {{ object.company_name }}"
+msgstr "أكّد بريدك الإلكتروني — طلب تسجيل لـ {{ object.company_name }}"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_failure_count
+msgid "Consecutive Sync Failures"
+msgstr "إخفاقات المزامنة المتتالية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__cron_report_miss_count
+msgid "Consecutive config-sync pushes whose required-job self-report could not be read. Reset by the first readable report."
+msgstr "عمليات دفع إعدادات متتالية تعذّرت قراءة التقرير الذاتي لمهامها المطلوبة. يُعاد العدّاد إلى الصفر عند أول تقرير مقروء."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Create & Provision Tenant"
+msgstr "إنشاء وتهيئة المستأجر"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Create this tenant's database and workspace now?"
+msgstr "إنشاء قاعدة بيانات هذا المستأجر ومساحة عمله الآن؟"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__cron_health_detail
+msgid "Cron Health Detail"
+msgstr "تفاصيل صحة المهام المجدولة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__cron_report_miss_count
+msgid "Cron Report Miss Count"
+msgstr "عدد تقارير المهام الفائتة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__current_wave
+msgid "Current Wave"
+msgstr "الموجة الحالية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__domain_type__custom
+msgid "Custom Domain"
+msgstr "نطاق مخصّص"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
+msgid "Custom Domains"
+msgstr "النطاقات المخصّصة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Customize modules"
+msgstr "تخصيص الوحدات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "DEV MODE — temporary credentials (no forced reset): %s"
+msgstr "وضع التطوير — بيانات اعتماد مؤقتة (دون إعادة تعيين إجبارية): %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "DONE — tenant database is login-ready."
+msgstr "تم — قاعدة بيانات المستأجر جاهزة لتسجيل الدخول."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "DRY-RUN: would run `odoo %(flag)s %(m)s` on %(db)s."
+msgstr "تجربة جافة: كان سيُنفَّذ `odoo %(flag)s %(m)s` على %(db)s."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__backup_type__daily
+msgid "Daily"
+msgstr "يومي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Database '%s' already exists (collision)."
+msgstr "قاعدة البيانات '%s' موجودة بالفعل (تعارض)."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__database_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__database_name
+msgid "Database Name"
+msgstr "اسم قاعدة البيانات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Database created; modules installed: %s"
+msgstr "تم إنشاء قاعدة البيانات؛ الوحدات المثبّتة: %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Database name '%s' is reserved (a platform or maintenance database) and cannot be assigned to a tenant."
+msgstr "اسم قاعدة البيانات '%s' محجوز (قاعدة بيانات منصّة أو صيانة) ولا يمكن تخصيصه لمستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Database name '%s' is reserved."
+msgstr "اسم قاعدة البيانات '%s' محجوز."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Disabled on the tenant: %(jobs)s"
+msgstr "معطّلة على المستأجر: %(jobs)s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_provisioning_job__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_saas_subprocess_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid "Domain"
+msgstr "النطاق"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__fqdn
+msgid "Domain (FQDN)"
+msgstr "النطاق (FQDN)"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__domain_type
+msgid "Domain Type"
+msgstr "نوع النطاق"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_tree
+msgid "Domains"
+msgstr "النطاقات"
+
+#. module: ncollection_saas
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_domain
+#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_domains
+msgid "Domains & SSL"
+msgstr "النطاقات و SSL"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__done
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__done
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__done
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
+msgid "Done"
+msgstr "تم"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__done_count
+msgid "Done Count"
+msgstr "عدد المنجز"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__dry_run
+msgid "Dry Run"
+msgstr "تجربة جافة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_exchange_rate__usd_per_eur
+msgid "ECB's published USD rate against its EUR base, stored raw. Tenants derive their own base currency from it."
+msgstr "سعر الدولار الأمريكي المنشور من البنك المركزي الأوروبي مقابل اليورو كأساس، مخزَّن خامًا. يشتق المستأجرون عملتهم الأساسية منه."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Each row is a deliberate exception to the plan, with who made it\n                        and why. Deleting a row restores exactly what the plan says.\n                        Removing a module withdraws the licence and hides the app — it\n                        never uninstalls the module or deletes any data."
+msgstr "كل صف استثناء متعمَّد من الخطة، مع من أنشأه ولماذا. حذف الصف يعيد ما تقوله الخطة تمامًا. إزالة وحدة تسحب الترخيص وتخفي التطبيق — ولا تُلغي تثبيت الوحدة ولا تحذف أي بيانات."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
+msgid "Enter Company"
+msgstr "دخول الشركة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+msgid "Error"
+msgstr "خطأ"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__error_log
+msgid "Error Log"
+msgstr "سجل الأخطاء"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "Every tenant is reachable at <subdomain>.<base domain>. Changing the base domain changes the URL of every tenant at once."
+msgstr "كل مستأجر متاح على <النطاق الفرعي>.<النطاق الأساسي>. تغيير النطاق الأساسي يغيّر رابط كل مستأجر دفعة واحدة."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__ssl_status__expired
+msgid "Expired"
+msgstr "منتهي الصلاحية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__ssl_status__expiring
+msgid "Expiring Soon"
+msgstr "على وشك الانتهاء"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
+msgid "Expiring within 14 days"
+msgstr "ستنتهي خلال 14 يوماً"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "FAILED (snapshot %(b)s kept for manual restore). %(d)s"
+msgstr "فشل (اللقطة %(b)s محفوظة للاستعادة اليدوية). %(d)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "FAILED, and RESTORE FAILED — the database may be gone, manual recovery needed. upgrade: %(u)s / restore: %(r)s"
+msgstr "فشل، وفشلت الاستعادة — قد تكون قاعدة البيانات مفقودة وتلزم استعادة يدوية. الترقية: %(u)s / الاستعادة: %(r)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "FAILED, auto-restored from snapshot. %s"
+msgstr "فشل، وتمت الاستعادة تلقائيًا من اللقطة. %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "FAILED: %s"
+msgstr "فشل: %s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__failed
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__failed
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__failed
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__localization_applied_state__error
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__failed
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
+msgid "Failed"
+msgstr "فشل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__failed_count
+msgid "Failed Count"
+msgstr "عدد الإخفاقات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Failures"
+msgstr "الإخفاقات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__fetched_at
+msgid "Fetched At"
+msgstr "تم الجلب في"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__finished_at
+msgid "Finished At"
+msgstr "انتهى في"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Fleet Migration"
+msgstr "ترحيل الأسطول"
+
+#. module: ncollection_saas
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_fleet_migration
+#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_fleet_migration
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
+msgid "Fleet Migrations"
+msgstr "ترحيلات الأسطول"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Fleet migration %s"
+msgstr "ترحيل الأسطول %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Fleet migration complete (%s)."
+msgstr "اكتمل ترحيل الأسطول (%s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Fleet migration: tenant %s needs manual recovery"
+msgstr "ترحيل الأسطول: المستأجر %s يحتاج إلى استعادة يدوية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_follower_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_follower_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_partner_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_partner_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (الشركاء)"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_type_icon
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_type_icon
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "أيقونة Font Awesome مثل fa-tasks"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "For a tenant provisioned before its country was set.                                   New tenants are localized at provisioning, which is the                                   only moment a chart of accounts can be loaded safely."
+msgstr "لمستأجر تمت تهيئته قبل ضبط بلده. يُوطَّن المستأجرون الجدد عند التهيئة، وهي اللحظة الوحيدة التي يمكن فيها تحميل دليل الحسابات بأمان."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__fqdn
+msgid "Fully-qualified hostname, e.g. acme.ncollectionerp.com."
+msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.ncollectionerp.com."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
+msgid "Group by Status"
+msgstr "تجميع حسب الحالة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
+msgid "Group by Type"
+msgstr "تجميع حسب النوع"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__has_message
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__has_message
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__has_message
+msgid "Has Message"
+msgstr "يحتوي على رسالة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__cron_health_state__ok
+msgid "Healthy"
+msgstr "سليم"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_provisioning_job__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_saas_subprocess_mixin__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_exception_icon
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_exception_icon
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_exception_icon
+msgid "Icon"
+msgstr "الأيقونة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_exception_icon
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_exception_icon
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "أيقونة تشير إلى نشاط استثنائي."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_needaction
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_needaction
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "إذا تم تحديده، فإن الرسائل الجديدة تتطلب انتباهك."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_error
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_sms_error
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_error
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_sms_error
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_error
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "إذا تم تحديده، فإن بعض الرسائل بها خطأ في التسليم."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
+msgid "In flight"
+msgstr "قيد التنفيذ"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__config_sync_state__ok
+msgid "In sync"
+msgstr "متزامن"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__operation__install
+msgid "Install (odoo -i)"
+msgstr "تثبيت (odoo -i)"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Install Licensed Modules"
+msgstr "تثبيت الوحدات المرخّصة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Install OK."
+msgstr "اكتمل التثبيت."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/module_install.py:0
+msgid "Install licensed modules -> '%s'"
+msgstr "تثبيت الوحدات المرخّصة ← '%s'"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/module_install.py:0
+msgid "Install licensed modules for '%s'"
+msgstr "تثبيت الوحدات المرخّصة لـ '%s'"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Install this plan's modules into the tenant database so                                   the licensed applications actually work. Licensing alone                                   only makes them visible."
+msgstr "ثبّت وحدات هذه الخطة في قاعدة بيانات المستأجر حتى تعمل التطبيقات المرخّصة فعلًا. فالترخيص وحده يجعلها مرئية فقط."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Install this plan's modules into the tenant's database? It runs in an isolated process and is safe to repeat — modules that are already installed are left untouched."
+msgstr "تثبيت وحدات هذه الخطة في قاعدة بيانات المستأجر؟ يعمل في عملية معزولة ويمكن تكراره بأمان — فالوحدات المثبّتة بالفعل لا تُمسّ."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Installation"
+msgstr "التثبيت"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Installation Log"
+msgstr "سجل التثبيت"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__done
+msgid "Installed"
+msgstr "مثبّت"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__running
+msgid "Installing"
+msgstr "جارٍ التثبيت"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Installing: %s"
+msgstr "جارٍ التثبيت: %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Invalid database name '%s' — it must be lowercase alphanumeric, start with a letter, and be 3–63 characters (no underscores, hyphens or path characters): it is the database name and the tenant subdomain."
+msgstr "اسم قاعدة البيانات '%s' غير صالح — يجب أن يكون بأحرف صغيرة وأرقام، يبدأ بحرف، وطوله 3–63 (دون شرطات سفلية أو واصلات أو رموز مسار): فهو اسم قاعدة البيانات والنطاق الفرعي للمستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Invalid database name '%s': must match ^[a-z][a-z0-9]{2,62}$."
+msgstr "اسم قاعدة بيانات غير صالح '%s': يجب أن يطابق ^[a-z][a-z0-9]{2,62}$."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Invalid module name '%s'."
+msgstr "اسم وحدة غير صالح '%s'."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Investigate backup failure: %s"
+msgstr "تحقّق من فشل النسخة الاحتياطية: %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Investigate config sync: %s"
+msgstr "افحص مزامنة الإعدادات: %s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_is_follower
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_is_follower
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Job for database '%s' is already done; refusing to re-run."
+msgstr "مهمة قاعدة البيانات '%s' منتهية بالفعل؛ رفض إعادة التشغيل."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__last_alert_date
+msgid "Last Expiry Alert"
+msgstr "آخر تنبيه انتهاء صلاحية"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Last Push"
+msgstr "آخر دفعة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_verify_invalid
+msgid "Link expired — NCollection"
+msgstr "انتهت صلاحية الرابط — NCollection"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Load this country's accounting localization — chart of accounts and currency — into the tenant's existing database? This is refused if the tenant already has accounting entries, and does nothing if the localization has already been applied."
+msgstr "تحميل توطين المحاسبة لهذه الدولة — دليل الحسابات والعملة — في قاعدة بيانات المستأجر الحالية؟ يُرفض ذلك إذا كان للمستأجر قيود محاسبية بالفعل، ولا يفعل شيئًا إذا طُبّق التوطين من قبل."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__localization_applied_state
+msgid "Localization Applied"
+msgstr "تم تطبيق التوطين"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__localization_applied_message
+msgid "Localization Result"
+msgstr "نتيجة التوطين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_localization.py:0
+msgid "Localization applied"
+msgstr "تم تطبيق التوطين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_localization.py:0
+msgid "Localization failed"
+msgstr "فشل التوطين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_localization.py:0
+msgid "Localization refused"
+msgstr "رُفض التوطين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Localization verified (%(country)s): %(result)s"
+msgstr "تم التحقق من التوطين (%(country)s): %(result)s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__log
+msgid "Log"
+msgstr "السجل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__dry_run
+msgid "Log the intended upgrade for every tenant without touching any database."
+msgstr "سجّل الترقية المقصودة لكل مستأجر دون المساس بأي قاعدة بيانات."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__message
+msgid "Message"
+msgstr "الرسالة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_error
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_error
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ في تسليم الرسالة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__migration_id
+msgid "Migration"
+msgstr "الترحيل"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Migration cancelled before this tenant ran."
+msgstr "تم إلغاء الترحيل قبل تشغيل هذا المستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Migration cancelled by %s."
+msgstr "تم إلغاء الترحيل بواسطة %s."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__module_install_last_error
+msgid "Module Install Last Error"
+msgstr "آخر خطأ في تثبيت الوحدات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__module_install_log
+msgid "Module Install Log"
+msgstr "سجل تثبيت الوحدات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__module_install_state
+msgid "Module Installation"
+msgstr "تثبيت الوحدات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__module_names
+msgid "Module Names"
+msgstr "أسماء الوحدات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Module entitlement"
+msgstr "استحقاق الوحدات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Modules"
+msgstr "الوحدات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__module_install_last_ok
+msgid "Modules Installed On"
+msgstr "الوحدات المثبّتة على"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__backup_type__monthly
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+msgid "Monthly"
+msgstr "شهري"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__my_activity_date_deadline
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__my_activity_date_deadline
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "الموعد النهائي لنشاطي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__enterable_tenant_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
+msgid "My Companies"
+msgstr "شركاتي"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "NCollection SaaS"
+msgstr "NCollection SaaS"
+
+#. module: ncollection_saas
+#: model:mail.template,name:ncollection_saas.mail_template_checkout_verify
+msgid "NCollection: Verify your workspace email"
+msgstr "NCollection: تحقّق من البريد الإلكتروني لمساحة عملك"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_fleet_migration_advance_ir_actions_server
+msgid "NCollection: advance fleet migrations"
+msgstr "NCollection: دفع ترحيلات الأسطول"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_tenant_backup_drill_ir_actions_server
+msgid "NCollection: monthly restore drill"
+msgstr "NCollection: تدريب الاستعادة الشهري"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_tenant_backup_nightly_ir_actions_server
+msgid "NCollection: nightly tenant backups"
+msgstr "NCollection: النسخ الاحتياطية الليلية للمستأجرين"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_tenant_backup_prune_ir_actions_server
+msgid "NCollection: prune old tenant backups"
+msgstr "NCollection: تقليم النسخ الاحتياطية القديمة للمستأجرين"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_config_reconcile_ir_actions_server
+msgid "NCollection: reconcile tenant workspace configs"
+msgstr "NCollection: مطابقة إعدادات مساحات عمل المستأجرين"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_ecb_rate_refresh_ir_actions_server
+msgid "NCollection: refresh ECB exchange rate"
+msgstr "NCollection: تحديث سعر الصرف من البنك المركزي الأوروبي"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_expire_pending_registrations_ir_actions_server
+msgid "NCollection: release subdomains of undecided registrations"
+msgstr "NCollection: تحرير النطاقات الفرعية للتسجيلات غير المحسومة"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.cron_domain_ssl_scan_ir_actions_server
+msgid "NCollection: scan tenant domains & SSL expiry"
+msgstr "NCollection: فحص نطاقات المستأجرين وانتهاء صلاحية SSL"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Name validated."
+msgstr "تم التحقق من الاسم."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__config_sync_state__permanent
+msgid "Needs attention"
+msgstr "يحتاج إلى انتباه"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_calendar_event_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_calendar_event_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr "حدث التقويم للنشاط التالي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_date_deadline
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_date_deadline
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "الموعد النهائي للنشاط التالي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_summary
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_summary
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_summary
+msgid "Next Activity Summary"
+msgstr "ملخص النشاط التالي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_type_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_type_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_type_id
+msgid "Next Activity Type"
+msgstr "نوع النشاط التالي"
+
+#. module: ncollection_saas
+#: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_backup
+msgid "Nightly per-tenant backups appear here once the schedule runs."
+msgstr "تظهر النسخ الاحتياطية الليلية لكل مستأجر هنا بمجرد تشغيل الجدول."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "No changes: this tenant has exactly the modules its plan grants."
+msgstr "لا تغييرات: لدى هذا المستأجر بالضبط الوحدات التي تمنحها خطته."
+
+#. module: ncollection_saas
+#: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_fleet_migration
+msgid "No fleet migrations yet"
+msgstr "لا توجد ترحيلات أسطول بعد"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "No pre-upgrade snapshot on this line — nothing to restore from. This line failed before the snapshot was taken, which also means its database was never modified."
+msgstr "لا توجد لقطة قبل الترقية في هذا السطر — لا شيء للاستعادة منه. فشل هذا السطر قبل أخذ اللقطة، ما يعني أيضًا أن قاعدة بياناته لم تُعدَّل أبدًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "No ready tenants to re-key."
+msgstr "لا يوجد مستأجرون جاهزون لإعادة المفتاح."
+
+#. module: ncollection_saas
+#: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_backup
+msgid "No tenant backups yet"
+msgstr "لا توجد نسخ احتياطية للمستأجرين بعد"
+
+#. module: ncollection_saas
+#: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_domain
+msgid "No tenant domains yet"
+msgstr "لا توجد نطاقات مستأجرين بعد"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "None of the selected canary tenants are 'ready'."
+msgstr "لا يوجد أي من المستأجرين التجريبيين المحدّدين في حالة 'جاهز'."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__localization_applied_state__none
+msgid "Not applied"
+msgstr "غير مُطبَّق"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__cron_health_state__unknown
+msgid "Not reported"
+msgstr "لم يُبلَّغ"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__none
+msgid "Nothing to do"
+msgstr "لا شيء للقيام به"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_needaction_counter
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_needaction_counter
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_error_counter
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_error_counter
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_needaction_counter
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_needaction_counter
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلب إجراءً"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_error_counter
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_error_counter
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ في التسليم"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "On"
+msgstr "مفعّل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__auto_restore
+msgid "On a tenant upgrade failure, automatically drop and restore that tenant from its pre-upgrade snapshot (ARCHITECTURE §7.4). Off = flag it and stop for a manual restore; the snapshot is taken either way."
+msgstr "عند فشل ترقية مستأجر، يحذف النظام قاعدة بياناته تلقائيًا ويستعيدها من لقطتها قبل الترقية (ARCHITECTURE §7.4). عند الإيقاف: يُوسَم السطر ويتوقف لاستعادة يدوية؛ وتُؤخذ اللقطة في الحالتين."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Only a FAILED line can be restored; this one is '%s'. Restoring a tenant that upgraded successfully would roll back a good upgrade."
+msgstr "لا يمكن استعادة إلا السطر الفاشل؛ وهذا السطر '%s'. استعادة مستأجر نجحت ترقيته ستتراجع عن ترقية سليمة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "Only a Platform Administrator can enter a company."
+msgstr "يمكن لمدير المنصّة فقط دخول الشركة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Only a platform administrator can approve or provision a tenant."
+msgstr "يمكن لمسؤول المنصة فقط الموافقة على مستأجر أو تهيئته."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_activity_id
+msgid "Open Config-Sync To-Do"
+msgstr "فتح مهمة مزامنة الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__cron_health_activity_id
+msgid "Open Required-Job To-Do"
+msgstr "فتح مهمة المهام المطلوبة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__cron_report_activity_id
+msgid "Open Unreadable-Report To-Do"
+msgstr "فتح مهمة التقرير غير المقروء"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pending
+msgid "Open my workspace"
+msgstr "افتح مساحة عملي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__operation
+msgid "Operation"
+msgstr "العملية"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Optional note for the record (kept if you reject)"
+msgstr "ملاحظة اختيارية للسجل (تُحفظ إذا رفضت)"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__pending
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__pending
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+msgid "Pick a plan. Get your ERP in minutes."
+msgstr "اختر خطة. احصل على نظام تخطيط موارد المؤسسات خلال دقائق."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/module_install.py:0
+msgid "Plan '%s' licenses no additional modules — the core modules are already installed."
+msgstr "الخطة '%s' لا ترخّص وحدات إضافية — فالوحدات الأساسية مثبّتة بالفعل."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__domain_type__subdomain
+msgid "Platform Subdomain"
+msgstr "النطاق الفرعي للمنصّة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Pre-upgrade snapshot failed: %s"
+msgstr "فشلت اللقطة قبل الترقية: %s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration_line__backup_id
+msgid "Pre-upgrade snapshot for rollback."
+msgstr "لقطة ما قبل الترقية للتراجع."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Pre-upgrade snapshot…"
+msgstr "اللقطة قبل الترقية…"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Prepared: %(c)s canary + %(o)s fleet tenant(s)."
+msgstr "تم التحضير: %(c)s تجريبي + %(o)s من مستأجري الأسطول."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+msgid "Pricing — NCollection"
+msgstr "التسعير — NCollection"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__probing
+msgid "Probing"
+msgstr "الفحص"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "Production routing also needs wildcard DNS for *.<base domain>, a matching wildcard certificate, and a reverse proxy that forwards the Host header — see docs/markdown/ROUTING.md."
+msgstr "يحتاج التوجيه في الإنتاج أيضًا إلى DNS شامل لـ *.<النطاق الأساسي> وشهادة شاملة مطابقة وخادم وكيل عكسي يمرّر ترويسة Host — راجع docs/markdown/ROUTING.md."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Progress"
+msgstr "التقدّم"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_provisioning_job_form_engine
+msgid "Provision"
+msgstr "تجهيز"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_provisioning_job_form_engine
+msgid "Provision (inline)"
+msgstr "تجهيز (مباشر)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Provision tenant DB '%s'"
+msgstr "تجهيز قاعدة بيانات المستأجر '%s'"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Provisioning FAILED for tenant %(name)s (database '%(db)s'). Latest job log:\n%(log)s"
+msgstr "فشل التجهيز للمستأجر %(name)s (قاعدة البيانات '%(db)s'). آخر سجلّ للمهمة:\n%(log)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Provisioning quota exceeded: %(n)s jobs in the last hour (limit %(limit)s)."
+msgstr "تم تجاوز حصة التجهيز: %(n)s مهمة في الساعة الأخيرة (الحد %(limit)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Provisioning started for '%s'. The workspace will be ready in a few minutes."
+msgstr "بدأت تهيئة '%s'. ستكون مساحة العمل جاهزة خلال دقائق."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Provisioning started for database '%s'."
+msgstr "بدأ التجهيز لقاعدة البيانات '%s'."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Push this tenant's plan configuration (modules, limits,                                   subscription status) into its database now. Same push a                                   plan change queues automatically — use it to retry after                                   a failure."
+msgstr "ادفع إعدادات خطة هذا المستأجر (الوحدات والحدود وحالة الاشتراك) إلى قاعدة بياناته الآن. وهو الدفع نفسه الذي يضعه تغيير الخطة في الطابور تلقائيًا — استخدمه لإعادة المحاولة بعد فشل."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__queued
+msgid "Queued"
+msgstr "في الطابور"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "RESTORE FAILED after the database was dropped — '%(db)s' may no longer exist. Manual recovery needed (off-box backup or PITR). Attempted by %(user)s. %(err)s"
+msgstr "فشلت الاستعادة بعد حذف قاعدة البيانات — قد لا تكون '%(db)s' موجودة بعد الآن. تلزم استعادة يدوية (نسخة خارج الجهاز أو PITR). المحاولة بواسطة %(user)s. %(err)s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__name
+msgid "Rate Date"
+msgstr "تاريخ السعر"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__rating_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__rating_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Re-enable required job: %s"
+msgstr "أعد تفعيل المهمة المطلوبة: %s"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_config_sync_rekey
+msgid "Re-key config sync"
+msgstr "إعادة مفتاح مزامنة الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.actions.server,name:ncollection_saas.action_tenant_rekey_config_sync_fleet
+msgid "Re-key config sync (all ready tenants)"
+msgstr "إعادة مفتاح مزامنة الإعدادات (كل المستأجرين الجاهزين)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "Re-keyed %(ok)s tenant(s); %(bad)s FAILED: %(names)s. Failed tenants still present the OLD key — check each one's chatter before considering the rotation complete."
+msgstr "أُعيد مفتاح %(ok)s مستأجر؛ وفشل %(bad)s: %(names)s. ما زال المستأجرون الفاشلون يقدّمون المفتاح القديم — افحص سجل كل منهم قبل اعتبار التدوير مكتملًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "Re-keyed %(ok)s tenant(s); every one authenticated on the verification push."
+msgstr "أُعيد مفتاح %(ok)s مستأجر؛ وكلهم تمت مصادقتهم في دفعة التحقق."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "Re-keying config-sync credentials requires Settings administrator rights."
+msgstr "تتطلب إعادة مفاتيح مزامنة الإعدادات صلاحيات مسؤول الإعدادات."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__localization_applied_state__refused
+msgid "Refused"
+msgstr "مرفوض"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Refused: %s"
+msgstr "مرفوض: %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/saas_subprocess.py:0
+msgid "Refusing to operate on reserved/platform database '%s'."
+msgstr "نرفض التعامل مع قاعدة البيانات المحجوزة أو الخاصة بالمنصة '%s'."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Refusing to purge '%(t)s': it resolves outside the backup root %(r)s. rmtree is irreversible, so an unattributable path is never removed."
+msgstr "نرفض حذف '%(t)s': فهو يُحلّ خارج جذر النسخ الاحتياطية %(r)s. إن rmtree لا رجعة فيه، لذا لا يُحذف مسار غير منسوب أبدًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Refusing to restore backup of '%(src)s' over live tenant database '%(dst)s'. A live tenant database may only be restored over by its OWN backup; use a scratch name."
+msgstr "نرفض استعادة نسخة '%(src)s' فوق قاعدة بيانات المستأجر الفعّالة '%(dst)s'. لا يجوز الاستعادة فوق قاعدة بيانات مستأجر فعّالة إلا من نسخته هو؛ استخدم اسمًا تجريبيًا."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "Register your company"
+msgstr "سجّل شركتك"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Registration Request"
+msgstr "طلب تسجيل"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Registration approved by %s."
+msgstr "تمت الموافقة على التسجيل بواسطة %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Registration expired: no decision within %(days)s days."
+msgstr "انتهى التسجيل: لم يُتخذ قرار خلال %(days)s يومًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Registration rejected by %(user)s."
+msgstr "رُفض التسجيل بواسطة %(user)s."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pending
+msgid "Registration request"
+msgstr "طلب تسجيل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pending
+msgid "Registration submitted"
+msgstr "تم تقديم التسجيل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Reject"
+msgstr "رفض"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Reject this registration request? The requested subdomain is released."
+msgstr "رفض طلب التسجيل هذا؟ يتم تحرير النطاق الفرعي المطلوب."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Renew SSL: %s"
+msgstr "تجديد SSL: %s"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_config_sync_rekey
+msgid "Replace this tenant's config-sync key with a freshly derived one, then verify it with a live push. The current key stops working immediately."
+msgstr "استبدل مفتاح مزامنة الإعدادات لهذا المستأجر بمفتاح مشتق حديثًا، ثم تحقق منه بدفعة حية. يتوقف المفتاح الحالي عن العمل فورًا."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__cron_health_state
+msgid "Required Jobs"
+msgstr "المهام المطلوبة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Required jobs healthy again on %(db)s."
+msgstr "عادت المهام المطلوبة سليمة على %(db)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Required tenant jobs are enabled again on %(db)s."
+msgstr "المهام المطلوبة للمستأجر مفعّلة مجددًا على %(db)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Required-job report unreadable: %s"
+msgstr "تقرير المهام المطلوبة غير مقروء: %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Required-job reporting RECOVERED for %(db)s."
+msgstr "تعافى الإبلاغ عن المهام المطلوبة لـ %(db)s."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_user_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_user_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_user_id
+msgid "Responsible User"
+msgstr "المستخدم المسؤول"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
+msgid "Restore"
+msgstr "استعادة"
+
+#. module: ncollection_saas
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_backup_restore_wizard
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
+msgid "Restore Backup"
+msgstr "استعادة النسخة الاحتياطية"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Restore FAILED"
+msgstr "فشلت الاستعادة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__target_db
+msgid "Restore Into (scratch DB)"
+msgstr "الاستعادة إلى (قاعدة بيانات مؤقتة)"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_backup_restore_wizard
+msgid "Restore Tenant Backup to a Scratch Database"
+msgstr "استعادة النسخة الاحتياطية للمستأجر إلى قاعدة بيانات مؤقتة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Restore drill FAILED: %(err)s (%(scrap)s)."
+msgstr "فشل اختبار الاستعادة: %(err)s (%(scrap)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Restore drill OK: %(file)s restored to scratch DB %(db)s (%(scrap)s)."
+msgstr "نجح اختبار الاستعادة: استُعيد %(file)s إلى قاعدة التجربة %(db)s (%(scrap)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Restore drill SKIPPED: scratch name '%s' collides with a live tenant database — refusing to overwrite it."
+msgstr "تم تخطّي تدريب الاستعادة: يتعارض الاسم المؤقت '%s' مع قاعدة بيانات مستأجر مباشرة — رفض الكتابة فوقها."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Restore in place"
+msgstr "استعادة في المكان"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/backup_restore.py:0
+msgid "Restore of %(src)s into %(db)s queued."
+msgstr "تمت جدولة استعادة %(src)s إلى %(db)s."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__restored
+msgid "Restored"
+msgstr "تمت الاستعادة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Restored in place from snapshot %(b)s by %(user)s (manual)."
+msgstr "تمت الاستعادة في المكان من اللقطة %(b)s بواسطة %(user)s (يدويًا)."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
+msgid "Restores into a scratch/staging database — never a live tenant."
+msgstr "تتم الاستعادة إلى قاعدة بيانات مؤقتة/تجريبية — وليس إلى مستأجر مباشر أبداً."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+msgid "Restore…"
+msgstr "استعادة…"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Restoring a tenant in place requires Settings administrator rights."
+msgstr "تتطلب الاستعادة في المكان صلاحيات مسؤول الإعدادات."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+msgid "Result"
+msgstr "النتيجة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__module_install_state
+msgid "Result of the last attempt to install this tenant's licensed modules into its database. 'Failed' means the modules are licensed but NOT usable yet — the workspace is not ready."
+msgstr "نتيجة آخر محاولة لتثبيت الوحدات المرخّصة لهذا المستأجر في قاعدة بياناته. تعني «فشل» أن الوحدات مرخّصة لكنها غير قابلة للاستخدام بعد — فمساحة العمل غير جاهزة."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Retry Provisioning"
+msgstr "إعادة محاولة التهيئة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/subscription.py:0
+msgid "Retry requested by %s."
+msgstr "طلب إعادة المحاولة بواسطة %s."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__config_sync_state__transient
+msgid "Retrying"
+msgstr "جارٍ إعادة المحاولة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Retrying provisioning for '%s'. The previous attempt's job is re-run; no second database or user is created."
+msgstr "إعادة محاولة تهيئة '%s'. تُعاد مهمة المحاولة السابقة؛ ولا تُنشأ قاعدة بيانات أو مستخدم ثانٍ."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__is_wildcard
+msgid "Rides Wildcard Cert"
+msgstr "يستخدم شهادة البدل (Wildcard)"
+
+#. module: ncollection_saas
+#: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_fleet_migration
+msgid "Roll a shared-addon upgrade across every tenant database with a\n               canary gate, per-tenant snapshots, and failure isolation."
+msgstr "تنفيذ ترقية الوحدات المشتركة على كل قواعد بيانات المستأجرين مع بوابة اختبار أولية ولقطات لكل مستأجر وعزل للإخفاقات."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Rollback WARNING: could not drop %(db)s: %(err)s"
+msgstr "تحذير التراجع: تعذّر حذف %(db)s: %(err)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Rolled back: dropped database '%s'."
+msgstr "تم التراجع: حُذفت قاعدة البيانات '%s'."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__rolling
+msgid "Rolling Out"
+msgstr "قيد الطرح"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Run now (inline)"
+msgstr "التشغيل الآن (مباشر)"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Run the whole fleet migration inline now?"
+msgstr "هل تريد تشغيل ترحيل الأسطول بالكامل مباشرة الآن؟"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__running
+msgid "Running"
+msgstr "قيد التشغيل"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "SCRATCH COPY NOT REMOVED -- '%s' still exists and holds tenant data; drop it by hand"
+msgstr "لم تُزَل النسخة التجريبية -- لا تزال '%s' موجودة وتحوي بيانات مستأجر؛ احذفها يدويًا"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_sms_error
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_sms_error
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "خطأ في تسليم الرسائل القصيرة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid "SSL Certificate"
+msgstr "شهادة SSL"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__ssl_expiry
+msgid "SSL Expiry"
+msgstr "انتهاء صلاحية SSL"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__ssl_status
+msgid "SSL Status"
+msgstr "حالة SSL"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "SSL certificate for %(fqdn)s is %(label)s (expiry: %(expiry)s)."
+msgstr "شهادة SSL للنطاق %(fqdn)s هي %(label)s (انتهاء الصلاحية: %(expiry)s)."
+
+#. module: ncollection_saas
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_saas_settings
+msgid "SaaS Settings"
+msgstr "إعدادات SaaS"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Select at least one canary tenant — it is the verification gate."
+msgstr "اختر مستأجراً تجريبياً واحداً على الأقل — فهو بوابة التحقق."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Self-report readable again."
+msgstr "التقرير الذاتي قابل للقراءة مجددًا."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__config_sync_accepts_rate
+msgid "Set from the tenant's own sync RESPONSE. The platform sends the rate key only after a tenant has advertised it."
+msgstr "يُضبط من استجابة المزامنة الخاصة بالمستأجر نفسه. ترسل المنصة مفتاح السعر فقط بعد أن يعلنه المستأجر."
+
+#. module: ncollection_saas
+#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_settings
+msgid "Settings"
+msgstr "الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__file_size
 msgid "Size (bytes)"
 msgstr "الحجم (بايت)"
 
 #. module: ncollection_saas
-msgid "Restore drill SKIPPED: scratch name '%s' collides with a live tenant database — refusing to overwrite it."
-msgstr "تم تخطّي تدريب الاستعادة: يتعارض الاسم المؤقت '%s' مع قاعدة بيانات مستأجر مباشرة — رفض الكتابة فوقها."
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__skipped
+msgid "Skipped"
+msgstr "تم التخطي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Smoke probe failed on %s (a module is not 'installed', or the ORM read failed)."
+msgstr "فشل فحص الدخان على %s (وحدة ليست «مثبّتة»، أو فشلت قراءة ORM)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Smoke probe…"
+msgstr "فحص الدخان…"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Snapshot %(b)s belongs to tenant '%(other)s', not '%(this)s'. REFUSING: restoring it here would destroy this tenant's data and serve another tenant's data under this database name."
+msgstr "اللقطة %(b)s تخص المستأجر '%(other)s' وليس '%(this)s'. نرفض: فاستعادتها هنا ستدمّر بيانات هذا المستأجر وتعرض بيانات مستأجر آخر تحت اسم قاعدة البيانات هذه."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Snapshot for %(b)s is unusable — %(why)s (%(p)s). REFUSING to restore: the restore drops the live database first, so proceeding would destroy '%(db)s' with nothing to put back. Recover the file from off-box backup, or use PITR."
+msgstr "اللقطة الخاصة بـ %(b)s غير صالحة للاستخدام — %(why)s (%(p)s). نرفض الاستعادة: فالاستعادة تحذف قاعدة البيانات الفعّالة أولًا، والمتابعة ستدمّر '%(db)s' دون ما يُعاد. استرجع الملف من نسخة خارج الجهاز أو استخدم PITR."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__snapshotting
+msgid "Snapshotting"
+msgstr "التقاط اللقطة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Specify at least one module."
+msgstr "حدّد وحدة واحدة على الأقل."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Start (queued)"
+msgstr "بدء (في قائمة الانتظار)"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+msgid "Start a free 14-day trial — no card required."
+msgstr "ابدأ فترة تجريبية مجانية لمدة 14 يوماً — دون الحاجة إلى بطاقة."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+msgid "Start free trial"
+msgstr "ابدأ الفترة التجريبية المجانية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__started_at
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__started_at
+msgid "Started At"
+msgstr "بدأ في"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__state
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__status
+msgid "Status"
+msgstr "الحالة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_state
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_state
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_state
+msgid "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities."
+msgstr "الحالة بناءً على الأنشطة\nمتأخر: تاريخ الاستحقاق قد مضى\nاليوم: تاريخ النشاط هو اليوم\nمخطط: أنشطة مستقبلية."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/saas_subprocess.py:0
+msgid "Step %(label)s failed (exit %(code)s):\n%(out)s"
+msgstr "فشلت الخطوة %(label)s (رمز الخروج %(code)s):\n%(out)s"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
+msgid "Subdomains"
+msgstr "النطاقات الفرعية"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_form
+msgid "Submit registration request"
+msgstr "إرسال طلب التسجيل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Sync Configuration Now"
+msgstr "مزامنة الإعدادات الآن"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__target_count
+msgid "Target Count"
+msgstr "العدد المستهدف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__line_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
+msgid "Targets"
+msgstr "الأهداف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__tenant_id
+msgid "Tenant"
+msgstr "مستأجر"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_localization.py:0
+msgid "Tenant '%s' has no country localization package. Set a supported country first."
+msgstr "المستأجر '%s' ليس لديه حزمة توطين لدولته. اضبط دولة مدعومة أولًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/module_install.py:0
+msgid "Tenant '%s' has no ready database to install into."
+msgstr "المستأجر '%s' ليس لديه قاعدة بيانات جاهزة للتثبيت فيها."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_localization.py:0
+msgid "Tenant '%s' has no ready database to localize."
+msgstr "المستأجر '%s' ليس لديه قاعدة بيانات جاهزة للتوطين."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Tenant '%s' has no ready database to sync into."
+msgstr "المستأجر '%s' ليس لديه قاعدة بيانات جاهزة للمزامنة معها."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Tenant '%s' has not been approved; refusing to create its database."
+msgstr "المستأجر '%s' لم تتم الموافقة عليه؛ نرفض إنشاء قاعدة بياناته."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "Tenant Addressing"
+msgstr "عنونة المستأجر"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_backup
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+msgid "Tenant Backup"
+msgstr "النسخة الاحتياطية للمستأجر"
+
+#. module: ncollection_saas
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_backup
+#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_backups
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_tree
+msgid "Tenant Backups"
+msgstr "النسخ الاحتياطية للمستأجرين"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_domain
+msgid "Tenant Domain & SSL Certificate"
+msgstr "نطاق المستأجر وشهادة SSL"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_fleet_migration
+msgid "Tenant Fleet Migration"
+msgstr "ترحيل أسطول المستأجرين"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_fleet_migration_line
+msgid "Tenant Fleet Migration Target"
+msgstr "هدف ترحيل أسطول المستأجرين"
+
+#. module: ncollection_saas
+#: model:mail.template,name:ncollection_saas.mail_template_tenant_welcome
+msgid "Tenant Welcome"
+msgstr "ترحيب بالمستأجر"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "Tenant backup FAILED for %(db)s (%(type)s)."
+msgstr "فشلت النسخة الاحتياطية للمستأجر لقاعدة البيانات %(db)s (%(type)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "Tenant could not read: %(jobs)s"
+msgstr "تعذّرت قراءة المستأجر: %(jobs)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Tenant provisioning"
+msgstr "تهيئة المستأجر"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "Tenant provisioning failed: %s"
+msgstr "فشل تجهيز المستأجر: %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Tenant seeded: admin (forced reset), workspace config, branding."
+msgstr "تمت تهيئة المستأجر: المسؤول (إعادة تعيين إجبارية)، إعدادات مساحة العمل، الهوية البصرية."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__wave_size
+msgid "Tenants per rolling wave after the canary passes."
+msgstr "عدد المستأجرين لكل موجة تدريجية بعد نجاح الاختبار التجريبي (canary)."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "The <strong>plan</strong>\n                            ("
+msgstr "<strong>الخطة</strong> ("
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_verify_invalid
+msgid "The confirmation link is invalid or has already\n                        been used. You can start again from the pricing page."
+msgstr "رابط التأكيد غير صالح أو سبق استخدامه. يمكنك البدء من جديد من صفحة الأسعار."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "The database '%(db)s' was dropped and the restore then failed. It may no longer exist — recover from off-box backup or PITR. A to-do has been scheduled."
+msgstr "حُذفت قاعدة البيانات '%(db)s' ثم فشلت الاستعادة. قد لا تكون موجودة بعد الآن — استرجع من نسخة خارج الجهاز أو PITR. تمت جدولة مهمة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "The database name of a provisioned tenant is immutable — it is the live database and subdomain (tenant %s). Changing it would orphan the database and break routing."
+msgstr "اسم قاعدة البيانات لمستأجر مُجهَّز غير قابل للتغيير — فهو قاعدة البيانات المباشرة والنطاق الفرعي (المستأجر %s). تغييره سيؤدي إلى تيتيم قاعدة البيانات وتعطيل التوجيه."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__cron_report_activity_id
+msgid "The open to-do for a persistently unreadable self-report. Separate from cron_health_activity_id on purpose: 'we cannot SEE the jobs' and 'a job is DISABLED' need different actions, and closing one must not resolve the other."
+msgstr "المهمة المفتوحة لتقرير ذاتي غير مقروء باستمرار. منفصلة عن cron_health_activity_id عمدًا: فـ«لا نستطيع رؤية المهام» و«مهمة معطّلة» يحتاجان إجراءين مختلفين، ولا يجوز أن يحل إغلاق إحداهما الأخرى."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "The platform is not configured to reach tenants (service key missing)."
+msgstr "المنصة غير مهيأة للوصول إلى المستأجرين (مفتاح الخدمة مفقود)."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_res_config_settings__nc_base_domain
+msgid "The platform's root domain. Every tenant is reachable at <subdomain>.<base domain>. Leave empty to use the deployment's NC_BASE_DOMAIN (local development: ncollection.localhost). There is no built-in default."
+msgstr "النطاق الجذري للمنصة. كل مستأجر متاح على <النطاق الفرعي>.<النطاق الأساسي>. اتركه فارغًا لاستخدام NC_BASE_DOMAIN الخاص بالنشر (للتطوير المحلي: ncollection.localhost). لا يوجد افتراضي مضمَّن."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_exchange_rate__name
+msgid "The publication date ECB itself stamped on the feed — not the date we fetched it. A feed that stops updating keeps returning the same date, which is how staleness becomes visible."
+msgstr "تاريخ النشر الذي ختمه البنك المركزي الأوروبي نفسه على التغذية — وليس تاريخ جلبها. فالتغذية التي تتوقف عن التحديث تعيد التاريخ نفسه، وبهذا يظهر التقادم."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/checkout.py:0
+msgid "The subdomain '%(label)s' is already used by tenant '%(other)s'."
+msgstr "النطاق الفرعي '%(label)s' مستخدم بالفعل لدى المستأجر '%(other)s'."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__config_sync_activity_id
+msgid "The unresolved config-sync to-do, if any. An explicit link rather than searching activity summaries: the summary is translated, so a substring match silently stops working on a non-English backoffice."
+msgstr "مهمة مزامنة الإعدادات غير المحلولة، إن وجدت. رابط صريح بدلًا من البحث في ملخصات الأنشطة: فالملخص مترجم، وتطابق النص الجزئي يتوقف بصمت في واجهة خلفية بغير الإنجليزية."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "This DROPS the tenant's current database and restores its pre-upgrade snapshot in its place. Everything written since the snapshot is lost. Continue?"
+msgstr "سيحذف هذا قاعدة بيانات المستأجر الحالية ويستعيد لقطته قبل الترقية مكانها. كل ما كُتب منذ اللقطة يُفقد. المتابعة؟"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_verify_invalid
+msgid "This link is no longer valid"
+msgstr "لم يعد هذا الرابط صالحاً"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "This migration has already been started."
+msgstr "لقد بدأ هذا الترحيل بالفعل."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Timing: %(detail)s; total %(total)ss."
+msgstr "التوقيت: %(detail)s؛ الإجمالي %(total)s ث."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_exception_decoration
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_exception_decoration
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "نوع النشاط الاستثنائي في السجل."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__usd_per_eur
+msgid "USD per EUR"
+msgstr "دولار أمريكي لكل يورو"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__ssl_status__unknown
+msgid "Unknown"
+msgstr "غير معروف"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/saas_subprocess.py:0
+msgid "Unsafe database name '%s' (must match ^[a-z][a-z0-9]{2,62}$)."
+msgstr "اسم قاعدة بيانات غير آمن '%s' (يجب أن يطابق ^[a-z][a-z0-9]{2,62}$)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/saas_subprocess.py:0
+msgid "Unsafe scratch database name '%s' (must match ^[a-z][a-z0-9_]{2,62}$)."
+msgstr "اسم قاعدة بيانات تجريبية غير آمن '%s' (يجب أن يطابق ^[a-z][a-z0-9_]{2,62}$)."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+msgid "Upgrade"
+msgstr "ترقية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__operation__upgrade
+msgid "Upgrade (odoo -u)"
+msgstr "ترقية (odoo -u)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Upgrade AND auto-restore both failed for %(db)s; restore its pre-upgrade snapshot manually (see RUNBOOK_FLEET_MIGRATION)."
+msgstr "فشلت الترقية والاستعادة التلقائية معًا لـ %(db)s؛ استعد لقطته قبل الترقية يدويًا (راجع RUNBOOK_FLEET_MIGRATION)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Upgrade OK."
+msgstr "نجحت الترقية."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__operation
+msgid "Upgrade acts on modules the tenant ALREADY has; install adds modules it does not. They are not interchangeable — see below."
+msgstr "تعمل الترقية على الوحدات التي لدى المستأجر بالفعل؛ والتثبيت يضيف وحدات ليست لديه. وهما غير قابلين للتبادل — انظر أدناه."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__canary_tenant_ids
+msgid "Upgraded first; the fleet rolls out only if ALL canaries pass."
+msgstr "تتم ترقيتهم أولاً؛ لا يُطرح الأسطول إلا إذا نجح جميع المستأجرين التجريبيين (canaries)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Upgrading: %s"
+msgstr "قيد الترقية: %s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__ssl_status__valid
+msgid "Valid"
+msgstr "صالحة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__wave
+msgid "Wave"
+msgstr "الموجة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__wave_size
+msgid "Wave Size"
+msgstr "حجم الموجة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid "Wave size must be at least 1."
+msgstr "يجب أن يكون حجم الموجة 1 على الأقل."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__website_message_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__website_message_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع الإلكتروني"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__website_message_ids
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__website_message_ids
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__website_message_ids
+msgid "Website communication history"
+msgstr "سجل التواصل على الموقع الإلكتروني"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__backup_type__weekly
+msgid "Weekly"
+msgstr "أسبوعي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__config_sync_last_ok
+msgid "When config last reached this tenant successfully. Answers 'how long has this been broken?' at a glance."
+msgstr "متى وصلت الإعدادات إلى هذا المستأجر بنجاح آخر مرة. يجيب عن «منذ متى هذا معطّل؟» بنظرة واحدة."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__last_alert_date
+msgid "When the expiry alert last fired — throttles the weekly cron."
+msgstr "وقت إطلاق تنبيه انتهاء الصلاحية آخر مرة — يضبط وتيرة المهمة المجدولة الأسبوعية."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__config_sync_state
+msgid "Whether the last platform->tenant config push succeeded. 'Needs attention' means the failure cannot heal itself."
+msgstr "هل نجح آخر دفع إعدادات من المنصة إلى المستأجر. «يحتاج إلى انتباه» يعني أن الفشل لا يمكن أن يُصلح نفسه."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant__cron_health_state
+msgid "Whether the tenant-side jobs the platform depends on are still enabled. 'Not reported' means no usable report: the tenant has not synced since this check shipped, its response body could not be read, or it could not run the probe. It does NOT mean healthy."
+msgstr "هل لا تزال مهام جهة المستأجر التي تعتمد عليها المنصة مفعّلة. «لم يُبلَّغ» يعني لا يوجد تقرير صالح: لم يتزامن المستأجر منذ إصدار هذا الفحص، أو تعذّرت قراءة نص استجابته، أو لم يستطع تشغيل الفحص."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+msgid "Yearly"
+msgstr "سنوي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "You are not authorised to enter %s."
+msgstr "غير مصرّح لك بدخول %s."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pending
+msgid "Your registration request has been submitted and is awaiting approval."
+msgstr "تم تقديم طلب تسجيلك وهو بانتظار الموافقة."
+
+#. module: ncollection_saas
+#: model:mail.template,subject:ncollection_saas.mail_template_tenant_welcome
+msgid "Your {{ object.company_name }} workspace is ready"
+msgstr "مساحة عمل {{ object.company_name }} جاهزة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_localization.py:0
+msgid "apply localization"
+msgstr "تطبيق التوطين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync_rekey.py:0
+msgid "config-sync re-key"
+msgstr "إعادة مفتاح مزامنة الإعدادات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "database init"
+msgstr "تهيئة قاعدة البيانات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "file does not exist"
+msgstr "الملف غير موجود"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "file is empty (0 bytes)"
+msgstr "الملف فارغ (0 بايت)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "file is not readable by this process"
+msgstr "الملف غير قابل للقراءة من هذه العملية"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "localization check"
+msgstr "فحص التوطين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+#: code:addons/ncollection_saas/models/module_install.py:0
+msgid "module install"
+msgstr "تثبيت الوحدات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "module state check"
+msgstr "فحص حالة الوحدات"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "module upgrade"
+msgstr "ترقية الوحدة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "no path recorded"
+msgstr "لم يُسجَّل مسار"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "no reason recorded"
+msgstr "لم يُسجَّل سبب"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/backup.py:0
+msgid "scratch copy removed"
+msgstr "أُزيلت النسخة التجريبية"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "self-report discarded: response over %s bytes"
+msgstr "تم تجاهل التقرير الذاتي: الاستجابة أكبر من %s بايت"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/config_sync.py:0
+msgid "self-report unreadable"
+msgstr "التقرير الذاتي غير قابل للقراءة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "smoke probe"
+msgstr "فحص أولي (smoke)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "tenant seed"
+msgstr "تهيئة المستأجر"
 
 #. module: ncollection_saas
 msgid "Restore drill OK: %(file)s restored to scratch DB %(db)s."
@@ -63,496 +2546,32 @@ msgid "Restore drill FAILED: %s"
 msgstr "فشل تدريب الاستعادة: %s"
 
 #. module: ncollection_saas
-msgid "Tenant backup FAILED for %(db)s (%(type)s)."
-msgstr "فشلت النسخة الاحتياطية للمستأجر لقاعدة البيانات %(db)s (%(type)s)."
-
-#. module: ncollection_saas
-msgid "Investigate backup failure: %s"
-msgstr "تحقّق من فشل النسخة الاحتياطية: %s"
-
-#. module: ncollection_saas
-msgid "Tenant Domain & SSL Certificate"
-msgstr "نطاق المستأجر وشهادة SSL"
-
-#. module: ncollection_saas
-msgid "Domain (FQDN)"
-msgstr "النطاق (FQDN)"
-
-#. module: ncollection_saas
-msgid "Fully-qualified hostname, e.g. acme.ncollectionerp.com."
-msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.ncollectionerp.com."
-
-#. module: ncollection_saas
-msgid "Tenant"
-msgstr "مستأجر"
-
-#. module: ncollection_saas
-msgid "Platform Subdomain"
-msgstr "النطاق الفرعي للمنصّة"
-
-#. module: ncollection_saas
-msgid "Custom Domain"
-msgstr "نطاق مخصّص"
-
-#. module: ncollection_saas
-msgid "Rides Wildcard Cert"
-msgstr "يستخدم شهادة البدل (Wildcard)"
-
-#. module: ncollection_saas
-msgid "SSL Expiry"
-msgstr "انتهاء صلاحية SSL"
-
-#. module: ncollection_saas
-msgid "Valid"
-msgstr "صالحة"
-
-#. module: ncollection_saas
-msgid "Expiring Soon"
-msgstr "على وشك الانتهاء"
-
-#. module: ncollection_saas
-msgid "Expired"
-msgstr "منتهي الصلاحية"
-
-#. module: ncollection_saas
-msgid "Unknown"
-msgstr "غير معروف"
-
-#. module: ncollection_saas
-msgid "SSL Status"
-msgstr "حالة SSL"
-
-#. module: ncollection_saas
-msgid "Last Expiry Alert"
-msgstr "آخر تنبيه انتهاء صلاحية"
-
-#. module: ncollection_saas
-msgid "When the expiry alert last fired — throttles the weekly cron."
-msgstr "وقت إطلاق تنبيه انتهاء الصلاحية آخر مرة — يضبط وتيرة المهمة المجدولة الأسبوعية."
-
-#. module: ncollection_saas
-msgid "A domain record for this FQDN already exists."
-msgstr "يوجد بالفعل سجلّ نطاق لهذا الـ FQDN."
-
-#. module: ncollection_saas
-msgid "SSL certificate for %(fqdn)s is %(label)s (expiry: %(expiry)s)."
-msgstr "شهادة SSL للنطاق %(fqdn)s هي %(label)s (انتهاء الصلاحية: %(expiry)s)."
-
-#. module: ncollection_saas
-msgid "Renew SSL: %s"
-msgstr "تجديد SSL: %s"
-
-#. module: ncollection_saas
-msgid "Tenant Fleet Migration"
-msgstr "ترحيل أسطول المستأجرين"
-
-#. module: ncollection_saas
 msgid "Comma-separated technical module names to upgrade (odoo -u) across every ready tenant."
 msgstr "أسماء الوحدات التقنية مفصولة بفواصل لترقيتها (odoo -u) عبر كل مستأجر جاهز."
-
-#. module: ncollection_saas
-msgid "Tenants per rolling wave after the canary passes."
-msgstr "عدد المستأجرين لكل موجة تدريجية بعد نجاح الاختبار التجريبي (canary)."
-
-#. module: ncollection_saas
-msgid "Canary Tenants"
-msgstr "المستأجرون التجريبيون (Canary)"
-
-#. module: ncollection_saas
-msgid "Upgraded first; the fleet rolls out only if ALL canaries pass."
-msgstr "تتم ترقيتهم أولاً؛ لا يُطرح الأسطول إلا إذا نجح جميع المستأجرين التجريبيين (canaries)."
-
-#. module: ncollection_saas
-msgid "Log the intended upgrade for every tenant without touching any database."
-msgstr "سجّل الترقية المقصودة لكل مستأجر دون المساس بأي قاعدة بيانات."
-
-#. module: ncollection_saas
-msgid "Auto-restore on failure"
-msgstr "استعادة تلقائية عند الفشل"
-
-#. module: ncollection_saas
-msgid "Draft"
-msgstr "مسودة"
-
-#. module: ncollection_saas
-msgid "Canary Running"
-msgstr "الاختبار التجريبي قيد التشغيل"
-
-#. module: ncollection_saas
-msgid "Canary Failed"
-msgstr "فشل الاختبار التجريبي"
-
-#. module: ncollection_saas
-msgid "Rolling Out"
-msgstr "قيد الطرح"
-
-#. module: ncollection_saas
-msgid "Cancelled"
-msgstr "ملغى"
-
-#. module: ncollection_saas
-msgid "Targets"
-msgstr "الأهداف"
-
-#. module: ncollection_saas
-msgid "Fleet migration %s"
-msgstr "ترحيل الأسطول %s"
 
 #. module: ncollection_saas
 msgid "Specify at least one module to upgrade."
 msgstr "حدّد وحدة واحدة على الأقل لترقيتها."
 
 #. module: ncollection_saas
-msgid "Invalid module name '%s'."
-msgstr "اسم وحدة غير صالح '%s'."
-
-#. module: ncollection_saas
-msgid "Wave size must be at least 1."
-msgstr "يجب أن يكون حجم الموجة 1 على الأقل."
-
-#. module: ncollection_saas
-msgid "Select at least one canary tenant — it is the verification gate."
-msgstr "اختر مستأجراً تجريبياً واحداً على الأقل — فهو بوابة التحقق."
-
-#. module: ncollection_saas
-msgid "None of the selected canary tenants are 'ready'."
-msgstr "لا يوجد أي من المستأجرين التجريبيين المحدّدين في حالة 'جاهز'."
-
-#. module: ncollection_saas
-msgid "Prepared: %(c)s canary + %(o)s fleet tenant(s)."
-msgstr "تم التحضير: %(c)s تجريبي + %(o)s من مستأجري الأسطول."
-
-#. module: ncollection_saas
-msgid "This migration has already been started."
-msgstr "لقد بدأ هذا الترحيل بالفعل."
-
-#. module: ncollection_saas
-msgid "Canary failed — fleet rollout halted."
-msgstr "فشل الاختبار التجريبي — توقّف طرح الأسطول."
-
-#. module: ncollection_saas
-msgid "Fleet migration complete (%s)."
-msgstr "اكتمل ترحيل الأسطول (%s)."
-
-#. module: ncollection_saas
-msgid "Migration cancelled by %s."
-msgstr "تم إلغاء الترحيل بواسطة %s."
-
-#. module: ncollection_saas
-msgid "Tenant Fleet Migration Target"
-msgstr "هدف ترحيل أسطول المستأجرين"
-
-#. module: ncollection_saas
-msgid "0 = canary; 1..N = rolling waves."
-msgstr "0 = تجريبي؛ 1..N = موجات تدريجية."
-
-#. module: ncollection_saas
-msgid "Snapshotting"
-msgstr "التقاط اللقطة"
-
-#. module: ncollection_saas
 msgid "Upgrading"
 msgstr "قيد الترقية"
-
-#. module: ncollection_saas
-msgid "Probing"
-msgstr "الفحص"
-
-#. module: ncollection_saas
-msgid "Restored"
-msgstr "تمت الاستعادة"
 
 #. module: ncollection_saas
 msgid "Skipped (dry-run)"
 msgstr "تم التخطّي (تشغيل تجريبي)"
 
 #. module: ncollection_saas
-msgid "Pre-upgrade snapshot for rollback."
-msgstr "لقطة ما قبل الترقية للتراجع."
-
-#. module: ncollection_saas
-msgid "Migration cancelled before this tenant ran."
-msgstr "تم إلغاء الترحيل قبل تشغيل هذا المستأجر."
-
-#. module: ncollection_saas
-msgid "Refused: %s"
-msgstr "مرفوض: %s"
-
-#. module: ncollection_saas
-msgid "Upgrading: %s"
-msgstr "قيد الترقية: %s"
-
-#. module: ncollection_saas
-msgid "Upgrade OK."
-msgstr "نجحت الترقية."
-
-#. module: ncollection_saas
-msgid "module upgrade"
-msgstr "ترقية الوحدة"
-
-#. module: ncollection_saas
-msgid "smoke probe"
-msgstr "فحص أولي (smoke)"
-
-#. module: ncollection_saas
-msgid "Provision tenant DB '%s'"
-msgstr "تجهيز قاعدة بيانات المستأجر '%s'"
-
-#. module: ncollection_saas
-msgid "Job for database '%s' is already done; refusing to re-run."
-msgstr "مهمة قاعدة البيانات '%s' منتهية بالفعل؛ رفض إعادة التشغيل."
-
-#. module: ncollection_saas
-msgid "Provisioning started for database '%s'."
-msgstr "بدأ التجهيز لقاعدة البيانات '%s'."
-
-#. module: ncollection_saas
 msgid "Retry: cleared the database left by a previous failed run."
 msgstr "إعادة المحاولة: تم مسح قاعدة البيانات المتبقّية من تشغيل فاشل سابق."
-
-#. module: ncollection_saas
-msgid "Name validated."
-msgstr "تم التحقق من الاسم."
-
-#. module: ncollection_saas
-msgid "Database created; modules installed: %s"
-msgstr "تم إنشاء قاعدة البيانات؛ الوحدات المثبّتة: %s"
-
-#. module: ncollection_saas
-msgid "Tenant seeded: admin (forced reset), workspace config, branding."
-msgstr "تمت تهيئة المستأجر: المسؤول (إعادة تعيين إجبارية)، إعدادات مساحة العمل، الهوية البصرية."
-
-#. module: ncollection_saas
-msgid "Invalid database name '%s': must match ^[a-z][a-z0-9]{2,62}$."
-msgstr "اسم قاعدة بيانات غير صالح '%s': يجب أن يطابق ^[a-z][a-z0-9]{2,62}$."
-
-#. module: ncollection_saas
-msgid "Database name '%s' is reserved."
-msgstr "اسم قاعدة البيانات '%s' محجوز."
-
-#. module: ncollection_saas
-msgid "Database '%s' already exists (collision)."
-msgstr "قاعدة البيانات '%s' موجودة بالفعل (تعارض)."
-
-#. module: ncollection_saas
-msgid "database init"
-msgstr "تهيئة قاعدة البيانات"
-
-#. module: ncollection_saas
-msgid "tenant seed"
-msgstr "تهيئة المستأجر"
-
-#. module: ncollection_saas
-msgid "Rolled back: dropped database '%s'."
-msgstr "تم التراجع: حُذفت قاعدة البيانات '%s'."
-
-#. module: ncollection_saas
-msgid "FAILED: %s"
-msgstr "فشل: %s"
-
-#. module: ncollection_saas
-msgid "Provisioning quota exceeded: %(n)s jobs in the last hour (limit %(limit)s)."
-msgstr "تم تجاوز حصة التجهيز: %(n)s مهمة في الساعة الأخيرة (الحد %(limit)s)."
-
-#. module: ncollection_saas
-msgid "DONE — tenant database is login-ready."
-msgstr "تم — قاعدة بيانات المستأجر جاهزة لتسجيل الدخول."
-
-#. module: ncollection_saas
-msgid "The database name of a provisioned tenant is immutable — it is the live database and subdomain (tenant %s). Changing it would orphan the database and break routing."
-msgstr "اسم قاعدة البيانات لمستأجر مُجهَّز غير قابل للتغيير — فهو قاعدة البيانات المباشرة والنطاق الفرعي (المستأجر %s). تغييره سيؤدي إلى تيتيم قاعدة البيانات وتعطيل التوجيه."
-
-#. module: ncollection_saas
-msgid "Database name '%s' is reserved (a platform or maintenance database) and cannot be assigned to a tenant."
-msgstr "اسم قاعدة البيانات '%s' محجوز (قاعدة بيانات منصّة أو صيانة) ولا يمكن تخصيصه لمستأجر."
-
-#. module: ncollection_saas
-msgid "Provisioning FAILED for tenant %(name)s (database '%(db)s'). Latest job log:\n%(log)s"
-msgstr "فشل التجهيز للمستأجر %(name)s (قاعدة البيانات '%(db)s'). آخر سجلّ للمهمة:\n%(log)s"
-
-#. module: ncollection_saas
-msgid "Tenant provisioning failed: %s"
-msgstr "فشل تجهيز المستأجر: %s"
-
-#. module: ncollection_saas
-msgid "Restore Tenant Backup to a Scratch Database"
-msgstr "استعادة النسخة الاحتياطية للمستأجر إلى قاعدة بيانات مؤقتة"
-
-#. module: ncollection_saas
-msgid "Restore Into (scratch DB)"
-msgstr "الاستعادة إلى (قاعدة بيانات مؤقتة)"
-
-#. module: ncollection_saas
-msgid "A NON-live database name. The restore refuses to overwrite an existing tenant's database."
-msgstr "اسم قاعدة بيانات غير مباشرة. ترفض الاستعادة الكتابة فوق قاعدة بيانات مستأجر قائم."
 
 #. module: ncollection_saas
 msgid "'%s' is a live tenant database. Choose a scratch/staging name — restores never overwrite a live tenant."
 msgstr "'%s' هي قاعدة بيانات مستأجر مباشرة. اختر اسماً مؤقتاً/تجريبياً — لا تكتب الاستعادة أبداً فوق مستأجر مباشر."
 
 #. module: ncollection_saas
-msgid "Restore of %(src)s into %(db)s queued."
-msgstr "تمت جدولة استعادة %(src)s إلى %(db)s."
-
-#. module: ncollection_saas
-msgid "Provision"
-msgstr "تجهيز"
-
-#. module: ncollection_saas
-msgid "Provision (inline)"
-msgstr "تجهيز (مباشر)"
-
-#. module: ncollection_saas
-msgid "Activate"
-msgstr "تفعيل"
-
-#. module: ncollection_saas
-msgid "Domains"
-msgstr "النطاقات"
-
-#. module: ncollection_saas
-msgid "Domain"
-msgstr "النطاق"
-
-#. module: ncollection_saas
-msgid "SSL Certificate"
-msgstr "شهادة SSL"
-
-#. module: ncollection_saas
-msgid "Custom Domains"
-msgstr "النطاقات المخصّصة"
-
-#. module: ncollection_saas
-msgid "Subdomains"
-msgstr "النطاقات الفرعية"
-
-#. module: ncollection_saas
-msgid "Expiring within 14 days"
-msgstr "ستنتهي خلال 14 يوماً"
-
-#. module: ncollection_saas
-msgid "Group by Type"
-msgstr "تجميع حسب النوع"
-
-#. module: ncollection_saas
-msgid "Domains & SSL"
-msgstr "النطاقات و SSL"
-
-#. module: ncollection_saas
-msgid "No tenant domains yet"
-msgstr "لا توجد نطاقات مستأجرين بعد"
-
-#. module: ncollection_saas
-msgid "Restore Backup"
-msgstr "استعادة النسخة الاحتياطية"
-
-#. module: ncollection_saas
-msgid "Restores into a scratch/staging database — never a live tenant."
-msgstr "تتم الاستعادة إلى قاعدة بيانات مؤقتة/تجريبية — وليس إلى مستأجر مباشر أبداً."
-
-#. module: ncollection_saas
-msgid "Restore"
-msgstr "استعادة"
-
-#. module: ncollection_saas
-msgid "Cancel"
-msgstr "إلغاء"
-
-#. module: ncollection_saas
-msgid "Tenant Backups"
-msgstr "النسخ الاحتياطية للمستأجرين"
-
-#. module: ncollection_saas
-msgid "Restore…"
-msgstr "استعادة…"
-
-#. module: ncollection_saas
-msgid "Backup"
-msgstr "نسخة احتياطية"
-
-#. module: ncollection_saas
-msgid "Result"
-msgstr "النتيجة"
-
-#. module: ncollection_saas
-msgid "Error"
-msgstr "خطأ"
-
-#. module: ncollection_saas
-msgid "Group by Status"
-msgstr "تجميع حسب الحالة"
-
-#. module: ncollection_saas
-msgid "No tenant backups yet"
-msgstr "لا توجد نسخ احتياطية للمستأجرين بعد"
-
-#. module: ncollection_saas
-msgid "Nightly per-tenant backups appear here once the schedule runs."
-msgstr "تظهر النسخ الاحتياطية الليلية لكل مستأجر هنا بمجرد تشغيل الجدول."
-
-#. module: ncollection_saas
-msgid "Fleet Migrations"
-msgstr "ترحيلات الأسطول"
-
-#. module: ncollection_saas
-msgid "Fleet Migration"
-msgstr "ترحيل الأسطول"
-
-#. module: ncollection_saas
-msgid "Start (queued)"
-msgstr "بدء (في قائمة الانتظار)"
-
-#. module: ncollection_saas
-msgid "Run now (inline)"
-msgstr "التشغيل الآن (مباشر)"
-
-#. module: ncollection_saas
-msgid "Run the whole fleet migration inline now?"
-msgstr "هل تريد تشغيل ترحيل الأسطول بالكامل مباشرة الآن؟"
-
-#. module: ncollection_saas
-msgid "Upgrade"
-msgstr "ترقية"
-
-#. module: ncollection_saas
-msgid "Progress"
-msgstr "التقدّم"
-
-#. module: ncollection_saas
-msgid "Canary Tenants (verification gate)"
-msgstr "المستأجرون التجريبيون (بوابة التحقق)"
-
-#. module: ncollection_saas
-msgid "Audit Log"
-msgstr "سجلّ التدقيق"
-
-#. module: ncollection_saas
-msgid "In flight"
-msgstr "قيد التنفيذ"
-
-#. module: ncollection_saas
-msgid "No fleet migrations yet"
-msgstr "لا توجد ترحيلات أسطول بعد"
-
-#. module: ncollection_saas
-msgid "Pricing — NCollection"
-msgstr "التسعير — NCollection"
-
-#. module: ncollection_saas
-msgid "Pick a plan. Get your ERP in minutes."
-msgstr "اختر خطة. احصل على نظام تخطيط موارد المؤسسات خلال دقائق."
-
-#. module: ncollection_saas
-msgid "Start a free 14-day trial — no card required."
-msgstr "ابدأ فترة تجريبية مجانية لمدة 14 يوماً — دون الحاجة إلى بطاقة."
-
-#. module: ncollection_saas
 msgid "/ mo"
 msgstr "/ شهرياً"
-
-#. module: ncollection_saas
-msgid "Start free trial"
-msgstr "ابدأ الفترة التجريبية المجانية"
 
 #. module: ncollection_saas
 msgid "Create your workspace — NCollection"
@@ -591,30 +2610,6 @@ msgid "Check your email"
 msgstr "تحقّق من بريدك الإلكتروني"
 
 #. module: ncollection_saas
-msgid "Open my workspace"
-msgstr "افتح مساحة عملي"
-
-#. module: ncollection_saas
-msgid "Link expired — NCollection"
-msgstr "انتهت صلاحية الرابط — NCollection"
-
-#. module: ncollection_saas
-msgid "This link is no longer valid"
-msgstr "لم يعد هذا الرابط صالحاً"
-
-#. module: ncollection_saas
-msgid "Back to pricing"
-msgstr "العودة إلى التسعير"
-
-#. module: ncollection_saas
-msgid "NCollection: Verify your workspace email"
-msgstr "NCollection: تحقّق من البريد الإلكتروني لمساحة عملك"
-
-#. module: ncollection_saas
-msgid "Tenant Welcome"
-msgstr "ترحيب بالمستأجر"
-
-#. module: ncollection_saas
 msgid "Open your workspace"
 msgstr "افتح مساحة عملك"
 
@@ -627,30 +2622,6 @@ msgid "Workspace address:"
 msgstr "عنوان مساحة العمل:"
 
 #. module: ncollection_saas
-msgid "NCollection: reconcile tenant workspace configs"
-msgstr "NCollection: مطابقة إعدادات مساحات عمل المستأجرين"
-
-#. module: ncollection_saas
-msgid "NCollection: scan tenant domains & SSL expiry"
-msgstr "NCollection: فحص نطاقات المستأجرين وانتهاء صلاحية SSL"
-
-#. module: ncollection_saas
-msgid "NCollection: nightly tenant backups"
-msgstr "NCollection: النسخ الاحتياطية الليلية للمستأجرين"
-
-#. module: ncollection_saas
-msgid "NCollection: prune old tenant backups"
-msgstr "NCollection: تقليم النسخ الاحتياطية القديمة للمستأجرين"
-
-#. module: ncollection_saas
-msgid "NCollection: monthly restore drill"
-msgstr "NCollection: تدريب الاستعادة الشهري"
-
-#. module: ncollection_saas
-msgid "NCollection: advance fleet migrations"
-msgstr "NCollection: دفع ترحيلات الأسطول"
-
-#. module: ncollection_saas
 msgid "Platform"
 msgstr "المنصّة"
 
@@ -661,39 +2632,3 @@ msgstr "مسؤول المنصّة"
 #. module: ncollection_saas
 msgid "NCollection platform staff: the SaaS-admin dashboard, tenants, subscriptions, plans and the provisioning queue."
 msgstr "موظفو منصّة NCollection: لوحة معلومات مسؤول SaaS، والمستأجرون، والاشتراكات، والخطط، وقائمة انتظار التجهيز."
-
-#. module: ncollection_saas
-#. odoo-python
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
-msgid "My Companies"
-msgstr "شركاتي"
-
-#. module: ncollection_saas
-#. odoo-python
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
-msgid "Enter Company"
-msgstr "دخول الشركة"
-
-#. module: ncollection_saas
-#. odoo-python
-#: code:addons/ncollection_saas/models/platform_entry.py:0
-msgid "Only a Platform Administrator can enter a company."
-msgstr "يمكن لمدير المنصّة فقط دخول الشركة."
-
-#. module: ncollection_saas
-#. odoo-python
-#: code:addons/ncollection_saas/models/platform_entry.py:0
-msgid "You are not authorised to enter %s."
-msgstr "غير مصرّح لك بدخول %s."
-
-#. module: ncollection_saas
-#. odoo-python
-#: code:addons/ncollection_saas/models/platform_entry.py:0
-msgid "%s entered this company as Platform Administrator."
-msgstr "دخل %s هذه الشركة بصفته مدير المنصّة."
-
-#. module: ncollection_saas
-#. odoo-python
-#: code:addons/ncollection_saas/models/platform_entry.py:0
-msgid "%s could not be reached. Try again in a moment."
-msgstr "تعذّر الوصول إلى %s. حاول مرة أخرى بعد قليل."

@@ -131,19 +131,22 @@ class SubscriptionDashboard(models.TransientModel):
             rec.db_storage_total_mb = total / _MB
             if err:
                 rec.db_storage_html = (
-                    '<p class="text-muted">Storage statistics are currently unavailable.</p>')
+                    '<p class="text-muted">%s</p>' % html.escape(
+                        self.env._("Storage statistics are currently unavailable.")))
                 continue
             lines = []
             for name, size in shown:
                 label = html.escape(name or '')
-                tag = '' if name in tenant_names else ' <span class="text-muted">(platform)</span>'
+                tag = '' if name in tenant_names else ' <span class="text-muted">(%s)</span>' % html.escape(
+                    self.env._("platform"))
                 lines.append(
-                    '<tr><td>%s%s</td><td class="text-end">%.1f MB</td></tr>'
-                    % (label, tag, size / _MB))
+                    '<tr><td>%s%s</td><td class="text-end">%s</td></tr>'
+                    % (label, tag, html.escape(self.env._("%.1f MB", size / _MB))))
             rec.db_storage_html = (
                 '<table class="table table-sm o_ncollection_db_table">'
-                '<thead><tr><th>Database</th><th class="text-end">Size</th></tr></thead>'
-                '<tbody>%s</tbody></table>' % ''.join(lines))
+                '<thead><tr><th>%s</th><th class="text-end">%s</th></tr></thead>'
+                '<tbody>%s</tbody></table>' % (
+                    html.escape(self.env._("Database")), html.escape(self.env._("Size")), ''.join(lines)))
 
     def _read_db_sizes(self):
         """Per-database sizes from the cluster over the maintenance connection.

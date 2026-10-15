@@ -484,6 +484,7 @@ class TestApprovalGate(TransactionCase):
         """db_filter=^%d$ routes <label>.<base> to the database named <label>.
         A name generated from the company would leave the URL pointing at
         nothing."""
+        self.env['ir.config_parameter'].sudo().set_param('ncollection_saas.base_domain', 'example.com')
         tenant = self.Tenant.create({
             'company_name': 'Some Very Long Company Name LLC',
             'subdomain': 'shortname', 'plan_id': self.plan.id})

@@ -1,6 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, request as pwRequest } from '@playwright/test';
 import { execFileSync } from 'child_process';
 import { createHash } from 'crypto';
+import * as path from 'path';
 import { callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
 
 /**
@@ -144,7 +145,9 @@ test.describe('Platform Admin Mode', () => {
       'env.cr.commit()',
     ].join('\n');
     execFileSync('docker', ['compose', 'exec', '-T', 'odoo', 'odoo', 'shell', '-d', TENANT, '--no-http',
-      '--log-level=error', '--db_host=db', '--db_user=odoo', '--db_password=odoo'], { input: code });
+      '--log-level=error', '--db_host=db', '--db_user=odoo', '--db_password=odoo'],
+      // the repo root: CI passes COMPOSE_FILE as relative paths, which only resolve from there (the suite runs in e2e/)
+      { input: code, cwd: path.resolve(__dirname, '..', '..') });
   }
 
   test('the strip names the company and the admin, and "Back to Platform" leaves the tenant cleanly', async ({ page }) => {
@@ -162,7 +165,9 @@ test.describe('Platform Admin Mode', () => {
     expect(await page.evaluate(() => document.body.classList.contains('nc-platform-mode'))).toBe(true);
 
     // the token cannot be used a second time
-    const replay = await page.request.post(`${TENANTS[TENANT]}/ncollection/platform/enter`, { form: { token }, maxRedirects: 0 });
+    const anonymous = await pwRequest.newContext();                // another browser: no session
+    const replay = await anonymous.post(`${TENANTS[TENANT]}/ncollection/platform/enter`, { form: { token }, maxRedirects: 0 });
+    await anonymous.dispose();
     expect(replay.status()).toBe(403);
 
     // Back to Platform: ends THIS tenant session and goes to the platform

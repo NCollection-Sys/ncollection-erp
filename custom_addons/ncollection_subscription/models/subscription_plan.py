@@ -1,6 +1,7 @@
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
+from .companions import COMPANION_MODULES
 from .localization import PLAN_EXCLUDED_MODULES
 
 
@@ -145,7 +146,8 @@ class SubscriptionPlan(models.Model):
             [('name', 'in', list(self.CORE_TENANT_MODULES))], fields_)
         never_offer = (list(self.CORE_TENANT_MODULES)
                        + list(self.PLATFORM_ONLY_MODULES)
-                       + list(self.LOCALIZATION_MODULES))
+                       + list(self.LOCALIZATION_MODULES)
+                       + list(COMPANION_MODULES))     # entitled by their host (companions.py), never ticked
         optional = Module.search_read([
             ('application', '=', True),
             ('state', '!=', 'uninstallable'),

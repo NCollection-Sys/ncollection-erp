@@ -46,7 +46,20 @@ class ResUsers(models.Model):
         password). Token-less calls are plain signups — not logged here."""
         result = super().signup(values, token=token)
         if token:
+            self.env['ncollection.auth.spent_token']._spend(token)    # single use: core's token outlives its reset
             login = result[1] if isinstance(result, (list, tuple)) and len(result) > 1 \
                 else values.get('login')
             self.env['ncollection.auth.log']._capture('reset_complete', login=login)
         return result
+
+    @api.model
+    def _nc_reset_mail_available(self):
+        """True when this database can send mail at all: an active outgoing server record, or a process-level SMTP
+        host someone actually chose. Odoo's own default host is ``localhost``, where nothing listens on a tenant, so
+        that default does not count as "set up".
+
+        Workspace-wide, never per account, so answering on it cannot be used to probe for logins."""
+        from odoo.tools import config
+        host = (config.get('smtp_server') or '').strip().lower()
+        return bool(self.env['ir.mail_server'].sudo().search_count([('active', '=', True)])
+                    or host not in ('', 'localhost', '127.0.0.1'))

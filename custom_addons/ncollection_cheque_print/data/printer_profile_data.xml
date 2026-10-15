@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- No correction: the starting point, and what a template uses until a printer has been calibrated. -->
+    <record id="printer_profile_default" model="ncollection.cheque.printer.profile">
+        <field name="name">Default (no correction)</field>
+        <field name="company_id" eval="False"/>
+        <field name="offset_x_mm">0.0</field>
+        <field name="offset_y_mm">0.0</field>
+        <field name="scale_pct">100.0</field>
+        <field name="notes">Print the calibration sheet of a template at 100% / Actual size, measure it, and create a profile with the offsets.</field>
+    </record>
+
+    <record id="seq_cheque_print_job" model="ir.sequence">
+        <field name="name">Cheque print job</field>
+        <field name="code">ncollection.cheque.print.job</field>
+        <field name="prefix">CHQ-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

@@ -259,7 +259,18 @@ jobs:
                        | sed -nE 's/.*Updated for `([0-9a-f]{7,40})`.*/\1/p' \
                        | tail -1)
 
+            # Is Strix itself unavailable? Its LATEST comment (bot-authored lines only, so nobody else can forge
+            # it) carries a billing marker when the managed service cannot run reviews at all. That is a statement
+            # about the service, not about this code: no finding exists, and waiting for a stamp that cannot come
+            # only burns the deadline.
+            latest=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+                       --jq '.[] | "\(.user.login)\t\(.body | gsub("\n"; " "))"' \
+                     | grep '^strix-security\[bot\]' | tail -1 || true)
+            unavailable=0
+            case "$latest" in *'strix:pr-review-billing-required'*) unavailable=1 ;; esac
+
             [ "$reviewed" = "$short" ] && break
+            [ "$unavailable" = 1 ] && break
             [ "$SECONDS" -ge "$deadline" ] && break
             echo "waiting for Strix: reviewed=${reviewed:-none} head=$short"
             sleep 20
@@ -267,6 +278,22 @@ jobs:
 
           if [ "$reviewed" = "$short" ]; then
             echo "Strix reviewed $short — its verdict covers this commit."
+            exit 0
+          fi
+
+          if [ "${unavailable:-0}" = 1 ]; then
+            # INFORMATIONAL while the managed Strix service is unavailable (trial ended / billing). Nothing was
+            # reviewed and nothing was found, so this is REPORTED, not passed off as a clean verdict. It stops being
+            # informational by itself the moment Strix posts anything other than the billing notice: a stale stamp
+            # then fails exactly as before, and a finding is Strix's own check run, which this job never touches.
+            echo "::warning::Strix cannot review $short: its managed service is unavailable (billing). NOT reviewed."
+            {
+              echo "### Strix did not review this commit (service unavailable)"
+              echo
+              echo "Strix's last comment on this PR is its billing notice, so no review ran and no verdict exists"
+              echo "for \`$short\`. This job is informational while that lasts. Resume the workspace at"
+              echo "app.strix.ai/settings/billing, then comment \`@strix-security\` as a human for a real verdict."
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -376,9 +403,9 @@ jobs:
             odoo --db_host=localhost --db_user=odoo --db_password=odoo \
                  --addons-path=/mnt/extra-addons,/mnt/oca-addons/account-financial-reporting,/mnt/oca-addons/account-financial-tools,/mnt/oca-addons/mis-builder,/mnt/oca-addons/reporting-engine,/mnt/oca-addons/queue,/mnt/oca-addons/server-auth,/mnt/oca-addons/server-tools,/mnt/oca-addons/server-ux,/mnt/oca-addons/helpdesk,/usr/lib/python3/dist-packages/odoo/addons \
                  -d ci_test \
-                 -i hr,sale,purchase,stock,purchase_stock,account_asset_management,auditlog,ncollection_core,ncollection_ai,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth,ncollection_account_core,ncollection_account_localization_uae,ncollection_api,ncollection_approvals,ncollection_audit,ncollection_account_reports,ncollection_account_reports_oca,ncollection_account_analytics,ncollection_account_budget,ncollection_account_assets,ncollection_account_dashboard,ncollection_data_import,ncollection_reseller,account_financial_report,ncollection_helpdesk,ncollection_sale_attachments,ncollection_stock_barcode \
+                 -i hr,sale,purchase,stock,purchase_stock,account_asset_management,auditlog,ncollection_core,ncollection_ai,ncollection_branding,ncollection_subscription,ncollection_saas,ncollection_billing,ncollection_mis_templates,ncollection_auth,ncollection_account_core,ncollection_account_localization_uae,ncollection_api,ncollection_approvals,ncollection_audit,ncollection_account_reports,ncollection_account_reports_oca,ncollection_account_analytics,ncollection_account_budget,ncollection_account_assets,ncollection_account_dashboard,ncollection_data_import,ncollection_reseller,account_financial_report,ncollection_helpdesk,ncollection_sale_attachments,ncollection_stock_barcode,ncollection_cheque_print \
                  --test-enable \
-                 --test-tags /ncollection_core,/ncollection_ai,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth,/ncollection_account_core,/ncollection_account_localization_uae,/ncollection_api,/ncollection_approvals,/ncollection_audit,/ncollection_account_reports,/ncollection_account_reports_oca,/ncollection_account_analytics,/ncollection_account_budget,/ncollection_account_assets,/ncollection_account_dashboard,/ncollection_data_import,/ncollection_reseller,/ncollection_helpdesk,/ncollection_sale_attachments,/ncollection_stock_barcode \
+                 --test-tags /ncollection_core,/ncollection_ai,/ncollection_branding,/ncollection_subscription,/ncollection_saas,/ncollection_billing,/ncollection_mis_templates,/ncollection_auth,/ncollection_account_core,/ncollection_account_localization_uae,/ncollection_api,/ncollection_approvals,/ncollection_audit,/ncollection_account_reports,/ncollection_account_reports_oca,/ncollection_account_analytics,/ncollection_account_budget,/ncollection_account_assets,/ncollection_account_dashboard,/ncollection_data_import,/ncollection_reseller,/ncollection_helpdesk,/ncollection_sale_attachments,/ncollection_stock_barcode,/ncollection_cheque_print \
                  --stop-after-init --log-level=test \
             2>&1 | tee odoo-test.log
           test "${PIPESTATUS[0]}" -eq 0

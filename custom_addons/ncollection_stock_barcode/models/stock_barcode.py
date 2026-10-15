@@ -342,7 +342,8 @@ class NcStockBarcode(models.AbstractModel):
         if product.tracking != 'none' and not lot_name:
             return dict(self._count_state(location), ok=True, level='info',
                         message=self.env._("%s is tracked: scan its lot or serial number.", product.display_name),
-                        need_lot={'product_id': product.id, 'name': product.display_name, 'tracking': product.tracking})
+                        need_lot={'product_id': product.id, 'name': product.display_name,
+                                  'tracking': product.tracking})
         qty = 1.0 if product.tracking == 'serial' else self._clean_qty(qty)
         lot = False
         if lot_name:

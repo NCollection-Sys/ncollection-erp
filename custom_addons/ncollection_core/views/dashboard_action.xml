@@ -23,6 +23,7 @@
     <menuitem id="menu_ncollection_dashboard_root"
               name="Summary"
               action="action_ncollection_dashboard"
+              web_icon="ncollection_core,static/description/icon_summary.png"
               sequence="1"/>
 
 </odoo>

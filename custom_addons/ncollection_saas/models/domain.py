@@ -30,8 +30,6 @@ SSL_ALERT_LEAD_DAYS = 14
 SSL_REALERT_DAYS = 7
 
 # Config parameters (non-secret; overridable per deployment).
-_BASE_DOMAIN_PARAM = 'ncollection_saas.base_domain'
-_DEFAULT_BASE_DOMAIN = 'ncollectionerp.com'
 # The wildcard cert's current expiry (ISO date). A host-side job that can read
 # the real cert file writes this (see docs/markdown/RUNBOOK_STAGING.md); until
 # then subdomain records carry no expiry and read as "unknown".

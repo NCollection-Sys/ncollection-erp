@@ -109,6 +109,7 @@
          swap this ticket's Rule-4 mismatch for its exact inverse. -->
     <menuitem id="menu_department_dashboard_root"
               name="Department Dashboards"
+              web_icon="ncollection_account_dashboard,static/description/icon.png"
               groups="ncollection_core.group_role_sales,ncollection_core.group_role_hr,ncollection_core.group_role_warehouse"
               sequence="13"/>
 

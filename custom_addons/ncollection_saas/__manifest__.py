@@ -31,7 +31,11 @@
     # Pure Python, no schema change — a restart is enough and `-u` is not
     # required — but it is a real behaviour change on the platform's only
     # outbound call, so it gets traceability like #275's and #243's.
-    'version': '19.0.6.13.0',
+    # 19.0.6.16.0 (companion modules, cheque printing follows Accounting): the entitlement is now derived in
+    # ncollection_subscription's single authority, `_nc_effective_module_list`, so a NEW tenant gets the module at
+    # database creation with no change here. This bump exists for the migration that queues the existing install / sync
+    # entry points for the READY tenants that gain a companion (19.0.6.16.0/post-migrate.py, the 19.0.6.8.0 pattern).
+    'version': '19.0.6.16.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',

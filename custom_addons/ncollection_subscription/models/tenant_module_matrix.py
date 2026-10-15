@@ -20,6 +20,8 @@ from markupsafe import Markup, escape
 from odoo import Command, api, fields, models
 from odoo.exceptions import UserError
 
+from .companions import COMPANION_MODULES
+
 
 class TenantModuleMatrix(models.Model):
     _inherit = 'ncollection.tenant'
@@ -34,7 +36,8 @@ class TenantModuleMatrix(models.Model):
         """One dict per module that matters for this tenant, sorted by name.
 
         ``in_plan``   - the baseline grants it (plan, or the country package)
-        ``locked``    - a localization module: cannot be switched off
+        ``locked``    - a localization module or a companion: cannot be switched off
+        ``follows``   - for a companion, the module whose entitlement it follows
         ``override``  - '' / 'enable' / 'disable'
         ``effective`` - what the tenant actually gets (from the one authority)
         """
@@ -44,18 +47,21 @@ class TenantModuleMatrix(models.Model):
         localization = set(self._nc_localization_modules())
         overrides = {o.module_name: o for o in self.module_override_ids}
         effective = set(self._nc_effective_module_list())
+        # companions that apply (cheque printing follows Accounting): shown, but with no switch of their own
+        companions = {name: host for name, host in COMPANION_MODULES.items() if name in effective}
         names = list(dict.fromkeys(
-            plan_modules + sorted(localization) + list(overrides)))
+            plan_modules + sorted(localization) + sorted(companions) + list(overrides)))
         labels = {m.name: (m.shortdesc or m.name)
-                  for m in Module.search([('name', 'in', names)])}
+                  for m in Module.search([('name', 'in', names + list(companions.values()))])}
         rows = []
         for name in names:
             override = overrides.get(name)
             rows.append({
                 'name': name,
                 'label': labels.get(name, name),
-                'in_plan': name in plan_modules or name in localization,
-                'locked': name in localization,
+                'in_plan': name in plan_modules or name in localization or name in companions,
+                'locked': name in localization or name in companions,
+                'follows': labels.get(companions[name], companions[name]) if name in companions else '',
                 'override': override.mode if override else '',
                 'reason': override.reason if override else '',
                 'effective': name in effective,
@@ -93,7 +99,9 @@ class TenantModuleMatrix(models.Model):
                 escape(_("Module")), escape(_("From the plan")),
                 escape(_("This tenant")), escape(_("Result")))]
         for row in rows:
-            if row['locked']:
+            if row['follows']:
+                plan_cell = badge % ('secondary', escape(self.env._("Follows %s", row["follows"])))
+            elif row['locked']:
                 plan_cell = badge % ('secondary', escape(_("Country package")))
             elif row['in_plan']:
                 plan_cell = badge % ('success', escape(_("Included")))

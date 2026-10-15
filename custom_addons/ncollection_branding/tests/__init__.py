@@ -10,3 +10,4 @@ from . import test_translations
 from . import test_language_switch_session
 from . import test_app_shell_scroll
 from . import test_owl_template_rules
+from . import test_translation_coverage

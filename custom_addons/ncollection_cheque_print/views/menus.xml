@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inside the one Accounting application (no tile of its own): the same rights and the same licence as the
+         payments they print. -->
+    <menuitem id="menu_nc_cheque_root" name="Cheque Printing" parent="account.menu_finance" sequence="45"
+              groups="account.group_account_readonly"/>
+    <menuitem id="menu_nc_cheque_job" name="Print Jobs" parent="menu_nc_cheque_root" sequence="10"
+              action="action_nc_cheque_job" groups="account.group_account_readonly"/>
+    <menuitem id="menu_nc_cheque_template" name="Cheque Templates" parent="menu_nc_cheque_root" sequence="20"
+              action="action_nc_cheque_template" groups="account.group_account_readonly"/>
+    <menuitem id="menu_nc_cheque_profile" name="Printer Profiles" parent="menu_nc_cheque_root" sequence="30"
+              action="action_nc_cheque_profile" groups="account.group_account_readonly"/>
+</odoo>
