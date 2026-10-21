@@ -263,7 +263,8 @@ class NcDocumentStamp(models.Model):
         if isinstance(stamp_id, bool) or not isinstance(stamp_id, int):
             return False
         if not self.env.context.get('report_pdf_no_attachment'):
-            return False           # only the designer's render (it stores no copy); a download must never store a forged PDF
+            # only the designer's render (it stores no copy); a download must never store a forged PDF
+            return False
         stamp = self.browse(stamp_id).exists()
         try:
             stamp.check_access('write')

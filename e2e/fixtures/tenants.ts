@@ -155,18 +155,26 @@ export async function callKw(
   method: string,
   args: unknown[] = [],
   kwargs: Record<string, unknown> = {},
+  timeoutMs?: number,
 ) {
   const res = await request.post(`${TENANTS[tenant]}/web/dataset/call_kw`, {
     headers: { 'Content-Type': 'application/json' },
     data: { jsonrpc: '2.0', method: 'call', params: { model, method, args, kwargs } },
+    timeout: timeoutMs,
   });
   return res.json();
 }
 
 /**
  * Make `lang` usable as a user language on a tenant. A freshly provisioned tenant has the language record but it is
- * not active, and Odoo refuses a user language that is not active ("Invalid language code").
+ * not active, and Odoo refuses a user language that is not active ("Invalid language code"). Activating the record is
+ * not enough for a non-English language: its TRANSLATIONS must be loaded too, or every menu stays English. So a language
+ * other than English is installed through Odoo's own language-install wizard (`lang_install`: activates it and loads the
+ * terms of every installed module; existing terms are kept), once per tenant and run, so a completely fresh tenant ends
+ * in the same state every time.
  */
+const translationsLoaded = new Set<string>();
+
 export async function activateLanguage(request: APIRequestContext, tenant: TenantKey, lang: string): Promise<void> {
   const found = await callKw(request, tenant, 'res.lang', 'search_read',
     [[['code', '=', lang], ['active', 'in', [true, false]]]], { fields: ['id', 'active'] });
@@ -174,4 +182,12 @@ export async function activateLanguage(request: APIRequestContext, tenant: Tenan
   if (rec && !rec.active) {
     await callKw(request, tenant, 'res.lang', 'write', [[rec.id], { active: true }]);
   }
+  const key = `${tenant}:${lang}`;
+  if (!rec || lang === 'en_US' || translationsLoaded.has(key)) return;
+  const wizard = await callKw(request, tenant, 'base.language.install', 'create',
+    [{ lang_ids: [[6, 0, [rec.id]]], overwrite: false }]);
+  if (!wizard.result) throw new Error(`language wizard refused for ${lang}@${tenant}: ${JSON.stringify(wizard).slice(0, 200)}`);
+  const installed = await callKw(request, tenant, 'base.language.install', 'lang_install', [[wizard.result]], {}, 300_000);
+  if (installed.error) throw new Error(`loading ${lang} translations failed on ${tenant}: ${JSON.stringify(installed.error).slice(0, 200)}`);
+  translationsLoaded.add(key);
 }

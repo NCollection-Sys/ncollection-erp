@@ -11,6 +11,7 @@ import secrets
 from unittest.mock import patch
 
 from odoo.tests import HttpCase, tagged
+from odoo.tools import mute_logger
 
 from .test_platform_entry import NONCE, _grant
 
@@ -175,10 +176,13 @@ class TestPlatformAuditAttribution(HttpCase):
         if 'ncollection.auth.log' not in self.env:
             return
         log_model = type(self.env['ncollection.auth.log'])
-        with patch.object(log_model, '_capture_isolated', side_effect=RuntimeError('the log is down')):
+        expected = 'odoo.addons.ncollection_core.controllers.platform_entry'      # the one logger that reports it
+        with patch.object(log_model, '_capture_isolated', side_effect=RuntimeError('the log is down')), \
+                mute_logger(expected):
             response = self.url_open('/ncollection/platform/enter', data={'token': 'Never-Granted-' + NONCE},
                                      allow_redirects=False)
         self.assertEqual(response.status_code, 403)
+        self.assertNotEqual(response.status_code, 500)
 
     def test_a_used_link_is_logged_as_a_refused_entry(self):
         if 'ncollection.auth.log' not in self.env:
