@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Tenant Administration, users side: the Users & Access page of the tenant, the tenant's user list (a snapshot read
+        from the tenant database when it was opened) and the dialogs to reset a password, change roles and create a user.
+        Every action ends in ncollection.admin.service inside the tenant (models/tenant_admin.py); the platform keeps
+        no copy of a tenant's users beyond this snapshot and never a password.
+    -->
+
+    <record id="view_tenant_users_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.users.form</field>
+        <field name="model">ncollection.tenant.users</field>
+        <field name="arch" type="xml">
+            <form string="Tenant users" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_create_user" type="object" string="New user" class="btn-primary"/>
+                    <button name="action_refresh" type="object" string="Refresh"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="tenant_id" readonly="1" options="{'no_open': True}"/></h1>
+                    </div>
+                    <div class="text-muted mb-3" invisible="not max_users">
+                        <field name="active_internal" readonly="1" class="oe_inline"/> active users of
+                        <field name="max_users" readonly="1" class="oe_inline"/> allowed by the plan.
+                    </div>
+                    <field name="line_ids" nolabel="1">
+                        <list string="Users" create="false" delete="false" decoration-muted="not active"
+                              decoration-bf="is_tenant_admin">
+                            <field name="name"/>
+                            <field name="login"/>
+                            <field name="is_tenant_admin" widget="boolean" string="Tenant Administrator"/>
+                            <field name="role_names"/>
+                            <field name="active" widget="boolean"/>
+                            <field name="must_change_password" widget="boolean" string="Must change password" optional="show"/>
+                            <field name="last_login" optional="show"/>
+                            <button name="action_edit" type="object" string="Edit" icon="fa-pencil"/>
+                            <button name="action_reset_password" type="object" string="Reset password" icon="fa-key"/>
+                            <button name="action_edit_roles" type="object" string="Roles" icon="fa-id-badge"/>
+                            <button name="action_toggle_active" type="object" string="Activate / Deactivate"
+                                    icon="fa-power-off"
+                                    confirm="Change whether this person can sign in to the workspace?"/>
+                        </list>
+                    </field>
+                    <p class="text-muted">
+                        This list was read from the company's own workspace just now. Changes are made there, through the
+                        workspace's own rules (the last Administrator stays, the plan's user limit applies), and are recorded
+                        in its audit log with your name. Passwords are never stored by the platform.
+                    </p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tenant_user_password_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.user.password.form</field>
+        <field name="model">ncollection.tenant.user.password</field>
+        <field name="arch" type="xml">
+            <form string="Reset password">
+                <group>
+                    <field name="user_name"/>
+                    <field name="mode" widget="radio"/>
+                    <field name="new_password" password="True" invisible="mode != 'explicit'"
+                           required="mode == 'explicit'" autocomplete="new-password"/>
+                    <field name="must_change"/>
+                </group>
+                <p class="text-muted">
+                    The password is set inside the company's workspace. A temporary password is generated there and shown once,
+                    to you: the platform does not keep it. The person must choose their own at first sign-in.
+                </p>
+                <footer>
+                    <button name="action_apply" type="object" string="Reset password" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tenant_user_edit_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.user.edit.form</field>
+        <field name="model">ncollection.tenant.user.edit</field>
+        <field name="arch" type="xml">
+            <form string="Edit user">
+                <group>
+                    <field name="login"/>
+                    <field name="name"/>
+                    <field name="email" widget="email"/>
+                </group>
+                <p class="text-muted">
+                    Only the name and the contact email are changed here. The username, the roles and the password have their own actions.
+                </p>
+                <footer>
+                    <button name="action_apply" type="object" string="Save" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tenant_user_roles_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.user.roles.form</field>
+        <field name="model">ncollection.tenant.user.roles</field>
+        <field name="arch" type="xml">
+            <form string="Roles">
+                <group>
+                    <field name="user_name"/>
+                    <field name="available_role_ids" invisible="1"/>
+                    <field name="role_option_ids" widget="many2many_tags"
+                           options="{'no_create': True, 'no_open': True}" domain="[('id', 'in', available_role_ids)]"/>
+                </group>
+                <p class="text-muted">
+                    Only the roles this workspace can use are offered. Giving or taking a role changes the person's real
+                    permission groups in the workspace, immediately.
+                </p>
+                <footer>
+                    <button name="action_apply" type="object" string="Save roles" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tenant_user_create_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.user.create.form</field>
+        <field name="model">ncollection.tenant.user.create</field>
+        <field name="arch" type="xml">
+            <form string="New user">
+                <group>
+                    <group>
+                        <field name="name" placeholder="e.g. Sara Mahmoud"/>
+                        <field name="login" placeholder="e.g. sara.m"/>
+                        <field name="email" widget="email"/>
+                    </group>
+                    <group>
+                        <field name="available_role_ids" invisible="1"/>
+                        <field name="role_option_ids" widget="many2many_tags"
+                               options="{'no_create': True, 'no_open': True}" domain="[('id', 'in', available_role_ids)]"/>
+                        <field name="mode" widget="radio"/>
+                        <field name="new_password" password="True" invisible="mode != 'explicit'"
+                               required="mode == 'explicit'" autocomplete="new-password"/>
+                        <field name="must_change"/>
+                    </group>
+                </group>
+                <p class="text-muted">
+                    The user is created inside the company's workspace, within its plan's user limit. A temporary password is
+                    shown once, to you.
+                </p>
+                <footer>
+                    <button name="action_apply" type="object" string="Create user" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- The Users & Access page of the tenant form -->
+    <record id="view_ncollection_tenant_form_users" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form.users</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='platform_access']" position="before">
+                <page string="Users &amp; Access" name="users_access"
+                      groups="ncollection_subscription.group_platform_admin">
+                    <group>
+                        <group string="Tenant Administrator">
+                            <field name="admin_login" readonly="1" string="Username"/>
+                            <field name="admin_credentials_state" readonly="1"/>
+                        </group>
+                        <group string="Manage">
+                            <button name="action_open_users" type="object" string="Users of this company"
+                                    class="btn-primary" icon="fa-users" invisible="database_status != 'ready'"/>
+                            <button name="action_reset_admin_password" type="object" string="Reset administrator password"
+                                    icon="fa-key" invisible="database_status != 'ready'"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="status" invisible="database_status == 'ready'">
+                        The company's users can be managed once its workspace has been provisioned.
+                    </div>
+                    <p class="text-muted">
+                        Everything here acts on the company's own workspace, only if you are on its Platform Access list, and
+                        is recorded with your name both here and in the workspace's audit log. The platform never stores a
+                        tenant's passwords.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

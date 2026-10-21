@@ -16,11 +16,11 @@
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <!-- Without this the browser asks the host for /favicon.ico, which
                      this standalone layout does not serve, and logs a 404 on every
-                     page view of the customer's first impression. The branded
-                     company icon is already publicly served. -->
-                <link rel="icon" type="image/png"
-                      t-att-href="'/web/image/res.company/%s/favicon' % request.env.company.id"/>
-                <title><t t-esc="title or 'NCollection'"/></title>
+                     page view of the customer's first impression. The product favicon
+                     (Product Branding) is publicly served and versioned. -->
+                <link rel="icon" type="image/x-icon"
+                      t-att-href="nc_product_brand()['favicon_url']"/>
+                <title><t t-esc="title or nc_product_brand()['short_name']"/></title>
                 <t t-call-assets="web.assets_frontend" t-js="false"/>
             </head>
             <body>
@@ -33,7 +33,7 @@
     <!-- ===================== Pricing ===================== -->
     <template id="checkout_pricing" name="NCollection Pricing">
         <t t-call="ncollection_saas.checkout_layout">
-            <t t-set="title">Pricing — NCollection</t>
+            <t t-set="title" t-value="'Pricing — ' + nc_product_brand()['short_name']"/>
             <div class="nc-checkout" data-nc-checkout="pricing">
                 <header class="nc-checkout__head">
                     <h1>Pick a plan. Get your ERP in minutes.</h1>
@@ -158,7 +158,7 @@
     <!-- ===================== Invalid/expired verify token ===================== -->
     <template id="checkout_verify_invalid" name="NCollection Verify Invalid">
         <t t-call="ncollection_saas.checkout_layout">
-            <t t-set="title">Link expired — NCollection</t>
+            <t t-set="title" t-value="'Link expired — ' + nc_product_brand()['short_name']"/>
             <div class="nc-checkout" data-nc-checkout="invalid">
                 <div class="nc-checkout__card nc-checkout__card--center">
                     <h1>This link is no longer valid</h1>

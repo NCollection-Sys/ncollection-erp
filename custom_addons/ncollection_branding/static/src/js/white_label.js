@@ -28,6 +28,7 @@
  */
 
 import { registry } from "@web/core/registry";
+import { session } from "@web/session";
 import { _t } from "@web/core/l10n/translation";
 import {
     ErrorDialog,
@@ -36,7 +37,8 @@ import {
     RPCErrorDialog,
 } from "@web/core/errors/error_dialogs";
 
-const BRAND = "NCollection ERP";
+// The product name comes from Product Branding (session_info), never from a literal here.
+const BRAND = session.nc_product_brand?.name || "NCollection ERP";
 
 /* 1 — tab title: re-register the service with the brand as the empty
  * fallback (core hardcodes "Odoo"). Identical to core otherwise. */

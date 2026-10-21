@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- THE PAYMENT RECEIPT, as a document.
+
+         Odoo's own receipt lists the invoice, then the payment itself as a negative "invoice" row, then a due amount: a
+         reconciliation ledger, not a receipt. This one says what a receipt says: who paid, when, how, how much, what it
+         settled and what is left, from the payment's NATIVE reconciliation (the partials Odoo keeps: one row per
+         document the payment was applied to, the amount applied, the balance still due on it) and from nothing of ours.
+         The payment is never shown as if it were one of the documents it was applied to. -->
+    <template id="report_payment_receipt_document_nc" inherit_id="account.report_payment_receipt_document">
+        <xpath expr="//div[hasclass('page')]" position="replace">
+            <t t-set="nc_applied" t-value="o._nc_applied_rows()"/>
+            <t t-set="nc_rows" t-value="nc_applied[0]"/>
+            <t t-set="nc_unallocated" t-value="nc_applied[1]"/>
+            <t t-set="nc_labels" t-value="o._nc_receipt_labels()"/>
+            <t t-set="nc_words" t-value="o._nc_amount_in_words()"/>
+            <t t-set="nc_applied_total" t-value="sum(row['applied'] for row in nc_rows)"/>
+            <t t-set="nc_rtl" t-value="o.env['res.lang']._get_data(code=o.env.lang or 'en_US').direction == 'rtl'"/>
+            <t t-set="layout_document_title">
+                <span t-field="o.payment_receipt_title"/> <span t-field="o.name"/>
+            </t>
+            <t t-set="address">
+                <div class="o_nc_label" t-out="nc_labels['party']"/>
+                <address t-field="o.partner_id"
+                         t-options='{"widget": "contact", "fields": ["name", "address", "phone"], "no_marker": true}'/>
+                <div t-if="o.partner_id.vat" class="muted">
+                    <span t-out="o.partner_id.country_id.vat_label or 'Tax ID'"/>: <span t-field="o.partner_id.vat"/>
+                </div>
+            </t>
+
+            <div class="page">
+                <table class="o_nc_table" name="nc_receipt_info">
+                    <thead>
+                        <tr>
+                            <th>Payment date</th>
+                            <th t-if="values['display_payment_method'] and o.payment_method_id">Payment method</th>
+                            <th t-if="o.journal_id">Journal</th>
+                            <th t-if="o.memo">Reference</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span t-field="o.date"/></td>
+                            <td t-if="values['display_payment_method'] and o.payment_method_id"><span t-field="o.payment_method_id.name"/></td>
+                            <td t-if="o.journal_id"><span t-field="o.journal_id.name"/></td>
+                            <td t-if="o.memo" dir="auto"><span t-field="o.memo"/></td>
+                            <td><span t-attf-class="o_nc_status o_nc_status_#{o.state}" t-field="o.state"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table class="o_nc_table o_nc_amount" name="nc_receipt_amount">
+                    <tbody>
+                        <tr>
+                            <td style="width: 38%;">
+                                <div class="o_nc_label">Amount</div>
+                                <div style="font-size: 19pt; font-weight: bold;">
+                                    <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                </div>
+                            </td>
+                            <td t-if="nc_words" dir="auto">
+                                <div class="o_nc_label">Amount in words</div>
+                                <div t-out="nc_words"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <t t-if="nc_rows">
+                    <div class="o_nc_label" style="margin-bottom: 1.5mm;">Applied to</div>
+                    <table class="o_nc_table" name="nc_receipt_documents">
+                        <thead>
+                            <tr>
+                                <th><span t-out="nc_labels['document']"/></th>
+                                <th>Date</th>
+                                <th class="text-end">Document total</th>
+                                <th class="text-end">Applied</th>
+                                <th class="text-end">Balance due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="nc_rows" t-as="row">
+                                <t t-set="doc" t-value="row['move']"/>
+                                <td><span t-field="doc.name"/></td>
+                                <td><span t-field="doc.invoice_date"/></td>
+                                <td class="text-end"><span t-out="doc.amount_total" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                                <td class="text-end"><strong><span t-out="row['applied']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></strong></td>
+                                <td class="text-end"><span t-out="doc.amount_residual" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <p t-elif="o.state != 'draft'" class="muted o_nc_note">
+                    This payment is not applied to any invoice or bill; the whole amount is held as credit on the account.
+                </p>
+                <p t-if="o.state == 'draft'" class="muted o_nc_note">
+                    This payment has not been confirmed yet, so nothing has been applied.
+                </p>
+
+                <table class="o_nc_totals" name="nc_receipt_totals" t-attf-style="width: 52%; margin-#{'right' if nc_rtl else 'left'}: auto;">
+                    <tr>
+                        <td>Applied to documents</td>
+                        <td class="text-end"><span t-out="nc_applied_total" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                    </tr>
+                    <tr t-if="o.state != 'draft'">
+                        <td>Not applied (credit on account)</td>
+                        <td class="text-end"><span t-out="nc_unallocated" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                    </tr>
+                    <tr class="o_nc_grand">
+                        <td>Payment amount</td>
+                        <td class="text-end"><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                    </tr>
+                </table>
+
+                <table class="o_nc_signatures">
+                    <tr>
+                        <td>Received by</td>
+                        <td class="o_nc_gap"/>
+                        <td>Authorised signature</td>
+                    </tr>
+                </table>
+            </div>
+        </xpath>
+    </template>
+</odoo>

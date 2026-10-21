@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Read-only window on the audit log: sign-ins, password events and administrative actions (who, to whom, what).
+         Rows are written by the system only (ACL: read for administrators, nothing else). -->
+    <record id="view_auth_log_list" model="ir.ui.view">
+        <field name="name">ncollection.auth.log.list</field>
+        <field name="model">ncollection.auth.log</field>
+        <field name="arch" type="xml">
+            <list string="Security log" create="false" edit="false" delete="false">
+                <field name="create_date" string="When"/>
+                <field name="event_type" string="Event"/>
+                <field name="user_id" string="By"/>
+                <field name="actor_ref" string="Platform administrator" optional="show"/>
+                <field name="target_user_id" string="To" optional="show"/>
+                <field name="detail" optional="show"/>
+                <field name="ip_address" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_auth_log_search" model="ir.ui.view">
+        <field name="name">ncollection.auth.log.search</field>
+        <field name="model">ncollection.auth.log</field>
+        <field name="arch" type="xml">
+            <search string="Security log">
+                <field name="login"/>
+                <field name="user_id"/>
+                <field name="target_user_id"/>
+                <field name="event_type"/>
+                <filter name="admin" string="Administrative actions"
+                        domain="[('event_type', 'in', ('admin_user_create', 'admin_user_update', 'admin_user_activate', 'admin_user_deactivate', 'admin_password_reset', 'admin_roles_change', 'role_define', 'admin_denied'))]"/>
+                <filter name="failed" string="Failed sign-ins" domain="[('event_type', '=', 'login_failed')]"/>
+                <filter name="platform" string="Platform administrator"
+                        domain="[('event_type', 'in', ('platform_entry', 'platform_exit', 'platform_denied'))]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_auth_log" model="ir.actions.act_window">
+        <field name="name">Security</field>
+        <field name="res_model">ncollection.auth.log</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_auth_log_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing recorded yet</p>
+            <p>Sign-ins and administrative actions appear here.</p>
+        </field>
+    </record>
+</odoo>

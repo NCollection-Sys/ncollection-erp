@@ -14,6 +14,11 @@ $nc-platform-bar-height: 30px;
     top: 0;
     z-index: 1100;
 
+    .nc-platform-bar__logo {
+        height: 20px;
+        width: auto;
+    }
+
     .nc-platform-bar__company {
         font-weight: 700;
     }

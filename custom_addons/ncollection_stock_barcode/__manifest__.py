@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Stock Barcode',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.1.1',
     'category': 'Inventory/Inventory',
     'summary': 'Barcode scanning workflow for receipts, deliveries, transfers and inventory counts, '
                'on Odoo Community stock (hardware scanner or camera).',

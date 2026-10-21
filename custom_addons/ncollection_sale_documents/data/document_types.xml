@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Quotation and sales order are one report (sale.action_report_saleorder); the order's state says which. -->
+    <record id="doc_type_sales_quotation" model="ncollection.document.type">
+        <field name="name">Sales Quotation</field>
+        <field name="code">sales_quotation</field>
+        <field name="sequence">60</field>
+        <field name="report_ids" eval="[(6, 0, [ref('sale.action_report_saleorder')])]"/>
+        <field name="record_domain">[('state', 'in', ('draft', 'sent', 'cancel'))]</field>
+    </record>
+    <record id="doc_type_sales_order" model="ncollection.document.type">
+        <field name="name">Sales Order</field>
+        <field name="code">sales_order</field>
+        <field name="sequence">70</field>
+        <field name="report_ids" eval="[(6, 0, [ref('sale.action_report_saleorder')])]"/>
+        <field name="record_domain">[('state', 'in', ('sale', 'done'))]</field>
+    </record>
+</odoo>

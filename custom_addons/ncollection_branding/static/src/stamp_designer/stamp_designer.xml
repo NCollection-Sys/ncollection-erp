@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ncollection_branding.StampDesigner">
+        <div class="o_nc_stamp_designer">
+            <div class="o_nc_stamp_designer__controls">
+                <div class="o_nc_stamp_designer__page" dir="ltr" t-att-style="pageStyle" t-att-title="sizeLabel">
+                    <div class="o_nc_stamp_designer__box" t-att-style="boxStyle"
+                         t-on-pointerdown="(ev) => this.onPointerDown(ev, 'move')"
+                         t-on-pointermove="onPointerMove" t-on-pointerup="onPointerUp">
+                        <span class="o_nc_stamp_designer__handle"
+                              t-on-pointerdown="(ev) => this.onPointerDown(ev, 'resize')"
+                              t-on-pointermove="onPointerMove" t-on-pointerup="onPointerUp"/>
+                    </div>
+                </div>
+                <div class="o_nc_stamp_designer__pad">
+                    <button type="button" class="btn btn-secondary btn-sm" title="Left" t-on-click="(ev) => this.nudge(-1, 0, ev)"><i class="fa fa-arrow-left"/></button>
+                    <button type="button" class="btn btn-secondary btn-sm" title="Up" t-on-click="(ev) => this.nudge(0, -1, ev)"><i class="fa fa-arrow-up"/></button>
+                    <button type="button" class="btn btn-secondary btn-sm" title="Down" t-on-click="(ev) => this.nudge(0, 1, ev)"><i class="fa fa-arrow-down"/></button>
+                    <button type="button" class="btn btn-secondary btn-sm" title="Right" t-on-click="(ev) => this.nudge(1, 0, ev)"><i class="fa fa-arrow-right"/></button>
+                    <button type="button" class="btn btn-secondary btn-sm" title="Smaller" t-on-click="() => this.resize(0.95)"><i class="fa fa-search-minus"/></button>
+                    <button type="button" class="btn btn-secondary btn-sm" title="Larger" t-on-click="() => this.resize(1.05)"><i class="fa fa-search-plus"/></button>
+                </div>
+                <div class="text-muted small o_nc_stamp_designer__hint">Drag the stamp, or its corner to resize. Hold Shift on the arrows to move by 5 mm.</div>
+            </div>
+            <div class="o_nc_stamp_designer__preview">
+                <div class="o_nc_stamp_designer__bar">
+                    <strong>Real preview</strong>
+                    <span class="text-muted small" t-out="sizeLabel"/>
+                    <span class="flex-grow-1"/>
+                    <button type="button" class="btn btn-secondary btn-sm" t-att-disabled="!canPreview" t-on-click="refresh">Refresh</button>
+                    <button type="button" class="btn btn-primary btn-sm" t-att-disabled="!canPreview" t-on-click="printTest">Print test</button>
+                </div>
+                <iframe t-if="canPreview and state.previewUrl" class="o_nc_stamp_designer__pdf" t-att-src="state.previewUrl" title="Stamp preview"/>
+                <div t-else="" class="o_nc_stamp_designer__empty text-muted">
+                    Add the image and save the stamp to see it on a real document.
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

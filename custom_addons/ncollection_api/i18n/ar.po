@@ -468,8 +468,8 @@ msgstr "تعمل واجهة API بصلاحيات المستخدم المحدد. 
 
 #. module: ncollection_api
 #: model:ir.model.fields,help:ncollection_api.field_ncollection_api_client__user_id
-msgid "The API acts with this user's access rights. A client can never read what this user could not read — the permission model is Odoo's, not a second one."
-msgstr "تعمل واجهة API بصلاحيات هذا المستخدم. لا يستطيع العميل أبدًا قراءة ما لا يستطيع هذا المستخدم قراءته — فنموذج الصلاحيات هو نموذج Odoo وليس نموذجًا ثانيًا."
+msgid "The API acts with this user's access rights. A client can never read what this user could not read — the permission model is the platform's own, not a second one."
+msgstr "تعمل واجهة API بصلاحيات هذا المستخدم. لا يستطيع العميل أبدًا قراءة ما لا يستطيع هذا المستخدم قراءته — فنموذج الصلاحيات هو نموذج المنصة نفسها وليس نموذجًا ثانيًا."
 
 #. module: ncollection_api
 #: model:ir.model.fields,help:ncollection_api.field_ncollection_api_client__scope_ids

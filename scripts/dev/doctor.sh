@@ -77,10 +77,15 @@ fi
 # pagination. Nothing fails, so nothing says so.
 odoo_cid=$(docker compose -f docker-compose.yml -f docker-compose.dev.yml ps -q odoo 2>/dev/null)
 if [ -n "$odoo_cid" ]; then
-  if docker exec "$odoo_cid" getent hosts ncollection.localhost >/dev/null 2>&1; then
-    ok "odoo container resolves <tenant>.localhost (report PDFs are styled)"
+  # both spellings a tenant URL can take: the legacy <db>.localhost and the public <db>.<base domain> (the edge)
+  pdf_missing=""
+  for pdf_name in ncollection.localhost "ncollection.${NC_BASE_DOMAIN:-ncollection.localhost}"; do
+    docker exec "$odoo_cid" getent hosts "$pdf_name" >/dev/null 2>&1 || pdf_missing="$pdf_missing $pdf_name"
+  done
+  if [ -z "$pdf_missing" ]; then
+    ok "odoo container resolves the tenant hostnames (report PDFs are styled)"
   else
-    warn "odoo container cannot resolve ncollection.localhost — report PDFs come out unstyled" "make pdf-hosts"
+    warn "odoo container cannot resolve$pdf_missing — report PDFs come out unstyled" "make pdf-hosts"
   fi
 fi
 

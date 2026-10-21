@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The customer-portal dialog named, and promoted, the upstream vendor's software. -->
+    <template id="sale_order_portal_connect_branded" inherit_id="sale.sale_order_portal_template">
+        <xpath expr="//h5[contains(text(), 'Want to import this document in Odoo?')]" position="replace">
+            <h5>Want to import this document in your own software?</h5>
+        </xpath>
+        <xpath expr="//p[contains(text(), 'Drag and drop the request for quotation PDF')]" position="replace">
+            <p>Use the structured copy of this order below to bring it into your own system.</p>
+        </xpath>
+        <xpath expr="//h5[contains(text(), 'Not using Odoo?')]" position="replace">
+            <h5>Connect your own software</h5>
+        </xpath>
+        <xpath expr="//p[contains(text(), 'Use the above REST URL')]" position="replace">
+            <p>Use the above REST URL to get structured data of this order in UBL format.</p>
+        </xpath>
+        <xpath expr="//div[h5[contains(text(), 'good CRM software')]]" position="replace"/>
+    </template>
+</odoo>

@@ -10,8 +10,15 @@ from . import license_enforcement
 from . import ir_http
 from . import subscription_gate
 from . import res_groups
+from . import duplicate_mixin
+from . import attachment_mixin
+from . import document_print_mixin
+from . import partner_roles_mixin
 from . import platform_entry
+from . import role
 from . import res_users
+from . import res_users_admin
+from . import admin_service
 from . import res_users_apikeys
 from . import launcher_app
 # #374 the financial-data role gate, shared by ncollection_account_dashboard

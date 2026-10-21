@@ -45,7 +45,19 @@ MENU_NESTED_GATED_MODULES = {'account_financial_report', 'mis_builder'}
 # that tile must be exactly as licensed as the app it fronts, or an unlicensed tenant would see a card for something
 # its plan does not include. {native module: the module whose licence it follows}. The follower's Home tile is also
 # hidden and ordered with its host app (Settings > Applications).
-NATIVE_FOLLOWS_LICENCE = {'ncollection_stock_barcode': 'stock'}
+#
+# The same rule covers a native menu that lives UNDER another app but is a door onto a different one: Sales > Invoices
+# and Purchase > Vendor Bills are Odoo's own accounting actions, mounted in the Sales / Purchase menus by the two
+# *_documents modules. Those menus sit under the sale / purchase root, so they are hidden with it; they must ALSO
+# disappear when Accounting is not licensed, or the entry would open an action whose model Ring 2 denies. Today a plan
+# that lists `sale` or `purchase` always licenses `account` too (the dependency closure of _ncollection_blocked_
+# module_names), so the two never differ; this entry makes that a property of the gate instead of a coincidence of
+# Odoo's module dependencies.
+NATIVE_FOLLOWS_LICENCE = {
+    'ncollection_stock_barcode': 'stock',
+    'ncollection_sale_documents': 'account',
+    'ncollection_purchase_documents': 'account',
+}
 
 # Root menus that are NOT customer applications and are therefore left out of
 # the tenant app launcher (#455). They are not hidden — a user who may see them

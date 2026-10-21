@@ -35,6 +35,21 @@
                                    class="oe_avatar" options="{'size': [0, 180]}"/>
                         </group>
                     </group>
+                    <group>
+                        <group string="Company Stamp">
+                            <!-- One stamp per company, stored as uploaded (a transparent PNG stays transparent).
+                                 The shared print layout puts it at the end of this company's documents. -->
+                            <field name="nc_stamp" widget="image" class="oe_avatar"
+                                   options="{'size': [0, 180], 'accepted_file_extensions': 'image/png'}"/>
+                        </group>
+                        <group>
+                            <p class="text-muted">
+                                The default stamp: a PNG image, up to 2 MB and 4000 pixels on a side. It is printed at the
+                                bottom of the last page of a company document that has no Document Stamp of its own. To
+                                choose which documents carry which stamp, and exactly where, use Document Stamps.
+                            </p>
+                        </group>
+                    </group>
                     <p class="text-muted">
                         Colours use 6-digit hex (for example #1F5F8F). Changes apply
                         on the next page reload. Leave a colour empty to use the
@@ -69,6 +84,14 @@ action = {
               name="Appearance"
               parent="menu_workspace_settings_root"
               action="action_workspace_appearance"
-              sequence="40"/>
+              sequence="70"/>
+
+    <!-- Document stamps: the templates (image, documents, position in mm) with their designer; ncollection_branding
+         owns the model and the action, the administration menu is here with the other workspace entries. -->
+    <menuitem id="menu_workspace_document_stamps"
+              name="Document Stamps"
+              parent="menu_workspace_settings_root"
+              action="ncollection_branding.action_document_stamp"
+              sequence="80"/>
 
 </odoo>

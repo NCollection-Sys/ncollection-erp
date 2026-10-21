@@ -143,18 +143,42 @@ class PlatformEntry(models.Model):
         if user:
             if not user.nc_platform_proxy:
                 raise AccessDenied()          # a real user squatting the reserved login: never reuse it
-            user.write({'name': name, 'active': True})
+            user.write(self._nc_proxy_refresh_vals(user, name))
             return user
         groups = [self.env.ref('base.group_system').id]
         owner = self.env.ref('ncollection_core.group_role_owner', raise_if_not_found=False)
         if owner:
             groups.append(owner.id)
-        # The entry endpoint runs without a user, so there is no 'current' company: the workspace's main one.
-        company = self.env['res.company'].sudo().search([], order='sequence, id', limit=1)
+        company = self._nc_entered_company()
         return Users.create({
             'name': name, 'login': login, 'nc_platform_proxy': True, 'nc_platform_ref': entry.platform_ref,
             'group_ids': [(6, 0, groups)], 'company_id': company.id, 'company_ids': [(6, 0, company.ids)],
         })
+
+    @api.model
+    def _nc_entered_company(self):
+        """The company an entry is for. The grant names a TENANT (this database), not a company, and the entry endpoint
+        runs without a user, so there is no 'current' company: it is the workspace's main ACTIVE company. Least
+        privilege: the proxy gets that one company only, never every company of the tenant by default.
+
+        The main company is Odoo's own ``base.main_company``. It is NOT the first by ``sequence``: that column is NULL
+        on the company a database is created with, and Postgres sorts NULL last, so any company added later would
+        come first and the proxy would land in the wrong company. The sequence order is only the fallback for a
+        workspace whose main company is gone or archived."""
+        main = self.env.ref('base.main_company', raise_if_not_found=False)
+        if main and main.active:
+            return main
+        return self.env['res.company'].sudo().search([('active', '=', True)], order='sequence, id', limit=1)
+
+    @api.model
+    def _nc_proxy_refresh_vals(self, user, name):
+        """What a repeat entry refreshes on the proxy: its displayed name, being active, and its company, which is
+        RESET to the entered one, so nothing granted before (another company, an archived one) carries over."""
+        vals = {'name': name, 'active': True}
+        company = self._nc_entered_company()
+        if user.company_id != company or user.company_ids != company:
+            vals.update({'company_id': company.id, 'company_ids': [(6, 0, company.ids)]})
+        return vals
 
     @api.model
     def _redeem(self, user, token, remote_ip=''):

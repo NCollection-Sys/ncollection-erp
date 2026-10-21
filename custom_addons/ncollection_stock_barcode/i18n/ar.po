@@ -222,7 +222,7 @@ msgstr "لم يتم مسح أي شيء."
 #. module: ncollection_stock_barcode
 #. odoo-python
 #: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
-msgid "Odoo needs a decision to finish this operation."
+msgid "A decision is needed to finish this operation."
 msgstr "يحتاج النظام إلى قرار لإنهاء هذه العملية."
 
 #. module: ncollection_stock_barcode

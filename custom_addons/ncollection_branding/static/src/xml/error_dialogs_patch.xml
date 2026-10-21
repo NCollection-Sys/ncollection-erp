@@ -10,7 +10,16 @@
          templates) to override just the title attribute. -->
     <t t-inherit="web.SessionExpiredDialog" t-inherit-mode="extension">
         <xpath expr="//Dialog" position="attributes">
-            <attribute name="title.translate">NCollection ERP Session Expired</attribute>
+            <attribute name="title.translate">Session Expired</attribute>
+        </xpath>
+    </t>
+
+    <!-- The (?) documentation links of the settings pages and widgets point at the upstream vendor's website. The product
+         does not ship a link to another company's documentation: those links are not rendered. A link to any other
+         address is untouched. -->
+    <t t-inherit="web.DocumentationLink" t-inherit-mode="extension">
+        <xpath expr="//a" position="attributes">
+            <attribute name="t-if">!url.startsWith('https://www.odoo.com/')</attribute>
         </xpath>
     </t>
 

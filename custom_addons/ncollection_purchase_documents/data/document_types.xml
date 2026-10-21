@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A request for quotation and a purchase order are two reports; the order's state picks which one prints. -->
+    <record id="doc_type_purchase_rfq" model="ncollection.document.type">
+        <field name="name">Request for Quotation</field>
+        <field name="code">purchase_rfq</field>
+        <field name="sequence">80</field>
+        <field name="report_ids" eval="[(6, 0, [ref('purchase.report_purchase_quotation')])]"/>
+    </record>
+    <record id="doc_type_purchase_order" model="ncollection.document.type">
+        <field name="name">Purchase Order</field>
+        <field name="code">purchase_order</field>
+        <field name="sequence">90</field>
+        <field name="report_ids" eval="[(6, 0, [ref('purchase.action_report_purchase_order')])]"/>
+    </record>
+</odoo>

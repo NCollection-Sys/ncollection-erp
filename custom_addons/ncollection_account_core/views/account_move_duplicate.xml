@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Duplicate, next to Preview in the form header: invoices, bills, credit notes, receipts and entries. The right
+         to create is enforced by the action itself (nc.duplicate.mixin); the group here only hides the button from
+         users who could not use it. -->
+    <record id="view_move_form_nc_duplicate" model="ir.ui.view">
+        <field name="name">account.move.form.nc.duplicate</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='preview_invoice']" position="after">
+                <button name="action_nc_duplicate" type="object" string="Duplicate"
+                        groups="account.group_account_invoice" invisible="not id or not nc_can_duplicate"/>
+                <field name="nc_can_duplicate" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

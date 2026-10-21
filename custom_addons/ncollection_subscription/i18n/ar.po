@@ -1503,6 +1503,7 @@ msgstr "النطاق الفرعي"
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_form
+#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
 msgid "Subscription"
 msgstr "اشتراك"
 
@@ -2046,3 +2047,33 @@ msgid ""
 "'%(module)s' follows '%(host)s' and has no switch of its own: enable or "
 "disable '%(host)s' instead."
 msgstr "«%(module)s» يتبع «%(host)s» وليس له مفتاح تشغيل خاص به: فعّل «%(host)s» أو عطّله بدلًا من ذلك."
+
+#. module: ncollection_subscription
+#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
+msgid ""
+"Leave the password empty and the tenant is born hardened:\n"
+"                                    an unguessable password nobody is told, and the owner sets\n"
+"                                    their own through the emailed reset link."
+msgstr ""
+"اترك كلمة المرور فارغة ليولد المستأجر محصّنًا: كلمة مرور لا يمكن تخمينها ولا"
+" يُخبَر بها أحد، ويعيّن المالك كلمة مروره بنفسه عبر رابط إعادة التعيين "
+"المرسل بالبريد."
+
+#. module: ncollection_subscription
+#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
+msgid "Overview"
+msgstr "نظرة عامة"
+
+#. module: ncollection_subscription
+#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
+msgid "Platform Access"
+msgstr "صلاحية المنصّة"
+
+#. module: ncollection_subscription
+#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
+msgid ""
+"The password now lives in the tenant's own database and was\n"
+"                                    erased from here. Reset it from Users &amp; Access."
+msgstr ""
+"كلمة المرور الآن في قاعدة بيانات المستأجر نفسه وقد مُحيت من هنا. أعد تعيينها "
+"من «المستخدمون والوصول»."

@@ -12,13 +12,14 @@ class OpenApiSpecificationController(ApiControllerBase):
                 readonly=False)
     def openapi_spec(self, **kwargs):
         """Returns the dynamic OpenAPI 3.1 schema for NCollection REST API."""
+        product = http.request.env['ncollection.product.branding'].nc_brand()['name']
         spec = {
             "openapi": "3.1.0",
             "info": {
-                "title": "NCollection ERP Public REST API",
+                "title": "%s Public REST API" % product,
                 "version": "1.0.0",
                 "description": (
-                    "Enterprise Multi-Tenant REST API for NCollection ERP. "
+                    "Enterprise Multi-Tenant REST API for %s. " % product +
                     "Secured with OAuth2 Client Credentials & Scoped Bearer Tokens."
                 ),
                 "contact": {

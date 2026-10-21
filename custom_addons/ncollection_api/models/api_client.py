@@ -54,7 +54,7 @@ class NcollectionApiClient(models.Model):
         'res.users', string='Acts As', required=True, ondelete='restrict',
         help="The API acts with this user's access rights. A client can never "
              "read what this user could not read — the permission model is "
-             "Odoo's, not a second one.")
+             "the platform's own, not a second one.")
     scope_ids = fields.Many2many(
         'ncollection.api.scope', string='Allowed Scopes',
         help="The most a token for this client may be granted. A token request "

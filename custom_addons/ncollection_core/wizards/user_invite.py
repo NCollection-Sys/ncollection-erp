@@ -54,6 +54,10 @@ class UserInvite(models.TransientModel):
              '(see docs/ROLE_MATRIX.md).',
     )
 
+    role_ids = fields.Many2many(
+        'ncollection.role', 'ncollection_user_invite_role_rel', 'invite_id', 'role_id', string='More roles',
+        help='Workspace roles (Roles & Permissions) given in addition to the role above.')
+
     @api.constrains('username')
     def _check_username(self):
         for wizard in self:
@@ -100,6 +104,9 @@ class UserInvite(models.TransientModel):
                 (4, role_group.id),
             ],
         })
+
+        if self.role_ids:
+            user._nc_apply_roles(user.nc_role_ids | self.role_ids)     # in addition to the role chosen above
 
         # Best-effort invitation email (signup/reset link). Dev environments
         # have no SMTP — never fail the invite over mail transport.

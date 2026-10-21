@@ -175,7 +175,7 @@
                     </group>
                 </page>
 
-                <page string="Config Sync" name="config_sync">
+                <page string="Configuration Sync" name="config_sync">
                     <div class="text-muted mb-3">
                         Configuration synchronisation pushes this tenant's entitlement,
                         limits and subscription status into its own database, where

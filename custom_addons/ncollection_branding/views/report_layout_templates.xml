@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- THE NCOLLECTION DOCUMENT LAYOUT.
+
+         Odoo already lets each company pick its report layout (Light, Boxed, Bold...): a report.layout record that
+         names a layout view. This is one more, registered the same way, so every document that prints through
+         web.external_layout (invoices, bills, credit notes, receipts, quotations, orders, RFQs, purchase orders,
+         warehouse slips) gets the same company header, footer, typography and table design from ONE place, and a company
+         can still choose another layout in the layout configurator.
+
+         wkhtmltopdf's WebKit has no CSS variables and no flexbox, so the design is plain tables and plain values; the
+         company's own brand colour is written into the style block on each render. The fonts are the ones the
+         NCollection financial reports already use (Lato; Tajawal for Arabic), loaded from Odoo's own static fonts. -->
+
+    <template id="nc_document_css">
+        <!-- only a validated 6-digit hex ever reaches the style block (a free-text colour could break out of it) -->
+        <t t-set="nc_primary" t-value="company._nc_document_color()"/>
+        <style>
+            @font-face { font-family: 'NCLato'; font-weight: normal; src: url('/web/static/fonts/lato/Lato-Reg-webfont.ttf') format('truetype'); }
+            @font-face { font-family: 'NCLato'; font-weight: bold; src: url('/web/static/fonts/lato/Lato-Bol-webfont.ttf') format('truetype'); }
+            @font-face { font-family: 'NCTajawal'; font-weight: normal; src: url('/web/static/fonts/google/Tajawal/Tajawal-Regular.ttf') format('truetype'); }
+            @font-face { font-family: 'NCTajawal'; font-weight: bold; src: url('/web/static/fonts/google/Tajawal/Tajawal-Bold.ttf') format('truetype'); }
+            .o_nc_doc { font-family: 'NCLato', 'NCTajawal', 'DejaVu Sans', sans-serif; font-size: 9.2pt; color: #1b2a3a; line-height: 1.42; }
+            .o_nc_doc[dir="rtl"], .o_report_layout_nc[data-oe-lang^="ar"] { font-family: 'NCTajawal', 'NCLato', 'DejaVu Sans', sans-serif; font-size: 9.8pt; }
+            .o_nc_doc .muted { color: #5f7185; }
+            /* a clean slate: the header, footer and body tables carry no rules of the stock stylesheets (the right-to-left
+               one draws a black grid on every cell); each rule below then opts in to exactly the line it wants */
+            .o_nc_doc table, .o_nc_doc thead, .o_nc_doc tbody, .o_nc_doc tfoot, .o_nc_doc tr, .o_nc_doc th, .o_nc_doc td,
+            .o_report_layout_nc table, .o_report_layout_nc thead, .o_report_layout_nc tbody, .o_report_layout_nc tfoot,
+            .o_report_layout_nc tr, .o_report_layout_nc th, .o_report_layout_nc td {
+                border: 0 none; border-width: 0; border-style: none; }
+
+            /* ---- header: identity left (right in Arabic), contact details opposite, a rule in the brand colour ---- */
+            .o_nc_header table { width: 100%; border-collapse: collapse; }
+            .o_nc_header td { vertical-align: top; padding: 0; }
+            .o_nc_header .o_nc_brand img { max-height: 17mm; max-width: 60mm; }
+            .o_nc_header .o_nc_brand .o_nc_company_name { font-size: 15pt; font-weight: bold; color: <t t-out="nc_primary"/>; line-height: 1.15; }
+            .o_nc_header .o_nc_company_line { font-size: 7.8pt; color: #5f7185; margin-top: 1mm; }
+            .o_nc_header .o_nc_details { font-size: 8pt; color: #3a4b5d; line-height: 1.38; }
+            .o_nc_header .o_nc_details strong { color: #1b2a3a; }
+            .o_nc_header .o_nc_rule { border-top: 0.45mm solid <t t-out="nc_primary"/>; margin-top: 3mm; }
+
+            /* ---- footer ---- */
+            .o_nc_footer { font-size: 7.6pt; color: #5f7185; }
+            .o_nc_footer table { width: 100%; border-collapse: collapse; border-top: 0.2mm solid #cfd8e1; }
+            .o_nc_footer td { padding-top: 1.6mm; vertical-align: top; }
+
+            /* ---- document body ---- */
+            .o_report_layout_nc h2 { font-size: 19pt; font-weight: bold; color: <t t-out="nc_primary"/>; margin: 3mm 0 4mm 0; line-height: 1.15; }
+            .o_report_layout_nc h3 { font-size: 13pt; color: #1b2a3a; }
+            .o_report_layout_nc address { margin-bottom: 0; }
+            .o_report_layout_nc #informations { margin-bottom: 5mm; }
+            .o_report_layout_nc #informations strong, .o_report_layout_nc .o_nc_label {
+                display: block; color: #5f7185; font-size: 7.2pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6mm; }
+
+            .o_report_layout_nc table.o_main_table, .o_report_layout_nc table.o_nc_table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+            .o_report_layout_nc table.o_main_table thead th, .o_report_layout_nc table.o_nc_table thead th {
+                color: #5f7185; font-size: 7.4pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em;
+                border-top: 0; border-bottom: 0.45mm solid <t t-out="nc_primary"/>; padding: 2mm 2mm 1.6mm 2mm; background: #f4f7fa; }
+            .o_report_layout_nc table.o_main_table tbody td, .o_report_layout_nc table.o_nc_table tbody td {
+                border-top: 0; border-bottom: 0.2mm solid #e3e8ee; padding: 2mm; vertical-align: top; }
+            .o_report_layout_nc table.o_main_table tbody tr, .o_report_layout_nc table.o_nc_table tbody tr { page-break-inside: avoid; }
+            .o_report_layout_nc table thead { display: table-header-group; }
+            .o_report_layout_nc table.o_main_table tr.o_line_section td, .o_report_layout_nc table.o_main_table tr.o_line_note td { background: #f4f7fa; font-weight: bold; }
+
+            /* ---- totals ---- */
+            .o_report_layout_nc #total, .o_report_layout_nc .o_nc_totals { page-break-inside: avoid; }
+            .o_report_layout_nc table.o_total_table, .o_report_layout_nc table.o_nc_totals { border-collapse: collapse; }
+            .o_report_layout_nc table.o_total_table td, .o_report_layout_nc table.o_nc_totals td { padding: 1.4mm 2mm; border: 0; border-bottom: 0.2mm solid #e3e8ee; }
+            .o_report_layout_nc table.o_total_table tr.o_total td, .o_report_layout_nc table.o_nc_totals tr.o_nc_grand td {
+                border-top: 0.4mm solid <t t-out="nc_primary"/>; border-bottom: 0; font-size: 11.5pt; font-weight: bold; color: <t t-out="nc_primary"/>; }
+            .o_report_layout_nc tr.o_nc_amount_due td { font-weight: bold; font-size: 10.5pt; background: #f4f7fa; }
+            .o_report_layout_nc .o_nc_status { font-weight: bold; }
+            .o_report_layout_nc .o_nc_status_paid, .o_report_layout_nc .o_nc_status_in_process { color: #1c7c3d; }
+            .o_report_layout_nc .o_nc_status_overdue { color: #b3261e; }
+            .o_report_layout_nc .o_nc_status_partial, .o_report_layout_nc .o_nc_status_overpaid { color: #b26a00; }
+            .o_report_layout_nc .o_nc_status_unpaid, .o_report_layout_nc .o_nc_status_draft { color: #5f7185; }
+
+            /* ---- payment terms, notes, signature lines ---- */
+            .o_report_layout_nc #payment_term, .o_report_layout_nc .o_nc_note { color: #3a4b5d; font-size: 8.4pt; }
+            .o_report_layout_nc .o_nc_signatures { margin-top: 14mm; width: 100%; page-break-inside: avoid; }
+            .o_report_layout_nc .o_nc_signatures td { width: 45%; border-top: 0.2mm solid #8a99a8; padding-top: 1.2mm; color: #5f7185; font-size: 7.8pt; }
+            .o_report_layout_nc .o_nc_signatures td.o_nc_gap { width: 10%; border-top: 0; }
+        </style>
+    </template>
+
+    <template id="external_layout_nc">
+        <t t-set="nc_dir" t-value="'rtl' if (o and o.env['res.lang']._get_data(code=o.env.lang or 'en_US').direction == 'rtl') or (not o and company.env['res.lang']._get_data(code=company.env.lang or 'en_US').direction == 'rtl') else 'ltr'"/>
+        <t t-set="nc_start" t-value="'right' if nc_dir == 'rtl' else 'left'"/>
+        <t t-set="nc_end" t-value="'left' if nc_dir == 'rtl' else 'right'"/>
+        <t t-set="nc_vat_label" t-value="company.country_id.vat_label or 'Tax ID'"/>
+
+        <div t-attf-class="header o_nc_doc o_nc_header o_company_#{company.id}_layout" t-att-dir="nc_dir">
+            <t t-call="ncollection_branding.nc_document_css"/>
+            <table>
+                <tr>
+                    <td t-attf-style="width: 50%; text-align: #{nc_start};" class="o_nc_brand">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+                        <div t-else="" class="o_nc_company_name" t-out="company.name"/>
+                        <div t-if="company.report_header" class="o_nc_company_line" t-field="company.report_header"/>
+                    </td>
+                    <td t-attf-style="width: 50%; text-align: #{nc_end};" class="o_nc_details">
+                        <div t-if="company.logo"><strong t-out="company.name"/></div>
+                        <t t-if="company.is_company_details_empty">
+                            <div t-field="company.partner_id" t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                        </t>
+                        <t t-else=""><div t-field="company.company_details"/></t>
+                        <div t-if="forced_vat or company.vat"><span t-out="nc_vat_label"/>: <span t-out="forced_vat or company.vat"/></div>
+                        <div t-if="company.phone or company.email"><span t-if="company.phone" t-out="company.phone"/><span t-if="company.phone and company.email"> · </span><span t-if="company.email" t-out="company.email"/></div>
+                    </td>
+                </tr>
+            </table>
+            <div class="o_nc_rule"/>
+        </div>
+
+        <div t-attf-class="article o_nc_doc o_report_layout_nc o_company_#{company.id}_layout"
+             t-att-dir="nc_dir"
+             t-att-data-oe-model="o and o._name"
+             t-att-data-oe-id="o and o.id"
+             t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-call="ncollection_branding.nc_document_css"/>
+            <t t-call="web.address_layout"/>
+            <h2 t-out="layout_document_title"/>
+            <t t-out="0"/>
+        </div>
+
+        <div t-attf-class="footer o_nc_doc o_nc_footer o_company_#{company.id}_layout" t-att-dir="nc_dir">
+            <t t-call="ncollection_branding.nc_document_css"/>
+            <table>
+                <tr>
+                    <td t-attf-style="text-align: #{nc_start};"><div t-if="company.report_footer" t-field="company.report_footer"/></td>
+                    <td t-attf-style="text-align: #{nc_end}; white-space: nowrap; width: 28%;">
+                        <div t-if="report_type == 'pdf' and display_name_in_footer and o" t-out="o.name"/>
+                        <div t-if="report_type == 'pdf'">Page <span class="page"/> / <span class="topage"/></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </template>
+
+    <record id="report_layout_nc" model="report.layout">
+        <field name="name">NCollection</field>
+        <field name="sequence">1</field>
+        <field name="view_id" ref="external_layout_nc"/>
+    </record>
+</odoo>

@@ -170,7 +170,7 @@ echo "Setting up E2E tenants…"
 # existing `sale` is what actually brings the rule under test into existence.
 # Licensed too, so the menu is reachable rather than merely installed.
 create_tenant e2eclienta \
-  "base,ncollection_core,ncollection_branding,crm,sale,account,stock,ncollection_account_dashboard,ncollection_sale_attachments,ncollection_stock_barcode" \
+  "base,ncollection_core,ncollection_branding,crm,sale,account,stock,ncollection_account_dashboard,ncollection_sale_attachments,ncollection_sale_documents,ncollection_stock_barcode" \
   "crm,sale,account,stock,ncollection_account_dashboard"
 create_tenant e2eclientb "base,ncollection_core,ncollection_branding,crm,sale" "crm"
 

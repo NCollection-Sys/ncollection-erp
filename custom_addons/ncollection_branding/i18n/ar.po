@@ -353,10 +353,746 @@ msgstr "مبني على تقنية مفتوحة المصدر (GNU LGPL v3 — ر
 
 #. module: ncollection_branding
 #: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_http__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_http__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__id
 msgid "ID"
 msgstr "المعرّف"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_stamp
+msgid "Company Stamp"
+msgstr "ختم الشركة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_res_company__nc_stamp
+msgid ""
+"The company's official stamp / seal, a PNG (transparency is kept). It is "
+"printed at the end of the company's documents, by the shared print layout, "
+"for this company only."
+msgstr "ختم الشركة الرسمي، بصيغة PNG (تُحفظ الشفافية). يُطبع في نهاية مستندات الشركة عبر قالب الطباعة المشترك، لهذه الشركة فقط."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_company.py:0
+msgid "The company stamp is not a valid file."
+msgstr "ختم الشركة ليس ملفًا صالحًا."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_company.py:0
+msgid "The company stamp must be a PNG image."
+msgstr "يجب أن يكون ختم الشركة صورة بصيغة PNG."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_company.py:0
+msgid "The company stamp is too large (the limit is %(limit)s MB)."
+msgstr "ختم الشركة كبير جدًا (الحد الأقصى %(limit)s ميغابايت)."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_company.py:0
+msgid "The company stamp is not a readable PNG image."
+msgstr "ختم الشركة ليس صورة PNG قابلة للقراءة."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_company.py:0
+msgid "The company stamp is too large (at most %(side)s pixels on a side)."
+msgstr "ختم الشركة كبير جدًا (الحد الأقصى %(side)s بكسل في أطول ضلع)."
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.js:0
+msgid "%(w)s × %(h)s mm, %(x)s mm from the left, %(y)s mm from the top"
+msgstr "%(w)s × %(h)s مم، على بُعد %(x)s مم من اليسار و%(y)s مم من الأعلى"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__image
+msgid ""
+"A PNG (transparency is kept, the proportions are never changed for you), up "
+"to 2 MB and 4000 pixels on a side. It is stored exactly as uploaded."
+msgstr "صورة PNG (تُحفظ الشفافية ولا تُغيَّر النِّسَب تلقائيًا)، حتى 2 ميغابايت و4000 بكسل في أي جهة. تُحفظ كما رُفعت تمامًا."
+
+#. module: ncollection_branding
+#: model:ir.model.constraint,message:ncollection_branding.constraint_ncollection_document_type_code_unique
+msgid "A document type code must be unique."
+msgstr "يجب أن يكون رمز نوع المستند فريدًا."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__record_domain
+msgid ""
+"A domain on the printed record that tells this kind of document apart from "
+"the other kinds the same report prints, for example the move type. Empty "
+"(the default) means every record of the report."
+msgstr "نطاق على السجل المطبوع يميّز هذا النوع من المستندات عن الأنواع الأخرى التي يطبعها التقرير نفسه، مثل نوع القيد. إن تُرك فارغًا (الافتراضي) فهو يشمل كل سجلات التقرير."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Add the image and save the stamp to see it on a real document."
+msgstr "أضف الصورة واحفظ الختم لرؤيته على مستند حقيقي."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__document_type_ids
+msgid "Applies to"
+msgstr "ينطبق على"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_search
+msgid "Archived"
+msgstr "مؤرشف"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__keep_ratio
+msgid ""
+"Changing the width (or the height) changes the other so the image is never "
+"stretched."
+msgstr "تغيير العرض (أو الارتفاع) يغيّر الآخر حتى لا تُشوَّه الصورة."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_stamp.py:0
+msgid "Choose at least one kind of document for %(name)s."
+msgstr "اختر نوعًا واحدًا على الأقل من المستندات لـ %(name)s."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__code
+msgid "Code"
+msgstr "الرمز"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_res_config_settings
+msgid "Config Settings"
+msgstr "تهيئة الإعدادات"
+
+#. module: ncollection_branding
+#: model_terms:ir.actions.act_window,help:ncollection_branding.action_document_stamp
+msgid "Create your first document stamp"
+msgstr "أنشئ أول ختم للمستندات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__create_uid
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__create_uid
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__create_date
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__create_date
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+msgid "Design"
+msgstr "التصميم"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__x_mm
+msgid "Distance from the paper's left edge to the stamp's left edge."
+msgstr "المسافة من الحافة اليسرى للورقة إلى الحافة اليسرى للختم."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__y_mm
+msgid "Distance from the paper's top edge to the stamp's top edge."
+msgstr "المسافة من الحافة العلوية للورقة إلى الحافة العلوية للختم."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__name
+msgid "Document"
+msgstr "المستند"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+msgid "Document Stamp"
+msgstr "ختم المستند"
+
+#. module: ncollection_branding
+#: model:ir.actions.act_window,name:ncollection_branding.action_document_stamp
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_list
+msgid "Document Stamps"
+msgstr "أختام المستندات"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Down"
+msgstr "لأسفل"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid ""
+"Drag the stamp, or its corner to resize. Hold Shift on the arrows to move by"
+" 5 mm."
+msgstr "اسحب الختم، أو زاويته لتغيير الحجم. اضغط Shift مع الأسهم للتحريك بمقدار 5 مم."
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_stamp__page_scope__all
+msgid "Every page"
+msgstr "كل الصفحات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_stamp__page_scope__first
+msgid "First page"
+msgstr "الصفحة الأولى"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__x_mm
+msgid "From the left (mm)"
+msgstr "من اليسار (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__y_mm
+msgid "From the top (mm)"
+msgstr "من الأعلى (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__height_mm
+msgid "Height (mm)"
+msgstr "الارتفاع (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__aspect_ratio
+msgid "Image ratio"
+msgstr "نسبة الصورة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__keep_ratio
+msgid "Keep proportions"
+msgstr "الحفاظ على النِّسَب"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Larger"
+msgstr "أكبر"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__write_uid
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__write_uid
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__write_date
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__write_date
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_stamp__page_scope__last
+msgid "Last page"
+msgstr "الصفحة الأخيرة"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Left"
+msgstr "يسار"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.external_layout_nc
+msgid "Logo"
+msgstr "الشعار"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_ir_ui_menu
+msgid "Menu"
+msgstr "القائمة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__paper_format_ids
+msgid "Only on paper format"
+msgstr "على قياس الورق فقط"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__record_domain
+msgid "Only when"
+msgstr "فقط عندما"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__paper_format_ids
+msgid ""
+"Optional. Leave empty for any paper. Name a paper format and this stamp "
+"applies only to documents printed on it, and wins over a stamp that names "
+"none."
+msgstr "اختياري. اتركه فارغًا لأي ورق. حدّد قياس ورق ليُطبَّق هذا الختم على المستندات المطبوعة عليه فقط، وله الأولوية على ختم لا يحدد قياسًا."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.external_layout_nc
+msgid "Page <span class=\"page\"/> / <span class=\"topage\"/>"
+msgstr "صفحة <span class=\"page\"/> / <span class=\"topage\"/>"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__sheet_height_mm
+msgid "Paper height (mm)"
+msgstr "ارتفاع الورقة (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__sheet_width_mm
+msgid "Paper width (mm)"
+msgstr "عرض الورقة (مم)"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+msgid "Position and size"
+msgstr "الموضع والحجم"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Print test"
+msgstr "طباعة تجريبية"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__report_ids
+msgid "Printed by"
+msgstr "طُبع بواسطة"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_ncollection_document_type
+msgid "Printed document type"
+msgstr "نوع المستند المطبوع"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__page_scope
+msgid "Printed on"
+msgstr "تُطبع على"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__priority
+msgid "Priority"
+msgstr "الأولوية"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Real preview"
+msgstr "معاينة حقيقية"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Refresh"
+msgstr "تحديث"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_ir_actions_report
+msgid "Report Action"
+msgstr "إجراء التقرير"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Right"
+msgstr "يمين"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/controllers/stamp_preview.py:0
+msgid ""
+"Sample sheet: there is no %(kind)s yet, so the stamp is shown on an empty "
+"page."
+msgstr "ورقة نموذجية: لا يوجد %(kind)s بعد، لذا يظهر الختم على صفحة فارغة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Smaller"
+msgstr "أصغر"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__code
+msgid "Stable identifier used by data and code; never shown."
+msgstr "معرّف ثابت تستخدمه البيانات والشيفرة؛ لا يُعرض أبدًا."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__name
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+msgid "Stamp"
+msgstr "ختم"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__image
+msgid "Stamp image"
+msgstr "صورة الختم"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Stamp preview"
+msgstr "معاينة الختم"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_type.py:0
+msgid ""
+"The condition of %(name)s must be a plain domain list such as [('state', "
+"'=', 'sale')]."
+msgstr "يجب أن يكون شرط %(name)s قائمة نطاق بسيطة مثل [('state', '=', 'sale')]."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__document_type_ids
+msgid ""
+"The kinds of document this stamp is printed on. A stamp applies to nothing "
+"until it names at least one."
+msgstr "أنواع المستندات التي يُطبع عليها هذا الختم. لا يُطبَّق الختم على أي شيء حتى يحدد نوعًا واحدًا على الأقل."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_stamp.py:0
+msgid "The position of %(name)s must be inside the paper, in millimetres."
+msgstr "يجب أن يقع موضع %(name)s داخل الورقة، بالمليمتر."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__report_ids
+msgid "The report(s) whose PDF is this kind of document."
+msgstr "التقارير التي يُعدّ ملف PDF الخاص بها هذا النوع من المستندات."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_stamp.py:0
+msgid "The size of %(name)s must be between 1 and 400 millimetres."
+msgstr "يجب أن يكون حجم %(name)s بين 1 و400 مليمتر."
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
+msgid "Up"
+msgstr "لأعلى"
+
+#. module: ncollection_branding
+#: model_terms:ir.actions.act_window,help:ncollection_branding.action_document_stamp
+msgid ""
+"Upload a PNG stamp, choose the documents it is printed on (invoices, receipts, orders...) and place it\n"
+"               on the paper. The same stamp then appears on View and on Print."
+msgstr "ارفع ختمًا بصيغة PNG، واختر المستندات التي يُطبع عليها (فواتير، إيصالات، طلبات...) وضعه على الورقة. يظهر الختم نفسه عند العرض وعند الطباعة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__priority
+msgid ""
+"When several stamps could apply to a document, the HIGHER priority is the "
+"one printed."
+msgstr "عندما يصلح أكثر من ختم لمستند، يُطبع الختم صاحب الأولوية الأعلى."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__width_mm
+msgid "Width (mm)"
+msgstr "العرض (مم)"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+msgid "e.g. Official invoice stamp"
+msgstr "مثال: ختم الفاتورة الرسمي"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "%(label)s is too large (at most %(mb)s MB)."
+msgstr "%(label)s كبير جدًا (الحد الأقصى %(mb)s ميجابايت)."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "%(label)s is too large (at most %(px)s pixels on a side)."
+msgstr "%(label)s كبير جدًا (الحد الأقصى %(px)s بكسل في كل ضلع)."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid ""
+"%(label)s must be a %(kinds)s image (the file's content is checked, not its "
+"name)."
+msgstr "يجب أن يكون %(label)s صورة من نوع %(kinds)s (يُفحص محتوى الملف وليس اسمه)."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "%s is not a readable image."
+msgstr "%s ليست صورة قابلة للقراءة."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "%s is not a valid image file."
+msgstr "%s ليس ملف صورة صالحًا."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
+msgid ". All rights reserved."
+msgstr ". جميع الحقوق محفوظة."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Administration and platform screens. Empty: the product logo."
+msgstr "شاشات الإدارة والمنصة. إذا تُرك فارغًا: شعار المنتج."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__admin_logo
+msgid "Administration logo"
+msgstr "شعار الإدارة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Browser"
+msgstr "المتصفح"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.webclient_offline_branded
+msgid "Check your network connection and come back here."
+msgstr "تحقق من اتصالك بالشبكة ثم عد إلى هنا."
+
+#. module: ncollection_branding
+#: model:res.groups,name:ncollection_branding.group_stamp_manager
+msgid "Document Stamp Manager"
+msgstr "مدير أختام المستندات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__favicon
+msgid "Favicon"
+msgstr "أيقونة التبويب"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_ir_http
+msgid "HTTP Routing"
+msgstr "مسار HTTP"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid ""
+"Images are checked by their content: PNG, JPEG or WebP for logos (PNG or ICO for the\n"
+"                        favicon), up to 2 MB. SVG is not accepted."
+msgstr "تُفحص الصور حسب محتواها: PNG أو JPEG أو WebP للشعارات (PNG أو ICO لأيقونة التبويب)، حتى 2 ميجابايت. لا يُقبل SVG."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__login_logo
+msgid "Login logo"
+msgstr "شعار تسجيل الدخول"
+
+#. module: ncollection_branding
+#: model:res.groups,comment:ncollection_branding.group_stamp_manager
+msgid "May create and change document stamps and read the company seal image."
+msgstr "يمكنه إنشاء أختام المستندات وتعديلها وقراءة صورة ختم الشركة."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__nc_product_name
+msgid "Nc Product Name"
+msgstr "اسم المنتج"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "Only an administrator can change the product branding."
+msgstr "المسؤول وحده يستطيع تغيير هوية المنتج."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Optional dedicated logos"
+msgstr "شعارات مخصصة اختيارية"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__admin_logo
+msgid ""
+"Optional. The logo on the administration and platform screens; empty = the "
+"product logo."
+msgstr "اختياري. الشعار على شاشات الإدارة والمنصة؛ الفارغ = شعار المنتج."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__login_logo
+msgid ""
+"Optional. The logo on the sign-in and password pages; empty = the product "
+"logo."
+msgstr "اختياري. الشعار على صفحات تسجيل الدخول وكلمة المرور؛ الفارغ = شعار المنتج."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+#: model:ir.actions.server,name:ncollection_branding.action_product_branding
+#: model:ir.ui.menu,name:ncollection_branding.menu_product_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Product Branding"
+msgstr "هوية المنتج"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__logo
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Product logo"
+msgstr "شعار المنتج"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__name
+msgid "Product name"
+msgstr "اسم المنتج"
+
+#. module: ncollection_branding
+#. odoo-javascript
+#: code:addons/ncollection_branding/static/src/xml/error_dialogs_patch.xml:0
+msgid "Session Expired"
+msgstr "انتهت الجلسة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__short_name
+msgid "Short name"
+msgstr "الاسم المختصر"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Sign-in and password pages. Empty: the product logo."
+msgstr "صفحات تسجيل الدخول وكلمة المرور. إذا تُرك فارغًا: شعار المنتج."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__logo
+msgid ""
+"The application's logo. Also used for the login page and the administration "
+"screens unless they have their own below. NOT the company logo of a tenant."
+msgstr "شعار التطبيق. يُستخدم أيضًا في صفحة تسجيل الدخول وشاشات الإدارة ما لم يكن لها شعار خاص أدناه. وليس شعار شركة المستأجر."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__favicon
+msgid ""
+"The browser-tab icon (PNG or ICO, ideally square, 32x32 or larger). Empty = "
+"the icon shipped with the product."
+msgstr "أيقونة تبويب المتصفح (PNG أو ICO، ويفضّل مربعة 32×32 أو أكبر). الفارغ = الأيقونة المرفقة مع المنتج."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid ""
+"The product branding cannot be deleted: clear its fields for the defaults."
+msgstr "لا يمكن حذف هوية المنتج: أفرغ حقولها لاستخدام القيم الافتراضية."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__short_name
+msgid "The short form where space is tight (offline page, notices)."
+msgstr "الصيغة المختصرة حيث تضيق المساحة (صفحة عدم الاتصال، الإشعارات)."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "There is only one product branding."
+msgstr "توجد هوية منتج واحدة فقط."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid ""
+"This is the identity of the <strong>application</strong>: its name, logo and icon. The logo and\n"
+"                        stamp of a <strong>company</strong> (printed on its invoices) are configured on the company, not\n"
+"                        here. Changes apply at the next page load."
+msgstr "هذه هي هوية <strong>التطبيق</strong>: اسمه وشعاره وأيقونته. أما شعار <strong>الشركة</strong> وختمها (المطبوعان على فواتيرها) فيُضبطان في الشركة وليس هنا. تُطبَّق التغييرات عند تحميل الصفحة التالي."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid ""
+"Used on the sign-in page and the administration screens\n"
+"                                unless they have their own logo."
+msgstr "يُستخدم في صفحة تسجيل الدخول وشاشات الإدارة ما لم يكن لها شعار خاص."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__name
+msgid ""
+"What the application is called: browser title, login page, error pages, "
+"e-mails."
+msgstr "اسم التطبيق: عنوان المتصفح وصفحة تسجيل الدخول وصفحات الأخطاء والرسائل الإلكترونية."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "e.g. NCollection ERP"
+msgstr "مثال: NCollection ERP"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.webclient_offline_branded
+msgid "will load as soon as you're back online."
+msgstr "سيعمل فور عودة الاتصال."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_no_vendor_names
+msgid ""
+"API Keys allow your users to access the workspace with external tools when "
+"multi-factor authentication is enabled."
+msgstr "تتيح مفاتيح API لمستخدميك الوصول إلى مساحة العمل بأدوات خارجية عند تفعيل المصادقة متعددة العوامل."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_no_vendor_names_iap
+msgid "In-App Services"
+msgstr "الخدمات داخل التطبيق"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__manager_group_ids
+msgid ""
+"Besides Settings administrators (who may stamp every kind), the groups "
+"allowed to create or change a stamp for this kind of document. Enforced by "
+"the model on every write path, not only in the form. A kind with no group "
+"here can be stamped by Settings administrators only."
+msgstr "إضافةً إلى مسؤولي الإعدادات (الذين يستطيعون ختم كل الأنواع)، المجموعات المسموح لها بإنشاء ختم لهذا النوع من المستندات أو تعديله. يُطبَّق ذلك في النموذج على كل مسار كتابة وليس في الشاشة فقط. النوع الذي لا توجد له مجموعة هنا لا يختمه إلا مسؤولو الإعدادات."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__manager_group_ids
+msgid "Who may stamp it"
+msgstr "من يستطيع ختمه"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_stamp.py:0
+msgid "You are not allowed to configure a stamp for: %(kinds)s."
+msgstr "غير مسموح لك بضبط ختم لهذه الأنواع: %(kinds)s."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_stamp.py:0
+msgid "You are not allowed to put a stamp in that company."
+msgstr "غير مسموح لك بوضع ختم في تلك الشركة."

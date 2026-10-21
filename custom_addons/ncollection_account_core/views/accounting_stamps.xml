@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Accounting > Configuration > Document Stamps: where an accounting administrator configures the company stamp for
+        invoices, credit notes, bills and payment receipts.
+
+        There is NO second stamp system here. It is the same model (ncollection.document.stamp), the same designer and
+        the same PDF overlay as Workspace Administration > Document Stamps (ncollection_branding); this entry only shows
+        the stamps of the accounting kinds, offers only those kinds when a stamp is made, and is reachable by the
+        Accounting Adviser, who holds the stamp-manager right through the implication below.
+    -->
+    <record id="account.group_account_manager" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('ncollection_branding.group_stamp_manager'))]"/>
+    </record>
+
+    <record id="view_document_stamp_form_accounting" model="ir.ui.view">
+        <field name="name">ncollection.document.stamp.form.accounting</field>
+        <field name="model">ncollection.document.stamp</field>
+        <field name="inherit_id" ref="ncollection_branding.view_document_stamp_form"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='document_type_ids']" position="attributes">
+                <attribute name="domain">[('code', 'in', ['customer_invoice', 'customer_credit_note', 'vendor_bill', 'vendor_credit_note', 'payment_receipt'])]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_accounting_document_stamp" model="ir.actions.act_window">
+        <field name="name">Document Stamps</field>
+        <field name="res_model">ncollection.document.stamp</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('document_type_ids.code', 'in', ['customer_invoice', 'customer_credit_note', 'vendor_bill', 'vendor_credit_note', 'payment_receipt'])]</field>
+        <field name="search_view_id" ref="ncollection_branding.view_document_stamp_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create the stamp of your invoices</p>
+            <p>Upload your company stamp (a PNG), choose the documents it is printed on (customer invoices, credit notes,
+               vendor bills, payment receipts) and place it on the paper. The same stamp appears on View and on Print.</p>
+        </field>
+    </record>
+    <record id="action_accounting_document_stamp_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="act_window_id" ref="action_accounting_document_stamp"/>
+    </record>
+    <record id="action_accounting_document_stamp_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_document_stamp_form_accounting"/>
+        <field name="act_window_id" ref="action_accounting_document_stamp"/>
+    </record>
+
+    <menuitem id="menu_accounting_document_stamps" name="Document Stamps" parent="account.menu_finance_configuration"
+              action="action_accounting_document_stamp" sequence="90" groups="account.group_account_manager"/>
+</odoo>

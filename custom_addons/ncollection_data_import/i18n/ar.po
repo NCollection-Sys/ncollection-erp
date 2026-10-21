@@ -24,8 +24,8 @@ msgstr "تم التحقق من %s صف دون أخطاء مانعة — يمكن
 
 #. module: ncollection_data_import
 #: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
-msgid "A guided path over Odoo's own importer. Recommended order —\n                            each step can reference the ones before it:\n                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>."
-msgstr "مسار موجَّه فوق أداة الاستيراد الأصلية في Odoo. الترتيب الموصى به — يمكن لكل خطوة الإشارة إلى الخطوات التي قبلها: <b>المنتجات ← العملاء ← الموردون ← المخزون الافتتاحي ← الأرصدة الافتتاحية</b>."
+msgid "A guided path over the standard importer. Recommended order —\n                            each step can reference the ones before it:\n                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>."
+msgstr "مسار موجَّه فوق أداة الاستيراد القياسية. الترتيب الموصى به — يمكن لكل خطوة الإشارة إلى الخطوات التي قبلها: <b>المنتجات ← العملاء ← الموردون ← المخزون الافتتاحي ← الأرصدة الافتتاحية</b>."
 
 #. module: ncollection_data_import
 #: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
@@ -113,8 +113,8 @@ msgstr "آخر تحديث في"
 
 #. module: ncollection_data_import
 #: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
-msgid "Open Odoo import →"
-msgstr "فتح الاستيراد في Odoo ←"
+msgid "Open the standard import →"
+msgstr "فتح الاستيراد القياسي ←"
 
 #. module: ncollection_data_import
 #: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__opening_balances
@@ -176,8 +176,8 @@ msgstr "عمود المعرّف الخارجي لا يزال يحتوي على �
 #. module: ncollection_data_import
 #. odoo-python
 #: code:addons/ncollection_data_import/wizard/onboarding.py:0
-msgid "This file is too large to validate here. Import it on Odoo's own import screen, which loads large files in batches."
-msgstr "هذا الملف كبير جدًا للتحقق منه هنا. استورده في شاشة الاستيراد الأصلية في Odoo التي تحمّل الملفات الكبيرة على دفعات."
+msgid "This file is too large to validate here. Import it on the standard import screen, which loads large files in batches."
+msgstr "هذا الملف كبير جدًا للتحقق منه هنا. استورده في شاشة الاستيراد القياسية التي تحمّل الملفات الكبيرة على دفعات."
 
 #. module: ncollection_data_import
 #. odoo-python

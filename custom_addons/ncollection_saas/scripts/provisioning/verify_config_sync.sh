@@ -128,8 +128,18 @@ t.sync_workspace_config()
 env.cr.commit()
 print('SYNCED')
 PY
-[ "$(tq "$TENANT_DB" "SELECT allowed_module_names FROM ncollection_workspace_config LIMIT 1" | tr -d ',')" = "crmsaleaccount" ] \
-  && ok "upgraded module set pushed (crm,sale,account)" || no "module set not propagated"
+# The set a tenant receives is the plan's modules PLUS the companions its plan entitles (e.g. cheque printing comes with
+# Accounting): compare with the platform's own authority, and require the plan's three modules to lead it.
+EXPECTED="$("${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http --log-level=error "${DBARGS[@]}" 2>/dev/null <<PY
+t = env['ncollection.tenant'].search([('database_name','=','$TENANT_DB')], limit=1)
+print('EXPECTED=' + ','.join(t._nc_effective_module_list()))
+PY
+)"
+EXPECTED="$(printf '%s\n' "$EXPECTED" | sed -n 's/^EXPECTED=//p' | tr -d '\r')"
+GOT="$(tq "$TENANT_DB" "SELECT allowed_module_names FROM ncollection_workspace_config LIMIT 1" | tr -d ' ')"
+case "$GOT" in crm,sale,account*) lead=1 ;; *) lead=0 ;; esac
+[ -n "$EXPECTED" ] && [ "$GOT" = "$EXPECTED" ] && [ "$lead" = 1 ] \
+  && ok "upgraded module set pushed (crm,sale,account + the plan's companions: $GOT)" || no "module set not propagated (got '$GOT', expected '$EXPECTED')"
 [ "$(tq "$TENANT_DB" "SELECT max_users FROM ncollection_workspace_config LIMIT 1")" = "20" ] \
   && ok "seat cap propagated (max_users=20)" || no "max_users not propagated"
 hr
@@ -160,7 +170,7 @@ for t in env['ncollection.tenant'].search([('database_status','=','ready')]):
 env.cr.commit()
 print('RECONCILED')
 PY
-[ "$(tq "$TENANT_DB" "SELECT allowed_module_names FROM ncollection_workspace_config LIMIT 1" | tr -d ',')" = "crmsaleaccount" ] \
+[ "$(tq "$TENANT_DB" "SELECT allowed_module_names FROM ncollection_workspace_config LIMIT 1" | tr -d ' ')" = "$EXPECTED" ] \
   && ok "reconcile healed the tampered config" || no "reconcile did NOT heal"
 hr
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The partner's business role, beside its name on every accounting document. Each badge is a block element ON
+         PURPOSE: Odoo's view translation takes an inline element's text as part of its block, so a span would be
+         translated together with its siblings and never match a one-word term. The words are translatable view
+         terms; which badge shows comes from the partner's own customer / vendor classification (see
+         models/res_partner.py), so a partner that is both shows both. -->
+    <record id="view_move_form_nc_partner_roles" model="ir.ui.view">
+        <field name="name">account.move.form.nc.partner.roles</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id'][@widget='res_partner_many2one']" position="after">
+                <div class="o_nc_partner_roles d-flex flex-wrap gap-1 mt-1" invisible="not partner_id">
+                    <field name="nc_partner_is_customer" invisible="1"/>
+                    <field name="nc_partner_is_vendor" invisible="1"/>
+                    <div class="badge rounded-pill text-bg-info" invisible="not nc_partner_is_customer">Customer</div>
+                    <div class="badge rounded-pill text-bg-secondary" invisible="not nc_partner_is_vendor">Vendor</div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

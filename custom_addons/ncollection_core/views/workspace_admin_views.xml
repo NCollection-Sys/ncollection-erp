@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Workspace Administration Center: Overview, Users, Roles & Permissions, Teams, Security, Company, Appearance,
+        Document Stamps, System. One menu root (workspace_settings_views.xml), Owner / administrator only. Every screen
+        reads the REAL records (users, roles = groups, ACL rows, the audit log); there is no setting here that is not
+        enforced by the ORM underneath (the guards live in models/res_users_admin.py and models/role.py).
+    -->
+
+    <!-- ============ Users ============ -->
+    <record id="view_workspace_users_form" model="ir.ui.view">
+        <field name="name">ncollection.workspace.users.form</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <form string="User" create="false" delete="false">
+                <header>
+                    <button name="action_nc_open_reset_password" type="object" string="Reset password"
+                            class="btn-primary" invisible="not active"/>
+                    <button name="action_ncollection_deactivate" type="object" string="Deactivate"
+                            invisible="not active"
+                            confirm="Deactivate this user? They will no longer be able to log in."/>
+                    <button name="action_nc_activate" type="object" string="Activate" class="btn-primary"
+                            invisible="active"/>
+                </header>
+                <sheet>
+                    <field name="active" invisible="1"/>
+                    <field name="id" invisible="1"/>
+                    <widget name="web_ribbon" title="Deactivated" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Full name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Account">
+                            <field name="login" string="Username" readonly="id"/>
+                            <field name="email" string="Contact email" widget="email"/>
+                            <field name="login_date" string="Last sign-in" readonly="1"/>
+                        </group>
+                        <group string="Access">
+                            <field name="nc_role_ids" string="Roles" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="nc_must_change_password" string="Must choose a new password"/>
+                        </group>
+                    </group>
+                    <p class="text-muted">
+                        Roles are made of the workspace's real permission groups: giving or taking a role changes
+                        what this person can open and do immediately. Open Roles &amp; Permissions to see exactly what
+                        each role allows.
+                    </p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_workspace_users_search" model="ir.ui.view">
+        <field name="name">ncollection.workspace.users.search</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <search string="Users">
+                <field name="name" string="User" filter_domain="['|', ('name', 'ilike', self), ('login', 'ilike', self)]"/>
+                <field name="nc_role_ids" string="Role"/>
+                <filter name="inactive" string="Deactivated" domain="[('active', '=', False)]"/>
+                <filter name="must_change" string="Waiting to choose a password"
+                        domain="[('nc_must_change_password', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_workspace_users" model="ir.actions.act_window">
+        <field name="search_view_id" ref="view_workspace_users_search"/>
+    </record>
+
+    <record id="action_workspace_users_list_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_workspace_users_list"/>
+        <field name="act_window_id" ref="action_workspace_users"/>
+    </record>
+
+    <record id="action_workspace_users_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_workspace_users_form"/>
+        <field name="act_window_id" ref="action_workspace_users"/>
+    </record>
+
+    <!-- ============ Roles & Permissions ============ -->
+    <record id="view_role_list" model="ir.ui.view">
+        <field name="name">ncollection.role.list</field>
+        <field name="model">ncollection.role</field>
+        <field name="arch" type="xml">
+            <list string="Roles" decoration-muted="not available or not active">
+                <field name="name"/>
+                <field name="kind" widget="badge" decoration-info="kind == 'standard'" decoration-success="kind == 'custom'"/>
+                <field name="description" optional="show"/>
+                <field name="user_count"/>
+                <field name="grants_administration" widget="boolean" string="Administrator level"/>
+                <field name="available" widget="boolean"/>
+                <field name="missing_apps" string="Needs" optional="show"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_role_form" model="ir.ui.view">
+        <field name="name">ncollection.role.form</field>
+        <field name="model">ncollection.role</field>
+        <field name="arch" type="xml">
+            <form string="Role">
+                <header>
+                    <button name="action_view_access_matrix" type="object" string="What this role allows"
+                            class="btn-primary" invisible="not id"/>
+                    <button name="action_view_users" type="object" string="Users with this role" invisible="not id"/>
+                </header>
+                <sheet>
+                    <field name="id" invisible="1"/>
+                    <field name="kind" invisible="1"/>
+                    <field name="available" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Branch accountant"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="description" placeholder="What this role is for"/>
+                            <field name="kind" readonly="1"/>
+                            <field name="user_count"/>
+                        </group>
+                        <group>
+                            <field name="grants_administration" readonly="1" string="Administrator level"/>
+                            <field name="available" readonly="1" string="Available in this workspace"/>
+                            <field name="missing_apps" readonly="1" string="Needs" invisible="available"/>
+                        </group>
+                    </group>
+                    <group string="What it gives" invisible="kind == 'standard'">
+                        <field name="custom_group_ids" widget="many2many_tags" nolabel="1"
+                               options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                    <group string="What it gives" invisible="kind != 'standard'">
+                        <field name="group_ids" widget="many2many_tags" nolabel="1" readonly="1"
+                               options="{'no_open': True}"/>
+                    </group>
+                    <p class="text-muted">
+                        A role is only a name for real permission groups: what a person with it can do is decided by those groups
+                        and nothing else. A standard role comes with the product; a custom role is made here from the
+                        groups of the applications installed in this workspace and can never carry workspace administration.
+                    </p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_role_search" model="ir.ui.view">
+        <field name="name">ncollection.role.search</field>
+        <field name="model">ncollection.role</field>
+        <field name="arch" type="xml">
+            <search string="Roles">
+                <field name="name"/>
+                <filter name="standard" string="Standard" domain="[('kind', '=', 'standard')]"/>
+                <filter name="custom" string="Custom" domain="[('kind', '=', 'custom')]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_role" model="ir.actions.act_window">
+        <field name="name">Roles &amp; Permissions</field>
+        <field name="res_model">ncollection.role</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Define a role</p>
+            <p>A role names a set of permission groups so you can give the same access to several people.</p>
+        </field>
+    </record>
+
+    <record id="view_role_access_line_list" model="ir.ui.view">
+        <field name="name">ncollection.role.access.line.list</field>
+        <field name="model">ncollection.role.access.line</field>
+        <field name="arch" type="xml">
+            <list string="What this role allows" create="false" edit="false" delete="false">
+                <field name="model_label"/>
+                <field name="model_name" optional="hide"/>
+                <field name="can_read" widget="boolean"/>
+                <field name="can_write" widget="boolean"/>
+                <field name="can_create" widget="boolean"/>
+                <field name="can_unlink" widget="boolean"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_role_access_line_search" model="ir.ui.view">
+        <field name="name">ncollection.role.access.line.search</field>
+        <field name="model">ncollection.role.access.line</field>
+        <field name="arch" type="xml">
+            <search string="Access">
+                <field name="model_label" string="Data" filter_domain="['|', ('model_label', 'ilike', self), ('model_name', 'ilike', self)]"/>
+                <filter name="can_edit" string="Can edit" domain="[('can_write', '=', True)]"/>
+                <filter name="can_create" string="Can create" domain="[('can_create', '=', True)]"/>
+                <filter name="can_delete" string="Can delete" domain="[('can_unlink', '=', True)]"/>
+                <filter name="view_only" string="View only"
+                        domain="[('can_write', '=', False), ('can_create', '=', False), ('can_unlink', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============ Overview ============ -->
+    <record id="view_workspace_overview_form" model="ir.ui.view">
+        <field name="name">ncollection.workspace.overview.form</field>
+        <field name="model">ncollection.workspace.overview</field>
+        <field name="arch" type="xml">
+            <form string="Overview" create="false" edit="false" delete="false">
+                <sheet>
+                    <field name="admin_logo" widget="image" class="oe_avatar" options="{'size': [0, 48]}" readonly="1"/>
+                    <div class="oe_title"><h1><field name="company_id" readonly="1" options="{'no_open': True}"/></h1></div>
+                    <group>
+                        <group string="People">
+                            <field name="active_users"/>
+                            <field name="max_users" invisible="not max_users"/>
+                            <field name="administrators"/>
+                            <field name="archived_users"/>
+                            <field name="pending_password_changes"/>
+                        </group>
+                        <group string="Access">
+                            <field name="standard_roles"/>
+                            <field name="custom_roles"/>
+                            <field name="plan_code"/>
+                            <field name="subscription_status"/>
+                        </group>
+                    </group>
+                    <p class="text-muted">
+                        Manage who can sign in under Users, what they can do under Roles &amp; Permissions, and review
+                        sign-ins and administrative actions under Security.
+                    </p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_workspace_overview" model="ir.actions.server">
+        <field name="name">Overview</field>
+        <field name="model_id" ref="model_ncollection_workspace_overview"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open()</field>
+    </record>
+
+    <!-- ============ Teams / Departments (foundation: HR's departments, when HR is part of the workspace) ============ -->
+    <record id="action_workspace_teams" model="ir.actions.server">
+        <field name="name">Teams &amp; Departments</field>
+        <field name="model_id" ref="base.model_res_users"/>
+        <field name="state">code</field>
+        <field name="code">
+if 'hr.department' in env:
+    action = env['ir.actions.act_window']._for_xml_id('hr.hr_department_kanban_action')
+else:
+    action = {
+        'type': 'ir.actions.client', 'tag': 'display_notification',
+        'params': {
+            'title': env._('Teams and Departments'),
+            'message': env._('Departments come with the HR application, which is not part of this workspace.'),
+            'type': 'info', 'sticky': False,
+        },
+    }
+        </field>
+    </record>
+
+    <!-- ============ Security (sign-ins and administrative actions: ncollection_auth's audit log) ============ -->
+    <record id="action_workspace_security" model="ir.actions.server">
+        <field name="name">Security</field>
+        <field name="model_id" ref="base.model_res_users"/>
+        <field name="state">code</field>
+        <field name="code">
+if 'ncollection.auth.log' in env:
+    action = env['ir.actions.act_window']._for_xml_id('ncollection_auth.action_auth_log')
+else:
+    action = {
+        'type': 'ir.actions.client', 'tag': 'display_notification',
+        'params': {
+            'title': env._('Security'), 'message': env._('The audit log is not installed in this workspace.'),
+            'type': 'info', 'sticky': False,
+        },
+    }
+        </field>
+    </record>
+
+    <!-- ============ System (what the plan and platform have set for this workspace; read only) ============ -->
+    <record id="view_workspace_system_form" model="ir.ui.view">
+        <field name="name">ncollection.workspace.system.form</field>
+        <field name="model">ncollection.workspace.config</field>
+        <field name="arch" type="xml">
+            <form string="System" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h1>System</h1></div>
+                    <group>
+                        <group string="Subscription">
+                            <field name="plan_code"/>
+                            <field name="subscription_status"/>
+                            <field name="max_users"/>
+                        </group>
+                        <group string="Applications included">
+                            <field name="allowed_module_names" nolabel="1"/>
+                        </group>
+                    </group>
+                    <p class="text-muted">
+                        The plan and the applications it includes are set by NCollection and cannot be changed from inside
+                        the workspace.
+                    </p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_workspace_system" model="ir.actions.server">
+        <field name="name">System</field>
+        <field name="model_id" ref="model_ncollection_workspace_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = model.sudo().get_config()
+action = {
+    'type': 'ir.actions.act_window', 'name': env._('System'), 'res_model': 'ncollection.workspace.config',
+    'res_id': config.id, 'view_mode': 'form', 'target': 'current',
+    'views': [(env.ref('ncollection_core.view_workspace_system_form').id, 'form')],
+}
+        </field>
+    </record>
+
+    <!-- ============ Reset password dialog ============ -->
+    <record id="view_user_reset_password_form" model="ir.ui.view">
+        <field name="name">ncollection.user.reset.password.form</field>
+        <field name="model">ncollection.user.reset.password</field>
+        <field name="arch" type="xml">
+            <form string="Reset password">
+                <group>
+                    <field name="user_id" options="{'no_open': True}"/>
+                    <field name="mode" widget="radio"/>
+                    <field name="new_password" password="True" invisible="mode != 'explicit'"
+                           required="mode == 'explicit'" autocomplete="new-password"/>
+                    <field name="must_change"/>
+                </group>
+                <p class="text-muted">
+                    A temporary password is shown once, to you, and is not stored anywhere. The person is made to choose
+                    their own password the first time they sign in.
+                </p>
+                <footer>
+                    <button name="action_apply" type="object" string="Reset password" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ Menus: the Workspace Administration Center ============ -->
+    <menuitem id="menu_workspace_overview" name="Overview" parent="menu_workspace_settings_root"
+              action="action_workspace_overview" sequence="5"/>
+    <menuitem id="menu_workspace_roles" name="Roles &amp; Permissions" parent="menu_workspace_settings_root"
+              action="action_role" sequence="25"/>
+    <menuitem id="menu_workspace_teams" name="Teams &amp; Departments" parent="menu_workspace_settings_root"
+              action="action_workspace_teams" sequence="27"/>
+    <menuitem id="menu_workspace_security" name="Security" parent="menu_workspace_settings_root"
+              action="action_workspace_security" sequence="28"/>
+    <!-- The identity of the application itself (name, logos, favicon). Company branding is under Appearance / Company. -->
+    <menuitem id="menu_workspace_product_branding" name="Product Branding" parent="menu_workspace_settings_root"
+              action="ncollection_branding.action_product_branding" sequence="85"/>
+    <menuitem id="menu_workspace_system" name="System" parent="menu_workspace_settings_root"
+              action="action_workspace_system" sequence="90"/>
+</odoo>

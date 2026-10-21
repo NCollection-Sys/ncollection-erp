@@ -141,7 +141,7 @@ class NcollectionDataImportOnboarding(models.TransientModel):
         # reject an oversize upload without paying for chardet + a full CSV parse.
         if raw.count(b'\n') > MAX_VALIDATE_ROWS:
             return ([{'type': 'error', 'message': self.env._(
-                "This file is too large to validate here. Import it on Odoo's own "
+                "This file is too large to validate here. Import it on the standard "
                 "import screen, which loads large files in batches.")}], 0)
         model = ENTITY_MODEL[self.entity]
         ctx = dict(self.env.context, **ENTITY_CONTEXT.get(self.entity, {}))

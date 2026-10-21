@@ -116,7 +116,7 @@ class TestHomeUi(TransactionCase):
         expected = {
             'ncollection_core.menu_ncollection_dashboard_root': ('Summary', 'الملخّص'),
             'ncollection_core.menu_ncollection_alert': ('Anomaly Alerts', 'تنبيهات الشذوذ'),
-            'ncollection_core.menu_workspace_settings_root': ('Workspace Settings', 'إعدادات مساحة العمل'),
+            'ncollection_core.menu_workspace_settings_root': ('Workspace Administration', 'إدارة مساحة العمل'),
             'ncollection_stock_barcode.menu_nc_barcode_root': ('Barcode', 'الباركود'),
         }
         for xmlid, (english, arabic) in expected.items():

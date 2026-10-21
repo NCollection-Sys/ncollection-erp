@@ -29,6 +29,7 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Config-sync push carries `Host: <db>.<base-domain>` (db_filter routing) | `ncollection_saas/tests/test_config_sync.py` + `.../scripts/provisioning/verify_config_sync.sh` | CI `test` + `make verify-all` |
 | Shared-stack races → false CRITICALs (R-018) | CLAUDE.md Rule 14, `scripts/dev/stack_settled.sh`, `.claude/agents/verify-runner.md` | agent convention + `verify-runner` retry-before-escalate |
 | Report menus aligned to the ORM; OCA report wizards restricted to accounting read-only; per-role hub (R-027, R-028) | `ncollection_account_reports` (`_REPORT_MENU_GROUPS`, `_nc_harden_oca_wizards`), `tests/test_report_hub.py`, `tests/test_oca_wizard_access.py` | CI `test` + `e2e/manual/reports/*` |
+| Preview and Print render ONE document; the dev container reaches the tenant URL (R-034) | `ncollection_account_core` + `ncollection_sale_documents` tests, `scripts/dev/pdf_hosts.sh`, `make doctor` | CI `test` + `make doctor` |
 | PDF is styled in dev, and a blocked download is explained (R-029) | `scripts/dev/pdf_hosts.sh`, `make doctor`, `report_viewer.js` | `make doctor` + manual |
 
 ---
@@ -1049,3 +1050,91 @@ the new bundle appears after the registry cache is invalidated (module upgrade o
 never the cached attachment) and fails on any compile error (RED proven: the old line fails both). `release-smoke.spec.ts`
 now also fails on the banner, on a stylesheet bundle containing `css_error_message`, and on any error notification.
 Rule of thumb for new SCSS: never write bare `min()/max()/clamp()` with mixed units; wrap them in `unquote("...")`.
+
+## R-034 — Preview showed one document, Print/Download produced another ✅ FIXED
+
+**Symptom.** The invoice's Preview looked right; the PDF that Print / Download produced was a different document: titled
+"Proforma Invoice" on a POSTED invoice, and, on a dev stack, with no letterhead, no table rules and different pagination.
+
+**Root causes (three, independent).**
+1. *Two paths.* Odoo's **Preview** opens the customer-portal page (its own request: partner language, partner template,
+   its own pro-forma rule; for a quotation a completely different template, `sale_order_portal_template`), while **Print**
+   renders the report with the user's context. Two paths can only agree by accident.
+2. *A posted invoice printed as a pro-forma.* `account.move.action_print_pdf` sets `proforma_invoice = not
+   invoice_pdf_report_id`: an invoice that was never sent has no stored PDF, so Print marked even a posted one "Proforma".
+3. *wkhtmltopdf could not reach the stylesheet.* The dev odoo container resolved `<db>.localhost` (`pdf_hosts.sh`), but the
+   tenant URL is now `<db>.<base domain>` on port 80 (`_nc_public_origin`), a name nothing in the container resolved and a
+   port nothing there listens on. Odoo returned a PDF, exit 0, unstyled (R-029 again, for the new URL scheme).
+
+**Fix.** One path: `account.move._nc_print_report()` + `_nc_print_context()` feed BOTH `action_print_pdf` and
+`preview_invoice`, and Preview opens the very document Print produces (R-035 replaced the stock `/report/pdf` URL by an owned inline endpoint; a posted
+invoice is never a pro-forma, and a draft reads "Draft Invoice" in both, as the gear-menu Print does). `sale.order.action_preview_sale_order` opens `sale.report_saleorder`
+the same way. `pdf_hosts.sh` maps `<db>.<base domain>` to the nginx edge's address (and `doctor.sh` checks both names).
+
+**Guards.** `ncollection_account_core/tests/test_duplicate_and_print.py` (Print and Preview pass the same report and
+context; the Preview URL serves the same document the report engine renders; a posted invoice is never a pro-forma),
+`ncollection_sale_documents/tests/test_sale_documents.py` (same for a quotation, and it is not the portal URL),
+`make pdf-hosts` (second run adds 0) and `make doctor`. Rule of thumb: never add a second rendering of a printed
+document for "preview"; open the report.
+
+## R-035 — Printed documents looked like raw HTML, View was not the printed PDF, and the stamp designer crashed ✅ FIXED
+
+**Symptom.** Invoices, bills, receipts and orders came out with no letterhead, no table rules and system fonts (and, in
+Arabic, a black grid on every table); the Payment Receipt listed the payment itself as an invoice-allocation row; View
+opened a different rendering (or forced a download) instead of the PDF Print produces; the stamp could not be placed
+per document type; and opening a stamp form in a real browser raised a server error.
+
+**Root causes (six, independent).**
+1. *wkhtmltopdf could not reach the stylesheet (environment).* `scripts/dev/pdf_hosts.sh` mapped `<db>.localhost` to
+   loopback, but a tenant whose `web.base.url` has no port is fetched on :80, where nothing listens inside the container.
+   Odoo returned a PDF with exit 0, unstyled (R-029/R-034 again, for another URL shape). The script now derives the
+   mapping from each database's own `web.base.url` (no port -> the nginx edge, an explicit port -> loopback) and is
+   idempotent.
+2. *The layout itself (design).* Every company still used Odoo's stock "Light" layout and the stock receipt. The
+   NCollection layout (`ncollection_branding`: `report.layout` + `external_layout_nc`, company colour validated as hex,
+   RTL aware, page X / Y, stamp-safe margins) is now the default for companies that never chose one, and the receipt is
+   rebuilt from the real payment / reconciliation data (what was applied, to which documents, what is not applied).
+3. *Stock RTL stylesheet.* It draws a black border on every `table/tr/td`; the layout CSS resets them before opting in to
+   the lines it wants.
+4. *View was not the printed document.* View now opens `/ncollection/document/view/<model>/<id>` (ncollection_core): the
+   same report and context as Print, `Content-Disposition: inline` with the document's filename, no stored copy needed,
+   in a new tab, no popup-blocking round trip.
+5. *Stamps.* `ncollection.document.stamp` templates (image, document types, mm geometry, page scope, paper format,
+   priority) are applied by overlaying the PDF in `_render_qweb_pdf_prepare_streams`, per record, so View, Print, email
+   and stored copies carry the same stamp at the same millimetres (tests read the position back out of the bytes).
+6. *`bin_size`.* The web client reads every binary field as its size text ("9 bytes"); a computed field that
+   `b64decode`d `image` crashed the stamp form. Found only in a real browser. Binary reads that decode now say
+   `with_context(bin_size=False)`.
+
+**Guards.** `ncollection_branding/tests` (`test_stamp_overlay`, `test_document_stamp` incl. the bin_size case and the preview
+route), `ncollection_account_core/tests/test_document_stamp.py` (real wkhtmltopdf end to end),
+`ncollection_core/tests/test_duplicate_and_print.py` family (View URL and parity), `make pdf-hosts` (second run adds 0).
+Rule of thumb: a PDF is only proven styled by looking at it (render it, convert to an image, read it), and a form is only
+proven by opening it in a browser.
+
+## R-036 — The company stamp image could be read by any internal user, and the product name / favicon were hard-coded ✅ FIXED
+
+**Symptom.** (1) The binary of a document stamp (and the company's legacy seal) had no field-level group, so any internal user could fetch the raw
+seal from `/web/image/ncollection.document.stamp/<id>/image` or RPC `read`. (2) The product name, favicon and logos were literals scattered over
+templates, JS and Python (`NCollection ERP`, `favicon.ico`; the shipped `favicon.ico` was a 0-byte file served as the tab icon), and some stock
+pages still said "Odoo" (Settings labels, `odoo.com` documentation links).
+
+**Root causes.** The stamp image was an unrestricted Binary; only the *record* was protected. There was no single source of truth for the product
+identity.
+
+**Fix.** `image` / `nc_stamp` carry `groups='ncollection_branding.group_stamp_manager'`; the overlay reads them with a narrow `sudo()`. The product
+identity is ONE record (`ncollection.product.branding`) resolved by `nc_brand()` (a `nc_product_brand()` helper in every QWeb template, `session_info`
+for the web client) and served by `/ncollection/brand/<kind>` (versioned URL, content-sniffed PNG / JPEG / WebP / ICO, no SVG), distinct from the
+company brand. See `PRODUCT_BRANDING.md`. A real multi-size `favicon.ico` now ships. The `(?)` documentation links to the upstream vendor's site are not
+rendered.
+
+**Guards.** `ncollection_branding/tests/test_stamp_image_security.py` (restricted over the model, over `/web/image`, report context, cross-company,
+overlay still works), `test_product_branding.py` (one record, fallbacks, content validation, versioned URLs, sign-in page carries the name and no vendor
+name), `test_translation_coverage`, Playwright `product-branding.spec.ts`. Rule of thumb: protecting a record does not protect its binary fields; test
+the `/web/image` URL as an ordinary user.
+
+**Addendum to R-036 (final release gate).** (3) An Accounting Adviser, who holds the stamp-manager right through the accounting group, could create or edit a stamp for a
+NON-accounting kind over RPC because only the form's domain restricted the kinds. Fixed in the model (`ncollection.document.type.manager_group_ids` +
+`ncollection.document.stamp._nc_check_kinds_allowed`); guards: `ncollection_account_core/tests/test_document_stamp.py::TestStampKindAuthorisation` (the five kinds
+allowed; foreign, mixed and crafted payloads refused on create / write / copy / unlink, with a hostile context; admin unaffected; company isolation kept). (4) Vendor
+wording survived in module-authored mail templates, action help, portal / digest / two-factor pages and the system user's name; guards: `test_vendor_wording.py`.

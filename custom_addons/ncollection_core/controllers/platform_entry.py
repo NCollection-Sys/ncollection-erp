@@ -11,12 +11,14 @@ single-use and lives a few seconds; it is never logged or echoed.
 """
 import json
 import logging
+import threading
+import time
 
 from odoo import SUPERUSER_ID, fields, http
 from odoo.exceptions import AccessDenied
 from odoo.http import request
 
-from ..models.platform_entry import CREDENTIAL_TYPE, _URL_RE, token_digest
+from ..models.platform_entry import CREDENTIAL_TYPE, PROXY_LOGIN_PREFIX, _URL_RE, token_digest
 
 _DOUBLE_SUBMIT_SECONDS = 15
 
@@ -39,6 +41,51 @@ def _denied(reason='refused'):
         return request.make_response(_DENIED_PAGE, status=403, headers=[
             ('Content-Type', 'text/html; charset=utf-8'), ('Cache-Control', 'no-store')])
     return request.make_response('Forbidden', status=403, headers=[('Content-Type', 'text/plain')])
+
+
+def _audit_platform_event(env, event, proxy):
+    """Record the entry / exit of a Platform Administrator in the tenant's authentication log, when the tenant has one.
+
+    The proxy signs in by a one-time grant, not by password, so it never passes the login hooks that fill that log;
+    without this the log would show every ordinary sign-in and not the one that matters most. The row names the
+    PROXY user (a real account whose name is "Platform Admin: <person>"), never a tenant user: it is the actual
+    actor, not metadata written to look like one. ``ncollection_auth`` is optional here (a tenant may lack it)."""
+    if 'ncollection.auth.log' in env:
+        env['ncollection.auth.log'].sudo()._capture(event, user=proxy)
+
+
+_DENIAL_BUDGET_PER_MINUTE = 30
+_denial_counts = {}
+_denial_lock = threading.Lock()
+
+
+def _denial_budget_left(dbname, named=False, now=None):
+    """The refusal endpoint is public, and every audited refusal commits a row on its own cursor: without a cap a
+    loop of bad tokens fills the log and the connection pool. At most ``_DENIAL_BUDGET_PER_MINUTE`` refusals per
+    database and minute are written. Refusals that carry a NAMED proxy login have a budget of their own, so a flood of
+    anonymous bad tokens cannot use it up and hide a real one. The caller always gets the same bare 403."""
+    window = int((now if now is not None else time.time()) // 60)
+    key = (dbname, window, named)
+    with _denial_lock:
+        for old in [k for k in _denial_counts if k[1] != window]:
+            del _denial_counts[old]
+        count = _denial_counts[key] = _denial_counts.get(key, 0) + 1
+    return count <= _DENIAL_BUDGET_PER_MINUTE
+
+
+def _audit_platform_denial(login=None, bucket=None):
+    """Record a REFUSED entry (an unknown, expired or used link; a grant the proxy could not redeem; a session that is
+    not a proxy on the platform exit) in the tenant's authentication log, when it has one.
+
+    It goes through the log's existing failed-login path (``_capture_isolated``: its own cursor, so nothing the refusal
+    rolls back can erase it). The row carries the proxy login when one is known, else none; never the token."""
+    try:
+        env = request.env(user=SUPERUSER_ID, su=True)
+        if 'ncollection.auth.log' not in env or not _denial_budget_left(env.cr.dbname, named=bucket or bool(login)):
+            return
+        env['ncollection.auth.log']._capture_isolated('platform_denied', login=login)
+    except Exception:                                   # noqa: BLE001 - the refusal must stay the same bare 403
+        _logger.exception("Platform entry refusal could not be written to the authentication log")
 
 
 class NCollectionPlatformEntry(http.Controller):
@@ -79,6 +126,7 @@ class NCollectionPlatformEntry(http.Controller):
                 # the same browser submitted the same link twice (a reload, a double click, a download manager): it
                 # is already signed in as this proxy, so go on; nothing new is granted
                 return request.redirect("/odoo", code=303)
+            _audit_platform_denial()
             return _denied("no open grant")
         return_url = entry.return_url or ''
         try:
@@ -86,9 +134,11 @@ class NCollectionPlatformEntry(http.Controller):
             request.session.authenticate(request.env, {
                 'type': CREDENTIAL_TYPE, 'login': proxy.login, 'token': token})
         except AccessDenied:
+            _audit_platform_denial(PROXY_LOGIN_PREFIX + entry.platform_ref)     # the proxy login the grant names
             return _denied("grant not redeemable (expired, used, or the proxy refused it)")
         # Remember where to return. The session itself is time-boxed (see ResUsers._compute_session_token).
         request.session['nc_platform_return'] = return_url
+        _audit_platform_event(Entry.env, 'platform_entry', proxy)
         response = request.redirect('/odoo', code=303)
         response.headers['Referrer-Policy'] = 'no-referrer'    # the one-time token was in the URL that led here
         return response
@@ -106,7 +156,9 @@ class NCollectionPlatformEntry(http.Controller):
     @http.route('/ncollection/platform/exit', type='http', auth='user', methods=['GET'], sitemap=False)
     def leave(self, **_ignored):
         if not request.env.user.nc_platform_proxy:
+            _audit_platform_denial(request.env.user.login, bucket='exit')     # its own budget: signed-in noise
             return _denied()
         return_url = request.session.get('nc_platform_return') or ''
+        _audit_platform_event(request.env(user=SUPERUSER_ID, su=True), 'platform_exit', request.env.user)
         request.session.logout(keep_db=True)
         return request.redirect(return_url if _URL_RE.fullmatch(return_url) else '/web/login', local=False, code=303)

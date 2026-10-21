@@ -1,0 +1,75 @@
+# Arabic (ar_001) translation of ncollection_sale_documents.
+# NCollection ERP. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_sale_documents\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_order_form_nc_duplicate
+msgid "Duplicate"
+msgstr "نسخة مماثلة"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_tree_nc_document_actions
+msgid "Edit"
+msgstr "تعديل"
+
+#. module: ncollection_sale_documents
+#: model:ir.ui.menu,name:ncollection_sale_documents.menu_sale_nc_invoices
+msgid "Invoices"
+msgstr "الفواتير"
+
+#. module: ncollection_sale_documents
+#: model:ir.model,name:ncollection_sale_documents.model_sale_order
+#: model:ncollection.document.type,name:ncollection_sale_documents.doc_type_sales_order
+msgid "Sales Order"
+msgstr "أمر البيع"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_tree_nc_document_actions
+msgid "View"
+msgstr "عرض"
+
+#. module: ncollection_sale_documents
+#: model:ncollection.document.type,name:ncollection_sale_documents.doc_type_sales_quotation
+msgid "Sales Quotation"
+msgstr "عرض سعر مبيعات"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_portal_connect_branded
+msgid "Connect your own software"
+msgstr "اربط برنامجك الخاص"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_portal_connect_branded
+msgid ""
+"Use the above REST URL to get structured data of this order in UBL format."
+msgstr "استخدم رابط REST أعلاه للحصول على بيانات منظَّمة لهذا الطلب بصيغة UBL."
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_portal_connect_branded
+msgid ""
+"Use the structured copy of this order below to bring it into your own "
+"system."
+msgstr "استخدم النسخة المنظَّمة من هذا الطلب أدناه لإدخالها إلى نظامك الخاص."
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_portal_connect_branded
+msgid "Want to import this document in your own software?"
+msgstr "هل تريد استيراد هذا المستند إلى برنامجك الخاص؟"

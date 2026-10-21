@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- User-visible vendor credits of the portal and of the digest e-mail: they name the configured product instead
+         (Product Branding, ncollection_branding). Technical references are untouched. -->
+    <template id="portal_record_sidebar_branded" inherit_id="portal.portal_record_sidebar">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace">
+            <span t-out="nc_product_brand()['name']"/>
+        </xpath>
+    </template>
+    <template id="portal_my_security_branded" inherit_id="portal.portal_my_security">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace"/>
+    </template>
+    <template id="totp_portal_hook_branded" inherit_id="auth_totp_portal.totp_portal_hook">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace"/>
+    </template>
+    <template id="digest_mail_main_sent_by_branded" inherit_id="digest.digest_mail_main">
+        <xpath expr="//div[hasclass('by_odoo')]//a[contains(@href, 'odoo.com')]" position="replace">
+            <span t-out="company.env['ncollection.product.branding'].nc_brand()['name']"/>
+        </xpath>
+    </template>
+    <template id="digest_mail_main_powered_by_branded" inherit_id="digest.digest_mail_main" priority="17">
+        <xpath expr="//p[@id='powered']//a[contains(@href, 'odoo.com')]" position="replace">
+            <span t-out="company.env['ncollection.product.branding'].nc_brand()['name']"/>
+        </xpath>
+    </template>
+    <!-- the upstream vendor's own mobile-app promotion has no place in this product's digest -->
+    <template id="digest_section_mobile_branded" inherit_id="digest.digest_section_mobile">
+        <xpath expr="//td" position="attributes">
+            <attribute name="t-if">False</attribute>
+        </xpath>
+    </template>
+</odoo>

@@ -56,6 +56,7 @@ msgstr "الوصول إلى"
 #. module: ncollection_core
 #: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__role__accountant
 #: model:res.groups,name:ncollection_core.group_role_accountant
+#: model:ncollection.role,name:ncollection_core.nc_role_accountant
 msgid "Accountant"
 msgstr "محاسب"
 
@@ -79,6 +80,7 @@ msgstr "عبر حسابات النقد والبنك"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__active
 #: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_launcher_app__state__active
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_launcher_app_search
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__active
 msgid "Active"
 msgstr "نشط"
 
@@ -216,6 +218,7 @@ msgstr "الرئيس التنفيذي"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_reset_password_form
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -249,6 +252,7 @@ msgstr "تستخدم الألوان رمزًا سداسيًا من 6 خانات 
 #. module: ncollection_core
 #: model:ir.actions.server,name:ncollection_core.action_workspace_company
 #: model:ir.ui.menu,name:ncollection_core.menu_workspace_company
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__company_id
 msgid "Company"
 msgstr "الشركة"
 
@@ -287,6 +291,10 @@ msgstr "الدولة"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__create_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__create_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
@@ -300,6 +308,10 @@ msgstr "أنشئ بواسطة"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__create_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__create_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -317,11 +329,13 @@ msgstr "العملة"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
 msgid "Deactivate"
 msgstr "إلغاء التفعيل"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
 msgid "Deactivate this user? They will no longer be able to log in."
 msgstr "هل تريد إلغاء تفعيل هذا المستخدم؟ لن يتمكن بعد ذلك من تسجيل الدخول."
 
@@ -624,6 +638,10 @@ msgstr "مؤشر الأداء"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__write_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__write_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
@@ -637,6 +655,10 @@ msgstr "آخر تحديث بواسطة"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__write_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__write_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -759,6 +781,7 @@ msgstr "NCollection: إرسال ملخص تنبيهات الشذوذ بالبر�
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__name
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__name
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__name
 msgid "Name"
 msgstr "الاسم"
 
@@ -1000,6 +1023,7 @@ msgstr "مرجع مسؤول المنصة"
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/wizards/user_invite.py:0
+#: code:addons/ncollection_core/models/res_users_admin.py:0
 msgid "Please enter a valid email address."
 msgstr "يُرجى إدخال عنوان بريد إلكتروني صالح."
 
@@ -1075,6 +1099,11 @@ msgstr "الإيرادات (آخر 6 أشهر)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__role
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__role_id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__nc_role_summary
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_search
 msgid "Role"
 msgstr "الدور"
 
@@ -1114,6 +1143,7 @@ msgstr "إرسال الدعوة"
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__sequence
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__sequence
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__sequence
 msgid "Sequence"
 msgstr "التسلسل"
 
@@ -1252,12 +1282,14 @@ msgstr "تعذّر تحميل الملخّص. يُرجى تحديث الصفحة
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/wizards/user_invite.py:0
+#: code:addons/ncollection_core/models/res_users_admin.py:0
 msgid "The username '%s' is already taken."
 msgstr "اسم المستخدم '%s' مستخدم بالفعل."
 
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/wizards/user_invite.py:0
+#: code:addons/ncollection_core/models/res_users_admin.py:0
 msgid "The username cannot be an email address. Use 3-64 letters, digits, dots, dashes or underscores, such as sara.m."
 msgstr "لا يمكن أن يكون اسم المستخدم عنوان بريد إلكتروني. استخدم من 3 إلى 64 حرفًا أو رقمًا أو نقطة أو شرطة أو شرطة سفلية، مثل sara.m."
 
@@ -1362,6 +1394,9 @@ msgstr "استُخدم في"
 #. module: ncollection_core
 #: model:ir.model,name:ncollection_core.model_res_users
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__user_id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__user_id
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_search
 msgid "User"
 msgstr "المستخدم"
 
@@ -1378,12 +1413,16 @@ msgstr "تمت دعوة المستخدم"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__username
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
 msgid "Username"
 msgstr "اسم المستخدم"
 
 #. module: ncollection_core
 #: model:ir.actions.act_window,name:ncollection_core.action_workspace_users
 #: model:ir.ui.menu,name:ncollection_core.menu_workspace_users
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__user_count
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_search
 msgid "Users"
 msgstr "المستخدمون"
 
@@ -1607,3 +1646,1080 @@ msgstr "أدوار مساحة عمل المستأجر القياسية."
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
 msgid "Loading your summary…"
 msgstr "جارٍ تحميل الملخّص…"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Current year"
+msgstr "السنة الحالية"
+
+#. module: ncollection_core
+#. odoo-javascript
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.js:0
+msgid "Choose both the From date and the To date."
+msgstr "اختر تاريخ البداية وتاريخ النهاية معًا."
+
+#. module: ncollection_core
+#. odoo-javascript
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.js:0
+msgid "The From date cannot be after the To date."
+msgstr "لا يمكن أن يكون تاريخ البداية بعد تاريخ النهاية."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.js:0
+msgid "The summary could not be refreshed."
+msgstr "تعذّر تحديث الملخّص."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "The period is not a valid date range."
+msgstr "الفترة ليست نطاق تواريخ صالحًا."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "The period is outside the supported range."
+msgstr "الفترة خارج النطاق المدعوم."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_appearance_form
+msgid "Company Stamp"
+msgstr "ختم الشركة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_appearance_form
+msgid ""
+"A PNG image, up to 2 MB and 4000 pixels on a side. Transparency is kept and "
+"the proportions are never changed. It is printed at the end of this "
+"company's invoices, bills, quotations, orders and reports. Use the pencil to "
+"replace it and the bin to remove it."
+msgstr "صورة PNG حتى 2 ميغابايت و4000 بكسل في أطول ضلع. تُحفظ الشفافية ولا تتغير النسب أبدًا. تُطبع في نهاية فواتير هذه الشركة وفواتير الموردين وعروض الأسعار والطلبات والتقارير. استخدم القلم للاستبدال وسلة المهملات للحذف."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_duplicate_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_partner_roles_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_http__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_module_module__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_ui_menu__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_attachment_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_document_print_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_engine__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_anomaly_detector__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_config_sync_key__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_dashboard_data__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_financial_gate_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_groups__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_admin_service__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_duplicate_mixin__id
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_partner_roles_mixin__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_http__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_module_module__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ir_ui_menu__id
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_attachment_mixin__id
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_document_print_mixin__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_engine__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_aggregation_version__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_anomaly_detector__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_config_sync_key__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_dashboard_data__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_error_log__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_financial_gate_mixin__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_kpi_threshold__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_launcher_app__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_platform_entry__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_config__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_groups__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_admin_service__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Selected period"
+msgstr "الفترة المحددة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "As of %s"
+msgstr "حتى %s"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_res_groups
+msgid "Access Groups"
+msgstr "مجموعات الوصول"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/attachments/nc_file_viewer.xml:0
+msgid "Download"
+msgstr "تنزيل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_attachment_mixin__nc_attachment_count
+msgid "Files"
+msgstr "الملفات"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_ir_http
+msgid "HTTP Routing"
+msgstr "مسار HTTP"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/attachments/attachment_count_field.js:0
+msgid "No attachments."
+msgstr "لا توجد مرفقات."
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_nc_attachment_mixin__nc_attachment_count
+msgid ""
+"Number of files attached to this document (not the binary fields stored as "
+"attachments)."
+msgstr "عدد الملفات المرفقة بهذا المستند (وليس الحقول الثنائية المخزّنة كمرفقات)."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/attachments/attachment_count_field.js:0
+msgid "Show attachments"
+msgstr "عرض المرفقات"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/attachments/nc_file_viewer.xml:0
+msgid "This file type cannot be previewed here."
+msgstr "لا يمكن معاينة هذا النوع من الملفات هنا."
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_res_users_apikeys
+msgid "Users API Keys"
+msgstr "مفاتيح الواجهة البرمجية للتطبيق للمستخدمين"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid ""
+"%(roles)s cannot be given here: the application it needs is not part of this"
+" workspace (%(apps)s)."
+msgstr "لا يمكن منح %(roles)s هنا: التطبيق الذي يحتاجه ليس جزءًا من مساحة العمل هذه (%(apps)s)."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid ""
+". Enter the password you\n"
+"                    were given, then choose a new one. You will then sign in again."
+msgstr ". أدخل كلمة المرور التي أُعطيتَ إياها، ثم اختر كلمة مرور جديدة. ستسجّل الدخول بعدها من جديد."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "A password needs at least %s characters."
+msgstr "تحتاج كلمة المرور إلى %s أحرف على الأقل."
+
+#. module: ncollection_core
+#: model:ir.model.constraint,message:ncollection_core.constraint_ncollection_role_code_unique
+msgid "A role code can only be used once."
+msgstr "لا يمكن استخدام رمز الدور إلا مرة واحدة."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+msgid ""
+"A role is only a name for real permission groups: what a person with it can do is decided by those groups\n"
+"                        and nothing else. A standard role comes with the product; a custom role is made here from the\n"
+"                        groups of the applications installed in this workspace and can never carry workspace administration."
+msgstr "الدور مجرد اسم لمجموعات صلاحيات حقيقية: ما يستطيع الشخص فعله بهذا الدور تحدده هذه المجموعات ولا شيء غيرها. الدور القياسي يأتي مع المنتج؛ أما الدور المخصَّص فيُنشأ هنا من مجموعات التطبيقات المثبتة في مساحة العمل ولا يمكن أن يتضمن إدارة مساحة العمل."
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_role
+msgid ""
+"A role names a set of permission groups so you can give the same access to "
+"several people."
+msgstr "الدور يسمّي مجموعة من مجموعات الصلاحيات لتمنح الوصول نفسه لعدة أشخاص."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid "A standard role cannot be deleted: archive it instead."
+msgstr "لا يمكن حذف دور قياسي: أرشفه بدلًا من ذلك."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid ""
+"A standard role is defined by the product: you can rename or archive it, not"
+" change its groups."
+msgstr "الدور القياسي يحدده المنتج: يمكنك إعادة تسميته أو أرشفته لا تغيير مجموعاته."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_reset_password_form
+msgid ""
+"A temporary password is shown once, to you, and is not stored anywhere. The person is made to choose\n"
+"                    their own password the first time they sign in."
+msgstr "تظهر كلمة المرور المؤقتة مرة واحدة لك فقط ولا تُخزَّن في أي مكان. سيُطلب من الشخص اختيار كلمة مروره الخاصة عند أول تسجيل دخول."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "A user needs a name and a username."
+msgstr "يحتاج المستخدم إلى اسم واسم مستخدم."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_overview_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_search
+msgid "Access"
+msgstr "الصلاحيات"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid "Access: %s"
+msgstr "الصلاحيات: %s"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+msgid "Account"
+msgstr "الحساب"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Activate"
+msgstr "تفعيل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__active_users
+msgid "Active users"
+msgstr "المستخدمون النشطون"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_administrator
+msgid "Administrator"
+msgstr "مسؤول"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__grants_administration
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_list
+msgid "Administrator level"
+msgstr "مستوى مسؤول"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__administrators
+msgid "Administrators"
+msgstr "المسؤولون"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid "An administrator reset the password of"
+msgstr "أعاد مسؤول تعيين كلمة مرور المستخدم"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_system_form
+msgid "Applications included"
+msgstr "التطبيقات المضمَّنة"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_purchase_manager
+msgid ""
+"Approves and manages every purchase order and vendor, and the purchase "
+"configuration."
+msgstr "يعتمد ويدير كل أوامر الشراء والموردين، وإعدادات المشتريات."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_search
+msgid "Archived"
+msgstr "مؤرشف"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__available
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+msgid "Available in this workspace"
+msgstr "متاح في مساحة العمل هذه"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_crm_manager
+msgid "CRM Manager"
+msgstr "مدير إدارة علاقات العملاء"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_crm_user
+msgid "CRM User"
+msgstr "مستخدم إدارة علاقات العملاء"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid "Change password"
+msgstr "تغيير كلمة المرور"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/controllers/password_change.py:0
+msgid "Choose a password different from the one you were given."
+msgstr "اختر كلمة مرور مختلفة عن التي أُعطيتَ إياها."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid "Choose your own password"
+msgstr "اختر كلمة المرور الخاصة بك"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__code
+msgid "Code"
+msgstr "الرمز"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid "Confirm new password"
+msgstr "تأكيد كلمة المرور الجديدة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Contact email"
+msgstr "البريد الإلكتروني للتواصل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__can_create
+msgid "Create"
+msgstr "إنشاء"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_purchase_user
+msgid "Creates requests for quotation and purchase orders."
+msgstr "ينشئ طلبات عروض الأسعار وأوامر الشراء."
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_role__kind__custom
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_search
+msgid "Custom"
+msgstr "مخصَّص"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__custom_roles
+msgid "Custom roles"
+msgstr "الأدوار المخصَّصة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_role__custom_group_ids
+msgid "Custom roles: the access groups this role grants."
+msgstr "الأدوار المخصَّصة: مجموعات الصلاحيات التي يمنحها هذا الدور."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__model_label
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_search
+msgid "Data"
+msgstr "البيانات"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_accountant
+msgid ""
+"Day-to-day accounting: invoices, bills, payments and reports. No accounting "
+"configuration."
+msgstr "المحاسبة اليومية: الفواتير وفواتير الموردين والمدفوعات والتقارير. دون إعدادات المحاسبة."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_search
+msgid "Deactivated"
+msgstr "مُعطَّل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__archived_users
+msgid "Deactivated users"
+msgstr "المستخدمون المعطَّلون"
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_role
+msgid "Define a role"
+msgstr "عرّف دورًا"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__can_unlink
+msgid "Delete"
+msgstr "حذف"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__description
+msgid "Description"
+msgstr "الوصف"
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_document_stamps
+msgid "Document Stamps"
+msgstr "أختام المستندات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__can_write
+msgid "Edit"
+msgstr "تعديل"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_hr_user
+msgid "Employee records and day-to-day HR work."
+msgstr "سجلات الموظفين وأعمال الموارد البشرية اليومية."
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_hr_manager
+msgid "Employee records, departments and HR configuration."
+msgstr "سجلات الموظفين والأقسام وإعدادات الموارد البشرية."
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_crm_manager
+msgid ""
+"Every lead and opportunity, sales teams and the pipeline configuration."
+msgstr "كل العملاء المحتملين والفرص، وفرق المبيعات وإعدادات مسار المبيعات."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/controllers/password_change.py:0
+msgid "Fill in all the fields."
+msgstr "املأ جميع الحقول."
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_finance_manager
+msgid "Finance Manager"
+msgstr "مدير المالية"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_administrator
+msgid ""
+"Full control of the workspace: users, roles, settings, billing and every "
+"application. Give it to as few people as possible."
+msgstr "تحكّم كامل في مساحة العمل: المستخدمون والأدوار والإعدادات والفوترة وكل التطبيقات. امنحه لأقل عدد ممكن من الأشخاص."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+msgid "Full name"
+msgstr "الاسم الكامل"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_reset_password__mode__temporary
+msgid "Generate a temporary password"
+msgstr "إنشاء كلمة مرور مؤقتة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__group_xmlids
+msgid "Group Xmlids"
+msgstr "معرّفات المجموعات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__custom_group_ids
+msgid "Groups"
+msgstr "المجموعات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__group_ids
+msgid "Groups granted"
+msgstr "المجموعات الممنوحة"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_hr_manager
+msgid "HR Manager"
+msgstr "مدير الموارد البشرية"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_hr_user
+msgid "HR User"
+msgstr "مستخدم الموارد البشرية"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_inventory_manager
+msgid "Inventory Manager"
+msgstr "مدير المخزون"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_inventory_user
+msgid "Inventory User"
+msgstr "مستخدم المخزون"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__kind
+msgid "Kind"
+msgstr "النوع"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Last sign-in"
+msgstr "آخر تسجيل دخول"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/admin_service.py:0
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "Malformed request."
+msgstr "طلب غير صالح."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_overview_form
+msgid ""
+"Manage who can sign in under Users, what they can do under Roles &amp; Permissions, and review\n"
+"                        sign-ins and administrative actions under Security."
+msgstr "أدر من يمكنه تسجيل الدخول من «المستخدمون»، وما يمكنهم فعله من «الأدوار والصلاحيات»، وراجع عمليات تسجيل الدخول والإجراءات الإدارية من «الأمان»."
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_inventory_manager
+msgid ""
+"Manages warehouses, operations, adjustments and the inventory configuration."
+msgstr "يدير المستودعات والعمليات والتسويات وإعدادات المخزون."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__mode
+msgid "Mode"
+msgstr "الوضع"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__model_name
+msgid "Model"
+msgstr "النموذج"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__role_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+msgid "More roles"
+msgstr "أدوار إضافية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__must_change
+msgid "Must change it at next sign-in"
+msgstr "يجب تغييرها عند تسجيل الدخول التالي"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__nc_must_change_password
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Must change password"
+msgstr "يجب تغيير كلمة المرور"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+msgid "Must choose a new password"
+msgstr "يجب اختيار كلمة مرور جديدة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role__missing_apps
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_list
+msgid "Needs"
+msgstr "يتطلب"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__new_password
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid "New password"
+msgstr "كلمة المرور الجديدة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "Only a workspace administrator can change administrator roles."
+msgstr "لا يمكن إلا لمسؤول مساحة العمل تغيير أدوار المسؤولين."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid "Only a workspace administrator can manage roles."
+msgstr "لا يمكن إلا لمسؤول مساحة العمل إدارة الأدوار."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "Only a workspace administrator can reset this password."
+msgstr "لا يمكن إلا لمسؤول مساحة العمل إعادة تعيين كلمة المرور هذه."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/admin_service.py:0
+msgid "Only the platform service channel can use this."
+msgstr "لا يمكن استخدام هذا إلا عبر قناة خدمة المنصة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "Only the workspace's own users can be activated or deactivated here."
+msgstr "يمكن هنا تفعيل أو تعطيل مستخدمي مساحة العمل فقط."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/workspace_overview.py:0
+#: model:ir.actions.server,name:ncollection_core.action_workspace_overview
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_overview
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_overview_form
+#: code:addons/ncollection_core/wizards/workspace_overview.py:0
+msgid "Overview"
+msgstr "نظرة عامة"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_sales_user
+msgid "Own quotations, orders and customers."
+msgstr "عروض الأسعار والطلبات والعملاء الخاصة به."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_reset_password.py:0
+msgid "Password reset"
+msgstr "إعادة تعيين كلمة المرور"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid "Password you were given"
+msgstr "كلمة المرور التي أُعطيتَ إياها"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "Passwords are managed here for the workspace's own users only."
+msgstr "تُدار كلمات المرور هنا لمستخدمي مساحة العمل فقط."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_overview_form
+msgid "People"
+msgstr "الأشخاص"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__plan_code
+msgid "Plan"
+msgstr "الخطة"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_ncollection_platform_entry
+msgid "Platform administrator entry grant"
+msgstr "مسؤول المنصة"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_purchase_manager
+msgid "Purchase Manager"
+msgstr "مدير المشتريات"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_purchase_user
+msgid "Purchase User"
+msgstr "مستخدم المشتريات"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_reports_viewer
+msgid "Reads financial reports and documents; changes nothing."
+msgstr "يطّلع على التقارير والمستندات المالية؛ ولا يغيّر شيئًا."
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_inventory_user
+msgid "Receipts, deliveries, transfers and barcode operations."
+msgstr "الاستلام والتسليم والتحويلات وعمليات الباركود."
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_reports_viewer
+msgid "Reports Viewer"
+msgstr "عارض التقارير"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_reset_password_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Reset password"
+msgstr "إعادة تعيين كلمة المرور"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_res_users__nc_role_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_list
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_search
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+msgid "Roles"
+msgstr "الأدوار"
+
+#. module: ncollection_core
+#: model:ir.actions.act_window,name:ncollection_core.action_role
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_roles
+msgid "Roles & Permissions"
+msgstr "الأدوار والصلاحيات"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "Roles apply to the workspace's own users only."
+msgstr "تنطبق الأدوار على مستخدمي مساحة العمل فقط."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
+msgid ""
+"Roles are made of the workspace's real permission groups: giving or taking a role changes\n"
+"                        what this person can open and do immediately. Open Roles &amp; Permissions to see exactly what\n"
+"                        each role allows."
+msgstr "الأدوار مكوَّنة من مجموعات الصلاحيات الفعلية لمساحة العمل: منح الدور أو سحبه يغيّر فورًا ما يمكن لهذا الشخص فتحه والقيام به. افتح «الأدوار والصلاحيات» لترى بالضبط ما يسمح به كل دور."
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_finance_manager
+msgid ""
+"Runs accounting: invoices, bills, payments, journals, reconciliation, "
+"reports and accounting settings."
+msgstr "يدير المحاسبة: الفواتير وفواتير الموردين والمدفوعات واليوميات والتسوية والتقارير وإعدادات المحاسبة."
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_sales_manager
+msgid "Sales Manager"
+msgstr "مدير المبيعات"
+
+#. module: ncollection_core
+#: model:ncollection.role,name:ncollection_core.nc_role_sales_user
+msgid "Sales User"
+msgstr "مستخدم المبيعات"
+
+#. module: ncollection_core
+#: model:ir.actions.server,name:ncollection_core.action_workspace_security
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_security
+msgid "Security"
+msgstr "الأمان"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_sales_manager
+msgid "Sees every quotation and order, manages teams and sales configuration."
+msgstr "يرى كل عروض الأسعار والطلبات، ويدير الفرق وإعدادات المبيعات."
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_reset_password__mode__explicit
+msgid "Set a password myself"
+msgstr "سأحدد كلمة المرور بنفسي"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_res_users__nc_must_change_password
+msgid ""
+"Set by a password reset: the next sign-in is sent to a page that makes the "
+"person choose their own password before anything else opens."
+msgstr "تُحدَّد عند إعادة تعيين كلمة المرور: يُوجَّه تسجيل الدخول التالي إلى صفحة تجعل الشخص يختار كلمة مروره بنفسه قبل فتح أي شيء آخر."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+msgid "Sign out"
+msgstr "تسجيل الخروج"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_role__code
+msgid ""
+"Stable identifier of the role. Standard roles keep theirs across upgrades."
+msgstr "المعرّف الثابت للدور. تحتفظ الأدوار القياسية بمعرفاتها عبر الترقيات."
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_role__kind__standard
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_search
+msgid "Standard"
+msgstr "قياسي"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid "Standard roles are provided by the product."
+msgstr "الأدوار القياسية يوفّرها المنتج."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__standard_roles
+msgid "Standard roles available"
+msgstr "الأدوار القياسية المتاحة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_role__group_xmlids
+msgid "Standard roles: the external ids of the access groups this role stands for, comma separated."
+msgstr "الأدوار القياسية: المعرّفات الخارجية لمجموعات الصلاحيات التي يمثلها هذا الدور، مفصولة بفواصل."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__subscription_status
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_system_form
+msgid "Subscription"
+msgstr "الاشتراك"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/workspace_config.py:0
+#: model:ir.actions.server,name:ncollection_core.action_workspace_system
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_system
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_system_form
+msgid "System"
+msgstr "النظام"
+
+#. module: ncollection_core
+#: model:ir.actions.server,name:ncollection_core.action_workspace_teams
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_teams
+msgid "Teams & Departments"
+msgstr "الفرق والأقسام"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_reset_password.py:0
+msgid ""
+"Temporary password for %(user)s: %(password)s  -  give it to them now: it is"
+" not shown again."
+msgstr "كلمة المرور المؤقتة للمستخدم %(user)s: %(password)s  -  سلّمها له الآن: لن تُعرض مرة أخرى."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/admin_service.py:0
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "That account is not managed here."
+msgstr "هذا الحساب لا يُدار من هنا."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_appearance_form
+msgid ""
+"The default stamp: a PNG image, up to 2 MB and 4000 pixels on a side. It is printed at the\n"
+"                                bottom of the last page of a company document that has no Document Stamp of its own. To\n"
+"                                choose which documents carry which stamp, and exactly where, use Document Stamps."
+msgstr "الختم الافتراضي: صورة PNG بحجم حتى 2 ميغابايت و4000 بكسل في أي جهة. يُطبع أسفل الصفحة الأخيرة من مستند الشركة الذي ليس له ختم مستند خاص. لاختيار المستندات التي تحمل كل ختم وموضعه بدقة، استخدم «أختام المستندات»."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/controllers/password_change.py:0
+msgid "The new password and its confirmation are not the same."
+msgstr "كلمة المرور الجديدة وتأكيدها غير متطابقتين."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_reset_password.py:0
+msgid "The password of %s was changed."
+msgstr "تم تغيير كلمة مرور %s."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/controllers/password_change.py:0
+msgid "The password you were given is not correct."
+msgstr "كلمة المرور التي أُعطيتَ إياها غير صحيحة."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_system_form
+msgid ""
+"The plan and the applications it includes are set by NCollection and cannot be changed from inside\n"
+"                        the workspace."
+msgstr "تحدد NCollection الخطة والتطبيقات التي تتضمنها، ولا يمكن تغييرها من داخل مساحة العمل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/admin_service.py:0
+msgid "The request does not say which platform administrator made it."
+msgstr "لا يحدد الطلب أي مسؤول منصة قام به."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid ""
+"The role %(role)s cannot grant %(groups)s: it would give administration of "
+"the workspace."
+msgstr "لا يمكن للدور %(role)s منح %(groups)s: فذلك سيمنح إدارة مساحة العمل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid "The role %s needs at least one group."
+msgstr "يحتاج الدور %s إلى مجموعة واحدة على الأقل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid "The type and code of a role cannot be changed."
+msgstr "لا يمكن تغيير نوع الدور ورمزه."
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_res_users__nc_role_ids
+msgid "The workspace roles this user holds. Derived from the user's access groups."
+msgstr "أدوار مساحة العمل التي يحملها هذا المستخدم. مشتقة من مجموعات الصلاحيات الخاصة به."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_reset_password.py:0
+msgid "Type the new password, or choose a temporary one."
+msgstr "اكتب كلمة المرور الجديدة، أو اختر كلمة مرور مؤقتة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/admin_service.py:0
+msgid "Unknown role."
+msgstr "دور غير معروف."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__max_users
+msgid "Users allowed by the plan"
+msgstr "المستخدمون المسموح بهم في الخطة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/role.py:0
+msgid "Users with %s"
+msgstr "المستخدمون الذين لديهم %s"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+msgid "Users with this role"
+msgstr "المستخدمون بهذا الدور"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__can_read
+msgid "View"
+msgstr "عرض"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__pending_password_changes
+msgid "Waiting to choose a new password"
+msgstr "بانتظار اختيار كلمة مرور جديدة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_search
+msgid "Waiting to choose a password"
+msgstr "بانتظار اختيار كلمة مرور"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+msgid "What it gives"
+msgstr "ما يمنحه"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_list
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+msgid "What this role allows"
+msgstr "ما يسمح به هذا الدور"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+msgid "What this role is for"
+msgstr "الغرض من هذا الدور"
+
+#. module: ncollection_core
+#: model:ncollection.role,description:ncollection_core.nc_role_crm_user
+msgid "Works leads and opportunities."
+msgstr "يعمل على العملاء المحتملين والفرص."
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_settings_root
+msgid "Workspace Administration"
+msgstr "إدارة مساحة العمل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_ncollection_user_invite__role_ids
+msgid ""
+"Workspace roles (Roles & Permissions) given in addition to the role above."
+msgstr "أدوار مساحة العمل (الأدوار والصلاحيات) تُمنح بالإضافة إلى الدور أعلاه."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "You are not allowed to change roles."
+msgstr "غير مسموح لك بتغيير الأدوار."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "You cannot give a role that carries rights you do not have yourself."
+msgstr "لا يمكنك منح دور يحمل صلاحيات لا تملكها أنت."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "You cannot remove the last workspace Administrator."
+msgstr "لا يمكنك إزالة آخر مسؤول لمساحة العمل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/ir_http.py:0
+msgid "You must choose a new password before you continue."
+msgstr "يجب أن تختار كلمة مرور جديدة قبل المتابعة."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
+msgid "e.g. Branch accountant"
+msgstr "مثال: محاسب الفرع"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "A user needs a name."
+msgstr "يحتاج المستخدم إلى اسم."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_search
+msgid "Can create"
+msgstr "يمكنه الإنشاء"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_search
+msgid "Can delete"
+msgstr "يمكنه الحذف"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_search
+msgid "Can edit"
+msgstr "يمكنه التعديل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__has_audit_log
+msgid "Has Audit Log"
+msgstr "يوجد سجل تدقيق"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "Only a workspace administrator can activate users."
+msgstr "لا يمكن إلا لمسؤول مساحة العمل تفعيل المستخدمين."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_search
+msgid "View only"
+msgstr "للعرض فقط"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__admin_logo
+msgid "Administration logo"
+msgstr "شعار الإدارة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__has_audit_log
+msgid "Audit log available"
+msgstr "سجل التدقيق متاح"
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_product_branding
+msgid "Product Branding"
+msgstr "هوية المنتج"

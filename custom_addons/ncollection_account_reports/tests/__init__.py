@@ -25,3 +25,5 @@ from . import test_tax_analysis
 from . import test_oca_wizard_access
 from . import test_hub_roles
 from . import test_exclude_zero
+from . import test_summary_period
+from . import test_stamp_scope

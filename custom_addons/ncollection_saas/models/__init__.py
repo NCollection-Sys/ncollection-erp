@@ -24,3 +24,5 @@ from . import tenant_localization
 from . import res_config_settings
 # Platform administrator -> tenant entry ("Enter Company"): allow-list, one-time grant, Summary list.
 from . import platform_entry
+# Tenant Administration: a Platform Administrator manages a tenant's users through the tenant's service model.
+from . import tenant_admin

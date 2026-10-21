@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The right to configure document stamps (and to read the raw seal image). System administrators hold it through
+         base.group_system; the Accounting Adviser holds it through ncollection_account_core, so accounting can configure
+         its own documents' stamps without being a system administrator. Nobody else, ordinary users included. -->
+    <record id="group_stamp_manager" model="res.groups">
+        <field name="name">Document Stamp Manager</field>
+        <field name="comment">May create and change document stamps and read the company seal image.</field>
+    </record>
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('ncollection_branding.group_stamp_manager'))]"/>
+    </record>
+
+    <!-- A stamp belongs to ONE company: a user sees, prints with and edits only the stamps of the companies they are
+         allowed in. The right to CHANGE a stamp is the ACL's (workspace administrators); this rule is only the company
+         boundary, mirrored at the ORM so it holds for every path (UI, RPC, the print engine). -->
+    <record id="rule_document_stamp_company" model="ir.rule">
+        <field name="name">Document stamp: own companies</field>
+        <field name="model_id" ref="model_ncollection_document_stamp"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

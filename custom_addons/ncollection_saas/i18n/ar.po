@@ -37,6 +37,7 @@ msgstr "لا يمكن دخول %s الآن (لم تتم تهيئتها، أو أ
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/platform_entry.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
 msgid "%s could not be reached. Try again in a moment."
 msgstr "تعذّر الوصول إلى %s. حاول مرة أخرى بعد قليل."
 
@@ -216,8 +217,8 @@ msgstr "فشلت استعادة %(db)s في المكان يدويًا بعد ح�
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/config_sync.py:0
-msgid "A required job is DISABLED on %(db)s: %(detail)s\n\nOdoo deactivates a cron by itself after repeated failures, so this is usually a symptom rather than someone switching it off. The job stays off until re-enabled by hand."
-msgstr "مهمة مطلوبة معطّلة على %(db)s: %(detail)s\n\nيعطّل Odoo المهمة المجدولة بنفسه بعد إخفاقات متكررة، لذا فهذا عادةً عَرَض وليس إيقافًا متعمدًا. وتبقى المهمة متوقفة حتى تُعاد يدويًا."
+msgid "A required job is DISABLED on %(db)s: %(detail)s\n\nThe system deactivates a cron by itself after repeated failures, so this is usually a symptom rather than someone switching it off. The job stays off until re-enabled by hand."
+msgstr "مهمة مطلوبة معطّلة على %(db)s: %(detail)s\n\nيعطّل النظام المهمة المجدولة بنفسه بعد إخفاقات متكررة، لذا فهذا عادةً عَرَض وليس إيقافًا متعمدًا. وتبقى المهمة متوقفة حتى تُعاد يدويًا."
 
 #. module: ncollection_saas
 #: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__cron_health_state__degraded
@@ -243,6 +244,7 @@ msgstr "تفعيل"
 
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__active
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__active
 msgid "Active"
 msgstr "نشط"
 
@@ -391,6 +393,10 @@ msgstr "فشل الاختبار التجريبي — توقّف طرح الأس�
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -541,6 +547,13 @@ msgstr "إنشاء قاعدة بيانات هذا المستأجر ومساحة 
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
@@ -551,6 +564,13 @@ msgstr "أنشئ بواسطة"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -657,6 +677,13 @@ msgstr "معطّلة على المستأجر: %(jobs)s"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__display_name
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__display_name
 #: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -910,6 +937,13 @@ msgstr "سليم"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__id
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__id
 #: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -1078,6 +1112,13 @@ msgstr "آخر دفعة"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
@@ -1088,13 +1129,15 @@ msgstr "آخر تحديث بواسطة"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
-
-#. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_verify_invalid
-msgid "Link expired — NCollection"
-msgstr "انتهت صلاحية الرابط — NCollection"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
@@ -1288,6 +1331,10 @@ msgstr "NCollection: فحص نطاقات المستأجرين وانتهاء ص�
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__name
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__name
 msgid "Name"
 msgstr "الاسم"
 
@@ -1518,11 +1565,6 @@ msgstr "اللقطة قبل الترقية…"
 #: code:addons/ncollection_saas/models/fleet_migration.py:0
 msgid "Prepared: %(c)s canary + %(o)s fleet tenant(s)."
 msgstr "تم التحضير: %(c)s تجريبي + %(o)s من مستأجري الأسطول."
-
-#. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
-msgid "Pricing — NCollection"
-msgstr "التسعير — NCollection"
 
 #. module: ncollection_saas
 #: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__probing
@@ -2104,6 +2146,12 @@ msgstr "الأهداف"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__tenant_id
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__tenant_id
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__tenant_id
 msgid "Tenant"
 msgstr "مستأجر"
 
@@ -2240,6 +2288,7 @@ msgstr "المهمة المفتوحة لتقرير ذاتي غير مقروء ب
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/platform_entry.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
 msgid "The platform is not configured to reach tenants (service key missing)."
 msgstr "المنصة غير مهيأة للوصول إلى المستأجرين (مفتاح الخدمة مفقود)."
 
@@ -2632,3 +2681,535 @@ msgstr "مسؤول المنصّة"
 #. module: ncollection_saas
 msgid "NCollection platform staff: the SaaS-admin dashboard, tenants, subscriptions, plans and the provisioning queue."
 msgstr "موظفو منصّة NCollection: لوحة معلومات مسؤول SaaS، والمستأجرون، والاشتراكات، والخطط، وقائمة انتظار التجهيز."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+msgid "%(admin)s %(what)s the user %(login)s."
+msgstr "%(admin)s %(what)s المستخدم %(login)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "%(admin)s created the user %(login)s."
+msgstr "أنشأ %(admin)s المستخدم %(login)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "%(admin)s reset the password of %(user)s (%(how)s)."
+msgstr "أعاد %(admin)s تعيين كلمة مرور %(user)s (%(how)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "%(admin)s set the roles of %(user)s to: %(roles)s."
+msgstr "حدّد %(admin)s أدوار %(user)s لتصبح: %(roles)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "%(company)s could not complete the request (HTTP %(status)s)."
+msgstr "تعذّر على %(company)s إكمال الطلب (HTTP %(status)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "%s did not accept the request (the service channel is not authorised)."
+msgstr "لم تقبل %s الطلب (قناة الخدمة غير مخوّلة)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid ""
+"%s does not support this yet: its workspace modules are out of date. Upgrade"
+" ncollection_core on it (Fleet Migration), then try again."
+msgstr "لا تدعم %s هذا بعد: وحدات مساحة عملها قديمة. رقِّ ncollection_core عليها (ترحيل الأسطول) ثم حاول مجددًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "%s has no workspace to manage yet."
+msgstr "ليس لدى %s مساحة عمل لإدارتها بعد."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "%s sent a reply that is too large."
+msgstr "أرسلت %s ردًا كبيرًا جدًا."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Activate / Deactivate"
+msgstr "تفعيل / تعطيل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__administrator
+msgid "Administrator"
+msgstr "مسؤول"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__administrator
+msgid "Administrator level"
+msgstr "مستوى مسؤول"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__available
+msgid "Available"
+msgstr "متاح"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Change whether this person can sign in to the workspace?"
+msgstr "تغيير ما إذا كان بإمكان هذا الشخص تسجيل الدخول إلى مساحة العمل؟"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__code
+msgid "Code"
+msgstr "الرمز"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_res_config_settings
+msgid "Config Settings"
+msgstr "تهيئة الإعدادات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+msgid "Configuration Sync"
+msgstr "مزامنة الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__email
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__email
+msgid "Contact email"
+msgstr "البريد الإلكتروني للتواصل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
+msgid "Create user"
+msgstr "إنشاء مستخدم"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__email
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+msgid ""
+"Everything here acts on the company's own workspace, only if you are on its Platform Access list, and\n"
+"                        is recorded with your name both here and in the workspace's audit log. The platform never stores a\n"
+"                        tenant's passwords."
+msgstr "كل ما هنا يعمل على مساحة عمل الشركة نفسها، فقط إذا كنت ضمن قائمة وصول المنصة الخاصة بها، ويُسجَّل باسمك هنا وفي سجل التدقيق الخاص بمساحة العمل. لا تخزّن المنصة كلمات مرور المستأجرين أبدًا."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_create__mode__temporary
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_password__mode__temporary
+msgid "Generate a temporary password"
+msgstr "إنشاء كلمة مرور مؤقتة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__last_login
+msgid "Last sign-in"
+msgstr "آخر تسجيل دخول"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__line_ids
+msgid "Line"
+msgstr "البند"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+msgid "Manage"
+msgstr "إدارة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__max_users
+msgid "Max Users"
+msgstr "الحد الأقصى للمستخدمين"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__mode
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__mode
+msgid "Mode"
+msgstr "الوضع"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__must_change_password
+msgid "Must Change Password"
+msgstr "يجب تغيير كلمة المرور"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__must_change
+msgid "Must change it at first sign-in"
+msgstr "يجب تغييرها عند أول تسجيل دخول"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__must_change
+msgid "Must change it at next sign-in"
+msgstr "يجب تغييرها عند تسجيل الدخول التالي"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Must change password"
+msgstr "يجب تغيير كلمة المرور"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_subscription_dashboard
+msgid "NCollection SaaS Dashboard"
+msgstr "لوحة معلومات NCollection SaaS"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__new_password
+msgid "New password"
+msgstr "كلمة المرور الجديدة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "New user"
+msgstr "مستخدم جديد"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "Only a Platform Administrator can manage a company's users."
+msgstr "لا يمكن إلا لمسؤول المنصة إدارة مستخدمي الشركة."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form
+msgid ""
+"Only the roles this workspace can use are offered. Giving or taking a role changes the person's real\n"
+"                    permission groups in the workspace, immediately."
+msgstr "تُعرض فقط الأدوار التي يمكن لمساحة العمل هذه استخدامها. منح الدور أو سحبه يغيّر مجموعات صلاحيات الشخص الفعلية في مساحة العمل فورًا."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__new_password
+msgid "Password"
+msgstr "كلمة المرور"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "Password reset"
+msgstr "إعادة تعيين كلمة المرور"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Refresh"
+msgstr "تحديث"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__remote_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__remote_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__remote_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__remote_id
+msgid "Remote"
+msgstr "المعرّف البعيد"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+msgid "Reset administrator password"
+msgstr "إعادة تعيين كلمة مرور المسؤول"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "Reset password"
+msgstr "إعادة تعيين كلمة المرور"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__role_names
+msgid "Role"
+msgstr "الدور"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__role_option_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__role_option_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Roles"
+msgstr "الأدوار"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "Roles of %s"
+msgstr "أدوار %s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__available_role_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__available_role_ids
+msgid "Roles offered"
+msgstr "الأدوار المعروضة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form
+msgid "Save roles"
+msgstr "حفظ الأدوار"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_create__mode__explicit
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_password__mode__explicit
+msgid "Set a password myself"
+msgstr "سأحدد كلمة المرور بنفسي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid ""
+"Temporary password for %(user)s: %(password)s  -  give it to them now: it is"
+" not shown again."
+msgstr "كلمة المرور المؤقتة للمستخدم %(user)s: %(password)s  -  سلّمها له الآن: لن تُعرض مرة أخرى."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__is_tenant_admin
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Tenant Administrator"
+msgstr "مسؤول المستأجر"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Tenant users"
+msgstr "مستخدمو المستأجر"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "The administrator account %s was not found in the workspace."
+msgstr "لم يُعثر على حساب المسؤول %s في مساحة العمل."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+msgid ""
+"The company's users can be managed once its workspace has been provisioned."
+msgstr "يمكن إدارة مستخدمي الشركة بعد تجهيز مساحة عملها."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form
+msgid ""
+"The password is set inside the company's workspace. A temporary password is generated there and shown once,\n"
+"                    to you: the platform does not keep it. The person must choose their own at first sign-in."
+msgstr "تُحدَّد كلمة المرور داخل مساحة عمل الشركة. تُنشأ كلمة المرور المؤقتة هناك وتظهر مرة واحدة لك: ولا تحتفظ بها المنصة. يجب على الشخص اختيار كلمة مروره الخاصة عند أول تسجيل دخول."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "The password of %s was changed."
+msgstr "تم تغيير كلمة مرور %s."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
+msgid ""
+"The user is created inside the company's workspace, within its plan's user limit. A temporary password is\n"
+"                    shown once, to you."
+msgstr "يُنشأ المستخدم داخل مساحة عمل الشركة، ضمن حد المستخدمين في خطتها. تظهر كلمة المرور المؤقتة مرة واحدة لك."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid ""
+"This list was read from the company's own workspace just now. Changes are made there, through the\n"
+"                        workspace's own rules (the last Administrator stays, the plan's user limit applies), and are recorded\n"
+"                        in its audit log with your name. Passwords are never stored by the platform."
+msgstr "قُرئت هذه القائمة من مساحة عمل الشركة نفسها قبل لحظات. تُجرى التغييرات هناك، وفق قواعد مساحة العمل نفسها (يبقى آخر مسؤول، ويسري حد مستخدمي الخطة)، وتُسجَّل في سجل التدقيق باسمك. لا تخزّن المنصة كلمات المرور أبدًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "This tenant has no administrator account recorded."
+msgstr "لا يوجد حساب مسؤول مسجّل لهذا المستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "Type the new password, or choose a temporary one."
+msgstr "اكتب كلمة المرور الجديدة، أو اختر كلمة مرور مؤقتة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "Type the password, or choose a temporary one."
+msgstr "اكتب كلمة المرور، أو اختر كلمة مرور مؤقتة."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__user_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__user_name
+msgid "User"
+msgstr "المستخدم"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid ""
+"User %(login)s created. Temporary password: %(password)s  -  give it to them"
+" now: it is not shown again."
+msgstr "تم إنشاء المستخدم %(login)s. كلمة المرور المؤقتة: %(password)s  -  سلّمها له الآن: لن تُعرض مرة أخرى."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "User %s created."
+msgstr "تم إنشاء المستخدم %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "User created"
+msgstr "إنشاء مستخدم"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__login
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__login
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__login
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__users_id
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Users"
+msgstr "المستخدمون"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+msgid "Users & Access"
+msgstr "المستخدمون والوصول"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+msgid "Users of %s"
+msgstr "مستخدمو %s"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
+msgid "Users of this company"
+msgstr "مستخدمو هذه الشركة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant_user_create__login
+msgid "What this person types to sign in: a username, never an email address."
+msgstr "ما يكتبه هذا الشخص لتسجيل الدخول: اسم مستخدم وليس عنوان بريد إلكتروني."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+msgid "You are not authorised to manage the users of %s."
+msgstr "غير مصرّح لك بإدارة مستخدمي %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "a password chosen by the administrator"
+msgstr "كلمة مرور اختارها المسؤول"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "a temporary password"
+msgstr "كلمة مرور مؤقتة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+msgid "activated"
+msgstr "فعّل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "active users of"
+msgstr "مستخدمًا نشطًا من أصل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "allowed by the plan."
+msgstr "المسموح به في الخطة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+msgid "deactivated"
+msgstr "عطّل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
+msgid "e.g. Sara Mahmoud"
+msgstr "مثال: سارة محمود"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
+msgid "e.g. sara.m"
+msgstr "مثال: sara.m"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "none"
+msgstr "لا شيء"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "%(admin)s edited the user %(user)s."
+msgstr "عدّل %(admin)s المستخدم %(user)s."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__active_internal
+msgid "Active Internal"
+msgstr "المستخدمون الداخليون النشطون"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+msgid "Edit"
+msgstr "تعديل"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
+msgid "Edit user"
+msgstr "تعديل المستخدم"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
+msgid ""
+"Only the name and the contact email are changed here. The username, the "
+"roles and the password have their own actions."
+msgstr "يُغيَّر هنا الاسم والبريد الإلكتروني للتواصل فقط. لاسم المستخدم والأدوار وكلمة المرور إجراءاتها الخاصة."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
+msgid "Save"
+msgstr "حفظ"
