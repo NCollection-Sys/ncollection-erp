@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import { callKw, loginViaRpc, NAVBAR, TENANTS } from '../fixtures/tenants';
+import { clickViewAndCapturePdf, pdfFileNameOf } from '../fixtures/document-view';
 
 /**
  * Sales opens on Invoices (e2eclienta: Sales + Accounting, admin = workspace Owner).
@@ -76,15 +77,11 @@ test.describe('Sales: invoices first', () => {
     await expect(row.locator('button[name=action_nc_edit]')).toBeVisible();
     // the invoice's own status column (Odoo's) is still there beside the computed payment columns
     await expect(row).toContainText('Posted');
-    const [popup] = await Promise.all([
-      page.context().waitForEvent('page', { timeout: 15_000 }),
-      row.locator('button[name=action_nc_view]').click(),
-    ]);
-    await popup.waitForURL(/\/ncollection\/document\/view\/account\.move\/\d+/, { timeout: 30_000 });
-    const served = await page.request.get(popup.url());
-    expect(served.headers()['content-type']).toContain('application/pdf');
-    expect(served.headers()['content-disposition']).toContain('inline');
-    await popup.close();
+    const number = (await callKw(request, TENANT, 'account.move', 'read', [[move], ['name']])).result[0].name;
+    // browser-independent: the canonical route's own response (see fixtures/document-view.ts), not the tab's load state
+    await clickViewAndCapturePdf(page, row.locator('button[name=action_nc_view]'), {
+      model: 'account.move', id: move, fileName: pdfFileNameOf(number),
+    });
     expect(errors, 'no uncaught page error').toEqual([]);
   });
 

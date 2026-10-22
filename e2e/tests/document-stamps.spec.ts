@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import { callKw, loginViaRpc, TENANTS } from '../fixtures/tenants';
+import { clickViewAndCapturePdf, pdfFileNameOf } from '../fixtures/document-view';
 
 /**
  * Document stamps and View (e2eclienta: Accounting; admin = workspace Owner).
@@ -64,21 +65,11 @@ test.describe('Document stamps and View', () => {
     await page.goto(`${TENANTS[TENANT]}/odoo/action-account.action_move_out_invoice_type`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.o_list_view .o_data_row', { timeout: 60_000 });
     const row = page.locator('.o_data_row', { hasText: 'E2E View Customer' }).first();
-    const [popup] = await Promise.all([
-      page.context().waitForEvent('page', { timeout: 15_000 }),
-      row.locator('button[name=action_nc_view]').click(),
-    ]);
-    await popup.waitForURL(/\/ncollection\/document\/view\/account\.move\/\d+/, { timeout: 30_000 });
-    const url = popup.url();
-    const served = await page.request.get(url);
-    expect(served.status()).toBe(200);
-    expect(served.headers()['content-type']).toContain('application/pdf');
-    const disposition = served.headers()['content-disposition'] || '';
-    expect(disposition).toContain('inline');
-    expect(disposition).toMatch(/filename.*\.pdf/);
-    expect(served.headers()['cache-control']).toContain('no-store');
-    expect((await served.body()).subarray(0, 5).toString()).toBe('%PDF-');
-    await popup.close();
+    const number = (await callKw(page.request, TENANT, 'account.move', 'read', [[move], ['name']])).result[0].name;
+    // browser-independent: the canonical route's own response (see fixtures/document-view.ts), not the tab's load state
+    await clickViewAndCapturePdf(page, row.locator('button[name=action_nc_view]'), {
+      model: 'account.move', id: move, fileName: pdfFileNameOf(number),
+    });
     expect(errors, 'no uncaught page error').toEqual([]);
   });
 
