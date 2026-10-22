@@ -43,12 +43,12 @@ class TestWorkspaceSettings(TransactionCase):
         self.assertIn(self.env.ref("base.group_user"), user.all_group_ids)
 
     def test_invite_never_exposes_groups(self):
-        """The wizard's fields are name/email/role only — no group m2m."""
+        """The wizard's fields are name/email/role(s) only — roles are names, never a group m2m."""
         fields = self.Invite.fields_get()
         self.assertNotIn("group_ids", fields)
         self.assertEqual(
             sorted(f for f in fields if not f.startswith(("create_", "write_", "id", "display_"))),
-            ["email", "name", "role", "username"],
+            ["email", "name", "role", "role_ids", "username"],
         )
 
     def test_non_owner_denied_wizard(self):

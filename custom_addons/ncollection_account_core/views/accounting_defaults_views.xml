@@ -68,7 +68,7 @@
                         </group>
                         <group>
                             <div class="text-muted">
-                                Odoo Community has no automatic deferred revenue or expense engine. These are the
+                                There is no automatic deferred revenue or expense engine. These are the
                                 accounts and journal the manual "Change Period" action on journal items uses to
                                 spread an entry across periods.
                             </div>

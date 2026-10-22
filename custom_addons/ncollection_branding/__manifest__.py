@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.8.0',
+    'version': '19.0.1.10.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection corporate branding: logo, colors, favicon',
     'description': """
@@ -23,12 +23,16 @@ Applies NCollection corporate identity across the Odoo backend:
     # its `_compute_tour_enabled`, so web_tour must load BEFORE this module or
     # the super() call has nothing to reach. It is a core Odoo module that
     # `web` already pulls in — naming it adds no dependency, it fixes the order.
-    'depends': ['web', 'web_tour', 'mail', 'base_setup', 'http_routing', 'auth_signup'],
+    'depends': ['web', 'web_tour', 'mail', 'base_setup', 'iap', 'http_routing', 'auth_signup'],
     # #472: existing users keep whatever web_tour computed at ITS install, and
     # the compute only fires on user creation — so a fresh install needs this
     # to reach the admin account that already exists.
     'post_init_hook': 'post_init_hook',
     'data': [
+        'security/stamp_security.xml',
+        'security/ir.model.access.csv',
+        'data/product_branding_data.xml',
+        'views/product_branding_views.xml',
         'views/webclient_templates.xml',
         'views/login_templates.xml',
         'views/branding_theme_templates.xml',
@@ -36,9 +40,13 @@ Applies NCollection corporate identity across the Odoo backend:
         'views/res_config_settings_views.xml',
         'views/http_error_templates.xml',
         'views/mail_layout_templates.xml',
+        'views/document_stamp_views.xml',
+        'views/report_layout_templates.xml',
         'data/res_company_data.xml',
         'data/res_company_logo.xml',
         'data/system_parameters.xml',
+        'views/vendor_templates.xml',
+        'data/vendor_content.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -61,6 +69,9 @@ Applies NCollection corporate identity across the Odoo backend:
             'ncollection_branding/static/src/js/white_label.js',
             'ncollection_branding/static/src/js/mail_unread_store_patch.js',
             'ncollection_branding/static/src/xml/error_dialogs_patch.xml',
+            'ncollection_branding/static/src/stamp_designer/stamp_designer.scss',
+            'ncollection_branding/static/src/stamp_designer/stamp_designer.js',
+            'ncollection_branding/static/src/stamp_designer/stamp_designer.xml',
         ],
         'web.assets_frontend': [
             'ncollection_branding/static/src/scss/tokens.scss',

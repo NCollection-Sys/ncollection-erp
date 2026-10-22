@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        The upstream vendor's credit line in the reset-password e-mail: the e-mail names the configured product (Product
+        Branding), not the vendor. The other e-mails and pages that carry vendor wording live in the modules that
+        depend on the module that owns them (account_core, sale_documents, purchase_documents, auth) and use the same
+        resolver. Module-authored data (mail templates, action help) is handled by models/vendor_content.py.
+    -->
+    <template id="reset_password_email_branded" inherit_id="auth_signup.reset_password_email">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace">
+            <span t-out="object.env['ncollection.product.branding'].nc_brand()['name']"/>
+        </xpath>
+    </template>
+</odoo>

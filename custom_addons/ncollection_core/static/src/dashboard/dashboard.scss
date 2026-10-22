@@ -25,6 +25,48 @@
         flex-wrap: wrap;
     }
 
+    // The period control: two native date fields (so the picker, the date format and the digits follow the
+    // user's locale and direction) and, only when the period is not the default, a way back to it.
+    &__period {
+        display: flex;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: var(--nc-space-3);
+        transition: opacity 0.15s;
+
+        &.is-refreshing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    }
+
+    .nc-period__field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--nc-space-1);
+        margin: 0;
+    }
+
+    .nc-period__label {
+        font-size: var(--nc-font-size-xs, 0.75rem);
+        color: var(--nc-color-text-muted, #5f7185);
+    }
+
+    .nc-period__input {
+        min-width: 9.5rem;
+    }
+
+    .nc-period__reset {
+        padding-inline: 0;
+        align-self: flex-end;
+    }
+
+    .nc-period__error {
+        flex-basis: 100%;
+        color: var(--nc-color-danger, #b3261e);
+        font-size: var(--nc-font-size-sm, 0.85rem);
+    }
+
     &__title {
         font-size: var(--nc-font-size-xl);
         font-weight: var(--nc-font-weight-semibold);

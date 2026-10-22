@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Duplicate, in the order form header next to Print. The right to create is enforced by the action
+         (nc.duplicate.mixin); the group only hides the button from users who could not use it. -->
+    <record id="purchase_order_form_nc_duplicate" model="ir.ui.view">
+        <field name="name">purchase.order.form.nc.duplicate</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='print_quotation']" position="after">
+                <button name="action_nc_duplicate" type="object" string="Duplicate"
+                        groups="purchase.group_purchase_user" invisible="not id"/>
+                <!-- Odoo has no Preview for a purchase: this one is the printed RFQ / order (the same report). -->
+                <button name="action_nc_view" type="object" string="Preview" invisible="not id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Files / View / Edit on every RFQ and purchase order list (three separate lists in Odoo, one each). -->
+    <record id="purchase_order_kpis_tree_nc_document_actions" model="ir.ui.view">
+        <field name="name">purchase.order.rfq.list.nc.document.actions</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="nc_attachment_count" string="Files" widget="nc_attachment_count" optional="show"/>
+            </xpath>
+            <xpath expr="//list" position="inside">
+                <button name="action_nc_view" type="object" string="View" icon="fa-eye" title="View"/>
+                <button name="action_nc_edit" type="object" string="Edit" icon="fa-pencil" title="Edit"
+                        groups="purchase.group_purchase_user"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_order_view_tree_nc_document_actions" model="ir.ui.view">
+        <field name="name">purchase.order.list.nc.document.actions</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="nc_attachment_count" string="Files" widget="nc_attachment_count" optional="show"/>
+            </xpath>
+            <xpath expr="//list" position="inside">
+                <button name="action_nc_view" type="object" string="View" icon="fa-eye" title="View"/>
+                <button name="action_nc_edit" type="object" string="Edit" icon="fa-pencil" title="Edit"
+                        groups="purchase.group_purchase_user"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_order_tree_nc_document_actions" model="ir.ui.view">
+        <field name="name">purchase.order.base.list.nc.document.actions</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="nc_attachment_count" string="Files" widget="nc_attachment_count" optional="show"/>
+            </xpath>
+            <xpath expr="//list" position="inside">
+                <button name="action_nc_view" type="object" string="View" icon="fa-eye" title="View"/>
+                <button name="action_nc_edit" type="object" string="Edit" icon="fa-pencil" title="Edit"
+                        groups="purchase.group_purchase_user"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Purchase opens on VENDOR BILLS: Odoo's own vendor-bill action (New = a vendor bill, straight away, no RFQ or
+         purchase order needed), first in the Purchase menu, for the users who may bill. RFQs and Purchase Orders
+         stay where they are. -->
+    <menuitem id="menu_purchase_nc_vendor_bills" name="Vendor Bills" parent="purchase.menu_purchase_root"
+              action="account.action_move_in_invoice_type" groups="account.group_account_invoice" sequence="0"/>
+</odoo>

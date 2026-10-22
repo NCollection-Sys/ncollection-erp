@@ -55,6 +55,8 @@ _TECHNICAL = (
 
 # Python-built HTML that is deliberately NOT translated, with the reason. Keyed by path relative to the addons dir.
 _BARE_HTML_OK = {
+    'ncollection_branding/models/vendor_content.py':
+        "rewrite PATTERNS applied to the stored HTML of module mail templates; shown to no user as written",
     'ncollection_core/controllers/platform_entry.py':
         "the pre-login token bridge: auth-less, no user language is known, and it must reveal nothing",
 }

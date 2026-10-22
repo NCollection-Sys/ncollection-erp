@@ -83,3 +83,5 @@ def post_init_hook(env):
         [('tour_enabled', '=', True)])
     if users:
         users.write({'tour_enabled': False})
+    from .res_company import adopt_nc_layout
+    adopt_nc_layout(env)

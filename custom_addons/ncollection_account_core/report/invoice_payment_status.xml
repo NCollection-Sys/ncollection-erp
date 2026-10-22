@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The printed invoice / bill (the version WITH payments, Odoo's default Print and so View): after Odoo's own
+         "Paid on ..." lines and Amount Due, the paid amount and the payment status. The same template prints and
+         previews; the values are the computed, never-stored ones of models/account_move_status.py. The PDF without
+         payments is left exactly as it was. -->
+    <template id="report_invoice_document_nc_payment_status" inherit_id="account.report_invoice_document">
+        <xpath expr="//t[@t-if='print_with_payments']" position="inside">
+            <t t-if="o.nc_payment_status">
+                <tr t-if="not payments_vals" class="fw-bold o_nc_amount_due">
+                    <td>Amount Due</td>
+                    <td class="text-end"><span t-field="o.amount_residual"/></td>
+                </tr>
+                <tr class="o_nc_amount_paid">
+                    <td>Paid Amount</td>
+                    <td class="text-end"><span t-field="o.nc_amount_paid"/></td>
+                </tr>
+                <tr class="o_nc_payment_status">
+                    <td>Payment Status</td>
+                    <td class="text-end"><span t-attf-class="o_nc_status o_nc_status_#{o.nc_payment_status}" t-field="o.nc_payment_status"/></td>
+                </tr>
+            </t>
+        </xpath>
+    </template>
+</odoo>

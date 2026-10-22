@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Duplicate, next to Preview in the order form header. The right to create is enforced by the action
+         (nc.duplicate.mixin); the group only hides the button from users who could not use it. -->
+    <record id="view_order_form_nc_duplicate" model="ir.ui.view">
+        <field name="name">sale.order.form.nc.duplicate</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_preview_sale_order']" position="after">
+                <button name="action_nc_duplicate" type="object" string="Duplicate" class="btn-secondary"
+                        groups="sales_team.group_sale_salesman" invisible="not id"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- View / Edit on every quotation / order row (sale_order_tree is the parent of both lists; Files is
+         ncollection_sale_attachments' paperclip). View is the printed document, the same report Print uses. -->
+    <record id="sale_order_tree_nc_document_actions" model="ir.ui.view">
+        <field name="name">sale.order.list.nc.document.actions</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.sale_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <button name="action_nc_view" type="object" string="View" icon="fa-eye" title="View"/>
+                <button name="action_nc_edit" type="object" string="Edit" icon="fa-pencil" title="Edit"
+                        groups="sales_team.group_sale_salesman"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- The Sales APP itself. In Odoo 19 the root menu of `sale` is inactive: only `sale_management` (the "Sales" app
+         module, which a plan does not list) switches it on, so a tenant licensed for `sale` has quotations and orders
+         but no Sales app to open them from. This is the same one-field record `sale_management` ships (plus the icon
+         of `sale` itself, which is always installed). It adds no entitlement: the Sales root still belongs to `sale`,
+         so Ring 1 hides it exactly when the plan does not license `sale`. -->
+    <record id="sale.sale_menu_root" model="ir.ui.menu">
+        <field name="active" eval="True"/>
+        <field name="web_icon">sale,static/description/icon.png</field>
+    </record>
+
+    <!-- Sales opens on INVOICES: Odoo's own customer-invoice action (New = a customer invoice, straight away, no
+         quotation or order needed), first in the Sales menu, for the users who may invoice. Quotations and Orders
+         stay where they are. -->
+    <menuitem id="menu_sale_nc_invoices" name="Invoices" parent="sale.sale_menu_root"
+              action="account.action_move_out_invoice_type" groups="account.group_account_invoice" sequence="5"/>
+</odoo>

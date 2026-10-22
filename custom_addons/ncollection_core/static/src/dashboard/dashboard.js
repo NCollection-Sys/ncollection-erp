@@ -15,9 +15,10 @@
  * the operational cards, `drill_kpi`: both server-side, both access-checked, neither takes a domain from here.
  */
 
-import { Component, onMounted, onWillStart, onWillUnmount, useRef, useState } from "@odoo/owl";
+import { Component, onMounted, onPatched, onWillStart, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { _t } from "@web/core/l10n/translation";
+import { user } from "@web/core/user";
 import { useService } from "@web/core/utils/hooks";
 import {
     NcKpiCard,
@@ -68,29 +69,31 @@ export class NcDashboard extends Component {
         this.state = useState({
             loading: true,
             failed: false,
+            refreshing: false,
             widgets: [],
             actions: [],
             meta: {},
+            from: "",
+            to: "",
+            periodError: "",
         });
+        this._seq = 0; // a late answer to an older request never overwrites a newer one
+        this._timer = null;
+        this._pendingCharts = false;
 
         onWillStart(async () => {
-            try {
-                // One round-trip for the whole page (acceptance: loads under 2s).
-                const payload = await this.orm.call(
-                    "ncollection.dashboard.data",
-                    "get_dashboard_payload",
-                    []
-                );
-                this.state.widgets = payload.widgets || [];
-                this.state.actions = payload.actions || [];
-                this.state.meta = payload.meta || {};
-            } catch {
-                // Never leave the landing page blank and unexplained.
-                this.state.failed = true;
-            } finally {
-                this.state.loading = false;
+            const saved = this._savedPeriod();
+            await this.load(saved && saved.from, saved && saved.to, true);
+        });
+
+        // After a refresh the canvases are new DOM nodes: draw them once the page has been patched.
+        onPatched(() => {
+            if (this._pendingCharts) {
+                this._pendingCharts = false;
+                this._mountCharts();
             }
         });
+        onWillUnmount(() => clearTimeout(this._timer));
 
         // Data is fetched in onWillStart, so by the time we mount the canvases
         // are already in the DOM with their widget data.
@@ -98,6 +101,121 @@ export class NcDashboard extends Component {
 
         // Chart.js instances hold canvases and listeners; drop them explicitly.
         onWillUnmount(() => this._destroyCharts());
+    }
+
+    // -- the period (From / To) ------------------------------------------------------------------------
+    // The server owns what each figure means by a period (period total, as of To, trend ending at To, current
+    // state); this only asks for a window and shows it. Nothing here widens what the user may see.
+
+    get periodKey() {
+        return `nc_summary_period:${user.activeCompany.id}`;
+    }
+
+    _savedPeriod() {
+        try {
+            const saved = JSON.parse(sessionStorage.getItem(this.periodKey) || "null");
+            return saved && saved.from && saved.to && saved.from <= saved.to ? saved : null;
+        } catch {
+            return null; // storage blocked: the default period, no harm done
+        }
+    }
+
+    _savePeriod(from, to) {
+        try {
+            if (from && to) {
+                sessionStorage.setItem(this.periodKey, JSON.stringify({ from, to }));
+            } else {
+                sessionStorage.removeItem(this.periodKey);
+            }
+        } catch {
+            /* a convenience only */
+        }
+    }
+
+    async load(from, to, initial = false) {
+        const seq = ++this._seq;
+        if (!initial) {
+            this.state.refreshing = true;
+        }
+        try {
+            // One round-trip for the whole page (acceptance: loads under 2s).
+            const payload = await this.orm.call(
+                "ncollection.dashboard.data",
+                "get_dashboard_payload",
+                [],
+                from && to ? { date_from: from, date_to: to } : {}
+            );
+            if (seq !== this._seq) {
+                return;
+            }
+            this._destroyCharts();
+            this.state.widgets = payload.widgets || [];
+            this.state.actions = payload.actions || [];
+            this.state.meta = payload.meta || {};
+            const period = this.state.meta.period || {};
+            this.state.from = period.date_from || "";
+            this.state.to = period.date_to || "";
+            this.state.periodError = "";
+            this._pendingCharts = !initial;
+        } catch (error) {
+            if (seq !== this._seq) {
+                return;
+            }
+            if (initial) {
+                // Never leave the landing page blank and unexplained.
+                this.state.failed = true;
+            } else {
+                const data = error && error.data;
+                this.notification.add((data && data.message) || _t("The summary could not be refreshed."), {
+                    type: "danger",
+                });
+            }
+        } finally {
+            if (seq === this._seq) {
+                this.state.loading = false;
+                this.state.refreshing = false;
+            }
+        }
+    }
+
+    get isDefaultPeriod() {
+        return !this.state.meta.period || this.state.meta.period.is_default;
+    }
+
+    _periodProblem() {
+        const { from, to } = this.state;
+        if (!from || !to) {
+            return _t("Choose both the From date and the To date.");
+        }
+        if (from > to) {
+            return _t("The From date cannot be after the To date.");
+        }
+        return "";
+    }
+
+    onPeriodChange(which, ev) {
+        this.state[which] = ev.target.value;
+        this.state.periodError = this._periodProblem();
+        clearTimeout(this._timer);
+        if (this.state.periodError) {
+            return; // nothing is asked of the server for an unusable range
+        }
+        const period = this.state.meta.period || {};
+        if (this.state.from === period.date_from && this.state.to === period.date_to) {
+            return; // already showing it: no repeated call
+        }
+        this._timer = setTimeout(() => this.applyPeriod(), 300);
+    }
+
+    async applyPeriod() {
+        this._savePeriod(this.state.from, this.state.to);
+        await this.load(this.state.from, this.state.to);
+    }
+
+    async resetPeriod() {
+        clearTimeout(this._timer);
+        this._savePeriod(null, null);
+        await this.load(null, null);
     }
 
     get firstName() {

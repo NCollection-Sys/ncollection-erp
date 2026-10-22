@@ -114,6 +114,24 @@ EVENT_TYPES = [
     ('logout', 'Logout'),
     ('reset_request', 'Password reset requested'),
     ('reset_complete', 'Password reset completed'),
+    # a Platform Administrator entering / leaving the tenant through the platform's Enter Company (the proxy user
+    # signs in by a one-time grant, not by password, so it never reaches the login hooks above)
+    ('platform_entry', 'Platform administrator entered'),
+    ('platform_exit', 'Platform administrator left'),
+    # an entry the tenant refused: an unknown / expired / used link, a grant the proxy could not redeem, or a
+    # non-proxy session on the platform exit (written through _capture_isolated, like a failed login)
+    ('platform_denied', 'Platform administrator entry refused'),
+    # Workspace / tenant administration (ncollection_core). The row says WHAT was done, by whom and to whom, never a
+    # secret: no password, hash or token ever reaches this table.
+    ('admin_user_create', 'User created'),
+    ('admin_user_update', 'User updated'),
+    ('admin_user_activate', 'User activated'),
+    ('admin_user_deactivate', 'User deactivated'),
+    ('admin_password_reset', 'Password reset by an administrator'),
+    ('password_changed', 'Password changed by the user'),
+    ('admin_roles_change', 'Roles changed'),
+    ('role_define', 'Role defined'),
+    ('admin_denied', 'Administrative action refused'),
 ]
 
 
@@ -128,6 +146,11 @@ class NcollectionAuthLog(models.Model):
     ip_address = fields.Char()
     user_agent = fields.Char()
     db_name = fields.Char()
+    # Administrative events only (see EVENT_TYPES): who the action was done to, what was done, and -- when the
+    # action came through the platform -- which platform administrator asked. Plain metadata, never a secret.
+    target_user_id = fields.Many2one('res.users', ondelete='set null', index=True)
+    detail = fields.Char(size=512)
+    actor_ref = fields.Char(help="Platform administrator behind the action (set by the platform channel), if any.")
 
     # The retention purge (#219) filters on create_date, which Odoo does NOT
     # index by default. Without this the nightly cron sequentially scans a table
@@ -466,6 +489,26 @@ class NcollectionAuthLog(models.Model):
     def _capture(self, event_type, login=None, user=None):
         """Log an event inside the current transaction (success paths)."""
         self.sudo().create(self._prepare_capture_vals(event_type, login=login, user=user))
+
+    @api.model
+    def _capture_admin(self, event_type, actor=None, target=None, detail=None, actor_ref=None, isolated=False):
+        """Log an administrative action: actor (a user, or None for the platform channel, which then carries
+        actor_ref), the target user and a short non-secret detail. In the caller's transaction by default,
+        so the row exists exactly when the action does; isolated=True keeps it even if the caller rolls back (a
+        refused action)."""
+        vals = self._prepare_capture_vals(event_type, user=actor)
+        vals.update({
+            'target_user_id': target.id if target else None,
+            'detail': (detail or '')[:512] or None,
+            'actor_ref': (actor_ref or '')[:128] or None,
+        })
+        if not isolated:
+            self.sudo().create(vals)
+            return
+        with self.env.registry.cursor() as cr:
+            env = api.Environment(cr, SUPERUSER_ID, {})
+            env['ncollection.auth.log'].create(vals)
+            cr.commit()  # pylint: disable=invalid-commit
 
     @api.model
     def _capture_isolated(self, event_type, login=None):

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The printed accounting documents a stamp (ncollection_branding) can be scoped to. One invoice report prints
+         invoices, bills and credit notes alike; the condition on the move type tells them apart, so an "Official
+         invoice stamp" never lands on a vendor bill. -->
+    <record id="doc_type_customer_invoice" model="ncollection.document.type">
+        <field name="name">Customer Invoice</field>
+        <field name="code">customer_invoice</field>
+        <field name="manager_group_ids" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
+        <field name="sequence">10</field>
+        <field name="report_ids" eval="[(6, 0, [ref('account.account_invoices'), ref('account.account_invoices_without_payment')])]"/>
+        <field name="record_domain">[('move_type', 'in', ('out_invoice', 'out_receipt'))]</field>
+    </record>
+    <record id="doc_type_customer_credit_note" model="ncollection.document.type">
+        <field name="name">Customer Credit Note</field>
+        <field name="code">customer_credit_note</field>
+        <field name="manager_group_ids" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
+        <field name="sequence">20</field>
+        <field name="report_ids" eval="[(6, 0, [ref('account.account_invoices'), ref('account.account_invoices_without_payment')])]"/>
+        <field name="record_domain">[('move_type', '=', 'out_refund')]</field>
+    </record>
+    <record id="doc_type_vendor_bill" model="ncollection.document.type">
+        <field name="name">Vendor Bill</field>
+        <field name="code">vendor_bill</field>
+        <field name="manager_group_ids" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
+        <field name="sequence">30</field>
+        <field name="report_ids" eval="[(6, 0, [ref('account.account_invoices'), ref('account.account_invoices_without_payment')])]"/>
+        <field name="record_domain">[('move_type', 'in', ('in_invoice', 'in_receipt'))]</field>
+    </record>
+    <record id="doc_type_vendor_credit_note" model="ncollection.document.type">
+        <field name="name">Vendor Credit Note</field>
+        <field name="code">vendor_credit_note</field>
+        <field name="manager_group_ids" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
+        <field name="sequence">40</field>
+        <field name="report_ids" eval="[(6, 0, [ref('account.account_invoices'), ref('account.account_invoices_without_payment')])]"/>
+        <field name="record_domain">[('move_type', '=', 'in_refund')]</field>
+    </record>
+    <record id="doc_type_payment_receipt" model="ncollection.document.type">
+        <field name="name">Payment Receipt</field>
+        <field name="code">payment_receipt</field>
+        <field name="manager_group_ids" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
+        <field name="sequence">50</field>
+        <field name="report_ids" eval="[(6, 0, [ref('account.action_report_payment_receipt')])]"/>
+    </record>
+</odoo>

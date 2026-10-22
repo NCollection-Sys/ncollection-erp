@@ -32,11 +32,14 @@
               name="NCollection Login Split Layout">
         <xpath expr="//div[hasclass('container')]" position="replace">
             <div class="o_nc_login">
-                <!-- Left: NCollection product brand panel (fixed brand identity). -->
+                <t t-set="nc_brand" t-value="nc_product_brand()"/>
+                <!-- Left: the PRODUCT brand panel (name and logo from Product Branding; never the company's). -->
                 <aside class="o_nc_login__brand">
                     <div class="o_nc_login__brand-inner">
                         <span class="o_nc_login__wordmark">
-                            <svg width="40" height="40" viewBox="0 0 44 44" role="img" aria-label="NCollection">
+                            <img t-if="nc_brand['has']['login'] or nc_brand['has']['logo']" t-att-src="nc_brand['login_logo_url']"
+                                 t-att-alt="nc_brand['name']" style="max-height:44px; width:auto;"/>
+                            <svg t-else="" width="40" height="40" viewBox="0 0 44 44" role="img" aria-hidden="true">
                                 <defs>
                                     <linearGradient id="nc_login_logo_g" x1="0" y1="0" x2="1" y2="1">
                                         <stop offset="0" stop-color="#2d7ab7"/>
@@ -50,8 +53,7 @@
                                       stroke-width="3.4" stroke-linecap="round" opacity="0.92"/>
                                 <circle cx="33.5" cy="11" r="3" fill="#c6ddf0"/>
                             </svg>
-                            <span class="o_nc_login__wordmark-text">NCollection<span
-                                class="o_nc_login__wordmark-suffix">ERP</span></span>
+                            <span class="o_nc_login__wordmark-text" t-out="nc_brand['name']"/>
                         </span>
                         <div class="o_nc_login__brand-copy">
                             <h1>The unified business platform for GCC companies.</h1>
@@ -95,12 +97,12 @@
                     <div class="o_nc_login__card">
                         <div class="o_nc_login__card-logo">
                             <img t-attf-src="/web/binary/company_logo{{ '?dbname='+db if db else '' }}"
-                                 alt="NCollection" loading="lazy"/>
+                                 alt="" loading="lazy"/>
                         </div>
                         <t t-out="0"/>
                     </div>
                     <div class="o_nc_login__footer" t-if="not disable_footer">
-                        © <t t-out="datetime.date.today().year"/> NCollection. All rights reserved.
+                        © <t t-out="datetime.date.today().year"/> <t t-out="nc_brand['name']"/>. All rights reserved.
                     </div>
                 </main>
             </div>

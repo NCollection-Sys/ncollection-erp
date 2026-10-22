@@ -32,7 +32,10 @@
     # data/view/security records, so unlike every entry above it needs NO `-u`:
     # a restart picks it up, and a tenant left un-upgraded behaves identically
     # because the admitted group set is unchanged.
-    'version': '19.0.1.19.0',
+    # 19.0.1.21.0: Workspace Administration Center (users, roles = real groups, password reset with forced change,
+    # audit) and the platform's user-administration service (ncollection.admin.service). New models, data and
+    # menus, so `-u` is what applies it to an existing tenant.
+    'version': '19.0.1.22.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -56,7 +59,10 @@
         # After ir.model.access.csv, because a rule is meaningless
         # without the ACL that lets the group reach the model at all.
         'security/alert_security.xml',
+        'data/role_templates.xml',
         'views/workspace_settings_views.xml',
+        'views/workspace_admin_views.xml',
+        'views/password_change_templates.xml',
         'views/workspace_appearance_views.xml',
         'views/subscription_blocked_templates.xml',
         'views/launcher_app_views.xml',
@@ -88,6 +94,14 @@
             # Odoo de-duplicates asset paths — and avoids a runtime dependency
             # on some other module happening to pull it in first.
             'web/static/lib/Chart/Chart.js',
+            # The document "Files" paperclip + modal viewer (Odoo's FileViewer, extended), shared by every list that
+            # mixes in nc.attachment.mixin (sales / purchase orders, invoices / bills, payments).
+            'ncollection_core/static/src/attachments/nc_file_viewer.scss',
+            'ncollection_core/static/src/attachments/nc_file_viewer.js',
+            'ncollection_core/static/src/attachments/nc_file_viewer.xml',
+            'ncollection_core/static/src/attachments/attachment_count_field.js',
+            'ncollection_core/static/src/attachments/attachment_count_field.xml',
+            'ncollection_core/static/src/attachments/attachment_count_field.scss',
             'ncollection_core/static/src/dashboard/dashboard.scss',
             'ncollection_core/static/src/dashboard/dashboard.js',
             'ncollection_core/static/src/dashboard/dashboard.xml',

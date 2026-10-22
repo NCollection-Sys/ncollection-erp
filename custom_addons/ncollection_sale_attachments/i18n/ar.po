@@ -28,6 +28,7 @@ msgstr "تنزيل"
 
 #. module: ncollection_sale_attachments
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_attachments.sale_order_tree_nc_attachments
+#: model:ir.model.fields,field_description:ncollection_sale_attachments.field_sale_order__nc_attachment_count
 msgid "Files"
 msgstr "الملفات"
 
@@ -58,3 +59,8 @@ msgstr "عرض المرفقات"
 #: code:addons/ncollection_sale_attachments/static/src/viewer/nc_file_viewer.xml:0
 msgid "This file type cannot be previewed here."
 msgstr "لا يمكن معاينة هذا النوع من الملفات هنا."
+
+#. module: ncollection_sale_attachments
+#: model:ir.model,name:ncollection_sale_attachments.model_sale_order
+msgid "Sales Order"
+msgstr "أمر البيع"

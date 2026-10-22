@@ -33,3 +33,7 @@ from . import test_platform_proxy_credentials
 from . import test_launcher_apps
 from . import test_legacy_base_url
 from . import test_home_ui
+from . import test_platform_audit
+from . import test_workspace_admin
+from . import test_admin_service
+from . import test_forced_password_change

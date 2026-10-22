@@ -11,3 +11,9 @@ from . import test_language_switch_session
 from . import test_app_shell_scroll
 from . import test_owl_template_rules
 from . import test_translation_coverage
+from . import test_company_stamp
+from . import test_stamp_overlay
+from . import test_document_stamp
+from . import test_product_branding
+from . import test_stamp_image_security
+from . import test_vendor_wording

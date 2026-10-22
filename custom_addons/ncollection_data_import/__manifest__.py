@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Tenant Data Import Toolkit',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'category': 'Extra Tools',
     'summary': 'Onboarding import toolkit: starter CSV templates + a guided '
                'wizard over Odoo\'s native importer, with admin-friendly '

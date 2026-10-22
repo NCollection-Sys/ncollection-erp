@@ -17,6 +17,25 @@
                         <span t-if="firstName" class="nc-dashboard__welcome">Welcome back, <t t-esc="firstName"/></span>
                     </p>
                 </div>
+                <!-- The period of the figures that are about a period. Both dates, From &lt;= To; the server decides
+                     what each figure means by it (see ncollection.dashboard.data). -->
+                <div class="nc-dashboard__period" t-if="!state.failed" t-att-class="{'is-refreshing': state.refreshing}">
+                    <label class="nc-period__field">
+                        <span class="nc-period__label">From</span>
+                        <input type="date" class="form-control nc-period__input" name="nc_period_from"
+                               t-att-value="state.from" t-att-max="state.to or undefined"
+                               t-on-change="(ev) => this.onPeriodChange('from', ev)"/>
+                    </label>
+                    <label class="nc-period__field">
+                        <span class="nc-period__label">To</span>
+                        <input type="date" class="form-control nc-period__input" name="nc_period_to"
+                               t-att-value="state.to" t-att-min="state.from or undefined"
+                               t-on-change="(ev) => this.onPeriodChange('to', ev)"/>
+                    </label>
+                    <button type="button" class="btn btn-link nc-period__reset" t-if="!isDefaultPeriod"
+                            t-on-click="resetPeriod">Current year</button>
+                    <div class="nc-period__error" role="alert" t-if="state.periodError" t-esc="state.periodError"/>
+                </div>
                 <!-- Only actions for apps this tenant has AND licenses. -->
                 <div class="nc-dashboard__actions" t-if="state.actions.length">
                     <NcQuickActionCard t-foreach="state.actions" t-as="quick" t-key="quick.key"

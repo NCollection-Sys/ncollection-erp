@@ -128,12 +128,16 @@ msgstr "رابط إعادة تعيين كلمة المرور / التسجيل ا
 #. module: ncollection_auth
 #: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__display_name
 #: model:ir.model.fields,field_description:ncollection_auth.field_res_partner__display_name
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__display_name
+#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_auth
 #: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__id
 #: model:ir.model.fields,field_description:ncollection_auth.field_res_partner__id
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__id
+#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -146,3 +150,152 @@ msgstr "البصمة"
 #: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__used_at
 msgid "Used At"
 msgstr "تاريخ الاستخدام"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__platform_entry
+msgid "Platform administrator entered"
+msgstr "دخل مسؤول المنصة"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__platform_exit
+msgid "Platform administrator left"
+msgstr "غادر مسؤول المنصة"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__platform_denied
+msgid "Platform administrator entry refused"
+msgstr "رُفض دخول مسؤول المنصة"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__actor_ref
+msgid "Actor Ref"
+msgstr "مرجع المنفّذ"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_denied
+msgid "Administrative action refused"
+msgstr "إجراء إداري مرفوض"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
+msgid "Administrative actions"
+msgstr "الإجراءات الإدارية"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
+msgid "By"
+msgstr "بواسطة"
+
+#. module: ncollection_auth
+#: model:ir.model,name:ncollection_auth.model_res_partner
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__detail
+msgid "Detail"
+msgstr "التفاصيل"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
+msgid "Event"
+msgstr "الحدث"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
+msgid "Failed sign-ins"
+msgstr "محاولات تسجيل الدخول الفاشلة"
+
+#. module: ncollection_auth
+#: model_terms:ir.actions.act_window,help:ncollection_auth.action_auth_log
+msgid "Nothing recorded yet"
+msgstr "لم يُسجَّل شيء بعد"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__password_changed
+msgid "Password changed by the user"
+msgstr "غيّر المستخدم كلمة المرور"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_password_reset
+msgid "Password reset by an administrator"
+msgstr "أعاد مسؤول تعيين كلمة المرور"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
+msgid "Platform administrator"
+msgstr "مسؤول المنصة"
+
+#. module: ncollection_auth
+#: model:ir.model.fields,help:ncollection_auth.field_ncollection_auth_log__actor_ref
+msgid ""
+"Platform administrator behind the action (set by the platform channel), if "
+"any."
+msgstr "مسؤول المنصة الذي طلب الإجراء (تحدده قناة المنصة)، إن وُجد."
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__role_define
+msgid "Role defined"
+msgstr "تعريف دور"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_roles_change
+msgid "Roles changed"
+msgstr "تغيير الأدوار"
+
+#. module: ncollection_auth
+#: model:ir.actions.act_window,name:ncollection_auth.action_auth_log
+msgid "Security"
+msgstr "الأمان"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
+msgid "Security log"
+msgstr "سجل الأمان"
+
+#. module: ncollection_auth
+#: model_terms:ir.actions.act_window,help:ncollection_auth.action_auth_log
+msgid "Sign-ins and administrative actions appear here."
+msgstr "تظهر هنا عمليات تسجيل الدخول والإجراءات الإدارية."
+
+#. module: ncollection_auth
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__target_user_id
+msgid "Target User"
+msgstr "المستخدم المستهدف"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_user_activate
+msgid "User activated"
+msgstr "تفعيل مستخدم"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_user_create
+msgid "User created"
+msgstr "إنشاء مستخدم"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_user_deactivate
+msgid "User deactivated"
+msgstr "تعطيل مستخدم"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
+msgid "When"
+msgstr "الوقت"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_user_update
+msgid "User updated"
+msgstr "تحديث مستخدم"
+
+#. module: ncollection_auth
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.account_security_alert_branded
+msgid "<span>activating Two-factor Authentication</span>"
+msgstr "<span>تفعيل المصادقة الثنائية</span>"

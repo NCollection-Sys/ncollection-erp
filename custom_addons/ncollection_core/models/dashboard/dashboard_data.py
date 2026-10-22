@@ -31,11 +31,11 @@ Financial providers are interim. FPA §7 assigns them permanently to
 """
 
 import logging
-from datetime import date
+from datetime import date, timedelta
 
 from dateutil.relativedelta import relativedelta
 
-from odoo import api, models
+from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
@@ -244,6 +244,62 @@ class NCollectionDashboardData(models.AbstractModel):
 
     # -- KPI computations ---------------------------------------------------
 
+    # -- the period -----------------------------------------------------------
+    #
+    # The selected period is read from the context (set once, in get_dashboard_payload) by the figures that are
+    # genuinely about a PERIOD. Each figure's time meaning is decided here, not by the client:
+    #
+    #   period total   Profit & Loss, Expenses, Net Profit (the engine's own rows over [From, To]);
+    #                  Top Customers (confirmed orders dated within [From, To])
+    #   as of To       Balance Sheet (cumulative to the To date; the From date has no meaning for it)
+    #   trend ending   Revenue (last 6 months): the six months that END at the To date
+    #                  at To
+    #   fixed window   Sales / Purchases This Month: "this month" is the figure's definition
+    #   current state  Receivables, Payables, Cash & Bank, Open Quotations, Stock on Hand, Pending Transfers, Open
+    #                  Activities, Pending Approvals: what is open NOW; the books cannot be rewound for them
+    #
+    # The period only ever narrows or moves the window INSIDE what the user may already read: it never touches a
+    # company, a record rule or a licence, and every figure still goes through the same gated, access-checked paths.
+
+    @api.model
+    def _default_summary_period(self):
+        today = date.today()
+        return today.replace(month=1, day=1), today
+
+    @api.model
+    def _summary_period(self):
+        """The (From, To) the figures use: the selected one, else the current year to today."""
+        default_from, default_to = self._default_summary_period()
+        return (self.env.context.get('nc_summary_from') or default_from,
+                self.env.context.get('nc_summary_to') or default_to)
+
+    @api.model
+    def _parse_summary_period(self, date_from, date_to):
+        """Validate what the client sent. Nothing at all means the default; otherwise both dates, From <= To."""
+        if not date_from and not date_to:
+            return None
+        if not (date_from and date_to):
+            raise UserError(self.env._("Choose both the From date and the To date."))
+        try:
+            start, end = fields.Date.to_date(date_from), fields.Date.to_date(date_to)
+        except (TypeError, ValueError):
+            raise UserError(self.env._("The period is not a valid date range."))
+        if not (start and end):
+            raise UserError(self.env._("The period is not a valid date range."))
+        if start > end:
+            raise UserError(self.env._("The From date cannot be after the To date."))
+        if not (date(1900, 1, 1) <= start and end <= date(2200, 12, 31)):
+            raise UserError(self.env._("The period is outside the supported range."))
+        return start, end
+
+    @api.model
+    def _period_caption(self):
+        """The small line under a period figure: "Year to date" by default, else "Selected period" (the dates are
+        in the figure's own period tag)."""
+        if self._summary_period() == self._default_summary_period():
+            return self.env._('Year to date')
+        return self.env._('Selected period')
+
     @api.model
     def _engine(self):
         """The P4-T01 aggregation engine — the single choke point (§9)."""
@@ -395,14 +451,15 @@ class NCollectionDashboardData(models.AbstractModel):
     def _compute_revenue_6m(self):
         """Posted customer-invoice revenue per month, oldest first."""
         # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard.
-        today = date.today()
-        start = today.replace(day=1) - relativedelta(months=5)
+        # A TREND window, not a period total: the six months that END at the selected To date (today by default).
+        _period_from, period_to = self._summary_period()
+        start = period_to.replace(day=1) - relativedelta(months=5)
         result = self._engine().aggregate({
             'key': 'dash:revenue_6m',
             'model': 'account.move.line',
             'domain': [('account_id.account_type', '=', 'income'),
                        ('parent_state', '=', 'posted'),
-                       ('date', '>=', start)],
+                       ('date', '>=', start), ('date', '<=', period_to)],
             'groupby': ['date:month'],
             'aggregates': ['balance:sum'],
         })
@@ -422,8 +479,8 @@ class NCollectionDashboardData(models.AbstractModel):
 
     @api.model
     def _compute_top_customers(self):
-        """Top 5 customers by confirmed order value this year."""
-        start = date.today().replace(month=1, day=1)
+        """Top 5 customers by confirmed order value in the selected period (the current year by default)."""
+        period_from, period_to = self._summary_period()
         # The modern ORM groups to a RECORDSET; the engine flattens that to an
         # (id, display_name) tuple so the payload is cacheable inert data (a
         # recordset would be bound to an environment that is gone by the next
@@ -431,7 +488,8 @@ class NCollectionDashboardData(models.AbstractModel):
         result = self._engine().aggregate({
             'key': 'dash:top_customers',
             'model': 'sale.order',
-            'domain': [('state', '=', 'sale'), ('date_order', '>=', start)],
+            'domain': [('state', '=', 'sale'), ('date_order', '>=', period_from),
+                       ('date_order', '<', period_to + timedelta(days=1))],
             'groupby': ['partner_id'],
             'aggregates': ['amount_total:sum'],
             'limit': 5,
@@ -458,8 +516,8 @@ class NCollectionDashboardData(models.AbstractModel):
         ``exclude_zero`` option) so the card stays short; totals are the engine's. Every row carries the account ids
         it is made of, so a click can open exactly those journal items through the report service's drill.
         """
-        today = date.today()
-        vals = {'date_from': today.replace(month=1, day=1), 'date_to': today,
+        period_from, period_to = self._summary_period()
+        vals = {'date_from': period_from, 'date_to': period_to,
                 'target_move': 'posted', 'comparison_type': 'none'}
         Wizard = self.env[model_name]
         if 'exclude_zero' in Wizard._fields:
@@ -483,7 +541,9 @@ class NCollectionDashboardData(models.AbstractModel):
             'rows': rows,
             'empty': not any(row['value'] for row in rows),
             'action_id': action.id if action else False,
-            'period': '%s → %s' % (wizard.date_from, wizard.date_to),
+            # a Balance Sheet is a position AS OF a date (cumulative to it): say so, not a range it does not use
+            'period': (self.env._('As of %s', wizard.date_to) if model_name == STATEMENT_BALANCE_SHEET
+                       else '%s → %s' % (wizard.date_from, wizard.date_to)),
             'as_of': wizard.date_to,
             'wizard': {'model': model_name, 'id': wizard.id} if can_drill else False,
         }
@@ -550,11 +610,11 @@ class NCollectionDashboardData(models.AbstractModel):
         derived = [
             {'key': 'expenses', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL, 'label': self.env._('Expenses'),
              'icon': 'wallet', 'value': sum(r['value'] for r in expense_rows), 'format': 'currency',
-             'sub': self.env._('Year to date'), 'tone': 'neutral', 'period': period,
+             'sub': self._period_caption(), 'tone': 'neutral', 'period': period,
              'drill': self._derived_drill(pl, expense_rows, self.env._('Expenses'))},
             {'key': 'net_profit', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL, 'label': self.env._('Net Profit'),
              'icon': 'chart', 'value': net['value'], 'format': 'currency',
-             'sub': self.env._('Year to date'), 'tone': 'positive' if net['value'] > 0 else (
+             'sub': self._period_caption(), 'tone': 'positive' if net['value'] > 0 else (
                  'negative' if net['value'] < 0 else 'neutral'), 'period': period,
              'drill': self._derived_drill(pl, [net], self.env._('Net Profit'))},
         ]
@@ -630,12 +690,20 @@ class NCollectionDashboardData(models.AbstractModel):
     # -- payload ------------------------------------------------------------
 
     @api.model
-    def get_dashboard_payload(self):
+    def get_dashboard_payload(self, date_from=None, date_to=None):
         """Return every widget this user is allowed to see, in display order.
 
         Gating happens HERE, not in the client: a widget the role does not
         permit, or that the plan does not license, never reaches the browser.
+
+        ``date_from`` / ``date_to`` select the period of the figures that are about a period (see the table above
+        ``_summary_period``); both absent means the current year to today. They are validated here and only ever
+        move the window inside what the caller may already read.
         """
+        chosen = self._parse_summary_period(date_from, date_to)
+        if chosen:
+            self = self.with_context(nc_summary_from=chosen[0], nc_summary_to=chosen[1])
+        period_from, period_to = self._summary_period()
         allowed_groups = self._widget_groups_for_user()
         widgets = []
         kpi_drills = self._kpi_drill_specs()
@@ -682,5 +750,9 @@ class NCollectionDashboardData(models.AbstractModel):
                 'company_name': self.env.company.name,
                 'currency': self.env.company.currency_id.symbol or '',
                 'widget_groups': sorted(allowed_groups),
+                'period': {
+                    'date_from': fields.Date.to_string(period_from), 'date_to': fields.Date.to_string(period_to),
+                    'is_default': (period_from, period_to) == self._default_summary_period(),
+                },
             },
         }

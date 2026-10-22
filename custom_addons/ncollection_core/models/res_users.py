@@ -65,6 +65,11 @@ class ResUsers(models.Model):
             return {'uid': user.id, 'auth_method': CREDENTIAL_TYPE, 'mfa': 'default'}
         if self.nc_platform_proxy:
             raise AccessDenied()                  # no password path for a proxy, whatever is stored on it
+        if (credential.get('type') == 'password' and (env or {}).get('interactive', True) is False
+                and self.sudo().nc_must_change_password):
+            # A pending reset: the sessionless RPC doors (XML-RPC, /jsonrpc) must not let the handed-over password work
+            # until its owner has chosen their own at the sign-in page (the web gate is ir.http._authenticate).
+            raise AccessDenied()
         return super()._check_credentials(credential, env)
 
     @api.constrains('login')

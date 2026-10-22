@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **26**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **28**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -53,7 +53,10 @@ adding a module fails CI until someone updates this list.
 
 **Platform layer** (never queries tenant ERP models directly — Rule 3):
 - `ncollection_saas` — the provisioning engine: tenant lifecycle, provisioning jobs,
-  config-sync (+ re-key), fleet migration, backups, checkout, domains, exchange rates.
+  config-sync (+ re-key), fleet migration, backups, checkout, domains, exchange rates, and **Tenant Administration**:
+  the tenant form's Users & Access (list users, create, activate / deactivate, change roles, reset a password incl. the
+  Tenant Administrator's) through the tenant's `ncollection.admin.service` over the same derived-bearer JSON-2 channel,
+  authorised on every call (platform admin + the tenant's `platform_admin_ids` allow-list); the platform stores no password.
 - `ncollection_subscription` — Tenant / Subscription / Plan / SaaS-admin dashboard.
 - `ncollection_reseller` — partner reseller accounts, cascading branding, sub-tenants.
 - `ncollection_billing` — subscription billing: invoices, UAE VAT, proration, Stripe.
@@ -61,7 +64,12 @@ adding a module fails CI until someone updates this list.
 **Tenant layer** (installed into each tenant database):
 - `ncollection_core` — the security spine: 8 role groups + implications, license
   enforcement, menu visibility (Ring 1), workspace config, the financial gate, the
-  aggregation engine, KPIs, anomaly detection, the customer dashboard.
+  aggregation engine, KPIs, anomaly detection, the customer dashboard. Also the **Workspace Administration Center**
+  (Overview, Users, Roles & Permissions, Teams, Security, Company, Appearance, Document Stamps, System): `ncollection.role` =
+  a named view of REAL `res.groups` (standard templates + custom roles that can never carry administration),
+  `res.users.nc_role_ids` derived from the groups, password reset with forced change (`nc_must_change_password` +
+  `/ncollection/password/change`), `ncollection.admin.service` for the platform, and the inline View endpoint
+  `/ncollection/document/view/<model>/<id>`. Docs: `docs/markdown/WORKSPACE_AND_TENANT_ADMINISTRATION.md`.
 - `ncollection_api` — the public REST API (#77): `/api/v1`, OAuth2
   client-credentials, scoped tokens, per-client rate limiting, metadata-only
   request logging. **Extends Odoo core's `res.users.apikeys`** rather than
@@ -71,7 +79,9 @@ adding a module fails CI until someone updates this list.
   `scope IS NULL OR scope = 'rpc'`). `base_rest` is deprecated upstream and
   `installable: False` on 19.0; OCA `fastapi` needs five pip packages the stock
   image lacks — decision and revisit trigger in OCA_DEPENDENCIES.md.
-- `ncollection_auth` — authentication audit log + hardened login/session defaults.
+- `ncollection_auth` — authentication audit log + hardened login/session defaults. Also the **administrative audit**:
+  user / password / role events with target, detail and the platform administrator behind them, never a secret; the
+  Security screen of the Workspace Administration Center reads it.
 - `ncollection_audit` — audit-trail **infrastructure** on OCA `auditlog` (#81):
   the client IP `auditlog` has no field for, audit rules seeded as data and
   re-seeded on every registry load (R-014), a retention period that is a system
@@ -87,13 +97,23 @@ adding a module fails CI until someone updates this list.
   Group-restricted fields and `ncollection.auth.log` are never logged —
   `auditlog` ignores
   `groups=` and its log table is readable by a lower-trust group.
-- `ncollection_branding` — theme, logo, colors.
+- `ncollection_branding` — **Product Branding** (ONE record: the application's name, favicon, product / login / administration logos, resolved by `nc_brand()` for every
+  surface; never the company brand — docs: `docs/markdown/PRODUCT_BRANDING.md`), theme, logo, colors, and the document layer: the NCollection print layout (default), document types,
+  and **Document Stamp templates** (mm geometry, document types, paper, priority; PDF overlay; OWL designer with a real-PDF
+  preview; the stamp image is group-restricted to **Document Stamp Manager**, also reachable from Accounting > Configuration > Document Stamps). Docs: `docs/markdown/DOCUMENT_PRINTING_AND_STAMPS.md`.
 - `ncollection_ai` — tenant-side AI: gateway client, context injection, PII redaction.
 - `ncollection_approvals` — configurable approval workflows.
 - `ncollection_data_import` — onboarding import toolkit (CSV templates + wizard).
-- `ncollection_sale_attachments` — a paperclip column in the Quotations / Sales Orders lists that opens ONE modal
-  viewer on that document's attachments (Odoo's own FileViewer, extended: position "2 / 5", fallback card, RTL).
+- `ncollection_sale_attachments` — the "Files" paperclip column in the Quotations / Sales Orders lists. The paperclip,
+  its ONE modal viewer (Odoo's own FileViewer, extended: position "2 / 5", fallback card, RTL) and the count/metadata
+  (`nc.attachment.mixin`) live in `ncollection_core`, shared with invoices / bills / purchase orders / payments.
   No model, no ACL, no route: it reads `ir.attachment` as the user. `auto_install` with `sale`.
+- `ncollection_sale_documents` — Sales opens on **Invoices** (Odoo's own customer-invoice action, first in the menu: New is
+  a customer invoice, no quotation or order needed). It also switches on the Sales root menu: Odoo 19 leaves it inactive
+  unless `sale_management` is installed, and plans list `sale`, so without this there is no Sales app to open, **Duplicate** (نسخة مماثلة), and **View / Preview that is the very PDF
+  Print produces** (`nc.document.print.mixin`, ncollection_core: one report + one context for both). `auto_install` with `sale`.
+- `ncollection_purchase_documents` — the same for Purchase: **Vendor Bills** first, Duplicate, Files, and View / Preview =
+  the printed RFQ or purchase order. `auto_install` with `purchase`.
 - `ncollection_stock_barcode` — the warehouse barcode workflow Community lacks (`stock_barcode` is Enterprise, the OCA
   `stock_barcodes` port is not merged on 19.0): scan receipts / deliveries / transfers (products, lots, serials,
   locations), correct a mis-scan, validate with the stock engine's own `button_validate`, and count inventory with its
@@ -105,7 +125,11 @@ adding a module fails CI until someone updates this list.
   `.sudo()` lookup of a request-supplied id bypassed the portal record rule.
 
 **Financial** (`ncollection_account_*` + MIS):
-- `ncollection_account_core` — shared financial base, subscription restriction hooks.
+- `ncollection_account_core` — shared financial base, subscription restriction hooks. Also the invoice / bill
+  **payment status** (Unpaid / Partially Paid / Overdue / Paid in Full / Overpaid — computed from residuals, due dates and
+  reconciliations, never stored) and **payment allocation**: the payment form's Confirm posts natively, then applies the
+  payment through Odoo's own `js_assign_outstanding_line` (= `reconcile()`), selected document first, then earliest due;
+  the rest stays an outstanding credit. No parallel invoice / payment / reconciliation engine. Print Receipt / View = one report.
 - `ncollection_account_reports` — native report engine: filters, drill-down, PDF + XLSX. Also the **Reports hub**
   (7 categories; native Odoo analysis menus are re-filed into it with the group that already holds the ORM right),
   **Tax Analysis**, and the hardening of the OCA report wizards (restricted to accounting read-only on every registry
@@ -350,6 +374,9 @@ So tenant key === subdomain === database name, always.
 - `SPRINT_SCHEDULE.md` — parallelization / sprint grid.
 - `ARCHITECTURE_DATA_PLATFORM.md` · `ARCHITECTURE_SECURITY.md` — backend & security deep-dives.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
+- `WORKSPACE_AND_TENANT_ADMINISTRATION.md` — roles = real groups, password reset, the platform's user-administration service, audit, boundaries.
+- `PRODUCT_BRANDING.md` — product brand vs company brand, the one resolver, favicon / logo validation, where "Odoo" was removed and what stays.
+- `DOCUMENT_PRINTING_AND_STAMPS.md` — the one print pipeline, View = Print, the NCollection layout, the stamp system, how to prove a PDF.
 - `BRANCH_PROTECTION.md` — required CI checks + 1-approval policy, and why none of it is
   **enforceable** on the current GitHub plan (verified 403) — read before assuming CI blocks.
 - `DEMO_TENANT.md` — the populated **Al Barari Trading** workspace (`make demo-tenant`):

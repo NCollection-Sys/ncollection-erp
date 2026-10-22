@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Applies the product wording to module-authored mail templates and action help (models/vendor_content.py). -->
+    <function model="ncollection.vendor.content" name="_nc_unbrand"/>
+</odoo>

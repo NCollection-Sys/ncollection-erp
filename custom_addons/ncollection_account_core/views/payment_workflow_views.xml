@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- INVOICES / BILLS / CREDIT NOTES / RECEIPTS, every list (view_invoice_tree is the parent of all of them):
+         Files, the payment figures and status (computed from the accounting, never stored), and View / Edit. -->
+    <record id="view_invoice_tree_nc_payment_workflow" model="ir.ui.view">
+        <field name="name">account.move.list.nc.payment.workflow</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="nc_attachment_count" string="Files" widget="nc_attachment_count" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='status_in_payment']" position="before">
+                <field name="nc_amount_paid" optional="show" invisible="not nc_payment_status"/>
+                <field name="nc_amount_due" optional="show" invisible="not nc_payment_status"/>
+                <field name="nc_payment_status" widget="badge" optional="show"
+                       decoration-success="nc_payment_status == 'paid'"
+                       decoration-info="nc_payment_status == 'overpaid'"
+                       decoration-warning="nc_payment_status == 'partial'"
+                       decoration-danger="nc_payment_status == 'overdue'"
+                       decoration-muted="nc_payment_status == 'unpaid'"/>
+            </xpath>
+            <xpath expr="//list" position="inside">
+                <button name="action_nc_view" type="object" string="View" icon="fa-eye" title="View"/>
+                <button name="action_nc_edit" type="object" string="Edit" icon="fa-pencil" title="Edit"
+                        groups="account.group_account_invoice"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- The form: what has been paid and the status, under Amount Due (the payments themselves, with the amount each
+         applied, are Odoo's own list just above). -->
+    <record id="view_move_form_nc_payment_status" model="ir.ui.view">
+        <field name="name">account.move.form.nc.payment.status</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[hasclass('oe_subtotal_footer')]/field[@name='amount_residual']" position="before">
+                <field name="nc_amount_paid" invisible="not nc_payment_status"/>
+            </xpath>
+            <xpath expr="//group[hasclass('oe_subtotal_footer')]/field[@name='amount_residual']" position="after">
+                <field name="nc_payment_status" widget="badge" invisible="not nc_payment_status"
+                       decoration-success="nc_payment_status == 'paid'"
+                       decoration-info="nc_payment_status == 'overpaid'"
+                       decoration-warning="nc_payment_status == 'partial'"
+                       decoration-danger="nc_payment_status == 'overdue'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- PAYMENTS. Confirm posts and then applies the payment through Odoo's reconciliation (selected document first,
+         then earliest due); Print Receipt and View render the one receipt report. -->
+    <record id="view_account_payment_form_nc_workflow" model="ir.ui.view">
+        <field name="name">account.payment.form.nc.workflow</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_post']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_post']" position="after">
+                <button name="action_nc_post_and_allocate" string="Confirm" type="object" class="oe_highlight"
+                        invisible="state != 'draft'" data-hotkey="q"/>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_nc_print" string="Print Receipt" type="object" invisible="not id"/>
+                <button name="action_nc_view" string="View" type="object" invisible="not id"/>
+            </xpath>
+            <xpath expr="//field[@name='memo']" position="after">
+                <field name="nc_eligible_move_ids" invisible="1"/>
+                <field name="nc_apply_first_move_id" invisible="state != 'draft' or not partner_id"
+                       options="{'no_create': True}" placeholder="Optional: earliest due first"/>
+            </xpath>
+            <xpath expr="//sheet/group[@name='main_group']" position="after">
+                <group string="Allocation" invisible="not partner_id">
+                    <field name="nc_allocation_html" nolabel="1" colspan="2" readonly="1"/>
+                    <field name="nc_unallocated_amount" invisible="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_payment_tree_nc_workflow" model="ir.ui.view">
+        <field name="name">account.payment.list.nc.workflow</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="nc_unallocated_amount" optional="show" invisible="state == 'draft'"/>
+                <field name="nc_attachment_count" string="Files" widget="nc_attachment_count" optional="show"/>
+            </xpath>
+            <xpath expr="//list" position="inside">
+                <button name="action_nc_view" type="object" string="View" icon="fa-eye" title="View"/>
+                <button name="action_nc_edit" type="object" string="Edit" icon="fa-pencil" title="Edit"
+                        groups="account.group_account_invoice"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -15,6 +15,8 @@ export class NcPlatformModeBar extends Component {
 
     setup() {
         this.mode = session.nc_platform_mode || null;
+        // the administration logo of the PRODUCT (Product Branding), not the company's
+        this.adminLogo = session.nc_product_brand?.admin_logo_url || "";
         onMounted(() => document.body.classList.add("nc-platform-mode"));
         onWillUnmount(() => document.body.classList.remove("nc-platform-mode"));
     }

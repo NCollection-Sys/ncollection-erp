@@ -99,6 +99,10 @@ class WorkspaceConfig(models.Model):
              'fields here). 0 or unset = unlimited (fail-open).',
     )
 
+    def _compute_display_name(self):
+        for config in self:
+            config.display_name = self.env._('System')
+
     @api.model_create_multi
     def create(self, vals_list):
         # Access first, invariants second: an unauthorized caller must get

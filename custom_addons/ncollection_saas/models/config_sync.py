@@ -632,7 +632,7 @@ class TenantConfigSync(models.Model):
         """Chatter + one to-do, same convention as the config-sync alert."""
         body = self.env._(
             "A required job is DISABLED on %(db)s: %(detail)s\n\n"
-            "Odoo deactivates a cron by itself after repeated failures, so this "
+            "The system deactivates a cron by itself after repeated failures, so this "
             "is usually a symptom rather than someone switching it off. The "
             "job stays off until re-enabled by hand.",
             db=self.database_name, detail=detail)

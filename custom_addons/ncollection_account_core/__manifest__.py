@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.5.0',
+    'version': '19.0.1.7.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
                'restriction hooks, common mixins and the accounting engine '
@@ -20,7 +20,7 @@
     #                       that config (never a second enforcement path), so it
     #                       needs core installed. core ships in every tenant
     #                       (CORE_TENANT_MODULES), so this adds no new footprint.
-    'depends': ['account', 'ncollection_core'],
+    'depends': ['account', 'auth_totp_portal', 'ncollection_core'],
     # F1-T02: codify the fiscal-year baseline (31 Dec) on the tenant company at
     # provisioning via a post_init hook (hooks.py -> res.company). It only sets
     # Odoo's own native fields — no fiscal-year model, no posting/tax logic
@@ -33,9 +33,20 @@
         'views/accounting_app_menus.xml',
         # Custom print title of ONE invoice (presentation only; the stock heading is the default).
         'views/account_move_views.xml',
+        'views/account_move_duplicate.xml',
+        'views/account_move_partner_roles.xml',
+        # Files / View / Edit, payment status, payment allocation + Print Receipt (models/account_payment.py).
+        'views/payment_workflow_views.xml',
         # Settings > Accounting Defaults: the default accounts Community already has, reachable by the Owner.
         'views/accounting_defaults_views.xml',
         'report/invoice_title.xml',
+        # The kinds of printed document a stamp can be scoped to: invoices, bills, credit notes, payment receipts.
+        'data/document_types.xml',
+        # Accounting > Configuration > Document Stamps: the stamp of invoices, bills, credit notes and receipts.
+        'views/accounting_stamps.xml',
+        'report/invoice_payment_status.xml',
+        'report/payment_receipt.xml',
+        'views/vendor_portal_digest.xml',
     ],
     'post_init_hook': 'post_init_hook',
     # Scaffold: the load-bearing deliverable is the shared AbstractModel mixin

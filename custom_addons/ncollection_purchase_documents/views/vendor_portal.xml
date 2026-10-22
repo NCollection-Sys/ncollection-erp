@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The portal dialog named, and promoted, the upstream vendor's software. -->
+    <template id="purchase_order_portal_connect_branded" inherit_id="purchase.portal_my_purchase_order">
+        <xpath expr="//h5[contains(text(), 'Want to import this document in Odoo?')]" position="replace">
+            <h5>Want to import this document in your own software?</h5>
+        </xpath>
+        <xpath expr="//p[contains(text(), 'Drag and drop the request for quotation PDF')]" position="replace">
+            <p>Use the structured copy of this purchase order below to bring it into your own system.</p>
+        </xpath>
+        <xpath expr="//h5[contains(text(), 'Not using Odoo?')]" position="replace">
+            <h5>Connect your own software</h5>
+        </xpath>
+        <xpath expr="//p[contains(text(), 'Use the above REST URL')]" position="replace">
+            <p>Use the above REST URL to get structured data of this purchase order in UBL format.</p>
+        </xpath>
+        <xpath expr="//div[h5[contains(text(), 'good CRM software')]]" position="replace"/>
+    </template>
+</odoo>

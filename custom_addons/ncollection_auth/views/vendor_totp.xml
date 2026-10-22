@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The "Learn More" documentation links of the two-factor screens and e-mails point at the upstream vendor's
+         website; the product ships no link to another company's documentation. -->
+    <template id="auth_totp_form_branded" inherit_id="auth_totp.auth_totp_form">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace"/>
+    </template>
+    <template id="auth_totp_mail_form_branded" inherit_id="auth_totp_mail.auth_totp_mail_form">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace"/>
+    </template>
+    <template id="account_security_alert_branded" inherit_id="auth_totp_mail.account_security_alert">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace">
+            <span>activating Two-factor Authentication</span>
+        </xpath>
+    </template>
+</odoo>

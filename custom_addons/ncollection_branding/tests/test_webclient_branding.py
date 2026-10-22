@@ -49,21 +49,22 @@ class TestWebclientBranding(TransactionCase):
 
     def test_login_footer_override_present(self):
         arch = self._arch("ncollection_branding.login_layout_branded")
-        self.assertIn("NCollection ERP", arch)
+        self.assertIn("nc_product_brand()", arch)  # the name comes from Product Branding, not a literal
         # the two Odoo links are removed by this override
         self.assertIn("position=\"replace\"", arch)
 
     def test_bootstrap_theme_and_icon_override(self):
         arch = self._arch("ncollection_branding.webclient_bootstrap_branded")
         self.assertIn("#17375E", arch)
-        self.assertIn("apple-touch-icon.png", arch)
+        self.assertIn("favicon_url", arch)  # the touch icon follows the configured favicon
         self.assertNotIn("#71639e", arch)
         self.assertNotIn("odoo-icon-ios", arch)
 
     def test_offline_override_present(self):
         arch = self._arch("ncollection_branding.webclient_offline_branded")
-        self.assertIn("NCollection ERP will load", arch)
-        self.assertIn("ncollection_branding/static/src/img/logo.png", arch)
+        self.assertIn("will load as soon as", arch)
+        self.assertIn("nc_product_brand()", arch)
+        self.assertIn("/ncollection/brand/logo", arch)
 
     def test_404_override_present(self):
         arch = self._arch("ncollection_branding.http_404_branded")
@@ -87,7 +88,7 @@ class TestWebclientBranding(TransactionCase):
             }
         ))
         self.assertIn("NCollection", html)
-        self.assertIn("/ncollection_branding/static/src/img/logo.png", html)
+        self.assertIn("/ncollection/brand/logo", html)
         self.assertIn("ERR-99A1F0-8A2D", html)
         self.assertIn("Return to Workspace", html)
         self.assertIn("ncCopyIncident", html)
@@ -95,7 +96,7 @@ class TestWebclientBranding(TransactionCase):
 
     def test_settings_about_override_present(self):
         arch = self._arch("ncollection_branding.res_config_settings_view_form_branded")
-        self.assertIn("NCollection ERP", arch)
+        self.assertIn("nc_product_name", arch)
         # the widget is replaced away
         self.assertIn("res_config_edition", arch)  # in the xpath selector
 

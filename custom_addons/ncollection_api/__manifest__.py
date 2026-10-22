@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Public API',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'category': 'Technical',
     'summary': 'Public REST API foundation: OAuth2 client-credentials, scoped '
                'tokens, versioned /api/v1 routing, rate limiting (P8-T01)',

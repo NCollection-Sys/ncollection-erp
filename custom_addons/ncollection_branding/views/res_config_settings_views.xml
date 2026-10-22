@@ -18,11 +18,33 @@
         <field name="arch" type="xml">
             <xpath expr="//widget[@name='res_config_edition']" position="replace">
                 <div>
-                    <h3>NCollection ERP</h3>
+                    <h3><field name="nc_product_name" readonly="1" nolabel="1"/></h3>
                     <small class="text-muted">
                         Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the source distribution).
                     </small>
                 </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Two labels of the stock Settings page name the upstream vendor (API Keys help, IAP block). -->
+    <record id="res_config_settings_view_form_no_vendor_names" model="ir.ui.view">
+        <field name="name">res.config.settings.form.ncollection.no.vendor.names</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='%(base.action_apikeys_admin)d']/parent::setting" position="attributes">
+                <attribute name="help">API Keys allow your users to access the workspace with external tools when multi-factor authentication is enabled.</attribute>
+            </xpath>
+        </field>
+    </record>
+    <record id="res_config_settings_view_form_no_vendor_names_iap" model="ir.ui.view">
+        <field name="name">res.config.settings.form.ncollection.no.vendor.names.iap</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="iap.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//setting[@id='iap_credits_setting']" position="attributes">
+                <attribute name="string">In-App Services</attribute>
             </xpath>
         </field>
     </record>

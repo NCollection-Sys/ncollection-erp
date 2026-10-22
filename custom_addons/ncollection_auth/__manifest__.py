@@ -11,7 +11,8 @@
     # and self.mode != 'init': return`). An earlier version of this comment
     # claimed `-u` applies it — it does not, and a tenant with a customised
     # retention above 400 would have had the purge refuse on every run.
-    'version': '19.0.1.2.0',
+    # 1.3.0: administrative events (user / password / role changes) with target, detail and actor_ref columns.
+    'version': '19.0.1.3.0',
     'category': 'Hidden',
     'summary': 'Authentication audit log + hardened login/session defaults (P1-T19)',
     'author': 'NCollection',
@@ -19,9 +20,11 @@
     'license': 'LGPL-3',
     # auth_signup: core (reset-password flow hooks). auth_session_timeout:
     # OCA/server-auth pinned in repos.yml (inactivity logout).
-    'depends': ['base', 'web', 'auth_signup', 'auth_session_timeout'],
+    'depends': ['base', 'web', 'auth_signup', 'auth_session_timeout', 'auth_totp', 'auth_totp_mail'],
     'data': [
         'security/ir.model.access.csv',
+        'views/auth_log_views.xml',
+        'views/vendor_totp.xml',
         'data/auth_params.xml',
         'data/auth_cron.xml',
     ],

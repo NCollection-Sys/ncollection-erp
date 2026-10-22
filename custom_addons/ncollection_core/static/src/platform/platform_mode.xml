@@ -3,6 +3,7 @@
 
     <t t-name="ncollection_core.PlatformModeBar">
         <div t-if="mode" class="nc-platform-bar" role="status">
+            <img t-if="adminLogo" class="nc-platform-bar__logo" t-att-src="adminLogo" alt=""/>
             <span class="nc-platform-bar__company" t-esc="mode.company" dir="auto"/>
             <span class="nc-platform-bar__mode">Platform Admin Mode</span>
             <span class="nc-platform-bar__who" t-esc="mode.admin" dir="auto"/>

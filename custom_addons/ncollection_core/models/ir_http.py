@@ -15,12 +15,21 @@ blocks dispatch — it only refuses to *enable* debug.
 
 import logging
 
+import werkzeug.exceptions
+
 from odoo import models
+from odoo.exceptions import AccessError
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
 _OWNER_GROUP = 'ncollection_core.group_role_owner'
+
+# While a password reset by an administrator is pending, the signed-in person may reach only what is needed to choose a
+# new password (or leave): the change page, the sign-out, and the static files that page is made of.
+PASSWORD_CHANGE_PATH = '/ncollection/password/change'
+_PASSWORD_CHANGE_ALLOWED = (PASSWORD_CHANGE_PATH, '/web/session/logout', '/web/session/destroy')
+_PASSWORD_CHANGE_ALLOWED_PREFIXES = ('/web/assets/', '/web/static/', '/web/image/', '/web/binary/company_logo')
 
 
 class IrHttp(models.AbstractModel):
@@ -44,6 +53,31 @@ class IrHttp(models.AbstractModel):
             # Uncertain -> fall through and fail closed (strip debug).
             _logger.debug("Owner debug-gate check failed; stripping debug", exc_info=True)
         request.session.debug = ''
+
+    @classmethod
+    def _authenticate(cls, endpoint):
+        result = super()._authenticate(endpoint)
+        cls._nc_enforce_password_change()
+        return result
+
+    @classmethod
+    def _nc_enforce_password_change(cls):
+        """A session whose password an administrator reset can do nothing but set its own password first.
+
+        Enforced on EVERY authenticated request here, not by the sign-in page: a person who already holds a session
+        cookie, or who calls the JSON routes directly, meets the same wall. Web pages are sent to the change page; the
+        RPC routes are refused. The flag is read as the superuser: the person may not be allowed to read their own row.
+        """
+        if request is None or not request.session.uid:
+            return
+        path = request.httprequest.path
+        if path in _PASSWORD_CHANGE_ALLOWED or path.startswith(_PASSWORD_CHANGE_ALLOWED_PREFIXES):
+            return
+        if not request.env['res.users'].sudo().browse(request.session.uid).nc_must_change_password:
+            return
+        if request.dispatcher.routing_type == 'jsonrpc':
+            raise AccessError(request.env._("You must choose a new password before you continue."))
+        raise werkzeug.exceptions.HTTPException(response=request.redirect(PASSWORD_CHANGE_PATH, 303))
 
     def session_info(self):
         """Tell the web client when this session is a Platform Administrator's, so it can say so on every screen."""

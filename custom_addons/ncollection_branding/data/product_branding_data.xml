@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- The one product-branding record, with the defaults. noupdate: a workspace's own name and images are never reset
+         by an upgrade. -->
+    <record id="product_branding_default" model="ncollection.product.branding">
+        <field name="name">NCollection ERP</field>
+        <field name="short_name">NCollection</field>
+    </record>
+</odoo>

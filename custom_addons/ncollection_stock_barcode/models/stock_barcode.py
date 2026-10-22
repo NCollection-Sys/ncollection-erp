@@ -300,7 +300,7 @@ class NcStockBarcode(models.AbstractModel):
         result = picking.button_validate()
         if result is True:
             return self._reply(picking, True, self.env._("Operation %s validated.", picking.name), done=True)
-        return self._reply(picking, True, self.env._("Odoo needs a decision to finish this operation."), 'info',
+        return self._reply(picking, True, self.env._("A decision is needed to finish this operation."), 'info',
                            done=False, action=result)
 
     # ------------------------------------------------------------------ inventory count
@@ -385,7 +385,7 @@ class NcStockBarcode(models.AbstractModel):
         pending = isinstance(result, dict)               # the engine asks for a decision (a wizard) first
         return dict(self._count_state(location), ok=True, level='info' if pending else 'success', applied=not pending,
                     action=result if pending else None,
-                    message=(self.env._("Odoo needs a decision to finish this operation.") if pending
+                    message=(self.env._("A decision is needed to finish this operation.") if pending
                              else self.env._("Inventory adjusted.")))
 
     @api.model

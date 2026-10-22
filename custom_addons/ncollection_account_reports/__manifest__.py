@@ -5,7 +5,7 @@
     # 19.0.1.4.0 (#315/F2-T09): Department / Cost Centre / Profit Centre
     # analysis. New models + views + ACL rows + a new dependency, so `-u` is
     # what applies it to an existing tenant database.
-    'version': '19.0.1.8.0',
+    'version': '19.0.1.9.0',
     'category': 'Accounting/Accounting',
     'summary': 'Native financial report engine: definition, filters, drill-down, '
                'PDF + XLSX export (F2-T01) — the permanent replacement for the '
@@ -43,6 +43,7 @@
         'security/report_security.xml',
         'report/nc_print.xml',            # paper formats + design system: report_templates.xml references them
         'report/report_templates.xml',
+        'data/document_types.xml',
         'views/account_report_views.xml',
         'views/report_menus.xml',
     ],

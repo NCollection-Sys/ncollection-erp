@@ -23,3 +23,8 @@ access_platform_entry_system,ncollection.platform.entry.system,model_ncollection
 access_platform_entry_sync,ncollection.platform.entry.sync,model_ncollection_platform_entry,ncollection_core.group_config_sync,0,0,1,0
 access_launcher_app_owner,ncollection.launcher.app.owner,model_ncollection_launcher_app,ncollection_core.group_role_owner,1,1,0,0
 access_launcher_app_system,ncollection.launcher.app.system,model_ncollection_launcher_app,base.group_system,1,1,0,0
+access_role_user,ncollection.role.user,model_ncollection_role,base.group_user,1,0,0,0
+access_role_system,ncollection.role.system,model_ncollection_role,base.group_system,1,1,1,1
+access_user_reset_password_system,ncollection.user.reset.password.system,model_ncollection_user_reset_password,base.group_system,1,1,1,1
+access_role_access_line_system,ncollection.role.access.line.system,model_ncollection_role_access_line,base.group_system,1,1,1,1
+access_workspace_overview_system,ncollection.workspace.overview.system,model_ncollection_workspace_overview,base.group_system,1,1,1,1
