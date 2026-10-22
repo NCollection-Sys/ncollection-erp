@@ -1,0 +1,3 @@
+# The official PINT-AE files are hash-pinned by MANIFEST.txt and by the validator worker. They must reach every checkout
+# byte-for-byte: no line-ending conversion (core.autocrlf), no keyword expansion.
+custom_addons/ncollection_uae_einvoicing/resources/pint_ae/** -text

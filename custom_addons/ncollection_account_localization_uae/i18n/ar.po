@@ -34,6 +34,7 @@ msgstr "أنشئ في"
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__display_name
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_company__display_name
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__display_name
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_template__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -56,6 +57,7 @@ msgstr "نسبة الجاهزية للهيئة الاتحادية للضرائب
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__id
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_company__id
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__id
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_template__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -101,8 +103,13 @@ msgstr "قيد الانتظار"
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_company__fta_readiness
-msgid "Percentage of applicable UAE FTA compliance items marked done (items marked \"not applicable\" are excluded from the base)."
-msgstr "النسبة المئوية لعناصر الامتثال المطبّقة للهيئة الاتحادية للضرائب في الإمارات المُعلّمة كمكتملة (تُستثنى العناصر المُعلّمة \"غير قابل للتطبيق\" من الأساس)."
+msgid ""
+"Percentage of applicable UAE FTA compliance items marked done (items marked "
+"\"not applicable\" are excluded from the base)."
+msgstr ""
+"النسبة المئوية لعناصر الامتثال المطبّقة للهيئة الاتحادية للضرائب في الإمارات"
+" المُعلّمة كمكتملة (تُستثنى العناصر المُعلّمة \"غير قابل للتطبيق\" من "
+"الأساس)."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__sequence
@@ -111,7 +118,9 @@ msgstr "التسلسل"
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__key
-msgid "Stable technical identifier for the requirement (used for idempotent seeding)."
+msgid ""
+"Stable technical identifier for the requirement (used for idempotent "
+"seeding)."
 msgstr "معرّف تقني ثابت للمتطلب (يُستخدم للتعبئة الأولية غير المكرّرة)."
 
 #. module: ncollection_account_localization_uae
@@ -121,8 +130,12 @@ msgstr "الحالة"
 
 #. module: ncollection_account_localization_uae
 #: model_terms:ir.actions.act_window,help:ncollection_account_localization_uae.action_fta_compliance_item
-msgid "These items are seeded automatically and updated as VAT, chart of\n               accounts and FTA-compliant invoicing are configured."
-msgstr "تُنشأ هذه البنود تلقائيًا وتُحدَّث عند إعداد ضريبة القيمة المضافة ودليل الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
+msgid ""
+"These items are seeded automatically and updated as VAT, chart of\n"
+"               accounts and FTA-compliant invoicing are configured."
+msgstr ""
+"تُنشأ هذه البنود تلقائيًا وتُحدَّث عند إعداد ضريبة القيمة المضافة ودليل "
+"الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.constraint,message:ncollection_account_localization_uae.constraint_ncollection_fta_compliance_item_unique_company_key
@@ -132,7 +145,8 @@ msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب
 #. module: ncollection_account_localization_uae
 #: model_terms:ir.actions.act_window,help:ncollection_account_localization_uae.action_fta_compliance_item
 msgid "Track this company's UAE FTA readiness."
-msgstr "تتبّع جاهزية هذه الشركة للامتثال للهيئة الاتحادية للضرائب في الإمارات."
+msgstr ""
+"تتبّع جاهزية هذه الشركة للامتثال للهيئة الاتحادية للضرائب في الإمارات."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.actions.act_window,name:ncollection_account_localization_uae.action_fta_compliance_item
@@ -161,16 +175,230 @@ msgstr "تم تحديد جدول تقديم الإقرارات الضريبية 
 
 #. module: ncollection_account_localization_uae
 msgid "Tax invoices meet FTA format (TRN + VAT breakdown)"
-msgstr "الفواتير الضريبية مطابقة لصيغة الهيئة الاتحادية للضرائب (رقم التسجيل الضريبي + تفصيل ضريبة القيمة المضافة)"
+msgstr ""
+"الفواتير الضريبية مطابقة لصيغة الهيئة الاتحادية للضرائب (رقم التسجيل الضريبي"
+" + تفصيل ضريبة القيمة المضافة)"
 
 #. module: ncollection_account_localization_uae
 msgid "E-invoicing readiness (structured data / QR)"
 msgstr "الجاهزية للفوترة الإلكترونية (بيانات منظمة / رمز الاستجابة السريعة)"
 
 #. module: ncollection_account_localization_uae
-msgid "These items are seeded automatically and updated as VAT, chart of accounts and FTA-compliant invoicing are configured."
-msgstr "تتم تعبئة هذه العناصر تلقائياً وتُحدَّث عند تكوين ضريبة القيمة المضافة وشجرة الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
+msgid ""
+"These items are seeded automatically and updated as VAT, chart of accounts "
+"and FTA-compliant invoicing are configured."
+msgstr ""
+"تتم تعبئة هذه العناصر تلقائياً وتُحدَّث عند تكوين ضريبة القيمة المضافة وشجرة"
+" الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
 
 #. module: ncollection_account_localization_uae
 msgid "FTA compliance item: per-company"
 msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب: لكل شركة"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_trn
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_users__nc_trn
+msgid "TRN / Tax Registration Number"
+msgstr "رقم التسجيل الضريبي (TRN)"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_tin
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_users__nc_tin
+msgid "TIN / Tax Identification Number"
+msgstr "رقم التعريف الضريبي (TIN)"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_type
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_users__nc_legal_reg_type
+msgid "Legal registration type"
+msgstr "نوع التسجيل القانوني"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_authority
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_users__nc_legal_reg_authority
+msgid "Registration authority"
+msgstr "جهة التسجيل"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_country_id
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_users__nc_legal_reg_country_id
+msgid "Passport issuing country"
+msgstr "بلد إصدار جواز السفر"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__res_partner__nc_legal_reg_type__tl
+msgid "Commercial / Trade licence"
+msgstr "رخصة تجارية"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__res_partner__nc_legal_reg_type__eid
+msgid "Emirates ID"
+msgstr "الهوية الإماراتية"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__res_partner__nc_legal_reg_type__pas
+msgid "Passport"
+msgstr "جواز سفر"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__res_partner__nc_legal_reg_type__cd
+msgid "Cabinet Decision"
+msgstr "قرار مجلس الوزراء"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_product__nc_item_type
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_template__nc_item_type
+msgid "E-invoice item type"
+msgstr "نوع الصنف في الفاتورة الإلكترونية"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_product__nc_hs_code
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_template__nc_hs_code
+msgid "HS code"
+msgstr "رمز النظام المنسق (HS)"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_product__nc_sac_code
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_product_template__nc_sac_code
+msgid "SAC code"
+msgstr "رمز المحاسبة للخدمات (SAC)"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__product_template__nc_item_type__g
+msgid "Goods"
+msgstr "بضائع"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__product_template__nc_item_type__s
+msgid "Services"
+msgstr "خدمات"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__product_template__nc_item_type__b
+msgid "Both"
+msgstr "كلاهما"
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_product_template_form_nc_uae_classification
+msgid "UAE e-invoicing classification"
+msgstr "تصنيف الفوترة الإلكترونية الإماراتية"
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_partner_search_nc_uae_identity
+msgid "Missing TIN"
+msgstr "رقم التعريف الضريبي مفقود"
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_partner_search_nc_uae_identity
+msgid "Missing TRN"
+msgstr "رقم التسجيل الضريبي مفقود"
+
+#. module: ncollection_account_localization_uae
+#: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
+msgid ""
+"TRN / Tax Registration Number must be exactly 15 digits (no spaces or "
+"letters). Leave it empty if it is not known."
+msgstr ""
+"يجب أن يتكون رقم التسجيل الضريبي (TRN) من 15 رقماً بالضبط (بدون مسافات أو "
+"حروف). اتركه فارغاً إذا لم يكن معروفاً."
+
+#. module: ncollection_account_localization_uae
+#: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
+msgid ""
+"TIN / Tax Identification Number must be exactly 10 digits (no spaces or "
+"letters). Leave it empty if it is not known."
+msgstr ""
+"يجب أن يتكون رقم التعريف الضريبي (TIN) من 10 أرقام بالضبط (بدون مسافات أو "
+"حروف). اتركه فارغاً إذا لم يكن معروفاً."
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_partner_form_nc_uae_identity
+msgid "10 digits"
+msgstr "10 أرقام"
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_partner_form_nc_uae_identity
+msgid "15 digits"
+msgstr "15 رقماً"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model,name:ncollection_account_localization_uae.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_product__nc_hs_code
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_template__nc_hs_code
+msgid "Harmonized System goods classification (PINT-AE scheme 'HS')."
+msgstr "تصنيف السلع وفق النظام المنسّق (مخطط 'HS' في PINT-AE)."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_country_id
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_legal_reg_country_id
+msgid "Needed for a passport registration on an e-invoice."
+msgstr "مطلوب عند استخدام جواز السفر كتسجيل في الفاتورة الإلكترونية."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_product__nc_item_type
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_template__nc_item_type
+msgid ""
+"PINT-AE item type. Goods need an HS code, services a SAC code, 'Both' needs "
+"both, when the product is invoiced on a UAE e-invoice. Leave empty if the "
+"product is never e-invoiced."
+msgstr ""
+"نوع الصنف في PINT-AE. السلع تحتاج رمز HS، والخدمات رمز SAC، و'كلاهما' يحتاج "
+"الاثنين، عند فوترة المنتج في فاتورة إلكترونية إماراتية."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model,name:ncollection_account_localization_uae.model_product_template
+msgid "Product"
+msgstr "المنتج"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_product__nc_sac_code
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_template__nc_sac_code
+msgid "Service accounting code (PINT-AE scheme 'SAC')."
+msgstr "رمز المحاسبة الخدمية (مخطط 'SAC' في PINT-AE)."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_authority
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_legal_reg_authority
+msgid ""
+"The authority that issued the registration. Needed for a trade licence on an"
+" e-invoice."
+msgstr ""
+"الجهة التي أصدرت التسجيل. مطلوبة عند استخدام الرخصة التجارية في الفاتورة "
+"الإلكترونية."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_tin
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_tin
+msgid ""
+"UAE Tax Identification Number, 10 digits: the participant identifier used by"
+" UAE e-invoicing. Optional. Maintained explicitly: never derived from the "
+"TRN or from the Tax ID, and not synchronised between contacts."
+msgstr ""
+"رقم التعريف الضريبي الإماراتي، 10 أرقام: معرّف المشارك المستخدم في الفوترة "
+"الإلكترونية الإماراتية. اختياري. يُحدَّث صراحةً: لا يُشتق أبداً من رقم "
+"التسجيل الضريبي أو من الرقم الضريبي العام، ولا يُزامَن بين جهات الاتصال."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_trn
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_trn
+msgid ""
+"UAE VAT Tax Registration Number, 15 digits. Optional. Maintained explicitly:"
+" never derived from the TIN or from the Tax ID, and not synchronised between"
+" contacts."
+msgstr ""
+"رقم التسجيل الضريبي لضريبة القيمة المضافة الإماراتية، 15 رقماً. اختياري. "
+"يُحدَّث صراحةً: لا يُشتق أبداً من رقم التعريف الضريبي أو من الرقم الضريبي "
+"العام، ولا يُزامَن بين جهات الاتصال."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_type
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_legal_reg_type
+msgid ""
+"What kind of registration the Company ID (registry number) is. The official "
+"PINT-AE list."
+msgstr ""
+"نوع التسجيل الذي يمثله معرّف الشركة (رقم السجل). القائمة الرسمية لـ PINT-AE."

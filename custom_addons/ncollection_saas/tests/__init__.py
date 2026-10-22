@@ -25,3 +25,4 @@ from . import test_tenant_urls
 from . import test_my_companies
 from . import test_companion_provisioning
 from . import test_tenant_admin
+from . import test_gated_module_eligibility

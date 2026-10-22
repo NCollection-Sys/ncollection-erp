@@ -4,3 +4,4 @@ from . import test_uae_vat
 from . import test_uae_coa
 from . import test_uae_invoice
 from . import test_uae_currency
+from . import test_uae_master_data
