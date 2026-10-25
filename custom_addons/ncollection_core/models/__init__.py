@@ -6,6 +6,8 @@ from . import workspace_config
 from . import ir_ui_menu
 # #459: module management belongs to the platform, never to the tenant.
 from . import ir_module
+# Code-versus-database drift: why a valid code change can answer HTTP 500 (REGRESSIONS.md R-012b / R-037).
+from . import schema_drift
 from . import license_enforcement
 from . import ir_http
 from . import subscription_gate
@@ -37,3 +39,4 @@ from . import kpi
 from . import anomaly
 # P8-T10 error telemetry & structured incident logging (Issue #444)
 from . import error_log
+from . import screen_title

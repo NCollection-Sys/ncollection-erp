@@ -12,3 +12,5 @@ from . import test_tenant_identity
 from . import test_module_customization
 from . import test_platform_settings_card
 from . import test_companion_modules
+from . import test_system_branding_staff
+from . import test_screen_titles

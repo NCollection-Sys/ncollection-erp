@@ -14,6 +14,29 @@
         CSS declaration can ever be stored or emitted here.
     -->
 
+    <!-- SYSTEM colours (System Branding), in the SAME nc-color-* namespace the tenant uses: there is exactly one
+         token vocabulary. Emitted FIRST, so:
+           * inside a workspace a tenant that has chosen its own colours overrides them (the :root block below comes
+             later at equal specificity), and one that has chosen none inherits the system's;
+           * on a SYSTEM SURFACE (sign-in, reset, signup: body.o_nc_system_surface) the system colours are re-asserted
+             at body level, which wins for everything inside the page, so a tenant's colours cannot repaint them.
+         The values are strict 6-digit hex (ORM constraint on ncollection.product.branding and a validated fallback in
+         nc_brand()), so nothing that could break out of a CSS declaration can be emitted. -->
+    <template id="system_css_vars" inherit_id="web.layout" name="NCollection System Theme Variables" priority="14">
+        <xpath expr="//head" position="inside">
+            <t t-set="nc_system" t-value="nc_product_brand()"/>
+            <style type="text/css" id="nc_system_theme">:root {
+                --nc-color-primary: <t t-out="nc_system['primary_color']"/>;
+                --nc-color-secondary: <t t-out="nc_system['secondary_color']"/>;
+                }
+                body.o_nc_system_surface {
+                --nc-color-primary: <t t-out="nc_system['primary_color']"/>;
+                --nc-color-secondary: <t t-out="nc_system['secondary_color']"/>;
+                --nc-sidebar-active: <t t-out="nc_system['primary_color']"/>;
+                }</style>
+        </xpath>
+    </template>
+
     <!-- Colour tokens: injected on EVERY web.layout render (backend web client
          and the login/frontend layouts, which t-call web.frontend_layout ->
          web.layout). -->

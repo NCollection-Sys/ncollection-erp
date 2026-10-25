@@ -18,6 +18,7 @@ from odoo import SUPERUSER_ID, fields, http
 from odoo.exceptions import AccessDenied
 from odoo.http import request
 
+from ..app_url import app_url
 from ..models.platform_entry import CREDENTIAL_TYPE, PROXY_LOGIN_PREFIX, _URL_RE, token_digest
 
 _DOUBLE_SUBMIT_SECONDS = 15
@@ -106,7 +107,7 @@ class NCollectionPlatformEntry(http.Controller):
             'history.replaceState(null,"",location.pathname);'          # off the address bar and out of history
             'if(!m){location.replace(%s);return;}'
             'document.getElementById("t").value=m[1];document.getElementById("f").submit();})();</script>'
-            '</body></html>') % json.dumps('/odoo' if request.session.uid else '/web/login')
+            '</body></html>') % json.dumps(app_url() if request.session.uid else '/web/login')
         # No fragment (a reload, a bookmark, a replayed link): a signed-in browser goes on into the app, anyone else
         # to the ordinary login. Nothing is looked up and nothing is granted, so this opens no door.
         return request.make_response(html, headers=[
@@ -125,7 +126,7 @@ class NCollectionPlatformEntry(http.Controller):
             if self._already_entered_with(Entry, token):
                 # the same browser submitted the same link twice (a reload, a double click, a download manager): it
                 # is already signed in as this proxy, so go on; nothing new is granted
-                return request.redirect("/odoo", code=303)
+                return request.redirect(app_url(), code=303)
             _audit_platform_denial()
             return _denied("no open grant")
         return_url = entry.return_url or ''
@@ -139,7 +140,7 @@ class NCollectionPlatformEntry(http.Controller):
         # Remember where to return. The session itself is time-boxed (see ResUsers._compute_session_token).
         request.session['nc_platform_return'] = return_url
         _audit_platform_event(Entry.env, 'platform_entry', proxy)
-        response = request.redirect('/odoo', code=303)
+        response = request.redirect(app_url(), code=303)
         response.headers['Referrer-Policy'] = 'no-referrer'    # the one-time token was in the URL that led here
         return response
 

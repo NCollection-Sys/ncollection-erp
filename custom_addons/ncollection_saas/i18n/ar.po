@@ -25,8 +25,8 @@ msgstr "%(body)s\n\nلا يمكن لهذا الفشل أن يُصلح نفسه �
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/platform_entry.py:0
-msgid "%(company)s did not accept the entry (HTTP %(status)s). Its workspace modules are probably out of date: upgrade ncollection_core on it (Fleet Migration), then try again."
-msgstr "%(company)s لم تقبل الدخول (HTTP %(status)s). وحدات مساحة عملها على الأرجح قديمة: حدّث ncollection_core عليها (ترحيل الأسطول) ثم أعد المحاولة."
+msgid "%(company)s did not accept the entry (HTTP %(status)s). Its workspace is probably behind this platform's code. Upgrade every NCollection module named by the upgrade preflight for it, together in one run (never ncollection_core alone), then try again."
+msgstr "%(company)s لم تقبل الدخول (HTTP %(status)s). مساحة عملها على الأرجح أقدم من شيفرة هذه المنصة. حدّث معًا، في تشغيل واحد، كل وحدات NCollection التي يسمّيها فحص الترقية المسبق لها (وليس ncollection_core وحدها أبدًا)، ثم أعد المحاولة."
 
 #. module: ncollection_saas
 #. odoo-python
@@ -896,8 +896,8 @@ msgstr "لمستأجر تمت تهيئته قبل ضبط بلده. يُوطَّ�
 
 #. module: ncollection_saas
 #: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__fqdn
-msgid "Fully-qualified hostname, e.g. acme.ncollectionerp.com."
-msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.ncollectionerp.com."
+msgid "Fully-qualified hostname, e.g. acme.example.com."
+msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.example.com."
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
@@ -2603,6 +2603,7 @@ msgid "Specify at least one module to upgrade."
 msgstr "حدّد وحدة واحدة على الأقل لترقيتها."
 
 #. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__upgrading
 msgid "Upgrading"
 msgstr "قيد الترقية"
 
@@ -3213,3 +3214,270 @@ msgstr "يُغيَّر هنا الاسم والبريد الإلكتروني ل�
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
 msgid "Save"
 msgstr "حفظ"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_state
+msgid "Release state"
+msgstr "حالة الإصدار"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_detail
+msgid "Release detail"
+msgstr "تفاصيل الإصدار"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_checked_at
+msgid "Release checked at"
+msgstr "تاريخ فحص الإصدار"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_last_ok_at
+msgid "Last successful upgrade"
+msgstr "آخر ترقية ناجحة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_last_error
+msgid "Last failed upgrade"
+msgstr "آخر ترقية فاشلة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__unknown
+msgid "Not checked"
+msgstr "لم يُفحص"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__ready
+msgid "Ready"
+msgstr "جاهز"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__upgrade_required
+msgid "Upgrade required"
+msgstr "تتطلب ترقية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__upgrade_failed
+msgid "Upgrade failed"
+msgstr "فشلت الترقية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__blocked
+msgid "Blocked"
+msgstr "موقوف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__provisioning
+msgid "Provisioning"
+msgstr "قيد التهيئة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__unreachable
+msgid "Unreachable"
+msgstr "يتعذّر الوصول إليه"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
+msgid "Check release"
+msgstr "فحص الإصدار"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "%(company)s could not be held for the release (%(state)s)."
+msgstr "تعذّر إيقاف %(company)s من أجل الإصدار (%(state)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "Only a Platform Administrator can check a tenant's release state."
+msgstr "مسؤول المنصة وحده يستطيع فحص حالة إصدار المستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "Not ready for the current release"
+msgstr "غير جاهزة للإصدار الحالي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/platform_entry.py:0
+msgid "%(company)s cannot be entered right now: its workspace is not ready for the current release (%(state)s). No entry was issued. The Release section of the tenant shows why."
+msgstr "لا يمكن دخول %(company)s الآن: مساحة عملها غير جاهزة للإصدار الحالي (%(state)s). لم يُصدر أي دخول. يبيّن قسم الإصدار في المستأجر السبب."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Release validated: the modules match the code, the sign-in page answers, the workspace is open (READY)."
+msgstr "تم التحقق من الإصدار: الوحدات مطابقة للشيفرة، وصفحة تسجيل الدخول تستجيب، ومساحة العمل مفتوحة (جاهزة)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Release validation failed for '%(db)s': the new database is %(state)s.\n%(detail)s"
+msgstr "فشل التحقق من الإصدار لـ '%(db)s': قاعدة البيانات الجديدة في حالة %(state)s.\n%(detail)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Release validation failed for '%(db)s': its sign-in page answered HTTP %(code)s."
+msgstr "فشل التحقق من الإصدار لـ '%(db)s': أجابت صفحة تسجيل الدخول بـ HTTP %(code)s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/provisioning_job.py:0
+msgid "Release validation failed for '%(db)s': it could not be opened (%(state)s)."
+msgstr "فشل التحقق من الإصدار لـ '%(db)s': تعذّر فتحها (%(state)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Already compatible with the release: no module of this tenant is behind the code."
+msgstr "متوافقة مع الإصدار بالفعل: لا توجد وحدة لهذا المستأجر أقدم من الشيفرة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "cannot read the release state of %(db)s (%(state)s)."
+msgstr "تعذّرت قراءة حالة إصدار %(db)s (%(state)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "%(db)s needs an operator, not an upgrade:\n%(detail)s"
+msgstr "%(db)s تحتاج إلى مشغّل وليس إلى ترقية:\n%(detail)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "%(db)s needs %(mods)s upgraded together with the rest, and this migration does not include them."
+msgstr "%(db)s تحتاج إلى ترقية %(mods)s مع بقية الوحدات معًا، وهذا الترحيل لا يتضمنها."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "%(db)s was upgraded, but its release gate is %(state)s, not READY: it stays closed.\n%(detail)s"
+msgstr "تمت ترقية %(db)s، لكن بوابة الإصدار فيها في حالة %(state)s وليست جاهزة: تبقى مغلقة.\n%(detail)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration.py:0
+msgid ""
+"Release the platform database first: %(db)s is %(state)s for this release, "
+"not READY (%(detail)s). Upgrade exactly its required modules (%(mods)s), "
+"validate it and open it; no tenant was touched."
+msgstr ""
+"أصدِر قاعدة بيانات المنصة أولاً: %(db)s في حالة %(state)s لهذا الإصدار، "
+"وليست جاهزة (%(detail)s). قم بترقية الوحدات المطلوبة لها بالضبط (%(mods)s)، "
+"ثم تحقّق منها وافتحها؛ لم يُمسّ أي مستأجر."
+
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_fingerprint
+msgid "Database fingerprint"
+msgstr "بصمة قاعدة البيانات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_code_fingerprint
+msgid "Code release fingerprint"
+msgstr "بصمة إصدار الشيفرة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_required
+msgid "Modules to upgrade"
+msgstr "الوحدات المطلوب ترقيتها"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_action
+msgid "Required action"
+msgstr "الإجراء المطلوب"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
+msgid "<strong>Not ready for the current release</strong>"
+msgstr "<strong>غير جاهزة للإصدار الحالي</strong>"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid ""
+"The tenant answered HTTP %s to the release status (its code predates the "
+"release gate, or the service key does not match)."
+msgstr ""
+"أجاب المستأجر عن حالة الإصدار برمز HTTP %s (شيفرته أقدم من بوابة الإصدار، "
+"أو مفتاح الخدمة لا يطابق)."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
+msgid "Release"
+msgstr "الإصدار"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
+msgid "Database"
+msgstr "قاعدة البيانات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
+msgid "The Release section of the System tab shows the details."
+msgstr "يعرض قسم «الإصدار» في تبويب «النظام» التفاصيل."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "Upgrade exactly these modules together, in one run, through Fleet Migration (never all modules): %s. The tenant opens again only after the upgrade has been validated."
+msgstr "رقِّ هذه الوحدات بالضبط معًا، في تشغيل واحد، عبر ترحيل الأسطول (وليس كل الوحدات أبدًا): %s. لا يُفتح المستأجر مجددًا إلا بعد التحقق من الترقية."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "An upgrade is running or is being validated. Wait for Fleet Migration to validate and open the tenant; do not enter it until it is Ready."
+msgstr "هناك ترقية قيد التشغيل أو قيد التحقق. انتظر حتى يتحقق ترحيل الأسطول من المستأجر ويفتحه، ولا تدخله قبل أن يصبح جاهزًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "The last upgrade failed and the tenant is held. Read the last failed upgrade, correct the cause, then run the targeted upgrade again through Fleet Migration."
+msgstr "فشلت آخر ترقية والمستأجر موقوف. اقرأ آخر ترقية فاشلة وصحّح السبب، ثم أعد تشغيل الترقية المحددة عبر ترحيل الأسطول."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "Modules installed in this tenant are not deployed with the current code: %s. Deploy them, or remove them properly, before the tenant can open."
+msgstr "وحدات مثبتة لدى هذا المستأجر غير منشورة مع الشيفرة الحالية: %s. انشرها أو أزلها بالطريقة الصحيحة قبل أن يُفتح المستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "The database lacks a table or column the code declares. Run the targeted upgrade of the affected modules through Fleet Migration; never repair the schema by hand."
+msgstr "تفتقد قاعدة البيانات جدولًا أو عمودًا تعرّفه الشيفرة. شغّل الترقية المحددة للوحدات المتأثرة عبر ترحيل الأسطول، ولا تُصلح المخطط يدويًا أبدًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "An operator held this tenant. Lift the hold once the reason is resolved."
+msgstr "أوقف أحد المشغّلين هذا المستأجر. ارفع الإيقاف بعد معالجة السبب."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "The tenant is being provisioned and validated. It opens when validation passes."
+msgstr "يجري تجهيز المستأجر والتحقق منه، ويُفتح عند نجاح التحقق."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "The platform could not reach the tenant. Check its server, then check again."
+msgstr "تعذّر على المنصة الوصول إلى المستأجر. افحص خادمه ثم أعد الفحص."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "The tenant did not answer the release status: its code predates the release gate or its service key does not match. Check its deployment."
+msgstr "لم يُجب المستأجر عن حالة الإصدار: شيفرته أقدم من بوابة الإصدار أو مفتاح الخدمة لا يطابق. افحص نشره."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Refused: the pre-upgrade snapshot failed, so nothing was upgraded and the tenant was not touched. %s"
+msgstr "مرفوض: فشلت اللقطة السابقة للترقية، لذلك لم تتم ترقية أي شيء ولم يُمَس المستأجر. %s"

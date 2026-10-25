@@ -357,9 +357,12 @@ action = {
               action="action_workspace_teams" sequence="27"/>
     <menuitem id="menu_workspace_security" name="Security" parent="menu_workspace_settings_root"
               action="action_workspace_security" sequence="28"/>
-    <!-- The identity of the application itself (name, logos, favicon). Company branding is under Appearance / Company. -->
-    <menuitem id="menu_workspace_product_branding" name="Product Branding" parent="menu_workspace_settings_root"
-              action="ncollection_branding.action_product_branding" sequence="85"/>
+    <!-- The identity of the SYSTEM itself (name, logos, favicon, browser title, copyright, colours). A workspace's own
+         look is under Appearance and the company's identity under Company: three identities, three places. The
+         technical ids keep the names they were persisted under. -->
+    <menuitem id="menu_workspace_product_branding" name="System Branding" parent="menu_workspace_settings_root"
+              action="ncollection_branding.action_product_branding" sequence="85"
+              groups="ncollection_branding.group_system_branding_manager"/>
     <menuitem id="menu_workspace_system" name="System" parent="menu_workspace_settings_root"
               action="action_workspace_system" sequence="90"/>
 </odoo>

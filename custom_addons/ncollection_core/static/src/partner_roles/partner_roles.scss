@@ -1,0 +1,17 @@
+// Customer / Vendor badges (one component): the document forms (account_move_partner_roles.xml) and the partner
+// dropdown rows (partner_roles.js). Colours are the NCollection role tokens ONLY (ncollection_branding tokens.scss,
+// light; tokens.dark.scss, dark), which web.assets_backend loads before this sheet. No colour value lives here.
+.badge.o_nc_role_badge {
+    font-weight: var(--nc-font-weight-semibold);
+    border: 1px solid currentColor;
+
+    &.o_nc_role_customer {
+        color: var(--nc-color-customer);
+        background-color: var(--nc-color-customer-soft);
+    }
+
+    &.o_nc_role_vendor {
+        color: var(--nc-color-vendor);
+        background-color: var(--nc-color-vendor-soft);
+    }
+}

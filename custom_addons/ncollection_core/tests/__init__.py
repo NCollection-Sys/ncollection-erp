@@ -37,3 +37,8 @@ from . import test_platform_audit
 from . import test_workspace_admin
 from . import test_admin_service
 from . import test_forced_password_change
+from . import test_schema_drift
+from . import test_system_branding_boundary
+from . import test_release_gate
+from . import test_release_gate_cron
+from . import test_app_url

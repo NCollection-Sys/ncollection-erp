@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """No vendor product name or vendor link in what a user or a customer is shown, in the data modules ship.
 
-The product name comes from Product Branding. Technical references (the `/odoo/...` URL prefix, model names, the
+The product name comes from System Branding. Technical references (the `/odoo/...` URL prefix, model names, the
 `odoo` package) are not wording and are not asserted against.
 """
 import os
@@ -90,7 +90,7 @@ class TestVendorWording(TransactionCase):
 
     def test_the_two_title_parameters_are_not_read_by_any_product_code(self):
         """`web.base.title` and `database.show_name` hold the default product name as data, but nothing in the
-        product or in the web client reads them: the tab title and every page come from Product Branding. This keeps
+        product or in the web client reads them: the tab title and every page come from System Branding. This keeps
         it that way (a reader would show a name that does not follow the configured one)."""
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         offenders = []
@@ -105,7 +105,7 @@ class TestVendorWording(TransactionCase):
                     text = handle.read()
                 if 'web.base.title' in text or 'database.show_name' in text:
                     offenders.append(os.path.relpath(path, root))
-        self.assertFalse(offenders, 'these now read a parameter that does not follow Product Branding: %s' % offenders)
+        self.assertFalse(offenders, 'these now read a parameter that does not follow System Branding: %s' % offenders)
 
     def test_a_product_name_that_contains_the_vendor_word_never_makes_a_name_grow(self):
         brand = self.env['ncollection.product.branding']._nc_record()

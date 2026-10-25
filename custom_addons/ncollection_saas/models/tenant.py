@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 # database_status states in which the tenant's Postgres DB exists (or is being
 # built), so its name is fixed. The name IS the DB + subdomain identity
 # (tenant key === subdomain === database name under db_filter=^%d$).
-_NAME_LOCKED_STATES = ('provisioning', 'ready')
+_NAME_LOCKED_STATES = ('provisioning', 'validating', 'ready')
 
 # Names a tenant DB must never take — in two tiers:
 #
@@ -355,7 +355,7 @@ class Tenant(models.Model):
         both an administrator's Reject and the automatic expiry, so the two can
         never disagree about what rejecting means."""
         self.ensure_one()
-        if self.database_status in ('provisioning', 'ready'):
+        if self.database_status in ('provisioning', 'validating', 'ready'):
             raise UserError(self.env._(
                 "'%s' already has a workspace; it cannot be rejected.",
                 self.company_name))
@@ -431,7 +431,7 @@ class Tenant(models.Model):
                 "'%s' was rejected. Reopen the request before provisioning.", name))
         if self.database_status == 'ready':
             return self.env._("'%s' is already provisioned; nothing was created.", name)
-        if self.database_status == 'provisioning':
+        if self.database_status in ('provisioning', 'validating'):
             return self.env._("'%s' is already being provisioned.", name)
         if not self.plan_id:
             raise UserError(self.env._(

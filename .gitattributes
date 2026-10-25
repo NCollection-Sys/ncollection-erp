@@ -1,0 +1,4 @@
+# Shell scripts run inside the Linux containers through the bind mount (backup engine, release tooling, suites).
+# A Windows checkout with core.autocrlf would hand them CRLF ("set: pipefail\r: invalid option") - it broke the
+# Fleet Migration pre-upgrade snapshot on 2026-10-25. Always LF, on every platform.
+*.sh text eol=lf

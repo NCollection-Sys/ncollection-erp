@@ -1038,5 +1038,208 @@ class TestRunnerTimeoutExceedsSubprocessCap(GuardTestCase):
         self.assertEqual(self._run(), [])
 
 
+# ---------------------------------------------------------------------------
+# R-038 - the tenant domain is configuration, never a literal in anything that runs
+# ---------------------------------------------------------------------------
+class TestNoHardcodedTenantDomain(GuardTestCase):
+    OLD = "ncollectionerp.com"
+    DEV = "ncollection.localhost"
+
+    def _run(self):
+        findings = []
+        invariants.rule_no_hardcoded_tenant_domain(findings)
+        return findings
+
+    def test_the_old_production_domain_in_python_code_is_refused(self):
+        self.write("custom_addons/m/models/a.py", f"URL = 'https://x.{self.OLD}'\n")
+        found = self._run()
+        self.assertEqual(len(found), 1)
+        self.assertIn("retired production domain", found[0])
+
+    def test_the_old_production_domain_in_the_prod_edge_or_compose_is_refused(self):
+        self.write("nginx/conf.d/ncollection.prod.conf", f"server {{ server_name .{self.OLD}; }}\n")
+        self.write("docker-compose.prod.yml", f"services:\n  n:\n    environment:\n      DOMAIN: {self.OLD}\n")
+        self.assertEqual(len(self._run()), 2)
+
+    def test_the_old_production_domain_in_xml_data_and_views_is_refused(self):
+        self.write("custom_addons/m/views/v.xml", f'<odoo><field name="x" placeholder="{self.OLD}"/></odoo>\n')
+        self.assertEqual(len(self._run()), 1)
+
+    def test_a_comment_may_explain_the_history(self):
+        self.write("custom_addons/m/models/a.py", f"# this used to be {self.OLD}\nX = 1\n")
+        self.write("custom_addons/m/views/v.xml", f"<odoo><!-- was {self.OLD} --></odoo>\n")
+        self.write("nginx/conf.d/c.conf", f"# was {self.OLD}\nserver {{}}\n")
+        self.write("config/odoo.prod.conf", f"; was {self.OLD}\n[options]\n")
+        self.assertEqual(self._run(), [])
+
+    def test_a_docstring_is_code_not_a_comment(self):
+        self.write("custom_addons/m/models/a.py", f'"""Served on {self.OLD}."""\nX = 1\n')
+        self.assertEqual(len(self._run()), 1)
+
+    def test_tests_migrations_translations_and_docs_are_out_of_scope(self):
+        for rel in ("custom_addons/m/tests/test_a.py", "custom_addons/m/migrations/1.0/post-migrate.py",
+                    "custom_addons/m/i18n/ar.po", "docs/markdown/x.md"):
+            self.write(rel, f"X = '{self.OLD}'\n")
+        self.assertEqual(self._run(), [])
+
+    def test_the_development_domain_in_a_production_facing_file_is_refused(self):
+        self.write("docker-compose.prod.yml", f"services:\n  o:\n    environment:\n      NC_BASE_DOMAIN: {self.DEV}\n")
+        self.write("custom_addons/m/models/a.py", f"BASE = '{self.DEV}'\n")
+        self.assertEqual(len(self._run()), 2)
+
+    def test_the_development_domain_is_fine_in_development_files(self):
+        self.write("docker-compose.yml",
+                   f"services:\n  o:\n    environment:\n      NC_BASE_DOMAIN: ${{NC_BASE_DOMAIN:-{self.DEV}}}\n")
+        self.write("nginx/conf.d/ncollection.dev.conf", f"return 302 http://{self.DEV}$request_uri;\n")
+        self.write("scripts/dev/pdf_hosts.sh", f"BASE_DOMAIN=\"${{BASE_DOMAIN:-{self.DEV}}}\"\n")
+        self.write("custom_addons/m/scripts/provisioning/verify_x.sh", f"B=\"${{X:-{self.DEV}}}\"\n")
+        self.assertEqual(self._run(), [])
+
+    def test_a_listed_operator_hint_may_name_it_and_a_stale_listing_is_refused(self):
+        listed = next(iter(invariants.DEV_DOMAIN_HINTS))
+        self.write(listed, f"MESSAGE = 'for example {self.DEV} for local development'\n")
+        self.assertEqual(self._run(), [])
+        self.write(listed, "MESSAGE = 'no domain named here any more'\n")
+        found = self._run()
+        self.assertEqual(len(found), 1)
+        self.assertIn("stale exemption", found[0])
+
+    def test_the_real_repo_is_clean(self):
+        invariants.REPO_ROOT = self._real_root
+        self.assertEqual(self._run(), [])
+
+
+class TestReleaseToolingCarriesNoDbCredentials(GuardTestCase):
+    """The upgrade preflight / rehearsal run against production: their connection is the environment (review M5)."""
+
+    CLEAN = ('#!/usr/bin/env bash\n'
+             '# the old form was --db_password=odoo, kept in a comment only\n'
+             'in_db(){ "${DC[@]}" exec -T db sh -c \'export PGUSER="$POSTGRES_USER"; exec "$@"\' _ "$@"; }\n'
+             'in_db psql -d postgres -Atc "SELECT 1"\n'
+             'export PGHOST="$HOST" PGUSER="$USER" PGPASS' 'WORD="$PASSWORD"\n'   # split for the secrets scan
+             'psql -U "$POSTGRES_USER" -d x -c "SELECT 1"\n')
+
+    def _run(self):
+        findings = []
+        invariants.rule_release_tooling_carries_no_db_credentials(findings)
+        return findings
+
+    def test_environment_derived_credentials_are_clean(self):
+        self.write("scripts/upgrade/rehearse_upgrade.sh", self.CLEAN)
+        self.write("scripts/upgrade/preflight_versions.py", "connect(dbname=db, user=user, password=password)\n")
+        self.assertEqual(self._run(), [])
+
+    def test_a_literal_credential_is_refused_in_each_form(self):
+        for line in ('DBARGS=(--db_host=db --db_user=odoo --db_password=odoo)\n',
+                     'odoo -d x --db_password secret -u y\n',
+                     'PGPASSWORD=odoo psql -d x\n',
+                     '"${DC[@]}" exec -T db psql -U odoo -d postgres -c "SELECT 1"\n',
+                     'dropdb -Uodoo x\n',
+                     "connect(dbname=db, pass" + "word='odoo')\n"):   # split: the secrets scan reads this file too
+            with self.subTest(line=line):
+                self.write("scripts/upgrade/rehearse_upgrade.sh", self.CLEAN + line)
+                found = self._run()
+                self.assertEqual(len(found), 1, found)
+                self.assertIn("review M5", found[0])
+
+    def test_every_release_tool_is_covered(self):
+        for rel in invariants.RELEASE_TOOLING:
+            with self.subTest(rel=rel):
+                self.write(rel, "x --db_password=odoo\n")
+        self.assertEqual(len(self._run()), len(invariants.RELEASE_TOOLING))
+
+    def test_the_real_repo_is_clean(self):
+        invariants.REPO_ROOT = self._real_root
+        self.assertEqual(self._run(), [])
+
+
+class TestProdOdooIsNotPublished(GuardTestCase):
+    """Odoo trusts proxy headers in production, so nginx must be the only way in."""
+
+    OK = ("services:\n  db:\n    ports: !reset []\n\n  odoo:\n    command: odoo -c x\n"
+          "    # why\n    ports: !reset []\n    environment:\n      A: b\n\n  nginx:\n    ports:\n      - \"80:80\"\n")
+
+    def _run(self):
+        findings = []
+        invariants.rule_prod_odoo_is_not_published(findings)
+        return findings
+
+    def test_an_unpublished_odoo_is_clean(self):
+        self.write("docker-compose.prod.yml", self.OK)
+        self.assertEqual(self._run(), [])
+
+    def test_an_odoo_that_keeps_the_base_files_port_is_refused(self):
+        self.write("docker-compose.prod.yml",
+                   self.OK.replace("    ports: !reset []\n    environment", "    environment"))
+        found = self._run()
+        self.assertEqual(len(found), 1)
+        self.assertIn("unpublish", found[0])
+
+    def test_resetting_only_postgres_is_not_enough(self):
+        self.write("docker-compose.prod.yml", "services:\n  db:\n    ports: !reset []\n  odoo:\n    command: x\n")
+        self.assertEqual(len(self._run()), 1)
+
+    def test_a_missing_odoo_override_is_refused(self):
+        self.write("docker-compose.prod.yml", "services:\n  db:\n    ports: !reset []\n")
+        self.assertEqual(len(self._run()), 1)
+
+    def test_the_real_repo_passes(self):
+        invariants.REPO_ROOT = self._real_root
+        self.assertEqual(self._run(), [])
+
+
+class TestOdooProcessesLoadTheReleaseGate(GuardTestCase):
+    """`--load` replaces server_wide_modules: a process without ncollection_core has no release gate at all."""
+
+    CONF = "[options]\nserver_wide_modules = base,web,ncollection_core\n"
+    RUNNER = ("services:\n"
+              "  provisioning-runner:\n"
+              "    image: odoo:19\n"
+              "    command: >\n"
+              "      odoo -c /etc/odoo/odoo.conf\n"
+              "           --load=%s\n"
+              "           --workers=2 --max-cron-threads=1 -d ncollection\n")
+
+    def _run(self):
+        findings = []
+        invariants.rule_odoo_processes_load_the_release_gate(findings)
+        return findings
+
+    def test_the_gate_in_every_config_and_every_load_is_clean(self):
+        self.write("config/odoo.conf", self.CONF)
+        self.write("config/odoo.prod.conf", self.CONF)
+        self.write("docker-compose.saas.yml", self.RUNNER % "base,web,queue_job,ncollection_core")
+        self.write("docker-compose.json.yml", 'services:\n  w:\n    image: odoo:19\n'
+                                              '    command: ["odoo", "--load=base,web,ncollection_core"]\n')
+        self.assertEqual(self._run(), [])
+
+    def test_a_load_without_the_gate_is_flagged_with_its_service(self):
+        """The shape the provisioning runner shipped with."""
+        self.write("config/odoo.conf", self.CONF)
+        self.write("docker-compose.saas.yml", self.RUNNER % "base,web,queue_job")
+        findings = self._run()
+        self.assertEqual(len(findings), 1, findings)
+        self.assertIn("provisioning-runner", findings[0])
+        self.assertIn("--load=base,web,queue_job", findings[0])
+
+    def test_a_config_without_the_gate_is_flagged(self):
+        self.write("config/odoo.conf", "[options]\nserver_wide_modules = base,web\n")
+        self.write("config/odoo.prod.conf", "[options]\nworkers = 4\n")
+        findings = self._run()
+        self.assertEqual(len(findings), 2, findings)
+        self.assertTrue(all("server_wide_modules" in f for f in findings))
+
+    def test_a_commented_load_and_a_lookalike_module_are_not_the_gate(self):
+        self.write("config/odoo.conf", self.CONF)
+        self.write("docker-compose.x.yml", self.RUNNER % "base,web,ncollection_core_extra")
+        self.assertEqual(len(self._run()), 1, "a prefix of the module name is not the module")
+
+    def test_the_json_array_form_with_load_as_its_own_element_is_read(self):
+        self.write("config/odoo.conf", self.CONF)
+        self.write("docker-compose.x.yml", 'services:\n  w:\n    image: odoo:19\n'
+                                           '    command: ["odoo", "--load", "base,web"]\n')
+        self.assertEqual(len(self._run()), 1)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

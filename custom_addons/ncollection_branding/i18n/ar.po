@@ -118,6 +118,7 @@ msgstr "الاتصال بالدعم"
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -141,6 +142,7 @@ msgstr "نسيت كلمة المرور؟"
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_company__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_users__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -850,20 +852,6 @@ msgstr "%(label)s كبير جدًا (الحد الأقصى %(px)s بكسل في 
 #. module: ncollection_branding
 #. odoo-python
 #: code:addons/ncollection_branding/models/product_branding.py:0
-msgid ""
-"%(label)s must be a %(kinds)s image (the file's content is checked, not its "
-"name)."
-msgstr "يجب أن يكون %(label)s صورة من نوع %(kinds)s (يُفحص محتوى الملف وليس اسمه)."
-
-#. module: ncollection_branding
-#. odoo-python
-#: code:addons/ncollection_branding/models/product_branding.py:0
-msgid "%s is not a readable image."
-msgstr "%s ليست صورة قابلة للقراءة."
-
-#. module: ncollection_branding
-#. odoo-python
-#: code:addons/ncollection_branding/models/product_branding.py:0
 msgid "%s is not a valid image file."
 msgstr "%s ليس ملف صورة صالحًا."
 
@@ -871,11 +859,6 @@ msgstr "%s ليس ملف صورة صالحًا."
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
 msgid ". All rights reserved."
 msgstr ". جميع الحقوق محفوظة."
-
-#. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "Administration and platform screens. Empty: the product logo."
-msgstr "شاشات الإدارة والمنصة. إذا تُرك فارغًا: شعار المنتج."
 
 #. module: ncollection_branding
 #: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__admin_logo
@@ -935,49 +918,9 @@ msgid "Nc Product Name"
 msgstr "اسم المنتج"
 
 #. module: ncollection_branding
-#. odoo-python
-#: code:addons/ncollection_branding/models/product_branding.py:0
-msgid "Only an administrator can change the product branding."
-msgstr "المسؤول وحده يستطيع تغيير هوية المنتج."
-
-#. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
 msgid "Optional dedicated logos"
 msgstr "شعارات مخصصة اختيارية"
-
-#. module: ncollection_branding
-#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__admin_logo
-msgid ""
-"Optional. The logo on the administration and platform screens; empty = the "
-"product logo."
-msgstr "اختياري. الشعار على شاشات الإدارة والمنصة؛ الفارغ = شعار المنتج."
-
-#. module: ncollection_branding
-#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__login_logo
-msgid ""
-"Optional. The logo on the sign-in and password pages; empty = the product "
-"logo."
-msgstr "اختياري. الشعار على صفحات تسجيل الدخول وكلمة المرور؛ الفارغ = شعار المنتج."
-
-#. module: ncollection_branding
-#. odoo-python
-#: code:addons/ncollection_branding/models/product_branding.py:0
-#: model:ir.actions.server,name:ncollection_branding.action_product_branding
-#: model:ir.ui.menu,name:ncollection_branding.menu_product_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "Product Branding"
-msgstr "هوية المنتج"
-
-#. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__logo
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "Product logo"
-msgstr "شعار المنتج"
-
-#. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__name
-msgid "Product name"
-msgstr "اسم المنتج"
 
 #. module: ncollection_branding
 #. odoo-javascript
@@ -989,11 +932,6 @@ msgstr "انتهت الجلسة"
 #: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__short_name
 msgid "Short name"
 msgstr "الاسم المختصر"
-
-#. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "Sign-in and password pages. Empty: the product logo."
-msgstr "صفحات تسجيل الدخول وكلمة المرور. إذا تُرك فارغًا: شعار المنتج."
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__logo
@@ -1010,22 +948,9 @@ msgid ""
 msgstr "أيقونة تبويب المتصفح (PNG أو ICO، ويفضّل مربعة 32×32 أو أكبر). الفارغ = الأيقونة المرفقة مع المنتج."
 
 #. module: ncollection_branding
-#. odoo-python
-#: code:addons/ncollection_branding/models/product_branding.py:0
-msgid ""
-"The product branding cannot be deleted: clear its fields for the defaults."
-msgstr "لا يمكن حذف هوية المنتج: أفرغ حقولها لاستخدام القيم الافتراضية."
-
-#. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__short_name
 msgid "The short form where space is tight (offline page, notices)."
 msgstr "الصيغة المختصرة حيث تضيق المساحة (صفحة عدم الاتصال، الإشعارات)."
-
-#. module: ncollection_branding
-#. odoo-python
-#: code:addons/ncollection_branding/models/product_branding.py:0
-msgid "There is only one product branding."
-msgstr "توجد هوية منتج واحدة فقط."
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
@@ -1096,3 +1021,197 @@ msgstr "غير مسموح لك بضبط ختم لهذه الأنواع: %(kinds)
 #: code:addons/ncollection_branding/models/document_stamp.py:0
 msgid "You are not allowed to put a stamp in that company."
 msgstr "غير مسموح لك بوضع ختم في تلك الشركة."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "'%(field)s' is too long (at most %(max)s characters)."
+msgstr "'%(field)s' طويل جدًا (الحد الأقصى %(max)s حرفًا)."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "'%s' cannot contain control characters."
+msgstr "لا يمكن أن يحتوي '%s' على أحرف تحكّم."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__admin_logo
+msgid "Administration / system logo"
+msgstr "شعار الإدارة / النظام"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Administration and platform screens. Empty: the system logo."
+msgstr "شاشات الإدارة والمنصة. إذا تُرك فارغًا: شعار النظام."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__browser_title
+msgid "Browser title"
+msgstr "عنوان المتصفح"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__copyright_text
+msgid "Copyright / ownership text"
+msgstr "نص حقوق النشر / الملكية"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Empty: the system name"
+msgstr "فارغ: اسم النظام"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "Only platform staff can change the system branding."
+msgstr "طاقم المنصة وحده يستطيع تغيير هوية النظام."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/system_branding_grant.py:0
+msgid ""
+"Only platform staff can give the System Branding Manager right: it changes "
+"the identity of the system, not of this workspace."
+msgstr ""
+"طاقم المنصة وحده يستطيع منح صلاحية مدير هوية النظام: فهي تغيّر هوية النظام، "
+"لا هوية مساحة العمل هذه."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__copyright_text
+msgid "Optional. The line under the sign-in page, e.g. '© 2026 Acme Cloud Ltd. All rights reserved.' Empty: '© <year> <system name>. All rights reserved.'"
+msgstr "اختياري. السطر أسفل صفحة تسجيل الدخول، مثل '© 2026 Acme Cloud Ltd. All rights reserved.' الفارغ: '© <السنة> <اسم النظام>. All rights reserved.'"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__admin_logo
+msgid "Optional. The logo on the administration and platform screens; empty = the system logo."
+msgstr "اختياري. الشعار على شاشات الإدارة والمنصة؛ الفارغ = شعار النظام."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__login_logo
+msgid "Optional. The logo on the sign-in and password pages; empty = the system logo."
+msgstr "اختياري. الشعار على صفحات تسجيل الدخول وكلمة المرور؛ الفارغ = شعار النظام."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__browser_title
+msgid "Optional. The text of the browser tab. Empty: the system name."
+msgstr "اختياري. نص تبويب المتصفح. الفارغ: اسم النظام."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Ownership"
+msgstr "الملكية"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Shown under the sign-in page. Empty: © the\n                                current year and the system name."
+msgstr "يظهر أسفل صفحة تسجيل الدخول. الفارغ: © السنة الحالية واسم النظام."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "Sign-in and password pages. Empty: the system logo."
+msgstr "صفحات تسجيل الدخول وكلمة المرور. الفارغ: شعار النظام."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+#: model:ir.actions.server,name:ncollection_branding.action_product_branding
+#: model:ir.ui.menu,name:ncollection_branding.menu_product_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "System Branding"
+msgstr "هوية النظام"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_ncollection_product_branding
+msgid "System branding"
+msgstr "هوية النظام"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "System colours"
+msgstr "ألوان النظام"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__logo
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "System logo"
+msgstr "شعار النظام"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__name
+msgid "System name"
+msgstr "اسم النظام"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__primary_color
+msgid "System primary colour"
+msgstr "اللون الأساسي للنظام"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__secondary_color
+msgid "System secondary colour"
+msgstr "اللون الثانوي للنظام"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "The system branding cannot be deleted: clear its fields for the defaults."
+msgstr "لا يمكن حذف هوية النظام: أفرغ حقولها لاستخدام القيم الافتراضية."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__secondary_color
+msgid "The system's accent colour (links and highlights on the same surfaces). 6-digit hex, e.g. #2D7AB7."
+msgstr "لون النظام الثانوي (الروابط والتمييز في الأسطح نفسها). لون سداسي (Hex)، مثل #2D7AB7."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__logo
+msgid "The system's logo. Also used for the login page and the administration screens unless they have their own below. NOT the company logo of a tenant."
+msgstr "شعار النظام. يُستخدم أيضًا في صفحة تسجيل الدخول وشاشات الإدارة ما لم يكن لها شعار خاص أدناه. وهو ليس شعار شركة المستأجر."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__primary_color
+msgid "The system's main colour: the sign-in page, error pages, e-mail frame and the browser's theme colour, and the workspace colour wherever a tenant has not chosen its own. 6-digit hex, e.g. #1F5F8F."
+msgstr "اللون الرئيسي للنظام: صفحة تسجيل الدخول وصفحات الخطأ وإطار البريد ولون سمة المتصفح، ولون مساحة العمل حيث لم يختر المستأجر لونه. لون سداسي (Hex)، مثل #1F5F8F."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "The system's own colours: the sign-in page, error\n                                pages, e-mail frame and the browser's theme colour. A workspace that has not chosen\n                                its own colours uses these too; a workspace's colours never repaint these pages."
+msgstr "ألوان النظام الخاصة: صفحة تسجيل الدخول وصفحات الخطأ وإطار البريد ولون سمة المتصفح. مساحة العمل التي لم تختر ألوانها تستخدم هذه الألوان أيضًا؛ أما ألوان مساحة العمل فلا تعيد صبغ هذه الصفحات."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "There is only one system branding."
+msgstr "توجد هوية نظام واحدة فقط."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "This is the identity of the <strong>system</strong>: its name, logo, icon, browser title,\n                        copyright line and colours, as seen on the sign-in page, error pages, e-mails and the browser\n                        tab. It is separate from <strong>tenant branding</strong> (the colours and login background of\n                        a workspace) and from the <strong>company identity</strong> (the legal name, logo and stamp\n                        printed on its invoices); neither can change this and this cannot change them. Changes apply at\n                        the next page load."
+msgstr "هذه هي هوية <strong>النظام</strong>: اسمه وشعاره وأيقونته وعنوان المتصفح وسطر حقوق النشر وألوانه، كما تظهر في صفحة تسجيل الدخول وصفحات الخطأ والرسائل الإلكترونية وتبويب المتصفح. وهي منفصلة عن <strong>هوية المستأجر</strong> (ألوان مساحة العمل وخلفية تسجيل الدخول) وعن <strong>هوية الشركة</strong> (الاسم القانوني والشعار والختم المطبوعة على فواتيرها)؛ فلا يستطيع أي منهما تغيير هذه الهوية ولا تغيّرها هي. تُطبَّق التغييرات عند تحميل الصفحة التالي."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__name
+msgid "What the system is called: browser title (unless one is set below), sign-in page, error pages, e-mails. NOT the name of a tenant company."
+msgstr "اسم النظام: عنوان المتصفح (ما لم يُحدَّد عنوان أدناه) وصفحة تسجيل الدخول وصفحات الخطأ والرسائل الإلكترونية. وهو ليس اسم شركة المستأجر."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+msgid "e.g. © 2026 Acme Cloud Ltd. All rights reserved."
+msgstr "مثال: © 2026 Acme Cloud Ltd. All rights reserved."
+
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "%(label)s must be a %(kinds)s image%(found)s (the file's content is checked, not its name)."
+msgstr "يجب أن يكون %(label)s صورة من نوع %(kinds)s%(found)s (يُفحص محتوى الملف وليس اسمه)."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "; this file is %s"
+msgstr "؛ وهذا الملف من نوع %s"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "%(label)s could not be read as a %(kind)s image: the file is damaged or incomplete."
+msgstr "تعذّرت قراءة %(label)s كصورة %(kind)s: الملف تالف أو غير مكتمل."

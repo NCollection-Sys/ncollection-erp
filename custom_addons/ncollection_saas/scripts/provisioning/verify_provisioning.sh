@@ -187,6 +187,28 @@ echo "$cred" | grep -q "CRED True False True" \
     AND acc.name='group_account_user' AND acc.res_id=r.hid")" = "1" ] \
   && ok "R-014: Accountant role linked to account.group_account_user post-install" \
   || no "R-014: accountant role NOT linked to the account group"
+
+# R-037 / Company Entry: a FRESHLY provisioned tenant must START consistent with the code that provisioned it: no
+# module recorded behind its code, no model without its table, no stored field without its column. Provisioning
+# installs in a subprocess and the platform's first call into the tenant then goes through the long-running server;
+# a tenant that began behind would answer HTTP 500 on that very first request (how Company Entry failed on Atlas-eg).
+drift="$("${DC[@]}" exec -T odoo odoo shell -d provclient --no-http --log-level=error "${DBARGS[@]}" \
+  < scripts/upgrade/schema_drift.py 2>/dev/null | grep -a '^SCHEMA_DRIFT=' | head -1 | tr -d '\r' || true)"
+[ "$drift" = "SCHEMA_DRIFT=0" ] \
+  && ok "R-037: the freshly provisioned tenant starts with no module behind its code and no missing table or column" \
+  || no "R-037: the freshly provisioned tenant is already behind its code or missing schema ($drift)"
+# Its address is the one the configured base domain builds: what the welcome mail links to and Company Entry uses.
+ORIGIN_PY="$(cat <<'PY'
+tenant = env['ncollection.tenant'].search([('database_name', '=', 'provclient')], limit=1)
+print('ORIGIN=%s' % (tenant._nc_public_origin() or ''))
+PY
+)"
+want="$(printf '%s\n' "$ORIGIN_PY" | "${DC[@]}" exec -T odoo odoo shell -d "$PLATFORM_DB" --no-http --log-level=error \
+  "${DBARGS[@]}" 2>/dev/null | grep -a '^ORIGIN=' | head -1 | tr -d '\r' || true)"
+base="$(tq "$PLATFORM_DB" "SELECT portal_url FROM ncollection_tenant WHERE database_name='provclient'")"
+[ -n "$base" ] && [ "ORIGIN=$base" = "$want" ] \
+  && ok "the tenant's recorded portal URL is the canonical builder's address for the configured base domain" \
+  || no "portal URL '$base' differs from the canonical builder ('$want')"
 hr
 
 echo "== COMPANION MODULES: cheque printing follows Accounting (real provisioning, real databases) =="

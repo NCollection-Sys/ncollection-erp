@@ -33,7 +33,9 @@ database safely. Implements ARCHITECTURE_DATA_PLATFORM §7. Lives in
 *Settings → Technical → NCollection SaaS → Fleet Migrations → New*
 (needs the **Settings / `base.group_system`** group.)
 
-1. **Modules** — comma-separated technical names, e.g. `ncollection_core`.
+1. **Modules** — comma-separated technical names. **List every module the tenant is behind on, together** (`make upgrade-preflight db=<tenant>` names them), e.g.
+   `ncollection_core,ncollection_branding,ncollection_auth`: upgrading `ncollection_core` alone aborts when its dependencies are also behind
+   (`ParseError`, measured on a copy of a real tenant). Rehearse first (`make upgrade-rehearse db=<tenant>`). See `RUNBOOK_RELEASE_UPGRADE.md`.
 2. **Wave size** — tenants per rolling wave (default 5).
 3. **Canary tenants** — pick the internal demo tenant + 2–3 volunteers.
 4. **Dry run** — leave ON for the first pass: it logs the intended `-u` for every

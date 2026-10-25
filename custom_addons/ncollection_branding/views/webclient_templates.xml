@@ -2,11 +2,11 @@
 <odoo>
 
     <!-- Browser title + favicon (existing, P1-T16 groundwork) -->
-    <template id="layout" inherit_id="web.layout" name="Product Branding: browser title and favicon">
+    <template id="layout" inherit_id="web.layout" name="System Branding: browser title and favicon">
         <xpath expr="//head/title" position="replace">
-            <title t-out="nc_product_brand()['name']"/>
+            <title t-out="nc_product_brand()['title']"/>
         </xpath>
-        <!-- Favicon: configured in Product Branding, versioned in the URL so a change is never served from a cache -->
+        <!-- Favicon: configured in System Branding, versioned in the URL so a change is never served from a cache -->
         <xpath expr="//head/link[@rel='shortcut icon']" position="replace">
             <link type="image/x-icon" rel="shortcut icon" t-att-href="nc_product_brand()['favicon_url']"/>
         </xpath>
@@ -19,7 +19,7 @@
     <template id="webclient_bootstrap_branded" inherit_id="web.webclient_bootstrap"
               name="NCollection Bootstrap Branding">
         <xpath expr="//meta[@name='theme-color']" position="attributes">
-            <attribute name="content">#17375E</attribute>
+            <attribute name="t-att-content">nc_product_brand()['primary_color']</attribute>
         </xpath>
         <xpath expr="//link[@rel='apple-touch-icon']" position="attributes">
             <attribute name="t-att-href">nc_product_brand()['favicon_url']</attribute>

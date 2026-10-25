@@ -285,7 +285,8 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 16  # 16th: rule_runner_timeout_exceeds_subprocess_cap
+RULE_COUNT = 20  # 17th, 18th: tenant domain, prod Odoo unpublished; 19th: release tooling has no DB credential;
+#                  20th: every Odoo process loads the release gate server-wide
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -1663,6 +1664,194 @@ def rule_prod_admin_passwd_is_not_a_secret(out: list[str]) -> None:
                            f"known development password {known!r}.")
 
 
+# R-038 - the tenant domain is CONFIGURATION, never a literal in anything that runs.
+#
+# Tenant addresses are <subdomain>.<base domain>, the base domain comes from SaaS Settings / NC_BASE_DOMAIN / DOMAIN
+# (docs/markdown/TENANT_URLS.md), and the production edge is a template rendered from DOMAIN. Two literals break
+# that, and both have shipped: the OLD production domain (a local workspace advertised itself as
+# test11.<old domain>, and the prod nginx config could only serve that one domain), and the development domain
+# inside production-facing files. The first is refused everywhere that runs; the second only in production-facing
+# paths, because development defaults legitimately name it.
+OLD_PRODUCTION_DOMAIN = "ncollectionerp.com"
+DEV_DOMAIN = "ncollection.localhost"
+DOMAIN_SCAN_SUFFIXES = {".py", ".xml", ".js", ".scss", ".sh", ".conf", ".yml", ".yaml", ".j2", ".template", ".example"}
+DOMAIN_SKIP_DIRS = {"tests", "migrations", "i18n", "__pycache__", "static_description", "docs", "demo", "e2e",
+                    "manual", "playwright-report", "test-results"} | SKIP_PARTS
+# Production-facing files: the development domain must not appear in them at all.
+PROD_FACING_FILES = ("docker-compose.prod.yml", "config/odoo.prod.conf", "nginx/conf.d/ncollection.prod.conf")
+# Runtime files that name the development domain only inside an operator-facing hint (path -> why). A stale entry
+# (the file no longer names it) is itself a finding, so this list cannot rot.
+DEV_DOMAIN_HINTS = {
+    "custom_addons/ncollection_subscription/models/tenant.py": "the 'base domain is not configured' message",
+    "custom_addons/ncollection_saas/models/res_config_settings.py": "the Base Domain field help",
+}
+
+
+def _strip_comments(path: Path, text: str) -> str:
+    """``path`` without its comments: a comment may explain the history of a domain, code may not use it."""
+    suffix = path.suffix
+    if suffix == ".xml":
+        return re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    if suffix == ".py":
+        try:
+            tokens = tokenize.generate_tokens(io.StringIO(text).readline)
+            return "\n".join(tok.string for tok in tokens if tok.type != tokenize.COMMENT)
+        except (tokenize.TokenError, IndentationError, SyntaxError):
+            return text
+    if suffix in {".js", ".scss"}:
+        return re.sub(r"/\*.*?\*/|//[^\n]*", "", text, flags=re.S)
+    lines = []
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith(("#", ";")):
+            continue
+        lines.append(re.sub(r"\s#\s.*$", "", line))
+    return "\n".join(lines)
+
+
+def _domain_scan_files() -> list[Path]:
+    found = []
+    for base in (REPO_ROOT / "custom_addons", REPO_ROOT / "nginx", REPO_ROOT / "config", REPO_ROOT / "scripts",
+                 REPO_ROOT / ".github"):
+        if not base.exists():
+            continue
+        for path in base.rglob("*"):
+            rel_parts = path.relative_to(REPO_ROOT).parts
+            # scripts/ci defines the forbidden literals (and their tests): the guard cannot scan itself
+            if (path.is_file() and path.suffix in DOMAIN_SCAN_SUFFIXES and rel_parts[:2] != ("scripts", "ci")
+                    and not (set(rel_parts) & DOMAIN_SKIP_DIRS)):
+                found.append(path)
+    for name in ("docker-compose.yml", "docker-compose.saas.yml", "docker-compose.prod.yml",
+                 "docker-compose.staging.yml", "docker-compose.dev.yml", ".env.example"):
+        if (REPO_ROOT / name).is_file():
+            found.append(REPO_ROOT / name)
+    return found
+
+
+def rule_no_hardcoded_tenant_domain(out: list[str]) -> None:
+    """No production domain literal in code or infrastructure; no development domain in production-facing files."""
+    hinted: set[str] = set()
+    for path in _domain_scan_files():
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        try:
+            code = _strip_comments(path, path.read_text(encoding="utf-8", errors="ignore"))
+        except OSError:
+            continue
+        for number, line in enumerate(code.splitlines(), 1):
+            if OLD_PRODUCTION_DOMAIN in line:
+                out.append(f"{rel}: names the retired production domain {OLD_PRODUCTION_DOMAIN!r} in code or "
+                           f"configuration (a comment may). Tenant addresses come from the configured base domain "
+                           f"(SaaS Settings / NC_BASE_DOMAIN / DOMAIN), never a literal (R-038).")
+                break
+        has_dev = DEV_DOMAIN in code
+        if has_dev and rel in DEV_DOMAIN_HINTS:
+            hinted.add(rel)
+        elif has_dev and (rel in PROD_FACING_FILES or (
+                rel.startswith("custom_addons/") and path.suffix in {".py", ".xml", ".js", ".scss"})):
+            out.append(f"{rel}: names the development domain {DEV_DOMAIN!r} in a production-facing file. Development "
+                       f"defaults belong in the dev compose files; production reads its domain from configuration "
+                       f"(R-038).")
+    for rel, why in DEV_DOMAIN_HINTS.items():
+        if rel not in hinted and (REPO_ROOT / rel).exists():
+            out.append(f"{rel}: listed in DEV_DOMAIN_HINTS ({why}) but no longer names {DEV_DOMAIN!r}: remove the "
+                       f"stale exemption.")
+
+
+def rule_prod_odoo_is_not_published(out: list[str]) -> None:
+    """Production must not publish Odoo's own port: nginx is the only way in.
+
+    Odoo runs with ``proxy_mode = True`` in production, which makes it trust ``Host`` and ``X-Forwarded-*``
+    from whoever connects. The base compose file publishes ``8069:8069`` for development; if the production
+    override does not unpublish it, a client that reaches the host's 8069 directly can choose a tenant by Host,
+    claim https, and skip the edge's HSTS and rate limits. The override has to say ``ports: !reset []`` for the
+    odoo service (the way it already does for Postgres).
+    """
+    path = REPO_ROOT / "docker-compose.prod.yml"
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError as exc:
+        out.append(f"docker-compose.prod.yml: unreadable ({exc}); cannot verify Odoo is not published.")
+        return
+    block = re.search(r"^  odoo:\s*\n((?:(?:    .*|\s*#.*|)\n)+)", text.replace("\r\n", "\n") + "\n", re.MULTILINE)
+    if not block:
+        out.append("docker-compose.prod.yml: no `odoo:` service override found, so the base file's published "
+                   "8069 stays reachable around nginx while Odoo trusts proxy headers (R-038).")
+        return
+    if not re.search(r"^    ports:\s*!reset\s*\[\]", block.group(1), re.MULTILINE):
+        out.append("docker-compose.prod.yml: the odoo service does not unpublish its port (`ports: !reset []`). "
+                   "With proxy_mode = True, anything that reaches 8069 directly can spoof Host / X-Forwarded-* "
+                   "and bypass the edge (R-038).")
+
+
+# The release tooling that runs against PRODUCTION databases (RUNBOOK_RELEASE_UPGRADE.md). Its connection is the
+# containers' own environment; a literal user or password in it is a development credential waiting to be shipped.
+RELEASE_TOOLING = (
+    "scripts/upgrade/rehearse_upgrade.sh", "scripts/upgrade/preflight_versions.sh",
+    "scripts/upgrade/preflight_versions.py", "scripts/upgrade/http_smoke.py", "scripts/upgrade/schema_drift.py",
+    "scripts/upgrade/neutralize_copy.sql",
+)
+_LITERAL_DB_CREDENTIAL = re.compile(
+    r"--db_(?:password|user)[= ]\s*(?![\"']?\$)\S"            # odoo --db_password=odoo / --db_user odoo
+    r"|\bPG(?:PASSWORD|USER)=(?![\"']?\$)\S"                   # PGPASSWORD=odoo
+    r"|\b(?:psql|createdb|dropdb|pg_dump|pg_restore)\b.*\s-U\s*(?![\"']?\$)\w"   # psql -U odoo
+    r"|\bpassword\s*=\s*[\"'][^\"'$]+[\"']",                   # password='odoo' (Python)
+)
+
+
+def rule_release_tooling_carries_no_db_credentials(out: list[str]) -> None:
+    """The upgrade preflight / rehearsal take their database connection from the environment, never a literal.
+
+    The rehearsal shipped with ``--db_password=odoo`` and ``-U odoo`` (pre-commit review M5): unusable against a
+    production stack, where the credentials come from ``.env``, and a dev credential one copy-paste away from a
+    production command line. The connection is the odoo container's ``HOST`` / ``USER`` / ``PASSWORD`` (passed on as
+    ``PG*`` variables) and the db container's ``POSTGRES_USER``; this keeps a literal from coming back.
+    """
+    for rel in RELEASE_TOOLING:
+        path = REPO_ROOT / rel
+        if not path.exists():
+            continue
+        for lineno, line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith(("#", "--")):
+                continue
+            if _LITERAL_DB_CREDENTIAL.search(line):
+                out.append(f"{rel}:{lineno}: a literal database user or password in release tooling. Take the "
+                           f"connection from the container environment (HOST / USER / PASSWORD, POSTGRES_USER) "
+                           f"(review M5): {stripped[:90]}")
+
+
+RELEASE_GATE_MODULE = "ncollection_core"
+SERVER_WIDE_CONFIGS = ("config/odoo.conf", "config/odoo.prod.conf")
+_SERVER_WIDE_RE = re.compile(r"^\s*server_wide_modules\s*=\s*(.*?)\s*$", re.MULTILINE)
+_LOAD_RE = re.compile(r"--load[\"']?[=,\s]+[\"']?([A-Za-z0-9_,]+)")   # also ["--load", "base,web"]
+
+
+def rule_odoo_processes_load_the_release_gate(out: list[str]) -> None:
+    """Every Odoo process the stack runs loads ncollection_core server-wide: that module installs the release gate
+    (ncollection_core/release_gate.py) - HTTP, cron and the `-d` preload - in its post_load. `--load=` on a command
+    line REPLACES server_wide_modules from the config, so a `--load` without it is a process with no gate at all:
+    the provisioning runner ran `--load=base,web,queue_job` and so loaded and ran the crons of a platform database
+    the code was ahead of, while the web server answered that same database with the maintenance page.
+    """
+    for rel in SERVER_WIDE_CONFIGS:
+        path = REPO_ROOT / rel
+        if not path.exists():
+            continue
+        found = _SERVER_WIDE_RE.search(path.read_text(encoding="utf-8", errors="ignore"))
+        modules = [m.strip() for m in found.group(1).split(",")] if found else []
+        if RELEASE_GATE_MODULE not in modules:
+            out.append(f"{rel}: server_wide_modules does not list {RELEASE_GATE_MODULE}, so the release gate is "
+                       f"not installed: a database behind the code would answer HTTP 500 and run its crons.")
+    for path in sorted(REPO_ROOT.glob("docker-compose*.yml")):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for service, command, lineno in _compose_odoo_commands(text):
+            for found in _LOAD_RE.finditer(command):
+                if RELEASE_GATE_MODULE not in found.group(1).split(","):
+                    out.append(f"{path.name}:{lineno}: service '{service}' runs `--load={found.group(1)}` without "
+                               f"{RELEASE_GATE_MODULE}. --load replaces server_wide_modules, so this process has "
+                               f"no release gate (HTTP, cron, preload). Add {RELEASE_GATE_MODULE}.")
+
+
 RUNNER_TIME_HEADROOM_SECONDS = 300
 
 
@@ -1742,6 +1931,10 @@ def main() -> int:
     rule_dev_seed_password_never_shipped(findings)
     rule_prod_admin_passwd_is_not_a_secret(findings)
     rule_runner_timeout_exceeds_subprocess_cap(findings)
+    rule_no_hardcoded_tenant_domain(findings)
+    rule_prod_odoo_is_not_published(findings)
+    rule_release_tooling_carries_no_db_credentials(findings)
+    rule_odoo_processes_load_the_release_gate(findings)
 
     if findings:
         print("invariants: violations found\n")

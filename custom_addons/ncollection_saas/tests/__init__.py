@@ -25,3 +25,5 @@ from . import test_tenant_urls
 from . import test_my_companies
 from . import test_companion_provisioning
 from . import test_tenant_admin
+from . import test_base_domain_switch
+from . import test_release_compat

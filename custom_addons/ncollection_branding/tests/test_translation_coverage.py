@@ -59,6 +59,9 @@ _BARE_HTML_OK = {
         "rewrite PATTERNS applied to the stored HTML of module mail templates; shown to no user as written",
     'ncollection_core/controllers/platform_entry.py':
         "the pre-login token bridge: auth-less, no user language is known, and it must reveal nothing",
+    'ncollection_core/release_gate.py':
+        "the maintenance page is served BEFORE any registry exists (no catalogue, no user language): it carries its "
+        "own English and Arabic text, side by side",
 }
 
 _BS = chr(92)
@@ -230,6 +233,27 @@ class TestTranslationCoverage(TransactionCase):
 
         visit(tree, False)
         return found
+
+    def test_every_code_entry_carries_the_marker_odoo_loads_it_by(self):
+        """Odoo loads a Python code translation only from an entry marked ``#. odoo-python`` and a JS / OWL one only
+        from ``#. odoo-javascript`` (odoo/tools/translate.py, CodeTranslations). An entry that has the Arabic but
+        not the marker passes the check above and is still shown in English: seven System Branding messages and the
+        Summary breadcrumb were, until this test."""
+        unmarked = []
+        for module in self._modules():
+            po = os.path.join(_ADDONS, module, 'i18n', 'ar.po')
+            if not os.path.exists(po):
+                continue
+            with open(po, encoding='utf-8') as handle:
+                text = handle.read().replace('\r\n', '\n')
+            for block in re.split(r'\n\s*\n', text):
+                refs = re.findall(r'^#: (.*)$', block, re.M)
+                codes = [r for line in refs for r in line.split() if r.startswith('code:addons/')]
+                if any(r.split(':')[1].endswith('.py') for r in codes) and '#. odoo-python' not in block:
+                    unmarked.append('%s (python): %s' % (module, block.split('msgid', 1)[-1][:60]))
+                if any('/static/' in r for r in codes) and '#. odoo-javascript' not in block:
+                    unmarked.append('%s (javascript): %s' % (module, block.split('msgid', 1)[-1][:60]))
+        self.assertFalse(unmarked, 'Code entries Odoo will never load:\n  ' + '\n  '.join(unmarked[:40]))
 
     def test_the_platform_modules_are_held_to_the_same_rule(self):
         """The operator console is not exempt: both platform modules are in the set that is checked."""

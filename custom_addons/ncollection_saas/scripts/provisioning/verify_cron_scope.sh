@@ -150,6 +150,9 @@ run_arm() { # run_arm <label> <extra-args...>
   # ID cannot be wrong under a non-default COMPOSE_PROJECT_NAME (Rule 11 /
   # R-006), and there is no name for a later run to collide with.
   local cid
+  # `--load=base,web` WITHOUT ncollection_core is deliberate (scripts/ci/invariants.py scans compose files only):
+  # this harness measures WHICH databases Odoo's own cron runner visits; the release gate would skip the
+  # non-READY fixtures and change what the RED arm proves. Never a serving process.
   cid="$("${DC[@]}" run -d cron-scope-runner \
     odoo -c /etc/odoo/odoo.conf --load=base,web \
          --workers=0 --max-cron-threads=1 "$@")"

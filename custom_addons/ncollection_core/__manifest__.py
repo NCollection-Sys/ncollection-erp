@@ -35,7 +35,7 @@
     # 19.0.1.21.0: Workspace Administration Center (users, roles = real groups, password reset with forced change,
     # audit) and the platform's user-administration service (ncollection.admin.service). New models, data and
     # menus, so `-u` is what applies it to an existing tenant.
-    'version': '19.0.1.22.0',
+    'version': '19.0.1.23.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -96,6 +96,11 @@
             'web/static/lib/Chart/Chart.js',
             # The document "Files" paperclip + modal viewer (Odoo's FileViewer, extended), shared by every list that
             # mixes in nc.attachment.mixin (sales / purchase orders, invoices / bills, payments).
+            # Customer / Vendor badges: one component for the document forms and the partner dropdown.
+            'ncollection_core/static/src/partner_roles/partner_roles.scss',
+            'ncollection_core/static/src/partner_roles/partner_roles.js',
+            # The public application path (/atlas, app_url.py): Odoo's router conversions, after router.js.
+            'ncollection_core/static/src/router/app_path.js',
             'ncollection_core/static/src/attachments/nc_file_viewer.scss',
             'ncollection_core/static/src/attachments/nc_file_viewer.js',
             'ncollection_core/static/src/attachments/nc_file_viewer.xml',
@@ -116,6 +121,8 @@
         ],
     },
     'post_init_hook': 'post_init_hook',
+    # The release compatibility gate (release_gate.py), installed once per process; server-wide in odoo.conf.
+    'post_load': 'post_load',
     'installable': True,
     'auto_install': False,
 }

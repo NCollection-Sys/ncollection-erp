@@ -35,15 +35,29 @@ class ResPartner(models.Model):
             partner.nc_is_customer = (partner.customer_rank or 0) > 0 or (commercial.customer_rank or 0) > 0
             partner.nc_is_vendor = (partner.supplier_rank or 0) > 0 or (commercial.supplier_rank or 0) > 0
 
-    def _nc_role_labels(self):
-        """The badge labels of this partner, in the user's language."""
+    def _nc_roles(self):
+        """This partner's roles, in badge order: ``customer`` before ``vendor``."""
         self.ensure_one()
-        labels = []
-        if self.nc_is_customer:
-            labels.append(self.env._("Customer"))
-        if self.nc_is_vendor:
-            labels.append(self.env._("Vendor"))
-        return labels
+        return [role for role, flag in (('customer', self.nc_is_customer), ('vendor', self.nc_is_vendor)) if flag]
+
+    def _nc_role_labels(self):
+        """The badge labels of this partner, in the user's language, in the order of ``_nc_roles``."""
+        labels = {'customer': self.env._("Customer"), 'vendor': self.env._("Vendor")}
+        return [labels[role] for role in self._nc_roles()]
+
+    @api.model
+    @api.readonly
+    def web_name_search(self, name, specification, domain=None, operator='ilike', limit=100):
+        """The dropdown rows of a document that opted in also carry ``__nc_roles`` (the roles behind its badges,
+        in the same order), so the web client can colour each badge by role (static/src/partner_roles in
+        ncollection_core): Odoo's odoomark draws every back-tick badge alike. Data only, no markup."""
+        rows = super().web_name_search(name, specification, domain=domain, operator=operator, limit=limit)
+        if self.env.context.get(NC_PARTNER_ROLES_CTX):
+            partners = self.browse([row['id'] for row in rows])
+            roles = {partner.id: partner._nc_roles() for partner in partners}
+            for row in rows:
+                row['__nc_roles'] = roles.get(row['id'], [])
+        return rows
 
     @api.depends('customer_rank', 'supplier_rank', 'commercial_partner_id.customer_rank',
                  'commercial_partner_id.supplier_rank')

@@ -27,7 +27,7 @@ class WorkspaceOverview(models.TransientModel):
     admin_logo = fields.Binary(compute='_compute_admin_logo', string='Administration logo')
 
     def _compute_admin_logo(self):
-        # the PRODUCT's administration logo (Product Branding), read for this screen only; not the company logo
+        # the SYSTEM's administration logo (System Branding), read for this screen only; not the company logo
         import base64
         raw, _mime = self.env['ncollection.product.branding']._nc_image('admin')
         image = base64.b64encode(raw)

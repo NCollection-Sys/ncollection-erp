@@ -13,6 +13,8 @@ import tempfile
 from unittest.mock import patch
 
 from odoo.addons.ncollection_saas.models.backup import NcollectionBackup
+from odoo.addons.ncollection_saas.models.fleet_migration_line import FleetMigrationLine
+from odoo.addons.ncollection_saas.models.tenant_release import TenantRelease
 from odoo.addons.ncollection_saas.models.saas_subprocess import (
     DB_NAME_RE,
     RESERVED_DB_NAMES,
@@ -102,7 +104,7 @@ class TestFleetMigration(TransactionCase):
     @contextlib.contextmanager
     def _mocked(
         self, fail_dbs=(), run_calls=None, restore_calls=None,
-        drop_calls=None, restore_fail=False, installed=None, cmds=None,
+        drop_calls=None, restore_fail=False, installed=None, cmds=None, release_calls=None,
     ):
         """Stub every external side effect: the odoo subprocess, the snapshot,
         and the drop/restore. `fail_dbs` makes the apply step raise for those
@@ -149,10 +151,28 @@ class TestFleetMigration(TransactionCase):
             if drop_calls is not None:
                 drop_calls.append(db)
 
+        # The release gate of every tenant: it needs exactly the migration's modules, a hold and an open succeed. What
+        # the gate itself decides is tested in test_release_compat.py and, over HTTP, in verify_upgrade.sh.
+        def _required(_self, db, modules):
+            return list(modules)
+
+        def _hold(_self, hold, reason=''):
+            if release_calls is not None:
+                release_calls.append((_self.database_name, 'hold', hold))
+            return hold
+
+        def _open(_self):
+            if release_calls is not None:
+                release_calls.append((_self.database_name, 'open', ''))
+            return 'ready'
+
         with patch.object(SaasSubprocessMixin, '_run_odoo_subprocess', _run), \
                 patch.object(NcollectionBackup, 'run_backup', _run_backup), \
                 patch.object(NcollectionBackup, 'restore_to', _restore_to), \
-                patch.object(SaasSubprocessMixin, '_drop_database', _drop):
+                patch.object(SaasSubprocessMixin, '_drop_database', _drop), \
+                patch.object(FleetMigrationLine, '_nc_required_modules', _required), \
+                patch.object(TenantRelease, '_nc_release_hold', _hold), \
+                patch.object(TenantRelease, '_nc_release_open', _open):
             yield
 
     # ---- tests -----------------------------------------------------------
@@ -200,6 +220,81 @@ class TestFleetMigration(TransactionCase):
         # its neighbours upgraded fine
         self.assertEqual(self._line(migration, self.t1).state, 'done')
         self.assertEqual(self._line(migration, self.t3).state, 'done')
+
+    # ---- release gate (CASE C, CASE F) -----------------------------------
+
+    def test_case_c_a_failed_tenant_stays_held_and_the_others_are_opened(self):
+        """One tenant's upgrade fails: it is held as upgrade_failed (its users keep the maintenance page, never an
+        HTTP 500) and never opened; every other tenant is held while it upgrades, then opened READY."""
+        migration = self._migration()
+        calls = []
+        with self._mocked(fail_dbs={self.t2.database_name}, release_calls=calls):
+            migration.action_run_sync()
+        t2 = self.t2.database_name
+        self.assertIn((t2, 'hold', 'upgrading'), calls)
+        self.assertIn((t2, 'hold', 'upgrade_failed'), calls, 'the failed tenant stays held')
+        self.assertNotIn((t2, 'open', ''), calls, 'the failed tenant is never re-opened')
+        self.assertTrue(self.t2.nc_release_last_error)
+        for tenant in (self.canary, self.t1, self.t3):
+            with self.subTest(tenant=tenant.database_name):
+                db = tenant.database_name
+                self.assertEqual(self._line(migration, tenant).state, 'done')
+                self.assertLess(calls.index((db, 'hold', 'upgrading')), calls.index((db, 'open', '')),
+                                'held while upgrading, opened only after the probe')
+
+    # ---- platform first --------------------------------------------------
+
+    def _stale_platform(self, **changes):
+        state = {'state': 'upgrade_required', 'role': 'platform', 'required': ['ncollection_saas'],
+                 'behind': [('ncollection_saas', '19.0.6.17.1', '19.0.6.19.0')], 'hold': '', 'schema_gap': False,
+                 'missing': [], 'transitional': []}
+        state.update(changes)
+        return patch.object(type(self.env['ncollection.fleet.migration']), '_nc_platform_release',
+                            lambda _self: state)
+
+    def test_this_platform_is_ready_so_tenant_migrations_may_run(self):
+        self.assertEqual(self.env['ncollection.fleet.migration']._nc_assert_platform_ready()['state'], 'ready')
+
+    def test_a_stale_platform_refuses_to_start_any_tenant_migration(self):
+        for start in ('action_run_sync', 'action_start'):
+            migration = self._migration()
+            calls, runs = [], []
+            with self.subTest(start=start), self._stale_platform(), \
+                    self._mocked(release_calls=calls, run_calls=runs):
+                with self.assertRaisesRegex(UserError, 'Release the platform database first.*UPGRADE_REQUIRED'
+                                                       '.*ncollection_saas 19.0.6.17.1 < 19.0.6.19.0'):
+                    getattr(migration, start)()
+            self.assertEqual(migration.state, 'draft')
+            self.assertFalse(migration.line_ids, 'nothing was prepared')
+            self.assertEqual((calls, runs), ([], []), 'no tenant was held, upgraded or probed')
+
+    def test_a_platform_held_mid_rollout_refuses_every_queued_line(self):
+        """The platform held (its own release) after a migration started: each queued line re-checks and refuses
+        before any tenant work - the tenant is not flagged, not held, not upgraded."""
+        migration = self._migration()
+        migration._prepare()
+        migration.write({'state': 'rolling'})
+        line = self._line(migration, self.t1)
+        calls, runs = [], []
+        with self._stale_platform(state='upgrading', hold='upgrading', behind=[], required=[]), \
+                self._mocked(release_calls=calls, run_calls=runs):
+            line.run_line()
+        self.assertEqual(line.state, 'failed')
+        self.assertIn('Release the platform database first', line.message)
+        self.assertIn('UPGRADING', line.message)
+        self.assertEqual((calls, runs), ([], []))
+        self.assertEqual(self.t1.database_status, 'ready', 'refused before any DB work: not flagged')
+
+    def test_case_f_an_upgraded_tenant_is_opened_and_its_success_recorded(self):
+        migration = self._migration()
+        calls = []
+        with self._mocked(release_calls=calls):
+            migration.action_run_sync()
+        for tenant in (self.canary, self.t1, self.t2, self.t3):
+            with self.subTest(tenant=tenant.database_name):
+                self.assertIn((tenant.database_name, 'open', ''), calls)
+                self.assertTrue(tenant.nc_release_last_ok_at)
+                self.assertFalse(tenant.nc_release_last_error)
 
     # ---- manual restore in place (#244) ----------------------------------
 
@@ -450,6 +545,27 @@ class TestFleetMigration(TransactionCase):
         with self._mocked(fail_dbs={self.t2.database_name}):
             migration.action_run_sync()
         self.assertGreater(len(migration.message_ids), before)
+
+    def test_a_failed_snapshot_refuses_and_leaves_the_tenant_untouched(self):
+        """No snapshot = no upgrade, and the tenant database was never touched: it must stay 'ready' (not flagged
+        'error', which would strand it out of every later run with no snapshot to restore from) and must not be held.
+        Measured on 2026-10-25: a CRLF backup script failed the canary's snapshot exactly this way."""
+        migration = self._migration()
+        migration._prepare()
+        release_calls, applied = [], []
+
+        def _broken_backup(_self):
+            _self.write({'status': 'failed', 'error_log': 'set: pipefail\r: invalid option name'})
+
+        with self._mocked(release_calls=release_calls, run_calls=applied), \
+                patch.object(NcollectionBackup, 'run_backup', _broken_backup):
+            self._line(migration, self.t1).run_line()
+        line = self._line(migration, self.t1)
+        self.assertEqual(line.state, 'failed')
+        self.assertIn('snapshot failed', line.message)
+        self.assertEqual(self.t1.database_status, 'ready', 'not flagged error: nothing was touched')
+        self.assertEqual(release_calls, [], 'not held')
+        self.assertFalse([call for call in applied if call[1] == 'apply'], 'no -u ran')
 
     def test_cancel_skips_not_yet_run_tenants(self):
         # Cancel must stop tenants that a worker picks up after cancellation.

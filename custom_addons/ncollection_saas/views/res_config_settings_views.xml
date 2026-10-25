@@ -13,7 +13,7 @@
                            help="Every tenant is reachable at &lt;subdomain&gt;.&lt;base domain&gt;. Changing the base domain changes the URL of every tenant at once.">
                         <setting id="nc_base_domain_setting" string="Base Domain"
                                  help="Production routing also needs wildcard DNS for *.&lt;base domain&gt;, a matching wildcard certificate, and a reverse proxy that forwards the Host header — see docs/markdown/ROUTING.md.">
-                            <field name="nc_base_domain" placeholder="ncollectionerp.com"/>
+                            <field name="nc_base_domain" placeholder="example.com"/>
                         </setting>
                     </block>
                 </app>

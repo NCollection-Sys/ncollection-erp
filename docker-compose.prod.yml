@@ -41,13 +41,17 @@ services:
     # entrypoint still appends db_host/user/password from the HOST/USER/PASSWORD
     # env vars, so DB secrets continue to come from .env.
     command: odoo -c /etc/odoo/odoo.prod.conf
+    # proxy_mode = True (config/odoo.prod.conf) makes Odoo trust Host and X-Forwarded-* from WHOEVER connects, so nginx must
+    # be the only way in: unpublish the base file's `8069:8069`. Anything that reached it directly could pick a tenant by
+    # Host, claim https, and skip the edge's HSTS, login and API rate limits (docs/markdown/DEPLOYMENT_DOMAIN_CONTRACT.md).
+    ports: !reset []
     environment:
       # Production's base domain is the DOMAIN this deployment is served on, not a value baked into the code.
       NC_BASE_DOMAIN: ${NC_BASE_DOMAIN:-${DOMAIN:-}}
     volumes:
       - ./config/odoo.prod.conf:/etc/odoo/odoo.prod.conf:ro
 
-  # Edge reverse proxy + TLS (P1-T03). Prod = *.ncollectionerp.com over HTTPS;
+  # Edge reverse proxy + TLS (P1-T03). Prod = <DOMAIN> and *.<DOMAIN> over HTTPS;
   # the prod server block routes the realtime bus to Odoo :8072 (prod runs
   # workers=4/gevent). Needs the wildcard cert issued BEFORE first start
   # (nginx won't boot without it) — see nginx/README.md.
@@ -57,11 +61,16 @@ services:
     depends_on:
       odoo:
         condition: service_healthy
+    environment:
+      # The one place the production domain is chosen. Required: nginx cannot render its server blocks without it.
+      DOMAIN: "${DOMAIN:?DOMAIN is required, the base domain tenants are served on (for example balancecloud.ae)}"
+      NGINX_ENVSUBST_FILTER: ^DOMAIN$$     # $$ is compose's escape: the container sees ^DOMAIN$
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d/ncollection.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      # An envsubst TEMPLATE: the image renders it into conf.d/default.conf at start, substituting only ${DOMAIN}.
+      - ./nginx/conf.d/ncollection.prod.conf:/etc/nginx/templates/default.conf.template:ro
       - ./nginx/snippets:/etc/nginx/snippets:ro
       - certbot_certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot:ro

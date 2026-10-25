@@ -50,6 +50,9 @@ services:
       # Config-sync bearer key (P2-T03): the reconcile cron + queued live syncs
       # run here, so the runner needs the same key as the odoo service.
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+      # The tenant backup engine (ncollection_saas/scripts/backup/tenant_backup.sh) runs IN this process: scheduled
+      # backups and every Fleet Migration pre-upgrade snapshot. REQUIRED (.env.example); never in git.
+      TENANT_BACKUP_CIPHER_PASS: ${TENANT_BACKUP_CIPHER_PASS:-}
       # The platform base domain tenant hosts hang off (<tenant>.<NC_BASE_DOMAIN>). ONE authority: SaaS Settings
       # overrides it, this is what the deployment IS, and there is no built-in default. Dev: ncollection.localhost.
       # Production sets its real domain in .env. docs/markdown/TENANT_URLS.md
@@ -98,9 +101,16 @@ services:
     # The limit must exceed the engine's own subprocess cap
     # (saas_subprocess.SUBPROCESS_TIMEOUT, 30 min), or the worker is shot before
     # the engine can time out cleanly and report a legible failure.
+    #
+    # `ncollection_core` IN `--load` IS LOAD-BEARING (release gate). `--load`
+    # REPLACES server_wide_modules from odoo.conf, and ncollection_core is the
+    # server-wide module that installs the release gate (release_gate.py): HTTP,
+    # cron and the `-d` preload. Without it this runner - the process that runs
+    # the platform's crons - loaded and ran a platform database the code is
+    # ahead of. Enforced by scripts/ci/invariants.py.
     command: >
       odoo -c /etc/odoo/odoo.conf
-           --load=base,web,queue_job
+           --load=base,web,queue_job,ncollection_core
            --workers=2 --max-cron-threads=1
            --limit-time-real=3600
            -d ${PLATFORM_DB:-ncollection}

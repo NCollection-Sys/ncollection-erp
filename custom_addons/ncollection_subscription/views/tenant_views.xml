@@ -157,15 +157,15 @@
                                      and an address is refused. -->
                                 <field name="admin_login"
                                        placeholder="e.g. atlasadmin (required — not an email)"
-                                       readonly="database_status in ('provisioning', 'ready')"/>
+                                       readonly="database_status in ('provisioning', 'validating', 'ready')"/>
                                 <field name="admin_password" password="True"
-                                       invisible="database_status in ('provisioning', 'ready')"
+                                       invisible="database_status in ('provisioning', 'validating', 'ready')"
                                        placeholder="Leave empty to send a reset link instead"/>
                                 <field name="admin_password_confirm" password="True"
-                                       invisible="database_status in ('provisioning', 'ready') or not admin_password"/>
+                                       invisible="database_status in ('provisioning', 'validating', 'ready') or not admin_password"/>
                                 <field name="admin_credentials_state" readonly="1"/>
                                 <div colspan="2" class="text-muted small"
-                                     invisible="database_status in ('provisioning', 'ready')">
+                                     invisible="database_status in ('provisioning', 'validating', 'ready')">
                                     Leave the password empty and the tenant is born hardened:
                                     an unguessable password nobody is told, and the owner sets
                                     their own through the emailed reset link.
@@ -217,11 +217,11 @@
                                          not_provisioned or after an error so an admin
                                          can correct it and retry. -->
                                     <field name="database_name"
-                                           readonly="database_status in ('provisioning', 'ready')"
+                                           readonly="database_status in ('provisioning', 'validating', 'ready')"
                                            placeholder="Generated at provisioning"/>
                                     <field name="database_status" widget="badge"
                                            decoration-success="database_status == 'ready'"
-                                           decoration-info="database_status == 'provisioning'"
+                                           decoration-info="database_status in ('provisioning', 'validating')"
                                            decoration-muted="database_status == 'not_provisioned'"
                                            decoration-danger="database_status == 'error'"/>
                                     <field name="portal_url" widget="url" readonly="1"

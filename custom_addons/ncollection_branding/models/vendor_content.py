@@ -2,7 +2,7 @@
 """Vendor wording in MODULE-AUTHORED data that cannot be inherited: mail templates and the empty-state help of actions.
 
 Mail templates and `ir.actions.act_window.help` are stored records (mostly `noupdate`), so a view inheritance cannot
-reach them. The product name they should show is the one in Product Branding. This applies a short, explicit list of
+reach them. The system name they should show is the one in System Branding. This applies a short, explicit list of
 replacements to the records that a MODULE shipped (never to a user's own template or text), is idempotent (a second run
 changes nothing), and runs when the module is installed or upgraded and when the registry loads, so a module installed
 later is covered too. It does not touch technical content (URLs of the application, model names, tokens).

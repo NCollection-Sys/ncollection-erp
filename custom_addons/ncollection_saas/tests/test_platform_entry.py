@@ -14,7 +14,10 @@ from unittest.mock import MagicMock, patch
 from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase, tagged
 
+from odoo.addons.ncollection_saas.models.tenant_release import TenantRelease
+
 MODULE = 'odoo.addons.ncollection_saas.models.platform_entry'
+READY = (200, {'state': 'ready', 'compatible': True, 'behind': [], 'missing': []})
 PLATFORM_GROUP = 'ncollection_subscription.group_platform_admin'
 
 
@@ -52,7 +55,10 @@ class TestPlatformEntry(TransactionCase):
 
     def _enter(self, tenant, user, reply=None):
         post = MagicMock(return_value=reply or _reply())
-        with patch.dict(os.environ, {'NC_CONFIG_SYNC_KEY': 'master-key-for-tests'}), \
+        # The tenant's release gate answers READY: the entry path proper is what these tests are about (the release
+        # refusal has its own tests, test_release_compat.py).
+        with patch.object(TenantRelease, '_nc_release_call', return_value=READY), \
+                patch.dict(os.environ, {'NC_CONFIG_SYNC_KEY': 'master-key-for-tests'}), \
                 patch(MODULE + '.requests.post', post):
             action = tenant.with_user(user).action_enter_company()
         return action, post
@@ -104,6 +110,22 @@ class TestPlatformEntry(TransactionCase):
             self._enter(self.atlas, self.alice, reply=_reply(403, b''))
         self.assertIn('HTTP 403', str(caught.exception))
         self.assertIn('ncollection_core', str(caught.exception))
+
+    def test_the_remedy_for_a_tenant_that_is_behind_is_all_of_its_modules_not_core_alone(self):
+        """Measured on a copy of a real tenant (Atlas-eg): its grant call answered 500 (the column
+        res_users.nc_must_change_password was missing), and the old advice, "upgrade ncollection_core on it",
+        aborts with a ParseError because core's views need records that only ncollection_branding's own upgrade
+        creates. The message must not send an operator into that failure, and it must stay right for a tenant whose
+        set of behind modules differs (Atlas-eg needed core, branding, auth and account_core), so it names the source
+        of the list (the preflight), never a list, and claims no dependency."""
+        with self.assertRaises(UserError) as caught:
+            self._enter(self.atlas, self.alice, reply=_reply(500, b''))
+        message = str(caught.exception)
+        self.assertIn('HTTP 500', message)
+        self.assertIn('Upgrade every NCollection module named by the upgrade preflight for it, together', message)
+        self.assertIn('never ncollection_core alone', message)
+        for wrong in ('upgrade ncollection_core on it', 'depends on', 'ncollection_auth', 'ncollection_branding'):
+            self.assertNotIn(wrong, message)
 
     def test_only_the_hash_of_the_token_is_sent_to_the_tenant(self):
         action, post = self._enter(self.atlas, self.alice)

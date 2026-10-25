@@ -30,6 +30,9 @@ import os
 from odoo import fields, models
 from odoo.exceptions import UserError
 
+from .config_sync import _SYNC_KEY_ENV
+from .tenant_release import STATUS_PATH
+
 _logger = logging.getLogger(__name__)
 
 _TERMINAL_STATES = ('done', 'failed', 'restored', 'skipped')
@@ -82,15 +85,26 @@ class FleetMigrationLine(models.Model):
                 "Migration cancelled before this tenant ran."))
             return
         db = self.database_name
+        install = migration.operation == 'install'
         try:
             self._assert_safe_db_name(db)          # injection / self-target guard
+            # Platform first, re-checked for every queued line: the platform may have been held or redeployed
+            # since the migration started.
+            migration._nc_assert_platform_ready()
             modules = migration._module_list()
+            if not install:
+                # The EXACT modules this tenant needs, from its own release gate: an upgrade is never the
+                # operator's whole list on faith, and never one module of a set that must move together.
+                modules = self._nc_required_modules(db, modules)
         except Exception as exc:                    # noqa: BLE001
             # Refused before any DB work — the tenant DB is untouched, so it is
             # NOT flagged 'error'.
             self._mark('failed', self.env._("Refused: %s", exc))
             return
-        install = migration.operation == 'install'
+        if not install and not modules:
+            self._mark('skipped', self.env._(
+                "Already compatible with the release: no module of this tenant is behind the code."))
+            return
         if migration.dry_run:
             # Names the flag it would actually run. Saying "-u" on an install
             # dry-run would misreport the one thing the operator is checking.
@@ -107,7 +121,18 @@ class FleetMigrationLine(models.Model):
                 self._mark('skipped', self.env._(
                     "Already installed: %s. Nothing to do.", ','.join(modules)))
                 return
-            self._snapshot()
+            try:
+                self._snapshot()
+            except Exception as exc:                # noqa: BLE001 - nothing has touched the tenant yet
+                # No snapshot = no upgrade, and the tenant database is still exactly as it was: it is NOT flagged
+                # 'error' and NOT held (that would strand a healthy tenant out of every later run, with no snapshot
+                # to restore from). Measured 2026-10-25: a CRLF backup script failed every snapshot.
+                _logger.warning("Fleet: pre-upgrade snapshot of %s failed; the tenant was not touched: %s", db,
+                                str(exc)[-500:])
+                self._mark('failed', self.env._(
+                    "Refused: the pre-upgrade snapshot failed, so nothing was upgraded and the tenant was not "
+                    "touched. %s", str(exc)[-500:]))
+                return
             # Distinct whole strings per operation rather than capitalising a
             # translated fragment: .capitalize() on translated output is locale-
             # blind, and it silently changed the UPGRADE path's wording, which
@@ -116,9 +141,14 @@ class FleetMigrationLine(models.Model):
                        self.env._("Installing: %s", ','.join(modules)) if install
                        else self.env._("Upgrading: %s", ','.join(modules)),
                        stamp=False)
+            if not install:
+                # Held from now on: its users get the maintenance page, not a half-upgraded workspace.
+                self.tenant_id._nc_release_hold('upgrading', 'fleet migration')
             self._apply(db, modules)
             self._mark('probing', self.env._("Smoke probe…"), stamp=False)
             self._probe(db, modules)
+            if not install:
+                self._nc_release_open_after_upgrade(db)
             self._mark('done', self.env._("Install OK.") if install
                        else self.env._("Upgrade OK."))
         except Exception as exc:                    # noqa: BLE001 — isolate the failure
@@ -137,6 +167,53 @@ class FleetMigrationLine(models.Model):
                             'message': 'FAILED; bookkeeping error (see server log).'})
             except Exception:                       # noqa: BLE001
                 _logger.exception("Fleet: could not mark line failed for %s", db)
+        self._nc_release_mark_failed(exc)
+
+    # ------------------------------------------------------------------ release gate
+    def _nc_required_modules(self, db, modules):
+        """The modules THIS tenant's release gate reports behind the code. Refuses (nothing is upgraded) when the
+        state cannot be read, when the tenant needs an operator rather than an upgrade (a module that is not deployed,
+        a schema gap), or when the migration does not include every module the tenant needs: those must be upgraded
+        together, in one run, or the upgrade aborts half way (ncollection_core alone fails, R-037)."""
+        tenant = self.tenant_id
+        code, body = tenant._nc_release_call(STATUS_PATH)
+        state = tenant._nc_release_record(code, body)
+        if code != 200:
+            raise UserError(self.env._("cannot read the release state of %(db)s (%(state)s).", db=db, state=state))
+        if body.get('missing') or body.get('schema_gap'):
+            raise UserError(self.env._(
+                "%(db)s needs an operator, not an upgrade:\n%(detail)s", db=db, detail=tenant.nc_release_detail))
+        required = [row[0] for row in body.get('behind') or []]
+        uncovered = sorted(set(required) - set(modules))
+        if uncovered:
+            raise UserError(self.env._(
+                "%(db)s needs %(mods)s upgraded together with the rest, and this migration does not include them.",
+                db=db, mods=', '.join(uncovered)))
+        return required
+
+    def _nc_release_open_after_upgrade(self, db):
+        """Open the tenant only when its gate says the code and the database agree again (READY)."""
+        tenant = self.tenant_id
+        state = tenant._nc_release_open()
+        if state != 'ready':
+            raise UserError(self.env._(
+                "%(db)s was upgraded, but its release gate is %(state)s, not READY: it stays closed.\n%(detail)s",
+                db=db, state=state, detail=tenant.nc_release_detail or ''))
+        tenant.sudo().write({'nc_release_last_ok_at': fields.Datetime.now(), 'nc_release_last_error': False})
+
+    def _nc_release_mark_failed(self, exc):
+        """A failed upgrade keeps the tenant HELD (``upgrade_failed``): never re-opened by accident, and the reason is
+        on the tenant form. Best effort: the line's own failure is already recorded."""
+        if self.migration_id.operation == 'install' or self.state not in ('failed', 'restored'):
+            return
+        tenant = self.tenant_id
+        try:
+            # the tenant (whose Owner can read its parameters) gets a fixed reason; the detail stays on the platform,
+            # written AFTER the hold (whose record step writes the tenant's short reason) so it is the one kept
+            tenant._nc_release_hold('upgrade_failed', 'targeted upgrade failed (details on the platform)')
+            tenant.sudo().write({'nc_release_last_error': str(exc)[-1000:]})
+        except Exception:                           # noqa: BLE001
+            _logger.warning("Fleet: could not hold %s after its failed upgrade", tenant.database_name, exc_info=True)
 
     def _snapshot(self):
         self._mark('snapshotting', self.env._("Pre-upgrade snapshot…"), stamp=False)
@@ -159,7 +236,9 @@ class FleetMigrationLine(models.Model):
         cmd = ['odoo'] + self._odoo_conn_args(db) + [
             flag, ','.join(modules),
             '--stop-after-init', '--no-http', '--max-cron-threads=0']
-        self._run_odoo_subprocess(cmd, self._operation_label())
+        env = dict(os.environ)
+        env.pop(_SYNC_KEY_ENV, None)   # code run by -i / -u never needs the master that derives every tenant's key
+        self._run_odoo_subprocess(cmd, self._operation_label(), env=env)
 
     def _operation_label(self):
         """Step name for the subprocess failure message ("Step X failed").

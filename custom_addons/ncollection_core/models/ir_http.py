@@ -21,6 +21,8 @@ from odoo import models
 from odoo.exceptions import AccessError
 from odoo.http import request
 
+from ..app_url import APP_PATH
+
 _logger = logging.getLogger(__name__)
 
 _OWNER_GROUP = 'ncollection_core.group_role_owner'
@@ -82,6 +84,7 @@ class IrHttp(models.AbstractModel):
     def session_info(self):
         """Tell the web client when this session is a Platform Administrator's, so it can say so on every screen."""
         info = super().session_info()
+        info['nc_app_path'] = APP_PATH            # the public application path (app_url.py), for the router
         user = self.env.user
         if request and request.session.uid and user.nc_platform_proxy:
             info['nc_platform_mode'] = {

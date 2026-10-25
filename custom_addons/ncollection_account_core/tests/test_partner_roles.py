@@ -145,3 +145,47 @@ class TestPartnerRoles(AccountTestInvoicingCommon):
         invoice = self.init_invoice('in_invoice', partner=self.both, post=False, amounts=[10.0],
                                     invoice_date='2026-03-01')
         self.assertEqual((invoice.nc_partner_is_customer, invoice.nc_partner_is_vendor), (True, True))
+
+    # ---- one visual language: the same role component on the form and in the dropdown, colours from tokens ----
+    def test_the_dropdown_rows_carry_the_roles_behind_their_badges_in_order(self):
+        Partner = self.env['res.partner'].with_context(nc_partner_roles=True)
+        rows = {row['id']: row for row in Partner.web_name_search('Roletest', {'display_name': {}})}
+        self.assertEqual(rows[self.both.id]['__nc_roles'], ['customer', 'vendor'])
+        self.assertEqual(rows[self.customer.id]['__nc_roles'], ['customer'])
+        self.assertEqual(rows[self.vendor.id]['__nc_roles'], ['vendor'])
+        self.assertEqual(rows[self.neither.id]['__nc_roles'], [])
+        both = rows[self.both.id]['__formatted_display_name']
+        self.assertLess(both.index('`Customer`'), both.index('`Vendor`'), 'the badges follow the role order')
+        plain = self.env['res.partner'].web_name_search('Roletest', {'display_name': {}})
+        self.assertFalse(any('__nc_roles' in row for row in plain), 'only where a document opted in')
+
+    def test_the_form_badges_are_the_role_component_not_bootstrap_colours(self):
+        arch = self.env.ref('ncollection_account_core.view_move_form_nc_partner_roles').arch
+        self.assertIn('o_nc_role_badge o_nc_role_customer', arch)
+        self.assertIn('o_nc_role_badge o_nc_role_vendor', arch)
+        self.assertNotIn('text-bg-', arch, 'colours come from the NCollection role tokens')
+
+    def test_the_role_colours_are_tokens_in_light_and_dark(self):
+        import re
+        from odoo.tools import file_open
+
+        def read(path):
+            with file_open(path) as handle:
+                return handle.read()
+
+        tokens = ('--nc-color-customer:', '--nc-color-customer-soft:', '--nc-color-vendor:', '--nc-color-vendor-soft:')
+        for sheet in ('ncollection_branding/static/src/scss/tokens.scss',
+                      'ncollection_branding/static/src/scss/tokens.dark.scss'):
+            text = read(sheet)
+            for token in tokens:
+                with self.subTest(sheet=sheet, token=token):
+                    self.assertIn(token, text)
+        component = read('ncollection_core/static/src/partner_roles/partner_roles.scss')
+        self.assertFalse(re.search(r'#[0-9a-fA-F]{3,8}\b|rgba?\(', component), 'no colour value in the component')
+        dark = [path for path, *_rest in self.env['ir.asset']._get_asset_paths('web.assets_web_dark', {})]
+        self.assertTrue(any(p.endswith('ncollection_branding/static/src/scss/tokens.dark.scss') for p in dark))
+        backend = [path for path, *_rest in self.env['ir.asset']._get_asset_paths('web.assets_backend', {})]
+        tokens_at = next(i for i, p in enumerate(backend)
+                         if p.endswith('ncollection_branding/static/src/scss/tokens.scss'))
+        component_at = next(i for i, p in enumerate(backend) if p.endswith('partner_roles/partner_roles.scss'))
+        self.assertLess(tokens_at, component_at, 'the token layer is loaded before the component')

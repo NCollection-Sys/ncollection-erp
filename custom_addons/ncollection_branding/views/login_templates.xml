@@ -30,29 +30,25 @@
     <!-- 1 — split-screen layout frame -->
     <template id="login_layout_split" inherit_id="web.login_layout" priority="20"
               name="NCollection Login Split Layout">
+        <!-- The sign-in, reset and signup pages are a SYSTEM surface: they carry the system's identity and colours.
+             The body class lets views/branding_theme_templates.xml re-assert the system colours here, so a tenant's
+             own colours (which apply inside its workspace) can never repaint them. -->
+        <xpath expr="//t[@t-set='body_classname']" position="attributes">
+            <attribute name="t-value">'bg-100 o_nc_system_surface'</attribute>
+        </xpath>
         <xpath expr="//div[hasclass('container')]" position="replace">
             <div class="o_nc_login">
                 <t t-set="nc_brand" t-value="nc_product_brand()"/>
-                <!-- Left: the PRODUCT brand panel (name and logo from Product Branding; never the company's). -->
+                <!-- Left: the SYSTEM brand panel (name and logo from System Branding; never the company's). -->
                 <aside class="o_nc_login__brand">
                     <div class="o_nc_login__brand-inner">
                         <span class="o_nc_login__wordmark">
-                            <img t-if="nc_brand['has']['login'] or nc_brand['has']['logo']" t-att-src="nc_brand['login_logo_url']"
+                            <!-- The System Branding login logo (else its system logo), served versioned by
+                                 /ncollection/brand/login. Nothing configured: the system name alone - no
+                                 shipped or hard-coded mark stands in for the system's own. -->
+                            <img t-if="nc_brand['has']['login'] or nc_brand['has']['logo']"
+                                 class="o_nc_login__system-logo" t-att-src="nc_brand['login_logo_url']"
                                  t-att-alt="nc_brand['name']" style="max-height:44px; width:auto;"/>
-                            <svg t-else="" width="40" height="40" viewBox="0 0 44 44" role="img" aria-hidden="true">
-                                <defs>
-                                    <linearGradient id="nc_login_logo_g" x1="0" y1="0" x2="1" y2="1">
-                                        <stop offset="0" stop-color="#2d7ab7"/>
-                                        <stop offset="1" stop-color="#1f5f8f"/>
-                                    </linearGradient>
-                                </defs>
-                                <rect x="0" y="0" width="44" height="44" rx="11" fill="url(#nc_login_logo_g)"/>
-                                <path d="M13 31V13.5c0-.4.5-.6.8-.3L31 30.5" fill="none"
-                                      stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
-                                <path d="M13 13v18M31 13v18" fill="none" stroke="#ffffff"
-                                      stroke-width="3.4" stroke-linecap="round" opacity="0.92"/>
-                                <circle cx="33.5" cy="11" r="3" fill="#c6ddf0"/>
-                            </svg>
                             <span class="o_nc_login__wordmark-text" t-out="nc_brand['name']"/>
                         </span>
                         <div class="o_nc_login__brand-copy">
@@ -90,19 +86,17 @@
                     <div class="o_nc_login__glow" aria-hidden="true"/>
                 </aside>
 
-                <!-- Right: form side. The card logo (mobile only) uses the
-                     per-tenant company logo binary — subdomain→database routing
-                     means each tenant DB serves its own logo (acceptance item 7). -->
+                <!-- Right: form side. The card logo (mobile only, where the brand panel is hidden) is the
+                     same SYSTEM login logo: the sign-in page is the system's, never the company's. -->
                 <main class="o_nc_login__form-side">
                     <div class="o_nc_login__card">
-                        <div class="o_nc_login__card-logo">
-                            <img t-attf-src="/web/binary/company_logo{{ '?dbname='+db if db else '' }}"
-                                 alt="" loading="lazy"/>
+                        <div class="o_nc_login__card-logo" t-if="nc_brand['has']['login'] or nc_brand['has']['logo']">
+                            <img t-att-src="nc_brand['login_logo_url']" t-att-alt="nc_brand['name']" loading="lazy"/>
                         </div>
                         <t t-out="0"/>
                     </div>
                     <div class="o_nc_login__footer" t-if="not disable_footer">
-                        © <t t-out="datetime.date.today().year"/> <t t-out="nc_brand['name']"/>. All rights reserved.
+                        <t t-out="nc_brand['copyright']"/>
                     </div>
                 </main>
             </div>

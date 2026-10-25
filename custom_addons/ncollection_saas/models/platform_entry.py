@@ -30,6 +30,8 @@ import requests
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
 
+from odoo.addons.ncollection_core.app_url import app_url  # server-wide: the one application URL builder
+
 from .config_sync import _RPC_TIMEOUT, _SYNC_KEY_ENV, derive_tenant_key
 
 _logger = logging.getLogger(__name__)
@@ -60,6 +62,25 @@ class Tenant(models.Model):
         db = (self.database_name or '').strip()
         if not _DB_RE.fullmatch(db):
             raise UserError(self.env._("%s has no valid database registered.", self.company_name))
+        if not os.environ.get(_SYNC_KEY_ENV):
+            raise UserError(self.env._("The platform is not configured to reach tenants (service key missing)."))
+        # THE RELEASE CONTRACT, BEFORE ANY TOKEN EXISTS: a tenant whose database the code is ahead of (or that is held
+        # for an upgrade) would answer the redeem with its maintenance page at best, and an HTTP 500 at worst before
+        # the release gate. Ask its gate now and refuse cleanly: no token, no grant. A notification, not an exception:
+        # an exception would roll back the reason just recorded on the tenant form, which is what the operator needs.
+        state = self._nc_release_refresh()
+        if state != 'ready':
+            _logger.warning("Platform entry: user %s refused into tenant %s (release state %s)", user.login, db, state)
+            return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
+                'type': 'warning', 'sticky': True,
+                'title': self.env._("Not ready for the current release"),
+                'message': self.env._(
+                    "%(company)s cannot be entered right now: its workspace is not ready for the current release "
+                    "(%(state)s). No entry was issued. The Release section of the tenant shows why.",
+                    company=self.company_name,
+                    state=self._fields['nc_release_state'].convert_to_export(state, self)),
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            }}
 
         token = secrets.token_urlsafe(32)
         grant = {
@@ -80,7 +101,7 @@ class Tenant(models.Model):
     def _nc_platform_return_url(self):
         """Where "Back to Platform" returns to: this platform's own web address."""
         url = (self.env['ir.config_parameter'].sudo().get_param('web.base.url') or '').rstrip('/')
-        return url + '/odoo' if url else ''
+        return url + app_url() if url else ''
 
     def _nc_entry_url(self, token):
         """https://<tenant host>/ncollection/platform/enter#token=... (scheme follows how the platform is served)."""
@@ -124,8 +145,9 @@ class Tenant(models.Model):
         if not ok:
             _logger.error("Platform entry grant to %s refused (HTTP %s)", db, resp.status_code)
             raise UserError(self.env._(
-                "%(company)s did not accept the entry (HTTP %(status)s). Its workspace modules are probably out of "
-                "date: upgrade ncollection_core on it (Fleet Migration), then try again.",
+                "%(company)s did not accept the entry (HTTP %(status)s). Its workspace is probably behind this "
+                "platform's code. Upgrade every NCollection module named by the upgrade preflight for it, together "
+                "in one run (never ncollection_core alone), then try again.",
                 company=self.company_name, status=resp.status_code))
 
     @api.model

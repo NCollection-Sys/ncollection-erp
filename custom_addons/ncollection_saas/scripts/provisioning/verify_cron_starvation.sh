@@ -183,8 +183,13 @@ echo "  cron-stall-db healthy"
 # persistent fixture on a stale schema reports a code failure that is really a
 # setup problem. Fail loud (Rule 10); never `|| true` this.
 if [ "$(hq "SELECT 1")" = "1" ]; then
-  echo "== reusing '$HARNESS_DB' (upgrading ncollection_saas to match the code) =="
-  setup_args=(-u ncollection_saas)
+  # EVERY installed ncollection_* module, not only ncollection_saas: -u never upgrades a module's DEPENDENCIES, and
+  # a fixture left behind on one of them is (rightly) not READY - the release gate then runs none of its crons and
+  # this proof measures nothing (R-039). The fixture is this harness's own private database.
+  mods="$(hq "SELECT string_agg(name, ',' ORDER BY name) FROM ir_module_module WHERE state = 'installed' AND name LIKE 'ncollection\_%'")"
+  [ -n "$mods" ] || { echo "REFUSING: '$HARNESS_DB' has no ncollection module installed" >&2; exit 1; }
+  echo "== reusing '$HARNESS_DB' (upgrading its ncollection modules to match the code: $mods) =="
+  setup_args=(-u "$mods")
 else
   echo "== creating '$HARNESS_DB' (installing ncollection_saas — first run is slow) =="
   setup_args=(-i ncollection_saas)

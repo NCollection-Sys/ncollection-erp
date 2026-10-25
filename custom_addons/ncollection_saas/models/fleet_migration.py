@@ -104,6 +104,28 @@ class FleetMigration(models.Model):
                 raise ValidationError(self.env._("Invalid module name '%s'.", module))
         return mods
 
+    @api.model
+    def _nc_platform_release(self):
+        """The release gate's state of THIS (platform) database, read with plain SQL from its own tables - the same
+        reading the gate makes before any request, never a cached one."""
+        from odoo.addons.ncollection_core import release_gate  # noqa: PLC0415
+        return release_gate.read_state(self.env.cr, self.env.cr.dbname)
+
+    @api.model
+    def _nc_assert_platform_ready(self):
+        """Platform first: no tenant is migrated while the control plane itself is behind the code, held or blocked.
+        Its registry would run every step below (inventory, holds, probes) on a schema the code no longer matches."""
+        state = self._nc_platform_release()
+        if state['state'] == 'ready':
+            return state
+        detail = ', '.join('%s %s < %s' % tuple(row) for row in state['behind']) or state['hold'] or (
+            'schema gap' if state['schema_gap'] else ', '.join(state['missing'] + state['transitional']) or '-')
+        raise UserError(self.env._(
+            "Release the platform database first: %(db)s is %(state)s for this release, not READY (%(detail)s). "
+            "Upgrade exactly its required modules (%(mods)s), validate it and open it; no tenant was touched.",
+            db=self.env.cr.dbname, state=state['state'].upper(), detail=detail,
+            mods=', '.join(state['required']) or '-'))
+
     def _validate(self):
         self.ensure_one()
         self._module_list()
@@ -174,6 +196,7 @@ class FleetMigration(models.Model):
         self.ensure_one()
         if self.state != 'draft':
             raise UserError(self.env._("This migration has already been started."))
+        self._nc_assert_platform_ready()
         self._prepare()
         self.write({'state': 'canary', 'current_wave': 0})
         for line in self._wave_lines(0):
@@ -200,6 +223,7 @@ class FleetMigration(models.Model):
         self.ensure_one()
         if self.state != 'draft':
             raise UserError(self.env._("This migration has already been started."))
+        self._nc_assert_platform_ready()
         self._prepare()
         self.write({'state': 'canary', 'current_wave': 0})
         self._enqueue_wave(0)

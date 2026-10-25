@@ -529,6 +529,7 @@ msgstr "«معطّل» يزيل وحدة تمنحها الخطة؛ و«مُضا�
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant_module_override__display_name
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant_module_wizard__display_name
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant_module_wizard_line__display_name
+#: model:ir.model.fields,field_description:ncollection_subscription.field_res_users__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -670,8 +671,8 @@ msgstr "يحتوي على رسالة"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__subdomain
-msgid "Host label the tenant answers on, e.g. 'atlas' in atlas.ncollectionerp.com. Defaults to the database name."
-msgstr "التسمية التي يستجيب عليها المستأجر في المضيف، مثل 'atlas' في atlas.ncollectionerp.com. الافتراضي هو اسم قاعدة البيانات."
+msgid "Host label the tenant answers on, e.g. 'atlas' in atlas.example.com. Defaults to the database name."
+msgstr "التسمية التي يستجيب عليها المستأجر في المضيف، مثل 'atlas' في atlas.example.com. الافتراضي هو اسم قاعدة البيانات."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_provisioning_job__id
@@ -682,6 +683,7 @@ msgstr "التسمية التي يستجيب عليها المستأجر في ا
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant_module_override__id
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant_module_wizard__id
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant_module_wizard_line__id
+#: model:ir.model.fields,field_description:ncollection_subscription.field_res_users__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -1546,7 +1548,9 @@ msgid "Subscriptions"
 msgstr "الاشتراكات"
 
 #. module: ncollection_subscription
+#. odoo-python
 #: model:ir.actions.act_window,name:ncollection_subscription.action_ncollection_subscription_dashboard
+#: code:addons/ncollection_subscription/models/dashboard.py:0
 #: model:ir.ui.menu,name:ncollection_subscription.menu_ncollection_saas_dashboard
 msgid "Summary"
 msgstr "الملخّص"
@@ -2077,3 +2081,8 @@ msgid ""
 msgstr ""
 "كلمة المرور الآن في قاعدة بيانات المستأجر نفسه وقد مُحيت من هنا. أعد تعيينها "
 "من «المستخدمون والوصول»."
+
+#. module: ncollection_subscription
+#: model:ir.model.fields.selection,name:ncollection_subscription.selection__ncollection_tenant__database_status__validating
+msgid "Validating"
+msgstr "قيد التحقق"

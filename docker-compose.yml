@@ -60,6 +60,9 @@ services:
       # platform uses it to push plan changes into tenant DBs. Empty by default
       # (config sync then fails soft + logs).
       NC_CONFIG_SYNC_KEY: ${NC_CONFIG_SYNC_KEY:-}
+      # The tenant backup engine (ncollection_saas/scripts/backup/tenant_backup.sh) runs IN this process: scheduled
+      # backups and every Fleet Migration pre-upgrade snapshot. REQUIRED (.env.example); never in git.
+      TENANT_BACKUP_CIPHER_PASS: ${TENANT_BACKUP_CIPHER_PASS:-}
       # The platform base domain tenant hosts hang off (<tenant>.<NC_BASE_DOMAIN>). ONE authority: SaaS Settings
       # overrides it, this is what the deployment IS, and there is no built-in default. Dev: ncollection.localhost.
       # Production sets its real domain in .env. docs/markdown/TENANT_URLS.md

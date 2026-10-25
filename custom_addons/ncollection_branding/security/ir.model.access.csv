@@ -2,4 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_nc_document_type_user,ncollection.document.type user,model_ncollection_document_type,base.group_user,1,0,0,0
 access_nc_document_stamp_user,ncollection.document.stamp user,model_ncollection_document_stamp,base.group_user,1,0,0,0
 access_nc_document_stamp_manager,ncollection.document.stamp manager,model_ncollection_document_stamp,ncollection_branding.group_stamp_manager,1,1,1,1
-access_nc_product_branding_system,ncollection.product.branding system,model_ncollection_product_branding,base.group_system,1,1,1,0
+access_nc_product_branding_system,ncollection.product.branding system,model_ncollection_product_branding,ncollection_branding.group_system_branding_manager,1,1,1,0

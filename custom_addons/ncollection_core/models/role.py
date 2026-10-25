@@ -25,6 +25,7 @@ FORBIDDEN_GROUPS = (
     'ncollection_core.group_config_sync',       # platform service accounts
     'ncollection_core.group_cron_service',
     'ncollection_core.group_role_owner',        # the standard Administrator role, never re-created by hand
+    'ncollection_branding.group_system_branding_manager',   # the SYSTEM's identity: platform staff only
 )
 ADMIN_GROUP = 'base.group_system'
 _STANDARD_EDITABLE = {'active', 'sequence', 'description', 'name'}

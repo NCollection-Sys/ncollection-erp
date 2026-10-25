@@ -31,6 +31,8 @@ That is not recoverable knowledge — it is folklore. Guards are.
 | Report menus aligned to the ORM; OCA report wizards restricted to accounting read-only; per-role hub (R-027, R-028) | `ncollection_account_reports` (`_REPORT_MENU_GROUPS`, `_nc_harden_oca_wizards`), `tests/test_report_hub.py`, `tests/test_oca_wizard_access.py` | CI `test` + `e2e/manual/reports/*` |
 | Preview and Print render ONE document; the dev container reaches the tenant URL (R-034) | `ncollection_account_core` + `ncollection_sale_documents` tests, `scripts/dev/pdf_hosts.sh`, `make doctor` | CI `test` + `make doctor` |
 | PDF is styled in dev, and a blocked download is explained (R-029) | `scripts/dev/pdf_hosts.sh`, `make doctor`, `report_viewer.js` | `make doctor` + manual |
+| Newer code under an un-upgraded database answers 500 (R-037): drift detector + registry-load log, upgrade rehearsal with HTTP smoke, drift arm in the upgrade proof | `ncollection_core/models/schema_drift.py`, `scripts/upgrade/rehearse_upgrade.sh`, `scripts/upgrade/verify_upgrade.sh` arm 6 | CI `test` (detector) + `make verify-all` (arm 6) + `make upgrade-rehearse` before serving new code to a database |
+| The production domain is configuration at the edge too, and Odoo is only reachable through nginx (R-038) | `nginx/conf.d/ncollection.prod.conf` (template), `docker-compose.prod.yml`, `scripts/deploy/verify_edge_domain.sh`, `scripts/ci/invariants.py` (`rule_no_hardcoded_tenant_domain`, `rule_prod_odoo_is_not_published`), `ncollection_saas` `test_base_domain_switch` | pre-push `invariants` + CI `test`; `make edge-verify` |
 
 ---
 
@@ -1125,7 +1127,7 @@ identity.
 **Fix.** `image` / `nc_stamp` carry `groups='ncollection_branding.group_stamp_manager'`; the overlay reads them with a narrow `sudo()`. The product
 identity is ONE record (`ncollection.product.branding`) resolved by `nc_brand()` (a `nc_product_brand()` helper in every QWeb template, `session_info`
 for the web client) and served by `/ncollection/brand/<kind>` (versioned URL, content-sniffed PNG / JPEG / WebP / ICO, no SVG), distinct from the
-company brand. See `PRODUCT_BRANDING.md`. A real multi-size `favicon.ico` now ships. The `(?)` documentation links to the upstream vendor's site are not
+company brand. See `SYSTEM_BRANDING.md` (formerly `PRODUCT_BRANDING.md`). A real multi-size `favicon.ico` now ships. The `(?)` documentation links to the upstream vendor's site are not
 rendered.
 
 **Guards.** `ncollection_branding/tests/test_stamp_image_security.py` (restricted over the model, over `/web/image`, report context, cross-company,
@@ -1138,3 +1140,112 @@ NON-accounting kind over RPC because only the form's domain restricted the kinds
 `ncollection.document.stamp._nc_check_kinds_allowed`); guards: `ncollection_account_core/tests/test_document_stamp.py::TestStampKindAuthorisation` (the five kinds
 allowed; foreign, mixed and crafted payloads refused on create / write / copy / unlink, with a hostile context; admin unaffected; company isolation kept). (4) Vendor
 wording survived in module-authored mail templates, action help, portal / digest / two-factor pages and the system user's name; guards: `test_vendor_wording.py`.
+
+---
+
+## R-037 — Newer code under a database that was never upgraded answers HTTP 500 on the first real page ✅ GUARDED
+
+(R-012b, R-017 and R-019 are earlier instances of the same class; this entry is the root cause and the structural guard.)
+
+**Symptom.** After a branch checkout, a merge or a deploy, `POST /web/login` (or `GET /web/login`) answered **HTTP 500** while `/web/health` kept answering 200.
+Reproduced on 2026-10-23 two ways, each on a throwaway copy of the database (the real ones untouched):
+
+* the `ncollection` data served by the UAE e-invoicing branch's code: `POST /web/login` → 500, `psycopg2.errors.UndefinedColumn: column res_partner.nc_trn does not exist`
+  (the branch's `ncollection_account_localization_uae` 1.5.0 adds stored `res.partner` fields; the database was at 1.4.0);
+* a stale tenant served by `develop`: `GET /web/login` → 500, `column res_users.nc_must_change_password does not exist`, and `brand logo` → 500 on
+  the missing `ncollection_product_branding` table (`ncollection_core` 1.19.0 installed, 1.22.0 on disk; six modules behind, 7 tables and 5 columns missing).
+  Of 25 databases on the dev server, 18 had no `ncollection_product_branding` table at all.
+
+**Root cause (the lifecycle, not "upgrade the module").** Odoo builds a model's SELECT from the fields its CODE declares and changes a schema only on `-u`; it **never compares
+the version recorded in the database with the version on disk**. So the moment newer code is served under an un-upgraded database, every query on a changed model names a column
+that is not there. Nothing warns first: the registry loads, `/web/health` is green, and the first request that reads the model dies. Three facts of this repository make it
+recurring: (1) the dev stack serves ONE bind-mounted tree to EVERY database, so one `git checkout` puts new code under a dozen databases at once; (2) a running Odoo process
+keeps the module code it already imported, so a checkout does not change what is served until the container restarts, and a restart then applies the new code to every database
+simultaneously (the symptom appears or disappears at the restart, not at the checkout); (3) no gate ever requested a page from a database behind its code:
+`verify_upgrade.sh` proved migrations replay (with `--no-http`), `make doctor` warned by hand.
+
+**What was verified not to be the cause.** Routing / proxy (the edge answered 200 for the same database under matching code), security / access rules, a frontend error (the 500
+is a server response with a SQL traceback), a bad migration (the targeted upgrade of the behind modules ran clean and cured it), dependency order.
+
+**Guard.**
+1. `ncollection_core/models/schema_drift.py`: `version_drift` (code newer than the database), `schema_gaps` (stored fields / models with no column / table: the condition that actually
+   500s, and it also catches a gap at an unchanged version), and a registry-load hook that logs ONE `SCHEMA DRIFT` error naming the modules and the repair, so the first line of the log is the
+   cause. It never raises and never suppresses a traceback. Tests: `ncollection_core/tests/test_schema_drift.py`.
+2. `scripts/upgrade/rehearse_upgrade.sh` (`make upgrade-rehearse db=<db>`): previous state (a COPY of the database, only read) → drift report → HTTP smoke (expected to 500 when stale) → targeted `-u` of
+   ONLY the modules reported behind (never `-u all`, no hand-written SQL) → setup-log guard → drift report → HTTP smoke of the sign-in sequence (health, login page, POST login, web client,
+   session info with the system brand, brand logo, websocket; any 5xx fails) → `REHEARSAL=PASS|FAIL`. Run on a real stale tenant it reproduced the 500s and then passed.
+3. `scripts/upgrade/verify_upgrade.sh` arm 6 (part of `make verify-all` suite 7): fabricates "one release behind", asserts the report names the column and the module, that the stale state
+   500s on `GET /web/login`, that the targeted upgrade cures it, and that an insufficient upgrade (the wrong module) is REFUSED; `--modules all` and a non-scratch database are refused.
+
+**Rule of thumb.** A green `/web/health` and a green registry load say nothing about whether a database matches its code. Before serving new code to a database that has data, rehearse
+its upgrade on a copy (`make upgrade-rehearse`), and never use `-u all` to "fix" it.
+
+**Addendum: Company Entry on `atlaseg` was this same failure, plus a second defect.** Entering the company *Atlas-eg* answered
+"Atlas-eg did not accept the entry (HTTP 500). Its workspace modules are probably out of date: upgrade ncollection_core on it". Reproduced on a copy of the real
+database `atlaseg` (the source untouched) with the Company Entry sequence added to the HTTP smoke: the platform's grant call
+(`POST /json/2/ncollection.platform.entry/grant_from_platform`, bearer-authenticated against `res.users`) answered **500**,
+`psycopg2.errors.UndefinedColumn: column res_users.nc_must_change_password does not exist`. Four modules were behind (`ncollection_core` 19.0.1.18.0 < 19.0.1.22.0, `ncollection_branding`
+1.8.0 < 1.12.0, `ncollection_auth`, `ncollection_account_core`). After ONE targeted upgrade of those four the whole entry passed: grant, bridge, redeem (303 to `/odoo`), tenant Home in the right
+database as `Platform Admin: ...`, return to the platform address, signed out, token single-use. So it is R-037, not a routing, token or session defect.
+*Second defect:* the on-screen remedy, "upgrade ncollection_core on it (Fleet Migration)", **does not work**. The same copy upgraded with `-u ncollection_core` alone aborts with
+`ParseError` in `ncollection_core/views/workspace_admin_views.xml` (its menu references `ncollection_branding` records that only the branding upgrade creates), leaving the tenant on 500, and Fleet Migration
+runs exactly the module list it is given. The message now says to upgrade ALL of the tenant's NCollection modules together (`test_the_remedy_for_a_tenant_that_is_behind_is_all_of_its_modules_not_core_alone`).
+*Further guards:* `rehearse_upgrade.sh` runs the Company Entry probe on any database that holds the platform's service credential and prints the server's own exception lines; `verify_upgrade.sh` arm 6
+asserts the stale tenant 500s on the grant and the upgraded one completes the entry; arm 7 and `make upgrade-preflight db=<db>` (`scripts/upgrade/preflight_versions.sh`) are the READ-ONLY release gate
+against a real database (exit 1 names the modules behind, exit 2 is "could not check", never a silent pass); `verify_provisioning.sh` asserts a freshly provisioned tenant starts with no drift and the canonical portal URL.
+Procedure: `docs/markdown/RUNBOOK_RELEASE_UPGRADE.md`. Two more ways the same symptom arrives, now written down: the persistent platform fixture `saastest` behind new code, and a long-running odoo container still
+holding the old Python while a freshly provisioned tenant loads the new templates.
+
+---
+## R-038 — The production domain was a literal in the edge, and Odoo's port was reachable around it ✅ GUARDED
+
+**Symptom / risk found while preparing the production domain.** The application builds every tenant address from one configured base domain, but the production nginx config named
+`ncollectionerp.com` twice in `server_name` and in the certificate path (`.env.example` said so: "currently hardcodes ncollectionerp.com ... templating is a future enhancement"), so the edge could serve
+exactly one domain and a new one meant editing the file. The same audit found that production runs Odoo with `proxy_mode = True` (it trusts `Host` and `X-Forwarded-*` from whoever connects) while the
+base compose file publishes `8069:8069` and the production override reset only Postgres' port: nginx was not the only way in.
+
+**Root cause.** The domain was made configuration in the application (#476) but never in the deployment layer, and nothing scanned the infrastructure for it; the published port came from a development
+default that the production override never took back.
+
+**Guard.**
+1. `nginx/conf.d/ncollection.prod.conf` is now an envsubst template (only `${DOMAIN}` is substituted, `NGINX_ENVSUBST_FILTER=^DOMAIN$`); `docker-compose.prod.yml` takes `DOMAIN` (required) and passes it to nginx and,
+   by default, to Odoo's `NC_BASE_DOMAIN`. `make edge-verify` (`scripts/deploy/verify_edge_domain.sh`) renders it in the real nginx image for `balancecloud.ae` and a second domain and runs `nginx -t`.
+2. `scripts/ci/invariants.py` `rule_no_hardcoded_tenant_domain`: the retired production domain may not appear in code or configuration (comments, tests, migrations, translations and docs are out of scope); the
+   development domain may not appear in production-facing files; a stale exemption fails. Its tests run before the guard (`scripts/ci/test_invariants.py`).
+3. `rule_prod_odoo_is_not_published`: the production override must say `ports: !reset []` for the odoo service. Applied in `docker-compose.prod.yml`.
+4. A tenant can never take the apex's first label (the platform's own database under `db_filter ^%d$`): `_nc_subdomain_availability`.
+5. `ncollection_saas` `test_base_domain_switch`: for a new tenant, every generated address (tenant URL, Company Entry URL and service Host, provisioning portal URL, the seed's `NC_PORTAL_URL` that becomes the tenant's
+   `web.base.url`, domain FQDN, signup login link) follows the configured domain across `ncollection.localhost`, `balancecloud.ae` and `example.org`, and names no other.
+Contract: `docs/markdown/DEPLOYMENT_DOMAIN_CONTRACT.md`.
+
+**Rule of thumb.** A setting that is configuration in the code is not configuration until the edge, the compose files and the certificate path take it from the same place; and a proxy-trusting server must not be
+reachable except through the proxy.
+
+## R-039 — The release gate covered HTTP only: crons (and the `-d` preload) ran a database the code was ahead of ✅ GUARDED
+
+**Symptom.** While the real `ncollection` platform database was `UPGRADE_REQUIRED` and its sign-in page answered the
+gate's 503, "NCollection: advance fleet migrations" kept running on it every minute (found during the 2026-10-24
+platform release). Its registry - the stale code against the older schema - was loaded and its jobs executed.
+
+**Root cause.** Two, stacked. (1) The gate wrapped only `odoo.http.Request._serve_db`; cron runners never make a
+request: both enter a database through `IrCron._process_jobs(db_name)`, and a process started with `-d` loads the
+registry at boot through `preload_registries`. (2) The process that actually runs the platform's crons, the
+provisioning runner, starts with `--load=base,web,queue_job`; `--load` REPLACES `server_wide_modules`, so
+`ncollection_core` - the module whose `post_load` installs the gate - was never loaded there: that process had no gate
+of any kind, HTTP included.
+
+**Guard.**
+1. `ncollection_core/release_gate.py` wraps `IrCron._process_jobs` (entry), `IrCron._acquire_one_job` (before each job)
+   and `odoo.service.server.preload_registries`; only READY runs crons, `-i` / `-u` / `--test-enable` preloads are never
+   gated, each seam refuses LOUDLY if Odoo moves it. Unit tests: `tests/test_release_gate_cron.py`.
+2. `docker-compose.saas.yml`: the runner's `--load` includes `ncollection_core`.
+3. `scripts/ci/invariants.py` `rule_odoo_processes_load_the_release_gate`: every `server_wide_modules` and every compose
+   `--load=` must include `ncollection_core` (tests in `scripts/ci/test_invariants.py`, run before the guard).
+4. `scripts/upgrade/verify_upgrade.sh` arm 9 + `scripts/upgrade/cron_gate_probe.py`: Odoo's real
+   `IrCron._process_jobs`, in a process booted like a server, against real fixture databases: a stale database loads
+   no registry and runs no job while its READY neighbour in the same process runs; every hold, a module mid-upgrade and
+   a database with no module table run nothing; READY again runs again.
+
+**Rule of thumb.** A gate on the request path is not a gate on the database: list every way a process reaches a
+registry (request, cron, boot preload) and every process that does it (including the ones started with their own
+`--load`).

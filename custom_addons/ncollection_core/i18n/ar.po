@@ -1643,6 +1643,7 @@ msgid "Standard tenant workspace roles."
 msgstr "أدوار مساحة عمل المستأجر القياسية."
 
 #. module: ncollection_core
+#. odoo-javascript
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
 msgid "Loading your summary…"
 msgstr "جارٍ تحميل الملخّص…"
@@ -2721,5 +2722,5 @@ msgstr "سجل التدقيق متاح"
 
 #. module: ncollection_core
 #: model:ir.ui.menu,name:ncollection_core.menu_workspace_product_branding
-msgid "Product Branding"
-msgstr "هوية المنتج"
+msgid "System Branding"
+msgstr "هوية النظام"

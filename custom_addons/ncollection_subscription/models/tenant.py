@@ -68,6 +68,7 @@ class Tenant(models.Model):
         selection=[
             ('not_provisioned', 'Not Provisioned'),
             ('provisioning', 'Provisioning'),
+            ('validating', 'Validating'),
             ('ready', 'Ready'),
             ('error', 'Error'),
         ],
@@ -139,7 +140,7 @@ class Tenant(models.Model):
         # No string=: Odoo titles this 'Subdomain' from the field name (W8113).
         tracking=True, index=True,
         help="Host label the tenant answers on, e.g. 'atlas' in "
-             "atlas.ncollectionerp.com. Defaults to the database name.")
+             "atlas.example.com. Defaults to the database name.")
     base_domain = fields.Char(
         compute='_compute_tenant_url',
         help="Platform base domain, configured once in SaaS Settings.")
@@ -440,7 +441,7 @@ class Tenant(models.Model):
                 tenant.provision_stage = 'rejected'
             elif tenant.database_status == 'ready':
                 tenant.provision_stage = 'ready'
-            elif tenant.database_status == 'provisioning' or live_job:
+            elif tenant.database_status in ('provisioning', 'validating') or live_job:
                 tenant.provision_stage = 'provisioning'
             elif tenant.database_status == 'error':
                 tenant.provision_stage = 'failed'
@@ -526,7 +527,7 @@ class Tenant(models.Model):
     # (#228 review). env.su / SUPERUSER_ID are interpreter-level and not
     # RPC-spoofable. Both write() AND create() are guarded — base.group_system
     # (a real non-super admin) has create rights on this model too.
-    _NC_ENGINE_ONLY_DB_STATUSES = ('provisioning', 'ready')
+    _NC_ENGINE_ONLY_DB_STATUSES = ('provisioning', 'validating', 'ready')
 
     def _nc_check_engine_only_status(self, status):
         if (status in self._NC_ENGINE_ONLY_DB_STATUSES
