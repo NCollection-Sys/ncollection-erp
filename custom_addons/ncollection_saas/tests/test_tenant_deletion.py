@@ -101,8 +101,12 @@ class TestTenantDeletion(TransactionCase):
         self.assertTrue(record.exists(), "the audit record outlives the tenant")
 
     def test_a_failure_is_recorded_as_a_failure_and_retry_resumes(self):
-        with _drop(side_effect=RuntimeError('database busy')):
+        # The failure is logged with its traceback on purpose (an operator needs it); captured here, so the expected
+        # traceback is asserted rather than printed into the test log, where CI rightly fails on any traceback.
+        with _drop(side_effect=RuntimeError('database busy')), \
+                self.assertLogs('odoo.addons.ncollection_saas.models.tenant_deletion', level='ERROR') as logged:
             record = self.Deletion.with_user(self.alice)._nc_request(self.tenant, 'disposabledel')
+        self.assertIn('failed at database', '\n'.join(logged.output))
         self.assertEqual(record.state, 'failed')
         self.assertFalse(record.database_dropped)
         self.assertIn('database', record.message)

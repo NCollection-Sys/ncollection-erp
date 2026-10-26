@@ -144,7 +144,7 @@ class TestSystemWording(TransactionCase):
         self.assertIn('Odoo', str(other.body))
 
     def test_this_products_mail_subjects_say_the_system_name(self):
-        from odoo.addons.ncollection_branding.models.vendor_content import SUBJECT_RULES, _apply
+        from ..models.vendor_content import SUBJECT_RULES, _apply
         subject = _apply(SUBJECT_RULES, 'Your NCollection subscription has expired')
         self.assertNotIn('NCollection', subject)
         self.assertIn("nc_brand()['name']", subject)

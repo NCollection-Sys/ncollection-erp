@@ -66,7 +66,7 @@ class ResCompany(models.Model):
                     marks.add(handle.read())
             except FileNotFoundError:
                 continue
-        cleared = self.sudo().search([]).filtered(
+        cleared = self.sudo().search([('logo', '!=', False)]).filtered(
             lambda company: company.logo and base64.b64decode(company.logo) in marks)
         if cleared:
             cleared.write({'logo': False})

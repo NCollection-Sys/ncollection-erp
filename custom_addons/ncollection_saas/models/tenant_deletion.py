@@ -43,7 +43,7 @@ class TenantDeletion(models.Model):
     _order = 'id desc'
     _rec_name = 'database_name'
 
-    tenant_id = fields.Many2one('ncollection.tenant', string='Tenant', ondelete='set null', readonly=True)
+    tenant_id = fields.Many2one('ncollection.tenant', ondelete='set null', readonly=True)
     company_name = fields.Char(readonly=True)
     tenant_uuid = fields.Char(string='Tenant UUID', readonly=True)
     database_name = fields.Char(string='Database', readonly=True, required=True)
@@ -176,33 +176,3 @@ class TenantDeletion(models.Model):
     def _nc_result_action(self):
         return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': self.id,
                 'view_mode': 'form', 'target': 'current', 'name': self.env._("Tenant deletion")}
-
-
-class TenantDeleteWizard(models.TransientModel):
-    _name = 'ncollection.tenant.delete.wizard'
-    _description = 'Delete Tenant'
-
-    tenant_id = fields.Many2one('ncollection.tenant', required=True, readonly=True, ondelete='cascade')
-    company_name = fields.Char(related='tenant_id.company_name')
-    database_name = fields.Char(related='tenant_id.database_name', string='Identifier')
-    tenant_url = fields.Char(related='tenant_id.tenant_url')
-    confirm_identifier = fields.Char(string='Type the identifier to confirm')
-
-    @api.model
-    def default_get(self, fields_list):
-        values = super().default_get(fields_list)
-        if self.env.context.get('active_model') == 'ncollection.tenant' and self.env.context.get('active_id'):
-            values.setdefault('tenant_id', self.env.context['active_id'])
-        return values
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        for wizard in records:
-            self.env['ncollection.tenant.deletion']._nc_assert_may_delete(wizard.tenant_id)
-        return records
-
-    def action_delete(self):
-        self.ensure_one()
-        record = self.env['ncollection.tenant.deletion']._nc_request(self.tenant_id, self.confirm_identifier)
-        return record._nc_result_action()

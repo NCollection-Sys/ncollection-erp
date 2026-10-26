@@ -124,7 +124,7 @@ class TestApplicationUrlHttp(HttpCase):
                 self.assertIn(response.status_code, (200,), path)
 
     def test_the_installable_app_lives_under_the_application_path(self):
-        from odoo.addons.ncollection_core.controllers.app_routes import SW_HOMEPAGE, SW_SHARE_TARGET
+        from ..controllers.app_routes import SW_HOMEPAGE, SW_SHARE_TARGET
         manifest = self.url_open('/web/manifest.webmanifest').json()
         self.assertEqual((manifest['scope'], manifest['start_url']), ('/atlas', '/atlas'))
         self.assertFalse([s for s in manifest.get('shortcuts', []) if s['url'].startswith('/odoo')])

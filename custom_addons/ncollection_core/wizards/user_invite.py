@@ -33,7 +33,7 @@ class UserInvite(models.TransientModel):
     email = fields.Char(string='Contact Email', required=True)
     available_role_ids = fields.Many2many('ncollection.role', compute='_compute_available_role_ids')
     role_id = fields.Many2one(
-        'ncollection.role', string='Role', required=True, ondelete='cascade',
+        'ncollection.role', required=True, ondelete='cascade',
         domain="[('id', 'in', available_role_ids)]",
         help='What this person may do in the workspace (Roles & Permissions).')
     role_ids = fields.Many2many(
@@ -48,7 +48,7 @@ class UserInvite(models.TransientModel):
 
     @api.depends_context('uid')
     def _compute_available_role_ids(self):
-        roles = self.env['ncollection.role'].search([]).filtered('available')
+        roles = self.env['ncollection.role'].search([('active', '=', True)]).filtered('available')
         for wizard in self:
             wizard.available_role_ids = roles
 
