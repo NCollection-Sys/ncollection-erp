@@ -14,7 +14,7 @@
 
     <template id="nc_document_css">
         <!-- only a validated 6-digit hex ever reaches the style block (a free-text colour could break out of it) -->
-        <t t-set="nc_primary" t-value="company._nc_document_color()"/>
+        <t t-set="nc_primary" t-value="nc_opts['accent'] if nc_opts else company._nc_document_color()"/>
         <style>
             @font-face { font-family: 'NCLato'; font-weight: normal; src: url('/web/static/fonts/lato/Lato-Reg-webfont.ttf') format('truetype'); }
             @font-face { font-family: 'NCLato'; font-weight: bold; src: url('/web/static/fonts/lato/Lato-Bol-webfont.ttf') format('truetype'); }
@@ -81,11 +81,29 @@
             .o_report_layout_nc .o_nc_signatures { margin-top: 14mm; width: 100%; page-break-inside: avoid; }
             .o_report_layout_nc .o_nc_signatures td { width: 45%; border-top: 0.2mm solid #8a99a8; padding-top: 1.2mm; color: #5f7185; font-size: 7.8pt; }
             .o_report_layout_nc .o_nc_signatures td.o_nc_gap { width: 10%; border-top: 0; }
+            /* A block label already ends its line: the br some localisations put after it (the GCC "Invoice Date")
+               added an empty one and pushed that column a line below its neighbour. */
+            .o_report_layout_nc #informations strong + br { display: none; }
+        </style>
+        <!-- The document's Print Template (models/document_print_template.py): every value below is validated there
+             (hex colours, a fixed font list, known cell names), so nothing free-text reaches this block. -->
+        <style t-if="nc_opts">
+            <t t-if="nc_opts['font']">.o_nc_doc, .o_nc_doc table { font-family: <t t-out="nc_opts['font']"/>; }</t>
+            <t t-if="nc_opts['font_size']">.o_report_layout_nc { font-size: <t t-out="nc_opts['font_size']"/>pt; }</t>
+            <t t-if="nc_opts['text']">.o_report_layout_nc { color: <t t-out="nc_opts['text']"/>; }</t>
+            <t t-foreach="nc_opts['hidden_cells']" t-as="nc_cell">.o_report_layout_nc [name="<t t-out="nc_cell"/>"] { display: none; }
+            </t>
+            <t t-if="not nc_opts['show_payment_reference']">.o_report_layout_nc [name^="payment_communication"] { display: none; }</t>
+            <t t-if="nc_opts['single_language']">
+            .o_report_layout_nc [name$="_ar"], .o_report_layout_nc td[name="account_invoice_line_name"] span[dir="rtl"],
+            .o_report_layout_nc #informations > div > strong:first-child { display: none; }
+            </t>
         </style>
     </template>
 
     <template id="external_layout_nc">
-        <t t-set="nc_dir" t-value="'rtl' if (o and o.env['res.lang']._get_data(code=o.env.lang or 'en_US').direction == 'rtl') or (not o and company.env['res.lang']._get_data(code=company.env.lang or 'en_US').direction == 'rtl') else 'ltr'"/>
+        <t t-set="nc_opts" t-value="company.env['ncollection.document.type']._nc_print_options(o or False, company)"/>
+        <t t-set="nc_dir" t-value="nc_opts['direction'] if nc_opts['direction'] in ('ltr', 'rtl') else 'rtl' if (o and o.env['res.lang']._get_data(code=o.env.lang or 'en_US').direction == 'rtl') or (not o and company.env['res.lang']._get_data(code=company.env.lang or 'en_US').direction == 'rtl') else 'ltr'"/>
         <t t-set="nc_start" t-value="'right' if nc_dir == 'rtl' else 'left'"/>
         <t t-set="nc_end" t-value="'left' if nc_dir == 'rtl' else 'right'"/>
         <t t-set="nc_vat_label" t-value="company.country_id.vat_label or 'Tax ID'"/>
@@ -95,18 +113,21 @@
             <table>
                 <tr>
                     <td t-attf-style="width: 50%; text-align: #{nc_start};" class="o_nc_brand">
-                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+                        <img t-if="nc_opts['logo']" t-att-src="image_data_uri(nc_opts['logo'])" alt="Logo"/>
                         <div t-else="" class="o_nc_company_name" t-out="company.name"/>
                         <div t-if="company.report_header" class="o_nc_company_line" t-field="company.report_header"/>
+                        <div t-if="nc_opts['header_text']" class="o_nc_company_line" t-out="nc_opts['header_text']"/>
                     </td>
                     <td t-attf-style="width: 50%; text-align: #{nc_end};" class="o_nc_details">
-                        <div t-if="company.logo"><strong t-out="company.name"/></div>
+                      <t t-if="nc_opts['show_company_details']">
+                        <div t-if="nc_opts['logo']"><strong t-out="company.name"/></div>
                         <t t-if="company.is_company_details_empty">
-                            <div t-field="company.partner_id" t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                            <div t-foreach="nc_opts['company_lines']" t-as="nc_line" t-out="nc_line"/>
                         </t>
                         <t t-else=""><div t-field="company.company_details"/></t>
                         <div t-if="forced_vat or company.vat"><span t-out="nc_vat_label"/>: <span t-out="forced_vat or company.vat"/></div>
                         <div t-if="company.phone or company.email"><span t-if="company.phone" t-out="company.phone"/><span t-if="company.phone and company.email"> · </span><span t-if="company.email" t-out="company.email"/></div>
+                      </t>
                     </td>
                 </tr>
             </table>
@@ -119,8 +140,9 @@
              t-att-data-oe-id="o and o.id"
              t-att-data-oe-lang="o and o.env.context.get('lang')">
             <t t-call="ncollection_branding.nc_document_css"/>
-            <t t-call="web.address_layout"/>
-            <h2 t-out="layout_document_title"/>
+            <t t-if="nc_opts['show_address']" t-call="web.address_layout"/>
+            <h2 t-if="nc_opts['title']" t-out="nc_opts['title'] + (' ' + o.name if o and 'name' in o._fields and o.name and o.name != '/' else '')"/>
+            <h2 t-else="" t-out="layout_document_title"/>
             <t t-out="0"/>
         </div>
 
@@ -128,18 +150,36 @@
             <t t-call="ncollection_branding.nc_document_css"/>
             <table>
                 <tr>
-                    <td t-attf-style="text-align: #{nc_start};"><div t-if="company.report_footer" t-field="company.report_footer"/></td>
+                    <td t-attf-style="text-align: #{nc_start};"><div t-if="nc_opts['footer_text']" t-out="nc_opts['footer_text']"/><div t-elif="company.report_footer" t-field="company.report_footer"/></td>
                     <td t-attf-style="text-align: #{nc_end}; white-space: nowrap; width: 28%;">
                         <div t-if="report_type == 'pdf' and display_name_in_footer and o" t-out="o.name"/>
-                        <div t-if="report_type == 'pdf'">Page <span class="page"/> / <span class="topage"/></div>
+                        <div t-if="report_type == 'pdf' and nc_opts['page_numbers']">Page <span class="page"/> / <span class="topage"/></div>
                     </td>
                 </tr>
             </table>
         </div>
     </template>
 
+    <!-- The paper of the NCollection letterhead: the header above is about 25 mm (logo up to 17 mm, the rule 3 mm
+         below), so the page reserves that and no more; Odoo's stock A4 reserves 40 mm for a boxed header. Used when a
+         document type's Print Settings name no paper and the company prints with this layout
+         (models/ir_actions_report.py); an administrator can still choose another paper per document type. -->
+    <record id="paperformat_nc_document" model="report.paperformat">
+        <field name="name">A4 Document (letterhead)</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">34</field>
+        <field name="margin_bottom">18</field>
+        <field name="margin_left">12</field>
+        <field name="margin_right">12</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">29</field>
+        <field name="dpi">90</field>
+    </record>
+
     <record id="report_layout_nc" model="report.layout">
-        <field name="name">NCollection</field>
+        <field name="name">Professional</field>
         <field name="sequence">1</field>
         <field name="view_id" ref="external_layout_nc"/>
     </record>

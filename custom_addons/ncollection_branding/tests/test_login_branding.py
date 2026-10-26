@@ -10,7 +10,7 @@ web.login_layout). These tests prove:
 * the reset-password page inherits the same frame,
 * the page source carries zero visible "Odoo" branding,
 * Remember-Me is deliberately absent (see the module/PR rationale),
-* the NCollection company logo is seeded (login card no longer shows Odoo's
+* no vendor mark is the company logo (login card no longer shows Odoo's
   default logo).
 
 Module install already fails if any inheritance xpath stops matching, so a
@@ -107,8 +107,11 @@ class TestLoginRedesign(TransactionCase):
         arch = self._arch("ncollection_branding.login_layout_split")
         self.assertIn("o_nc_login__brand", arch)
         self.assertIn("o_nc_login__form-side", arch)
-        # per-tenant logo via the company_logo binary (acceptance item 7)
-        self.assertIn("company_logo", arch)
+        # The sign-in page is the SYSTEM's: its logo (brand panel and the mobile card) is the System Branding login
+        # logo, never the company's (System Branding vs Company Identity), and no hard-coded mark stands in for it.
+        self.assertNotIn("company_logo", arch)
+        self.assertIn("login_logo_url", arch)
+        self.assertNotIn("<svg", arch.split('o_nc_login__brand-copy')[0], "no hard-coded mark beside the name")
 
     def test_form_override_present(self):
         arch = self._arch("ncollection_branding.login_form_branded")
@@ -117,8 +120,32 @@ class TestLoginRedesign(TransactionCase):
         # guard preserved so the link never becomes a dead 404
         self.assertIn("reset_password_enabled", arch)
 
-    def test_company_logo_seeded(self):
-        """The login card reads /web/binary/company_logo; the NCollection logo
-        must be seeded so it does not fall back to Odoo's default (item 2)."""
+    def test_the_system_logo_stays_legible_on_the_dark_brand_panel(self):
+        """Measured on the real platform: a brand-blue logo on a transparent background drawn straight on the
+        dark panel was present but practically invisible. It sits on a light tile from the surface token."""
+        from odoo.tools import file_open
+        with file_open('ncollection_branding/static/src/scss/login.scss') as handle:
+            scss = handle.read()
+        rule = scss.split('.o_nc_login__system-logo {', 1)[1].split('}', 1)[0]
+        self.assertIn('background-color: var(--nc-surface-raised)', rule)
+        self.assertIn('o_nc_login__system-logo', self._arch('ncollection_branding.login_layout_split'))
+
+    def test_no_vendor_mark_is_the_company_logo(self):
+        """The company's logo prints on its invoices: Odoo's default mark and the NCollection mark this module used to
+        seed are removed, so the letterhead shows the company's own logo or its name. The sign-in page shows the
+        system's logo (System Branding), never this field."""
+        import base64
+        import io
+        from PIL import Image
+        from odoo.tools import file_open
         company = self.env.ref("base.main_company")
-        self.assertTrue(company.logo, "main company logo must be seeded")
+        with file_open('ncollection_branding/static/src/img/logo.png', 'rb') as handle:
+            company.logo = base64.b64encode(handle.read())
+        self.env['res.company']._nc_clear_vendor_logos()
+        self.assertFalse(company.logo, "the NCollection mark is not the company's logo")
+        buffer = io.BytesIO()
+        Image.new('RGB', (8, 8), (200, 30, 30)).save(buffer, format='PNG')
+        company.logo = base64.b64encode(buffer.getvalue())
+        own = company.logo
+        self.env['res.company']._nc_clear_vendor_logos()
+        self.assertEqual(company.logo, own, "a logo the Owner uploaded is never touched")

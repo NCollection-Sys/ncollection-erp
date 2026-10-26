@@ -41,6 +41,8 @@ Retired, because they were second and third answers to the same question: `ncoll
 `19.0.6.14.0` migration removes the two templates, and removes the old *seeded, never-edited* base domain **only when
 `NC_BASE_DOMAIN` is set**, so a production deployment that has not yet declared its domain keeps working unchanged.
 
+Production: the edge is a template rendered from the same `DOMAIN`, one wildcard route serves the apex and every tenant, and the apex's first label (the platform's own database) is reserved so no tenant can take it. The contract, DNS, TLS and forwarded-header requirements are in `docs/markdown/DEPLOYMENT_DOMAIN_CONTRACT.md`; `ncollection_saas` `test_base_domain_switch` proves a new tenant's every address follows the configured domain.
+
 ## 2. Local routing: what has to be running
 
 A browser request to `test11.ncollection.localhost` reaches the right database only if Odoo selects the database from

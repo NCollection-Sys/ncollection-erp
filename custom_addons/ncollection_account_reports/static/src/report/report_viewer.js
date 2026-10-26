@@ -574,6 +574,19 @@ export class NcReportViewer extends Component {
         this.state.values[field.name] = this.state.values[field.name].filter((r) => r.id !== id);
     }
 
+    // ----------------------------------------------------------- print
+    // Print opens the PDF in a new tab (the browser's viewer prints it); it never downloads. The PDF is the very
+    // report action Export's PDF uses (nc_report_export: same report, same wizard record holding the filters, same
+    // print payload and template), so what the tab shows is what Export would save.
+    async printReport() {
+        this.state.exportOpen = false;
+        const act = await this.orm.call("ncollection.report.service", "nc_report_export", [
+            this.state.data.wizard.model, this.state.data.wizard.id, "pdf",
+        ]);
+        const ids = (act.context && act.context.active_ids) || [this.state.data.wizard.id];
+        browser.open(`/report/pdf/${act.report_name}/${ids.join(",")}`, "_blank");
+    }
+
     // ----------------------------------------------------------- export
     async exportReport(kind) {
         this.state.exportOpen = false;

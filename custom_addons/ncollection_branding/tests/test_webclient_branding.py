@@ -49,14 +49,17 @@ class TestWebclientBranding(TransactionCase):
 
     def test_login_footer_override_present(self):
         arch = self._arch("ncollection_branding.login_layout_branded")
-        self.assertIn("nc_product_brand()", arch)  # the name comes from Product Branding, not a literal
+        self.assertIn("nc_product_brand()", arch)  # the name comes from System Branding, not a literal
         # the two Odoo links are removed by this override
         self.assertIn("position=\"replace\"", arch)
 
     def test_bootstrap_theme_and_icon_override(self):
         arch = self._arch("ncollection_branding.webclient_bootstrap_branded")
-        self.assertIn("#17375E", arch)
-        self.assertIn("favicon_url", arch)  # the touch icon follows the configured favicon
+        # the theme colour is the configured system primary colour, no longer a typed literal
+        self.assertIn("nc_product_brand()['primary_color']", arch)
+        self.assertNotIn("#17375E", arch)
+        # the iOS touch icon is the system's app icon: a square PNG cut from the configured favicon / logo
+        self.assertIn("/ncollection/brand/app-icon/180", arch)
         self.assertNotIn("#71639e", arch)
         self.assertNotIn("odoo-icon-ios", arch)
 

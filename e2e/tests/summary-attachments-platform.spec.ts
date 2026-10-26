@@ -173,7 +173,7 @@ test.describe('Platform Admin Mode', () => {
     // Back to Platform: ends THIS tenant session and goes to the platform
     await bar.locator('a.nc-platform-bar__back').click();
     await page.waitForURL(/e2eadmin\.localhost/, { timeout: 30_000 });
-    const after = await page.request.get(`${TENANTS[TENANT]}/odoo`, { maxRedirects: 0 });
+    const after = await page.request.get(`${TENANTS[TENANT]}/atlas`, { maxRedirects: 0 });
     expect([301, 302, 303]).toContain(after.status());
     expect(after.headers()['location'] || '').toContain('/web/login');
     expect(errors).toEqual([]);

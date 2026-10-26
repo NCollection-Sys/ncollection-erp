@@ -352,3 +352,11 @@ class TestPrintSystem(AccountTestInvoicingCommon):
         for name in names:
             with self.assertRaises(AccessError, msg=name):
                 self.env[name].with_user(self.user_a).create(dict(self.filters, company_id=self.company_b.id))
+
+    def test_the_report_header_prints_no_country_line(self):
+        self.env.company.partner_id.write({'country_id': self.env.ref('base.us').id, 'street': '1 Ledger Street'})
+        for model in ('ncollection.account.report.trial.balance', 'ncollection.account.report.general.ledger'):
+            with self.subTest(model=model):
+                _wiz, p = self._print(model)
+                self.assertIn('1 Ledger Street', p['co']['lines'])
+                self.assertNotIn('United States', ' '.join(p['co']['lines']))

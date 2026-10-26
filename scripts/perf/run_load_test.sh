@@ -12,7 +12,7 @@
 #    STAGES   k6 ramping-vus stages JSON            (default: ramp to 10 VUs)
 #    BASE_URL edge base on the compose net          (default: http://nginx)
 #  e.g. staging:  STAGES='[{"duration":"1m","target":50},{"duration":"3m","target":50},{"duration":"30s","target":0}]' \
-#                 TARGETS='[{"sub":"a.ncollectionerp.com","db":"a",...}, ...x3]' ./scripts/perf/run_load_test.sh
+#                 TARGETS='[{"sub":"a.<domain>","db":"a",...}, ...x3]' ./scripts/perf/run_load_test.sh
 #  SECURITY: for the REAL staging run do NOT pass live tenant creds inline (they
 #  land in shell history / `ps` / `docker inspect`) — source TARGETS from a 0600
 #  file and rotate the admin password afterwards. The dev fixture path is admin/admin.

@@ -4,7 +4,8 @@
          PURPOSE: Odoo's view translation takes an inline element's text as part of its block, so a span would be
          translated together with its siblings and never match a one-word term. The words are translatable view
          terms; which badge shows comes from the partner's own customer / vendor classification (see
-         models/res_partner.py), so a partner that is both shows both. -->
+         models/res_partner.py), so a partner that is both shows both. The colours are the NCollection role
+         tokens (ncollection_core static/src/partner_roles), the same badges as the partner dropdown. -->
     <record id="view_move_form_nc_partner_roles" model="ir.ui.view">
         <field name="name">account.move.form.nc.partner.roles</field>
         <field name="model">account.move</field>
@@ -14,8 +15,8 @@
                 <div class="o_nc_partner_roles d-flex flex-wrap gap-1 mt-1" invisible="not partner_id">
                     <field name="nc_partner_is_customer" invisible="1"/>
                     <field name="nc_partner_is_vendor" invisible="1"/>
-                    <div class="badge rounded-pill text-bg-info" invisible="not nc_partner_is_customer">Customer</div>
-                    <div class="badge rounded-pill text-bg-secondary" invisible="not nc_partner_is_vendor">Vendor</div>
+                    <div class="badge rounded-pill o_nc_role_badge o_nc_role_customer" invisible="not nc_partner_is_customer">Customer</div>
+                    <div class="badge rounded-pill o_nc_role_badge o_nc_role_vendor" invisible="not nc_partner_is_vendor">Vendor</div>
                 </div>
             </xpath>
         </field>

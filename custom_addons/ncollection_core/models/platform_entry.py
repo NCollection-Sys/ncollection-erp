@@ -149,6 +149,7 @@ class PlatformEntry(models.Model):
         owner = self.env.ref('ncollection_core.group_role_owner', raise_if_not_found=False)
         if owner:
             groups.append(owner.id)
+        groups += self._nc_proxy_platform_group_ids()
         company = self._nc_entered_company()
         return Users.create({
             'name': name, 'login': login, 'nc_platform_proxy': True, 'nc_platform_ref': entry.platform_ref,
@@ -171,10 +172,19 @@ class PlatformEntry(models.Model):
         return self.env['res.company'].sudo().search([('active', '=', True)], order='sequence, id', limit=1)
 
     @api.model
+    def _nc_proxy_platform_group_ids(self):
+        """Rights a Platform Administrator holds INSIDE a tenant that a tenant Owner does not: the identity of the
+        system (ncollection_branding) is the platform's to change, so the passwordless proxy, and only it, holds the
+        System Branding Manager group. A tenant's own Owner and Tenant Administrator never do."""
+        group = self.env.ref('ncollection_branding.group_system_branding_manager', raise_if_not_found=False)
+        return group.ids if group else []
+
+    @api.model
     def _nc_proxy_refresh_vals(self, user, name):
         """What a repeat entry refreshes on the proxy: its displayed name, being active, and its company, which is
         RESET to the entered one, so nothing granted before (another company, an archived one) carries over."""
         vals = {'name': name, 'active': True}
+        vals['group_ids'] = [(4, group_id) for group_id in self._nc_proxy_platform_group_ids()]
         company = self._nc_entered_company()
         if user.company_id != company or user.company_ids != company:
             vals.update({'company_id': company.id, 'company_ids': [(6, 0, company.ids)]})

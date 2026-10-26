@@ -18,7 +18,7 @@ and nothing breaks when `web_tour` changes its UI.
 `web_tour` is a transitive dependency of `web`, so it is always installed; this
 override is inert if that ever stops being true.
 """
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class ResUsers(models.Model):
@@ -66,6 +66,27 @@ class ResUsers(models.Model):
             context = dict(session.context)
             context['lang'] = self.lang
             session.context = context
+
+    # ------------------------------------------------------------------ Preferences > Notification
+    # mail words the choice "In Odoo" (a static label and help). The values stay 'email' / 'inbox' - only the words
+    # change - and they speak in the System Branding name, resolved on every read, so a renamed system shows at once.
+    notification_type = fields.Selection(selection='_nc_notification_type_selection')
+
+    @api.model
+    def _nc_notification_type_selection(self):
+        name = self.env['ncollection.product.branding'].nc_brand()['name']
+        return [('email', self.env._("By Emails")), ('inbox', self.env._("In %(system)s", system=name))]
+
+    @api.model
+    def fields_get(self, allfields=None, attributes=None):
+        res = super().fields_get(allfields, attributes)
+        if 'help' in res.get('notification_type', {}):
+            name = self.env['ncollection.product.branding'].nc_brand()['name']
+            res['notification_type']['help'] = self.env._(
+                "Policy on how to handle Chatter notifications:\n"
+                "- By Emails: notifications are sent to your email address\n"
+                "- In %(system)s: notifications appear in your %(system)s Inbox", system=name)
+        return res
 
 
 def post_init_hook(env):

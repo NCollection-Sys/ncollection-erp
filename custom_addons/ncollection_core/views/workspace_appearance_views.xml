@@ -94,4 +94,12 @@ action = {
               action="ncollection_branding.action_document_stamp"
               sequence="80"/>
 
+    <!-- Print settings: the paper and the optional sections of every printed document; ncollection_branding owns the
+         model, the action and the rule of who may change which document. -->
+    <menuitem id="menu_workspace_print_settings"
+              name="Print Settings"
+              parent="menu_workspace_settings_root"
+              action="ncollection_branding.action_print_settings"
+              sequence="85"/>
+
 </odoo>

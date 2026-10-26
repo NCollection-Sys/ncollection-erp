@@ -202,16 +202,40 @@ if ! "${DC[@]}" exec -T db psql -U odoo -d e2eadmin -tAc \
 else
   # Same staleness trap as create_tenant above. e2eadmin is the PLATFORM db, so
   # it holds ncollection.tenant — every field added to that model lands here.
-  echo "  • upgrading platform stack (ncollection_saas) on e2eadmin…"
-  if ! "${DC[@]}" exec -T odoo odoo -d e2eadmin -u ncollection_saas --without-demo=True \
-       --no-http --stop-after-init "${DBARGS[@]}" >/tmp/e2e_upgrade_e2eadmin.log 2>&1; then
-    echo "ERROR: upgrading ncollection_saas on e2eadmin failed — fixture is stale." >&2
-    echo "       Re-run with 'make e2e-clean' to rebuild." >&2
-    tail -20 /tmp/e2e_upgrade_e2eadmin.log >&2
-    exit 1
-  fi
-  "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" /tmp/e2e_upgrade_e2eadmin.log \
-    "ncollection_saas on e2eadmin" "if ./oca is empty, run 'make oca'"
+  # The modules to upgrade are the ones the release preflight names for THIS
+  # database, never a fixed name: `-u ncollection_saas` does not reach the modules
+  # saas DEPENDS on, so a bumped ncollection_subscription stayed behind and the
+  # release gate (rightly) answered 503 to every platform spec.
+  # The preflight exits non-zero on FAIL, which `set -e` + pipefail would turn into a
+  # silent exit here; its status is kept and the verdict below decides (it only reads).
+  pre_rc=0
+  # shellcheck disable=SC2016  # $1/$HOST/... expand in the CONTAINER's shell, not here
+  pre="$("${DC[@]}" exec -T odoo sh -c 'python3 - "$1" --env' _ e2eadmin \
+         < "$REPO_ROOT/scripts/upgrade/preflight_versions.py" 2>&1 | tr -d '\r')" || pre_rc=$?
+  verdict="$(printf '%s\n' "$pre" | sed -n 's/^PREFLIGHT=//p' | head -1)"
+  mods="$(printf '%s\n' "$pre" | sed -n 's/^PREFLIGHT_MODULES=//p' | head -1)"
+  inst="$(printf '%s\n' "$pre" | sed -n 's/^PREFLIGHT_INSTALL=//p' | head -1)"
+  modargs=()
+  [ -n "$mods" ] && modargs+=(-u "$mods")
+  [ -n "$inst" ] && modargs+=(-i "$inst")      # auto-installed by the code, absent here: same run
+  case "$verdict" in
+    PASS) echo "  • platform stack on e2eadmin is current (release preflight PASS)" ;;
+    FAIL)
+      echo "  • on e2eadmin, exactly what the release preflight names: upgrade ${mods:-none}, install ${inst:-none}"
+      if ! "${DC[@]}" exec -T odoo odoo -d e2eadmin "${modargs[@]}" --without-demo=True \
+           --no-http --stop-after-init "${DBARGS[@]}" >/tmp/e2e_upgrade_e2eadmin.log 2>&1; then
+        echo "ERROR: upgrading $mods on e2eadmin failed — fixture is stale." >&2
+        echo "       Re-run with 'make e2e-clean' to rebuild." >&2
+        tail -20 /tmp/e2e_upgrade_e2eadmin.log >&2
+        exit 1
+      fi
+      "$REPO_ROOT/scripts/dev/assert_odoo_setup.sh" /tmp/e2e_upgrade_e2eadmin.log \
+        "$mods on e2eadmin" "if ./oca is empty, run 'make oca'" ;;
+    *)
+      echo "ERROR: the release preflight could not check e2eadmin (${verdict:-no verdict}, exit $pre_rc); rebuild with 'make e2e-clean'." >&2
+      printf '%s\n' "$pre" | grep -a '^PREFLIGHT' >&2 || true
+      exit 1 ;;
+  esac
 fi
 # Deterministic admin creds + a checkout plan (write-or-create) for the register
 # journey. `odoo shell` is a REPL: an exception in the piped script does NOT set a

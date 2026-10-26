@@ -3,17 +3,9 @@
 
     <!-- White-label system parameters. noupdate=1 keeps client edits sticky. -->
 
-    <!-- Default outgoing email "from name" used by templates that fall back
-         to ir.config_parameter when no specific from is set. -->
-    <record id="ir_config_mail_default_from_filter" model="ir.config_parameter">
-        <field name="key">mail.default.from_filter</field>
-        <field name="value">ncollection.com</field>
-    </record>
-
-    <record id="ir_config_mail_default_from" model="ir.config_parameter">
-        <field name="key">mail.default.from</field>
-        <field name="value">noreply@ncollection.com</field>
-    </record>
+    <!-- No outgoing sender is seeded: it was noreply@ncollection.com (mail.default.from / from_filter), the address
+         every email of every workspace was sent from. Odoo's own default sender applies; databases that still hold
+         that exact value are cleaned by ncollection_core (workspace_config._nc_clear_placeholder_mail_sender). -->
 
     <!-- Web title appearing in some HTTP responses / shortcuts -->
     <record id="ir_config_web_title" model="ir.config_parameter">

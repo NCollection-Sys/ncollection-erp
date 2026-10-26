@@ -20,8 +20,8 @@
     -->
 
     <record id="module_category_ncollection_roles" model="ir.module.category">
-        <field name="name">NCollection Roles</field>
-        <field name="description">Standard tenant workspace roles for NCollection ERP.</field>
+        <field name="name">Workspace Roles</field>
+        <field name="description">Standard workspace roles.</field>
         <field name="sequence">1</field>
     </record>
 
@@ -29,7 +29,7 @@
          removed from res.groups). One privilege = one selector on the user form;
          our roles are additive, so they share a privilege for grouping only. -->
     <record id="privilege_ncollection_roles" model="res.groups.privilege">
-        <field name="name">NCollection Roles</field>
+        <field name="name">Workspace Roles</field>
         <field name="description">Standard tenant workspace roles.</field>
         <field name="sequence">1</field>
         <field name="category_id" ref="module_category_ncollection_roles"/>

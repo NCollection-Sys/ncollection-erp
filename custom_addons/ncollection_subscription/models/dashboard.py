@@ -23,7 +23,7 @@ _db_size_cache = {'ts': 0.0, 'value': ([], 0, None)}
 
 class SubscriptionDashboard(models.TransientModel):
     _name = 'ncollection.subscription.dashboard'
-    _description = 'NCollection SaaS Dashboard'
+    _description = 'Business Management Dashboard'
 
     # ---- tenant / subscription KPIs (P1-T07) -----------------------------
     total_tenants = fields.Integer(compute='_compute_kpis')
@@ -56,6 +56,12 @@ class SubscriptionDashboard(models.TransientModel):
     db_count = fields.Integer(compute='_compute_storage')
     db_storage_total_mb = fields.Float(compute='_compute_storage', string='Total Storage (MB)')
     db_storage_html = fields.Html(compute='_compute_storage', sanitize=False)
+
+    def _compute_display_name(self):
+        # A fresh transient record IS this page: without a name of its own Odoo would show
+        # 'ncollection.subscription.dashboard,NewId_0x...' as the breadcrumb (models.py default display_name).
+        for dashboard in self:
+            dashboard.display_name = self.env._('Summary')
 
     @api.depends_context('uid')
     def _compute_kpis(self):

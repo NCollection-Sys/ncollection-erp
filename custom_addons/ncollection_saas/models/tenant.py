@@ -9,18 +9,22 @@ ncollection_saas because only this layer depends on queue_job / the engine.
 """
 
 import logging
+import os
 import re
 import unicodedata
 
+import psycopg2
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import config
 
 _logger = logging.getLogger(__name__)
 
 # database_status states in which the tenant's Postgres DB exists (or is being
 # built), so its name is fixed. The name IS the DB + subdomain identity
 # (tenant key === subdomain === database name under db_filter=^%d$).
-_NAME_LOCKED_STATES = ('provisioning', 'ready')
+_NAME_LOCKED_STATES = ('provisioning', 'validating', 'ready')
 
 # Names a tenant DB must never take — in two tiers:
 #
@@ -112,6 +116,7 @@ class Tenant(models.Model):
         cooperate must not strand a tenant record -- but it logs ERROR, the
         signal P2-T10 watches.
         """
+        self._nc_refuse_orphaning_unlink()
         Backup = self.env['ncollection.backup'].sudo()
         names = [t.database_name for t in self if t.database_name]
         res = super().unlink()
@@ -119,6 +124,40 @@ class Tenant(models.Model):
             self.env.cr.postcommit.add(
                 lambda db=db: self._purge_after_commit(Backup, db))
         return res
+
+    def _nc_refuse_orphaning_unlink(self):
+        """No delete of a tenant RECORD may leave its database or filestore behind (Odoo's own Delete, an RPC unlink,
+        a cascade). A tenant whose database or filestore still exists is removed only by Delete Tenant
+        (models/tenant_deletion.py), which drops both first and then unlinks the record: there is no bypass, the
+        superuser included. A record whose database never existed (or is gone) is removed as before."""
+        live = []
+        root = os.path.realpath(os.path.join(config['data_dir'], 'filestore'))
+        for tenant in self:
+            db = (tenant.database_name or '').strip()
+            if not db:
+                continue
+            # only a directory INSIDE the filestore root and named after the tenant is its filestore ('..' is not)
+            store = os.path.realpath(config.filestore(db))
+            own_store = os.path.dirname(store) == root and os.path.basename(store) == db and os.path.isdir(store)
+            if own_store or self._nc_database_exists(db):
+                live.append(db)
+        if live:
+            raise UserError(self.env._(
+                "%s still has a database or files. Use Actions > Delete Tenant: it removes the database, its files "
+                "and this record together, so nothing is left behind.", ', '.join(live)))
+
+    @api.model
+    def _nc_database_exists(self, db):
+        """Whether ``db`` exists NOW, asked on a fresh maintenance connection: this request's own transaction reads
+        pg_database through its snapshot, which still shows a database Delete Tenant dropped moments ago (measured:
+        the first deletion of test11 failed at its records step for exactly that reason)."""
+        conn = psycopg2.connect(**self.env['ncollection.saas.subprocess.mixin']._db_conn_params('postgres'))
+        try:
+            with conn.cursor() as cr:
+                cr.execute("SELECT 1 FROM pg_database WHERE datname = %s", [db])
+                return bool(cr.fetchone())
+        finally:
+            conn.close()
 
     @api.model
     def _purge_after_commit(self, Backup, db):
@@ -355,7 +394,7 @@ class Tenant(models.Model):
         both an administrator's Reject and the automatic expiry, so the two can
         never disagree about what rejecting means."""
         self.ensure_one()
-        if self.database_status in ('provisioning', 'ready'):
+        if self.database_status in ('provisioning', 'validating', 'ready'):
             raise UserError(self.env._(
                 "'%s' already has a workspace; it cannot be rejected.",
                 self.company_name))
@@ -431,7 +470,7 @@ class Tenant(models.Model):
                 "'%s' was rejected. Reopen the request before provisioning.", name))
         if self.database_status == 'ready':
             return self.env._("'%s' is already provisioned; nothing was created.", name)
-        if self.database_status == 'provisioning':
+        if self.database_status in ('provisioning', 'validating'):
             return self.env._("'%s' is already being provisioned.", name)
         if not self.plan_id:
             raise UserError(self.env._(

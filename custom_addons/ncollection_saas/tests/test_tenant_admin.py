@@ -205,9 +205,45 @@ class TestTenantAdmin(TransactionCase):
         self.assertEqual(sorted(sent['role_codes']), ['accountant', 'sales_user'])
         self.assertNotIn('group_ids', sent)
 
-    def test_a_user_is_created_through_the_tenant_and_the_platform_does_not_keep_the_login_password(self):
+    def test_add_user_opens_an_empty_dialog_the_operator_fills_in(self):
+        """The regression: the dialog was CREATED before it was shown, without the required name, so Add User failed
+        with "required value for field name is missing" before the operator could type anything."""
+        roles = _reply({'ok': True, 'roles': [
+            {'code': 'accountant', 'name': 'Accountant', 'available': True},
+            {'code': 'owner', 'name': 'Owner', 'available': False, 'administrator': True}]})
+        with patch.dict(os.environ, ENV), patch(MODULE + '.requests.post', MagicMock(return_value=roles)):
+            action = self.env['ncollection.tenant.users'].with_user(self.alice).create(
+                {'tenant_id': self.atlas.id}).action_create_user()
+        self.assertNotIn('res_id', action)
+        self.assertEqual(action['name'], 'Add User')
+        Create = self.env['ncollection.tenant.user.create'].with_user(self.alice).with_context(**action['context'])
+        offered = Create.default_get(['tenant_id', 'available_role_ids'])
+        self.assertEqual(offered['tenant_id'], self.atlas.id)
+        options = self.env['ncollection.tenant.role.option'].browse(offered['available_role_ids'][0][2])
+        self.assertEqual(options.mapped('code'), ['accountant'], 'an administrator role is never offered')
+        dialog = Create.create({'name': 'Sara Mahmoud', 'login': 'sara.m', 'email': 'sara@example.com',
+                                'role_option_ids': [(6, 0, options.ids)]})
+        post = MagicMock(return_value=_reply({'ok': True, 'user_id': 41, 'login': 'sara.m',
+                                              'temporary_password': 'Tmp-' + secrets.token_urlsafe(8)}))
+        with patch.dict(os.environ, ENV), patch(MODULE + '.requests.post', post):
+            dialog.action_apply()
+        sent = json.loads(post.call_args_list[0].kwargs['data'])['vals']
+        self.assertEqual((sent['name'], sent['login'], sent['email'], sent['role_codes']),
+                         ('Sara Mahmoud', 'sara.m', 'sara@example.com', ['accountant']))
+
+    def test_a_user_needs_a_role(self):
         dialog = self.env['ncollection.tenant.user.create'].with_user(self.alice).create({
-            'tenant_id': self.atlas.id, 'name': 'New Person', 'login': 'new.person'})
+            'tenant_id': self.atlas.id, 'name': 'No Role', 'login': 'no.role'})
+        with patch.dict(os.environ, ENV), patch(MODULE + '.requests.post') as post, self.assertRaises(UserError):
+            dialog.action_apply()
+        self.assertFalse(post.called, 'nothing reaches the tenant')
+
+    def test_a_user_is_created_through_the_tenant_and_the_platform_does_not_keep_the_login_password(self):
+        option = self.env['ncollection.tenant.role.option'].create(
+            {'code': 'accountant', 'name': 'Accountant', 'available': True, 'sequence': 1})
+        dialog = self.env['ncollection.tenant.user.create'].with_user(self.alice).create({
+            'tenant_id': self.atlas.id, 'name': 'New Person', 'login': 'new.person',
+            'role_option_ids': [(6, 0, option.ids)]})
         generated = 'Qq7-' + secrets.token_urlsafe(12)
         post = MagicMock(return_value=_reply(
             {'ok': True, 'user_id': 40, 'login': 'new.person', 'temporary_password': generated}))

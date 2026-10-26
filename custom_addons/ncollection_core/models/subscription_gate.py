@@ -20,6 +20,8 @@ import logging
 import werkzeug.exceptions
 
 from odoo import SUPERUSER_ID, models
+
+from ..app_url import is_app_path
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -36,7 +38,7 @@ class IrHttp(models.AbstractModel):
         """True only for the backend web-client HTML entry points — NOT its
         assets (/web/assets/...), the login page (/web/login) or any RPC."""
         path = request.httprequest.path
-        return path == '/odoo' or path.startswith('/odoo/') or path == '/web'
+        return is_app_path(path)                 # /atlas[/...] (app_url.APP_PATH), /odoo[/...], /web
 
     @classmethod
     def _pre_dispatch(cls, rule, args):

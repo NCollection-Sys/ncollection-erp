@@ -57,7 +57,7 @@ class TestForcedPasswordChange(HttpCase):
 
     def test_a_web_page_is_replaced_by_the_change_page(self):
         self._reset_and_sign_in()
-        response = self.url_open('/odoo', allow_redirects=False)
+        response = self.url_open('/atlas', allow_redirects=False)
         self.assertEqual(response.status_code, 303)
         self.assertTrue(response.headers['Location'].endswith(CHANGE_PATH))
         page = self.url_open(CHANGE_PATH)
@@ -72,10 +72,10 @@ class TestForcedPasswordChange(HttpCase):
 
     def test_a_person_with_nothing_pending_is_not_held_back_and_has_no_use_for_the_page(self):
         self.authenticate('nothing_pending', self.free_password)
-        self.assertEqual(self.url_open('/odoo', allow_redirects=False).status_code, 200)
+        self.assertEqual(self.url_open('/atlas', allow_redirects=False).status_code, 200)
         response = self.url_open(CHANGE_PATH, allow_redirects=False)
         self.assertEqual(response.status_code, 303)
-        self.assertTrue(response.headers['Location'].endswith('/odoo'))
+        self.assertTrue(response.headers['Location'].endswith('/atlas'))
 
     def test_the_page_refuses_a_wrong_given_password_a_mismatch_and_an_unchanged_password(self):
         self._reset_and_sign_in()
@@ -107,6 +107,6 @@ class TestForcedPasswordChange(HttpCase):
         self.assertTrue(row)
         self.assertNotIn(chosen, (row.detail or '') + (row.login or ''))
         # signed out: the old cookie no longer opens anything; the chosen password signs in, the temporary one does not
-        self.assertEqual(self.url_open('/odoo', allow_redirects=False).status_code, 303)
+        self.assertEqual(self.url_open('/atlas', allow_redirects=False).status_code, 303)
         self._sign_in('reset_person', chosen)
-        self.assertEqual(self.url_open('/odoo', allow_redirects=False).status_code, 200)
+        self.assertEqual(self.url_open('/atlas', allow_redirects=False).status_code, 200)

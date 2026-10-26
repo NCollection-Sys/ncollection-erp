@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Delete Tenant (models/tenant_deletion.py): Tenants list / form -> Actions -> Delete Tenant, a typed-identifier
+     confirmation, and the platform-level audit of every deletion. The UI is a convenience: the authority and every
+     safety check are server side. -->
+<odoo>
+    <record id="view_tenant_delete_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.delete.wizard.form</field>
+        <field name="model">ncollection.tenant.delete.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Delete Tenant">
+                <div class="alert alert-danger" role="alert">
+                    <p class="fw-bold mb-1">This permanently deletes the tenant.</p>
+                    <p class="mb-0">Its database, its files and every platform record of it are removed. This cannot be undone.</p>
+                </div>
+                <group>
+                    <field name="tenant_id" invisible="1"/>
+                    <field name="company_name" readonly="1"/>
+                    <field name="database_name" readonly="1"/>
+                    <field name="tenant_url" readonly="1" widget="url"/>
+                    <field name="confirm_identifier" required="1" placeholder="Type the identifier shown above"/>
+                </group>
+                <footer>
+                    <button name="action_delete" string="Delete Tenant" type="object" class="btn-danger"
+                            confirm="Delete this tenant permanently?"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tenant_delete" model="ir.actions.act_window">
+        <field name="name">Delete Tenant</field>
+        <field name="res_model">ncollection.tenant.delete.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="ncollection_subscription.model_ncollection_tenant"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[(4, ref('ncollection_subscription.group_platform_admin'))]"/>
+    </record>
+
+    <record id="view_tenant_deletion_list" model="ir.ui.view">
+        <field name="name">ncollection.tenant.deletion.list</field>
+        <field name="model">ncollection.tenant.deletion</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0" decoration-danger="state == 'failed'"
+                  decoration-success="state == 'deleted'">
+                <field name="create_date" string="Requested"/>
+                <field name="company_name"/>
+                <field name="database_name"/>
+                <field name="requested_by"/>
+                <field name="state"/>
+                <field name="finished_at"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tenant_deletion_form" model="ir.ui.view">
+        <field name="name">ncollection.tenant.deletion.form</field>
+        <field name="model">ncollection.tenant.deletion</field>
+        <field name="arch" type="xml">
+            <form string="Tenant deletion" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_retry" string="Retry" type="object" class="btn-primary"
+                            invisible="state != 'failed'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="requested,deleting,deleted"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="company_name"/>
+                            <field name="database_name"/>
+                            <field name="tenant_uuid"/>
+                            <field name="requested_by"/>
+                            <field name="create_date" string="Requested"/>
+                            <field name="finished_at"/>
+                        </group>
+                        <group>
+                            <field name="database_dropped"/>
+                            <field name="filestore_removed"/>
+                            <field name="records_removed"/>
+                        </group>
+                    </group>
+                    <field name="message" readonly="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tenant_deletion" model="ir.actions.act_window">
+        <field name="name">Tenant Deletions</field>
+        <field name="res_model">ncollection.tenant.deletion</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_ncollection_saas_tenant_deletion"
+              name="Tenant Deletions"
+              parent="ncollection_subscription.menu_ncollection_saas_root"
+              groups="ncollection_subscription.group_platform_admin"
+              action="action_tenant_deletion"
+              sequence="77"/>
+</odoo>

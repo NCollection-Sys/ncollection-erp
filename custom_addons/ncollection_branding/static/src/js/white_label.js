@@ -37,8 +37,10 @@ import {
     RPCErrorDialog,
 } from "@web/core/errors/error_dialogs";
 
-// The product name comes from Product Branding (session_info), never from a literal here.
+// The system name and the browser title come from System Branding (session_info), never from a literal here. The
+// literal is only the last resort when the session carries no brand at all (it equals the shipped default).
 const BRAND = session.nc_product_brand?.name || "NCollection ERP";
+const TAB_TITLE = session.nc_product_brand?.title || BRAND;
 
 /* 1 — tab title: re-register the service with the brand as the empty
  * fallback (core hardcodes "Odoo"). Identical to core otherwise. */
@@ -48,7 +50,7 @@ const brandedTitleService = {
         const titleParts = {};
         function updateTitle() {
             const counter = Object.values(titleCounters).reduce((acc, c) => acc + c, 0);
-            const name = Object.values(titleParts).join(" - ") || BRAND;
+            const name = Object.values(titleParts).join(" - ") || TAB_TITLE;
             document.title = counter ? `(${counter}) ${name}` : name;
         }
         return {

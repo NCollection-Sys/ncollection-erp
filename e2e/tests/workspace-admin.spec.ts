@@ -97,7 +97,7 @@ test.describe('Workspace Administration Center', () => {
     expect(answer.status()).toBe(303);
     expect(answer.headers()['location']).toContain('/web/login');
     await loginViaRpc(person, TENANT, login, chosen);
-    const after = await person.request.get(`${TENANTS[TENANT]}/odoo`, { maxRedirects: 0 });
+    const after = await person.request.get(`${TENANTS[TENANT]}/atlas`, { maxRedirects: 0 });
     expect(after.status()).toBe(200);
     await context.close();
 
@@ -123,6 +123,10 @@ test.describe('Workspace Administration Center', () => {
       const actions = await menuActions(page, lang);
       expect(Object.keys(actions).length, `menus in ${lang}: ${JSON.stringify(actions)}`).toBeGreaterThanOrEqual(8);
       for (const [name, id] of Object.entries(actions)) {
+        // System Branding is the platform's, not the Owner's: opening it as the Owner is refused by design, and it is
+        // absent from the Owner's real menu tree (asserted in product-branding.spec.ts, 'the boundary'). This raw menu
+        // search lists every menu whatever its groups, so it is skipped here.
+        if (name === 'System Branding' || name === 'هوية النظام') continue;
         if (name === 'Invite User' || name === 'دعوة مستخدم') continue;   // the wizard is Owner-only by its ACL; the fixture admin is a system user, not the Owner role
         await page.goto(`${TENANTS[TENANT]}/odoo/action-${id}`, { waitUntil: 'domcontentloaded' });
         await page.waitForSelector('.o_main_navbar', { timeout: 60_000 });

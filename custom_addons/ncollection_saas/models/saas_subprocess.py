@@ -46,7 +46,7 @@ DB_NAME_RE = re.compile(r'^[a-z][a-z0-9]{2,62}$')
 # database "unreachable over HTTP by construction", because db_filter = ^%d$
 # and underscores are invalid in hostnames. THAT IS FALSE and was measured to
 # be false: nginx forwards an underscored Host verbatim (proxy.conf's
-# `proxy_set_header Host $host`, server_name `.localhost` / `.ncollectionerp.com`)
+# `proxy_set_header Host $host`, server_name `.<base domain>`)
 # and odoo.http.db_filter regex-matches the label against EXISTING database
 # names with no charset validation. `curl -H 'Host: drill_acme.localhost'`
 # returns the same 303 as a real tenant. Do not re-derive that safety claim.

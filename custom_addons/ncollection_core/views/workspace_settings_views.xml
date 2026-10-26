@@ -12,12 +12,58 @@
         never rendered anywhere below.
     -->
 
+    <!-- ============ Add User (the model keeps its technical name) ============ -->
+    <record id="view_user_invite_form" model="ir.ui.view">
+        <field name="name">ncollection.user.invite.form</field>
+        <field name="model">ncollection.user.invite</field>
+        <field name="arch" type="xml">
+            <form string="Add User">
+                <sheet>
+                    <group>
+                        <group string="User">
+                            <field name="name" placeholder="e.g. Sara Mahmoud"/>
+                            <field name="username" placeholder="e.g. sara.m"/>
+                            <field name="email" placeholder="e.g. sara@yourcompany.com"/>
+                        </group>
+                        <group string="Access">
+                            <field name="available_role_ids" invisible="1"/>
+                            <field name="role_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="role_ids" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="mode" widget="radio"/>
+                            <field name="new_password" password="True" invisible="mode != 'explicit'"
+                                   required="mode == 'explicit'"/>
+                            <field name="must_change"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_create_user" string="Add User" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_user_invite" model="ir.actions.act_window">
+        <field name="name">Add User</field>
+        <field name="res_model">ncollection.user.invite</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_user_invite_form"/>
+        <field name="target">new</field>
+    </record>
+
     <!-- ============ Users (simplified list — no groups exposed) ============ -->
     <record id="view_workspace_users_list" model="ir.ui.view">
         <field name="name">ncollection.workspace.users.list</field>
         <field name="model">res.users</field>
         <field name="arch" type="xml">
             <list string="Workspace Users" create="false" delete="false" decoration-muted="not active">
+                <header>
+                    <!-- the one way to add a user here: ready to sign in, with a role (wizards/user_invite.py) -->
+                    <button name="%(action_user_invite)d" type="action" string="Add User" class="btn-primary"
+                            display="always"/>
+                </header>
                 <field name="name"/>
                 <field name="login" string="Username"/>
                 <field name="email" string="Contact email" optional="show"/>
@@ -45,42 +91,9 @@
         <field name="domain">[('share', '=', False), ('nc_platform_proxy', '=', False), ('login', 'not like', '%@ncollection.internal'), ('login', '!=', '__system__')]</field>
         <field name="context">{'active_test': False}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Invite your first team member</p>
-            <p>Use "Invite User" to add teammates with a predefined role.</p>
+            <p class="o_view_nocontent_smiling_face">Add your first team member</p>
+            <p>Use "Add User" to add a teammate with a role, ready to sign in.</p>
         </field>
-    </record>
-
-    <!-- ============ Invite wizard ============ -->
-    <record id="view_user_invite_form" model="ir.ui.view">
-        <field name="name">ncollection.user.invite.form</field>
-        <field name="model">ncollection.user.invite</field>
-        <field name="arch" type="xml">
-            <form string="Invite User">
-                <sheet>
-                    <group>
-                        <field name="name" placeholder="e.g. Sara Mahmoud"/>
-                        <field name="username" placeholder="e.g. sara.m"/>
-                        <field name="email" placeholder="e.g. sara@yourcompany.com"/>
-                        <field name="role" widget="radio"/>
-                        <field name="role_ids" widget="many2many_tags" string="More roles"
-                               options="{'no_create': True, 'no_open': True}"/>
-                    </group>
-                </sheet>
-                <footer>
-                    <button name="action_invite" string="Send Invitation"
-                            type="object" class="btn-primary"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
-                </footer>
-            </form>
-        </field>
-    </record>
-
-    <record id="action_user_invite" model="ir.actions.act_window">
-        <field name="name">Invite User</field>
-        <field name="res_model">ncollection.user.invite</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="view_user_invite_form"/>
-        <field name="target">new</field>
     </record>
 
     <!-- ============ Company info (simplified — no technical tabs) ============ -->
@@ -95,7 +108,8 @@
                     </div>
                     <group>
                         <group string="Identity">
-                            <field name="logo" widget="image" class="oe_avatar"/>
+                            <!-- temporary: the System Branding logo, read-only; the company's own logo is untouched -->
+                            <field name="nc_system_logo" widget="image" class="oe_avatar" readonly="1"/>
                             <field name="vat" string="TRN"/>
                         </group>
                         <group string="Contact">
@@ -152,12 +166,6 @@ action = {
               parent="menu_workspace_settings_root"
               action="action_workspace_users"
               sequence="10"/>
-
-    <menuitem id="menu_workspace_invite"
-              name="Invite User"
-              parent="menu_workspace_settings_root"
-              action="action_user_invite"
-              sequence="20"/>
 
     <menuitem id="menu_workspace_company"
               name="Company"

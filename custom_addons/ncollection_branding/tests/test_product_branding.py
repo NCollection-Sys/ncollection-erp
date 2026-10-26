@@ -55,7 +55,7 @@ class TestProductBrandingModel(TransactionCase):
         self.record.write({'favicon': _ico()})
         after = self.Brand.nc_brand()
         self.assertTrue(after['has']['favicon'])
-        self.assertGreaterEqual(after['version'], before['version'])
+        self.assertNotEqual(after['version'], before['version'], 'a changed image changes every image URL')
 
     def test_login_and_admin_logos_fall_back_to_the_product_logo_then_to_the_shipped_one(self):
         self.record.write({'logo': False, 'login_logo': False, 'admin_logo': False})
@@ -92,6 +92,31 @@ class TestProductBrandingModel(TransactionCase):
         """A file called logo.png holding a script is refused: nothing here looks at a file name."""
         with self.assertRaises(ValidationError):
             self.record.write({'login_logo': base64.b64encode(b'<script>alert(1)</script>')})
+
+    def test_every_format_the_message_names_is_accepted_and_damage_is_refused_with_a_reason(self):
+        """The message promises PNG, JPEG or WebP. WebP was always refused as 'not a readable image': Odoo loads
+        only the BMP/GIF/ICO/JPEG/PNG/PPM decoders (odoo.tools.image), so Pillow could never open it."""
+        jpeg = io.BytesIO()
+        Image.new('RGB', (40, 20), (30, 160, 60)).save(jpeg, 'JPEG')
+        # a lossless WebP made by a full Pillow elsewhere (24x12): the server never decodes WebP
+        webp = base64.b64decode('UklGRh4AAABXRUJQVlA4TBEAAAAvF8ACAAdQlKIUuf+BiOh/AAA=')
+        for label, raw in (('png', base64.b64decode(_png())), ('jpeg', jpeg.getvalue()), ('webp', webp)):
+            with self.subTest(label):
+                self.record.write({'logo': base64.b64encode(raw)})
+                self.assertEqual(self.Brand._nc_image('logo')[0], raw, 'stored and served as uploaded')
+        png = base64.b64decode(_png())
+        damaged = {
+            'png truncated': (png[:len(png) // 2], 'could not be read as a PNG image'),
+            'jpeg truncated': (jpeg.getvalue()[:40], 'could not be read as a JPEG image'),
+            'webp truncated': (webp[:30], 'could not be read as a WebP image'),
+            'gif': (b'GIF89a' + b'\0' * 20, 'this file is GIF'),
+            'random': (bytes(range(256)) * 4, 'must be a PNG, JPEG or WebP image'),
+            'wav': (b'RIFF\x24\x00\x00\x00WAVEfmt ' + b'\0' * 28, 'this file is RIFF (WAVE)'),
+        }
+        for label, (raw, says) in damaged.items():
+            with self.subTest(label), self.assertRaises(ValidationError) as caught:
+                self.record.write({'logo': base64.b64encode(raw)})
+            self.assertIn(says, str(caught.exception))
 
     def test_only_an_administrator_changes_the_branding(self):
         with self.assertRaises(AccessError):
@@ -148,6 +173,40 @@ class TestProductBrandingHttp(HttpCase):
         self.env.cr.flush()
         self.authenticate('admin', 'admin')
         self.assertIn('SomeOtherERP', self.url_open('/odoo').text)
+
+    def _login_logo(self):
+        """(src, bytes) of the system logo on the sign-in page, as an anonymous visitor gets them."""
+        import re
+        page = self.url_open('/web/login').text
+        tag = re.search(r'<img[^>]*class="o_nc_login__system-logo"[^>]*>', page)
+        if not tag:
+            return page, None, None
+        src = re.search(r'src="([^"]+)"', tag.group(0)).group(1).replace('&amp;', '&')
+        return page, src, self.url_open(src).content
+
+    def test_the_sign_in_logo_is_the_system_logo_a_then_b_never_the_company_s(self):
+        self.record.write({'logo': False, 'login_logo': False})
+        self.env.cr.flush()
+        page, src, _body = self._login_logo()
+        self.assertIsNone(src, 'nothing configured: the system name alone')
+        self.assertNotIn('nc_login_logo_g', page, 'no hard-coded mark')
+        self.assertNotIn('/web/binary/company_logo', page, 'never the company identity')
+        logo_a, logo_b = _png(color=(200, 30, 30, 255)), _png(color=(30, 160, 60, 255), size=(30, 30))
+        self.record.write({'logo': logo_a})
+        self.env.cr.flush()
+        _page, src_a, body = self._login_logo()
+        self.assertRegex(src_a, r'^/ncollection/brand/login\?v=\d+$')
+        self.assertEqual(body, base64.b64decode(logo_a), 'the sign-in logo IS System Logo A')
+        self.record.write({'logo': logo_b})
+        self.env.cr.flush()
+        _page, src_b, body = self._login_logo()
+        self.assertNotEqual(src_b, src_a, 'a replaced logo gets a new URL: never a cached A')
+        self.assertEqual(body, base64.b64decode(logo_b), 'logo B replaced A')
+        own = _png(color=(9, 9, 200, 255), size=(16, 16))
+        self.record.write({'login_logo': own})
+        self.env.cr.flush()
+        self.assertEqual(self._login_logo()[2], base64.b64decode(own), 'a dedicated login logo wins')
+        self.assertNotEqual(self._login_logo()[2], base64.b64decode(self.env.company.logo or b''))
 
     def test_an_unconfigured_workspace_keeps_the_shipped_name(self):
         self.record.write({'name': 'NCollection ERP', 'logo': False, 'favicon': False})

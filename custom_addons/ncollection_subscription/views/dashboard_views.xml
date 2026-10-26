@@ -5,7 +5,7 @@
         <field name="name">ncollection.subscription.dashboard.form</field>
         <field name="model">ncollection.subscription.dashboard</field>
         <field name="arch" type="xml">
-            <form string="NCollection Platform Summary" create="false" edit="false" delete="false">
+            <form string="Platform Summary" create="false" edit="false" delete="false">
                 <field name="currency_id" invisible="1"/>
                 <div class="o_ncollection_dashboard">
                     <h1 class="o_ncollection_dashboard_title">Platform Summary</h1>

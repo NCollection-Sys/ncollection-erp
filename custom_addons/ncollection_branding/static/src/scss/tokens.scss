@@ -39,6 +39,8 @@ $nc-primitive-green-600:   #2E7D5B;
 $nc-primitive-red-600:     #B4453C;
 $nc-primitive-amber-600:   #B7791F;
 $nc-primitive-info-600:    #2563C9;
+$nc-primitive-green-50:    #E7F3ED;
+$nc-primitive-violet-50:   #F1E9FB;
 // Categorical series palette (the reference's data-viz hues) — chart tier.
 $nc-primitive-series-2:    #8145CD;
 $nc-primitive-series-3:    #CD45A2;
@@ -59,6 +61,13 @@ $nc-primitive-series-5:    #13CD3C;
     --nc-status-error:         #{$nc-primitive-red-600};
     --nc-status-warning:       #{$nc-primitive-amber-600};
     --nc-status-info:          #{$nc-primitive-info-600};
+    // A partner's business role (Customer / Vendor badges on documents and in the partner dropdown): two hues
+    // that never read as one another. The words stay on the badge; colour only supports them.
+    // Dark values: tokens.dark.scss (web.assets_web_dark).
+    --nc-color-customer:       #{$nc-primitive-green-600};
+    --nc-color-customer-soft:  #{$nc-primitive-green-50};
+    --nc-color-vendor:         #{$nc-primitive-series-2};
+    --nc-color-vendor-soft:    #{$nc-primitive-violet-50};
     --nc-radius-md:            10px;
     --nc-shadow-card:          0 1px 3px rgba(15, 23, 42, 0.08);
 

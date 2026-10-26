@@ -6,7 +6,7 @@
          payments is left exactly as it was. -->
     <template id="report_invoice_document_nc_payment_status" inherit_id="account.report_invoice_document">
         <xpath expr="//t[@t-if='print_with_payments']" position="inside">
-            <t t-if="o.nc_payment_status">
+            <t t-if="o.nc_payment_status and o._nc_print_shows_payment_status()">
                 <tr t-if="not payments_vals" class="fw-bold o_nc_amount_due">
                     <td>Amount Due</td>
                     <td class="text-end"><span t-field="o.amount_residual"/></td>

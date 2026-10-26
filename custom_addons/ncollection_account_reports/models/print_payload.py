@@ -51,7 +51,9 @@ class NcPrintPayload(models.AbstractModel):
         partner = company.partner_id
         country = company.country_id
         city = ' '.join(x for x in (partner.zip, partner.city, partner.state_id.name) if x)
-        lines = [x for x in (partner.street, partner.street2, city, country.name) if x]
+        # No country line: a printed header names the company and its address, and the country alone (Odoo seeds the
+        # main company as United States) printed under the name was noise at best and wrong at worst.
+        lines = [x for x in (partner.street, partner.street2, city) if x]
         vat_label = country.vat_label or ('TRN' if country.code == 'AE' else self.env._("Tax ID"))
         return {
             'name': company.name or '',

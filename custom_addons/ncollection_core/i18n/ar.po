@@ -151,8 +151,8 @@ msgstr "التطبيقات"
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/ir_module.py:0
-msgid "Applications are managed by NCollection, not from inside your workspace. Your subscription plan decides which applications are installed: open Settings > Applications to see what it includes and to choose what appears on your Home screen. To add or remove an application, change your subscription plan — your workspace is updated for you.\n\n(Installing modules directly would bypass the plan your workspace is licensed under.)"
-msgstr "تتم إدارة التطبيقات بواسطة NCollection وليس من داخل مساحة عملك. تحدد خطة اشتراكك التطبيقات المثبّتة: افتح الإعدادات > التطبيقات لمعرفة ما تتضمنه ولاختيار ما يظهر على شاشتك الرئيسية. لإضافة تطبيق أو إزالته، غيّر خطة اشتراكك — وسيتم تحديث مساحة عملك تلقائيًا.\n\n(تثبيت الوحدات مباشرةً يتجاوز الخطة المرخّصة لمساحة عملك.)"
+msgid "Applications are managed by %(system)s, not from inside your workspace. Your subscription plan decides which applications are installed: open Settings > Applications to see what it includes and to choose what appears on your Home screen. To add or remove an application, change your subscription plan — your workspace is updated for you.\n\n(Installing modules directly would bypass the plan your workspace is licensed under.)"
+msgstr "تتم إدارة التطبيقات بواسطة %(system)s وليس من داخل مساحة عملك. تحدد خطة اشتراكك التطبيقات المثبّتة: افتح الإعدادات > التطبيقات لمعرفة ما تتضمنه ولاختيار ما يظهر على شاشتك الرئيسية. لإضافة تطبيق أو إزالته، غيّر خطة اشتراكك — وسيتم تحديث مساحة عملك تلقائيًا.\n\n(تثبيت الوحدات مباشرةً يتجاوز الخطة المرخّصة لمساحة عملك.)"
 
 #. module: ncollection_core
 #. odoo-python
@@ -764,8 +764,8 @@ msgstr "NCollection"
 #. module: ncollection_core
 #: model:ir.module.category,name:ncollection_core.module_category_ncollection_roles
 #: model:res.groups.privilege,name:ncollection_core.privilege_ncollection_roles
-msgid "NCollection Roles"
-msgstr "أدوار NCollection"
+msgid "Workspace Roles"
+msgstr "أدوار مساحة العمل"
 
 #. module: ncollection_core
 #: model:ir.actions.server,name:ncollection_core.cron_detect_anomalies_ir_actions_server
@@ -1104,6 +1104,7 @@ msgstr "الإيرادات (آخر 6 أشهر)"
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_form
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_search
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__role_id
 msgid "Role"
 msgstr "الدور"
 
@@ -1185,8 +1186,8 @@ msgstr "الانحرافات المعيارية عن خط الأساس."
 
 #. module: ncollection_core
 #: model:ir.module.category,description:ncollection_core.module_category_ncollection_roles
-msgid "Standard tenant workspace roles for NCollection ERP."
-msgstr "أدوار مساحة عمل المستأجر القياسية لنظام NCollection ERP."
+msgid "Standard workspace roles."
+msgstr "أدوار مساحة العمل القياسية."
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_alert__state
@@ -1397,6 +1398,7 @@ msgstr "استُخدم في"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__user_id
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_search
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
 msgid "User"
 msgstr "المستخدم"
 
@@ -1643,6 +1645,7 @@ msgid "Standard tenant workspace roles."
 msgstr "أدوار مساحة عمل المستأجر القياسية."
 
 #. module: ncollection_core
+#. odoo-javascript
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
 msgid "Loading your summary…"
 msgstr "جارٍ تحميل الملخّص…"
@@ -1914,6 +1917,7 @@ msgstr "يحتاج المستخدم إلى اسم واسم مستخدم."
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_overview_form
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_form
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_role_access_line_search
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
 msgid "Access"
 msgstr "الصلاحيات"
 
@@ -2142,6 +2146,7 @@ msgstr "الاسم الكامل"
 
 #. module: ncollection_core
 #: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_reset_password__mode__temporary
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__mode__temporary
 msgid "Generate a temporary password"
 msgstr "إنشاء كلمة مرور مؤقتة"
 
@@ -2253,6 +2258,7 @@ msgstr "يتطلب"
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__new_password
 #: model_terms:ir.ui.view,arch_db:ncollection_core.password_change_page
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__new_password
 msgid "New password"
 msgstr "كلمة المرور الجديدة"
 
@@ -2425,6 +2431,7 @@ msgstr "يرى كل عروض الأسعار والطلبات، ويدير الف
 
 #. module: ncollection_core
 #: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_reset_password__mode__explicit
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_user_invite__mode__explicit
 msgid "Set a password myself"
 msgstr "سأحدد كلمة المرور بنفسي"
 
@@ -2721,5 +2728,88 @@ msgstr "سجل التدقيق متاح"
 
 #. module: ncollection_core
 #: model:ir.ui.menu,name:ncollection_core.menu_workspace_product_branding
-msgid "Product Branding"
-msgstr "هوية المنتج"
+msgid "System Branding"
+msgstr "هوية النظام"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "%(user)s can sign in now as %(login)s with the temporary password %(password)s  -  give it to them now: it is not shown again."
+msgstr "يمكن لـ %(user)s تسجيل الدخول الآن باسم %(login)s بكلمة المرور المؤقتة %(password)s  -  سلّمها له الآن: لن تُعرض مرة أخرى."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "%(user)s can sign in now as %(login)s."
+msgstr "يمكن لـ %(user)s تسجيل الدخول الآن باسم %(login)s."
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_workspace_users
+msgid "Add your first team member"
+msgstr "أضف أول عضو في فريقك"
+
+#. module: ncollection_core
+#: model_terms:ir.actions.act_window,help:ncollection_core.action_workspace_users
+msgid "Use \"Add User\" to add a teammate with a role, ready to sign in."
+msgstr "استخدم \"إضافة مستخدم\" لإضافة زميل بدور محدد، جاهز لتسجيل الدخول."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__available_role_ids
+msgid "Available Role"
+msgstr "الأدوار المتاحة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__must_change
+msgid "Must change it at first sign-in"
+msgstr "يجب تغييرها عند أول تسجيل دخول"
+
+#. module: ncollection_core
+#: model:ir.actions.act_window,name:ncollection_core.action_user_invite
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_users_list
+msgid "Add User"
+msgstr "إضافة مستخدم"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_invite__mode
+msgid "Password"
+msgstr "كلمة المرور"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/workspace_config.py:0
+msgid "The company details pushed by the platform are not valid."
+msgstr "بيانات الشركة المرسلة من المنصة غير صالحة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "Type the password, or choose a temporary one."
+msgstr "اكتب كلمة المرور، أو اختر كلمة مؤقتة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/user_invite.py:0
+msgid "User created"
+msgstr "تم إنشاء المستخدم"
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_print_settings
+msgid "Print Settings"
+msgstr "إعدادات الطباعة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_users_admin.py:0
+msgid "A platform administrator session cannot set passwords. Leave the temporary password: the person sets their own at first sign-in."
+msgstr "لا يمكن لجلسة مدير المنصّة تعيين كلمات المرور. اترك كلمة المرور المؤقتة: يعيّن الشخص كلمته عند أول تسجيل دخول."
+
+#. module: ncollection_core
+#: model:res.groups,name:ncollection_core.group_cron_service
+msgid "Scheduler (service)"
+msgstr "المجدول (خدمة)"
+
+#. module: ncollection_core
+#: model:res.groups,name:ncollection_core.group_config_sync
+msgid "Config Sync (service)"
+msgstr "مزامنة الإعدادات (خدمة)"

@@ -63,6 +63,7 @@ class TestMailBranding(TransactionCase):
             )
 
     def test_layouts_render_company_footer(self):
+        self.company.write({'email': 'office@company.example', 'website': 'https://company.example'})
         html = self._render('mail.mail_notification_layout')
         self.assertIn(self.company.name, html)
         self.assertIn(self.company.email, html)

@@ -393,7 +393,10 @@ class TestBackup(TransactionCase):
         root = self._backup_root_with('rtclienta', 'e2eclienta', 'provclient')
         for db in ('rtclienta', 'e2eclienta', 'provclient'):
             tenant = self._tenant(database_name=db)
-            tenant.unlink()
+            # Those suites' databases may really exist on a shared dev server, and then the orphan guard (R-043)
+            # rightly refuses the unlink; this test is about the PURGE, so the guard is out of the way here.
+            with patch(TENANT + '.Tenant._nc_refuse_orphaning_unlink', autospec=True):
+                tenant.unlink()
             self.env.cr.postcommit.run()
             self.assertTrue(
                 os.path.isdir(os.path.join(root, db)),

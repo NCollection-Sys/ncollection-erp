@@ -79,14 +79,15 @@ class IrModuleModule(models.Model):
             "belongs to the platform, not the tenant (#459).",
             operation, self.env.user.id, self.env.user.login)
         raise AccessError(self.env._(
-            "Applications are managed by NCollection, not from inside your "
+            "Applications are managed by %(system)s, not from inside your "
             "workspace. Your subscription plan decides which applications are "
             "installed: open Settings > Applications to see what it includes and "
             "to choose what appears on your Home screen. To add or remove an "
             "application, change your subscription plan — your workspace is "
             "updated for you.\n\n"
             "(Installing modules directly would bypass the plan your "
-            "workspace is licensed under.)"))
+            "workspace is licensed under.)",
+            system=self.env['ncollection.product.branding'].sudo().nc_brand()['name']))
 
     def write(self, vals):
         """`state` is what an install/upgrade actually changes, so a direct

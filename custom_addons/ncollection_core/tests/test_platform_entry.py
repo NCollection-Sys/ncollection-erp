@@ -227,7 +227,7 @@ class TestPlatformEntryEndpoints(HttpCase):
         self._grant(NONCE)
         response = self.url_open('/ncollection/platform/enter', data={'token': NONCE}, allow_redirects=False)
         self.assertEqual(response.status_code, 303)
-        self.assertTrue(response.headers['Location'].endswith('/odoo'))
+        self.assertTrue(response.headers['Location'].endswith('/atlas'), 'into the application path, never /odoo')
         info = self.url_open('/web/session/get_session_info', headers={'Content-Type': 'application/json'},
                              data='{"jsonrpc": "2.0", "params": {}}').json()['result']
         self.assertEqual(info['username'], PROXY_LOGIN_PREFIX + 'u7')
@@ -284,7 +284,7 @@ class TestPlatformEntryEndpoints(HttpCase):
         self.assertNotIn('"Forbidden"', anonymous.text)
         self.authenticate('admin', 'admin')
         signed_in = self.url_open('/ncollection/platform/enter', allow_redirects=False)
-        self.assertIn('location.replace("/odoo")', signed_in.text)
+        self.assertIn('location.replace("/atlas")', signed_in.text)
 
     def test_exit_ends_the_session_and_returns_to_the_platform(self):
         self._grant(NONCE)

@@ -168,3 +168,15 @@ def _sync_role_implications(env):
 def post_init_hook(env):
     _sync_role_implications(env)
     _sync_scheduler_read_access(env)
+    _hold_for_provisioning(env)
+
+
+def _hold_for_provisioning(env):
+    """A database installed BY THE PROVISIONING ENGINE (it sets NC_RELEASE_HOLD=provisioning for its ``odoo -i``) is
+    held by the release gate from this commit on, until the engine has validated it and opened it. Any other install
+    (a developer database, a test fixture) is not held: it is READY as soon as its code and modules agree."""
+    import os
+    from . import release_gate
+    if os.environ.get(release_gate.HOLD_ENV) == 'provisioning':
+        release_gate.set_hold(env.cr, 'provisioning')
+        _logger.info("Release gate: %s is held for provisioning until the engine validates it", env.cr.dbname)

@@ -101,7 +101,7 @@ class ResUsers(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         self._nc_refuse_credentials_from_proxy(vals_list)
-        if not self.env.su and any(self._nc_proxy_keys(vals) for vals in vals_list):
+        if self.env.uid != SUPERUSER_ID and any(self._nc_proxy_keys(vals) for vals in vals_list):
             raise AccessError(self.env._("Platform administrator accounts are managed by the platform."))
         users = super().create(vals_list)
         if self.env.su:
@@ -134,6 +134,12 @@ class ResUsers(models.Model):
         the acting user, so it cannot be used to step around a check built on this."""
         return bool(self.env.uid != SUPERUSER_ID and self.env.user.sudo().nc_platform_proxy)
 
+    def _nc_system_branding_exempt_holders(self):
+        """A Platform Administrator's entry proxy may be GIVEN the System Branding Manager right (the grant guard of
+        ncollection_branding): it is how the entry flow (``ncollection.platform.entry._proxy_user``) grants it, and the
+        proxy is an account only the platform manages (its flags can only be set as the superuser). Nobody else is."""
+        return super()._nc_system_branding_exempt_holders() | self.filtered('nc_platform_proxy')
+
     def _nc_refuse_credentials_from_proxy(self, vals_list):
         """A platform proxy session may not set any user's password: that would be a persistent credential (for
         itself, or for a real account) that outlives the session. Real tenant users keep every right they have."""
@@ -148,8 +154,9 @@ class ResUsers(models.Model):
     def write(self, vals):
         self._nc_refuse_credentials_from_proxy([vals])
         # `readonly=True` is only a UI hint: a tenant admin must not be able to mark a real user as a proxy (it would
-        # leave the seat count) or create/alter a proxy by hand. Only the entry flow (superuser env) may.
-        if self._nc_proxy_keys(vals) and not self.env.su:
+        # leave the seat count) or create/alter a proxy by hand. Only the entry flow (the REAL superuser: env.su is
+        # not enough, workspace code runs sudo() for tenant users and sudo() keeps the acting user) may.
+        if self._nc_proxy_keys(vals) and self.env.uid != SUPERUSER_ID:
             raise AccessError(self.env._("Platform administrator accounts are managed by the platform."))
         result = super().write(vals)
         # Re-activating an archived user also consumes a seat.

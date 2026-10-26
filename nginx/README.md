@@ -12,13 +12,13 @@ unchanged). Nginx is layered in for dev and prod:
 | Environment | File | Ports | Domain | TLS | Bus → |
 |---|---|---|---|---|---|
 | **Dev** | `conf.d/ncollection.dev.conf` | 80 | `*.localhost` | none | Odoo **8069** |
-| **Prod** | `conf.d/ncollection.prod.conf` | 80 → 443 | `*.ncollectionerp.com` | Let's Encrypt wildcard | Odoo **8072** |
+| **Prod** | `conf.d/ncollection.prod.conf` (an envsubst template) | 80 → 443 | `$DOMAIN` + `*.$DOMAIN` | Let's Encrypt, apex + wildcard | Odoo **8072** |
 
 ```
 nginx/
 ├── conf.d/
 │   ├── ncollection.dev.conf     # *.localhost, HTTP, ws→8069
-│   └── ncollection.prod.conf    # *.ncollectionerp.com, TLS+HSTS, ws→8072
+│   └── ncollection.prod.conf    # template: $DOMAIN + *.$DOMAIN, TLS+HSTS, ws→8072
 ├── snippets/
 │   ├── proxy.conf               # Host + X-Forwarded-* (feeds Odoo proxy_mode), ws upgrade, timeouts
 │   ├── security-headers.conf    # X-Frame-Options, nosniff, Referrer-Policy, CSP
@@ -82,7 +82,7 @@ to start without the `ssl_certificate` files). Issue it first ↓.
 
 ## 🔐 Issuing the wildcard certificate
 
-A wildcard (`*.ncollectionerp.com`) **must** use the **DNS-01** challenge —
+A wildcard (`*.$DOMAIN`) **must** use the **DNS-01** challenge —
 HTTP-01 cannot validate wildcards. DNS-01 proves domain control by creating a
 `_acme-challenge` TXT record, so you need your DNS provider's API.
 
@@ -103,7 +103,7 @@ docker run --rm \
   -v "$PWD/secrets/cloudflare.ini:/creds.ini:ro" \
   certbot/dns-cloudflare certonly \
     --dns-cloudflare --dns-cloudflare-credentials /creds.ini \
-    -d "ncollectionerp.com" -d "*.ncollectionerp.com" \
+    -d "$DOMAIN" -d "*.$DOMAIN" \
     --email "$CERTBOT_EMAIL" --agree-tos --no-eff-email
 ```
 
@@ -121,10 +121,10 @@ docker run --rm -it \
   -v ncollection-erp_certbot_certs:/etc/letsencrypt \
   certbot/certbot certonly \
     --manual --preferred-challenges dns \
-    -d "ncollectionerp.com" -d "*.ncollectionerp.com" \
+    -d "$DOMAIN" -d "*.$DOMAIN" \
     --email "$CERTBOT_EMAIL" --agree-tos --no-eff-email
 # Certbot pauses and shows a TXT value; add it at your DNS host, wait for
-# propagation (dig _acme-challenge.ncollectionerp.com TXT), then press Enter.
+# propagation (dig _acme-challenge.$DOMAIN TXT), then press Enter.
 ```
 
 > Manual certs **cannot auto-renew** — repeat this ~every 60 days, or switch to
@@ -171,8 +171,8 @@ tighten blindly or the backend white-screens.
 
 ## Custom tenant domains (P2-T06)
 
-Platform **subdomains** (`<db>.ncollectionerp.com`) need **zero** work here —
-they ride the wildcard block above and the `*.ncollectionerp.com` cert. The
+Platform **subdomains** (`<db>.$DOMAIN`) need **zero** work here —
+they ride the wildcard block above and the `*.$DOMAIN` cert. The
 platform just tracks them (`ncollection.domain`, auto-created on provisioning)
 and a weekly cron alerts 14 days before the cert expires.
 

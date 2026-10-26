@@ -45,9 +45,12 @@ class NcDocumentPrintMixin(models.AbstractModel):
         return {'type': 'ir.actions.act_url', 'target': 'new', 'url': self._nc_view_url()}
 
     def action_nc_print(self):
-        """Print: the same report and context as :meth:`action_nc_view`, as a download."""
+        """Print: the same report and context as :meth:`action_nc_view`. The action carries ``nc_print_in_tab``, and
+        the web client opens it in a new tab as the PDF (static/src/js/print_in_tab.js) instead of downloading it:
+        the browser's own viewer prints it."""
         self.ensure_one()
-        return self._nc_print_report().with_context(**self._nc_print_context()).report_action(self.id, config=False)
+        return self._nc_print_report().with_context(**self._nc_print_context(), nc_print_in_tab=True).report_action(
+            self.id, config=False)
 
     def action_nc_edit(self):
         """The document's own form, for a user who may change it (anyone else gets Odoo's own access error)."""

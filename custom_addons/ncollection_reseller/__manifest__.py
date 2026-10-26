@@ -1,6 +1,6 @@
 {
     'name': 'NCollection White-Label Reseller System',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.2',
     'category': 'NCollection/Platform',
     'summary': 'Partner reseller accounts: cascading branding, sub-tenant '
                'management, provisioning quotas, and revenue-share reporting',

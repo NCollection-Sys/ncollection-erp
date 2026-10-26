@@ -194,10 +194,10 @@ class TestCheckoutHttp(HttpCase):
         })
         res = self._rpc('/nc/checkout/status', {'tenant_uuid': tenant.tenant_uuid})
         self.assertEqual(res['status'], 'ready')
-        self.assertEqual(res['login_url'], 'https://readyco.ncollectionerp.com/odoo')
+        self.assertEqual(res['login_url'], 'https://readyco.ncollectionerp.com/atlas')
         self.assertNotIn('localhost', res['login_url'])
         # an explicit deployment override is still honoured
         self.env['ir.config_parameter'].sudo().set_param(
             'ncollection_saas.base_domain', 'tenants.example.com')
         res2 = self._rpc('/nc/checkout/status', {'tenant_uuid': tenant.tenant_uuid})
-        self.assertEqual(res2['login_url'], 'https://readyco.tenants.example.com/odoo')
+        self.assertEqual(res2['login_url'], 'https://readyco.tenants.example.com/atlas')
