@@ -157,7 +157,41 @@ jobs:
         id: e2e
         continue-on-error: true
         working-directory: e2e
-        run: npx playwright test
+        # list for the log, json for the failure summary below (same tests, same config)
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-results.json
+        run: npx playwright test --reporter=list,json
+
+      # Observability only: names every failed test (spec, line, attempts, first line of the error) as an
+      # annotation and in the job summary, so a red E2E is readable without opening the raw log. The gate below
+      # still decides; this step changes no outcome.
+      - name: E2E failures (summary)
+        if: always() && steps.e2e.outcome == 'failure'
+        working-directory: e2e
+        run: |
+          node -e '
+          const fs = require("fs");
+          if (!fs.existsSync("e2e-results.json")) { console.log("::warning::no e2e-results.json"); process.exit(0); }
+          const r = JSON.parse(fs.readFileSync("e2e-results.json", "utf8"));
+          const out = [];
+          const walk = (s, file) => {
+            (s.suites || []).forEach((x) => walk(x, x.file || file));
+            (s.specs || []).forEach((sp) => sp.tests.forEach((t) => {
+              if (t.status !== "unexpected" && t.status !== "flaky") return;
+              const res = t.results || [];
+              const err = ((res.find((x) => x.error) || {}).error || {}).message || "";
+              const first = err.replace(/\x1b\[[0-9;]*m/g, "").split("\n").filter(Boolean).slice(0, 2).join(" | ").slice(0, 300);
+              out.push({ file: sp.file || file, line: sp.line, title: sp.title, status: t.status, attempts: res.length, err: first });
+            }));
+          };
+          (r.suites || []).forEach((s) => walk(s, s.file));
+          const md = ["### E2E failures", "", "| status | spec | test | attempts | error |", "|---|---|---|---|---|"];
+          for (const f of out) {
+            console.log(`::error file=e2e/tests/${f.file},line=${f.line}::[${f.status}] ${f.title} (attempts: ${f.attempts}) ${f.err}`);
+            md.push(`| ${f.status} | ${f.file}:${f.line} | ${f.title.replace(/\|/g, "/")} | ${f.attempts} | ${f.err.replace(/\|/g, "/")} |`);
+          }
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md.join("\n") + "\n");
+          '
 
       # ---- Report + gate ----------------------------------------------------
       - name: Results summary
