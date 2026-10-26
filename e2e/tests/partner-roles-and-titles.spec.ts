@@ -193,6 +193,16 @@ test.describe('Company Entry and the Release section', () => {
       const row = page.locator('.o_ncollection_companies .o_data_row', { hasText: company }).first();
       await row.locator('button[name=action_enter_company]').click({ timeout: 90_000 });
     };
+    // a READY company opens in a NEW tab (the platform page stays on the platform)
+    const enterInNewTab = async (company: string) => {
+      await page.goto(summary, { waitUntil: 'domcontentloaded' });
+      const row = page.locator('.o_ncollection_companies .o_data_row', { hasText: company }).first();
+      const [tab] = await Promise.all([
+        page.context().waitForEvent('page', { timeout: 90_000 }),
+        row.locator('button[name=action_enter_company]').click({ timeout: 90_000 }),
+      ]);
+      return tab;
+    };
     const names = await rpc(page, PLATFORM, 'ncollection.tenant', 'read', [[id[stale], id.e2eclienta], ['company_name']]);
     const name = Object.fromEntries(names.map((t: { id: number; company_name: string }) => [t.id, t.company_name]));
 
@@ -210,11 +220,12 @@ test.describe('Company Entry and the Release section', () => {
     await expect(page.locator('.o_field_widget[name=nc_release_code_fingerprint]')).not.toBeEmpty();
 
     // the READY tenant next to it is entered normally, into its /atlas application path
-    await enter(name[id.e2eclienta]);
+    const tenantTab = await enterInNewTab(name[id.e2eclienta]);
     // the tenant's public address on the configured base domain (e2eclienta.<base domain>), into /atlas
-    await page.waitForURL((u) => u.hostname.startsWith('e2eclienta.') && u.pathname.startsWith('/atlas'),
+    await tenantTab.waitForURL((u) => u.hostname.startsWith('e2eclienta.') && u.pathname.startsWith('/atlas'),
       { timeout: 90_000 });
-    await page.waitForSelector(NAVBAR, { timeout: 90_000 });
+    await tenantTab.waitForSelector(NAVBAR, { timeout: 90_000 });
+    expect(new URL(page.url()).host, 'the platform page did not navigate').toBe(new URL(TENANTS[PLATFORM]).host);
     noOdooInTheAddressBar(urls);
   });
 });
