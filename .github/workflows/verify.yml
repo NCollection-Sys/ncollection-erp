@@ -97,6 +97,12 @@ jobs:
           echo "127.0.0.1 rtclienta.localhost rtclientb.localhost rtadmin.localhost" | sudo tee -a /etc/hosts
           echo "127.0.0.1 e2eclienta.localhost e2eclientb.localhost e2eadmin.localhost" | sudo tee -a /etc/hosts
 
+      # Company Entry and config-sync reach a tenant with keys derived from the platform's NC_CONFIG_SYNC_KEY
+      # (docker-compose.yml passes it, empty by default): without one, Enter Company refuses ("service key missing")
+      # and no identity is pushed. A random, job-local key: nothing secret is stored, nothing outlives the run.
+      - name: Generate a throwaway config-sync key
+        run: echo "NC_CONFIG_SYNC_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
       - name: Start the routing stack (db_filter ON, workers=0)
         run: docker compose up -d
 
