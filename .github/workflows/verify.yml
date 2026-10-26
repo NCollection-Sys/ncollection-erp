@@ -40,7 +40,9 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # 35, not 20: on ubuntu-24.04 `playwright install --with-deps` alone took 604 s (PR #486, run 40404836590),
+    # leaving the E2E suite ~6 of its ~10 minutes. Budget only: every suite failure still fails the gate below.
+    timeout-minutes: 35
     # Callers (canary.yml) need to tell "the code is broken" from "verification
     # could not run". Only the gate knows, so it publishes it (#398).
     outputs:
