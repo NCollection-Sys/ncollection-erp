@@ -39,7 +39,7 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Callers (canary.yml) need to tell "the code is broken" from "verification
     # could not run". Only the gate knows, so it publishes it (#398).
