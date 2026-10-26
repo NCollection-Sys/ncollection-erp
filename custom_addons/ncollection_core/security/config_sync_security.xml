@@ -11,7 +11,7 @@
             create/unlink — the singleton is created once by provisioning).
         -->
         <record id="group_config_sync" model="res.groups">
-            <field name="name">NCollection Config Sync (service)</field>
+            <field name="name">Config Sync (service)</field>
             <field name="comment">Non-interactive platform service account: may
                 write the workspace configuration projection pushed by the SaaS
                 platform. Not for human users.</field>

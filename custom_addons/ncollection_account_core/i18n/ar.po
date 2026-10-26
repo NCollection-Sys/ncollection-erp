@@ -75,6 +75,7 @@ msgstr "التأجيلات والاستحقاقات (تغيير الفترة)"
 #: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__display_name
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name
 #: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -89,6 +90,7 @@ msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخي
 #: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__id
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id
 #: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -702,3 +704,19 @@ msgid ""
 "Upload your company stamp (a PNG), choose the documents it is printed on (customer invoices, credit notes,\n"
 "               vendor bills, payment receipts) and place it on the paper. The same stamp appears on View and on Print."
 msgstr "ارفع ختم شركتك (صورة PNG)، واختر المستندات التي يُطبع عليها (فواتير العملاء، الإشعارات الدائنة، فواتير الموردين، إيصالات الدفع)، وضعه على الورقة. يظهر الختم نفسه في العرض وفي الطباعة."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__nc_show_payment_status
+msgid "Payment status"
+msgstr "حالة الدفع"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_document_type__nc_show_payment_status
+msgid "Print the paid amount and the payment status (Unpaid, Partially Paid, Paid in Full...) under the totals of this document."
+msgstr "طباعة المبلغ المدفوع وحالة الدفع (غير مدفوعة، مدفوعة جزئياً، مدفوعة بالكامل...) أسفل إجماليات هذا المستند."
+
+#. module: ncollection_account_core
+#: model:ir.actions.act_window,name:ncollection_account_core.action_accounting_print_settings
+#: model:ir.ui.menu,name:ncollection_account_core.menu_accounting_print_settings
+msgid "Print Settings"
+msgstr "إعدادات الطباعة"

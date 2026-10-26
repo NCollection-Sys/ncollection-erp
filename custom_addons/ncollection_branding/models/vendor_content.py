@@ -7,6 +7,7 @@ replacements to the records that a MODULE shipped (never to a user's own templat
 changes nothing), and runs when the module is installed or upgraded and when the registry loads, so a module installed
 later is covered too. It does not touch technical content (URLs of the application, model names, tokens).
 """
+import base64
 import logging
 import re
 
@@ -37,6 +38,8 @@ MAIL_RULES = (
 SUBJECT_RULES = (
     (r'invites you to connect to Odoo', 'invites you to connect to ' + _BRAND_EMAIL, 0),
     (r'on your Odoo account', 'on your ' + _BRAND_EMAIL + ' account', 0),
+    # this product's own subscription e-mails (ncollection_billing) said "Your NCollection trial / subscription ..."
+    (r'\bNCollection\b', _BRAND_EMAIL, 0),
 )
 # the empty-state text of the lists: the vendor's "sample" / documentation buttons are removed
 HELP_RULES = (
@@ -91,7 +94,22 @@ class NcVendorContent(models.AbstractModel):
         current = partner.sudo().name
         ours = (self._nc_bot_name(old_short_name),) if old_short_name else ()
         if current in ('OdooBot',) + ours and current != self._nc_bot_name(brand['short_name']):
-            return self._nc_write(partner.sudo(), {'name': self._nc_bot_name(brand['short_name'])})
+            return self._nc_write(partner.sudo(), {'name': self._nc_bot_name(brand['short_name']),
+                                                   'image_1920': self._nc_bot_avatar()})
+        return 0
+
+    @api.model
+    def _nc_bot_avatar(self):
+        """The system user's picture: the system's app icon (System Branding), not the vendor's robot."""
+        return base64.b64encode(self.env['ncollection.product.branding'].sudo()._nc_app_icon(512))
+
+    @api.model
+    def _nc_sync_bot_avatar(self):
+        """After the system's images change: the bot that still carries the product's name gets the new icon."""
+        partner = self.env.ref('base.partner_root', raise_if_not_found=False)
+        brand = self.env['ncollection.product.branding'].nc_brand()
+        if partner and partner.sudo().name == self._nc_bot_name(brand['short_name']):
+            return self._nc_write(partner.sudo(), {'image_1920': self._nc_bot_avatar()})
         return 0
 
     @api.model
@@ -113,12 +131,20 @@ class NcVendorContent(models.AbstractModel):
                 if new != body:
                     vals['body_html'] = new
             subject = template.subject or ''
-            if subject and 'Odoo' in subject:
+            if subject and re.search(r'\b(Odoo|NCollection)\b', subject):
                 new = _apply(SUBJECT_RULES, subject)
                 if new != subject:
                     vals['subject'] = new
             if vals:
                 changed += self._nc_write(template, vals)
+            # a translated subject (e.g. Arabic) carries the same name: each installed language gets the same rules
+            for code, _name in self.env['res.lang'].get_installed():
+                localized = template.with_context(lang=code)
+                text = localized.subject or ''
+                if text and re.search(r'\b(Odoo|NCollection)\b', text):
+                    new = _apply(SUBJECT_RULES, text)
+                    if new != text:
+                        changed += self._nc_write(localized, {'subject': new})
         for action in self._nc_module_records('ir.actions.act_window'):
             help_text = action.help or ''
             if 'odoo.com' in help_text:

@@ -294,14 +294,28 @@ class ResUsers(models.Model):
         if password is not None and not isinstance(password, str):
             raise UserError(self.env._("Malformed request."))
         explicit = bool(password)
+        # A platform administrator's entry proxy adds users exactly as the platform's Users & Access does: a generated
+        # temporary password the person must change at first sign-in, never one the proxy chose (that would be a
+        # credential the platform knows and that outlives the session - the rule of _nc_refuse_credentials_from_proxy).
+        proxy = self._nc_actor_is_platform_proxy()
+        if proxy and explicit:
+            raise AccessError(self.env._(
+                "A platform administrator session cannot set passwords. Leave the temporary password: the person "
+                "sets their own at first sign-in."))
         if explicit and len(password) < MIN_EXPLICIT_PASSWORD:
             raise UserError(self.env._("A password needs at least %s characters.", MIN_EXPLICIT_PASSWORD))
         secret = password or generate_password()
-        user = self.create({
+        vals = {
             'name': name, 'login': login, 'email': email or False,
             'group_ids': [(4, self.env.ref('base.group_user').id)],
-            'password': secret, 'nc_must_change_password': bool(must_change),
-        })
+            'nc_must_change_password': True if proxy else bool(must_change),
+        }
+        if proxy:
+            user = self.create(vals)
+            # The one password write a proxy causes: generated here, server side, and forced to change.
+            user.with_user(SUPERUSER_ID).write({'password': secret})
+        else:
+            user = self.create(dict(vals, password=secret))
         self.env['res.users']._ncollection_check_user_limit()
         if roles:
             user._nc_apply_roles(roles)

@@ -214,11 +214,15 @@ else
          < "$REPO_ROOT/scripts/upgrade/preflight_versions.py" 2>&1 | tr -d '\r')" || pre_rc=$?
   verdict="$(printf '%s\n' "$pre" | sed -n 's/^PREFLIGHT=//p' | head -1)"
   mods="$(printf '%s\n' "$pre" | sed -n 's/^PREFLIGHT_MODULES=//p' | head -1)"
+  inst="$(printf '%s\n' "$pre" | sed -n 's/^PREFLIGHT_INSTALL=//p' | head -1)"
+  modargs=()
+  [ -n "$mods" ] && modargs+=(-u "$mods")
+  [ -n "$inst" ] && modargs+=(-i "$inst")      # auto-installed by the code, absent here: same run
   case "$verdict" in
     PASS) echo "  • platform stack on e2eadmin is current (release preflight PASS)" ;;
     FAIL)
-      echo "  • upgrading on e2eadmin exactly what the release preflight names: $mods"
-      if ! "${DC[@]}" exec -T odoo odoo -d e2eadmin -u "$mods" --without-demo=True \
+      echo "  • on e2eadmin, exactly what the release preflight names: upgrade ${mods:-none}, install ${inst:-none}"
+      if ! "${DC[@]}" exec -T odoo odoo -d e2eadmin "${modargs[@]}" --without-demo=True \
            --no-http --stop-after-init "${DBARGS[@]}" >/tmp/e2e_upgrade_e2eadmin.log 2>&1; then
         echo "ERROR: upgrading $mods on e2eadmin failed — fixture is stale." >&2
         echo "       Re-run with 'make e2e-clean' to rebuild." >&2

@@ -65,5 +65,8 @@ for db in $targets; do
   done <<<"$missing"
   modules="$(printf '%s\n' "$out" | sed -n 's/^PREFLIGHT_MODULES=//p' | head -1 | tr -d '\r')"
   [ -n "$modules" ] && printf '%-18s %-9s %-26s upgrade together, one run: %s\n' "$db" "$role" "$state" "$modules"
+  install="$(printf '%s\n' "$out" | sed -n 's/^PREFLIGHT_INSTALL=//p' | head -1 | tr -d '\r')"
+  [ -n "$install" ] && printf '%-18s %-9s %-26s install in the same run (auto-installed by the code): %s\n' \
+    "$db" "$role" "$state" "$install"
 done
 exit "$rc"

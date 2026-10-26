@@ -119,6 +119,8 @@ msgstr "الاتصال بالدعم"
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -143,6 +145,8 @@ msgstr "نسيت كلمة المرور؟"
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_users__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -239,8 +243,8 @@ msgstr "اللون الأساسي"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_res_company__nc_primary_color
-msgid "Primary brand colour — drives the navbar and primary buttons. 6-digit hex, e.g. #1F5F8F. Leave empty for the NCollection default."
-msgstr "لون العلامة التجارية الأساسي — يتحكّم في شريط التنقّل والأزرار الأساسية. رمز سداسي عشري من 6 خانات، مثل #1F5F8F. اتركه فارغًا لاستخدام لون NCollection الافتراضي."
+msgid "Primary brand colour — drives the navbar and primary buttons. 6-digit hex, e.g. #1F5F8F. Leave empty for the system default."
+msgstr "لون العلامة التجارية الأساسي — يتحكّم في شريط التنقّل والأزرار الأساسية. رمز سداسي عشري من 6 خانات، مثل #1F5F8F. اتركه فارغًا لاستخدام لون النظام الافتراضي."
 
 #. module: ncollection_branding
 #. odoo-javascript
@@ -639,6 +643,8 @@ msgstr "يسار"
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.external_layout_nc
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_system_logo
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_logo_source
 msgid "Logo"
 msgstr "الشعار"
 
@@ -976,8 +982,8 @@ msgstr "اسم التطبيق: عنوان المتصفح وصفحة تسجيل �
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "e.g. NCollection ERP"
-msgstr "مثال: NCollection ERP"
+msgid "e.g. Acme Cloud"
+msgstr "مثال: Acme Cloud"
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.webclient_offline_branded
@@ -1132,6 +1138,7 @@ msgstr "ألوان النظام"
 #. module: ncollection_branding
 #: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__logo
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_logo_source__system
 msgid "System logo"
 msgstr "شعار النظام"
 
@@ -1215,3 +1222,465 @@ msgstr "؛ وهذا الملف من نوع %s"
 #: code:addons/ncollection_branding/models/product_branding.py:0
 msgid "%(label)s could not be read as a %(kind)s image: the file is damaged or incomplete."
 msgstr "تعذّرت قراءة %(label)s كصورة %(kind)s: الملف تالف أو غير مكتمل."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "Refusing to sync system branding field(s): %s"
+msgstr "رفض مزامنة حقول هوية النظام: %s"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/product_branding.py:0
+msgid "The system branding pushed by the platform must be a dict."
+msgstr "يجب أن تكون هوية النظام المرسلة من المنصة قاموسًا."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_users.py:0
+msgid "By Emails"
+msgstr "عبر البريد الإلكتروني"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_users.py:0
+msgid "In %(system)s"
+msgstr "في %(system)s"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/res_users.py:0
+msgid "Policy on how to handle Chatter notifications:\n- By Emails: notifications are sent to your email address\n- In %(system)s: notifications appear in your %(system)s Inbox"
+msgstr "طريقة التعامل مع إشعارات المحادثات:\n- عبر البريد الإلكتروني: تُرسل الإشعارات إلى بريدك الإلكتروني\n- في %(system)s: تظهر الإشعارات في صندوق الوارد في %(system)s"
+
+#. module: ncollection_branding
+#: model:ir.actions.act_window,name:ncollection_branding.action_print_settings
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
+msgid "Print Settings"
+msgstr "إعدادات الطباعة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__paperformat_id
+msgid "Paper format"
+msgstr "تنسيق الورق"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__paperformat_id
+msgid "The paper, orientation and margins this document prints on, in Preview and Print alike. Documents printed by the same report share it. Empty: the document paper sized for the letterhead, otherwise the company's paper format. A report that declares its own paper format (a cheque) keeps it."
+msgstr "الورق والاتجاه والهوامش التي يُطبع عليها هذا المستند، في المعاينة والطباعة على حد سواء. تشترك فيه المستندات التي يطبعها التقرير نفسه. إذا تُرك فارغاً: ورق المستندات المناسب للترويسة، وإلا فتنسيق ورق الشركة. التقرير الذي يحدد تنسيق ورقه بنفسه (الشيك) يحتفظ به."
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Document paper (default)"
+msgstr "ورق المستندات (افتراضي)"
+
+#. module: ncollection_branding
+#: model_terms:ir.actions.act_window,help:ncollection_branding.action_print_settings
+msgid "No printable documents"
+msgstr "لا توجد مستندات قابلة للطباعة"
+
+#. module: ncollection_branding
+#: model_terms:ir.actions.act_window,help:ncollection_branding.action_print_settings
+msgid "Each printed document (invoice, receipt, quotation...) is listed here with its paper format and optional\n               sections. Preview and Print always use the same settings."
+msgstr "كل مستند مطبوع (فاتورة، إيصال، عرض سعر...) مدرج هنا مع تنسيق ورقه وأقسامه الاختيارية. تستخدم المعاينة والطباعة دائماً الإعدادات نفسها."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_type.py:0
+msgid "Only the print settings of a document type can be changed."
+msgstr "يمكن تغيير إعدادات الطباعة لنوع المستند فقط."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_type.py:0
+msgid "You are not allowed to change the print settings of: %(kinds)s."
+msgstr "غير مسموح لك بتغيير إعدادات الطباعة لـ: %(kinds)s."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__notification_type
+msgid "Notification"
+msgstr "الإشعارات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_title
+msgid "Document title"
+msgstr "عنوان المستند"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_header_text
+msgid "Header text"
+msgstr "نص الترويسة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_footer_text
+msgid "Footer text"
+msgstr "نص التذييل"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_logo
+msgid "Document logo"
+msgstr "شعار المستند"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_company_details
+msgid "Company details"
+msgstr "بيانات الشركة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_primary_color
+msgid "Accent colour"
+msgstr "لون التمييز"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_text_color
+msgid "Text colour"
+msgstr "لون النص"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_font
+msgid "Font"
+msgstr "الخط"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_font_size
+msgid "Text size (pt)"
+msgstr "حجم النص (نقطة)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_paper_size
+msgid "Paper size"
+msgstr "حجم الورق"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_orientation
+msgid "Orientation"
+msgstr "الاتجاه"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_margin_top
+msgid "Top margin (mm)"
+msgstr "الهامش العلوي (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_margin_bottom
+msgid "Bottom margin (mm)"
+msgstr "الهامش السفلي (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_margin_left
+msgid "Left margin (mm)"
+msgstr "الهامش الأيسر (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_margin_right
+msgid "Right margin (mm)"
+msgstr "الهامش الأيمن (مم)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_page_numbers
+msgid "Page numbers"
+msgstr "أرقام الصفحات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_customer_address
+msgid "Customer address block"
+msgstr "عنوان العميل"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_payment_reference
+msgid "Payment reference"
+msgstr "مرجع الدفع"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_stamp
+msgid "Document stamp"
+msgstr "ختم المستند"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_quantity
+msgid "Quantity column"
+msgstr "عمود الكمية"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_unit_price
+msgid "Unit price column"
+msgstr "عمود سعر الوحدة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_discount
+msgid "Discount column"
+msgstr "عمود الخصم"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_taxes
+msgid "Taxes column"
+msgstr "عمود الضرائب"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_language_mode
+msgid "Labels"
+msgstr "التسميات"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_direction
+msgid "Direction"
+msgstr "اتجاه الكتابة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_title
+msgid "Printed as the document's title instead of the standard one (for example \"Tax Invoice\"). The number of the document follows it. Empty: the standard title."
+msgstr "يُطبع عنوانًا للمستند بدل العنوان القياسي (مثل \"فاتورة ضريبية\") ويليه رقم المستند. فارغ: العنوان القياسي."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_header_text
+msgid "A line printed under the company's details at the top of every page."
+msgstr "سطر يُطبع تحت بيانات الشركة أعلى كل صفحة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_footer_text
+msgid "Printed at the bottom of every page, instead of the company's report footer. Empty: the company footer."
+msgstr "يُطبع أسفل كل صفحة بدل تذييل تقارير الشركة. فارغ: تذييل الشركة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_show_company_details
+msgid "The company's address, tax number, phone and email in the header."
+msgstr "عنوان الشركة ورقمها الضريبي وهاتفها وبريدها في الترويسة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_primary_color
+msgid "Title, rules and totals. Empty: the company's document colour."
+msgstr "العنوان والخطوط والإجماليات. فارغ: لون مستندات الشركة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_text_color
+msgid "Body text. Empty: dark grey."
+msgstr "نص المستند. فارغ: رمادي داكن."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_show_stamp
+msgid "Apply the Document Stamps that match this document."
+msgstr "تطبيق أختام المستندات المطابقة لهذا المستند."
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_logo_source__company
+msgid "Company logo"
+msgstr "شعار الشركة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_logo_source__custom
+msgid "This document's own logo"
+msgstr "شعار خاص بهذا المستند"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_logo_source__none
+msgid "No logo (company name)"
+msgstr "بلا شعار (اسم الشركة)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_font__default
+msgid "Default"
+msgstr "الافتراضي"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_font__sans
+msgid "Sans-serif"
+msgstr "بلا تذييل (Sans-serif)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_font__serif
+msgid "Serif"
+msgstr "بتذييل (Serif)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_font__mono
+msgid "Monospace"
+msgstr "ثابت العرض"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_orientation__portrait
+msgid "Portrait"
+msgstr "عمودي"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_orientation__landscape
+msgid "Landscape"
+msgstr "أفقي"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_language_mode__bilingual
+msgid "Bilingual where the template provides it (English and Arabic)"
+msgstr "ثنائي اللغة حيث يوفّره القالب (الإنجليزية والعربية)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_language_mode__single
+msgid "Document language only"
+msgstr "لغة المستند فقط"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_direction__auto
+msgid "Follow the document language"
+msgstr "حسب لغة المستند"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_direction__ltr
+msgid "Left to right"
+msgstr "من اليسار إلى اليمين"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_direction__rtl
+msgid "Right to left"
+msgstr "من اليمين إلى اليسار"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Print Template"
+msgstr "قالب الطباعة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
+#: model:ir.actions.act_window,name:ncollection_branding.action_print_settings
+msgid "Print Templates"
+msgstr "قوالب الطباعة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
+msgid "Preview"
+msgstr "معاينة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Template"
+msgstr "القالب"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Identity"
+msgstr "الهوية"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Header and footer"
+msgstr "الترويسة والتذييل"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Colours and typography"
+msgstr "الألوان والخطوط"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Page"
+msgstr "الصفحة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Paper"
+msgstr "الورق"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Margins"
+msgstr "الهوامش"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Sections and columns"
+msgstr "الأقسام والأعمدة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Sections"
+msgstr "الأقسام"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Line columns"
+msgstr "أعمدة البنود"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Language"
+msgstr "اللغة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Standard title"
+msgstr "العنوان القياسي"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "Printed under the company details"
+msgstr "يُطبع تحت بيانات الشركة"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+msgid "The company's report footer"
+msgstr "تذييل تقارير الشركة"
+
+#. module: ncollection_branding
+#: model_terms:ir.actions.act_window,help:ncollection_branding.action_print_settings
+msgid "Each printed document (invoice, receipt, quotation...) has its template here: title, logo, colours, page,\n               sections and language. Preview, View and Print always use the same template."
+msgstr "لكل مستند مطبوع (فاتورة، إيصال، عرض سعر...) قالبه هنا: العنوان والشعار والألوان والصفحة والأقسام واللغة. تستخدم المعاينة والعرض والطباعة القالب نفسه دائمًا."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_print_template.py:0
+msgid "A colour is a 6-digit hex value such as #1F5F8F."
+msgstr "اللون قيمة سداسية عشرية من 6 خانات مثل #1F5F8F."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_print_template.py:0
+msgid "The text size must be between 6 and 16 pt."
+msgstr "يجب أن يكون حجم النص بين 6 و16 نقطة."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_print_template.py:0
+msgid "A margin must be between 0 and 80 mm."
+msgstr "يجب أن يكون الهامش بين 0 و80 مم."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_print_template.py:0
+msgid "Print template: %s"
+msgstr "قالب طباعة: %s"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_print_template.py:0
+msgid "%s has no report to preview."
+msgstr "لا يوجد تقرير لمعاينة %s."
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_print_template.py:0
+msgid "There is no %s yet to preview. Create one, and its preview shows these settings."
+msgstr "لا يوجد %s بعد لمعاينته. أنشئ واحدًا وستعرض معاينته هذه الإعدادات."
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_paper_size__a4
+msgid "A4"
+msgstr "A4"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_paper_size__a5
+msgid "A5"
+msgstr "A5"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_paper_size__letter
+msgid "Letter"
+msgstr "Letter (رسالة)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_paper_size__legal
+msgid "Legal"
+msgstr "Legal (قانوني)"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_font_size
+msgid "0: the layout's own size (larger in Arabic)."
+msgstr "0: حجم التنسيق نفسه (أكبر في العربية)."

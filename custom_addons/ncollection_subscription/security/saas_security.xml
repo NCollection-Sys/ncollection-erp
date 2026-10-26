@@ -12,7 +12,7 @@
             so existing system administrators keep their access unchanged.
         -->
         <record id="module_category_ncollection" model="ir.module.category">
-            <field name="name">NCollection</field>
+            <field name="name">Management</field>
             <field name="sequence">90</field>
         </record>
 

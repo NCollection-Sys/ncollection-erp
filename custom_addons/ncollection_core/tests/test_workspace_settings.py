@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Owner workspace settings & user management (P1-T12)."""
 
-from odoo.exceptions import AccessError, ValidationError
+import secrets
+
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
 
@@ -27,53 +29,89 @@ class TestWorkspaceSettings(TransactionCase):
             ("active", "=", True), ("share", "=", False),
         ])
 
-    # ---------------- invite ----------------
+    # ---------------- New User (the wizard keeps its technical name, ncollection.user.invite) ----------------
 
-    def test_owner_invites_user_with_role(self):
-        wizard = self.Invite.with_user(self.owner).create({
-            "name": "New Hire", "username": "newhire", "email": "hire@example.com", "role": "warehouse",
-        })
-        wizard.action_invite()
+    def _role(self, code):
+        return self.env["ncollection.role"].sudo().search([("code", "=", code)], limit=1)
+
+    def _new(self, user=None, **vals):
+        values = {"name": "New Hire", "username": "newhire", "email": "hire@example.com",
+                  "role_id": self._role("sales_user").id}
+        values.update(vals)
+        return self.Invite.with_user(user or self.owner).create(values)
+
+    def test_owner_creates_a_user_with_a_role_ready_to_sign_in(self):
+        result = self._new().action_create_user()
         user = self.env["res.users"].sudo().search([("login", "=", "newhire")])
-        self.assertTrue(user)
-        self.assertIn(
-            self.env.ref("ncollection_core.group_role_warehouse"),
-            user.group_ids,
-        )
-        self.assertIn(self.env.ref("base.group_user"), user.all_group_ids)
+        self.assertTrue(user and user.active and not user.share)
+        self.assertIn(self._role("sales_user"), user.nc_role_ids)
+        self.assertTrue(self._role("sales_user").group_ids <= user.all_group_ids, "the role is its real groups")
+        self.assertTrue(user.nc_must_change_password, "a temporary password must be changed at first sign-in")
+        message = result["params"]["message"]
+        self.assertIn("newhire", message)
+        self.assertTrue(result["params"]["sticky"], "the temporary password is shown once, until dismissed")
+        # usable now: the shown password authenticates (no invitation e-mail, no link)
+        temporary = message.split("temporary password ", 1)[1].split()[0]
+        user.with_user(user)._check_credentials({"type": "password", "password": temporary}, {"interactive": True})
 
-    def test_invite_never_exposes_groups(self):
-        """The wizard's fields are name/email/role(s) only — roles are names, never a group m2m."""
+    def test_a_typed_password_is_used_and_never_kept_on_the_wizard(self):
+        typed = "Aa1-" + secrets.token_urlsafe(12)
+        wizard = self._new(username="typed.pw", mode="explicit", new_password=typed, must_change=False)
+        wizard.action_create_user()
+        self.assertFalse(wizard.new_password)
+        user = self.env["res.users"].sudo().search([("login", "=", "typed.pw")])
+        self.assertFalse(user.nc_must_change_password)
+        user.with_user(user)._check_credentials({"type": "password", "password": typed},
+                                                {"interactive": True})
+
+    def test_more_roles_are_added_to_the_role(self):
+        self._new(username="two.roles", role_ids=[(6, 0, self._role("purchase_user").ids)]).action_create_user()
+        user = self.env["res.users"].sudo().search([("login", "=", "two.roles")])
+        self.assertEqual(user.nc_role_ids & (self._role("sales_user") | self._role("purchase_user")),
+                         self._role("sales_user") | self._role("purchase_user"))
+
+    def test_the_wizard_offers_only_the_roles_this_workspace_has(self):
+        wizard = self._new()
+        self.assertTrue(wizard.available_role_ids)
+        self.assertFalse(wizard.available_role_ids.filtered(lambda role: not role.available))
+
+    def test_the_wizard_never_exposes_groups(self):
+        """Name, username, email, role(s) and the password choice only: roles are names, never a group m2m."""
         fields = self.Invite.fields_get()
         self.assertNotIn("group_ids", fields)
         self.assertEqual(
             sorted(f for f in fields if not f.startswith(("create_", "write_", "id", "display_"))),
-            ["email", "name", "role", "role_ids", "username"],
+            ["available_role_ids", "email", "mode", "must_change", "name", "new_password", "role_id", "role_ids",
+             "username"],
         )
 
     def test_non_owner_denied_wizard(self):
-        """ACL mirror: Sales cannot even create the invite wizard."""
+        """ACL mirror: Sales cannot even create the wizard."""
         with self.assertRaises(AccessError):
-            self.Invite.with_user(self.sales).create({
-                "name": "X", "username": "xuser", "email": "x@example.com", "role": "employee",
-            })
+            self._new(user=self.sales, username="xuser")
+
+    def test_a_non_administrator_cannot_hand_out_administration(self):
+        """Escalation is refused by the role service itself (_nc_apply_roles), whatever the screen: a user manager
+        who is not an administrator cannot create an Administrator."""
+        manager = new_test_user(self.env, login="ws_usermgr", groups="base.group_user,base.group_erp_manager")
+        with self.assertRaises(UserError):     # AccessError and ValidationError are UserErrors too
+            self.env["res.users"].with_user(manager)._nc_create_workspace_user(
+                "Escalated", "escalated", role_ids=self._role("administrator").ids)
+        self.assertFalse(self.env["res.users"].sudo().with_context(active_test=False).search(
+            [("login", "=", "escalated")]))
 
     def test_invalid_email_rejected(self):
         with self.assertRaises(ValidationError):
-            self.Invite.with_user(self.owner).create({
-                "name": "X", "username": "xuser", "email": "not-an-email", "role": "employee",
-            })
+            self._new(username="xuser", email="not-an-email")
 
     # ---------------- max-user limit ----------------
 
-    def test_limit_blocks_invite_with_upgrade_message(self):
+    def test_limit_blocks_a_new_user(self):
         self.Config.create({"max_users": self._active_internal_count()})
-        wizard = self.Invite.with_user(self.owner).create({
-            "name": "Over Limit", "username": "overlimit", "email": "over@example.com", "role": "employee",
-        })
-        with self.assertRaises(ValidationError) as cm:
-            wizard.action_invite()
-        self.assertIn("Upgrade", str(cm.exception))
+        wizard = self._new(username="overlimit")
+        with self.assertRaises(ValidationError):
+            wizard.action_create_user()
+        self.assertFalse(self.env["res.users"].sudo().search([("login", "=", "overlimit")]))
 
     def test_limit_blocks_raw_orm_create(self):
         """Rule 4: the real control is in res.users.create, not just the UI."""
@@ -86,13 +124,8 @@ class TestWorkspaceSettings(TransactionCase):
 
     def test_limit_zero_means_unlimited(self):
         self.Config.create({"max_users": 0})
-        wizard = self.Invite.with_user(self.owner).create({
-            "name": "Free Seat", "username": "freeseat", "email": "free@example.com", "role": "employee",
-        })
-        wizard.action_invite()  # must not raise
-        self.assertTrue(
-            self.env["res.users"].sudo().search([("login", "=", "freeseat")])
-        )
+        self._new(username="freeseat").action_create_user()  # must not raise
+        self.assertTrue(self.env["res.users"].sudo().search([("login", "=", "freeseat")]))
 
     def test_reactivation_counts_against_limit(self):
         victim = new_test_user(self.env, login="ws_victim", groups="base.group_user")
@@ -139,13 +172,17 @@ class TestWorkspaceSettings(TransactionCase):
         self.assertIn(menu.id, visible_owner)
         self.assertNotIn(menu.id, visible_sales)
 
+    def test_users_has_new_user_and_no_invite_menu(self):
+        self.assertFalse(self.env.ref("ncollection_core.menu_workspace_invite", raise_if_not_found=False))
+        arch = self.env.ref("ncollection_core.view_workspace_users_list").arch
+        action = self.env.ref("ncollection_core.action_user_invite")
+        self.assertIn('name="%d"' % action.id, arch, "the list's Add User button opens the Add User form")
+        self.assertEqual(action.name, "Add User")
+
     # ---------------- usernames, not email addresses ----------------
 
-    def test_invited_user_logs_in_with_the_username_not_the_email(self):
-        wizard = self.Invite.with_user(self.owner).create({
-            "name": "Sara", "username": "sara.m", "email": "sara@example.com", "role": "sales",
-        })
-        wizard.action_invite()
+    def test_the_user_signs_in_with_the_username_not_the_email(self):
+        self._new(username="sara.m", email="sara@example.com").action_create_user()
         user = self.env["res.users"].sudo().search([("login", "=", "sara.m")])
         self.assertEqual(user.email, "sara@example.com")      # contact detail only
         self.assertFalse(self.env["res.users"].sudo().search(
@@ -153,20 +190,14 @@ class TestWorkspaceSettings(TransactionCase):
 
     def test_an_email_is_refused_as_the_username(self):
         with self.assertRaises(ValidationError):
-            self.Invite.with_user(self.owner).create({
-                "name": "X", "username": "x@example.com", "email": "x@example.com",
-                "role": "employee",
-            })
+            self._new(username="x@example.com", email="x@example.com")
 
     def test_a_taken_username_is_refused_before_anything_is_created(self):
-        self.Invite.with_user(self.owner).create({
-            "name": "A", "username": "dupuser", "email": "a@example.com", "role": "employee",
-        }).action_invite()
-        wizard = self.Invite.with_user(self.owner).create({
-            "name": "B", "username": "dupuser", "email": "b@example.com", "role": "employee",
-        })
+        self._new(name="A", username="dupuser", email="a@example.com").action_create_user()
+        wizard = self._new(name="B", username="dupuser", email="b@example.com")
         with self.assertRaises(ValidationError):
-            wizard.action_invite()
+            wizard.action_create_user()
+        self.assertEqual(self.env["res.users"].sudo().search_count([("login", "=", "dupuser")]), 1)
 
     def test_the_orm_refuses_an_email_login_for_a_human_user(self):
         """Rule 4: the wizard is not the control, res.users is."""

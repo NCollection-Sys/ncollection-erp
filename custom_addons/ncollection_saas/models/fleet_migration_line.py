@@ -86,6 +86,7 @@ class FleetMigrationLine(models.Model):
             return
         db = self.database_name
         install = migration.operation == 'install'
+        to_install = []
         try:
             self._assert_safe_db_name(db)          # injection / self-target guard
             # Platform first, re-checked for every queued line: the platform may have been held or redeployed
@@ -95,22 +96,23 @@ class FleetMigrationLine(models.Model):
             if not install:
                 # The EXACT modules this tenant needs, from its own release gate: an upgrade is never the
                 # operator's whole list on faith, and never one module of a set that must move together.
-                modules = self._nc_required_modules(db, modules)
+                modules, to_install = self._nc_required_modules(db, modules)
         except Exception as exc:                    # noqa: BLE001
             # Refused before any DB work — the tenant DB is untouched, so it is
             # NOT flagged 'error'.
             self._mark('failed', self.env._("Refused: %s", exc))
             return
-        if not install and not modules:
+        if not install and not modules and not to_install:
             self._mark('skipped', self.env._(
-                "Already compatible with the release: no module of this tenant is behind the code."))
+                "Already compatible with the release: no module of this tenant is behind the code or missing."))
             return
         if migration.dry_run:
             # Names the flag it would actually run. Saying "-u" on an install
             # dry-run would misreport the one thing the operator is checking.
             self._mark('skipped', self.env._(
                 "DRY-RUN: would run `odoo %(flag)s %(m)s` on %(db)s.",
-                flag='-i' if install else '-u', m=','.join(modules), db=db))
+                flag='-i' if install else '-u -i' if to_install else '-u',
+                m=' '.join(filter(None, [','.join(modules), ','.join(to_install)])), db=db))
             return
         self.write({'started_at': fields.Datetime.now()})
         try:
@@ -139,14 +141,16 @@ class FleetMigrationLine(models.Model):
             # the manifest promises is unchanged. This keeps upgrade byte-identical.
             self._mark('upgrading',
                        self.env._("Installing: %s", ','.join(modules)) if install
+                       else self.env._("Upgrading: %(u)s; installing: %(i)s", u=','.join(modules) or '-',
+                                       i=','.join(to_install)) if to_install
                        else self.env._("Upgrading: %s", ','.join(modules)),
                        stamp=False)
             if not install:
                 # Held from now on: its users get the maintenance page, not a half-upgraded workspace.
                 self.tenant_id._nc_release_hold('upgrading', 'fleet migration')
-            self._apply(db, modules)
+            self._apply(db, modules, to_install)
             self._mark('probing', self.env._("Smoke probe…"), stamp=False)
-            self._probe(db, modules)
+            self._probe(db, list(modules) + list(to_install))
             if not install:
                 self._nc_release_open_after_upgrade(db)
             self._mark('done', self.env._("Install OK.") if install
@@ -189,7 +193,25 @@ class FleetMigrationLine(models.Model):
             raise UserError(self.env._(
                 "%(db)s needs %(mods)s upgraded together with the rest, and this migration does not include them.",
                 db=db, mods=', '.join(uncovered)))
-        return required
+        return required, self._nc_modules_to_install(db, body)
+
+    def _nc_modules_to_install(self, db, body):
+        """What this tenant must GAIN to match a tenant created today, installed (``-i``) in the same run:
+
+        * ``absent`` - the gate's list of modules the code auto-installs that this database does not have (Odoo
+          auto-installs only while a trigger is being installed, so an old tenant never got them);
+        * its licensed ``ncollection_*`` modules that are not installed, from the platform's one authority on
+          entitlement (``_nc_licensed_module_list``), e.g. a companion added after the tenant was created.
+
+        Never the operator's list and never anything outside those two: nothing is installed that a new tenant
+        with the same plan would not have."""
+        absent = list(body.get('absent') or [])
+        licensed = [name for name in self.tenant_id._nc_licensed_module_list()
+                    if name.startswith('ncollection_') and name not in absent]
+        missing = self._not_installed(db, licensed) if licensed else []
+        if missing is None:
+            raise UserError(self.env._("cannot read which licensed modules %s has installed.", db))
+        return sorted(set(absent) | set(missing))
 
     def _nc_release_open_after_upgrade(self, db):
         """Open the tenant only when its gate says the code and the database agree again (READY)."""
@@ -225,7 +247,7 @@ class FleetMigrationLine(models.Model):
                 "Pre-upgrade snapshot failed: %s", backup.error_log or '?'))
         self.backup_id = backup.id
 
-    def _apply(self, db, modules):
+    def _apply(self, db, modules, to_install=()):
         """Run the migration's operation against this tenant.
 
         ``-i`` and ``-u`` are the ONLY difference between install and upgrade;
@@ -233,9 +255,13 @@ class FleetMigrationLine(models.Model):
         there is no second engine to keep in step.
         """
         flag = '-i' if self.migration_id.operation == 'install' else '-u'
-        cmd = ['odoo'] + self._odoo_conn_args(db) + [
-            flag, ','.join(modules),
-            '--stop-after-init', '--no-http', '--max-cron-threads=0']
+        cmd = ['odoo'] + self._odoo_conn_args(db)
+        if modules:
+            cmd += [flag, ','.join(modules)]
+        if to_install:
+            # One run: the modules behind and the modules a tenant created today would have move together.
+            cmd += ['-i', ','.join(to_install)]
+        cmd += ['--stop-after-init', '--no-http', '--max-cron-threads=0']
         env = dict(os.environ)
         env.pop(_SYNC_KEY_ENV, None)   # code run by -i / -u never needs the master that derives every tenant's key
         self._run_odoo_subprocess(cmd, self._operation_label(), env=env)
@@ -274,6 +300,12 @@ class FleetMigrationLine(models.Model):
         the install fails too, and THAT failure legitimately flags it, because by
         then a write was attempted.
         """
+        missing = self._not_installed(db, modules)
+        return missing is not None and not missing
+
+    def _not_installed(self, db, modules):
+        """Which of ``modules`` are NOT installed in ``db`` (a read in an isolated odoo shell). ``None`` when the
+        read itself failed: each caller decides what that means, never an assumption either way."""
         script = (
             "mods = env['ir.module.module'].search([('name', 'in', %r)])\n"
             "have = mods.filtered(lambda m: m.state == 'installed').mapped('name')\n"
@@ -287,15 +319,15 @@ class FleetMigrationLine(models.Model):
             _logger.warning(
                 "Fleet: module state check failed for %s (%s); proceeding with "
                 "the install, which is idempotent.", db, exc)
-            return False
+            return None
         for line in reversed((out or '').splitlines()):
             if line.strip().startswith('NC_HAVE='):
                 have = {m for m in line.strip()[len('NC_HAVE='):].split(',') if m}
-                return set(modules).issubset(have)
+                return sorted(set(modules) - have)
         # No marker: do NOT assume "already installed" — that would silently skip
         # a tenant the backfill exists to fix. Fall through and let the install
         # run; -i is idempotent, so the cost of being wrong this way is nil.
-        return False
+        return None
 
     def _probe(self, db, modules):
         """Smoke probe: the upgraded modules are actually ``installed`` AND a

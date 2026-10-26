@@ -262,7 +262,9 @@ class FleetMigration(models.Model):
             self.write({'state': 'rolling', 'current_wave': 1})
             self._enqueue_wave(1)
         elif self.state == 'rolling':
-            if not self._wave_terminal(self.current_wave):
+            # An empty wave (every target was a canary) has nothing to wait for: without this a canary-only migration
+            # stayed 'rolling' forever, its tenants upgraded and its record never closed.
+            if self._wave_lines(self.current_wave) and not self._wave_terminal(self.current_wave):
                 return
             nxt = self.current_wave + 1
             if self._wave_lines(nxt):

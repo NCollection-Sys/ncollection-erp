@@ -11,7 +11,7 @@ scoped to a document that exists. Nothing here prints anything.
 import ast
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 
 class NcDocumentType(models.Model):
@@ -59,3 +59,49 @@ class NcDocumentType(models.Model):
     def _nc_types_for(self, report, record):
         """The kinds of document ``record`` is when printed by ``report`` (usually exactly one)."""
         return self.search([('report_ids', 'in', report.ids)]).filtered(lambda doc_type: doc_type._nc_matches(record))
+
+    # ------------------------------------------------------------------ Print Settings
+    # A document type is also where its PRINT SETTINGS live: one controlled record per kind of document, shipped as
+    # data by the module that prints it and surviving every upgrade. Only these fields can be changed, and only by
+    # who may manage that kind (the same rule as its stamps); the rest of the record is data.
+    paperformat_id = fields.Many2one(
+        'report.paperformat', string='Paper format',
+        help="The paper, orientation and margins this document prints on, in Preview and Print alike. Documents "
+             "printed by the same report share it. Empty: the document paper sized for the letterhead, otherwise the "
+             "company's "
+             "paper format. A report that declares its own paper format (a cheque) keeps it.")
+
+    @api.model
+    def _nc_print_setting_fields(self):
+        """The fields a manager of a kind may change. Modules that add an optional section add its switch here."""
+        return {'paperformat_id'}
+
+    def _nc_check_print_settings_allowed(self, vals):
+        if self.env.su:
+            return
+        if set(vals) - self._nc_print_setting_fields():
+            raise AccessError(self.env._("Only the print settings of a document type can be changed."))
+        user = self.env.user
+        if user.has_group('base.group_system'):
+            return
+        mine = user.all_group_ids
+        refused = self.filtered(lambda kind: not (kind.manager_group_ids & mine))
+        if refused:
+            raise AccessError(self.env._(
+                "You are not allowed to change the print settings of: %(kinds)s.",
+                kinds=', '.join(refused.mapped('name'))))
+
+    def write(self, vals):
+        targets = self
+        if 'paperformat_id' in vals and not self.env.context.get('install_mode'):
+            # the paper is a property of the REPORT (wkhtmltopdf prints one batch on one paper): kinds printed by the
+            # same report (invoice, bill, credit note) share it, so choosing it for one chooses it for all of them
+            targets |= self.search([('report_ids', 'in', self.report_ids.ids)])
+        targets._nc_check_print_settings_allowed(vals)
+        return super(NcDocumentType, targets).write(vals)
+
+    @api.model
+    def _nc_paperformat_for(self, report):
+        """The paper ``report`` prints on by its document type's Print Settings, or an empty recordset."""
+        kinds = self.sudo().search([('report_ids', 'in', report.ids), ('paperformat_id', '!=', False)], limit=1)
+        return kinds.paperformat_id

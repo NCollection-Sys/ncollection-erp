@@ -57,6 +57,9 @@ class NcApplicationPathPwa(WebManifest):
         manifest['scope'] = manifest['start_url'] = APP_PATH
         for shortcut in manifest.get('shortcuts') or []:
             shortcut['url'] = to_app_url(shortcut.get('url'))
+        share = manifest.get('share_target')
+        if isinstance(share, dict) and share.get('action'):
+            share['action'] = to_app_url(share['action'])
         return manifest
 
     @http.route()

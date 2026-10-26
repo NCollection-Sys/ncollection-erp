@@ -233,8 +233,8 @@ msgstr "فشلت محاولة الدفع لهذا الاشتراك (المعام
 
 #. module: ncollection_billing
 #: model:mail.template,subject:ncollection_billing.mail_template_dunning
-msgid "Payment overdue for your NCollection subscription"
-msgstr "دفعة متأخرة لاشتراكك في NCollection"
+msgid "Payment overdue for your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} subscription"
+msgstr "دفعة متأخرة لاشتراكك في {{ object.env['ncollection.product.branding'].nc_brand()['name'] }}"
 
 #. module: ncollection_billing
 #. odoo-python
@@ -270,28 +270,28 @@ msgstr "لم نتمكن من معالجة دفعتك"
 
 #. module: ncollection_billing
 #: model:mail.template,subject:ncollection_billing.mail_template_plan_change
-msgid "Your NCollection plan has changed"
-msgstr "تم تغيير خطتك في NCollection"
+msgid "Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} plan has changed"
+msgstr "تم تغيير خطتك في {{ object.env['ncollection.product.branding'].nc_brand()['name'] }}"
 
 #. module: ncollection_billing
 #: model:mail.template,subject:ncollection_billing.mail_template_expiry_warning
-msgid "Your NCollection subscription expires soon ({{ object.days_remaining }} days)"
-msgstr "تنتهي صلاحية اشتراكك في NCollection قريباً ({{ object.days_remaining }} أيام)"
+msgid "Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} subscription expires soon ({{ object.days_remaining }} days)"
+msgstr "تنتهي صلاحية اشتراكك في {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} قريباً ({{ object.days_remaining }} أيام)"
 
 #. module: ncollection_billing
 #: model:mail.template,subject:ncollection_billing.mail_template_expired
-msgid "Your NCollection subscription has expired"
-msgstr "انتهت صلاحية اشتراكك في NCollection"
+msgid "Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} subscription has expired"
+msgstr "انتهت صلاحية اشتراكك في {{ object.env['ncollection.product.branding'].nc_brand()['name'] }}"
 
 #. module: ncollection_billing
 #: model:mail.template,subject:ncollection_billing.mail_template_trial_ending
-msgid "Your NCollection trial ends soon"
-msgstr "تنتهي فترتك التجريبية في NCollection قريباً"
+msgid "Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} trial ends soon"
+msgstr "تنتهي فترتك التجريبية في {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} قريباً"
 
 #. module: ncollection_billing
 #: model:mail.template,subject:ncollection_billing.mail_template_suspended
-msgid "Your NCollection workspace has been suspended"
-msgstr "تم تعليق مساحة عملك في NCollection"
+msgid "Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} workspace has been suspended"
+msgstr "تم تعليق مساحة عملك في {{ object.env['ncollection.product.branding'].nc_brand()['name'] }}"
 
 #. module: ncollection_billing
 msgid "Please renew to avoid any interruption to your workspace."

@@ -317,6 +317,11 @@ PRE_BEFORE="$(preflight)"
 { printf '%s\n' "$PRE_BEFORE" | grep -aE '^PREFLIGHT_(BEHIND|MISSING|ERROR)' | sed 's/^/     /'; } || true   # display only
 PRE_VERDICT="$(marker "$PRE_BEFORE" PREFLIGHT)"
 BEHIND="$(marker "$PRE_BEFORE" PREFLIGHT_MODULES)"
+# Installed in the SAME run (-i), as Fleet Migration does: what the code auto-installs and this database lacks
+# (PREFLIGHT_INSTALL), plus REHEARSE_INSTALL - the licensed modules the platform's entitlement says it lacks.
+INSTALL="$(marker "$PRE_BEFORE" PREFLIGHT_INSTALL)"
+[ -n "${REHEARSE_INSTALL:-}" ] && INSTALL="${INSTALL:+$INSTALL,}$REHEARSE_INSTALL"
+say "  to install (absent / licensed): ${INSTALL:-none}"
 say "  behind (preflight): ${BEHIND:-none}   missing columns: ${B_COLS:-?}   missing tables: ${B_TABS:-?}"
 case "$PRE_VERDICT" in
   PASS|FAIL) ;;
@@ -341,24 +346,31 @@ BEFORE_SMOKE="$SMOKE_RESULT"
 # ---------------------------------------------------------------- [3] targeted upgrade
 step "3) targeted upgrade (never -u all, never base, only NCollection / OCA modules)"
 MODS="${FORCE_MODULES:-$BEHIND}"
-if [ -z "$MODS" ]; then
+if [ -z "$MODS" ] && [ -z "$INSTALL" ]; then
   if [ "${B_COLS:-0}" != "0" ] || [ "${B_TABS:-0}" != "0" ]; then
     bad "columns/tables are missing but NO module is behind: an upgrade cannot be chosen for this. Investigate; nothing was changed."
   else
     good "no module is behind the code: nothing to upgrade"
   fi
 else
-  if ! validate_modules "$MODS"; then
+  if [ -n "$MODS" ] && ! validate_modules "$MODS"; then
     bad "the module list '$MODS' contains a module this tool must never upgrade: nothing was upgraded"
     verdict_fail
   fi
-  say "  upgrading ONLY: $MODS"
+  if [ -n "$INSTALL" ] && ! validate_modules "$INSTALL"; then
+    bad "the install list '$INSTALL' contains a module this tool must never install: nothing was changed"
+    verdict_fail
+  fi
+  UPARGS=()
+  [ -n "$MODS" ] && UPARGS+=(-u "$MODS")
+  [ -n "$INSTALL" ] && UPARGS+=(-i "$INSTALL")
+  say "  upgrading ONLY: ${MODS:-none}   installing ONLY: ${INSTALL:-none}"
   UPLOG="$LOG_DIR/upgrade.log"
   # Held while it upgrades: the moment its versions match the code the copy is READY, and data files can re-activate
   # crons before [3b] runs; a shared cron runner (no -d) would run them. The release gate runs no cron of a held
   # database. Lifted right after the copy is neutralised again.
   in_db psql -q -v ON_ERROR_STOP=1 -d "$SCRATCH" -c "INSERT INTO ir_config_parameter (key, value) VALUES ('ncollection.release.hold', 'upgrading:rehearsal copy') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value" >/dev/null
-  if in_odoo odoo -d "$SCRATCH" -u "$MODS" --no-http --stop-after-init --max-cron-threads=0 >"$UPLOG" 2>&1; then
+  if in_odoo odoo -d "$SCRATCH" "${UPARGS[@]}" --no-http --stop-after-init --max-cron-threads=0 >"$UPLOG" 2>&1; then
     good "odoo exited 0"
   else
     bad "odoo exited non-zero"; tail -20 "$UPLOG" | sed 's/^/     | /'
@@ -396,6 +408,7 @@ say "----------------------------------------------------------------------"
 say "  before upgrade: drift=$( [ -n "$BEHIND" ] && echo "yes ($BEHIND)" || echo none ), smoke=$BEFORE_SMOKE"
 say "  after  upgrade: drift=$( [ "$A_FLAG" = "0" ] && echo none || echo YES ), smoke=$SMOKE_RESULT"
 [ -n "$MODS" ] && say "  REHEARSAL_UPGRADE_MODULES=$MODS   (run exactly this list, together, for real)"
+[ -n "${INSTALL:-}" ] && say "  REHEARSAL_INSTALL_MODULES=$INSTALL   (installed in the same run, for real too)"
 if [ "$fail" -eq 0 ]; then
   say "REHEARSAL=PASS"
   exit 0

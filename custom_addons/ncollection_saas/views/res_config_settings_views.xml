@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app string="NCollection SaaS" name="ncollection_saas"
+                <app string="Management" name="ncollection_saas"
                      logo="/ncollection_subscription/static/description/icon.png">
                     <block title="Tenant Addressing"
                            help="Every tenant is reachable at &lt;subdomain&gt;.&lt;base domain&gt;. Changing the base domain changes the URL of every tenant at once.">
@@ -22,7 +22,7 @@
     </record>
 
     <record id="action_ncollection_saas_settings" model="ir.actions.act_window">
-        <field name="name">SaaS Settings</field>
+        <field name="name">Management Settings</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>

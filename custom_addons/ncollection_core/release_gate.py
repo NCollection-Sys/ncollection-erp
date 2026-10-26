@@ -36,7 +36,11 @@ WHAT "READY" MEANS (deterministic, the same comparison the release preflight mak
 * the DATABASE is read with plain SQL (no registry): ``ir_module_module`` and the hold parameter;
 * READY  <=> the module table exists, no module is mid-install/upgrade/removal (``to %``), no installed module of the
   release universe is recorded at a version older than its code, no installed ``ncollection_*`` module is missing from
-  the code, no schema gap was found when the registry loaded (``schema_drift``), and no release HOLD is set.
+  the code, no schema gap was found when the registry loaded (``schema_drift``), and no release HOLD is set;
+* and no ``ncollection_*`` module the code AUTO-INSTALLS is absent: one whose triggers (``auto_install`` list, or all
+  its ``depends``) are installed. Odoo auto-installs only while a trigger is itself being installed, so a module added
+  to the code later never reaches a database created before it - an old tenant stayed READY without the Sales /
+  Purchase document modules a new tenant gets. Such a module is listed in ``absent``: the exact ``-i`` list.
 
 States (also what the platform mirrors on ``ncollection.tenant``): READY, UPGRADE_REQUIRED (modules behind),
 UPGRADING (a module is mid-upgrade, or the release tooling holds it while it upgrades and validates), UPGRADE_FAILED
@@ -212,7 +216,7 @@ def release_manifest(refresh=False):
     global _release
     with _lock:
         if _release is None or refresh:
-            versions = {}
+            versions, auto = {}, {}
             for root in _code_roots():
                 for name in sorted(os.listdir(root)):
                     path = os.path.join(root, name, '__manifest__.py')
@@ -225,7 +229,11 @@ def release_manifest(refresh=False):
                         continue
                     if isinstance(data, dict) and data.get('version') and data.get('installable', True):
                         versions.setdefault(name, _full_version(data['version']))
-            _release = {'modules': versions, 'fingerprint': fingerprint(versions)}
+                        if name.startswith('ncollection_') and data.get('auto_install'):
+                            trigger = data['auto_install']
+                            auto.setdefault(name, tuple(trigger if isinstance(trigger, (list, tuple))
+                                                        else data.get('depends') or ()))
+            _release = {'modules': versions, 'fingerprint': fingerprint(versions), 'auto_install': auto}
         return _release
 
 
@@ -235,7 +243,7 @@ def evaluate(rows, hold_value, schema_gap, release):
     module table does not exist yet. Pure, so the decision is testable without a server."""
     if rows is None:
         return {'state': PROVISIONING, 'role': TENANT, 'compatible': False, 'passable': False, 'behind': [],
-                'required': [], 'missing': [], 'transitional': [], 'schema_gap': False, 'hold': '',
+                'required': [], 'absent': [], 'missing': [], 'transitional': [], 'schema_gap': False, 'hold': '',
                 'hold_reason': '', 'db_fingerprint': '', 'release_fingerprint': release['fingerprint']}
     code = release['modules']
     role = PLATFORM if any(name == PLATFORM_MODULE and state != 'to remove' for name, state, _v in rows) else TENANT
@@ -244,14 +252,15 @@ def evaluate(rows, hold_value, schema_gap, release):
     behind = [(name, installed[name] or '', code[name]) for name in sorted(installed)
               if name in code and parse_version(code[name]) > parse_version(installed[name] or '0')]
     missing = sorted(name for name in installed if name.startswith('ncollection_') and name not in code)
+    absent = _absent(release.get('auto_install') or {}, set(installed), set(transitional))
     hold, _sep, reason = (hold_value or '').partition(':')
     hold = hold.strip()
-    compatible = not (transitional or behind or missing or schema_gap)
+    compatible = not (transitional or behind or absent or missing or schema_gap)
     if transitional:
         state = UPGRADING
     elif hold in HOLD_STATES:
         state = HOLD_STATES[hold]
-    elif behind:
+    elif behind or absent:
         state = UPGRADE_REQUIRED
     elif missing or schema_gap:
         state = BLOCKED
@@ -260,12 +269,29 @@ def evaluate(rows, hold_value, schema_gap, release):
     return {
         'state': state, 'role': role, 'compatible': compatible, 'passable': compatible and hold in _PASSABLE_HOLDS,
         # ``required`` is the exact ``-u`` list: every module behind, together, never one of a set that moves together.
-        'behind': behind, 'required': [row[0] for row in behind], 'missing': missing, 'transitional': transitional,
+        # ``absent``: the exact ``-i`` list (auto-installed by the code, not in this database), applied in the same run
+        'behind': behind, 'required': [row[0] for row in behind], 'absent': absent, 'missing': missing,
+        'transitional': transitional,
         'schema_gap': bool(schema_gap), 'hold': hold if hold in HOLD_STATES else '',
         'hold_reason': reason.strip()[:_REASON_MAX],
         'db_fingerprint': fingerprint({name: v for name, v in installed.items() if name in code}),
         'release_fingerprint': release['fingerprint'],
     }
+
+
+def _absent(auto, installed, transitional):
+    """The auto-install modules of the code this database should have and does not, to a fixed point (installing one
+    can trigger another). A module already mid-install is transitional, not absent."""
+    have, absent = set(installed), []
+    changed = True
+    while changed:
+        changed = False
+        for name in sorted(auto):
+            if name not in have and name not in transitional and all(dep in have for dep in auto[name]):
+                have.add(name)
+                absent.append(name)
+                changed = True
+    return sorted(absent)
 
 
 _TOKEN_SQL = """
@@ -599,9 +625,10 @@ def _log_decision(db, result, path):
         return
     _logger.warning(
         "Release gate: db=%s role=%s state=%s->%s blocking normal traffic with the maintenance response (first: %s); "
-        "release=%s database=%s required=%s behind=%s missing=%s transitional=%s schema_gap=%s hold=%s%s",
+        "release=%s database=%s required=%s behind=%s absent=%s missing=%s transitional=%s schema_gap=%s hold=%s%s",
         *common[:4], path, *common[4:], ','.join(result['required']) or '-',
-        ','.join('%s %s<%s' % row for row in result['behind']) or '-', ','.join(result['missing']) or '-',
+        ','.join('%s %s<%s' % row for row in result['behind']) or '-', ','.join(result.get('absent') or []) or '-',
+        ','.join(result['missing']) or '-',
         ','.join(result['transitional']) or '-', result['schema_gap'], result['hold'] or '-',
         ' (%s)' % result['hold_reason'] if result['hold_reason'] else '')
 
@@ -783,7 +810,7 @@ def _left_mid_transition(db_name):
     except Exception:  # noqa: BLE001 - cron_allowed already logged it; nothing runs
         return False
     return bool(result['state'] == UPGRADING and result['transitional'] and not (
-        result['hold'] or result['behind'] or result['missing'] or result['schema_gap']))
+        result['hold'] or result['behind'] or result.get('absent') or result['missing'] or result['schema_gap']))
 
 
 def gated_acquire_one_job(cr, job_id, original, include_not_ready=False):

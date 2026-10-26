@@ -957,23 +957,14 @@ msgstr "الموعد النهائي لنشاطي"
 
 #. module: ncollection_subscription
 #: model:ir.module.category,name:ncollection_subscription.module_category_ncollection
-msgid "NCollection"
-msgstr "NCollection"
-
-#. module: ncollection_subscription
-#: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_dashboard_form
-msgid "NCollection Platform Summary"
-msgstr "ملخص منصة NCollection"
-
-#. module: ncollection_subscription
 #: model:ir.ui.menu,name:ncollection_subscription.menu_ncollection_saas_root
-msgid "NCollection SaaS"
-msgstr "NCollection SaaS"
+msgid "Management"
+msgstr "الإدارة"
 
 #. module: ncollection_subscription
 #: model:ir.model,name:ncollection_subscription.model_ncollection_subscription_dashboard
-msgid "NCollection SaaS Dashboard"
-msgstr "لوحة معلومات NCollection SaaS"
+msgid "Business Management Dashboard"
+msgstr "لوحة معلومات إدارة الأعمال"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_subscription__name

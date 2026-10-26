@@ -90,6 +90,39 @@ class TestReleaseGateDecision(TransactionCase):
         self.assertEqual(result['state'], gate.BLOCKED)
         self.assertEqual(result['missing'], ['ncollection_uae_einvoicing'])
 
+    def test_a_module_the_code_auto_installs_and_the_database_lacks_requires_an_upgrade(self):
+        """Parity: an OLD tenant (sale installed before the Sales documents module existed) is not READY. Odoo
+        auto-installs only while a trigger is itself being installed, so nothing else would ever give it the module
+        a tenant created today has. The fixed point follows a chain (one auto-install enabling the next)."""
+        release = dict(RELEASE, modules=dict(RELEASE['modules'], ncollection_sale_documents='19.0.1.0.0',
+                                             ncollection_sale_extra='19.0.1.0.0'),
+                       auto_install={'ncollection_sale_documents': ('sale', 'ncollection_core'),
+                                     'ncollection_sale_extra': ('ncollection_sale_documents',),
+                                     'ncollection_stock_barcode': ('stock',)})
+        rows = CURRENT + [('sale', 'installed', '19.0.1.2')]
+        result = gate.evaluate(rows, None, False, release)
+        self.assertEqual(result['state'], gate.UPGRADE_REQUIRED)
+        self.assertFalse(result['compatible'])
+        self.assertEqual(result['absent'], ['ncollection_sale_documents', 'ncollection_sale_extra'],
+                         'stock is not installed here: the barcode module is not owed')
+        self.assertEqual(result['required'], [], 'nothing is behind: the -u list stays exact')
+        rows += [('ncollection_sale_documents', 'installed', '19.0.1.0.0'),
+                 ('ncollection_sale_extra', 'installed', '19.0.1.0.0')]
+        self.assertEqual(gate.evaluate(rows, None, False, release)['state'], gate.READY)
+
+    def test_an_auto_install_left_mid_install_is_transitional_not_absent(self):
+        release = dict(RELEASE, auto_install={'ncollection_sale_documents': ('sale',)})
+        rows = CURRENT + [('sale', 'installed', '19.0.1.2'), ('ncollection_sale_documents', 'to install', '')]
+        result = gate.evaluate(rows, None, False, release)
+        self.assertEqual(result['state'], gate.UPGRADING)
+        self.assertEqual(result['absent'], [])
+
+    def test_the_release_reads_auto_install_triggers_of_our_modules_only(self):
+        auto = gate.release_manifest()['auto_install']
+        self.assertIn('ncollection_sale_documents', auto)
+        self.assertIn('sale', auto['ncollection_sale_documents'])
+        self.assertFalse([name for name in auto if not name.startswith('ncollection_')])
+
     def test_a_schema_gap_found_at_registry_load_blocks(self):
         self.assertEqual(gate.evaluate(CURRENT, None, True, RELEASE)['state'], gate.BLOCKED)
 

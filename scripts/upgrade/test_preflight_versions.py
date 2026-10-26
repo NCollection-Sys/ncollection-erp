@@ -90,6 +90,24 @@ class TestPreflightVerdict(unittest.TestCase):
         self.assertIn('PREFLIGHT_BEHIND=ncollection_core database 19.0.1.22.0 < code 19.0.1.23.0', lines)
         self.assertIn('PREFLIGHT_MODULES=ncollection_core,ncollection_branding', lines)
 
+    def test_a_module_the_code_auto_installs_and_the_database_lacks_fails_with_the_install_list(self):
+        """An old tenant: sale was installed before the Sales documents module existed, so it never got it."""
+        auto = {'ncollection_sale_documents': ('sale', 'ncollection_core'), 'ncollection_stock_barcode': ('stock',)}
+        installed = [('sale', '19.0.1.2'), ('ncollection_core', '19.0.1.23.0')]
+        code, lines = pv.evaluate('db', installed, self.DISK, auto)
+        self.assertEqual(code, 1)
+        self.assertIn('PREFLIGHT=FAIL', lines)
+        self.assertIn('PREFLIGHT_INSTALL=ncollection_sale_documents', lines, 'stock is not installed: no barcode')
+        self.assertIn('PREFLIGHT_MODULES=', lines, 'nothing is behind: the -u list stays empty')
+        disk = dict(self.DISK, ncollection_sale_documents='19.0.1.0.0')
+        code, lines = pv.evaluate('db', installed + [('ncollection_sale_documents', '19.0.1.0.0')], disk, auto)
+        self.assertEqual(code, 0)
+
+    def test_the_real_tree_names_the_sales_and_purchase_document_modules(self):
+        auto = pv._disk_auto_install([os.path.join(os.path.dirname(__file__), '..', '..', 'custom_addons')])
+        for name in ('ncollection_sale_documents', 'ncollection_purchase_documents'):
+            self.assertIn(name, auto)
+
     def test_versions_compare_as_numbers_not_text(self):
         code, _lines = pv.evaluate('db', [('ncollection_branding', '19.0.1.9.0')], self.DISK)
         self.assertEqual(code, 1, '1.12 is newer than 1.9')

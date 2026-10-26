@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Workspace Administration (ncollection_core) is the platform's OWN configuration too: its users, company,
+         appearance, Print Settings / Print Templates, Document Stamps. Its root menu is the tenant Owner's (the Owner
+         role), and platform staff never hold that role: it is what tells a tenant Owner from a platform operator
+         (res_users._nc_is_platform_administrator, the System Branding grant), so the main system administrator
+         never saw the menu. The platform module adds its own Platform Admin group to that one menu. Tenants are
+         untouched: this module is not installed there and the group does not exist there. The ORM rights are the
+         platform administrators' own (base.group_system implies Platform Admin on this database). -->
+    <record id="ncollection_core.menu_workspace_settings_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(4, ref('ncollection_subscription.group_platform_admin'))]"/>
+    </record>
+</odoo>

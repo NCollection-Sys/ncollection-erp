@@ -1249,3 +1249,75 @@ of any kind, HTTP included.
 **Rule of thumb.** A gate on the request path is not a gate on the database: list every way a process reaches a
 registry (request, cron, boot preload) and every process that does it (including the ones started with their own
 `--load`).
+
+## R-040 — A renamed label kept its OLD translation on every existing database ✅ GUARDED
+
+**Symptom.** After the release that renamed the platform app to "Business Management" (with "إدارة الأعمال" in
+`ar.po`), the Arabic interface of the platform still showed "NCollection SaaS". English was right.
+
+**Root cause.** Odoo loads a module's `.po` on upgrade with `overwrite=False`
+(`loading.py`: `overwrite_existing_translations`, off by default). A record whose English source changes keeps every
+other language it already had; the new msgid's translation is "already there" and is skipped. Any label we rename is
+therefore stale in Arabic on every database that existed before the rename, and correct on a new one - which is why
+new-tenant tests never saw it.
+
+**Guard.** Every module whose labels change in a release reloads ITS OWN terms with overwrite in its post-migrate
+(`migrations/<version>/post-migrate.py` in ncollection_core, _branding, _account_core, _saas, _subscription:
+`ir.module.module._load_module_terms([module], langs, overwrite=True)`), through Odoo's own loader, nothing else.
+Proven on the real platform database after its upgrade (the menu's `ar_001` value).
+
+**Rule of thumb.** Renaming a translated label is a data migration, not only a `.po` edit.
+
+## R-041 — "Add User" failed before the dialog opened: required value for field "name" is missing ✅ GUARDED
+
+**Symptom.** Tenant > Users & Access > New user: `Create a tenant user (ncollection.tenant.user.create): Cannot complete
+operation: required value for field "name" is missing.` No dialog was ever shown.
+
+**Root cause.** `TenantUserCreate._nc_open` CREATED the wizard record (tenant and offered roles only) and opened it by
+`res_id`. `name` and `login` are `required=True`; only the operator can type them, after the dialog opens. The
+existing test created the wizard directly with a name, so the open path was never exercised.
+
+**Guard.** The dialog opens with `context` defaults and no record (`wizards/tenant_user_dialogs.py`); a role is
+required; `test_tenant_admin.py::test_add_user_opens_an_empty_dialog_the_operator_fills_in` drives the real button
+(`action_create_user`) and `default_get`, then creates, and `test_a_user_needs_a_role`.
+
+**Rule of thumb.** A wizard with required user input is opened with defaults, never pre-created; test the button.
+
+## R-042 — Every email left "from noreply@ncollection.com", and Add User failed in a platform entry session ✅ GUARDED
+
+**Symptom 1.** Workspace and platform emails were sent as `noreply@ncollection.com` (filter `ncollection.com`) on every
+database, whatever the system or company was called.
+
+**Root cause 1.** `ncollection_branding/data/system_parameters.xml` seeded `mail.default.from` / `mail.default.from_filter`
+with the old vendor address (noupdate, so it stayed forever).
+
+**Guard 1.** No sender is seeded any more; `ncollection.workspace.config._nc_clear_placeholder_mail_sender` removes the
+two parameters where they still hold exactly the shipped value (tenants: on every company-identity push; the platform:
+ncollection_saas 6.23.0 post-migrate). A sender an operator set is kept.
+`test_platform_identity.py::test_the_placeholder_sender_is_removed_and_an_operators_sender_kept`.
+
+**Symptom 2.** Workspace Administration > Users > Add User, from a Platform Administrator's Enter Company session:
+"A platform administrator session cannot set passwords."
+
+**Root cause 2.** `_nc_create_workspace_user` always wrote a password, and a proxy may write none (the credential would
+outlive the session). The platform's own Users & Access already creates users with a generated temporary password that
+must be changed; the workspace path had no such branch.
+
+**Guard 2.** For a proxy actor the user is created with a server-generated temporary password and
+`nc_must_change_password` forced on; a typed password is still refused.
+`test_workspace_admin.py::test_a_platform_administrators_entry_session_cannot_set_a_password_here`.
+
+**Rule of thumb.** A vendor address in seed data is identity, not configuration: never seed one.
+
+## R-043 — Odoo's own Delete removed a tenant record and left its database and files behind ✅ GUARDED
+
+**Symptom.** Tenants > Actions > Delete (Odoo's generic delete, or an RPC `unlink`) removed the platform's tenant row; the
+PostgreSQL database and the filestore stayed, routable by host and owned by nobody.
+
+**Root cause.** `ncollection.tenant.unlink` only purged the backup files; nothing tied the record's removal to its database.
+
+**Guard.** `ncollection.tenant._nc_refuse_orphaning_unlink`: a tenant whose database (`pg_database`) or filestore still
+exists cannot be unlinked by anyone, the superuser included. Delete Tenant drops both first, then unlinks.
+`test_tenant_deletion.py::test_a_plain_unlink_cannot_orphan_a_live_database`.
+
+**Rule of thumb.** A record that stands for an external resource is removed by the flow that removes the resource.

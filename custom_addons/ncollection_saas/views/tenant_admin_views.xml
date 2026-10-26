@@ -13,7 +13,7 @@
         <field name="arch" type="xml">
             <form string="Tenant users" create="false" edit="false" delete="false">
                 <header>
-                    <button name="action_create_user" type="object" string="New user" class="btn-primary"/>
+                    <button name="action_create_user" type="object" string="Add User" class="btn-primary"/>
                     <button name="action_refresh" type="object" string="Refresh"/>
                 </header>
                 <sheet>
@@ -124,7 +124,7 @@
         <field name="name">ncollection.tenant.user.create.form</field>
         <field name="model">ncollection.tenant.user.create</field>
         <field name="arch" type="xml">
-            <form string="New user">
+            <form string="Add User">
                 <group>
                     <group>
                         <field name="name" placeholder="e.g. Sara Mahmoud"/>
@@ -133,7 +133,7 @@
                     </group>
                     <group>
                         <field name="available_role_ids" invisible="1"/>
-                        <field name="role_option_ids" widget="many2many_tags"
+                        <field name="role_option_ids" widget="many2many_tags" required="1"
                                options="{'no_create': True, 'no_open': True}" domain="[('id', 'in', available_role_ids)]"/>
                         <field name="mode" widget="radio"/>
                         <field name="new_password" password="True" invisible="mode != 'explicit'"
@@ -146,7 +146,7 @@
                     shown once, to you.
                 </p>
                 <footer>
-                    <button name="action_apply" type="object" string="Create user" class="btn-primary"/>
+                    <button name="action_apply" type="object" string="Add User" class="btn-primary"/>
                     <button string="Cancel" special="cancel"/>
                 </footer>
             </form>

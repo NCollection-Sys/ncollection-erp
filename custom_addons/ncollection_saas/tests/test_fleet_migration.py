@@ -154,7 +154,7 @@ class TestFleetMigration(TransactionCase):
         # The release gate of every tenant: it needs exactly the migration's modules, a hold and an open succeed. What
         # the gate itself decides is tested in test_release_compat.py and, over HTTP, in verify_upgrade.sh.
         def _required(_self, db, modules):
-            return list(modules)
+            return list(modules), []
 
         def _hold(_self, hold, reason=''):
             if release_calls is not None:
@@ -858,6 +858,21 @@ class TestFleetMigration(TransactionCase):
         self.assertEqual(migration.state, 'rolling')
         self.assertEqual(migration.current_wave, 1)
         self.assertEqual(enqueued, [1])
+
+    def test_a_canary_only_migration_closes_once_its_canary_is_done(self):
+        # every target is a canary (a migration of chosen tenants only): wave 1 is empty, and the record must still
+        # reach 'done' instead of staying 'rolling' forever.
+        migration = self._migration()
+        Line = self.env['ncollection.fleet.migration.line']
+        Line.create({'migration_id': migration.id, 'tenant_id': self.canary.id, 'wave': 0})
+        migration.write({'state': 'canary', 'current_wave': 0})
+        with self._mocked():
+            migration._wave_lines(0).run_line()
+        with patch.object(type(migration), '_enqueue_wave', lambda self, wave: None):
+            migration._advance()
+            self.assertEqual(migration.state, 'rolling')
+            migration._advance()
+        self.assertEqual(migration.state, 'done')
 
     def test_db_name_guard_rejects_unsafe_targets(self):
         line = self.env['ncollection.fleet.migration.line']

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PRINT TEMPLATES: one row per kind of printed document (ncollection.document.type, shipped as data by the module
+         that prints it: invoices, bills, credit notes, receipts, quotations, orders...). The form is the template of
+         that document: identity, colours and typography, page, sections and columns, language and direction, with a
+         Preview that is the very PDF Print produces. The model enforces who may change which kind
+         (models/document_type.py); the layout reads it (models/document_print_template.py). -->
+    <record id="view_document_type_print_settings_list" model="ir.ui.view">
+        <field name="name">ncollection.document.type.print.settings.list</field>
+        <field name="model">ncollection.document.type</field>
+        <field name="arch" type="xml">
+            <list string="Print Templates" create="false" delete="false">
+                <field name="sequence" column_invisible="1"/>
+                <field name="name"/>
+                <field name="nc_title"/>
+                <field name="paperformat_id" placeholder="Document paper (default)"/>
+                <field name="nc_logo_source"/>
+                <field name="nc_language_mode"/>
+                <button name="action_nc_preview" type="object" string="Preview" icon="fa-eye"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_document_type_print_settings_form" model="ir.ui.view">
+        <field name="name">ncollection.document.type.print.settings.form</field>
+        <field name="model">ncollection.document.type</field>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            <form string="Print Template" create="false" delete="false">
+                <header>
+                    <button name="action_nc_preview" type="object" string="Preview" class="btn-primary" icon="fa-eye"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <notebook>
+                        <page string="Template" name="template">
+                            <group>
+                                <group string="Identity">
+                                    <field name="nc_title" placeholder="Standard title"/>
+                                    <field name="nc_logo_source"/>
+                                    <field name="nc_logo" widget="image" class="oe_avatar"
+                                           invisible="nc_logo_source != 'custom'"/>
+                                    <field name="nc_show_company_details"/>
+                                </group>
+                                <group string="Header and footer">
+                                    <field name="nc_header_text" placeholder="Printed under the company details"/>
+                                    <field name="nc_footer_text" placeholder="The company's report footer"/>
+                                    <field name="nc_page_numbers"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Colours and typography" name="style">
+                            <group>
+                                <group>
+                                    <field name="nc_primary_color" widget="color" placeholder="#1F5F8F"/>
+                                    <field name="nc_text_color" widget="color" placeholder="#1B2A3A"/>
+                                </group>
+                                <group>
+                                    <field name="nc_font"/>
+                                    <field name="nc_font_size"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Page" name="page">
+                            <group>
+                                <group string="Paper">
+                                    <field name="nc_paper_size"/>
+                                    <field name="nc_orientation"/>
+                                    <field name="paperformat_id" readonly="1" placeholder="Document paper (default)"/>
+                                </group>
+                                <group string="Margins">
+                                    <field name="nc_margin_top"/>
+                                    <field name="nc_margin_bottom"/>
+                                    <field name="nc_margin_left"/>
+                                    <field name="nc_margin_right"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Sections and columns" name="sections">
+                            <group>
+                                <group string="Sections">
+                                    <field name="nc_show_customer_address"/>
+                                    <field name="nc_show_payment_reference"/>
+                                    <field name="nc_show_stamp"/>
+                                </group>
+                                <group string="Line columns">
+                                    <field name="nc_show_quantity"/>
+                                    <field name="nc_show_unit_price"/>
+                                    <field name="nc_show_discount"/>
+                                    <field name="nc_show_taxes"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Language" name="language">
+                            <group>
+                                <field name="nc_language_mode" widget="radio"/>
+                                <field name="nc_direction" widget="radio"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_print_settings" model="ir.actions.act_window">
+        <field name="name">Print Templates</field>
+        <field name="res_model">ncollection.document.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_document_type_print_settings_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_document_type_print_settings_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No printable documents</p>
+            <p>Each printed document (invoice, receipt, quotation...) has its template here: title, logo, colours, page,
+               sections and language. Preview, View and Print always use the same template.</p>
+        </field>
+    </record>
+</odoo>

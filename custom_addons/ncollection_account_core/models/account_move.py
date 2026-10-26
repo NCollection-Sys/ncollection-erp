@@ -88,9 +88,12 @@ class AccountMove(models.Model):
         return {'proforma_invoice': False}
 
     def action_print_pdf(self):
+        """Print opens the invoice PDF in a new tab (``nc_print_in_tab``, ncollection_core's print_in_tab.js), never a
+        download: the same report and context Preview renders."""
         self.ensure_one()
         report = self._nc_print_report()
-        action = report.with_context(**self._nc_print_context()).report_action(self.id, config=False)
+        action = report.with_context(**self._nc_print_context(), nc_print_in_tab=True).report_action(
+            self.id, config=False)
         return self._get_action_with_base_document_layout_configurator(action)
 
     def preview_invoice(self):

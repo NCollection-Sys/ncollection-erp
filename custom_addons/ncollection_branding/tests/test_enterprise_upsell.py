@@ -41,11 +41,31 @@ class TestEnterpriseUpsellClosed(TransactionCase):
         visible_settings = [s for s in arch.xpath('//setting') if not self._hidden(s)]
         self.assertGreater(len(visible_settings), 10)
         visible_fields = {f.get('name') for s in visible_settings for f in s.xpath('.//field')}
-        # an ordinary Community option (a module_* one is hidden by Odoo itself when its module is absent)
-        for name in ('group_multi_currency',):
-            if name in self.env['res.config.settings']._fields:
+        # ordinary Community options of several apps stay; the ones a module installed here declares must be met
+        ordinary = ('group_multi_currency', 'group_uom', 'group_product_variant', 'group_discount_per_so_line',
+                    'group_stock_multi_locations', 'group_analytic_accounting')
+        present = [name for name in ordinary if name in self.env['res.config.settings']._fields]
+        self.assertGreaterEqual(len(present), 4, 'several apps are covered: %s' % present)
+        for name in present:
+            with self.subTest(field=name):
+                self.assertIn(name, visible_fields)
+
+    def test_a_community_option_odoo_itself_conditions_is_not_hidden_by_us(self):
+        """The earlier false positive: ``module_account_payment`` is a Community option. Whether it shows is decided
+        elsewhere (the platform manages applications, so module switches are locked: ``invisible="True"``,
+        ``readonly``); the upsell closure's own mark (a literal ``invisible="1"``, models/res_config_settings.py)
+        must never be put on it or on its setting."""
+        arch = self._settings_arch()
+        for name in ('module_account_payment',):
+            fields = arch.xpath("//field[@name='%s']" % name)
+            self.assertTrue(fields, '%s is in the settings view' % name)
+            for field in fields:
+                holder = next((n for n in field.iterancestors() if n.tag == 'setting'), None)
                 with self.subTest(field=name):
-                    self.assertIn(name, visible_fields)
+                    self.assertNotIn(field.get('widget'), UPSELL_WIDGETS)
+                    self.assertNotEqual(field.get('invisible'), '1', 'the upsell closure hid %s' % name)
+                    if holder is not None:
+                        self.assertNotEqual(holder.get('invisible'), '1', 'the upsell closure hid its setting')
 
     def test_the_widget_itself_never_opens_the_dialog(self):
         with file_open('ncollection_branding/static/src/js/no_enterprise_upsell.js') as handle:

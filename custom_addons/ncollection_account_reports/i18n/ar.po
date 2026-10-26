@@ -1008,6 +1008,7 @@ msgstr "المالية والمحاسبة"
 #: code:addons/ncollection_account_reports/models/account_report.py:0
 #: model:ir.actions.report,name:ncollection_account_reports.action_report_financial
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_comparison_list
+#: model:ncollection.document.type,name:ncollection_account_reports.doc_type_financial_report
 msgid "Financial Report"
 msgstr "تقرير مالي"
 
@@ -1550,8 +1551,8 @@ msgstr "تقرير يتطلّب الدفاتر كاملة — NCollection"
 
 #. module: ncollection_account_reports
 #: model:ir.ui.menu,name:ncollection_account_reports.menu_ncollection_account_reports
-msgid "NCollection Reports"
-msgstr "تقارير NCollection"
+msgid "Financial Reports"
+msgstr "التقارير المالية"
 
 #. module: ncollection_account_reports
 #: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_revenue

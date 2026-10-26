@@ -95,7 +95,9 @@ class Tenant(models.Model):
             body=self.env._("%s entered this company as Platform Administrator.", user.name),
             author_id=user.partner_id.id, subtype_xmlid='mail.mt_note')
         _logger.info("Platform entry: user %s (id %s) -> tenant %s", user.login, user.id, db)
-        return {'type': 'ir.actions.act_url', 'url': self._nc_entry_url(token), 'target': 'self'}
+        # A new tab per company: each tenant is its own host, so its session cookie never meets another tenant's and
+        # the platform tab stays where it was (several companies open side by side in one browser).
+        return {'type': 'ir.actions.act_url', 'url': self._nc_entry_url(token), 'target': 'new'}
 
     # ------------------------------------------------------------------ helpers
     def _nc_platform_return_url(self):

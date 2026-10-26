@@ -5,7 +5,7 @@
          eight columns are not squeezed; the statements stay on the company's
          portrait A4. Margins leave room for the branded external layout. -->
     <record id="paperformat_nc_landscape" model="report.paperformat">
-        <field name="name">NCollection A4 Landscape</field>
+        <field name="name">A4 Landscape (reports)</field>
         <field name="default" eval="False"/>
         <field name="format">A4</field>
         <field name="orientation">Landscape</field>

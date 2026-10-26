@@ -58,7 +58,8 @@ class TestWebclientBranding(TransactionCase):
         # the theme colour is the configured system primary colour, no longer a typed literal
         self.assertIn("nc_product_brand()['primary_color']", arch)
         self.assertNotIn("#17375E", arch)
-        self.assertIn("favicon_url", arch)  # the touch icon follows the configured favicon
+        # the iOS touch icon is the system's app icon: a square PNG cut from the configured favicon / logo
+        self.assertIn("/ncollection/brand/app-icon/180", arch)
         self.assertNotIn("#71639e", arch)
         self.assertNotIn("odoo-icon-ios", arch)
 

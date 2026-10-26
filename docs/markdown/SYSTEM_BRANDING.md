@@ -135,6 +135,9 @@ Classification of the occurrences (repository scan + a real-browser audit of log
 | The system user's name (`OdooBot`) | renamed to `<short name> Bot`, and kept in step when the short name changes, unless an administrator gave it another name |
 | Shipped group and digest names that said "Odoo" | the system name is substituted once |
 | The `(?)` documentation links of Settings | not rendered (JS template extension) |
+| Web-client strings that NAME the product (`Install Odoo` in Discuss, the notification-permission messages, the session-expired dialog, `Odoo needs your authorization first.`) | `ir.http._get_translations_for_webclient` (`models/ir_http.py`, `WEB_IDENTITY_TERMS`): Odoo's own translation channel answers them in the System Branding name, in every language (the Arabic "أودو" too); an explicit list, never every string that mentions Odoo |
+| Preferences > Notification "In Odoo" (and its help) | `res.users.notification_type` keeps its values (`email` / `inbox`); its labels come from a selection METHOD resolved on every read: "In %(system)s" / "في %(system)s", so a renamed system shows at once |
+| The company's logo on its documents | the vendor marks (Odoo's default company logo, the NCollection mark seeded until 19.0.1.15.0) are removed, exact bytes only; the letterhead shows the company's own logo or its name |
 
 `web.base.title` and `database.show_name` are system parameters that hold the default product name as DATA. Nothing in the product or in the Odoo
 core of this version reads either (verified by search; `database.show_name` only belongs to the dev database manager, `list_db = False` in production), so

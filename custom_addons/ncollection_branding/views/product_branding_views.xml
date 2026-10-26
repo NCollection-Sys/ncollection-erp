@@ -22,7 +22,7 @@
                     </div>
                     <group>
                         <group string="Name">
-                            <field name="name" placeholder="e.g. NCollection ERP"/>
+                            <field name="name" placeholder="e.g. Acme Cloud"/>
                             <field name="short_name"/>
                             <field name="browser_title" placeholder="Empty: the system name"/>
                         </group>

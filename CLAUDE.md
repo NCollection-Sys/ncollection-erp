@@ -57,6 +57,8 @@ adding a module fails CI until someone updates this list.
   the tenant form's Users & Access (list users, create, activate / deactivate, change roles, reset a password incl. the
   Tenant Administrator's) through the tenant's `ncollection.admin.service` over the same derived-bearer JSON-2 channel,
   authorised on every call (platform admin + the tenant's `platform_admin_ids` allow-list); the platform stores no password.
+  Also **Delete Tenant** (Actions > Delete Tenant, typed identifier, same allow-list; database + filestore + platform
+  records, never the platform DB or a reserved / protected name; audit `ncollection.tenant.deletion` outlives the tenant).
 - `ncollection_subscription` — Tenant / Subscription / Plan / SaaS-admin dashboard.
 - `ncollection_reseller` — partner reseller accounts, cascading branding, sub-tenants.
 - `ncollection_billing` — subscription billing: invoices, UAE VAT, proration, Stripe.

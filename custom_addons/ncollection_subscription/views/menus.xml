@@ -2,10 +2,10 @@
 <odoo>
 
     <menuitem id="menu_ncollection_saas_root"
-              name="NCollection SaaS"
+              name="Management"
               sequence="10"
               groups="ncollection_subscription.group_platform_admin"
-              web_icon="ncollection_subscription,static/description/icon.png"/>
+              web_icon="ncollection_subscription,static/description/icon_business.png"/>
 
     <menuitem id="menu_ncollection_saas_dashboard"
               name="Summary"

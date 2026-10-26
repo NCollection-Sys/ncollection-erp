@@ -57,8 +57,47 @@ def _disk_versions(roots=ADDONS_ROOTS):
     return found
 
 
-def evaluate(db, installed, disk):
-    """The verdict for ``installed`` [(name, recorded version)] against ``disk`` {name: version}: (code, lines)."""
+def _disk_auto_install(roots=ADDONS_ROOTS):
+    """{module: triggers} for every ``ncollection_*`` module the code AUTO-INSTALLS (the same rule as the release
+    gate, ``ncollection_core/release_gate.py``): its ``auto_install`` list, or all its ``depends``."""
+    found = {}
+    for root in roots:
+        for current, dirs, files in os.walk(root):
+            name = os.path.basename(current)
+            if '__manifest__.py' in files and current != root:
+                dirs[:] = []
+                if not name.startswith('ncollection_'):
+                    continue
+                try:
+                    with open(os.path.join(current, '__manifest__.py'), encoding='utf-8') as handle:
+                        manifest = ast.literal_eval(handle.read())
+                except (OSError, ValueError, SyntaxError):
+                    continue
+                if (isinstance(manifest, dict) and manifest.get('auto_install')
+                        and manifest.get('installable', True)):
+                    trigger = manifest['auto_install']
+                    found.setdefault(name, tuple(trigger if isinstance(trigger, (list, tuple))
+                                                 else manifest.get('depends') or ()))
+    return found
+
+
+def absent_modules(installed_names, auto):
+    """The auto-install modules this database should have and does not, to a fixed point."""
+    have, absent, changed = set(installed_names), [], True
+    while changed:
+        changed = False
+        for name in sorted(auto):
+            if name not in have and all(dep in have for dep in auto[name]):
+                have.add(name)
+                absent.append(name)
+                changed = True
+    return sorted(absent)
+
+
+def evaluate(db, installed, disk, auto=None):
+    """The verdict for ``installed`` [(name, recorded version)] against ``disk`` {name: version}: (code, lines).
+    ``auto`` {module: triggers}: a module the code auto-installs and this database lacks is ``absent`` (the exact
+    ``-i`` list, PREFLIGHT_INSTALL) and fails the preflight like a module behind does."""
     behind, unknown = [], []
     for name, recorded in installed:
         if name not in disk:
@@ -67,18 +106,21 @@ def evaluate(db, installed, disk):
         if _tuple(disk[name]) > _tuple(recorded):
             behind.append((name, recorded or '(none)', disk[name]))
     missing = sorted(name for name in unknown if name.startswith('ncollection_'))
+    absent = absent_modules([name for name, _v in installed], auto or {})
     checked = len(installed) - len(unknown)
     lines = ['PREFLIGHT_DB=%s' % db, 'PREFLIGHT_CHECKED=%d' % checked]
     lines += ['PREFLIGHT_BEHIND=%s database %s < code %s' % row for row in behind]
     lines += ['PREFLIGHT_MISSING=%s is installed but has no code under %s' % (name, ', '.join(ADDONS_ROOTS))
               for name in missing]
+    lines += ['PREFLIGHT_ABSENT=%s is auto-installed by the code and not installed here' % name for name in absent]
     lines.append('PREFLIGHT_MODULES=%s' % ','.join(name for name, _r, _d in behind))
+    lines.append('PREFLIGHT_INSTALL=%s' % ','.join(absent))
     if not checked:
         lines.append('PREFLIGHT_ERROR no installed module was found under the addons roots: nothing was checked')
     if not checked or missing:
         lines.append('PREFLIGHT=ERROR')
         return 2, lines
-    if behind:
+    if behind or absent:
         lines.append('PREFLIGHT=FAIL')
         return 1, lines
     lines.append('PREFLIGHT=PASS')
@@ -116,7 +158,7 @@ def main(db, host, user, password):
         cursor.execute("SELECT name, latest_version FROM ir_module_module WHERE state = 'installed' ORDER BY name")
         installed = cursor.fetchall()
     connection.close()
-    code, lines = evaluate(db, installed, _disk_versions())
+    code, lines = evaluate(db, installed, _disk_versions(), _disk_auto_install())
     print('\n'.join(lines))
     return code
 

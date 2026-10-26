@@ -74,6 +74,9 @@ _MAGIC = (
 )
 _KINDS = ('logo', 'login', 'admin', 'favicon')
 _FIELD_OF = {'logo': 'logo', 'login': 'login_logo', 'admin': 'admin_logo', 'favicon': 'favicon'}
+# What the platform pushes to every tenant over config-sync (the system identity, never tenant or company branding).
+PUSHED_FIELDS = ('name', 'short_name', 'browser_title', 'copyright_text', 'primary_color', 'secondary_color',
+                 'logo', 'login_logo', 'admin_logo', 'favicon')
 
 
 _OTHER_FORMATS = (
@@ -322,6 +325,22 @@ class ProductBranding(models.Model):
         with tools.file_open('ncollection_branding/static/src/img/' + default, 'rb') as handle:
             return handle.read(), ('image/x-icon' if kind == 'favicon' else 'image/png')
 
+    @api.model
+    def _nc_app_icon(self, size):
+        """A square PNG of ``size`` px for the installable app (web manifest, iOS home screen, offline page): the
+        system's favicon, else its logo, centred on a transparent square. Browsers require square PNG icons of
+        fixed sizes, which a configured logo usually is not."""
+        record = self.sudo().search([], limit=1)
+        kinds = ('favicon', 'logo') if record and record.favicon else ('logo',)
+        for kind in kinds:
+            raw, _mime = self._nc_image(kind)
+            try:
+                return image_tools.image_process(raw, size=(size, size), expand=True, output_format='PNG')
+            except (ValueError, UserError, OSError):
+                continue                            # a favicon PIL cannot open: the logo is the next candidate
+        with tools.file_open('ncollection_branding/static/src/img/logo.png', 'rb') as handle:
+            return image_tools.image_process(handle.read(), size=(size, size), expand=True, output_format='PNG')
+
     # ------------------------------------------------------------------ writes
     @api.model
     def _nc_check_values(self, vals):
@@ -347,11 +366,59 @@ class ProductBranding(models.Model):
         self._nc_check_values(vals)
         images = [f for f in ('logo', 'login_logo', 'admin_logo', 'favicon') if f in vals]
         old_short_name = self[:1].short_name if 'short_name' in vals else None
+        old_name = self[:1].name if 'name' in vals else None
+        Content = self.env['ncollection.vendor.content']
+        old_bot_name = Content._nc_bot_name(old_short_name) if old_short_name else None
         result = super(ProductBranding, self.with_context(nc_images=images)).write(vals)
         self.env.registry.clear_cache()
         if 'short_name' in vals:
-            self.env['ncollection.vendor.content']._nc_sync_bot(old_short_name)
+            Content._nc_sync_bot(old_short_name)
+        elif images:
+            Content._nc_sync_bot_avatar()
+        if old_name or old_bot_name:
+            # what the system user already wrote in Discuss now says the new name
+            self.env['mail.message']._nc_reword_system_messages(old_name, old_bot_name)
         return result
+
+    # ------------------------------------------------------------------ the platform's identity, pushed to tenants
+    @api.model
+    def _nc_platform_identity(self):
+        """This database's System Branding as the config-sync payload the platform pushes to every tenant: the
+        whitelisted fields only, images as base64 text. Read on the PLATFORM (its own model, Rule 3)."""
+        record = self.sudo().search([], limit=1).with_context(bin_size=False)
+        if not record:
+            return {}
+        identity = {}
+        for fname in PUSHED_FIELDS:
+            value = record[fname]
+            identity[fname] = (value.decode() if isinstance(value, bytes) else value) or False
+        return identity
+
+    @api.model
+    def _nc_apply_platform_identity(self, identity):
+        """Apply the platform's System Branding in a TENANT (called by ``sync_from_platform``, over the config-sync
+        channel the platform alone holds a bearer for). The system identity is the platform's to set, so this is the
+        tenant-side write that path is for: only the whitelisted fields, through the same validation as the form
+        (image type and size, colours), written as the real superuser because the channel itself is the platform.
+        Writes only what differs; returns the changed field names."""
+        if not isinstance(identity, dict):
+            raise UserError(self.env._("The system branding pushed by the platform must be a dict."))
+        rejected = set(identity) - set(PUSHED_FIELDS)
+        if rejected:
+            raise UserError(self.env._("Refusing to sync system branding field(s): %s", ', '.join(sorted(rejected))))
+        record = self.with_user(SUPERUSER_ID)._nc_record().with_context(bin_size=False)
+        changes = {}
+        for fname, value in identity.items():
+            value = value or False
+            if fname == 'name' and not value:
+                continue                            # required: an empty push never blanks the system's name
+            current = record[fname]
+            current = (current.decode() if isinstance(current, bytes) else current) or False
+            if current != value:
+                changes[fname] = value
+        if changes:
+            record.write(changes)
+        return sorted(changes)
 
     @api.ondelete(at_uninstall=False)
     def _nc_never_delete(self):

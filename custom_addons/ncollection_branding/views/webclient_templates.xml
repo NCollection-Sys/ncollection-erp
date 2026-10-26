@@ -22,7 +22,7 @@
             <attribute name="t-att-content">nc_product_brand()['primary_color']</attribute>
         </xpath>
         <xpath expr="//link[@rel='apple-touch-icon']" position="attributes">
-            <attribute name="t-att-href">nc_product_brand()['favicon_url']</attribute>
+            <attribute name="t-att-href">'/ncollection/brand/app-icon/180?v=%s' % nc_product_brand()['version']</attribute>
         </xpath>
     </template>
 

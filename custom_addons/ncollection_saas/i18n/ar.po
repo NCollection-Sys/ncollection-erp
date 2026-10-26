@@ -397,6 +397,7 @@ msgstr "فشل الاختبار التجريبي — توقّف طرح الأس�
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -554,6 +555,8 @@ msgstr "إنشاء قاعدة بيانات هذا المستأجر ومساحة 
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
@@ -571,6 +574,8 @@ msgstr "أنشئ بواسطة"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -684,6 +689,9 @@ msgstr "معطّلة على المستأجر: %(jobs)s"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__display_name
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__display_name
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_product_branding__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -835,6 +843,7 @@ msgstr "تم الجلب في"
 
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__finished_at
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__finished_at
 msgid "Finished At"
 msgstr "انتهى في"
 
@@ -944,6 +953,9 @@ msgstr "سليم"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__id
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__id
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_product_branding__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -1119,6 +1131,8 @@ msgstr "آخر دفعة"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_uid
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
@@ -1136,6 +1150,8 @@ msgstr "آخر تحديث بواسطة"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_date
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -1280,8 +1296,8 @@ msgstr "شركاتي"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
-msgid "NCollection SaaS"
-msgstr "NCollection SaaS"
+msgid "Management"
+msgstr "الإدارة"
 
 #. module: ncollection_saas
 #: model:mail.template,name:ncollection_saas.mail_template_checkout_verify
@@ -1892,6 +1908,7 @@ msgstr "تتطلب الاستعادة في المكان صلاحيات مسؤو�
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__message
 msgid "Result"
 msgstr "النتيجة"
 
@@ -2000,8 +2017,8 @@ msgstr "شهادة SSL للنطاق %(fqdn)s هي %(label)s (انتهاء الص
 
 #. module: ncollection_saas
 #: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_saas_settings
-msgid "SaaS Settings"
-msgstr "إعدادات SaaS"
+msgid "Management Settings"
+msgstr "إعدادات الإدارة"
 
 #. module: ncollection_saas
 #. odoo-python
@@ -2099,6 +2116,7 @@ msgstr "الحالة"
 
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__status
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__state
 msgid "Status"
 msgstr "الحالة"
 
@@ -2152,6 +2170,8 @@ msgstr "الأهداف"
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__tenant_id
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__tenant_id
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__tenant_id
 msgid "Tenant"
 msgstr "مستأجر"
 
@@ -2790,11 +2810,6 @@ msgid "Contact email"
 msgstr "البريد الإلكتروني للتواصل"
 
 #. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
-msgid "Create user"
-msgstr "إنشاء مستخدم"
-
-#. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__email
 msgid "Email"
 msgstr "البريد الإلكتروني"
@@ -2861,8 +2876,8 @@ msgstr "يجب تغيير كلمة المرور"
 
 #. module: ncollection_saas
 #: model:ir.model,name:ncollection_saas.model_ncollection_subscription_dashboard
-msgid "NCollection SaaS Dashboard"
-msgstr "لوحة معلومات NCollection SaaS"
+msgid "Business Management Dashboard"
+msgstr "لوحة معلومات إدارة الأعمال"
 
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__new_password
@@ -2875,8 +2890,8 @@ msgstr "كلمة المرور الجديدة"
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
 #: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
-msgid "New user"
-msgstr "مستخدم جديد"
+msgid "Add User"
+msgstr "إضافة مستخدم"
 
 #. module: ncollection_saas
 #. odoo-python
@@ -3414,6 +3429,7 @@ msgstr "الإصدار"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__database_name
 msgid "Database"
 msgstr "قاعدة البيانات"
 
@@ -3481,3 +3497,262 @@ msgstr "لم يُجب المستأجر عن حالة الإصدار: شيفرت�
 #: code:addons/ncollection_saas/models/fleet_migration_line.py:0
 msgid "Refused: the pre-upgrade snapshot failed, so nothing was upgraded and the tenant was not touched. %s"
 msgstr "مرفوض: فشلت اللقطة السابقة للترقية، لذلك لم تتم ترقية أي شيء ولم يُمَس المستأجر. %s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_accepts_system_branding
+msgid "Accepts Pushed System Branding"
+msgstr "يقبل هوية النظام المرسلة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Already compatible with the release: no module of this tenant is behind the code or missing."
+msgstr "متوافق بالفعل مع الإصدار: لا توجد وحدة لدى هذا المستأجر متأخرة عن الشيفرة أو مفقودة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_release.py:0
+msgid "Run Fleet Migration for this tenant: it upgrades exactly %(required)s and installs %(absent)s, the modules the current code installs automatically and this older tenant does not have yet (never all modules). The tenant opens again only after the run has been validated."
+msgstr "شغّل ترحيل الأسطول لهذا المستأجر: يرقّي بالضبط %(required)s ويثبّت %(absent)s، وهي الوحدات التي تثبّتها الشيفرة الحالية تلقائيًا ولا يملكها هذا المستأجر الأقدم بعد (وليس كل الوحدات أبدًا). لا يُفتح المستأجر مجددًا إلا بعد التحقق من التشغيل."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "Upgrading: %(u)s; installing: %(i)s"
+msgstr "ترقية: %(u)s؛ تثبيت: %(i)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
+msgid "cannot read which licensed modules %s has installed."
+msgstr "تعذّرت قراءة الوحدات المرخّصة المثبّتة لدى %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "Choose the role of the new user."
+msgstr "اختر دور المستخدم الجديد."
+
+#. module: ncollection_saas
+#: model:ir.actions.act_window,name:ncollection_saas.action_tenant_delete
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
+#: model:ir.model,name:ncollection_saas.model_ncollection_tenant_delete_wizard
+msgid "Delete Tenant"
+msgstr "حذف المستأجر"
+
+#. module: ncollection_saas
+#: model:ir.actions.act_window,name:ncollection_saas.action_tenant_deletion
+#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_tenant_deletion
+msgid "Tenant Deletions"
+msgstr "عمليات حذف المستأجرين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_form
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "Tenant deletion"
+msgstr "حذف مستأجر"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_tenant_deletion
+msgid "Tenant deletion (audit)"
+msgstr "حذف مستأجر (سجل التدقيق)"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
+msgid "This permanently deletes the tenant."
+msgstr "سيؤدي هذا إلى حذف المستأجر نهائيًا."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
+msgid "Its database, its files and every platform record of it are removed. This cannot be undone."
+msgstr "ستُحذف قاعدة بياناته وملفاته وكل سجلاته على المنصّة. لا يمكن التراجع عن ذلك."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
+msgid "Type the identifier shown above"
+msgstr "اكتب المعرّف الظاهر أعلاه"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
+msgid "Delete this tenant permanently?"
+msgstr "حذف هذا المستأجر نهائيًا؟"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__confirm_identifier
+msgid "Type the identifier to confirm"
+msgstr "اكتب المعرّف للتأكيد"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__database_name
+msgid "Identifier"
+msgstr "المعرّف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_deletion__state__requested
+msgid "Delete requested"
+msgstr "طُلب الحذف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_deletion__state__deleting
+msgid "Deleting"
+msgstr "جارٍ الحذف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_deletion__state__deleted
+msgid "Deleted"
+msgstr "تم الحذف"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_deletion__state__failed
+msgid "Delete failed"
+msgstr "فشل الحذف"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_list
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_form
+msgid "Requested"
+msgstr "تاريخ الطلب"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__requested_by
+msgid "Requested by"
+msgstr "طلبه"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__records_removed
+msgid "Platform records removed"
+msgstr "حُذفت سجلات المنصّة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__database_dropped
+msgid "Database Dropped"
+msgstr "حُذفت قاعدة البيانات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__filestore_removed
+msgid "Filestore Removed"
+msgstr "حُذف مخزن الملفات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_form
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "Only a Platform Administrator can delete a tenant."
+msgstr "لا يحذف المستأجر إلا مدير المنصّة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "You are not authorised to delete %s."
+msgstr "غير مصرّح لك بحذف %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s has no database to delete."
+msgstr "لا توجد قاعدة بيانات لـ %s لحذفها."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "The identifier you typed does not match. Type %s exactly to delete this tenant."
+msgstr "المعرّف الذي كتبته غير مطابق. اكتب %s تمامًا لحذف هذا المستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s is the platform's or a reserved database and can never be deleted."
+msgstr "%s قاعدة بيانات المنصّة أو قاعدة محجوزة ولا يمكن حذفها أبدًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s is protected from deletion on this platform."
+msgstr "%s محمي من الحذف على هذه المنصّة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s is not owned by exactly one tenant record; nothing was deleted."
+msgstr "%s لا يملكها سجل مستأجر واحد بالضبط؛ لم يُحذف شيء."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s is being provisioned. Wait for it to finish."
+msgstr "يجري تجهيز %s. انتظر حتى يكتمل."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s has a provisioning job in progress."
+msgstr "لدى %s مهمة تجهيز قيد التنفيذ."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s is being upgraded. Wait for the upgrade to finish."
+msgstr "تجري ترقية %s. انتظر حتى تكتمل الترقية."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "%s is a target of a Fleet Migration in progress."
+msgstr "%s مستهدف بترحيل أسطول قيد التنفيذ."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "The filestore of %s is not inside the server's storage root."
+msgstr "مخزن ملفات %s ليس داخل جذر التخزين في الخادم."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "Only a failed deletion can be retried."
+msgstr "لا تُعاد إلا محاولة حذف فشلت."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "Refusing to delete a platform or reserved database."
+msgstr "رُفض حذف قاعدة بيانات المنصّة أو قاعدة محجوزة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "Deleted: database, filestore and platform records."
+msgstr "تم الحذف: قاعدة البيانات ومخزن الملفات وسجلات المنصّة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+msgid "Failed at the %(step)s step: %(error)s"
+msgstr "فشل عند خطوة %(step)s: %(error)s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__company_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__company_name
+msgid "Company Name"
+msgstr "اسم الشركة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__tenant_uuid
+msgid "Tenant UUID"
+msgstr "المعرّف الفريد للمستأجر"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__tenant_url
+msgid "Tenant URL"
+msgstr "رابط المستأجر"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant.py:0
+msgid "%s still has a database or files. Use Actions > Delete Tenant: it removes the database, its files and this record together, so nothing is left behind."
+msgstr "لا يزال لـ %s قاعدة بيانات أو ملفات. استخدم الإجراءات > حذف المستأجر: فهو يحذف قاعدة البيانات وملفاتها وهذا السجل معًا فلا يبقى شيء خلفه."

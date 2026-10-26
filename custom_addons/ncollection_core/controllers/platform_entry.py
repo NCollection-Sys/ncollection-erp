@@ -118,6 +118,10 @@ class NCollectionPlatformEntry(http.Controller):
     @http.route('/ncollection/platform/enter', type='http', auth='none', methods=['POST'], readonly=False,
                 csrf=False, sitemap=False)
     def enter(self, token=None, **_ignored):
+        # A host with no database behind it any more (a deleted tenant) has nothing to enter: the same refusal as any
+        # dead link, not an HTTP 500 from a request without a registry.
+        if not request.db:
+            return _denied("no database for this host")
         # auth='none' has no user: do the registry work as the real superuser (a user-less env.sudo() breaks code
         # that reads env.user), and let the session sign in as the PROXY below.
         Entry = request.env(user=SUPERUSER_ID, su=True)['ncollection.platform.entry']

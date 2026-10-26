@@ -10,7 +10,7 @@ web.login_layout). These tests prove:
 * the reset-password page inherits the same frame,
 * the page source carries zero visible "Odoo" branding,
 * Remember-Me is deliberately absent (see the module/PR rationale),
-* the NCollection company logo is seeded (login card no longer shows Odoo's
+* no vendor mark is the company logo (login card no longer shows Odoo's
   default logo).
 
 Module install already fails if any inheritance xpath stops matching, so a
@@ -130,8 +130,22 @@ class TestLoginRedesign(TransactionCase):
         self.assertIn('background-color: var(--nc-surface-raised)', rule)
         self.assertIn('o_nc_login__system-logo', self._arch('ncollection_branding.login_layout_split'))
 
-    def test_company_logo_seeded(self):
-        """The company identity keeps its seeded NCollection logo (documents, the company switcher) so it does
-        not fall back to Odoo's default (item 2). The sign-in page no longer reads it."""
+    def test_no_vendor_mark_is_the_company_logo(self):
+        """The company's logo prints on its invoices: Odoo's default mark and the NCollection mark this module used to
+        seed are removed, so the letterhead shows the company's own logo or its name. The sign-in page shows the
+        system's logo (System Branding), never this field."""
+        import base64
+        import io
+        from PIL import Image
+        from odoo.tools import file_open
         company = self.env.ref("base.main_company")
-        self.assertTrue(company.logo, "main company logo must be seeded")
+        with file_open('ncollection_branding/static/src/img/logo.png', 'rb') as handle:
+            company.logo = base64.b64encode(handle.read())
+        self.env['res.company']._nc_clear_vendor_logos()
+        self.assertFalse(company.logo, "the NCollection mark is not the company's logo")
+        buffer = io.BytesIO()
+        Image.new('RGB', (8, 8), (200, 30, 30)).save(buffer, format='PNG')
+        company.logo = base64.b64encode(buffer.getvalue())
+        own = company.logo
+        self.env['res.company']._nc_clear_vendor_logos()
+        self.assertEqual(company.logo, own, "a logo the Owner uploaded is never touched")

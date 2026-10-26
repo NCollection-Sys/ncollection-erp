@@ -1,62 +1,56 @@
 # -*- coding: utf-8 -*-
-"""Owner "Invite User" wizard (P1-T12).
+"""Workspace administration "Add User" (was "Invite User", P1-T12).
 
-The tenant Owner's replacement for raw user administration: name + email +
-ONE of the 8 predefined NCollection roles (P1-T08). Raw res.groups is never
-exposed — the role selection maps to group xml-ids internally.
+The tenant administrator adds a user DIRECTLY, ready to sign in: name, username (never an email address), contact
+email and the role(s) from Roles & Permissions (``ncollection.role``, real groups). An invitation e-mail could not
+make the user usable (a workspace may have no outgoing mail server, and the link expires), so the user gets a
+password now: a generated temporary one shown once to the administrator, or one the administrator types, which the
+person must change at the next sign-in unless that is turned off - the same rule as Reset password.
 
-Access: ACL grants this wizard to group_role_owner only, so a non-Owner is
-denied at the ORM even if they discover the action (Rule 4 mirror of the
-Owner-only menu). The max-user limit is enforced BOTH here (friendly
-pre-flight) and in res.users.create (the real control).
+Everything goes through the one creation service, ``res.users._nc_create_workspace_user`` (the platform's Tenant
+Administration uses it too): username rule, seat limit, roles applied by ``_nc_apply_roles`` (only an administrator
+hands out administration, nobody hands out a group they lack, a role whose application is not part of the workspace
+is refused) and the administrative audit. The wizard adds no rule of its own.
+
+Access: the ACL grants this wizard to the workspace Owner only (Rule 4 mirror of the Owner-only menu). The model keeps
+its technical name, ``ncollection.user.invite``.
 """
-
-import logging
-import re
-
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
-_logger = logging.getLogger(__name__)
-
-# The same rule the tenant administrator is held to (ncollection_subscription):
-# no @, so an email address can never become a login.
-USERNAME_RE = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]{2,63}')
-
-# role key -> (label, group xml-id). Single source: ROLE_MATRIX.md roles.
-ROLE_GROUPS = {
-    'employee': ('Employee', 'ncollection_core.group_role_employee'),
-    'sales': ('Sales', 'ncollection_core.group_role_sales'),
-    'warehouse': ('Warehouse', 'ncollection_core.group_role_warehouse'),
-    'hr': ('HR', 'ncollection_core.group_role_hr'),
-    'accountant': ('Accountant', 'ncollection_core.group_role_accountant'),
-    'manager': ('Manager', 'ncollection_core.group_role_manager'),
-    'ceo': ('CEO', 'ncollection_core.group_role_ceo'),
-    'owner': ('Owner', 'ncollection_core.group_role_owner'),
-}
+from ..models.res_users_admin import USERNAME_RE
 
 
 class UserInvite(models.TransientModel):
     _name = 'ncollection.user.invite'
-    _description = 'NCollection Invite Workspace User'
+    _description = 'New workspace user'
 
     name = fields.Char(string='Full Name', required=True)
     username = fields.Char(
         required=True,
-        help='What this person types to sign in. A username, never an email '
-             'address - their email is only a contact detail.')
+        help='What this person types to sign in. A username, never an email address - their email is only a contact '
+             'detail.')
     email = fields.Char(string='Contact Email', required=True)
-    role = fields.Selection(
-        selection=[(key, label) for key, (label, _xmlid) in ROLE_GROUPS.items()],
-        required=True,
-        default='employee',
-        help='One of the 8 predefined NCollection workspace roles '
-             '(see docs/ROLE_MATRIX.md).',
-    )
-
+    available_role_ids = fields.Many2many('ncollection.role', compute='_compute_available_role_ids')
+    role_id = fields.Many2one(
+        'ncollection.role', string='Role', required=True, ondelete='cascade',
+        domain="[('id', 'in', available_role_ids)]",
+        help='What this person may do in the workspace (Roles & Permissions).')
     role_ids = fields.Many2many(
         'ncollection.role', 'ncollection_user_invite_role_rel', 'invite_id', 'role_id', string='More roles',
-        help='Workspace roles (Roles & Permissions) given in addition to the role above.')
+        domain="[('id', 'in', available_role_ids), ('id', '!=', role_id)]",
+        help='Workspace roles given in addition to the role above.')
+    mode = fields.Selection(
+        [('temporary', 'Generate a temporary password'), ('explicit', 'Set a password myself')],
+        string='Password', required=True, default='temporary')
+    new_password = fields.Char(string='New password')
+    must_change = fields.Boolean(string='Must change it at first sign-in', default=True)
+
+    @api.depends_context('uid')
+    def _compute_available_role_ids(self):
+        roles = self.env['ncollection.role'].search([]).filtered('available')
+        for wizard in self:
+            wizard.available_role_ids = roles
 
     @api.constrains('username')
     def _check_username(self):
@@ -72,64 +66,25 @@ class UserInvite(models.TransientModel):
             if '@' not in (wizard.email or ''):
                 raise ValidationError(self.env._('Please enter a valid email address.'))
 
-    def action_invite(self):
+    def action_create_user(self):
         self.ensure_one()
-        Users = self.env['res.users']
-
-        # Friendly pre-flight (the hard control lives in res.users.create).
-        max_users = self.env['ncollection.workspace.config'].get_max_users()
-        if max_users:
-            active_internal = Users.sudo().search_count([
-                ('active', '=', True), ('share', '=', False),
-            ])
-            if active_internal >= max_users:
-                raise ValidationError(self.env._(
-                    'Your plan allows a maximum of %(limit)s users. Upgrade '
-                    'your subscription to invite more.',
-                    limit=max_users,
-                ))
-
-        if Users.sudo().with_context(active_test=False).search_count(
-                [('login', '=', self.username)]):
-            raise ValidationError(self.env._(
-                "The username '%s' is already taken.", self.username))
-
-        role_group = self.env.ref(ROLE_GROUPS[self.role][1])
-        user = Users.create({
-            'name': self.name,
-            'login': self.username,
-            'email': self.email,
-            'group_ids': [
-                (4, self.env.ref('base.group_user').id),
-                (4, role_group.id),
-            ],
-        })
-
-        if self.role_ids:
-            user._nc_apply_roles(user.nc_role_ids | self.role_ids)     # in addition to the role chosen above
-
-        # Best-effort invitation email (signup/reset link). Dev environments
-        # have no SMTP — never fail the invite over mail transport.
-        try:
-            if hasattr(user, 'action_reset_password'):
-                user.with_context(create_user=True).action_reset_password()
-        except Exception:  # pragma: no cover - depends on mail infra
-            _logger.info(
-                "Invitation email for %s could not be sent (no outgoing "
-                "mail server?); the user was created.", user.login,
-            )
-
+        typed = self.new_password if self.mode == 'explicit' else None
+        if self.mode == 'explicit' and not typed:
+            raise UserError(self.env._("Type the password, or choose a temporary one."))
+        self.new_password = False                  # gone from the row before anything else runs (never logged)
+        self.flush_recordset(['new_password'])
+        user, temporary = self.env['res.users']._nc_create_workspace_user(
+            self.name, self.username, email=self.email, role_ids=(self.role_id | self.role_ids).ids,
+            password=typed, must_change=self.must_change)
+        if temporary:
+            message = self.env._(
+                "%(user)s can sign in now as %(login)s with the temporary password %(password)s  -  give it to them "
+                "now: it is not shown again.", user=user.name, login=user.login, password=temporary)
+        else:
+            message = self.env._("%(user)s can sign in now as %(login)s.", user=user.name, login=user.login)
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': self.env._('User invited'),
-                'message': self.env._(
-                    '%(name)s was added with the %(role)s role.',
-                    name=user.name, role=ROLE_GROUPS[self.role][0],
-                ),
-                'type': 'success',
-                'sticky': False,
-                'next': {'type': 'ir.actions.act_window_close'},
-            },
+            'type': 'ir.actions.client', 'tag': 'display_notification',
+            'params': {'title': self.env._("User created"), 'message': message,
+                       'type': 'warning' if temporary else 'success', 'sticky': bool(temporary),
+                       'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'}},
         }

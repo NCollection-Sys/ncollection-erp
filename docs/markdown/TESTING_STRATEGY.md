@@ -9,11 +9,11 @@ Written 2026-08-06 against the live tree: **81 test files · 869 test methods ·
 full-estate baseline run on `958d8d6` the same day (§7).
 
 **Live counts — enforced, not re-typed (#405):
-**195**<!--count:test_files--> test files ·
-**2476**<!--count:test_methods--> test methods ·
+**202**<!--count:test_files--> test files ·
+**2541**<!--count:test_methods--> test methods ·
 **17**<!--count:verify_scripts--> `verify_*.sh` proofs
 (**8**<!--count:verify_all_suites--> suites in `verify-all`) ·
-**24**<!--count:e2e_specs--> Playwright specs.**
+**25**<!--count:e2e_specs--> Playwright specs.**
 
 The line above is kept as the dated original rather than overwritten, because this
 document's value is that its numbers can be trusted — which means showing when they
@@ -106,7 +106,7 @@ premise that nothing covered it; the workflow audit disproved that.
 | Supply chain | pip-audit · Trivy (fs: vuln + secret) | 2 | PR, **non-blocking** | — |
 | Odoo ORM tests | `custom_addons/*/tests/` | **87 files · 961 methods** · 90 `TransactionCase` · 8 `HttpCase` | PR `test` job | 4m CI / 2m 8s local¹ |
 | Infra proofs | **17**<!--count:verify_scripts--> × `verify_*.sh` | **8**<!--count:verify_all_suites--> suites in `verify-all` (routing · provisioning · config-sync · cron-starvation · cron-scope · financial-bootstrap · **upgrade** · e2e) | `make verify-all`, local | 8m 20s warm¹ |
-| Browser E2E | `e2e/tests/`, chromium only | **24**<!--count:e2e_specs--> specs · 27 tests¹ (portal isolation added by #66/#403) | PR `verify.yml` | 6m CI / 45s¹ |
+| Browser E2E | `e2e/tests/`, chromium only | **25**<!--count:e2e_specs--> specs · 27 tests¹ (portal isolation added by #66/#403) | PR `verify.yml` | 6m CI / 45s¹ |
 | Load / perf | k6 `load_test.js` · `bench_aggregation.py` | 2 | manual | — |
 | Security audit | `phase1_security_audit.sh` · `phase3_security_assessment.sh` | 2 | manual / pre-launch | — |
 | Post-merge | `canary.yml` (verify + **full-tree** guard) | 1 | every merge | ~12m |

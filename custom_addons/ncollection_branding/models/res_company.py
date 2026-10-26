@@ -15,7 +15,7 @@ import binascii
 import io
 import re
 
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 from odoo.exceptions import ValidationError
 
 # A colour is exactly a 6-digit hex triplet. Nothing else may reach the
@@ -40,11 +40,43 @@ class ResCompany(models.Model):
     # never overwrites a tenant's chosen colours — mirroring the once-only
     # posture of res_company_logo.xml. An empty value means "fall back to the
     # NCollection default baked into the SCSS var() fallback".
+    # TEMPORARY presentation (until the company-branding design is decided): the Workspace Administration "Company"
+    # screen shows the SYSTEM's logo (System Branding) instead of the company's own ``logo``, which is not touched -
+    # documents and the company switcher keep the company's identity. Read-only, never stored.
+    nc_system_logo = fields.Binary(string="Logo", compute='_compute_nc_system_logo')
+
+    def _compute_nc_system_logo(self):
+        raw, _mime = self.env['ncollection.product.branding']._nc_image('logo')
+        image = base64.b64encode(raw)
+        for company in self:
+            company.nc_system_logo = image
+
+    # A company's logo is the COMPANY's identity (the letterhead of its invoices). The vendor marks a database is born
+    # with - Odoo's default company logo, and the NCollection mark this module used to seed - are not: printed on an
+    # invoice they read as the company's own. They are removed (the letterhead then shows the company's name); a logo
+    # the Owner uploaded is never touched. Exact bytes only, so nothing is guessed.
+    _NC_VENDOR_LOGOS = ('base/static/img/res_company_logo.png', 'ncollection_branding/static/src/img/logo.png')
+
+    @api.model
+    def _nc_clear_vendor_logos(self):
+        marks = set()
+        for path in self._NC_VENDOR_LOGOS:
+            try:
+                with tools.file_open(path, 'rb') as handle:
+                    marks.add(handle.read())
+            except FileNotFoundError:
+                continue
+        cleared = self.sudo().search([]).filtered(
+            lambda company: company.logo and base64.b64decode(company.logo) in marks)
+        if cleared:
+            cleared.write({'logo': False})
+        return cleared
+
     nc_primary_color = fields.Char(
         string="Primary Colour",
         default="#1F5F8F",
         help="Primary brand colour — drives the navbar and primary buttons. "
-             "6-digit hex, e.g. #1F5F8F. Leave empty for the NCollection default.",
+             "6-digit hex, e.g. #1F5F8F. Leave empty for the system default.",
     )
     nc_secondary_color = fields.Char(
         string="Secondary Colour",

@@ -251,12 +251,46 @@ class TestReleaseCompat(TransactionCase):
         self.assertEqual((seen['env'] or {}).get('NC_RELEASE_HOLD'), 'provisioning')
 
     # ------------------------------------------------------------------ Fleet Migration: the exact module set
-    def _line(self, status, modules=('ncollection_core', 'ncollection_branding', 'ncollection_auth')):
+    def _line_both(self, status, modules=('ncollection_core', 'ncollection_branding', 'ncollection_auth'),
+                   licensed=(), not_installed=()):
+        """``(upgrade list, install list)`` the line derives; the licensed set and the tenant's installed state are
+        stubbed (the real read is an odoo shell inside the tenant)."""
         migration = self.env['ncollection.fleet.migration'].create({'name': 'rel', 'module_names': ','.join(modules)})
         line = self.env['ncollection.fleet.migration.line'].create({
             'migration_id': migration.id, 'tenant_id': self.atlas.id})
-        with patch.object(TenantRelease, '_nc_release_call', return_value=status):
+        Line = type(line)
+        with patch.object(TenantRelease, '_nc_release_call', return_value=status), \
+                patch.object(type(self.atlas), '_nc_licensed_module_list', lambda _s: list(licensed)), \
+                patch.object(Line, '_not_installed', lambda _s, _db, mods: [m for m in mods if m in not_installed]):
             return line._nc_required_modules('atlasrel', list(modules))
+
+    def _line(self, status, modules=('ncollection_core', 'ncollection_branding', 'ncollection_auth')):
+        return self._line_both(status, modules)[0]
+
+    def test_an_old_tenant_gains_what_the_code_auto_installs_and_what_it_is_licensed_for(self):
+        """Parity with a tenant created today: the gate's ``absent`` list (auto-installed by the code) and the
+        licensed modules this tenant lacks are INSTALLED in the same run; nothing else is."""
+        upgrade, install = self._line_both(
+            _status('upgrade_required', absent=['ncollection_purchase_documents', 'ncollection_sale_documents']),
+            licensed=['ncollection_account_core', 'ncollection_cheque_print', 'sale'],
+            not_installed=['ncollection_cheque_print', 'sale'])
+        self.assertEqual(upgrade, [])
+        self.assertEqual(install, ['ncollection_cheque_print', 'ncollection_purchase_documents',
+                                   'ncollection_sale_documents'],
+                         'only our modules: a licensed Odoo app is the module-install job, not a release')
+
+    def test_a_tenant_at_parity_gains_nothing(self):
+        self.assertEqual(self._line_both(_status('ready'), licensed=['ncollection_cheque_print']), ([], []))
+
+    def test_an_unreadable_licensed_state_refuses_rather_than_guessing(self):
+        migration = self.env['ncollection.fleet.migration'].create({'name': 'rel', 'module_names': 'ncollection_core'})
+        line = self.env['ncollection.fleet.migration.line'].create({
+            'migration_id': migration.id, 'tenant_id': self.atlas.id})
+        with patch.object(TenantRelease, '_nc_release_call', return_value=_status('ready')), \
+                patch.object(type(self.atlas), '_nc_licensed_module_list', lambda _s: ['ncollection_cheque_print']), \
+                patch.object(type(line), '_not_installed', lambda *_a: None), \
+                self.assertRaises(UserError):
+            line._nc_required_modules('atlasrel', ['ncollection_core'])
 
     def test_the_line_upgrades_exactly_what_the_tenant_needs(self):
         required = self._line(_status('upgrade_required', behind=[

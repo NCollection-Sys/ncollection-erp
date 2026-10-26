@@ -28,3 +28,7 @@ from . import tenant_release
 from . import platform_entry
 # Tenant Administration: a Platform Administrator manages a tenant's users through the tenant's service model.
 from . import tenant_admin
+# The platform's System Branding reaches every tenant over config-sync.
+from . import system_branding_sync
+# Delete Tenant: a disposable tenant removed for good (database, filestore, platform records), with an audit record.
+from . import tenant_deletion

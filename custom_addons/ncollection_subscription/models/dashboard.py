@@ -23,7 +23,7 @@ _db_size_cache = {'ts': 0.0, 'value': ([], 0, None)}
 
 class SubscriptionDashboard(models.TransientModel):
     _name = 'ncollection.subscription.dashboard'
-    _description = 'NCollection SaaS Dashboard'
+    _description = 'Business Management Dashboard'
 
     # ---- tenant / subscription KPIs (P1-T07) -----------------------------
     total_tenants = fields.Integer(compute='_compute_kpis')

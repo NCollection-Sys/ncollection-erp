@@ -299,8 +299,8 @@ msgstr "اسم الموزّع"
 
 #. module: ncollection_reseller
 #: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__brand_primary_color
-msgid "Reseller primary brand colour cascaded onto each sub-tenant (overrides the NCollection default). 6-digit hex, e.g. #1F5F8F."
-msgstr "اللون الأساسي للعلامة التجارية للموزّع، ينتقل إلى كل مستأجر فرعي (ويتجاوز الافتراضي لدى NCollection). لون سداسي من 6 خانات، مثل #1F5F8F."
+msgid "Reseller primary brand colour cascaded onto each sub-tenant (overrides the system default). 6-digit hex, e.g. #1F5F8F."
+msgstr "اللون الأساسي للعلامة التجارية للموزّع، ينتقل إلى كل مستأجر فرعي (ويتجاوز الافتراضي لدى النظام). لون سداسي من 6 خانات، مثل #1F5F8F."
 
 #. module: ncollection_reseller
 #: model:ir.model.fields,help:ncollection_reseller.field_ncollection_reseller__brand_sidebar_color

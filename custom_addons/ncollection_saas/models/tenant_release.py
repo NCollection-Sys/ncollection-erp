@@ -126,6 +126,7 @@ class TenantRelease(models.Model):
     @staticmethod
     def _nc_release_describe(body):
         lines = ['%s: database %s < code %s' % tuple(row) for row in body.get('behind') or []]
+        lines += ['%s: auto-installed by the code, not installed here' % name for name in body.get('absent') or []]
         lines += ['%s: installed but not deployed' % name for name in body.get('missing') or []]
         lines += ['%s: install / upgrade / removal in progress' % name for name in body.get('transitional') or []]
         if body.get('schema_gap'):
@@ -146,8 +147,15 @@ class TenantRelease(models.Model):
     def _nc_release_action_text(self, state, body):
         """What the operator has to do, in their language. Derived from the gate's answer only."""
         required = ', '.join(body.get('required') or [])
+        absent = ', '.join(body.get('absent') or [])
         if state == 'ready':
             return ''
+        if state == 'upgrade_required' and absent:
+            return self.env._(
+                "Run Fleet Migration for this tenant: it upgrades exactly %(required)s and installs %(absent)s, the "
+                "modules the current code installs automatically and this older tenant does not have yet (never all "
+                "modules). The tenant opens again only after the run has been validated.",
+                required=required or '-', absent=absent)
         if state == 'upgrade_required':
             return self.env._(
                 "Upgrade exactly these modules together, in one run, through Fleet Migration (never all modules): "
@@ -187,7 +195,8 @@ class TenantRelease(models.Model):
             vals = {'nc_release_state': state, 'nc_release_detail': self._nc_release_describe(body),
                     'nc_release_fingerprint': body.get('db_fingerprint') or False,
                     'nc_release_code_fingerprint': body.get('release_fingerprint') or False,
-                    'nc_release_required': ','.join(body.get('required') or []) or False}
+                    'nc_release_required': ','.join((body.get('required') or []) + (body.get('absent') or []))
+                                           or False}
             ok_at, _ok = self._nc_release_stamp(body.get('last_ok'))
             error_at, error = self._nc_release_stamp(body.get('last_error'))
             if ok_at:
