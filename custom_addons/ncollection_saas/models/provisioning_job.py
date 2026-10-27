@@ -344,7 +344,9 @@ class ProvisioningJob(models.Model):
             'NC_LOC_CHART': package['chart_template'],
             'NC_LOC_CURRENCY': package['currency'],
         })
-        cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
+        # --no-http: a shell step must never start a server. With `workers > 0` in the config (production) it would
+        # start a prefork server and bind :8069, which the runner itself holds (OSError: Address already in use).
+        cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--no-http', '--log-level=error']
         out = self._run_odoo_subprocess(
             cmd, self.env._("localization check"), stdin=script, env=env_vars)
         detail = next((line for line in (out or '').splitlines()
@@ -410,7 +412,9 @@ class ProvisioningJob(models.Model):
         if master:
             env_vars[_TENANT_KEY_ENV] = derive_tenant_key(master, db)
         # `shell` MUST be the first argument (odoo <subcommand> <options>).
-        cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--log-level=error']
+        # --no-http: a shell step must never start a server. With `workers > 0` in the config (production) it would
+        # start a prefork server and bind :8069, which the runner itself holds (OSError: Address already in use).
+        cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--no-http', '--log-level=error']
         out = self._run_odoo_subprocess(
             cmd, self.env._("tenant seed"), stdin=script, env=env_vars)
         self._log_dev_credentials(out)
