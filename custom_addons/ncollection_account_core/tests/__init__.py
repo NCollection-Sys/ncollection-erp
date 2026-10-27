@@ -10,3 +10,4 @@ from . import test_partner_roles
 from . import test_payment_workflow
 from . import test_document_stamp
 from . import test_view_print_parity
+from . import test_print_settings

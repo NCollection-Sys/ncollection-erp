@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- User-visible vendor credits of the portal and of the digest e-mail: they name the configured product instead
-         (Product Branding, ncollection_branding). Technical references are untouched. -->
+         (System Branding, ncollection_branding). Technical references are untouched. -->
     <template id="portal_record_sidebar_branded" inherit_id="portal.portal_record_sidebar">
         <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace">
             <span t-out="nc_product_brand()['name']"/>

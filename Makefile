@@ -74,7 +74,8 @@ OCA_VENV := .oca-venv
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
         cron-starvation-verify cron-starvation-clean orphan-dbs \
         cron-scope-verify cron-scope-clean \
-        upgrade-verify upgrade-clean \
+        upgrade-verify upgrade-clean upgrade-rehearse upgrade-preflight edge-verify \
+        release-status upgrade-platform-verify \
         ai-up ai-down ai-logs ai-test ai-verify ai-context-sample \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
 
@@ -247,8 +248,43 @@ test: ## Run the Odoo test suite locally, same matrix as CI (m=<module> to scope
 upgrade-verify: ## Prove module upgrades run their migrations and data survives (#362) — owns upgr*
 	./scripts/upgrade/verify_upgrade.sh
 
-upgrade-clean: ## Drop the UPGRADE fixture DBs upgrgreen/upgrred/upgrcore (destructive)
-	@for d in upgrgreen upgrred upgrcore; do $(call drop_database,$$d); done
+upgrade-clean: ## Drop the UPGRADE fixture DBs upgrgreen/upgrred/upgrcore/upgrdrift/upgrcronnew/upgrplat (destructive)
+	@for d in upgrgreen upgrred upgrcore upgrdrift upgrcronnew upgrplat; do $(call drop_database,$$d); done
+
+# Will THIS code serve THIS database after the upgrade it needs? (R-037)
+# Odoo changes a schema only on -u and never compares versions, so newer code under an un-upgraded database answers
+# HTTP 500 on the first request that reads a changed model (GET /web/login) while /web/health stays green. This
+# rehearses the whole lifecycle on a COPY of <db> - drift report, HTTP smoke, TARGETED -u (never -u all), drift
+# report, HTTP smoke - and prints REHEARSAL=PASS|FAIL. The source database is only read; nothing real is upgraded.
+upgrade-rehearse: ## Rehearse the targeted upgrade of a COPY of a database + HTTP smoke:  make upgrade-rehearse db=<db>
+	@test -n "$(db)" || (echo "Usage: make upgrade-rehearse db=<database>"; exit 1)
+	./scripts/upgrade/rehearse_upgrade.sh $(db)
+
+# The whole PLATFORM release, end to end, on a scratch COPY (upgrplat) of the platform database: new code + old platform
+# DB -> pre-registry 503 -> operator status names the exact modules -> release plan -> rehearsal -> hold, exact -u,
+# registry + drift validation, held smoke, open -> READY -> normal traffic. The source is only READ (pg_dump).
+upgrade-platform-verify: ## Prove the platform release end to end on a COPY:  make upgrade-platform-verify [src=ncollection]
+	./scripts/upgrade/verify_platform_release.sh $(or $(src),ncollection)
+
+# READ-ONLY release gate (R-037): is any installed module of the database behind the code about to serve it? Run it
+# against the REAL database after deploying code and before pointing traffic at it; exit 1 names what to upgrade.
+upgrade-preflight: ## Read-only: is any installed module behind the code?  make upgrade-preflight db=<db> [db=<db> ...]
+	@test -n "$(db)" || (echo "Usage: make upgrade-preflight db='<database> [<database> ...]'"; exit 1)
+	./scripts/upgrade/preflight_versions.sh $(db)
+
+# READ-ONLY release status of ONE database, the PLATFORM database included while the release gate blocks it: answered
+# before the registry with plain SQL, authenticated by the NC_CONFIG_SYNC_KEY derivation inside the odoo container
+# (never printed). See docs/markdown/RELEASE_COMPATIBILITY_GATE.md "Operator status".
+release-status: ## Read-only: release state, required modules, fingerprints of ONE database:  make release-status db=<db>
+	@test -n "$(db)" || (echo "Usage: make release-status db=<database>"; exit 1)
+	@docker compose exec -T odoo python3 - http://127.0.0.1:8069 $(db) status < scripts/upgrade/release_status.py
+
+# Does the production edge follow DOMAIN? Renders the nginx template for balancecloud.ae and another domain in the real
+# nginx image and runs nginx -t. Touches no DNS, certificate or server. The check's own self-test runs FIRST: a check
+# whose verdict ignored nginx -t's exit status once printed OK over a refused configuration.
+edge-verify: ## Render + nginx -t the production edge for one or more domains:  make edge-verify [domains='balancecloud.ae example.org']
+	./scripts/deploy/test_verify_edge_domain.sh
+	./scripts/deploy/verify_edge_domain.sh $(domains)
 
 ## ---- AI gateway satellite (P5-T02 / #59, opt-in) ----
 # The platform's FIRST satellite (ARCHITECTURE_DATA_PLATFORM §10.2) and the only

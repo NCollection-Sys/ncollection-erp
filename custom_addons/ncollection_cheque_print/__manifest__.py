@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Cheque Print',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.2',
     'category': 'Accounting/Accounting',
     'summary': 'Print the variable data of an Odoo payment onto a pre-printed bank cheque: configurable templates, a '
                'simple drag-and-drop designer, exact-size PDF, printer calibration and an audited print history',

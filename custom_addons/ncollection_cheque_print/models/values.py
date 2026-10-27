@@ -47,7 +47,7 @@ class ChequeValues(models.AbstractModel):
         return {
             'design': env._("DESIGN PREVIEW - the reference image and the boxes are NOT printed"),
             'watermark': env._("PREVIEW - NOT A PRINT"),
-            'calibration_title': env._("NCollection cheque calibration"),
+            'calibration_title': env._("Cheque calibration"),
             'calibration_page': env._(
                 "%(name)s   |   page %(w).1f x %(h).1f mm   |   print at 100 percent (Actual size)"),
             'calibration_help': env._(

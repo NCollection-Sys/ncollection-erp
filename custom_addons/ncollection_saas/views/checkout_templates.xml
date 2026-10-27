@@ -17,7 +17,7 @@
                 <!-- Without this the browser asks the host for /favicon.ico, which
                      this standalone layout does not serve, and logs a 404 on every
                      page view of the customer's first impression. The product favicon
-                     (Product Branding) is publicly served and versioned. -->
+                     (System Branding) is publicly served and versioned. -->
                 <link rel="icon" type="image/x-icon"
                       t-att-href="nc_product_brand()['favicon_url']"/>
                 <title><t t-esc="title or nc_product_brand()['short_name']"/></title>

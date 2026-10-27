@@ -47,6 +47,26 @@ _SYNCABLE_FIELDS = frozenset({
 # CBUAE peg constant never has to leave ncollection_account_localization_uae.
 _RATE_APPLY_FIELDS = frozenset({'ecb_usd_per_eur', 'ecb_rate_date'})
 
+# The platform's System Branding (name, short name, title, colours, logos, favicon): the system identity is the
+# platform's, so every tenant shows the platform's, not the defaults it was seeded with. Applied by
+# ncollection_branding's own whitelisted, validated write, then dropped before the licensing whitelist runs.
+_SYSTEM_BRANDING_KEY = 'nc_system_branding'
+
+# The company's contact details as entered on the platform's Tenants record. Applied override-if-placeholder: only a
+# field that is empty or still holds what ncollection_branding shipped (data/res_company_data.xml) is written, so a
+# value the Owner entered is never replaced.
+_COMPANY_IDENTITY_KEY = 'nc_company_identity'
+_COMPANY_IDENTITY_FIELDS = ('email', 'phone', 'website')
+_COMPANY_PLACEHOLDERS = {'email': ('noreply@ncollection.com',), 'website': ('https://ncollection.com',
+                                                                            'http://ncollection.com')}
+# The outgoing sender ncollection_branding once seeded as system parameters (data/system_parameters.xml): every email
+# of the workspace left "from noreply@ncollection.com". Removed where they still hold exactly that value, so Odoo's own
+# default sender applies; a value an operator set is kept.
+_PLACEHOLDER_MAIL_PARAMS = {
+    'mail.default.from': 'noreply@ncollection.com',
+    'mail.default.from_filter': 'ncollection.com',
+}
+
 # Deliberately duplicated from ncollection_saas rather than imported: this module
 # does NOT depend on the platform addon, and more importantly validation belongs
 # on the side that holds the privilege. The platform checked this band before
@@ -189,6 +209,8 @@ class WorkspaceConfig(models.Model):
         vals = dict(vals)
         brand = {k: vals.pop(k) for k in list(vals) if k in _BRAND_APPLY_FIELDS}
         rate = {k: vals.pop(k) for k in list(vals) if k in _RATE_APPLY_FIELDS}
+        system_identity = vals.pop(_SYSTEM_BRANDING_KEY, None)
+        company_identity = vals.pop(_COMPANY_IDENTITY_KEY, None)
         rejected = set(vals) - _SYNCABLE_FIELDS
         if rejected:
             raise UserError(self.env._(
@@ -207,6 +229,10 @@ class WorkspaceConfig(models.Model):
             self._nc_apply_pushed_branding(brand)
         if rate:
             self._nc_apply_pushed_rate(rate)
+        if system_identity:
+            self.env['ncollection.product.branding']._nc_apply_platform_identity(system_identity)
+        if company_identity:
+            self._nc_apply_company_identity(company_identity)
         return {'ok': True, 'plan_code': config.plan_code,
                 'subscription_status': config.subscription_status,
                 'required_crons': self._required_cron_health(),
@@ -214,7 +240,9 @@ class WorkspaceConfig(models.Model):
                 # up-to-date platform not to send rate keys to a tenant running
                 # older code -- which would fail this method's own whitelist
                 # guard and take licensing sync down with it.
-                'accepts_rate': True}
+                'accepts_rate': True,
+                # Same rule for the platform's System Branding (one dict under _SYSTEM_BRANDING_KEY).
+                'accepts_system_branding': True}
 
     @api.model
     def _nc_apply_pushed_rate(self, rate):
@@ -363,6 +391,38 @@ class WorkspaceConfig(models.Model):
                 to_write[target] = value
         if to_write:
             company.sudo().write(to_write)
+
+    @api.model
+    def _nc_apply_company_identity(self, identity):
+        """Write the platform's contact details for this company where it holds a placeholder or nothing; a
+        placeholder the platform has no value for is cleared (it was never the company's). What the Owner entered is
+        kept. Returns the field names written."""
+        if not isinstance(identity, dict) or set(identity) - set(_COMPANY_IDENTITY_FIELDS):
+            raise UserError(self.env._("The company details pushed by the platform are not valid."))
+        company = self.env.company
+        if not company:
+            return []
+        to_write = {}
+        for fname, value in identity.items():
+            value = (value or '').strip()
+            current = (company[fname] or '').strip()
+            replaceable = not current or current in _COMPANY_PLACEHOLDERS.get(fname, ())
+            if replaceable and current != value:
+                to_write[fname] = value or False
+        if to_write:
+            company.sudo().write(to_write)
+        self._nc_clear_placeholder_mail_sender()
+        return sorted(to_write)
+
+    @api.model
+    def _nc_clear_placeholder_mail_sender(self):
+        """Drop the shipped placeholder sender (``_PLACEHOLDER_MAIL_PARAMS``); returns the keys removed."""
+        params = self.env['ir.config_parameter'].sudo()
+        stale = params.search([('key', 'in', list(_PLACEHOLDER_MAIL_PARAMS))]).filtered(
+            lambda param: param.value == _PLACEHOLDER_MAIL_PARAMS[param.key])
+        keys = sorted(stale.mapped('key'))
+        stale.unlink()
+        return keys
 
     def get_allowed_module_list(self):
         """Parse allowed_module_names into a clean, de-duplicated list.

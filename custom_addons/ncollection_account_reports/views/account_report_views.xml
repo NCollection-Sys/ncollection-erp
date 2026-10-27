@@ -63,7 +63,7 @@
     </record>
 
     <menuitem id="menu_ncollection_account_reports"
-              name="NCollection Reports"
+              name="Financial Reports"
               parent="account.menu_finance_reports"
               sequence="90"/>
     <menuitem id="menu_report_reference"

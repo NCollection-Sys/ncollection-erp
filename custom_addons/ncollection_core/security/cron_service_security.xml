@@ -54,7 +54,7 @@
             which is the entire point of #347.)
         -->
         <record id="group_cron_service" model="res.groups">
-            <field name="name">NCollection Scheduler (service)</field>
+            <field name="name">Scheduler (service)</field>
             <field name="comment">Non-interactive tenant service account: may
                 record anomaly alerts produced by scheduled detection. Not a
                 system user, so plan entitlement still applies to everything it

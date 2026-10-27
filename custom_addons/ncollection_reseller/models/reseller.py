@@ -44,7 +44,7 @@ class Reseller(models.Model):
     brand_primary_color = fields.Char(
         string='Primary Colour',
         help="Reseller primary brand colour cascaded onto each sub-tenant "
-             "(overrides the NCollection default). 6-digit hex, e.g. #1F5F8F.")
+             "(overrides the system default). 6-digit hex, e.g. #1F5F8F.")
     brand_secondary_color = fields.Char(
         string='Secondary Colour', help="Reseller accent colour. 6-digit hex.")
     brand_sidebar_color = fields.Char(

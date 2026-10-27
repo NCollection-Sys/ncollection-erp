@@ -24,6 +24,8 @@ from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import config
 
+from .tenant_release import STATUS_PATH
+
 # Intra-package (platform-layer) import — the KDF + master env-var name live with
 # the config-sync push code. The PLATFORM derives each tenant's config-sync key and
 # hands only the derived value to the seed subprocess, so the master never enters
@@ -216,6 +218,11 @@ class ProvisioningJob(models.Model):
                 detail='; '.join('%s %ds' % (label, seconds) for label, seconds in timings),
                 total=int(time.monotonic() - started)))
 
+            # VALIDATING: the database exists and is seeded, but stays held (maintenance page for everybody but the
+            # platform's own bearer) until its release gate says it matches the code, it answers a real page, and
+            # it has been opened. A failure here rolls the database back like any other step.
+            self.tenant_id.sudo().write({'database_status': 'validating'})
+            self._nc_validate_release(db)
             self._mark_done(setup_url=setup_url)
         except Exception as exc:  # noqa: BLE001 - engine must catch to roll back
             # Record the failure WITHOUT re-raising: re-raising would make both
@@ -285,7 +292,38 @@ class ProvisioningJob(models.Model):
             '--without-demo=True', '--stop-after-init', '--no-http',
             '--max-cron-threads=0',
         ]
-        self._run_odoo_subprocess(cmd, self.env._("database init"))
+        # The new database is HELD by its release gate from the install's own commit (ncollection_core's
+        # post_init_hook reads this), so it is never routable before _nc_validate_release has opened it.
+        env = dict(os.environ, NC_RELEASE_HOLD='provisioning')
+        env.pop(_SYNC_KEY_ENV, None)   # like the seed: no subprocess touching a tenant database needs the master
+        self._run_odoo_subprocess(cmd, self.env._("database init"), env=env)
+
+    def _nc_validate_release(self, db):
+        """VALIDATING -> READY, entirely through the new tenant's own release gate over HTTP (Rule 3):
+
+        1. its state: the modules it holds are exactly the code's (compatible) and it is held for provisioning;
+        2. a real page: ``GET /web/login`` as the platform (its bearer passes the provisioning hold) answers 200;
+        3. open it: the gate lifts the hold only because the database is compatible, and answers READY.
+
+        Anything else raises, so the engine rolls the new database back: the tenant never became routable."""
+        tenant = self.tenant_id
+        code, body = tenant._nc_release_call(STATUS_PATH)
+        state = tenant._nc_release_record(code, body)
+        if code != 200 or not body.get('compatible') or body.get('hold') != 'provisioning':
+            raise UserError(self.env._(
+                "Release validation failed for '%(db)s': the new database is %(state)s.\n%(detail)s",
+                db=db, state=state, detail=tenant.nc_release_detail or ''))
+        page = tenant._nc_release_page('/web/login')
+        if page != 200:
+            raise UserError(self.env._(
+                "Release validation failed for '%(db)s': its sign-in page answered HTTP %(code)s.",
+                db=db, code=page or '-'))
+        state = tenant._nc_release_open()
+        if state != 'ready':
+            raise UserError(self.env._(
+                "Release validation failed for '%(db)s': it could not be opened (%(state)s).", db=db, state=state))
+        self._append_log(self.env._(
+            "Release validated: the modules match the code, the sign-in page answers, the workspace is open (READY)."))
 
     def _verify_localization(self, db):
         """Assert the tenant really ended up on its country's chart + currency.
@@ -536,6 +574,12 @@ class ProvisioningJob(models.Model):
             'database_status': 'ready',
             'portal_url': tenant.portal_url or self._portal_url(db),
         })
+        # The first config push, now that the tenant is ready: it is the push whose response advertises the tenant's
+        # capabilities, after which the same sync job sends the platform's System Branding (system_branding_sync.py).
+        # Without it only a TRIAL tenant was synced here (through action_activate below); a tenant created active
+        # showed the shipped default branding until the nightly reconcile. Same queue and identity key as every other
+        # trigger, so the activation's enqueue below does not stack a second job.
+        tenant._config_sync_enqueue()
         # #476: the tenant's own database now holds the credential, so the
         # platform stops holding it. The window in which a usable tenant password
         # sits on the platform database is exactly the queue latency, not forever.

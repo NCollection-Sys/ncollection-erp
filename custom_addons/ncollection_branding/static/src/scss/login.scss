@@ -95,6 +95,16 @@ $nc-brand-glow: rgba(45, 122, 183, 0.5);
     user-select: none;
 }
 
+// The System Branding logo on the dark, theme-invariant brand panel: a light tile behind it, so ANY configured logo
+// (a dark or brand-blue mark on a transparent background is the common case) stays legible. Measured on the real
+// platform: a blue "N" PNG drawn straight on the panel was present but practically invisible.
+.o_nc_login__system-logo {
+    box-sizing: content-box;
+    padding: 5px;
+    border-radius: var(--nc-radius-sm, 6px);
+    background-color: var(--nc-surface-raised);
+}
+
 .o_nc_login__wordmark-text {
     display: inline-flex;
     align-items: baseline;

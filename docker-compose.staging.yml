@@ -12,7 +12,7 @@
 #    - odoo runs the multi-tenant PRODUCTION config (db_filter, workers=4),
 #    - Postgres is NOT exposed to the host.
 #
-#  The nginx + wildcard-TLS edge for *.staging.ncollectionerp.com is deliberately
+#  The nginx + wildcard-TLS edge for *.staging.<DOMAIN> is deliberately
 #  OUT OF SCOPE here — that is ticket P2-T06 (Domain & SSL Automation). Until it
 #  lands, staging answers on the host's :8069 (firewall-restricted per the
 #  runbook), and the deploy smoke test hits Odoo's own /web/health route.

@@ -18,16 +18,67 @@ a second renderer.
 
 ## Layout and design
 
-`ncollection_branding`: `report.layout` "NCollection" (default for companies that never chose a layout; a deliberate choice of
+`ncollection_branding`: `report.layout` "Professional" (default for companies that never chose a layout; a deliberate choice of
 another layout is kept), `external_layout_nc`: logo or name, company details and VAT/TRN, a rule in the company colour (validated hex
 only), footer text and *Page X / Y*. LTR/RTL follows the document language. Fonts are the bundled Lato and Tajawal. The body tables,
 totals, status colours and signature lines are shared CSS (`nc_document_css`); wkhtmltopdf's WebKit has no CSS variables or flexbox, so
 none are used. The stock RTL stylesheet draws black table borders; the layout resets them first.
 
+The letterhead's logo is the **company's** logo, or its name when it has none. The vendor marks a database is born with (Odoo's default
+company logo, and the NCollection mark this module seeded until 19.0.1.15.0) are removed on install and on every upgrade, exact bytes
+only (`res.company._nc_clear_vendor_logos`): printed on an invoice they read as the company's own. An uploaded logo is never touched.
+
+## Print Settings (one per kind of printed document)
+
+The Print Settings of a document live on its **document type** (`ncollection.document.type`, shipped as data by the module that prints it:
+accounting, sales, purchase, reports). There is no second template system and no HTML editor: a setting chooses among what the templates
+already render, and survives upgrades because it is a field on a data record, not a copy of a template.
+
+* **Paper format** (`paperformat_id`). `ir.actions.report.get_paperformat` (`ncollection_branding/models/ir_actions_report.py`) resolves,
+  in order: the report's own paper (a cheque declares its exact size), the document type's Print Setting, the **A4 Document (letterhead)**
+  paper when the company prints with the NCollection letterhead (Odoo's stock A4 reserves ~40 mm for a boxed header, which left a blank
+  band above this ~25 mm one), then the company's paper. Preview and Print both resolve through here. Kinds printed by the same report
+  (invoice, bill, credit note) share one paper, so choosing it for one chooses it for all of them.
+* **Optional sections**: a module adds its switch to the document type and to `_nc_print_setting_fields()`. Accounting adds
+  **Payment status** (paid amount + status under the totals, `nc_show_payment_status`).
+* **Who may change them**: the model decides (`_nc_check_print_settings_allowed`): only the print-setting fields, and only by a Settings
+  administrator or a member of the kind's `manager_group_ids` (the Accounting Adviser for the accounting kinds), the same rule as stamps.
+  Everyone else reads.
+* **Where**: Workspace Administration > Print Settings (every kind), Accounting > Configuration > Print Settings (the accounting kinds).
+
+The financial reports keep their own report-specific papers (`ncollection_account_reports/report/nc_print.xml`: portrait/landscape) and
+their own print payload; they are listed as a document type for stamps and can be given a paper here too.
+
 The **Payment Receipt** (`ncollection_account_core/report/payment_receipt.xml`) shows payment information, party, date, method,
 journal, status, the amount (and in words), an *Applied to* table built from the real reconciliations (document, date, total, applied,
 balance due) and totals: applied, not applied (credit on account), payment amount. Nothing is invented: an unconfirmed or unallocated
 payment says so. The accounting and reconciliation engine is not touched.
+
+## Print Templates (how each printed document looks)
+
+**Where:** Workspace Administration > **Print Settings** (every kind of document) and Accounting > Configuration > **Print
+Settings** (the accounting kinds). Both open the list **Print Templates**; a row opens the document's template form, and
+**Preview** (list button or form header) opens the latest real document of that kind.
+
+**What can be set** (fields of `ncollection.document.type`, `ncollection_branding/models/document_print_template.py`):
+
+| Tab | Settings |
+|---|---|
+| Template | document title (replaces the standard title, the number follows), logo (company / system / the document's own / none), company details on or off, header text, footer text (replaces the company report footer), page numbers |
+| Colours and typography | accent colour, text colour (validated hex), font (a fixed list the PDF engine has), text size 6-16 pt |
+| Page | paper size, orientation, four margins: together they become the kind's own `report.paperformat` ("Print template: <kind>"), kept in step on every change |
+| Sections and columns | customer address block, payment reference, document stamp, quantity / unit price / discount / taxes columns; accounting adds payment status |
+| Language | bilingual labels (where the template provides Arabic and English) or the document language only; direction automatic / LTR / RTL |
+
+**Supported documents:** every document type shipped as data: customer invoice, customer credit note, vendor bill, vendor
+credit note, payment receipt, quotation, sales order, RFQ, purchase order and the financial reports. A new printable document
+plugs in by shipping a document type record for its report: no new screen, no new code path.
+
+**One renderer.** `external_layout_nc` asks `_nc_print_options(record)` for the template of the document it prints; validated
+values only reach its `<style>` block (colours, font stacks, known cell names). `get_paperformat` asks for the page. Preview,
+View and Print are the same `_render_qweb_pdf` call on the same report, so a saved setting shows in all three. Presentation only:
+no amount, tax or residual is computed here. This is not Odoo Studio: there is no template editor and no copied view, so an
+upgrade of Odoo's own templates is never overwritten.
 
 ## Stamps
 

@@ -2,8 +2,8 @@
 """Tenant domain & SSL tracking + automation (P2-T06).
 
 Every provisioned tenant gets a `ncollection.domain` record. The common case is
-a PLATFORM SUBDOMAIN (`<db>.ncollectionerp.com`): it rides the wildcard cert +
-the single `server_name .ncollectionerp.com` nginx block from P1-T03, so a new
+a PLATFORM SUBDOMAIN (`<db>.<base domain>`): it rides the wildcard cert +
+the single `server_name .<base domain>` nginx block from P1-T03, so a new
 tenant is reachable over HTTPS with ZERO manual server work — this model just
 *tracks* it and watches the cert's expiry.
 
@@ -45,7 +45,7 @@ class NcollectionDomain(models.Model):
 
     fqdn = fields.Char(
         string='Domain (FQDN)', required=True, index=True, tracking=True,
-        help="Fully-qualified hostname, e.g. acme.ncollectionerp.com.")
+        help="Fully-qualified hostname, e.g. acme.example.com.")
     tenant_id = fields.Many2one(
         'ncollection.tenant', string='Tenant', required=True,
         ondelete='cascade', tracking=True)
@@ -55,7 +55,7 @@ class NcollectionDomain(models.Model):
             ('custom', 'Custom Domain'),
         ],
         default='subdomain', required=True, tracking=True)
-    # Subdomains ride the shared *.ncollectionerp.com wildcard cert (P1-T03);
+    # Subdomains ride the shared *.<base domain> wildcard cert (P1-T03);
     # custom domains get their own Let's Encrypt cert (deferred).
     is_wildcard = fields.Boolean(
         string='Rides Wildcard Cert', default=True, tracking=True)

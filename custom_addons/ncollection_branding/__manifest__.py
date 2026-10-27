@@ -1,8 +1,8 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.10.0',
+    'version': '19.0.1.17.0',
     'category': 'Theme/Customization',
-    'summary': 'NCollection corporate branding: logo, colors, favicon',
+    'summary': 'NCollection branding: system branding, tenant colours, document layout and stamps',
     'description': """
 NCollection Branding
 =====================
@@ -30,6 +30,7 @@ Applies NCollection corporate identity across the Odoo backend:
     'post_init_hook': 'post_init_hook',
     'data': [
         'security/stamp_security.xml',
+        'security/system_branding_security.xml',
         'security/ir.model.access.csv',
         'data/product_branding_data.xml',
         'views/product_branding_views.xml',
@@ -41,6 +42,7 @@ Applies NCollection corporate identity across the Odoo backend:
         'views/http_error_templates.xml',
         'views/mail_layout_templates.xml',
         'views/document_stamp_views.xml',
+        'views/print_settings_views.xml',
         'views/report_layout_templates.xml',
         'data/res_company_data.xml',
         'data/res_company_logo.xml',
@@ -67,11 +69,17 @@ Applies NCollection corporate identity across the Odoo backend:
             'ncollection_branding/static/src/components/playground.js',
             'ncollection_branding/static/src/components/playground.xml',
             'ncollection_branding/static/src/js/white_label.js',
+            # Enterprise upsell closed (res_config_settings.py hides it; this keeps the widgets inert).
+            'ncollection_branding/static/src/js/no_enterprise_upsell.js',
             'ncollection_branding/static/src/js/mail_unread_store_patch.js',
             'ncollection_branding/static/src/xml/error_dialogs_patch.xml',
             'ncollection_branding/static/src/stamp_designer/stamp_designer.scss',
             'ncollection_branding/static/src/stamp_designer/stamp_designer.js',
             'ncollection_branding/static/src/stamp_designer/stamp_designer.xml',
+        ],
+        # Odoo's dark colour scheme bundle: the SEMANTIC tokens reassigned, never a component rule (tokens.scss).
+        'web.assets_web_dark': [
+            'ncollection_branding/static/src/scss/tokens.dark.scss',
         ],
         'web.assets_frontend': [
             'ncollection_branding/static/src/scss/tokens.scss',

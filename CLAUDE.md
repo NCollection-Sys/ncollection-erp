@@ -57,6 +57,8 @@ adding a module fails CI until someone updates this list.
   the tenant form's Users & Access (list users, create, activate / deactivate, change roles, reset a password incl. the
   Tenant Administrator's) through the tenant's `ncollection.admin.service` over the same derived-bearer JSON-2 channel,
   authorised on every call (platform admin + the tenant's `platform_admin_ids` allow-list); the platform stores no password.
+  Also **Delete Tenant** (Actions > Delete Tenant, typed identifier, same allow-list; database + filestore + platform
+  records, never the platform DB or a reserved / protected name; audit `ncollection.tenant.deletion` outlives the tenant).
 - `ncollection_subscription` — Tenant / Subscription / Plan / SaaS-admin dashboard.
 - `ncollection_reseller` — partner reseller accounts, cascading branding, sub-tenants.
 - `ncollection_billing` — subscription billing: invoices, UAE VAT, proration, Stripe.
@@ -97,8 +99,9 @@ adding a module fails CI until someone updates this list.
   Group-restricted fields and `ncollection.auth.log` are never logged —
   `auditlog` ignores
   `groups=` and its log table is readable by a lower-trust group.
-- `ncollection_branding` — **Product Branding** (ONE record: the application's name, favicon, product / login / administration logos, resolved by `nc_brand()` for every
-  surface; never the company brand — docs: `docs/markdown/PRODUCT_BRANDING.md`), theme, logo, colors, and the document layer: the NCollection print layout (default), document types,
+- `ncollection_branding` — **System Branding** (ONE record: the system's name, favicon, system / login / administration logos, browser title, copyright text and primary / secondary
+  colours in the existing `--nc-color-*` tokens, resolved by `nc_brand()` for every surface, changed ONLY by the `System Branding Manager` group (platform staff and a Platform Administrator inside a tenant; the tenant Owner cannot); never the tenant's colours or the company's identity — three identities, three places;
+  the persisted names stay `ncollection.product.branding` — docs: `docs/markdown/SYSTEM_BRANDING.md`), theme, logo, colors, and the document layer: the NCollection print layout (default), document types,
   and **Document Stamp templates** (mm geometry, document types, paper, priority; PDF overlay; OWL designer with a real-PDF
   preview; the stamp image is group-restricted to **Document Stamp Manager**, also reachable from Accounting > Configuration > Document Stamps). Docs: `docs/markdown/DOCUMENT_PRINTING_AND_STAMPS.md`.
 - `ncollection_ai` — tenant-side AI: gateway client, context injection, PII redaction.
@@ -312,7 +315,9 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 | Demo tenant (`make demo-tenant`) | `albarari` | `make demo-clean` |
 | Aggregation bench | `aggbench` | — |
 | Local test suite (`make test`) | `nctest` | self-drops (start + end of run) |
-| Upgrade proof (#362, #381) | `upgrgreen` · `upgrred` · `upgrcore` | self-drops (start + end) · `make upgrade-clean` |
+| Upgrade proof (#362, #381) + drift arm (R-037) + cron arm (R-039) | `upgrgreen` · `upgrred` · `upgrcore` · `upgrdrift` · `upgrcronnew` | self-drops (start + end) · `make upgrade-clean` |
+| Upgrade rehearsal (R-037) | `upgrreh<source>` — a scratch COPY of the database being rehearsed | self-drops on every exit path |
+| Platform release proof (`make upgrade-platform-verify`) | `upgrplat` — a scratch COPY of the platform database | self-drops on every exit path · `make upgrade-clean` |
 
 The last three rows are **not** throwaway fixtures. `saastest` in particular is the
 default `PLATFORM_DB` that `verify_provisioning.sh` and `verify_config_sync.sh` run
@@ -387,7 +392,11 @@ So tenant key === subdomain === database name, always.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
 - `WORKSPACE_AND_TENANT_ADMINISTRATION.md` — roles = real groups, password reset, the platform's user-administration service, audit, boundaries.
 - `UAE_EINVOICING.md` — the UAE e-invoicing engine: scope, identity model, rounding analysis, validator, retention and offboarding, provisioning gate.
-- `PRODUCT_BRANDING.md` — product brand vs company brand, the one resolver, favicon / logo validation, where "Odoo" was removed and what stays.
+- `DEPLOYMENT_DOMAIN_CONTRACT.md` — the production domain (`balancecloud.ae` + `*.balancecloud.ae`): the one `DOMAIN` setting, the wildcard route, DNS / TLS / forwarded headers / trusted proxy, what is proven where.
+- `RUNBOOK_RELEASE_UPGRADE.md` — deploying code to a database that exists: backup, deploy, preflight, rehearse on a copy, targeted upgrade, smoke, traffic. Never `-u all`.
+- `RELEASE_COMPATIBILITY_GATE.md` — why a database the code is ahead of answers a branded 503 instead of an HTTP 500: the gate before the registry (`ncollection_core/release_gate.py`, server-wide), the states, holds, the platform's status channel, provisioning `validating`, Company Entry, Fleet Migration (platform first, enforced), and how an
+  operator reads a blocked PLATFORM database (`make release-status db=ncollection`).
+- `SYSTEM_BRANDING.md` — system branding vs tenant branding vs company identity, the one resolver, favicon / logo validation, where "Odoo" was removed and what stays.
 - `DOCUMENT_PRINTING_AND_STAMPS.md` — the one print pipeline, View = Print, the NCollection layout, the stamp system, how to prove a PDF.
 - `BRANCH_PROTECTION.md` — required CI checks + 1-approval policy, and why none of it is
   **enforceable** on the current GitHub plan (verified 403) — read before assuming CI blocks.

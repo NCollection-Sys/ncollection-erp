@@ -33,7 +33,7 @@
             upgrades.
         -->
         <record id="user_cron_service" model="res.users">
-            <field name="name">NCollection Scheduler</field>
+            <field name="name">Scheduler (service)</field>
             <field name="login">cron@ncollection.internal</field>
             <field name="active" eval="True"/>
             <!-- Odoo 19: group_ids, not groups_id. base.group_user ONLY —

@@ -24,7 +24,7 @@ PLATFORM_DB="${PLATFORM_DB:-saastest}"
 DB="tadmina"
 DC=(docker compose)
 DBARGS=(--db_host=db --db_user=odoo --db_password=odoo)
-BASE_DOMAIN="ncollectionerp.com"
+BASE_DOMAIN="${NC_BASE_DOMAIN:-ncollection.localhost}"   # only a Host header here: the first label picks the database
 EDGE="http://127.0.0.1:8069"
 pass=0; fail=0
 ok(){ echo "  ✅ PASS: $1"; pass=$((pass + 1)); }

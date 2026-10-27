@@ -68,7 +68,7 @@ _DATE_PATTERNS = {
 DEFAULT_LABELS = {
     'design': 'DESIGN PREVIEW - the reference image and the boxes are NOT printed',
     'watermark': 'PREVIEW - NOT A PRINT',
-    'calibration_title': 'NCollection cheque calibration',
+    'calibration_title': 'Cheque calibration',
     'calibration_page': '%(name)s   |   page %(w).1f x %(h).1f mm   |   print at 100 percent (Actual size)',
     'calibration_help': 'Each cross is exactly 10 mm from two edges. Measure from the paper edge to a cross: any '
                         'difference is the printer shift. Enter it as the horizontal / vertical offset in the '

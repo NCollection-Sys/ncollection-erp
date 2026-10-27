@@ -1,0 +1,14 @@
+// =============================================================================
+// NCollection semantic tokens, DARK colour scheme (Odoo's web.assets_web_dark bundle).
+// Only SEMANTIC tokens are reassigned here (tokens.scss: "dark mode reassigns semantic tokens, never primitives and
+// never component rules"). Lighter role hues on translucent fills, so each badge keeps its contrast on a dark surface.
+// =============================================================================
+$nc-primitive-green-300:  #6FCF9F;
+$nc-primitive-violet-300: #C4A2F2;
+
+:root {
+    --nc-color-customer:      #{$nc-primitive-green-300};
+    --nc-color-customer-soft: rgba(46, 125, 91, 0.24);
+    --nc-color-vendor:        #{$nc-primitive-violet-300};
+    --nc-color-vendor-soft:   rgba(129, 69, 205, 0.28);
+}

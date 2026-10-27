@@ -105,8 +105,8 @@ them at the edge causes endless routing bugs on every upgrade. Therefore:
 |---|---|
 | Public entry `/` (no website module) | Odoo answers `303 → /odoo`; the edge rewrites that Location to **`/web`** (scoped `proxy_redirect` on `location = /` only) |
 | `/web/login`, `/web/reset_password`, `/my` | already clean — no "odoo" in these URLs, nothing to do |
-| **Backend `/odoo/...`** | **stays as-is** — internal, hardcoded by the JS router; accepted |
-| `/web/login?redirect=/odoo` after deliberately visiting `/odoo` anonymously | accepted — the user typed the backend path themselves |
+| **Application UI** | **`/atlas/...`** since 2026-10-24 (see *The application path* below). `/odoo/...` still works and is redirected there |
+| `/web/...` technical endpoints | unchanged (`/web/login`, `/web/image`, `/web/content`, `/web/assets`, RPC) — API, not pages |
 
 Flow effects of the `location = /` rewrite (all verified live on Odoo 19):
 - **Anonymous prospect**: `/` → `/web` → `303 /web/login?redirect=%2Fweb%3F` — login page,
@@ -117,6 +117,22 @@ Flow effects of the `location = /` rewrite (all verified live on Odoo 19):
   `?redirect=/odoo` would leak "odoo" right back into the URL.)
 - **Future website tenants**: with the website module installed, `/` returns `200` and the
   `proxy_redirect` is a **no-op**. The block is inert — do not remove it, do not "fix" it.
+
+### The application path: `/atlas/...` (2026-10-24, supersedes "backend /odoo stays as-is")
+
+The web client's public namespace is **`/atlas/...`** (`https://<tenant>.<domain>/atlas/...`), never `/odoo/...`.
+`/web/...` stays Odoo's technical namespace on purpose.
+
+| Piece | Where | What it does |
+|---|---|---|
+| One value, one builder | `ncollection_core/app_url.py` | `APP_PATH` from `NC_APP_PATH` (default `/atlas` in dev and prod; validated: one lowercase segment, never an Odoo / NCollection namespace). `app_url()` builds, `to_app_url()` maps an `/odoo` URL. Every NCollection redirect / link (login, logout, Company Entry and its return, checkout login link, password change) uses it. The host is never part of it. |
+| Server adapter | `ncollection_core/controllers/app_routes.py` | Extends Odoo's own `Home`: `web_client` also answers `/atlas[/...]` (same checks: session, `?redirect=/atlas/...` to login, internal user); `/odoo[/...]` answers **302** to the same path under `/atlas` (query kept); `/` and the post-login redirect map Odoo's `/odoo` answer. A 302, not a 301: the prefix is configuration. |
+| Client adapter | `ncollection_core/static/src/router/app_path.js` | Patches `router.stateToUrl` / `router.urlToState` — the conversions Odoo's router exports *for this* ("can be patched if needed in a custom webclient") and routes every push / replace / popstate / click through — then re-runs the exported `startRouter()`. One extra click listener does what Odoo's private one does only under `/odoo`: internal links become a state change, through Odoo's own popstate handler. |
+| Upgrade guard | `ncollection_core/tests/test_app_url.py` | Pins the router.js lines the patch relies on and the asset order; HTTP tests for the redirects, the login round trip and logout. The browser proof is `e2e/tests/partner-roles-and-titles.spec.ts` (*Application URLs*). |
+
+Links Odoo itself renders (e-mails, chatter mentions, `startUrl()` users in other modules) still say `/odoo/...`: clicked
+in the web client they are routed in place, opened anywhere else the server redirects them. No Odoo file is changed and
+nginx is unchanged (its `location = /` rule rewrites only a Location of exactly `/odoo`, which the server no longer sends).
 
 ### Public aliases (301s)
 

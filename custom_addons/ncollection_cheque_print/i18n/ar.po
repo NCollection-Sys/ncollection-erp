@@ -830,8 +830,8 @@ msgstr "الرسائل"
 #. module: ncollection_cheque_print
 #. odoo-python
 #: code:addons/ncollection_cheque_print/models/values.py:0
-msgid "NCollection cheque calibration"
-msgstr "معايرة شيكات NCollection"
+msgid "Cheque calibration"
+msgstr "معايرة الشيكات"
 
 #. module: ncollection_cheque_print
 #: model:ir.model.fields,field_description:ncollection_cheque_print.field_ncollection_cheque_print_job__name

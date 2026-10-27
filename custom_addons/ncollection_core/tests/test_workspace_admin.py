@@ -298,7 +298,15 @@ class TestPasswordReset(_Common):
         with self.assertRaises(AccessError):
             self.member.with_user(proxy).nc_reset_password()
         with self.assertRaises(AccessError):
-            self.Users.with_user(proxy)._nc_create_workspace_user('Made By Proxy', 'made.by.proxy')
+            self.Users.with_user(proxy)._nc_create_workspace_user(
+                'Made By Proxy', 'made.by.proxy', password=_password())
+        # Add User from an entry session: the same as the platform's Users & Access - a generated temporary password
+        # the person must change, never one the proxy chose, and must-change cannot be switched off.
+        user, temporary = self.Users.with_user(proxy)._nc_create_workspace_user(
+            'Made By Proxy', 'made.by.proxy', must_change=False)
+        self.assertTrue(temporary)
+        self.assertTrue(user.nc_must_change_password)
+        self.assertTrue(self._sign_in(user, temporary))
 
     def test_the_reset_dialog_clears_what_was_typed(self):
         chosen = _password()

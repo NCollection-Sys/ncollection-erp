@@ -3,3 +3,4 @@
 from . import backup_restore
 from . import tenant_users
 from . import tenant_user_dialogs
+from . import tenant_delete_wizard

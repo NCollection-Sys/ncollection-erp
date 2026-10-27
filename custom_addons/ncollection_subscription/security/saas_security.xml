@@ -12,7 +12,7 @@
             so existing system administrators keep their access unchanged.
         -->
         <record id="module_category_ncollection" model="ir.module.category">
-            <field name="name">NCollection</field>
+            <field name="name">Management</field>
             <field name="sequence">90</field>
         </record>
 
@@ -40,6 +40,19 @@
     <data>
         <record id="base.group_system" model="res.groups">
             <field name="implied_ids" eval="[Command.link(ref('group_platform_admin'))]"/>
+        </record>
+        <!-- Platform staff, and only they, may change the identity of the system (ncollection_branding). Through this
+             link the platform database's system administrators keep that right; a tenant database has no Platform
+             Admin group, so its Owner never reaches it.
+
+             WRITTEN FROM THE MANAGER GROUP'S SIDE (implied_by_ids = "who implies me"), on purpose. group_platform_admin is
+             declared above in a noupdate block, so Odoo records it as noupdate and, on an UPGRADE of an existing
+             database, skips any later write to it: an implied_ids line on that record is applied by a fresh install
+             and silently NOT by an upgrade (measured on a copy of the real platform database: 0 rows), which would
+             lock the operators out of System Branding. The manager group is an ordinary record, so this is applied
+             on install and on every upgrade. -->
+        <record id="ncollection_branding.group_system_branding_manager" model="res.groups">
+            <field name="implied_by_ids" eval="[Command.link(ref('group_platform_admin'))]"/>
         </record>
     </data>
 </odoo>

@@ -14,6 +14,7 @@ from odoo import http
 from odoo.exceptions import AccessDenied, UserError
 from odoo.http import request
 
+from ..app_url import app_url
 from ..models.ir_http import PASSWORD_CHANGE_PATH
 
 _logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class PasswordChange(http.Controller):
     def change(self, **post):
         user = request.env['res.users'].sudo().browse(request.session.uid)
         if not user.nc_must_change_password:
-            return request.redirect('/odoo')              # nothing pending: this page has no other use
+            return request.redirect(app_url())            # nothing pending: this page has no other use
         error = None
         if request.httprequest.method == 'POST':
             error = self._apply(user, post)

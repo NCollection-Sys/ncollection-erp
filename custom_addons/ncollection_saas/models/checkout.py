@@ -82,6 +82,11 @@ class TenantCheckout(models.Model):
             return False, 'invalid'
         if subdomain in RESERVED_SUBDOMAINS or subdomain in OFFENSIVE_SUBDOMAINS:
             return False, 'reserved'
+        # The first label of the apex IS the platform's own database under db_filter ^%d$ (<label>.<tld> -> the
+        # database named <label>), so no tenant may take it, whatever base domain is configured.
+        apex_label = (self.env['ncollection.tenant']._nc_base_domain() or '').split('.')[0]
+        if apex_label and subdomain == apex_label:
+            return False, 'reserved'
         # Collision space: an existing tenant, the live platform DB, or (deep
         # only) any database already in the cluster (a half-provisioned or
         # foreign DB).

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The right to change the identity of the SYSTEM (name, logos, favicon, browser title, copyright line, system
+         colours). It is NOT implied by base.group_system and therefore not by the tenant Owner role, which implies
+         base.group_system: a workspace Owner administers THEIR workspace, they do not rename the platform.
+
+         Who holds it:
+           * the platform's own staff: ncollection_subscription makes its Platform Admin group imply it, and in the
+             platform database base.group_system implies Platform Admin, so the operators keep the access they had;
+           * a Platform Administrator who enters a tenant (the passwordless proxy user, ncollection_core), only while
+             inside that tenant;
+           * the superuser (provisioning and migrations run as it).
+         A tenant database has no Platform Admin group (the subscription layer is not installed there), so its Owner,
+         Tenant Administrator and ordinary users never hold it. -->
+    <record id="group_system_branding_manager" model="res.groups">
+        <field name="name">System Branding Manager</field>
+        <field name="comment">May change the system's name, logos, favicon, browser title, copyright line and colours.
+            Platform staff only: not implied by Administration: Settings or the workspace Owner role.</field>
+    </record>
+</odoo>

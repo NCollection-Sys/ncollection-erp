@@ -70,10 +70,34 @@ their `ir.model.access` rows and record rules, exactly as before.
   `actor_ref = platform:u<id> (<name>)`, the target user and a short detail. `actor_ref` is honoured only when the environment was
   elevated by code, so a client-sent context cannot forge it.
 
+## Delete Tenant (platform)
+
+Tenants list or form > **Actions > Delete Tenant** (`ncollection_saas/models/tenant_deletion.py`). For disposable and
+test tenants: it removes the tenant permanently.
+
+- **Who.** A Platform Administrator on the tenant's `platform_admin_ids` allow-list, checked server side on every call
+  (opening the dialog, deleting, retrying). Tenant Owners and tenant users never see the platform at all.
+- **What the browser sends.** The tenant id and the identifier typed in the dialog. The database name, the filestore
+  path and the routing come from the trusted tenant record; the typed identifier must equal its database name exactly.
+- **Refused before anything is touched.** The platform's own database, `ncollection` and every reserved / fixture name;
+  a name that is not a strict tenant identifier; a database not owned by exactly one tenant record; a tenant that is
+  provisioning, has a queued or running provisioning job, is held `upgrading`, or is a target of an in-flight Fleet
+  Migration; a tenant named in the system parameter `ncollection_saas.tenant_delete_protected` (comma separated).
+- **The run.** Database (`DROP DATABASE ... WITH (FORCE)`: every session ends, so an entry token or session can never be
+  used again), filestore (resolved under the server's `data_dir/filestore` and asserted to be inside it), then the
+  platform records: subscriptions, then the tenant row, with its domains, backups (rows and files), provisioning jobs,
+  fleet lines, module overrides and allow-list by cascade. Invoices keep their rows, with the tenant link cleared.
+  Routing needs no cleanup: a host routes to the database of the same name, which no longer exists.
+- **Audit.** `ncollection.tenant.deletion` (Business Management > Tenant Deletions) outlives the tenant: who, which tenant
+  and database, when, the state (Delete requested / Deleting / Deleted / Delete failed), which steps completed and the
+  failure reason. Never a password or token.
+- **Failure.** Any step that raises is recorded as **Delete failed** with the step it stopped at; nothing after it ran.
+  **Retry** re-checks the authority and the refusals and resumes; every step is idempotent.
+
 ## Workspace Administration (tenant)
 
-Menu root `Workspace Administration` (administrators only): Overview, Users, Invite User, Roles & Permissions, Teams & Departments,
-Security, Company, Appearance, Document Stamps, System. Every screen reads real records.
+Menu root `Workspace Administration` (administrators only): Overview, Users (with **Add User**), Roles & Permissions, Teams & Departments,
+Security, Company, Appearance, Document Stamps, Print Settings, System. Every screen reads real records.
 
 * Users: list/form with role, last sign-in, "must change password"; reset password, activate / deactivate (existing guards), roles.
 * Security: the audit log (`ncollection.auth.log`): sign-ins, password events, role and user changes, platform entry / exit / refusal.

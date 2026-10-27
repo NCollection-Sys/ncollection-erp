@@ -22,7 +22,7 @@ PLATFORM_DB="${PLATFORM_DB:-saastest}"
 DB_A="pentera"; DB_B="penterb"
 DC=(docker compose)
 DBARGS=(--db_host=db --db_user=odoo --db_password=odoo)
-BASE_DOMAIN="ncollectionerp.com"
+BASE_DOMAIN="${NC_BASE_DOMAIN:-ncollection.localhost}"   # only a Host header here: the first label picks the database
 EDGE="http://127.0.0.1:8069"
 pass=0; fail=0
 ok(){ echo "  ✅ PASS: $1"; pass=$((pass + 1)); }
@@ -120,6 +120,22 @@ PA="$(mktemp)"; PB="$(mktemp)"
 # ---------------------------------------------------------------- 2/3. enter A, write in A
 echo "== 2/3. enter A: a named proxy session; customer + invoice land in A only =="
 [ "$(enter "$DB_A" "$PA")" = "303" ] && ok "entry redirects (303) into tenant A" || no "entry into A did not redirect"
+
+# The address Company Entry sends the browser to is the ONE canonical tenant address (<label>.<configured base domain>),
+# never a stored snapshot, a stale localhost:8069, or anything typed on the tenant record. (The token is a fragment
+# and is not printed.)
+EXPECT_A="$(shellp <<PY | sed -n 's/^ORIGIN //p' | tail -1 | tr -d '\r'
+print('ORIGIN', env['ncollection.tenant'].search([('database_name', '=', '$DB_A')])._nc_public_origin())
+PY
+)"
+case "$(cat "$URLS/$DB_A")" in
+  "$EXPECT_A"/ncollection/platform/enter#token=*) ok "Company Entry goes to the canonical tenant address ($EXPECT_A)" ;;
+  *) no "Company Entry URL is not the canonical builder's address (expected prefix '$EXPECT_A')" ;;
+esac
+case "$(cat "$URLS/$DB_A")" in
+  *:8069*|*"localhost:"*) no "the Company Entry URL carries a stale port" ;;
+  *) ok "no stale port in the Company Entry URL" ;;
+esac
 SESS="$(curl -s -c "$PA" -b "$PA" -H "Host: $DB_A.$BASE_DOMAIN" -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","params":{}}' "$EDGE/web/session/get_session_info")"
 echo "$SESS" | grep -q '"username": "platform\.u' && ok "the A session is the admin's platform proxy" || no "A session user wrong"

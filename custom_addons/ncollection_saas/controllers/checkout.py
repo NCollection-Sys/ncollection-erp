@@ -14,6 +14,8 @@ job (P1-T03) — the independent second layer.
 import re
 
 from odoo import fields, http
+
+from odoo.addons.ncollection_core.app_url import app_url  # server-wide: the one application URL builder
 from odoo.http import request
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
@@ -202,5 +204,5 @@ class CheckoutController(http.Controller):
         if tenant.database_status == 'ready':
             origin = tenant._nc_public_origin()
             if origin:
-                result['login_url'] = origin + '/odoo'
+                result['login_url'] = origin + app_url()
         return result

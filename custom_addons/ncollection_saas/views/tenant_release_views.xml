@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Release compatibility (release gate): whether the tenant may receive traffic from the code the platform runs,
+         and exactly why not. Recorded by Company Entry, provisioning, Fleet Migration and the Check button. -->
+    <record id="view_tenant_form_release" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form.release</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_form"/>
+        <field name="arch" type="xml">
+            <!-- A tenant that is not READY says so at the top of its form, with what to do; the Release section
+                 (System tab) has every detail. All of it is what the tenant's gate answered over HTTP before its
+                 registry loads: nothing here needs the tenant's application to run. -->
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0 o_nc_release_banner" role="alert"
+                     invisible="database_status != 'ready' or nc_release_state in ('ready', 'unknown')">
+                    <strong>Not ready for the current release</strong>
+                    <field name="nc_release_state" readonly="1" class="ms-2 fw-bold"/>
+                    <div><field name="nc_release_action" readonly="1"/></div>
+                    <div class="text-muted">The Release section of the System tab shows the details.</div>
+                </div>
+            </xpath>
+            <xpath expr="//page[@name='system']/group[1]" position="after">
+                <group string="Release" name="nc_release">
+                    <group>
+                        <field name="nc_release_state" widget="badge"
+                               decoration-success="nc_release_state == 'ready'"
+                               decoration-info="nc_release_state in ('upgrading', 'provisioning')"
+                               decoration-warning="nc_release_state == 'upgrade_required'"
+                               decoration-danger="nc_release_state in ('upgrade_failed', 'blocked', 'unreachable')"
+                               decoration-muted="nc_release_state == 'unknown'"/>
+                        <field name="database_name" string="Database" readonly="1"/>
+                        <field name="nc_release_action" invisible="not nc_release_action"/>
+                        <field name="nc_release_required" invisible="not nc_release_required"/>
+                        <field name="nc_release_detail" invisible="nc_release_state == 'ready' or not nc_release_detail"/>
+                    </group>
+                    <group>
+                        <field name="nc_release_checked_at"/>
+                        <field name="nc_release_code_fingerprint" invisible="not nc_release_code_fingerprint"/>
+                        <field name="nc_release_fingerprint" invisible="not nc_release_fingerprint"/>
+                        <field name="nc_release_last_ok_at" invisible="not nc_release_last_ok_at"/>
+                        <field name="nc_release_last_error" invisible="not nc_release_last_error"/>
+                        <button name="action_nc_release_check" type="object" string="Check release" class="oe_link"
+                                icon="fa-refresh" groups="ncollection_subscription.group_platform_admin"
+                                invisible="database_status != 'ready'"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="filter_tenant_release_not_ready" model="ir.filters">
+        <field name="name">Not ready for the release</field>
+        <field name="model_id">ncollection.tenant</field>
+        <field name="domain">[('database_status', '=', 'ready'), ('nc_release_state', '!=', 'ready')]</field>
+    </record>
+</odoo>

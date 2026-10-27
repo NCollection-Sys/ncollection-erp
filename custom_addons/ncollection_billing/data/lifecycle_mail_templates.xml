@@ -12,7 +12,7 @@
         <record id="mail_template_trial_ending" model="mail.template">
             <field name="name">NCollection: Trial Ending Soon</field>
             <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
-            <field name="subject">Your NCollection trial ends soon</field>
+            <field name="subject">Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} trial ends soon</field>
             <field name="email_to">{{ object.tenant_id.email or '' }}</field>
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
@@ -29,7 +29,7 @@
         <record id="mail_template_expired" model="mail.template">
             <field name="name">NCollection: Subscription Expired</field>
             <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
-            <field name="subject">Your NCollection subscription has expired</field>
+            <field name="subject">Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} subscription has expired</field>
             <field name="email_to">{{ object.tenant_id.email or '' }}</field>
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
@@ -45,7 +45,7 @@
         <record id="mail_template_suspended" model="mail.template">
             <field name="name">NCollection: Subscription Suspended</field>
             <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
-            <field name="subject">Your NCollection workspace has been suspended</field>
+            <field name="subject">Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} workspace has been suspended</field>
             <field name="email_to">{{ object.tenant_id.email or '' }}</field>
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
@@ -94,7 +94,7 @@
         <record id="mail_template_plan_change" model="mail.template">
             <field name="name">NCollection: Plan Change Confirmation</field>
             <field name="model_id" ref="ncollection_subscription.model_ncollection_subscription"/>
-            <field name="subject">Your NCollection plan has changed</field>
+            <field name="subject">Your {{ object.env['ncollection.product.branding'].nc_brand()['name'] }} plan has changed</field>
             <field name="email_to">{{ object.tenant_id.email or '' }}</field>
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">

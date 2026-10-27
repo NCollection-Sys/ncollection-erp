@@ -115,10 +115,12 @@ class TenantUserCreate(models.TransientModel):
     def _nc_open(self, tenant):
         tenant._nc_admin_authorise()
         options = self.env['ncollection.tenant.role.option']._nc_load(tenant)
-        wizard = self.create({'tenant_id': tenant.id, 'available_role_ids': [(6, 0, options.ids)]})
+        # Opened with DEFAULTS, never a pre-created record: name and username are required and only the operator can
+        # type them, so creating the dialog before it is shown fails with "required value for field name is missing".
         return {
-            'type': 'ir.actions.act_window', 'name': self.env._('New user'),
-            'res_model': self._name, 'res_id': wizard.id, 'view_mode': 'form', 'target': 'new',
+            'type': 'ir.actions.act_window', 'name': self.env._('Add User'),
+            'res_model': self._name, 'view_mode': 'form', 'target': 'new',
+            'context': {'default_tenant_id': tenant.id, 'default_available_role_ids': [(6, 0, options.ids)]},
         }
 
     def action_apply(self):
@@ -128,6 +130,8 @@ class TenantUserCreate(models.TransientModel):
         if self.mode == 'explicit' and not typed:
             raise UserError(self.env._("Type the password, or choose a temporary one."))
         codes = self.role_option_ids.mapped('code')
+        if not codes:
+            raise UserError(self.env._("Choose the role of the new user."))
         self.new_password = False
         self.flush_recordset(['new_password'])
         reply = tenant._nc_admin_call('create_user', {

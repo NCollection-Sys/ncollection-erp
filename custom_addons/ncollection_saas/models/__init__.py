@@ -22,7 +22,13 @@ from . import module_install
 # After module_install so the tenant model's SaaS extensions are all in place.
 from . import tenant_localization
 from . import res_config_settings
+# Release compatibility: the platform's record of each tenant's release gate (before Company Entry, which reads it).
+from . import tenant_release
 # Platform administrator -> tenant entry ("Enter Company"): allow-list, one-time grant, Summary list.
 from . import platform_entry
 # Tenant Administration: a Platform Administrator manages a tenant's users through the tenant's service model.
 from . import tenant_admin
+# The platform's System Branding reaches every tenant over config-sync.
+from . import system_branding_sync
+# Delete Tenant: a disposable tenant removed for good (database, filestore, platform records), with an audit record.
+from . import tenant_deletion

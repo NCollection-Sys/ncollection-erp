@@ -17,3 +17,7 @@ from . import test_document_stamp
 from . import test_product_branding
 from . import test_stamp_image_security
 from . import test_vendor_wording
+from . import test_system_branding
+from . import test_enterprise_upsell
+from . import test_platform_identity
+from . import test_print_settings

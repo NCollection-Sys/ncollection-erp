@@ -32,7 +32,7 @@
                                 <button type="button" role="menuitem" t-on-click="() => this.exportReport('pdf')">PDF</button>
                             </div>
                         </div>
-                        <button class="btn btn-secondary" type="button" t-on-click="() => this.exportReport('pdf')">
+                        <button class="btn btn-secondary" type="button" t-on-click="() => this.printReport()">
                             <i class="fa fa-print" aria-hidden="true"/> Print
                         </button>
                     </div>

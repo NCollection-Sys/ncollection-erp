@@ -10,16 +10,16 @@
 
     <!-- Master Self-Contained Error Page Layout -->
     <template id="ncollection_error_layout" name="NCollection Uniform Error Page">
-        <t t-set="brand" t-value="'#1F5F8F'"/>
+        <t t-set="brand" t-value="nc_product_brand()['primary_color']"/>
         <html lang="en">
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                <title><t t-out="error_title or 'Error'"/> — NCollection</title>
+                <title><t t-out="error_title or 'Error'"/> — <t t-out="nc_product_brand()['title']"/></title>
                 <link type="image/x-icon" rel="shortcut icon" t-att-href="nc_product_brand()['favicon_url']"/>
                 <style>
                     :root {
-                        --nc-brand: #1F5F8F;
+                        --nc-brand: <t t-out="brand"/>;
                         --nc-brand-hover: #17486D;
                         --nc-text-main: #0F172A;
                         --nc-text-muted: #5A6B83;

@@ -1,4 +1,5 @@
 from . import localization
+from . import res_users
 from . import subscription_plan
 from . import tenant
 from . import gated_modules

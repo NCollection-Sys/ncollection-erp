@@ -51,4 +51,46 @@
 
     <menuitem id="menu_accounting_document_stamps" name="Document Stamps" parent="account.menu_finance_configuration"
               action="action_accounting_document_stamp" sequence="90" groups="account.group_account_manager"/>
+
+    <!-- Accounting > Configuration > Print Settings: the same Print Settings as Workspace Administration
+         (ncollection_branding), filtered to the accounting documents, plus their optional payment-status section. The
+         model decides who may change which document (document_type.py), not this menu. -->
+    <record id="view_document_type_print_settings_list_accounting" model="ir.ui.view">
+        <field name="name">ncollection.document.type.print.settings.list.accounting</field>
+        <field name="model">ncollection.document.type</field>
+        <field name="inherit_id" ref="ncollection_branding.view_document_type_print_settings_list"/>
+        <field name="arch" type="xml">
+            <field name="paperformat_id" position="after">
+                <field name="code" column_invisible="1"/>
+                <field name="nc_show_payment_status" widget="boolean_toggle"
+                       invisible="code not in ['customer_invoice', 'customer_credit_note', 'vendor_bill', 'vendor_credit_note']"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_document_type_print_settings_form_accounting" model="ir.ui.view">
+        <field name="name">ncollection.document.type.print.settings.form.accounting</field>
+        <field name="model">ncollection.document.type</field>
+        <field name="inherit_id" ref="ncollection_branding.view_document_type_print_settings_form"/>
+        <field name="arch" type="xml">
+            <field name="nc_show_payment_reference" position="after">
+                <field name="code" invisible="1"/>
+                <field name="nc_show_payment_status"
+                       invisible="code not in ['customer_invoice', 'customer_credit_note', 'vendor_bill', 'vendor_credit_note']"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="action_accounting_print_settings" model="ir.actions.act_window">
+        <field name="name">Print Settings</field>
+        <field name="res_model">ncollection.document.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('ncollection_branding.view_document_type_print_settings_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('ncollection_branding.view_document_type_print_settings_form')})]"/>
+        <field name="domain">[('code', 'in', ['customer_invoice', 'customer_credit_note', 'vendor_bill', 'vendor_credit_note', 'payment_receipt'])]</field>
+    </record>
+
+    <menuitem id="menu_accounting_print_settings" name="Print Settings" parent="account.menu_finance_configuration"
+              action="action_accounting_print_settings" sequence="91" groups="account.group_account_manager"/>
 </odoo>
