@@ -574,6 +574,12 @@ class ProvisioningJob(models.Model):
             'database_status': 'ready',
             'portal_url': tenant.portal_url or self._portal_url(db),
         })
+        # The first config push, now that the tenant is ready: it is the push whose response advertises the tenant's
+        # capabilities, after which the same sync job sends the platform's System Branding (system_branding_sync.py).
+        # Without it only a TRIAL tenant was synced here (through action_activate below); a tenant created active
+        # showed the shipped default branding until the nightly reconcile. Same queue and identity key as every other
+        # trigger, so the activation's enqueue below does not stack a second job.
+        tenant._config_sync_enqueue()
         # #476: the tenant's own database now holds the credential, so the
         # platform stops holding it. The window in which a usable tenant password
         # sits on the platform database is exactly the queue latency, not forever.
