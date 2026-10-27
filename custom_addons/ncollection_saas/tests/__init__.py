@@ -30,3 +30,4 @@ from . import test_release_compat
 from . import test_system_branding_sync
 from . import test_tenant_deletion
 from . import test_platform_workspace_admin
+from . import test_provisioning_first_sync
