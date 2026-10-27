@@ -15,3 +15,4 @@ from . import test_companion_modules
 from . import test_system_branding_staff
 from . import test_screen_titles
 from . import test_business_management
+from . import test_shipped_plans_fixture

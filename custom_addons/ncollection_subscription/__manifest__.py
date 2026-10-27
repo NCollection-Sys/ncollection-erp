@@ -31,6 +31,10 @@ SaaS management platform for NCollection ERP administrators:
         'views/menus.xml',
         'data/demo_data.xml',
     ],
+    # Sample tenants + subscriptions: demo databases only (installed WITHOUT demo by default in Odoo 19).
+    'demo': [
+        'demo/demo_tenants.xml',
+    ],
     'assets': {
         'web.assets_backend': [
             'ncollection_subscription/static/src/scss/dashboard.scss',
