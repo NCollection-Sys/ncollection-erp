@@ -107,6 +107,7 @@ USER_FIELDS = {'flag_' + name for name in FLAG_ORDER} | {
     'principal_id',
     'credit_reason',
     'payment_means_override',
+    'advance_move_ids',
 }
 # a manager's: they move the retention date of a record, so they are restricted and always logged
 RETENTION_FIELDS = {'retention_class', 'retention_anchor_date'}
@@ -230,6 +231,16 @@ class EInvoice(models.Model):
         lambda self: [(c, r.get('name', c)) for c, r in sorted(codelists.load('credit_reason').rows.items())]
     )
     payment_means_override = fields.Char(help="Overrides the payment-method map for this document (an official code).")
+    advance_move_ids = fields.Many2many(
+        'account.move',
+        'ncollection_einvoice_advance_rel',
+        'einvoice_id',
+        'move_id',
+        string='Advance invoices',
+        help="The tax invoices already issued for advance payments of this supply. The final invoice references them "
+        "(IBT-025 / IBT-026) and covers only the remaining balance (UAE Electronic Invoicing Guidelines V2.0 App 5 "
+        "§17.1).",
+    )
 
     # --- scope (lib/scope.py): is an e-invoice required at all? Decided by the engine at every preparation.
     excluded_transaction = fields.Selection(
@@ -494,6 +505,34 @@ class EInvoice(models.Model):
                 '%s / %s -> %s / %s' % (old + (record.retention_class, record.retention_anchor_date)),
             )
         return result
+
+    @api.constrains('advance_move_ids', 'move_id')
+    def _check_advance_invoices(self):
+        """Guidelines V2.0 App 5 §17.1: the advance was invoiced BEFORE the final invoice, to the same customer, as a
+        tax invoice. Anything else is refused at the ORM, whatever the client."""
+        for record in self:
+            move = record.move_id
+            for advance in record.advance_move_ids:
+                if move.move_type != 'out_invoice':
+                    raise ValidationError(self.env._("Only an invoice can reference advance invoices."))
+                if advance == move:
+                    raise ValidationError(self.env._("An invoice cannot reference itself as its advance."))
+                if (
+                    advance.move_type != 'out_invoice'
+                    or advance.state != 'posted'
+                    or advance.company_id != move.company_id
+                    or advance.commercial_partner_id != move.commercial_partner_id
+                ):
+                    raise ValidationError(
+                        self.env._(
+                            "%s is not a posted customer invoice of the same company and customer.",
+                            advance.display_name,
+                        )
+                    )
+                if advance.invoice_date and move.invoice_date and advance.invoice_date > move.invoice_date:
+                    raise ValidationError(
+                        self.env._("The advance invoice %s is dated after this invoice.", advance.display_name)
+                    )
 
     @api.constrains('company_id', 'move_id')
     def _check_company_is_the_documents(self):

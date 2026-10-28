@@ -23,6 +23,7 @@ from odoo.exceptions import UserError
 from ..lib import (
     adjustments,
     business_days,
+    doctype,
     emirates,
     identity,
     payment_means,
@@ -504,11 +505,7 @@ class EInvoicePrepare(models.Model):
             )
             booked[(category, rate)] = booked.get((category, rate), ZERO) + abs(_d(tax_line.amount_currency))
         categories = {item['category'] for item in items} | {a['category'] for a in adjs}
-        only_exempt = bool(categories) and categories <= {'E', 'O'}
-        if is_credit:
-            type_code = profile.credit_type_out_of_scope if only_exempt else profile.credit_type_tax
-        else:
-            type_code = profile.invoice_type_out_of_scope if only_exempt else profile.invoice_type_tax
+        type_code = doctype.type_code('credit_note' if is_credit else 'invoice', categories, profile)
 
         # --- parties
         seller = self._nc_party(company.partner_id, seller=True, flags=flags, found=found)
@@ -557,6 +554,12 @@ class EInvoicePrepare(models.Model):
             else None
         )
         preceding = []
+        if not is_credit and self.advance_move_ids:
+            # Guidelines V2.0 App 5 §17.1: the final invoice references the advance invoice(s) in IBT-025 / IBT-026
+            preceding = [
+                {'number': adv.name, 'date': adv.invoice_date.isoformat() if adv.invoice_date else None}
+                for adv in self.advance_move_ids.sorted(lambda m: (m.invoice_date or fields.Date.today(), m.name))
+            ]
         if is_credit and move.reversed_entry_id:
             preceding = [
                 {
@@ -568,6 +571,23 @@ class EInvoicePrepare(models.Model):
                     ),
                 }
             ]
+        # deliver-to address (IBG-13): emitted for an export, where fatal rule ibr-152-ae requires it unless the
+        # delivery is to the UAE. Odoo's own delivery address of the document; never invented.
+        delivery = None
+        shipping = move.partner_shipping_id if 'partner_shipping_id' in move._fields else False
+        if flags.get('export') and shipping:
+            ship_country = shipping.country_id.code or ''
+            ship_state = shipping.state_id.code if shipping.state_id else None
+            delivery = {
+                'street': shipping.street or None,
+                'city': shipping.city or None,
+                'subdivision': (
+                    emirates.pint_subdivision(ship_state)
+                    if ship_country == 'AE'
+                    else (shipping.state_id.name if shipping.state_id else None)
+                ),
+                'country': ship_country or None,
+            }
         totals = {
             'untaxed': r2(_d(move.amount_untaxed)),
             'tax': r2(_d(move.amount_tax)),
@@ -596,6 +616,7 @@ class EInvoicePrepare(models.Model):
             'seller': seller,
             'buyer': buyer,
             'buyer_endpoint_source': buyer.get('endpoint_source'),
+            'delivery': delivery,
             'payment': (
                 None
                 if resolution.omitted
@@ -631,6 +652,7 @@ class EInvoicePrepare(models.Model):
                 'principal_id': payload['principal_id'],
                 'period_start': payload['period_start'],
                 'period_end': payload['period_end'],
+                'delivery': delivery,
             },
             'seller': seller['_ready'],
             'buyer': buyer['_ready'],

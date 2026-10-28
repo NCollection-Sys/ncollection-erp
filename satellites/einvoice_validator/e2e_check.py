@@ -14,6 +14,7 @@ what it must (DOCTYPE/entity, wrong release) and a tampered rule set stops it.
 Exit status 0 only if every expectation holds."""
 
 import base64
+import copy
 import glob
 import hashlib
 import http.client
@@ -144,11 +145,44 @@ def main():
     cases['zero-rated'] = payloads.standard_payload(
         lines=[payloads._line(1, 1, '100.00', rate='0', category='Z')], odoo_totals=None
     )
-    cases['exempt only (out-of-scope 480)'] = payloads.standard_payload(
+    # DECISION 2026-10-28 / OCQ-20: an exempt-only document is 480, because fatal ibr-151-ae refuses it as a 380 (the
+    # matching negative control is below); Guidelines V2.0 App 6 §18.3.1 disagrees and the conflict stays open
+    cases['exempt only is 480 (fatal ibr-151-ae; OCQ-20)'] = payloads.standard_payload(
         type_code='480',
         lines=[payloads._line(1, 1, '100.00', category='E', exemption_code='DL8.46.1')],
         odoo_totals=None,
     )
+    # Guidelines V2.0 App 6 §18.3.1: zero-rated supplies are not 480; a 'Z' line satisfies ibr-151-ae
+    cases['exempt + zero-rated is 380 (App 6 §18.3.1, ibr-151-ae)'] = payloads.standard_payload(
+        lines=[
+            payloads._line(1, 1, '100.00', rate='0', category='Z'),
+            payloads._line(2, 1, '40.00', category='E', exemption_code='DL8.46.1'),
+        ],
+        odoo_totals=None,
+    )
+    # an out-of-scope credit note (81): buyer legal registration present (ibr-136-ae), reason and original invoice
+    cn_lines = [payloads._line(1, 1, '100.00', category='O', item_type='S', hs=None, sac='998311')]
+    cases['out-of-scope credit note 81 (ibr-122-ae, ibr-136-ae)'] = payloads.credit_note_payload(
+        type_code='81', lines=cn_lines, odoo_totals=None
+    )
+    # Guidelines V2.0 App 5 §17.1: the final invoice references the advance invoice in IBT-025 / IBT-026
+    cases['final 380 referencing its advance invoice (App 5 §17.1)'] = payloads.standard_payload(
+        preceding=[{'number': 'ADV-001', 'date': '2026-09-01'}]
+    )
+    # export (XXXXXXX1) to a buyer not on Peppol: predefined endpoint 9900000099 and the deliver-to address
+    # (ibr-152-ae)
+    export = payloads.standard_payload(
+        flags={'export': True},
+        transaction_type_code='00000001',
+        lines=[payloads._line(1, 1, '100.00', rate='0', category='Z')],
+        odoo_totals=None,
+        delivery={'street': 'Gulf Road', 'city': 'Kuwait City', 'subdivision': 'Al Asimah', 'country': 'KW'},
+    )
+    export['buyer'].update(
+        endpoint_id='9900000099', tin=None, trn=None, legal_id=None, legal_type=None, legal_authority=None,
+        street='Gulf Road', city='Kuwait City', subdivision='Al Asimah', country='KW',
+    )
+    cases['export with deliver-to address (ibr-152-ae)'] = export
     cases['mixed S + Z + E'] = payloads.standard_payload(
         lines=[
             payloads._line(1, 1, '100.00'),
@@ -200,6 +234,13 @@ def main():
             'ibr-co-16',
         ),
     }
+    exempt_380 = payloads.standard_payload(
+        lines=[payloads._line(1, 1, '100.00', category='E', exemption_code='DL8.46.1')], odoo_totals=None
+    )
+    controls['exempt-only document typed 380'] = (build(exempt_380).decode('utf-8'), 'ibr-151-ae')
+    no_delivery = copy.deepcopy(export)
+    no_delivery['delivery'] = None
+    controls['export without deliver-to address'] = (build(no_delivery).decode('utf-8'), 'ibr-152-ae')
     for label, (xml, rule) in controls.items():
         outcome = client.validate(xml.encode('utf-8'), 'invoice', profile)
         rules = {f.rule for f in outcome.failures}

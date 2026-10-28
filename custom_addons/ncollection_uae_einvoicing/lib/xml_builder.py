@@ -9,7 +9,8 @@ Schematron expects; the Schematron (lib/validator.py) remains the judge.
 ``payload`` keys used: ``kind`` (invoice|credit_note), ``type_code``, ``number``, ``uuid``, ``issue_date``,
 ``issue_time``, ``due_date``, ``vat_point_date``, ``note``, ``currency``, ``exchange_rate``, ``transaction_type_code``,
 ``credit_reason``, ``preceding`` ([{number, date}]), ``billing_frequency``, ``period_start``, ``period_end``,
-``beneficiary_id``, ``principal_id``, ``seller``/``buyer`` (party dicts), ``payment`` ({means_code, account_id,
+``beneficiary_id``, ``principal_id``, ``delivery`` ({street, city, subdivision, country}), ``seller``/``buyer`` (party
+dicts), ``payment`` ({means_code, account_id,
 terms_note}), ``lines``, ``adjustments``, ``figures`` (reconcile output), ``aed`` ({tax_total, total_incl} for non-AED
 documents).
 """
@@ -106,6 +107,18 @@ def build(payload, profile=None):
     if payload.get('principal_id'):
         principal = _add(_add(root, 'cac:SellerSupplierParty'), 'cac:Party')
         _add(_add(principal, 'cac:PartyIdentification'), 'cbc:ID', payload['principal_id'])
+    delivery = payload.get('delivery')
+    if delivery:
+        # IBG-13 deliver-to address, as in the official export sample (required for an export by ibr-152-ae)
+        address = _add(_add(_add(root, 'cac:Delivery'), 'cac:DeliveryLocation'), 'cac:Address')
+        if delivery.get('street'):
+            _add(address, 'cbc:StreetName', delivery['street'])
+        if delivery.get('city'):
+            _add(address, 'cbc:CityName', delivery['city'])
+        if delivery.get('subdivision'):
+            _add(address, 'cbc:CountrySubentity', delivery['subdivision'])
+        if delivery.get('country'):
+            _add(_add(address, 'cac:Country'), 'cbc:IdentificationCode', delivery['country'])
 
     payment = payload.get('payment') or {}
     if payment.get('means_code'):

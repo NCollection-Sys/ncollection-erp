@@ -156,6 +156,19 @@ def _document(doc, flags, categories, profile, found):
         found.append(_issues.make('OFFICIAL:ibr-138-ae', 'document', "A summary invoice needs its invoicing period."))
     if doc.get('billing_frequency') and doc['billing_frequency'] not in codelists.codes('billing_frequency', profile):
         found.append(_issues.make('OFFICIAL:ibr-005-ae', 'document', "Billing frequency is not in the official list."))
+    if flags.get('export'):
+        delivery = doc.get('delivery') or {}
+        to_uae = (delivery.get('country') or '').upper() == 'AE'
+        complete = delivery.get('street') and delivery.get('city') and delivery.get('subdivision')
+        if not delivery or not (to_uae or complete):
+            found.append(
+                _issues.make(
+                    'OFFICIAL:ibr-152-ae',
+                    'document',
+                    "An export needs the deliver-to address (street, city and region) unless the goods are delivered "
+                    "in the UAE: set the document's delivery address.",
+                )
+            )
     if flags.get('margin_scheme') and categories - {'N'}:
         found.append(
             _issues.make(
