@@ -218,7 +218,9 @@ class TestScopeOnRealDocuments(EInvoiceCase):
         record.with_user(self.manager).write({'excluded_transaction': 'airline_passenger'})
         self.assertEqual(record.local_state, 'draft')
         record.action_prepare()
-        self.assertEqual((record.local_state, record.scope_reason_code), ('not_required', 'airline-passenger-e-ticket'))
+        self.assertEqual(
+            (record.local_state, record.scope_reason_code), ('not_required', 'airline-passenger-e-ticket')
+        )
 
     def test_a_refused_declaration_blocks_the_document(self):
         record = self._einvoice()

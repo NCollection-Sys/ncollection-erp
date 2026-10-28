@@ -3,16 +3,16 @@
 
 Every outcome names its official source (``lib/sources.py``). The rules, in the order they are applied:
 
-1. **B2C** (Guidelines V2.0 §6.2): supplies to natural persons who are not in Business are outside the scope. The buyer's
-   party type is master data the accountant declares (``res.partner.nc_einvoice_party_type``); a person who is not a
-   company is NEVER assumed to be a consumer (a sole trader is in Business).
-2. **Tax Group** (MD 243 Art 4(1)(f) as inserted by MD 197 Art 2): transactions between members of the same Tax Group are
-   Excluded Transactions for 24 months starting 1 January 2027, i.e. a transaction dated 2027-01-01 through 2028-12-31.
-   Both parties must carry the SAME Tax Group TRN. Guidelines V2.0 §6.3.2.1 calls the same window a grace period that
-   changes timing only (OCQ-22): either way no e-invoice is required inside it, and one is required on either side of
-   it.
-3. **A declared exclusion** (MD 243 Art 4(1)(a)–(e)), chosen per document by an e-invoicing manager and verified here as
-   far as data allows:
+1. **B2C** (Guidelines V2.0 §6.2): supplies to natural persons who are not in Business are outside the scope. The
+   buyer's party type is master data the accountant declares (``res.partner.nc_einvoice_party_type``); a person who
+   is not a company is NEVER assumed to be a consumer (a sole trader is in Business).
+2. **Tax Group** (MD 243 Art 4(1)(f) as inserted by MD 197 Art 2): transactions between members of the same Tax Group
+   are Excluded Transactions for 24 months starting 1 January 2027, i.e. a transaction dated 2027-01-01 through
+   2028-12-31. Both parties must carry the SAME Tax Group TRN. Guidelines V2.0 §6.3.2.1 calls the same window a grace
+   period that changes timing only (OCQ-22): either way no e-invoice is required inside it, and one is required on
+   either side of it.
+3. **A declared exclusion** (MD 243 Art 4(1)(a)–(e)), chosen per document by an e-invoicing manager and verified here
+   as far as data allows:
 
    * ``sovereign`` (a): the SELLER must be a Government Entity (its partner's party type is ``government``).
    * ``airline_passenger`` (b) / ``airline_ancillary`` (c): accepted as declared (the electronic ticket / EMD is the
@@ -188,6 +188,7 @@ def classify(
         'airline_passenger': "International passenger transport by an airline with an electronic ticket.",
         'airline_ancillary': "An airline's ancillary passenger service with an Electronic Miscellaneous Document.",
         'airline_cargo': "International goods transport by an airline with an air waybill, inside the 24 months.",
-        'financial_services': "Financial services that are exempt or zero-rated under VAT Executive Regulation Art 42.",
+        'financial_services': "Financial services that are exempt or zero-rated under VAT Executive Regulation "
+        "Art 42.",
     }
     return Scope(NOT_REQUIRED, code, reasons[declared_exclusion], source, window), found

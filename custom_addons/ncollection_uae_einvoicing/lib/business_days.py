@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Business-day arithmetic for the issuance deadline (pure: dates in, dates out; no time zones inside).
 
-MD 243/2025 Art 6(5) as replaced by MD 197/2026 Art 2: an Electronic Invoice or Electronic Credit Note must be issued and
-transmitted "within fourteen (14) Business Days from the Date of Business Transaction". MD 243 Art 1 defines a Business
-Day as any day of the week except weekends and official holidays of the Federal Government.
+MD 243/2025 Art 6(5) as replaced by MD 197/2026 Art 2: an Electronic Invoice or Electronic Credit Note must be issued
+and transmitted "within fourteen (14) Business Days from the Date of Business Transaction". MD 243 Art 1 defines a
+Business Day as any day of the week except weekends and official holidays of the Federal Government.
 
 * The weekend is Saturday and Sunday (the UAE Federal Government working week since 1 January 2022); it is a parameter
   here, not a hidden constant, so a future change is configuration.

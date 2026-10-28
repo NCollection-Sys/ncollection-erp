@@ -74,8 +74,8 @@ class ResPartner(models.Model):
             ('consumer', 'Natural person not in business'),
         ],
         string='E-invoicing party type', default='business', required=True, copy=False, tracking=True,
-        help="Business and Government Entity transactions are in the scope of UAE e-invoicing; a natural person who is "
-             "not in business is not (UAE Electronic Invoicing Guidelines V2.0 §6.2).")
+        help="Business and Government Entity transactions are in the scope of UAE e-invoicing; a natural person "
+             "who is not in business is not (UAE Electronic Invoicing Guidelines V2.0 §6.2).")
     # MD 243/2025 Art 4(1)(f) as inserted by MD 197/2026: transactions between members of the same Tax Group are
     # excluded from 2027-01-01 through 2028-12-31. The group is identified by its own TRN, explicitly maintained.
     nc_vat_group_trn = fields.Char(
