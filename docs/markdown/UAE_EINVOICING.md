@@ -264,6 +264,14 @@ docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges --ne
 The Odoo container needs `NC_EINVOICE_VALIDATOR_URL` and the same `NC_EINVOICE_VALIDATOR_TOKEN` in its environment (never in a database).
 With either missing, every validation is "unavailable" and no document can become `validated` — by design.
 
+**Development and CI (no production change).** `make einvoice-e2e` runs the whole official path from a clean checkout with no
+stack and no database (official samples, engine-built documents, negative controls, worker security checks, and with
+`EINVOICE_FIXTURES=<dir>` the XML exported from real posted invoices). `make einvoice-validator-up` starts the worker beside
+the dev Odoo through `docker-compose.einvoice.yml`: an `internal: true` network (no gateway, no egress), no published port,
+read-only root filesystem, all capabilities dropped, `no-new-privileges`, 512 MB / 1 CPU, rules mounted read-only, token from
+`.env` (`NC_EINVOICE_VALIDATOR_TOKEN`; the overlay refuses to start without it). No production compose file layers it, and
+deploying the validator to production is a separate decision.
+
 ## 8. Credentials
 
 No reversible secret store existed (inbound keys are hash-only). The engine reuses the repository's pattern — a master key from the

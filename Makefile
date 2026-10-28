@@ -77,7 +77,8 @@ OCA_VENV := .oca-venv
         upgrade-verify upgrade-clean upgrade-rehearse upgrade-preflight edge-verify \
         release-status upgrade-platform-verify \
         ai-up ai-down ai-logs ai-test ai-verify ai-context-sample \
-        demo-tenant demo-clean staging-config staging-build go-live-check stack-settled
+        demo-tenant demo-clean staging-config staging-build go-live-check stack-settled \
+        einvoice-e2e einvoice-validator-up einvoice-validator-down
 
 # `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
 # MAKEFILE_LIST, and grep prefixes every match with `filename:` once it is given
@@ -179,6 +180,26 @@ upgrade: ## Upgrade a module after editing it:  make upgrade m=<module> [db=...]
 	@test -n "$(m)" || (echo "Usage: make upgrade m=<module> [db=$(db)]"; exit 1)
 	$(COMPOSE) exec odoo odoo -d $(db) -u $(m) --stop-after-init $(ODOO_DB_ARGS)
 	$(COMPOSE) restart odoo
+
+## ---- UAE e-invoicing official validator (dev / CI) ----
+# The official PINT-AE rules (pinned, unmodified) run in satellites/einvoice_validator, never in the Odoo image.
+# einvoice-e2e needs no stack and no database: it runs the official samples, the engine-built documents, the
+# negative controls, the worker's security checks and, with EINVOICE_FIXTURES=<dir>, the XML the Odoo suite exported
+# from REAL posted invoices (tests/test_real_move_crosscheck.py writes them when NC_EINVOICE_EXPORT_DIR is set).
+EINVOICE_PY_IMAGE ?= python:3.12-slim
+einvoice-e2e: ## Official PINT-AE rules end to end, no stack:  make einvoice-e2e [EINVOICE_FIXTURES=<dir>]
+	docker run --rm \
+	  -v "$(CURDIR)/custom_addons/ncollection_uae_einvoicing:/addon:ro" \
+	  -v "$(CURDIR)/satellites/einvoice_validator:/sat:ro" \
+	  $(if $(EINVOICE_FIXTURES),-v "$(abspath $(EINVOICE_FIXTURES)):/fixtures:ro" -e NC_EINVOICE_FIXTURES=/fixtures,) \
+	  $(EINVOICE_PY_IMAGE) sh -c "pip install -q --root-user-action=ignore saxonche==13.1.0 lxml \
+	    && cd /tmp && python /sat/e2e_check.py && python /sat/test_worker.py"
+
+einvoice-validator-up: ## Start the validator beside the dev Odoo (internal network, no port; needs NC_EINVOICE_VALIDATOR_TOKEN)
+	$(COMPOSE) -f docker-compose.einvoice.yml up -d --build einvoice-validator odoo
+
+einvoice-validator-down: ## Stop the dev validator (the dev Odoo keeps running without it)
+	$(COMPOSE) -f docker-compose.einvoice.yml stop einvoice-validator
 
 ## ---- Tests ----
 # The local counterpart to CI's `test` job (#365). Until this target existed the

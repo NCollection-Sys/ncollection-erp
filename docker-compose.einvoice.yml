@@ -1,0 +1,49 @@
+# ============================================================================
+#  UAE e-invoicing official validator — DEVELOPMENT / CI OVERLAY ONLY
+# ============================================================================
+#  Runs satellites/einvoice_validator (SaxonC-HE + the pinned, unmodified PINT-AE rules) beside the dev Odoo, on an
+#  INTERNAL network with NO published port, so the engine's "Validate" step can reach a real official validator.
+#
+#    docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.einvoice.yml \
+#        up -d einvoice-validator odoo
+#
+#  Never layered on production: production compose files do not include it, and the validator is not deployed
+#  there (a production deployment is a separate, approved decision). The token is a development secret from .env
+#  (NC_EINVOICE_VALIDATOR_TOKEN, at least 32 characters, never committed); without it this overlay refuses to start.
+#
+#  Hardening mirrors docs/markdown/UAE_EINVOICING.md §7: read-only root filesystem, no capabilities,
+#  no-new-privileges, CPU / memory limits (a transform cannot be interrupted in-process), rules mounted read-only.
+# ============================================================================
+
+services:
+  einvoice-validator:
+    build: ./satellites/einvoice_validator
+    image: nc-einvoice-validator:dev
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1.0
+    environment:
+      NC_EINVOICE_SPEC_VERSION: "1.0.4"
+      NC_EINVOICE_VALIDATOR_TOKEN: ${NC_EINVOICE_VALIDATOR_TOKEN:?set NC_EINVOICE_VALIDATOR_TOKEN (32+ chars) in .env}
+    volumes:
+      - ./custom_addons/ncollection_uae_einvoicing/resources/pint_ae/1.0.4:/rules:ro
+    networks:
+      - nc_einvoice
+
+  odoo:
+    environment:
+      NC_EINVOICE_VALIDATOR_URL: http://einvoice-validator:8090
+      NC_EINVOICE_VALIDATOR_TOKEN: ${NC_EINVOICE_VALIDATOR_TOKEN:?set NC_EINVOICE_VALIDATOR_TOKEN (32+ chars) in .env}
+    networks:
+      - default
+      - nc_dbplane
+      - nc_einvoice
+
+networks:
+  # internal: Docker gives it no gateway, so the validator can reach nothing and nothing outside can reach it
+  nc_einvoice:
+    internal: true
