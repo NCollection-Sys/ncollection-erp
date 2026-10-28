@@ -114,6 +114,7 @@ RETENTION_FIELDS = {'retention_class', 'retention_anchor_date'}
 EXCLUSION_FIELDS = {'excluded_transaction'}
 MANAGER_FIELDS = RETENTION_FIELDS | EXCLUSION_FIELDS
 MANAGER_GROUP = 'ncollection_uae_einvoicing.group_einvoice_manager'
+UAE_TZ = 'Asia/Dubai'
 LICENCE_MODULE = 'ncollection_uae_einvoicing'
 
 # fields that describe the document and its identity: frozen once the document is locked
@@ -154,6 +155,8 @@ LOCKED_FIELDS = (
         'scope_source',
         'scope_window',
         'transaction_date',
+        'issue_deadline',
+        'vat_issue_deadline',
     }
     | {'flag_' + name for name in FLAG_ORDER}
 )
@@ -253,6 +256,27 @@ class EInvoice(models.Model):
     scope_reason = fields.Char(readonly=True, copy=False)
     scope_source = fields.Char(string='Scope source', readonly=True, copy=False)
     scope_window = fields.Char(readonly=True, copy=False, help="The dated window the decision rests on, if any.")
+
+    # --- issuance deadline (lib/business_days.py). Shown and listed; it does not change submission behaviour.
+    issue_deadline = fields.Date(
+        string='Issue deadline',
+        readonly=True,
+        copy=False,
+        help="14 Business Days after the date of the business transaction (MD 243/2025 Art 6(5) as replaced by MD "
+        "197/2026), counting the configured official holidays.",
+    )
+    vat_issue_deadline = fields.Date(
+        string='VAT Law deadline',
+        readonly=True,
+        copy=False,
+        help="The separate VAT-Law timeline for a Registrant (MD 243/2025 Art 6(4)); computed only when the period is "
+        "configured (OCQ-23).",
+    )
+    is_overdue = fields.Boolean(
+        compute='_compute_is_overdue',
+        search='_search_is_overdue',
+        help="The issue deadline has passed (in the UAE time zone) and the e-invoice has not been submitted.",
+    )
     payment_means_code = fields.Char(readonly=True)
     vat_point_date = fields.Date(readonly=True)
 
@@ -325,6 +349,33 @@ class EInvoice(models.Model):
                 record.headline = labels[record.local_state]
             else:
                 record.headline = dict(SUBMISSION_STATES)[record.submission_state]
+
+    def _nc_today(self):
+        """Today in the UAE (Asia/Dubai), whatever the server's or the user's time zone."""
+        return fields.Date.context_today(self.with_context(tz=UAE_TZ))
+
+    @api.depends('issue_deadline', 'submission_state', 'local_state')
+    def _compute_is_overdue(self):
+        today = self._nc_today()
+        for record in self:
+            record.is_overdue = bool(
+                record.issue_deadline
+                and record.issue_deadline < today
+                and record.submission_state == 'not_submitted'
+                and record.local_state != 'not_required'
+            )
+
+    def _search_is_overdue(self, operator, value):
+        if operator not in ('=', '!=') or not isinstance(value, bool):
+            raise UserError(self.env._("Unsupported search on overdue."))
+        overdue = [
+            ('issue_deadline', '<', self._nc_today()),
+            ('submission_state', '=', 'not_submitted'),
+            ('local_state', '!=', 'not_required'),
+        ]
+        if (operator == '=') == value:
+            return overdue
+        return ['!', '&', '&'] + overdue
 
     @api.depends('retention_class', 'retention_anchor_date', 'company_id')
     def _compute_retain_until(self):

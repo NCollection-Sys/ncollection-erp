@@ -28,3 +28,5 @@ access_nc_einv_tax_map_service,ncollection.einvoice.tax.map.service,model_ncolle
 access_nc_einv_payment_map_service,ncollection.einvoice.payment.map.service,model_ncollection_einvoice_payment_map,group_einvoice_service,1,0,0,0
 access_nc_einv_retention_service,ncollection.einvoice.retention.rule.service,model_ncollection_einvoice_retention_rule,group_einvoice_service,1,0,0,0
 access_nc_einv_hold_service,ncollection.einvoice.hold.service,model_ncollection_einvoice_hold,group_einvoice_service,1,0,0,0
+access_nc_einv_holiday_user,ncollection.einvoice.holiday.user,model_ncollection_einvoice_holiday,group_einvoice_user,1,0,0,0
+access_nc_einv_holiday_manager,ncollection.einvoice.holiday.manager,model_ncollection_einvoice_holiday,group_einvoice_manager,1,1,1,1

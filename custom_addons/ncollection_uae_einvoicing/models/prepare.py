@@ -20,7 +20,19 @@ from decimal import Decimal
 from odoo import fields, models
 from odoo.exceptions import UserError
 
-from ..lib import adjustments, emirates, identity, payment_means, readiness, reconcile, scope, spec, units, validator
+from ..lib import (
+    adjustments,
+    business_days,
+    emirates,
+    identity,
+    payment_means,
+    readiness,
+    reconcile,
+    scope,
+    spec,
+    units,
+    validator,
+)
 from ..lib import issues as _issues
 from ..lib.money import ZERO, dec, r2
 from ..lib.xml_builder import build
@@ -309,9 +321,19 @@ class EInvoicePrepare(models.Model):
             categories=categories,
             effective_date=config.effective_date or None,
         )
+        required = decided.state != scope.NOT_REQUIRED
+        holidays = self.env['ncollection.einvoice.holiday']._nc_dates(company)
+        deadline = business_days.issuance_deadline(transaction_date, holidays) if required else None
+        vat_deadline = (
+            fields.Date.add(transaction_date, days=config.vat_issue_days)
+            if required and transaction_date and config.vat_issue_days
+            else None
+        )
         self.sudo().write(
             {
                 'transaction_date': transaction_date,
+                'issue_deadline': deadline or False,
+                'vat_issue_deadline': vat_deadline or False,
                 'scope_state': decided.state,
                 'scope_reason_code': decided.reason_code or False,
                 'scope_reason': decided.reason or False,

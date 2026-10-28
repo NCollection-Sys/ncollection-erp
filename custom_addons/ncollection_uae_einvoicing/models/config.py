@@ -62,6 +62,18 @@ class EInvoiceConfig(models.Model):
         "date under MD 244/2025 as amended by MR 66/2026, or its voluntary start). Used only by the 24-month airline "
         "air-waybill exclusion of MD 243/2025 Art 4(1)(d); never assumed when empty.",
     )
+    vat_issue_days = fields.Integer(
+        string='VAT Law issuance period (days)',
+        help="MD 243/2025 Art 6(4): a Registrant issues within the timeline of the VAT Law. That period has not been "
+        "confirmed from the VAT Decree-Law by this project (OCQ-23), so it is configuration: empty means the VAT-Law "
+        "deadline is not computed. The 14-Business-Day deadline of Art 6(5) is computed regardless.",
+    )
+
+    @api.constrains('vat_issue_days')
+    def _check_vat_issue_days(self):
+        for config in self:
+            if config.vat_issue_days < 0:
+                raise ValidationError(self.env._("The VAT Law issuance period cannot be negative."))
 
     @api.constrains('default_bank_account_id', 'company_id')
     def _check_bank_account_is_the_companys(self):
@@ -77,6 +89,31 @@ class EInvoiceConfig(models.Model):
     def _compute_spec_version(self):
         for config in self:
             config.spec_version = spec.get_profile().key
+
+
+class EInvoiceHoliday(models.Model):
+    """An official holiday of the Federal Government: not a Business Day (MD 243/2025 Art 1, "Business Day").
+
+    Holidays are announced every year and several follow the lunar calendar, so they are data, maintained by an
+    e-invoicing manager, never a list in code. A company-less row applies to every company of the workspace."""
+
+    _name = 'ncollection.einvoice.holiday'
+    _description = 'UAE official holiday (e-invoicing business days)'
+    _order = 'date'
+
+    date = fields.Date(required=True, index=True)
+    name = fields.Char(required=True)
+    company_id = fields.Many2one(
+        'res.company', index=True, ondelete='cascade', help="Empty: the holiday applies to every company."
+    )
+
+    _date_company_unique = models.Constraint('unique(date, company_id)', 'This holiday is already in the calendar.')
+
+    @api.model
+    def _nc_dates(self, company):
+        """The holiday dates that apply to ``company``."""
+        rows = self.sudo().search(['|', ('company_id', '=', False), ('company_id', '=', company.id)])
+        return frozenset(rows.mapped('date'))
 
 
 class EInvoiceProvider(models.Model):
