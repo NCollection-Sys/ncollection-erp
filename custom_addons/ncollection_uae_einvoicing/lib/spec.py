@@ -99,6 +99,30 @@ PROFILES = {
 }
 
 
+# The companion Peppol specifications of the same UAE release family. Recorded here (the only place release strings may
+# live) so documentation and future phases cite exact versions; nothing in this phase builds these documents.
+#   * Self-billing uses its own type-code lists: 389 / 480 (invoice) and 261 / 81 (credit note); same data model as
+#     Billing (docs.peppol.eu/poac/ae/upcoming/pint-ae-sb/, code lists UNCL1001-inv / UNCL1001-cn).
+#   * The UAE Tax Data Document is reported to the tax authority by the issuer's and the receiver's side; under the
+#     five-corner model that is the ASPs (Guidelines V2.0 §5.1 steps 4 and 7), never this engine (Corner 1).
+COMPANION_SPECS = {
+    'pint-ae-sb': {
+        'title': 'PINT AE Self-Billing',
+        'version': '1.0.4',
+        'url': 'https://docs.peppol.eu/poac/ae/upcoming/pint-ae-sb/',
+        'invoice_type_codes': ('389', '480'),
+        'credit_type_codes': ('261', '81'),
+    },
+    'ae-tdd': {
+        'title': 'UAE Tax Data Document',
+        'version': '1.0.4',
+        'release_date': '2026-07-29',
+        'status': 'Final',
+        'url': 'https://docs.peppol.eu/poac/ae/upcoming/ae-tdd/release-notes/',
+    },
+}
+
+
 def get_profile(key=None):
     """The profile for ``key`` (default: the active one). Unknown key ⇒ KeyError, never a silent fallback."""
     return PROFILES[key or ACTIVE_PROFILE_KEY]

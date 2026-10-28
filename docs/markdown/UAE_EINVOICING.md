@@ -5,16 +5,67 @@ Module `ncollection_uae_einvoicing` (engine), master data in `ncollection_accoun
 is what the code now does and why. Status of every compliance claim is stated: **FACT** (verified in a cited source or by a test),
 **DECISION** (taken by the project owner), **OPEN COMPLIANCE QUESTION (OCQ)** (not conclusively established, not guessed).
 
+## 0. Regulatory baseline (re-baselined 2026-10-28)
+
+The Ministry of Finance eInvoicing page (https://mof.gov.ae/en/about-us/initiatives/einvoicing/) is the primary source. Every entry
+below was read from the published PDF; the registry in code is `lib/sources.py` (MoF instruments) and `lib/spec.py` (Peppol
+specifications). **Superseded and no longer cited as current:** Guidelines V1.1 (1 Jun 2026) and Mandatory Fields V1.0 (23 Feb 2026).
+
+| Source | Version / date | What it fixes for this engine |
+|---|---|---|
+| UAE Electronic Invoicing Guidelines | **V2.0**, Oct 2026 | the five-corner model (§5.1), scope (§6), exclusions (§7), phases (§8), document categories / scenarios / tax categories (§10), storage (§5.4, App 4), advances and retention (App 5), identification and classification (App 6) |
+| UAE Electronic Invoice Mandatory Fields | **V1.1**, 28 Oct 2026 | 51 fields for an electronic tax invoice (§4.1), 49 for a commercial electronic invoice (§4.2) |
+| Ministerial Decision 243/2025, as amended by **MD 197/2026** | MD 197 in force 1 Oct 2026 | exclusions (Art 4), credit-note cases (Art 6(2)), issuance deadline (Art 6(4)–(5)), agent (Art 8), self-billing (Art 9), retention (Art 11); Art 12 repealed |
+| Ministerial Decision 244/2025, as amended by **MR 66/2026** | MR 66 published May 2026 | phased implementation dates |
+| Ministerial Decision 168/2026 | in force 1 Oct 2026 | ASP accreditation (replaces MD 64/2025 and MR 56/2026); no engine behaviour depends on it |
+| Cabinet Decision 106/2025 | final version, 8 Dec 2025 | violations and administrative penalties |
+| PINT AE Billing | **1.0.4**, 2026-06-02, Final (PDK 1.4.4) | the vendored, unmodified rule set (§2) |
+| PINT AE Self-Billing | **1.0.4** | same data model; its own type codes 389 / 480 and 261 / 81 (`spec.COMPANION_SPECS`) |
+| UAE Tax Data Document | **1.0.4**, 2026-07-29, Final | reported by the ASPs (Corners 2 and 3), not by this engine |
+
+**Current effective requirements** (each is the source's own wording, summarised):
+
+* **Six document categories** (Guidelines V2.0 §10.1): electronic Tax Invoice, electronic Tax Credit Note, Commercial Invoice,
+  Electronic Credit Note, self-billed electronic Tax Invoice, self-billed electronic Tax Credit Note. There is no self-billing of
+  commercial invoices (§10.3) and no "provisional invoice" category (§10.1).
+* **Eight combinable scenarios** (Guidelines V2.0 §10.4; Mandatory Fields V1.1 field 5, the BTAE-02 flags in this order): free zone,
+  deemed supply, margin scheme, summary invoice, continuous supply, disclosed agent billing, e-commerce, export. Several may apply
+  to one document (§10.4, p. 31).
+* **Tax categories** (Guidelines V2.0 §10.5): standard rate, exempt, outside the scope, reverse charge, zero rated, margin scheme.
+  **Domestic reverse charge** (§10.5.1) applies only between two VAT registrants, for electronic devices, precious metals and stones,
+  crude or refined oil, natural gas, pure hydrocarbons and **metal scrap**; the invoice carries no VAT, a **narrative** of the
+  reverse-charge reason, and the goods type. Imports of concerned goods/services carry no e-invoicing requirement.
+* **Scope** (Guidelines V2.0 §6.1–6.2): every Business Transaction of a Person in business (B2B, B2G, G2B, G2G); supplies to or from
+  natural persons who are not in business are outside the scope.
+* **Exclusions** (MD 243 Art 4 as amended by MD 197 Art 2): sovereign Government transactions not in competition with the private
+  sector; airline passenger transport with an electronic ticket and its ancillary services with an EMD; airline cargo with an air
+  waybill for 24 months from the date the e-invoicing system becomes effective; financial services exempt or zero-rated under
+  Art 42 of the VAT Executive Regulation; **transactions between members of the same Tax Group for 24 months from 1 January 2027
+  (through 31 December 2028)**. Guidelines V2.0 §6.3.2.1 describes the Tax Group window as a grace period that changes the timing
+  only; the Decision text lists it as an Excluded Transaction. The engine follows the Decision text and cites both.
+* **Issuance deadline** (MD 243 Art 6(5) as replaced by MD 197 Art 2): **14 Business Days** from the Date of Business Transaction,
+  subject to Art 6(4) (a Registrant issues within the timeline of the VAT Law, a separate rule).
+* **Storage** (MD 243 Art 11 as replaced by MD 197 Art 2; Guidelines V2.0 §5.4, App 4): retention for the Tax Procedures Law period,
+  producible to the Authority; **the former requirement to store inside the UAE is removed**.
+* **System failure** (MD 197 Art 1(3) and Art 3): the definition and **the notification obligation of former Art 12 are repealed**. The
+  engine implements no system-failure notice. (Guidelines V2.0 App 3 still asks Persons to make sure their ASP notifies the FTA of
+  service disruptions; that is the ASP's act.)
+* **Timetable** (MD 244 Art 5 as amended by MR 66; Guidelines V2.0 §8.3): Revenue ≥ AED 50m: appoint an ASP by **30 Oct 2026**,
+  implement by **1 Jan 2027**; Revenue < AED 50m: 31 Mar 2027 / 1 Jul 2027; Government Entities: 31 Mar 2027 / 1 Oct 2027. Pilot and
+  voluntary adoption from 1 Jul 2026 (§8.1–8.2).
+* **Penalties:** Cabinet Decision 106/2025. Guidelines V2.0 §11.2 cites a Cabinet Decision No. 173 of 2026 that is **not published** on
+  the MoF page: it is not cited as a fact (OCQ-19).
+
 ## 1. What it is, and is not
 
 * NCollection is **Corner 1** of the five-corner model: it prepares the document and hands it to the customer's Accredited Service
-  Provider (ASP). It is not the FTA and not an ASP. [FACT: UAE Electronic Invoicing Guidelines V1.1 §5.1]
+  Provider (ASP). It is not the FTA and not an ASP. [FACT: UAE Electronic Invoicing Guidelines V2.0 §5.1]
 * **No ASP is selected or built in.** The core knows only an adapter interface; a future `ncollection_uae_einvoicing_<asp>` module is
   the only place transport and provider credentials' *use* will live. There is no HTTP client in the core and no fake endpoint.
 * **Scope:** customer invoices (`out_invoice`) and customer credit notes (`out_refund`). A vendor bill is a *received* document and is
   never an outbound e-invoice (creating one is refused). Self-billing and inbound e-invoices are future, separate flows.
 * The **PDF is unchanged**: it is the printable representation. The e-invoice is the structured XML. No QR code or barcode is added
-  (the UAE e-invoice has none). [FACT: Guidelines §5.3]
+  (the UAE e-invoice has none). [FACT: Guidelines V2.0 §5.3]
 
 ## 2. Pinned official resources
 
@@ -34,7 +85,10 @@ new release that corrects one forces a human review.
 |---|---|---|
 | `greek-nu-margin-code` | the code-list file gives the margin-scheme category as GREEK capital Nu (U+039D); the Schematron and the official sample use LATIN `N` | the engine emits Latin `N`; the file is read as published; `tax_categories` is an explicit tested set |
 | `hs-sac-min-digits-placeholder` | rule `ibr-187-ae` (minimum digits of HS/SAC) is a placeholder: `test="true()"`, message says "X digits" | digits-only is an NCollection *warning*; no length is enforced (OCQ-5) |
-| `self-billing-type-codes-missing` | type lists contain 380/480 and 381/81 only; 389/261 named on the website are absent | self-billing out of scope; no such code is ever emitted (OCQ-11) |
+| `self-billing-type-codes-missing` | the BILLING type lists contain 380/480 and 381/81 only; the self-billing codes are in the separate PINT AE Self-Billing 1.0.4 lists (389/480, 261/81) | self-billing out of scope this phase; no such code is ever emitted (OCQ-11 answered by the Self-Billing lists) |
+| `exempt-only-tax-invoice-refused` | fatal `ibr-151-ae` refuses a 380/381 whose lines are all E/O, while Guidelines V2.0 App 6 §18.3.1 says 480 is not for exempt or zero-rated supplies | DECISION 2026-10-28: follow the fatal rule (all E/O ⇒ 480/81; any S/Z/AE/N ⇒ 380/381); OCQ-20 |
+| `billing-frequency-description-code` | `ibr-160-ae` tests `InvoicePeriod/cbc:DescriptionCode`, the official sample uses `cbc:Description` | the engine writes `cbc:Description` like the sample; the 'Others' note is not enforced by anyone yet (follow-up) |
+| `metal-scrap-goods-type-missing` | Guidelines V2.0 §10.5.1 lists metal scrap as reverse-charge goods; fatal `ibr-006-ae` accepts only the five shipped GoodsType codes | metal scrap is recognised in the tax map and BLOCKED with `NCOLLECTION:rcm-goods-type-not-in-release`; no code invented (OCQ-6) |
 | `no-endpoint-format-rule` | no official rule checks the endpoint's format (a 9-digit seller TIN validates) | `NCOLLECTION:tin-must-be-10-digits` is our own rule and is reported as such |
 | `emirate-rule-shadowed` | `ibr-128-ae` sits in the generic address rule, after the seller/buyer-specific ones in the same pattern; only the first matching rule fires, so an invalid emirate (`DU`) **validates clean** | the engine's explicit emirate map is the only enforcement |
 | `exemption-code-outside-list` | an official sample uses `VATEX-AE-EDU`, outside the shipped four-code list, and validates | presence is official (`ibr-167-ae`); membership is an NCollection warning |
@@ -54,9 +108,13 @@ participant id, endpoint id and scheme id are five things:
 * `res.partner.nc_tin` — the UAE e-invoicing participant TIN, optional, 10 digits when set.
 * **Neither is ever derived from the other or from `vat`; there is no copy helper and no fallback to `vat`**; they are not
   synchronised between a company and its contacts (`copy=False`, outside `_commercial_fields`).
-* **OCQ-1 (open):** the two official documents disagree on the TIN's origin — Mandatory Fields V1.0 (23 Feb 2026): the first 10
-  digits of the *Corporate Tax* TRN; Guidelines V1.1 (1 Jun 2026): the first 10 digits of the person's *own* TRN (both: not the Tax
-  Group representative's). Therefore the TIN is stored explicitly and never computed.
+* **OCQ-1 (open, re-confirmed against the current versions):** the two current official documents still disagree on the TIN's
+  origin — Mandatory Fields V1.1 (28 Oct 2026) §2 and glossary: the first 10 digits of the *Corporate Tax* TRN; Guidelines V2.0 §2
+  and App 6 §18.1: the first 10 digits of the TRN *the Person has been issued*, its own (both: not the Tax Group representative's;
+  App 6 §18.1.2 sends a Person whose VAT and Corporate Tax profiles show different TINs to the FTA). Therefore the TIN is stored
+  explicitly and never computed, and the engine does not choose between the two readings. Guidelines V2.0 App 6 §18.1.1 also fixes
+  where the seller's identifier goes: a VAT-registered seller's TRN in IBT-031, a seller not registered for VAT puts its TIN in
+  IBT-032 (rule ibr-177-ae); the builder does exactly that.
 * **UUID (OCQ-14):** the Guidelines say the ASP generates it, yet rule `ibr-193-ae` requires it in the document. The engine stores a
   `uuid` set once and never reused as another identifier; the ASP-side authority is left to the adapter.
 
@@ -252,8 +310,11 @@ or run nothing), unlike the product's generic enforcement for an empty list.
 
 ## 10. Retention and tenant offboarding
 
-**Facts.** MD 197/2026 Art 11 (in force 1 Oct 2026): retain e-invoices, credit notes and associated data for the period in the Tax
-Procedures Law, producible to the Authority; the Guidelines (§5.4, App 4) summarise the periods as 5 years after the Tax Period for
+**Facts.** MD 243 Art 11 as replaced by MD 197/2026 Art 2 (in force 1 Oct 2026): retain e-invoices, credit notes and associated data
+for the period in the Tax Procedures Law, producible to the Authority; the former in-UAE storage requirement is removed. Guidelines
+V2.0 §5.4 adds what "met" means (integrity preserved, promptly accessible to the FTA, retrievable in complete and readable form) and
+that "associated data" is what supports integrity, authenticity and auditability, not general business documentation. The
+Guidelines V2.0 (§5.4, App 4) summarise the periods as 5 years after the Tax Period for
 Taxable Persons, 5 years from the end of the creation year for others, 7 years for real-estate records, with +4 years on a dispute,
 audit or audit notification and +1 year after a voluntary disclosure; no storage location or layer is mandated; delegating storage to an
 ASP is allowed but the legal obligation stays with the Person. The primary text (Cabinet Decision 74/2023 Art 3) has not been read:
@@ -328,12 +389,21 @@ identically on the pristine tree and is unrelated.
 
 ## 13. Open compliance questions
 
-OCQ-1 TIN origin · OCQ-2 buyer business acceptance message · OCQ-3 MLS vocabulary and negative-MLS duties · OCQ-4 precision of a derived
-net price · OCQ-5 HS/SAC minimum digits · OCQ-6 metal-scrap RCM goods type missing from the shipped list · OCQ-7 tourist-refund tax
-category · OCQ-8 exchange-rate source · OCQ-9 rounding on multi-rate/foreign/allowance documents (measure per pilot) · OCQ-11
-self-billing codes · OCQ-12 retention primary text · OCQ-13 Gazette status of MD 197 / Decision 66 · OCQ-14 UUID authority · OCQ-15 which
-PINT-AE release is required from 1 Jan 2027 · OCQ-16 Arabic names in the XML · OCQ-18 same-day VAT point date (the engine omits
-BT-007 unless strictly earlier, per `ibr-141-ae`).
+OCQ-1 TIN origin (still open between Mandatory Fields V1.1 and Guidelines V2.0, §4) · OCQ-2 buyer business acceptance message · OCQ-3
+MLS vocabulary and negative-MLS duties (which MLS version the UAE PASR requires is not confirmed) · OCQ-4 precision of a derived net
+price · OCQ-5 HS/SAC minimum digits · OCQ-6 metal-scrap RCM goods type: listed by Guidelines V2.0 §10.5.1, absent from the PINT-AE
+1.0.4 GoodsType list and refused by fatal `ibr-006-ae` · OCQ-7 tourist-refund tax category · OCQ-8 exchange-rate source · OCQ-9
+rounding on multi-rate/foreign/allowance documents (measure per pilot) · OCQ-11 self-billing codes: **answered** (PINT AE Self-Billing
+1.0.4 lists 389/480 and 261/81) · OCQ-12 retention primary text (Cabinet Decision 74/2023 Art 3, cited by Guidelines V2.0 §5.4) ·
+OCQ-13 Gazette status of MD 197 / MR 66 (both PDFs carry blank publication dates) · OCQ-14 UUID authority (Guidelines V2.0 §5.2 #7:
+the ASP) · OCQ-15 which PINT-AE release is required from 1 Jan 2027 · OCQ-16 Arabic names in the XML · OCQ-18 same-day VAT point
+date (the engine omits BT-007 unless strictly earlier, per `ibr-141-ae`) · **OCQ-19** Cabinet Decision 173/2026 (penalties) is cited
+by Guidelines V2.0 §11.2 but not published; only CD 106/2025 is cited · **OCQ-20** exempt-only documents: fatal `ibr-151-ae` vs
+Guidelines V2.0 App 6 §18.3.1 (decision recorded in §3) · **OCQ-21** the start of the 24-month airline air-waybill exclusion (MD 243
+Art 4(1)(d): "the date on which the Electronic Invoicing System becomes effective") is not tied to one calendar date for every
+Person · **OCQ-22** the Tax Group exclusion is an Excluded Transaction in MD 197 Art 2 but a timing-only grace period in Guidelines
+V2.0 §6.3.2.1; the engine applies the Decision text and cites both · **OCQ-23** the VAT-Law issuance timeline for Registrants (MD 243
+Art 6(4)) has not been read from the VAT Decree-Law itself; the engine models it as a separate, unconfirmed rule.
 
 ## 14. Arabic UI status
 

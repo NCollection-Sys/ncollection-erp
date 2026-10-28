@@ -73,6 +73,26 @@ def _self_billing_type_codes_missing(profile):
     )
 
 
+def _exempt_only_tax_invoice_refused(profile):
+    test = _asserts(profile).get('ibr-151-ae', '')
+    not_exempt = 'normalize-space(cbc:ID) != &#34;E&#34;'
+    not_outside = 'normalize-space(cbc:ID) != &#34;O&#34;'
+    return '380' in test and not_exempt in test and not_outside in test
+
+
+def _billing_frequency_description_code(profile):
+    test = _asserts(profile).get('ibr-160-ae', '')
+    sample = _read(profile, 'examples', 'invoice', 'Continuous.supplies.xml')
+    return 'DescriptionCode' in test and _LT + 'cbc:Description>MTH' in sample and 'DescriptionCode' not in sample
+
+
+def _metal_scrap_goods_type_missing(profile):
+    test = _asserts(profile).get('ibr-006-ae', '')
+    rows = codelists.load('rcm_goods_type', profile).rows
+    names = ' '.join((row.get('name') or '').lower() for row in rows.values())
+    return len(rows) == 5 and all(code in test for code in rows) and 'scrap' not in names
+
+
 def _no_endpoint_format_rule(profile):
     for test in _asserts(profile).values():
         if 'EndpointID' in test and (re.search(r'\{10\}', test) or 'string-length' in test):
@@ -111,12 +131,13 @@ ARTIFACTS = (
     ),
     UpstreamArtifact(
         'self-billing-type-codes-missing',
-        "The shipped invoice/credit-note type-code lists contain only 380/480 and 381/81; the self-billing codes "
-        "389/261 "
-        "named on the PINT-AE website are absent (261 is referenced by ibr-191-ae, 389 appears nowhere in the "
-        "Schematron).",
-        'codelist/UNCL1001-inv.gc, codelist/UNCL1001-cn.gc, schematron ibr-191-ae',
-        "Self-billing is out of scope for this phase; no self-billing type code is ever emitted (OCQ-11).",
+        "The shipped BILLING type-code lists contain only 380/480 and 381/81. The self-billing codes are not missing "
+        "from the specification: they belong to the separate PINT AE Self-Billing specification of the same release, "
+        "whose own lists are 389/480 (invoice) and 261/81 (credit note); 261 is still referenced by Billing rule "
+        "ibr-191-ae.",
+        'codelist/UNCL1001-inv.gc, codelist/UNCL1001-cn.gc, schematron ibr-191-ae; spec.COMPANION_SPECS["pint-ae-sb"]',
+        "Self-billing is out of scope for this phase; no self-billing type code is ever emitted. A self-billing phase "
+        "vendors the Self-Billing resources as their own profile (OCQ-11 is answered by the Self-Billing code lists).",
         _self_billing_type_codes_missing,
     ),
     UpstreamArtifact(
@@ -170,6 +191,42 @@ ARTIFACTS = (
         'codelist/UNCL4461.gc',
         "The pinned artifact is authoritative for the pinned version; code 48 is never emitted (OCQ-17).",
         _payment_means_list_has_nine_codes,
+    ),
+    UpstreamArtifact(
+        'exempt-only-tax-invoice-refused',
+        "Fatal rule ibr-151-ae refuses a 380 / 381 whose lines are ALL Exempt and/or Not subject to VAT, while "
+        "Guidelines V2.0 Appendix 6 §18.3.1 says 480 should not be used for exempt or zero-rated supplies. For an "
+        "exempt-only document the two official sources cannot both be satisfied (zero-rated is not affected: a 'Z' "
+        "line satisfies ibr-151-ae).",
+        'schematron/PINT-jurisdiction-aligned-rules.sch, assert ibr-151-ae (flag fatal); Guidelines V2.0 §18.3.1',
+        "DECISION (project owner, 2026-10-28): follow the fatal technical rule, which is what the network validates: "
+        "a document whose every line is E and/or O is 480 / 81; a document with any S, Z, AE or N line is 380 / 381. "
+        "The conflict is open compliance question OCQ-20.",
+        _exempt_only_tax_invoice_refused,
+    ),
+    UpstreamArtifact(
+        'billing-frequency-description-code',
+        "Rule ibr-160-ae ('Others' billing frequency needs an invoice note) tests "
+        "cac:InvoicePeriod/cbc:DescriptionCode, but the official continuous-supply sample carries the billing "
+        "frequency in cbc:Description (no DescriptionCode anywhere), so the rule can never fire on a document shaped "
+        "like the sample.",
+        'schematron/PINT-jurisdiction-aligned-rules.sch, assert ibr-160-ae; examples/invoice/Continuous.supplies.xml',
+        "The engine writes the frequency where the official sample does (cbc:Description). The 'Others' + note "
+        "requirement is therefore not enforced by the official validator for such documents; the engine does not "
+        "enforce it either yet (recorded follow-up).",
+        _billing_frequency_description_code,
+    ),
+    UpstreamArtifact(
+        'metal-scrap-goods-type-missing',
+        "Guidelines V2.0 §10.5.1 lists metal scrap trading (Cabinet Decision No. 153 of 2025) among the domestic "
+        "reverse-charge goods, but fatal rule ibr-006-ae accepts only the five codes of the shipped GoodsType list "
+        "(electronic devices, gold and diamonds, crude or refined oil, natural gas, pure hydrocarbons); no code for "
+        "metal scrap exists in the pinned release.",
+        'schematron/PINT-jurisdiction-aligned-rules.sch, assert ibr-006-ae; codelist/GoodsType.gc; Guidelines V2.0 '
+        '§10.5.1',
+        "Metal scrap is a recognised reverse-charge goods type in the tax map, and a document carrying it is BLOCKED "
+        "with NCOLLECTION:rcm-goods-type-not-in-release; no code is invented (OCQ-6).",
+        _metal_scrap_goods_type_missing,
     ),
 )
 

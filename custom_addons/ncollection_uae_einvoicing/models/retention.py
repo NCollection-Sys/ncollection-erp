@@ -3,7 +3,7 @@
 
 NOTHING IS PURGED AND NO PERIOD IS HARD-CODED. Retention depends on who the Person is, the tax period and on extensions
 (an FTA dispute, a tax audit, an audit notification, a voluntary disclosure) whose primary legal text (Cabinet Decision
-74/2023 Art 3) has not been read by this project: only the Guidelines' summary of it (V1.1 §5.4). So the periods are
+74/2023 Art 3) has not been read by this project: only the Guidelines' summary of it (V2.0 §5.4). So the periods are
 not code: they are rows of ``ncollection.einvoice.retention.rule``, each with its citation and a ``confirmed`` flag
 that starts False. A record is purgeable only when a CONFIRMED rule matches its class, an anchor date is set, no hold
 is open, and every closed hold's extension has run: otherwise ``retain_until`` is empty and the answer is "not
