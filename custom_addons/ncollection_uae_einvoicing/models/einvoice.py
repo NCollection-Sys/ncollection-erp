@@ -29,6 +29,7 @@ from ..lib.identity import FLAG_ORDER, transaction_type_code
 from .guards import without_unsafe_defaults
 
 LOCAL_STATES = [
+    ('not_required', 'Not required'),
     ('draft', 'Draft'),
     ('ready', 'Ready'),
     ('locally_checked', 'Locally checked'),
@@ -62,7 +63,9 @@ BUSINESS_STATES = [('unknown', 'Unknown')]
 # the legal moves of each dimension. Anything else is refused: no state can be skipped or revived by accident.
 TRANSITIONS = {
     'local_state': {
-        'draft': {'ready'},
+        # not_required: the scope classifier (lib/scope.py) found no e-invoice obligation; preparing again re-decides
+        'not_required': {'draft'},
+        'draft': {'ready', 'not_required'},
         'ready': {'draft', 'locally_checked'},
         'locally_checked': {'draft', 'ready', 'validated', 'validation_failed'},
         'validation_failed': {'draft', 'ready', 'locally_checked'},
@@ -107,6 +110,9 @@ USER_FIELDS = {'flag_' + name for name in FLAG_ORDER} | {
 }
 # a manager's: they move the retention date of a record, so they are restricted and always logged
 RETENTION_FIELDS = {'retention_class', 'retention_anchor_date'}
+# a manager's too: declaring an MD 243 Art 4 exclusion removes the e-invoice obligation, so it is restricted and logged
+EXCLUSION_FIELDS = {'excluded_transaction'}
+MANAGER_FIELDS = RETENTION_FIELDS | EXCLUSION_FIELDS
 MANAGER_GROUP = 'ncollection_uae_einvoicing.group_einvoice_manager'
 LICENCE_MODULE = 'ncollection_uae_einvoicing'
 
@@ -141,6 +147,13 @@ LOCKED_FIELDS = (
         'reconciliation_state',
         'reconciliation_json',
         'company_id',
+        'excluded_transaction',
+        'scope_state',
+        'scope_reason_code',
+        'scope_reason',
+        'scope_source',
+        'scope_window',
+        'transaction_date',
     }
     | {'flag_' + name for name in FLAG_ORDER}
 )
@@ -214,6 +227,32 @@ class EInvoice(models.Model):
         lambda self: [(c, r.get('name', c)) for c, r in sorted(codelists.load('credit_reason').rows.items())]
     )
     payment_means_override = fields.Char(help="Overrides the payment-method map for this document (an official code).")
+
+    # --- scope (lib/scope.py): is an e-invoice required at all? Decided by the engine at every preparation.
+    excluded_transaction = fields.Selection(
+        [
+            ('sovereign', "Government sovereign activity (MD 243 Art 4(1)(a))"),
+            ('airline_passenger', "Airline passenger transport with an e-ticket (MD 243 Art 4(1)(b))"),
+            ('airline_ancillary', "Airline ancillary service with an EMD (MD 243 Art 4(1)(c))"),
+            ('airline_cargo', "Airline cargo with an air waybill, first 24 months (MD 243 Art 4(1)(d))"),
+            ('financial_services', "Exempt or zero-rated financial services (MD 243 Art 4(1)(e))"),
+        ],
+        string='Declared exclusion',
+        help="Declared by an e-invoicing manager and verified by the engine as far as the data allows. A declaration "
+        "the engine cannot accept is reported and the document stays in scope.",
+    )
+    transaction_date = fields.Date(
+        string='Date of business transaction',
+        readonly=True,
+        help="The VAT point date when the document has one, else the invoice date.",
+    )
+    scope_state = fields.Selection(
+        [('in_scope', 'E-invoice required'), ('not_required', 'Not required')], readonly=True, copy=False
+    )
+    scope_reason_code = fields.Char(readonly=True, copy=False)
+    scope_reason = fields.Char(readonly=True, copy=False)
+    scope_source = fields.Char(string='Scope source', readonly=True, copy=False)
+    scope_window = fields.Char(readonly=True, copy=False, help="The dated window the decision rests on, if any.")
     payment_means_code = fields.Char(readonly=True)
     vat_point_date = fields.Date(readonly=True)
 
@@ -274,6 +313,7 @@ class EInvoice(models.Model):
     @api.depends('local_state', 'submission_state', 'exchange_state', 'fta_state')
     def _compute_headline(self):
         labels = {
+            'not_required': 'Not required',
             'draft': 'Draft',
             'ready': 'Ready',
             'locally_checked': 'Checked',
@@ -310,11 +350,11 @@ class EInvoice(models.Model):
         creator = self
         if not self.env.su:
             # a client-supplied ``default_<field>`` would fill state, identity or the archive link past the whitelist
-            creator = without_unsafe_defaults(self, USER_FIELDS | RETENTION_FIELDS | {'move_id', 'company_id'})
+            creator = without_unsafe_defaults(self, USER_FIELDS | MANAGER_FIELDS | {'move_id', 'company_id'})
         for vals in vals_list:
             if not self.env.su:
                 # the engine, not the caller, supplies state, identity, snapshots, references and archive links
-                engine = set(vals) - USER_FIELDS - RETENTION_FIELDS - {'move_id', 'company_id'}
+                engine = set(vals) - USER_FIELDS - MANAGER_FIELDS - {'move_id', 'company_id'}
                 if engine:
                     raise UserError(
                         self.env._(
@@ -324,6 +364,8 @@ class EInvoice(models.Model):
                     )
                 if RETENTION_FIELDS & set(vals) and not self.env.user.has_group(MANAGER_GROUP):
                     raise AccessError(self.env._("Only an e-invoicing manager can set the retention class or anchor."))
+                if EXCLUSION_FIELDS & set(vals) and not self.env.user.has_group(MANAGER_GROUP):
+                    raise AccessError(self.env._("Only an e-invoicing manager can declare an excluded transaction."))
             move = self.env['account.move'].browse(vals.get('move_id'))
             if not move:
                 raise UserError(self.env._("An e-invoice belongs to an accounting document."))
@@ -344,13 +386,15 @@ class EInvoice(models.Model):
             vals['document_kind'] = 'credit_note' if move.move_type == 'out_refund' else 'invoice'
         records = super(EInvoice, creator).create(vals_list)
         records._log('created')
+        for record in records.filtered('excluded_transaction'):
+            record._log('exclusion_declared', record.excluded_transaction)
         return records
 
     def write(self, vals):
         keys = set(vals)
         self._nc_require_licence()
         if not self.env.su:
-            allowed = USER_FIELDS | RETENTION_FIELDS | {'line_ids'}
+            allowed = USER_FIELDS | MANAGER_FIELDS | {'line_ids'}
             if self.env.user.has_group('ncollection_uae_einvoicing.group_einvoice_service'):
                 allowed |= NETWORK_FIELDS
             engine = keys - allowed
@@ -366,7 +410,10 @@ class EInvoice(models.Model):
                 )
             if RETENTION_FIELDS & keys and not self.env.user.has_group(MANAGER_GROUP):
                 raise AccessError(self.env._("Only an e-invoicing manager can set the retention class or anchor."))
-            if USER_FIELDS & keys and any(record.local_state not in ('draft', 'ready') for record in self):
+            if EXCLUSION_FIELDS & keys and not self.env.user.has_group(MANAGER_GROUP):
+                raise AccessError(self.env._("Only an e-invoicing manager can declare an excluded transaction."))
+            editable = ('draft', 'ready', 'not_required')
+            if (USER_FIELDS | EXCLUSION_FIELDS) & keys and any(r.local_state not in editable for r in self):
                 raise UserError(
                     self.env._("This e-invoice has already been checked. Prepare it again before changing its data.")
                 )
@@ -384,6 +431,11 @@ class EInvoice(models.Model):
                     )
                 )
         result = super().write(vals)
+        for record in self if EXCLUSION_FIELDS & keys else self.browse():
+            record._log('exclusion_declared', record.excluded_transaction or 'cleared')
+            if record.local_state == 'ready':
+                # the earlier decision no longer holds: the document must be prepared (and its scope decided) again
+                record._transition('local_state', 'draft', 'exclusion_changed')
         for record in self if RETENTION_FIELDS & keys else self.browse():
             old = before[record.id]
             record._log(
@@ -561,6 +613,7 @@ class EInvoiceValidation(models.Model):
     einvoice_id = fields.Many2one('ncollection.einvoice', required=True, ondelete='cascade', index=True)
     layer = fields.Selection(
         [
+            ('scope', 'Scope'),
             ('readiness', 'Readiness'),
             ('reconciliation', 'Reconciliation'),
             ('official', 'Official validation'),

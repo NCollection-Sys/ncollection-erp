@@ -7,3 +7,4 @@ from . import test_prepare
 from . import test_review_logic
 from . import test_hardening
 from . import test_hardening_defaults
+from . import test_scope

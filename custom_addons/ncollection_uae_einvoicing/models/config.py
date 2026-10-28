@@ -56,6 +56,12 @@ class EInvoiceConfig(models.Model):
         help="The account written as the payee account of a credit transfer (payment means 30).",
     )
     company_partner_id = fields.Many2one(related='company_id.partner_id')
+    effective_date = fields.Date(
+        string='E-invoicing effective date',
+        help="The date the UAE e-invoicing system became effective for this company (its mandatory implementation "
+        "date under MD 244/2025 as amended by MR 66/2026, or its voluntary start). Used only by the 24-month airline "
+        "air-waybill exclusion of MD 243/2025 Art 4(1)(d); never assumed when empty.",
+    )
 
     @api.constrains('default_bank_account_id', 'company_id')
     def _check_bank_account_is_the_companys(self):

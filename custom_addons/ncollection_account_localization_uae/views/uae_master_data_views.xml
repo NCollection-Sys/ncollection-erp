@@ -15,6 +15,8 @@
                 <field name="nc_legal_reg_authority" invisible="nc_legal_reg_type != 'TL'"/>
                 <field name="nc_legal_reg_country_id" invisible="nc_legal_reg_type != 'PAS'"
                        options="{'no_open': True, 'no_create': True}"/>
+                <field name="nc_einvoice_party_type"/>
+                <field name="nc_vat_group_trn" placeholder="15 digits"/>
             </xpath>
         </field>
     </record>

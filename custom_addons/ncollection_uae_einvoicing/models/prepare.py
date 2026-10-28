@@ -20,7 +20,7 @@ from decimal import Decimal
 from odoo import fields, models
 from odoo.exceptions import UserError
 
-from ..lib import adjustments, emirates, identity, payment_means, readiness, reconcile, spec, units, validator
+from ..lib import adjustments, emirates, identity, payment_means, readiness, reconcile, scope, spec, units, validator
 from ..lib import issues as _issues
 from ..lib.money import ZERO, dec, r2
 from ..lib.xml_builder import build
@@ -88,8 +88,23 @@ class EInvoicePrepare(models.Model):
         for record in self:
             if record.locked:
                 raise UserError(self.env._("A submitted e-invoice is locked."))
+            if record.local_state == 'not_required' or record.scope_state == 'not_required':
+                raise UserError(
+                    self.env._(
+                        "No e-invoice is required for this document (%(reason)s). No XML is generated.",
+                        reason=record.scope_reason or record.scope_reason_code or '',
+                    )
+                )
             if record.local_state != 'ready':
                 raise UserError(self.env._("Only a ready e-invoice can be turned into XML; prepare it first."))
+            # the scope is decided again: a party's type or Tax Group may have changed since preparation
+            decided, scope_found = record._nc_decide_scope()
+            if decided.state == scope.NOT_REQUIRED or _issues.errors(scope_found):
+                raise UserError(
+                    self.env._(
+                        "Whether this document needs an e-invoice changed since it was prepared. Prepare it again."
+                    )
+                )
             payload, found = record._nc_build_payload()
             if _issues.errors(found) or canonical(payload) != record.payload_json:
                 raise UserError(
@@ -192,13 +207,26 @@ class EInvoicePrepare(models.Model):
             superseded = self.xml_attachment_id
             self.sudo().write({'xml_attachment_id': False, 'xml_sha256': False})
             self._log('xml_superseded', 'sha256 %s' % superseded.checksum, attachment=superseded)
-        if self.local_state in ('ready', 'locally_checked', 'validated', 'validation_failed'):
+        if self.local_state in ('ready', 'locally_checked', 'validated', 'validation_failed', 'not_required'):
             self._transition('local_state', 'draft', 'prepare_again')
         self._nc_sync_lines()
+        decided, scope_found = self._nc_decide_scope()
+        self._nc_store_findings('scope', scope_found)
+        if decided.state == scope.NOT_REQUIRED:
+            self.sudo().write({'payload_json': False})
+            self._transition(
+                'local_state',
+                'not_required',
+                'not_required',
+                '%s | %s%s'
+                % (decided.reason_code, decided.source, ' | window %s' % decided.window if decided.window else ''),
+            )
+            return
         payload, found = self._nc_build_payload()
         reconciliation = reconcile.reconcile(payload, profile)
         readiness_found = list(found)
-        found = found + reconciliation.issues
+        # a refused exclusion declaration (scope error) blocks the document like any readiness error
+        found = scope_found + found + reconciliation.issues
         values = {
             'spec_version': profile.key,
             'customization_id': profile.customization_id,
@@ -246,6 +274,52 @@ class EInvoicePrepare(models.Model):
             self._log('prepare_blocked', '%d error(s)' % len(_issues.errors(found)))
         else:
             self._transition('local_state', 'ready', 'prepared', 'reconciliation: %s' % reconciliation.state)
+
+    def _nc_transaction_date(self):
+        """The Date of Business Transaction: the VAT point (taxable supply) date when the document carries one, else
+        the invoice date. Credit notes use their own invoice date."""
+        move = self.move_id
+        supply = move.taxable_supply_date if 'taxable_supply_date' in move._fields else False
+        if supply and move.move_type != 'out_refund':
+            return supply
+        return move.invoice_date or False
+
+    def _nc_decide_scope(self):
+        """Run lib/scope.py on this document and record the decision (engine fields). ``(Scope, issues)``."""
+        self.ensure_one()
+        move, company = self.move_id, self.company_id
+        seller, buyer = company.partner_id, move.commercial_partner_id
+        tax_map = {
+            m.tax_id.id: m.pint_category
+            for m in self.env['ncollection.einvoice.tax.map'].search([('company_id', '=', company.id)])
+        }
+        categories = {
+            tax_map.get(line.tax_ids.id) if len(line.tax_ids) == 1 else None
+            for line in move.invoice_line_ids.filtered(lambda ml: ml.display_type == 'product')
+        }
+        config = self.env['ncollection.einvoice.config'].sudo().search([('company_id', '=', company.id)], limit=1)
+        transaction_date = self._nc_transaction_date()
+        decided, found = scope.classify(
+            transaction_date,
+            buyer_party_type=buyer.nc_einvoice_party_type,
+            seller_party_type=seller.nc_einvoice_party_type,
+            seller_vat_group=seller.nc_vat_group_trn or None,
+            buyer_vat_group=buyer.nc_vat_group_trn or None,
+            declared_exclusion=self.excluded_transaction or None,
+            categories=categories,
+            effective_date=config.effective_date or None,
+        )
+        self.sudo().write(
+            {
+                'transaction_date': transaction_date,
+                'scope_state': decided.state,
+                'scope_reason_code': decided.reason_code or False,
+                'scope_reason': decided.reason or False,
+                'scope_source': decided.source or False,
+                'scope_window': decided.window or False,
+            }
+        )
+        return decided, found
 
     def _nc_sync_lines(self):
         """One toggle line per product line of the document; existing toggles are kept."""

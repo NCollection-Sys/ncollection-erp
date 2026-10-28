@@ -65,11 +65,33 @@ class ResPartner(models.Model):
     nc_legal_reg_country_id = fields.Many2one(
         'res.country', string='Passport issuing country', copy=False,
         help="Needed for a passport registration on an e-invoice.")
+    # Scope of UAE e-invoicing (Guidelines V2.0 §6.1-6.2): supplies to natural persons who are not in Business are
+    # outside the scope. Declared, never inferred: a person who is not a company may still be in Business.
+    nc_einvoice_party_type = fields.Selection(
+        [
+            ('business', 'Business'),
+            ('government', 'Government Entity'),
+            ('consumer', 'Natural person not in business'),
+        ],
+        string='E-invoicing party type', default='business', required=True, copy=False, tracking=True,
+        help="Business and Government Entity transactions are in the scope of UAE e-invoicing; a natural person who is "
+             "not in business is not (UAE Electronic Invoicing Guidelines V2.0 §6.2).")
+    # MD 243/2025 Art 4(1)(f) as inserted by MD 197/2026: transactions between members of the same Tax Group are
+    # excluded from 2027-01-01 through 2028-12-31. The group is identified by its own TRN, explicitly maintained.
+    nc_vat_group_trn = fields.Char(
+        string='Tax Group TRN', copy=False, tracking=True,
+        help="The 15-digit TRN of the VAT Tax Group this person belongs to, if any. Two parties with the same Tax "
+             "Group TRN are members of the same Tax Group.")
 
-    @api.constrains('nc_trn', 'nc_tin')
+    @api.constrains('nc_trn', 'nc_tin', 'nc_vat_group_trn')
     def _check_nc_uae_identifiers(self):
         """The only thing master data refuses: a NON-EMPTY value in the wrong shape. Empty is always fine."""
         for partner in self:
+            if partner.nc_vat_group_trn and uae_identifiers.trn_state(partner.nc_vat_group_trn).state == \
+                    uae_identifiers.INVALID:
+                raise ValidationError(self.env._(
+                    "Tax Group TRN must be exactly 15 digits (no spaces or letters). Leave it empty if the person is "
+                    "not a member of a Tax Group."))
             if partner.nc_trn and uae_identifiers.trn_state(partner.nc_trn).state == uae_identifiers.INVALID:
                 raise ValidationError(self.env._(
                     "TRN / Tax Registration Number must be exactly 15 digits (no spaces or letters). Leave it empty "
