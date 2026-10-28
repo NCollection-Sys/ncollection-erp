@@ -418,8 +418,37 @@ def _line(line, buyer, profile, found):
                     )
                 )
     if category == 'AE':
-        if line.get('goods_type') not in codelists.codes('rcm_goods_type', profile):
+        # Guidelines V2.0 §10.5.1: domestic reverse charge between two registrants; no VAT, the goods type and a
+        # narrative of the reason on the invoice
+        if line.get('goods_type') == codelists.METAL_SCRAP:
+            found.append(
+                _issues.make(
+                    'NCOLLECTION:rcm-goods-type-not-in-release',
+                    subject,
+                    "Metal scrap is a reverse-charge goods type (Guidelines V2.0 §10.5.1) but the pinned PINT-AE "
+                    "release has no code for it (fatal rule ibr-006-ae accepts five codes only): this document cannot "
+                    "be issued as an e-invoice until a release adds the code.",
+                )
+            )
+        elif line.get('goods_type') not in codelists.codes('rcm_goods_type', profile):
             found.append(_issues.make('OFFICIAL:ibr-166-ae', subject, "A reverse-charge line needs its goods type."))
+        if not (line.get('rc_narrative') or '').strip():
+            found.append(
+                _issues.make(
+                    'NCOLLECTION:rcm-narrative-required',
+                    subject,
+                    "A reverse-charge e-invoice must state why the supply is subject to the reverse charge "
+                    "(Guidelines V2.0 §10.5.1): set the narrative on the tax map.",
+                )
+            )
+        if dec(line.get('aed_vat') or 0) != 0:
+            found.append(
+                _issues.make(
+                    'OFFICIAL:ibr-162-ae',
+                    subject,
+                    "A reverse-charge line carries no VAT: the tax booked on it must be zero.",
+                )
+            )
         if not line.get('gtin'):
             found.append(
                 _issues.make('OFFICIAL:ibr-174-ae', subject, "A reverse-charge line needs the item's GTIN (barcode).")

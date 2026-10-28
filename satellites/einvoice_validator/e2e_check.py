@@ -183,6 +183,18 @@ def main():
         street='Gulf Road', city='Kuwait City', subdivision='Al Asimah', country='KW',
     )
     cases['export with deliver-to address (ibr-152-ae)'] = export
+    # Guidelines V2.0 §10.5.1 domestic reverse charge: AE, no VAT (ibr-162-ae, ae-09), goods type (ibr-166-ae,
+    # ibr-006-ae), GTIN scheme 0160 (ibr-174-ae), buyer TRN (ibr-103-ae) and the narrative as IBT-120 of the AE
+    # breakdown
+    cases['domestic reverse charge with narrative (G2.0 §10.5.1)'] = payloads.standard_payload(
+        lines=[
+            payloads._line(
+                1, 2, '1500.00', rate='5', category='AE', goods_type='DL8.48.8.2', gtin='4006381333931',
+                rc_narrative='Reverse charge: Cabinet Decision No. 91 of 2023 (electronic devices)',
+            )
+        ],
+        odoo_totals=None,
+    )
     cases['mixed S + Z + E'] = payloads.standard_payload(
         lines=[
             payloads._line(1, 1, '100.00'),

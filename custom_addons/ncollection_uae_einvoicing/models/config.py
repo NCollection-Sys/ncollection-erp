@@ -22,6 +22,13 @@ def _codelist_selection(name):
     return selection
 
 
+def _rcm_goods_selection(self):
+    """The official GoodsType codes plus metal scrap, which readiness blocks (see codelists.METAL_SCRAP)."""
+    return _codelist_selection('rcm_goods_type')(self) + [
+        (codelists.METAL_SCRAP, 'Metal scrap (Cabinet Decision 153/2025) — no code in the pinned PINT-AE list')
+    ]
+
+
 class EInvoiceConfig(models.Model):
     _name = 'ncollection.einvoice.config'
     _description = 'UAE e-invoicing configuration (per company)'
@@ -185,7 +192,13 @@ class EInvoiceTaxMap(models.Model):
     )
     exemption_code = fields.Char(help="Required for category E (the reason the supply is exempt).")
     rcm_goods_type = fields.Selection(
-        _codelist_selection('rcm_goods_type'), string='Reverse-charge goods type', help="Required for category AE."
+        _rcm_goods_selection, string='Reverse-charge goods type', help="Required for category AE."
+    )
+    rc_narrative = fields.Char(
+        string='Reverse-charge narrative',
+        help="Why the supply is subject to the domestic reverse charge, e.g. the Cabinet Decision that applies. "
+        "Required on a reverse-charge e-invoice (UAE Electronic Invoicing Guidelines V2.0 §10.5.1); written as the "
+        "VAT exemption reason text (IBT-120) of the reverse-charge VAT breakdown.",
     )
     pint_rate = fields.Float(
         string='Rate shown for reverse charge',

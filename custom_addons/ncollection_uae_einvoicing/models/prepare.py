@@ -473,6 +473,7 @@ class EInvoicePrepare(models.Model):
                     'rate': rate,
                     'exemption_code': mapped.exemption_code if mapped else None,
                     'goods_type': mapped.rcm_goods_type if mapped and category == 'AE' else None,
+                    'rc_narrative': (mapped.rc_narrative or None) if mapped and category == 'AE' else None,
                     'item_type': product.nc_item_type or None,
                     'hs': product.nc_hs_code or None,
                     'sac': product.nc_sac_code or None,

@@ -10,3 +10,4 @@ from . import test_hardening_defaults
 from . import test_scope
 from . import test_business_days
 from . import test_classification
+from . import test_reverse_charge

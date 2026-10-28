@@ -140,13 +140,20 @@ def build(payload, profile=None):
         _add(rate, 'cbc:CalculationRate', fmt_plain(payload['exchange_rate']))
 
     figures = payload['figures']
+    # Guidelines V2.0 §10.5.1: a reverse-charge invoice states why the reverse charge applies. Written once, as the VAT
+    # exemption reason text (IBT-120) of the reverse-charge breakdown (ibr-sr-32: at most one per breakdown).
+    rc_narrative = '; '.join(
+        sorted({line['rc_narrative'] for line in payload['lines'] if line.get('category') == 'AE' and
+                line.get('rc_narrative')})
+    )
     total = _add(root, 'cac:TaxTotal')
     _amount(total, 'cbc:TaxAmount', figures['tax_total'], currency)
     for entry in figures['breakdown']:
         sub = _add(total, 'cac:TaxSubtotal')
         _amount(sub, 'cbc:TaxableAmount', entry['taxable'], currency)
         _amount(sub, 'cbc:TaxAmount', entry['tax'], currency)
-        _tax_category(sub, entry['category'], entry['rate'])
+        reason_text = rc_narrative if entry['category'] == 'AE' and rc_narrative else None
+        _tax_category(sub, entry['category'], entry['rate'], reason_text=reason_text)
     if is_foreign and payload.get('aed'):
         aed_total = _add(root, 'cac:TaxTotal')
         _amount(aed_total, 'cbc:TaxAmount', payload['aed']['tax_total'], 'AED')
@@ -173,13 +180,15 @@ def build(payload, profile=None):
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-def _tax_category(parent, category, rate, exemption_code=None):
+def _tax_category(parent, category, rate, exemption_code=None, reason_text=None):
     node = _add(parent, 'cac:TaxCategory')
     _add(node, 'cbc:ID', category)
     if rate is not None:
         _add(node, 'cbc:Percent', fmt_plain(rate))
     if exemption_code:
         _add(node, 'cbc:TaxExemptionReasonCode', exemption_code)
+    if reason_text:
+        _add(node, 'cbc:TaxExemptionReason', reason_text)
     _add(_add(node, 'cac:TaxScheme'), 'cbc:ID', 'VAT')
     return node
 

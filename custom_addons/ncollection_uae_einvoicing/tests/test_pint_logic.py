@@ -615,6 +615,9 @@ class TestReadiness(TransactionCase):
         )
         snap = snapshot()
         snap['lines'][0].update(category='AE', rate=D('5'), goods_type='DL8.48.3.1', gtin='324243424')
+        # Guidelines V2.0 §10.5.1 also requires the reverse-charge narrative (added with the re-baseline)
+        self.assertEqual(rules(readiness.check(snap)), {'NCOLLECTION:rcm-narrative-required'})
+        snap['lines'][0]['rc_narrative'] = 'Reverse charge: Cabinet Decision No. 91 of 2023'
         self.assertEqual(rules(readiness.check(snap)), set())
 
     # ---- document rules

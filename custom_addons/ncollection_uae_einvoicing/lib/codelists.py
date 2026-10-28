@@ -17,6 +17,12 @@ _GC = '{http://docs.oasis-open.org/codelist/ns/genericode/1.0/}'
 
 CodeList = namedtuple('CodeList', 'name version rows')
 
+# Guidelines V2.0 §10.5.1 lists metal scrap trading (Cabinet Decision No. 153 of 2025) among the domestic
+# reverse-charge goods, but the pinned GoodsType list (and fatal rule ibr-006-ae) has no code for it (upstream
+# finding 'metal-scrap-goods-type-missing', OCQ-6). It is a recognised choice in the tax map that readiness
+# BLOCKS: it is NOT an official code, is never invented as one and never reaches the XML.
+METAL_SCRAP = 'NC-METAL-SCRAP'
+
 # logical name -> shipped file
 FILES = {
     'tax_category': 'Aligned-TaxCategoryCodes.gc',
