@@ -52,6 +52,18 @@ failures_total = []
 TOKEN = secrets.token_hex(24)  # random per run: no secret literal in the source
 
 
+def _required_real_cases():
+    """REQUIRED_CASES of tests/test_real_move_crosscheck.py, read from its source (that module imports Odoo)."""
+    import ast
+
+    with open(os.path.join(ADDON, 'tests', 'test_real_move_crosscheck.py'), encoding='utf-8') as handle:
+        tree = ast.parse(handle.read())
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(getattr(t, 'id', None) == 'REQUIRED_CASES' for t in node.targets):
+            return ast.literal_eval(node.value)
+    return {}
+
+
 def expect(label, condition, detail=''):
     print('%-4s %s %s' % ('OK' if condition else 'FAIL', label, detail))
     if not condition:
@@ -259,6 +271,26 @@ def main():
         expect(
             'negative control: %s fails %s' % (label, rule), rule in rules and not outcome.ok, str(sorted(rules)[:6])
         )
+
+    # ---- 3a. XML the engine's mapper produced from REAL posted Odoo documents (tests/test_real_move_crosscheck.py)
+    fixtures = os.environ.get('NC_EINVOICE_FIXTURES')
+    if fixtures:
+        required = _required_real_cases()
+        expect('real-move fixtures: the required case list was read', bool(required), str(sorted(required)))
+        for case, (kind, outcome_expected, rule) in sorted(required.items()):
+            path = os.path.join(fixtures, case + '.xml')
+            if not os.path.isfile(path):
+                expect('real-move %s exported' % case, False, 'missing from %s' % fixtures)
+                continue
+            with open(path, 'rb') as handle:
+                outcome = client.validate(handle.read(), kind, profile)
+            failed = sorted({f.rule for f in outcome.failures if f.flag != 'warning'})
+            if outcome_expected == 'pass':
+                expect('real-move %s validates under the official rules' % case, outcome.ok, str(failed[:8]))
+            else:
+                expect(
+                    'real-move %s is refused by %s' % (case, rule), not outcome.ok and rule in failed, str(failed[:8])
+                )
 
     # ---- 3b. the official validator does NOT catch a bad seller emirate (rule shadowed, see lib/upstream.py)
     bad = base.replace('<cbc:CountrySubentity>DXB<', '<cbc:CountrySubentity>DU<')

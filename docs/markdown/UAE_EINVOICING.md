@@ -264,6 +264,14 @@ docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges --ne
 The Odoo container needs `NC_EINVOICE_VALIDATOR_URL` and the same `NC_EINVOICE_VALIDATOR_TOKEN` in its environment (never in a database).
 With either missing, every validation is "unavailable" and no document can become `validated` — by design.
 
+**Real documents through the official rules (R57).** `tests/test_real_move_crosscheck.py` builds REAL posted Odoo documents
+(tax invoice 380, tax credit note 381, out-of-scope commercial invoice 480, exempt-only 480, zero-rated 380, domestic reverse
+charge, an export scenario with its deliver-to address, and a negative case: the same mapper output with its UUID removed),
+runs the engine's own preparation and XML generation, and, with `NC_EINVOICE_EXPORT_DIR` set, writes each XML with its
+expected outcome. `e2e_check.py` (`NC_EINVOICE_FIXTURES`) validates exactly those files under the official rules and fails
+when any required case is missing. CI runs both in the `test` job, so a mapper change the official rules reject fails the pull
+request.
+
 **Development and CI (no production change).** `make einvoice-e2e` runs the whole official path from a clean checkout with no
 stack and no database (official samples, engine-built documents, negative controls, worker security checks, and with
 `EINVOICE_FIXTURES=<dir>` the XML exported from real posted invoices). `make einvoice-validator-up` starts the worker beside

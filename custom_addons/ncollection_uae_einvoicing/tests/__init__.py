@@ -13,3 +13,4 @@ from . import test_classification
 from . import test_reverse_charge
 from . import test_adapter_contract
 from . import test_ui_access
+from . import test_real_move_crosscheck

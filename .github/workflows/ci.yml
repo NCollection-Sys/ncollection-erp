@@ -398,11 +398,17 @@ jobs:
       # --test-enable also runs Odoo core's own suite (base, web, …), and
       # core's CLI self-tests (test_cli) fail inside this container —
       # proven by the first live run.
+      # NC_EINVOICE_EXPORT_DIR: the UAE e-invoicing cross-check (tests/test_real_move_crosscheck.py) writes the XML its
+      # REAL posted invoices produce there; the step after the tests validates exactly those files under the official
+      # PINT-AE rules (R57). The folder is world-writable because the odoo image runs as a non-root user.
       - name: Install addons and run tests
         run: |
+          mkdir -p einvoice-fixtures && chmod 777 einvoice-fixtures
           docker run --rm \
             --network host \
             -e HOST=localhost -e USER=odoo -e PASSWORD=odoo \
+            -e NC_EINVOICE_EXPORT_DIR=/einvoice-fixtures \
+            -v "${{ github.workspace }}/einvoice-fixtures:/einvoice-fixtures" \
             -v "${{ github.workspace }}/custom_addons:/mnt/extra-addons" \
             -v "${{ github.workspace }}/oca:/mnt/oca-addons" \
             odoo:19 \
@@ -427,6 +433,20 @@ jobs:
       # alternative allowlists exactly the dangerous case.
       - name: Fail on unexpected skips (a skipped test is not a passing test)
         run: python scripts/ci/check_skips.py odoo-test.log
+
+      # R57: the mapper and the official validator were each proven on their own, never together. This validates the
+      # XML that the engine produced from REAL posted Odoo invoices (exported by the test run above) under the pinned,
+      # unmodified PINT-AE rules, plus the official samples, engine-built documents and negative controls. A required
+      # case that was not exported FAILS (an empty export cannot pass).
+      - name: Validate real-move e-invoice XML under the official PINT-AE rules
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/custom_addons/ncollection_uae_einvoicing:/addon:ro" \
+            -v "${{ github.workspace }}/satellites/einvoice_validator:/sat:ro" \
+            -v "${{ github.workspace }}/einvoice-fixtures:/fixtures:ro" \
+            -e NC_EINVOICE_FIXTURES=/fixtures \
+            python:3.12-slim sh -c "pip install -q --root-user-action=ignore saxonche==13.1.0 lxml \
+              && cd /tmp && python /sat/e2e_check.py"
 
   build:
     runs-on: ubuntu-latest
