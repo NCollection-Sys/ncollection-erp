@@ -35,12 +35,21 @@ msgstr "<i class=\"fa fa-exclamation-triangle fa-2x\" role=\"img\" aria-label=\"
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
 msgid "<i class=\"fa fa-hourglass-half fa-2x\" role=\"img\" aria-label=\"Pending\"/>"
-msgstr "<i class=\"fa fa-hourglass-half fa-2x\" role=\"img\" aria-label=\"قيد الانتظار\"/>"
+msgstr ""
+"<i class=\"fa fa-hourglass-half fa-2x\" role=\"img\" aria-label=\"قيد "
+"الانتظار\"/>"
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_form
-msgid "<i class=\"fa fa-infinity me-1\" role=\"img\"/>\n                                <strong>Perpetual membership.</strong>\n                                Paid once, never renewed, no expiry date. Access ends only\n                                when an administrator suspends, cancels or terminates it."
-msgstr "<i class=\"fa fa-infinity me-1\" role=\"img\"/><strong>عضوية دائمة.</strong> تُدفع مرة واحدة ولا تُجدَّد ولا تاريخ انتهاء لها. ينتهي الوصول فقط عندما يعلّق المسؤول الاشتراك أو يلغيه أو ينهيه."
+msgid ""
+"<i class=\"fa fa-infinity me-1\" role=\"img\"/>\n"
+"                                <strong>Perpetual membership.</strong>\n"
+"                                Paid once, never renewed, no expiry date. Access ends only\n"
+"                                when an administrator suspends, cancels or terminates it."
+msgstr ""
+"<i class=\"fa fa-infinity me-1\" role=\"img\"/><strong>عضوية دائمة.</strong>"
+" تُدفع مرة واحدة ولا تُجدَّد ولا تاريخ انتهاء لها. ينتهي الوصول فقط عندما "
+"يعلّق المسؤول الاشتراك أو يلغيه أو ينهيه."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_dashboard_form
@@ -70,7 +79,9 @@ msgstr "<span class=\"nc-kpi-card__label\">تنتهي خلال 30 يومًا أ�
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_dashboard_form
 msgid "<span class=\"nc-kpi-card__label\">MRR (monthly)</span>"
-msgstr "<span class=\"nc-kpi-card__label\">الإيرادات الشهرية المتكررة (شهريًا)</span>"
+msgstr ""
+"<span class=\"nc-kpi-card__label\">الإيرادات الشهرية المتكررة "
+"(شهريًا)</span>"
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_dashboard_form
@@ -99,8 +110,27 @@ msgstr "<strong>فشلت التهيئة.</strong>"
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_plan_form
-msgid "<strong>Saving this list takes effect on every tenant of this plan.</strong>\n                                Adding a module queues its <strong>installation</strong> into every\n                                ready tenant's database and re-syncs licensing; removing one\n                                revokes access but never uninstalls, so customer data is kept.\n                                Both run in the background — the save does not wait — and each\n                                tenant's own result is shown on its form.\n                                <br/>\n                                Core modules (<code>base</code>, <code>ncollection_core</code>,\n                                <code>ncollection_branding</code>, <code>ncollection_auth</code>)\n                                are always installed and are not listed here.\n                                A module listed here also licenses whatever it depends on."
-msgstr "<strong>يسري حفظ هذه القائمة على كل مستأجر في هذه الخطة.</strong> إضافة وحدة تضع <strong>تثبيتها</strong> في الطابور في قاعدة بيانات كل مستأجر جاهز وتعيد مزامنة الترخيص؛ وإزالة وحدة تسحب الوصول دون إلغاء التثبيت، فتُحفظ بيانات العميل. كلاهما يعمل في الخلفية — فلا ينتظر الحفظ — وتظهر نتيجة كل مستأجر على نموذجه. <br/> الوحدات الأساسية (<code>base</code> و<code>ncollection_core</code> و<code>ncollection_branding</code> و<code>ncollection_auth</code>) مثبّتة دائمًا وغير مدرجة هنا. والوحدة المدرجة هنا ترخّص أيضًا كل ما تعتمد عليه."
+msgid ""
+"<strong>Saving this list takes effect on every tenant of this plan.</strong>\n"
+"                                Adding a module queues its <strong>installation</strong> into every\n"
+"                                ready tenant's database and re-syncs licensing; removing one\n"
+"                                revokes access but never uninstalls, so customer data is kept.\n"
+"                                Both run in the background — the save does not wait — and each\n"
+"                                tenant's own result is shown on its form.\n"
+"                                <br/>\n"
+"                                Core modules (<code>base</code>, <code>ncollection_core</code>,\n"
+"                                <code>ncollection_branding</code>, <code>ncollection_auth</code>)\n"
+"                                are always installed and are not listed here.\n"
+"                                A module listed here also licenses whatever it depends on."
+msgstr ""
+"<strong>يسري حفظ هذه القائمة على كل مستأجر في هذه الخطة.</strong> إضافة وحدة"
+" تضع <strong>تثبيتها</strong> في الطابور في قاعدة بيانات كل مستأجر جاهز "
+"وتعيد مزامنة الترخيص؛ وإزالة وحدة تسحب الوصول دون إلغاء التثبيت، فتُحفظ "
+"بيانات العميل. كلاهما يعمل في الخلفية — فلا ينتظر الحفظ — وتظهر نتيجة كل "
+"مستأجر على نموذجه. <br/> الوحدات الأساسية (<code>base</code> "
+"و<code>ncollection_core</code> و<code>ncollection_branding</code> "
+"و<code>ncollection_auth</code>) مثبّتة دائمًا وغير مدرجة هنا. والوحدة "
+"المدرجة هنا ترخّص أيضًا كل ما تعتمد عليه."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
@@ -115,14 +145,20 @@ msgstr "<strong>ليس لهذا المستأجر قاعدة بيانات بعد.
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/subscription.py:0
-msgid "A One Time subscription is perpetual and cannot be renewed (subscription \"%s\")."
+msgid ""
+"A One Time subscription is perpetual and cannot be renewed (subscription "
+"\"%s\")."
 msgstr "اشتراك «لمرة واحدة» دائم ولا يمكن تجديده (الاشتراك \"%s\")."
 
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/subscription.py:0
-msgid "A One Time subscription never expires, so it cannot have an end date (subscription \"%s\"). Cancel, suspend or terminate it instead."
-msgstr "اشتراك «لمرة واحدة» لا ينتهي أبدًا، لذا لا يمكن أن يكون له تاريخ انتهاء (الاشتراك \"%s\"). ألغِه أو علّقه أو أنهِه بدلًا من ذلك."
+msgid ""
+"A One Time subscription never expires, so it cannot have an end date "
+"(subscription \"%s\"). Cancel, suspend or terminate it instead."
+msgstr ""
+"اشتراك «لمرة واحدة» لا ينتهي أبدًا، لذا لا يمكن أن يكون له تاريخ انتهاء "
+"(الاشتراك \"%s\"). ألغِه أو علّقه أو أنهِه بدلًا من ذلك."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_subscription__message_needaction
@@ -290,8 +326,12 @@ msgstr "تغيير"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription_plan__one_time_price
-msgid "Charged once when a One Time subscription on this plan is activated. Not a recurring amount — it never renews and it is excluded from MRR."
-msgstr "يُحتسب مرة واحدة عند تفعيل اشتراك «لمرة واحدة» على هذه الخطة. ليس مبلغًا متكررًا — فلا يتجدد ويُستثنى من الإيرادات الشهرية المتكررة."
+msgid ""
+"Charged once when a One Time subscription on this plan is activated. Not a "
+"recurring amount — it never renews and it is excluded from MRR."
+msgstr ""
+"يُحتسب مرة واحدة عند تفعيل اشتراك «لمرة واحدة» على هذه الخطة. ليس مبلغًا "
+"متكررًا — فلا يتجدد ويُستثنى من الإيرادات الشهرية المتكررة."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_subscription_dashboard__churn_rate
@@ -316,13 +356,26 @@ msgstr "الرمز"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription_plan__allowed_module_names
-msgid "Comma-separated technical module names included in this plan, e.g. \"crm,sale,stock\". Consumed by the tenant workspace visibility engine (P1-T09) and license enforcement (P1-T10)."
-msgstr "أسماء الوحدات التقنية المضمّنة في هذه الخطة مفصولة بفواصل، مثل \"crm,sale,stock\". يستهلكها محرك ظهور مساحة العمل للمستأجر (P1-T09) وفرض الترخيص (P1-T10)."
+msgid ""
+"Comma-separated technical module names included in this plan, e.g. "
+"\"crm,sale,stock\". Consumed by the tenant workspace visibility engine "
+"(P1-T09) and license enforcement (P1-T10)."
+msgstr ""
+"أسماء الوحدات التقنية المضمّنة في هذه الخطة مفصولة بفواصل، مثل "
+"\"crm,sale,stock\". يستهلكها محرك ظهور مساحة العمل للمستأجر (P1-T09) وفرض "
+"الترخيص (P1-T10)."
 
 #. module: ncollection_subscription
 #: model_terms:ir.actions.act_window,help:ncollection_subscription.action_ncollection_tenant
-msgid "Companies that register on the public page appear here as\n                <em>Pending Approval</em> — use that filter to find the ones\n                waiting for you. You can also create a tenant yourself and\n                provision it with a single click."
-msgstr "تظهر الشركات التي تسجّل في الصفحة العامة هنا بحالة <em>بانتظار الموافقة</em> — استخدم ذلك المرشح للعثور على الشركات التي تنتظرك. ويمكنك أيضًا إنشاء مستأجر بنفسك وتهيئته بنقرة واحدة."
+msgid ""
+"Companies that register on the public page appear here as\n"
+"                <em>Pending Approval</em> — use that filter to find the ones\n"
+"                waiting for you. You can also create a tenant yourself and\n"
+"                provision it with a single click."
+msgstr ""
+"تظهر الشركات التي تسجّل في الصفحة العامة هنا بحالة <em>بانتظار الموافقة</em>"
+" — استخدم ذلك المرشح للعثور على الشركات التي تنتظرك. ويمكنك أيضًا إنشاء "
+"مستأجر بنفسك وتهيئته بنقرة واحدة."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant__company_name
@@ -356,8 +409,12 @@ msgstr "اسم جهة الاتصال"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__email
-msgid "Contact address for notices and password recovery. This is NOT the login — the administrator signs in with the username below."
-msgstr "عنوان التواصل للإشعارات واستعادة كلمة المرور. هذا ليس اسم الدخول — فمسؤول المستأجر يسجّل الدخول باسم المستخدم أدناه."
+msgid ""
+"Contact address for notices and password recovery. This is NOT the login — "
+"the administrator signs in with the username below."
+msgstr ""
+"عنوان التواصل للإشعارات واستعادة كلمة المرور. هذا ليس اسم الدخول — فمسؤول "
+"المستأجر يسجّل الدخول باسم المستخدم أدناه."
 
 #. module: ncollection_subscription
 #. odoo-javascript
@@ -368,8 +425,12 @@ msgstr "أساسي"
 #. module: ncollection_subscription
 #. odoo-javascript
 #: code:addons/ncollection_subscription/static/src/module_picker/module_picker.xml:0
-msgid "Core modules are installed in every tenant on every plan and cannot be\n                    toggled. A module listed here also licenses whatever it depends on."
-msgstr "الوحدات الأساسية مثبّتة في كل مستأجر على كل خطة ولا يمكن تبديلها. والوحدة المدرجة هنا ترخّص أيضًا كل ما تعتمد عليه."
+msgid ""
+"Core modules are installed in every tenant on every plan and cannot be\n"
+"                    toggled. A module listed here also licenses whatever it depends on."
+msgstr ""
+"الوحدات الأساسية مثبّتة في كل مستأجر على كل خطة ولا يمكن تبديلها. والوحدة "
+"المدرجة هنا ترخّص أيضًا كل ما تعتمد عليه."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant__country_id
@@ -476,7 +537,9 @@ msgstr "عدد الأيام بعد انتهاء الصلاحية التي يست
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription__days_remaining
 msgid "Days until end_date. 0 when there is no end date or it has passed."
-msgstr "الأيام المتبقية حتى end_date. تكون 0 عند عدم وجود تاريخ انتهاء أو عند انقضائه."
+msgstr ""
+"الأيام المتبقية حتى end_date. تكون 0 عند عدم وجود تاريخ انتهاء أو عند "
+"انقضائه."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_subscription_dashboard__db_count
@@ -517,7 +580,9 @@ msgstr "معطّل لهذا المستأجر"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant_module_override__mode
-msgid "Disabled removes a module the plan grants; Added grants one the plan does not."
+msgid ""
+"Disabled removes a module the plan grants; Added grants one the plan does "
+"not."
 msgstr "«معطّل» يزيل وحدة تمنحها الخطة؛ و«مُضاف» يمنح وحدة لا تمنحها الخطة."
 
 #. module: ncollection_subscription
@@ -545,8 +610,13 @@ msgstr "مسودة"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__country_id
-msgid "Drives localization at provisioning: chart of accounts, currency and tax setup. Changing it after the database exists does NOT re-localize it — use \"Apply localization\" for that."
-msgstr "يحدّد التوطين عند التهيئة: دليل الحسابات والعملة وإعداد الضرائب. تغييرها بعد وجود قاعدة البيانات لا يعيد توطينها — استخدم «تطبيق التوطين» لذلك."
+msgid ""
+"Drives localization at provisioning: chart of accounts, currency and tax "
+"setup. Changing it after the database exists does NOT re-localize it — use "
+"\"Apply localization\" for that."
+msgstr ""
+"يحدّد التوطين عند التهيئة: دليل الحسابات والعملة وإعداد الضرائب. تغييرها بعد"
+" وجود قاعدة البيانات لا يعيد توطينها — استخدم «تطبيق التوطين» لذلك."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant__email
@@ -577,8 +647,14 @@ msgstr "يجب أن يكون تاريخ الانتهاء بعد تاريخ ال�
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription__grace_end_date
-msgid "End of the post-expiry grace window (end_date + plan grace_days). During grace the subscription is expired but access continues; suspension only happens after this date (fired by P2-T14)."
-msgstr "نهاية فترة السماح بعد انتهاء الصلاحية (end_date + قيمة grace_days في الخطة). خلال فترة السماح يكون الاشتراك منتهي الصلاحية لكن يستمر الوصول؛ ولا يحدث التعليق إلا بعد هذا التاريخ (يتم تشغيله بواسطة P2-T14)."
+msgid ""
+"End of the post-expiry grace window (end_date + plan grace_days). During "
+"grace the subscription is expired but access continues; suspension only "
+"happens after this date (fired by P2-T14)."
+msgstr ""
+"نهاية فترة السماح بعد انتهاء الصلاحية (end_date + قيمة grace_days في الخطة)."
+" خلال فترة السماح يكون الاشتراك منتهي الصلاحية لكن يستمر الوصول؛ ولا يحدث "
+"التعليق إلا بعد هذا التاريخ (يتم تشغيله بواسطة P2-T14)."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields.selection,name:ncollection_subscription.selection__ncollection_tenant__database_status__error
@@ -745,14 +821,20 @@ msgstr "مضمّن في هذه الخطة"
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/subscription.py:0
-msgid "Invalid subscription transition: %(current)s -> %(new)s (subscription \"%(name)s\")."
+msgid ""
+"Invalid subscription transition: %(current)s -> %(new)s (subscription "
+"\"%(name)s\")."
 msgstr "انتقال اشتراك غير صالح: %(current)s ← %(new)s (الاشتراك \"%(name)s\")."
 
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/subscription.py:0
-msgid "Invalid subscription transition: cannot renew from %(current)s (subscription \"%(name)s\")."
-msgstr "انتقال اشتراك غير صالح: لا يمكن التجديد من %(current)s (الاشتراك \"%(name)s\")."
+msgid ""
+"Invalid subscription transition: cannot renew from %(current)s (subscription"
+" \"%(name)s\")."
+msgstr ""
+"انتقال اشتراك غير صالح: لا يمكن التجديد من %(current)s (الاشتراك "
+"\"%(name)s\")."
 
 #. module: ncollection_subscription
 #. odoo-python
@@ -773,8 +855,10 @@ msgstr "تفاصيل المهمة"
 
 #. module: ncollection_subscription
 #: model_terms:ir.actions.act_window,help:ncollection_subscription.action_ncollection_provisioning_job
-msgid "Jobs appear here when a new tenant database is queued for provisioning."
-msgstr "تظهر المهام هنا عندما توضع قاعدة بيانات مستأجر جديد في قائمة انتظار التجهيز."
+msgid ""
+"Jobs appear here when a new tenant database is queued for provisioning."
+msgstr ""
+"تظهر المهام هنا عندما توضع قاعدة بيانات مستأجر جديد في قائمة انتظار التجهيز."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_provisioning_job__write_uid
@@ -807,13 +891,20 @@ msgstr "اتركه فارغًا لإرسال رابط إعادة تعيين بد
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
-msgid "Leave the password empty and the tenant is born hardened:\n                                an unguessable password nobody is told, and the owner sets\n                                their own through the emailed reset link."
-msgstr "اترك كلمة المرور فارغة ليولد المستأجر محصّنًا: كلمة مرور لا يمكن تخمينها ولا يُخبَر بها أحد، ويعيّن المالك كلمة مروره بنفسه عبر رابط إعادة التعيين المرسل بالبريد."
+msgid ""
+"Leave the password empty and the tenant is born hardened:\n"
+"                                an unguessable password nobody is told, and the owner sets\n"
+"                                their own through the emailed reset link."
+msgstr ""
+"اترك كلمة المرور فارغة ليولد المستأجر محصّنًا: كلمة مرور لا يمكن تخمينها ولا"
+" يُخبَر بها أحد، ويعيّن المالك كلمة مروره بنفسه عبر رابط إعادة التعيين "
+"المرسل بالبريد."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription_plan__trial_days
 msgid "Length of the free trial for this plan, in days (0 = no trial)."
-msgstr "مدة الفترة التجريبية المجانية لهذه الخطة، بالأيام (0 = بدون فترة تجريبية)."
+msgstr ""
+"مدة الفترة التجريبية المجانية لهذه الخطة، بالأيام (0 = بدون فترة تجريبية)."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant__effective_module_names
@@ -823,8 +914,12 @@ msgstr "الوحدات المرخّصة"
 #. module: ncollection_subscription
 #. odoo-javascript
 #: code:addons/ncollection_subscription/static/src/module_picker/module_picker.xml:0
-msgid "Licensed by this plan but not offered as an application here —\n                            kept as-is by the bulk actions. Click to remove one."
-msgstr "مرخّصة من هذه الخطة لكنها غير معروضة كتطبيق هنا — تُترك كما هي في الإجراءات المجمّعة. انقر لإزالة إحداها."
+msgid ""
+"Licensed by this plan but not offered as an application here —\n"
+"                            kept as-is by the bulk actions. Click to remove one."
+msgstr ""
+"مرخّصة من هذه الخطة لكنها غير معروضة كتطبيق هنا — تُترك كما هي في الإجراءات "
+"المجمّعة. انقر لإزالة إحداها."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_plan_form
@@ -926,8 +1021,14 @@ msgstr "الوحدات"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__effective_module_names
-msgid "Modules this tenant's plan licenses, on top of the core modules every tenant always gets. Set them on the plan — saving there queues a config-sync push to every tenant using it."
-msgstr "الوحدات التي ترخّصها خطة هذا المستأجر، فوق الوحدات الأساسية التي يحصل عليها كل مستأجر دائمًا. حدّدها على الخطة — فالحفظ هناك يضع دفع مزامنة الإعدادات في الطابور لكل مستأجر يستخدمها."
+msgid ""
+"Modules this tenant's plan licenses, on top of the core modules every tenant"
+" always gets. Set them on the plan — saving there queues a config-sync push "
+"to every tenant using it."
+msgstr ""
+"الوحدات التي ترخّصها خطة هذا المستأجر، فوق الوحدات الأساسية التي يحصل عليها "
+"كل مستأجر دائمًا. حدّدها على الخطة — فالحفظ هناك يضع دفع مزامنة الإعدادات في"
+" الطابور لكل مستأجر يستخدمها."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields.selection,name:ncollection_subscription.selection__ncollection_subscription__billing_cycle__monthly
@@ -1010,8 +1111,13 @@ msgstr "لم تُحدَّد دولة"
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
-msgid "No database exists yet and none will be created until you\n                                approve. Review the details below, then use\n                                <em>Approve &amp; Provision</em> (or <em>Reject</em>) above."
-msgstr "لا توجد قاعدة بيانات ولن تُنشأ حتى توافق. راجع التفاصيل أدناه، ثم استخدم <em>موافقة وتهيئة</em> (أو <em>رفض</em>) أعلاه."
+msgid ""
+"No database exists yet and none will be created until you\n"
+"                                approve. Review the details below, then use\n"
+"                                <em>Approve &amp; Provision</em> (or <em>Reject</em>) above."
+msgstr ""
+"لا توجد قاعدة بيانات ولن تُنشأ حتى توافق. راجع التفاصيل أدناه، ثم استخدم "
+"<em>موافقة وتهيئة</em> (أو <em>رفض</em>) أعلاه."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
@@ -1076,8 +1182,15 @@ msgstr "غير معروضة على هذه المنصة"
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
-msgid "Nothing was left half-built. The reason is in the latest job under\n                                <em>System → Provisioning Jobs</em> and in the chatter. Fix the cause\n                                and press <em>Retry Provisioning</em>; it re-runs the same job and\n                                never creates a second database or user."
-msgstr "لم يُترك شيء نصف مبني. السبب في أحدث مهمة ضمن <em>النظام ← مهام التهيئة</em> وفي سجل الدردشة. عالج السبب واضغط <em>إعادة محاولة التهيئة</em>؛ فهي تعيد المهمة نفسها ولا تنشئ قاعدة بيانات أو مستخدمًا ثانيًا."
+msgid ""
+"Nothing was left half-built. The reason is in the latest job under\n"
+"                                <em>System → Provisioning Jobs</em> and in the chatter. Fix the cause\n"
+"                                and press <em>Retry Provisioning</em>; it re-runs the same job and\n"
+"                                never creates a second database or user."
+msgstr ""
+"لم يُترك شيء نصف مبني. السبب في أحدث مهمة ضمن <em>النظام ← مهام التهيئة</em>"
+" وفي سجل الدردشة. عالج السبب واضغط <em>إعادة محاولة التهيئة</em>؛ فهي تعيد "
+"المهمة نفسها ولا تنشئ قاعدة بيانات أو مستخدمًا ثانيًا."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_subscription__message_needaction_counter
@@ -1115,13 +1228,21 @@ msgstr "لمرة واحدة"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription__billing_cycle
-msgid "One Time is a perpetual membership: charged once, never renewed, and it stays active until an administrator cancels, suspends or terminates it."
-msgstr "«لمرة واحدة» عضوية دائمة: تُدفع مرة واحدة ولا تُجدَّد، وتبقى نشطة حتى يلغيها المسؤول أو يعلّقها أو ينهيها."
+msgid ""
+"One Time is a perpetual membership: charged once, never renewed, and it "
+"stays active until an administrator cancels, suspends or terminates it."
+msgstr ""
+"«لمرة واحدة» عضوية دائمة: تُدفع مرة واحدة ولا تُجدَّد، وتبقى نشطة حتى يلغيها"
+" المسؤول أو يعلّقها أو ينهيها."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__provision_stage
-msgid "One answer to 'where is this company in getting its workspace?', derived from the approval state and the database status."
-msgstr "إجابة واحدة عن «أين وصلت هذه الشركة في الحصول على مساحة عملها؟»، مشتقة من حالة الموافقة وحالة قاعدة البيانات."
+msgid ""
+"One answer to 'where is this company in getting its workspace?', derived "
+"from the approval state and the database status."
+msgstr ""
+"إجابة واحدة عن «أين وصلت هذه الشركة في الحصول على مساحة عملها؟»، مشتقة من "
+"حالة الموافقة وحالة قاعدة البيانات."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_subscription_plan__one_time_price
@@ -1130,8 +1251,12 @@ msgstr "السعر لمرة واحدة"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__admin_password_hash
-msgid "One-way hash of the password a customer chose when registering. Applied at provisioning, then erased."
-msgstr "تجزئة أحادية الاتجاه لكلمة المرور التي اختارها العميل عند التسجيل. تُطبَّق عند التهيئة ثم تُمحى."
+msgid ""
+"One-way hash of the password a customer chose when registering. Applied at "
+"provisioning, then erased."
+msgstr ""
+"تجزئة أحادية الاتجاه لكلمة المرور التي اختارها العميل عند التسجيل. تُطبَّق "
+"عند التهيئة ثم تُمحى."
 
 #. module: ncollection_subscription
 #. odoo-python
@@ -1142,19 +1267,29 @@ msgstr "يمكن لمسؤول المنصة فقط تغيير وحدات المس
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/tenant.py:0
-msgid "Only an Administrator can change who may enter a company from the platform."
+msgid ""
+"Only an Administrator can change who may enter a company from the platform."
 msgstr "يمكن للمسؤول فقط تغيير من يستطيع دخول شركة من المنصة."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
-msgid "Only the platform administrators listed here can see this company in\n                                their Summary and enter it. Entering signs them in to this company's own database as a\n                                named Platform Admin account; no password is shared or stored."
-msgstr "يستطيع مسؤولو المنصة المدرجون هنا فقط رؤية هذه الشركة في ملخصهم ودخولها. يسجّل الدخول حسابًا مسمّى لمسؤول المنصة في قاعدة بيانات هذه الشركة؛ ولا تُشارَك كلمة مرور ولا تُخزَّن."
+msgid ""
+"Only the platform administrators listed here can see this company in\n"
+"                                their Summary and enter it. Entering signs them in to this company's own database as a\n"
+"                                named Platform Admin account; no password is shared or stored."
+msgstr ""
+"يستطيع مسؤولو المنصة المدرجون هنا فقط رؤية هذه الشركة في ملخصهم ودخولها. "
+"يسجّل الدخول حسابًا مسمّى لمسؤول المنصة في قاعدة بيانات هذه الشركة؛ ولا "
+"تُشارَك كلمة مرور ولا تُخزَّن."
 
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/tenant.py:0
-msgid "Only the provisioning engine may set a tenant's database status to '%(status)s'."
-msgstr "لا يجوز إلا لمحرك التجهيز تعيين حالة قاعدة بيانات المستأجر إلى '%(status)s'."
+msgid ""
+"Only the provisioning engine may set a tenant's database status to "
+"'%(status)s'."
+msgstr ""
+"لا يجوز إلا لمحرك التجهيز تعيين حالة قاعدة بيانات المستأجر إلى '%(status)s'."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields.selection,name:ncollection_subscription.selection__ncollection_tenant__admin_credentials_state__reset_link
@@ -1226,8 +1361,12 @@ msgstr "مؤشر لحظي: نشط / (نشط + تجريبي)."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription_dashboard__churn_rate
-msgid "Point-in-time proxy: churned / (active + churned). Not a 30-day rate (no status-transition history yet)."
-msgstr "مؤشر لحظي: متسرّب / (نشط + متسرّب). ليس معدل 30 يومًا (لا يوجد سجل لانتقالات الحالة بعد)."
+msgid ""
+"Point-in-time proxy: churned / (active + churned). Not a 30-day rate (no "
+"status-transition history yet)."
+msgstr ""
+"مؤشر لحظي: متسرّب / (نشط + متسرّب). ليس معدل 30 يومًا (لا يوجد سجل لانتقالات"
+" الحالة بعد)."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant__portal_url
@@ -1275,8 +1414,13 @@ msgstr "قائمة انتظار التجهيز"
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
-msgid "Provisioning creates it, installs the plan's modules and seeds\n                                the administrator account. Use <em>Create &amp; Provision Tenant</em>\n                                above — one click, nothing else to run."
-msgstr "تنشئها التهيئة وتثبّت وحدات الخطة وتزرع حساب المسؤول. استخدم <em>إنشاء وتهيئة المستأجر</em> أعلاه — بنقرة واحدة ولا شيء آخر لتشغيله."
+msgid ""
+"Provisioning creates it, installs the plan's modules and seeds\n"
+"                                the administrator account. Use <em>Create &amp; Provision Tenant</em>\n"
+"                                above — one click, nothing else to run."
+msgstr ""
+"تنشئها التهيئة وتثبّت وحدات الخطة وتزرع حساب المسؤول. استخدم <em>إنشاء "
+"وتهيئة المستأجر</em> أعلاه — بنقرة واحدة ولا شيء آخر لتشغيله."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_provisioning_job_form
@@ -1313,8 +1457,12 @@ msgstr "السبب"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant_module_wizard__reason
-msgid "Recorded on every override this change creates, so 'why is this customer different from their plan?' always has an answer."
-msgstr "يُسجَّل على كل استثناء ينشئه هذا التغيير، فيكون لسؤال «لماذا يختلف هذا العميل عن خطته؟» جواب دائمًا."
+msgid ""
+"Recorded on every override this change creates, so 'why is this customer "
+"different from their plan?' always has an answer."
+msgstr ""
+"يُسجَّل على كل استثناء ينشئه هذا التغيير، فيكون لسؤال «لماذا يختلف هذا "
+"العميل عن خطته؟» جواب دائمًا."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant__registration_date
@@ -1425,13 +1573,23 @@ msgstr "تحديد النتائج المرئية"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__registration_state
-msgid "Self-registered companies wait here until an administrator approves them. No database exists until then."
-msgstr "تنتظر الشركات المسجَّلة ذاتيًا هنا حتى يوافق عليها مسؤول. لا توجد قاعدة بيانات حتى ذلك الحين."
+msgid ""
+"Self-registered companies wait here until an administrator approves them. No"
+" database exists until then."
+msgstr ""
+"تنتظر الشركات المسجَّلة ذاتيًا هنا حتى يوافق عليها مسؤول. لا توجد قاعدة "
+"بيانات حتى ذلك الحين."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__admin_password
-msgid "Set once, used at provisioning, then erased from this record. Leave empty to have the tenant born hardened: an unguessable password the owner replaces through the emailed reset link."
-msgstr "تُضبط مرة واحدة وتُستخدم عند التهيئة ثم تُمحى من هذا السجل. اتركها فارغة ليولد المستأجر محصّنًا: كلمة مرور لا يمكن تخمينها يستبدلها المالك عبر رابط إعادة التعيين المرسل بالبريد."
+msgid ""
+"Set once, used at provisioning, then erased from this record. Leave empty to"
+" have the tenant born hardened: an unguessable password the owner replaces "
+"through the emailed reset link."
+msgstr ""
+"تُضبط مرة واحدة وتُستخدم عند التهيئة ثم تُمحى من هذا السجل. اتركها فارغة "
+"ليولد المستأجر محصّنًا: كلمة مرور لا يمكن تخمينها يستبدلها المالك عبر رابط "
+"إعادة التعيين المرسل بالبريد."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields.selection,name:ncollection_subscription.selection__ncollection_tenant__admin_credentials_state__pending
@@ -1475,8 +1633,16 @@ msgstr "الحالة"
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription__activity_state
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__activity_state
-msgid "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities."
-msgstr "الحالة بناءً على الأنشطة\nمتأخر: تاريخ الاستحقاق قد مضى\nاليوم: تاريخ النشاط هو اليوم\nمخطط: أنشطة مستقبلية."
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"الحالة بناءً على الأنشطة\n"
+"متأخر: تاريخ الاستحقاق قد مضى\n"
+"اليوم: تاريخ النشاط هو اليوم\n"
+"مخطط: أنشطة مستقبلية."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_dashboard_form
@@ -1588,8 +1754,14 @@ msgstr "مستأجر"
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/tenant.py:0
-msgid "Tenant '%s' has no valid administrator username. Set one on the tenant (3-32 characters: lowercase letters, digits, '.', '_' or '-', starting with a letter; an email address is not a username) before provisioning."
-msgstr "المستأجر '%s' ليس لديه اسم مستخدم مسؤول صالح. عيّن واحدًا على المستأجر (3–32 حرفًا: أحرف صغيرة وأرقام و'.' و'_' و'-'، ويبدأ بحرف؛ والبريد الإلكتروني ليس اسم مستخدم) قبل التهيئة."
+msgid ""
+"Tenant '%s' has no valid administrator username. Set one on the tenant (3-32"
+" characters: lowercase letters, digits, '.', '_' or '-', starting with a "
+"letter; an email address is not a username) before provisioning."
+msgstr ""
+"المستأجر '%s' ليس لديه اسم مستخدم مسؤول صالح. عيّن واحدًا على المستأجر (3–32"
+" حرفًا: أحرف صغيرة وأرقام و'.' و'_' و'-'، ويبدأ بحرف؛ والبريد الإلكتروني ليس"
+" اسم مستخدم) قبل التهيئة."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
@@ -1657,14 +1829,22 @@ msgstr "كلمتا مرور المسؤول غير متطابقتين."
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/tenant.py:0
-msgid "The administrator username cannot be an email address. Choose a username such as 'atlasadmin'; the email is contact information only."
-msgstr "لا يمكن أن يكون اسم مستخدم المسؤول بريدًا إلكترونيًا. اختر اسمًا مثل 'atlasadmin'؛ فالبريد الإلكتروني للتواصل فقط."
+msgid ""
+"The administrator username cannot be an email address. Choose a username "
+"such as 'atlasadmin'; the email is contact information only."
+msgstr ""
+"لا يمكن أن يكون اسم مستخدم المسؤول بريدًا إلكترونيًا. اختر اسمًا مثل "
+"'atlasadmin'؛ فالبريد الإلكتروني للتواصل فقط."
 
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/tenant.py:0
-msgid "The administrator username must be 3-32 characters: lowercase letters, digits, '.', '_' or '-', starting with a letter."
-msgstr "يجب أن يكون اسم مستخدم المسؤول من 3–32 حرفًا: أحرف صغيرة وأرقام و'.' و'_' و'-'، ويبدأ بحرف."
+msgid ""
+"The administrator username must be 3-32 characters: lowercase letters, "
+"digits, '.', '_' or '-', starting with a letter."
+msgstr ""
+"يجب أن يكون اسم مستخدم المسؤول من 3–32 حرفًا: أحرف صغيرة وأرقام و'.' و'_' "
+"و'-'، ويبدأ بحرف."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant_module_override__module_name
@@ -1673,8 +1853,13 @@ msgstr "الاسم التقني للوحدة، مثل 'crm'."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
-msgid "The password now lives in the tenant's own database and was\n                                erased from here. It is changed from the user's profile\n                                inside the workspace."
-msgstr "كلمة المرور الآن في قاعدة بيانات المستأجر نفسه وقد مُحيت من هنا. تُغيَّر من ملف المستخدم الشخصي داخل مساحة العمل."
+msgid ""
+"The password now lives in the tenant's own database and was\n"
+"                                erased from here. It is changed from the user's profile\n"
+"                                inside the workspace."
+msgstr ""
+"كلمة المرور الآن في قاعدة بيانات المستأجر نفسه وقد مُحيت من هنا. تُغيَّر من "
+"ملف المستخدم الشخصي داخل مساحة العمل."
 
 #. module: ncollection_subscription
 #: model:ir.model.constraint,message:ncollection_subscription.constraint_ncollection_subscription_plan_code_unique
@@ -1684,8 +1869,13 @@ msgstr "يجب أن يكون رمز الخطة فريدًا."
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/tenant.py:0
-msgid "The platform base domain is not configured. Set it in SaaS Settings, or set NC_BASE_DOMAIN in the deployment environment (e.g. ncollection.localhost for local development)."
-msgstr "النطاق الأساسي للمنصة غير مضبوط. اضبطه في إعدادات SaaS، أو اضبط NC_BASE_DOMAIN في بيئة النشر (مثل ncollection.localhost للتطوير المحلي)."
+msgid ""
+"The platform base domain is not configured. Set it in SaaS Settings, or set "
+"NC_BASE_DOMAIN in the deployment environment (e.g. ncollection.localhost for"
+" local development)."
+msgstr ""
+"النطاق الأساسي للمنصة غير مضبوط. اضبطه في إعدادات SaaS، أو اضبط "
+"NC_BASE_DOMAIN في بيئة النشر (مثل ncollection.localhost للتطوير المحلي)."
 
 #. module: ncollection_subscription
 #: model:ir.model.constraint,message:ncollection_subscription.constraint_ncollection_tenant_tenant_uuid_unique
@@ -1711,8 +1901,12 @@ msgstr "لدى هذا المستأجر استثناء لتلك الوحدة با
 #. module: ncollection_subscription
 #. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_module_matrix.py:0
-msgid "This tenant's plan grants only the core modules every workspace receives. Use “Customize modules” to add modules for this tenant alone."
-msgstr "خطة هذا المستأجر تمنح الوحدات الأساسية فقط التي تحصل عليها كل مساحة عمل. استخدم «تخصيص الوحدات» لإضافة وحدات لهذا المستأجر وحده."
+msgid ""
+"This tenant's plan grants only the core modules every workspace receives. "
+"Use “Customize modules” to add modules for this tenant alone."
+msgstr ""
+"خطة هذا المستأجر تمنح الوحدات الأساسية فقط التي تحصل عليها كل مساحة عمل. "
+"استخدم «تخصيص الوحدات» لإضافة وحدات لهذا المستأجر وحده."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_provisioning_job_form
@@ -1776,8 +1970,13 @@ msgstr "نوع النشاط الاستثنائي في السجل."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__admin_login
-msgid "Username the tenant administrator signs in with. Defaults to the email address when left empty, which is the behaviour every tenant provisioned before this field had."
-msgstr "اسم المستخدم الذي يسجّل به مسؤول المستأجر الدخول. الافتراضي هو البريد الإلكتروني عند تركه فارغًا، وهو سلوك كل مستأجر تمت تهيئته قبل هذا الحقل."
+msgid ""
+"Username the tenant administrator signs in with. Defaults to the email "
+"address when left empty, which is the behaviour every tenant provisioned "
+"before this field had."
+msgstr ""
+"اسم المستخدم الذي يسجّل به مسؤول المستأجر الدخول. الافتراضي هو البريد "
+"الإلكتروني عند تركه فارغًا، وهو سلوك كل مستأجر تمت تهيئته قبل هذا الحقل."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_subscription_form
@@ -1798,23 +1997,39 @@ msgstr "سجل التواصل على الموقع الإلكتروني"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__module_matrix_html
-msgid "What the plan grants, what this tenant has changed, and what the tenant ends up with. Read-only: change it with 'Customize modules'."
-msgstr "ما تمنحه الخطة، وما غيّره هذا المستأجر، وما ينتهي إليه المستأجر. للقراءة فقط: غيّره بـ«تخصيص الوحدات»."
+msgid ""
+"What the plan grants, what this tenant has changed, and what the tenant ends"
+" up with. Read-only: change it with 'Customize modules'."
+msgstr ""
+"ما تمنحه الخطة، وما غيّره هذا المستأجر، وما ينتهي إليه المستأجر. للقراءة "
+"فقط: غيّره بـ«تخصيص الوحدات»."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_subscription__trial_end_date
-msgid "When the trial ends. Set by action_start_trial from the plan trial_days; a trial past this date is converted or expired."
-msgstr "موعد انتهاء الفترة التجريبية. يتم تعيينه بواسطة action_start_trial من قيمة trial_days في الخطة؛ الفترة التجريبية التي تتجاوز هذا التاريخ يتم تحويلها أو تنتهي صلاحيتها."
+msgid ""
+"When the trial ends. Set by action_start_trial from the plan trial_days; a "
+"trial past this date is converted or expired."
+msgstr ""
+"موعد انتهاء الفترة التجريبية. يتم تعيينه بواسطة action_start_trial من قيمة "
+"trial_days في الخطة؛ الفترة التجريبية التي تتجاوز هذا التاريخ يتم تحويلها أو"
+" تنتهي صلاحيتها."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__tenant_url
-msgid "Where this tenant is reachable: <subdomain>.<base domain>. Empty until the base domain is configured."
-msgstr "المكان الذي يمكن الوصول إلى هذا المستأجر فيه: <النطاق الفرعي>.<النطاق الأساسي>. فارغ حتى يُضبط النطاق الأساسي."
+msgid ""
+"Where this tenant is reachable: <subdomain>.<base domain>. Empty until the "
+"base domain is configured."
+msgstr ""
+"المكان الذي يمكن الوصول إلى هذا المستأجر فيه: <النطاق الفرعي>.<النطاق "
+"الأساسي>. فارغ حتى يُضبط النطاق الأساسي."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__admin_credentials_state
-msgid "Whether a password is waiting to be applied, has been applied and erased from here, or was never set."
-msgstr "هل كلمة مرور بانتظار التطبيق، أم طُبِّقت ومُحيت من هنا، أم لم تُضبط أبدًا."
+msgid ""
+"Whether a password is waiting to be applied, has been applied and erased "
+"from here, or was never set."
+msgstr ""
+"هل كلمة مرور بانتظار التطبيق، أم طُبِّقت ومُحيت من هنا، أم لم تُضبط أبدًا."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__localization_status
@@ -1823,8 +2038,12 @@ msgstr "حزمة التوطين التي يُهيَّأ بها هذا المست
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__platform_admin_ids
-msgid "Who may enter this company from the platform. Leave a person out and they cannot see or enter it."
-msgstr "من يستطيع دخول هذه الشركة من المنصة. إن استبعدت شخصًا فلن يستطيع رؤيتها أو دخولها."
+msgid ""
+"Who may enter this company from the platform. Leave a person out and they "
+"cannot see or enter it."
+msgstr ""
+"من يستطيع دخول هذه الشركة من المنصة. إن استبعدت شخصًا فلن يستطيع رؤيتها أو "
+"دخولها."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant__registration_decision_note
@@ -1838,8 +2057,11 @@ msgstr "لماذا يختلف هذا المستأجر عن خطته؟ (اختي�
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,help:ncollection_subscription.field_ncollection_tenant_module_override__reason
-msgid "Why this tenant differs from its plan. Shown to whoever asks why a customer is missing an app."
-msgstr "سبب اختلاف هذا المستأجر عن خطته. يُعرض لمن يسأل لماذا ينقص عميلًا تطبيق ما."
+msgid ""
+"Why this tenant differs from its plan. Shown to whoever asks why a customer "
+"is missing an app."
+msgstr ""
+"سبب اختلاف هذا المستأجر عن خطته. يُعرض لمن يسأل لماذا ينقص عميلًا تطبيق ما."
 
 #. module: ncollection_subscription
 #: model:ir.model.fields,field_description:ncollection_subscription.field_ncollection_tenant_module_wizard_line__wizard_id
@@ -1894,8 +2116,14 @@ msgstr "مثال: atlasadmin (مطلوب — وليس بريدًا إلكترو�
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_module_wizard_form
-msgid "only. <em>In the plan</em> is the shared baseline; <em>Change</em> shows how\n                    this tenant will differ from it. The plan and other tenants are not touched,\n                    and switching a module off never deletes its data."
-msgstr "فقط. <em>في الخطة</em> هي الأساس المشترك؛ و<em>تغيير</em> يوضح كيف سيختلف هذا المستأجر عنها. لا تُمَسّ الخطة ولا المستأجرون الآخرون، وتعطيل وحدة لا يحذف بياناتها أبدًا."
+msgid ""
+"only. <em>In the plan</em> is the shared baseline; <em>Change</em> shows how\n"
+"                    this tenant will differ from it. The plan and other tenants are not touched,\n"
+"                    and switching a module off never deletes its data."
+msgstr ""
+"فقط. <em>في الخطة</em> هي الأساس المشترك؛ و<em>تغيير</em> يوضح كيف سيختلف "
+"هذا المستأجر عنها. لا تُمَسّ الخطة ولا المستأجرون الآخرون، وتعطيل وحدة لا "
+"يحذف بياناتها أبدًا."
 
 #. module: ncollection_subscription
 #. odoo-python
@@ -2041,7 +2269,9 @@ msgstr "يتبع %s"
 msgid ""
 "'%(module)s' follows '%(host)s' and has no switch of its own: enable or "
 "disable '%(host)s' instead."
-msgstr "«%(module)s» يتبع «%(host)s» وليس له مفتاح تشغيل خاص به: فعّل «%(host)s» أو عطّله بدلًا من ذلك."
+msgstr ""
+"«%(module)s» يتبع «%(host)s» وليس له مفتاح تشغيل خاص به: فعّل «%(host)s» أو "
+"عطّله بدلًا من ذلك."
 
 #. module: ncollection_subscription
 #: model_terms:ir.ui.view,arch_db:ncollection_subscription.view_ncollection_tenant_form
@@ -2070,8 +2300,104 @@ msgid ""
 "The password now lives in the tenant's own database and was\n"
 "                                    erased from here. Reset it from Users &amp; Access."
 msgstr ""
-"كلمة المرور الآن في قاعدة بيانات المستأجر نفسه وقد مُحيت من هنا. أعد تعيينها "
-"من «المستخدمون والوصول»."
+"كلمة المرور الآن في قاعدة بيانات المستأجر نفسه وقد مُحيت من هنا. أعد تعيينها"
+" من «المستخدمون والوصول»."
+
+#. module: ncollection_subscription
+#. odoo-python
+#: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
+msgid ""
+"%(label)s is for %(country)s tenants only; this tenant's country is "
+"%(actual)s."
+msgstr ""
+"%(label)s متاح لمستأجري %(country)s فقط؛ وبلد هذا المستأجر هو %(actual)s."
+
+#. module: ncollection_subscription
+#. odoo-python
+#: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
+msgid "%(label)s needs %(missing)s in this tenant's entitlement."
+msgstr "%(label)s يتطلب %(missing)s ضمن استحقاقات هذا المستأجر."
+
+#. module: ncollection_subscription
+#. odoo-python
+#: code:addons/ncollection_subscription/models/tenant_module_override.py:0
+msgid "'%(module)s' cannot be enabled for tenant '%(tenant)s': %(reasons)s"
+msgstr "لا يمكن تفعيل '%(module)s' للمستأجر '%(tenant)s': %(reasons)s"
+
+#. module: ncollection_subscription
+#. odoo-python
+#: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
+msgid "'%s' is not a gated module."
+msgstr "'%s' ليس موديولاً مقيَّداً بشروط الأهلية."
+
+#. module: ncollection_subscription
+#. odoo-python
+#: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
+#: code:addons/ncollection_subscription/models/tenant_module_override.py:0
+msgid "A reason (a ticket or approval reference) is required to enable %s."
+msgstr "يلزم ذكر سبب (مرجع تذكرة أو موافقة) لتفعيل %s."
+
+#. module: ncollection_subscription
+#: model:ir.model,name:ncollection_subscription.model_ncollection_tenant_module_wizard
+msgid "Customize Modules For One Tenant"
+msgstr "تخصيص الموديولات لمستأجر واحد"
+
+#. module: ncollection_subscription
+#: model:ir.model,name:ncollection_subscription.model_ncollection_tenant_module_wizard_line
+msgid "Customize Modules — One Module"
+msgstr "تخصيص الموديولات — موديول واحد"
+
+#. module: ncollection_subscription
+#: model:ir.model,name:ncollection_subscription.model_ncollection_provisioning_job
+msgid "NCollection Provisioning Job"
+msgstr "مهمة تجهيز NCollection"
+
+#. module: ncollection_subscription
+#: model:ir.model,name:ncollection_subscription.model_ncollection_subscription
+msgid "NCollection Subscription"
+msgstr "اشتراك NCollection"
+
+#. module: ncollection_subscription
+#: model:ir.model,name:ncollection_subscription.model_ncollection_subscription_plan
+msgid "NCollection Subscription Plan"
+msgstr "خطة اشتراك NCollection"
+
+#. module: ncollection_subscription
+#: model:ir.model,name:ncollection_subscription.model_ncollection_tenant
+msgid "NCollection Tenant Company"
+msgstr "شركة مستأجر NCollection"
+
+#. module: ncollection_subscription
+#: model:res.groups,comment:ncollection_subscription.group_platform_admin
+msgid ""
+"NCollection platform staff: the SaaS-admin dashboard,\n"
+"                tenants, subscriptions, plans and the provisioning queue."
+msgstr ""
+"فريق منصة NCollection: لوحة مسؤول المنصة والمستأجرون والاشتراكات والخطط "
+"ومهام التجهيز."
+
+#. module: ncollection_subscription
+#: model:ir.model,name:ncollection_subscription.model_ncollection_tenant_module_override
+msgid "Per-Tenant Module Override"
+msgstr "تجاوز الموديولات لكل مستأجر"
+
+#. module: ncollection_subscription
+#. odoo-python
+#: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
+msgid ""
+"This tenant's country is %(country)s but its accounting company has not been"
+" verified as a %(country)s company (the registry label is not enough). Run "
+"'Apply localization' on the tenant: it is a harmless check on a tenant that "
+"is already correct, and it refuses one that is not."
+msgstr ""
+"بلد هذا المستأجر هو %(country)s لكن لم يتم التحقق من أن شركته المحاسبية شركة"
+" %(country)s (بناءً على سجل الدفاتر المحاسبية الفعلية)."
+
+#. module: ncollection_subscription
+#. odoo-python
+#: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
+msgid "not set"
+msgstr "غير محدد"
 
 #. module: ncollection_subscription
 #: model:ir.model.fields.selection,name:ncollection_subscription.selection__ncollection_tenant__database_status__validating
