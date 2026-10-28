@@ -308,6 +308,22 @@ class EInvoice(models.Model):
     business_state = fields.Selection(BUSINESS_STATES, default='unknown', required=True, readonly=True)
     locked = fields.Boolean(readonly=True, copy=False)
     headline = fields.Char(compute='_compute_headline')
+    # What the operator sees in this phase. Deliberately only five values: nothing here can say "sent" or
+    # "transmitted", because no transmission exists yet (the submission dimensions stay 'not submitted').
+    ui_status = fields.Selection(
+        [
+            ('not_required', 'Not required'),
+            ('draft', 'Draft'),
+            ('ready', 'Ready'),
+            ('invalid', 'Invalid'),
+            ('validated', 'Validated'),
+        ],
+        string='Status',
+        compute='_compute_ui_status',
+        help="Not required: no e-invoice obligation (see Scope). Draft: not prepared yet. Invalid: blocking findings "
+        "or failed official validation. Ready: prepared (and possibly turned into XML), not yet officially "
+        "validated. Validated: the official PINT-AE rules passed. Nothing has been transmitted.",
+    )
 
     line_ids = fields.One2many('ncollection.einvoice.line', 'einvoice_id')
     history_ids = fields.One2many('ncollection.einvoice.history', 'einvoice_id', readonly=True)
@@ -360,6 +376,23 @@ class EInvoice(models.Model):
                 record.headline = labels[record.local_state]
             else:
                 record.headline = dict(SUBMISSION_STATES)[record.submission_state]
+
+    @api.depends('local_state', 'validation_ids.severity')
+    def _compute_ui_status(self):
+        for record in self:
+            state = record.local_state
+            if state == 'not_required':
+                record.ui_status = 'not_required'
+            elif state == 'validated':
+                record.ui_status = 'validated'
+            elif state == 'validation_failed':
+                record.ui_status = 'invalid'
+            elif state in ('ready', 'locally_checked'):
+                record.ui_status = 'ready'
+            elif any(v.severity == 'error' for v in record.validation_ids):
+                record.ui_status = 'invalid'
+            else:
+                record.ui_status = 'draft'
 
     def _nc_today(self):
         """Today in the UAE (Asia/Dubai), whatever the server's or the user's time zone."""

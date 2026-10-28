@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection UAE E-Invoicing',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Accounting/Localizations',
     'summary': 'UAE e-invoicing engine (PINT-AE): reconciliation, XML generation, validation boundary, status model, '
     'audit and archive for customer invoices and credit notes. ASP-agnostic: no provider is built in.',
@@ -26,5 +26,8 @@
         'security/security.xml',
         'security/ir.model.access.csv',
         'data/sequence.xml',
+        'views/einvoice_views.xml',
+        'views/config_views.xml',
+        'views/menus.xml',
     ],
 }

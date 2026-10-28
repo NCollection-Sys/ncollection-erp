@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The operator's workflow: account.move -> Prepare (scope + readiness) -> Generate XML -> Validate (official
+         rules) -> findings and history. There is no submission in this phase: nothing on these screens can say that a
+         document was sent or transmitted. Every restriction shown here is also enforced by the model. -->
+
+    <record id="view_einvoice_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.list</field>
+        <field name="model">ncollection.einvoice</field>
+        <field name="arch" type="xml">
+            <list string="UAE e-invoices" create="false" delete="false"
+                  decoration-muted="ui_status == 'not_required'" decoration-danger="ui_status == 'invalid' or is_overdue"
+                  decoration-success="ui_status == 'validated'">
+                <field name="name"/>
+                <field name="move_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="document_kind"/>
+                <field name="type_code"/>
+                <field name="transaction_date"/>
+                <field name="issue_deadline"/>
+                <field name="is_overdue"/>
+                <field name="ui_status" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_einvoice_search" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.search</field>
+        <field name="model">ncollection.einvoice</field>
+        <field name="arch" type="xml">
+            <search string="UAE e-invoices">
+                <field name="name"/>
+                <field name="move_id"/>
+                <field name="uuid"/>
+                <filter name="overdue" string="Overdue" domain="[('is_overdue', '=', True)]"/>
+                <separator/>
+                <filter name="not_required" string="Not required" domain="[('local_state', '=', 'not_required')]"/>
+                <filter name="draft" string="Draft" domain="[('local_state', '=', 'draft')]"/>
+                <filter name="ready" string="Ready" domain="[('local_state', 'in', ('ready', 'locally_checked'))]"/>
+                <filter name="invalid" string="Validation failed" domain="[('local_state', '=', 'validation_failed')]"/>
+                <filter name="validated" string="Validated" domain="[('local_state', '=', 'validated')]"/>
+                <group>
+                    <filter name="group_kind" string="Document kind" context="{'group_by': 'document_kind'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_einvoice_form" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.form</field>
+        <field name="model">ncollection.einvoice</field>
+        <field name="arch" type="xml">
+            <form string="UAE e-invoice" create="false" delete="false">
+                <header>
+                    <button name="action_prepare" type="object" string="Prepare" class="btn-primary"
+                            invisible="local_state not in ('draft', 'not_required')"/>
+                    <button name="action_prepare" type="object" string="Prepare again"
+                            invisible="local_state in ('draft', 'not_required')"/>
+                    <button name="action_generate_xml" type="object" string="Generate XML" class="btn-primary"
+                            invisible="local_state != 'ready'"/>
+                    <button name="action_validate" type="object" string="Validate" class="btn-primary"
+                            invisible="local_state not in ('locally_checked', 'validation_failed')"/>
+                    <field name="ui_status" widget="statusbar" statusbar_visible="draft,ready,validated"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="status" invisible="local_state != 'not_required'">
+                        No e-invoice is required for this document:
+                        <field name="scope_reason" class="fw-bold" readonly="1"/>
+                        (<field name="scope_source" readonly="1"/>).
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not is_overdue">
+                        The issue deadline has passed and this e-invoice has not been submitted.
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Document">
+                            <field name="move_id" readonly="1"/>
+                            <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                            <field name="document_kind" readonly="1"/>
+                            <field name="type_code" readonly="1"/>
+                            <field name="transaction_type_code" readonly="1"/>
+                            <field name="spec_version" readonly="1"/>
+                        </group>
+                        <group string="Dates">
+                            <field name="transaction_date" readonly="1"/>
+                            <field name="issue_deadline" readonly="1"/>
+                            <field name="vat_issue_deadline" readonly="1" invisible="not vat_issue_deadline"/>
+                            <field name="is_overdue" readonly="1"/>
+                            <field name="vat_point_date" readonly="1" invisible="not vat_point_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Scenario" name="scenario">
+                            <group>
+                                <group string="Transaction type (BTAE-02)">
+                                    <field name="flag_free_zone"/>
+                                    <field name="flag_deemed_supply"/>
+                                    <field name="flag_margin_scheme"/>
+                                    <field name="flag_summary"/>
+                                    <field name="flag_continuous_supply"/>
+                                    <field name="flag_agent_billing"/>
+                                    <field name="flag_ecommerce"/>
+                                    <field name="flag_export"/>
+                                </group>
+                                <group string="Scenario data">
+                                    <field name="beneficiary_id" invisible="not flag_free_zone"/>
+                                    <field name="principal_id" invisible="not flag_agent_billing"/>
+                                    <field name="billing_frequency"
+                                           invisible="not flag_continuous_supply and not flag_summary"/>
+                                    <field name="period_start" invisible="not flag_continuous_supply and not flag_summary"/>
+                                    <field name="period_end" invisible="not flag_continuous_supply and not flag_summary"/>
+                                    <field name="buyer_not_onboarded"/>
+                                    <field name="credit_reason" invisible="document_kind != 'credit_note'"/>
+                                    <field name="payment_means_override"/>
+                                    <field name="advance_move_ids" widget="many2many_tags"
+                                           invisible="document_kind != 'invoice'"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Scope" name="scope">
+                            <group>
+                                <field name="scope_state" readonly="1"/>
+                                <field name="scope_reason_code" readonly="1"/>
+                                <field name="scope_reason" readonly="1"/>
+                                <field name="scope_source" readonly="1"/>
+                                <field name="scope_window" readonly="1"/>
+                                <field name="excluded_transaction"
+                                       groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+                            </group>
+                        </page>
+                        <page string="Lines" name="lines">
+                            <field name="line_ids">
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="sequence" readonly="1"/>
+                                    <field name="name" readonly="1"/>
+                                    <field name="adjustment"/>
+                                    <field name="reason_code"/>
+                                    <field name="reason"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Findings" name="findings">
+                            <field name="validation_ids" readonly="1">
+                                <list create="false" delete="false" decoration-danger="severity == 'error'"
+                                      decoration-warning="severity == 'warning'">
+                                    <field name="layer"/>
+                                    <field name="severity"/>
+                                    <field name="rule"/>
+                                    <field name="authority"/>
+                                    <field name="subject"/>
+                                    <field name="message"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Identity" name="identity">
+                            <group>
+                                <group string="Seller">
+                                    <field name="seller_tin" readonly="1"/>
+                                    <field name="seller_trn" readonly="1"/>
+                                    <field name="seller_endpoint_scheme" readonly="1"/>
+                                    <field name="seller_endpoint_id" readonly="1"/>
+                                </group>
+                                <group string="Buyer">
+                                    <field name="buyer_tin" readonly="1"/>
+                                    <field name="buyer_trn" readonly="1"/>
+                                    <field name="buyer_endpoint_scheme" readonly="1"/>
+                                    <field name="buyer_endpoint_id" readonly="1"/>
+                                    <field name="buyer_endpoint_source" readonly="1"/>
+                                </group>
+                                <group string="Document">
+                                    <field name="invoice_number" readonly="1"/>
+                                    <field name="uuid" readonly="1"/>
+                                    <field name="reconciliation_state" readonly="1"/>
+                                    <field name="xml_attachment_id" readonly="1"/>
+                                    <field name="xml_sha256" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="History" name="history">
+                            <field name="history_ids" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="at"/>
+                                    <field name="actor_id"/>
+                                    <field name="dimension"/>
+                                    <field name="from_state"/>
+                                    <field name="to_state"/>
+                                    <field name="event"/>
+                                    <field name="detail"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_einvoice" model="ir.actions.act_window">
+        <field name="name">UAE e-invoices</field>
+        <field name="res_model">ncollection.einvoice</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_einvoice_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No UAE e-invoice yet</p>
+            <p>Open a posted customer invoice or credit note and use its E-invoice button to prepare one.</p>
+        </field>
+    </record>
+
+    <!-- The smart button on the accounting document. Visible to e-invoicing users only; the method checks it too. -->
+    <record id="view_move_form_nc_einvoice" model="ir.ui.view">
+        <field name="name">account.move.form.nc.einvoice</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_nc_open_einvoice" type="object" class="oe_stat_button" icon="fa-file-code-o"
+                        groups="ncollection_uae_einvoicing.group_einvoice_user"
+                        invisible="state != 'posted' or move_type not in ('out_invoice', 'out_refund')">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">E-invoice</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

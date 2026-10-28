@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inside the Accounting app (no new Home tile). The menus are restricted to the e-invoicing groups; the models
+         are restricted by ir.model.access.csv and the engine's own write guards, so hiding a menu is never the
+         control. -->
+    <menuitem id="menu_einvoice_root" name="UAE E-Invoicing" parent="account.menu_finance" sequence="46"
+              groups="ncollection_uae_einvoicing.group_einvoice_user"/>
+    <menuitem id="menu_einvoice_documents" name="E-Invoices" parent="menu_einvoice_root" sequence="10"
+              action="action_einvoice" groups="ncollection_uae_einvoicing.group_einvoice_user"/>
+
+    <menuitem id="menu_einvoice_configuration" name="Configuration" parent="menu_einvoice_root" sequence="90"
+              groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+    <menuitem id="menu_einvoice_config" name="Settings" parent="menu_einvoice_configuration" sequence="10"
+              action="action_einvoice_config" groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+    <menuitem id="menu_einvoice_tax_map" name="Tax Mapping" parent="menu_einvoice_configuration" sequence="20"
+              action="action_einvoice_tax_map" groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+    <menuitem id="menu_einvoice_payment_map" name="Payment Means Mapping" parent="menu_einvoice_configuration"
+              sequence="30" action="action_einvoice_payment_map"
+              groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+    <menuitem id="menu_einvoice_provider" name="Service Providers" parent="menu_einvoice_configuration" sequence="40"
+              action="action_einvoice_provider" groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+    <menuitem id="menu_einvoice_holiday" name="Official Holidays" parent="menu_einvoice_configuration" sequence="50"
+              action="action_einvoice_holiday" groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+</odoo>

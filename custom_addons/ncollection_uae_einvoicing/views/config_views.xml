@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Configuration screens: managers write, users read (ir.model.access.csv). The provider's participant id and
+         credential state are written by an adapter only (models/config.py), so they are read-only here. -->
+
+    <record id="view_einvoice_config_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.config.list</field>
+        <field name="model">ncollection.einvoice.config</field>
+        <field name="arch" type="xml">
+            <list string="E-invoicing configuration">
+                <field name="company_id"/>
+                <field name="enabled"/>
+                <field name="spec_version"/>
+                <field name="default_payment_means_code"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_einvoice_config_form" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.config.form</field>
+        <field name="model">ncollection.einvoice.config</field>
+        <field name="arch" type="xml">
+            <form string="E-invoicing configuration">
+                <sheet>
+                    <group>
+                        <group string="Company">
+                            <field name="company_id"/>
+                            <field name="enabled"/>
+                            <field name="spec_version"/>
+                            <field name="effective_date"/>
+                        </group>
+                        <group string="Payment">
+                            <field name="company_partner_id" invisible="1"/>
+                            <field name="default_payment_means_code"/>
+                            <field name="default_bank_account_id"/>
+                        </group>
+                        <group string="Deadlines">
+                            <field name="vat_issue_days"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_einvoice_config" model="ir.actions.act_window">
+        <field name="name">E-invoicing configuration</field>
+        <field name="res_model">ncollection.einvoice.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_einvoice_tax_map_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.tax.map.list</field>
+        <field name="model">ncollection.einvoice.tax.map</field>
+        <field name="arch" type="xml">
+            <list string="Tax mapping" editable="bottom">
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="tax_id"/>
+                <field name="pint_category"/>
+                <field name="exemption_code" invisible="pint_category != 'E'"/>
+                <field name="rcm_goods_type" invisible="pint_category != 'AE'"/>
+                <field name="pint_rate" invisible="pint_category != 'AE'"/>
+                <field name="rc_narrative" invisible="pint_category != 'AE'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_einvoice_tax_map" model="ir.actions.act_window">
+        <field name="name">Tax mapping</field>
+        <field name="res_model">ncollection.einvoice.tax.map</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="view_einvoice_payment_map_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.payment.map.list</field>
+        <field name="model">ncollection.einvoice.payment.map</field>
+        <field name="arch" type="xml">
+            <list string="Payment means mapping" editable="bottom">
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="journal_id"/>
+                <field name="pint_code"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_einvoice_payment_map" model="ir.actions.act_window">
+        <field name="name">Payment means mapping</field>
+        <field name="res_model">ncollection.einvoice.payment.map</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="view_einvoice_provider_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.provider.list</field>
+        <field name="model">ncollection.einvoice.provider</field>
+        <field name="arch" type="xml">
+            <list string="Service providers (ASP)">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="adapter"/>
+                <field name="state"/>
+                <field name="asp_participant_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_einvoice_provider_form" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.provider.form</field>
+        <field name="model">ncollection.einvoice.provider</field>
+        <field name="arch" type="xml">
+            <form string="Service provider (ASP)">
+                <sheet>
+                    <div class="alert alert-info" role="status" invisible="adapter">
+                        No provider adapter is installed: nothing can be submitted from this workspace yet.
+                    </div>
+                    <group>
+                        <field name="name"/>
+                        <field name="company_id"/>
+                        <field name="adapter"/>
+                        <field name="state" readonly="1"/>
+                        <field name="asp_participant_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_einvoice_provider" model="ir.actions.act_window">
+        <field name="name">Service providers (ASP)</field>
+        <field name="res_model">ncollection.einvoice.provider</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_einvoice_holiday_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.holiday.list</field>
+        <field name="model">ncollection.einvoice.holiday</field>
+        <field name="arch" type="xml">
+            <list string="Official holidays" editable="bottom">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_einvoice_holiday" model="ir.actions.act_window">
+        <field name="name">Official holidays</field>
+        <field name="res_model">ncollection.einvoice.holiday</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

@@ -33,6 +33,11 @@
         <field name="model_id" ref="model_ncollection_einvoice_secret"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
+    <record id="rule_einvoice_holiday_company" model="ir.rule">
+        <field name="name">E-invoice holiday: own company or workspace-wide</field>
+        <field name="model_id" ref="model_ncollection_einvoice_holiday"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
     <record id="rule_einvoice_tax_map_company" model="ir.rule">
         <field name="name">E-invoice tax map: own company</field>
         <field name="model_id" ref="model_ncollection_einvoice_tax_map"/>
