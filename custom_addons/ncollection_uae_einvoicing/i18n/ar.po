@@ -10,6 +10,7 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid "'%s' is not a valid PINT-AE VAT category."
 msgstr "'%s' ليست فئة ضريبة قيمة مضافة صالحة في PINT-AE."
@@ -21,6 +22,7 @@ msgid ""
 msgstr "للشركة مزوّد خدمة معتمد واحد: ترسل وتستقبل عبر المزوّد نفسه."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
 msgid "A credential cannot be empty."
 msgstr "لا يمكن أن تكون بيانات الاعتماد فارغة."
@@ -31,6 +33,7 @@ msgid "A label chosen by the provider adapter, e.g. 'api_token'."
 msgstr "تسمية يحددها مهيّئ المزوّد، مثل 'api_token'."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/retention.py:0
 msgid "A legal hold is part of the record: close it, do not delete it."
 msgstr "الحجز القانوني جزء من السجل: أغلقه ولا تحذفه."
@@ -41,6 +44,7 @@ msgid "A line appears once per e-invoice."
 msgstr "يظهر البند مرة واحدة فقط في كل فاتورة إلكترونية."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid ""
 "A reverse-charge tax needs its goods type and the rate shown on the line."
@@ -56,11 +60,13 @@ msgstr ""
 "تجعل أي سجل قابلاً للإتلاف أبداً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "A submitted e-invoice is locked."
 msgstr "الفاتورة الإلكترونية المُرسلة مقفلة."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "A submitted e-invoice is locked; issue a credit note or a new invoice."
 msgstr ""
@@ -102,16 +108,19 @@ msgid "Adjustment"
 msgstr "تسوية"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
 msgid "An e-invoice archive file cannot be deleted."
 msgstr "لا يمكن حذف ملف أرشيف الفاتورة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
 msgid "An e-invoice archive file cannot be modified."
 msgstr "لا يمكن تعديل ملف أرشيف الفاتورة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid "An exempt tax needs its exemption reason."
 msgstr "الضريبة المعفاة تتطلب سبب الإعفاء."
@@ -358,6 +367,7 @@ msgid "E-invoice record"
 msgstr "سجل الفاتورة الإلكترونية"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "E-invoice records are part of the regulated archive and are never deleted."
@@ -548,6 +558,7 @@ msgid "Fta State"
 msgstr "حالة الهيئة الاتحادية للضرائب"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "Generate the XML before validating it."
 msgstr "أنشئ ملف XML قبل التحقق منه."
@@ -585,6 +596,7 @@ msgid "ID"
 msgstr "المعرّف"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "Illegal e-invoice transition: %(dimension)s cannot go from %(old)s to "
@@ -704,6 +716,7 @@ msgid "Name"
 msgstr "الاسم"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Network references are written only by the provider adapter."
 msgstr "مراجع الشبكة يكتبها مهيّئ المزوّد فقط."
@@ -762,27 +775,32 @@ msgid "Official validation"
 msgstr "التحقق الرسمي"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "Official validation unavailable"
 msgstr "التحقق الرسمي غير متاح"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Only a posted document can be prepared as an e-invoice."
 msgstr "لا يمكن تجهيز مستند كفاتورة إلكترونية إلا بعد ترحيله."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "Only a ready e-invoice can be turned into XML; prepare it first."
 msgstr ""
 "لا يمكن تحويل الفاتورة الإلكترونية إلى XML إلا إذا كانت جاهزة؛ جهّزها أولاً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
 msgid "Only an e-invoicing manager can set a provider credential."
 msgstr "لا يستطيع ضبط بيانات اعتماد المزوّد إلا مدير الفوترة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "Only customer invoices and customer credit notes can be e-invoiced. A vendor"
@@ -792,6 +810,7 @@ msgstr ""
 "فاتورة المورّد مستند مستلم وليست مستنداً صادراً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
 msgid "Only the e-invoicing service account can use a provider credential."
 msgstr ""
@@ -1128,6 +1147,7 @@ msgid "State"
 msgstr "الحالة"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "States are changed only by the e-invoicing engine, not directly."
 msgstr "لا تتغير الحالات إلا عبر محرك الفوترة الإلكترونية وليس مباشرة."
@@ -1190,6 +1210,7 @@ msgid ""
 msgstr "الحساب المكتوب كحساب المستفيد في التحويل الدائن (وسيلة الدفع 30)."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid ""
 "The accounting document changed since this e-invoice was prepared, or it is "
@@ -1199,6 +1220,7 @@ msgstr ""
 "جاهزة. جهّزها من جديد."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "The archived XML no longer matches its checksum."
 msgstr "لم يعد ملف XML المؤرشف يطابق بصمته."
@@ -1214,6 +1236,7 @@ msgstr ""
 "الضريبي لا يعني ذلك."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
 msgid "The credential is not set."
 msgstr "بيانات الاعتماد غير مضبوطة."
@@ -1228,16 +1251,19 @@ msgstr ""
 "المحاسب ولا يُستنتج أبداً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "The e-invoice history is append-only."
 msgstr "سجل الفاتورة الإلكترونية للإضافة فقط."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid "The journal belongs to another company."
 msgstr "دفتر اليومية يخص شركة أخرى."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "The lines of a checked, validated or submitted e-invoice cannot change; "
@@ -1247,6 +1273,7 @@ msgstr ""
 "جهّزها من جديد أولاً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid ""
 "The official validation could not be performed (%s). The e-invoice is NOT "
@@ -1269,6 +1296,7 @@ msgid "The primary legal text this row is taken from."
 msgstr "النص النظامي الأصلي الذي أُخذ منه هذا الصف."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid "The tax belongs to another company."
 msgstr "الضريبة تخص شركة أخرى."
@@ -1284,6 +1312,7 @@ msgid "This document revision already has an e-invoice."
 msgstr "لهذه النسخة من المستند فاتورة إلكترونية بالفعل."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "This e-invoice has been submitted and is locked: its content cannot change. "
@@ -1298,6 +1327,7 @@ msgid "This journal is already mapped."
 msgstr "دفتر اليومية هذا مربوط بالفعل."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid ""
 "This revision already has archived XML. Issue the correction as a credit "
@@ -1467,27 +1497,32 @@ msgid "sha256 of a provider response, never the response itself."
 msgstr "بصمة SHA-256 لاستجابة المزوّد، وليس الاستجابة نفسها."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/retention.py:0
 msgid "A closed legal hold is final."
 msgstr "الحجز القانوني المغلق نهائي."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
 msgid "A credential's identity cannot be changed; set it again instead."
 msgstr "لا يمكن تغيير هوية بيانات الاعتماد؛ أعد ضبطها بدلاً من ذلك."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/retention.py:0
 msgid ""
 "A legal hold can only be closed (or its reason edited), never rescoped."
 msgstr "يمكن إغلاق الحجز القانوني (أو تعديل سببه) فقط، ولا يمكن تغيير نطاقه."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
 msgid "An e-invoice archive file is never public."
 msgstr "ملف أرشيف الفاتورة الإلكترونية لا يكون عاماً أبداً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "An e-invoice belongs to an accounting document."
 msgstr "الفاتورة الإلكترونية تتبع مستنداً محاسبياً."
@@ -1498,16 +1533,19 @@ msgid "Closed By"
 msgstr "أُغلق بواسطة"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
 msgid "Files in the e-invoice archive are written by the engine only."
 msgstr "ملفات أرشيف الفاتورة الإلكترونية يكتبها محرك الفوترة الإلكترونية فقط."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Findings are replaced by the e-invoicing engine only."
 msgstr "الملاحظات يستبدلها محرك الفوترة الإلكترونية فقط."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Findings are written by the e-invoicing engine only."
 msgstr "الملاحظات يكتبها محرك الفوترة الإلكترونية فقط."
@@ -1518,12 +1556,14 @@ msgid "Journal Entry"
 msgstr "قيد اليومية"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Only an e-invoicing manager can set the retention class or anchor."
 msgstr ""
 "لا يستطيع ضبط فئة الاحتفاظ أو تاريخ أساسه إلا مدير الفوترة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "Only an officially validated e-invoice can leave the 'not submitted' state."
@@ -1531,12 +1571,14 @@ msgstr ""
 "لا تغادر حالة 'غير مُرسلة' إلا فاتورة إلكترونية تم التحقق منها رسمياً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "Only the document toggle (allowance or charge) of a line can be changed."
 msgstr "يمكن تغيير خيار المستند فقط (خصم أو رسم) لبند الفاتورة."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid "Participant and credential state are written by the provider adapter."
 msgstr "معرّف المشارك وحالة بيانات الاعتماد يكتبهما مهيّئ المزوّد."
@@ -1553,6 +1595,7 @@ msgstr ""
 "PINT الخاصة بالمستند فقط؛ أما الحالة والهوية والأرشيف فهي من اختصاص المحرك."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
 msgid "The credential company must be the company of its provider."
 msgstr "يجب أن تكون شركة بيانات الاعتماد هي شركة مزوّدها."
@@ -1563,11 +1606,13 @@ msgid "The e-invoice UUID must be unique."
 msgstr "يجب أن يكون المعرّف الفريد UUID للفاتورة الإلكترونية غير مكرر."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "The e-invoice company must be the company of the accounting document."
 msgstr "يجب أن تكون شركة الفاتورة الإلكترونية هي شركة المستند المحاسبي."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "The e-invoice history is written by the e-invoicing engine only."
 msgstr "سجل الفاتورة الإلكترونية يكتبه محرك الفوترة الإلكترونية فقط."
@@ -1578,22 +1623,26 @@ msgid "The e-invoice record number must be unique."
 msgstr "يجب أن يكون رقم سجل الفاتورة الإلكترونية غير مكرر."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "The line belongs to another accounting document."
 msgstr "البند يخص مستنداً محاسبياً آخر."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "These fields are written only by the e-invoicing engine: %s."
 msgstr "هذه الحقول يكتبها محرك الفوترة الإلكترونية فقط: %s."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "These values are set by the e-invoicing engine and cannot be supplied: %s."
 msgstr "هذه القيم يحددها محرك الفوترة الإلكترونية ولا يمكن إدخالها: %s."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/account_move.py:0
 msgid ""
 "This document has been submitted as a UAE e-invoice and is final. Issue a "
@@ -1603,21 +1652,25 @@ msgstr ""
 "أو فاتورة جديدة بدلاً من ذلك."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "UAE e-invoicing is not enabled for %s."
 msgstr "الفوترة الإلكترونية الإماراتية غير مفعّلة للشركة %s."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "UAE e-invoicing is not licensed for this workspace."
 msgstr "الفوترة الإلكترونية الإماراتية غير مرخّصة لمساحة العمل هذه."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/retention.py:0
 msgid "A legal hold cannot be closed before it was opened."
 msgstr "لا يمكن إغلاق الحجز القانوني قبل فتحه."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/retention.py:0
 msgid ""
 "A legal hold is opened open and the system records who opened it; close it "
@@ -1625,6 +1678,7 @@ msgid ""
 msgstr "يُفتح الحجز القانوني مفتوحاً ويسجّل النظام من فتحه؛ أغلقه لاحقاً."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid ""
 "The document contains a character that XML cannot carry (a control "
@@ -1632,11 +1686,13 @@ msgid ""
 msgstr "يحتوي المستند على حرف لا يمكن لملف XML حمله (حرف تحكم)."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid "The payee bank account must belong to the company."
 msgstr "يجب أن يتبع الحساب البنكي للمستفيد الشركة."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid ""
 "This e-invoice has already been checked. Prepare it again before changing "

@@ -2304,6 +2304,7 @@ msgstr ""
 " من «المستخدمون والوصول»."
 
 #. module: ncollection_subscription
+#. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
 msgid ""
 "%(label)s is for %(country)s tenants only; this tenant's country is "
@@ -2312,21 +2313,25 @@ msgstr ""
 "%(label)s متاح لمستأجري %(country)s فقط؛ وبلد هذا المستأجر هو %(actual)s."
 
 #. module: ncollection_subscription
+#. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
 msgid "%(label)s needs %(missing)s in this tenant's entitlement."
 msgstr "%(label)s يتطلب %(missing)s ضمن استحقاقات هذا المستأجر."
 
 #. module: ncollection_subscription
+#. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_module_override.py:0
 msgid "'%(module)s' cannot be enabled for tenant '%(tenant)s': %(reasons)s"
 msgstr "لا يمكن تفعيل '%(module)s' للمستأجر '%(tenant)s': %(reasons)s"
 
 #. module: ncollection_subscription
+#. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
 msgid "'%s' is not a gated module."
 msgstr "'%s' ليس موديولاً مقيَّداً بشروط الأهلية."
 
 #. module: ncollection_subscription
+#. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
 #: code:addons/ncollection_subscription/models/tenant_module_override.py:0
 msgid "A reason (a ticket or approval reference) is required to enable %s."
@@ -2377,6 +2382,7 @@ msgid "Per-Tenant Module Override"
 msgstr "تجاوز الموديولات لكل مستأجر"
 
 #. module: ncollection_subscription
+#. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
 msgid ""
 "This tenant's country is %(country)s but its accounting company has not been"
@@ -2388,9 +2394,11 @@ msgstr ""
 " %(country)s (بناءً على سجل الدفاتر المحاسبية الفعلية)."
 
 #. module: ncollection_subscription
+#. odoo-python
 #: code:addons/ncollection_subscription/models/tenant_eligibility.py:0
 msgid "not set"
 msgstr "غير محدد"
+
 #. module: ncollection_subscription
 #: model:ir.model.fields.selection,name:ncollection_subscription.selection__ncollection_tenant__database_status__validating
 msgid "Validating"

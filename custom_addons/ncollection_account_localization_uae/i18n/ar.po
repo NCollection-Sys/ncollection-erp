@@ -294,6 +294,7 @@ msgid "Missing TRN"
 msgstr "رقم التسجيل الضريبي مفقود"
 
 #. module: ncollection_account_localization_uae
+#. odoo-python
 #: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
 msgid ""
 "TRN / Tax Registration Number must be exactly 15 digits (no spaces or "
@@ -303,6 +304,7 @@ msgstr ""
 "حروف). اتركه فارغاً إذا لم يكن معروفاً."
 
 #. module: ncollection_account_localization_uae
+#. odoo-python
 #: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
 msgid ""
 "TIN / Tax Identification Number must be exactly 10 digits (no spaces or "
