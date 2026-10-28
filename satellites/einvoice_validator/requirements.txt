@@ -1,0 +1,6 @@
+# The ONLY third-party dependency of the validator worker, pinned by version AND by file hash (pip --require-hashes).
+# Hashes are the PyPI-published sha256 of the CPython 3.12 manylinux wheels for the two platforms the image targets
+# (x86_64 and aarch64), as published 2026-10-15. Updating SaxonC is a reviewed change to this file, never an implicit one.
+saxonche==13.1.0 \
+    --hash=sha256:edf6ff3c3883343afd4e90714b02fc19e556cc527ea8d8f528a381d5db99408c \
+    --hash=sha256:a2387e142ca17a62bc927df4a7a0781fefa927f0e85f19e1ad4a13cb691f5a50

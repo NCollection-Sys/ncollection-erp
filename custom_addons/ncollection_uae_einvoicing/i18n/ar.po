@@ -1,0 +1,1701 @@
+# Arabic (ar_001) translation of ncollection_uae_einvoicing.
+# NCollection ERP. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_uae_einvoicing\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid "'%s' is not a valid PINT-AE VAT category."
+msgstr "'%s' ليست فئة ضريبة قيمة مضافة صالحة في PINT-AE."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_provider_company_unique
+msgid ""
+"A company has one ASP: it sends and receives through the same provider."
+msgstr "للشركة مزوّد خدمة معتمد واحد: ترسل وتستقبل عبر المزوّد نفسه."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "A credential cannot be empty."
+msgstr "لا يمكن أن تكون بيانات الاعتماد فارغة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__secret_name
+msgid "A label chosen by the provider adapter, e.g. 'api_token'."
+msgstr "تسمية يحددها مهيّئ المزوّد، مثل 'api_token'."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/retention.py:0
+msgid "A legal hold is part of the record: close it, do not delete it."
+msgstr "الحجز القانوني جزء من السجل: أغلقه ولا تحذفه."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_line_line_unique
+msgid "A line appears once per e-invoice."
+msgstr "يظهر البند مرة واحدة فقط في كل فاتورة إلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid ""
+"A reverse-charge tax needs its goods type and the rate shown on the line."
+msgstr "ضريبة الاحتساب العكسي تتطلب نوع السلع والنسبة الظاهرة على البند."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__confirmed
+msgid ""
+"A rule only counts once someone has checked it against the primary text. "
+"Unconfirmed rows never make a record purgeable."
+msgstr ""
+"لا تُعتمد القاعدة إلا بعد مطابقتها مع النص الأصلي. الصفوف غير المؤكدة لا "
+"تجعل أي سجل قابلاً للإتلاف أبداً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "A submitted e-invoice is locked."
+msgstr "الفاتورة الإلكترونية المُرسلة مقفلة."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "A submitted e-invoice is locked; issue a credit note or a new invoice."
+msgstr ""
+"الفاتورة الإلكترونية المُرسلة مقفلة؛ أصدر إشعاراً دائناً أو فاتورة جديدة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__ae
+msgid "AE — Reverse charge"
+msgstr "AE — الاحتساب العكسي"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__layer__asp
+msgid "ASP"
+msgstr "مزوّد الخدمة المعتمد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__asp_accepted
+msgid "ASP accepted"
+msgstr "قبلها مزوّد الخدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__asp_rejected
+msgid "ASP rejected"
+msgstr "رفضها مزوّد الخدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__actor_id
+msgid "Actor"
+msgstr "المنفّذ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__adapter
+msgid "Adapter"
+msgstr "المهيّئ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__adjustment
+msgid "Adjustment"
+msgstr "تسوية"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
+msgid "An e-invoice archive file cannot be deleted."
+msgstr "لا يمكن حذف ملف أرشيف الفاتورة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
+msgid "An e-invoice archive file cannot be modified."
+msgstr "لا يمكن تعديل ملف أرشيف الفاتورة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid "An exempt tax needs its exemption reason."
+msgstr "الضريبة المعفاة تتطلب سبب الإعفاء."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__einvoice_ids
+msgid "Applies to"
+msgstr "ينطبق على"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__asp_reference
+msgid "Asp Reference"
+msgstr "مرجع مزوّد الخدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__at
+msgid "At"
+msgstr "في"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ir_attachment
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__attachment_id
+msgid "Attachment"
+msgstr "المرفق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__authority
+msgid "Authority"
+msgstr "الجهة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__base_anchor
+msgid "Base Anchor"
+msgstr "تاريخ الأساس"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__base_years
+msgid "Base Years"
+msgstr "سنوات الأساس"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__beneficiary_id
+msgid "Beneficiary"
+msgstr "المستفيد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__billing_frequency
+msgid "Billing Frequency"
+msgstr "دورية الفوترة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__reconciliation_state__blocked
+msgid "Blocked"
+msgstr "محظورة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__business_state
+msgid "Business State"
+msgstr "الحالة التجارية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_endpoint_id
+msgid "Buyer Endpoint"
+msgstr "نقطة نهاية المشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_endpoint_scheme
+msgid "Buyer Endpoint Scheme"
+msgstr "مخطط نقطة نهاية المشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_endpoint_source
+msgid "Buyer Endpoint Source"
+msgstr "مصدر نقطة نهاية المشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_not_onboarded
+msgid "Buyer Not Onboarded"
+msgstr "المشتري غير مسجّل في المنظومة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_tin
+msgid "Buyer Tin"
+msgstr "رقم التعريف الضريبي للمشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_trn
+msgid "Buyer Trn"
+msgstr "رقم التسجيل الضريبي للمشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__ciphertext
+msgid "Ciphertext"
+msgstr "النص المشفّر"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__closed_on
+msgid "Closed On"
+msgstr "تاريخ الإغلاق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__configured
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_provider__state__configured
+msgid "Configured"
+msgstr "مضبوط"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__confirmed
+msgid "Confirmed"
+msgstr "مؤكَّدة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_provider__state__verified
+msgid "Credentials verified"
+msgstr "تم التحقق من بيانات الاعتماد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__credit_reason
+msgid "Credit Reason"
+msgstr "سبب الإشعار الدائن"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__document_kind__credit_note
+msgid "Credit note"
+msgstr "إشعار دائن"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__customization_id
+msgid "Customization"
+msgstr "التخصيص"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__default_payment_means_code
+msgid "Default payment means"
+msgstr "وسيلة الدفع الافتراضية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__exchange_state__delivered
+msgid "Delivered"
+msgstr "تم التسليم"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__detail
+msgid "Detail"
+msgstr "التفاصيل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__dimension
+msgid "Dimension"
+msgstr "البُعد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__direction
+msgid "Direction"
+msgstr "الاتجاه"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ir_attachment__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_account_move__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__document_kind
+msgid "Document Kind"
+msgstr "نوع المستند"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_line__adjustment__allowance
+msgid "Document allowance"
+msgstr "خصم على المستند"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_line__adjustment__charge
+msgid "Document charge"
+msgstr "رسم على المستند"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__local_state__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__e
+msgid "E — Exempt"
+msgstr "E — معفاة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__name
+msgid "E-invoice record"
+msgstr "سجل الفاتورة الإلكترونية"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"E-invoice records are part of the regulated archive and are never deleted."
+msgstr "سجلات الفواتير الإلكترونية جزء من الأرشيف النظامي ولا تُحذف أبداً."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__effective_from
+msgid "Effective From"
+msgstr "سارية من"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__einvoice_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__einvoice_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__einvoice_id
+msgid "Einvoice"
+msgstr "الفاتورة الإلكترونية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_line__adjustment
+msgid ""
+"Empty = an ordinary item line. A global discount or surcharge is marked "
+"here, on this document, never on the product."
+msgstr ""
+"فارغ = بند صنف عادي. يُحدَّد الخصم أو الرسم الشامل هنا في هذا المستند، وليس "
+"على المنتج أبداً."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__einvoice_ids
+msgid "Empty = every e-invoice of the company."
+msgstr "فارغ = كل الفواتير الإلكترونية للشركة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__retain_until
+msgid ""
+"Empty means: NOT purgeable. Computed only from a confirmed retention rule "
+"and the legal holds."
+msgstr ""
+"فارغ يعني: غير قابل للإتلاف. يُحسب فقط من قاعدة احتفاظ مؤكَّدة ومن الحجوزات "
+"القانونية."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__enabled
+msgid "Enabled"
+msgstr "مفعّل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__base_anchor__tax_period_end
+msgid "End of the Tax Period"
+msgstr "نهاية الفترة الضريبية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__base_anchor__calendar_year_end
+msgid "End of the calendar year"
+msgstr "نهاية السنة الميلادية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__severity__error
+msgid "Error"
+msgstr "خطأ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__event
+msgid "Event"
+msgstr "الحدث"
+
+#. module: ncollection_uae_einvoicing
+#: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_manager
+msgid ""
+"Everything a user does, plus configuration: provider, credentials (write-"
+"only), tax and payment maps, retention rules and legal holds."
+msgstr ""
+"كل ما يقوم به المستخدم، إضافة إلى الإعداد: المزوّد وبيانات الاعتماد (للكتابة"
+" فقط) وخرائط الضرائب والدفع وقواعد الاحتفاظ والحجوزات القانونية."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__reconciliation_state__exact
+msgid "Exact"
+msgstr "مطابقة تماماً"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__exchange_reference
+msgid "Exchange Reference"
+msgstr "مرجع التبادل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__exchange_state
+msgid "Exchange State"
+msgstr "حالة التبادل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__exemption_code
+msgid "Exemption Code"
+msgstr "رمز الإعفاء"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__ext_dispute_years
+msgid "Extension: FTA dispute (years)"
+msgstr "تمديد: نزاع مع الهيئة الاتحادية للضرائب (سنوات)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__ext_notification_years
+msgid "Extension: audit notification (years)"
+msgstr "تمديد: إخطار التدقيق (سنوات)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__ext_audit_years
+msgid "Extension: tax audit (years)"
+msgstr "تمديد: التدقيق الضريبي (سنوات)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__ext_disclosure_years
+msgid "Extension: voluntary disclosure (years)"
+msgstr "تمديد: الإفصاح الطوعي (سنوات)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_hold__hold_type__audit_notification
+msgid "FTA audit notification"
+msgstr "إخطار تدقيق من الهيئة الاتحادية للضرائب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_hold__hold_type__fta_dispute
+msgid "FTA dispute"
+msgstr "نزاع مع الهيئة الاتحادية للضرائب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__permanent_failure
+msgid "Failed (permanent)"
+msgstr "فشل (نهائي)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__transient_failure
+msgid "Failed (will retry)"
+msgstr "فشل (ستُعاد المحاولة)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_agent_billing
+msgid "Flag Agent Billing"
+msgstr "علامة الفوترة بالوكالة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_continuous_supply
+msgid "Flag Continuous Supply"
+msgstr "علامة التوريد المستمر"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_deemed_supply
+msgid "Flag Deemed Supply"
+msgstr "علامة التوريد الاعتباري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_ecommerce
+msgid "Flag Ecommerce"
+msgstr "علامة التجارة الإلكترونية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_export
+msgid "Flag Export"
+msgstr "علامة التصدير"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_free_zone
+msgid "Flag Free Zone"
+msgstr "علامة المنطقة الحرة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_margin_scheme
+msgid "Flag Margin Scheme"
+msgstr "علامة نظام هامش الربح"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__flag_summary
+msgid "Flag Summary"
+msgstr "ملخص العلامات"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__from_state
+msgid "From State"
+msgstr "من الحالة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__fta_reference
+msgid "Fta Reference"
+msgstr "مرجع الهيئة الاتحادية للضرائب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__fta_state
+msgid "Fta State"
+msgstr "حالة الهيئة الاتحادية للضرائب"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "Generate the XML before validating it."
+msgstr "أنشئ ملف XML قبل التحقق منه."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__headline
+msgid "Headline"
+msgstr "العنوان"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__history_ids
+msgid "History"
+msgstr "السجل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__hold_type
+msgid "Hold Type"
+msgstr "نوع الحجز"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ir_attachment__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_account_move__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"Illegal e-invoice transition: %(dimension)s cannot go from %(old)s to "
+"%(new)s."
+msgstr ""
+"انتقال غير مسموح للفاتورة الإلكترونية: لا يمكن أن ينتقل %(dimension)s من "
+"%(old)s إلى %(new)s."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__document_kind__invoice
+msgid "Invoice"
+msgstr "فاتورة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__invoice_number
+msgid "Invoice number (PINT BT-001 snapshot)"
+msgstr "رقم الفاتورة (نسخة PINT BT-001)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__journal_id
+msgid "Journal"
+msgstr "دفتر اليومية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_payment_map
+msgid "Journal → PINT-AE payment means"
+msgstr "دفتر اليومية ← وسيلة الدفع في PINT-AE"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__key_version
+msgid "Key Version"
+msgstr "إصدار المفتاح"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__name
+msgid "Label"
+msgstr "البيان"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__layer
+msgid "Layer"
+msgstr "الطبقة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__line_ids
+msgid "Line"
+msgstr "البند"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__local_state
+msgid "Local State"
+msgstr "الحالة المحلية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__local_state__locally_checked
+msgid "Locally checked"
+msgstr "تم فحصها محلياً"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__locked
+msgid "Locked"
+msgstr "مقفل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__message
+msgid "Message"
+msgstr "الرسالة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__move_id
+msgid "Move"
+msgstr "القيد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__move_line_id
+msgid "Move Line"
+msgstr "بند القيد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__n
+msgid "N — Standard rate additional VAT (margin scheme)"
+msgstr "N — ضريبة إضافية بالنسبة الأساسية (نظام هامش الربح)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "Network references are written only by the provider adapter."
+msgstr "مراجع الشبكة يكتبها مهيّئ المزوّد فقط."
+
+#. module: ncollection_uae_einvoicing
+#: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_service
+msgid ""
+"Non-interactive account that runs submission and status jobs and is the only"
+" one allowed to decrypt a provider credential. Not for human users."
+msgstr ""
+"حساب غير تفاعلي ينفّذ مهام الإرسال والحالة، وهو الوحيد المسموح له بفك تشفير "
+"بيانات اعتماد المزوّد."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__fta_state__not_applicable
+msgid "Not applicable"
+msgstr "غير قابل للتطبيق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__retention_class__unclassified
+msgid "Not classified"
+msgstr "غير مصنّف"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_provider__state__draft
+msgid "Not configured"
+msgstr "غير مضبوط"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__not_submitted
+msgid "Not submitted"
+msgstr "غير مُرسلة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__o
+msgid "O — Not subject to VAT"
+msgstr "O — غير خاضعة لضريبة القيمة المضافة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__rule
+msgid ""
+"OFFICIAL:<id> is a rule of the pinned PINT-AE Schematron; NCOLLECTION:<name>"
+" is ours."
+msgstr ""
+"OFFICIAL:<id> قاعدة من مخطط Schematron الرسمي المعتمد لـ PINT-AE؛ أما "
+"NCOLLECTION:<name> فهي قاعدة خاصة بنا."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_tax_map
+msgid "Odoo tax → PINT-AE VAT category"
+msgstr "ضريبة أودو ← فئة ضريبة القيمة المضافة في PINT-AE"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__layer__official
+msgid "Official validation"
+msgstr "التحقق الرسمي"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "Official validation unavailable"
+msgstr "التحقق الرسمي غير متاح"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "Only a posted document can be prepared as an e-invoice."
+msgstr "لا يمكن تجهيز مستند كفاتورة إلكترونية إلا بعد ترحيله."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "Only a ready e-invoice can be turned into XML; prepare it first."
+msgstr ""
+"لا يمكن تحويل الفاتورة الإلكترونية إلى XML إلا إذا كانت جاهزة؛ جهّزها أولاً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "Only an e-invoicing manager can set a provider credential."
+msgstr "لا يستطيع ضبط بيانات اعتماد المزوّد إلا مدير الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"Only customer invoices and customer credit notes can be e-invoiced. A vendor"
+" bill is a received document, not an outbound e-invoice."
+msgstr ""
+"لا يمكن إصدار فاتورة إلكترونية إلا لفواتير العملاء وإشعاراتهم الدائنة. "
+"فاتورة المورّد مستند مستلم وليست مستنداً صادراً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "Only the e-invoicing service account can use a provider credential."
+msgstr ""
+"لا يستطيع استخدام بيانات اعتماد المزوّد إلا حساب خدمة الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__opened_by
+msgid "Opened By"
+msgstr "فُتح بواسطة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__opened_on
+msgid "Opened On"
+msgstr "تاريخ الفتح"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_line__reason_code
+msgid ""
+"Optional official allowance (UNCL5189) / charge (UNCL7161) reason code."
+msgstr "رمز سبب رسمي اختياري للخصم (UNCL5189) أو للرسم (UNCL7161)."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__retention_class__other_person
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__retention_class__other_person
+msgid "Other Person"
+msgstr "شخص آخر"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_hold__hold_type__other
+msgid "Other legal hold"
+msgstr "حجز قانوني آخر"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__direction__outbound
+msgid "Outbound"
+msgstr "صادرة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__payment_means_override
+msgid "Overrides the payment-method map for this document (an official code)."
+msgstr "يتجاوز خريطة وسائل الدفع لهذا المستند (رمز رسمي)."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__spec_version
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__spec_version
+msgid "PINT-AE release"
+msgstr "إصدار PINT-AE"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__asp_participant_id
+msgid "Participant ID (ASP)"
+msgstr "معرّف المشارك (مزوّد الخدمة)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__asp_participant_id
+msgid "Participant ID (registered by the ASP)"
+msgstr "معرّف المشارك (المسجَّل لدى مزوّد الخدمة)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__company_partner_id
+msgid "Partner"
+msgstr "الشريك"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__default_bank_account_id
+msgid "Payee bank account"
+msgstr "الحساب البنكي للمستفيد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__payload_json
+msgid "Payload Json"
+msgstr "حمولة JSON"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__payment_means_code
+msgid "Payment Means Code"
+msgstr "رمز وسيلة الدفع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__payment_means_override
+msgid "Payment Means Override"
+msgstr "تجاوز وسيلة الدفع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__pint_code
+msgid "Payment means"
+msgstr "وسيلة الدفع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__exchange_state__pending
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__fta_state__pending
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__period_end
+msgid "Period End"
+msgstr "نهاية الفترة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__period_start
+msgid "Period Start"
+msgstr "بداية الفترة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__pint_category
+msgid "Pint Category"
+msgstr "فئة PINT"
+
+#. module: ncollection_uae_einvoicing
+#: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_user
+msgid ""
+"Prepares, checks and validates UAE e-invoices of the companies the user may "
+"access, and downloads their XML. Reads accounting documents (read only)."
+msgstr ""
+"يجهّز الفواتير الإلكترونية الإماراتية ويفحصها ويتحقق منها للشركات المسموح "
+"للمستخدم بالوصول إليها، ويحمّل ملفات XML الخاصة بها."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__principal_id
+msgid "Principal"
+msgstr "الأصل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__profile_id
+msgid "Profile"
+msgstr "ملف التعريف"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__adapter
+msgid "Provided by an ncollection_uae_einvoicing_<asp> module."
+msgstr "يوفّره موديول ncollection_uae_einvoicing_<asp>."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__provider_id
+msgid "Provider"
+msgstr "المزوّد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__queued
+msgid "Queued"
+msgstr "في الطابور"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__pint_rate
+msgid "Rate shown for reverse charge"
+msgstr "النسبة المعروضة للاحتساب العكسي"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__layer__readiness
+msgid "Readiness"
+msgstr "الجاهزية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__local_state__ready
+msgid "Ready"
+msgstr "جاهز"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__retention_class__real_estate
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__retention_class__real_estate
+msgid "Real estate record"
+msgstr "سجل عقاري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__reason
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__reason
+msgid "Reason"
+msgstr "السبب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__reason_code
+msgid "Reason Code"
+msgstr "رمز السبب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__layer__reconciliation
+msgid "Reconciliation"
+msgstr "المطابقة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__reconciliation_json
+msgid "Reconciliation Json"
+msgstr "مطابقة JSON"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__reconciliation_state
+msgid "Reconciliation State"
+msgstr "حالة المطابقة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__reference
+msgid "Reference"
+msgstr "المرجع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__exchange_state__rejected_by_buyer_asp
+msgid "Rejected by buyer ASP"
+msgstr "رفضها مزوّد خدمة المشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__fta_state__report_failed
+msgid "Report failed"
+msgstr "فشل الإبلاغ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__fta_state__reported
+msgid "Reported"
+msgstr "تم الإبلاغ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__exchange_state__report_only
+msgid "Reported to the tax authority only"
+msgstr "أُبلغ للهيئة الضريبية فقط"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__rcm_goods_type
+msgid "Required for category AE."
+msgstr "مطلوب للفئة AE."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__exemption_code
+msgid "Required for category E (the reason the supply is exempt)."
+msgstr "مطلوب للفئة E (سبب إعفاء التوريد)."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__response_digest
+msgid "Response Digest"
+msgstr "بصمة الاستجابة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__retain_until
+msgid "Retain Until"
+msgstr "الاحتفاظ حتى"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__retention_anchor_date
+msgid "Retention Anchor Date"
+msgstr "تاريخ أساس الاحتفاظ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__retention_class
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__retention_class
+msgid "Retention Class"
+msgstr "فئة الاحتفاظ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__pint_rate
+msgid ""
+"Reverse charge is booked at 0% in Odoo but PINT-AE shows the rate on the "
+"line. Used only for category AE."
+msgstr ""
+"يُقيَّد الاحتساب العكسي بنسبة 0% في أودو بينما يعرض PINT-AE النسبة على "
+"البند. يُستخدم للفئة AE فقط."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__rcm_goods_type
+msgid "Reverse-charge goods type"
+msgstr "نوع سلع الاحتساب العكسي"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__revision
+msgid "Revision"
+msgstr "المراجعة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__rule
+msgid "Rule"
+msgstr "القاعدة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__s
+msgid "S — Standard rate"
+msgstr "S — النسبة الأساسية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__secret_name
+msgid "Secret Name"
+msgstr "اسم السر"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__seller_endpoint_id
+msgid "Seller Endpoint"
+msgstr "نقطة نهاية البائع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__seller_endpoint_scheme
+msgid "Seller Endpoint Scheme"
+msgstr "مخطط نقطة نهاية البائع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__seller_tin
+msgid "Seller Tin"
+msgstr "رقم التعريف الضريبي للبائع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__seller_trn
+msgid "Seller Trn"
+msgstr "رقم التسجيل الضريبي للبائع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__set_at
+msgid "Set At"
+msgstr "وقت الضبط"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__set_by
+msgid "Set By"
+msgstr "ضُبط بواسطة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__severity
+msgid "Severity"
+msgstr "الخطورة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__source_citation
+msgid "Source Citation"
+msgstr "المرجع النظامي"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__spec_version
+msgid "Spec Version"
+msgstr "إصدار المواصفة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "States are changed only by the e-invoicing engine, not directly."
+msgstr "لا تتغير الحالات إلا عبر محرك الفوترة الإلكترونية وليس مباشرة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__subject
+msgid "Subject"
+msgstr "الموضوع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__submission_state
+msgid "Submission State"
+msgstr "حالة الإرسال"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__submitted
+msgid "Submitted"
+msgstr "مُرسلة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__submitting
+msgid "Submitting"
+msgstr "قيد الإرسال"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__enabled
+msgid ""
+"Switches e-invoicing on for THIS company. Installing the module never "
+"enables it: an administrator does, company by company."
+msgstr ""
+"يفعّل الفوترة الإلكترونية لهذه الشركة فقط. تثبيت الموديول لا يفعّلها أبداً: "
+"يفعّلها المسؤول شركة بشركة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__tax_id
+msgid "Tax"
+msgstr "الضرائب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_hold__hold_type__tax_audit
+msgid "Tax audit"
+msgstr "تدقيق ضريبي"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__retention_class__taxable_person
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__retention_class__taxable_person
+msgid "Taxable Person"
+msgstr "الشخص الخاضع للضريبة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__reference
+msgid "The FTA reference or case number."
+msgstr "مرجع الهيئة الاتحادية للضرائب أو رقم القضية."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__default_bank_account_id
+msgid ""
+"The account written as the payee account of a credit transfer (payment means"
+" 30)."
+msgstr "الحساب المكتوب كحساب المستفيد في التحويل الدائن (وسيلة الدفع 30)."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid ""
+"The accounting document changed since this e-invoice was prepared, or it is "
+"not ready. Prepare it again."
+msgstr ""
+"تغيّر المستند المحاسبي منذ تجهيز هذه الفاتورة الإلكترونية، أو أنها غير "
+"جاهزة. جهّزها من جديد."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "The archived XML no longer matches its checksum."
+msgstr "لم يعد ملف XML المؤرشف يطابق بصمته."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_not_onboarded
+msgid ""
+"The buyer is known NOT to be on UAE e-invoicing. Only then is the predefined"
+" 'not onboarded' endpoint used; a missing TIN is never taken to mean this."
+msgstr ""
+"من المعلوم أن المشتري غير مسجّل في الفوترة الإلكترونية الإماراتية. عندها فقط"
+" تُستخدم نقطة النهاية المعرّفة مسبقاً لغير المسجّلين؛ ونقص رقم التعريف "
+"الضريبي لا يعني ذلك."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "The credential is not set."
+msgstr "بيانات الاعتماد غير مضبوطة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__retention_anchor_date
+msgid ""
+"The date the retention period runs from (e.g. the end of the Tax Period). "
+"Set by the accountant; never inferred."
+msgstr ""
+"التاريخ الذي تبدأ منه مدة الاحتفاظ (مثل نهاية الفترة الضريبية). يحدده "
+"المحاسب ولا يُستنتج أبداً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "The e-invoice history is append-only."
+msgstr "سجل الفاتورة الإلكترونية للإضافة فقط."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid "The journal belongs to another company."
+msgstr "دفتر اليومية يخص شركة أخرى."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"The lines of a checked, validated or submitted e-invoice cannot change; "
+"prepare it again first."
+msgstr ""
+"لا يمكن تغيير بنود فاتورة إلكترونية تم فحصها أو التحقق منها أو إرسالها؛ "
+"جهّزها من جديد أولاً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid ""
+"The official validation could not be performed (%s). The e-invoice is NOT "
+"validated."
+msgstr ""
+"تعذّر إجراء التحقق الرسمي (%s). الفاتورة الإلكترونية غير مُتحقَّق منها."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__spec_version
+msgid ""
+"The pinned official release every e-invoice of this company is built and "
+"validated against. It is stored on each e-invoice."
+msgstr ""
+"الإصدار الرسمي المعتمد الذي تُبنى وتُتحقق عليه كل فاتورة إلكترونية لهذه "
+"الشركة. يُحفظ مع كل فاتورة إلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__source_citation
+msgid "The primary legal text this row is taken from."
+msgstr "النص النظامي الأصلي الذي أُخذ منه هذا الصف."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid "The tax belongs to another company."
+msgstr "الضريبة تخص شركة أخرى."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_config_company_unique
+msgid "There is already an e-invoicing configuration for this company."
+msgstr "يوجد بالفعل إعداد للفوترة الإلكترونية لهذه الشركة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_move_revision_unique
+msgid "This document revision already has an e-invoice."
+msgstr "لهذه النسخة من المستند فاتورة إلكترونية بالفعل."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"This e-invoice has been submitted and is locked: its content cannot change. "
+"Issue a credit note or a new invoice instead."
+msgstr ""
+"أُرسلت هذه الفاتورة الإلكترونية وهي مقفلة: لا يمكن تغيير محتواها. أصدر "
+"إشعاراً دائناً أو فاتورة جديدة بدلاً من ذلك."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_payment_map_journal_unique
+msgid "This journal is already mapped."
+msgstr "دفتر اليومية هذا مربوط بالفعل."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid ""
+"This revision already has archived XML. Issue the correction as a credit "
+"note or a new invoice."
+msgstr ""
+"لهذه النسخة ملف XML مؤرشف بالفعل. أصدر التصحيح كإشعار دائن أو فاتورة جديدة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_secret_name_unique
+msgid "This secret is already defined for the provider."
+msgstr "هذا السر معرّف بالفعل لدى المزوّد."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_tax_map_tax_unique
+msgid "This tax is already mapped."
+msgstr "هذه الضريبة مربوطة بالفعل."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__to_state
+msgid "To State"
+msgstr "إلى الحالة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__transaction_type_code
+msgid "Transaction Type Code"
+msgstr "رمز نوع المعاملة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__type_code
+msgid "Type Code"
+msgstr "رمز النوع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice
+msgid "UAE e-invoice"
+msgstr "فاتورة إلكترونية إماراتية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_validation
+msgid "UAE e-invoice finding"
+msgstr "ملاحظة على فاتورة إلكترونية إماراتية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_hold
+msgid "UAE e-invoice legal hold"
+msgstr "حجز قانوني على فاتورة إلكترونية إماراتية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_line
+msgid "UAE e-invoice line (per-document toggle)"
+msgstr "بند فاتورة إلكترونية إماراتية (خيار على مستوى المستند)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_retention_rule
+msgid "UAE e-invoice retention rule (data, with its citation)"
+msgstr "قاعدة احتفاظ بفاتورة إلكترونية إماراتية (بيانات مع مرجعها النظامي)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_history
+msgid "UAE e-invoice status history (append-only)"
+msgstr "سجل حالات الفاتورة الإلكترونية الإماراتية (للإضافة فقط)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_config
+msgid "UAE e-invoicing configuration (per company)"
+msgstr "إعداد الفوترة الإلكترونية الإماراتية (لكل شركة)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_provider
+msgid "UAE e-invoicing provider (ASP)"
+msgstr "مزوّد الفوترة الإلكترونية الإماراتية (مزوّد الخدمة المعتمد)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_secret
+msgid "UAE e-invoicing provider credential (encrypted, write-only)"
+msgstr ""
+"بيانات اعتماد مزوّد الفوترة الإلكترونية الإماراتية (مشفّرة، للكتابة فقط)"
+
+#. module: ncollection_uae_einvoicing
+#: model:res.groups,name:ncollection_uae_einvoicing.group_einvoice_manager
+msgid "UAE e-invoicing: manager"
+msgstr "الفوترة الإلكترونية الإماراتية: مدير"
+
+#. module: ncollection_uae_einvoicing
+#: model:res.groups,name:ncollection_uae_einvoicing.group_einvoice_service
+msgid "UAE e-invoicing: service"
+msgstr "الفوترة الإلكترونية الإماراتية: خدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:res.groups,name:ncollection_uae_einvoicing.group_einvoice_user
+msgid "UAE e-invoicing: user"
+msgstr "الفوترة الإلكترونية الإماراتية: مستخدم"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__uuid
+msgid "UUID"
+msgstr "المعرّف الفريد UUID"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__unknown
+msgid "Unknown"
+msgstr "غير معروف"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__default_payment_means_code
+msgid ""
+"Used only when neither the document nor a payment-method map says otherwise."
+" There is no built-in default: an e-invoice with no payment means configured"
+" is blocked, not guessed."
+msgstr ""
+"يُستخدم فقط عندما لا يحدد المستند ولا خريطة وسائل الدفع غير ذلك. لا توجد "
+"قيمة افتراضية مدمجة: الفاتورة الإلكترونية دون وسيلة دفع محددة غير جاهزة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__local_state__validated
+msgid "Validated"
+msgstr "تم التحقق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__validation_ids
+msgid "Validation"
+msgstr "التحقق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__local_state__validation_failed
+msgid "Validation failed"
+msgstr "فشل التحقق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__vat_point_date
+msgid "Vat Point Date"
+msgstr "تاريخ نقطة الضريبة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_hold__hold_type__voluntary_disclosure
+msgid "Voluntary disclosure"
+msgstr "إفصاح طوعي"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__severity__warning
+msgid "Warning"
+msgstr "تحذير"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__reconciliation_state__within_tolerance
+msgid "Within official tolerance"
+msgstr "ضمن الفارق الرسمي المسموح"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__xml_attachment_id
+msgid "Xml Attachment"
+msgstr "مرفق XML"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__xml_sha256
+msgid "Xml Sha256"
+msgstr "بصمة XML (SHA-256)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__z
+msgid "Z — Zero rated"
+msgstr "Z — نسبة صفرية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_history__response_digest
+msgid "sha256 of a provider response, never the response itself."
+msgstr "بصمة SHA-256 لاستجابة المزوّد، وليس الاستجابة نفسها."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/retention.py:0
+msgid "A closed legal hold is final."
+msgstr "الحجز القانوني المغلق نهائي."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "A credential's identity cannot be changed; set it again instead."
+msgstr "لا يمكن تغيير هوية بيانات الاعتماد؛ أعد ضبطها بدلاً من ذلك."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/retention.py:0
+msgid ""
+"A legal hold can only be closed (or its reason edited), never rescoped."
+msgstr "يمكن إغلاق الحجز القانوني (أو تعديل سببه) فقط، ولا يمكن تغيير نطاقه."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
+msgid "An e-invoice archive file is never public."
+msgstr "ملف أرشيف الفاتورة الإلكترونية لا يكون عاماً أبداً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "An e-invoice belongs to an accounting document."
+msgstr "الفاتورة الإلكترونية تتبع مستنداً محاسبياً."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__closed_by
+msgid "Closed By"
+msgstr "أُغلق بواسطة"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/ir_attachment.py:0
+msgid "Files in the e-invoice archive are written by the engine only."
+msgstr "ملفات أرشيف الفاتورة الإلكترونية يكتبها محرك الفوترة الإلكترونية فقط."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "Findings are replaced by the e-invoicing engine only."
+msgstr "الملاحظات يستبدلها محرك الفوترة الإلكترونية فقط."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "Findings are written by the e-invoicing engine only."
+msgstr "الملاحظات يكتبها محرك الفوترة الإلكترونية فقط."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_account_move
+msgid "Journal Entry"
+msgstr "قيد اليومية"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "Only an e-invoicing manager can set the retention class or anchor."
+msgstr ""
+"لا يستطيع ضبط فئة الاحتفاظ أو تاريخ أساسه إلا مدير الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"Only an officially validated e-invoice can leave the 'not submitted' state."
+msgstr ""
+"لا تغادر حالة 'غير مُرسلة' إلا فاتورة إلكترونية تم التحقق منها رسمياً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"Only the document toggle (allowance or charge) of a line can be changed."
+msgstr "يمكن تغيير خيار المستند فقط (خصم أو رسم) لبند الفاتورة."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid "Participant and credential state are written by the provider adapter."
+msgstr "معرّف المشارك وحالة بيانات الاعتماد يكتبهما مهيّئ المزوّد."
+
+#. module: ncollection_uae_einvoicing
+#: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_user
+msgid ""
+"Prepares, checks and validates UAE e-invoices of the companies the user may "
+"access. Reads accounting documents (read only). Writes only the per-document"
+" PINT data; state, identity and the archive are the engine's."
+msgstr ""
+"يجهّز الفواتير الإلكترونية الإماراتية ويفحصها ويتحقق منها للشركات المسموح "
+"للمستخدم بالوصول إليها. يقرأ المستندات المحاسبية (للقراءة فقط). يكتب بيانات "
+"PINT الخاصة بالمستند فقط؛ أما الحالة والهوية والأرشيف فهي من اختصاص المحرك."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "The credential company must be the company of its provider."
+msgstr "يجب أن تكون شركة بيانات الاعتماد هي شركة مزوّدها."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_uuid_unique
+msgid "The e-invoice UUID must be unique."
+msgstr "يجب أن يكون المعرّف الفريد UUID للفاتورة الإلكترونية غير مكرر."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "The e-invoice company must be the company of the accounting document."
+msgstr "يجب أن تكون شركة الفاتورة الإلكترونية هي شركة المستند المحاسبي."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "The e-invoice history is written by the e-invoicing engine only."
+msgstr "سجل الفاتورة الإلكترونية يكتبه محرك الفوترة الإلكترونية فقط."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_name_unique
+msgid "The e-invoice record number must be unique."
+msgstr "يجب أن يكون رقم سجل الفاتورة الإلكترونية غير مكرر."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "The line belongs to another accounting document."
+msgstr "البند يخص مستنداً محاسبياً آخر."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "These fields are written only by the e-invoicing engine: %s."
+msgstr "هذه الحقول يكتبها محرك الفوترة الإلكترونية فقط: %s."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"These values are set by the e-invoicing engine and cannot be supplied: %s."
+msgstr "هذه القيم يحددها محرك الفوترة الإلكترونية ولا يمكن إدخالها: %s."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/account_move.py:0
+msgid ""
+"This document has been submitted as a UAE e-invoice and is final. Issue a "
+"credit note or a new invoice instead."
+msgstr ""
+"أُرسل هذا المستند كفاتورة إلكترونية إماراتية وهو نهائي. أصدر إشعاراً دائناً "
+"أو فاتورة جديدة بدلاً من ذلك."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "UAE e-invoicing is not enabled for %s."
+msgstr "الفوترة الإلكترونية الإماراتية غير مفعّلة للشركة %s."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "UAE e-invoicing is not licensed for this workspace."
+msgstr "الفوترة الإلكترونية الإماراتية غير مرخّصة لمساحة العمل هذه."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/retention.py:0
+msgid "A legal hold cannot be closed before it was opened."
+msgstr "لا يمكن إغلاق الحجز القانوني قبل فتحه."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/retention.py:0
+msgid ""
+"A legal hold is opened open and the system records who opened it; close it "
+"afterwards."
+msgstr "يُفتح الحجز القانوني مفتوحاً ويسجّل النظام من فتحه؛ أغلقه لاحقاً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid ""
+"The document contains a character that XML cannot carry (a control "
+"character)."
+msgstr "يحتوي المستند على حرف لا يمكن لملف XML حمله (حرف تحكم)."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid "The payee bank account must belong to the company."
+msgstr "يجب أن يتبع الحساب البنكي للمستفيد الشركة."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid ""
+"This e-invoice has already been checked. Prepare it again before changing "
+"its data."
+msgstr ""
+"تم فحص هذه الفاتورة الإلكترونية بالفعل. أعد تجهيزها قبل تغيير بياناتها."

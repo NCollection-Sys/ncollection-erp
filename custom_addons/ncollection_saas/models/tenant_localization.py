@@ -48,6 +48,21 @@ class TenantLocalization(models.Model):
     localization_applied_message = fields.Text(
         string='Localization Result', readonly=True, copy=False)
 
+    def _nc_books_verified(self):
+        """True when the tenant-side check recorded that this tenant's company IS on its country package's chart and
+        currency (state ``done`` and a result that names exactly ``<chart>/<currency>``).
+
+        This is the accounting FACT that gated modules (ncollection_subscription/models/gated_modules.py) rely on,
+        instead of the registry's country label: a tenant registered as AE whose company is on the US chart is
+        ``refused`` here and so never eligible, and a tenant that was never checked (``none``) is not eligible either.
+        The existing 'Apply localization' button refreshes it (a no-op on a correct tenant)."""
+        self.ensure_one()
+        package = self._nc_localization_package()
+        if not package or self.localization_applied_state != 'done':
+            return False
+        expected = '%s/%s' % (package['chart_template'], package['currency'])
+        return (self.localization_applied_message or '').strip().endswith(expected)
+
     def action_apply_localization(self):
         """Apply this tenant's country localization to its existing database.
 
@@ -96,6 +111,7 @@ class TenantLocalization(models.Model):
             # must read as a decision the operator has to make rather than as a
             # broken button.
             refused = 'REFUSED:' in message
+            was_verified = self.localization_applied_state == 'done'
             # RECORDED, NOT RAISED. Raising would roll this write back with the
             # transaction and leave the operator with a dialog and a record
             # that says nothing happened — so the one place they would look
@@ -107,6 +123,10 @@ class TenantLocalization(models.Model):
             _logger.warning("Localization of tenant %s %s: %s",
                             self.database_name,
                             'refused' if refused else 'failed', message)
+            if was_verified:
+                # a tenant whose books WERE verified no longer are: an eligibility-gated module is withdrawn from its
+                # entitlement now, through the same sync, rather than at the next reconcile
+                self._config_sync_enqueue()
             return self._nc_localization_notification(
                 title=(self.env._("Localization refused") if refused
                        else self.env._("Localization failed")),

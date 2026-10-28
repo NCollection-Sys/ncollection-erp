@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- UAE e-invoicing master data. Placed beside the existing Tax ID (vat), which is untouched. None of these fields is
+         required, none is shown on any report, and none is filled from another field. -->
+
+    <record id="view_partner_form_nc_uae_identity" model="ir.ui.view">
+        <field name="name">res.partner.form.nc.uae.identity</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vat']" position="after">
+                <field name="nc_trn" placeholder="15 digits"/>
+                <field name="nc_tin" placeholder="10 digits"/>
+                <field name="nc_legal_reg_type"/>
+                <field name="nc_legal_reg_authority" invisible="nc_legal_reg_type != 'TL'"/>
+                <field name="nc_legal_reg_country_id" invisible="nc_legal_reg_type != 'PAS'"
+                       options="{'no_open': True, 'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_search_nc_uae_identity" model="ir.ui.view">
+        <field name="name">res.partner.search.nc.uae.identity</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="nc_missing_tin" string="Missing TIN" domain="[('nc_tin', '=', False)]"/>
+                <filter name="nc_missing_trn" string="Missing TRN" domain="[('nc_trn', '=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_template_form_nc_uae_classification" model="ir.ui.view">
+        <field name="name">product.template.form.nc.uae.classification</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_information']" position="inside">
+                <group name="nc_uae_classification" string="UAE e-invoicing classification">
+                    <field name="nc_item_type"/>
+                    <field name="nc_hs_code" invisible="nc_item_type not in ('G', 'B')"/>
+                    <field name="nc_sac_code" invisible="nc_item_type not in ('S', 'B')"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

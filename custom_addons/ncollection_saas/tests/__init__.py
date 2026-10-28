@@ -25,8 +25,10 @@ from . import test_tenant_urls
 from . import test_my_companies
 from . import test_companion_provisioning
 from . import test_tenant_admin
+from . import test_gated_module_eligibility
 from . import test_base_domain_switch
 from . import test_release_compat
 from . import test_system_branding_sync
 from . import test_tenant_deletion
 from . import test_platform_workspace_admin
+from . import test_provisioning_first_sync
