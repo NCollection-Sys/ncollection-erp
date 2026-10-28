@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **28**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **29**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -171,6 +171,17 @@ adding a module fails CI until someone updates this list.
   **A companion module**: entitled exactly when its tenant has Accounting (`ncollection_subscription/models/companions.py`,
   applied in the one authority `_nc_effective_module_list`); never named in a plan, never in the plan picker.
   Docs: `docs/markdown/CHEQUE_PRINTING.md`.
+- `ncollection_uae_einvoicing` — the **UAE e-invoicing engine** (PINT-AE; the pinned release lives in `resources/pint_ae/<release>/` as
+  UNMODIFIED official files with a checksum manifest): customer invoices and credit notes only (a vendor bill is never an outbound
+  e-invoice). Provider-agnostic: no ASP is built in, a future `ncollection_uae_einvoicing_<asp>` is only an adapter. Odoo stays the
+  accounting truth: the XML carries the booked figures and a document the official rules cannot accept is BLOCKED, never adjusted.
+  Official validation runs in an isolated worker (`satellites/einvoice_validator`, SaxonC-HE; nothing XSLT 2.0 is added to the Odoo
+  image) that needs a bearer token and signs every answer; only the engine (`sudo`, never a client-suppliable flag) writes state, identity
+  and the archive, and the licence is mirrored at the ORM, fail-closed. Five orthogonal states, an append-only history, an immutable XML archive, fail-closed retention, write-only encrypted
+  credentials. **A GATED module** (`ncollection_subscription/models/gated_modules.py`): eligible only for a tenant whose country is
+  the UAE AND whose books are VERIFIED as UAE books AND that has Accounting; activated only by an explicit per-tenant `enable`
+  override; never in a plan, never a companion. The master data it consumes (`nc_trn`, `nc_tin`, legal registration, product HS/SAC)
+  lives in `ncollection_account_localization_uae`. Docs: `docs/markdown/UAE_EINVOICING.md`.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
 
@@ -380,6 +391,7 @@ So tenant key === subdomain === database name, always.
 - `ARCHITECTURE_DATA_PLATFORM.md` · `ARCHITECTURE_SECURITY.md` — backend & security deep-dives.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
 - `WORKSPACE_AND_TENANT_ADMINISTRATION.md` — roles = real groups, password reset, the platform's user-administration service, audit, boundaries.
+- `UAE_EINVOICING.md` — the UAE e-invoicing engine: scope, identity model, rounding analysis, validator, retention and offboarding, provisioning gate.
 - `DEPLOYMENT_DOMAIN_CONTRACT.md` — the production domain (`balancecloud.ae` + `*.balancecloud.ae`): the one `DOMAIN` setting, the wildcard route, DNS / TLS / forwarded headers / trusted proxy, what is proven where.
 - `RUNBOOK_RELEASE_UPGRADE.md` — deploying code to a database that exists: backup, deploy, preflight, rehearse on a copy, targeted upgrade, smoke, traffic. Never `-u all`.
 - `RELEASE_COMPATIBILITY_GATE.md` — why a database the code is ahead of answers a branded 503 instead of an HTTP 500: the gate before the registry (`ncollection_core/release_gate.py`, server-wide), the states, holds, the platform's status channel, provisioning `validating`, Company Entry, Fleet Migration (platform first, enforced), and how an

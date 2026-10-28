@@ -6,6 +6,7 @@ from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 from .companions import COMPANION_MODULES, companions_of
+from .gated_modules import GATED_MODULES
 from .localization import localization_package
 
 # The administrator's login is a USERNAME, never an email address. Lower-case
@@ -627,7 +628,17 @@ class Tenant(models.Model):
         return list(package['modules']) if package else []
 
     def _nc_effective_module_list(self):
-        """EVERY module this tenant is entitled to.
+        """EVERY module this tenant is entitled to: the pre-gate entitlement minus gated modules it may not have.
+
+        See gated_modules.py. A gated module (UAE e-invoicing) can only be here through an explicit per-tenant `enable`
+        override AND while the tenant is eligible; a plan that names one has the name ignored. Everything else is
+        exactly `_nc_entitlement_before_gate`, so the single-authority property below is unchanged.
+        """
+        self.ensure_one()
+        return self._nc_apply_eligibility_gate(self._nc_entitlement_before_gate())
+
+    def _nc_entitlement_before_gate(self):
+        """EVERY module this tenant is entitled to, BEFORE the eligibility gate.
 
             plan  UNION  localization package  MINUS  disabled  UNION  added
                   UNION  the companions of whatever is left (cheque printing follows Accounting)
@@ -657,7 +668,7 @@ class Tenant(models.Model):
         self.ensure_one()
         plan = self.plan_id
         modules = [name for name in (plan.get_allowed_module_list() if plan else [])
-                   if name not in COMPANION_MODULES]
+                   if name not in COMPANION_MODULES and name not in GATED_MODULES]
         for name in self._nc_localization_modules():
             if name not in modules:
                 modules.append(name)

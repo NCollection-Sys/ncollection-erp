@@ -2,6 +2,8 @@ from . import localization
 from . import res_users
 from . import subscription_plan
 from . import tenant
+from . import gated_modules
+from . import tenant_eligibility
 from . import subscription
 from . import provisioning_job
 from . import dashboard

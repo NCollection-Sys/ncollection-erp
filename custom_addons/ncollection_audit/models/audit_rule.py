@@ -149,6 +149,12 @@ _NC_WITHHELD = {
 # These models keep their OWN audit story. Flagged by security review.
 SENSITIVE_MODELS = frozenset({
     'ncollection.auth.log',
+    # UAE e-invoices: the payload and the findings hold both parties' identifiers and the amounts, and the e-invoice
+    # archive has its own append-only history and retention; copying them here would duplicate regulated records into
+    # a lower-trust trail that retention does not govern.
+    'ncollection.einvoice',
+    'ncollection.einvoice.validation',
+    'ncollection.einvoice.secret',
 })
 
 # Recompute churn, not user intent. Excluded so the trail stays readable.

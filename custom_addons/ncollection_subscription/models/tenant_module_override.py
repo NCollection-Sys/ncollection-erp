@@ -30,6 +30,7 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 from .companions import COMPANION_MODULES
+from .gated_modules import is_gated
 
 
 class TenantModuleOverride(models.Model):
@@ -84,6 +85,26 @@ class TenantModuleOverride(models.Model):
             if not Module.search_count([('name', '=', name)]):
                 raise ValidationError(self.env._(
                     "'%s' is not a module on this platform.", name))
+
+    @api.constrains('module_name', 'mode', 'tenant_id', 'active', 'reason')
+    def _check_gated_module_eligibility(self):
+        """An ACTIVE ``enable`` override for a gated module needs an ELIGIBLE tenant (gated_modules.py).
+
+        This is the one place a per-tenant decision is recorded, so it is the one place that refuses: a registry-AE
+        tenant whose books are not verified, or a non-UAE tenant, cannot be given UAE e-invoicing by mistake."""
+        for override in self:
+            name = (override.module_name or '').strip()
+            if not (override.active and override.mode == 'enable' and is_gated(name)):
+                continue
+            eligible, reasons = override.tenant_id._nc_module_eligibility(name)
+            if not eligible:
+                raise ValidationError(self.env._(
+                    "'%(module)s' cannot be enabled for tenant '%(tenant)s': %(reasons)s",
+                    module=name, tenant=override.tenant_id.display_name, reasons=' '.join(reasons)))
+            if not (override.reason or '').strip():
+                # the same rule as the helper's: the decision to give a tenant a regulated capability is attributable
+                raise ValidationError(self.env._(
+                    "A reason (a ticket or approval reference) is required to enable %s.", name))
 
     @api.model_create_multi
     def create(self, vals_list):
