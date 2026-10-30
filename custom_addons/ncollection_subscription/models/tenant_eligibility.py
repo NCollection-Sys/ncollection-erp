@@ -47,8 +47,13 @@ class TenantEligibility(models.Model):
                     country=rule['country'],
                 )
             )
-        entitled = set(self._nc_entitlement_before_gate()) - set(GATED_MODULES)
-        missing = [name for name in rule['requires'] if name not in entitled]
+        # a requirement that is itself gated (an ASP adapter needs the e-invoicing engine) counts only when that module
+        # is entitled AND eligible itself, so the dependency can never be met by a module the tenant may not have
+        entitled = set(self._nc_entitlement_before_gate())
+        missing = [
+            name for name in rule['requires']
+            if name not in entitled or (is_gated(name) and not self._nc_module_eligibility(name)[0])
+        ]
         if missing:
             reasons.append(
                 self.env._(

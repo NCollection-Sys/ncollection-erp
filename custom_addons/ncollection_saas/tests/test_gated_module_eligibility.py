@@ -371,3 +371,25 @@ class TestTheRealGateTable(TransactionCase):
         tenant._nc_enable_gated_module(self.MODULE, 'PILOT')
         tenant._nc_withdraw_gated_module(self.MODULE)
         self.assertEqual(tenant._nc_effective_module_list(), before)
+
+    def test_a_gated_module_that_requires_a_gated_module_follows_it(self):
+        """An ASP adapter (ncollection_uae_einvoicing_acube) requires the gated e-invoicing engine: it is eligible
+        only while the engine is entitled AND eligible, and its own enable is still required."""
+        adapter = 'mrp'
+        with patch.dict(GATED_MODULES,
+                        {adapter: {'country': 'AE', 'requires': (self.MODULE,), 'label': 'Test adapter'}}):
+            tenant = self._tenant(self.ae, 'done', 'already ae/AED')
+            eligible, reasons = tenant._nc_module_eligibility(adapter)
+            self.assertFalse(eligible, 'the engine is not entitled yet')
+            self.assertIn(self.MODULE, ' '.join(reasons))
+            with self.assertRaises(ValidationError):
+                tenant._nc_enable_gated_module(adapter, 'TICKET')
+            tenant._nc_enable_gated_module(self.MODULE, 'TICKET-ENGINE')
+            self.assertTrue(tenant._nc_module_eligibility(adapter)[0])
+            self.assertNotIn(adapter, tenant._nc_effective_module_list(), 'eligible is not activated')
+            tenant._nc_enable_gated_module(adapter, 'TICKET-ADAPTER')
+            self.assertIn(adapter, tenant._nc_effective_module_list())
+
+    def test_the_real_registry_gates_the_acube_adapter_behind_the_engine(self):
+        rule = GATED_MODULES['ncollection_uae_einvoicing_acube']
+        self.assertEqual((rule['country'], rule['requires']), ('AE', ('ncollection_uae_einvoicing',)))

@@ -35,6 +35,12 @@ GATED_MODULES = {
         'requires': ('account',),
         'label': 'UAE e-invoicing',
     },
+    # an ASP adapter: optional, never in a plan, and only for a tenant that holds (and is eligible for) the engine
+    'ncollection_uae_einvoicing_acube': {
+        'country': 'AE',
+        'requires': ('ncollection_uae_einvoicing',),
+        'label': 'UAE e-invoicing: A-Cube adapter',
+    },
 }
 
 
