@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **29**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **30**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -182,7 +182,12 @@ adding a module fails CI until someone updates this list.
   the UAE AND whose books are VERIFIED as UAE books AND that has Accounting; activated only by an explicit per-tenant `enable`
   override; never in a plan, never a companion. The master data it consumes (`nc_trn`, `nc_tin`, legal registration, product HS/SAC)
   lives in `ncollection_account_localization_uae`. Docs: `docs/markdown/UAE_EINVOICING.md`.
-- `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking.
+- `ncollection_uae_einvoicing_acube` — the first ASP adapter (A-Cube, MoF accreditation 188961), behind the engine's
+  provider-neutral contract; built against A-Cube's PUBLISHED Gov AE OpenAPI, NOT yet proven on its sandbox (no
+  credential), so release stays blocked. A-Cube webhooks are unsigned (static token): a callback is only a trigger and
+  the state is re-read from the API. Docs: `docs/markdown/UAE_EINVOICING.md` §9f.
+- `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking; also the foreign buyer
+  identifier (`nc_foreign_tax_id` + ICD scheme, Guidelines V2.0 §18.2.3) the e-invoicing engine maps to IBT-046.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
 
 **Demo:** `ncollection_demo_freshorigin` — the Fresh Origin showcase dataset.

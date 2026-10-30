@@ -60,10 +60,19 @@ specifications). **Superseded and no longer cited as current:** Guidelines V1.1 
 
 * NCollection is **Corner 1** of the five-corner model: it prepares the document and hands it to the customer's Accredited Service
   Provider (ASP). It is not the FTA and not an ASP. [FACT: UAE Electronic Invoicing Guidelines V2.0 §5.1]
-* **No ASP is selected or built in.** The core knows only an adapter interface; a future `ncollection_uae_einvoicing_<asp>` module is
-  the only place transport and provider credentials' *use* will live. There is no HTTP client in the core and no fake endpoint.
-* **Scope:** customer invoices (`out_invoice`) and customer credit notes (`out_refund`). A vendor bill is a *received* document and is
-  never an outbound e-invoice (creating one is refused). Self-billing and inbound e-invoices are future, separate flows.
+* **No ASP is selected or built in.** The core holds a provider-independent **transport engine** (§9a: queue, idempotency,
+  retries, callbacks, confirmations) that reaches an ASP only through the adapter interface; a `ncollection_uae_einvoicing_<asp>`
+  module is the only place a provider's network calls, formats and credentials' *use* live. There is still no HTTP client in the
+  core. Decided 2026-10-28: the engine is built and proven against the contract adapter now; a real adapter follows the choice of
+  an ASP and its sandbox, and **release stays blocked until one is proven**.
+* **Confirmations are the ASP's.** The Tax Data Document and the report to the FTA are the ASP's acts; NCollection consumes and
+  stores the ASP's confirmations and never generates a TDD itself (decided 2026-10-28; Guidelines V2.0 §5.1).
+* **Scope:** customer invoices (`out_invoice`, 380 / 480) and customer credit notes (`out_refund`, 381 / 81) on PINT AE
+  **Billing**; and, since Cycle 3 (2026-10-29), **self-billed** documents on PINT AE **Self-Billing** (§9d): a vendor bill
+  (`in_invoice`, 389) or vendor refund (`in_refund`, 261) that THIS company issues for its supplier under an active
+  self-billing agreement. A vendor bill is e-invoiced ONLY that way: without an agreement, creating its e-invoice is refused,
+  and a bill that itself came from a received e-invoice can never be self-billed. Inbound documents (§9c) are stored, matched
+  and turned only into a DRAFT vendor bill, or for a received self-billed document a DRAFT customer invoice.
 * The **PDF is unchanged**: it is the printable representation. The e-invoice is the structured XML. No QR code or barcode is added
   (the UAE e-invoice has none). [FACT: Guidelines V2.0 §5.3]
 
@@ -76,6 +85,14 @@ place the release, the specification identifiers and the constants live; `verify
 unlisted file and a test fails if the version string appears anywhere else in `lib/`. Adding a release is a new profile and a new
 folder, not a code search (the Schematron was revised six times in its first year).
 
+`resources/pint_ae_sb/1.0.4/` holds the **PINT AE Self-Billing 1.0.4** package the same way (profile `pint-ae-sb-1.0.4`; source
+`https://docs.peppol.eu/poac/ae/upcoming/pint-ae-sb/resources.zip`, sha256 `7e6e58f1…3d15`, 784,521 bytes, `Last-Modified`
+2026-07-29, PDK 1.4.4): the two Schematron bundles, the same 17 code lists, and the two official samples (`Self Billing.xml`,
+`Self billing tax credit note.xml`). Compared byte for byte with Billing 1.0.4 (2026-10-29): the jurisdiction rules are
+**identical**; the UBL rules differ in ONE assert, `ibr-cl-01` (type codes 389/480 and 261/81 instead of 380/480 and 381/81);
+the code lists are identical except `UNCL1001-inv` / `UNCL1001-cn`. `CustomizationID` `urn:peppol:pint:selfbilling-1@ae-1`,
+`ProfileID` `urn:peppol:bis:selfbilling`. Its own `MANIFEST.txt`, so its rule-set fingerprint differs from Billing's.
+
 ## 3. Upstream artifact discrepancies (recorded, never "fixed")
 
 Registered in `lib/upstream.py`, each with evidence, the engine's handling and a check that it is *still true* of the pinned files, so a
@@ -85,7 +102,9 @@ new release that corrects one forces a human review.
 |---|---|---|
 | `greek-nu-margin-code` | the code-list file gives the margin-scheme category as GREEK capital Nu (U+039D); the Schematron and the official sample use LATIN `N` | the engine emits Latin `N`; the file is read as published; `tax_categories` is an explicit tested set |
 | `hs-sac-min-digits-placeholder` | rule `ibr-187-ae` (minimum digits of HS/SAC) is a placeholder: `test="true()"`, message says "X digits" | digits-only is an NCollection *warning*; no length is enforced (OCQ-5) |
-| `self-billing-type-codes-missing` | the BILLING type lists contain 380/480 and 381/81 only; the self-billing codes are in the separate PINT AE Self-Billing 1.0.4 lists (389/480, 261/81) | self-billing out of scope this phase; no such code is ever emitted (OCQ-11 answered by the Self-Billing lists) |
+| `self-billing-type-codes-missing` | the BILLING type lists contain 380/480 and 381/81 only; the self-billing codes are in the separate PINT AE Self-Billing 1.0.4 lists (389/480, 261/81) | self-billing is its own profile and rule set (§2, §9d); Billing never emits 389/261 and its rules refuse them (`ibr-cl-01`, proven both ways in `e2e_check.py`) |
+| `self-billing-credit-rules-not-applied` | `ibr-055-ae` (preceding reference), `ibr-158-ae` (credit reason), `ibr-124-ae` (no VAT point date) and `ibr-151-ae` (not only E/O) name only 380/381/81, so they never fire for 389/261, in the Self-Billing package too | the engine applies the same four requirements to self-billed documents as ITS OWN rules (`NCOLLECTION:self-billing-ibr-055-ae` …): a self-billed tax credit note is a Tax Credit Note (VAT Decree-Law Art 70; Guidelines V2.0 §10.3) |
+| `ecommerce-sample-flagged-as-export` | the official sample "Supply through e-commerce" carries transaction type `00000001`, the EXPORT position (`ibr-152-ae`), not e-commerce `00000010` (`ibr-142-ae`) | the engine follows the rules' positions (`identity.FLAG_ORDER`), not the sample |
 | `exempt-only-tax-invoice-refused` | fatal `ibr-151-ae` refuses a 380/381 whose lines are all E/O, while Guidelines V2.0 App 6 §18.3.1 says 480 is not for exempt or zero-rated supplies | DECISION 2026-10-28: follow the fatal rule (all E/O ⇒ 480/81; any S/Z/AE/N ⇒ 380/381); OCQ-20 |
 | `billing-frequency-description-code` | `ibr-160-ae` tests `InvoicePeriod/cbc:DescriptionCode`, the official sample uses `cbc:Description` | the engine writes `cbc:Description` like the sample; the 'Others' note is not enforced by anyone yet (follow-up) |
 | `metal-scrap-goods-type-missing` | Guidelines V2.0 §10.5.1 lists metal scrap as reverse-charge goods; fatal `ibr-006-ae` accepts only the five shipped GoodsType codes | metal scrap is recognised in the tax map and BLOCKED with `NCOLLECTION:rcm-goods-type-not-in-release`; no code invented (OCQ-6) |
@@ -115,8 +134,18 @@ participant id, endpoint id and scheme id are five things:
   explicitly and never computed, and the engine does not choose between the two readings. Guidelines V2.0 App 6 §18.1.1 also fixes
   where the seller's identifier goes: a VAT-registered seller's TRN in IBT-031, a seller not registered for VAT puts its TIN in
   IBT-032 (rule ibr-177-ae); the builder does exactly that.
-* **UUID (OCQ-14):** the Guidelines say the ASP generates it, yet rule `ibr-193-ae` requires it in the document. The engine stores a
-  `uuid` set once and never reused as another identifier; the ASP-side authority is left to the adapter.
+* **UUID (OCQ-14, resolved Cycle 4 as far as the sources allow):** Guidelines V2.0 §5.2 #7 assigns *generating* the UUID to the ASP,
+  but fatal `ibr-193-ae` requires `cbc:UUID` in the document Corner 1 hands over, and official validation (and the ASP's own) runs on
+  that document. So the engine is the authority for the DOCUMENT's `cbc:UUID`: generated once (RFC 4122 v4) at first preparation,
+  locked at submission, never reused; the ASP's identifier is a DIFFERENT field (`asp_reference`; A-Cube's `invoiceId`). A-Cube's
+  published contract returns its own resource uuid and does not say it rewrites `cbc:UUID` — SANDBOX-VERIFY; if an ASP does, its value
+  is stored as the provider reference, never written over ours.
+* **Foreign buyer (R05, Cycle 4; Guidelines V2.0 §18.2.3):** a buyer whose country is not AE, with no UAE TIN, and with
+  `nc_foreign_tax_id` + `nc_foreign_tax_scheme` (localization master data; the scheme is 4 digits, never 0235) gets endpoint
+  `0235:9900000098` (source `predefined_foreign_buyer`) and IBT-046 = its foreign identifier with the ICD scheme; IBT-048 is not
+  populated. Readiness checks the scheme against the ICD list read from the pinned `ibr-cl-10` itself (`codelists.icd_codes`), and
+  `ibr-135-ae` accepts the identifier. A UAE buyer is never treated as foreign. Tests: `tests/test_foreign_buyer.py` (5) and the
+  real-move case `real-foreign-buyer-380` (official rules).
 
 `vat` itself is untouched: it is Odoo's country-agnostic Tax ID (validated per country, used for fiscal positions, printed as the TRN by
 the GCC invoice, and holding foreign VAT numbers for foreign customers), so it does not carry the exact semantics "the UAE VAT TRN".
@@ -193,6 +222,40 @@ that rate is material, take a per-tenant accounting decision about `round_global
   the original invoice. Such a note is therefore **blocked with the rule named** until the user chooses another reason or issues it
   without the reversal link; the engine does not silently drop the link.
 
+## 6a. Scenario matrix (BTAE-02; Guidelines V2.0 §10.4)
+
+The eight positions of the transaction-type code, in the order the official rules test them (`identity.FLAG_ORDER`). "Official"
+= the rule is the pinned Schematron's (fatal unless noted); every row has a POSITIVE real-move case (`tests/test_scenario_matrix.py`,
+exported and validated by the official rules in `make einvoice-e2e`) and a NEGATIVE case (readiness reports the rule before XML).
+
+| # | Scenario | Code | Mandatory (rule) | Forbidden | Document types | XML | Tests (+/−) |
+|---|---|---|---|---|---|---|---|
+| 1 | Free zone | `1XXXXXXX` | beneficiary ID BTAE-01 (`ibr-007-ae`) | — | 380/381/480/81 | `cac:BuyerCustomerParty/…/cbc:ID` | `test_free_zone` / `…_without_beneficiary` |
+| 2 | Deemed supply | `X1XXXXXX` | predefined endpoint `0235:9900000097`; no payment means / due date (`ibr-191-ae`, `ibr-127-ae` exempt) | on 480/81 (`ibr-157-ae`) | 380/381 | buyer `EndpointID` | `test_deemed_supply` / `…_not_allowed_on_a_commercial_invoice` |
+| 3 | Margin scheme | `XX1XXXXX` | every category `N` (`ibr-116-ae`); VAT amount 0 with the rate shown (`ibr-108-ae`) | on 480/81 (`ibr-157-ae`); any non-N line | 380/381 | `TaxCategory/ID = N`, `Percent` | `test_margin_scheme` / `…_with_a_standard_rated_line`, `…_on_a_commercial_invoice`, tax-map guard |
+| 4 | Summary invoice | `XXX1XXXX` | invoicing period IBG-14 (`ibr-138-ae`) | on 480/81 (`ibr-157-ae`) | 380/381 | `cac:InvoicePeriod` | `test_summary_invoice` / `…_without_period`, `…_on_a_commercial_invoice` |
+| 5 | Continuous supply | `XXXX1XXX` | none fatal; billing frequency from the official list if given (`ibr-005-ae`) | — | all | `InvoicePeriod/Description` | `test_continuous_supply` |
+| 6 | Disclosed agent | `XXXXX1XX` | principal ID BTAE-14 (`ibr-137-ae`); the agent's TRN (`ibr-177-ae`) | principal = the seller's TRN (`ibr-176-ae`) | all | `cac:SellerSupplierParty/…/cbc:ID` | `test_disclosed_agent_billing` / `…_without_principal`, `test_the_principal_cannot_be_the_agent` |
+| 7 | E-commerce | `XXXXXX1X` | deliver-to street, city, region (`ibr-142-ae`) | — | all | `cac:Delivery` | `test_ecommerce` / `…_without_a_delivery_address` |
+| 8 | Export | `XXXXXXX1` | deliver-to address unless delivered in the UAE (`ibr-152-ae`); buyer identifier not required (`ibr-135-ae`) | self-billed export (`NCOLLECTION:self-billing-export-not-applicable`) | 380/381 typically zero-rated | `cac:Delivery` from `partner_shipping_id` | `test_real_export_scenario_380` (crosscheck) / `test_export_without_a_delivery_address_abroad` |
+
+**Combinations.** No official rule forbids two positions together except via the document type (`ibr-157-ae`); proven
+together: free zone + e-commerce (`10000010`), summary + continuous supply (`00011000`), and several missing-data flags at once
+report every rule. **Tax categories:** S, Z, E, O, AE (reverse charge, `test_reverse_charge`, crosscheck), N (margin) — all
+reach official validation on real moves; all-E/O ⇒ 480/81 (below); out-of-scope-only ⇒ 480.
+
+**Defects this matrix found and fixed (Cycle 3).** (1) An e-commerce supply was built WITHOUT `cac:Delivery` — the engine emitted
+the deliver-to address only for exports — so every real e-commerce document would have failed fatal `ibr-142-ae`; the address now
+comes from the document's delivery address for e-commerce too, and readiness reports `ibr-142-ae` first. (2) A real margin-scheme
+line (Odoo tax 0%, mapped `N`) carried rate 0 and was blocked; `N` now takes the rate SHOWN from the tax map like reverse charge
+(the tax map refuses an `N` tax that is not 0% or has no shown rate). (3) `ibr-176-ae` / `ibr-177-ae` (agent billing) had no
+readiness check; they now do.
+
+**The known conflict, unchanged.** Guidelines V2.0 App 6 §18.3.1 vs fatal `ibr-151-ae`: the DECISION of 2026-10-28 stands — follow
+the fatal rule, so an all-Exempt / Not-subject document is 480 / 81 (`real-exempt-only-480`, e2e negative control "exempt-only
+document typed 380 fails ibr-151-ae"). Not re-litigated: no newer authoritative text was found. Self-billing has NO 480 / 81 form
+(§9d), so there the same document is refused instead.
+
 ## 7. Validator
 
 The official Schematron is **XSLT 2.0** (`queryBinding="xslt2"`; `xsl:function`, `castable as`, `every … satisfies`). The Odoo image has
@@ -221,6 +284,16 @@ deemed supply); five negative controls fail with the right rule ids; the worker 
 ~25–60 ms per document (one-off measurement).
 Running the real end-to-end check found four defects in the engine's first draft (gross price on every line, `ibr-151-ae`, the
 predefined-endpoint buyer identifier, a mis-scoped TIN advisory) which are fixed and tested.
+
+**Two profiles, two workers (Cycle 3).** The Self-Billing rule set runs in a SECOND instance of the same worker image, mounted
+with `resources/pint_ae_sb/1.0.4` (`einvoice-validator-sb` in `docker-compose.einvoice.yml`, same hardening, same internal
+network). The engine picks the worker by the document's profile (`SpecProfile.validator_url_env`: `NC_EINVOICE_VALIDATOR_URL`
+for Billing, `NC_EINVOICE_VALIDATOR_SB_URL` for Self-Billing), and the client checks the answering worker's rule-set
+fingerprint against THAT profile's manifest, so a Billing worker can never validate a self-billed document (or the reverse):
+the call is "unavailable", never "valid". No worker code changed. `e2e_check.py` (2026-10-29, ALL EXPECTATIONS HOLD) adds: both
+official Self-Billing samples validate clean; an engine-built 389 and 261 validate clean; a 389 is refused by the Billing rules
+and a 380 by the Self-Billing rules (`ibr-cl-01`); a 389 without the supplier VAT identifier fails `ibr-134-ae`, a 261 without
+its UUID fails `ibr-193-ae`; and a Self-Billing answer offered as a Billing one is rejected by the client.
 
 **Licence (recorded 2026-10-22):** SaxonC-HE is **MPL-2.0** per Saxonica's terms page (open-source Saxon-HE) and product page (some Apache-2.0 /
 BSD-style components; "incompatible with secondary licenses"). The `saxonche` 13.1.0 wheel (sha256 `edf6ff3c…408c`) ships **no LICENSE file**
@@ -292,8 +365,41 @@ fields (company, provider, name, version, who, when) are immutable even to the s
 undecryptable. The ciphertext column is readable only by the service account, which alone can decrypt (a private method, not RPC).
 Secrets never enter XML, logs, history, audit rows (the audit seeder excludes the model), exception messages or the frontend (tests
 prove each). No fingerprint of a secret is stored. The one `sudo()` of the credential path is in `set_secret`, after an explicit manager
-check. Unset master key ⇒ the feature refuses; it never falls back to plaintext. **Not built yet:** key rotation (`key_version` is
-always 1) and a screen; the service account must be created as a non-login user (nothing enforces that yet).
+check. Unset master key ⇒ the feature refuses; it never falls back to plaintext. The service account is created by the module as an
+INACTIVE user (`data/transport.xml`), so it cannot log in.
+
+**The credential screen (Cycle 4).** Provider form > Credentials (managers only): name, configured, key version, who and when — never
+a value. *Set a credential* opens a write-through wizard: the value is handed to `set_secret` inside the wizard's `create` and is never
+stored, not even in the transient table (tested by reading the column).
+
+**Key rotation (R48, Cycle 4).** The master is VERSIONED. The deployment holds the current master and, only during a rotation, the
+previous one, all in the container environment:
+
+| Variable | Meaning |
+|---|---|
+| `NC_EINVOICE_SECRET_KEY` | the current master (≥ 32 characters) |
+| `NC_EINVOICE_SECRET_KEY_VERSION` | its version (default 1, so every existing ciphertext keeps working) |
+| `NC_EINVOICE_SECRET_KEY_PREVIOUS` | the previous master, only while rotating (must differ from the current one) |
+| `NC_EINVOICE_SECRET_KEY_PREVIOUS_VERSION` | its version (required with it; must differ) |
+
+Each ciphertext records its version, which is in both the key derivation and the AAD, so a ciphertext opens only with the master of its
+own version. *Rotate credential keys* (managers; `ncollection.einvoice.secret.action_rotate_keys`) re-encrypts every credential of the
+manager's own companies: decrypt with the master of its version, encrypt with the current one, swap — **one savepoint per
+credential**, so each swap is atomic and a credential that cannot be decrypted (its master is missing, or the ciphertext was moved or
+tampered with) keeps its old ciphertext and version and is only counted. Nothing leaves the method but counts; no value, key or
+ciphertext is logged by it (Odoo's own DEBUG SQL log can show a ciphertext as a query parameter — the stored value, useless without the
+master). New secrets are always written with the current version. Runbook:
+
+1. generate a new master (`openssl rand -hex 32`); deploy it as `NC_EINVOICE_SECRET_KEY` with `…_VERSION` = old + 1, and move the old
+   one to `…_PREVIOUS` / `…_PREVIOUS_VERSION` (every container that runs e-invoicing code: web workers and `einvoice-runner`);
+2. in each tenant, a manager runs *Rotate credential keys* (or the operator calls `action_rotate_keys` per database); check
+   `failed = 0`;
+3. remove `…_PREVIOUS*` and restart. A credential still on the old version then fails closed (never silently) and is set again.
+
+Tests (`tests/test_key_rotation.py`, 12): key-ring rules; old → new migration readable during and after; idempotent second run; the
+rotated ciphertext refuses the old master, a wrong master and a wrong version; a missing master and a moved ciphertext leave the old
+secret untouched and rotate the rest; another company's credential is untouched; only a manager rotates; no secret in logs or result;
+the wizard stores nothing in clear.
 
 ## 9. States, history, immutability
 
@@ -324,7 +430,371 @@ performed is *recorded and returned*, never raised (an exception would roll the 
 checks the tenant's licence itself: it **fails closed** (a workspace whose licence does not name `ncollection_uae_einvoicing` can create
 or run nothing), unlike the product's generic enforcement for an empty list.
 
+## 9a. Transport (models/transport.py, controllers/callback.py)
+
+**Dimensions.** Seven now: the five above plus `mls_state` (Peppol Message Level Status AB / AP / RE: about the *message*) and a
+real `business_state` (the buyer's Invoice Response: AB, IP, UQ, CA, AP, RE, PD; `rejected` and `paid` are final). The TDD / FTA
+confirmation stays on `fta_state`. None of the transport dimensions can touch another.
+
+**One submission per revision.** `ncollection.einvoice.submission` stores the contract's idempotency key (sha256 of UUID,
+revision and XML digest) under a database `UNIQUE`, and a stable correlation id. The provider receives the same key on every
+attempt, so a timeout after a successful send is resolved by sending again: the contract makes the provider answer with the same
+document id (proven: `test_a_timeout_after_a_successful_send_creates_no_second_document`).
+
+**Workers.** The job locks its row (`FOR UPDATE NOWAIT`); a second worker that finds it locked, or a job that runs before its time
+or after the work is done, does nothing. A worker that dies mid-send leaves a lease that expires (10 min); the enqueue cron puts
+it back with the same key.
+
+**Retries.** TRANSIENT only, `lib/backoff.py`: 60 s doubling, capped at 6 h, deterministic ±20 % jitter, Retry-After as a floor;
+after 8 attempts the submission is a dead letter (`dead`, `permanent_failure`). AUTHENTICATION / CONFIGURATION: `attention`, no
+retry until a manager restarts it. REJECTED: final, with an `asp` finding naming the provider's code. An adapter that raises is a
+transient failure, never a crashed job. An answer whose correlation or key is not the submission's is refused.
+
+**Events.** Callbacks (`POST /ncollection/einvoice/callback/<provider id>`, no session, verified by the adapter before parsing,
+1 MB cap, the same 401 for every refusal) and polls store each event once (`UNIQUE(provider, message id)`), the payload's sha256
+and never the payload. An event that arrives before the acceptance it needs waits (`pending`) and is applied once the document
+gets there; one that conflicts with a final state is kept and `ignored`; one whose ids match no submission, or whose correlation
+and document ids disagree, is an `orphan` — never guessed.
+
+**Topology.** Jobs run on the `einvoice` queue_job channel; the cron only enqueues (DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §2). The
+adapter runs as `einvoice-service@ncollection.internal`, created **inactive** (it cannot sign in and holds no seat), the only
+identity that can decrypt a provider credential. Tenant-side execution: §9b.
+
+## 9b. The tenant runner (runner_scope.py, docker-compose.einvoice-runner.yml)
+
+**Decision (2026-10-29): ONE shared runner, not one per tenant.** OCA's jobrunner already serves several databases and elects
+itself master of each with a per-database advisory lock; what it lacked was a *scope* and a *refresh* (it serves `db_name` or
+every database, discovered once at start). `einvoice-runner` is the stock `odoo:19` image with this module in `--load` and
+`NC_EINVOICE_RUNNER=1`; the module's `post_load` then patches the runner class in that process only:
+
+* **Scope.** A database is served only if `runner_scope.decide()` says so: the release gate calls it a TENANT (never the platform:
+  the gate keys that on `ncollection_saas`), its gate state is READY (provisioning, upgrading, held, behind or failed databases run
+  nothing), `ncollection_uae_einvoicing` and `queue_job` are installed, and the workspace status the platform pushes is not
+  suspended / expired / cancelled. A database that cannot be read is not served that round.
+* **Refresh.** Every 60 s the eligible set is re-read; joiners are added with their pending jobs, leavers are removed from the
+  channel manager and closed. New, suspended or deleted tenants need no restart.
+* **Execution and isolation.** Unchanged OCA mechanics: the runner calls `/queue_job/runjob?db=<db>` on its OWN HTTP server
+  (`127.0.0.1`, no published port, `--db-filter=.*` because the scope, not the filter, chooses the databases), which runs the job in
+  that database's registry and transaction. Credentials are per database / company / provider and decrypted only by the inactive
+  service user of that database. The release gate is loaded (`ncollection_core` in `--load`), so a database that stops being READY
+  answers `runjob` with its maintenance response even between two refreshes.
+* **What stays as it was.** Without `NC_EINVOICE_RUNNER=1` the patch is a no-op: the platform's `provisioning-runner`, the HTTP
+  workers and every other process keep OCA's behaviour. `--max-cron-threads=0`: crons stay where they are (invariants R6).
+* **Edge.** `/queue_job/runjob` is `auth='none'` and must never be reachable from the public edge. The dev edge now answers 403 for
+  `/queue_job/` (nginx `ncollection.dev.conf`). **Release item: the production edge (`ncollection.prod.conf`) needs the same block;
+  it is not changed in local development.**
+* **Not deployed.** The overlay is opt-in; production adopts it in the final release sequence.
+
+## 9c. Inbound e-invoices (models/inbound.py, lib/inbound_parse.py)
+
+An inbound document becomes at most a **DRAFT** vendor bill (decided 2026-10-28): never posted, never validated, never paid by the
+engine, and nothing is guessed.
+
+**Path.** An `inbound` event (callback or poll, deduplicated like every event) enqueues a fetch; the fetch job calls the adapter's
+`fetch_inbound`, checks the provider's digest against the bytes, archives the XML (the legal artefact, kept as a protected
+attachment with its sha256; transport events keep only digests) and records ONE intake row; processing then runs the states:
+
+```
+received -> validating -> matching -> ready -> bill_created
+validating -> validation_failed | rejected | duplicate | review | (validator unavailable: stays validating, retried with backoff)
+matching   -> unmatched (no supplier / identifiers disagree)        ready -> review (tax, currency or document amounts)
+unmatched -> matching, review -> validating                         (Process again, after the master data is corrected)
+```
+
+The inbound `state` is its own dimension: it never touches MLS, the business response, `fta_state` or any outbound state.
+
+**Validation, in order.** Integrity (the archived bytes against their digest); safe parsing (no DTD, entities or network; a
+DOCTYPE is refused outright, which is the XXE defence); only 380 / 480 / 381 / 81 are purchase documents, and 389 / 261 are
+self-billed (below); the BUYER must be this company by TRN or participant id (TIN), never by name, else `rejected`; the engine's own preconditions (number, date, currency, a supplier
+identifier, complete lines, a credit note's billing reference, line total = Σ lines, tax-exclusive = lines − allowances +
+charges, tax-inclusive = exclusive + tax, payable = inclusive − prepaid, at 0.01); then the OFFICIAL PINT-AE rules on the
+isolated validator (§7), whose failed rule ids become `OFFICIAL:<id>`.
+
+**Supplier matching.** TRN, then participant id (TIN, which is the endpoint id on the UAE scheme), then legal registration
+(`company_registry`), among active partners shared or of this company. Every identifier the document carries must point to the
+SAME commercial partner: none → `unmatched` (no partner is ever created), more than one → `unmatched` (ambiguous or conflicting).
+A name never decides; a renamed supplier with the same TRN still matches.
+
+**The draft bill.** `in_invoice` / `in_refund` of the provider's company, the matched partner, `ref` = the document number,
+invoice and due dates, the active currency of the document (else `review`), one line per document line with the line amount as
+the truth (unit price = line amount / quantity, so line discounts are carried exactly), and the purchase tax that the company's
+**tax map** gives for the line's PINT category and rate — exactly one, else `review`. Document-level allowances, charges or prepaid
+amounts go to `review`. The bill is created inside a savepoint and kept only if its untaxed and tax totals equal the document's
+(0.01); otherwise `review`. `account.move.nc_inbound_id` links the bill to its source, and the narration names the provider and
+its document id.
+
+**Duplicates, enforced by the database.** `UNIQUE(provider, asp document id)` and `UNIQUE(provider, message id)` collapse repeated
+callbacks, polls, retried fetches and callback-versus-poll races into one row; a partial unique index on the DOMAIN identity
+(company, supplier identifier, kind, number) over non-duplicate rows makes the same invoice delivered under a new provider id a
+`duplicate` row pointing at the original; `account.move.nc_inbound_id` is unique, so one intake row has at most one bill. Each
+processing step locks its row (`FOR UPDATE NOWAIT`) and is idempotent.
+
+**A received SELF-BILLED document (389 / 261, Cycle 3).** The customer issued it for this company, its supplier, so the roles
+mirror: the SELLER must be this company (else `rejected`, `NCOLLECTION:inbound_wrong_recipient`; a 389 that names this company
+as its BUYER is refused the same way); it is validated with the **Self-Billing** rule set; the counterparty matched (same
+identifier rules) is the CUSTOMER; it proceeds only if an active `receive` self-billing agreement with that customer covers the
+issue date (else `review`, `NCOLLECTION:inbound_self_billing_agreement`); and it becomes a **DRAFT customer invoice / credit
+note** (`out_invoice` / `out_refund`) with the company's SALE tax map. Same duplicate layers (the domain key uses the
+customer's identity). Cycle 2's "389 / 261 → review" stop is replaced.
+
+## 9d. Self-billing (PINT AE Self-Billing: 389 / 261)
+
+Guidelines V2.0 §10.3 (the only official text on it): "the buyer may issue the Electronic Invoice on behalf of the supplier"
+**subject to an agreement** between them; self-billing "only appl[ies] for VAT purposes" and "is not available for suppliers who
+are not registered for VAT", so "there is no option for self-billing of Commercial Invoices"; it "will require the buyer to be
+on the Electronic Invoicing System"; and a self-billed Tax Invoice "should fulfil the criteria" of a Tax Invoice.
+
+**The workflow.** A posted vendor bill (`in_invoice`) or vendor refund (`in_refund`) → its e-invoice (`self_billing` set by the
+ENGINE from the document type; a checkbox never makes a document self-billed) → preparation on the Self-Billing profile → XML
+with the Self-Billing `CustomizationID` / `ProfileID` and type 389 / 261 → official validation by the Self-Billing worker → the
+SAME transport engine as every e-invoice (queue, idempotency key, lease, retry, dead letter) with `SubmissionRequest.self_billed`,
+`customization_id` and `profile_id` set (a self-billed document travels from the BUYER, this Person, to the SELLER: an adapter
+must not infer direction from the party roles) → provider response → MLS / FTA (TDD) confirmations STORED from the ASP (never
+generated) → final state, append-only history and the immutable XML archive.
+
+**Eligibility, deterministic (`ncollection.einvoice.self.billing.agreement`, models/self_billing.py).** An e-invoicing MANAGER
+records the agreement (partner, reference, period, direction `issue` = we self-bill our supplier / `receive` = our customer
+self-bills us) and activates it; activation is refused when the supplier is not VAT-registered (no valid TRN) or another active
+agreement for the same partner and direction overlaps; an active agreement cannot be edited (terminate it and record a new one),
+termination records who and when, and a once-active agreement is never deleted. Creating a vendor bill's e-invoice is refused
+without ANY active `issue` agreement with that supplier; every preparation then checks, and blocks with its own rule:
+
+| Rule | Condition |
+|---|---|
+| `NCOLLECTION:self-billing-agreement-missing / not_yet / expired / ambiguous` | exactly one active agreement must cover the transaction date |
+| `NCOLLECTION:self-billing-supplier-not-registered` | the supplier (the document's SELLER) has a valid TRN |
+| `NCOLLECTION:self-billing-buyer-not-on-system` | this company (the BUYER) has a valid TIN (its participant id) and is not marked "not onboarded" |
+| `NCOLLECTION:self-billing-commercial-not-allowed` | at least one VAT-relevant line: a self-billed document stays 389 / 261 and is never turned into 480 / 81 |
+| `NCOLLECTION:self-billing-export-not-applicable` | no export flag: under self-billing the buyer is this UAE company on the system |
+| `NCOLLECTION:self-billing-ibr-055-ae / -ibr-158-ae / -ibr-124-ae` | a 261 references its original (except VD), carries its reason and no VAT point date (see `self-billing-credit-rules-not-applied`, §3) |
+
+**Mandatory data, field by field.** Self-Billing has the same data model as Billing (stated on the official package page), so
+every mandatory field and fatal rule of §4–§6 applies unchanged, with the parties as the document defines them: the SUPPLIER is
+`AccountingSupplierParty` (its TIN endpoint `0235:<TIN>`, its TRN — `ibr-134-ae`/`ibr-177-ae`, its legal registration —
+`ibr-150-ae`, its address) and THIS company is `AccountingCustomerParty`. The payee is the supplier: payment means come from
+the bill's own (supplier) bank account, never this company's default account (`ibr-192-ae` blocks a credit transfer without
+it). Credit notes reference the original self-billed invoice through Odoo's reversal link (§9e).
+
+| Field | Source | Code | Validation | XML | Test |
+|---|---|---|---|---|---|
+| CustomizationID / ProfileID | PINT AE SB 1.0.4 | `spec.PROFILES['pint-ae-sb-1.0.4']` | official `ibr-cl-*`, profile fingerprint | `cbc:CustomizationID`, `cbc:ProfileID` | `test_a_self_billed_tax_invoice_389` |
+| Type 389 / 261 | UNCL1001 SB lists; G2.0 §10.1 | `lib/doctype.py` | `ibr-cl-01` (SB worker) | `InvoiceTypeCode` / `CreditNoteTypeCode` | 389 / 261 tests; e2e `ibr-cl-01` both ways |
+| Seller = supplier (name, TIN endpoint, TRN, legal id, address) | G2.0 §10.3; MF1.1 | `prepare._nc_parties` | `ibr-134/150/177-ae`, readiness | `AccountingSupplierParty` | 389 test (supplier block), e2e `ibr-134-ae` negative |
+| Buyer = this company | G2.0 §10.3 | `prepare._nc_parties` | `buyer-not-on-system`, `ibr-135/149-ae` | `AccountingCustomerParty` | `test_the_buyer_must_be_on_the_einvoicing_system` |
+| Agreement | G2.0 §10.3 | `models/self_billing.py` | `self-billing-agreement-*` | not in XML (stored on the record, in the payload) | eligibility tests (8) |
+| Payment account | MF1.1; `ibr-192-ae` | `prepare` (no company fallback) | `ibr-191/192-ae` | `PaymentMeans` | `test_the_company_default_account_is_never_the_suppliers` |
+| Original invoice reference, reason | VAT DL Art 70; `ibr-055/158-ae` (extended) | `_nc_original_facts` | `self-billing-ibr-*`, `credit-note-original-*` | `BillingReference`, `DiscrepancyResponse` | 261 tests |
+| Lines, quantities, prices, discounts, allowances, charges, totals, tax | Billing model | unchanged mapper | reconciliation + official | unchanged | 389 / 261 official validation (e2e, real-move fixtures) |
+
+## 9e. Credit notes (381 tax / 81 commercial / 261 self-billed)
+
+The three kinds stay distinct: a **tax credit note** 381 corrects a tax invoice 380, a **commercial credit note** 81 a commercial
+invoice 480, a **self-billed tax credit note** 261 a self-billed 389 (`prepare.CREDIT_PAIRS`). The type follows the credit note's
+own lines (`lib/doctype.py`), and the pair is then checked against the original's e-invoice.
+
+**The reference.** The ONLY reference is Odoo's own reversal link (`reversed_entry_id`): never a typed value, so it can neither be
+ambiguous nor point outside this database (a tenant is a database). `_nc_original_facts` checks it and readiness blocks with:
+`credit-note-original-not_found / other_company / wrong_kind` (a customer credit note corrects a customer invoice, a vendor refund
+a vendor bill) `/ other_partner / not_posted / not_einvoiced` (the original HAS an e-invoice that never passed the official
+validation) `/ type_mismatch / other_profile`. An original with NO e-invoice at all (issued before the mandate, out of scope,
+or before this engine) is allowed with a WARNING (`credit-note-original-without-einvoice`), silent when the original predates the
+company's configured e-invoicing start. A credit note without a link needs the volume-discount reason (`ibr-055-ae`).
+
+**Amounts (VAT Decree-Law Art 70; Guidelines V2.0 §12.2 #3–#4).** Partial credit notes are allowed. Every POSTED credit note of
+the same original, this one included, may credit at most the original's total AND at most its VAT (`credit-exceeds-original`,
+checked separately, so a credit carrying VAT a zero-rated original never charged is refused even within the amount).
+
+**One credit note for several invoices — formal review (Cycle 4).** Guidelines V2.0 §12.2 #3: "In instances where a single electronic
+Tax Credit Note is issued for multiple past electronic Tax Invoices, references to these multiple electronic Tax Invoices **can be
+provided** in one electronic Tax Credit Note." That is a PERMISSION, not a mandate; fatal `ibr-055-ae` requires *a* preceding
+reference (IBG-03), which one original satisfies; nothing in PINT-AE 1.0.4, the Mandatory Fields V1.1 or MD 243 requires a Person to
+consolidate credits. Issuing one credit note per invoice is always compliant. Supporting it would need a second, non-accounting
+reference list whose amounts Odoo's reconciliation (one `reversed_entry_id`) would not see, which is exactly the inconsistency the
+original-amount check exists to prevent. **Decision: intentional supported-scope restriction, status NOT APPLICABLE (not a
+requirement).** Such a document cannot be produced, so it is never sent wrongly; a customer who wants it is told to credit each invoice.
+
+**Lifecycle.** A credit note has no shortcut: draft → prepare → XML → official validation → queued submission → ASP → MLS / FTA
+→ final state → archive, exactly as an invoice. One e-invoice per credit-note revision (`unique(move_id, revision)`); a second
+submission of the same revision is refused (`already submitted`) and the idempotency key is unique.
+
+| Case | Test (tests/test_credit_notes.py unless noted) |
+|---|---|
+| full reversal 381 (amounts, VAT, reference, payable, XML) | `test_a_full_reversal` (+ official, `real-credit-note-381-full`) |
+| one-line partial | `test_a_one_line_partial_credit` (+ official) |
+| multi-line partial quantity | `test_a_multi_line_partial_quantity_credit` (+ official) |
+| partial amount | `test_a_partial_amount_credit` |
+| partial tax adjustment | `test_a_partial_tax_adjustment` |
+| commercial 81 for a 480 | `test_a_commercial_credit_note_81_for_a_480` (+ official) |
+| self-billed 261 full | test_self_billing `test_a_self_billed_tax_credit_note_261_full_reversal` (+ official SB) |
+| missing original / other company / other customer / wrong kind / not posted / original never validated / type mismatch | `TestCreditNoteReferences` (7 tests) |
+| excessive amount / excessive VAT | `test_credits_beyond_the_original_amount_are_refused`, `test_credited_vat_beyond_the_original_vat_is_refused` |
+| duplicate credit note | `test_a_credit_note_has_one_einvoice_per_revision`; transport idempotency (test_transport, test_self_billing) |
+| cross-tenant | structural: database per tenant and the ORM link is the only reference; not separately testable inside one database |
+| invalid VAT / invalid totals | reconciliation + official rules (test_pint_logic, test_prepare; unchanged for credit notes) |
+
+## 9f. ASP research and the A-Cube adapter (Cycle 4, 2026-10-29)
+
+**Landscape (authoritative source).** The MoF page *eInvoicing Accredited Service Providers (ASPs)*
+(`mof.gov.ae/en/about-us/initiatives/einvoicing/einvoicing-accredited-service-providers-asps/`, fetched 2026-10-29) lists 69 accredited
+providers with accreditation numbers. Third-party counts (41 / 54 / 70) disagree; only the MoF list is used. No commercial commitment,
+no purchase, no credential requested.
+
+| Candidate (MoF no.) | Public API contract | Sandbox | PINT-AE XML in | Self-billing | TDD | Webhook security | Fit |
+|---|---|---|---|---|---|---|---|
+| **A-Cube** (188961) | OpenAPI 3.1 `docs.acubeapi.com/openapi/gov-ae-api.json` | documented host `ae-sandbox.api.acubeapi.com`; account registration | yes (`application/xml`) | yes (`self-billed-invoice/-credit-note`, 389/261) | `GET …/{uuid}/tdd` | static token only | **technical target** |
+| Aigentrix / TronStride (182493) | public REST reference | `environment=SANDBOX` per request; account + API key | yes (`create-from-xml`) | not documented | FTA `taxStatus` + PDF renditions | HMAC-SHA256 (`X-Aigentrix-Signature`, timestamp) | runner-up |
+| Complyance (112219) | partial (GETS JSON mapping) | request-based | JSON-first | linked, not specified | portal downloads | not documented | weak for an XML engine |
+| Avalara (134809) | SDK; UAE specifics not public | account-gated | UBL via mandate | not documented | not documented | not documented | gated |
+| Pagero / ecosio / EDICOM / others | marketing / gated | gated | — | — | — | — | not assessable publicly |
+
+**Why A-Cube:** the only accredited ASP whose UAE contract is fully PUBLIC and machine-readable, which takes our exact artefact (PINT AE
+UBL XML) unmodified, names self-billing explicitly and exposes the TDD per document. **What it lacks:** signed webhooks (a static
+token) and a published idempotency key; both are handled by design below.
+
+**The adapter (`ncollection_uae_einvoicing_acube`).** Behind `AdapterBase`; the core imports nothing from it. Built against the
+published contract (OpenAPI sha256 `858d1060…ddff`); **never run against the provider** — no credential exists.
+* Auth: `POST common.api.acubeapi.com/login` (`email`, `password`, `environment`) → 24 h JWT, cached in memory only, renewed
+  10 min before `exp` and once on a 401. Secrets `email` / `password` / `webhook_token` come from the engine's encrypted store.
+* Outbound: 380 / 480 / 389 → `POST /invoices/outgoing`; 381 / 81 / 261 → `POST /credit-notes/outgoing`; 201 = accepted (`invoiceId`
+  stored as `<collection>:<uuid>`), 400 / 422 = REJECTED (the violation CODE kept, never its text), 404 = CONFIGURATION (legal entity
+  not onboarded), 401 / 403 = AUTHENTICATION, 429 / 5xx = TRANSIENT with `Retry-After` honoured. Self-billed documents are owned by
+  the BUYER (this Person), which the request now says (`self_billed`).
+* Idempotency (no key in the API): before every POST the adapter looks for an outgoing document of the owner TIN with the same number
+  and type (paged, ≤ 5 pages) and returns it as `duplicate`; a created-but-unreadable answer is TRANSIENT so the retry looks first.
+* Status: `GET /{collection}/{uuid}`; only `delivered` (exchange delivered) and `delivery_failed` (exchange rejected) are mapped —
+  `accepted`, `rejected`, `withdrawn`, `action_required` have NO published meaning and are stored as unmapped events, moving no state.
+  `GET …/tdd` 200 ⇒ an `fta reported` event with `tdd_reference = acube-tdd-sha256:<sha256>`. The engine never generates a TDD.
+* Callbacks: A-Cube webhooks carry only a static token (`X-NC-Webhook-Token`, ≥ 32 characters, constant-time compare). Because an
+  unsigned body can be replayed or forged by whoever learns the token, **a callback is only a trigger**: `document.delivered` makes the
+  adapter re-read the document from the API with our credentials; `document.received` announces an inbound id that the engine then
+  fetches. Event ids are deterministic per (document, state), so a replay is a duplicate the engine drops. The engine's controller
+  still applies its 1 MB limit and answers the same 401 for every refusal (no existence leak).
+* Inbound: `GET /invoices|credit-notes?direction=incoming` (paged cursor), XML from `…/{uuid}/source`; an outgoing document is never
+  accepted as inbound.
+* SSRF: the two hosts are constants chosen by the provider's environment (sandbox / production); no URL comes from configuration or
+  from an answer; redirects are not followed.
+
+Tests (`ncollection_uae_einvoicing_acube/tests`, 34): the engine's adapter contract suite (its four signed-callback tests re-stated for
+the trigger model), endpoint routing for all six types, buyer ownership of self-billed documents, token reuse / renewal, refused
+credentials, configuration vs rejection, violation code, Retry-After, status mapping, TDD as stored confirmation, host not
+configurable, inbound list / fetch, outgoing never inbound, no secret in a URL, token verification, body never trusted, replay
+dedup, malformed / unknown callbacks. All against a SCRIPTED server that implements only the published contract — not provider answers.
+
+**SANDBOX-VERIFY before any release (needs an A-Cube sandbox account):** the login flow and token claims; whether `cbc:UUID` is kept;
+the real meaning of `accepted` / `rejected` / `withdrawn` / `action_required`; how MLS documents (`documentType: mls`) relate to an
+outgoing document; the list endpoint's paging shape (`hydra:member` or array) and duplicate detection; the webhook payload fields;
+legal-entity onboarding via EmaraTax; behaviour for predefined endpoints (98 / 97 / 99, report-only); 409 / duplicate answers.
+
+### 9f.1 Adapter audit (Cycle 5) — defects found and fixed
+
+| Finding | Severity | Fix | Test |
+|---|---|---|---|
+| The in-memory token cache was keyed by provider id + environment. The shared tenant runner serves many databases in ONE process, where two tenants' provider rows can have the same id: one tenant could have reused another tenant's A-Cube token | **HIGH (tenant confusion)** | key = (database, provider id, environment, sha256 of the login email) | `test_two_tenants_never_share_a_token` |
+| The duplicate check matched on document number + type only; a number is not globally unique (another revision, another counterparty), so a legitimate document could have been suppressed | HIGH | a candidate must match owner TIN, direction, type, number AND recipient, and its stored XML (`/source`) must carry OUR `cbc:UUID` | `test_the_same_number_with_another_uuid_is_not_a_duplicate`, `…_for_another_recipient_…` |
+| When the list endpoint failed, the adapter fell through and POSTed blind (a duplicate after a lost answer) | HIGH | the check fails SAFE: TRANSIENT `duplicate-check-inconclusive`, nothing sent, retried with backoff; also after 50 full pages | `test_an_unreadable_list_never_sends_blind` |
+| No response-size limit; TLS verification implicit | MEDIUM | streamed read refused past 20 MB (`response-too-large`); `verify=True` stated; redirects still refused | `test_an_oversized_provider_answer_is_refused` |
+| Inbound XML had no size cap before archiving | MEDIUM | 10 MB (the engine parser's limit), PERMANENT `inbound-too-large` | `test_an_oversized_inbound_document_is_refused_before_archiving` |
+
+Timeout AFTER A-Cube stored the document, then a retry: one document at the provider, the retry returns it as `duplicate`
+(`test_a_timeout_after_acceptance_then_a_retry_gives_one_document`). Callback and polling then name the same provider id, which the
+engine's `UNIQUE(idempotency_key)` / one-submission-per-revision already keep as ONE logical submission.
+
+### 9f.2 Identifiers — none is reused for another
+
+| Identifier | Owner | Where stored | Notes |
+|---|---|---|---|
+| e-invoice UUID (`cbc:UUID`) | Balance Cloud (engine) | `ncollection.einvoice.uuid` | generated once per revision, locked at submission; required in the XML by fatal `ibr-193-ae` before any ASP sees it; also the adapter's duplicate proof |
+| idempotency key | engine | `submission.idempotency_key` (UNIQUE) | sha256(uuid, revision, xml sha256) |
+| correlation id | engine | `submission.correlation_id` (UNIQUE) | per submission |
+| provider document id | A-Cube (`invoiceId`) | `submission.asp_document_id`, `einvoice.asp_reference` as `<collection>:<uuid>` | never written into `uuid` |
+| provider event / message id | adapter (deterministic per document + state), or the provider's | `event.message_id` UNIQUE(provider, message_id) | replays collapse |
+| MLS | ASP | `einvoice.mls_state` + event | A-Cube models MLS as separate documents (`documentType: mls`): **SANDBOX-VERIFY** how they link |
+| TDD / FTA reference | ASP | `einvoice.fta_reference = acube-tdd-sha256:<sha256 of the TDD>` + event | the TDD is downloaded, digested and referenced, never generated |
+
+**UUID authority, proved as far as the sources go.** PINT-AE: `ibr-193-ae` (fatal) — the document carries `cbc:UUID`. UAE: Guidelines
+V2.0 §5.2 #7 gives *generating* it to the ASP, which cannot be what is validated, because the official rules run on Corner 1's
+document. A-Cube's OpenAPI: the outgoing endpoint takes the XML verbatim and returns `invoiceId` (its own resource uuid); nothing says
+it rewrites `cbc:UUID`. **Not provable without the sandbox:** whether A-Cube's stored `/source` still carries our UUID. The adapter
+DEPENDS on that (duplicate proof), so the first sandbox test is exactly that assertion (§9f.4, step 3); if A-Cube rewrites it, the
+duplicate proof must change before release.
+
+### 9f.3 A-Cube status → engine (the whole published enum)
+
+| A-Cube status | Engine event | State moved | Final? | Retry? | Evidence |
+|---|---|---|---|---|---|
+| (POST 201) | `submission accepted` | `submission_state = asp_accepted` | no | — | OpenAPI 201 |
+| (POST 400 / 422) | `submission rejected` | `asp_rejected` | yes | no | OpenAPI 400 / 422 |
+| (POST 404) | failed CONFIGURATION | submission `attention` (e-invoice `transient_failure`) | — | after a manager acts | OpenAPI 404 "legal entity not found" |
+| (401 / 403) | failed AUTHENTICATION | submission `attention` | — | after a manager acts | login doc |
+| (429 / 5xx / timeout) | failed TRANSIENT | submission `retry_wait` | — | yes, backoff + Retry-After | classification |
+| `delivered` | `exchange delivered` | `exchange_state = delivered` | per dimension | — | OpenAPI enum + lifecycle guide |
+| `delivery_failed` | `exchange rejected` | `exchange_state = rejected_by_buyer_asp` | yes | no | OpenAPI enum |
+| `new`, `valid`, `sending_queued`, `sending_started`, `processed`, `received` | `exchange acube:<status>` | **nothing** (stored, ignored) | no | poll again | in-flight states |
+| `sending_failed`, `accepted`, `rejected`, `withdrawn`, `action_required` | `exchange acube:<status>` | **nothing** (stored, ignored) | unknown | — | **no published meaning: SANDBOX-VERIFY** |
+| anything not in the enum | `exchange acube:<status>` | **nothing** | — | — | safe fallback: an unknown status never becomes accepted |
+
+### 9f.4 Sandbox: what is missing, and the activation procedure
+
+**Blocker (external):** no A-Cube account. Checked (names only, no values printed): `.env`, `.env.example`, `config/odoo.conf` contain no
+A-Cube or ASP variable. Required, per A-Cube's authentication guide: an A-Cube platform account (**email + password**) for the
+**sandbox** environment, and for documents a **legal entity** onboarded in the sandbox (A-Cube's EmaraTax onboarding flow:
+`POST /legal-entities/onboarding/verify` / `init`), i.e. a test TIN A-Cube accepts. Nothing is invented meanwhile.
+
+Activation, once supplied (dev stack only):
+1. install `ncollection_uae_einvoicing_acube` in a scratch tenant; provider *A-Cube*, environment *Sandbox*;
+2. *Set a credential*: `email`, `password`, and `webhook_token` (≥ 32 random characters); register the event destination with
+   `authType=header`, `authKey=X-NC-Webhook-Token` and that token (A-Cube API `POST /event-destinations`);
+3. first assertion: send one 380, read `/source`, assert our `cbc:UUID` is unchanged (§9f.2);
+4. then the matrix: 380 / 480 / 381 / 81 / 389 / 261 and the twelve scenarios from `tests/test_scenario_matrix.py`; rejection
+   (a document the official rules refuse, sent deliberately); duplicate after a forced timeout; status polling; callback,
+   callback replay, callback before / after the final state; inbound polling (needs a second sandbox entity sending to us);
+   TDD download;
+5. record every outcome as observed; a case the sandbox cannot produce is **NOT TESTABLE IN SANDBOX**, never "passed".
+
+None of steps 1–5 has been executed: there is NO real-sandbox evidence yet. The full step-by-step execution pack (credentials, onboarding, 24 steps with expected states and evidence, questions for A-Cube) is `docs/markdown/UAE_EINVOICING_ACUBE_SANDBOX.md`. Diagnostics added in this pass: an A-Cube refusal now records WHERE it failed (the violation `propertyPath`, structure only, never the message text).
+
+## 9g. Production deployment requirements (documented, NOT applied)
+
+**Public `/queue_job/` block — a release change, and a pre-existing exposure.** `nginx/conf.d/ncollection.prod.conf` (the 443 server for
+`.${DOMAIN}`) has NO `/queue_job/` location today, while queue_job already runs in production for the platform runner, so
+`/queue_job/runjob?db=…&job_uuid=…` (auth='none') is reachable through the edge (low risk: it needs an unguessable job uuid; still
+not acceptable). The exact change, beside `location /web/database` in the 443 server and in
+`nginx/templates/tenant-custom-domain.conf.j2` (and every rendered `nginx/conf.d/tenants/*.conf`):
+
+```nginx
+    location ^~ /queue_job/ {
+        return 403;
+    }
+```
+
+then `nginx -t` and a reload, and a check that `curl -o /dev/null -w '%{http_code}' https://<host>/queue_job/runjob` answers 403. The
+port-80 server only redirects and needs nothing. Not applied: production nginx is out of bounds this cycle.
+
+**Services.**
+
+| Service | Image / command | Network | Limits / policy |
+|---|---|---|---|
+| `einvoice-runner` (tenant queue) | odoo:19, `NC_EINVOICE_RUNNER=1`, `--load=base,web,queue_job,ncollection_core,ncollection_uae_einvoicing --workers=2 --max-cron-threads=0`, `ODOO_QUEUE_JOB_CHANNELS root:2,root.einvoice:2`, jobs called on its own `127.0.0.1:8069` | db plane + egress to the ASP hosts only; NO published port | `restart: unless-stopped`; 1 CPU / 1 GB as a start (measure); exactly ONE instance (OCA's per-database advisory lock makes a second one idle, not harmful); stop signal SIGTERM, grace ≥ `--limit-time-real` (600 s) |
+| `einvoice-validator` (Billing) | `satellites/einvoice_validator`, rules `pint_ae/1.0.4` read-only | internal network, no gateway | read-only FS, no capabilities, 512 MB / 1 CPU, `restart: unless-stopped` |
+| `einvoice-validator-sb` (Self-Billing) | same image, rules `pint_ae_sb/1.0.4` read-only | same | same |
+| web workers / runner env | `NC_EINVOICE_VALIDATOR_URL`, `NC_EINVOICE_VALIDATOR_SB_URL`, `NC_EINVOICE_VALIDATOR_TOKEN`, `NC_EINVOICE_SECRET_KEY` (+ `_VERSION`, and `_PREVIOUS*` only while rotating) | — | secrets from the deployment's secret store, never in git |
+
+Queue channel `root.einvoice` (data/transport.xml); crons only enqueue. Runner hardening added in Cycle 4: a database that vanishes or is
+half-provisioned between the probe and the connect is skipped and retried, and an unreadable server keeps the current scope, so a
+refresh never takes the loop down (`TestRunnerResilience`, 3 tests). Logs carry reasons, never database contents or secrets.
+
 ## 10. Retention and tenant offboarding
+
+**Evidence export package (R46, Cycle 4).** Configuration > *Create Evidence Package* (e-invoicing managers; for their own companies
+only) produces ONE ZIP per company and records who / when / sha256 on an append-only `ncollection.einvoice.export` row (the audit trail;
+never edited, never deleted). Contents (`models/export.py`, format `lib/export_package.py`): `package.json` (database, company, TRN,
+counts, what is and is not included), `MANIFEST.sha256` (sha256 of every file), and per e-invoice `record.json` (identity, the five
+states + MLS + business, payload, findings, full history, submissions with attempts, provider events with TDD / MLS references, the
+self-billing agreement) plus EVERY archived XML (superseded ones too) with its sha256; per received document its facts, history and
+the received XML. Never included: credentials, provider message bodies (never stored). Deterministic (same evidence ⇒ same bytes);
+`verify()` refuses traversal / absolute paths, duplicates, links, oversize, unlisted or changed files — safe on a package from
+elsewhere. Elevation: `sudo()` only after the manager check and only for that company. Tests: `tests/test_export_package.py` (12).
+Still NOT built (approved model below): the destructive purge.
 
 **Facts.** MD 243 Art 11 as replaced by MD 197/2026 Art 2 (in force 1 Oct 2026): retain e-invoices, credit notes and associated data
 for the period in the Tax Procedures Law, producible to the Authority; the former in-UAE storage requirement is removed. Guidelines
@@ -389,12 +859,50 @@ stored). A plan that names the module is ignored; the picker never offers it; lo
 the override or any data (and a tenant whose books were verified and are later refused is pushed immediately, not at the next reconcile); there is no bulk action and no country-wide switch. Not a companion
 (companions follow their host automatically and refuse a per-tenant switch).
 
+**The ASP adapter is gated too (Cycle 5).** `ncollection_uae_einvoicing_acube` is a second gated module whose `requires` is the engine:
+it is eligible only while `ncollection_uae_einvoicing` is entitled AND itself eligible (the eligibility check now recurses for a gated
+requirement instead of discarding gated modules), and it still needs its OWN `enable` override. So it can never reach a tenant without
+the engine, never comes with a plan, and is optional per tenant. The core stays provider-neutral (it names no adapter). Tests:
+`ncollection_saas` `test_a_gated_module_that_requires_a_gated_module_follows_it`, `test_the_real_registry_gates_the_acube_adapter_behind_the_engine`.
+The validator workers and the tenant runner are infrastructure, not tenant entitlements: they serve only databases that hold the
+licensed engine (the runner's eligibility probe), and the engine mirrors the licence at the ORM (`_nc_licensed`), so an unlicensed tenant
+cannot use them even if a module were present.
+
 **Tenant inventory (read-only, 2026-10-22)** — eligible with verified books: `uaetest`, `test11`; AE-registered but books **not** yet
 verified by the check (`localization_applied_state=none`; running the existing, harmless "Apply localization" refreshes it): `atlas`,
 `atlaseg`, `test12`, `test13`, `test14`, `awtar`; **refused / not eligible:** `wasla` (registered AE, books US/USD, localization
 refused). **Pilot: `uaetest`.** Nothing has been enabled or changed on any tenant.
 
 ## 12. Tests and gates
+
+**Final completion pass (2026-10-29), fresh database, final code:** full suite 594 / 594, 0 failed, 0 errors, 0 skipped (e-invoicing
+502, A-Cube 41, localization 51); A-Cube 41 + gated eligibility 22 + Arabic coverage / PO format 5 = 68 / 68; official rules 105
+expectations, 24 / 24 real-move documents (23 valid, 1 deliberately invalid refused by `ibr-193-ae`), worker 29 / 29; flake8,
+invariants (+ tests), role matrix (+ tests), doc counts (+ tests), skip gate tests clean. **Architecture guard RUN on the uncommitted
+work** with its own `--files` mode (no commit): clean, 104 files. Change in this pass: credential rotation is now attributed
+(`rotated_by` / `rotated_at` on each credential, shown on the provider form, Arabic labels). Production `/queue_job/` block verified
+compatible with the platform runner: `provisioning-runner` sets no `ODOO_QUEUE_JOB_HOST`, so OCA's jobrunner calls `runjob` on its own
+container (`localhost:8069`), never through nginx.
+
+**Cycle 5 (2026-10-29), fresh database:** full suite 594 tests, 0 failed, 0 errors, 0 skipped (e-invoicing 502, A-Cube adapter 41,
+localization 51). Separate run on the final files: A-Cube 41 + gated eligibility 22 (`ncollection_saas`) + Arabic coverage and PO
+format 5 (`ncollection_branding`) = 68 / 68. Official rules: 105 expectations hold (33 official samples, 20 engine-built documents, 9
+negative controls, 24 / 24 real-move documents: 23 valid, 1 deliberately invalid refused by `ibr-193-ae`), worker 29 / 29. No A-Cube
+sandbox test exists: every A-Cube test runs against a scripted server built from the published contract.
+
+**Cycle 4 (2026-10-29), fresh database, final code:** 588 tests, 0 failed, 0 errors, no skips (e-invoicing 502, A-Cube adapter 35,
+UAE localization 51); 6 min 22 s wall. New: key rotation 12, evidence export 12, foreign buyer 5, runner resilience 3, received
+self-billed credit note + never-posted 2, A-Cube 35. Official rules: `e2e_check.py` 105 expectations hold, 24 / 24 real-move XMLs as
+expected (the new `real-foreign-buyer-380` included), worker 29 / 29. Arabic: the repository's coverage guard
+(`ncollection_branding` `TestTranslationCoverage`) passes for all three modules; its platform-module check needs `ncollection_saas`
+installed and is not meaningful on this scratch install. Inbound evidence: the received documents in `test_inbound` /
+`test_self_billing` are the engine's own officially-validated XMLs, so no separate inbound XML exists to validate.
+
+**Cycle 3 (2026-10-29), measured on a fresh database:** the module suite is **468 tests, 0 failed, 0 errors** (397 after Cycle 2).
+New: self-billing 28 (`test_self_billing.py`: eligibility 13, documents 8, transport 4, received 3), credit notes 20
+(`test_credit_notes.py`), scenario matrix 23 (`test_scenario_matrix.py`). With `NC_EINVOICE_EXPORT_DIR` the suite exports 23
+real-move XMLs (8 before); `e2e_check.py` validates all 23 under the official rules (the Self-Billing ones on the Self-Billing
+worker) and every other expectation holds; worker unit tests 29/29. The paragraph below is the original Phase-1 baseline.
 
 Engine 228 tests (pure logic 67 + review-found logic 9, validator client 23, security / isolation / secrecy / state / archive /
 retention 37, hardening against forgery 37 + 13, mapper on real invoices 28, pinned resources 14), gate 30, master data (module suite) 51,
@@ -430,6 +938,32 @@ Arabic UI is **not** claimed complete. Before release a native Arabic reviewer m
 *Compliance Archive*. Established NCollection terms were reused where they exist (the merge takes existing catalogue entries first) and no
 existing translation was changed. Messages that the engine builds at run time from its library (readiness and reconciliation findings)
 are stored on the record in the language of the user who ran the action; they are not yet in the catalogue.
+
+## 14a. Requirement status (Cycle 3 review, 2026-10-29)
+
+The R-numbers come from the 2026-10-28 compliance audit, whose two drafts numbered some rows differently; where a number named two
+requirements, both are reviewed. Status only with evidence; "ASP phase" = the remaining part needs a real ASP adapter (Cycle 4).
+
+| Req | Requirement | Status | Code | Tests | Evidence / what remains |
+|---|---|---|---|---|---|
+| R05 | Buyer identifier IBT-046 / IBT-047; foreign buyer (G2.0 §18.2.2-18.2.3; `ibr-135/136/149-ae`, `ibr-cl-10`) | COMPLIANT | localization `nc_foreign_tax_id/_scheme`; `identity.buyer_endpoint`; `prepare._nc_party`; `xml_builder._party`; readiness | test_foreign_buyer (5), `real-foreign-buyer-380` (official) | IBT-048 for a foreign VAT id is not populated (G2.0: only if applicable; no field modelled) |
+| R20 | Self-billed Tax Invoice 389 / Tax Credit Note 261 (G2.0 §10.3) | COMPLIANT (engine) | §9d; `spec`, `self_billing.py`, `prepare`, `readiness` | test_self_billing (28), e2e SB section, real-move SB fixtures | official SB rules pass for 389 / 261; submission to a real ASP: ASP phase |
+| R20′ | No cancellation after submission (MD 243 Art 6(2)(a)) | COMPLIANT | `account_move.py` | test_security_archive | unchanged, re-run green |
+| R25 | Free zone: beneficiary (`ibr-007-ae`) | COMPLIANT | prepare / xml_builder | `test_free_zone` (+ official), negative | engine-built FTZ document validated by the official rules (it was "official sample only") |
+| R25′ | Margin scheme: N, VAT 0 (`ibr-116/108-ae`) | COMPLIANT | prepare (`N` shown rate), tax-map guard | `test_margin_scheme` (+ official), 3 negatives | was blocked on a real move (defect fixed, §6a) |
+| R30 | Export: endpoint 99, deliver-to (`ibr-152-ae`) | COMPLIANT | identity, prepare (`cac:Delivery`) | crosscheck export (+ official), negative | retested in the matrix |
+| R30′ | Disclosed agent: principal (`ibr-137/176/177-ae`) | COMPLIANT | readiness `_agent` | `test_disclosed_agent_billing` (+ official), 2 negatives | the principal stays an ID (what BTAE-14 is); no principal partner needed by the rules |
+| R40 | Outbound submission (queue, retry, idempotency, timeout) | COMPLIANT (engine) | §9a | test_transport (25), test_self_billing transport (4) | against the contract adapter; a real ASP: ASP phase |
+| R40′ / R41 | Confirmations C3→C1 / C5→C1 (MLS, TDD reported) | COMPLIANT (engine) | `ncollection.einvoice.event`, `mls_state`, `fta_state` | test_transport, `test_mls_and_tdd_confirmations_are_stored_not_generated` | stored from the ASP; vocabulary of a real ASP: ASP phase (OCQ-3) |
+| R41′ | TDD generation | NOT APPLICABLE | — | — | the ASP's act (G2.0 §5.1); never generated here (decision 2026-10-28) |
+| R43 | Inbound receiving into accounting (MD 243 Art 6(3)) | COMPLIANT (engine) | §9c | test_inbound (31), received self-billed (3) | DRAFT documents only; a real ASP's inbound API: ASP phase |
+| R43′ | UUID authority (G2.0 §5.2 #7; `ibr-193-ae`) | COMPLIANT (engine) / ASP-DEPENDENT | `einvoice.uuid` (ours, locked) vs `asp_reference` | real-move negative control, test_security_archive | whether A-Cube keeps `cbc:UUID`: SANDBOX-VERIFY (§9f) |
+| R46 | No system-failure notice to the FTA (MD 197 Art 3 repeals Art 12) | COMPLIANT | — (deliberately absent) | — | nothing builds one; must stay absent |
+| R46′ | Retention integrity / export package (MD 243 Art 11; G2.0 §5.4) | COMPLIANT (export) | `models/export.py`, `lib/export_package.py` | test_export_package (12) | the destructive purge stays unbuilt by decision (§10) |
+| R48 | Secrets at rest, rotation, credential screen | COMPLIANT | `secret.py`, `secret_crypto.keyring_from_env`, wizard | test_key_rotation (12), test_security_archive | — |
+| R48′ / R49′ | Callback authentication, replay protection, idempotency | COMPLIANT (engine) | `controllers/callback.py`, adapter `verify_callback`, `UNIQUE(provider, message_id)` | test_transport (forged / replayed / duplicate / reordered) | each adapter implements its provider's signature: ASP phase |
+| R49 | Immutability and tamper evidence | COMPLIANT | `prepare` (`xml_generated` / `xml_superseded` carry the sha256 + attachment), `ir_attachment` guard, locked fields | test_security_archive, test_prepare | the 2026-10-28 gap ("no digest per archived XML in the history") was already closed: every archived XML's sha256 is in its history row |
+| Endpoints | Seller `0235:<TIN>`; buyer endpoint; predefined 98 / 97 / 99; self-billing roles | COMPLIANT | `identity.py`, `prepare._nc_parties` | test_pint_logic, matrix (deemed 97), crosscheck (export 99), SB (`seller_endpoint 0235:<supplier TIN>`) | the Peppol participant LOOKUP (SML/SMP) is the ASP's (G2.0 §5.2 #6): NOT APPLICABLE to Corner 1 |
 
 ## 15. Pre-merge review (2026-10-22) and what remains
 
