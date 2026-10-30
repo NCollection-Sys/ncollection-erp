@@ -58,7 +58,25 @@ FTA_STATES = [
     ('report_failed', 'Report failed'),
     ('not_applicable', 'Not applicable'),
 ]
-BUSINESS_STATES = [('unknown', 'Unknown')]
+# Peppol Message Level Status of the transmission (AB / AP / RE): about the MESSAGE, never the invoice's business state
+MLS_STATES = [
+    ('pending', 'Pending'),
+    ('acknowledged', 'Acknowledged'),
+    ('accepted', 'Accepted'),
+    ('rejected', 'Rejected'),
+]
+# the buyer's Invoice Response (Peppol UNCL4343 subset): the business answer, distinct from transport and tax states
+BUSINESS_STATES = [
+    ('unknown', 'Unknown'),
+    ('acknowledged', 'Acknowledged by the buyer'),
+    ('in_process', 'In process'),
+    ('under_query', 'Under query'),
+    ('conditionally_accepted', 'Conditionally accepted'),
+    ('accepted', 'Accepted by the buyer'),
+    ('rejected', 'Rejected by the buyer'),
+    ('paid', 'Paid'),
+]
+_OPEN_BUSINESS = {'unknown', 'acknowledged', 'in_process', 'under_query', 'conditionally_accepted', 'accepted'}
 
 # the legal moves of each dimension. Anything else is refused: no state can be skipped or revived by accident.
 TRANSITIONS = {
@@ -93,6 +111,16 @@ TRANSITIONS = {
         'reported': set(),
         'not_applicable': set(),
     },
+    'mls_state': {
+        'pending': {'acknowledged', 'accepted', 'rejected'},
+        'acknowledged': {'accepted', 'rejected'},
+        'accepted': set(),
+        'rejected': set(),
+    },
+    # a buyer may move between the open answers; rejected and paid are final
+    'business_state': {
+        state: (_OPEN_BUSINESS | {'rejected', 'paid'}) - {state, 'unknown'} for state in _OPEN_BUSINESS
+    } | {'rejected': set(), 'paid': set()},
 }
 
 # what an e-invoicing USER may type. Every other field is written only by the engine, which runs as ``sudo()`` (the
@@ -125,6 +153,8 @@ LOCKED_FIELDS = (
         'move_id',
         'revision',
         'document_kind',
+        'self_billing',
+        'self_billing_agreement_id',
         'type_code',
         'spec_version',
         'customization_id',
@@ -162,7 +192,8 @@ LOCKED_FIELDS = (
     | {'flag_' + name for name in FLAG_ORDER}
 )
 # fields only an adapter result / the state machine may write
-STATE_FIELDS = {'local_state', 'submission_state', 'exchange_state', 'fta_state', 'business_state', 'locked'}
+STATE_FIELDS = {'local_state', 'submission_state', 'exchange_state', 'fta_state', 'mls_state', 'business_state',
+                'locked'}
 NETWORK_FIELDS = {'asp_participant_id', 'asp_reference', 'exchange_reference', 'fta_reference'}
 
 
@@ -178,7 +209,19 @@ class EInvoice(models.Model):
         required=True,
         ondelete='restrict',
         index=True,
-        domain="[('move_type', 'in', ('out_invoice', 'out_refund')), ('state', '=', 'posted')]",
+        domain="[('move_type', 'in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')), "
+        "('state', '=', 'posted')]",
+    )
+    # a vendor bill / vendor refund is e-invoiced ONLY as a self-billed document (PINT AE Self-Billing, 389 / 261):
+    # this company, the buyer, issues it for the supplier under a self-billing agreement (Guidelines V2.0 §10.3)
+    self_billing = fields.Boolean(string='Self-billed', readonly=True, copy=False)
+    self_billing_agreement_id = fields.Many2one(
+        'ncollection.einvoice.self.billing.agreement',
+        string='Self-billing agreement',
+        readonly=True,
+        copy=False,
+        ondelete='restrict',
+        help="The agreement with the supplier under which this company issued the document (decided at preparation).",
     )
     revision = fields.Integer(default=1, readonly=True)
     document_kind = fields.Selection([('invoice', 'Invoice'), ('credit_note', 'Credit note')], required=True)
@@ -305,6 +348,8 @@ class EInvoice(models.Model):
     submission_state = fields.Selection(SUBMISSION_STATES, default='not_submitted', required=True, readonly=True)
     exchange_state = fields.Selection(EXCHANGE_STATES, default='pending', required=True, readonly=True)
     fta_state = fields.Selection(FTA_STATES, default='pending', required=True, readonly=True)
+    mls_state = fields.Selection(MLS_STATES, string='Message level status', default='pending', required=True,
+                                 readonly=True)
     business_state = fields.Selection(BUSINESS_STATES, default='unknown', required=True, readonly=True)
     locked = fields.Boolean(readonly=True, copy=False)
     headline = fields.Char(compute='_compute_headline')
@@ -464,13 +509,30 @@ class EInvoice(models.Model):
             move = self.env['account.move'].browse(vals.get('move_id'))
             if not move:
                 raise UserError(self.env._("An e-invoice belongs to an accounting document."))
-            if move.move_type not in ('out_invoice', 'out_refund'):
+            if move.move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'):
+                raise UserError(
+                    self.env._("Only invoices, credit notes and self-billed vendor bills can be e-invoiced.")
+                )
+            self_billed = move.move_type in ('in_invoice', 'in_refund')
+            if self_billed and move.nc_inbound_id:
                 raise UserError(
                     self.env._(
-                        "Only customer invoices and customer credit notes can be e-invoiced. A vendor bill is a "
-                        "received document, not an outbound e-invoice."
+                        "This vendor bill was created from an e-invoice the supplier sent: it is a received document "
+                        "and cannot be self-billed again."
                     )
                 )
+            if self_billed and not self.env['ncollection.einvoice.self.billing.agreement'].sudo()._nc_for(
+                move.company_id, move.commercial_partner_id, None
+            )['any']:
+                # a checkbox never makes a document self-billed: an agreement a manager activated must exist first
+                raise UserError(
+                    self.env._(
+                        "A vendor bill is e-invoiced only as a self-billed document, and there is no active "
+                        "self-billing agreement with %s. An e-invoicing manager must record the agreement first.",
+                        move.commercial_partner_id.display_name,
+                    )
+                )
+            vals['self_billing'] = self_billed
             if move.state != 'posted':
                 raise UserError(self.env._("Only a posted document can be prepared as an e-invoice."))
             if vals.get('company_id') and vals['company_id'] != move.company_id.id:
@@ -478,7 +540,7 @@ class EInvoice(models.Model):
             vals['company_id'] = move.company_id.id  # never the session's active company
             if vals.get('name', '/') == '/':
                 vals['name'] = self.env['ir.sequence'].next_by_code('ncollection.einvoice') or '/'
-            vals['document_kind'] = 'credit_note' if move.move_type == 'out_refund' else 'invoice'
+            vals['document_kind'] = 'credit_note' if move.move_type in ('out_refund', 'in_refund') else 'invoice'
         records = super(EInvoice, creator).create(vals_list)
         records._log('created')
         for record in records.filtered('excluded_transaction'):

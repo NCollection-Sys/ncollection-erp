@@ -78,6 +78,15 @@ def main():
     port = server.server_address[1]
     client = validator.HttpValidatorClient('http://127.0.0.1:%d' % port, timeout=60, token=TOKEN)
     print('engine:', srv_validator.engine, '| rules manifest sha256:', srv_validator.manifest_sha256[:16])
+    # PINT AE Self-Billing: its own worker over its own pinned rule set (as in docker-compose.einvoice.yml)
+    sb_profile = spec.get_profile(spec.SELF_BILLING_PROFILE_KEY)
+    sb_validator = worker.Validator(sb_profile.resource_dir, sb_profile.pint_version, worker.SaxonTransformer())
+    sb_server = ThreadingHTTPServer(('127.0.0.1', 0), worker.make_handler(sb_validator, TOKEN))
+    threading.Thread(target=sb_server.serve_forever, daemon=True).start()
+    sb_client = validator.HttpValidatorClient(
+        'http://127.0.0.1:%d' % sb_server.server_address[1], timeout=60, token=TOKEN
+    )
+    print('self-billing rules manifest sha256:', sb_validator.manifest_sha256[:16])
 
     # ---- 1. official samples
     for kind, folder in (('invoice', 'invoice'), ('credit_note', 'creditnote')):
@@ -86,6 +95,42 @@ def main():
                 outcome = client.validate(handle.read(), kind, profile)
             fatal = [f.rule for f in outcome.failures if f.flag != 'warning']
             expect('official sample %s' % os.path.basename(path), outcome.ok, str(fatal))
+
+    # ---- 1b. PINT AE Self-Billing: official samples, engine-built 389 / 261, and the two profiles kept apart
+    for kind, folder in (('invoice', 'invoice'), ('credit_note', 'creditnote')):
+        for path in sorted(glob.glob(os.path.join(sb_profile.examples_dir, folder, '*.xml'))):
+            with open(path, 'rb') as handle:
+                outcome = sb_client.validate(handle.read(), kind, sb_profile)
+            fatal = [f.rule for f in outcome.failures if f.flag != 'warning']
+            expect('official self-billing sample %s' % os.path.basename(path), outcome.ok, str(fatal))
+    sb_invoice = build(payloads.standard_payload(type_code='389'), sb_profile)
+    sb_credit = build(payloads.credit_note_payload(type_code='261'), sb_profile)
+    for label, xml, kind in (('self-billed tax invoice 389', sb_invoice, 'invoice'),
+                             ('self-billed tax credit note 261', sb_credit, 'credit_note')):
+        outcome = sb_client.validate(xml, kind, sb_profile)
+        expect('engine-built %s' % label, outcome.ok, str([f.rule for f in outcome.failures if f.flag != 'warning']))
+    outcome = client.validate(sb_invoice, 'invoice', profile)
+    expect('a 389 is refused by the BILLING rules (ibr-cl-01): the profiles are not interchangeable',
+           not outcome.ok and 'ibr-cl-01' in {f.rule for f in outcome.failures})
+    outcome = sb_client.validate(build(payloads.standard_payload(), profile), 'invoice', sb_profile)
+    expect('a 380 is refused by the SELF-BILLING rules (ibr-cl-01)',
+           not outcome.ok and 'ibr-cl-01' in {f.rule for f in outcome.failures})
+    for label, bad, kind, rule in (
+        ('self-billed 389 without the supplier VAT identifier', re.sub(
+            rb'<cac:AccountingSupplierParty>(.*?)<cac:PartyTaxScheme>.*?</cac:PartyTaxScheme>',
+            rb'<cac:AccountingSupplierParty>\1', sb_invoice, count=1, flags=re.S), 'invoice', 'ibr-134-ae'),
+        ('self-billed 261 without its UUID', re.sub(rb'<cbc:UUID>[^<]*</cbc:UUID>\s*', b'', sb_credit, count=1),
+         'credit_note', 'ibr-193-ae'),
+    ):
+        outcome = sb_client.validate(bad, kind, sb_profile)
+        failed = {f.rule for f in outcome.failures if f.flag != 'warning'}
+        expect('negative control: %s fails %s' % (label, rule), not outcome.ok and rule in failed,
+               str(sorted(failed)[:6]))
+    try:
+        sb_client.validate(sb_invoice, 'invoice', profile)
+        expect('the client refuses a Self-Billing answer as a Billing one (rule-set fingerprint)', False)
+    except validator.ValidatorUnavailable:
+        expect('the client refuses a Self-Billing answer as a Billing one (rule-set fingerprint)', True)
 
     # ---- 2. documents built by the engine
     def lines(*specs):
@@ -277,13 +322,17 @@ def main():
     if fixtures:
         required = _required_real_cases()
         expect('real-move fixtures: the required case list was read', bool(required), str(sorted(required)))
-        for case, (kind, outcome_expected, rule) in sorted(required.items()):
+        for case, case_spec in sorted(required.items()):
+            kind, outcome_expected, rule = case_spec[:3]
+            # an optional 4th element names the profile (the Self-Billing cases); the default is Billing
+            case_profile = spec.get_profile(case_spec[3]) if len(case_spec) > 3 else profile
             path = os.path.join(fixtures, case + '.xml')
             if not os.path.isfile(path):
                 expect('real-move %s exported' % case, False, 'missing from %s' % fixtures)
                 continue
             with open(path, 'rb') as handle:
-                outcome = client.validate(handle.read(), kind, profile)
+                case_client = sb_client if case_profile.self_billing else client
+                outcome = case_client.validate(handle.read(), kind, case_profile)
             failed = sorted({f.rule for f in outcome.failures if f.flag != 'warning'})
             if outcome_expected == 'pass':
                 expect('real-move %s validates under the official rules' % case, outcome.ok, str(failed[:8]))
@@ -441,6 +490,7 @@ def main():
     finally:
         shutil.rmtree(tmp, True)
     server.shutdown()
+    sb_server.shutdown()
     print('\n%s' % ('ALL EXPECTATIONS HOLD' if not failures_total else 'FAILED: %s' % failures_total))
     return 1 if failures_total else 0
 

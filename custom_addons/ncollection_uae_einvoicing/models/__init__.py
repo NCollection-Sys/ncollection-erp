@@ -7,3 +7,7 @@ from . import ir_attachment
 from . import account_move
 from . import prepare
 from . import adapter
+from . import transport
+from . import inbound
+from . import self_billing
+from . import export

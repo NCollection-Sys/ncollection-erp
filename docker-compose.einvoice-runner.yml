@@ -1,0 +1,58 @@
+# ============================================================================
+#  E-invoicing TENANT runner overlay  (OPT-IN; docs/markdown/UAE_EINVOICING.md §9b)
+# ============================================================================
+#  OCA queue_job's jobrunner for the `einvoice` channel in TENANT databases.
+#  The provisioning-runner (docker-compose.saas.yml) is pinned to the platform
+#  database with -d and keeps that job; this one serves only the databases
+#  custom_addons/ncollection_uae_einvoicing/runner_scope.py finds ELIGIBLE:
+#  a tenant (never the platform), READY by the release gate, with e-invoicing
+#  and queue_job installed, and a workspace that is not suspended or expired.
+#  It re-reads that set every minute, so new / suspended / deleted tenants need
+#  no restart.
+#
+#    docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+#                   -f docker-compose.einvoice-runner.yml up -d einvoice-runner
+#
+#  Not in `make up`, not in CI. NOT deployed: production adopts it only in the
+#  final release sequence.
+# ============================================================================
+services:
+
+  einvoice-runner:
+    image: odoo:19
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      USER: ${DB_USER:-odoo}
+      PASSWORD: ${DB_PASSWORD:-odoo}
+      # Turns runner_scope.install() on. Without it the module's post_load is a no-op.
+      NC_EINVOICE_RUNNER: "1"
+      # Only the e-invoicing channel runs here; root caps the subtree (see docker-compose.saas.yml for why).
+      ODOO_QUEUE_JOB_CHANNELS: root:2,root.einvoice:2
+      # The jobrunner calls /queue_job/runjob on THIS container's own HTTP server (never the public edge).
+      ODOO_QUEUE_JOB_HOST: 127.0.0.1
+      ODOO_QUEUE_JOB_PORT: "8069"
+      # The provider credential master key (models/secret.py) - the only place outside the odoo service that needs it.
+      NC_EINVOICE_SECRET_KEY: ${NC_EINVOICE_SECRET_KEY:-}
+    # --db-filter=.* : runjob carries ?db=<tenant>; the HTTP server here is reachable only on the compose network (no
+    # ports:), and which databases get jobs is decided by runner_scope, not by the filter.
+    # ncollection_core in --load: the release gate (a non-READY database answers runjob with the maintenance response).
+    command: >
+      odoo -c /etc/odoo/odoo.conf
+           --load=base,web,queue_job,ncollection_core,ncollection_uae_einvoicing
+           --workers=2 --max-cron-threads=0
+           --limit-time-real=600
+           --db-filter=.*
+    volumes:
+      - ./custom_addons:/mnt/extra-addons:ro
+      - ./oca:/mnt/oca-addons:ro
+      - ${NC_RUNNER_CONF:-./config/odoo.conf}:/etc/odoo/odoo.conf:ro
+      - odoo_data:/var/lib/odoo
+    networks:
+      - default
+      - nc_dbplane
+    mem_limit: 1000m
+    cpus: 1.0
+    restart: unless-stopped

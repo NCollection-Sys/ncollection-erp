@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Outbound ASP work runs here, never in a cron thread (DESIGN_CRON_AND_QUEUE_TOPOLOGY.md §2). The runner that
+             serves tenant databases sets its capacity (docs/markdown/UAE_EINVOICING.md, "Transport"). -->
+        <record id="channel_einvoice" model="queue.job.channel">
+            <field name="name">einvoice</field>
+            <field name="parent_id" ref="queue_job.channel_root"/>
+        </record>
+
+        <!-- The identity the adapter runs as: the only one that may decrypt a provider credential. INACTIVE on
+             purpose: it can never sign in and is not a plan seat. -->
+        <record id="user_einvoice_service" model="res.users">
+            <field name="name">E-invoicing service</field>
+            <field name="login">einvoice-service@ncollection.internal</field>
+            <field name="active" eval="False"/>
+            <field name="group_ids" eval="[Command.set([ref('base.group_user'), ref('group_einvoice_service')])]"/>
+        </record>
+    </data>
+
+    <data>
+        <!-- Enqueues only (retries due, expired leases, status polls); the provider is called by the queued job. -->
+        <record id="cron_einvoice_transport" model="ir.cron">
+            <field name="name">UAE e-invoicing: enqueue transport work</field>
+            <field name="model_id" ref="model_ncollection_einvoice_submission"/>
+            <field name="state">code</field>
+            <field name="code">model._nc_cron_enqueue_due()</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
+        <!-- Enqueues inbound polls and due re-validations; fetching runs in the queued job. -->
+        <record id="cron_einvoice_inbound" model="ir.cron">
+            <field name="name">UAE e-invoicing: enqueue inbound work</field>
+            <field name="model_id" ref="model_ncollection_einvoice_inbound"/>
+            <field name="state">code</field>
+            <field name="code">model._nc_cron_enqueue()</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

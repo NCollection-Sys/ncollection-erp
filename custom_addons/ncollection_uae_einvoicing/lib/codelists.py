@@ -74,3 +74,23 @@ def load(logical_name, profile=None):
 def codes(logical_name, profile=None):
     """The ids exactly as published."""
     return frozenset(load(logical_name, profile).rows)
+
+
+@lru_cache(maxsize=8)
+def _icd_codes(schematron_dir):
+    import re
+
+    with open(os.path.join(schematron_dir, 'PINT-UBL-validation-preprocessed.sch'), encoding='utf-8') as handle:
+        text = handle.read()
+    match = re.search(r'id="ibr-cl-10"[^>]*?test="[^"]*?contains\(\' ([0-9 ]+) \'', text)
+    if not match:
+        raise ValueError('the ICD list of ibr-cl-10 was not found in the pinned rules')
+    return frozenset(match.group(1).split())
+
+
+def icd_codes(profile=None):
+    """The ISO/IEC 6523 ICD scheme codes the pinned official rule ``ibr-cl-10`` accepts for a party identifier
+    (IBT-046-1). The ICD code-list FILE is not vendored; the list the validator actually enforces is read from the
+    unmodified rule itself, so the two can never disagree."""
+    profile = profile or get_profile()
+    return _icd_codes(profile.schematron_dir)

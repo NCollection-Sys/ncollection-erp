@@ -14,7 +14,10 @@ Buyer endpoint, in this order (each branch is traced in ``source``):
 4. the buyer has a valid ``nc_tin`` → scheme 0235 + that TIN;
 5. the buyer is EXPLICITLY marked "not on UAE e-invoicing" → the predefined not-onboarded endpoint (report-only);
    never assumed from a missing TIN;
-6. otherwise → an error: the buyer identity is missing.
+6. the buyer is located OUTSIDE the UAE (its country is recorded and is not AE) and has a recorded FOREIGN tax
+   identifier → the predefined not-onboarded endpoint as well (Guidelines V2.0 §18.2.3: "IBT-049 - Buyer Electronic
+   Address: Populate with 9900000098"); its identifier then goes to IBT-046 with its ICD scheme;
+7. otherwise → an error: the buyer identity is missing.
 """
 
 from collections import namedtuple
@@ -80,7 +83,8 @@ def seller_endpoint(tin_state, tin, profile=None):
 
 
 def buyer_endpoint(
-    *, flags, peppol_eas=None, peppol_endpoint=None, tin_state='missing', tin=None, not_onboarded=False, profile=None
+    *, flags, peppol_eas=None, peppol_endpoint=None, tin_state='missing', tin=None, not_onboarded=False, profile=None,
+    foreign_identified=False,
 ):
     """``(Endpoint | None, issues)`` for the buyer, following the order in the module docstring."""
     profile = profile or get_profile()
@@ -105,6 +109,8 @@ def buyer_endpoint(
         ]
     if not_onboarded:
         return Endpoint(scheme, profile.predefined_endpoint('not_onboarded'), 'predefined_not_onboarded', True), []
+    if foreign_identified:
+        return Endpoint(scheme, profile.predefined_endpoint('not_onboarded'), 'predefined_foreign_buyer', True), []
     return None, [
         _issues.make(
             'NCOLLECTION:buyer-identity-missing',

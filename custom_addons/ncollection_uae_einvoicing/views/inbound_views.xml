@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_einvoice_inbound_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.inbound.list</field>
+        <field name="model">ncollection.einvoice.inbound</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false" decoration-danger="state in ('validation_failed', 'rejected')"
+                  decoration-warning="state in ('unmatched', 'review')" decoration-muted="state == 'duplicate'">
+                <field name="create_date" string="Received"/>
+                <field name="invoice_number"/>
+                <field name="seller_name"/>
+                <field name="partner_id"/>
+                <field name="issue_date"/>
+                <field name="currency_code"/>
+                <field name="tax_inclusive"/>
+                <field name="state"/>
+                <field name="bill_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_einvoice_inbound_form" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.inbound.form</field>
+        <field name="model">ncollection.einvoice.inbound</field>
+        <field name="arch" type="xml">
+            <form string="Received e-invoice" create="false" delete="false" edit="false">
+                <header>
+                    <button name="action_reprocess" type="object" string="Process again" class="btn-primary"
+                            invisible="state not in ('unmatched', 'review', 'validating')"/>
+                    <button name="action_open_bill" type="object" string="Open draft bill"
+                            invisible="not bill_id"/>
+                    <field name="state" widget="statusbar" statusbar_visible="received,validating,matching,ready,bill_created"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="state not in ('unmatched', 'review')">
+                        <field name="reason" readonly="1"/>
+                        Correct the master data (the supplier's identifiers, the tax mapping or the currency), then
+                        process the document again. Nothing is guessed.
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state not in ('validation_failed', 'rejected')">
+                        <field name="reason" readonly="1"/>
+                    </div>
+                    <div class="alert alert-info" role="status" invisible="state != 'duplicate'">
+                        This document was already received: <field name="duplicate_of_id" readonly="1"/>.
+                    </div>
+                    <group>
+                        <group string="Document">
+                            <field name="invoice_number"/>
+                            <field name="document_kind"/>
+                            <field name="type_code"/>
+                            <field name="issue_date"/>
+                            <field name="due_date"/>
+                            <field name="currency_code"/>
+                            <field name="billing_reference" invisible="not billing_reference"/>
+                            <field name="document_uuid"/>
+                        </group>
+                        <group string="Totals">
+                            <field name="line_total"/>
+                            <field name="tax_exclusive"/>
+                            <field name="tax_total"/>
+                            <field name="tax_inclusive"/>
+                            <field name="payable"/>
+                        </group>
+                        <group string="Supplier">
+                            <field name="seller_name"/>
+                            <field name="seller_trn"/>
+                            <field name="seller_endpoint"/>
+                            <field name="seller_legal_id"/>
+                            <field name="partner_id"/>
+                            <field name="match_basis"/>
+                        </group>
+                        <group string="Reception">
+                            <field name="provider_id"/>
+                            <field name="asp_document_id"/>
+                            <field name="message_id"/>
+                            <field name="received_at"/>
+                            <field name="xml_attachment_id"/>
+                            <field name="xml_sha256"/>
+                            <field name="bill_id"/>
+                            <field name="reason_code" invisible="not reason_code"/>
+                        </group>
+                    </group>
+                    <field name="history_ids" readonly="1">
+                        <list create="false" delete="false">
+                            <field name="at"/>
+                            <field name="actor_id"/>
+                            <field name="from_state"/>
+                            <field name="to_state"/>
+                            <field name="event"/>
+                            <field name="detail"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_einvoice_inbound" model="ir.actions.act_window">
+        <field name="name">Received e-invoices</field>
+        <field name="res_model">ncollection.einvoice.inbound</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No e-invoice received yet</p>
+            <p>Documents your ASP receives for you appear here and become DRAFT vendor bills.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_einvoice_inbound" name="Received E-Invoices" parent="menu_einvoice_root" sequence="20"
+              action="action_einvoice_inbound" groups="ncollection_uae_einvoicing.group_einvoice_user"/>
+
+    <!-- the source of a vendor bill made from a received e-invoice -->
+    <record id="view_move_form_nc_inbound" model="ir.ui.view">
+        <field name="name">account.move.form.nc.inbound</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ref']" position="after">
+                <field name="nc_inbound_id" readonly="1" invisible="not nc_inbound_id"
+                       groups="ncollection_uae_einvoicing.group_einvoice_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

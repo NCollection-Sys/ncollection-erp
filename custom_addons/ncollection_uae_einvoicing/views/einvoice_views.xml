@@ -81,6 +81,8 @@
                             <field name="company_id" readonly="1" groups="base.group_multi_company"/>
                             <field name="document_kind" readonly="1"/>
                             <field name="type_code" readonly="1"/>
+                            <field name="self_billing" readonly="1"/>
+                            <field name="self_billing_agreement_id" readonly="1" invisible="not self_billing"/>
                             <field name="transaction_type_code" readonly="1"/>
                             <field name="spec_version" readonly="1"/>
                         </group>
@@ -218,7 +220,7 @@
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_nc_open_einvoice" type="object" class="oe_stat_button" icon="fa-file-code-o"
                         groups="ncollection_uae_einvoicing.group_einvoice_user"
-                        invisible="state != 'posted' or move_type not in ('out_invoice', 'out_refund')">
+                        invisible="state != 'posted' or move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')">
                     <div class="o_stat_info">
                         <span class="o_stat_text">E-invoice</span>
                     </div>

@@ -38,11 +38,16 @@ from ..lib import issues as _issues
 from ..lib.money import ZERO, dec, r2
 from ..lib.xml_builder import build
 
-VALIDATOR_URL_ENV = 'NC_EINVOICE_VALIDATOR_URL'
+VALIDATOR_URL_ENV = 'NC_EINVOICE_VALIDATOR_URL'  # Billing; each profile names its own (spec.SpecProfile)
 VALIDATOR_TOKEN_ENV = 'NC_EINVOICE_VALIDATOR_TOKEN'
 # the payload text is built in ONE language, so the same document produces the same payload and XML whoever (in
 # whichever UI language) prepares, generates or validates it
 PAYLOAD_LANG = 'en_US'
+CREDIT_TYPES = ('out_refund', 'in_refund')
+# the e-invoice a credit note's original must have reached before it can be credited electronically
+CREDITABLE_LOCAL = ('validated',)
+# tax credit note -> tax invoice, commercial credit note -> commercial invoice (UNTDID 1001 pairs of both profiles)
+CREDIT_PAIRS = {'381': '380', '81': '480', '261': '389'}
 
 
 def _d(value):
@@ -127,7 +132,7 @@ class EInvoicePrepare(models.Model):
                     )
                 )
             try:
-                xml = build(payload)
+                xml = build(payload, spec.get_profile(payload['spec']))
             except ValueError:
                 # lxml refuses control characters in text: say which problem it is rather than showing a traceback
                 raise UserError(
@@ -163,10 +168,13 @@ class EInvoicePrepare(models.Model):
             if hashlib.sha256(xml).hexdigest() != record.xml_sha256:
                 raise UserError(self.env._("The archived XML no longer matches its checksum."))
             try:
+                # each profile's official rule set lives in its own worker (Billing / Self-Billing); the client
+                # also refuses an answer whose rule-set fingerprint is not this profile's
                 client = validator.HttpValidatorClient(
-                    os.environ.get(VALIDATOR_URL_ENV), token=os.environ.get(VALIDATOR_TOKEN_ENV)
+                    os.environ.get(record._nc_profile().validator_url_env),
+                    token=os.environ.get(VALIDATOR_TOKEN_ENV),
                 )
-                outcome = client.validate(xml, record.document_kind)
+                outcome = client.validate(xml, record.document_kind, record._nc_profile())
             except validator.ValidatorUnavailable as exc:
                 # RECORD AND RETURN, never raise: an exception rolls the transaction back and would erase this history
                 # row.
@@ -213,7 +221,7 @@ class EInvoicePrepare(models.Model):
 
     def _nc_prepare(self):
         self.ensure_one()
-        profile = spec.get_profile()
+        profile = self._nc_profile()
         if self.xml_attachment_id:
             # Not yet submitted: the document may still be corrected, but a generated XML is NEVER destroyed. The file
             # stays in the archive, immutable, and the history keeps the link to it; the record points at the next one.
@@ -259,6 +267,7 @@ class EInvoicePrepare(models.Model):
             'buyer_endpoint_id': payload['buyer'].get('endpoint_id') or False,
             'buyer_endpoint_source': payload.get('buyer_endpoint_source') or False,
             'reconciliation_state': reconciliation.state,
+            'self_billing_agreement_id': payload.get('self_billing_agreement_id') or False,
             'reconciliation_json': dumps(
                 {
                     'state': reconciliation.state,
@@ -293,7 +302,7 @@ class EInvoicePrepare(models.Model):
         the invoice date. Credit notes use their own invoice date."""
         move = self.move_id
         supply = move.taxable_supply_date if 'taxable_supply_date' in move._fields else False
-        if supply and move.move_type != 'out_refund':
+        if supply and move.move_type not in CREDIT_TYPES:
             return supply
         return move.invoice_date or False
 
@@ -301,7 +310,7 @@ class EInvoicePrepare(models.Model):
         """Run lib/scope.py on this document and record the decision (engine fields). ``(Scope, issues)``."""
         self.ensure_one()
         move, company = self.move_id, self.company_id
-        seller, buyer = company.partner_id, move.commercial_partner_id
+        seller, buyer = self._nc_parties()
         tax_map = {
             m.tax_id.id: m.pint_category
             for m in self.env['ncollection.einvoice.tax.map'].search([('company_id', '=', company.id)])
@@ -359,7 +368,7 @@ class EInvoicePrepare(models.Model):
     def _nc_store_findings(self, layer, found):
         self.ensure_one()
         self.sudo().validation_ids.filtered(lambda v: v.layer == layer).unlink()
-        profile = spec.get_profile()
+        profile = self._nc_profile()
         for issue in found:
             self.env['ncollection.einvoice.validation'].sudo().create(
                 {
@@ -402,8 +411,8 @@ class EInvoicePrepare(models.Model):
                     "e-invoice, so the amount due would not match the official rule.",
                 )
             )
-        profile = spec.get_profile()
-        is_credit = move.move_type == 'out_refund'
+        profile = self._nc_profile()
+        is_credit = move.move_type in CREDIT_TYPES
         flags = {name: bool(self['flag_' + name]) for name in identity.FLAG_ORDER}
         txn_code = identity.transaction_type_code(flags)
         tax_map = {
@@ -438,7 +447,9 @@ class EInvoicePrepare(models.Model):
                     )
                 )
             category = mapped.pint_category if mapped else None
-            if category == 'AE':
+            if category in ('AE', 'N'):
+                # booked at 0% in Odoo, the rate is SHOWN on the line: reverse charge, and the margin scheme (whose
+                # VAT amount must be 0, ibr-108-ae)
                 rate = _d(mapped.pint_rate)
             elif category in ('E', 'O') or mapped is None:
                 rate = None
@@ -501,16 +512,17 @@ class EInvoicePrepare(models.Model):
             category = mapped.pint_category
             rate = (
                 _d(mapped.pint_rate)
-                if category == 'AE'
+                if category in ('AE', 'N')
                 else None if category in ('E', 'O') else _d(tax_line.tax_line_id.amount)
             )
             booked[(category, rate)] = booked.get((category, rate), ZERO) + abs(_d(tax_line.amount_currency))
         categories = {item['category'] for item in items} | {a['category'] for a in adjs}
         type_code = doctype.type_code('credit_note' if is_credit else 'invoice', categories, profile)
 
-        # --- parties
-        seller = self._nc_party(company.partner_id, seller=True, flags=flags, found=found)
-        buyer = self._nc_party(move.commercial_partner_id, seller=False, flags=flags, found=found)
+        # --- parties (self-billing: the supplier is still the SELLER of the document, this company its buyer)
+        seller_partner, buyer_partner = self._nc_parties()
+        seller = self._nc_party(seller_partner, seller=True, flags=flags, found=found)
+        buyer = self._nc_party(buyer_partner, seller=False, flags=flags, found=found)
 
         # --- payment means
         config = self.env['ncollection.einvoice.config'].search([('company_id', '=', company.id)], limit=1)
@@ -524,7 +536,9 @@ class EInvoicePrepare(models.Model):
         mapped_codes = (
             [pay_map[method_line.journal_id.id]] if method_line and method_line.journal_id.id in pay_map else []
         )
-        bank = move.partner_bank_id or config.default_bank_account_id
+        # self-billing: the payee is the SUPPLIER, so only the bill's own (supplier) account may be used, never this
+        # company's default account
+        bank = move.partner_bank_id or (config.default_bank_account_id if not self.self_billing else False)
         resolution = payment_means.resolve(
             type_code=type_code,
             transaction_type_code=txn_code,
@@ -572,11 +586,11 @@ class EInvoicePrepare(models.Model):
                     ),
                 }
             ]
-        # deliver-to address (IBG-13): emitted for an export, where fatal rule ibr-152-ae requires it unless the
-        # delivery is to the UAE. Odoo's own delivery address of the document; never invented.
+        # deliver-to address (IBG-13): emitted for an export (fatal ibr-152-ae, unless delivered in the UAE) and for an
+        # e-commerce supply (fatal ibr-142-ae). Odoo's own delivery address of the document; never invented.
         delivery = None
         shipping = move.partner_shipping_id if 'partner_shipping_id' in move._fields else False
-        if flags.get('export') and shipping:
+        if (flags.get('export') or flags.get('ecommerce')) and shipping:
             ship_country = shipping.country_id.code or ''
             ship_state = shipping.state_id.code if shipping.state_id else None
             delivery = {
@@ -654,6 +668,8 @@ class EInvoicePrepare(models.Model):
                 'period_start': payload['period_start'],
                 'period_end': payload['period_end'],
                 'delivery': delivery,
+                'self_billing': self._nc_self_billing_facts(seller_partner) if self.self_billing else None,
+                'original': self._nc_original_facts(type_code) if is_credit else None,
             },
             'seller': seller['_ready'],
             'buyer': buyer['_ready'],
@@ -661,7 +677,98 @@ class EInvoicePrepare(models.Model):
             'adjustments': adjs,
         }
         found.extend(readiness.check(snapshot, profile))
+        if snapshot['doc']['self_billing']:
+            # which agreement authorised the buyer to issue this document: stored with the record, and part of the
+            # payload so a changed agreement makes the prepared document stale like any other source change
+            payload['self_billing_agreement_id'] = snapshot['doc']['self_billing']['agreement_id']
         return payload, found
+
+    # ------------------------------------------------------------------ profile, parties, self-billing, originals
+    def _nc_profile(self):
+        """The PINT-AE profile of THIS document: Self-Billing for a self-billed one, else Billing."""
+        return spec.get_profile(spec.SELF_BILLING_PROFILE_KEY if self.self_billing else None)
+
+    def _nc_parties(self):
+        """``(seller, buyer)`` partners of the document. Standard billing: this company sells to the customer. Self-
+        billing: this company is the BUYER issuing the document for its supplier, who stays the seller."""
+        move, company = self.move_id, self.company_id
+        if self.self_billing:
+            return move.commercial_partner_id, company.partner_id
+        return company.partner_id, move.commercial_partner_id
+
+    def _nc_self_billing_facts(self, supplier):
+        """What Guidelines V2.0 §10.3 needs to know, as facts for lib/readiness.py (which decides)."""
+        on_date = self._nc_transaction_date() or self.move_id.invoice_date
+        agreements = self.env['ncollection.einvoice.self.billing.agreement'].sudo()._nc_for(
+            self.company_id, supplier, on_date
+        )
+        buyer = self.company_id.partner_id
+        return {
+            'agreement': agreements['state'],
+            'agreement_id': agreements['agreement'].id or None,
+            'supplier_registered': supplier._nc_uae_identity_states()['trn'].state == 'valid',
+            'buyer_on_system': (
+                not self.buyer_not_onboarded and buyer._nc_uae_identity_states()['tin'].state == 'valid'
+            ),
+        }
+
+    def _nc_original_facts(self, type_code):
+        """The credit note's original invoice, checked: same company, same counterparty, same direction, posted, its
+        own e-invoice validated with the corresponding type and profile, and the credits not exceeding it. Facts only;
+        lib/readiness.py decides. Odoo's own reversal link (``reversed_entry_id``) is the ONLY reference used, so a
+        reference can never be typed in, ambiguous or point outside this database."""
+        move = self.move_id
+        original = move.reversed_entry_id
+        if not original:
+            return {'state': 'missing'}
+        original = original.sudo()
+        facts = {'number': original.name}
+        expected_kind = 'in_invoice' if move.move_type == 'in_refund' else 'out_invoice'
+        if not original.exists():
+            return dict(facts, state='not_found')
+        if original.company_id != move.company_id:
+            return dict(facts, state='other_company')
+        if original.move_type != expected_kind:
+            return dict(facts, state='wrong_kind')
+        if original.state != 'posted':
+            return dict(facts, state='not_posted')
+        if original.commercial_partner_id != move.commercial_partner_id:
+            return dict(facts, state='other_partner')
+        einvoice = self.sudo().search(
+            [('move_id', '=', original.id), ('local_state', 'in', CREDITABLE_LOCAL)], order='revision desc', limit=1
+        )
+        config = self.env['ncollection.einvoice.config'].sudo().search(
+            [('company_id', '=', move.company_id.id)], limit=1
+        )
+        before_mandate = bool(
+            config.effective_date and original.invoice_date and original.invoice_date < config.effective_date
+        )
+        if not einvoice:
+            draft = self.sudo().search_count([('move_id', '=', original.id)])
+            if draft:
+                # the original HAS an e-invoice, but it never passed the official validation: crediting it would
+                # correct a document the network never accepted
+                return dict(facts, state='not_einvoiced')
+            # no e-invoice at all (issued before the mandate, out of scope, or before this engine existed): the credit
+            # is allowed, and flagged unless the original predates the company's e-invoicing start
+            facts['no_einvoice'] = not before_mandate
+        else:
+            if bool(einvoice.self_billing) != bool(self.self_billing):
+                return dict(facts, state='other_profile')
+            if CREDIT_PAIRS.get(type_code) != einvoice.type_code:
+                return dict(facts, state='type_mismatch')
+        # every POSTED credit note of the same original, this one included, against what the original carried
+        credits = self.env['account.move'].sudo().search(
+            [('reversed_entry_id', '=', original.id), ('state', '=', 'posted'), ('move_type', '=', move.move_type)]
+        ) | move
+        return dict(
+            facts,
+            state='ok',
+            credited_total=r2(sum((_d(m.amount_total) for m in credits), ZERO)),
+            original_total=r2(_d(original.amount_total)),
+            credited_tax=r2(sum((_d(m.amount_tax) for m in credits), ZERO)),
+            original_tax=r2(_d(original.amount_tax)),
+        )
 
     def _nc_line_tax(self, move_line):
         """Tax of ONE line as the company's tax engine computes it for that line (display / AED split only: the tax
@@ -738,7 +845,16 @@ class EInvoicePrepare(models.Model):
         else:
             eas = partner.peppol_eas if 'peppol_eas' in partner._fields else None
             endpoint_value = partner.peppol_endpoint if 'peppol_endpoint' in partner._fields else None
-            ready.update(peppol_eas=eas, peppol_endpoint=endpoint_value, not_onboarded=self.buyer_not_onboarded)
+            # Guidelines V2.0 §18.2.3: a buyer OUTSIDE the UAE with only a foreign tax identifier (master data of the
+            # localization module) - IBT-046 carries it with its ICD scheme, the endpoint is 9900000098
+            foreign_id = (partner.nc_foreign_tax_id or '').strip() if 'nc_foreign_tax_id' in partner._fields else ''
+            foreign_scheme = (partner.nc_foreign_tax_scheme or '').strip() if foreign_id else ''
+            foreign_identified = bool(foreign_id and country and country != 'AE' and tin_state.state != 'valid')
+            ready.update(
+                peppol_eas=eas, peppol_endpoint=endpoint_value, not_onboarded=self.buyer_not_onboarded,
+                foreign_identified=foreign_identified, foreign_id=foreign_id or None,
+                foreign_scheme=foreign_scheme or None,
+            )
             endpoint, issues_ = identity.buyer_endpoint(
                 flags=flags,
                 peppol_eas=eas,
@@ -746,7 +862,15 @@ class EInvoicePrepare(models.Model):
                 tin_state=tin_state.state,
                 tin=partner.nc_tin,
                 not_onboarded=self.buyer_not_onboarded,
+                foreign_identified=foreign_identified,
             )
+            # IBT-046 Buyer identifier (G2.0 §18.2.2-18.2.3): the foreign identifier, or - when the electronic
+            # address is a predefined one - the UAE TIN with scheme 0235 (it is then not the endpoint)
+            if foreign_identified:
+                party.update(identifier=foreign_id, identifier_scheme=foreign_scheme)
+            elif endpoint is not None and endpoint.report_only and tin_state.state == 'valid':
+                party.update(identifier=partner.nc_tin, identifier_scheme='0235')
+            ready.update(identifier=party.get('identifier'))
         if endpoint is not None:
             party.update(
                 endpoint_scheme=endpoint.scheme,

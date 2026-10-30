@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_einvoice_form_transport" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.form.transport</field>
+        <field name="model">ncollection.einvoice</field>
+        <field name="inherit_id" ref="view_einvoice_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='ui_status']" position="before">
+                <button name="action_submit" type="object" string="Submit to ASP" class="btn-primary"
+                        invisible="local_state != 'validated' or submission_state != 'not_submitted'"/>
+                <button name="action_retry_submission" type="object" string="Restart submission"
+                        groups="ncollection_uae_einvoicing.group_einvoice_manager"
+                        invisible="transport_state != 'attention'"/>
+                <button name="action_poll_status" type="object" string="Refresh status"
+                        invisible="submission_state != 'asp_accepted'"/>
+            </xpath>
+            <xpath expr="//sheet/div[hasclass('oe_title')]" position="before">
+                <div class="alert alert-warning" role="alert" invisible="transport_state != 'attention'">
+                    The ASP refused the credentials or the configuration. An e-invoicing manager must correct the
+                    provider settings and restart the submission. Nothing is retried until then.
+                </div>
+                <div class="alert alert-danger" role="alert" invisible="transport_state != 'dead'">
+                    The submission failed after every retry. The document was not accepted by the ASP.
+                </div>
+                <div class="alert alert-danger" role="alert" invisible="submission_state != 'asp_rejected'">
+                    The ASP rejected the document. See the findings for the reason.
+                </div>
+            </xpath>
+            <xpath expr="//notebook/page[@name='history']" position="before">
+                <page string="Transport" name="transport">
+                    <group>
+                        <group string="Status">
+                            <field name="submission_state" readonly="1"/>
+                            <field name="exchange_state" readonly="1"/>
+                            <field name="fta_state" string="Tax data (FTA)" readonly="1"/>
+                            <field name="mls_state" readonly="1"/>
+                            <field name="business_state" readonly="1"/>
+                        </group>
+                        <group string="Submission">
+                            <field name="transport_state" readonly="1"/>
+                            <field name="transport_attempts" readonly="1"/>
+                            <field name="transport_next_attempt" readonly="1" invisible="not transport_next_attempt"/>
+                            <field name="transport_error" readonly="1" invisible="not transport_error"/>
+                            <field name="correlation_id" readonly="1"/>
+                            <field name="asp_reference" readonly="1"/>
+                            <field name="exchange_reference" readonly="1"/>
+                            <field name="fta_reference" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="submission_ids" readonly="1">
+                        <list create="false" delete="false">
+                            <field name="create_date" string="Queued"/>
+                            <field name="revision"/>
+                            <field name="state"/>
+                            <field name="attempt_count"/>
+                            <field name="asp_document_id"/>
+                            <field name="error_category"/>
+                            <field name="error_code"/>
+                        </list>
+                    </field>
+                    <field name="event_ids" readonly="1">
+                        <list create="false" delete="false">
+                            <field name="create_date" string="Received"/>
+                            <field name="source"/>
+                            <field name="kind"/>
+                            <field name="status"/>
+                            <field name="occurred_at"/>
+                            <field name="state"/>
+                            <field name="note"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

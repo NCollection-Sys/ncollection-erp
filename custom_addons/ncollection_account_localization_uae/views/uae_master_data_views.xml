@@ -17,6 +17,9 @@
                        options="{'no_open': True, 'no_create': True}"/>
                 <field name="nc_einvoice_party_type"/>
                 <field name="nc_vat_group_trn" placeholder="15 digits"/>
+                <field name="country_code" invisible="1"/>
+                <field name="nc_foreign_tax_id" invisible="country_code == 'AE'"/>
+                <field name="nc_foreign_tax_scheme" placeholder="ICD, 4 digits" invisible="country_code == 'AE'"/>
             </xpath>
         </field>
     </record>

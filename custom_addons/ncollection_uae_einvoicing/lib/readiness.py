@@ -23,6 +23,37 @@ NOT_APPLICABLE = 'not_applicable'
 
 _DIGITS = re.compile(r'[0-9]+')
 
+# Billing rules the pinned official files write ONLY for 380 / 381 / 81 and therefore never fire for a self-billed
+# 389 / 261 (verified 2026-10-29 in the byte-identical jurisdiction rules of both packages; lib/upstream.py
+# ``self-billing-credit-rules-not-applied``). A self-billed tax credit note is still a Tax Credit Note under the VAT
+# Decree-Law (Art 70; Guidelines V2.0 §10.3: it "should fulfil the criteria" of its standard counterpart), so the
+# engine applies the same requirement to it, labelled as ITS OWN rule, never as the official one.
+SELF_BILLING_EXTENDED = frozenset({'ibr-055-ae', 'ibr-124-ae', 'ibr-151-ae', 'ibr-158-ae'})
+
+# The original-document facts a credit note's model computes (``doc['original']['state']``), and what each means.
+ORIGINAL_PROBLEMS = {
+    'missing': "The credit note does not reference the invoice it corrects.",
+    'not_found': "The referenced original invoice does not exist in this database.",
+    'other_company': "The referenced original invoice belongs to another company.",
+    'not_posted': "The referenced original invoice is not posted.",
+    'wrong_kind': "The referenced document is not an invoice of the same direction (a customer credit note corrects "
+                  "a customer invoice, a self-billed credit note a self-billed vendor bill).",
+    'other_partner': "The referenced original invoice was issued to / by a different party.",
+    'not_einvoiced': "The referenced original invoice has an e-invoice that was never officially validated: complete "
+                     "(or correct) the original first.",
+    'type_mismatch': "The credit note's type does not correspond to the original's: a tax credit note corrects a tax "
+                     "invoice (380 / 389), a commercial credit note a commercial invoice (480).",
+    'other_profile': "A self-billed credit note corrects only a self-billed invoice, and a standard credit note only "
+                     "a standard invoice.",
+}
+
+
+def _rule(code, profile):
+    """``OFFICIAL:<code>`` - or, for a Billing rule the official files do not apply to self-billing, this engine's."""
+    if profile.self_billing and code in SELF_BILLING_EXTENDED:
+        return 'NCOLLECTION:self-billing-%s' % code
+    return 'OFFICIAL:' + code
+
 
 def check(snapshot, profile=None):
     """All findings for ``snapshot`` (see the Phase 1A specification for its shape)."""
@@ -37,9 +68,27 @@ def check(snapshot, profile=None):
     _document(doc, flags, categories, profile, found)
     _party('seller', snapshot['seller'], doc, flags, profile, found)
     _party('buyer', snapshot['buyer'], doc, flags, profile, found)
+    if flags.get('agent_billing'):
+        _agent(doc, snapshot['seller'], found)
     for line in snapshot.get('lines', []):
         _line(line, snapshot['buyer'], profile, found)
     return found
+
+
+def _agent(doc, seller, found):
+    """Disclosed agent billing: the agent (the seller) must carry its TRN, and the principal is another Person."""
+    if seller.get('trn_state') != 'valid':
+        found.append(
+            _issues.make('OFFICIAL:ibr-177-ae', 'seller', "Disclosed agent billing needs the seller's (agent's) TRN.")
+        )
+    elif doc.get('principal_id') and doc['principal_id'].strip() == (seller.get('trn') or '').strip():
+        found.append(
+            _issues.make(
+                'OFFICIAL:ibr-176-ae',
+                'document',
+                "The principal cannot be the agent itself: the principal ID equals the seller's TRN.",
+            )
+        )
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -67,7 +116,9 @@ def _document(doc, flags, categories, profile, found):
                 "An out-of-scope document may only use the Exempt or Not-subject VAT categories.",
             )
         )
-    if type_code in (profile.invoice_type_tax, profile.credit_type_tax) and categories and categories <= {'E', 'O'}:
+    if profile.self_billing:
+        _self_billing(doc, categories, profile, found)
+    elif type_code in (profile.invoice_type_tax, profile.credit_type_tax) and categories and categories <= {'E', 'O'}:
         found.append(
             _issues.make(
                 'OFFICIAL:ibr-151-ae',
@@ -106,7 +157,9 @@ def _document(doc, flags, categories, profile, found):
     if kind == 'credit_note':
         reason = doc.get('credit_reason')
         if not reason:
-            found.append(_issues.make('OFFICIAL:ibr-158-ae', 'document', "A credit note needs a credit-note reason."))
+            found.append(
+                _issues.make(_rule('ibr-158-ae', profile), 'document', "A credit note needs a credit-note reason.")
+            )
         elif reason not in codelists.codes('credit_reason', profile):
             found.append(
                 _issues.make(
@@ -119,7 +172,7 @@ def _document(doc, flags, categories, profile, found):
         if reason == 'VD' and doc.get('preceding'):
             found.append(
                 _issues.make(
-                    'OFFICIAL:ibr-055-ae',
+                    _rule('ibr-055-ae', profile),
                     'document',
                     "A volume-discount credit note must NOT reference an invoice. A credit note made by reversing an "
                     "invoice always does, so choose another credit-note reason or issue it without the reversal link.",
@@ -128,15 +181,16 @@ def _document(doc, flags, categories, profile, found):
         if reason != 'VD' and not doc.get('preceding'):
             found.append(
                 _issues.make(
-                    'OFFICIAL:ibr-055-ae',
+                    _rule('ibr-055-ae', profile),
                     'document',
                     "A credit note needs a reference to the original invoice (except a volume discount).",
                 )
             )
         if doc.get('vat_point_date'):
             found.append(
-                _issues.make('OFFICIAL:ibr-124-ae', 'document', "A credit note cannot carry a VAT point date.")
+                _issues.make(_rule('ibr-124-ae', profile), 'document', "A credit note cannot carry a VAT point date.")
             )
+        _original(doc, found)
     if doc.get('vat_point_date') and doc.get('issue_date') and not doc['vat_point_date'] < doc['issue_date']:
         found.append(
             _issues.make(
@@ -169,6 +223,26 @@ def _document(doc, flags, categories, profile, found):
                     "in the UAE: set the document's delivery address.",
                 )
             )
+    if flags.get('ecommerce'):
+        delivery = doc.get('delivery') or {}
+        if not (delivery.get('street') and delivery.get('city') and delivery.get('subdivision')):
+            found.append(
+                _issues.make(
+                    'OFFICIAL:ibr-142-ae',
+                    'document',
+                    "An e-commerce supply needs the deliver-to address (street, city and region): set the document's "
+                    "delivery address.",
+                )
+            )
+    if profile.self_billing and flags.get('export'):
+        found.append(
+            _issues.make(
+                'NCOLLECTION:self-billing-export-not-applicable',
+                'document',
+                "A self-billed document cannot be an export: under self-billing this company is the BUYER, on the "
+                "UAE Electronic Invoicing System (Guidelines V2.0 §10.3), so the goods are not exported to it.",
+            )
+        )
     if flags.get('margin_scheme') and categories - {'N'}:
         found.append(
             _issues.make(
@@ -203,6 +277,7 @@ def _party(role, party, doc, flags, profile, found):
             tin_state=party.get('tin_state', 'missing'),
             tin=party.get('tin'),
             not_onboarded=party.get('not_onboarded', False),
+            foreign_identified=party.get('foreign_identified', False),
             profile=profile,
         )
     found.extend(issues_)
@@ -233,8 +308,26 @@ def _party(role, party, doc, flags, profile, found):
         and endpoint.scheme == profile.participant_scheme
         and not re.fullmatch(r'1[0-9]{9}', endpoint.id)
         and trn_state != 'valid'
+        and not party.get('identifier')
     ):
-        found.append(_issues.make('OFFICIAL:ibr-135-ae', subject, "The buyer's TRN (or identifier) is required."))
+        found.append(
+            _issues.make(
+                'OFFICIAL:ibr-135-ae',
+                subject,
+                "The buyer's TRN or identifier is required. A buyer outside the UAE: record its foreign tax "
+                "identifier "
+                "and ICD scheme on the partner (Guidelines V2.0 §18.2.3).",
+            )
+        )
+    if role == 'buyer' and party.get('foreign_scheme') and party['foreign_scheme'] not in codelists.icd_codes(profile):
+        found.append(
+            _issues.make(
+                'OFFICIAL:ibr-cl-10',
+                subject,
+                "The buyer identifier scheme %(scheme)s is not on the ISO/IEC 6523 ICD list.",
+                {'scheme': party['foreign_scheme']},
+            )
+        )
     # --- legal registration (scheme 0235 only, as the official rules)
     if endpoint is not None and endpoint.scheme == profile.participant_scheme:
         needs_legal = role == 'seller' or not re.match(r'[19]', endpoint.id)
@@ -456,4 +549,95 @@ def _line(line, buyer, profile, found):
         if buyer.get('trn_state') != 'valid':
             found.append(
                 _issues.make('OFFICIAL:ibr-103-ae', 'buyer', "A reverse-charge supply needs the buyer's TRN.")
+            )
+
+
+def _self_billing(doc, categories, profile, found):
+    """Guidelines V2.0 §10.3, decided from facts the model computed (``doc['self_billing']``): the BUYER may issue the
+    supplier's document only under an agreement with that supplier, only for a VAT-registered supplier, only while the
+    buyer is on the Electronic Invoicing System, and only as a TAX document (no self-billed Commercial Invoice)."""
+    if categories and categories <= {'E', 'O'}:
+        found.append(
+            _issues.make(
+                'NCOLLECTION:self-billing-commercial-not-allowed',
+                'document',
+                "A self-billed document must be a tax invoice / tax credit note: self-billing applies only for VAT "
+                "purposes, so a document made only of Exempt / Not-subject lines cannot be self-billed (Guidelines "
+                "V2.0 §10.3). Ask the supplier to issue it.",
+            )
+        )
+    facts = doc.get('self_billing') or {}
+    agreement = facts.get('agreement', 'missing')
+    if agreement != 'valid':
+        found.append(
+            _issues.make(
+                'NCOLLECTION:self-billing-agreement-%s' % agreement,
+                'document',
+                {
+                    'missing': "There is no active self-billing agreement with this supplier.",
+                    'not_yet': "The self-billing agreement with this supplier is not yet in force on the transaction "
+                               "date.",
+                    'expired': "The self-billing agreement with this supplier had ended on the transaction date.",
+                    'ambiguous': "More than one active self-billing agreement with this supplier covers the "
+                                 "transaction date.",
+                }.get(agreement, "The self-billing agreement with this supplier is not usable."),
+            )
+        )
+    if not facts.get('supplier_registered'):
+        found.append(
+            _issues.make(
+                'NCOLLECTION:self-billing-supplier-not-registered',
+                'seller',
+                "Self-billing is not available for a supplier that is not registered for VAT: the supplier needs a "
+                "valid TRN (Guidelines V2.0 §10.3).",
+            )
+        )
+    if not facts.get('buyer_on_system'):
+        found.append(
+            _issues.make(
+                'NCOLLECTION:self-billing-buyer-not-on-system',
+                'buyer',
+                "Self-billing requires the buyer (this company) to be on the Electronic Invoicing System with its own "
+                "participant identifier (Guidelines V2.0 §10.3).",
+            )
+        )
+
+
+def _original(doc, found):
+    """The credit note's original document (``doc['original']``, computed by the model from the accounting link)."""
+    original = doc.get('original')
+    if not original or original.get('state') == 'missing':
+        return  # no link: the reference rule (ibr-055-ae, or its self-billing equivalent) already reports it
+    state = original.get('state')
+    if state != 'ok':
+        found.append(
+            _issues.make(
+                'NCOLLECTION:credit-note-original-%s' % state,
+                'document',
+                ORIGINAL_PROBLEMS.get(state, "The referenced original invoice cannot be credited."),
+            )
+        )
+        return
+    if original.get('no_einvoice'):
+        found.append(
+            _issues.make(
+                'NCOLLECTION:credit-note-original-without-einvoice',
+                'document',
+                "The original invoice %(number)s has no e-invoice in this system. The credit note references it by "
+                "number only; check it was issued before e-invoicing applied to it.",
+                {'number': original.get('number')},
+                severity=_issues.WARNING,
+            )
+        )
+    for key, label in (('total', 'amount'), ('tax', 'VAT')):
+        credited, limit = dec(original.get('credited_' + key)), dec(original.get('original_' + key))
+        if credited > limit:
+            found.append(
+                _issues.make(
+                    'NCOLLECTION:credit-exceeds-original',
+                    'document',
+                    "The credit notes for %(number)s would credit %(credited)s of %(label)s; the invoice carries only "
+                    "%(limit)s (VAT Decree-Law Art 70: a credit note reduces what was invoiced).",
+                    {'number': original.get('number'), 'credited': credited, 'label': label, 'limit': limit},
+                )
             )

@@ -14,3 +14,13 @@ from . import test_reverse_charge
 from . import test_adapter_contract
 from . import test_ui_access
 from . import test_real_move_crosscheck
+from . import test_transport
+from . import test_inbound
+from . import test_runner_scope
+from . import test_self_billing
+from . import test_credit_notes
+from . import test_scenario_matrix
+from . import test_key_rotation
+from . import test_export_package
+from . import test_foreign_buyer
+from . import test_uuid_identity

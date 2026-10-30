@@ -34,9 +34,31 @@ services:
     networks:
       - nc_einvoice
 
+  # PINT AE Self-Billing: the SAME worker image with the Self-Billing rule set (its own manifest fingerprint, so an
+  # answer from one worker can never be accepted for the other profile). Same hardening.
+  einvoice-validator-sb:
+    image: nc-einvoice-validator:dev
+    depends_on:
+      - einvoice-validator
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1.0
+    environment:
+      NC_EINVOICE_SPEC_VERSION: "1.0.4"
+      NC_EINVOICE_VALIDATOR_TOKEN: ${NC_EINVOICE_VALIDATOR_TOKEN:?set NC_EINVOICE_VALIDATOR_TOKEN (32+ chars) in .env}
+    volumes:
+      - ./custom_addons/ncollection_uae_einvoicing/resources/pint_ae_sb/1.0.4:/rules:ro
+    networks:
+      - nc_einvoice
+
   odoo:
     environment:
       NC_EINVOICE_VALIDATOR_URL: http://einvoice-validator:8090
+      NC_EINVOICE_VALIDATOR_SB_URL: http://einvoice-validator-sb:8090
       NC_EINVOICE_VALIDATOR_TOKEN: ${NC_EINVOICE_VALIDATOR_TOKEN:?set NC_EINVOICE_VALIDATOR_TOKEN (32+ chars) in .env}
     networks:
       - default

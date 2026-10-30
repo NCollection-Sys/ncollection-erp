@@ -93,7 +93,11 @@ class TestContractPrimitives(TransactionCase):
             contract.unregister(fake_adapter.FakeAdapter.code)
 
     def test_the_core_ships_no_adapter_and_no_transport(self):
-        self.assertEqual(self.env['ncollection.einvoice.provider']._fields['adapter'].selection, [])
+        # the CORE contributes no adapter value; a provider module (e.g. ncollection_uae_einvoicing_acube) may
+        values = self.env['ir.model.fields.selection'].search(
+            [('field_id.model', '=', 'ncollection.einvoice.provider'), ('field_id.name', '=', 'adapter')])
+        owners = set(values.get_external_id().values())
+        self.assertFalse({x for x in owners if x.startswith('ncollection_uae_einvoicing.')}, owners)
         forbidden = {'requests', 'urllib', 'urllib3', 'http', 'httpx', 'aiohttp', 'socket'}
         for name in ('lib/adapter_contract.py', 'models/adapter.py'):
             with open(os.path.join(ADDON, name), encoding='utf-8') as handle:

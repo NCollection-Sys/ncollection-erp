@@ -197,6 +197,10 @@ def _party(root, tag, party, seller):
     wrapper = _add(root, tag)
     node = _add(wrapper, 'cac:Party')
     _add(node, 'cbc:EndpointID', party['endpoint_id'], schemeID=party['endpoint_scheme'])
+    if not seller and party.get('identifier'):
+        # IBT-046 Buyer identifier with its ISO/IEC 6523 ICD scheme (IBT-046-1); Guidelines V2.0 §18.2.2-18.2.3
+        _add(_add(node, 'cac:PartyIdentification'), 'cbc:ID', party['identifier'],
+             schemeID=party.get('identifier_scheme'))
     if party.get('trading_name'):
         _add(_add(node, 'cac:PartyName'), 'cbc:Name', party['trading_name'])
     address = _add(node, 'cac:PostalAddress')

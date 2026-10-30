@@ -77,3 +77,54 @@ def decrypt(master, blob, *, db, company_id, provider, name, version=1):
         return AESGCM(_key(master, db, company_id, provider, version)).decrypt(nonce, ciphertext, aad).decode('utf-8')
     except (InvalidTag, ValueError, TypeError):
         raise SecretError('the stored secret cannot be decrypted in this context') from None
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# KEY ROTATION (R48). The master is versioned. The deployment holds the CURRENT master and, only while a rotation is in
+# progress, the PREVIOUS one; both live in the container environment, never in a database:
+#
+#     NC_EINVOICE_SECRET_KEY            the current master     NC_EINVOICE_SECRET_KEY_VERSION   its version (default 1)
+#     NC_EINVOICE_SECRET_KEY_PREVIOUS   the previous master       NC_EINVOICE_SECRET_KEY_PREVIOUS_VERSION   its version
+#
+# Every ciphertext records the version it was made with (``key_version`` is part of the key derivation AND of the AAD),
+# so an old ciphertext stays decryptable with the previous master until it is re-encrypted with the current one, and a
+# ciphertext presented under another version fails authentication instead of decrypting. Rotation never needs a human
+# to see a credential: the service re-encrypts in-process (models/secret.py ``action_rotate_keys``).
+VERSION_ENV = 'NC_EINVOICE_SECRET_KEY_VERSION'
+PREVIOUS_ENV = 'NC_EINVOICE_SECRET_KEY_PREVIOUS'
+PREVIOUS_VERSION_ENV = 'NC_EINVOICE_SECRET_KEY_PREVIOUS_VERSION'
+
+
+def _version(name, default=None):
+    raw = os.environ.get(name, '')
+    if not raw:
+        if default is None:
+            raise SecretError('%s is required when a previous master is configured' % name)
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        raise SecretError('%s must be a positive integer' % name) from None
+    if value < 1:
+        raise SecretError('%s must be a positive integer' % name)
+    return value
+
+
+def keyring_from_env():
+    """``(current_version, {version: master})`` from the environment. The previous master is optional; when given it
+    must have its own, different version and must not equal the current master (a 'rotation' to the same key would
+    re-encrypt nothing useful and hide a configuration mistake)."""
+    current = master_from_env()
+    current_version = _version(VERSION_ENV, 1)
+    ring = {current_version: current}
+    previous = os.environ.get(PREVIOUS_ENV, '')
+    if previous:
+        if len(previous) < MASTER_MIN_LENGTH:
+            raise SecretError('the previous e-invoicing master key is too short (%s)' % PREVIOUS_ENV)
+        previous_version = _version(PREVIOUS_VERSION_ENV)
+        if previous_version == current_version:
+            raise SecretError('the previous and the current master key must have different versions')
+        if previous.encode('utf-8') == current:
+            raise SecretError('the previous and the current master key are the same key')
+        ring[previous_version] = previous.encode('utf-8')
+    return current_version, ring

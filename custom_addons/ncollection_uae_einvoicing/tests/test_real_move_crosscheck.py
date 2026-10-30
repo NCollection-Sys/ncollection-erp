@@ -24,7 +24,7 @@ from .common import EInvoiceCase
 
 EXPORT_ENV = 'NC_EINVOICE_EXPORT_DIR'
 
-# case -> (kind, expected official outcome, rule that must fire for an expected failure)
+# case -> (kind, expected official outcome, rule that must fire for an expected failure[, profile key])
 REQUIRED_CASES = {
     'real-tax-invoice-380': ('invoice', 'pass', None),
     'real-tax-credit-note-381': ('credit_note', 'pass', None),
@@ -34,6 +34,26 @@ REQUIRED_CASES = {
     'real-reverse-charge-380': ('invoice', 'pass', None),
     'real-export-scenario-380': ('invoice', 'pass', None),
     'real-negative-uuid-removed': ('invoice', 'fail', 'ibr-193-ae'),
+    # tests/test_credit_notes.py
+    'real-credit-note-381-full': ('credit_note', 'pass', None),
+    'real-credit-note-381-partial-line': ('credit_note', 'pass', None),
+    'real-credit-note-381-partial-multi': ('credit_note', 'pass', None),
+    'real-commercial-credit-note-81': ('credit_note', 'pass', None),
+    # tests/test_scenario_matrix.py
+    'real-scenario-free-zone': ('invoice', 'pass', None),
+    'real-scenario-deemed-supply': ('invoice', 'pass', None),
+    'real-scenario-margin-scheme': ('invoice', 'pass', None),
+    'real-scenario-summary': ('invoice', 'pass', None),
+    'real-scenario-continuous-supply': ('invoice', 'pass', None),
+    'real-scenario-agent-billing': ('invoice', 'pass', None),
+    'real-scenario-ecommerce': ('invoice', 'pass', None),
+    'real-scenario-free-zone-ecommerce': ('invoice', 'pass', None),
+    'real-scenario-summary-continuous': ('invoice', 'pass', None),
+    # tests/test_self_billing.py: validated by the Self-Billing worker (the 4th element names the profile)
+    'real-self-billed-tax-invoice-389': ('invoice', 'pass', None, 'pint-ae-sb-1.0.4'),
+    'real-self-billed-tax-credit-note-261': ('credit_note', 'pass', None, 'pint-ae-sb-1.0.4'),
+    # tests/test_foreign_buyer.py (R05, Guidelines V2.0 §18.2.3)
+    'real-foreign-buyer-380': ('invoice', 'pass', None),
 }
 
 
@@ -88,7 +108,7 @@ class TestRealMoveCrossCheck(EInvoiceCase):
         return record, record.xml_attachment_id.raw
 
     def _export(self, case, xml):
-        kind, expect, rule = REQUIRED_CASES[case]
+        kind, expect, rule = REQUIRED_CASES[case][:3]
         self.assertTrue(xml.startswith(b'<?xml'), case)
         folder = os.environ.get(EXPORT_ENV)
         if folder:

@@ -126,7 +126,9 @@ class TestAccessAndIsolation(EInvoiceCase):
 @tagged('post_install', '-at_install')
 class TestOnlyCustomerDocuments(EInvoiceCase):
 
-    def test_a_vendor_bill_is_never_an_outbound_e_invoice(self):
+    def test_a_vendor_bill_is_an_e_invoice_only_under_a_self_billing_agreement(self):
+        """Since Cycle 3 a vendor bill can be e-invoiced, but ONLY as a self-billed document (389 / 261) under an
+        active agreement with that supplier (tests/test_self_billing.py); without one it is refused at the ORM."""
         bill = self.env['account.move'].create(
             {
                 'move_type': 'in_invoice',
@@ -139,7 +141,7 @@ class TestOnlyCustomerDocuments(EInvoiceCase):
         bill.action_post()
         with self.assertRaises(UserError) as caught:
             self.env['ncollection.einvoice'].create({'move_id': bill.id, 'company_id': self.company.id})
-        self.assertIn('vendor bill', str(caught.exception).lower())
+        self.assertIn('self-billing agreement', str(caught.exception).lower())
 
     def test_a_draft_document_cannot_be_prepared(self):
         with self.assertRaises(UserError):

@@ -1,0 +1,30 @@
+# Vendored subset of PINT-AE Self-Billing 1.0.4 official resources. UNMODIFIED copies.
+# release: PINT AE Self-Billing 1.0.4 (PDK 1.4.4, 2026-07-29)
+# source: https://docs.peppol.eu/poac/ae/upcoming/pint-ae-sb/resources.zip
+# source zip sha256: 7e6e58f120132dd2d2a6acf21b4a9318f0d07f2685c30ff282fae0e2a6613d15 (784521 bytes, Last-Modified Wed, 29 Jul 2026 10:33:28 GMT)
+# same subset as resources/pint_ae/1.0.4 (ICD.gc UNCL1153.gc UNCL7143.gc and the three PDFs omitted); invoice and credit-note schematron are byte-identical so each is stored once; UNCL1001-inv.gc from trn-invoice, UNCL1001-cn.gc and CreditReason.gc (only in trn-creditnote) from trn-creditnote, every other code list from trn-invoice
+# compared with Billing 1.0.4 (2026-10-29): jurisdiction rules byte-identical; the UBL rules differ ONLY in ibr-cl-01 (type codes 389/480, 261/81); code lists identical except UNCL1001-inv/-cn
+# format: sha256  path-relative-to-this-folder
+09cbd1130d6f62538ab8bb31e47166e75fedf79d5bbfe5f54ef9643345f88c6d  codelist/Aligned-TaxCategoryCodes.gc
+81e8a327083bfe95cd753bb5e2fbe5429858d4cad036aa3e2f8d2a1005c264e8  codelist/Aligned-TaxExemptionCodes.gc
+0638589a9aff5f1cb5fcb5472d52402ac1c70364d84fe5410ffff2bdcd26a020  codelist/CreditReason.gc
+5b448e9e049119196dd1ef2c8dd60dd347357130c54b047ff1168f13afb3230b  codelist/FreqBilling.gc
+3921d490c2681ea86fe210685d55fbb2c4c550564dc31c8c6d6b3c0d71224e52  codelist/GoodsType.gc
+03e3a0b4d25bd7e39072b462ac87a5c648c9031f08c05932d142c6f1bd95bd34  codelist/ISO3166.gc
+b38ec3244ffc9d85571a762a9dfc06f8c877c87d4d61c1939792fc5a1d7193a9  codelist/ISO4217.gc
+85dfecdd860c096b88f1f3b9c4998f2c425ea0db560092810c87ecaa2cc51329  codelist/ItemType.gc
+98bfc9af324312235ee0235dd39f7eb38e0ace943af2736a5458387f8eeaa0a4  codelist/MimeCode.gc
+90fca61a5a67ecdff9105172232126033497fe5fc71c4d23a8dd7fa603cae253  codelist/UNCL1001-cn.gc
+3a086b80b5ccddf370f757e8cfcb87091c9b1611fa9f29aa9dacc0d5bd9e5cd6  codelist/UNCL1001-inv.gc
+ad459cae5d541ce057e6745186e0602c54d51b85b9990f41d9fccc4aeddd940f  codelist/UNCL4461.gc
+e18eac1beb970d0f224711e236f9c4639efc75f8889bec390330df24ea4059c6  codelist/UNCL5189.gc
+fc4320ff08586a171a252a538a5f67601b088642511c42ed4b59ac4938f4fc6c  codelist/UNCL7161.gc
+07d4d8f8b327307bddd269d21574698d77873946209188da85d46c5e9cc28c2e  codelist/UNECERec20.gc
+b973e03c27ecb72ef5d2cee3aee1f6f89ac01268174d7c14720bd8fc13db8bdd  codelist/eas.gc
+23861e6a609fe7a5be3d557b1a5e05c656e90015c9c4e5ce3a0732de5106eaf2  codelist/transactiontype.gc
+3b2c5cfd5740223cbbe309a5658bd1576014f21a9903b9e7f9905aeb18774142  examples/creditnote/Self billing tax credit note.xml
+c4eb75ebaf957f4b09be5a2ba44a29f350a2f55f90fc24f43309b704e62d4e0e  examples/invoice/Self Billing.xml
+5dd815399dfd0c22bd548d27228be061c6ca460b88b63344339f82ea758663fc  schematron/PINT-UBL-validation-preprocessed.sch
+e238b45bafe65038b846a9d8173054ab315ae0a709dc65f17b5de9d38303f037  schematron/PINT-UBL-validation-preprocessed.xslt
+d0e767f246fa8e90749060a51fea5a22e03659ae83ec66aff9cfd3b932168a3e  schematron/PINT-jurisdiction-aligned-rules.sch
+da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b  schematron/PINT-jurisdiction-aligned-rules.xslt

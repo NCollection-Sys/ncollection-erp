@@ -31,6 +31,8 @@ class FakeAdapter(contract.AdapterBase):
         self.seen_nonces = set()
         self.fail_next = None  # None | 'transient' | 'rejected'
         self.calls = 0
+        self.inbox = {}  # provider document id -> InboundDocument (documents the provider received for this Person)
+        self.inbox_order = []
 
     # ---------------------------------------------------------------- outbound
     def submit(self, request):
@@ -128,3 +130,22 @@ class FakeAdapter(contract.AdapterBase):
             if event.kind not in contract.EVENT_KINDS:
                 raise contract.AdapterError(contract.ErrorCategory.PERMANENT, 'unknown-event', event.kind)
         return events
+
+    # ---------------------------------------------------------------- inbound
+    def receive(self, document_id, xml, message_id=None, **extra):
+        """Test helper: the network delivers ``xml`` to this Person's ASP."""
+        document = contract.InboundDocument(
+            asp_document_id=document_id, message_id=message_id or '%s-received' % document_id, xml=xml,
+            xml_sha256=hashlib.sha256(xml).hexdigest(), **extra)
+        self.inbox[document_id] = document
+        self.inbox_order.append(document_id)
+        return document
+
+    def fetch_inbound(self, asp_document_id):
+        if asp_document_id not in self.inbox:
+            raise contract.AdapterError(contract.ErrorCategory.PERMANENT, 'not-found', 'unknown inbound document')
+        return self.inbox[asp_document_id]
+
+    def list_inbound(self, cursor=None):
+        start = int(cursor or 0)
+        return list(self.inbox_order[start:]), str(len(self.inbox_order))

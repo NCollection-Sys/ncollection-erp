@@ -106,6 +106,17 @@ def _payment_means_list_has_nine_codes(profile):
     )
 
 
+def _self_billing_credit_rules_not_applied(profile):
+    asserts = _asserts(profile)
+    rules = ('ibr-055-ae', 'ibr-124-ae', 'ibr-151-ae', 'ibr-158-ae')
+    return all(rule in asserts and '261' not in asserts[rule] for rule in rules)
+
+
+def _ecommerce_sample_flagged_as_export(profile):
+    text = _read(profile, 'examples', 'invoice', 'Supply through e-commerce.xml')
+    return re.search(r'ProfileExecutionID[>]00000001[' + _LT + ']', text) is not None
+
+
 ARTIFACTS = (
     UpstreamArtifact(
         'greek-nu-margin-code',
@@ -227,6 +238,27 @@ ARTIFACTS = (
         "Metal scrap is a recognised reverse-charge goods type in the tax map, and a document carrying it is BLOCKED "
         "with NCOLLECTION:rcm-goods-type-not-in-release; no code is invented (OCQ-6).",
         _metal_scrap_goods_type_missing,
+    ),
+    UpstreamArtifact(
+        'self-billing-credit-rules-not-applied',
+        "Rules ibr-055-ae (preceding invoice reference), ibr-158-ae (credit-note reason), ibr-124-ae (no VAT point "
+        "date) and ibr-151-ae (not only E / O) name only 380 / 381 / 81, so they never fire for a self-billed 389 / "
+        "261, although the Self-Billing package ships the same (byte-identical) jurisdiction rules.",
+        'schematron/PINT-jurisdiction-aligned-rules.sch, asserts ibr-055-ae, ibr-124-ae, ibr-151-ae, ibr-158-ae',
+        "The engine applies the same four requirements to self-billed documents as its OWN rules "
+        "(NCOLLECTION:self-billing-ibr-055-ae etc., readiness.SELF_BILLING_EXTENDED): a self-billed tax credit note "
+        "is a Tax Credit Note (VAT Decree-Law Art 70; Guidelines V2.0 §10.3).",
+        _self_billing_credit_rules_not_applied,
+    ),
+    UpstreamArtifact(
+        'ecommerce-sample-flagged-as-export',
+        "The official sample 'Supply through e-commerce' carries transaction type 00000001, the EXPORT position "
+        "(ibr-152-ae: XXXXXXX1), not e-commerce (ibr-142-ae: XXXXXX1X); the official 'Exports' samples carry the same "
+        "code.",
+        'examples/invoice/Supply through e-commerce.xml, cbc:ProfileExecutionID',
+        "The engine follows the RULES (identity.FLAG_ORDER: e-commerce is the 7th position), not the sample; an "
+        "engine-built e-commerce document carries its deliver-to address (ibr-142-ae) and is validated as such.",
+        _ecommerce_sample_flagged_as_export,
     ),
 )
 

@@ -196,10 +196,10 @@ einvoice-e2e: ## Official PINT-AE rules end to end, no stack:  make einvoice-e2e
 	    && cd /tmp && python /sat/e2e_check.py && python /sat/test_worker.py"
 
 einvoice-validator-up: ## Start the validator beside the dev Odoo (internal network, no port; needs NC_EINVOICE_VALIDATOR_TOKEN)
-	$(COMPOSE) -f docker-compose.einvoice.yml up -d --build einvoice-validator odoo
+	$(COMPOSE) -f docker-compose.einvoice.yml up -d --build einvoice-validator einvoice-validator-sb odoo
 
 einvoice-validator-down: ## Stop the dev validator (the dev Odoo keeps running without it)
-	$(COMPOSE) -f docker-compose.einvoice.yml stop einvoice-validator
+	$(COMPOSE) -f docker-compose.einvoice.yml stop einvoice-validator einvoice-validator-sb
 
 ## ---- Tests ----
 # The local counterpart to CI's `test` job (#365). Until this target existed the

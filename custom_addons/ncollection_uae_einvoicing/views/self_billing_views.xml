@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Self-billing agreements (Guidelines V2.0 §10.3). Manager-only menu; the model is guarded at the ORM
+         (models/self_billing.py) and by ir.model.access.csv, so the menu is never the control. -->
+    <record id="view_einvoice_sb_agreement_list" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.self.billing.agreement.list</field>
+        <field name="model">ncollection.einvoice.self.billing.agreement</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="direction"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'"
+                       decoration-muted="state == 'terminated'"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_einvoice_sb_agreement_form" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.self.billing.agreement.form</field>
+        <field name="model">ncollection.einvoice.self.billing.agreement</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_activate" type="object" string="Activate" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_terminate" type="object" string="Terminate"
+                            invisible="state != 'active'"
+                            confirm="Terminate this agreement? Self-billed documents can no longer be issued under it."/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="state != 'draft'"/>
+                            <field name="partner_id" readonly="state != 'draft'"/>
+                            <field name="direction" readonly="state != 'draft'"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"/>
+                            <field name="activated_by_id" invisible="not activated_by_id"/>
+                            <field name="activated_at" invisible="not activated_at"/>
+                            <field name="terminated_by_id" invisible="not terminated_by_id"/>
+                            <field name="terminated_at" invisible="not terminated_at"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Where the signed agreement is kept, its scope..."
+                           readonly="state != 'draft'"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_einvoice_sb_agreement" model="ir.actions.act_window">
+        <field name="name">Self-billing agreements</field>
+        <field name="res_model">ncollection.einvoice.self.billing.agreement</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_einvoice_sb_agreement" name="Self-Billing Agreements" parent="menu_einvoice_configuration"
+              sequence="45" action="action_einvoice_sb_agreement"
+              groups="ncollection_uae_einvoicing.group_einvoice_manager"/>
+</odoo>

@@ -21,7 +21,12 @@ from decimal import Decimal
 
 RESOURCE_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'resources', 'pint_ae'))
 
+SB_RESOURCE_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'resources', 'pint_ae_sb'))
+
 ACTIVE_PROFILE_KEY = 'pint-ae-1.0.4'
+# PINT AE Self-Billing: the BUYER issues the document on behalf of the supplier (Guidelines V2.0 §10.3). Same data
+# model as Billing, its own CustomizationID / ProfileID, type codes and official rule set (resources/pint_ae_sb/).
+SELF_BILLING_PROFILE_KEY = 'pint-ae-sb-1.0.4'
 
 
 @dataclass(frozen=True)
@@ -48,10 +53,14 @@ class SpecProfile:
     amount_decimals: int
     emirate_codes: tuple  # ibr-128-ae
     predefined_endpoints: tuple  # (reason, endpoint id) - report-only, never exchanged via C3
+    self_billing: bool = False
+    resource_root: str = RESOURCE_ROOT
+    # the container variable naming the validator worker that holds THIS profile's official rule set
+    validator_url_env: str = 'NC_EINVOICE_VALIDATOR_URL'
 
     @property
     def resource_dir(self):
-        return os.path.join(RESOURCE_ROOT, self.pint_version)
+        return os.path.join(self.resource_root, self.pint_version)
 
     @property
     def schematron_dir(self):
@@ -96,13 +105,43 @@ PROFILES = {
             ('export', '9900000099'),  # export, receiver not registered in Peppol (XXXXXXX1)
         ),
     ),
+    'pint-ae-sb-1.0.4': SpecProfile(
+        key='pint-ae-sb-1.0.4',
+        pint_version='1.0.4',
+        release_date='2026-07-29',
+        status='Final',
+        source_url='https://docs.peppol.eu/poac/ae/upcoming/pint-ae-sb/resources.zip',
+        source_zip_sha256='7e6e58f120132dd2d2a6acf21b4a9318f0d07f2685c30ff282fae0e2a6613d15',
+        customization_id='urn:peppol:pint:selfbilling-1@ae-1',
+        profile_id='urn:peppol:bis:selfbilling',
+        participant_scheme='0235',
+        invoice_type_tax='389',
+        # 480 / 81 are in the Self-Billing code lists, but Guidelines V2.0 §10.3 allows self-billing only for VAT
+        # purposes ("there is no option for self-billing of Commercial Invoices"): the engine never emits them.
+        invoice_type_out_of_scope='480',
+        credit_type_tax='261',
+        credit_type_out_of_scope='81',
+        tax_categories=('S', 'E', 'O', 'AE', 'Z', 'N'),
+        standard_rate=Decimal('5.00'),
+        tax_slack=Decimal('0.02'),
+        max_exchange_rate_decimals=6,
+        amount_decimals=2,
+        emirate_codes=('AUH', 'DXB', 'SHJ', 'UAQ', 'FUJ', 'AJM', 'RAK'),
+        predefined_endpoints=(
+            ('not_onboarded', '9900000098'),
+            ('deemed_supply', '9900000097'),
+            ('export', '9900000099'),
+        ),
+        self_billing=True,
+        resource_root=SB_RESOURCE_ROOT,
+        validator_url_env='NC_EINVOICE_VALIDATOR_SB_URL',
+    ),
 }
 
 
 # The companion Peppol specifications of the same UAE release family. Recorded here (the only place release strings may
-# live) so documentation and future phases cite exact versions; nothing in this phase builds these documents.
-#   * Self-billing uses its own type-code lists: 389 / 480 (invoice) and 261 / 81 (credit note); same data model as
-#     Billing (docs.peppol.eu/poac/ae/upcoming/pint-ae-sb/, code lists UNCL1001-inv / UNCL1001-cn).
+# live) so documentation cites exact versions.
+#   * Self-billing is BUILT since 2026-10-29 (profile 'pint-ae-sb-1.0.4' above); this entry stays as its citation.
 #   * The UAE Tax Data Document is reported to the tax authority by the issuer's and the receiver's side; under the
 #     five-corner model that is the ASPs (Guidelines V2.0 §5.1 steps 4 and 7), never this engine (Corner 1).
 COMPANION_SPECS = {

@@ -66,4 +66,7 @@ class EInvoiceAdapter(models.AbstractModel):
             correlation_id=str(uuid_lib.uuid4()),
             seller_endpoint='%s:%s' % (einvoice.seller_endpoint_scheme, einvoice.seller_endpoint_id),
             buyer_endpoint='%s:%s' % (einvoice.buyer_endpoint_scheme, einvoice.buyer_endpoint_id),
+            customization_id=einvoice.customization_id or '',
+            profile_id=einvoice.profile_id or '',
+            self_billed=bool(einvoice.self_billing),
         )

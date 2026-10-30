@@ -83,6 +83,35 @@ class ResPartner(models.Model):
         help="The 15-digit TRN of the VAT Tax Group this person belongs to, if any. Two parties with the same Tax "
              "Group TRN are members of the same Tax Group.")
 
+    # A buyer located OUTSIDE the UAE, not subject to UAE e-invoicing, that has only a foreign tax identifier (UAE
+    # Electronic Invoicing Guidelines V2.0 §18.2.3): its identifier goes to IBT-046 with an ISO/IEC 6523 ICD scheme
+    # (IBT-046-1). The UAE TIN is NOT entered here (it is ``nc_tin``, scheme 0235). Whether the scheme is on the ICD
+    # list is checked by the e-invoicing engine against the pinned official rule (ibr-cl-10), not by master data.
+    nc_foreign_tax_id = fields.Char(
+        string='Foreign tax identifier', copy=False, tracking=True,
+        help="A buyer outside the UAE: its foreign Tax Identification Number or equivalent identifier (IBT-046). "
+             "Leave empty for a UAE party.")
+    nc_foreign_tax_scheme = fields.Char(
+        string='Foreign identifier scheme (ICD)', size=4, copy=False, tracking=True,
+        help="The ISO/IEC 6523 ICD code of the foreign identifier's scheme (IBT-046-1), 4 digits, e.g. 0088 (GLN). "
+             "Never 0235: the UAE TIN belongs in the TIN field.")
+
+    @api.constrains('nc_foreign_tax_id', 'nc_foreign_tax_scheme')
+    def _check_nc_foreign_identifier(self):
+        for partner in self:
+            ident, scheme = (partner.nc_foreign_tax_id or '').strip(), (partner.nc_foreign_tax_scheme or '').strip()
+            if bool(ident) != bool(scheme):
+                raise ValidationError(self.env._(
+                    "A foreign tax identifier needs its ICD scheme, and a scheme needs its identifier."))
+            if scheme and not (len(scheme) == 4 and scheme.isascii() and scheme.isdigit()):
+                raise ValidationError(self.env._("The ICD scheme is a 4-digit code (ISO/IEC 6523)."))
+            if scheme == '0235':
+                raise ValidationError(self.env._(
+                    "0235 is the UAE TIN scheme: enter a UAE TIN in the TIN field, not as a foreign identifier."))
+            if ident and (len(ident) > 100 or any(ch.isspace() for ch in ident) or not ident.isprintable()):
+                raise ValidationError(self.env._(
+                    "The foreign tax identifier is one printable value without spaces (at most 100 characters)."))
+
     @api.constrains('nc_trn', 'nc_tin', 'nc_vat_group_trn')
     def _check_nc_uae_identifiers(self):
         """The only thing master data refuses: a NON-EMPTY value in the wrong shape. Empty is always fine."""

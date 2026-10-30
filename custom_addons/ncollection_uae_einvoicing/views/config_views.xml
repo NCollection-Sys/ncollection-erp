@@ -59,7 +59,7 @@
                 <field name="pint_category"/>
                 <field name="exemption_code" invisible="pint_category != 'E'"/>
                 <field name="rcm_goods_type" invisible="pint_category != 'AE'"/>
-                <field name="pint_rate" invisible="pint_category != 'AE'"/>
+                <field name="pint_rate" invisible="pint_category not in ('AE', 'N')"/>
                 <field name="rc_narrative" invisible="pint_category != 'AE'"/>
             </list>
         </field>
@@ -103,6 +103,32 @@
         </field>
     </record>
 
+    <record id="view_einvoice_secret_wizard_form" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.secret.wizard.form</field>
+        <field name="model">ncollection.einvoice.secret.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Set a provider credential">
+                <group>
+                    <field name="provider_id" readonly="1"/>
+                    <field name="secret_name"/>
+                    <field name="value" password="True"/>
+                </group>
+                <p class="text-muted">The value is encrypted at once and can never be displayed again.</p>
+                <footer>
+                    <button name="action_done" type="object" string="Save" class="btn-primary"/>
+                    <button special="cancel" string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_einvoice_secret_wizard" model="ir.actions.act_window">
+        <field name="name">Set a provider credential</field>
+        <field name="res_model">ncollection.einvoice.secret.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
     <record id="view_einvoice_provider_form" model="ir.ui.view">
         <field name="name">ncollection.einvoice.provider.form</field>
         <field name="model">ncollection.einvoice.provider</field>
@@ -119,6 +145,27 @@
                         <field name="state" readonly="1"/>
                         <field name="asp_participant_id" readonly="1"/>
                     </group>
+                    <!-- credentials: status only (configured, key version, who, when); the value is write-only -->
+                    <group string="Credentials" groups="ncollection_uae_einvoicing.group_einvoice_manager">
+                        <field name="nc_secret_ids" nolabel="1" colspan="2">
+                            <list>
+                                <field name="secret_name"/>
+                                <field name="configured"/>
+                                <field name="key_version"/>
+                                <field name="set_by"/>
+                                <field name="set_at"/>
+                                <field name="rotated_by"/>
+                                <field name="rotated_at"/>
+                            </list>
+                        </field>
+                    </group>
+                    <div class="o_row" groups="ncollection_uae_einvoicing.group_einvoice_manager">
+                        <button name="%(action_einvoice_secret_wizard)d" type="action" string="Set a credential"
+                                context="{'default_provider_id': id}" class="btn-secondary"/>
+                        <button name="action_nc_rotate_keys" type="object" string="Rotate credential keys"
+                                class="btn-secondary"
+                                confirm="Re-encrypt every credential with the current key? Values are never shown."/>
+                    </div>
                 </sheet>
             </form>
         </field>

@@ -91,4 +91,40 @@
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
     </record>
+
+    <record id="rule_einvoice_submission_company" model="ir.rule">
+        <field name="name">E-invoice submission: own company</field>
+        <field name="model_id" ref="model_ncollection_einvoice_submission"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_einvoice_attempt_company" model="ir.rule">
+        <field name="name">E-invoice submission attempt: own company</field>
+        <field name="model_id" ref="model_ncollection_einvoice_submission_attempt"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_einvoice_event_company" model="ir.rule">
+        <field name="name">E-invoice provider event: own company</field>
+        <field name="model_id" ref="model_ncollection_einvoice_event"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_einvoice_inbound_company" model="ir.rule">
+        <field name="name">Inbound e-invoice: own company</field>
+        <field name="model_id" ref="model_ncollection_einvoice_inbound"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_einvoice_inbound_history_company" model="ir.rule">
+        <field name="name">Inbound e-invoice history: own company</field>
+        <field name="model_id" ref="model_ncollection_einvoice_inbound_history"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_einvoice_sb_agreement_company" model="ir.rule">
+        <field name="name">Self-billing agreement: own company</field>
+        <field name="model_id" ref="model_ncollection_einvoice_self_billing_agreement"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_einvoice_export_company" model="ir.rule">
+        <field name="name">Evidence export: own company</field>
+        <field name="model_id" ref="model_ncollection_einvoice_export"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
 </odoo>

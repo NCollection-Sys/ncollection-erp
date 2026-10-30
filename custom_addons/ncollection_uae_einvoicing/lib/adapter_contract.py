@@ -40,7 +40,7 @@ class ErrorCategory(enum.Enum):
 RETRYABLE = frozenset({ErrorCategory.TRANSIENT})
 
 SUBMISSION_STATUSES = ('accepted', 'rejected', 'failed')
-EVENT_KINDS = ('submission', 'exchange', 'fta', 'mls', 'buyer_response')
+EVENT_KINDS = ('submission', 'exchange', 'fta', 'mls', 'buyer_response', 'inbound')
 
 
 @dataclass(eq=False)  # not frozen: the interpreter writes __traceback__ / __context__ on a raised exception
@@ -71,6 +71,11 @@ class SubmissionRequest:
     correlation_id: str
     seller_endpoint: str  # '<scheme>:<id>'
     buyer_endpoint: str
+    # the PINT-AE profile (Peppol document type = root + CustomizationID). A SELF-BILLED document travels from the
+    # BUYER (this Person, the sender) to the SELLER (the receiver): the adapter must not infer direction from roles.
+    customization_id: str = ''
+    profile_id: str = ''
+    self_billed: bool = False
 
 
 @dataclass(frozen=True)
@@ -106,6 +111,22 @@ class StatusResult:
     asp_document_id: str
     correlation_id: Optional[str]
     events: tuple  # of CallbackEvent, oldest first
+
+
+@dataclass(frozen=True)
+class InboundDocument:
+    """A document the ASP RECEIVED for this Person. ``xml`` is the legal artefact itself (the engine archives it);
+    ``xml_sha256`` is the provider's digest when it gives one, checked against the bytes. An ``inbound`` callback
+    event announces one by ``asp_document_id``; the engine then calls :meth:`AdapterBase.fetch_inbound`."""
+
+    asp_document_id: str
+    message_id: str
+    xml: bytes
+    xml_sha256: Optional[str] = None
+    sender_endpoint: Optional[str] = None  # '<scheme>:<id>' as routed by the network
+    receiver_endpoint: Optional[str] = None
+    received_at: Optional[str] = None
+    correlation_id: Optional[str] = None
 
 
 def idempotency_key(einvoice_uuid, revision, xml_sha256):
@@ -160,6 +181,16 @@ class AdapterBase:
     def parse_callback(self, headers, body):
         """The events of a VERIFIED callback, as a list of :class:`CallbackEvent`. Raises :class:`AdapterError`
         (PERMANENT) for a malformed body; never any other exception."""
+        raise NotImplementedError
+
+    def fetch_inbound(self, asp_document_id):
+        """The :class:`InboundDocument` the provider holds under ``asp_document_id``. Raises :class:`AdapterError`.
+        Fetching the same id twice returns the same document (the engine dedupes on it)."""
+        raise NotImplementedError
+
+    def list_inbound(self, cursor=None):
+        """``(asp_document_ids, next_cursor)``: received documents since ``cursor`` (polling, for a provider without
+        callbacks or to catch a lost one). Raises :class:`AdapterError`."""
         raise NotImplementedError
 
     def classify_error(self, http_status=None, provider_code=None, exception=None):

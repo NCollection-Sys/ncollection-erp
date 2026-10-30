@@ -1,6 +1,7 @@
 # The official PINT-AE files are hash-pinned by MANIFEST.txt and by the validator worker. They must reach every checkout
 # byte-for-byte: no line-ending conversion (core.autocrlf), no keyword expansion.
 custom_addons/ncollection_uae_einvoicing/resources/pint_ae/** -text
+custom_addons/ncollection_uae_einvoicing/resources/pint_ae_sb/** -text
 
 # Shell scripts run inside the Linux containers through the bind mount (backup engine, release tooling, suites).
 # A Windows checkout with core.autocrlf would hand them CRLF ("set: pipefail\r: invalid option") - it broke the

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_einvoice_provider_form_acube" model="ir.ui.view">
+        <field name="name">ncollection.einvoice.provider.form.acube</field>
+        <field name="model">ncollection.einvoice.provider</field>
+        <field name="inherit_id" ref="ncollection_uae_einvoicing.view_einvoice_provider_form"/>
+        <field name="arch" type="xml">
+            <field name="adapter" position="after">
+                <field name="nc_acube_environment" invisible="adapter != 'acube'"/>
+            </field>
+        </field>
+    </record>
+</odoo>

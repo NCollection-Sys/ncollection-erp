@@ -23,12 +23,8 @@ msgstr "'%s' ليست فئة ضريبة قيمة مضافة صالحة في PINT
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__issue_deadline
-msgid ""
-"14 Business Days after the date of the business transaction (MD 243/2025 Art"
-" 6(5) as replaced by MD 197/2026), counting the configured official "
-"holidays."
-msgstr ""
-"14 يوم عمل بعد تاريخ المعاملة التجارية (القرار الوزاري 243/2025 المادة 6(5) كما استُبدلت بالقرار الوزاري 197/2026)، مع احتساب العطلات الرسمية المهيأة."
+msgid "14 Business Days after the date of the business transaction (MD 243/2025 Art 6(5) as replaced by MD 197/2026), counting the configured official holidays."
+msgstr "14 يوم عمل بعد تاريخ المعاملة التجارية (القرار الوزاري 243/2025 المادة 6(5) كما استُبدلت بالقرار الوزاري 197/2026)، مع احتساب العطلات الرسمية المهيأة."
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_move_form_nc_einvoice
@@ -42,10 +38,20 @@ msgid "A closed legal hold is final."
 msgstr "الحجز القانوني المغلق نهائي."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "A company cannot self-bill itself."
+msgstr "لا يمكن للشركة أن تفوتر نفسها ذاتياً."
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_provider_company_unique
-msgid ""
-"A company has one ASP: it sends and receives through the same provider."
+msgid "A company has one ASP: it sends and receives through the same provider."
 msgstr "للشركة مزوّد خدمة معتمد واحد: ترسل وتستقبل عبر المزوّد نفسه."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_submission_correlation_unique
+msgid "A correlation id identifies one submission."
+msgstr "يحدد معرّف الربط عملية إرسال واحدة."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -60,6 +66,11 @@ msgid "A credential's identity cannot be changed; set it again instead."
 msgstr "لا يمكن تغيير هوية بيانات الاعتماد؛ أعد ضبطها بدلاً من ذلك."
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_submission_key_unique
+msgid "A document revision is submitted once."
+msgstr "تُرسَل مراجعة المستند مرة واحدة."
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__secret_name
 msgid "A label chosen by the provider adapter, e.g. 'api_token'."
 msgstr "تسمية يحددها مهيّئ المزوّد، مثل 'api_token'."
@@ -67,8 +78,7 @@ msgstr "تسمية يحددها مهيّئ المزوّد، مثل 'api_token'."
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/retention.py:0
-msgid ""
-"A legal hold can only be closed (or its reason edited), never rescoped."
+msgid "A legal hold can only be closed (or its reason edited), never rescoped."
 msgstr "يمكن إغلاق الحجز القانوني (أو تعديل سببه) فقط، ولا يمكن تغيير نطاقه."
 
 #. module: ncollection_uae_einvoicing
@@ -80,9 +90,7 @@ msgstr "لا يمكن إغلاق الحجز القانوني قبل فتحه."
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/retention.py:0
-msgid ""
-"A legal hold is opened open and the system records who opened it; close it "
-"afterwards."
+msgid "A legal hold is opened open and the system records who opened it; close it afterwards."
 msgstr "يُفتح الحجز القانوني مفتوحاً ويسجّل النظام من فتحه؛ أغلقه لاحقاً."
 
 #. module: ncollection_uae_einvoicing
@@ -99,17 +107,45 @@ msgstr "يظهر البند مرة واحدة فقط في كل فاتورة إل
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
-msgid ""
-"A reverse-charge tax needs its goods type and the rate shown on the line."
+msgid "A margin-scheme tax is booked at 0% and needs the rate shown on the line."
+msgstr "تُسجَّل ضريبة نظام الهامش بنسبة 0% وتحتاج إلى النسبة الظاهرة على البند."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_event_message_unique
+msgid "A provider event is recorded once."
+msgstr "يُسجَّل حدث المزوّد مرة واحدة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_inbound_asp_document_unique
+msgid "A received document is recorded once."
+msgstr "يُسجَّل المستند المستلم مرة واحدة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_account_move_nc_inbound_unique
+msgid "A received e-invoice has one vendor bill."
+msgstr "للفاتورة الإلكترونية المستلمة فاتورة مورّد واحدة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_inbound_message_unique
+msgid "A received message is recorded once."
+msgstr "تُسجَّل الرسالة المستلمة مرة واحدة."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/config.py:0
+msgid "A reverse-charge tax needs its goods type and the rate shown on the line."
 msgstr "ضريبة الاحتساب العكسي تتطلب نوع السلع والنسبة الظاهرة على البند."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__confirmed
-msgid ""
-"A rule only counts once someone has checked it against the primary text. "
-"Unconfirmed rows never make a record purgeable."
-msgstr ""
-"لا تُعتمد القاعدة إلا بعد مطابقتها مع النص الأصلي. الصفوف غير المؤكدة لا تجعل أي سجل قابلاً للإتلاف أبداً."
+msgid "A rule only counts once someone has checked it against the primary text. Unconfirmed rows never make a record purgeable."
+msgstr "لا تُعتمد القاعدة إلا بعد مطابقتها مع النص الأصلي. الصفوف غير المؤكدة لا تجعل أي سجل قابلاً للإتلاف أبداً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "A self-billing agreement is made with the supplier company itself."
+msgstr "تُبرم اتفاقية الفوترة الذاتية مع شركة المورّد نفسها."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -121,8 +157,13 @@ msgstr "الفاتورة الإلكترونية المُرسلة مقفلة."
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "A submitted e-invoice is locked; issue a credit note or a new invoice."
-msgstr ""
-"الفاتورة الإلكترونية المُرسلة مقفلة؛ أصدر إشعاراً دائناً أو فاتورة جديدة."
+msgstr "الفاتورة الإلكترونية المُرسلة مقفلة؛ أصدر إشعاراً دائناً أو فاتورة جديدة."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "A vendor bill is e-invoiced only as a self-billed document, and there is no active self-billing agreement with %s. An e-invoicing manager must record the agreement first."
+msgstr "لا تُصدَر فاتورة المورّد إلكترونياً إلا كمستند فوترة ذاتية، ولا توجد اتفاقية فوترة ذاتية نشطة مع %s. يجب على مدير الفوترة الإلكترونية تسجيل الاتفاقية أولاً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__ae
@@ -145,7 +186,59 @@ msgid "ASP rejected"
 msgstr "رفضها مزوّد الخدمة"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "ASP submissions are part of the regulated archive and are never deleted."
+msgstr "عمليات الإرسال إلى مزوّد الخدمة جزء من الأرشيف النظامي ولا تُحذف أبداً."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__mls_state__accepted
+msgid "Accepted"
+msgstr "مقبولة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_submission__state__done
+msgid "Accepted by the ASP"
+msgstr "قبلها مزوّد الخدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__accepted
+msgid "Accepted by the buyer"
+msgstr "قبلها المشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__mls_state__acknowledged
+msgid "Acknowledged"
+msgstr "تم الإقرار بالاستلام"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__acknowledged
+msgid "Acknowledged by the buyer"
+msgstr "أقرّ المشتري بالاستلام"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_sb_agreement_form
+msgid "Activate"
+msgstr "تفعيل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__activated_at
+msgid "Activated At"
+msgstr "تاريخ التفعيل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__activated_by_id
+msgid "Activated By"
+msgstr "فعّلها"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_self_billing_agreement__state__active
+msgid "Active"
+msgstr "نشطة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__actor_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__actor_id
 msgid "Actor"
 msgstr "المنفّذ"
 
@@ -165,22 +258,47 @@ msgid "Advance invoices"
 msgstr "فواتير الدفعات المقدمة"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__name
+msgid "Agreement reference"
+msgstr "مرجع الاتفاقية"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__excluded_transaction__airline_ancillary
 msgid "Airline ancillary service with an EMD (MD 243 Art 4(1)(c))"
-msgstr ""
-"خدمة إضافية لشركة طيران بمستند متنوع إلكتروني (القرار الوزاري 243 المادة 4(1)(ج))"
+msgstr "خدمة إضافية لشركة طيران بمستند متنوع إلكتروني (القرار الوزاري 243 المادة 4(1)(ج))"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__excluded_transaction__airline_cargo
-msgid ""
-"Airline cargo with an air waybill, first 24 months (MD 243 Art 4(1)(d))"
-msgstr ""
-"شحن جوي بموجب بوليصة شحن جوي، أول 24 شهراً (القرار الوزاري 243 المادة 4(1)(د))"
+msgid "Airline cargo with an air waybill, first 24 months (MD 243 Art 4(1)(d))"
+msgstr "شحن جوي بموجب بوليصة شحن جوي، أول 24 شهراً (القرار الوزاري 243 المادة 4(1)(د))"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__excluded_transaction__airline_passenger
 msgid "Airline passenger transport with an e-ticket (MD 243 Art 4(1)(b))"
 msgstr "نقل ركاب جوي بتذكرة إلكترونية (القرار الوزاري 243 المادة 4(1)(ب))"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "An active or terminated agreement cannot be changed; terminate it, record a new one."
+msgstr "لا يمكن تعديل اتفاقية نشطة أو منتهية؛ أنهِها وسجّل اتفاقية جديدة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_self_billing_agreement_period_check
+msgid "An agreement cannot end before it starts."
+msgstr "لا يمكن أن تنتهي الاتفاقية قبل أن تبدأ."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "An agreement is created as a draft and activated with its button."
+msgstr "تُنشأ الاتفاقية كمسودة وتُفعَّل من زرّها."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "An agreement that was active is evidence and is never deleted."
+msgstr "الاتفاقية التي كانت نشطة دليل ولا تُحذف أبداً."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -208,6 +326,18 @@ msgstr "الفاتورة الإلكترونية تتبع مستنداً محاس
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/export.py:0
+msgid "An evidence export is a record of what was produced; it never changes."
+msgstr "تصدير الأدلة سجلٌّ لما أُنتج ولا يتغير أبداً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/export.py:0
+msgid "An evidence export is part of the audit trail and is never deleted."
+msgstr "تصدير الأدلة جزء من سجل التدقيق ولا يُحذف أبداً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/config.py:0
 msgid "An exempt tax needs its exemption reason."
 msgstr "الضريبة المعفاة تتطلب سبب الإعفاء."
@@ -219,9 +349,32 @@ msgid "An invoice cannot reference itself as its advance."
 msgstr "لا يمكن للفاتورة أن تشير إلى نفسها كفاتورة دفعة مقدمة."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "Another active agreement with this supplier covers part of the same period."
+msgstr "توجد اتفاقية نشطة أخرى مع هذا المورّد تغطي جزءاً من الفترة نفسها."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_event__state__applied
+msgid "Applied"
+msgstr "مُطبّق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__applied_at
+msgid "Applied At"
+msgstr "تاريخ التطبيق"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__einvoice_ids
 msgid "Applies to"
 msgstr "ينطبق على"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__asp_document_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__asp_document_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__asp_document_id
+msgid "Asp Document"
+msgstr "مستند مزوّد الخدمة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__asp_reference
@@ -230,6 +383,8 @@ msgstr "مرجع مزوّد الخدمة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__at
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__at
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__at
 msgid "At"
 msgstr "في"
 
@@ -238,6 +393,18 @@ msgstr "في"
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__attachment_id
 msgid "Attachment"
 msgstr "المرفق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__attempt_ids
+msgid "Attempt"
+msgstr "المحاولة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__transport_attempts
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__attempt_count
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__attempt_count
+msgid "Attempt Count"
+msgstr "عدد المحاولات"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__authority
@@ -265,6 +432,11 @@ msgid "Billing Frequency"
 msgstr "دورية الفوترة"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__billing_reference
+msgid "Billing Reference"
+msgstr "مرجع الفاتورة الأصلية"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__reconciliation_state__blocked
 msgid "Blocked"
 msgstr "محظورة"
@@ -281,6 +453,7 @@ msgstr "المشتري"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_endpoint_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__buyer_endpoint
 msgid "Buyer Endpoint"
 msgstr "نقطة نهاية المشتري"
 
@@ -295,6 +468,16 @@ msgid "Buyer Endpoint Source"
 msgstr "مصدر نقطة نهاية المشتري"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__buyer_legal_id
+msgid "Buyer Legal"
+msgstr "التسجيل القانوني للمشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__buyer_name
+msgid "Buyer Name"
+msgstr "اسم المشتري"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_not_onboarded
 msgid "Buyer Not Onboarded"
 msgstr "المشتري غير مسجّل في المنظومة"
@@ -306,8 +489,19 @@ msgstr "رقم التعريف الضريبي للمشتري"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_trn
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__buyer_trn
 msgid "Buyer Trn"
 msgstr "رقم التسجيل الضريبي للمشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_event__source__callback
+msgid "Callback"
+msgstr "إشعار رجعي"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_secret_wizard_form
+msgid "Cancel"
+msgstr "إلغاء"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__ciphertext
@@ -327,17 +521,29 @@ msgstr "تاريخ الإغلاق"
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__company_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__company_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__company_id
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_config_form
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_search
 msgid "Company"
 msgstr "الشركة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__conditionally_accepted
+msgid "Conditionally accepted"
+msgstr "مقبولة بشروط"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.ui.menu,name:ncollection_uae_einvoicing.menu_einvoice_configuration
@@ -356,16 +562,54 @@ msgid "Confirmed"
 msgstr "مؤكَّدة"
 
 #. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid ""
+"Correct the master data (the supplier's identifiers, the tax mapping or the currency), then\n"
+"                        process the document again. Nothing is guessed."
+msgstr "صحّح البيانات الأساسية (معرّفات المورّد أو ربط الضرائب أو العملة) ثم عالج المستند مجدداً. لا يُفترض أي شيء."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__correlation_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__correlation_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__correlation_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__correlation_id
+msgid "Correlation"
+msgstr "معرّف الربط"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__partner_id
+msgid "Counterparty"
+msgstr "الطرف المقابل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.ui.menu,name:ncollection_uae_einvoicing.menu_einvoice_export_create
+msgid "Create Evidence Package"
+msgstr "إنشاء حزمة الأدلة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.actions.server,name:ncollection_uae_einvoicing.action_einvoice_export_create
+msgid "Create evidence package"
+msgstr "إنشاء حزمة الأدلة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__create_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__create_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__create_uid
 msgid "Created by"
@@ -374,18 +618,38 @@ msgstr "أنشئ بواسطة"
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__create_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__create_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__create_date
 msgid "Created on"
 msgstr "أنشئ في"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "Credential key rotation"
+msgstr "تدوير مفاتيح بيانات الاعتماد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__nc_secret_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_provider_form
+msgid "Credentials"
+msgstr "بيانات الاعتماد"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_provider__state__verified
@@ -399,8 +663,25 @@ msgstr "سبب الإشعار الدائن"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__document_kind__credit_note
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__document_kind__credit_note
 msgid "Credit note"
 msgstr "إشعار دائن"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__currency_code
+msgid "Currency Code"
+msgstr "رمز العملة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__current_submission_id
+msgid "Current Submission"
+msgstr "الإرسال الحالي"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "Current key version %(current)s: %(rotated)s re-encrypted, %(already)s already current, %(failed)s could not be re-encrypted and were left unchanged."
+msgstr "إصدار المفتاح الحالي %(current)s: أُعيد تشفير %(rotated)s، و%(already)s محدّثة أصلاً، وتعذّر إعادة تشفير %(failed)s فتُركت دون تغيير."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__customization_id
@@ -429,12 +710,8 @@ msgstr "المواعيد النهائية"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__excluded_transaction
-msgid ""
-"Declared by an e-invoicing manager and verified by the engine as far as the "
-"data allows. A declaration the engine cannot accept is reported and the "
-"document stays in scope."
-msgstr ""
-"يصرّح بها مدير الفوترة الإلكترونية ويتحقق منها المحرك بقدر ما تسمح البيانات. التصريح الذي لا يمكن للمحرك قبوله يُبلَّغ عنه ويبقى المستند ضمن النطاق."
+msgid "Declared by an e-invoicing manager and verified by the engine as far as the data allows. A declaration the engine cannot accept is reported and the document stays in scope."
+msgstr "يصرّح بها مدير الفوترة الإلكترونية ويتحقق منها المحرك بقدر ما تسمح البيانات. التصريح الذي لا يمكن للمحرك قبوله يُبلَّغ عنه ويبقى المستند ضمن النطاق."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__excluded_transaction
@@ -453,6 +730,7 @@ msgstr "تم التسليم"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__detail
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__detail
 msgid "Detail"
 msgstr "التفاصيل"
 
@@ -463,6 +741,7 @@ msgstr "البُعد"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__direction
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__direction
 msgid "Direction"
 msgstr "الاتجاه"
 
@@ -472,14 +751,22 @@ msgstr "الاتجاه"
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_adapter__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__display_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__display_name
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__display_name
 msgid "Display Name"
@@ -487,11 +774,13 @@ msgstr "الاسم المعروض"
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
 msgid "Document"
 msgstr "المستند"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__document_kind
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__document_kind
 msgid "Document Kind"
 msgstr "نوع المستند"
 
@@ -511,11 +800,52 @@ msgid "Document kind"
 msgstr "نوع المستند"
 
 #. module: ncollection_uae_einvoicing
+#: model_terms:ir.actions.act_window,help:ncollection_uae_einvoicing.action_einvoice_inbound
+msgid "Documents your ASP receives for you appear here and become DRAFT vendor bills."
+msgstr "تظهر هنا المستندات التي يستلمها مزوّد الخدمة نيابةً عنك وتتحول إلى فواتير مورّدين بحالة مسودة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__domain_key
+msgid "Domain Key"
+msgstr "مفتاح الهوية"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__local_state__draft
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__ui_status__draft
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_self_billing_agreement__state__draft
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_search
 msgid "Draft"
 msgstr "مسودة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__bill_id
+msgid "Draft document"
+msgstr "المستند المسودة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__bill_created
+msgid "Draft vendor bill created"
+msgstr "أُنشئت فاتورة مورّد مسودة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__due_date
+msgid "Due Date"
+msgstr "تاريخ الاستحقاق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__duplicate
+msgid "Duplicate"
+msgstr "مكرر"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__duplicate_of_id
+msgid "Duplicate Of"
+msgstr "مكرر عن"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__duplicate_seen
+msgid "Duplicate Seen"
+msgstr "رُصد تكرار"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__e
@@ -535,8 +865,7 @@ msgstr "سجل الفاتورة الإلكترونية"
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"E-invoice records are part of the regulated archive and are never deleted."
+msgid "E-invoice records are part of the regulated archive and are never deleted."
 msgstr "سجلات الفواتير الإلكترونية جزء من الأرشيف النظامي ولا تُحذف أبداً."
 
 #. module: ncollection_uae_einvoicing
@@ -562,19 +891,23 @@ msgid "Effective From"
 msgstr "سارية من"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__einvoice_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__einvoice_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__einvoice_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__einvoice_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__einvoice_id
 msgid "Einvoice"
 msgstr "الفاتورة الإلكترونية"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__einvoice_count
+msgid "Einvoice Count"
+msgstr "عدد الفواتير الإلكترونية"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_line__adjustment
-msgid ""
-"Empty = an ordinary item line. A global discount or surcharge is marked "
-"here, on this document, never on the product."
-msgstr ""
-"فارغ = بند صنف عادي. يُحدَّد الخصم أو الرسم الشامل هنا في هذا المستند، وليس على المنتج أبداً."
+msgid "Empty = an ordinary item line. A global discount or surcharge is marked here, on this document, never on the product."
+msgstr "فارغ = بند صنف عادي. يُحدَّد الخصم أو الرسم الشامل هنا في هذا المستند، وليس على المنتج أبداً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__einvoice_ids
@@ -583,11 +916,13 @@ msgstr "فارغ = كل الفواتير الإلكترونية للشركة."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__retain_until
-msgid ""
-"Empty means: NOT purgeable. Computed only from a confirmed retention rule "
-"and the legal holds."
-msgstr ""
-"فارغ يعني: غير قابل للإتلاف. يُحسب فقط من قاعدة احتفاظ مؤكَّدة ومن الحجوزات القانونية."
+msgid "Empty means: NOT purgeable. Computed only from a confirmed retention rule and the legal holds."
+msgstr "فارغ يعني: غير قابل للإتلاف. يُحسب فقط من قاعدة احتفاظ مؤكَّدة ومن الحجوزات القانونية."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__date_to
+msgid "Empty: open-ended until terminated."
+msgstr "فارغ: مفتوحة المدة حتى الإنهاء."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__company_id
@@ -598,6 +933,11 @@ msgstr "فارغ: تنطبق العطلة على جميع الشركات."
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__enabled
 msgid "Enabled"
 msgstr "مفعّل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__value
+msgid "Encrypted at once; never shown again, never stored in clear."
+msgstr "تُشفَّر فوراً؛ لا تُعرض مجدداً ولا تُخزَّن بنص واضح أبداً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__base_anchor__tax_period_end
@@ -615,17 +955,50 @@ msgid "Error"
 msgstr "خطأ"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__error_category
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__error_category
+msgid "Error Category"
+msgstr "فئة الخطأ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__error_code
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__error_code
+msgid "Error Code"
+msgstr "رمز الخطأ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__transport_error
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__error_message
+msgid "Error Message"
+msgstr "رسالة الخطأ"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__event_ids
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__event
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__event
 msgid "Event"
 msgstr "الحدث"
 
 #. module: ncollection_uae_einvoicing
 #: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_manager
-msgid ""
-"Everything a user does, plus configuration: provider, credentials (write-"
-"only), tax and payment maps, retention rules and legal holds."
-msgstr ""
-"كل ما يقوم به المستخدم، إضافة إلى الإعداد: المزوّد وبيانات الاعتماد (للكتابة فقط) وخرائط الضرائب والدفع وقواعد الاحتفاظ والحجوزات القانونية."
+msgid "Everything a user does, plus configuration: provider, credentials (write-only), tax and payment maps, retention rules and legal holds."
+msgstr "كل ما يقوم به المستخدم، إضافة إلى الإعداد: المزوّد وبيانات الاعتماد (للكتابة فقط) وخرائط الضرائب والدفع وقواعد الاحتفاظ والحجوزات القانونية."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.ui.menu,name:ncollection_uae_einvoicing.menu_einvoice_export
+msgid "Evidence Exports"
+msgstr "تصدير الأدلة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.actions.act_window,name:ncollection_uae_einvoicing.action_einvoice_export
+msgid "Evidence exports"
+msgstr "تصدير الأدلة"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/export.py:0
+msgid "Evidence exports are created with 'Create evidence package' only."
+msgstr "تُنشأ عمليات تصدير الأدلة من «إنشاء حزمة الأدلة» فقط."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__reconciliation_state__exact
@@ -645,8 +1018,7 @@ msgstr "حالة التبادل"
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__excluded_transaction__financial_services
 msgid "Exempt or zero-rated financial services (MD 243 Art 4(1)(e))"
-msgstr ""
-"خدمات مالية معفاة أو خاضعة للنسبة الصفرية (القرار الوزاري 243 المادة 4(1)(هـ))"
+msgstr "خدمات مالية معفاة أو خاضعة للنسبة الصفرية (القرار الوزاري 243 المادة 4(1)(هـ))"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__exemption_code
@@ -684,6 +1056,11 @@ msgid "FTA dispute"
 msgstr "نزاع مع الهيئة الاتحادية للضرائب"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_submission__state__dead
+msgid "Failed (final)"
+msgstr "فشل (نهائي)"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__permanent_failure
 msgid "Failed (permanent)"
 msgstr "فشل (نهائي)"
@@ -692,6 +1069,11 @@ msgstr "فشل (نهائي)"
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__transient_failure
 msgid "Failed (will retry)"
 msgstr "فشل (ستُعاد المحاولة)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__file_count
+msgid "File Count"
+msgstr "عدد الملفات"
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -758,6 +1140,7 @@ msgstr "ملخص العلامات"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__from_state
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__from_state
 msgid "From State"
 msgstr "من الحالة"
 
@@ -794,6 +1177,7 @@ msgstr "العنوان"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__history_ids
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__history_ids
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
 msgid "History"
 msgstr "السجل"
@@ -804,23 +1188,42 @@ msgid "Hold Type"
 msgstr "نوع الحجز"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__http_status
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__http_status
+msgid "Http Status"
+msgstr "حالة HTTP"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_account_move__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ir_attachment__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_adapter__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__id
 msgid "ID"
 msgstr "المعرّف"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__idempotency_key
+msgid "Idempotency Key"
+msgstr "مفتاح عدم التكرار"
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
@@ -830,11 +1233,41 @@ msgstr "الهوية"
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"Illegal e-invoice transition: %(dimension)s cannot go from %(old)s to "
-"%(new)s."
-msgstr ""
-"انتقال غير مسموح للفاتورة الإلكترونية: لا يمكن أن ينتقل %(dimension)s من %(old)s إلى %(new)s."
+msgid "Illegal e-invoice transition: %(dimension)s cannot go from %(old)s to %(new)s."
+msgstr "انتقال غير مسموح للفاتورة الإلكترونية: لا يمكن أن ينتقل %(dimension)s من %(old)s إلى %(new)s."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "Illegal inbound transition: %(old)s cannot go to %(new)s."
+msgstr "انتقال وارد غير مسموح: لا يمكن الانتقال من %(old)s إلى %(new)s."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__in_process
+msgid "In process"
+msgstr "قيد المعالجة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__inbound_id
+msgid "Inbound"
+msgstr "وارد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__inbound_count
+msgid "Inbound Count"
+msgstr "عدد المستندات الواردة"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "Inbound documents are recorded by the e-invoicing engine only."
+msgstr "يسجّل محرك الفوترة الإلكترونية المستندات الواردة فقط."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "Inbound documents are written by the e-invoicing engine only."
+msgstr "لا يكتب المستندات الواردة إلا محرك الفوترة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__ui_status__invalid
@@ -843,8 +1276,14 @@ msgstr "غير صالح"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__document_kind__invoice
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__document_kind__invoice
 msgid "Invoice"
 msgstr "فاتورة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__invoice_number
+msgid "Invoice Number"
+msgstr "رقم الفاتورة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__invoice_number
@@ -857,9 +1296,19 @@ msgid "Is Overdue"
 msgstr "متأخر"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__issue_date
+msgid "Issue Date"
+msgstr "تاريخ الإصدار"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__issue_deadline
 msgid "Issue deadline"
 msgstr "الموعد النهائي للإصدار"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__direction
+msgid "Issue: this company self-bills the partner (outbound 389 / 261). Receive: the partner self-bills this company, and its documents arrive as received e-invoices that become DRAFT customer invoices."
+msgstr "إصدار: هذه الشركة تفوتر الشريك ذاتياً (صادر 389 / 261). استلام: الشريك يفوتر هذه الشركة ذاتياً، وتصل مستنداته كفواتير إلكترونية مستلمة تتحول إلى فواتير عملاء بحالة مسودة."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__journal_id
@@ -877,9 +1326,19 @@ msgid "Journal → PINT-AE payment means"
 msgstr "دفتر اليومية ← وسيلة الدفع في PINT-AE"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_event__state__ignored
+msgid "Kept, not applied"
+msgstr "محفوظ دون تطبيق"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__key_version
 msgid "Key Version"
 msgstr "إصدار المفتاح"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__kind
+msgid "Kind"
+msgstr "النوع"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__name
@@ -887,16 +1346,34 @@ msgid "Label"
 msgstr "البيان"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__last_attempt_at
+msgid "Last Attempt At"
+msgstr "آخر محاولة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__last_polled_at
+msgid "Last Polled At"
+msgstr "آخر استعلام عن الحالة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__write_uid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__write_uid
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__write_uid
 msgid "Last Updated by"
@@ -905,14 +1382,22 @@ msgstr "آخر تحديث بواسطة"
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_holiday__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_payment_map__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__write_date
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__write_date
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__write_date
 msgid "Last Updated on"
@@ -924,9 +1409,19 @@ msgid "Layer"
 msgstr "الطبقة"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__lease_until
+msgid "Lease Until"
+msgstr "محجوز حتى"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__line_ids
 msgid "Line"
 msgstr "البند"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__line_total
+msgid "Line Total"
+msgstr "إجمالي البنود"
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
@@ -950,19 +1445,40 @@ msgstr "مقفل"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__vat_issue_days
-msgid ""
-"MD 243/2025 Art 6(4): a Registrant issues within the timeline of the VAT "
-"Law. That period has not been confirmed from the VAT Decree-Law by this "
-"project (OCQ-23), so it is configuration: empty means the VAT-Law deadline "
-"is not computed. The 14-Business-Day deadline of Art 6(5) is computed "
-"regardless."
-msgstr ""
-"القرار الوزاري 243/2025 المادة 6(4): يصدر المسجّل خلال المدة المحددة في قانون ضريبة القيمة المضافة. لم يؤكد هذا المشروع تلك المدة من المرسوم بقانون (OCQ-23)، لذا فهي إعداد: الفراغ يعني عدم احتساب موعد قانون الضريبة. أما موعد 14 يوم عمل في المادة 6(5) فيُحتسب في جميع الأحوال."
+msgid "MD 243/2025 Art 6(4): a Registrant issues within the timeline of the VAT Law. That period has not been confirmed from the VAT Decree-Law by this project (OCQ-23), so it is configuration: empty means the VAT-Law deadline is not computed. The 14-Business-Day deadline of Art 6(5) is computed regardless."
+msgstr "القرار الوزاري 243/2025 المادة 6(4): يصدر المسجّل خلال المدة المحددة في قانون ضريبة القيمة المضافة. لم يؤكد هذا المشروع تلك المدة من المرسوم بقانون (OCQ-23)، لذا فهي إعداد: الفراغ يعني عدم احتساب موعد قانون الضريبة. أما موعد 14 يوم عمل في المادة 6(5) فيُحتسب في جميع الأحوال."
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__manifest_sha256
+msgid "Manifest Sha256"
+msgstr "بصمة البيان SHA-256"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__match_basis
+msgid "Match Basis"
+msgstr "أساس المطابقة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__matching
+msgid "Matching the supplier"
+msgstr "مطابقة المورّد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__message_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__message_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__message
 msgid "Message"
 msgstr "الرسالة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__mls_state
+msgid "Message level status"
+msgstr "حالة الرسالة (MLS)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__metadata_json
+msgid "Metadata Json"
+msgstr "البيانات الوصفية (JSON)"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__move_id
@@ -992,10 +1508,43 @@ msgid "Nc Einvoice Count"
 msgstr "عدد الفواتير الإلكترونية"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__nc_inbound_cursor
+msgid "Nc Inbound Cursor"
+msgstr "موضع الاستعلام عن الوارد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__nc_inbound_polled_at
+msgid "Nc Inbound Polled At"
+msgstr "آخر استعلام عن الوارد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_submission__state__attention
+msgid "Needs an administrator"
+msgstr "يحتاج إلى مسؤول"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__review
+msgid "Needs review"
+msgstr "يحتاج إلى مراجعة"
+
+#. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Network references are written only by the provider adapter."
 msgstr "مراجع الشبكة يكتبها مهيّئ المزوّد فقط."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__transport_next_attempt
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__next_attempt_at
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__next_attempt_at
+msgid "Next Attempt At"
+msgstr "موعد المحاولة التالية"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "No ASP is configured for %s."
+msgstr "لم يُضبط مزوّد خدمة لـ %s."
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.actions.act_window,help:ncollection_uae_einvoicing.action_einvoice
@@ -1005,11 +1554,8 @@ msgstr "لا توجد فاتورة إلكترونية إماراتية بعد"
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
-msgid ""
-"No e-invoice is required for this document (%(reason)s). No XML is "
-"generated."
-msgstr ""
-"لا تُطلب فاتورة إلكترونية لهذا المستند (%(reason)s). لا يُنشأ ملف XML."
+msgid "No e-invoice is required for this document (%(reason)s). No XML is generated."
+msgstr "لا تُطلب فاتورة إلكترونية لهذا المستند (%(reason)s). لا يُنشأ ملف XML."
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
@@ -1017,20 +1563,24 @@ msgid "No e-invoice is required for this document:"
 msgstr "لا تُطلب فاتورة إلكترونية لهذا المستند:"
 
 #. module: ncollection_uae_einvoicing
+#: model_terms:ir.actions.act_window,help:ncollection_uae_einvoicing.action_einvoice_inbound
+msgid "No e-invoice received yet"
+msgstr "لم تُستلم أي فاتورة إلكترونية بعد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_event__state__orphan
+msgid "No matching e-invoice"
+msgstr "لا توجد فاتورة إلكترونية مطابقة"
+
+#. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_provider_form
-msgid ""
-"No provider adapter is installed: nothing can be submitted from this "
-"workspace yet."
-msgstr ""
-"لا يوجد محوّل مزوّد خدمة مثبّت: لا يمكن إرسال أي شيء من مساحة العمل هذه بعد."
+msgid "No provider adapter is installed: nothing can be submitted from this workspace yet."
+msgstr "لا يوجد محوّل مزوّد خدمة مثبّت: لا يمكن إرسال أي شيء من مساحة العمل هذه بعد."
 
 #. module: ncollection_uae_einvoicing
 #: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_service
-msgid ""
-"Non-interactive account that runs submission and status jobs and is the only"
-" one allowed to decrypt a provider credential. Not for human users."
-msgstr ""
-"حساب غير تفاعلي ينفّذ مهام الإرسال والحالة، وهو الوحيد المسموح له بفك تشفير بيانات اعتماد المزوّد."
+msgid "Non-interactive account that runs submission and status jobs and is the only one allowed to decrypt a provider credential. Not for human users."
+msgstr "حساب غير تفاعلي ينفّذ مهام الإرسال والحالة، وهو الوحيد المسموح له بفك تشفير بيانات اعتماد المزوّد."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__fta_state__not_applicable
@@ -1057,18 +1607,24 @@ msgstr "غير مطلوبة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__ui_status
-msgid ""
-"Not required: no e-invoice obligation (see Scope). Draft: not prepared yet. "
-"Invalid: blocking findings or failed official validation. Ready: prepared "
-"(and possibly turned into XML), not yet officially validated. Validated: the"
-" official PINT-AE rules passed. Nothing has been transmitted."
-msgstr ""
-"غير مطلوبة: لا يوجد التزام بفاتورة إلكترونية (انظر النطاق). مسودة: لم تُجهَّز بعد. غير صالح: نتائج مانعة أو فشل التحقق الرسمي. جاهز: مجهّزة (وربما حُوّلت إلى XML) ولم يُتحقق منها رسمياً بعد. تم التحقق: اجتازت قواعد PINT-AE الرسمية. لم يُرسل أي شيء."
+msgid "Not required: no e-invoice obligation (see Scope). Draft: not prepared yet. Invalid: blocking findings or failed official validation. Ready: prepared (and possibly turned into XML), not yet officially validated. Validated: the official PINT-AE rules passed. Nothing has been transmitted."
+msgstr "غير مطلوبة: لا يوجد التزام بفاتورة إلكترونية (انظر النطاق). مسودة: لم تُجهَّز بعد. غير صالح: نتائج مانعة أو فشل التحقق الرسمي. جاهز: مجهّزة (وربما حُوّلت إلى XML) ولم يُتحقق منها رسمياً بعد. تم التحقق: اجتازت قواعد PINT-AE الرسمية. لم يُرسل أي شيء."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__not_submitted
 msgid "Not submitted"
 msgstr "غير مُرسلة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__note
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__note
+msgid "Note"
+msgstr "ملاحظة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__number
+msgid "Number"
+msgstr "الرقم"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__o
@@ -1077,11 +1633,13 @@ msgstr "O — غير خاضعة لضريبة القيمة المضافة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__rule
-msgid ""
-"OFFICIAL:<id> is a rule of the pinned PINT-AE Schematron; NCOLLECTION:<name>"
-" is ours."
-msgstr ""
-"OFFICIAL:<id> قاعدة من مخطط Schematron الرسمي المعتمد لـ PINT-AE؛ أما NCOLLECTION:<name> فهي قاعدة خاصة بنا."
+msgid "OFFICIAL:<id> is a rule of the pinned PINT-AE Schematron; NCOLLECTION:<name> is ours."
+msgstr "OFFICIAL:<id> قاعدة من مخطط Schematron الرسمي المعتمد لـ PINT-AE؛ أما NCOLLECTION:<name> فهي قاعدة خاصة بنا."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__occurred_at
+msgid "Occurred At"
+msgstr "وقت الحدوث"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_tax_map
@@ -1114,8 +1672,13 @@ msgstr "التحقق الرسمي غير متاح"
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/account_move.py:0
 msgid "Only a UAE e-invoicing user can open the e-invoice of a document."
-msgstr ""
-"لا يمكن فتح الفاتورة الإلكترونية لمستند إلا لمستخدم الفوترة الإلكترونية الإماراتية."
+msgstr "لا يمكن فتح الفاتورة الإلكترونية لمستند إلا لمستخدم الفوترة الإلكترونية الإماراتية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "Only a draft agreement can be activated."
+msgstr "يمكن تفعيل الاتفاقية المسودة فقط."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -1127,14 +1690,49 @@ msgstr "لا يمكن تجهيز مستند كفاتورة إلكترونية إ
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "Only a ready e-invoice can be turned into XML; prepare it first."
-msgstr ""
-"لا يمكن تحويل الفاتورة الإلكترونية إلى XML إلا إذا كانت جاهزة؛ جهّزها أولاً."
+msgstr "لا يمكن تحويل الفاتورة الإلكترونية إلى XML إلا إذا كانت جاهزة؛ جهّزها أولاً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Only a submission waiting for an administrator can be restarted."
+msgstr "يمكن إعادة تشغيل الإرسال الذي ينتظر مسؤولاً فقط."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "Only an active agreement can be terminated."
+msgstr "يمكن إنهاء الاتفاقية النشطة فقط."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Only an e-invoicing manager can declare an excluded transaction."
 msgstr "لا يمكن التصريح بمعاملة مستثناة إلا لمدير الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/export.py:0
+msgid "Only an e-invoicing manager can export the e-invoicing evidence."
+msgstr "يمكن لمدير الفوترة الإلكترونية فقط تصدير أدلة الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "Only an e-invoicing manager can manage self-billing agreements."
+msgstr "يمكن لمدير الفوترة الإلكترونية فقط إدارة اتفاقيات الفوترة الذاتية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Only an e-invoicing manager can restart a submission."
+msgstr "يمكن لمدير الفوترة الإلكترونية فقط إعادة تشغيل الإرسال."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+msgid "Only an e-invoicing manager can rotate the credential keys."
+msgstr "يمكن لمدير الفوترة الإلكترونية فقط تدوير مفاتيح بيانات الاعتماد."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -1146,8 +1744,13 @@ msgstr "لا يستطيع ضبط بيانات اعتماد المزوّد إلا
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "Only an e-invoicing manager can set the retention class or anchor."
-msgstr ""
-"لا يستطيع ضبط فئة الاحتفاظ أو تاريخ أساسه إلا مدير الفوترة الإلكترونية."
+msgstr "لا يستطيع ضبط فئة الاحتفاظ أو تاريخ أساسه إلا مدير الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "Only an e-invoicing user can reprocess a received document."
+msgstr "يمكن لمستخدم الفوترة الإلكترونية فقط إعادة معالجة مستند مستلم."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -1159,47 +1762,53 @@ msgstr "لا يمكن الإشارة إلى فواتير الدفعات المق
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/adapter.py:0
 msgid "Only an officially validated e-invoice can be submitted to an ASP."
-msgstr ""
-"لا يمكن إرسال فاتورة إلكترونية إلى مزوّد الخدمة إلا بعد التحقق الرسمي منها."
+msgstr "لا يمكن إرسال فاتورة إلكترونية إلى مزوّد الخدمة إلا بعد التحقق الرسمي منها."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Only an officially validated e-invoice can be submitted."
+msgstr "لا يُرسَل إلا فاتورة إلكترونية تم التحقق منها رسمياً."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"Only an officially validated e-invoice can leave the 'not submitted' state."
-msgstr ""
-"لا تغادر حالة 'غير مُرسلة' إلا فاتورة إلكترونية تم التحقق منها رسمياً."
+msgid "Only an officially validated e-invoice can leave the 'not submitted' state."
+msgstr "لا تغادر حالة 'غير مُرسلة' إلا فاتورة إلكترونية تم التحقق منها رسمياً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "Only an unmatched, waiting or reviewed document can be reprocessed."
+msgstr "يمكن إعادة معالجة المستند غير المطابق أو المنتظر أو الخاضع للمراجعة فقط."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"Only customer invoices and customer credit notes can be e-invoiced. A vendor"
-" bill is a received document, not an outbound e-invoice."
-msgstr ""
-"لا يمكن إصدار فاتورة إلكترونية إلا لفواتير العملاء وإشعاراتهم الدائنة. فاتورة المورّد مستند مستلم وليست مستنداً صادراً."
+msgid "Only invoices, credit notes and self-billed vendor bills can be e-invoiced."
+msgstr "يمكن إصدار فواتير إلكترونية للفواتير والإشعارات الدائنة وفواتير المورّدين ذاتية الفوترة فقط."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"Only the document toggle (allowance or charge) of a line can be changed."
+msgid "Only the document toggle (allowance or charge) of a line can be changed."
 msgstr "يمكن تغيير خيار المستند فقط (خصم أو رسم) لبند الفاتورة."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
 msgid "Only the e-invoicing service account can use a provider credential."
-msgstr ""
-"لا يستطيع استخدام بيانات اعتماد المزوّد إلا حساب خدمة الفوترة الإلكترونية."
+msgstr "لا يستطيع استخدام بيانات اعتماد المزوّد إلا حساب خدمة الفوترة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.actions.act_window,help:ncollection_uae_einvoicing.action_einvoice
-msgid ""
-"Open a posted customer invoice or credit note and use its E-invoice button "
-"to prepare one."
-msgstr ""
-"افتح فاتورة عميل أو إشعاراً دائناً مرحّلاً واستخدم زر الفاتورة الإلكترونية لتجهيزها."
+msgid "Open a posted customer invoice or credit note and use its E-invoice button to prepare one."
+msgstr "افتح فاتورة عميل أو إشعاراً دائناً مرحّلاً واستخدم زر الفاتورة الإلكترونية لتجهيزها."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid "Open draft bill"
+msgstr "فتح الفاتورة المسودة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__opened_by
@@ -1213,8 +1822,7 @@ msgstr "تاريخ الفتح"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_line__reason_code
-msgid ""
-"Optional official allowance (UNCL5189) / charge (UNCL7161) reason code."
+msgid "Optional official allowance (UNCL5189) / charge (UNCL7161) reason code."
 msgstr "رمز سبب رسمي اختياري للخصم (UNCL5189) أو للرسم (UNCL7161)."
 
 #. module: ncollection_uae_einvoicing
@@ -1229,9 +1837,19 @@ msgid "Other legal hold"
 msgstr "حجز قانوني آخر"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_self_billing_agreement__direction__receive
+msgid "Our customer issues our documents (we are the supplier)"
+msgstr "عميلنا يُصدر مستنداتنا (نحن المورّد)"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__direction__outbound
 msgid "Outbound"
 msgstr "صادرة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__outcome
+msgid "Outcome"
+msgstr "النتيجة"
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_search
@@ -1248,6 +1866,21 @@ msgstr "يتجاوز خريطة وسائل الدفع لهذا المستند (�
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__spec_version
 msgid "PINT-AE release"
 msgstr "إصدار PINT-AE"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__attachment_id
+msgid "Package"
+msgstr "الحزمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__package_sha256
+msgid "Package Sha256"
+msgstr "بصمة الحزمة SHA-256"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__paid
+msgid "Paid"
+msgstr "مدفوعة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__asp_participant_id
@@ -1267,8 +1900,14 @@ msgstr "معرّف المشارك وحالة بيانات الاعتماد يك�
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__company_partner_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__partner_id
 msgid "Partner"
 msgstr "الشريك"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__payable
+msgid "Payable"
+msgstr "المبلغ المستحق"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__default_bank_account_id
@@ -1279,6 +1918,11 @@ msgstr "الحساب البنكي للمستفيد"
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__payload_json
 msgid "Payload Json"
 msgstr "حمولة JSON"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__payload_sha256
+msgid "Payload Sha256"
+msgstr "بصمة المحتوى SHA-256"
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_config_form
@@ -1314,6 +1958,7 @@ msgstr "ربط وسائل الدفع"
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__exchange_state__pending
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__fta_state__pending
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__mls_state__pending
 msgid "Pending"
 msgstr "قيد الانتظار"
 
@@ -1344,17 +1989,18 @@ msgstr "تجهيز مرة أخرى"
 
 #. module: ncollection_uae_einvoicing
 #: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_user
-msgid ""
-"Prepares, checks and validates UAE e-invoices of the companies the user may "
-"access. Reads accounting documents (read only). Writes only the per-document"
-" PINT data; state, identity and the archive are the engine's."
-msgstr ""
-"يجهّز الفواتير الإلكترونية الإماراتية ويفحصها ويتحقق منها للشركات المسموح للمستخدم بالوصول إليها. يقرأ المستندات المحاسبية (للقراءة فقط). يكتب بيانات PINT الخاصة بالمستند فقط؛ أما الحالة والهوية والأرشيف فهي من اختصاص المحرك."
+msgid "Prepares, checks and validates UAE e-invoices of the companies the user may access. Reads accounting documents (read only). Writes only the per-document PINT data; state, identity and the archive are the engine's."
+msgstr "يجهّز الفواتير الإلكترونية الإماراتية ويفحصها ويتحقق منها للشركات المسموح للمستخدم بالوصول إليها. يقرأ المستندات المحاسبية (للقراءة فقط). يكتب بيانات PINT الخاصة بالمستند فقط؛ أما الحالة والهوية والأرشيف فهي من اختصاص المحرك."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__principal_id
 msgid "Principal"
 msgstr "الأصل"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid "Process again"
+msgstr "معالجة مجدداً"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__profile_id
@@ -1367,19 +2013,42 @@ msgid "Provided by an ncollection_uae_einvoicing_<asp> module."
 msgstr "يوفّره موديول ncollection_uae_einvoicing_<asp>."
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__provider_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__provider_id
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__provider_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__provider_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__provider_id
 msgid "Provider"
 msgstr "المزوّد"
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Provider events are part of the regulated archive and are never deleted."
+msgstr "أحداث المزوّد جزء من الأرشيف النظامي ولا تُحذف أبداً."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Provider events are recorded by the e-invoicing engine only."
+msgstr "يسجّل محرك الفوترة الإلكترونية أحداث المزوّد فقط."
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__queued
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_submission__state__queued
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
 msgid "Queued"
 msgstr "في الطابور"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__pint_rate
-msgid "Rate shown for reverse charge"
-msgstr "النسبة المعروضة للاحتساب العكسي"
+msgid "Rate shown on the line"
+msgstr "النسبة الظاهرة على البند"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_provider_form
+msgid "Re-encrypt every credential with the current key? Values are never shown."
+msgstr "إعادة تشفير جميع بيانات الاعتماد بالمفتاح الحالي؟ لا تُعرض القيم أبداً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__layer__readiness
@@ -1394,6 +2063,11 @@ msgid "Ready"
 msgstr "جاهز"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__ready
+msgid "Ready for a vendor bill"
+msgstr "جاهز لفاتورة مورّد"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__retention_class__real_estate
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__retention_class__real_estate
 msgid "Real estate record"
@@ -1401,14 +2075,62 @@ msgstr "سجل عقاري"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__reason
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__reason
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__reason
 msgid "Reason"
 msgstr "السبب"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__reason_code
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__reason_code
 msgid "Reason Code"
 msgstr "رمز السبب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__received
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_list
+msgid "Received"
+msgstr "مستلم"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.ui.menu,name:ncollection_uae_einvoicing.menu_einvoice_inbound
+msgid "Received E-Invoices"
+msgstr "الفواتير الإلكترونية المستلمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__received_at
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__received_at
+msgid "Received by the ASP at"
+msgstr "تاريخ استلام مزوّد الخدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_account_bank_statement_line__nc_inbound_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_account_move__nc_inbound_id
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid "Received e-invoice"
+msgstr "الفاتورة الإلكترونية المستلمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.actions.act_window,name:ncollection_uae_einvoicing.action_einvoice_inbound
+msgid "Received e-invoices"
+msgstr "الفواتير الإلكترونية المستلمة"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "Received e-invoices are part of the regulated archive and are never deleted."
+msgstr "الفواتير الإلكترونية المستلمة جزء من الأرشيف النظامي ولا تُحذف أبداً."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__receiver_endpoint
+msgid "Receiver Endpoint"
+msgstr "العنوان الإلكتروني للمستلِم"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid "Reception"
+msgstr "الاستلام"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__layer__reconciliation
@@ -1431,9 +2153,30 @@ msgid "Reference"
 msgstr "المرجع"
 
 #. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "Refresh status"
+msgstr "تحديث الحالة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__mls_state__rejected
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__rejected
+msgid "Rejected"
+msgstr "مرفوضة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__exchange_state__rejected_by_buyer_asp
 msgid "Rejected by buyer ASP"
 msgstr "رفضها مزوّد خدمة المشتري"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_submission__state__rejected
+msgid "Rejected by the ASP"
+msgstr "رفضها مزوّد الخدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__rejected
+msgid "Rejected by the buyer"
+msgstr "رفضها المشتري"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__fta_state__report_failed
@@ -1451,6 +2194,16 @@ msgid "Reported to the tax authority only"
 msgstr "أُبلغ للهيئة الضريبية فقط"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__requested_at
+msgid "Requested At"
+msgstr "تاريخ الطلب"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_export__requested_by
+msgid "Requested By"
+msgstr "طلبه"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__rcm_goods_type
 msgid "Required for category AE."
 msgstr "مطلوب للفئة AE."
@@ -1464,6 +2217,16 @@ msgstr "مطلوب للفئة E (سبب إعفاء التوريد)."
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__response_digest
 msgid "Response Digest"
 msgstr "بصمة الاستجابة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__response_sha256
+msgid "Response Sha256"
+msgstr "بصمة الرد SHA-256"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "Restart submission"
+msgstr "إعادة تشغيل الإرسال"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__retain_until
@@ -1482,12 +2245,14 @@ msgid "Retention Class"
 msgstr "فئة الاحتفاظ"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__retry_at
+msgid "Retry At"
+msgstr "موعد إعادة المحاولة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__pint_rate
-msgid ""
-"Reverse charge is booked at 0% in Odoo but PINT-AE shows the rate on the "
-"line. Used only for category AE."
-msgstr ""
-"يُقيَّد الاحتساب العكسي بنسبة 0% في أودو بينما يعرض PINT-AE النسبة على البند. يُستخدم للفئة AE فقط."
+msgid "Reverse charge (AE) and the margin scheme (N) are booked at 0% in Odoo, but PINT-AE shows the rate on the line (for N the VAT amount stays 0, ibr-108-ae). Used only for categories AE and N."
+msgstr "يُسجَّل الاحتساب العكسي (AE) ونظام الهامش (N) بنسبة 0% في أودو، لكن PINT-AE يُظهر النسبة على البند (ويبقى مبلغ الضريبة 0 لفئة N، ibr-108-ae). يُستخدم للفئتين AE وN فقط."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__rcm_goods_type
@@ -1501,8 +2266,14 @@ msgstr "بيان الاحتساب العكسي"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__revision
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__revision
 msgid "Revision"
 msgstr "المراجعة"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_provider_form
+msgid "Rotate credential keys"
+msgstr "تدوير مفاتيح بيانات الاعتماد"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__rule
@@ -1513,6 +2284,11 @@ msgstr "القاعدة"
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__s
 msgid "S — Standard rate"
 msgstr "S — النسبة الأساسية"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_secret_wizard_form
+msgid "Save"
+msgstr "حفظ"
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
@@ -1557,8 +2333,40 @@ msgstr "مصدر النطاق"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__secret_name
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__secret_name
 msgid "Secret Name"
 msgstr "اسم السر"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__self_billed
+msgid "Self Billed"
+msgstr "فوترة ذاتية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.ui.menu,name:ncollection_uae_einvoicing.menu_einvoice_sb_agreement
+msgid "Self-Billing Agreements"
+msgstr "اتفاقيات الفوترة الذاتية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__self_billing
+msgid "Self-billed"
+msgstr "فوترة ذاتية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__self_billing_agreement_id
+msgid "Self-billing agreement"
+msgstr "اتفاقية الفوترة الذاتية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.actions.act_window,name:ncollection_uae_einvoicing.action_einvoice_sb_agreement
+msgid "Self-billing agreements"
+msgstr "اتفاقيات الفوترة الذاتية"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "Self-billing is not available for a supplier that is not registered for VAT: %s has no valid TRN (Guidelines V2.0 §10.3)."
+msgstr "الفوترة الذاتية غير متاحة لمورّد غير مسجّل في ضريبة القيمة المضافة: ليس لدى %s رقم تسجيل ضريبي صالح (الإرشادات الإصدار 2.0 §10.3)."
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
@@ -1567,6 +2375,7 @@ msgstr "البائع"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__seller_endpoint_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__seller_endpoint
 msgid "Seller Endpoint"
 msgstr "نقطة نهاية البائع"
 
@@ -1576,14 +2385,35 @@ msgid "Seller Endpoint Scheme"
 msgstr "مخطط نقطة نهاية البائع"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__seller_legal_id
+msgid "Seller Legal"
+msgstr "التسجيل القانوني للبائع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__seller_name
+msgid "Seller Name"
+msgstr "اسم البائع"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__seller_tin
 msgid "Seller Tin"
 msgstr "رقم التعريف الضريبي للبائع"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__seller_trn
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__seller_trn
 msgid "Seller Trn"
 msgstr "رقم التسجيل الضريبي للبائع"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__sender_endpoint
+msgid "Sender Endpoint"
+msgstr "العنوان الإلكتروني للمرسِل"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_submission__state__in_flight
+msgid "Sending"
+msgstr "جارٍ الإرسال"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_line__sequence
@@ -1617,6 +2447,22 @@ msgid "Set By"
 msgstr "ضُبط بواسطة"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_secret_wizard
+msgid "Set a UAE e-invoicing provider credential"
+msgstr "تعيين بيانات اعتماد مزوّد الفوترة الإلكترونية"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_provider_form
+msgid "Set a credential"
+msgstr "تعيين بيانات اعتماد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.actions.act_window,name:ncollection_uae_einvoicing.action_einvoice_secret_wizard
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_secret_wizard_form
+msgid "Set a provider credential"
+msgstr "تعيين بيانات اعتماد المزوّد"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.ui.menu,name:ncollection_uae_einvoicing.menu_einvoice_config
 msgid "Settings"
 msgstr "الإعدادات العامة"
@@ -1625,6 +2471,11 @@ msgstr "الإعدادات العامة"
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__severity
 msgid "Severity"
 msgstr "الخطورة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__source
+msgid "Source"
+msgstr "المصدر"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__source_citation
@@ -1637,7 +2488,11 @@ msgid "Spec Version"
 msgstr "إصدار المواصفة"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__state
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__state
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__state
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__state
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__state
 msgid "State"
 msgstr "الحالة"
 
@@ -1649,8 +2504,15 @@ msgstr "لا تتغير الحالات إلا عبر محرك الفوترة ا�
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__ui_status
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_event__status
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
 msgid "Status"
 msgstr "الحالة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_event__source__poll
+msgid "Status poll"
+msgstr "استعلام عن الحالة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_validation__subject
@@ -1658,9 +2520,50 @@ msgid "Subject"
 msgstr "الموضوع"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__submission_ids
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission_attempt__submission_id
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "Submission"
+msgstr "الإرسال"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__submission_state
 msgid "Submission State"
 msgstr "حالة الإرسال"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_event__source__submit
+msgid "Submission answer"
+msgstr "رد الإرسال"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Submission attempts are append-only."
+msgstr "محاولات الإرسال للإضافة فقط."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Submission attempts are written by the e-invoicing engine only."
+msgstr "لا يكتب محاولات الإرسال إلا محرك الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Submissions are created by the e-invoicing engine only."
+msgstr "لا ينشئ عمليات الإرسال إلا محرك الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "Submissions are written by the e-invoicing engine only."
+msgstr "لا يكتب عمليات الإرسال إلا محرك الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "Submit to ASP"
+msgstr "إرسال إلى مزوّد الخدمة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__submission_state__submitted
@@ -1673,12 +2576,19 @@ msgid "Submitting"
 msgstr "قيد الإرسال"
 
 #. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid "Supplier"
+msgstr "المورّد"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__unmatched
+msgid "Supplier not matched"
+msgstr "لم تتم مطابقة المورّد"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__enabled
-msgid ""
-"Switches e-invoicing on for THIS company. Installing the module never "
-"enables it: an administrator does, company by company."
-msgstr ""
-"يفعّل الفوترة الإلكترونية لهذه الشركة فقط. تثبيت الموديول لا يفعّلها أبداً: يفعّلها المسؤول شركة بشركة."
+msgid "Switches e-invoicing on for THIS company. Installing the module never enables it: an administrator does, company by company."
+msgstr "يفعّل الفوترة الإلكترونية لهذه الشركة فقط. تثبيت الموديول لا يفعّلها أبداً: يفعّلها المسؤول شركة بشركة."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__tax_id
@@ -1686,14 +2596,34 @@ msgid "Tax"
 msgstr "الضرائب"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__tax_exclusive
+msgid "Tax Exclusive"
+msgstr "الإجمالي دون الضريبة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__tax_inclusive
+msgid "Tax Inclusive"
+msgstr "الإجمالي شامل الضريبة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.ui.menu,name:ncollection_uae_einvoicing.menu_einvoice_tax_map
 msgid "Tax Mapping"
 msgstr "ربط الضرائب"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__tax_total
+msgid "Tax Total"
+msgstr "إجمالي الضريبة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_hold__hold_type__tax_audit
 msgid "Tax audit"
 msgstr "تدقيق ضريبي"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "Tax data (FTA)"
+msgstr "البيانات الضريبية (الهيئة الاتحادية للضرائب)"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.actions.act_window,name:ncollection_uae_einvoicing.action_einvoice_tax_map
@@ -1706,6 +2636,54 @@ msgstr "ربط الضرائب"
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_retention_rule__retention_class__taxable_person
 msgid "Taxable Person"
 msgstr "الشخص الخاضع للضريبة"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_sb_agreement_form
+msgid "Terminate"
+msgstr "إنهاء"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_sb_agreement_form
+msgid "Terminate this agreement? Self-billed documents can no longer be issued under it."
+msgstr "إنهاء هذه الاتفاقية؟ لن يعود بالإمكان إصدار مستندات فوترة ذاتية بموجبها."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_self_billing_agreement__state__terminated
+msgid "Terminated"
+msgstr "منتهية"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__terminated_at
+msgid "Terminated At"
+msgstr "تاريخ الإنهاء"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__terminated_by_id
+msgid "Terminated By"
+msgstr "أنهاها"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "The ASP has not acknowledged this document yet."
+msgstr "لم يُقرّ مزوّد الخدمة باستلام هذا المستند بعد."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__duplicate_seen
+msgid "The ASP recognised a repeated send of the same key."
+msgstr "تعرّف مزوّد الخدمة على إرسال مكرر بالمفتاح نفسه."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid ""
+"The ASP refused the credentials or the configuration. An e-invoicing manager must correct the\n"
+"                    provider settings and restart the submission. Nothing is retried until then."
+msgstr "رفض مزوّد الخدمة بيانات الاعتماد أو الإعدادات. يجب على مدير الفوترة الإلكترونية تصحيح إعدادات المزوّد وإعادة تشغيل الإرسال. لا تُعاد أي محاولة حتى ذلك الحين."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "The ASP rejected the document. See the findings for the reason."
+msgstr "رفض مزوّد الخدمة المستند. راجع النتائج لمعرفة السبب."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_hold__reference
@@ -1721,30 +2699,35 @@ msgstr "لا يمكن أن تكون مدة الإصدار وفق قانون ضر
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__transaction_date
 msgid "The VAT point date when the document has one, else the invoice date."
-msgstr ""
-"تاريخ استحقاق ضريبة القيمة المضافة إن وُجد في المستند، وإلا تاريخ الفاتورة."
+msgstr "تاريخ استحقاق ضريبة القيمة المضافة إن وُجد في المستند، وإلا تاريخ الفاتورة."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__default_bank_account_id
-msgid ""
-"The account written as the payee account of a credit transfer (payment means"
-" 30)."
+msgid "The account written as the payee account of a credit transfer (payment means 30)."
 msgstr "الحساب المكتوب كحساب المستفيد في التحويل الدائن (وسيلة الدفع 30)."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
-msgid ""
-"The accounting document changed since this e-invoice was prepared, or it is "
-"not ready. Prepare it again."
-msgstr ""
-"تغيّر المستند المحاسبي منذ تجهيز هذه الفاتورة الإلكترونية، أو أنها غير جاهزة. جهّزها من جديد."
+msgid "The accounting document changed since this e-invoice was prepared, or it is not ready. Prepare it again."
+msgstr "تغيّر المستند المحاسبي منذ تجهيز هذه الفاتورة الإلكترونية، أو أنها غير جاهزة. جهّزها من جديد."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
 msgid "The advance invoice %s is dated after this invoice."
 msgstr "فاتورة الدفعة المقدمة %s مؤرخة بعد هذه الفاتورة."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__self_billing_agreement_id
+msgid "The agreement with the supplier under which this company issued the document (decided at preparation)."
+msgstr "الاتفاقية مع المورّد التي أصدرت هذه الشركة المستند بموجبها (تُحدَّد عند الإعداد)."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "The agreement's state changes only through its buttons."
+msgstr "لا تتغير حالة الاتفاقية إلا من أزرارها."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -1755,11 +2738,8 @@ msgstr "لم يعد ملف XML المؤرشف يطابق بصمته."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__buyer_not_onboarded
-msgid ""
-"The buyer is known NOT to be on UAE e-invoicing. Only then is the predefined"
-" 'not onboarded' endpoint used; a missing TIN is never taken to mean this."
-msgstr ""
-"من المعلوم أن المشتري غير مسجّل في الفوترة الإلكترونية الإماراتية. عندها فقط تُستخدم نقطة النهاية المعرّفة مسبقاً لغير المسجّلين؛ ونقص رقم التعريف الضريبي لا يعني ذلك."
+msgid "The buyer is known NOT to be on UAE e-invoicing. Only then is the predefined 'not onboarded' endpoint used; a missing TIN is never taken to mean this."
+msgstr "من المعلوم أن المشتري غير مسجّل في الفوترة الإلكترونية الإماراتية. عندها فقط تُستخدم نقطة النهاية المعرّفة مسبقاً لغير المسجّلين؛ ونقص رقم التعريف الضريبي لا يعني ذلك."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -1775,21 +2755,13 @@ msgstr "بيانات الاعتماد غير مضبوطة."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__effective_date
-msgid ""
-"The date the UAE e-invoicing system became effective for this company (its "
-"mandatory implementation date under MD 244/2025 as amended by MR 66/2026, or"
-" its voluntary start). Used only by the 24-month airline air-waybill "
-"exclusion of MD 243/2025 Art 4(1)(d); never assumed when empty."
-msgstr ""
-"تاريخ سريان نظام الفوترة الإلكترونية الإماراتي على هذه الشركة (تاريخ التطبيق الإلزامي وفق القرار الوزاري 244/2025 المعدّل بالقرار 66/2026، أو بدء تطبيقها الطوعي). يُستخدم فقط لاستثناء بوليصة الشحن الجوي لمدة 24 شهراً في القرار الوزاري 243/2025 المادة 4(1)(د)؛ ولا يُفترض أبداً إذا كان فارغاً."
+msgid "The date the UAE e-invoicing system became effective for this company (its mandatory implementation date under MD 244/2025 as amended by MR 66/2026, or its voluntary start). Used only by the 24-month airline air-waybill exclusion of MD 243/2025 Art 4(1)(d); never assumed when empty."
+msgstr "تاريخ سريان نظام الفوترة الإلكترونية الإماراتي على هذه الشركة (تاريخ التطبيق الإلزامي وفق القرار الوزاري 244/2025 المعدّل بالقرار 66/2026، أو بدء تطبيقها الطوعي). يُستخدم فقط لاستثناء بوليصة الشحن الجوي لمدة 24 شهراً في القرار الوزاري 243/2025 المادة 4(1)(د)؛ ولا يُفترض أبداً إذا كان فارغاً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__retention_anchor_date
-msgid ""
-"The date the retention period runs from (e.g. the end of the Tax Period). "
-"Set by the accountant; never inferred."
-msgstr ""
-"التاريخ الذي تبدأ منه مدة الاحتفاظ (مثل نهاية الفترة الضريبية). يحدده المحاسب ولا يُستنتج أبداً."
+msgid "The date the retention period runs from (e.g. the end of the Tax Period). Set by the accountant; never inferred."
+msgstr "التاريخ الذي تبدأ منه مدة الاحتفاظ (مثل نهاية الفترة الضريبية). يحدده المحاسب ولا يُستنتج أبداً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__scope_window
@@ -1799,10 +2771,13 @@ msgstr "الفترة الزمنية التي يستند إليها القرار�
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
-msgid ""
-"The document contains a character that XML cannot carry (a control "
-"character)."
+msgid "The document contains a character that XML cannot carry (a control character)."
 msgstr "يحتوي المستند على حرف لا يمكن لملف XML حمله (حرف تحكم)."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__bill_id
+msgid "The draft vendor bill, or for a self-billed document the draft customer invoice."
+msgstr "فاتورة المورّد المسودة، أو فاتورة العميل المسودة للمستند ذاتي الفوترة."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_uuid_unique
@@ -1833,17 +2808,25 @@ msgid "The e-invoice record number must be unique."
 msgstr "يجب أن يكون رقم سجل الفاتورة الإلكترونية غير مكرر."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "The inbound history is append-only."
+msgstr "سجل المستندات الواردة للإضافة فقط."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/inbound.py:0
+msgid "The inbound history is written by the e-invoicing engine only."
+msgstr "لا يكتب سجل المستندات الواردة إلا محرك الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__is_overdue
-msgid ""
-"The issue deadline has passed (in the UAE time zone) and the e-invoice has "
-"not been submitted."
-msgstr ""
-"انقضى الموعد النهائي للإصدار (بتوقيت الإمارات) ولم تُرسل الفاتورة الإلكترونية."
+msgid "The issue deadline has passed (in the UAE time zone) and the e-invoice has not been submitted."
+msgstr "انقضى الموعد النهائي للإصدار (بتوقيت الإمارات) ولم تُرسل الفاتورة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
-msgid ""
-"The issue deadline has passed and this e-invoice has not been submitted."
+msgid "The issue deadline has passed and this e-invoice has not been submitted."
 msgstr "انقضى الموعد النهائي للإصدار ولم تُرسل هذه الفاتورة الإلكترونية."
 
 #. module: ncollection_uae_einvoicing
@@ -1861,20 +2844,21 @@ msgstr "البند يخص مستنداً محاسبياً آخر."
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"The lines of a checked, validated or submitted e-invoice cannot change; "
-"prepare it again first."
-msgstr ""
-"لا يمكن تغيير بنود فاتورة إلكترونية تم فحصها أو التحقق منها أو إرسالها؛ جهّزها من جديد أولاً."
+msgid "The lines of a checked, validated or submitted e-invoice cannot change; prepare it again first."
+msgstr "لا يمكن تغيير بنود فاتورة إلكترونية تم فحصها أو التحقق منها أو إرسالها؛ جهّزها من جديد أولاً."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
+msgid "The official validation could not be performed (%s). The e-invoice is NOT validated."
+msgstr "تعذّر إجراء التحقق الرسمي (%s). الفاتورة الإلكترونية غير مُتحقَّق منها."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_export_form
 msgid ""
-"The official validation could not be performed (%s). The e-invoice is NOT "
-"validated."
-msgstr ""
-"تعذّر إجراء التحقق الرسمي (%s). الفاتورة الإلكترونية غير مُتحقَّق منها."
+"The package is deterministic and self-verifying: MANIFEST.sha256 lists the sha256 of every\n"
+"                        file, and package.json carries the sha256 of the manifest."
+msgstr "الحزمة حتمية وتتحقق من نفسها: يسرد MANIFEST.sha256 بصمة SHA-256 لكل ملف، ويحمل package.json بصمة البيان."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -1884,11 +2868,8 @@ msgstr "يجب أن يتبع الحساب البنكي للمستفيد الشر
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__spec_version
-msgid ""
-"The pinned official release every e-invoice of this company is built and "
-"validated against. It is stored on each e-invoice."
-msgstr ""
-"الإصدار الرسمي المعتمد الذي تُبنى وتُتحقق عليه كل فاتورة إلكترونية لهذه الشركة. يُحفظ مع كل فاتورة إلكترونية."
+msgid "The pinned official release every e-invoice of this company is built and validated against. It is stored on each e-invoice."
+msgstr "الإصدار الرسمي المعتمد الذي تُبنى وتُتحقق عليه كل فاتورة إلكترونية لهذه الشركة. يُحفظ مع كل فاتورة إلكترونية."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_retention_rule__source_citation
@@ -1896,12 +2877,35 @@ msgid "The primary legal text this row is taken from."
 msgstr "النص النظامي الأصلي الذي أُخذ منه هذا الصف."
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_provider__nc_inbound_cursor
+msgid "The provider's position in its inbound list."
+msgstr "موضع المزوّد في قائمة المستندات الواردة."
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__vat_issue_deadline
-msgid ""
-"The separate VAT-Law timeline for a Registrant (MD 243/2025 Art 6(4)); "
-"computed only when the period is configured (OCQ-23)."
-msgstr ""
-"المدة المستقلة وفق قانون ضريبة القيمة المضافة للمسجّل (القرار الوزاري 243/2025 المادة 6(4))؛ تُحتسب فقط عند تهيئة المدة (OCQ-23)."
+msgid "The separate VAT-Law timeline for a Registrant (MD 243/2025 Art 6(4)); computed only when the period is configured (OCQ-23)."
+msgstr "المدة المستقلة وفق قانون ضريبة القيمة المضافة للمسجّل (القرار الوزاري 243/2025 المادة 6(4))؛ تُحتسب فقط عند تهيئة المدة (OCQ-23)."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "The submission failed after every retry. The document was not accepted by the ASP."
+msgstr "فشل الإرسال بعد جميع المحاولات. لم يقبل مزوّد الخدمة المستند."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__partner_id
+msgid "The supplier (a received invoice) or the customer (a self-billed document)."
+msgstr "المورّد (فاتورة مستلمة) أو العميل (مستند فوترة ذاتية)."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/self_billing.py:0
+msgid "The supplier belongs to another company."
+msgstr "المورّد تابع لشركة أخرى."
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__partner_id
+msgid "The supplier this company self-bills (Issue), or the customer that self-bills this company (Receive)."
+msgstr "المورّد الذي تفوتره هذه الشركة ذاتياً (إصدار)، أو العميل الذي يفوتر هذه الشركة ذاتياً (استلام)."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
@@ -1911,12 +2915,13 @@ msgstr "الضريبة تخص شركة أخرى."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice__advance_move_ids
-msgid ""
-"The tax invoices already issued for advance payments of this supply. The "
-"final invoice references them (IBT-025 / IBT-026) and covers only the "
-"remaining balance (UAE Electronic Invoicing Guidelines V2.0 App 5 §17.1)."
-msgstr ""
-"الفواتير الضريبية الصادرة سابقاً عن الدفعات المقدمة لهذا التوريد. تشير إليها الفاتورة النهائية (IBT-025 / IBT-026) وتغطي الرصيد المتبقي فقط (إرشادات الفوترة الإلكترونية في الإمارات الإصدار 2.0، الملحق 5 البند 17.1)."
+msgid "The tax invoices already issued for advance payments of this supply. The final invoice references them (IBT-025 / IBT-026) and covers only the remaining balance (UAE Electronic Invoicing Guidelines V2.0 App 5 §17.1)."
+msgstr "الفواتير الضريبية الصادرة سابقاً عن الدفعات المقدمة لهذا التوريد. تشير إليها الفاتورة النهائية (IBT-025 / IBT-026) وتغطي الرصيد المتبقي فقط (إرشادات الفوترة الإلكترونية في الإمارات الإصدار 2.0، الملحق 5 البند 17.1)."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_secret_wizard_form
+msgid "The value is encrypted at once and can never be displayed again."
+msgstr "تُشفَّر القيمة فوراً ولا يمكن عرضها مجدداً أبداً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_config_company_unique
@@ -1932,18 +2937,14 @@ msgstr "هذه الحقول يكتبها محرك الفوترة الإلكتر�
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"These values are set by the e-invoicing engine and cannot be supplied: %s."
+msgid "These values are set by the e-invoicing engine and cannot be supplied: %s."
 msgstr "هذه القيم يحددها محرك الفوترة الإلكترونية ولا يمكن إدخالها: %s."
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/account_move.py:0
-msgid ""
-"This document has been submitted as a UAE e-invoice and is final. Issue a "
-"credit note or a new invoice instead."
-msgstr ""
-"أُرسل هذا المستند كفاتورة إلكترونية إماراتية وهو نهائي. أصدر إشعاراً دائناً أو فاتورة جديدة بدلاً من ذلك."
+msgid "This document has been submitted as a UAE e-invoice and is final. Issue a credit note or a new invoice instead."
+msgstr "أُرسل هذا المستند كفاتورة إلكترونية إماراتية وهو نهائي. أصدر إشعاراً دائناً أو فاتورة جديدة بدلاً من ذلك."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_move_revision_unique
@@ -1951,22 +2952,32 @@ msgid "This document revision already has an e-invoice."
 msgstr "لهذه النسخة من المستند فاتورة إلكترونية بالفعل."
 
 #. module: ncollection_uae_einvoicing
-#. odoo-python
-#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"This e-invoice has already been checked. Prepare it again before changing "
-"its data."
-msgstr ""
-"تم فحص هذه الفاتورة الإلكترونية بالفعل. أعد تجهيزها قبل تغيير بياناتها."
+#: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_inbound_domain_unique
+msgid "This document was already received."
+msgstr "تم استلام هذا المستند مسبقاً."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid "This document was already received:"
+msgstr "تم استلام هذا المستند مسبقاً:"
 
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
-msgid ""
-"This e-invoice has been submitted and is locked: its content cannot change. "
-"Issue a credit note or a new invoice instead."
-msgstr ""
-"أُرسلت هذه الفاتورة الإلكترونية وهي مقفلة: لا يمكن تغيير محتواها. أصدر إشعاراً دائناً أو فاتورة جديدة بدلاً من ذلك."
+msgid "This e-invoice has already been checked. Prepare it again before changing its data."
+msgstr "تم فحص هذه الفاتورة الإلكترونية بالفعل. أعد تجهيزها قبل تغيير بياناتها."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "This e-invoice has been submitted and is locked: its content cannot change. Issue a credit note or a new invoice instead."
+msgstr "أُرسلت هذه الفاتورة الإلكترونية وهي مقفلة: لا يمكن تغيير محتواها. أصدر إشعاراً دائناً أو فاتورة جديدة بدلاً من ذلك."
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/transport.py:0
+msgid "This e-invoice was already submitted."
+msgstr "أُرسلت هذه الفاتورة الإلكترونية مسبقاً."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.constraint,message:ncollection_uae_einvoicing.constraint_ncollection_einvoice_holiday_date_company_unique
@@ -1989,9 +3000,21 @@ msgid "This tax is already mapped."
 msgstr "هذه الضريبة مربوطة بالفعل."
 
 #. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/einvoice.py:0
+msgid "This vendor bill was created from an e-invoice the supplier sent: it is a received document and cannot be self-billed again."
+msgstr "أُنشئت فاتورة المورّد هذه من فاتورة إلكترونية أرسلها المورّد: إنها مستند مستلم ولا يمكن فوترته ذاتياً مرة أخرى."
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_history__to_state
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound_history__to_state
 msgid "To State"
 msgstr "إلى الحالة"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_inbound_form
+msgid "Totals"
+msgstr "الإجماليات"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__transaction_type_code
@@ -2004,7 +3027,14 @@ msgid "Transaction type (BTAE-02)"
 msgstr "نوع المعاملة (BTAE-02)"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__transport_state
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form_transport
+msgid "Transport"
+msgstr "النقل"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__type_code
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__type_code
 msgid "Type Code"
 msgstr "رمز النوع"
 
@@ -2022,6 +3052,16 @@ msgid "UAE e-invoice"
 msgstr "فاتورة إلكترونية إماراتية"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_submission
+msgid "UAE e-invoice ASP submission"
+msgstr "إرسال الفاتورة الإلكترونية إلى مزوّد الخدمة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_submission_attempt
+msgid "UAE e-invoice ASP submission attempt (append-only)"
+msgstr "محاولة إرسال الفاتورة الإلكترونية (إضافة فقط)"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_validation
 msgid "UAE e-invoice finding"
 msgstr "ملاحظة على فاتورة إلكترونية إماراتية"
@@ -2035,6 +3075,11 @@ msgstr "حجز قانوني على فاتورة إلكترونية إمارات�
 #: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_line
 msgid "UAE e-invoice line (per-document toggle)"
 msgstr "بند فاتورة إلكترونية إماراتية (خيار على مستوى المستند)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_event
+msgid "UAE e-invoice provider event"
+msgstr "حدث مزوّد الفوترة الإلكترونية"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_retention_rule
@@ -2066,6 +3111,11 @@ msgid "UAE e-invoicing configuration (per company)"
 msgstr "إعداد الفوترة الإلكترونية الإماراتية (لكل شركة)"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_export
+msgid "UAE e-invoicing evidence export (append-only)"
+msgstr "تصدير أدلة الفوترة الإلكترونية (إضافة فقط)"
+
+#. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
 msgid "UAE e-invoicing is not enabled for %s."
@@ -2085,8 +3135,17 @@ msgstr "مزوّد الفوترة الإلكترونية الإماراتية (�
 #. module: ncollection_uae_einvoicing
 #: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_secret
 msgid "UAE e-invoicing provider credential (encrypted, write-only)"
-msgstr ""
-"بيانات اعتماد مزوّد الفوترة الإلكترونية الإماراتية (مشفّرة، للكتابة فقط)"
+msgstr "بيانات اعتماد مزوّد الفوترة الإلكترونية الإماراتية (مشفّرة، للكتابة فقط)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.actions.server,name:ncollection_uae_einvoicing.cron_einvoice_inbound_ir_actions_server
+msgid "UAE e-invoicing: enqueue inbound work"
+msgstr "الفوترة الإلكترونية (الإمارات): جدولة أعمال المستندات الواردة"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.actions.server,name:ncollection_uae_einvoicing.cron_einvoice_transport_ir_actions_server
+msgid "UAE e-invoicing: enqueue transport work"
+msgstr "الفوترة الإلكترونية (الإمارات): جدولة أعمال النقل"
 
 #. module: ncollection_uae_einvoicing
 #: model:res.groups,name:ncollection_uae_einvoicing.group_einvoice_manager
@@ -2104,14 +3163,35 @@ msgid "UAE e-invoicing: user"
 msgstr "الفوترة الإلكترونية الإماراتية: مستخدم"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_inbound
+msgid "UAE inbound e-invoice"
+msgstr "فاتورة إلكترونية واردة (الإمارات)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_inbound_history
+msgid "UAE inbound e-invoice history (append-only)"
+msgstr "سجل الفاتورة الإلكترونية الواردة (إضافة فقط)"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_holiday
 msgid "UAE official holiday (e-invoicing business days)"
 msgstr "عطلة رسمية إماراتية (أيام عمل الفوترة الإلكترونية)"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model,name:ncollection_uae_einvoicing.model_ncollection_einvoice_self_billing_agreement
+msgid "UAE self-billing agreement"
+msgstr "اتفاقية الفوترة الذاتية (الإمارات)"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__uuid
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__document_uuid
 msgid "UUID"
 msgstr "المعرّف الفريد UUID"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__under_query
+msgid "Under query"
+msgstr "قيد الاستفسار"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__business_state__unknown
@@ -2126,12 +3206,8 @@ msgstr "البحث في حقل التأخر غير مدعوم بهذه الصي�
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__default_payment_means_code
-msgid ""
-"Used only when neither the document nor a payment-method map says otherwise."
-" There is no built-in default: an e-invoice with no payment means configured"
-" is blocked, not guessed."
-msgstr ""
-"يُستخدم فقط عندما لا يحدد المستند ولا خريطة وسائل الدفع غير ذلك. لا توجد قيمة افتراضية مدمجة: الفاتورة الإلكترونية دون وسيلة دفع محددة غير جاهزة."
+msgid "Used only when neither the document nor a payment-method map says otherwise. There is no built-in default: an e-invoice with no payment means configured is blocked, not guessed."
+msgstr "يُستخدم فقط عندما لا يحدد المستند ولا خريطة وسائل الدفع غير ذلك. لا توجد قيمة افتراضية مدمجة: الفاتورة الإلكترونية دون وسيلة دفع محددة غير جاهزة."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__vat_issue_deadline
@@ -2142,6 +3218,16 @@ msgstr "موعد قانون ضريبة القيمة المضافة"
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__vat_issue_days
 msgid "VAT Law issuance period (days)"
 msgstr "مدة الإصدار وفق قانون ضريبة القيمة المضافة (أيام)"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__date_from
+msgid "Valid from"
+msgstr "سارية من"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_self_billing_agreement__date_to
+msgid "Valid until"
+msgstr "سارية حتى"
 
 #. module: ncollection_uae_einvoicing
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
@@ -2156,15 +3242,26 @@ msgid "Validated"
 msgstr "تم التحقق"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__validating
+msgid "Validating"
+msgstr "جارٍ التحقق"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__validation_ids
 msgid "Validation"
 msgstr "التحقق"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__local_state__validation_failed
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_inbound__state__validation_failed
 #: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_search
 msgid "Validation failed"
 msgstr "فشل التحقق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret_wizard__value
+msgid "Value"
+msgstr "القيمة"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__vat_point_date
@@ -2177,28 +3274,40 @@ msgid "Voluntary disclosure"
 msgstr "إفصاح طوعي"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_event__state__pending
+msgid "Waiting for an earlier event"
+msgstr "بانتظار حدث سابق"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_submission__state__retry_wait
+msgid "Waiting to retry"
+msgstr "بانتظار إعادة المحاولة"
+
+#. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_validation__severity__warning
 msgid "Warning"
 msgstr "تحذير"
 
 #. module: ncollection_uae_einvoicing
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_self_billing_agreement__direction__issue
+msgid "We issue our supplier's documents (we are the buyer)"
+msgstr "نُصدر مستندات مورّدنا (نحن المشتري)"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_sb_agreement_form
+msgid "Where the signed agreement is kept, its scope..."
+msgstr "مكان حفظ الاتفاقية الموقّعة ونطاقها..."
+
+#. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
-msgid ""
-"Whether this document needs an e-invoice changed since it was prepared. "
-"Prepare it again."
-msgstr ""
-"تغيّر ما إذا كان هذا المستند يحتاج إلى فاتورة إلكترونية منذ تجهيزه. جهّزه مرة أخرى."
+msgid "Whether this document needs an e-invoice changed since it was prepared. Prepare it again."
+msgstr "تغيّر ما إذا كان هذا المستند يحتاج إلى فاتورة إلكترونية منذ تجهيزه. جهّزه مرة أخرى."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_tax_map__rc_narrative
-msgid ""
-"Why the supply is subject to the domestic reverse charge, e.g. the Cabinet "
-"Decision that applies. Required on a reverse-charge e-invoice (UAE "
-"Electronic Invoicing Guidelines V2.0 §10.5.1); written as the VAT exemption "
-"reason text (IBT-120) of the reverse-charge VAT breakdown."
-msgstr ""
-"سبب خضوع التوريد للاحتساب العكسي المحلي، مثل قرار مجلس الوزراء المنطبق. مطلوب في الفاتورة الإلكترونية الخاضعة للاحتساب العكسي (إرشادات الفوترة الإلكترونية في الإمارات الإصدار 2.0، البند 10.5.1)؛ ويُكتب كنص سبب الإعفاء (IBT-120) في تفصيل ضريبة القيمة المضافة للاحتساب العكسي."
+msgid "Why the supply is subject to the domestic reverse charge, e.g. the Cabinet Decision that applies. Required on a reverse-charge e-invoice (UAE Electronic Invoicing Guidelines V2.0 §10.5.1); written as the VAT exemption reason text (IBT-120) of the reverse-charge VAT breakdown."
+msgstr "سبب خضوع التوريد للاحتساب العكسي المحلي، مثل قرار مجلس الوزراء المنطبق. مطلوب في الفاتورة الإلكترونية الخاضعة للاحتساب العكسي (إرشادات الفوترة الإلكترونية في الإمارات الإصدار 2.0، البند 10.5.1)؛ ويُكتب كنص سبب الإعفاء (IBT-120) في تفصيل ضريبة القيمة المضافة للاحتساب العكسي."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice__reconciliation_state__within_tolerance
@@ -2207,13 +3316,22 @@ msgstr "ضمن الفارق الرسمي المسموح"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__xml_attachment_id
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__xml_attachment_id
 msgid "Xml Attachment"
 msgstr "مرفق XML"
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice__xml_sha256
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_inbound__xml_sha256
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_submission__xml_sha256
 msgid "Xml Sha256"
 msgstr "بصمة XML (SHA-256)"
+
+#. module: ncollection_uae_einvoicing
+#. odoo-python
+#: code:addons/ncollection_uae_einvoicing/models/export.py:0
+msgid "You can export only the evidence of your own companies."
+msgstr "يمكنك تصدير أدلة شركاتك فقط."
 
 #. module: ncollection_uae_einvoicing
 #: model:ir.model.fields.selection,name:ncollection_uae_einvoicing.selection__ncollection_einvoice_tax_map__pint_category__z
@@ -2226,19 +3344,11 @@ msgid "sha256 of a provider response, never the response itself."
 msgstr "بصمة SHA-256 لاستجابة المزوّد، وليس الاستجابة نفسها."
 
 #. module: ncollection_uae_einvoicing
-#: model:res.groups,comment:ncollection_uae_einvoicing.group_einvoice_user
-msgid ""
-"Prepares, checks and validates UAE e-invoices of the companies the user may "
-"access, and downloads their XML. Reads accounting documents (read only)."
-msgstr ""
-"يجهّز الفواتير الإلكترونية الإماراتية ويفحصها ويتحقق منها للشركات المسموح "
-"للمستخدم بالوصول إليها، ويحمّل ملفات XML الخاصة بها."
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__rotated_by
+msgid "Rotated By"
+msgstr "نفّذ التدوير"
 
 #. module: ncollection_uae_einvoicing
-#. odoo-python
-#: code:addons/ncollection_uae_einvoicing/models/prepare.py:0
-msgid ""
-"This revision already has archived XML. Issue the correction as a credit "
-"note or a new invoice."
-msgstr ""
-"لهذه النسخة ملف XML مؤرشف بالفعل. أصدر التصحيح كإشعار دائن أو فاتورة جديدة."
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__rotated_at
+msgid "Rotated At"
+msgstr "تاريخ التدوير"

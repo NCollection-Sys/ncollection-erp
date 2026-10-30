@@ -11,6 +11,12 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_account_localization_uae
+#. odoo-python
+#: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
+msgid "0235 is the UAE TIN scheme: enter a UAE TIN in the TIN field, not as a foreign identifier."
+msgstr "0235 هو نظام رقم التعريف الضريبي الإماراتي: أدخل الرقم الإماراتي في حقل TIN وليس كمعرّف أجنبي."
+
+#. module: ncollection_account_localization_uae
 #: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_partner_form_nc_uae_identity
 msgid "10 digits"
 msgstr "10 أرقام"
@@ -19,6 +25,18 @@ msgstr "10 أرقام"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_partner_form_nc_uae_identity
 msgid "15 digits"
 msgstr "15 رقماً"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_foreign_tax_id
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_foreign_tax_id
+msgid "A buyer outside the UAE: its foreign Tax Identification Number or equivalent identifier (IBT-046). Leave empty for a UAE party."
+msgstr "مشترٍ خارج الإمارات: رقم تعريفه الضريبي الأجنبي أو معرّف مكافئ (IBT-046). اتركه فارغاً لطرف إماراتي."
+
+#. module: ncollection_account_localization_uae
+#. odoo-python
+#: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
+msgid "A foreign tax identifier needs its ICD scheme, and a scheme needs its identifier."
+msgstr "يحتاج المعرّف الضريبي الأجنبي إلى نظام ICD الخاص به، ويحتاج النظام إلى معرّفه."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__product_template__nc_item_type__b
@@ -33,12 +51,8 @@ msgstr "منشأة أعمال"
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_einvoice_party_type
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_einvoice_party_type
-msgid ""
-"Business and Government Entity transactions are in the scope of UAE "
-"e-invoicing; a natural person who is not in business is not (UAE Electronic "
-"Invoicing Guidelines V2.0 §6.2)."
-msgstr ""
-"معاملات منشآت الأعمال والجهات الحكومية مشمولة بنطاق الفوترة الإلكترونية في الإمارات؛ أما الشخص الطبيعي الذي لا يمارس عملاً تجارياً فغير مشمول (إرشادات الفوترة الإلكترونية في الإمارات الإصدار 2.0، البند 6.2)."
+msgid "Business and Government Entity transactions are in the scope of UAE e-invoicing; a natural person who is not in business is not (UAE Electronic Invoicing Guidelines V2.0 §6.2)."
+msgstr "معاملات منشآت الأعمال والجهات الحكومية مشمولة بنطاق الفوترة الإلكترونية في الإمارات؛ أما الشخص الطبيعي الذي لا يمارس عملاً تجارياً فغير مشمول (إرشادات الفوترة الإلكترونية في الإمارات الإصدار 2.0، البند 6.2)."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__res_partner__nc_legal_reg_type__cd
@@ -116,6 +130,18 @@ msgid "FTA Readiness %"
 msgstr "نسبة الجاهزية للهيئة الاتحادية للضرائب %"
 
 #. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_foreign_tax_scheme
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_users__nc_foreign_tax_scheme
+msgid "Foreign identifier scheme (ICD)"
+msgstr "نظام المعرّف الأجنبي (ICD)"
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_foreign_tax_id
+#: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_users__nc_foreign_tax_id
+msgid "Foreign tax identifier"
+msgstr "المعرّف الضريبي الأجنبي"
+
+#. module: ncollection_account_localization_uae
 #: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__product_template__nc_item_type__g
 msgid "Goods"
 msgstr "بضائع"
@@ -136,6 +162,11 @@ msgstr "رمز النظام المنسق (HS)"
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_template__nc_hs_code
 msgid "Harmonized System goods classification (PINT-AE scheme 'HS')."
 msgstr "تصنيف السلع وفق النظام المنسّق (مخطط 'HS' في PINT-AE)."
+
+#. module: ncollection_account_localization_uae
+#: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_partner_form_nc_uae_identity
+msgid "ICD, 4 digits"
+msgstr "ICD، 4 أرقام"
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__id
@@ -210,12 +241,8 @@ msgstr "ملاحظات"
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_product__nc_item_type
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_product_template__nc_item_type
-msgid ""
-"PINT-AE item type. Goods need an HS code, services a SAC code, 'Both' needs "
-"both, when the product is invoiced on a UAE e-invoice. Leave empty if the "
-"product is never e-invoiced."
-msgstr ""
-"نوع الصنف في PINT-AE. السلع تحتاج رمز HS، والخدمات رمز SAC، و'كلاهما' يحتاج الاثنين، عند فوترة المنتج في فاتورة إلكترونية إماراتية."
+msgid "PINT-AE item type. Goods need an HS code, services a SAC code, 'Both' needs both, when the product is invoiced on a UAE e-invoice. Leave empty if the product is never e-invoiced."
+msgstr "نوع الصنف في PINT-AE. السلع تحتاج رمز HS، والخدمات رمز SAC، و'كلاهما' يحتاج الاثنين، عند فوترة المنتج في فاتورة إلكترونية إماراتية."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields.selection,name:ncollection_account_localization_uae.selection__res_partner__nc_legal_reg_type__pas
@@ -235,11 +262,8 @@ msgstr "قيد الانتظار"
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_company__fta_readiness
-msgid ""
-"Percentage of applicable UAE FTA compliance items marked done (items marked "
-"\"not applicable\" are excluded from the base)."
-msgstr ""
-"النسبة المئوية لعناصر الامتثال المطبّقة للهيئة الاتحادية للضرائب في الإمارات المُعلّمة كمكتملة (تُستثنى العناصر المُعلّمة \"غير قابل للتطبيق\" من الأساس)."
+msgid "Percentage of applicable UAE FTA compliance items marked done (items marked \"not applicable\" are excluded from the base)."
+msgstr "النسبة المئوية لعناصر الامتثال المطبّقة للهيئة الاتحادية للضرائب في الإمارات المُعلّمة كمكتملة (تُستثنى العناصر المُعلّمة \"غير قابل للتطبيق\" من الأساس)."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model,name:ncollection_account_localization_uae.model_product_template
@@ -276,9 +300,7 @@ msgstr "خدمات"
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_ncollection_fta_compliance_item__key
-msgid ""
-"Stable technical identifier for the requirement (used for idempotent "
-"seeding)."
+msgid "Stable technical identifier for the requirement (used for idempotent seeding)."
 msgstr "معرّف تقني ثابت للمتطلب (يُستخدم للتعبئة الأولية غير المكرّرة)."
 
 #. module: ncollection_account_localization_uae
@@ -295,11 +317,8 @@ msgstr "رقم التعريف الضريبي (TIN)"
 #. module: ncollection_account_localization_uae
 #. odoo-python
 #: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
-msgid ""
-"TIN / Tax Identification Number must be exactly 10 digits (no spaces or "
-"letters). Leave it empty if it is not known."
-msgstr ""
-"يجب أن يتكون رقم التعريف الضريبي (TIN) من 10 أرقام بالضبط (بدون مسافات أو حروف). اتركه فارغاً إذا لم يكن معروفاً."
+msgid "TIN / Tax Identification Number must be exactly 10 digits (no spaces or letters). Leave it empty if it is not known."
+msgstr "يجب أن يتكون رقم التعريف الضريبي (TIN) من 10 أرقام بالضبط (بدون مسافات أو حروف). اتركه فارغاً إذا لم يكن معروفاً."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_trn
@@ -310,11 +329,8 @@ msgstr "رقم التسجيل الضريبي (TRN)"
 #. module: ncollection_account_localization_uae
 #. odoo-python
 #: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
-msgid ""
-"TRN / Tax Registration Number must be exactly 15 digits (no spaces or "
-"letters). Leave it empty if it is not known."
-msgstr ""
-"يجب أن يتكون رقم التسجيل الضريبي (TRN) من 15 رقماً بالضبط (بدون مسافات أو حروف). اتركه فارغاً إذا لم يكن معروفاً."
+msgid "TRN / Tax Registration Number must be exactly 15 digits (no spaces or letters). Leave it empty if it is not known."
+msgstr "يجب أن يتكون رقم التسجيل الضريبي (TRN) من 15 رقماً بالضبط (بدون مسافات أو حروف). اتركه فارغاً إذا لم يكن معروفاً."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,field_description:ncollection_account_localization_uae.field_res_partner__nc_vat_group_trn
@@ -325,37 +341,45 @@ msgstr "رقم التسجيل الضريبي للمجموعة الضريبية"
 #. module: ncollection_account_localization_uae
 #. odoo-python
 #: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
-msgid ""
-"Tax Group TRN must be exactly 15 digits (no spaces or letters). Leave it "
-"empty if the person is not a member of a Tax Group."
-msgstr ""
-"يجب أن يتكون رقم التسجيل الضريبي للمجموعة الضريبية من 15 رقماً بالضبط (بلا مسافات أو حروف). اتركه فارغاً إذا لم يكن الشخص عضواً في مجموعة ضريبية."
+msgid "Tax Group TRN must be exactly 15 digits (no spaces or letters). Leave it empty if the person is not a member of a Tax Group."
+msgstr "يجب أن يتكون رقم التسجيل الضريبي للمجموعة الضريبية من 15 رقماً بالضبط (بلا مسافات أو حروف). اتركه فارغاً إذا لم يكن الشخص عضواً في مجموعة ضريبية."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_vat_group_trn
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_vat_group_trn
-msgid ""
-"The 15-digit TRN of the VAT Tax Group this person belongs to, if any. Two "
-"parties with the same Tax Group TRN are members of the same Tax Group."
-msgstr ""
-"رقم التسجيل الضريبي المكوّن من 15 رقماً للمجموعة الضريبية لضريبة القيمة المضافة التي ينتمي إليها هذا الشخص، إن وُجدت. الطرفان اللذان يحملان رقم المجموعة نفسه عضوان في المجموعة الضريبية نفسها."
+msgid "The 15-digit TRN of the VAT Tax Group this person belongs to, if any. Two parties with the same Tax Group TRN are members of the same Tax Group."
+msgstr "رقم التسجيل الضريبي المكوّن من 15 رقماً للمجموعة الضريبية لضريبة القيمة المضافة التي ينتمي إليها هذا الشخص، إن وُجدت. الطرفان اللذان يحملان رقم المجموعة نفسه عضوان في المجموعة الضريبية نفسها."
+
+#. module: ncollection_account_localization_uae
+#. odoo-python
+#: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
+msgid "The ICD scheme is a 4-digit code (ISO/IEC 6523)."
+msgstr "نظام ICD رمز من 4 أرقام (ISO/IEC 6523)."
+
+#. module: ncollection_account_localization_uae
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_foreign_tax_scheme
+#: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_foreign_tax_scheme
+msgid "The ISO/IEC 6523 ICD code of the foreign identifier's scheme (IBT-046-1), 4 digits, e.g. 0088 (GLN). Never 0235: the UAE TIN belongs in the TIN field."
+msgstr "رمز ICD وفق ISO/IEC 6523 لنظام المعرّف الأجنبي (IBT-046-1)، 4 أرقام، مثل 0088 (GLN). ليس 0235 أبداً: رقم التعريف الضريبي الإماراتي مكانه حقل TIN."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_authority
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_legal_reg_authority
-msgid ""
-"The authority that issued the registration. Needed for a trade licence on an"
-" e-invoice."
-msgstr ""
-"الجهة التي أصدرت التسجيل. مطلوبة عند استخدام الرخصة التجارية في الفاتورة الإلكترونية."
+msgid "The authority that issued the registration. Needed for a trade licence on an e-invoice."
+msgstr "الجهة التي أصدرت التسجيل. مطلوبة عند استخدام الرخصة التجارية في الفاتورة الإلكترونية."
+
+#. module: ncollection_account_localization_uae
+#. odoo-python
+#: code:addons/ncollection_account_localization_uae/models/res_partner.py:0
+msgid "The foreign tax identifier is one printable value without spaces (at most 100 characters)."
+msgstr "المعرّف الضريبي الأجنبي قيمة واحدة قابلة للطباعة بلا مسافات (100 حرف كحد أقصى)."
 
 #. module: ncollection_account_localization_uae
 #: model_terms:ir.actions.act_window,help:ncollection_account_localization_uae.action_fta_compliance_item
 msgid ""
 "These items are seeded automatically and updated as VAT, chart of\n"
 "               accounts and FTA-compliant invoicing are configured."
-msgstr ""
-"تُنشأ هذه البنود تلقائيًا وتُحدَّث عند إعداد ضريبة القيمة المضافة ودليل الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
+msgstr "تُنشأ هذه البنود تلقائيًا وتُحدَّث عند إعداد ضريبة القيمة المضافة ودليل الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.constraint,message:ncollection_account_localization_uae.constraint_ncollection_fta_compliance_item_unique_company_key
@@ -365,8 +389,7 @@ msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب
 #. module: ncollection_account_localization_uae
 #: model_terms:ir.actions.act_window,help:ncollection_account_localization_uae.action_fta_compliance_item
 msgid "Track this company's UAE FTA readiness."
-msgstr ""
-"تتبّع جاهزية هذه الشركة للامتثال للهيئة الاتحادية للضرائب في الإمارات."
+msgstr "تتبّع جاهزية هذه الشركة للامتثال للهيئة الاتحادية للضرائب في الإمارات."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.actions.act_window,name:ncollection_account_localization_uae.action_fta_compliance_item
@@ -384,22 +407,14 @@ msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_tin
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_tin
-msgid ""
-"UAE Tax Identification Number, 10 digits: the participant identifier used by"
-" UAE e-invoicing. Optional. Maintained explicitly: never derived from the "
-"TRN or from the Tax ID, and not synchronised between contacts."
-msgstr ""
-"رقم التعريف الضريبي الإماراتي، 10 أرقام: معرّف المشارك المستخدم في الفوترة الإلكترونية الإماراتية. اختياري. يُحدَّث صراحةً: لا يُشتق أبداً من رقم التسجيل الضريبي أو من الرقم الضريبي العام، ولا يُزامَن بين جهات الاتصال."
+msgid "UAE Tax Identification Number, 10 digits: the participant identifier used by UAE e-invoicing. Optional. Maintained explicitly: never derived from the TRN or from the Tax ID, and not synchronised between contacts."
+msgstr "رقم التعريف الضريبي الإماراتي، 10 أرقام: معرّف المشارك المستخدم في الفوترة الإلكترونية الإماراتية. اختياري. يُحدَّث صراحةً: لا يُشتق أبداً من رقم التسجيل الضريبي أو من الرقم الضريبي العام، ولا يُزامَن بين جهات الاتصال."
 
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_trn
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_trn
-msgid ""
-"UAE VAT Tax Registration Number, 15 digits. Optional. Maintained explicitly:"
-" never derived from the TIN or from the Tax ID, and not synchronised between"
-" contacts."
-msgstr ""
-"رقم التسجيل الضريبي لضريبة القيمة المضافة الإماراتية، 15 رقماً. اختياري. يُحدَّث صراحةً: لا يُشتق أبداً من رقم التعريف الضريبي أو من الرقم الضريبي العام، ولا يُزامَن بين جهات الاتصال."
+msgid "UAE VAT Tax Registration Number, 15 digits. Optional. Maintained explicitly: never derived from the TIN or from the Tax ID, and not synchronised between contacts."
+msgstr "رقم التسجيل الضريبي لضريبة القيمة المضافة الإماراتية، 15 رقماً. اختياري. يُحدَّث صراحةً: لا يُشتق أبداً من رقم التعريف الضريبي أو من الرقم الضريبي العام، ولا يُزامَن بين جهات الاتصال."
 
 #. module: ncollection_account_localization_uae
 #: model_terms:ir.ui.view,arch_db:ncollection_account_localization_uae.view_product_template_form_nc_uae_classification
@@ -409,42 +424,5 @@ msgstr "تصنيف الفوترة الإلكترونية الإماراتية"
 #. module: ncollection_account_localization_uae
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_partner__nc_legal_reg_type
 #: model:ir.model.fields,help:ncollection_account_localization_uae.field_res_users__nc_legal_reg_type
-msgid ""
-"What kind of registration the Company ID (registry number) is. The official "
-"PINT-AE list."
-msgstr ""
-"نوع التسجيل الذي يمثله معرّف الشركة (رقم السجل). القائمة الرسمية لـ PINT-AE."
-
-#. module: ncollection_account_localization_uae
-msgid "TRN registered with the FTA"
-msgstr "رقم التسجيل الضريبي (TRN) مسجّل لدى الهيئة الاتحادية للضرائب"
-
-#. module: ncollection_account_localization_uae
-msgid "VAT tax period configured"
-msgstr "تم تكوين الفترة الضريبية لضريبة القيمة المضافة"
-
-#. module: ncollection_account_localization_uae
-msgid "VAT return filing schedule set"
-msgstr "تم تحديد جدول تقديم الإقرارات الضريبية لضريبة القيمة المضافة"
-
-#. module: ncollection_account_localization_uae
-msgid "Tax invoices meet FTA format (TRN + VAT breakdown)"
-msgstr ""
-"الفواتير الضريبية مطابقة لصيغة الهيئة الاتحادية للضرائب (رقم التسجيل الضريبي"
-" + تفصيل ضريبة القيمة المضافة)"
-
-#. module: ncollection_account_localization_uae
-msgid "E-invoicing readiness (structured data / QR)"
-msgstr "الجاهزية للفوترة الإلكترونية (بيانات منظمة / رمز الاستجابة السريعة)"
-
-#. module: ncollection_account_localization_uae
-msgid ""
-"These items are seeded automatically and updated as VAT, chart of accounts "
-"and FTA-compliant invoicing are configured."
-msgstr ""
-"تتم تعبئة هذه العناصر تلقائياً وتُحدَّث عند تكوين ضريبة القيمة المضافة وشجرة"
-" الحسابات والفوترة المتوافقة مع الهيئة الاتحادية للضرائب."
-
-#. module: ncollection_account_localization_uae
-msgid "FTA compliance item: per-company"
-msgstr "عنصر الامتثال للهيئة الاتحادية للضرائب: لكل شركة"
+msgid "What kind of registration the Company ID (registry number) is. The official PINT-AE list."
+msgstr "نوع التسجيل الذي يمثله معرّف الشركة (رقم السجل). القائمة الرسمية لـ PINT-AE."

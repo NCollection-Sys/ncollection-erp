@@ -1,0 +1,60 @@
+# Arabic (ar_001) translation of ncollection_uae_einvoicing_acube.
+# NCollection ERP. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_uae_einvoicing_acube\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing_acube.selection__ncollection_einvoice_provider__adapter__acube
+msgid "A-Cube (PINT AE)"
+msgstr "A-Cube (PINT AE)"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing_acube.field_ncollection_einvoice_provider__nc_acube_environment
+msgid "A-Cube environment"
+msgstr "بيئة A-Cube"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing_acube.field_ncollection_einvoice_provider__adapter
+msgid "Adapter"
+msgstr "المحوّل"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing_acube.field_ncollection_einvoice_provider__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing_acube.field_ncollection_einvoice_provider__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing_acube.selection__ncollection_einvoice_provider__nc_acube_environment__production
+msgid "Production"
+msgstr "الإنتاج"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields,help:ncollection_uae_einvoicing_acube.field_ncollection_einvoice_provider__adapter
+msgid "Provided by an ncollection_uae_einvoicing_<asp> module."
+msgstr "يوفّره تطبيق ncollection_uae_einvoicing_<asp>."
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields.selection,name:ncollection_uae_einvoicing_acube.selection__ncollection_einvoice_provider__nc_acube_environment__sandbox
+msgid "Sandbox"
+msgstr "بيئة الاختبار"
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model.fields,help:ncollection_uae_einvoicing_acube.field_ncollection_einvoice_provider__nc_acube_environment
+msgid "Sandbox: ae-sandbox.api.acubeapi.com (test network). Production: ae.api.acubeapi.com. Credentials are issued per environment by A-Cube."
+msgstr "بيئة الاختبار: ae-sandbox.api.acubeapi.com (شبكة الاختبار). الإنتاج: ae.api.acubeapi.com. تصدر A-Cube بيانات الاعتماد لكل بيئة على حدة."
+
+#. module: ncollection_uae_einvoicing_acube
+#: model:ir.model,name:ncollection_uae_einvoicing_acube.model_ncollection_einvoice_provider
+msgid "UAE e-invoicing provider (ASP)"
+msgstr "مزوّد خدمة الفوترة الإلكترونية (الإمارات)"

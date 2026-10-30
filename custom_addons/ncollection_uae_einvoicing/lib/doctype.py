@@ -12,7 +12,10 @@ The rule (DECISION 2026-10-28, recorded as upstream finding ``exempt-only-tax-in
   rule the network validates wins, and the conflict stays open.
 * 480 / 81 may carry only E, O or Z (fatal ibr-122-ae); with the rule above 480 / 81 never carries Z.
 
-Self-billing codes (389 / 261) belong to PINT AE Self-Billing and are never produced here.
+Self-billing (the Self-Billing profile, 389 / 261): ALWAYS the tax type. Guidelines V2.0 §10.3 allows self-billing only
+for VAT purposes ("there is no option for self-billing of Commercial Invoices"), so a self-billed document made only of
+E / O lines is never turned into 480 / 81: it stays 389 / 261 and readiness refuses it
+(``NCOLLECTION:self-billing-commercial-not-allowed``).
 """
 
 TAX_RELEVANT = frozenset({'S', 'Z', 'AE', 'N'})
@@ -22,7 +25,7 @@ NON_TAX = frozenset({'E', 'O'})
 def type_code(kind, categories, profile):
     """The type code for a document of ``kind`` ('invoice' | 'credit_note') whose lines use ``categories``."""
     used = set(categories) - {None}
-    non_tax_only = bool(used) and used <= NON_TAX
+    non_tax_only = bool(used) and used <= NON_TAX and not profile.self_billing
     if kind == 'credit_note':
         return profile.credit_type_out_of_scope if non_tax_only else profile.credit_type_tax
     return profile.invoice_type_out_of_scope if non_tax_only else profile.invoice_type_tax

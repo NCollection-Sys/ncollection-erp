@@ -201,10 +201,10 @@ class EInvoiceTaxMap(models.Model):
         "VAT exemption reason text (IBT-120) of the reverse-charge VAT breakdown.",
     )
     pint_rate = fields.Float(
-        string='Rate shown for reverse charge',
+        string='Rate shown on the line',
         digits=(16, 2),
-        help="Reverse charge is booked at 0% in Odoo but PINT-AE shows the rate on the line. Used only for category "
-        "AE.",
+        help="Reverse charge (AE) and the margin scheme (N) are booked at 0% in Odoo, but PINT-AE shows the rate on "
+        "the line (for N the VAT amount stays 0, ibr-108-ae). Used only for categories AE and N.",
     )
 
     _tax_unique = models.Constraint('unique(company_id, tax_id)', 'This tax is already mapped.')
@@ -219,6 +219,11 @@ class EInvoiceTaxMap(models.Model):
             if record.pint_category == 'AE' and not (record.rcm_goods_type and record.pint_rate > 0):
                 raise ValidationError(
                     self.env._("A reverse-charge tax needs its goods type and the rate shown on the line.")
+                )
+            if record.pint_category == 'N' and not (record.pint_rate > 0 and not record.tax_id.amount):
+                # the margin scheme shows the rate but carries NO VAT amount (ibr-108-ae; official sample)
+                raise ValidationError(
+                    self.env._("A margin-scheme tax is booked at 0% and needs the rate shown on the line.")
                 )
 
     @api.constrains('company_id', 'tax_id')
