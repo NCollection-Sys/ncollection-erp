@@ -42,7 +42,15 @@ db_exists(){ "${DC[@]}" exec -T db psql -U odoo -d postgres -tAc \
   "SELECT 1 FROM pg_database WHERE datname='$1'" 2>/dev/null | grep -q 1; }
 drop_db(){ "${DC[@]}" exec -T db psql -U odoo -d postgres -c \
   "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$1'" >/dev/null 2>&1 || true
-  "${DC[@]}" exec -T db psql -U odoo -d postgres -c "DROP DATABASE IF EXISTS $1" >/dev/null 2>&1 || true; }
+  "${DC[@]}" exec -T db psql -U odoo -d postgres -c "DROP DATABASE IF EXISTS $1" >/dev/null 2>&1 || true
+  drop_filestore "$1"; }
+# A raw DROP DATABASE leaves the fixture's filestore behind, and the tenant guard then refuses to unlink a record
+# whose files still exist (ncollection_saas tenant.py, Delete Tenant), so platform_cleanup failed on every later
+# run. Only this suite's own prov* names, inside the data dir; fails loud when the directory survives (Rule 10).
+drop_filestore(){
+  case "$1" in prov[a-z0-9]*) ;; *) echo "❌ drop_filestore: '$1' is not a provisioning fixture" >&2; return 1 ;; esac
+  "${DC[@]}" exec -T odoo sh -c 'rm -rf -- "/var/lib/odoo/filestore/$1" && test ! -e "/var/lib/odoo/filestore/$1"' \
+    sh "$1" || { echo "❌ drop_filestore: the filestore of '$1' could not be removed" >&2; return 1; }; }
 tq(){ "${DC[@]}" exec -T db psql -U odoo -d "$1" -tAc "$2" 2>/dev/null | tr -d ' '; }
 
 # --- keep the platform DB's schema in step with the code (#283) -------------

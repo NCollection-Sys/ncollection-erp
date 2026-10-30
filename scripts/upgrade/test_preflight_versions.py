@@ -104,7 +104,10 @@ class TestPreflightVerdict(unittest.TestCase):
         self.assertEqual(code, 0)
 
     def test_the_real_tree_names_the_sales_and_purchase_document_modules(self):
-        auto = pv._disk_auto_install([os.path.join(os.path.dirname(__file__), '..', '..', 'custom_addons')])
+        # from the repository, or (as verify_upgrade.sh runs it) from a copy inside the odoo container, where the
+        # real tree is the preflight's own ADDONS_ROOTS; the assertions below still fail on a tree without them
+        repo = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'custom_addons')
+        auto = pv._disk_auto_install([repo] if os.path.isdir(repo) else list(pv.ADDONS_ROOTS))
         for name in ('ncollection_sale_documents', 'ncollection_purchase_documents'):
             self.assertIn(name, auto)
 
