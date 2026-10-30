@@ -68,7 +68,7 @@ OCA_VENV := .oca-venv
 .DEFAULT_GOAL := help
 .PHONY: help up down stop restart logs ps shell psql odoo-shell \
         bootstrap createdb dropdb install upgrade demo oca \
-        routing-up routing-verify routing-down routing-clean e2e-clean \
+        routing-up routing-verify routing-down routing-clean e2e-clean e2e-uae-setup e2e-uae-clean \
         saas-up saas-down saas-urls saas-jobs saas-runner-logs \
         load-test load-test-clean security-assess \
         provisioning-verify config-sync-verify financial-bootstrap-verify e2e-verify verify-all hooks-install doctor \
@@ -401,8 +401,17 @@ saas-urls: ## Print the platform + tenant entry points for the SaaS-routing stac
 routing-clean: ## Drop the ROUTING fixture DBs rtclienta/rtclientb/rtadmin (destructive)
 	@for d in rtclienta rtclientb rtadmin; do $(call drop_database,$$d); done
 
-e2e-clean: ## Drop the E2E fixture DBs e2eclienta/e2eclientb/e2eadmin (destructive)
+e2e-clean: ## Drop the E2E fixture DBs e2eclienta/e2eclientb/e2eadmin, and e2euae via its guarded cleanup (destructive)
+	@# e2euae is registered IN e2eadmin: remove it (ownership-verified) while its platform still exists, never orphan it
+	@if $(COMPOSE) exec -T db psql -U $(DB_USER) -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='e2eadmin'" | grep -q 1; then \
+	  bash e2e/scripts/cleanup_e2e_uae_tenant.sh; fi
 	@for d in e2eclienta e2eclientb e2eadmin; do $(call drop_database,$$d); done
+
+e2e-uae-setup: ## Provision the UAE e-invoicing fixture e2euae through the e2eadmin platform (gated flow, idempotent)
+	bash e2e/scripts/setup_e2e_uae_tenant.sh
+
+e2e-uae-clean: ## Remove ONLY e2euae (database, filestore, its e2eadmin rows) after verifying fixture ownership
+	bash e2e/scripts/cleanup_e2e_uae_tenant.sh
 
 security-assess: ## Run the P3-T12 pre-launch security assessment (needs routing-up) — see docs/markdown/SECURITY_ASSESSMENT_P3-T12.md
 	./scripts/audit/phase3_security_assessment.sh

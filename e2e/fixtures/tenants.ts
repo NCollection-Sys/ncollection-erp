@@ -14,6 +14,9 @@ export const TENANTS = {
   e2eclienta: 'http://e2eclienta.localhost',
   e2eclientb: 'http://e2eclientb.localhost',
   e2eadmin: 'http://e2eadmin.localhost',
+  // UAE e-invoicing fixture, provisioned through e2eadmin by e2e/scripts/setup_e2e_uae_tenant.sh (opt-in; the
+  // general suite and global setup never need it).
+  e2euae: 'http://e2euae.localhost',
 } as const;
 export type TenantKey = keyof typeof TENANTS;
 

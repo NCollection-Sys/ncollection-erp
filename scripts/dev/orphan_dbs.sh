@@ -33,7 +33,7 @@ DC=(docker compose -f docker-compose.yml -f docker-compose.dev.yml)
 # name, so `rtclienta` is owned but `rtclientaX` is not silently swallowed.
 OWNED_RE='^(postgres|ncollection|ncplatform|albarari'\
 '|rtclienta|rtclientb|rtadmin'\
-'|e2eclienta|e2eclientb|e2eadmin'\
+'|e2eclienta|e2eclientb|e2eadmin|e2euae'\
 '|prov[a-z0-9]*'\
 '|loadtesta|loadtestb|loadtestc'\
 '|fintest|saastest|aggbench|cronstall|cronscopeplatform|cronscopetenant'\

@@ -47,6 +47,24 @@ Names must stay **alphanumeric**: `db_filter=^%d$` routes a subdomain to the dat
 same name, underscores are invalid in hostnames, and hyphens would need Postgres quoting. So
 tenant key === subdomain === database name, always.
 
+## The UAE e-invoicing fixture (`e2euae`, opt-in)
+
+`tests/uae-einvoicing.spec.ts` runs against its own tenant, never the two above: `ncollection_uae_einvoicing` is a
+GATED module (UAE country + verified AE/AED books + an explicit per-tenant `enable`), which a US tenant on the generic
+chart can never satisfy.
+
+```bash
+make e2e-uae-setup     # provisions e2euae THROUGH the e2eadmin platform: plan E2EUAE, tenant (AE), sync provisioning,
+                       # verified books, enable override, licensed install, licence sync; idempotent
+make e2e-uae-clean     # removes ONLY e2euae, after verifying its ownership marker in the platform AND the database
+cd e2e && npx playwright test tests/uae-einvoicing.spec.ts --config playwright.local.config.ts
+```
+
+Logins (dev-only): `e2e.owner` / `$E2E_UAE_OWNER_PW` (default in the setup script; e-invoicing manager) and `biz` /
+`demo1234` (no e-invoicing group). No ASP provider or credential is ever created, so nothing leaves the machine. Without
+the fixture every test in the file SKIPS with the reason — that is not a pass. `make e2e-clean` runs the guarded
+`e2euae` cleanup first, because `e2euae` is registered in `e2eadmin`. Add `e2euae.localhost` to the hosts line below.
+
 ## Run it locally
 
 Prerequisites: Docker (the dev stack), Node 20+, and the aggregated OCA tree.

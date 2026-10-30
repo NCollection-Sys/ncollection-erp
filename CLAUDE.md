@@ -311,6 +311,7 @@ shared, so running one suite silently destroyed another's fixtures (REGRESSIONS.
 |---|---|---|
 | Routing proof (P1-T06) | `rtclienta` · `rtclientb` · `rtadmin` | `make routing-clean` |
 | E2E (P1-T20) | `e2eclienta` · `e2eclientb` · `e2eadmin` | `make e2e-clean` |
+| E2E UAE e-invoicing (registered **in `e2eadmin`**: plan `E2EUAE` + one tenant) | `e2euae` | `make e2e-uae-clean` (ownership-verified; also run by `e2e-clean`) |
 | Provisioning (P2-T01) | `prov*` | — |
 | Load test (P3-T03) | `loadtesta` · `loadtestb` · `loadtestc` | `make load-test-clean` |
 | Financial bootstrap (P3-T01) | `fintest` | self-drops (start + end of run) |
