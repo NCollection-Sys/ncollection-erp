@@ -152,9 +152,21 @@ SENSITIVE_MODELS = frozenset({
     # UAE e-invoices: the payload and the findings hold both parties' identifiers and the amounts, and the e-invoice
     # archive has its own append-only history and retention; copying them here would duplicate regulated records into
     # a lower-trust trail that retention does not govern.
+    # The same holds for every record the engine writes about a document: its lines, its own append-only history,
+    # the transport (submissions, attempts, provider events with MLS / TDD references), received documents and their
+    # history, and the evidence packages. The CONFIGURATION models (config, holidays, providers, tax / payment maps,
+    # retention rules, holds, self-billing agreements) stay audited: who changed them is exactly what a trail is for.
     'ncollection.einvoice',
+    'ncollection.einvoice.line',
+    'ncollection.einvoice.history',
     'ncollection.einvoice.validation',
     'ncollection.einvoice.secret',
+    'ncollection.einvoice.submission',
+    'ncollection.einvoice.submission.attempt',
+    'ncollection.einvoice.event',
+    'ncollection.einvoice.inbound',
+    'ncollection.einvoice.inbound.history',
+    'ncollection.einvoice.export',
 })
 
 # Recompute churn, not user intent. Excluded so the trail stays readable.

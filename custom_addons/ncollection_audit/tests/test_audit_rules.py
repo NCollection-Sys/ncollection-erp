@@ -164,6 +164,42 @@ class TestAuditRules(AuditCommon):
         self.assertFalse(
             set(self.Rule._nc_audited_models()) & SENSITIVE_MODELS)
 
+    # The UAE e-invoicing models that are CONFIGURATION, and therefore audited; every other persistent
+    # ncollection.einvoice* model is a regulated record and must be in SENSITIVE_MODELS.
+    EINVOICE_CONFIGURATION = frozenset({
+        'ncollection.einvoice.config',
+        'ncollection.einvoice.holiday',
+        'ncollection.einvoice.provider',
+        'ncollection.einvoice.tax.map',
+        'ncollection.einvoice.payment.map',
+        'ncollection.einvoice.retention.rule',
+        'ncollection.einvoice.hold',
+        'ncollection.einvoice.self.billing.agreement',
+    })
+
+    def test_regulated_einvoice_records_are_never_copied_into_the_general_trail(self):
+        """Found by the full CI matrix: the inbound, transport and export models added after the first e-invoicing
+        release were discovered like any ncollection model, so received documents (both parties' identifiers and
+        the amounts) were copied into the lower-trust trail, and auditlog's immediate write broke duplicate
+        detection. Every persistent e-invoicing model must be classified: a new one fails here until someone
+        decides which side it is on. Vacuous only where the engine is not installed (`m=ncollection_audit`)."""
+        from ..models.audit_rule import SENSITIVE_MODELS
+        present = set()
+        for record in self.env['ir.model'].sudo().search([('model', '=like', 'ncollection.einvoice%')]):
+            model = self.env.get(record.model)
+            if model is not None and not model._transient and not model._abstract:
+                present.add(record.model)
+        unclassified = present - SENSITIVE_MODELS - self.EINVOICE_CONFIGURATION
+        self.assertFalse(unclassified, "e-invoicing models with no audit decision: %s" % sorted(unclassified))
+        self.assertFalse(self.EINVOICE_CONFIGURATION & SENSITIVE_MODELS)
+        seeded = set(self.Rule.search([]).mapped('model_model'))
+        self.assertFalse(seeded & (present - self.EINVOICE_CONFIGURATION),
+                         "regulated e-invoicing records are audited: %s"
+                         % sorted(seeded & (present - self.EINVOICE_CONFIGURATION)))
+        if present:
+            self.assertIn('ncollection.einvoice.inbound', present, 'the fixture model is missing')
+            self.assertTrue(seeded & self.EINVOICE_CONFIGURATION, 'configuration must stay audited')
+
     def test_transient_models_are_never_audited(self):
         """Wizards are a form somebody opened, not a fact worth keeping — and
         they are created constantly."""

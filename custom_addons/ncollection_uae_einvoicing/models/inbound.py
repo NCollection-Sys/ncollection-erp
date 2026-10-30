@@ -286,9 +286,12 @@ class EInvoiceInbound(models.Model):
         original = self.search([('domain_key', '=', key), ('state', '!=', 'duplicate'), ('id', '!=', self.id)],
                                limit=1)
         if original:
-            self.write({'domain_key': key, 'duplicate_of_id': original.id})
+            # state first: the partial unique index covers only rows that are not 'duplicate', so the identity may be
+            # written only once this row has left that set (a write that is flushed at once, as under auditlog, would
+            # otherwise collide with the original)
             self._nc_move('duplicate', 'duplicate_document', 'NCOLLECTION:inbound_duplicate',
                           'the same document was received as %s' % original.asp_document_id)
+            self.write({'domain_key': key, 'duplicate_of_id': original.id})
             return 'duplicate'
         try:
             with self.env.cr.savepoint():
@@ -297,8 +300,8 @@ class EInvoiceInbound(models.Model):
             # another worker claimed the identity at the same moment: this one is the duplicate
             self.invalidate_recordset()
             original = self.search([('domain_key', '=', key), ('state', '!=', 'duplicate')], limit=1)
-            self.write({'domain_key': key, 'duplicate_of_id': original.id})
             self._nc_move('duplicate', 'duplicate_document', 'NCOLLECTION:inbound_duplicate', 'concurrent delivery')
+            self.write({'domain_key': key, 'duplicate_of_id': original.id})
             return 'duplicate'
         self._nc_move('matching', 'validated')
         return 'valid'

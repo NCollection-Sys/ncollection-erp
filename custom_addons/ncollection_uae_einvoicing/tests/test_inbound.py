@@ -82,6 +82,19 @@ class InboundCase(EInvoiceCase):
         return self.env['account.move'].sudo().search(
             [('nc_inbound_id', '!=', False), ('company_id', '=', self.tenant.id)])
 
+    def _flush_every_write(self):
+        """What OCA auditlog's ``write_full`` does on a model it audits: every write reaches the database at once
+        (``flush_recordset``), instead of when the ORM next flushes. The full CI matrix found duplicate handling
+        crashing under exactly that; emulated here so the guard holds whether or not auditlog is installed."""
+        Inbound = type(self.env['ncollection.einvoice.inbound'])
+        write = Inbound.write
+
+        def flushed_write(record, vals):
+            result = write(record, vals)
+            record.flush_recordset()
+            return result
+        return patch.object(Inbound, 'write', flushed_write)
+
 
 @tagged('post_install', '-at_install')
 class TestInboundHappyPath(InboundCase):
@@ -146,6 +159,40 @@ class TestInboundDuplicates(InboundCase):
         self.assertEqual(second.state, 'duplicate')
         self.assertEqual(second.duplicate_of_id, first)
         self.assertFalse(second.bill_id)
+        self.assertEqual(len(self._bills()), 1, 'no duplicate accounting document')
+
+    def test_a_duplicate_is_classified_when_every_write_reaches_the_database_at_once(self):
+        xml = self._xml()
+        first = self._receive(xml, 'IN-1')
+        with self._flush_every_write():
+            second = self._receive(xml, 'IN-2', message_id='other-message')
+        self.assertEqual((second.state, second.duplicate_of_id, second.domain_key),
+                         ('duplicate', first, first.domain_key))
+        self.assertEqual(second.history_ids.sorted('id')[-1:].to_state, 'duplicate')
+        self.assertFalse(second.bill_id)
+        self.assertEqual(len(self._bills()), 1, 'no duplicate accounting document')
+
+    def test_a_concurrent_duplicate_is_classified_when_every_write_reaches_the_database_at_once(self):
+        """The race path: the lookup sees no original (another worker has not committed yet), the database index
+        refuses the identity, and the row must still end as a duplicate of the original."""
+        xml = self._xml()
+        first = self._receive(xml, 'IN-1')
+        Inbound = type(self.env['ncollection.einvoice.inbound'])
+        search = Inbound.search
+        missed = []
+
+        def search_missing_the_original_once(model, domain, *args, **kwargs):
+            if not missed and ('state', '!=', 'duplicate') in domain and any(
+                    isinstance(term, tuple) and term[0] == 'id' for term in domain):
+                missed.append(True)
+                return model.browse()
+            return search(model, domain, *args, **kwargs)
+        with self._flush_every_write(), patch.object(Inbound, 'search', search_missing_the_original_once), \
+                mute_logger('odoo.sql_db'):
+            second = self._receive(xml, 'IN-2', message_id='other-message')
+        self.assertTrue(missed, 'the race path was not exercised')
+        self.assertEqual((second.state, second.duplicate_of_id), ('duplicate', first))
+        self.assertEqual(second.reason, 'concurrent delivery')
         self.assertEqual(len(self._bills()), 1, 'no duplicate accounting document')
 
     def test_a_callback_racing_a_poll_fetches_once(self):
