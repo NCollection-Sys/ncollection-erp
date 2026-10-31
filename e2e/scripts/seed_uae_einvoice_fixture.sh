@@ -8,7 +8,9 @@
 #    - the company partner: street / city / emirate DU / AE, TIN, TRN, trade-licence registration + authority;
 #    - one buyer (UAE business, emirate AZ) with TIN, TRN, trade-licence registration;
 #    - one Goods product with an HS code (unit = Units -> UN/ECE C62, lib/units.py);
-#    - the tax map: '5% DU' -> S, '0% EXT' -> E (DL8.46.1), '0%' -> Z (the AE chart's own taxes, never recreated);
+#    - the tax map: '5% DU' -> S, '5% AZ' -> S, '0% EXT' -> E (DL8.46.1), '0%' -> Z (the AE chart's own taxes, never
+#      recreated). '5% AZ' because the buyer is in Abu Dhabi: l10n_ae auto-applies the Abu Dhabi fiscal position,
+#      which replaces the company default '5% DU' with '5% AZ' on every line entered through the invoice form;
 #    - the engine config: enabled, default payment means 10 (in the pinned UNCL4461 list, lib/payment_means.py).
 #  ALL identifiers are FICTIONAL test data. They pass the format checks only (15 / 10 digits; the FTA publishes no
 #  checksum) and are not registrations of any real entity. No invoice, no provider, no credential, no ASP.
@@ -191,6 +193,7 @@ def sale_tax(name):
 
 
 for xmlid, tax_name, extra in (('tax_map_s', '5% DU', {'pint_category': 'S'}),
+                               ('tax_map_s_az', '5% AZ', {'pint_category': 'S'}),
                                ('tax_map_e', '0% EXT', {'pint_category': 'E', 'exemption_code': 'DL8.46.1'}),
                                ('tax_map_z', '0%', {'pint_category': 'Z'})):
     tax = sale_tax(tax_name)
