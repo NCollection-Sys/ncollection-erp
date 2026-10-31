@@ -40,17 +40,30 @@ async function fixtureProblem(page: Page): Promise<string> {
   return res.result === 1 ? '' : `${MODULE} is not installed on ${TENANT}`;
 }
 
-/** The ids of the given menus of this module that the session's user can see (load_menus applies every filter). */
-async function visibleMenus(request: APIRequestContext): Promise<string[]> {
-  const ids = (await callKw(request, TENANT, 'ir.model.data', 'search_read',
-    [[['module', '=', MODULE], ['model', '=', 'ir.ui.menu'], ['name', 'in', MENUS]], ['name', 'res_id']])).result ?? [];
+type MenuRef = { name: string; res_id: number };
+
+/**
+ * The menu ids, resolved with the owner's session: ir.model.data is readable only by Access Rights, so a restricted
+ * user cannot resolve them and must be handed them.
+ */
+async function resolveMenus(request: APIRequestContext): Promise<MenuRef[]> {
+  const res = await callKw(request, TENANT, 'ir.model.data', 'search_read',
+    [[['module', '=', MODULE], ['model', '=', 'ir.ui.menu'], ['name', 'in', MENUS]], ['name', 'res_id']]);
+  if (res.error) throw new Error(`menu ids not readable: ${JSON.stringify(res.error).slice(0, 200)}`);
+  const ids: MenuRef[] = res.result ?? [];
   // an empty answer must never read as "no menu visible": every id has to resolve first
   if (ids.length !== MENUS.length) throw new Error(`resolved ${ids.length}/${MENUS.length} menu ids`);
+  return ids;
+}
+
+/** The names of the given menus that the session's user can see (load_menus applies every filter). */
+async function visibleMenus(request: APIRequestContext, ids?: MenuRef[]): Promise<string[]> {
+  ids = ids ?? await resolveMenus(request);
   const loadRes = await callKw(request, TENANT, 'ir.ui.menu', 'load_menus', [false]);
   if (!loadRes.result) throw new Error(`load_menus failed: ${JSON.stringify(loadRes.error ?? {}).slice(0, 200)}`);
   const loaded = loadRes.result;
   const shown = new Set(Object.keys(loaded).map(Number));
-  return ids.filter((r: { res_id: number }) => shown.has(r.res_id)).map((r: { name: string }) => r.name);
+  return ids.filter((r) => shown.has(r.res_id)).map((r) => r.name);
 }
 
 async function openAction(page: Page, xmlid: string, suffix = '') {
@@ -100,15 +113,26 @@ test.describe('UAE e-invoicing: the user interface', () => {
 });
 
 test.describe('UAE e-invoicing: access control', () => {
-  test('a user without the e-invoicing groups sees no menu and is refused by the ORM', async ({ page }) => {
+  test('a user without the e-invoicing groups sees no menu and is refused by the ORM', async ({ page, browser }) => {
     const problem = await fixtureProblem(page);
     test.skip(!!problem, problem);
-    await page.context().clearCookies();
-    await loginViaRpc(page, TENANT, 'biz', 'demo1234');
-    expect(await visibleMenus(page.request)).toEqual([]);
-    for (const model of ['ncollection.einvoice', 'ncollection.einvoice.inbound', 'ncollection.einvoice.secret']) {
-      const res = await callKw(page.request, TENANT, model, 'search_read', [[]], { fields: ['id'], limit: 1 });
-      expect(res.error?.data?.name, `${model} must be refused`).toBe('odoo.exceptions.AccessError');
+    const menus = await resolveMenus(page.request); // as the owner
+    // a fresh context: no cookie of the owner's session can reach the restricted user's requests
+    const ctx = await browser.newContext();
+    try {
+      const biz = await ctx.newPage();
+      await loginViaRpc(biz, TENANT, 'biz', 'demo1234');
+      const info = await callKw(biz.request, TENANT, 'res.users', 'search_read',
+        [[['login', '=', 'biz']]], { fields: ['id'], limit: 1 });
+      expect(info.error, 'the restricted session is a working session').toBeUndefined();
+      expect(await visibleMenus(biz.request, menus)).toEqual([]);
+      for (const model of ['ncollection.einvoice', 'ncollection.einvoice.inbound', 'ncollection.einvoice.secret']) {
+        const res = await callKw(biz.request, TENANT, model, 'search_read', [[]], { fields: ['id'], limit: 1 });
+        expect(res.result, `${model} must return no data`).toBeUndefined();
+        expect(res.error?.data?.name, `${model} must be refused`).toBe('odoo.exceptions.AccessError');
+      }
+    } finally {
+      await ctx.close();
     }
   });
 });
