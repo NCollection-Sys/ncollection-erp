@@ -1241,5 +1241,32 @@ class TestOdooProcessesLoadTheReleaseGate(GuardTestCase):
         self.assertEqual(len(self._run()), 1)
 
 
+class TestR21MakefileReadsNamedEnvKeys(GuardTestCase):
+    """The Makefile must not `include` .env: that turned every secret in it into
+    a Make variable that `make -p` prints, though no recipe used them."""
+
+    def _findings(self, make):
+        self.write("Makefile", make)
+        found = []
+        invariants.rule_makefile_reads_named_env_keys(found)
+        return found
+
+    def test_reading_named_keys_is_clean(self):
+        self.assertEqual(self._findings(
+            "nc_env_value = $(shell [ -f .env ] && sed -n 's/^$(1)=//p' .env | tail -n 1)\n"
+            "DB_USER ?= $(or $(call nc_env_value,DB_USER),odoo)\n"
+            "# `-include .env` used to be here\n"), [])
+
+    def test_every_include_form_is_reported(self):
+        for line in ("-include .env", "include .env", "sinclude .env", "  -include ./.env", "-include .env  "):
+            with self.subTest(line=line):
+                found = self._findings(line + "\nDB_USER ?= odoo\n")
+                self.assertEqual(len(found), 1)
+                self.assertIn("make -p", found[0])
+
+    def test_other_includes_are_not_reported(self):
+        self.assertEqual(self._findings("-include .env.example.mk\ninclude common.mk\n"), [])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -285,8 +285,9 @@ CRON_THREADS_OK_RE = re.compile(r"^(?:0|\$\{[A-Za-z_][A-Za-z0-9_]*:-0\})$")
 # asked for and what a bare code change would not have produced.
 # Reported in the clean line. A literal here drifts the moment a rule is
 # added — it already read `5` with six rules wired.
-RULE_COUNT = 20  # 17th, 18th: tenant domain, prod Odoo unpublished; 19th: release tooling has no DB credential;
-#                  20th: every Odoo process loads the release gate server-wide
+RULE_COUNT = 21  # 17th, 18th: tenant domain, prod Odoo unpublished; 19th: release tooling has no DB credential;
+#                  20th: every Odoo process loads the release gate server-wide; 21st: the Makefile reads only named
+#                  .env keys
 
 CRON_ENUMERATORS_ALLOWED: dict[tuple[str, str], str] = {
     ("docker-compose.pooling.yml", "odoo-bus"):
@@ -1826,6 +1827,32 @@ _SERVER_WIDE_RE = re.compile(r"^\s*server_wide_modules\s*=\s*(.*?)\s*$", re.MULT
 _LOAD_RE = re.compile(r"--load[\"']?[=,\s]+[\"']?([A-Za-z0-9_,]+)")   # also ["--load", "base,web"]
 
 
+_MAKE_INCLUDE_ENV = re.compile(r"^\s*(?:-|s)?include\s+(?:\S*/)?\.env(?:\s|$)")
+
+
+def rule_makefile_reads_named_env_keys(out: list[str]) -> None:
+    """The Makefile never `include`s .env: it reads the keys it needs by name.
+
+    THE BUG THIS ENCODES. `-include .env` made EVERY line of .env a Make
+    variable - the validator token, the config-sync key, the backup cipher pass
+    - though no recipe used any of them (Compose reads .env on its own). They
+    were then printed by `make -p`, `make --print-data-base` or any `$(info)`,
+    i.e. by the first diagnostic someone pasted into an issue. The Makefile
+    needs DB_USER / DB_PASSWORD only, and reads exactly those.
+    """
+    makefile = REPO_ROOT / "Makefile"
+    try:
+        text = makefile.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if _MAKE_INCLUDE_ENV.match(line):
+            out.append(
+                f"Makefile:{lineno}: `{line.strip()}` turns every secret in .env into a Make "
+                "variable that `make -p` prints. Read the keys the recipes need by name "
+                "(see nc_env_value) instead.")
+
+
 def rule_odoo_processes_load_the_release_gate(out: list[str]) -> None:
     """Every Odoo process the stack runs loads ncollection_core server-wide: that module installs the release gate
     (ncollection_core/release_gate.py) - HTTP, cron and the `-d` preload - in its post_load. `--load=` on a command
@@ -1935,6 +1962,7 @@ def main() -> int:
     rule_prod_odoo_is_not_published(findings)
     rule_release_tooling_carries_no_db_credentials(findings)
     rule_odoo_processes_load_the_release_gate(findings)
+    rule_makefile_reads_named_env_keys(findings)
 
     if findings:
         print("invariants: violations found\n")

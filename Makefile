@@ -6,11 +6,16 @@
 # ============================================================================
 
 # Optionally pull DB credentials from .env (falls back to dev defaults).
--include .env
+# ONLY the keys named here are read. `-include .env` used to turn EVERY line of
+# .env into a Make variable, so the validator token, the config-sync key and the
+# backup cipher pass were all printed by `make -p` / `make --print-data-base`,
+# though no recipe uses them (Compose reads .env itself). The invariant
+# `makefile_reads_named_env_keys` keeps it that way.
+nc_env_value = $(shell [ -f .env ] && sed -n 's/^$(1)=//p' .env | tail -n 1)
 
-DB_USER     ?= odoo
-DB_PASSWORD ?= odoo
-DB_NAME     ?= postgres
+DB_USER     ?= $(or $(call nc_env_value,DB_USER),odoo)
+DB_PASSWORD ?= $(or $(call nc_env_value,DB_PASSWORD),odoo)
+DB_NAME     ?= $(or $(call nc_env_value,DB_NAME),postgres)
 
 # Target Odoo database for module operations. Override per-command, e.g.:
 #   make upgrade m=ncollection_subscription db=ncollection_demo
@@ -81,7 +86,7 @@ OCA_VENV := .oca-venv
         einvoice-e2e einvoice-validator-check einvoice-validator-build einvoice-validator-up einvoice-validator-sb-up \
         einvoice-validator-down
 
-# `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
+# `grep -h` is load-bearing (#338). `-include .env` put a SECOND file in
 # MAKEFILE_LIST, and grep prefixes every match with `filename:` once it is given
 # more than one file. The awk FS then splits at that first colon, so `$1` came
 # out as "Makefile" for every row instead of the target name — on every machine
