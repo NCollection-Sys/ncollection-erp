@@ -489,3 +489,81 @@ class TestOfficialValidationStep(EInvoiceCase):
         record = self._einvoice()
         with self.assertRaises(UserError):
             record.action_validate()
+
+    # ------------------------------------------------------------------ repeated attempts (audit history)
+    def _history(self, record):
+        return self.env['ncollection.einvoice.history'].search([('einvoice_id', '=', record.id)], order='id')
+
+    def _snapshot(self, rows):
+        return [(r.id, r.dimension, r.from_state, r.to_state, r.event, r.detail) for r in rows]
+
+    def test_a_first_failure_writes_exactly_one_failure_row(self):
+        worker = _Worker(failures=[{'id': 'ibr-190-ae', 'flag': 'fatal', 'location': '/Invoice', 'text': 'a'}])
+        self.addCleanup(worker.close)
+        record = self._checked()
+        before = len(self._history(record))
+        with patch.dict(os.environ, validator_env(worker.url)):
+            record.action_validate()
+        added = self._history(record)[before:]
+        self.assertEqual(added.mapped('event'), ['official_validation_failed'], "one attempt, one row")
+        self.assertIn('ibr-190-ae', added.detail)
+
+    def test_a_repeated_failure_appends_its_own_history_row(self):
+        worker = _Worker(failures=[{'id': 'ibr-190-ae', 'flag': 'fatal', 'location': '/Invoice', 'text': 'a'}])
+        self.addCleanup(worker.close)
+        record = self._checked()
+        with patch.dict(os.environ, validator_env(worker.url)):
+            record.action_validate()
+            self.assertEqual(record.local_state, 'validation_failed')
+            first = self._snapshot(self._history(record))
+            worker.answer['failures'] = [{'id': 'ibr-151-ae', 'flag': 'fatal', 'location': '/Invoice', 'text': 'b'}]
+            record.action_validate()
+        self.assertEqual(record.local_state, 'validation_failed')
+        official = record.validation_ids.filtered(lambda v: v.layer == 'official')
+        self.assertEqual(official.mapped('rule'), ['OFFICIAL:ibr-151-ae'], "the findings are the latest attempt's")
+        history = self._history(record)
+        self.assertEqual(self._snapshot(history[: len(first)]), first, "earlier history is never rewritten")
+        added = history[len(first):]
+        self.assertEqual(added.mapped('event'), ['official_validation_failed'], "the second attempt adds one row")
+        failed = history.filtered(lambda h: h.event == 'official_validation_failed')
+        self.assertEqual(len(failed), 2, "each completed failed attempt is in the history")
+        self.assertIn('ibr-190-ae', failed[0].detail)
+        self.assertNotIn('ibr-151-ae', failed[0].detail)
+        self.assertIn('ibr-151-ae', failed[1].detail)
+        self.assertNotIn('ibr-190-ae', failed[1].detail)
+        self.assertIn('release %s' % spec.get_profile().pint_version, failed[1].detail)
+
+    def test_a_failure_then_a_pass_keeps_the_failure_and_validates(self):
+        worker = _Worker(failures=[{'id': 'ibr-190-ae', 'flag': 'fatal', 'location': '/Invoice', 'text': 'a'}])
+        self.addCleanup(worker.close)
+        record = self._checked()
+        with patch.dict(os.environ, validator_env(worker.url)):
+            record.action_validate()
+            first = self._snapshot(self._history(record))
+            worker.answer['failures'] = []
+            record.action_validate()
+        self.assertEqual(record.local_state, 'validated')
+        self.assertFalse(record.validation_ids.filtered(lambda v: v.layer == 'official'), "a clean answer clears them")
+        history = self._history(record)
+        self.assertEqual(self._snapshot(history[: len(first)]), first, "the failure evidence survives the pass")
+        self.assertEqual(
+            history[len(first):].mapped('event'), ['revalidating', 'official_validation_passed'],
+            "the documented edge validation_failed -> locally_checked -> validated, one pass row",
+        )
+
+    def test_an_unavailable_worker_after_a_failure_is_neither_a_failure_nor_a_pass(self):
+        worker = _Worker(failures=[{'id': 'ibr-190-ae', 'flag': 'fatal', 'location': '/Invoice', 'text': 'a'}])
+        self.addCleanup(worker.close)
+        record = self._checked()
+        with patch.dict(os.environ, validator_env(worker.url)):
+            record.action_validate()
+            first = self._snapshot(self._history(record))
+            worker.sign = False
+            result = record.action_validate()
+        self.assertEqual(result['params']['type'], 'warning')
+        self.assertEqual(record.local_state, 'validation_failed', "an untrusted answer moves nothing")
+        official = record.validation_ids.filtered(lambda v: v.layer == 'official')
+        self.assertEqual(official.mapped('rule'), ['OFFICIAL:ibr-190-ae'], "nor does it replace the findings")
+        history = self._history(record)
+        self.assertEqual(self._snapshot(history[: len(first)]), first)
+        self.assertEqual(history[len(first):].mapped('event'), ['validator_unavailable'])

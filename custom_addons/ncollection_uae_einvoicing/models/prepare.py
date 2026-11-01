@@ -189,14 +189,14 @@ class EInvoicePrepare(models.Model):
                     record._transition('local_state', 'locally_checked', 'revalidating')
                 record._transition('local_state', 'validated', 'official_validation_passed', ran)
             else:
+                failed = ', '.join(sorted({f.rule for f in outcome.failures if f.flag != 'warning'}))
+                detail = '%s | failed: %s' % (ran, failed)
                 if record.local_state == 'locally_checked':
-                    failed = ', '.join(sorted({f.rule for f in outcome.failures if f.flag != 'warning'}))
-                    record._transition(
-                        'local_state',
-                        'validation_failed',
-                        'official_validation_failed',
-                        '%s | failed: %s' % (ran, failed),
-                    )
+                    record._transition('local_state', 'validation_failed', 'official_validation_failed', detail)
+                else:
+                    # already failed: the state does not move (_transition skips it), but the findings above were just
+                    # replaced, so this attempt and its rules go into the history or they are lost
+                    record._log('official_validation_failed', detail)
         if unavailable is not None:
             return {
                 'type': 'ir.actions.client',
