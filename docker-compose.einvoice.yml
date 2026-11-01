@@ -4,8 +4,12 @@
 #  Runs satellites/einvoice_validator (SaxonC-HE + the pinned, unmodified PINT-AE rules) beside the dev Odoo, on an
 #  INTERNAL network with NO published port, so the engine's "Validate" step can reach a real official validator.
 #
-#    docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.einvoice.yml \
-#        up -d einvoice-validator odoo
+#    make einvoice-validator-check      # read-only: are the selected files the running stack?
+#    make einvoice-validator-up         # Billing only; guarded, --no-deps --no-build
+#
+#  Do not run `docker compose ... up` on this file by hand: attaching recreates odoo from the files given, and the
+#  overlay must sit on the files the stack RUNS with (default: base + dev + routing + saas, EINVOICE_STACK_FILES in the
+#  Makefile). Base + dev alone drop routing's --db-filter / --no-database-list / --proxy-mode / cron-0 command.
 #
 #  Never layered on production: production compose files do not include it, and the validator is not deployed
 #  there (a production deployment is a separate, approved decision). The token is a development secret from .env

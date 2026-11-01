@@ -31,7 +31,7 @@ below are manual; the commands shown are the ones that exist.
 | Diagnose the dev environment | `make doctor` |
 | OCA addons present (fresh worktree) | `make oca` |
 | Dev stack up / down | `make up` / `make down` |
-| Validator workers (Billing + Self-Billing; needs `NC_EINVOICE_VALIDATOR_TOKEN` in `.env`) | `make einvoice-validator-up` / `make einvoice-validator-down` |
+| Validator workers (needs `NC_EINVOICE_VALIDATOR_TOKEN` in `.env`; attaches to the RUNNING stack, `EINVOICE_STACK_FILES` default = `make saas-up`'s files, guarded) | `make einvoice-validator-check` (read-only) · `make einvoice-validator-build` · `make einvoice-validator-up` (Billing; `EINVOICE_RECREATE_ODOO=1` the first time) · `make einvoice-validator-sb-up` (Self-Billing, explicit) · `make einvoice-validator-down` |
 | Tenant e-invoice runner (dev overlay) | `docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.einvoice-runner.yml up -d einvoice-runner` (header of that file) |
 | Stop the runner | the same files, `rm -sf einvoice-runner` |
 | Install the modules in the scratch tenant DB | `make install m=ncollection_uae_einvoicing,ncollection_uae_einvoicing_acube db=<scratch tenant>` |

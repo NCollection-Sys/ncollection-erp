@@ -78,7 +78,8 @@ OCA_VENV := .oca-venv
         release-status upgrade-platform-verify \
         ai-up ai-down ai-logs ai-test ai-verify ai-context-sample \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled \
-        einvoice-e2e einvoice-validator-up einvoice-validator-down
+        einvoice-e2e einvoice-validator-check einvoice-validator-build einvoice-validator-up einvoice-validator-sb-up \
+        einvoice-validator-down
 
 # `grep -h` is load-bearing (#338). `-include .env` puts a SECOND file in
 # MAKEFILE_LIST, and grep prefixes every match with `filename:` once it is given
@@ -195,11 +196,34 @@ einvoice-e2e: ## Official PINT-AE rules end to end, no stack:  make einvoice-e2e
 	  $(EINVOICE_PY_IMAGE) sh -c "pip install -q --root-user-action=ignore saxonche==13.1.0 lxml \
 	    && cd /tmp && python /sat/e2e_check.py && python /sat/test_worker.py"
 
-einvoice-validator-up: ## Start the validator beside the dev Odoo (internal network, no port; needs NC_EINVOICE_VALIDATOR_TOKEN)
-	$(COMPOSE) -f docker-compose.einvoice.yml up -d --build einvoice-validator einvoice-validator-sb odoo
+# The validator is an OVERLAY on a RUNNING stack, and attaching it recreates odoo from the files Compose is given, so
+# they must be the files that stack runs with: base + dev alone would drop routing's --db-filter / --no-database-list /
+# --proxy-mode / cron-0 command. EINVOICE_STACK_FILES defaults to the full SaaS dev stack (`make saas-up`); another
+# stack is selected explicitly, e.g. EINVOICE_STACK_FILES="$(COMPOSE_FILES)" for `make up`. The guard
+# (scripts/dev/einvoice_stack_guard.sh) refuses unless the selected files ARE the running stack, compared by config
+# hash, never by a render (the overlay interpolates the token). Building, Billing and Self-Billing are separate targets;
+# nothing here passes --build, --remove-orphans or -v, and every start is --no-deps.
+EINVOICE_STACK_FILES   ?= $(COMPOSE_FILES) -f docker-compose.routing.yml -f docker-compose.saas.yml
+EINVOICE_COMPOSE_FILES  = $(EINVOICE_STACK_FILES) -f docker-compose.einvoice.yml
+EINVOICE_COMPOSE        = docker compose $(EINVOICE_COMPOSE_FILES)
+EINVOICE_GUARD          = bash scripts/dev/einvoice_stack_guard.sh
 
-einvoice-validator-down: ## Stop the dev validator (the dev Odoo keeps running without it)
-	$(COMPOSE) -f docker-compose.einvoice.yml stop einvoice-validator einvoice-validator-sb
+einvoice-validator-check: ## Read-only: prove EINVOICE_STACK_FILES are the running stack; starts nothing
+	@$(EINVOICE_GUARD) check $(EINVOICE_COMPOSE_FILES)
+
+einvoice-validator-build: ## Build the validator image only; no container is started or recreated
+	$(EINVOICE_COMPOSE) build einvoice-validator
+
+einvoice-validator-up: ## Attach the Billing validator to the running stack (guarded, no build; EINVOICE_RECREATE_ODOO=1 to attach odoo)
+	@$(EINVOICE_GUARD) billing $(EINVOICE_COMPOSE_FILES)
+	$(EINVOICE_COMPOSE) up -d --no-deps --no-build einvoice-validator odoo
+
+einvoice-validator-sb-up: ## Also start the Self-Billing validator (explicit; needs the Billing validator attached first)
+	@$(EINVOICE_GUARD) sb $(EINVOICE_COMPOSE_FILES)
+	$(EINVOICE_COMPOSE) up -d --no-deps --no-build einvoice-validator-sb
+
+einvoice-validator-down: ## Stop both validators; odoo keeps running and Validate then reports "unavailable"
+	$(EINVOICE_COMPOSE) stop einvoice-validator einvoice-validator-sb
 
 ## ---- Tests ----
 # The local counterpart to CI's `test` job (#365). Until this target existed the

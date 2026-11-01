@@ -347,8 +347,14 @@ request.
 
 **Development and CI (no production change).** `make einvoice-e2e` runs the whole official path from a clean checkout with no
 stack and no database (official samples, engine-built documents, negative controls, worker security checks, and with
-`EINVOICE_FIXTURES=<dir>` the XML exported from real posted invoices). `make einvoice-validator-up` starts the worker beside
-the dev Odoo through `docker-compose.einvoice.yml`: an `internal: true` network (no gateway, no egress), no published port,
+`EINVOICE_FIXTURES=<dir>` the XML exported from real posted invoices). `make einvoice-validator-up` attaches the Billing worker
+to the RUNNING dev stack through `docker-compose.einvoice.yml`. Attaching recreates odoo from the files Compose is given, so they
+must be the files that stack runs with (`EINVOICE_STACK_FILES`, default the full SaaS dev stack of `make saas-up`; base + dev
+alone would drop routing's `--db-filter` / `--no-database-list` / `--proxy-mode` / cron-0 command). `scripts/dev/einvoice_stack_guard.sh`
+refuses unless the selected files ARE the running stack (config hashes, never a render, which would print the token), recreating
+odoo also needs `EINVOICE_RECREATE_ODOO=1`, and every start is `--no-deps --no-build`: `make einvoice-validator-build` builds,
+`make einvoice-validator-sb-up` starts the Self-Billing worker, `make einvoice-validator-check` verifies and starts nothing.
+The worker runs on an `internal: true` network (no gateway, no egress), no published port,
 read-only root filesystem, all capabilities dropped, `no-new-privileges`, 512 MB / 1 CPU, rules mounted read-only, token from
 `.env` (`NC_EINVOICE_VALIDATOR_TOKEN`; the overlay refuses to start without it). No production compose file layers it, and
 deploying the validator to production is a separate decision.
