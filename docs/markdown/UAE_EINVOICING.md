@@ -1154,3 +1154,27 @@ slipping past the DOCTYPE scan — each pinned by a test.
 * Saxonica's notices must be collected before the worker image is distributed outside NCollection.
 * An Odoo `_get_raw_access_token` token can still be minted by a user who can already read the archive file, which is their own act of
   sharing; it grants no more than their own access.
+
+## 16. Local closure and handoff (2026-11-02)
+
+**Runtime.** The shared local odoo was restarted once (`docker restart` of the same container: config hash `54c293c2…`, flags
+`--db-filter=^%d$ --no-database-list --proxy-mode --max-cron-threads=0`, addresses unchanged; healthy 7 s after the restart) and
+`e2euae` was upgraded alone (`-u ncollection_uae_einvoicing`, separate process via `exec`, 28 s, no error). `ncollection_uae_einvoicing`
+is **19.0.1.4.0** in `e2euae`; the release gate moved it `UPGRADE_REQUIRED → READY` at 04:29:16 UTC (it had served the maintenance 503
+since 01:30:51, caused by the version bump reaching the running gate before the upgrade, §9g.3). Nginx, PostgreSQL and the validator
+were not restarted; no other database was upgraded. Backup: `D:\Backups\e2euae-preupgrade-20261102T042532Z` (15 checksums, 922 / 922
+files). Source rollback reference (last `19.0.1.3.0` manifest, schema-compatible): `258f11c`.
+
+**Evidence after.** EINV/2026/00001-3 validated / not submitted, attachments 548 / 550 / 551 with their sha256 unchanged, history
+4 / 4 / 4, findings 0, validator request count 6 (unchanged since the last authorised Validate), no provider, submission, attempt,
+event or queue job. `e2eadmin`, `e2eclienta`, `e2eclientb`, `hd67`, `saastest` answer 200; `ncollection`, `einvdev`, `einvfull`,
+`uaetest`, `atlas` and the other databases listed in §9g.3 stay at the maintenance 503 they had before (behind on other modules).
+
+**Last accepted tests.** Module suites 622 / 622 (+ 8 / 8 branch); official rules 107 expectations, 25 / 25 real-move documents, posted
+branch invoice 0 fatal; worker 29 / 29; Playwright 4 / 4 on the upgraded `e2euae` and 4 / 4 notice tests on an isolated server;
+translation coverage 5 / 5; pylint at baseline 205; upgrade rehearsal PASS.
+
+**Still open.** A-Cube: sandbox credential, real submission and acceptance, and whether it keeps `cbc:UUID` (hard stop, §9f).
+Customer: whether a branch issues under the parent's TRN (the engine uses the document company). Regulatory: §13. Deferred
+deployment decision: the database password on the odoo command line (§9g.2). `e2euae` lists 8 sales taxes without a PINT-AE
+category (unused by its invoices; classify them before using them). `einvdev` / `einvfull` need their owner's upgrade.
