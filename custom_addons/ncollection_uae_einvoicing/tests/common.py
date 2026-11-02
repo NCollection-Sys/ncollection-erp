@@ -4,6 +4,7 @@ product."""
 
 import base64
 import hashlib
+import os
 import secrets
 from unittest.mock import patch
 
@@ -16,6 +17,8 @@ GROUP = 'ncollection_uae_einvoicing.'
 # the shared secret between the engine and the (stubbed) validator worker in the tests: random per run, so no secret
 # literal lives in the source
 VALIDATOR_TOKEN = secrets.token_hex(24)
+# what the engine reads to reach a worker (models/prepare.py, lib/spec.py); removed for every EInvoiceCase
+VALIDATOR_ENV = ('NC_EINVOICE_VALIDATOR_URL', 'NC_EINVOICE_VALIDATOR_SB_URL', 'NC_EINVOICE_VALIDATOR_TOKEN')
 
 
 def signed_answer(answer, request, token=VALIDATOR_TOKEN, xml_sha256=None, nonce=None):
@@ -46,6 +49,14 @@ class EInvoiceCase(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        # hermetic: a test process started inside a container that runs the validator overlay inherits its URLs and
+        # token, and a test that expects "no validator" then validated against the LIVE worker. Tests that need a
+        # worker give it a stub through validator_env(); nothing reaches a real one.
+        hermetic = patch.dict(os.environ)
+        hermetic.start()
+        cls.addClassCleanup(hermetic.stop)
+        for name in VALIDATOR_ENV:
+            os.environ.pop(name, None)
         # the licence mirror is tested on its own (test_hardening); every other test runs on a licensed workspace
         licence = patch.object(type(cls.env['ncollection.einvoice']), '_nc_licensed', lambda self: True)
         licence.start()

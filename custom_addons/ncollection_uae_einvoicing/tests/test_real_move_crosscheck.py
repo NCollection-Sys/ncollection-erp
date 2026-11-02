@@ -39,6 +39,8 @@ REQUIRED_CASES = {
     'real-credit-note-381-partial-line': ('credit_note', 'pass', None),
     'real-credit-note-381-partial-multi': ('credit_note', 'pass', None),
     'real-commercial-credit-note-81': ('credit_note', 'pass', None),
+    # the credit note an accountant actually makes: Credit Note wizard → Reverse → Confirm (auto-reconciled)
+    'real-credit-note-381-reverse-wizard': ('credit_note', 'pass', None),
     # tests/test_scenario_matrix.py
     'real-scenario-free-zone': ('invoice', 'pass', None),
     'real-scenario-deemed-supply': ('invoice', 'pass', None),

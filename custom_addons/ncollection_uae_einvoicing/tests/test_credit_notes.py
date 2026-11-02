@@ -14,6 +14,7 @@ import re
 from datetime import date
 
 from odoo import Command
+from odoo.exceptions import UserError
 from odoo.tests import tagged
 from odoo.tools import mute_logger
 
@@ -230,3 +231,113 @@ class TestCreditNoteReferences(CreditCase):
         self.assertFalse(record.locked)
         steps = record.history_ids.filtered(lambda h: h.dimension == 'local_state').mapped('to_state')
         self.assertEqual(steps[-2:], ['ready', 'locally_checked'])
+
+
+@tagged('post_install', '-at_install')
+class TestCreditNoteThroughOdooReversal(CreditCase):
+    """The credit note an accountant actually makes: Odoo's Credit Note wizard, then Confirm. Posting a reversal of a
+    posted invoice RECONCILES the two receivables (account ``_post`` → ``_reconcile_reversed_moves``), so the original
+    reads 'reversed' (or 'partial') afterwards. What the engine requires of the original is that its E-INVOICE was
+    officially validated, never that the accounting invoice is still unpaid: this proves the two never get confused."""
+
+    def _wizard(self, original, **vals):
+        return (
+            self.env['account.move.reversal']
+            .with_context(active_model='account.move', active_ids=original.ids)
+            .create(dict({'reason': 'Full cancellation', 'journal_id': original.journal_id.id,
+                          'date': date(2026, 10, 5)}, **vals))
+        )
+
+    def _reverse(self, original, modify=False):
+        wizard = self._wizard(original)
+        action = wizard.modify_moves() if modify else wizard.refund_moves()
+        return wizard.new_move_ids, action
+
+    def _receivable(self, move):
+        return move.line_ids.filtered(lambda line: line.account_type == 'asset_receivable')
+
+    def _single_line_original(self):
+        return self._original(lines=[self._line(qty=2)])
+
+    def test_reverse_leaves_an_unreconciled_draft_and_confirm_reconciles_it_in_full(self):
+        original, _record = self._single_line_original()
+        refund, action = self._reverse(original)
+        self.assertEqual(action['res_id'], refund.id)
+        self.assertEqual((refund.move_type, refund.state, refund.reversed_entry_id), ('out_refund', 'draft', original))
+        self.assertEqual(original.payment_state, 'not_paid', "the wizard alone reconciles nothing")
+        self.assertFalse(self._receivable(original).matched_credit_ids)
+
+        refund.action_post()
+        partial = self._receivable(original).matched_credit_ids
+        self.assertEqual(partial.credit_move_id, self._receivable(refund), "only the two receivables are matched")
+        self.assertEqual(partial.amount, 210.0)
+        self.assertEqual((original.payment_state, original.amount_residual), ('reversed', 0.0))
+        self.assertEqual((refund.payment_state, refund.amount_total_signed), ('paid', -210.0))
+        self.assertFalse(self.env['account.payment'].search([('partner_id', '=', self.buyer.id)]),
+                         "a reversal reconciles moves, it creates no payment")
+
+        record, xml = self._ready_xml(refund, credit_reason='DL8.61.1.A')
+        self.assertEqual((record.document_kind, record.type_code), ('credit_note', '381'))
+        self.assertNotIn('NCOLLECTION:credit-note-original-not_einvoiced', self.rules(record))
+        self.assertIn(b'<CreditNote ', xml)
+        self.assertIn(b'<cbc:ResponseCode>DL8.61.1.A</cbc:ResponseCode>', xml)
+        self.assertIn(('<cac:InvoiceDocumentReference><cbc:ID>%s</cbc:ID>' % original.name).encode(),
+                      re.sub(rb'>\s+<', b'><', xml))
+        self.assertIn(b'<cbc:CreditedQuantity unitCode="C62">2</cbc:CreditedQuantity>', xml)
+        self.assertEqual(self._payable(xml), '210.00', "the credit note states positive amounts")
+        self._export('real-credit-note-381-reverse-wizard', xml)
+
+    def test_a_partial_credit_through_the_wizard_reconciles_only_its_own_amount(self):
+        original, _record = self._single_line_original()
+        refund, _action = self._reverse(original)
+        refund.invoice_line_ids.filtered(lambda line: line.display_type == 'product').quantity = 1
+        refund.action_post()
+        self.assertEqual(self._receivable(original).matched_credit_ids.amount, 105.0)
+        self.assertEqual((original.payment_state, original.amount_residual), ('partial', 105.0))
+        record, xml = self._ready_xml(refund, credit_reason='DL8.61.1.D')
+        self.assertEqual(record.type_code, '381')
+        self.assertIn(b'<cbc:CreditedQuantity unitCode="C62">1</cbc:CreditedQuantity>', xml)
+        self.assertEqual(self._payable(xml), '105.00')
+
+    def test_reverse_and_create_invoice_still_yields_a_valid_credit_note(self):
+        original, _record = self._single_line_original()
+        # in 'modify' mode the wizard redirects to the NEW draft invoice; the refund is the original's reversal
+        replacement, _action = self._reverse(original, modify=True)
+        refund = original.reversal_move_ids
+        self.assertEqual(len(refund), 1)
+        self.assertEqual((refund.move_type, refund.state), ('out_refund', 'posted'),
+                         "with no future date, Odoo posts and reconciles the reversal of a cancelling 'modify'")
+        self.assertEqual(original.payment_state, 'reversed')
+        self.assertEqual((replacement.move_type, replacement.state), ('out_invoice', 'draft'),
+                         "the correcting invoice is a new draft, outside the e-invoice until posted")
+        record, _xml = self._ready_xml(refund, credit_reason='DL8.61.1.A')
+        self.assertEqual(record.type_code, '381')
+
+    def test_a_credit_note_of_an_already_paid_invoice_stays_an_open_credit(self):
+        original, _record = self._single_line_original()
+        self.env['account.payment.register'].with_context(
+            active_model='account.move', active_ids=original.ids
+        ).create({'payment_date': date(2026, 10, 2)})._create_payments()
+        self.assertIn(original.payment_state, ('paid', 'in_payment'))
+        refund, _action = self._reverse(original)
+        refund.action_post()
+        self.assertEqual((refund.payment_state, refund.amount_residual), ('not_paid', 210.0),
+                         "nothing was left to reconcile: the refund is an outstanding credit")
+        record, xml = self._ready_xml(refund, credit_reason='DL8.61.1.A')
+        self.assertEqual(record.type_code, '381')
+        self.assertEqual(self._payable(xml), '210.00')
+
+    def test_a_validated_credit_note_refuses_a_second_validation_and_a_new_xml(self):
+        original, _record = self._single_line_original()
+        refund, _action = self._reverse(original)
+        refund.action_post()
+        record, xml = self._ready_xml(refund, credit_reason='DL8.61.1.A')
+        archive, digest = record.xml_attachment_id, record.xml_sha256
+        self._validated(record)
+        with self.assertRaisesRegex(UserError, 'Generate the XML before validating'):
+            record.action_validate()
+        with self.assertRaisesRegex(UserError, 'Only a ready e-invoice'):
+            record.action_generate_xml()
+        self.assertEqual((record.xml_attachment_id, record.xml_sha256, record.xml_attachment_id.raw),
+                         (archive, digest, xml))
+        self.assertEqual(record.local_state, 'validated')

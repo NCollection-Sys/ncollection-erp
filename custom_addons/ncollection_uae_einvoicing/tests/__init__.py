@@ -24,3 +24,4 @@ from . import test_key_rotation
 from . import test_export_package
 from . import test_foreign_buyer
 from . import test_uuid_identity
+from . import test_onboarding

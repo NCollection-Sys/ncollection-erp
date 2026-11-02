@@ -17,7 +17,7 @@ const TENANT = 'e2euae' as const;
 const MODULE = 'ncollection_uae_einvoicing';
 const OWNER = 'e2e.owner';
 const OWNER_PW = process.env.E2E_UAE_OWNER_PW ?? 'E2e-Uae-Owner-77!'; // dev-only fixture credential (setup script)
-const PAGES = ['Scenario', 'Scope', 'Lines', 'Findings', 'Identity', 'History'];
+const PAGES = ['Scenario', 'Scope', 'Lines', 'Findings', 'Identity', 'Transport', 'History'];
 // Menus by XML id, never by display name: a name can repeat anywhere in the menu tree.
 const MENUS = ['menu_einvoice_root', 'menu_einvoice_documents', 'menu_einvoice_inbound', 'menu_einvoice_provider',
   'menu_einvoice_export', 'menu_einvoice_sb_agreement'];
@@ -105,6 +105,11 @@ test.describe('UAE e-invoicing: the user interface', () => {
     for (const label of PAGES) {
       await expect(page.locator('.o_form_view .o_notebook .nav-link', { hasText: label }).first()).toBeVisible();
     }
+    // the "XML generated, not yet validated" notice exists only for local_state = locally_checked
+    const [state] = (await callKw(page.request, TENANT, 'ncollection.einvoice', 'read', [[ids[0]], ['local_state']]))
+      .result ?? [];
+    await expect(page.locator('.o_form_view .o_nc_einvoice_checked'))
+      .toHaveCount(state?.local_state === 'locally_checked' ? 1 : 0);
     await page.locator('.o_form_view .o_notebook .nav-link', { hasText: 'History' }).first().click();
     await expect(page.locator('.o_form_view .o_notebook .tab-pane.active')).toBeVisible();
     await expect(page.locator('.o_error_dialog')).toHaveCount(0);

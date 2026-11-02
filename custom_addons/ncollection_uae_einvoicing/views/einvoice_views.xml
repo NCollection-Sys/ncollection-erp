@@ -69,6 +69,12 @@
                         <field name="scope_reason" class="fw-bold" readonly="1"/>
                         (<field name="scope_source" readonly="1"/>).
                     </div>
+                    <!-- the statusbar deliberately keeps five values (ready covers locally_checked); this says which
+                         step of "Ready" the document is at, so Generate XML and Validate are never confused -->
+                    <div class="alert alert-info o_nc_einvoice_checked" role="status"
+                         invisible="local_state != 'locally_checked'">
+                        The XML is generated, archived and locally checked. It has not been officially validated yet.
+                    </div>
                     <div class="alert alert-warning" role="alert" invisible="not is_overdue">
                         The issue deadline has passed and this e-invoice has not been submitted.
                     </div>

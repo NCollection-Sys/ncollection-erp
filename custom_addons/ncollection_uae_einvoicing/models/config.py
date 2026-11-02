@@ -76,6 +76,26 @@ class EInvoiceConfig(models.Model):
         "deadline is not computed. The 14-Business-Day deadline of Art 6(5) is computed regardless.",
     )
 
+    unmapped_sale_tax_ids = fields.Many2many(
+        'account.tax',
+        string='Sales taxes without a PINT-AE category',
+        compute='_compute_unmapped_sale_tax_ids',
+        help="Active sales taxes of this company that no tax map classifies yet. An invoice using one of them is "
+        "blocked at Prepare (NCOLLECTION:tax-unmapped); this lists them up front so a new company can be set up "
+        "before its first invoice. Nothing is classified automatically: a tax's rate does not say whether it is "
+        "zero rated, exempt or out of scope.",
+    )
+
+    def _compute_unmapped_sale_tax_ids(self):
+        # the same rule Prepare applies: a map of the SAME company classifies the tax (models/prepare.py)
+        Tax = self.env['account.tax']
+        Map = self.env['ncollection.einvoice.tax.map']
+        for config in self:
+            company = config.company_id
+            mapped = Map.search([('company_id', '=', company.id)]).tax_id
+            taxes = Tax.search([('company_id', '=', company.id), ('type_tax_use', '=', 'sale')]) if company else Tax
+            config.unmapped_sale_tax_ids = taxes - mapped
+
     @api.constrains('vat_issue_days')
     def _check_vat_issue_days(self):
         for config in self:
