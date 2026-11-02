@@ -106,10 +106,27 @@ Security, Company, Appearance, Document Stamps, Print Settings, System. Every sc
   organisation model).
 * A company administrator cannot manage other tenants, cannot widen the licence, and cannot create platform roles.
 
+## Apps, Developer Mode and "Become Superuser" (platform only)
+
+* **Apps** (`base.menu_management`) is hidden in a tenant for everyone but the real superuser and the platform administrator
+  (`ir.ui.menu._ncollection_platform_only_menu_ids`); the menu is only the UI half. `ir.module.module` refuses `web_search_read` /
+  `web_read` too (`_nc_assert_module_management_allowed`), so the direct URL to the Apps action shows nothing.
+* **Developer Mode** is Odoo's native one (Settings > Activate the developer mode, or `?debug=1`). It sticks for the tenant **Owner**, the
+  platform administrator and the superuser, and is stripped for every other user (`ir.http._handle_debug`). The web client is an
+  `auth='none'` route, so the gate reads the session's user after Odoo's own session-token check (`_nc_debug_user`); a stale or forged
+  session fails closed. Developer Mode grants no right: Apps and module management stay refused as above.
+* **`/web/become`** (the developer menu's *Become Superuser*) is refused for anyone but the platform administrator and the superuser
+  (`ncollection_core/controllers/app_routes.py`). Odoo grants it to every system user, and a tenant Owner is one; as the superuser an
+  Owner passed every `env.su` escape, module installation included. Fixed in the Platform UX sprint (2026-11); a runtime that has not
+  been restarted on this code still has the hole.
+* Contact **Website** placeholder: `e.g. https://www.<platform domain>` from `ncollection_saas.base_domain` (else `NC_BASE_DOMAIN`);
+  the field itself stays empty (`ncollection_core/models/res_partner_website.py`).
+
 ## Verified how
 
 `ncollection_core/tests/test_workspace_admin.py`, `test_admin_service.py`, `test_forced_password_change.py`;
-`ncollection_saas/tests/test_tenant_admin.py`; `ncollection_saas/scripts/provisioning/verify_tenant_admin.sh` (a really provisioned
+`ncollection_saas/tests/test_tenant_admin.py`; `ncollection_core/tests/test_platform_ux_sprint.py` (Apps, Developer Mode, Become
+Superuser, Website placeholder); `ncollection_saas/scripts/provisioning/verify_tenant_admin.sh` (a really provisioned
 tenant, real HTTP, 30 checks including "the temporary password signs in, is then forced to change, and no table of either database holds it");
 Playwright specs under `e2e/tests/`.
 

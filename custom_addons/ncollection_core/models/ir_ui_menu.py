@@ -128,7 +128,30 @@ class IrUiMenu(models.Model):
         owner_only = self._ncollection_owner_only_menu_ids()
         if owner_only:
             visible = visible - owner_only
+        platform_only = self._ncollection_platform_only_menu_ids()
+        if platform_only:
+            visible = visible - platform_only
         return visible
+
+    # Apps (module management) belongs to the platform, not to any tenant user - the Owner included: every module
+    # operation is refused to them at the model (ir_module.py), so the menu only led to a screen whose buttons fail.
+    _PLATFORM_ONLY_MENUS = ('base.menu_management',)
+
+    @api.model
+    def _ncollection_platform_only_menu_ids(self):
+        """The Apps subtree, hidden from everyone but the superuser and a platform administrator (the same rule as
+        ``ir.module.module._nc_assert_module_management_allowed``)."""
+        if self.env.su or self.env.user._is_superuser() or self.env['res.users']._nc_actor_is_platform_admin():
+            return set()
+        Menu = self.sudo().with_context(active_test=False)
+        menu_ids = set()
+        for xmlid in self._PLATFORM_ONLY_MENUS:
+            root = self.env.ref(xmlid, raise_if_not_found=False)
+            if root:
+                menu_ids.add(root.id)
+                if root.parent_path:
+                    menu_ids.update(Menu.search([('parent_path', '=like', root.parent_path + '%')]).ids)
+        return menu_ids
 
     @api.model
     def _ncollection_owner_only_menu_ids(self):

@@ -89,6 +89,18 @@ class IrModuleModule(models.Model):
             "workspace is licensed under.)",
             system=self.env['ncollection.product.branding'].sudo().nc_brand()['name']))
 
+    @api.model
+    def web_search_read(self, *args, **kwargs):
+        """The Apps screen's list (and its kanban): the module catalogue is the platform's to manage, so a tenant user
+        reaching `/odoo/apps` by URL gets the refusal instead of a screen whose every button fails. Server code that
+        reads modules (`search`, `read`) is unaffected."""
+        self._nc_assert_module_management_allowed('web_search_read')
+        return super().web_search_read(*args, **kwargs)
+
+    def web_read(self, *args, **kwargs):
+        self._nc_assert_module_management_allowed('web_read')
+        return super().web_read(*args, **kwargs)
+
     def write(self, vals):
         """`state` is what an install/upgrade actually changes, so a direct
         write on it is the same operation wearing a different hat."""

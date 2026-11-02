@@ -375,6 +375,7 @@ msgstr "مفتاح الكاشف"
 #: model:ir.model.fields,field_description:ncollection_core.field_res_groups__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_partner__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -555,6 +556,7 @@ msgstr "حالة HTTP"
 #: model:ir.model.fields,field_description:ncollection_core.field_res_groups__id
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users__id
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_partner__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -2813,3 +2815,15 @@ msgstr "المجدول (خدمة)"
 #: model:res.groups,name:ncollection_core.group_config_sync
 msgid "Config Sync (service)"
 msgstr "مزامنة الإعدادات (خدمة)"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/document_print_mixin.py:0
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_partner_website.py:0
+msgid "e.g. https://www.%(domain)s"
+msgstr "مثال: https://www.%(domain)s"

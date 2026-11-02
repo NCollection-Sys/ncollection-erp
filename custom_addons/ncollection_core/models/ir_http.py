@@ -20,6 +20,7 @@ import werkzeug.exceptions
 from odoo import models
 from odoo.exceptions import AccessError
 from odoo.http import request
+from odoo.tools import consteq
 
 from ..app_url import APP_PATH
 
@@ -46,15 +47,42 @@ class IrHttp(models.AbstractModel):
         if not request.session.debug:
             return
         try:
-            user = request.env.user
-            if request.env.su or user._is_superuser():
+            user = cls._nc_debug_user()                             # None: no valid session -> fail closed below
+            if user is not None and (request.env.su or user._is_superuser()):
                 return
-            if user.has_group(_OWNER_GROUP):
+            if user is not None and user.has_group(_OWNER_GROUP):
+                return
+            # The platform administrator runs the platform database and never holds the tenant Owner ROLE, so
+            # Settings > Activate the developer mode was silently undone for exactly the operator it exists for. The
+            # check is the one module management uses, and it is always False inside a tenant database.
+            if user is not None and user._nc_actor_is_platform_admin():
                 return
         except Exception:  # pragma: no cover - never break dispatch
             # Uncertain -> fall through and fail closed (strip debug).
             _logger.debug("Owner debug-gate check failed; stripping debug", exc_info=True)
         request.session.debug = ''
+
+    @classmethod
+    def _nc_debug_user(cls):
+        """The signed-in user the debug flag is decided for, or None.
+
+        The web client (``/odoo``, ``/atlas``, ``/web``) is an ``auth='none'`` route, as in Odoo, so during dispatch
+        ``request.env.user`` is NOT the signed-in user: the gate judged "nobody" and stripped ``?debug=1`` for every
+        user, the Owner included, which is why Settings > Activate the developer mode never stuck. On such a route the
+        session's user is taken, but only after the same session-token check Odoo's own web client makes
+        (``security.check_session``, without its side effects): a stale or forged session fails closed."""
+        if request.env.uid:
+            return request.env.user
+        uid = request.session.uid
+        if not uid:
+            return None
+        user = request.env['res.users'].sudo().browse(uid).exists()
+        if not user or not user.active:
+            return None
+        expected = user._compute_session_token(request.session.sid)
+        if not expected or not consteq(expected, request.session.session_token or ''):
+            return None
+        return user.with_user(user).sudo(False)
 
     @classmethod
     def _authenticate(cls, endpoint):

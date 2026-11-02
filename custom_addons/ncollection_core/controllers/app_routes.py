@@ -7,6 +7,7 @@ runs unchanged for them (session, login redirect with ``?redirect=/atlas/...``, 
 ``index`` and ``_login_redirect`` keep Odoo's decision and only map its ``/odoo`` answer.
 """
 import json
+import logging
 
 from odoo import http
 from odoo.http import request
@@ -15,6 +16,8 @@ from odoo.addons.web.controllers.home import Home
 from odoo.addons.web.controllers.webmanifest import WebManifest
 
 from ..app_url import APP_PATH, ODOO_PATH, to_app_url
+
+_logger = logging.getLogger(__name__)
 
 
 class NcApplicationPath(Home):
@@ -29,6 +32,19 @@ class NcApplicationPath(Home):
             # address bar. A plain 302: the prefix is configuration, a permanent redirect would outlive a change of it.
             return request.redirect(to_app_url(request.httprequest.full_path.rstrip('?')), code=302, local=True)
         return super().web_client(s_action=s_action, **kw)
+
+    @http.route('/web/become', type='http', auth='user', sitemap=False, readonly=True)
+    def switch_to_admin(self):
+        """"Become Superuser" (the developer menu's item, and this URL with or without developer mode) is the
+        platform's, not a tenant's. Odoo grants it to any system user, and a tenant Owner IS one (role_groups.xml):
+        becoming the superuser then passed every `env.su` escape hatch, module installation included
+        (models/ir_module.py) - a tenant could install what its plan did not sell. Only the platform administrator
+        (always False inside a tenant database) and the real superuser keep it; anyone else stays who they are."""
+        user = request.env.user
+        if not (user._is_superuser() or request.env['res.users']._nc_actor_is_platform_admin()):
+            _logger.warning("Refused /web/become for user %s (%s): not a platform administrator.", user.id, user.login)
+            return request.redirect(self._login_redirect(user.id))
+        return super().switch_to_admin()
 
     @http.route('/', type='http', auth='none')
     def index(self, s_action=None, db=None, **kw):

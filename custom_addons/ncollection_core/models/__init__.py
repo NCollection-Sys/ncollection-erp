@@ -40,3 +40,4 @@ from . import anomaly
 # P8-T10 error telemetry & structured incident logging (Issue #444)
 from . import error_log
 from . import screen_title
+from . import res_partner_website
