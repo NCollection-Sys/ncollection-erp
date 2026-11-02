@@ -862,6 +862,45 @@ PID 1 exposed, so the change belongs to the deployment: a config file mounted re
 starts, so it is a deployment decision (P1-T02 production config), not a code change made here. In development the value is the
 documented dev password.
 
+**Tested 2026-11-02 with synthetic credentials** (a throwaway Postgres on an internal network): the image's entrypoint skips
+`--db_password` when `PGPASSWORD` is set (`check_config "db_password" "$PASSWORD" "PGPASSWORD"`), and libpq reads it. With it,
+PID 1's command line carries no password, Odoo connects and loads, and a wrong value fails with "password authentication failed".
+Limit: every process in the container runs as `odoo`, which can read `/proc/1/environ` too, and `docker inspect` shows the variable;
+the gain is that the value leaves the world-readable command line, `ps` and `docker top`. A Docker secret read through
+`PASSWORD_FILE` does NOT help: the entrypoint loads it and still passes `--db_password`.
+
+### 9g.3 Shared runtime: what a restart changes, and the approval package (2026-11-02, NOT executed)
+
+**Measured state** (`scripts/upgrade/preflight_versions.sh` over every database, read-only): the release gate already holds most
+databases at the maintenance 503 because they are behind code that predates this work (this branch changes only the two e-invoicing
+manifests). Behind on other modules: `ncollection` (platform), `atlas`, `atlaseg`, `awtar`, `devpath`, `i18nx`, `ncfocus`,
+`ncollection_demo`, `p1t12_test`, `p2t02_blast`, `t_a`, `test12`, `test14`, `test15`, `uaetest`, and `einvdev` / `einvfull`
+(localization 19.0.1.6.0 < 1.7.0 besides the e-invoicing module). Current: `e2eadmin`, `e2eclienta`, `e2eclientb`, `hd67`, `saastest`.
+
+**Incident caused by this work:** the running gate reads the manifests on disk, so the version bump in `dc2b416` put `e2euae` on the
+maintenance 503 from **2026-11-02 01:30:51 UTC** (first blocked request: `/websocket`). Data unaffected (`/web/health` 200, the three
+archived XMLs unchanged). Two ways out, either needs a decision: run the upgrade below, or restore `19.0.1.3.0` in the manifest (the
+gate then serves `e2euae` again on the OLD loaded code, and the next deploy must remember the views and `ar.po` need `-u`).
+
+**Minimum scope.** Python of `ncollection_uae_einvoicing` is loaded by the restart for every database that has the module: `e2euae`
+(upgraded here), `einvdev`, `einvfull` (already gated by an unrelated localization drift: they stay at 503, unchanged, until their
+owner upgrades them). No other database has the module, so their behaviour does not change. Nothing else in this branch is
+module-versioned.
+
+**Package (requires approval):** 1) backups: `pg_dump -Fc e2euae` + its filestore + the three sha256s (as
+`D:\Backups\e2euae-precreditnote-*`), source revision `c90626c` + the current addon tree as the rollback reference; 2) checks: disk,
+commit headroom, no active sessions or queued jobs on `e2euae`, the running config hashes (`make einvoice-validator-check`); 3) restart
+the odoo service only, with the files it runs with (`EINVOICE_STACK_FILES` + `docker-compose.einvoice.yml`; never base + dev alone,
+never `--remove-orphans`, never the Self-Billing worker); 4) `make upgrade-preflight db=e2euae` names exactly
+`ncollection_uae_einvoicing`; 5) `odoo -d e2euae -u ncollection_uae_einvoicing --stop-after-init --no-http --max-cron-threads=0` via
+`exec`; 6) smoke: `e2euae` login 200, `e2eclienta/b` 200, `make release-status db=e2euae` READY, the e-invoice form's seven pages,
+the configuration readiness list, Arabic; 7) evidence: EINV/2026/00001-3 validated / not submitted, attachments 548 / 550 / 551 with
+the same sha256, history 4 / 4 / 4, findings 0, validator request count unchanged, 0 submissions. Rehearsed on a copy:
+REHEARSAL=PASS (§12). Every tenant on the shared odoo is unavailable while odoo restarts; the duration was not measured here.
+**Rollback:** before step 5, put the previous addon tree back and restart; after a failed step 5, the same plus a restore of the
+step-1 backup (separately approved). The password change (9g.2) is a separate decision: it changes how the container starts and adds a
+second rollback dimension, so it should not ride on this upgrade.
+
 ## 10. Retention and tenant offboarding
 
 **Evidence export package (R46, Cycle 4).** Configuration > *Create Evidence Package* (e-invoicing managers; for their own companies
