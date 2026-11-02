@@ -54,6 +54,7 @@ _BLOCKED_MODULE_OPERATIONS = (
     'button_uninstall_wizard',
     'button_reset_state',
     'module_uninstall',
+    'update_list',
 )
 
 
@@ -159,3 +160,32 @@ class IrModuleModule(models.Model):
     def module_uninstall(self):
         self._nc_assert_module_management_allowed('module_uninstall')
         return super().module_uninstall()
+
+    def update_list(self):
+        # "Update Apps List": scans the server's addons path and writes the catalogue. The platform's loader (`-i` /
+        # `-u`) calls it as the superuser; from inside a workspace it is module management like the buttons.
+        self._nc_assert_module_management_allowed('update_list')
+        return super().update_list()
+
+
+class BaseModuleUpgrade(models.TransientModel):
+    """Apply Scheduled Upgrades: rebuilds the registry with `update_module=True`, which applies every queued module
+    state and runs the upgrade of every module marked for it. Not a button on a module, so not covered above."""
+    _inherit = 'base.module.upgrade'
+
+    def upgrade_module(self):
+        self.env['ir.module.module']._nc_assert_module_management_allowed('base.module.upgrade')
+        return super().upgrade_module()
+
+    def upgrade_module_cancel(self):
+        self.env['ir.module.module']._nc_assert_module_management_allowed('base.module.upgrade:cancel')
+        return super().upgrade_module_cancel()
+
+
+class BaseModuleUpdate(models.TransientModel):
+    """Update Apps List, the wizard (it calls `update_list`; refused before the wizard reports anything)."""
+    _inherit = 'base.module.update'
+
+    def update_module(self):
+        self.env['ir.module.module']._nc_assert_module_management_allowed('base.module.update')
+        return super().update_module()

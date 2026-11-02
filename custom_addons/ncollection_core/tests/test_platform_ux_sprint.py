@@ -57,6 +57,15 @@ class TestAppsBelongToThePlatform(TransactionCase):
             Module.search([], limit=1).web_read({'name': {}})
         self.assertTrue(Module.search_count([]), "server code that reads modules still can")
 
+    def test_refreshing_the_list_and_applying_scheduled_upgrades_are_refused_too(self):
+        _as_tenant(self)
+        for model, method in (('base.module.update', 'update_module'), ('base.module.upgrade', 'upgrade_module'),
+                              ('base.module.upgrade', 'upgrade_module_cancel')):
+            with self.subTest(model=model, method=method), self.assertRaises(AccessError):
+                getattr(self.env[model].with_user(self.owner).create({}), method)()
+        with self.assertRaises(AccessError):
+            self.env['ir.module.module'].with_user(self.owner).update_list()
+
     def test_installed_business_apps_stay_visible(self):
         _as_tenant(self)
         contacts = self.env.ref('contacts.menu_contacts', raise_if_not_found=False)

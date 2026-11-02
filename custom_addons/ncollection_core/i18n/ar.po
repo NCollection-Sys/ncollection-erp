@@ -376,6 +376,8 @@ msgstr "مفتاح الكاشف"
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_res_partner__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_update__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_upgrade__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -557,6 +559,8 @@ msgstr "حالة HTTP"
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users__id
 #: model:ir.model.fields,field_description:ncollection_core.field_res_users_apikeys__id
 #: model:ir.model.fields,field_description:ncollection_core.field_res_partner__id
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_update__id
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_upgrade__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -2827,3 +2831,28 @@ msgstr "مسودة"
 #: code:addons/ncollection_core/models/res_partner_website.py:0
 msgid "e.g. https://www.%(domain)s"
 msgstr "مثال: https://www.%(domain)s"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_nc_document_print_mixin__nc_stamp_mode
+msgid "Default follows the Print Settings of this kind of document. On or Off applies to this document only. On draws the stamp chosen for this kind of document; with no stamp configured, nothing is drawn."
+msgstr "الافتراضي يتبع إعدادات الطباعة لهذا النوع من المستندات. التشغيل أو الإيقاف ينطبق على هذا المستند فقط. التشغيل يضع الختم المختار لهذا النوع من المستندات؛ وإن لم يُعدّ ختم فلا يُوضع شيء."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_document_print_mixin__nc_stamp_mode
+msgid "Document Stamp"
+msgstr "ختم المستند"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_document_print_mixin__nc_stamp_mode_editable
+msgid "Nc Stamp Mode Editable"
+msgstr "يمكن تغيير ختم المستند"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_nc_document_print_mixin__nc_stamp_default_on
+msgid "Stamped by default"
+msgstr "مختوم افتراضيًا"
+
+#. module: ncollection_core
+#: model:ir.model.fields,help:ncollection_core.field_nc_document_print_mixin__nc_stamp_default_on
+msgid "What Default means for this document: its kind's Print Setting."
+msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."

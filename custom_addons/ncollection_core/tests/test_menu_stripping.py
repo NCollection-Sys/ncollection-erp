@@ -45,9 +45,11 @@ class TestMenuStripping(TransactionCase):
         self.assertNotIn(self.apps_menu.id, visible)
         self.assertNotIn(self.settings_menu.id, visible)
 
-    def test_owner_sees_both_menus(self):
+    def test_owner_sees_settings_but_apps_belongs_to_the_platform(self):
+        # SEC-01: Apps is the platform's (ir_ui_menu._ncollection_platform_only_menu_ids), the Owner included; the
+        # Owner-only rule still gives the Owner Settings.
         visible = self.env["ir.ui.menu"].with_user(self.owner)._visible_menu_ids()
-        self.assertIn(self.apps_menu.id, visible)
+        self.assertNotIn(self.apps_menu.id, visible)
         self.assertIn(self.settings_menu.id, visible)
 
     def test_owner_only_menu_ids_empty_for_owner(self):
