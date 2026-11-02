@@ -217,6 +217,15 @@ that rate is material, take a per-tenant accounting decision about `round_global
   (`unmapped_sale_tax_ids`: active sales taxes of that company that no map of the same company classifies, the rule Prepare
   applies) with a warning, so a new company is set up before its first invoice. The list only reads: it creates and changes no map, so
   running it again, on a fresh or an already configured company, changes nothing (`tests/test_onboarding.py`).
+* **Branch companies:** a tax is classified by the company that OWNS it (a map is that company's), and an Odoo branch invoices
+  with its parent company's taxes (`account.tax` checks companies `parent_of`). Prepare therefore reads the maps of the taxes on
+  the document from the document company **and its ancestors** (`_nc_tax_maps`), never a sibling's or another tenant's, and the
+  branch's readiness list counts the parent's classified taxes as ready. Before 2026-11-02 Prepare read only the branch's own
+  maps, which can never exist for a parent tax, so every branch invoice blocked with `tax-unmapped`. The read is `sudo` because
+  a branch user's session may not include the parent; the domain (the document's taxes, the company chain) is the boundary, and
+  the record rule on the map is unchanged, so a branch manager still cannot edit the parent's classification.
+  `TestBranchTaxClassification`. Whether a UAE branch issues under the parent's TRN is a tax-registration question for the
+  customer; the engine takes seller identity from the document company as before.
 * **Units:** an explicit closed map to UN/ECE Rec 20; an unknown unit blocks (Odoo core silently uses `C62`).
 * **GTIN:** a product barcode is sent as a GTIN (scheme 0160) only if it is a GTIN-8/12/13/14 with a correct GS1 check digit; any other
   barcode is not sent.
@@ -815,6 +824,44 @@ Queue channel `root.einvoice` (data/transport.xml); crons only enqueue. Runner h
 half-provisioned between the probe and the connect is skipped and retried, and an unreadable server keeps the current scope, so a
 refresh never takes the loop down (`TestRunnerResilience`, 3 tests). Logs carry reasons, never database contents or secrets.
 
+### 9g.1 Upgrading the shared development runtime (PREPARED 2026-11-02, NOT executed)
+
+The shared dev Odoo has run since 2026-10-31 21:03 UTC and has loaded none of `7a8fd4f` (repeated-failure history), `82b98eb`
+(onboarding readiness, form notice, test isolation) or the 2026-11-02 changes (branch tax classification, the credential wizard moved
+to `wizard/`, Arabic catalogue, pylint fixes). Python reaches it only on a restart; views, the field and `ar.po` only on `-u`.
+
+* **What changes.** Python: `models/prepare.py`, `models/config.py`, `models/secret.py`, `wizard/secret_wizard.py`,
+  `models/self_billing.py`, `runner_scope.py`. Data: `views/einvoice_views.xml`, `views/config_views.xml`, `i18n/ar.po`. Schema: none
+  (the new field is computed, not stored; the wizard keeps its model name and table). Security files: unchanged. Version
+  `19.0.1.3.0 → 19.0.1.4.0` so the release gate and `make upgrade-preflight` name the upgrade instead of reporting the database current.
+  `ncollection_uae_einvoicing_acube`: README and manifest keys only, no upgrade needed.
+* **Which databases.** `e2euae` (19.0.1.3.0). `einvdev` / `einvfull` were already at 19.0.1.2.0 before this work and are someone
+  else's dev databases: list them, do not upgrade them unasked. Every other database has the module uninstalled.
+* **Order.** 1) Announce the window; nothing else may depend on the stack (Rule 14). 2) Back up `e2euae` (dump + filestore + the three
+  archived XMLs' sha256, as `D:\Backups\e2euae-precreditnote-*`). 3) `make upgrade-rehearse db=e2euae` (a COPY: drift report, HTTP
+  smoke, targeted `-u`, smoke; REHEARSAL=PASS required). 4) Restart odoo with the files it runs with — base + dev + routing + saas +
+  einvoice (`EINVOICE_STACK_FILES`), never base + dev alone, never `--remove-orphans` (scripts/dev/einvoice_stack_guard.sh checks the
+  set). 5) `make upgrade-preflight db=e2euae` must name `ncollection_uae_einvoicing`. 6) Targeted `-u ncollection_uae_einvoicing -d
+  e2euae --stop-after-init` (never `-u all`). 7) Restart nginx only if odoo's address changed (nginx resolves once). 8) Smoke: login,
+  E-Invoices list, the form's seven pages, the configuration form's readiness list, `make release-status db=e2euae`.
+* **Evidence check after.** EINV/2026/00001-00003 still validated / not submitted, attachments 548 / 550 / 551 with the same sha256,
+  history 4 / 4 / 4, findings 0, validator request count unchanged (no Validate is part of an upgrade).
+* **Expected disruption.** Every tenant on the shared odoo answers 502/503 for the restart (about 30-60 s) and `e2euae` holds a
+  branded 503 from the release gate until step 6 completes.
+* **Rollback.** Rehearsal FAIL, preflight not naming the module, a failed `-u`, a smoke failure or any evidence difference: stop, put the
+  previous commit's addon tree back, restart, and if `-u` had already run, restore `e2euae` from the step-2 backup (an explicit,
+  separately approved restore).
+
+### 9g.2 Database password on the Odoo command line (recorded, not changed)
+
+The official `odoo:19` entrypoint passes `--db_password` on the command line of the container's main process (PID 1), so any process in
+the container can read it from `/proc/1/cmdline`. The Makefile's `ODOO_DB_ARGS` recipes do the same for `exec`'d processes (visible in
+`make -n` and the process list); `make -p` shows only the unexpanded definition since `026bb50`. Fixing only the Makefile would leave
+PID 1 exposed, so the change belongs to the deployment: a config file mounted read-only for the odoo user (`db_password` in
+`odoo.conf`, mode 0600) or the image's `PASSWORD_FILE`, with recipes that no longer pass the flag. That changes how every container
+starts, so it is a deployment decision (P1-T02 production config), not a code change made here. In development the value is the
+documented dev password.
+
 ## 10. Retention and tenant offboarding
 
 **Evidence export package (R46, Cycle 4).** Configuration > *Create Evidence Package* (e-invoicing managers; for their own companies
@@ -906,6 +953,17 @@ verified by the check (`localization_applied_state=none`; running the existing, 
 refused). **Pilot: `uaetest`.** Nothing has been enabled or changed on any tenant.
 
 ## 12. Tests and gates
+
+**Sprint 3 (2026-11-02), fresh disposable database, final code:** one isolated process, 622 tests, 0 failed, 0 errors, 0 skipped
+(e-invoicing 524, A-Cube 52 + localization 69 counted as 93 post-install, translation coverage 5 with `ncollection_saas` installed so
+its platform-module rule runs); official rules 107 expectations, 25 / 25 real-move documents, worker 29 / 29; Playwright 4 / 4; the
+live validator was never called. Static: flake8, invariants (+117 tests), doc counts (+8), architecture guard (+39), skip gate (+17),
+role matrix (+18), and the **pylint-odoo gate back at its 205 baseline**: the branch had added 8 findings (the credential wizard in
+`models/`, two redundant field strings, an `except: pass` in the runner, the A-Cube manifest's default keys and missing README), all
+fixed rather than baselined. Fixed: **branch companies could never be e-invoiced** (§6). Arabic: the four new user-facing terms are
+in `ar.po` under their own references. Not run here: `make verify-all` (its e2e step restarts the shared odoo and nginx; its other
+seven suites are platform suites this work does not touch); a browser view of the "XML generated, not validated" notice (no isolated
+web server is reachable from a browser without publishing a port; the view installs and loads in the suite).
 
 **Sprint 2 (2026-11-02), fresh disposable database, current code:** e-invoicing module suite **521 tests, 0 failed, 0 errors, 0
 skipped** (skip gate clean). New: credit notes through Odoo's own reversal wizard 5 (§9e), onboarding readiness 4
