@@ -16,7 +16,4 @@
     'data': [
         'views/provider_views.xml',
     ],
-    'installable': True,
-    'application': False,
-    'auto_install': False,
 }

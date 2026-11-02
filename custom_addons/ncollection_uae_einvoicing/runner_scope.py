@@ -139,7 +139,8 @@ def install(runner_cls=None, clock=time.monotonic):
                     try:
                         db.close()
                     except Exception:  # noqa: BLE001
-                        pass
+                        _logger.debug('e-invoicing runner: closing a database that could not be joined failed',
+                                      exc_info=True)
                 continue
             self.db_by_name[db_name] = db
             for job_data in pending:

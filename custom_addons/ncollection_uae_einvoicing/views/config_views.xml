@@ -25,7 +25,7 @@
                     <div class="alert alert-warning o_nc_einvoice_unmapped" role="alert"
                          invisible="not unmapped_sale_tax_ids">
                         Some sales taxes have no PINT-AE VAT category yet. An invoice that uses one of them cannot be
-                        prepared: classify each in Configuration &gt; Tax Mapping.
+                        prepared: classify each one in the Tax Mapping of the e-invoicing Configuration.
                     </div>
                     <group string="Readiness" invisible="not unmapped_sale_tax_ids">
                         <field name="unmapped_sale_tax_ids" widget="many2many_tags" readonly="1"/>

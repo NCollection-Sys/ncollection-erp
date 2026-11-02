@@ -306,15 +306,26 @@ class EInvoicePrepare(models.Model):
             return supply
         return move.invoice_date or False
 
+    def _nc_tax_maps(self, move, company):
+        """The maps that classify the taxes ON THIS DOCUMENT. A tax is classified by the company that owns it (a map
+        is that company's, config.py ``_check_company``), and a branch invoices with its parent company's taxes
+        (Odoo's ``account.tax`` checks companies ``parent_of``). So the maps are read for the document's own taxes,
+        from the document company and its ancestors only: exactly the companies whose taxes Odoo lets the document
+        carry, never a sibling's or another tenant's. ``sudo`` because a branch user's session may not include the
+        parent company; the domain, not the session, is the boundary here."""
+        taxes = move.invoice_line_ids.tax_ids._origin
+        if not taxes:
+            return self.env['ncollection.einvoice.tax.map']
+        return self.env['ncollection.einvoice.tax.map'].sudo().search(
+            [('tax_id', 'in', taxes.ids), ('company_id', 'in', company.parent_ids.ids)]
+        )
+
     def _nc_decide_scope(self):
         """Run lib/scope.py on this document and record the decision (engine fields). ``(Scope, issues)``."""
         self.ensure_one()
         move, company = self.move_id, self.company_id
         seller, buyer = self._nc_parties()
-        tax_map = {
-            m.tax_id.id: m.pint_category
-            for m in self.env['ncollection.einvoice.tax.map'].search([('company_id', '=', company.id)])
-        }
+        tax_map = {m.tax_id.id: m.pint_category for m in self._nc_tax_maps(move, company)}
         categories = {
             tax_map.get(line.tax_ids.id) if len(line.tax_ids) == 1 else None
             for line in move.invoice_line_ids.filtered(lambda ml: ml.display_type == 'product')
@@ -415,9 +426,7 @@ class EInvoicePrepare(models.Model):
         is_credit = move.move_type in CREDIT_TYPES
         flags = {name: bool(self['flag_' + name]) for name in identity.FLAG_ORDER}
         txn_code = identity.transaction_type_code(flags)
-        tax_map = {
-            m.tax_id.id: m for m in self.env['ncollection.einvoice.tax.map'].search([('company_id', '=', company.id)])
-        }
+        tax_map = {m.tax_id.id: m for m in self._nc_tax_maps(move, company)}
 
         # --- lines and per-line toggles
         toggles = {line.move_line_id.id: line for line in self.line_ids}

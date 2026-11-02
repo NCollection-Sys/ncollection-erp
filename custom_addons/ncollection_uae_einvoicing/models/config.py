@@ -87,14 +87,19 @@ class EInvoiceConfig(models.Model):
     )
 
     def _compute_unmapped_sale_tax_ids(self):
-        # the same rule Prepare applies: a map of the SAME company classifies the tax (models/prepare.py)
+        # the same rule Prepare applies (models/prepare.py ``_nc_tax_maps``): the sales taxes this company can
+        # invoice with (its own and, for a branch, its parent companies'), classified by the company that owns them
         Tax = self.env['account.tax']
-        Map = self.env['ncollection.einvoice.tax.map']
+        Map = self.env['ncollection.einvoice.tax.map'].sudo()
         for config in self:
             company = config.company_id
-            mapped = Map.search([('company_id', '=', company.id)]).tax_id
-            taxes = Tax.search([('company_id', '=', company.id), ('type_tax_use', '=', 'sale')]) if company else Tax
-            config.unmapped_sale_tax_ids = taxes - mapped
+            if not company:
+                config.unmapped_sale_tax_ids = Tax
+                continue
+            chain = company.parent_ids.ids
+            taxes = Tax.sudo().search([('company_id', 'in', chain), ('type_tax_use', '=', 'sale')])
+            mapped = Map.search([('company_id', 'in', chain), ('tax_id', 'in', taxes.ids)]).tax_id
+            config.unmapped_sale_tax_ids = (taxes - mapped).with_env(self.env)
 
     @api.constrains('vat_issue_days')
     def _check_vat_issue_days(self):

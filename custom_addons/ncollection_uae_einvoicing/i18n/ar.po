@@ -1737,6 +1737,7 @@ msgstr "يمكن لمدير الفوترة الإلكترونية فقط تدو�
 #. module: ncollection_uae_einvoicing
 #. odoo-python
 #: code:addons/ncollection_uae_einvoicing/models/secret.py:0
+#: code:addons/ncollection_uae_einvoicing/wizard/secret_wizard.py:0
 msgid "Only an e-invoicing manager can set a provider credential."
 msgstr "لا يستطيع ضبط بيانات اعتماد المزوّد إلا مدير الفوترة الإلكترونية."
 
@@ -3352,3 +3353,28 @@ msgstr "نفّذ التدوير"
 #: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_secret__rotated_at
 msgid "Rotated At"
 msgstr "تاريخ التدوير"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,field_description:ncollection_uae_einvoicing.field_ncollection_einvoice_config__unmapped_sale_tax_ids
+msgid "Sales taxes without a PINT-AE category"
+msgstr "ضرائب المبيعات غير المصنّفة وفق PINT-AE"
+
+#. module: ncollection_uae_einvoicing
+#: model:ir.model.fields,help:ncollection_uae_einvoicing.field_ncollection_einvoice_config__unmapped_sale_tax_ids
+msgid "Active sales taxes of this company that no tax map classifies yet. An invoice using one of them is blocked at Prepare (NCOLLECTION:tax-unmapped); this lists them up front so a new company can be set up before its first invoice. Nothing is classified automatically: a tax's rate does not say whether it is zero rated, exempt or out of scope."
+msgstr "ضرائب المبيعات النشطة لهذه الشركة التي لم يصنّفها أي ربط ضريبي بعد. تُحظر الفاتورة التي تستخدم إحداها عند التحضير (NCOLLECTION:tax-unmapped)؛ وتُعرض هنا مسبقاً لإعداد الشركة الجديدة قبل فاتورتها الأولى. لا يُصنَّف أي شيء تلقائياً: نسبة الضريبة لا تحدد ما إذا كانت التوريدات خاضعة للنسبة الصفرية أو معفاة أو خارج النطاق."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_config_form
+msgid "Readiness"
+msgstr "الجاهزية"
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_config_form
+msgid "Some sales taxes have no PINT-AE VAT category yet. An invoice that uses one of them cannot be prepared: classify each one in the Tax Mapping of the e-invoicing Configuration."
+msgstr "بعض ضرائب المبيعات ليس لها فئة ضريبية وفق PINT-AE بعد. لا يمكن تحضير فاتورة تستخدم إحداها: صنّف كل ضريبة في ربط الضرائب ضمن إعدادات الفوترة الإلكترونية."
+
+#. module: ncollection_uae_einvoicing
+#: model_terms:ir.ui.view,arch_db:ncollection_uae_einvoicing.view_einvoice_form
+msgid "The XML is generated, archived and locally checked. It has not been officially validated yet."
+msgstr "تم إنشاء ملف XML وأرشفته وفحصه محلياً. لم يتم التحقق منه رسمياً بعد."

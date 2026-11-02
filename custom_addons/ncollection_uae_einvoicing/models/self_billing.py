@@ -29,7 +29,6 @@ class SelfBillingAgreement(models.Model):
     )
     partner_id = fields.Many2one(
         'res.partner',
-        string='Partner',
         required=True,
         index=True,
         ondelete='restrict',
