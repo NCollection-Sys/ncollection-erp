@@ -210,6 +210,13 @@ that rate is material, take a per-tenant accounting decision about `round_global
   A flagged line becomes a document-level allowance/charge with its VAT category (`aligned-ibrp-032/037`); category `N` is refused
   (`ibr-114/115-ae`); an unflagged negative line is refused. Line discounts become the price discount (BT-147/148), as in the official
   samples; `OCQ-4` (precision of a derived net price) stays open.
+* **Tax map and onboarding a company:** every sales tax needs an explicit PINT-AE category (`S Z E O AE N`; `E` needs its
+  exemption reason, `AE` its goods type and shown rate, `N` a 0% tax with its shown rate). Nothing is seeded and nothing is inferred
+  from a rate: a 0% tax may be zero rated, exempt or out of scope. An invoice using an unmapped tax blocks at Prepare
+  (`NCOLLECTION:tax-unmapped`). The company's e-invoicing configuration lists **Sales taxes without a PINT-AE category**
+  (`unmapped_sale_tax_ids`: active sales taxes of that company that no map of the same company classifies, the rule Prepare
+  applies) with a warning, so a new company is set up before its first invoice. The list only reads: it creates and changes no map, so
+  running it again, on a fresh or an already configured company, changes nothing (`tests/test_onboarding.py`).
 * **Units:** an explicit closed map to UN/ECE Rec 20; an unknown unit blocks (Odoo core silently uses `C62`).
 * **GTIN:** a product barcode is sent as a GTIN (scheme 0160) only if it is a GTIN-8/12/13/14 with a correct GS1 check digit; any other
   barcode is not sent.
@@ -637,6 +644,25 @@ submission of the same revision is refused (`already submitted`) and the idempot
 | duplicate credit note | `test_a_credit_note_has_one_einvoice_per_revision`; transport idempotency (test_transport, test_self_billing) |
 | cross-tenant | structural: database per tenant and the ORM link is the only reference; not separately testable inside one database |
 | invalid VAT / invalid totals | reconciliation + official rules (test_pint_logic, test_prepare; unchanged for credit notes) |
+| **Odoo's own wizard**: Credit Note → Reverse → Confirm, auto-reconciled in full (original `reversed`, refund `paid`, only the two receivables matched, no payment) | `TestCreditNoteThroughOdooReversal.test_reverse_leaves_an_unreconciled_draft_and_confirm_reconciles_it_in_full` (+ official, `real-credit-note-381-reverse-wizard`) ¹ |
+| partial credit through the wizard (original `partial`, only the credited amount reconciled) | `test_a_partial_credit_through_the_wizard_reconciles_only_its_own_amount` ¹ |
+| Reverse and Create Invoice (cancelling reversal + new draft invoice) | `test_reverse_and_create_invoice_still_yields_a_valid_credit_note` ¹ |
+| credit note of an already-paid invoice (nothing to reconcile: an open credit) | `test_a_credit_note_of_an_already_paid_invoice_stays_an_open_credit` ¹ |
+| validated credit note: no second Validate, no new XML, archive unchanged | `test_a_validated_credit_note_refuses_a_second_validation_and_a_new_xml` ¹ |
+
+¹ Added 2026-11-02 and run on a fresh database in the full module suite (521 tests, 0 failed, 0 errors, 0 skipped); the
+wizard-made credit note passes the official PINT-AE 1.0.4 rules (`e2e_check.py`, §12).
+
+**Reconciliation is not the original's validity.** Confirming a reversal of a posted invoice makes Odoo reconcile the two
+receivables (`account.move._post` → `_reconcile_reversed_moves`), so a fully credited original reads `reversed` with a zero residual.
+That is standard accounting and is accepted. What the engine requires of the original is that its **e-invoice** was officially
+validated (`CREDITABLE_LOCAL`), never that the accounting invoice is still unpaid; the live run below proves the two are not confused.
+
+**Live local evidence (2026-11-01/02, tenant `e2euae`, Billing worker, real browser).** INV/2026/00002 → EINV/2026/00002 (380,
+attachment 550, sha256 `97b03402…5b0bc0c`) validated on its only Validate; Credit Note → Reverse → Confirm → RINV/2026/00001
+(auto-reconciled, 210 AED) → EINV/2026/00003 (381, reason DL8.61.1.A, BillingReference INV/2026/00002 2026-11-02, CreditedQuantity 2,
+200 / 10 / 210, attachment 551, sha256 `5efe0478…7a98bf`) validated on its only Validate (`official_validation_passed`, SaxonC-HE
+13.1, release 1.0.4, rules `cebdadfd…`; 0 findings; not submitted). No ASP was contacted.
 
 ## 9f. ASP research and the A-Cube adapter (Cycle 4, 2026-10-29)
 
@@ -880,6 +906,16 @@ verified by the check (`localization_applied_state=none`; running the existing, 
 refused). **Pilot: `uaetest`.** Nothing has been enabled or changed on any tenant.
 
 ## 12. Tests and gates
+
+**Sprint 2 (2026-11-02), fresh disposable database, current code:** e-invoicing module suite **521 tests, 0 failed, 0 errors, 0
+skipped** (skip gate clean). New: credit notes through Odoo's own reversal wizard 5 (§9e), onboarding readiness 4
+(`test_onboarding.py`). Official rules: `e2e_check.py` **107 expectations hold, 0 fail**; **25 / 25 real-move documents** as
+expected (24 valid, among them the wizard-made credit note `real-credit-note-381-reverse-wizard` and the self-billed 389 / 261 on the
+Self-Billing rule set; 1 deliberately invalid refused by `ibr-193-ae`); worker 29 / 29. Playwright `uae-einvoicing.spec.ts` 4 / 4
+(read-only on `e2euae`; the form now checks all seven pages, Transport included). **Test isolation fixed:** a suite started inside a
+container that runs the validator overlay inherited its URL and token, so `test_the_full_user_flow_…` validated a disposable
+document against the LIVE Billing worker; `EInvoiceCase` now removes the validator variables for every test class (tests that need a
+worker give it a stub), and the 521-test rerun made no call to the live worker.
 
 **Final completion pass (2026-10-29), fresh database, final code:** full suite 594 / 594, 0 failed, 0 errors, 0 skipped (e-invoicing
 502, A-Cube 41, localization 51); A-Cube 41 + gated eligibility 22 + Arabic coverage / PO format 5 = 68 / 68; official rules 105
