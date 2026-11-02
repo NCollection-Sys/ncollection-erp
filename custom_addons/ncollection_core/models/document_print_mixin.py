@@ -24,6 +24,7 @@ _FILENAME_UNSAFE = re.compile(r'[\\/:*?"<>|\r\n\t]+')
 
 class NcDocumentPrintMixin(models.AbstractModel):
     _name = 'nc.document.print.mixin'
+    _inherit = ['nc.document.stamp.mixin']       # the document's own Document Stamp switch (ncollection_branding)
     _description = 'View and Print of a business document from one report'
 
     # The View controller serves only models that carry this marker (i.e. that opted in by inheriting this mixin).

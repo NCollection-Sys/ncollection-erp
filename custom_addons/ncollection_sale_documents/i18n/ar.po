@@ -84,3 +84,38 @@ msgstr "الإجمالي شامل الضريبة"
 #: code:addons/ncollection_sale_documents/models/sale_order.py:0
 msgid "Quotation"
 msgstr "عرض سعر"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,help:ncollection_sale_documents.field_sale_order__nc_stamp_mode
+msgid "Default follows the Print Settings of this kind of document. On or Off applies to this document only. On draws the stamp chosen for this kind of document; with no stamp configured, nothing is drawn."
+msgstr "الافتراضي يتبع إعدادات الطباعة لهذا النوع من المستندات. التشغيل أو الإيقاف ينطبق على هذا المستند فقط. التشغيل يضع الختم المختار لهذا النوع من المستندات؛ وإن لم يُعدّ ختم فلا يُوضع شيء."
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__nc_stamp_mode
+msgid "Document Stamp"
+msgstr "ختم المستند"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__nc_stamp_mode_editable
+msgid "Nc Stamp Mode Editable"
+msgstr "يمكن تغيير ختم المستند"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__nc_stamp_default_on
+msgid "Stamped by default"
+msgstr "مختوم افتراضيًا"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,help:ncollection_sale_documents.field_sale_order__nc_stamp_default_on
+msgid "What Default means for this document: its kind's Print Setting."
+msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_order_form_nc_stamp_mode
+msgid "(stamped)"
+msgstr "(مختوم)"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_order_form_nc_stamp_mode
+msgid "(not stamped)"
+msgstr "(غير مختوم)"

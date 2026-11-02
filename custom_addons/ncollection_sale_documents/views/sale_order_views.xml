@@ -62,4 +62,25 @@
             </xpath>
         </field>
     </record>
+
+    <!-- STAMP-02: the Document Stamp switch of THIS document (nc.document.stamp.mixin, ncollection_branding). Default
+         follows the Print Settings of its kind; On / Off applies to this document only. Changing it is enforced by
+         the model (who may stamp the kind), the readonly here only says so. -->
+    <record id="view_order_form_nc_stamp_mode" model="ir.ui.view">
+        <field name="name">sale.order.form.nc.stamp.mode</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='order_details']" position="inside">
+                <field name="nc_stamp_mode_editable" invisible="1"/>
+                <field name="nc_stamp_default_on" invisible="1"/>
+                <label for="nc_stamp_mode"/>
+                <div class="o_row">
+                    <field name="nc_stamp_mode" widget="selection_badge" readonly="not nc_stamp_mode_editable"/>
+                    <div class="text-muted" invisible="nc_stamp_mode != 'default' or not nc_stamp_default_on">(stamped)</div>
+                    <div class="text-muted" invisible="nc_stamp_mode != 'default' or nc_stamp_default_on">(not stamped)</div>
+                </div>
+            </xpath>
+        </field>
+    </record>
 </odoo>

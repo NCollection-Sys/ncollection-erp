@@ -11,5 +11,6 @@ from . import ir_ui_menu
 from . import document_type
 from . import document_print_template
 from . import document_stamp
+from . import document_stamp_mixin
 from . import ir_actions_report
 from . import mail_thread

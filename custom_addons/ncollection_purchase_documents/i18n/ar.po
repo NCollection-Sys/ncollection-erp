@@ -103,3 +103,38 @@ msgstr "هل تريد استيراد هذا المستند إلى برنامجك
 #: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_form_nc_line_amounts
 msgid "Total incl. Tax"
 msgstr "الإجمالي شامل الضريبة"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,help:ncollection_purchase_documents.field_purchase_order__nc_stamp_mode
+msgid "Default follows the Print Settings of this kind of document. On or Off applies to this document only. On draws the stamp chosen for this kind of document; with no stamp configured, nothing is drawn."
+msgstr "الافتراضي يتبع إعدادات الطباعة لهذا النوع من المستندات. التشغيل أو الإيقاف ينطبق على هذا المستند فقط. التشغيل يضع الختم المختار لهذا النوع من المستندات؛ وإن لم يُعدّ ختم فلا يُوضع شيء."
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__nc_stamp_mode
+msgid "Document Stamp"
+msgstr "ختم المستند"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__nc_stamp_mode_editable
+msgid "Nc Stamp Mode Editable"
+msgstr "يمكن تغيير ختم المستند"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__nc_stamp_default_on
+msgid "Stamped by default"
+msgstr "مختوم افتراضيًا"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,help:ncollection_purchase_documents.field_purchase_order__nc_stamp_default_on
+msgid "What Default means for this document: its kind's Print Setting."
+msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_form_nc_stamp_mode
+msgid "(stamped)"
+msgstr "(مختوم)"
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_form_nc_stamp_mode
+msgid "(not stamped)"
+msgstr "(غير مختوم)"

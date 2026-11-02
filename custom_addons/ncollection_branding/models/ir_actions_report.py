@@ -51,8 +51,13 @@ class IrActionsReport(models.Model):
                 continue                                 # a merged result for duplicated ids: nothing to attribute
             if entry.get('attachment') and report.attachment_use:
                 continue                                 # Odoo re-used a stored PDF: it already carries its stamp
-            kind = self.env['ncollection.document.type']._nc_kind_of(record)
-            if kind and not kind.nc_show_stamp:
+            # the kind THIS report prints (a purchase order is not an RFQ just because both are purchase.order)
+            DocType = self.env['ncollection.document.type'].sudo()
+            kind = DocType._nc_types_for(report, record)[:1] or DocType._nc_kind_of(record)
+            if 'nc_stamp_mode' in record._fields:
+                if not record._nc_stamp_wanted(kind):
+                    continue                             # this document's own switch, else its kind's Print Setting
+            elif kind and not kind.nc_show_stamp:
                 continue                                 # its Print Template prints this kind without a stamp
             pdf = stream.getvalue()
             stamped = Stamp._nc_apply_to_pdf(report, record, pdf)

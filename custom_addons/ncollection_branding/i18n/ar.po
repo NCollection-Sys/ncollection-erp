@@ -121,6 +121,7 @@ msgstr "الاتصال بالدعم"
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -147,6 +148,7 @@ msgstr "نسيت كلمة المرور؟"
 #: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -553,6 +555,7 @@ msgstr "المستند"
 #. module: ncollection_branding
 #: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_stamp
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_mode
 msgid "Document Stamp"
 msgstr "ختم المستند"
 
@@ -1475,6 +1478,12 @@ msgstr "بلا شعار (اسم الشركة)"
 
 #. module: ncollection_branding
 #: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_font__default
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__default
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__default
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__default
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__default
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__default
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__default
 msgid "Default"
 msgstr "الافتراضي"
 
@@ -1680,3 +1689,54 @@ msgstr "Legal (قانوني)"
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_font_size
 msgid "0: the layout's own size (larger in Arabic)."
 msgstr "0: حجم التنسيق نفسه (أكبر في العربية)."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_mode
+msgid "Default follows the Print Settings of this kind of document. On or Off applies to this document only. On draws the stamp chosen for this kind of document; with no stamp configured, nothing is drawn."
+msgstr "الافتراضي يتبع إعدادات الطباعة لهذا النوع من المستندات. التشغيل أو الإيقاف ينطبق على هذا المستند فقط. التشغيل يضع الختم المختار لهذا النوع من المستندات؛ وإن لم يُعدّ ختم فلا يُوضع شيء."
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_nc_document_stamp_mixin
+msgid "Document Stamp on/off of a printed document"
+msgstr "تشغيل / إيقاف ختم المستند المطبوع"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_mode_editable
+msgid "Nc Stamp Mode Editable"
+msgstr "يمكن تغيير ختم المستند"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__off
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__off
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__off
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__off
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__off
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__off
+msgid "Off"
+msgstr "إيقاف"
+
+#. module: ncollection_branding
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__on
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__on
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__on
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__on
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__on
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__on
+msgid "On"
+msgstr "تشغيل"
+
+#. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/document_stamp_mixin.py:0
+msgid "Only a Settings administrator or someone allowed to stamp %(kind)s may turn its Document Stamp on or off."
+msgstr "لا يمكن تشغيل ختم المستند أو إيقافه إلا لمسؤول الإعدادات أو لمن يُسمح له بختم %(kind)s."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_default_on
+msgid "Stamped by default"
+msgstr "مختوم افتراضيًا"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_default_on
+msgid "What Default means for this document: its kind's Print Setting."
+msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."

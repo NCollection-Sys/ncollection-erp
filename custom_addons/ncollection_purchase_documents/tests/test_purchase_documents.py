@@ -107,3 +107,47 @@ class TestPurchaseLinesAndFileNames(TestPurchaseDuplicate):
         self.assertEqual(order._nc_print_filename(), 'Request for Quotation %s' % order.name.replace('/', '-'))
         order.button_confirm()
         self.assertEqual(order._nc_print_filename(), 'Purchase Order %s' % order.name.replace('/', '-'))
+
+
+@tagged('post_install', '-at_install')
+class TestPurchaseStampPerDocument(TestPurchaseDuplicate):
+    """The Document Stamp switch on requests for quotation and purchase orders: Default follows
+    the kind's Print Setting, On / Off applies to this one
+    document, the printed PDF follows it, and only a Settings administrator may change it (no group is named on these
+    kinds)."""
+
+    def _stamp(self, code):
+        from odoo import Command
+        from odoo.addons.ncollection_branding.tests.test_document_stamp import _b64, _png
+        kind = self.env.ref('ncollection_purchase_documents.doc_type_%s' % code)
+        return self.env['ncollection.document.stamp'].create({
+            'name': code, 'company_id': self.env.company.id, 'image': _b64(_png()),
+            'document_type_ids': [Command.set(kind.ids)]})
+
+    def test_each_order_kind_follows_its_own_switch(self):
+        from odoo.addons.ncollection_branding.tests.stamp_print import stamps_on
+        reports = {'purchase_rfq': self.env.ref('purchase.report_purchase_quotation'),
+                   'purchase_order': self.env.ref('purchase.action_report_purchase_order')}
+        for confirm, code in ((False, 'purchase_rfq'), (True, 'purchase_order')):
+            with self.subTest(code=code):
+                report = reports[code]
+                self._stamp(code)
+                order, other = self._order(confirm=confirm), self._order(confirm=confirm)
+                order, other = order.with_env(self.env), other.with_env(self.env)          # as the administrator
+                self.assertEqual(order.nc_stamp_mode, 'default')
+                self.assertEqual(stamps_on(report, order), [1])
+                order.nc_stamp_mode = 'off'
+                self.assertEqual(stamps_on(report, order), [0])
+                self.assertEqual(stamps_on(report, other), [1], "the other order is unaffected")
+                self.env.ref('ncollection_purchase_documents.doc_type_%s' % code).nc_show_stamp = False
+                other.nc_stamp_mode = 'on'
+                self.assertEqual(stamps_on(report, other), [1])
+                self.assertEqual(stamps_on(report, self._order(confirm=confirm)), [0])
+
+    def test_only_a_settings_administrator_may_switch_it(self):
+        order = self._order()
+        user = self.buyer
+        self.assertFalse(order.with_user(user).nc_stamp_mode_editable)
+        with self.assertRaises(AccessError):
+            order.with_user(user).write({'nc_stamp_mode': 'off'})
+        self.assertEqual(order.nc_stamp_mode, 'default')
