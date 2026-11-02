@@ -954,6 +954,20 @@ refused). **Pilot: `uaetest`.** Nothing has been enabled or changed on any tenan
 
 ## 12. Tests and gates
 
+**Sprint 4 (2026-11-02), isolated acceptance:** a disposable `odoo:19` container on the current source (its own database and
+filestore volume, database-plane network only plus its own bridge for a `127.0.0.1:18069` port, no validator network, URL or token,
+DNS to loopback), removed afterwards. **Posted branch invoice:** a fictional parent with the `ae` chart, a branch that receives it
+through Odoo's own pre-commit load, an invoice of the BRANCH on the parent's journal with the PARENT's `5% DU` (Abu Dhabi fiscal
+position, 200 / 10 / 210, balanced) → Prepare `ready`, 0 findings, category S from the parent's map → XML `locally_checked` →
+official PINT-AE 1.0.4 rules in-process: **0 fatal, 0 warnings**. Negative: a branch manager editing the parent's map is refused
+(`AccessError`), an unrelated company's chain resolves nothing, a sibling's own map is never returned, an unmapped tax blocks
+(`tax-unmapped`). The suite now covers the posted path too (`test_a_posted_branch_invoice_with_the_parents_tax_prepares_and_generates`,
+using `cr.precommit.run()` as Odoo's own branch tests do). **Browser:** `e2e/tests/uae-einvoicing-notice.spec.ts` 4 / 4 against that
+server (notice visible with its exact text on a `locally_checked` document, the seven pages, Validate offered, no Generate XML, no
+Submit; absent on a validated one; Arabic text in an Arabic session; within a 390 px screen); it SKIPS unless `NC_UAE_ACCEPT_*` names
+such a server. **Upgrade rehearsal** `scripts/upgrade/rehearse_upgrade.sh e2euae` on a copy: preflight named
+`ncollection_uae_einvoicing 19.0.1.3.0 < 19.0.1.4.0`, targeted `-u`, no traceback, no drift, 27 HTTP checks OK, **REHEARSAL=PASS**.
+
 **Sprint 3 (2026-11-02), fresh disposable database, final code:** one isolated process, 622 tests, 0 failed, 0 errors, 0 skipped
 (e-invoicing 524, A-Cube 52 + localization 69 counted as 93 post-install, translation coverage 5 with `ncollection_saas` installed so
 its platform-module rule runs); official rules 107 expectations, 25 / 25 real-move documents, worker 29 / 29; Playwright 4 / 4; the

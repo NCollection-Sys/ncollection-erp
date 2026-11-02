@@ -63,6 +63,15 @@ class TestBranchTaxClassification(EInvoiceCase):
         super().setUpClass()
         cls.branch = cls.env['res.company'].create({'name': 'EInv Seller Co - Abu Dhabi branch',
                                                     'parent_id': cls.company.id, 'country_id': cls.ae.id})
+        # Odoo gives a branch its parent's chart in a PRE-COMMIT hook; a test never commits, so run it, as Odoo's own
+        # branch tests do (account/tests/test_company_branch.py)
+        cls.env.cr.precommit.run()
+        cls.branch.partner_id.write({
+            'street': 'Hamdan Street', 'city': 'Abu Dhabi', 'country_id': cls.ae.id,
+            'state_id': cls.env['res.country.state'].search([('country_id', '=', cls.ae.id), ('code', '=', 'AZ')],
+                                                            limit=1).id,
+            'nc_tin': '1987654321', 'nc_trn': '198765432102003', 'company_registry': '112345678900003',
+            'nc_legal_reg_type': 'TL', 'nc_legal_reg_authority': 'Abu Dhabi Department of Economic Development'})
         cls.env = cls.env(context=dict(cls.env.context, allowed_company_ids=(cls.branch | cls.company).ids))
         cls.branch_config = cls.env['ncollection.einvoice.config'].create(
             {'company_id': cls.branch.id, 'enabled': True, 'default_payment_means_code': '10'})
@@ -76,6 +85,23 @@ class TestBranchTaxClassification(EInvoiceCase):
             'invoice_line_ids': [(0, 0, {'product_id': self.product.id, 'quantity': 1, 'price_unit': 100.0,
                                          'tax_ids': [(6, 0, tax.ids)]})],
         })
+
+    def test_a_posted_branch_invoice_with_the_parents_tax_prepares_and_generates(self):
+        line = {'product_id': self.product.id, 'quantity': 2, 'price_unit': 100.0, 'tax_ids': [(6, 0, self.tax_s.ids)]}
+        move = self._invoice(lines=[line], company_id=self.branch.id)
+        self.assertEqual((move.state, move.company_id, move.invoice_line_ids.tax_ids.company_id),
+                         ('posted', self.branch, self.company))
+        self.assertEqual((move.amount_untaxed, move.amount_tax, move.amount_total), (200.0, 10.0, 210.0))
+        record = self._einvoice(move, company_id=self.branch.id)
+        record.action_prepare()
+        self.assertEqual(record.local_state, 'ready', sorted(self.rules(record)))
+        self.assertEqual(record.type_code, '380')
+        record.action_generate_xml()
+        xml = record.xml_attachment_id.raw
+        self.assertEqual(record.local_state, 'locally_checked')
+        self.assertIn(b'<cbc:RegistrationName>EInv Seller Co - Abu Dhabi branch</cbc:RegistrationName>', xml,
+                      "the seller is the document company, as for any document")
+        self.assertIn(b'<cbc:ID>S</cbc:ID>', xml)
 
     def test_a_branch_invoice_uses_the_parents_classification(self):
         move = self._draft(self.branch, self.tax_s)
