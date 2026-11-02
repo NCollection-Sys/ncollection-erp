@@ -12,6 +12,7 @@
             <list string="Print Templates" create="false" delete="false">
                 <field name="sequence" column_invisible="1"/>
                 <field name="name"/>
+                <field name="nc_show_stamp" widget="boolean_toggle"/>
                 <field name="nc_title"/>
                 <field name="paperformat_id" placeholder="Document paper (default)"/>
                 <field name="nc_logo_source"/>
@@ -83,7 +84,7 @@
                                 <group string="Sections">
                                     <field name="nc_show_customer_address"/>
                                     <field name="nc_show_payment_reference"/>
-                                    <field name="nc_show_stamp"/>
+                                    <field name="nc_show_stamp" widget="boolean_toggle"/>
                                 </group>
                                 <group string="Line columns">
                                     <field name="nc_show_quantity"/>

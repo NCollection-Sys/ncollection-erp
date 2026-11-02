@@ -551,6 +551,7 @@ msgid "Document"
 msgstr "المستند"
 
 #. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_stamp
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
 msgid "Document Stamp"
 msgstr "ختم المستند"
@@ -1391,11 +1392,6 @@ msgstr "عنوان العميل"
 #: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_payment_reference
 msgid "Payment reference"
 msgstr "مرجع الدفع"
-
-#. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_stamp
-msgid "Document stamp"
-msgstr "ختم المستند"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_quantity

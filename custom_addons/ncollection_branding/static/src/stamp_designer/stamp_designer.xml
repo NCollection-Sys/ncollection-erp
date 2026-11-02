@@ -8,6 +8,7 @@
                     <div class="o_nc_stamp_designer__box" t-att-style="boxStyle"
                          t-on-pointerdown="(ev) => this.onPointerDown(ev, 'move')"
                          t-on-pointermove="onPointerMove" t-on-pointerup="onPointerUp">
+                        <img class="o_nc_stamp_designer__img" t-att-src="imageSrc" alt="" draggable="false"/>
                         <span class="o_nc_stamp_designer__handle"
                               t-on-pointerdown="(ev) => this.onPointerDown(ev, 'resize')"
                               t-on-pointermove="onPointerMove" t-on-pointerup="onPointerUp"/>

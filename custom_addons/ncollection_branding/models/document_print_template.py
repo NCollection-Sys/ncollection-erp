@@ -82,7 +82,10 @@ class NcDocumentPrintTemplate(models.Model):
     nc_show_customer_address = fields.Boolean(string='Customer address block', default=True)
     nc_show_payment_reference = fields.Boolean(string='Payment reference', default=True)
     nc_show_stamp = fields.Boolean(
-        string='Document stamp', default=True, help="Apply the Document Stamps that match this document.")
+        string='Document Stamp', default=True,
+        help="On: the Document Stamps that match this kind of document are printed on it (Print, View and Preview are "
+             "the same render). Off: this kind prints without a stamp; the stamps and their placement are kept, and "
+             "nothing already posted or archived changes.")
     nc_show_quantity = fields.Boolean(string='Quantity column', default=True)
     nc_show_unit_price = fields.Boolean(string='Unit price column', default=True)
     nc_show_discount = fields.Boolean(string='Discount column', default=True)
@@ -162,11 +165,17 @@ class NcDocumentPrintTemplate(models.Model):
         """Everything ``external_layout_nc`` needs to print ``record`` the way its Print Template says. Values are
         validated here (colours, fonts, column names), so the template only interpolates trusted strings."""
         kind = self._nc_kind_of(record)
+        # Settings > Configure Document Layout renders its live preview with the WIZARD (base.document.layout) as
+        # `company`: it mirrors the company's fields (logo, colours, partner) but none of its methods. Print with the
+        # real company, and take the colour and logo the user is editing from the wizard so the preview follows them.
+        layout = None
+        if company is not None and company._name == 'base.document.layout':
+            layout, company = company, company.company_id
         company = company or (record.company_id if record and 'company_id' in record._fields else self.env.company)
         logo = False
         source = kind.nc_logo_source if kind else 'company'
         if source == 'company':
-            logo = company.logo
+            logo = layout.logo if layout else company.logo
         elif source == 'custom':
             logo = kind.nc_logo or company.logo
         elif source == 'system':
@@ -177,7 +186,12 @@ class NcDocumentPrintTemplate(models.Model):
             for flag, names in COLUMNS.items():
                 if not kind[flag]:
                     hidden += names
-        accent = kind.nc_primary_color if kind and kind.nc_primary_color else company._nc_document_color()
+        if kind and kind.nc_primary_color:
+            accent = kind.nc_primary_color
+        elif layout and _HEX.fullmatch(layout.primary_color or ''):
+            accent = layout.primary_color
+        else:
+            accent = company._nc_document_color()
         partner = company.partner_id
         city = ' '.join(x for x in (partner.zip, partner.city, partner.state_id.name) if x)
         # The company's address WITHOUT a country line: Odoo seeds the main company as United States, and a country

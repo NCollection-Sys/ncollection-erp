@@ -7,6 +7,8 @@ import { standardWidgetProps } from "@web/views/widgets/standard_widget_props";
 const MAP_W = 250; // px, the width the page-shaped control is drawn at
 const MAP_H = 330; // px, and the most height it may take
 const PREVIEW_DELAY = 700; // ms of quiet after the last change before the real PDF is asked again
+const COMMIT_DELAY = 150; // ms of quiet before a burst of edits (zoom clicks, a drag) reaches the record
+const GEOMETRY = ["x_mm", "y_mm", "width_mm", "height_mm"];
 
 /**
  * Stamp designer: a CONTROL for the position and size of a stamp, and the REAL preview next to it.
@@ -16,6 +18,11 @@ const PREVIEW_DELAY = 700; // ms of quiet after the last change before the real 
  *  - The document you check is the PDF below it, produced by the server with the very engine that stamps a printed
  *    document, at the numbers as they are right now (not yet saved). Dragging, nudging or typing refreshes it.
  * Nothing here knows how a stamp is drawn; it only edits the record's numbers.
+ *
+ * Responsiveness: every record.update() is a server onchange, and the box used to carry the image (base64 for a new
+ * file) in its style, so each zoom click or pointer move cost an RPC plus a re-decode of the image. Edits now land in a
+ * local DRAFT that the control draws at once; the record gets the result once per burst (after COMMIT_DELAY, at the
+ * end of a drag, and before the widget goes away), and the image is a stable <img> whose source does not change.
  */
 export class NcStampDesigner extends Component {
     static template = "ncollection_branding.StampDesigner";
@@ -23,13 +30,23 @@ export class NcStampDesigner extends Component {
 
     setup() {
         this.state = useState({ previewUrl: this.buildUrl() });
+        this.draft = useState({});
         this._timer = null;
+        this._commitTimer = null;
         this._drag = null;
-        onWillUnmount(() => clearTimeout(this._timer));
+        this._image = { key: null, url: null };
+        onWillUnmount(() => {
+            clearTimeout(this._timer);
+            this.commit();
+            if (this._image.url && this._image.url.startsWith("blob:")) {
+                URL.revokeObjectURL(this._image.url);
+            }
+        });
     }
 
+    /** The record's values with the edits not yet committed on top: what the control draws. */
     get data() {
-        return this.props.record.data;
+        return Object.assign({}, this.props.record.data, this.draft);
     }
 
     get canPreview() {
@@ -59,18 +76,28 @@ export class NcStampDesigner extends Component {
         const s = this.scale;
         return (
             `left:${(d.x_mm * s).toFixed(1)}px;top:${(d.y_mm * s).toFixed(1)}px;` +
-            `width:${(d.width_mm * s).toFixed(1)}px;height:${(d.height_mm * s).toFixed(1)}px;` +
-            `background-image:url(${this.imageSrc});`
+            `width:${(d.width_mm * s).toFixed(1)}px;height:${(d.height_mm * s).toFixed(1)}px;`
         );
     }
 
     get imageSrc() {
-        const image = this.data.image;
-        // a freshly picked file is base64 in the record; a stored one is fetched by the standard image route
-        if (image && image.length > 64) {
-            return `data:image/png;base64,${image}`;
+        const image = this.props.record.data.image;
+        // a freshly picked file is base64 in the record (decoded ONCE into an object URL); a stored one is fetched by
+        // the standard image route. The source only changes when the image does.
+        const fresh = image && image.length > 64;
+        const key = fresh ? `${image.length}:${image.slice(0, 32)}:${image.slice(-32)}` : "stored";
+        if (this._image.key !== key) {
+            if (this._image.url && this._image.url.startsWith("blob:")) {
+                URL.revokeObjectURL(this._image.url);
+            }
+            let url = `/web/image/ncollection.document.stamp/${this.props.record.resId}/image`;
+            if (fresh) {
+                const bytes = Uint8Array.from(atob(image), (c) => c.charCodeAt(0));
+                url = URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
+            }
+            this._image = { key, url };
         }
-        return `/web/image/ncollection.document.stamp/${this.props.record.resId}/image`;
+        return this._image.url;
     }
 
     get sizeLabel() {
@@ -108,8 +135,30 @@ export class NcStampDesigner extends Component {
         return Math.round(value * 10) / 10;
     }
 
-    async set(values) {
+    set(values) {
+        Object.assign(this.draft, values);
+        clearTimeout(this._commitTimer);
+        this._commitTimer = setTimeout(() => this.commit(), COMMIT_DELAY);
+    }
+
+    /** Hand the drafted numbers to the record in ONE update (one onchange), then refresh the real preview. */
+    async commit() {
+        clearTimeout(this._commitTimer);
+        const values = {};
+        for (const name of GEOMETRY) {
+            if (name in this.draft) {
+                values[name] = this.draft[name];
+            }
+        }
+        if (!Object.keys(values).length) {
+            return;
+        }
         await this.props.record.update(values);
+        for (const name of Object.keys(values)) {
+            if (this.draft[name] === values[name]) {
+                delete this.draft[name];
+            }
+        }
         this.schedulePreview();
     }
 
@@ -140,7 +189,10 @@ export class NcStampDesigner extends Component {
     }
 
     onPointerUp() {
-        this._drag = null;
+        if (this._drag) {
+            this._drag = null;
+            this.commit();
+        }
     }
 
     // ---- buttons ----------------------------------------------------------------------------------------------
@@ -159,7 +211,8 @@ export class NcStampDesigner extends Component {
         this.set({ width_mm: width, height_mm: d.keep_ratio && ratio ? this.round(width / ratio) : Math.max(1, this.round(d.height_mm * factor)) });
     }
 
-    refresh() {
+    async refresh() {
+        await this.commit();
         clearTimeout(this._timer);
         this.state.previewUrl = this.buildUrl();
     }
@@ -167,6 +220,7 @@ export class NcStampDesigner extends Component {
     printTest() {
         // a direct reaction to the click, so the browser does not treat the new tab as a pop-up
         window.open(this.buildUrl().split("#")[0], "_blank");
+        this.commit();
     }
 }
 

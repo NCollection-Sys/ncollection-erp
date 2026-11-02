@@ -324,3 +324,38 @@ class TestStampPreviewRoute(HttpCase):
         self.env.flush_all()
         self.assertEqual(self.url_open('/ncollection/stamp/preview/%d' % theirs.id).status_code, 404)
         self.assertEqual(self.url_open('/ncollection/stamp/preview/999999999').status_code, 404)
+
+
+@tagged('post_install', '-at_install')
+class TestStampOnOffPerKind(_StampCommon):
+    """The Document Stamp On/Off switch of a kind's Print Settings decides whether the real print pipeline stamps it.
+    Odoo's own renderer is replaced by a known one-page PDF, so what is checked is the PDF that leaves the pipeline."""
+
+    def _printed(self, record):
+        from unittest.mock import patch
+        from odoo.addons.base.models.ir_actions_report import IrActionsReport
+
+        def rendered(_self, report_ref, data, res_ids=None):
+            return {res_id: {'stream': io.BytesIO(_sheet()), 'attachment': None} for res_id in res_ids}
+
+        with patch.object(IrActionsReport, '_render_qweb_pdf_prepare_streams', rendered):
+            streams = self.report.with_company(self.company_a)._render_qweb_pdf_prepare_streams(
+                self.report.report_name, {}, res_ids=record.ids)
+        return streams[record.id]['stream'].getvalue()
+
+    def test_on_stamps_the_printed_pdf_and_off_prints_it_without_keeping_anything_else_from_changing(self):
+        stamp = self._stamp(self.type_company, x_mm=120.0, y_mm=200.0, width_mm=40.0, height_mm=20.0,
+                            page_scope='last')
+        self.assertTrue(self.type_company.nc_show_stamp, "a kind prints its stamps by default")
+        self.assertEqual([len(found) for found in pdf_probe.placements(self._printed(self.firm))], [1])
+        self.type_company.nc_show_stamp = False
+        self.assertEqual([len(found) for found in pdf_probe.placements(self._printed(self.firm))], [0])
+        self.assertTrue(stamp.exists() and stamp.active and stamp.x_mm == 120.0, "the stamp itself is kept as it was")
+        self.type_company.nc_show_stamp = True
+        self.assertEqual([len(found) for found in pdf_probe.placements(self._printed(self.firm))], [1])
+
+    def test_the_switch_is_per_kind(self):
+        self._stamp(self.type_company | self.type_person)
+        self.type_company.nc_show_stamp = False
+        self.assertEqual([len(found) for found in pdf_probe.placements(self._printed(self.firm))], [0])
+        self.assertEqual([len(found) for found in pdf_probe.placements(self._printed(self.person))], [1])
