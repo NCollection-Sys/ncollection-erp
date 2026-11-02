@@ -14,7 +14,12 @@ this mixin declares, once, the report its Print uses (:meth:`_nc_print_report`) 
 so View and Print cannot render two different documents. Nothing here renders anything itself: the report engine
 does, as the user, with the user's own access rights.
 """
+import re
+
 from odoo import models
+
+# Characters a file name cannot carry on common systems (and a header must not): replaced, never the stored number.
+_FILENAME_UNSAFE = re.compile(r'[\\/:*?"<>|\r\n\t]+')
 
 
 class NcDocumentPrintMixin(models.AbstractModel):
@@ -32,6 +37,22 @@ class NcDocumentPrintMixin(models.AbstractModel):
         """The context Print renders with (and so View too). Nothing by default."""
         self.ensure_one()
         return {}
+
+    def _nc_print_kind_label(self):
+        """What the document IS, for its file name (e.g. "Vendor Bill"). Models name their real kinds."""
+        self.ensure_one()
+        return self._description
+
+    def _nc_print_filename(self):
+        """The printed file's name, without extension: "<kind> <number>", e.g. "Customer Invoice INV-2026-00003".
+
+        The reports of these documents use it as their ``print_report_name``, so Print (Odoo's download route) and
+        View (``controllers/document_view.py``) name the file the same way. Only the FILE NAME is normalised (a "/"
+        becomes "-"); the document's number is never changed."""
+        self.ensure_one()
+        number = self.name if self.name and self.name != '/' else self.env._("Draft")
+        name = _FILENAME_UNSAFE.sub('-', '%s %s' % (self._nc_print_kind_label(), number)).strip(' .-')
+        return name[:120] or 'document'
 
     def _nc_view_url(self):
         """Where View opens: the controller that serves this document inline (see controllers/document_view.py)."""

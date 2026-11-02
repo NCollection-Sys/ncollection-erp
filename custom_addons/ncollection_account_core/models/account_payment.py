@@ -240,6 +240,9 @@ class AccountPayment(models.Model):
     def _nc_print_report(self):
         return self.env.ref('account.action_report_payment_receipt')
 
+    def _nc_print_kind_label(self):
+        return self.env._("Payment Receipt")
+
     # ------------------------------------------------------------------ the printed receipt
     def _nc_amount_in_words(self):
         """The payment amount in words, in the language the receipt is printed in; empty when that is not available (an

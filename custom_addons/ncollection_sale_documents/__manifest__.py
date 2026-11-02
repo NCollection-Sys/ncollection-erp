@@ -14,6 +14,7 @@
     'depends': ['sale', 'account', 'ncollection_core'],
     'data': [
         'views/sale_order_views.xml',
+        'views/document_filenames.xml',
         'views/vendor_portal.xml',
         'data/document_types.xml',
     ],

@@ -1,0 +1,24 @@
+// Document lines (LINE-03): a thin grey separator between the columns of the editable line tables of invoices, bills
+// (account.move invoice_line_ids) and sales / purchase orders (order_line) - and nowhere else. `border-inline-end`
+// follows the direction of the page, so an Arabic (right-to-left) table is separated on the correct side.
+.o_form_view .o_field_widget:is([name="invoice_line_ids"], [name="order_line"]) .o_list_table {
+    > thead > tr > th:not(:last-child),
+    > tbody > tr.o_data_row:not(.o_is_line_section):not(.o_is_line_subsection):not(.o_is_line_note) > td:not(:last-child) {
+        border-inline-end: 1px solid var(--nc-line-separator, #dee2e6);
+    }
+}
+
+// LINE-04: the product image button next to the product name; it never takes the cell's width from the name.
+.o_nc_product_image_btn {
+    flex: 0 0 auto;
+    line-height: 1;
+    color: var(--nc-color-primary, #1F5F8F);
+}
+
+.o_nc_product_image_preview {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    margin: 0 auto;
+    object-fit: contain;
+}

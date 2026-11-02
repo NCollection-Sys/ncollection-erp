@@ -11,14 +11,15 @@ Nothing is stored and nothing is rendered by any other template: this is the one
 that opted in to the mixin can be named, and the user must be allowed to read the record.
 """
 import re
-import time
 
 from werkzeug.exceptions import Forbidden, NotFound
 
 from odoo import http
 from odoo.exceptions import AccessError
 from odoo.http import content_disposition, request
-from odoo.tools.safe_eval import safe_eval
+# Odoo's wrapped `time` (what its own /report/download passes): safe_eval refuses a raw module, so passing Python's
+# `time` made every print_report_name raise and every View fall back to the record's display name.
+from odoo.tools.safe_eval import safe_eval, time
 
 _UNSAFE = re.compile(r'[\\/:*?"<>|\r\n\t]+')
 

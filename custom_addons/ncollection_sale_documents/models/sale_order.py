@@ -18,6 +18,11 @@ class SaleOrder(models.Model):
         """The report action Print uses for a quotation / order."""
         return self.env.ref('sale.action_report_saleorder')
 
+    def _nc_print_kind_label(self):
+        """A quotation until it is confirmed, then a sales order (the two titles the printed document carries)."""
+        self.ensure_one()
+        return self.env._("Quotation") if self.state in ('draft', 'sent') else self.env._("Sales Order")
+
     def action_preview_sale_order(self):
         """Preview = the printed quotation / order (nc.document.print.mixin), not the customer portal page."""
         return self.action_nc_view()

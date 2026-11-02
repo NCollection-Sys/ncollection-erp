@@ -720,3 +720,32 @@ msgstr "طباعة المبلغ المدفوع وحالة الدفع (غير م�
 #: model:ir.ui.menu,name:ncollection_account_core.menu_accounting_print_settings
 msgid "Print Settings"
 msgstr "إعدادات الطباعة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_line_amounts
+msgid "Total incl. Tax"
+msgstr "الإجمالي شامل الضريبة"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Sales Receipt"
+msgstr "إيصال مبيعات"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Purchase Receipt"
+msgstr "إيصال مشتريات"
+
+#. module: ncollection_account_core
+#. odoo-javascript
+#: code:addons/ncollection_account_core/static/src/document_lines/product_image.js:0
+msgid "Show the product image"
+msgstr "عرض صورة المنتج"
+
+#. module: ncollection_account_core
+#. odoo-javascript
+#: code:addons/ncollection_account_core/static/src/document_lines/product_image.js:0
+msgid "Product image"
+msgstr "صورة المنتج"

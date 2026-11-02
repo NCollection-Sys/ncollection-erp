@@ -158,3 +158,26 @@ class TestSummaryTopCustomersPeriod(TransactionCase):
         edge = top(str(date(year, 1, 25)), str(date(year, 1, 25)))
         self.assertEqual(edge.get('Synthetic Late Customer'), totals['Synthetic Late Customer'],
                          "the To date is inclusive")
+
+
+@tagged('post_install', '-at_install')
+class TestSaleLinesAndFileNames(TestSaleDuplicate):
+    """LINE-01/02: Amount after Price, then the tax-included line total; PRINT-01: the printed file's name."""
+
+    def test_amount_follows_price_and_total_incl_tax_is_shown(self):
+        from lxml import etree
+        arch = etree.fromstring(self.env['sale.order'].get_views([(False, 'form')])['views']['form']['arch'])
+        fields = [(f.get('name'), f.get('string'), f.get('optional'))
+                  for f in arch.xpath("//field[@name='order_line']/list")[0].findall('field')]
+        names = [f[0] for f in fields]
+        price = names.index('price_unit')
+        self.assertEqual(names[price + 1:price + 4], ['price_subtotal', 'price_total', 'price_total'])
+        self.assertIn(('price_total', 'Total incl. Tax', 'show'), fields)
+
+    def test_a_quotation_and_an_order_are_named_as_what_they_are(self):
+        order = self._order()
+        report = self.env.ref('sale.action_report_saleorder')
+        self.assertEqual(report.print_report_name, 'object._nc_print_filename()')
+        self.assertEqual(order._nc_print_filename(), 'Quotation %s' % order.name.replace('/', '-'))
+        order.action_confirm()
+        self.assertEqual(order._nc_print_filename(), 'Sales Order %s' % order.name.replace('/', '-'))

@@ -15,6 +15,17 @@ a second renderer.
 4. **Print** = the report action (download). **View** = `GET /ncollection/document/view/<model>/<id>` (`ncollection_core`): the same render,
    `Content-Disposition: inline; filename=<document>.pdf`, `no-store`, `nosniff`, 404 for anything that is not printable, 403 on no access;
    it opens in a new tab with the browser's PDF viewer. No HTML preview, no portal page, no second template.
+5. **File name** = `<document kind> <number>.pdf` (`_nc_print_filename`: e.g. `Customer Invoice INV-2026-00001`, `Vendor Bill ...`,
+   `Quotation S00012`, `Request for Quotation P00007`, `Payment Receipt ...`; `Draft` while unnumbered; path / reserved characters
+   removed, 120 characters at most). View and Print use the same name: the reports' `print_report_name` calls it
+   (`document_filenames.xml` in account_core, sale_documents, purchase_documents).
+
+Document lines (invoice, bill, sales and purchase order forms): **Amount** (untaxed) directly after **Price**, then **Total incl. Tax**
+(Odoo's own `price_total`, no new field), a thin grey separator between the columns (follows RTL), and a product-image button beside the
+product when it has an image (preview dialog; `ncollection_account_core/static/src/document_lines`).
+
+Settings > **Configure Document Layout** previews with the wizard (`base.document.layout`) as `company`: `_nc_print_options` takes the
+colour (validated hex) and logo being edited from the wizard, and the company for the rest.
 
 ## Layout and design
 
@@ -96,6 +107,10 @@ position and size in **millimetres** from the top-left of the paper, keep-propor
   keeps the aspect ratio, shows the physical size, and previews through a **real PDF** (`/ncollection/stamp/preview/<id>`: the newest real
   document of the stamp's type, else a labelled sample sheet) and *Print test*.
 * Tenant and company isolation: a stamp is a company record under a record rule; the preview route 404s for anything the user cannot read.
+* **On / Off per kind**: the **Document Stamp** switch (`nc_show_stamp`) on each Print Setting (list toggle and form). Off: that kind
+  prints without a stamp whatever templates match; the templates are kept.
+* The designer edits a local draft and commits the geometry to the record once (debounced 150 ms, and on release / save), so zooming or
+  dragging no longer fires one onchange and one PDF preview per step.
 
 ### Where it is configured, and who can read the image
 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PRINT-01: "Request for Quotation P00003" / "Purchase Order P00003" (nc.document.print.mixin). -->
+    <record id="purchase.action_report_purchase_order" model="ir.actions.report">
+        <field name="print_report_name">object._nc_print_filename()</field>
+    </record>
+    <record id="purchase.report_purchase_quotation" model="ir.actions.report">
+        <field name="print_report_name">object._nc_print_filename()</field>
+    </record>
+</odoo>

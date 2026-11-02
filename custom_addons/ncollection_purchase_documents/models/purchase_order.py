@@ -23,3 +23,8 @@ class PurchaseOrder(models.Model):
         if self.state in _RFQ_STATES:
             return self.env.ref('purchase.report_purchase_quotation')
         return self.env.ref('purchase.action_report_purchase_order')
+
+    def _nc_print_kind_label(self):
+        self.ensure_one()
+        return (self.env._("Request for Quotation") if self.state in _RFQ_STATES
+                else self.env._("Purchase Order"))

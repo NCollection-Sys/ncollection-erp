@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PRINT-01: "Quotation S00012" / "Sales Order S00012" (nc.document.print.mixin._nc_print_filename). -->
+    <record id="sale.action_report_saleorder" model="ir.actions.report">
+        <field name="print_report_name">object._nc_print_filename()</field>
+    </record>
+</odoo>

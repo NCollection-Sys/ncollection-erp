@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-inherit="account.ProductLabelSectionAndNoteField" t-inherit-mode="extension">
+        <xpath expr="//Many2One" position="after">
+            <button t-if="ncImage.productId" type="button"
+                    class="btn btn-link p-0 px-1 fa fa-picture-o o_nc_product_image_btn"
+                    t-att-title="ncImageLabel" t-att-aria-label="ncImageLabel"
+                    t-on-click="ncOpenImage"/>
+        </xpath>
+    </t>
+
+    <t t-name="ncollection_account_core.ProductImageDialog">
+        <Dialog title="props.title" size="'lg'" footer="false">
+            <img class="o_nc_product_image_preview" t-att-src="src" t-att-alt="props.title" loading="lazy"/>
+        </Dialog>
+    </t>
+
+</templates>

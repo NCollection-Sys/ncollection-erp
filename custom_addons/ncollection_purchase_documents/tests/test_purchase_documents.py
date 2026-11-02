@@ -84,3 +84,26 @@ class TestPurchaseDuplicate(TransactionCase):
         arabic = self.env['purchase.order'].with_context(lang='ar_001').get_views(
             [(False, 'form')])['views']['form']['arch']
         self.assertIn('نسخة مماثلة', arabic)
+
+
+@tagged('post_install', '-at_install')
+class TestPurchaseLinesAndFileNames(TestPurchaseDuplicate):
+    """LINE-01/02 and PRINT-01 on purchase orders."""
+
+    def test_amount_follows_price_and_total_incl_tax_is_shown(self):
+        from lxml import etree
+        arch = etree.fromstring(self.env['purchase.order'].get_views([(False, 'form')])['views']['form']['arch'])
+        fields = [(f.get('name'), f.get('string'))
+                  for f in arch.xpath("//field[@name='order_line']/list")[0].findall('field')]
+        names = [f[0] for f in fields]
+        price = names.index('price_unit')
+        self.assertEqual(fields[price + 1:price + 3],
+                         [('price_subtotal', 'Amount'), ('price_total', 'Total incl. Tax')])
+
+    def test_an_rfq_and_an_order_are_named_as_what_they_are(self):
+        order = self._order()
+        for xmlid in ('purchase.report_purchase_quotation', 'purchase.action_report_purchase_order'):
+            self.assertEqual(self.env.ref(xmlid).print_report_name, 'object._nc_print_filename()')
+        self.assertEqual(order._nc_print_filename(), 'Request for Quotation %s' % order.name.replace('/', '-'))
+        order.button_confirm()
+        self.assertEqual(order._nc_print_filename(), 'Purchase Order %s' % order.name.replace('/', '-'))

@@ -73,3 +73,14 @@ msgstr "استخدم النسخة المنظَّمة من هذا الطلب أد
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_portal_connect_branded
 msgid "Want to import this document in your own software?"
 msgstr "هل تريد استيراد هذا المستند إلى برنامجك الخاص؟"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_order_form_nc_line_amounts
+msgid "Total incl. Tax"
+msgstr "الإجمالي شامل الضريبة"
+
+#. module: ncollection_sale_documents
+#. odoo-python
+#: code:addons/ncollection_sale_documents/models/sale_order.py:0
+msgid "Quotation"
+msgstr "عرض سعر"

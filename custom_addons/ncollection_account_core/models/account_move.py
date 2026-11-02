@@ -76,6 +76,19 @@ class AccountMove(models.Model):
         self.ensure_one()
         return self.env['account.move.send']._get_default_pdf_report_id(self)
 
+    def _nc_print_kind_label(self):
+        """The kind of accounting document, for its file name: a vendor bill is not a "Customer Invoice"."""
+        self.ensure_one()
+        labels = {
+            'out_invoice': self.env._("Customer Invoice"),
+            'out_refund': self.env._("Customer Credit Note"),
+            'in_invoice': self.env._("Vendor Bill"),
+            'in_refund': self.env._("Vendor Credit Note"),
+            'out_receipt': self.env._("Sales Receipt"),
+            'in_receipt': self.env._("Purchase Receipt"),
+        }
+        return labels.get(self.move_type) or self.env._("Journal Entry")
+
     def _nc_print_context(self):
         """The context both Preview and Print render with: the canonical invoice report, never the pro-forma flag.
 

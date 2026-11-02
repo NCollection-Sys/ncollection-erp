@@ -43,4 +43,23 @@
          stay where they are. -->
     <menuitem id="menu_sale_nc_invoices" name="Invoices" parent="sale.sale_menu_root"
               action="account.action_move_out_invoice_type" groups="account.group_account_invoice" sequence="5"/>
+
+    <!-- Line amounts (LINE-01/02): Amount right after Price, then Odoo's own optional "Tax Incl." column (price_total,
+         the tax engine's line total) shown by default as "Total incl. Tax". Placement only. -->
+    <record id="view_order_form_nc_line_amounts" model="ir.ui.view">
+        <field name="name">sale.order.form.nc.line.amounts</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
+                <xpath expr="//field[@name='order_line']/list/field[@name='price_subtotal'][not(@optional)]" position="move"/>
+                <xpath expr="//field[@name='order_line']/list/field[@name='price_total'][not(@optional)]" position="move"/>
+                <xpath expr="//field[@name='order_line']/list/field[@name='price_total'][@optional='hide']" position="move"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_total'][@optional='hide']" position="attributes">
+                <attribute name="optional">show</attribute>
+                <attribute name="string">Total incl. Tax</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>

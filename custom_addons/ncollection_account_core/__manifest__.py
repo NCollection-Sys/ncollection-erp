@@ -46,9 +46,18 @@
         'views/accounting_stamps.xml',
         'report/invoice_payment_status.xml',
         'report/payment_receipt.xml',
+        'report/document_filenames.xml',
         'views/vendor_portal_digest.xml',
     ],
     'post_init_hook': 'post_init_hook',
+    # Document lines of invoices, bills, sales and purchase orders: column separators and the product image preview.
+    'assets': {
+        'web.assets_backend': [
+            'ncollection_account_core/static/src/document_lines/document_lines.scss',
+            'ncollection_account_core/static/src/document_lines/product_image.js',
+            'ncollection_account_core/static/src/document_lines/product_image.xml',
+        ],
+    },
     # Scaffold: the load-bearing deliverable is the shared AbstractModel mixin
     # (models/account_mixin.py). It is abstract (no records) and there is no
     # concrete model yet, so there is deliberately no security/ir.model.access

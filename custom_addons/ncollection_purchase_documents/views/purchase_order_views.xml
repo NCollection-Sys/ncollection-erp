@@ -70,4 +70,18 @@
          stay where they are. -->
     <menuitem id="menu_purchase_nc_vendor_bills" name="Vendor Bills" parent="purchase.menu_purchase_root"
               action="account.action_move_in_invoice_type" groups="account.group_account_invoice" sequence="0"/>
+
+    <!-- Line amounts (LINE-01/02): Amount right after Price, then the line total including tax (price_total, the
+         tax engine's own line total). Placement only. -->
+    <record id="purchase_order_form_nc_line_amounts" model="ir.ui.view">
+        <field name="name">purchase.order.form.nc.line.amounts</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
+                <xpath expr="//field[@name='order_line']/list/field[@name='price_subtotal']" position="move"/>
+                <field name="price_total" string="Total incl. Tax"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
