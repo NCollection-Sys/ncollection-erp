@@ -153,23 +153,11 @@ if owner_group and owner_group not in admin.group_ids:
     admin.write({'group_ids': [(4, owner_group.id)]})
 
 # 4c. Option A: a tenant Owner is a business administrator, not a platform technical administrator. Odoo's base
-#     grants the `admin` account base.group_system (-> base.group_erp_manager) DIRECTLY, independently of our role,
-#     which is the escape hatch that let an Owner write server-action code, edit security or become the superuser.
-#     Remove those direct memberships from every workspace Owner that is not the platform's entry proxy. The
-#     Workspace Administrator right (group_tenant_admin, implied by the Owner role) keeps the administration surface.
-#     Idempotent; never touches the platform's own database (no tenant has the platform-admin group).
-_sys = env.ref('base.group_system', raise_if_not_found=False)  # noqa: F821
-_erp = env.ref('base.group_erp_manager', raise_if_not_found=False)  # noqa: F821
-_plat = env.ref('ncollection_subscription.group_platform_admin', raise_if_not_found=False)  # noqa: F821
-if owner_group and not _plat:  # _plat present => platform DB: never strip there
-    _strip = [g.id for g in (_sys, _erp) if g]
-    _owners = env['res.users'].sudo().search([  # noqa: F821
-        ('all_group_ids', 'in', owner_group.id), ('nc_platform_proxy', '=', False),
-    ]).filtered(lambda u: u.id != 1)
-    for _u in _owners:
-        _remove = [(3, gid) for gid in _strip if gid in _u.group_ids.ids]
-        if _remove:
-            _u.write({'group_ids': _remove})
+#     grants the `admin` account base.group_system (-> base.group_erp_manager) DIRECTLY, independently of our role.
+#     ONE enforcement, shared with the existing-tenant migration (ncollection_core 19.0.1.27.0): the Owner role stops
+#     implying them and no Owner (active or archived, the platform entry proxy excepted) holds them directly.
+#     Never touches the platform database. Idempotent.
+env['res.groups']._nc_enforce_owner_least_privilege()  # noqa: F821
 
 # 5. Config-sync service account (P2-T03). A dedicated, non-interactive user
 #    scoped to ncollection.workspace.config writes (group_config_sync — NOT a

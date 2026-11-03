@@ -6,6 +6,9 @@ The Owner holds ``group_tenant_admin`` (the Workspace Administration Center) but
 not by a per-method guard. The platform administrator and the superuser keep everything, because
 ``base.group_system`` implies ``group_tenant_admin``.
 """
+from unittest.mock import patch
+
+from odoo import api
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
@@ -140,3 +143,51 @@ class TestOwnerUserManagement(TransactionCase):
         with self.assertRaises(UserError):
             proxy.with_user(self.owner).nc_set_active(False)
         self.assertTrue(proxy.active)
+
+
+def _patch_platform_group(test, group):
+    """Make the platform administrator group look absent (None: a tenant database) or present (a platform one)."""
+    original = api.Environment.ref
+
+    def ref(env, xmlid, raise_if_not_found=True):
+        if xmlid == 'ncollection_subscription.group_platform_admin':
+            return group if group is not None else env['res.groups']
+        return original(env, xmlid, raise_if_not_found)
+    patcher = patch.object(api.Environment, 'ref', ref)
+    patcher.start()
+    test.addCleanup(patcher.stop)
+
+
+@tagged('post_install', '-at_install')
+class TestOwnerLeastPrivilegeOnAnExistingDatabase(TransactionCase):
+    """A database created before Option A stores Owner -> base.group_system, and its registrant holds the technical
+    groups directly. A fresh install never shows this; a rehearsed upgrade of a real tenant copy did (the Owner kept
+    base.group_system). The shared enforcement (migration and provisioning) must leave no Owner a technical admin."""
+
+    def test_an_old_database_is_brought_to_option_a(self):
+        _patch_platform_group(self, None)
+        system, owner_role = self.env.ref('base.group_system'), self.env.ref('ncollection_core.group_role_owner')
+        owner_role.write({'implied_ids': [(4, system.id)]})                 # the pre-Option-A implication
+        registrant = new_test_user(self.env, login='old_registrant', groups=OWNER + ',base.group_system')
+        archived = new_test_user(self.env, login='old_archived', groups=OWNER + ',base.group_erp_manager')
+        archived.active = False
+        proxy = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Platform Admin: old', 'login': 'old_platform_proxy', 'nc_platform_proxy': True,
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id, owner_role.id, system.id])]})
+        self.assertTrue(registrant.has_group('base.group_system'), "the old state really is reproduced")
+        changed = self.env['res.groups']._nc_enforce_owner_least_privilege()
+        self.assertEqual(set(changed), {'old_registrant', 'old_archived'})
+        self.env.invalidate_all()
+        self.assertNotIn(system, owner_role.implied_ids)
+        for user in (registrant, archived):
+            self.assertFalse(user.has_group('base.group_system'), user.login)
+            self.assertFalse(user.has_group('base.group_erp_manager'), user.login)
+            self.assertTrue(user.has_group('ncollection_core.group_tenant_admin'), user.login)
+        self.assertTrue(proxy.has_group('base.group_system'), "the platform entry proxy keeps its rights")
+        self.assertEqual(self.env['res.groups']._nc_enforce_owner_least_privilege(), [], "idempotent")
+
+    def test_the_platform_database_is_never_touched(self):
+        _patch_platform_group(self, self.env['res.groups'].create({'name': 'Platform administrators (test)'}))
+        admin = new_test_user(self.env, login='plat_admin', groups=OWNER + ',base.group_system')
+        self.assertEqual(self.env['res.groups']._nc_enforce_owner_least_privilege(), [])
+        self.assertTrue(admin.has_group('base.group_system'))

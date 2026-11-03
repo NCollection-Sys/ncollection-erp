@@ -110,7 +110,10 @@
     <record id="group_role_owner" model="res.groups">
         <field name="name">Owner</field>
         <field name="privilege_id" ref="privilege_ncollection_roles"/>
-        <field name="implied_ids" eval="[(4, ref('group_role_ceo')), (4, ref('group_tenant_admin'))]"/>
+        <!-- (3, ...) first: databases created before Option A store Owner -> base.group_system, and a link-only
+             eval would leave it there on upgrade (measured on a copy of a real tenant: the Owner kept system). -->
+        <field name="implied_ids" eval="[(3, ref('base.group_system')), (3, ref('base.group_erp_manager')),
+                                         (4, ref('group_role_ceo')), (4, ref('group_tenant_admin'))]"/>
         <field name="comment">Workspace owner: full control of THEIR workspace including billing, user management and the Workspace Administration Center, through group_tenant_admin. NOT base.group_system / base.group_erp_manager: a tenant Owner is a business administrator, not a platform technical administrator, and cannot run server-side code, edit security or manage modules (Option A). Financial WRITE via runtime-linked account.group_account_user, overriding CEO's read-only.</field>
     </record>
 
