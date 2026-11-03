@@ -122,6 +122,75 @@ Security, Company, Appearance, Document Stamps, Print Settings, System. Every sc
 * Contact **Website** placeholder: `e.g. https://www.<platform domain>` from `ncollection_saas.base_domain` (else `NC_BASE_DOMAIN`);
   the field itself stays empty (`ncollection_core/models/res_partner_website.py`).
 
+## The tenant Owner is a business administrator, not a platform technical administrator (Option A)
+
+**Decision (approved, final):** the Owner role no longer implies `base.group_system` or `base.group_erp_manager`. Those two
+groups are what let a tenant Owner write server-action Python, QWeb, record rules, `res.groups` and `ir.model.access`, install
+modules and become the superuser; blocking each of those one method at a time does not end.
+
+* **`ncollection_core.group_tenant_admin`** (Workspace Administrator) is the tenant-scoped administration right. The Owner role
+  implies it; `base.group_system` implies it too, so the platform administrator, the `admin` account and the superuser keep every
+  workspace-admin right they had. It implies `ncollection_branding.group_stamp_manager`.
+* NCollection's own admin models (the Workspace Administration Center, alerts, roles, ...) are granted to `group_tenant_admin`.
+  Branding's "who administers this workspace's documents" check (every stamp kind, Print Settings, a document's own stamp switch)
+  is `res.users._nc_is_workspace_administrator()`: Odoo's Settings administrator in branding, `group_tenant_admin` once core is
+  installed.
+* **Enforced on existing databases, not only by the role definition.** A database created before Option A stores
+  Owner -> `base.group_system`, and a link-only data eval never removes it (measured: a rehearsed upgrade of a real tenant left
+  the Owners with `base.group_system`). `role_groups.xml` unlinks it on every upgrade of core, and
+  `res.groups._nc_enforce_owner_least_privilege()` - called by the 19.0.1.27.0 migration and by provisioning (`seed_tenant.py`) -
+  removes it from the role and strips direct memberships from every Owner, archived ones included. The platform entry proxy keeps
+  its rights (platform staff); the platform database is never touched (it has the platform administrator group, a tenant never
+  does). Idempotent.
+
+### What the Owner administers, and where
+
+| Capability | Where | How it is authorised |
+|---|---|---|
+| Users: create, roles, activate / deactivate, reset password | Workspace Administration > Users / Roles & Permissions | delegated methods (`_nc_create_workspace_user`, `nc_set_roles`, `nc_set_active`, ...): `sudo` only after the Admin Center's own check; a custom role can never carry `base.group_system`, `base.group_erp_manager` or `group_tenant_admin`; the platform entry proxy is not the Owner's to manage |
+| Company identity, address, VAT, logo | Workspace Administration > Company | `res.company` delegation (below) |
+| Tenant appearance (colours, login background, company stamp image) | Workspace Administration > Appearance | `res.company` delegation |
+| Accounting Defaults (default accounts, journals, taxes) | Workspace Administration > Accounting Defaults | `res.company` delegation; many2one values must belong to the company |
+| Business Settings: Sales, Purchase, Accounting | Workspace Administration > Business Settings | explicit per-module list (below) |
+| Document Stamps, Print Settings, each document's stamp switch | Workspace Administration > Document Stamps / Print Settings; the document form | `_nc_is_workspace_administrator()` |
+| Security audit log (sign-ins, administrative actions) | Workspace Administration > Security | READ on `ncollection.auth.log` (tenant rows only exist in a tenant database); no write or delete |
+| Native Developer Mode | Workspace Administration > Activate Developer Mode (Odoo's own `?debug=1`) | kept by `ir.http._handle_debug` for the Owner role |
+
+**`res.company` delegation** (`ncollection_core/models/res_company_delegation.py`): a Workspace Administrator without
+`base.group_erp_manager` may write ONLY fields in `_nc_tenant_admin_company_fields()` (identity, appearance, and what Accounting,
+Sales and Purchase add), ONLY on companies they belong to, and every many2one value must belong to that company (taxes and journals
+through `company_id`, accounts through `company_ids`); a default sales tax must be a sales tax. Anything else is not delegated and
+Odoo's own access check refuses it. Every delegated write is audited (`admin_settings_change`).
+
+**Business Settings** (`ncollection.business.settings`, a wizard): an explicit, code-defined list per module - Sales: quotation
+validity, online signature / payment, prepayment, discounts, pro-forma, automatic invoice; Purchase: lock confirmed orders, order
+approval and its amount, purchase warnings, receipt reminder; Accounting: default sales / purchase tax, tax rounding, price
+include, QR codes, amount in words, terms, incoterm, cash rounding, delivery addresses. Each value is validated against the native
+field and applied where Odoo stores it (company field through the delegation, configuration parameter, or `res.groups`
+`_apply_group` / `_remove_group`). `res.config.settings.execute()` is never called, so no module can be installed from here; the
+company is always `env.company`, never one sent by the client.
+
+### Intentionally platform-only (documented, not an oversight)
+
+* Odoo's **General Settings** (`res.config.settings`) and the native **Settings** app: it also installs modules (`module_*`) and
+  edits technical configuration. Settings a business owner needs are in Business Settings; the rest stays with the platform.
+* **Apps** / module management, **`/web/become`**, server actions, automated actions, QWeb / view editing, record rules,
+  security groups, ACLs, model and field metadata.
+* **Public API clients** (`ncollection_api`): a client "acts as" a chosen user and its secret is issued only by server code; a
+  tenant-safe issuance flow does not exist yet, so administration stays with the platform.
+* **System Branding** (the product's own identity) - see SYSTEM_BRANDING.md.
+* In native Developer Mode the Owner has Odoo's inspection tools (metadata, data, fields, computed arch, filters, "Leave Debug
+  Mode"); *Edit View*, *Become Superuser* and every technical write are refused by the server, not only hidden.
+
+### Known: non-Owner technical accounts in tenant databases
+
+Option A governs the **Owner**. A tenant database that was not created through `seed_tenant.py` can still contain Odoo's stock
+`admin`-style account holding `base.group_system` without the Owner role (measured on the dev/e2e fixtures `atlas`, `devpath`,
+`e2eclienta`, `e2eclientb`, `einvdev`, `einvfull`, `uaetest`). Such an account remains a full technical administrator inside that
+tenant. Provisioned tenants do not have it (the registrant becomes the Owner and is stripped). Deciding what to do with those
+accounts (convert to Owner, or retire) is an operator decision, not done automatically: removing the wrong account can lock a
+tenant out of its own administration.
+
 ## Verified how
 
 `ncollection_core/tests/test_workspace_admin.py`, `test_admin_service.py`, `test_forced_password_change.py`;
