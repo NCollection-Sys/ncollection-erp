@@ -130,6 +130,7 @@ EVENT_TYPES = [
     ('admin_password_reset', 'Password reset by an administrator'),
     ('password_changed', 'Password changed by the user'),
     ('admin_roles_change', 'Roles changed'),
+    ('admin_settings_change', 'Company or business settings changed'),
     ('role_define', 'Role defined'),
     ('admin_denied', 'Administrative action refused'),
 ]

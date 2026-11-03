@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_ncollection_auth_log_system,ncollection.auth.log system read,model_ncollection_auth_log,base.group_system,1,0,0,0
 access_ncollection_auth_spent_token_system,ncollection.auth.spent_token system read,model_ncollection_auth_spent_token,base.group_system,1,0,0,0
+access_ncollection_auth_log_tenant_admin,ncollection.auth.log workspace administrator read,model_ncollection_auth_log,ncollection_core.group_tenant_admin,1,0,0,0

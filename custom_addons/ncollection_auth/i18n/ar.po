@@ -299,3 +299,8 @@ msgstr "تحديث مستخدم"
 #: model_terms:ir.ui.view,arch_db:ncollection_auth.account_security_alert_branded
 msgid "<span>activating Two-factor Authentication</span>"
 msgstr "<span>تفعيل المصادقة الثنائية</span>"
+
+#. module: ncollection_auth
+#: model:ir.model.fields.selection,name:ncollection_auth.selection__ncollection_auth_log__event_type__admin_settings_change
+msgid "Company or business settings changed"
+msgstr "تم تغيير إعدادات الشركة أو الأعمال"

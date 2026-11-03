@@ -20,7 +20,9 @@
     'license': 'LGPL-3',
     # auth_signup: core (reset-password flow hooks). auth_session_timeout:
     # OCA/server-auth pinned in repos.yml (inactivity logout).
-    'depends': ['base', 'web', 'auth_signup', 'auth_session_timeout', 'auth_totp', 'auth_totp_mail'],
+    'depends': ['base', 'web', 'auth_signup', 'auth_session_timeout', 'auth_totp', 'auth_totp_mail',
+                # group_tenant_admin (Option A): the workspace Owner reads this workspace's audit log
+                'ncollection_core'],
     'data': [
         'security/ir.model.access.csv',
         'views/auth_log_views.xml',
