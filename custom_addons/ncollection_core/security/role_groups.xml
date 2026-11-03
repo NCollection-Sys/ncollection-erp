@@ -91,6 +91,7 @@
          they had; a tenant Owner gets the administration surface without the technical escape hatches. -->
     <record id="group_tenant_admin" model="res.groups">
         <field name="name">Workspace Administrator</field>
+        <field name="implied_ids" eval="[(4, ref('ncollection_branding.group_stamp_manager'))]"/>
         <field name="comment">Tenant-scoped business administration (the Workspace Administration Center and NCollection's own admin models). Deliberately does NOT grant base.group_system or base.group_erp_manager: no server-action code, QWeb, record-rule, group, ACL or module management, and no path to the superuser.</field>
     </record>
     <record id="base.group_system" model="res.groups">
