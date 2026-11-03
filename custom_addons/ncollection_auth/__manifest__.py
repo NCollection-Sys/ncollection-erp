@@ -12,7 +12,7 @@
     # claimed `-u` applies it — it does not, and a tenant with a customised
     # retention above 400 would have had the purge refuse on every run.
     # 1.3.0: administrative events (user / password / role changes) with target, detail and actor_ref columns.
-    'version': '19.0.1.3.0',
+    'version': '19.0.1.4.0',
     'category': 'Hidden',
     'summary': 'Authentication audit log + hardened login/session defaults (P1-T19)',
     'author': 'NCollection',

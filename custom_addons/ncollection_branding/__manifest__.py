@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.17.0',
+    'version': '19.0.1.18.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection branding: system branding, tenant colours, document layout and stamps',
     'description': """

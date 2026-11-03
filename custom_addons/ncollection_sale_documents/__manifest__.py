@@ -2,7 +2,7 @@
 # (proprietary NCollection module — same exemption the other ncollection_* modules carry.)
 {
     'name': 'NCollection Sale Documents',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Sales/Sales',
     'summary': 'Sales opens on Invoices; Duplicate; View / Preview that is the very PDF Print produces',
     'author': 'NCollection',

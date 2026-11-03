@@ -2,7 +2,7 @@
 # (proprietary NCollection module — same exemption the other ncollection_* modules carry.)
 {
     'name': 'NCollection Purchase Documents',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Inventory/Purchase',
     'summary': 'Purchase opens on Vendor Bills; Duplicate; Files; View / Preview = the printed document',
     'author': 'NCollection',
