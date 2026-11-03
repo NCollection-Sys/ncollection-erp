@@ -55,7 +55,7 @@ class TestSystemBrandingBoundary(TransactionCase):
 
     # ----------------------------------------------------------------- the Owner
     def test_a_tenant_owner_does_not_hold_the_system_branding_right(self):
-        self.assertTrue(self.owner.has_group('base.group_system'), 'the Owner role still implies Settings: unchanged')
+        self.assertFalse(self.owner.has_group('base.group_system'), 'Option A: the Owner is not a system user')
         self.assertFalse(self.owner.has_group(MANAGER))
         self.assertNotIn(self.manager_group, self.env.ref('ncollection_core.group_role_owner').all_implied_ids)
 
@@ -150,18 +150,17 @@ class TestSystemBrandingBoundary(TransactionCase):
         self._assert_owner_never_holds_it()
 
     def test_the_guard_leaves_ordinary_user_and_group_administration_alone(self):
-        """Only GIVING the right is refused: the Owner still creates users, groups and implications that do not reach
-        it, and the guard never blocks taking the right away."""
-        member = self.env['res.users'].with_user(self.owner).with_context(no_reset_password=True).create({
-            'name': 'Ordinary Member', 'login': 'boundary_member',
-            'group_ids': [Command.set([self.env.ref('base.group_user').id])]})
-        team = self.env['res.groups'].with_user(self.owner).create({
-            'name': 'Boundary Team', 'implied_ids': [Command.link(self.env.ref('base.group_user').id)],
-            'user_ids': [Command.link(member.id)]})
-        member.with_user(self.owner).write({'group_ids': [Command.link(team.id)]})
+        """Option A: the Owner creates users through the Admin Center (not a raw res.users write) and can NOT edit
+        res.groups at all (an escalation surface, now refused at the ORM). The system-branding guard still never
+        blocks REMOVING the right."""
+        member, _temp = self.env['res.users'].with_user(self.owner)._nc_create_workspace_user(
+            'Ordinary Member', 'boundary_member')
         self.assertTrue(member.has_group('base.group_user'))
+        with self.assertRaises(AccessError):
+            self.env['res.groups'].with_user(self.owner).create({
+                'name': 'Boundary Team', 'implied_ids': [Command.link(self.env.ref('base.group_user').id)]})
         _Entry, _entry, proxy = self._enter('u77')
-        proxy.with_user(self.owner).write({'group_ids': [Command.unlink(self.manager_group.id)]})
+        proxy.sudo().write({'group_ids': [Command.unlink(self.manager_group.id)]})
         self.assertFalse(proxy.has_group(MANAGER), 'removing the right is never restricted')
 
     def test_the_superuser_still_gives_the_right(self):
@@ -176,7 +175,10 @@ class TestSystemBrandingBoundary(TransactionCase):
     # ------------------------------------------- tenant branding and company identity are the Owner's
     def test_the_owner_keeps_tenant_branding_and_company_identity_and_neither_touches_the_system(self):
         before = self.Brand.nc_brand()
-        company = self.company.with_user(self.owner)
+        # The Owner is not base.group_erp_manager; the Admin Center Company screen performs this write server-side.
+        with self.assertRaises(AccessError):
+            self.company.with_user(self.owner).write({'name': 'Direct Write Refused'})
+        company = self.company.sudo()
         company.write({'nc_primary_color': '#123456', 'nc_secondary_color': '#654321', 'nc_sidebar_color': '#0A0B0C'})
         company.write({'name': 'Boundary Trading FZ-LLC'})
         company.flush_recordset()

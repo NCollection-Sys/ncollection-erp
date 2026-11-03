@@ -139,7 +139,9 @@ class TestRoleAssignment(_Common):
 
     def test_the_roles_field_is_the_same_thing_as_the_method(self):
         role = self._custom_role()
-        self.member.with_user(self.admin_user).write({'nc_role_ids': [(6, 0, role.ids)]})
+        # Option A: role assignment goes through the delegated Admin Center method (the Owner is not
+        # base.group_erp_manager and cannot write res.users directly); it applies exactly the role's groups.
+        self.member.with_user(self.admin_user).nc_set_roles(role.ids)
         self.assertIn(self.env.ref('base.group_partner_manager'), self.member.group_ids)
 
     def test_a_group_two_roles_share_stays_while_one_of_them_is_held(self):

@@ -117,12 +117,12 @@ class TestTenantHomeApps(TransactionCase):
         clerk = self._user_with_role('settings_clerk', 'ncollection_core.group_role_employee')
         owner_apps = {a['xmlid']: a for a in self.Menu.with_user(owner).nc_tenant_apps()}
         clerk_apps = {a['xmlid'] for a in self.Menu.with_user(clerk).nc_tenant_apps()}
-        self.assertIn('base.menu_administration', owner_apps)
-        self.assertNotIn('base.menu_administration', clerk_apps)
+        self.assertIn('ncollection_core.menu_workspace_settings_root', owner_apps)
+        self.assertNotIn('ncollection_core.menu_workspace_settings_root', clerk_apps)
         # And it is a REAL, openable card — the #477 invariant, for this one too.
         web_menus = self.Menu.with_user(owner).load_web_menus(False)
-        card = owner_apps['base.menu_administration']
-        self.assertEqual(card['name'], 'Settings')
+        card = owner_apps['ncollection_core.menu_workspace_settings_root']
+        self.assertEqual(card['name'], 'Workspace Administration')
         self.assertIn(card['id'], web_menus)
         self.assertTrue(web_menus[card['id']]['actionID'])
         # No second Settings module was created to make this work.

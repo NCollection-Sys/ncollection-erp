@@ -45,14 +45,18 @@ class TestMenuStripping(TransactionCase):
         self.assertNotIn(self.apps_menu.id, visible)
         self.assertNotIn(self.settings_menu.id, visible)
 
-    def test_owner_sees_settings_but_apps_belongs_to_the_platform(self):
-        # SEC-01: Apps is the platform's (ir_ui_menu._ncollection_platform_only_menu_ids), the Owner included; the
-        # Owner-only rule still gives the Owner Settings.
+    def test_owner_sees_the_admin_center_not_native_apps_or_settings(self):
+        # Option A: the Owner's administration is the Workspace Administration Center (group_role_owner), NOT Odoo's
+        # native Apps (platform-only) or General Settings (base.group_erp_manager, which the Owner no longer holds).
         visible = self.env["ir.ui.menu"].with_user(self.owner)._visible_menu_ids()
         self.assertNotIn(self.apps_menu.id, visible)
-        self.assertIn(self.settings_menu.id, visible)
+        self.assertNotIn(self.settings_menu.id, visible)
+        admin_center = self.env.ref("ncollection_core.menu_workspace_settings_root")
+        self.assertIn(admin_center.id, visible, "the Owner administers the workspace through the Admin Center")
 
     def test_owner_only_menu_ids_empty_for_owner(self):
+        # The Owner-only subtraction hides nothing extra from the Owner; native Apps/Settings are refused by group,
+        # not by this list (Option A).
         owner_hidden = self.env["ir.ui.menu"].with_user(
             self.owner
         )._ncollection_owner_only_menu_ids()
@@ -72,7 +76,9 @@ class TestMenuStripping(TransactionCase):
         with self.assertRaises(AccessError):
             self.env["res.config.settings"].with_user(self.sales).create({})
 
-    def test_owner_allowed_settings_model(self):
-        """Owner implies group_system, so settings access is retained."""
-        settings = self.env["res.config.settings"].with_user(self.owner).create({})
-        self.assertTrue(settings)
+    def test_owner_is_refused_native_general_settings(self):
+        """Option A: the Owner is NOT base.group_erp_manager, so Odoo's native General Settings
+        (res.config.settings) is refused at the ORM. Business settings are administered through the Workspace
+        Administration Center instead (company, users, roles, branding, stamps, printing)."""
+        with self.assertRaises(AccessError):
+            self.env["res.config.settings"].with_user(self.owner).create({})

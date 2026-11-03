@@ -41,10 +41,11 @@ class TestAppsBelongToThePlatform(TransactionCase):
     def _visible(self, user):
         return self.env['ir.ui.menu'].with_user(user)._visible_menu_ids()
 
-    def test_a_tenant_owner_keeps_settings_but_no_longer_sees_apps(self):
+    def test_a_tenant_owner_administers_via_the_admin_center_not_native_apps(self):
         _as_tenant(self)
         visible = self._visible(self.owner)
-        self.assertIn(self.settings.id, visible, "the Owner still administers the workspace")
+        admin_center = self.env.ref("ncollection_core.menu_workspace_settings_root")
+        self.assertIn(admin_center.id, visible, "the Owner administers the workspace through the Admin Center")
         self.assertNotIn(self.apps.id, visible)
         self.assertNotIn(self.apps.id, self._visible(self.clerk))
 
@@ -171,8 +172,9 @@ class TestBecomeSuperuserBelongsToThePlatform(HttpCase):
         _as_tenant(self)
         owner = new_test_user(self.env, login='become_owner',
                               groups='base.group_user,ncollection_core.group_role_owner')
-        self.assertTrue(owner.has_group('base.group_system'), "the probe really is a system user")
-        self.assertEqual(self._uid_after_become('become_owner'), owner.id)
+        self.assertFalse(owner.has_group('base.group_system'), "Option A: the Owner is not a system user")
+        self.assertEqual(self._uid_after_become('become_owner'), owner.id,
+                         "a tenant Owner never becomes the superuser")
 
     def test_the_platform_administrator_keeps_it(self):
         group = self.env.ref(PLATFORM_GROUP, raise_if_not_found=False)

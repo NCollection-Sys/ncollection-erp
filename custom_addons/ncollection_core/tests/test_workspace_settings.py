@@ -113,10 +113,11 @@ class TestWorkspaceSettings(TransactionCase):
             wizard.action_create_user()
         self.assertFalse(self.env["res.users"].sudo().search([("login", "=", "overlimit")]))
 
-    def test_limit_blocks_raw_orm_create(self):
-        """Rule 4: the real control is in res.users.create, not just the UI."""
+    def test_raw_orm_create_is_refused_for_the_owner(self):
+        """Option A: the Owner is not base.group_erp_manager, so a raw res.users.create is refused at the ORM. The
+        seat limit itself is enforced on the delegated Admin Center path (see test_limit_blocks_a_new_user)."""
         self.Config.create({"max_users": self._active_internal_count()})
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(AccessError):
             self.env["res.users"].with_user(self.owner).create({
                 "name": "Bypass Attempt", "login": "bypassuser",
                 "group_ids": [(4, self.env.ref("base.group_user").id)],
@@ -131,8 +132,10 @@ class TestWorkspaceSettings(TransactionCase):
         victim = new_test_user(self.env, login="ws_victim", groups="base.group_user")
         victim.with_user(self.owner).action_ncollection_deactivate()
         self.Config.create({"max_users": self._active_internal_count()})
+        # Reactivation goes through the delegated Admin Center method (nc_set_active), which checks the seat limit
+        # after the privileged write (Option A: the Owner does not write res.users directly).
         with self.assertRaises(ValidationError):
-            victim.sudo().with_user(self.owner).write({"active": True})
+            victim.with_user(self.owner).nc_set_active(True)
 
     # ---------------- deactivate ----------------
 
