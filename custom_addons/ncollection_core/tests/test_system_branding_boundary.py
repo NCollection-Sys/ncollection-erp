@@ -175,10 +175,9 @@ class TestSystemBrandingBoundary(TransactionCase):
     # ------------------------------------------- tenant branding and company identity are the Owner's
     def test_the_owner_keeps_tenant_branding_and_company_identity_and_neither_touches_the_system(self):
         before = self.Brand.nc_brand()
-        # The Owner is not base.group_erp_manager; the Admin Center Company screen performs this write server-side.
-        with self.assertRaises(AccessError):
-            self.company.with_user(self.owner).write({'name': 'Direct Write Refused'})
-        company = self.company.sudo()
+        # Option A: the Owner is not base.group_erp_manager; res.company's Workspace Administrator delegation lets them
+        # change their OWN company's identity and appearance (and nothing else - test_company_delegation).
+        company = self.company.with_user(self.owner)
         company.write({'nc_primary_color': '#123456', 'nc_secondary_color': '#654321', 'nc_sidebar_color': '#0A0B0C'})
         company.write({'name': 'Boundary Trading FZ-LLC'})
         company.flush_recordset()

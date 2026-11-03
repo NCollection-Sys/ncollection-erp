@@ -67,9 +67,10 @@ class TestPlatformAdminBoundary(TransactionCase):
         self.assertEqual(self.config.allowed_module_names, 'stock,fleet')
 
     def test_an_owner_is_never_a_platform_administrator_even_where_the_platform_group_is_implied(self):
-        """Where the platform group exists, base.group_system (which the Owner role implies) brings it along. The
-        tenant Owner ROLE is what keeps the two contexts apart."""
-        self.assertIn(self.platform_group, self.owner.all_group_ids)
+        """Option A: the Owner role no longer implies base.group_system, so it no longer brings the platform group
+        along either (before, only the Owner ROLE kept the two contexts apart)."""
+        self.assertNotIn(self.env.ref('base.group_system'), self.owner.all_group_ids)
+        self.assertNotIn(self.platform_group, self.owner.all_group_ids)
         self.assertFalse(self.Users.with_user(self.owner)._nc_actor_is_platform_admin())
         with self.assertRaises(AccessError):
             self.module.with_user(self.owner).button_immediate_install()
