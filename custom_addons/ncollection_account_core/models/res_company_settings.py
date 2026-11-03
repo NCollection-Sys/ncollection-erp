@@ -25,6 +25,18 @@ class ResCompany(models.Model):
             'expense_accrual_account_id', 'automatic_entry_default_journal_id',
         }
 
+    def write(self, vals):
+        """Odoo's account overrides res.company.write and sets ir.default (the default receivable / payable / income
+        accounts) as the CALLER before calling super - so, when account loads after ncollection_core, a Workspace
+        Administrator's delegated write was refused by ir.default's record rule before the delegation was reached.
+        This module loads after account, so its override runs first: the same checks, elevated here, audited once."""
+        if self._nc_delegated_company_write(vals):
+            self._nc_check_delegated_values(vals)
+            result = super(ResCompany, self.sudo()).write(vals)
+            self._nc_audit_delegated_write(vals)
+            return result
+        return super().write(vals)
+
     def _nc_check_delegated_values(self, vals):
         result = super()._nc_check_delegated_values(vals)
         for name, use in (('account_sale_tax_id', 'sale'), ('account_purchase_tax_id', 'purchase')):

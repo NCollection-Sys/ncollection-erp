@@ -67,11 +67,17 @@ class ResCompany(models.Model):
                     raise ValidationError(self.env._(
                         "%(field)s must belong to %(company)s.", field=field.string, company=company.name))
 
+    def _nc_audit_delegated_write(self, vals):
+        self.env.user._nc_audit('admin_settings_change', 'company %s: %s' % (
+            ', '.join(str(i) for i in self.ids), ', '.join(sorted(vals))))
+
     def write(self, vals):
+        # A module whose own res.company.write must run elevated too (it sits ABOVE this one in the MRO, e.g. Odoo's
+        # account, which sets ir.default as the caller) elevates first - see ncollection_account_core - and this one
+        # then sees env.su and passes through: one check, one audit.
         if self._nc_delegated_company_write(vals):
             self._nc_check_delegated_values(vals)
             result = super(ResCompany, self.sudo()).write(vals)
-            self.env.user._nc_audit('admin_settings_change', 'company %s: %s' % (
-                ', '.join(str(i) for i in self.ids), ', '.join(sorted(vals))))
+            self._nc_audit_delegated_write(vals)
             return result
         return super().write(vals)
