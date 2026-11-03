@@ -58,7 +58,7 @@ ROLE_IMPLICATIONS = {
         # Owner overrides CEO's read-only with full accounting access.
         'account.group_account_user',
         # Full workspace control (D10): Purchase and Inventory administration. Owner already holds
-        # account_user + base.group_system, so these add no accounting right it lacks. NOT given to
+        # account_user + group_tenant_admin, so these add no accounting right it lacks. NOT given to
         # Manager/CEO: a purchase user may write VENDOR BILLS (account.move, record-rule limited), which
         # would give Manager a financial write (D5) and CEO a write where D2 says read-only.
         'purchase.group_purchase_manager',

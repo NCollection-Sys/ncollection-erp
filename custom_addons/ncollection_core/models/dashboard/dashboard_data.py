@@ -119,7 +119,7 @@ class NCollectionDashboardData(models.AbstractModel):
 
         # A system administrator holding no NCollection role still administers
         # the workspace; mirror Owner rather than serving an empty dashboard.
-        if not groups and user.has_group('base.group_system'):
+        if not groups and user.has_group('ncollection_core.group_tenant_admin'):
             groups.update(ALL_WIDGET_GROUPS)
 
         # Employee is "the floor every other role stands on" (role_groups.xml),

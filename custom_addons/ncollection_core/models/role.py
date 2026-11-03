@@ -26,8 +26,11 @@ FORBIDDEN_GROUPS = (
     'ncollection_core.group_cron_service',
     'ncollection_core.group_role_owner',        # the standard Administrator role, never re-created by hand
     'ncollection_branding.group_system_branding_manager',   # the SYSTEM's identity: platform staff only
+    'ncollection_core.group_tenant_admin',      # workspace administration, granted only by the Owner role
 )
-ADMIN_GROUP = 'base.group_system'
+# Workspace administration is group_tenant_admin (Option A). base.group_system implies it, so the platform
+# administrator and the superuser still satisfy every check written against it.
+ADMIN_GROUP = 'ncollection_core.group_tenant_admin'
 _STANDARD_EDITABLE = {'active', 'sequence', 'description', 'name'}
 
 

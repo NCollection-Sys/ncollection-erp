@@ -154,6 +154,16 @@ action = {
         </field>
     </record>
 
+    <!-- Native Developer Mode (DEV-01), reachable from the Admin Center. The Owner no longer holds
+         base.group_system and so no longer sees Odoo's General Settings "Activate the developer mode"; this opens
+         Odoo's OWN debug on the application path (?debug=1). ir.http._handle_debug keeps debug for the Owner role.
+         No imitation, no custom debug menu; deactivation is Odoo's native debug menu item. -->
+    <record id="action_nc_activate_developer_mode" model="ir.actions.act_url">
+        <field name="name">Activate Developer Mode</field>
+        <field name="url">/odoo?debug=1</field>
+        <field name="target">self</field>
+    </record>
+
     <!-- ============ Menus (Owner-only) ============ -->
     <menuitem id="menu_workspace_settings_root"
               name="Workspace Administration"
@@ -166,6 +176,12 @@ action = {
               parent="menu_workspace_settings_root"
               action="action_workspace_users"
               sequence="10"/>
+
+    <menuitem id="menu_workspace_developer_mode"
+              name="Activate Developer Mode"
+              parent="menu_workspace_settings_root"
+              action="action_nc_activate_developer_mode"
+              sequence="900"/>
 
     <menuitem id="menu_workspace_company"
               name="Company"

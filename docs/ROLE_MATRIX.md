@@ -55,7 +55,7 @@ Task: [P1-T08]. Audited by: [P1-T21] Phase-1 security audit.
 | **Accountant** `group_role_accountant` | Employee | `account.group_account_user` | Full accounting features (Odoo "Show Full Accounting Features"). Financial WRITE role. |
 | **Manager** `group_role_manager` | Employee | `sales_team.group_sale_salesman_all_leads`, `stock.group_stock_user`, `hr.group_hr_user` | Department-level oversight: ALL-documents sales visibility + operational access across installed op modules. Deliberately NO financial groups and NO Settings. |
 | **CEO** `group_role_ceo` | Manager (chain) | `account.group_account_readonly` | Sees everything; financials strictly READ-ONLY (`group_account_readonly`, never `group_account_user`). No Settings. |
-| **Owner** `group_role_owner` | CEO (chain), `base.group_system` | `account.group_account_user`, `purchase.group_purchase_manager`, `stock.group_stock_manager` | Full workspace control incl. billing and user management. `base.group_system` grants Settings — its dangerous surface (Apps, debug, technical menus) is stripped by P1-T11, which depends on this task. Financial write overrides CEO's read-only. |
+| **Owner** `group_role_owner` | CEO (chain), `ncollection_core.group_tenant_admin` | `account.group_account_user`, `purchase.group_purchase_manager`, `stock.group_stock_manager` | Full control of THEIR workspace incl. billing and user management, through `group_tenant_admin` (the Workspace Administration Center). NOT `base.group_system` / `base.group_erp_manager` (Option A): a tenant Owner is a business administrator, not a platform technical administrator, and cannot run server-side code, edit security or manage modules. `base.group_system` implies `group_tenant_admin`, so platform staff keep every workspace-admin right. Financial write overrides CEO's read-only. |
 
 ## 3. Inheritance chains (transitive view)
 
@@ -67,7 +67,7 @@ HR ───────── Employee + [hr_user]
 Accountant ─ Employee + [account_user]
 Manager ──── Employee + [salesman_all_leads, stock_user, hr_user]
 CEO ──────── Manager + [account_readonly]
-Owner ────── CEO + base.group_system + [account_user, purchase_manager, stock_manager]
+Owner ────── CEO + group_tenant_admin + [account_user, purchase_manager, stock_manager]
 ```
 
 Bracketed = runtime-linked (present only when the module is installed).

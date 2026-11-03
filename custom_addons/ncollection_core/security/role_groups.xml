@@ -83,6 +83,20 @@
         <field name="comment">Department manager: operational oversight (all-documents visibility in operational modules, runtime-linked). No financial configuration, no Settings.</field>
     </record>
 
+    <!-- Workspace Administrator (Option A, #security): the tenant-scoped administration right. It carries the
+         Workspace Administration Center and NCollection's own admin models, but NOT base.group_system /
+         base.group_erp_manager, so the Owner who holds it cannot write server-action Python, QWeb, record rules,
+         res.groups, ir.model.access, nor manage modules or become the superuser. base.group_system IMPLIES it, so
+         the platform administrator, the `admin` account and the real superuser keep every workspace-admin right
+         they had; a tenant Owner gets the administration surface without the technical escape hatches. -->
+    <record id="group_tenant_admin" model="res.groups">
+        <field name="name">Workspace Administrator</field>
+        <field name="comment">Tenant-scoped business administration (the Workspace Administration Center and NCollection's own admin models). Deliberately does NOT grant base.group_system or base.group_erp_manager: no server-action code, QWeb, record-rule, group, ACL or module management, and no path to the superuser.</field>
+    </record>
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('ncollection_core.group_tenant_admin'))]"/>
+    </record>
+
     <!-- CEO: sees everything, financials read-only. -->
     <record id="group_role_ceo" model="res.groups">
         <field name="name">CEO</field>
@@ -95,8 +109,8 @@
     <record id="group_role_owner" model="res.groups">
         <field name="name">Owner</field>
         <field name="privilege_id" ref="privilege_ncollection_roles"/>
-        <field name="implied_ids" eval="[(4, ref('group_role_ceo')), (4, ref('base.group_system'))]"/>
-        <field name="comment">Workspace owner: full control including billing, user management and Settings (base.group_system; the dangerous surface is stripped by P1-T11). Financial WRITE access via runtime-linked account.group_account_user, overriding CEO's read-only.</field>
+        <field name="implied_ids" eval="[(4, ref('group_role_ceo')), (4, ref('group_tenant_admin'))]"/>
+        <field name="comment">Workspace owner: full control of THEIR workspace including billing, user management and the Workspace Administration Center, through group_tenant_admin. NOT base.group_system / base.group_erp_manager: a tenant Owner is a business administrator, not a platform technical administrator, and cannot run server-side code, edit security or manage modules (Option A). Financial WRITE via runtime-linked account.group_account_user, overriding CEO's read-only.</field>
     </record>
 
 </odoo>

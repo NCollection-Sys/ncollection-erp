@@ -311,11 +311,13 @@ class ResUsers(models.Model):
             'nc_must_change_password': True if proxy else bool(must_change),
         }
         if proxy:
-            user = self.create(vals)
+            user = self.sudo().create(vals)
             # The one password write a proxy causes: generated here, server side, and forced to change.
             user.with_user(SUPERUSER_ID).write({'password': secret})
         else:
-            user = self.create(dict(vals, password=secret))
+            # Delegated: the Owner is a business administrator (group_tenant_admin), not base.group_erp_manager,
+            # so res.users create is performed server-side after the wizard's ACL gate (Option A).
+            user = self.sudo().create(dict(vals, password=secret))
         self.env['res.users']._ncollection_check_user_limit()
         if roles:
             user._nc_apply_roles(roles)

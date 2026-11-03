@@ -61,7 +61,7 @@
                 ref('ncollection_core.group_role_sales'),
                 ref('ncollection_core.group_role_ceo'),
                 ref('ncollection_core.group_role_owner'),
-                ref('base.group_system')])]"/>
+                ref('ncollection_core.group_tenant_admin')])]"/>
         </record>
 
         <record id="rule_alert_expense" model="ir.rule">
@@ -72,7 +72,7 @@
                 ref('ncollection_core.group_role_accountant'),
                 ref('ncollection_core.group_role_ceo'),
                 ref('ncollection_core.group_role_owner'),
-                ref('base.group_system')])]"/>
+                ref('ncollection_core.group_tenant_admin')])]"/>
         </record>
 
         <record id="rule_alert_attendance" model="ir.rule">
@@ -83,7 +83,7 @@
                 ref('ncollection_core.group_role_hr'),
                 ref('ncollection_core.group_role_manager'),
                 ref('ncollection_core.group_role_owner'),
-                ref('base.group_system')])]"/>
+                ref('ncollection_core.group_tenant_admin')])]"/>
         </record>
 
         <record id="rule_alert_stock" model="ir.rule">
@@ -94,7 +94,7 @@
                 ref('ncollection_core.group_role_warehouse'),
                 ref('ncollection_core.group_role_manager'),
                 ref('ncollection_core.group_role_owner'),
-                ref('base.group_system')])]"/>
+                ref('ncollection_core.group_tenant_admin')])]"/>
         </record>
     </data>
 </odoo>
