@@ -41,3 +41,5 @@ from . import anomaly
 from . import error_log
 from . import screen_title
 from . import res_partner_website
+from . import res_company_delegation
+from . import business_settings

@@ -8,3 +8,4 @@ from . import account_move_status
 from . import account_payment
 from . import amount_words
 from . import document_type
+from . import business_settings

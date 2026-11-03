@@ -17,11 +17,15 @@ msgstr "نسخة مماثلة"
 
 #. module: ncollection_sale_documents
 #: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__display_name
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_res_company__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_sale_documents
 #: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__id
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__id
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_res_company__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -38,6 +42,8 @@ msgstr "الفواتير"
 #. module: ncollection_sale_documents
 #: model:ir.model,name:ncollection_sale_documents.model_sale_order
 #: model:ncollection.document.type,name:ncollection_sale_documents.doc_type_sales_order
+#. odoo-python
+#: code:addons/ncollection_sale_documents/models/sale_order.py:0
 msgid "Sales Order"
 msgstr "أمر البيع"
 
@@ -119,3 +125,63 @@ msgstr "(مختوم)"
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_order_form_nc_stamp_mode
 msgid "(not stamped)"
 msgstr "(غير مختوم)"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__automatic_invoice
+msgid "Automatic Invoice"
+msgstr "الفوترة التلقائية"
+
+#. module: ncollection_sale_documents
+#: model:ir.model,name:ncollection_sale_documents.model_ncollection_business_settings
+msgid "Business Settings"
+msgstr "إعدادات الأعمال"
+
+#. module: ncollection_sale_documents
+#: model:ir.model,name:ncollection_sale_documents.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__quotation_validity_days
+msgid "Default Quotation Validity (days)"
+msgstr "مدة صلاحية عرض السعر الافتراضية (بالأيام)"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__group_discount_per_so_line
+msgid "Discounts"
+msgstr "الخصومات"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__portal_confirmation_pay
+msgid "Online Payment"
+msgstr "الدفع عبر الإنترنت"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__portal_confirmation_sign
+msgid "Online Signature"
+msgstr "التوقيع عبر الإنترنت"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__prepayment_percent
+msgid "Prepayment Percentage"
+msgstr "نسبة الدفعة المقدمة"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
+msgid "Pricing and Invoicing"
+msgstr "التسعير والفوترة"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__group_proforma_sales
+msgid "Pro-Forma Invoice"
+msgstr "الفاتورة المبدئية"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
+msgid "Quotations"
+msgstr "عروض الأسعار"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
+msgid "Sales"
+msgstr "المبيعات"

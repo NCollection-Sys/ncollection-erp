@@ -253,6 +253,7 @@ msgstr "تستخدم الألوان رمزًا سداسيًا من 6 خانات 
 #: model:ir.actions.server,name:ncollection_core.action_workspace_company
 #: model:ir.ui.menu,name:ncollection_core.menu_workspace_company
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__company_id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__company_id
 msgid "Company"
 msgstr "الشركة"
 
@@ -268,6 +269,7 @@ msgstr "اسم الشركة"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_workspace_company_form
+#: model:ir.model,name:ncollection_core.model_res_partner
 msgid "Contact"
 msgstr "جهة الاتصال"
 
@@ -295,6 +297,7 @@ msgstr "الدولة"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__create_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__create_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__create_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
@@ -312,6 +315,7 @@ msgstr "أنشئ بواسطة"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__create_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__create_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__create_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -378,6 +382,11 @@ msgstr "مفتاح الكاشف"
 #: model:ir.model.fields,field_description:ncollection_core.field_res_partner__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_base_module_update__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_base_module_upgrade__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_update__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_upgrade__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_res_partner__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -561,6 +570,11 @@ msgstr "حالة HTTP"
 #: model:ir.model.fields,field_description:ncollection_core.field_res_partner__id
 #: model:ir.model.fields,field_description:ncollection_core.field_base_module_update__id
 #: model:ir.model.fields,field_description:ncollection_core.field_base_module_upgrade__id
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_update__id
+#: model:ir.model.fields,field_description:ncollection_core.field_base_module_upgrade__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_core.field_res_partner__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -648,6 +662,7 @@ msgstr "مؤشر الأداء"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__write_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__write_uid
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__write_uid
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
@@ -665,6 +680,7 @@ msgstr "آخر تحديث بواسطة"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_role_access_line__write_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_user_reset_password__write_date
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__write_date
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -2856,3 +2872,100 @@ msgstr "مختوم افتراضيًا"
 #: model:ir.model.fields,help:ncollection_core.field_nc_document_print_mixin__nc_stamp_default_on
 msgid "What Default means for this document: its kind's Print Setting."
 msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_company_delegation.py:0
+msgid "%(field)s must belong to %(company)s."
+msgstr "%(field)s يجب أن ينتمي إلى %(company)s."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/business_settings.py:0
+msgid "%(setting)s cannot be changed here."
+msgstr "لا يمكن تغيير %(setting)s من هنا."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/business_settings.py:0
+msgid "%(setting)s cannot be negative."
+msgstr "لا يمكن أن يكون %(setting)s سالبًا."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/business_settings.py:0
+msgid "%(setting)s has no such option."
+msgstr "لا يحتوي %(setting)s على هذا الخيار."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/business_settings.py:0
+msgid "%(setting)s must be on or off."
+msgstr "يجب أن يكون %(setting)s مفعّلًا أو معطّلًا."
+
+#. module: ncollection_core
+#: model:ir.actions.act_url,name:ncollection_core.action_nc_activate_developer_mode
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_developer_mode
+msgid "Activate Developer Mode"
+msgstr "تفعيل وضع المطوّر"
+
+#. module: ncollection_core
+#: model:ir.actions.act_window,name:ncollection_core.action_nc_business_settings
+#: model:ir.model,name:ncollection_core.model_ncollection_business_settings
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_business_settings
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Business Settings"
+msgstr "إعدادات الأعمال"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "General"
+msgstr "عام"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/business_settings.py:0
+msgid "Only a workspace administrator can change the business settings."
+msgstr "لا يمكن تغيير إعدادات الأعمال إلا لمسؤول مساحة العمل."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Save"
+msgstr "حفظ"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_company_delegation.py:0
+msgid "The selected %(field)s does not exist."
+msgstr "%(field)s المحدد غير موجود."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "These settings apply to the company shown above."
+msgstr "تنطبق هذه الإعدادات على الشركة المعروضة أعلاه."
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_base_module_update
+msgid "Update Module"
+msgstr "تحديث الوحدات"
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_base_module_upgrade
+msgid "Upgrade Module"
+msgstr "ترقية الوحدات"
+
+#. module: ncollection_core
+#: model:res.groups,name:ncollection_core.group_tenant_admin
+msgid "Workspace Administrator"
+msgstr "مسؤول مساحة العمل"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_company_delegation.py:0
+msgid "You can only change the companies you belong to."
+msgstr "يمكنك تغيير الشركات التي تنتمي إليها فقط."

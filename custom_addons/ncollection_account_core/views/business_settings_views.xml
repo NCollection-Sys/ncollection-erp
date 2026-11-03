@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nc_business_settings_form_accounting" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.accounting</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
+                <page string="Accounting" name="accounting">
+                    <group>
+                        <group string="Taxes">
+                            <field name="sale_tax_id" options="{'no_create': True}"/>
+                            <field name="purchase_tax_id" options="{'no_create': True}"/>
+                            <field name="tax_calculation_rounding_method"/>
+                            <field name="account_price_include"/>
+                        </group>
+                        <group string="Invoices">
+                            <field name="qr_code"/>
+                            <field name="display_invoice_amount_total_words"/>
+                            <field name="use_invoice_terms"/>
+                            <field name="incoterm_id" options="{'no_create': True}"/>
+                            <field name="group_cash_rounding"/>
+                            <field name="group_sale_delivery_address"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Accounting Defaults in the Workspace Administration Center: the Owner no longer reaches Odoo's Settings menu
+         (Option A); the form saves through res.company's Workspace Administrator delegation. -->
+    <menuitem id="menu_workspace_accounting_defaults"
+              name="Accounting Defaults"
+              parent="ncollection_core.menu_workspace_settings_root"
+              action="action_nc_accounting_defaults"
+              sequence="16"/>
+</odoo>

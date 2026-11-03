@@ -39,6 +39,7 @@
         'views/payment_workflow_views.xml',
         # Settings > Accounting Defaults: the default accounts Community already has, reachable by the Owner.
         'views/accounting_defaults_views.xml',
+        'views/business_settings_views.xml',
         'report/invoice_title.xml',
         # The kinds of printed document a stamp can be scoped to: invoices, bills, credit notes, payment receipts.
         'data/document_types.xml',

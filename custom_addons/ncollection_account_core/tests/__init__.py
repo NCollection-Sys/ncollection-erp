@@ -13,3 +13,4 @@ from . import test_view_print_parity
 from . import test_print_settings
 from . import test_document_lines_and_filenames
 from . import test_stamp_per_document
+from . import test_business_settings

@@ -64,6 +64,7 @@
         'views/workspace_admin_views.xml',
         'views/password_change_templates.xml',
         'views/workspace_appearance_views.xml',
+        'views/business_settings_views.xml',
         'views/subscription_blocked_templates.xml',
         'views/launcher_app_views.xml',
         'views/dashboard_action.xml',

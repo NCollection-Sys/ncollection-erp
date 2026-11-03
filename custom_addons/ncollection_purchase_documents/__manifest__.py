@@ -15,6 +15,7 @@
     'data': [
         'views/purchase_order_views.xml',
         'views/document_filenames.xml',
+        'views/business_settings_views.xml',
         'views/vendor_portal.xml',
         'data/document_types.xml',
     ],

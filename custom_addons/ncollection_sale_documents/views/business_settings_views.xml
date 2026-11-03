@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nc_business_settings_form_sales" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.sales</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
+                <page string="Sales" name="sales">
+                    <group>
+                        <group string="Quotations">
+                            <field name="quotation_validity_days"/>
+                            <field name="portal_confirmation_sign"/>
+                            <field name="portal_confirmation_pay"/>
+                            <field name="prepayment_percent" invisible="not portal_confirmation_pay"/>
+                        </group>
+                        <group string="Pricing and Invoicing">
+                            <field name="group_discount_per_so_line"/>
+                            <field name="group_proforma_sales"/>
+                            <field name="automatic_invoice"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -17,11 +17,15 @@ msgstr "نسخة مماثلة"
 
 #. module: ncollection_purchase_documents
 #: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__display_name
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_res_company__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_purchase_documents
 #: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__id
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__id
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_res_company__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -55,6 +59,8 @@ msgstr "معاينة"
 #. module: ncollection_purchase_documents
 #: model:ir.model,name:ncollection_purchase_documents.model_purchase_order
 #: model:ncollection.document.type,name:ncollection_purchase_documents.doc_type_purchase_order
+#. odoo-python
+#: code:addons/ncollection_purchase_documents/models/purchase_order.py:0
 msgid "Purchase Order"
 msgstr "أمر شراء"
 
@@ -72,6 +78,8 @@ msgstr "عرض"
 
 #. module: ncollection_purchase_documents
 #: model:ncollection.document.type,name:ncollection_purchase_documents.doc_type_purchase_rfq
+#. odoo-python
+#: code:addons/ncollection_purchase_documents/models/purchase_order.py:0
 msgid "Request for Quotation"
 msgstr "طلب عرض سعر"
 
@@ -138,3 +146,58 @@ msgstr "(مختوم)"
 #: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_form_nc_stamp_mode
 msgid "(not stamped)"
 msgstr "(غير مختوم)"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model,name:ncollection_purchase_documents.model_ncollection_business_settings
+msgid "Business Settings"
+msgstr "إعدادات الأعمال"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model,name:ncollection_purchase_documents.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__company_currency_id
+msgid "Company Currency"
+msgstr "عملة الشركة"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__lock_confirmed_po
+msgid "Lock Confirmed Orders"
+msgstr "قفل الطلبات المؤكدة"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__po_double_validation_amount
+msgid "Minimum Amount"
+msgstr "الحد الأدنى للمبلغ"
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase
+msgid "Orders"
+msgstr "الطلبات"
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase
+msgid "Purchase"
+msgstr "المشتريات"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__po_order_approval
+msgid "Purchase Order Approval"
+msgstr "اعتماد أوامر الشراء"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__group_warning_purchase
+msgid "Purchase Warnings"
+msgstr "تحذيرات المشتريات"
+
+#. module: ncollection_purchase_documents
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__group_send_reminder
+msgid "Receipt Reminder"
+msgstr "تذكير الاستلام"
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase
+msgid "Vendors"
+msgstr "الموردون"

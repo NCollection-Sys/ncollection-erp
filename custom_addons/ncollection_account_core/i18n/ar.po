@@ -23,6 +23,7 @@ msgstr "%(account)s لا يمكن أن يكون %(field)s لـ %(company)s."
 #: model:ir.actions.server,name:ncollection_account_core.action_nc_accounting_defaults
 #: model:ir.ui.menu,name:ncollection_account_core.menu_nc_accounting_defaults
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+#: model:ir.ui.menu,name:ncollection_account_core.menu_workspace_accounting_defaults
 msgid "Accounting Defaults"
 msgstr "الإعدادات الافتراضية للمحاسبة"
 
@@ -76,6 +77,8 @@ msgstr "التأجيلات والاستحقاقات (تغيير الفترة)"
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name
 #: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -90,6 +93,8 @@ msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخي
 #: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__id
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id
 #: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__id
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id
 msgid "ID"
 msgstr "المعرّف"
@@ -155,6 +160,7 @@ msgstr "مثال: TAX INVOICE أو فاتورة ضريبية. يُطبع رقم 
 
 #. module: ncollection_account_core
 #: model:ir.ui.menu,name:account.menu_finance
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
 msgid "Accounting"
 msgstr "المحاسبة"
 
@@ -393,6 +399,8 @@ msgstr "الملفات"
 
 #. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_account_move
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
 msgid "Journal Entry"
 msgstr "قيد اليومية"
 
@@ -572,11 +580,15 @@ msgstr "فاتورة مورّد"
 
 #. module: ncollection_account_core
 #: model:ncollection.document.type,name:ncollection_account_core.doc_type_customer_credit_note
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
 msgid "Customer Credit Note"
 msgstr "إشعار دائن للعميل"
 
 #. module: ncollection_account_core
 #: model:ncollection.document.type,name:ncollection_account_core.doc_type_customer_invoice
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
 msgid "Customer Invoice"
 msgstr "فاتورة عميل"
 
@@ -614,6 +626,8 @@ msgstr "المدفوع إلى"
 
 #. module: ncollection_account_core
 #: model:ncollection.document.type,name:ncollection_account_core.doc_type_payment_receipt
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
 msgid "Payment Receipt"
 msgstr "إيصال دفع"
 
@@ -679,11 +693,15 @@ msgstr "لم تُطبَّق هذه الدفعة على أي فاتورة؛ يُ�
 
 #. module: ncollection_account_core
 #: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_bill
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
 msgid "Vendor Bill"
 msgstr "فاتورة مورّد"
 
 #. module: ncollection_account_core
 #: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_credit_note
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
 msgid "Vendor Credit Note"
 msgstr "إشعار دائن من المورّد"
 
@@ -791,3 +809,74 @@ msgstr "(مختوم)"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_stamp_mode
 msgid "(not stamped)"
 msgstr "(غير مختوم)"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/business_settings.py:0
+msgid "%(field)s must be a %(use)s tax."
+msgstr "يجب أن يكون %(field)s ضريبة من نوع %(use)s."
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_ncollection_business_settings
+msgid "Business Settings"
+msgstr "إعدادات الأعمال"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__group_cash_rounding
+msgid "Cash Rounding"
+msgstr "التقريب النقدي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__group_sale_delivery_address
+msgid "Customer Delivery Addresses"
+msgstr "عناوين تسليم العملاء"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__incoterm_id
+msgid "Default Incoterm"
+msgstr "شروط التجارة الدولية الافتراضية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__purchase_tax_id
+msgid "Default Purchase Tax"
+msgstr "ضريبة المشتريات الافتراضية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_price_include
+msgid "Default Sales Price Include"
+msgstr "تضمين الضريبة في سعر البيع افتراضيًا"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__sale_tax_id
+msgid "Default Sales Tax"
+msgstr "ضريبة المبيعات الافتراضية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__use_invoice_terms
+msgid "Default Terms & Conditions"
+msgstr "الشروط والأحكام الافتراضية"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Invoices"
+msgstr "الفواتير"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__qr_code
+msgid "QR Codes on Invoices"
+msgstr "رموز QR على الفواتير"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__tax_calculation_rounding_method
+msgid "Tax Rounding Method"
+msgstr "طريقة تقريب الضريبة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Taxes"
+msgstr "الضرائب"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_invoice_amount_total_words
+msgid "Total Amount in Words"
+msgstr "المبلغ الإجمالي كتابةً"
