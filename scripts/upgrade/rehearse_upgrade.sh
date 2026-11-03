@@ -286,16 +286,22 @@ good "scratch database ready"
 # A known admin on the COPY (random password, never printed). Raw SQL on purpose: on a stale schema the ORM cannot
 # read res.users at all - that is the failure being rehearsed.
 step "0b) a known administrator on the scratch copy"
-PWSCRIPT="$LOG_DIR/setpw.py"
-cat > "$PWSCRIPT" <<PY
-env.cr.execute("SELECT login FROM res_users WHERE id = 2")
-row = env.cr.fetchone()
-print("ADMIN_LOGIN=%s" % (row[0] if row else ""))
-env.cr.execute("UPDATE res_users SET password = %s WHERE id = 2", (env["res.users"]._crypt_context().hash("$ADMIN_PW"),))
-env.cr.commit()
-PY
-ADMIN_LOGIN="$(shell_marker < "$PWSCRIPT" | sed -n 's/^ADMIN_LOGIN=//p' | head -1 | tr -d '\r')"
+# NO ORM HERE. This step used `odoo shell`, which loads the registry and reads res.partner for its own environment
+# before running a line of the script: on a copy whose schema is behind the code - the very state this tool rehearses -
+# it died with UndefinedColumn (seen: res_partner.nc_trn), and under `set -e` the assignment ended the run with no
+# message at all. The login is read and the password set with plain SQL; the hash comes from passlib in the odoo
+# container (the password on stdin, never on a command line), in the pbkdf2-sha512 format Odoo verifies.
+ADMIN_LOGIN="$(in_db psql -d "$SCRATCH" -Atc "SELECT login FROM res_users WHERE id = 2" | tr -d '\r')" \
+  || { bad "could not read the administrator of the scratch copy"; exit 1; }
 [ -n "$ADMIN_LOGIN" ] || { bad "the scratch database has no administrator (res_users.id = 2)"; exit 1; }
+ADMIN_HASH="$(printf '%s' "$ADMIN_PW" | "${DC[@]}" exec -T odoo python3 -c 'import sys
+from passlib.context import CryptContext
+print(CryptContext(["pbkdf2_sha512"]).hash(sys.stdin.read()))')" \
+  || { bad "could not hash the scratch administrator's password"; exit 1; }
+# psql interpolates :'h' only in a script it reads, never in -c: the statement goes on stdin
+printf '%s\n' "UPDATE res_users SET password = :'h' WHERE id = 2" \
+  | in_db psql -q -d "$SCRATCH" -v ON_ERROR_STOP=1 -v h="$ADMIN_HASH" \
+  || { bad "could not set the scratch administrator's password"; exit 1; }
 good "administrator '$ADMIN_LOGIN' (password set on the copy only)"
 
 # Is this database a TENANT (does it hold the platform's config-sync service account and its key)? Then Company Entry is
