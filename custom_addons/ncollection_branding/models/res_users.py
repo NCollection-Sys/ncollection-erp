@@ -24,6 +24,13 @@ from odoo import api, fields, models
 class ResUsers(models.Model):
     _inherit = 'res.users'
 
+    def _nc_is_workspace_administrator(self):
+        """Who administers this workspace's documents - every stamp kind, every Print Setting. Here: Odoo's
+        Settings administrator. ncollection_core (which this module cannot reference) redefines it as its Workspace
+        Administrator, which the tenant Owner holds WITHOUT base.group_system (Option A)."""
+        self.ensure_one()
+        return self.has_group('base.group_system')
+
     @api.depends('create_date')
     def _compute_tour_enabled(self):
         """Always False. Overrides web_tour's compute, which turns tours ON for

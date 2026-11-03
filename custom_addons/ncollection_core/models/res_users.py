@@ -32,6 +32,13 @@ ALLOW_EMAIL_LOGIN_CTX = 'ncollection_allow_email_login'
 class ResUsers(models.Model):
     _inherit = 'res.users'
 
+    def _nc_is_workspace_administrator(self):
+        """Option A: the workspace's documents (stamps, print settings) are administered by the Workspace
+        Administrator - the tenant Owner, who is not base.group_system. base.group_system implies it, so the platform
+        administrator still passes."""
+        self.ensure_one()
+        return self.has_group('ncollection_core.group_tenant_admin')
+
     nc_platform_proxy = fields.Boolean(
         string='Platform administrator proxy', readonly=True, copy=False, index=True,
         help="Passwordless account a Platform Administrator enters this workspace as. It signs in only "

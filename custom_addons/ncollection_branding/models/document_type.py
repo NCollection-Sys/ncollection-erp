@@ -82,7 +82,7 @@ class NcDocumentType(models.Model):
         if set(vals) - self._nc_print_setting_fields():
             raise AccessError(self.env._("Only the print settings of a document type can be changed."))
         user = self.env.user
-        if user.has_group('base.group_system'):
+        if user._nc_is_workspace_administrator():
             return
         mine = user.all_group_ids
         refused = self.filtered(lambda kind: not (kind.manager_group_ids & mine))

@@ -84,3 +84,37 @@ class TestAccountingBusinessSettings(AccountTestInvoicingCommon):
         # the transient accepts any string; the settings validation refuses it before anything is applied
         with self.assertRaises(ValidationError):
             self._settings(tax_calculation_rounding_method='not_a_method').action_nc_save()
+
+
+@tagged('post_install', '-at_install')
+class TestOwnerAdministersDocumentStamps(AccountTestInvoicingCommon):
+    """Option A: the workspace Owner (group_tenant_admin, not base.group_system) still administers every document
+    stamp kind, every Print Setting and each document's own Document Stamp switch."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        company = cls.env.company
+        cls.owner = new_test_user(
+            cls.env, login='st_owner',
+            groups='base.group_user,ncollection_core.group_role_owner,account.group_account_user',
+            company_id=company.id, company_ids=[(6, 0, company.ids)])
+        cls.invoice_kind = cls.env.ref('ncollection_account_core.doc_type_customer_invoice')
+        cls.other_kind = cls.env['ncollection.document.type'].sudo().create(
+            {'name': 'Delivery Slip', 'code': 'st_other'})
+
+    def test_the_owner_switches_a_documents_stamp(self):
+        invoice = self.init_invoice('out_invoice', post=True, amounts=[100.0], invoice_date='2026-03-01')
+        self.assertTrue(invoice.with_user(self.owner).nc_stamp_mode_editable)
+        invoice.with_user(self.owner).write({'nc_stamp_mode': 'off'})
+        self.assertEqual(invoice.nc_stamp_mode, 'off')
+        self.assertEqual(invoice.state, 'posted')
+
+    def test_the_owner_creates_stamps_for_any_kind_and_changes_print_settings(self):
+        from odoo.addons.ncollection_branding.tests.test_document_stamp import _b64, _png
+        stamp = self.env['ncollection.document.stamp'].with_user(self.owner).create({
+            'name': 'Owner stamp', 'company_id': self.env.company.id, 'image': _b64(_png()),
+            'document_type_ids': [(6, 0, (self.invoice_kind | self.other_kind).ids)]})
+        self.assertTrue(stamp)
+        self.invoice_kind.with_user(self.owner).write({'nc_show_stamp': False})
+        self.assertFalse(self.invoice_kind.nc_show_stamp)

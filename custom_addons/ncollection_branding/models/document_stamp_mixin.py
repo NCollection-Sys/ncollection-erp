@@ -50,7 +50,7 @@ class NcDocumentStampMixin(models.AbstractModel):
     def _nc_may_set_stamp_mode(self, kind):
         """The rule of ``ncollection.document.stamp._nc_check_kinds_allowed``, for one document's kind."""
         user = self.env.user
-        if self.env.su or user.has_group('base.group_system'):
+        if self.env.su or user._nc_is_workspace_administrator():
             return True
         return bool(kind and kind.manager_group_ids & user.all_group_ids)
 

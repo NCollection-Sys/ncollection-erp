@@ -138,7 +138,7 @@ class NcDocumentStamp(models.Model):
         authorisation; the form's domain only narrows the choices. It looks at the stored kinds, so a crafted
         payload, a many2many command, a copy or a context key cannot reach a kind the user is not allowed to stamp."""
         user = self.env.user
-        if self.env.su or user.has_group('base.group_system'):
+        if self.env.su or user._nc_is_workspace_administrator():
             return
         mine = user.all_group_ids
         for stamp in self:
