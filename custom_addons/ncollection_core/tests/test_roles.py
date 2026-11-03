@@ -73,7 +73,7 @@ MATRIX_ALLOWED_DIRECT = {
     },
     'ncollection_core.group_role_owner': {
         'ncollection_core.group_role_ceo',
-        'base.group_system',
+        'ncollection_core.group_tenant_admin',
         'account.group_account_user',
         'purchase.group_purchase_manager',
         'stock.group_stock_manager',
@@ -104,10 +104,13 @@ class TestTenantRoles(TransactionCase):
         employee = self.env.ref('ncollection_core.group_role_employee')
         self.assertIn(self.env.ref('base.group_user'), employee.implied_ids)
 
-    def test_owner_implies_system(self):
+    def test_owner_is_a_business_admin_not_a_platform_admin(self):
+        # Option A: the Owner holds the tenant-scoped administration right, never the platform technical ones.
         owner = self.env.ref('ncollection_core.group_role_owner')
         closure = owner.all_implied_ids
-        self.assertIn(self.env.ref('base.group_system'), closure)
+        self.assertIn(self.env.ref('ncollection_core.group_tenant_admin'), closure)
+        self.assertNotIn(self.env.ref('base.group_system'), closure)
+        self.assertNotIn(self.env.ref('base.group_erp_manager'), closure)
 
     def test_only_owner_reaches_system(self):
         system = self.env.ref('base.group_system')

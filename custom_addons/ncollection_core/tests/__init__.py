@@ -43,3 +43,4 @@ from . import test_release_gate
 from . import test_release_gate_cron
 from . import test_app_url
 from . import test_platform_ux_sprint
+from . import test_tenant_owner_least_privilege
