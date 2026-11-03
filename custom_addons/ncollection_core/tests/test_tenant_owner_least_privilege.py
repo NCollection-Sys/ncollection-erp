@@ -6,7 +6,7 @@ The Owner holds ``group_tenant_admin`` (the Workspace Administration Center) but
 not by a per-method guard. The platform administrator and the superuser keep everything, because
 ``base.group_system`` implies ``group_tenant_admin``.
 """
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
 OWNER = 'base.group_user,ncollection_core.group_role_owner'
@@ -92,3 +92,51 @@ class TestOwnerCannotExecuteCodeOrEditSecurity(TransactionCase):
         with self.assertRaises(AccessError):
             self.owner.with_user(self.owner).write({'group_ids': [(4, system.id)]})
         self.assertFalse(self.owner.has_group('base.group_system'))
+
+
+@tagged('post_install', '-at_install')
+class TestOwnerUserManagement(TransactionCase):
+    """The Owner administers users and roles end to end through the Admin Center's delegated methods; a role can never
+    carry a technical group, a direct group write is refused, and the platform entry proxy is not theirs to manage."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.owner = new_test_user(cls.env, login='um_owner', groups=OWNER)
+        cls.Users = cls.env['res.users']
+        cls.Role = cls.env['ncollection.role']
+        cls.partner_manager = cls.env.ref('base.group_partner_manager')
+
+    def test_create_assign_deactivate_and_reactivate(self):
+        user, temporary = self.Users.with_user(self.owner)._nc_create_workspace_user('Member One', 'member.one')
+        self.assertTrue(temporary, "a generated temporary password is returned once")
+        self.assertTrue(user.nc_must_change_password)
+        role = self.Role.with_user(self.owner).create({
+            'name': 'Contacts Manager', 'custom_group_ids': [(6, 0, self.partner_manager.ids)]})
+        user.with_user(self.owner).nc_set_roles(role.ids)
+        self.assertIn(self.partner_manager, user.group_ids)
+        self.assertFalse(user.has_group('base.group_system'))
+        user.with_user(self.owner).nc_set_active(False)
+        self.assertFalse(user.active)
+        user.with_user(self.owner).nc_set_active(True)
+        self.assertTrue(user.active)
+
+    def test_a_role_can_never_carry_a_technical_group(self):
+        for xmlid in ('base.group_system', 'base.group_erp_manager', 'ncollection_core.group_tenant_admin'):
+            with self.subTest(group=xmlid), self.assertRaises(ValidationError):
+                self.Role.with_user(self.owner).create({
+                    'name': 'Escalate %s' % xmlid, 'custom_group_ids': [(6, 0, self.env.ref(xmlid).ids)]})
+
+    def test_a_direct_group_write_is_refused(self):
+        member = new_test_user(self.env, login='um_member', groups='base.group_user')
+        with self.assertRaises(AccessError):
+            member.with_user(self.owner).write({'group_ids': [(4, self.partner_manager.id)]})
+        self.assertNotIn(self.partner_manager, member.group_ids)
+
+    def test_the_platform_entry_proxy_is_not_managed_by_the_owner(self):
+        proxy = self.Users.with_context(no_reset_password=True).create({
+            'name': 'Platform Admin: test', 'login': 'um_platform_proxy', 'nc_platform_proxy': True,
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
+        with self.assertRaises(UserError):
+            proxy.with_user(self.owner).nc_set_active(False)
+        self.assertTrue(proxy.active)
