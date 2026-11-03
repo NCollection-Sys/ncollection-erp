@@ -6,16 +6,6 @@ Confirmed Orders" and "Purchase Order Approval" into the company's ``po_lock`` a
 from odoo import api, fields, models
 
 
-class ResCompany(models.Model):
-    _inherit = 'res.company'
-
-    @api.model
-    def _nc_tenant_admin_company_fields(self):
-        return super()._nc_tenant_admin_company_fields() | {
-            'po_lock', 'po_double_validation', 'po_double_validation_amount',
-        }
-
-
 class NcBusinessSettings(models.TransientModel):
     _inherit = 'ncollection.business.settings'
 

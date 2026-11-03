@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 from . import purchase_order
-from . import business_settings
+from . import res_company_settings

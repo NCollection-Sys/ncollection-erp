@@ -2881,25 +2881,25 @@ msgstr "%(field)s يجب أن ينتمي إلى %(company)s."
 
 #. module: ncollection_core
 #. odoo-python
-#: code:addons/ncollection_core/models/business_settings.py:0
+#: code:addons/ncollection_core/wizards/business_settings.py:0
 msgid "%(setting)s cannot be changed here."
 msgstr "لا يمكن تغيير %(setting)s من هنا."
 
 #. module: ncollection_core
 #. odoo-python
-#: code:addons/ncollection_core/models/business_settings.py:0
+#: code:addons/ncollection_core/wizards/business_settings.py:0
 msgid "%(setting)s cannot be negative."
 msgstr "لا يمكن أن يكون %(setting)s سالبًا."
 
 #. module: ncollection_core
 #. odoo-python
-#: code:addons/ncollection_core/models/business_settings.py:0
+#: code:addons/ncollection_core/wizards/business_settings.py:0
 msgid "%(setting)s has no such option."
 msgstr "لا يحتوي %(setting)s على هذا الخيار."
 
 #. module: ncollection_core
 #. odoo-python
-#: code:addons/ncollection_core/models/business_settings.py:0
+#: code:addons/ncollection_core/wizards/business_settings.py:0
 msgid "%(setting)s must be on or off."
 msgstr "يجب أن يكون %(setting)s مفعّلًا أو معطّلًا."
 
@@ -2929,7 +2929,7 @@ msgstr "عام"
 
 #. module: ncollection_core
 #. odoo-python
-#: code:addons/ncollection_core/models/business_settings.py:0
+#: code:addons/ncollection_core/wizards/business_settings.py:0
 msgid "Only a workspace administrator can change the business settings."
 msgstr "لا يمكن تغيير إعدادات الأعمال إلا لمسؤول مساحة العمل."
 

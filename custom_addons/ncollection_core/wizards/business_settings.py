@@ -26,8 +26,7 @@ class NcBusinessSettings(models.TransientModel):
     _name = 'ncollection.business.settings'
     _description = 'Business Settings'
 
-    company_id = fields.Many2one('res.company', string='Company', readonly=True,
-                                 default=lambda self: self.env.company)
+    company_id = fields.Many2one('res.company', readonly=True, default=lambda self: self.env.company)
 
     @api.model
     def _nc_settings_spec(self):

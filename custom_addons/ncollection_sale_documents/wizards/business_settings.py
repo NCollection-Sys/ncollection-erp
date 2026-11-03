@@ -4,16 +4,6 @@ business_settings.py): the sales settings a workspace Owner changes, applied whe
 from odoo import api, fields, models
 
 
-class ResCompany(models.Model):
-    _inherit = 'res.company'
-
-    @api.model
-    def _nc_tenant_admin_company_fields(self):
-        return super()._nc_tenant_admin_company_fields() | {
-            'quotation_validity_days', 'portal_confirmation_sign', 'portal_confirmation_pay', 'prepayment_percent',
-        }
-
-
 class NcBusinessSettings(models.TransientModel):
     _inherit = 'ncollection.business.settings'
 
@@ -23,7 +13,7 @@ class NcBusinessSettings(models.TransientModel):
     prepayment_percent = fields.Float(string='Prepayment Percentage')
     group_discount_per_so_line = fields.Boolean(string='Discounts')
     group_proforma_sales = fields.Boolean(string='Pro-Forma Invoice')
-    automatic_invoice = fields.Boolean(string='Automatic Invoice')
+    automatic_invoice = fields.Boolean()
 
     @api.model
     def _nc_settings_spec(self):

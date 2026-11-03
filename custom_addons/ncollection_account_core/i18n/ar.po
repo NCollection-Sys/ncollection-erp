@@ -812,7 +812,7 @@ msgstr "(غير مختوم)"
 
 #. module: ncollection_account_core
 #. odoo-python
-#: code:addons/ncollection_account_core/models/business_settings.py:0
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
 msgid "%(field)s must be a %(use)s tax."
 msgstr "يجب أن يكون %(field)s ضريبة من نوع %(use)s."
 
