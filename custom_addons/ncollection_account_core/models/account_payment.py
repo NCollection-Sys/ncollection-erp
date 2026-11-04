@@ -252,6 +252,11 @@ class AccountPayment(models.Model):
 
     def _nc_apply_allocation(self):
         for payment in self:
+            first = payment.nc_apply_first_move_id
+            if first:
+                # the user chose THIS document on the payment form: the payment is recorded against it (the evidence
+                # an excess needs, see wizards/payment_register_evidence.py)
+                payment.sudo().nc_registered_move_ids = [(4, first.id)]
             for move, _lines in payment._nc_allocation_targets():
                 open_lines = payment._nc_counterpart_lines().filtered(lambda line: not line.reconciled)
                 if not open_lines:
@@ -260,6 +265,9 @@ class AccountPayment(models.Model):
                     if not line.reconciled:
                         move.js_assign_outstanding_line(line.id)
                 move.matched_payment_ids |= payment            # the link the Register Payment wizard also keeps
+            if first:
+                self.env.add_to_compute(first._fields['nc_overpaid_amount'], first.sudo())
+                first.sudo().flush_recordset(['nc_overpaid_amount'])
 
     # ------------------------------------------------------------------ View / Print Receipt
     def _nc_print_report(self):

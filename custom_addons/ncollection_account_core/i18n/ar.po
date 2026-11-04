@@ -79,6 +79,10 @@ msgstr "التأجيلات والاستحقاقات (تغيير الفترة)"
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_name
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_product_template__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -96,6 +100,10 @@ msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخي
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__id
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_product_template__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -893,6 +901,7 @@ msgstr "مدفوع بالزيادة"
 
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_is_taxable
 msgid "Taxable"
 msgstr "خاضع للضريبة"
 
@@ -908,6 +917,7 @@ msgstr "مدفوع بالزيادة"
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_overpaid_amount
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_overpaid_amount
 msgid "Overpaid Amount"
 msgstr "مبلغ الزيادة المدفوعة"
 
@@ -931,3 +941,15 @@ msgstr "سُجّلت مقابل"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.product_template_form_nc_duplicate
 msgid "<span class=\"o_stat_text\">Duplicate</span>"
 msgstr "<span class=\"o_stat_text\">نسخة مماثلة</span>"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Overpaid can only be searched with Yes or No."
+msgstr "يمكن البحث في «مدفوع بالزيادة» بنعم أو لا فقط."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move_status.py:0
+msgid "Taxable can only be searched with Yes or No."
+msgstr "يمكن البحث في «خاضع للضريبة» بنعم أو لا فقط."

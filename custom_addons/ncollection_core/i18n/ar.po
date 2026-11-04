@@ -391,6 +391,8 @@ msgstr "مفتاح الكاشف"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_res_company__display_name
 #: model:ir.model.fields,field_description:ncollection_core.field_res_partner__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_base_document_layout__display_name
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_dashboard_export__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -579,6 +581,8 @@ msgstr "حالة HTTP"
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__id
 #: model:ir.model.fields,field_description:ncollection_core.field_res_company__id
 #: model:ir.model.fields,field_description:ncollection_core.field_res_partner__id
+#: model:ir.model.fields,field_description:ncollection_core.field_base_document_layout__id
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_dashboard_export__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -3112,3 +3116,20 @@ msgstr "طيّ لوحة السجل"
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_partner_form_nc_duplicate
 msgid "<span class=\"o_stat_text\">Duplicate</span>"
 msgstr "<span class=\"o_stat_text\">نسخة مماثلة</span>"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_company_delegation.py:0
+msgid "Choose one of the available document layouts."
+msgstr "اختر أحد مخططات المستندات المتاحة."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/base_document_layout.py:0
+msgid "You can only configure the layout of your own company."
+msgstr "يمكنك فقط ضبط مخطط مستندات شركتك."
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_document_layout
+msgid "Document Layout"
+msgstr "مخطط المستند"

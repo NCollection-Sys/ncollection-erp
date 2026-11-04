@@ -142,7 +142,9 @@ class TestSummaryTopCustomersPeriod(TransactionCase):
                 'order_line': [(0, 0, {'product_id': product.id, 'product_uom_qty': qty, 'price_unit': 10.0})]})
             order.action_confirm()
             order.date_order = when                    # confirming stamps "now": the figure reads the order date
-            totals[partner.name] = order.amount_total
+            # the figure is in the company currency (an order in another currency is converted at its order date)
+            totals[partner.name] = order.currency_id._convert(
+                order.amount_total, order.company_id.currency_id, order.company_id, when)
         service = self.env['ncollection.dashboard.data'].with_user(owner)
 
         def top(date_from=None, date_to=None):

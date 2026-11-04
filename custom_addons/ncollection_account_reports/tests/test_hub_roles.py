@@ -139,11 +139,12 @@ class TestHubRoles(AccountTestInvoicingCommon):
         self.assertFalse(self.u['ceo'].has_group('account.group_account_user'))
         self.assertFalse(self.u['ceo'].has_group('base.group_system'))
 
-    def test_owner_gains_purchase_and_inventory_administration_it_could_already_reach(self):
+    def test_owner_gains_purchase_and_inventory_administration_without_system_rights(self):
         owner = self.u['owner']
         self.assertTrue(owner.has_group('purchase.group_purchase_manager'))
         self.assertTrue(owner.has_group('stock.group_stock_manager'))
-        self.assertTrue(owner.has_group('base.group_system'), "Owner was already a system administrator")
+        self.assertFalse(owner.has_group('base.group_system'),
+                         "Option A: the Owner is a business administrator, not a system administrator")
 
     def test_a_manager_sees_no_accounting_menu(self):
         roots = self.env['ir.ui.menu'].with_user(self.u['manager'])._visible_menu_ids(False)

@@ -206,10 +206,10 @@ class DashboardExport(models.AbstractModel):
             '.bar{background:#3b82f6;height:8px;display:inline-block}.neg{color:#b91c1c}',
             '</style></head><body>',
             '<h1>%s</h1>' % E(env_('Summary dashboard')),
-            '<div class="ctx">%s &middot; %s &middot; %s %s &rarr; %s &middot; %s %s</div>' % (
+            '<div class="ctx">%s</div>' % ' &middot; '.join([
                 E(meta.get('company_name') or ''), E(self.env.company.currency_id.name or ''),
-                E(env_('From')), E(meta['period']['date_from']), E(meta['period']['date_to']),
-                E(env_('Exported by')), E(meta.get('user_name') or '')),
+                '%s %s \u2192 %s' % (E(env_('From')), E(meta['period']['date_from']), E(meta['period']['date_to'])),
+                '%s %s' % (E(env_('Exported by')), E(meta.get('user_name') or ''))]),
         ]
         kpis = [w for w in widgets if w.get('type') == 'kpi']
         if kpis:
