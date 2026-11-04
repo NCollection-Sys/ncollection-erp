@@ -36,6 +36,23 @@
                             t-on-click="resetPeriod">Current year</button>
                     <div class="nc-period__error" role="alert" t-if="state.periodError" t-esc="state.periodError"/>
                 </div>
+                <!-- Export: PDF or Excel of exactly this view (same period, company and permissions). -->
+                <div class="nc-dashboard__export" t-if="!state.failed">
+                    <Dropdown>
+                        <button type="button" class="btn btn-secondary nc-export__toggle" aria-label="Export"
+                                data-hotkey="shift+e">
+                            <i class="fa fa-download me-1" aria-hidden="true"/><span>Export</span>
+                        </button>
+                        <t t-set-slot="content">
+                            <DropdownItem onSelected="() => this.onExport('pdf')">
+                                <i class="fa fa-file-pdf-o me-2" aria-hidden="true"/>Export as PDF
+                            </DropdownItem>
+                            <DropdownItem onSelected="() => this.onExport('xlsx')">
+                                <i class="fa fa-file-excel-o me-2" aria-hidden="true"/>Export as Excel
+                            </DropdownItem>
+                        </t>
+                    </Dropdown>
+                </div>
                 <!-- Only actions for apps this tenant has AND licenses. -->
                 <div class="nc-dashboard__actions" t-if="state.actions.length">
                     <NcQuickActionCard t-foreach="state.actions" t-as="quick" t-key="quick.key"

@@ -4,3 +4,4 @@ from . import platform_entry
 from . import document_view
 from . import password_change
 from . import app_routes
+from . import dashboard_export

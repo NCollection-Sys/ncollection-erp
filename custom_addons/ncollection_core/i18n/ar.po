@@ -2969,3 +2969,112 @@ msgstr "مسؤول مساحة العمل"
 #: code:addons/ncollection_core/models/res_company_delegation.py:0
 msgid "You can only change the companies you belong to."
 msgstr "يمكنك تغيير الشركات التي تنتمي إليها فقط."
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Export"
+msgstr "تصدير"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Export as PDF"
+msgstr "تصدير بصيغة PDF"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+msgid "Export as Excel"
+msgstr "تصدير بصيغة Excel"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Summary dashboard"
+msgstr "لوحة الملخص"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Exported by"
+msgstr "تم التصدير بواسطة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Exported at"
+msgstr "وقت التصدير"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Metric"
+msgstr "المؤشر"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Value"
+msgstr "القيمة"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Basis"
+msgstr "الأساس"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Change vs last month (%)"
+msgstr "التغير عن الشهر الماضي (%)"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Charts"
+msgstr "الرسوم البيانية"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Chart"
+msgstr "الرسم البياني"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Label"
+msgstr "البند"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Line"
+msgstr "السطر"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Customer Credit"
+msgstr "رصيد العملاء الدائن"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Customer credit"
+msgstr "رصيد العملاء الدائن"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+msgid "Advances and overpayments not yet applied"
+msgstr "دفعات مقدمة وزيادات في السداد لم تُطبَّق بعد"
+

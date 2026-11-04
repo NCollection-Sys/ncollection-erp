@@ -47,3 +47,4 @@ from . import test_tenant_owner_least_privilege
 from . import test_company_delegation
 from . import test_document_layout_owner
 from . import test_duplicate_contacts
+from . import test_dashboard_export

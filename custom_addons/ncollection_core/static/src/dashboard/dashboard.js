@@ -20,6 +20,8 @@ import { registry } from "@web/core/registry";
 import { _t } from "@web/core/l10n/translation";
 import { user } from "@web/core/user";
 import { useService } from "@web/core/utils/hooks";
+import { Dropdown } from "@web/core/dropdown/dropdown";
+import { DropdownItem } from "@web/core/dropdown/dropdown_item";
 import {
     NcKpiCard,
     NcQuickActionCard,
@@ -52,7 +54,7 @@ const QUICK_ICONS = {
 export class NcDashboard extends Component {
     static template = "ncollection_core.Dashboard";
     static props = ["*"];
-    static components = { NcKpiCard, NcQuickActionCard, NcStatementCard };
+    static components = { NcKpiCard, NcQuickActionCard, NcStatementCard, Dropdown, DropdownItem };
 
     setup() {
         this.orm = useService("orm");
@@ -380,6 +382,29 @@ export class NcDashboard extends Component {
 
     onQuickAction(actionId) {
         this.action.doAction(actionId);
+    }
+
+    /**
+     * Export the dashboard as the user is looking at it (DASH-02). The file is built by the server from the
+     * dashboard's own payload for the same period and company; nothing is calculated here, and the address names no
+     * tenant, user or model.
+     */
+    onExport(format) {
+        const params = new URLSearchParams();
+        if (this.state.from && this.state.to) {
+            params.set("date_from", this.state.from);
+            params.set("date_to", this.state.to);
+        }
+        const companyId = user.activeCompany && user.activeCompany.id;
+        if (companyId) {
+            params.set("company_id", companyId);
+        }
+        const link = document.createElement("a");
+        link.href = `/ncollection/dashboard/export/${format}?${params.toString()}`;
+        link.rel = "noopener";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     }
 }
 
