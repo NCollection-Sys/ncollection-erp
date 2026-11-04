@@ -248,3 +248,50 @@ class TestSettlementExcess(AccountTestInvoicingCommon):
         self.assertTrue(fields['nc_overpaid_amount'].store)
         for name in ('nc_payment_status', 'nc_amount_paid', 'nc_amount_due'):
             self.assertFalse(fields[name].store, name)
+
+    # ---------------------------------------------------------------- evidence: only a payment recorded AGAINST it
+    def _advance(self, amount, partner=None):
+        payment = self.env['account.payment'].create({
+            'payment_type': 'inbound', 'partner_type': 'customer', 'partner_id': (partner or self.customer).id,
+            'amount': amount, 'journal_id': self.bank.id})
+        payment.action_post()
+        return payment
+
+    def test_an_advance_assigned_to_an_invoice_is_customer_credit_not_its_excess(self):
+        doc = self._doc(800.0)
+        advance = self._advance(1000.0)
+        line = _recv(advance.move_id.line_ids)
+        doc.js_assign_outstanding_line(line.id)
+        self.assertEqual(doc.amount_residual, 0.0)
+        self.assertEqual(sum(line.mapped('amount_residual')), -200.0, "200 of customer credit remains")
+        self.assertEqual((doc.nc_overpaid_amount, doc.nc_payment_status, doc.nc_amount_due), (0.0, 'paid', 0.0))
+        self.assertTrue(advance.nc_is_overpaid, "the payment screen still shows the unapplied remainder")
+
+    def test_a_payment_recorded_against_two_invoices_leaves_credit_not_excess(self):
+        first, second = self._doc(300.0), self._doc(400.0)
+        register = self.env['account.payment.register'].with_context(
+            active_model='account.move', active_ids=(first | second).ids).create({'amount': 1000.0})
+        register._create_payments()
+        self.assertEqual((first.amount_residual, second.amount_residual), (0.0, 0.0))
+        self.assertEqual((first.nc_overpaid_amount, second.nc_overpaid_amount), (0.0, 0.0))
+
+    def test_multiple_payments_only_the_recorded_remainder_counts(self):
+        doc = self._doc(500.0)
+        self._pay(doc, 200.0)
+        self._pay(doc, 400.0)
+        self.assertEqual((doc.nc_amount_paid, doc.nc_amount_due, doc.nc_overpaid_amount), (600.0, -100.0, 100.0))
+
+    def test_removing_the_reconciliation_restores_the_native_balance(self):
+        doc = self._doc(800.0)
+        payment = self._pay(doc, 1000.0)
+        doc_residual = doc.amount_residual
+        _recv(doc.line_ids | payment.move_id.line_ids).remove_move_reconcile()
+        self.assertEqual(doc.nc_overpaid_amount, 0.0)
+        self.assertEqual((doc.nc_amount_due, doc.nc_amount_paid), (800.0, 0.0))
+        self.assertNotEqual(doc.amount_residual, doc_residual)
+
+    def test_the_stamp_is_copy_false_and_unwritable_by_a_plain_user(self):
+        doc = self._doc(800.0)
+        payment = self._pay(doc, 1000.0)
+        self.assertEqual(payment.nc_registered_move_ids, doc)
+        self.assertFalse(payment.copy().nc_registered_move_ids)

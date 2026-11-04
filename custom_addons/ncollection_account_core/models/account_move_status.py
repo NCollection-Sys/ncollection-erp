@@ -18,6 +18,8 @@ facts whenever they change. Odoo's own ``amount_residual`` and every journal ent
 The order above is the Settlement Status sort order (most urgent first, most settled last; a document with no status
 last), decided by a rank in SQL -- never by the translated label.
 
+EVIDENCE. Only a payment RECORDED AGAINST this document (Register Payment on it, see payment_register_evidence.py)
+can be its excess; an advance later assigned to it, a bank import or a payment of an earlier release is customer credit.
 THE EXCESS, EXACTLY. A payment line that settled this document and still has an unapplied remainder is attributed to
 the document only when that line settled NOTHING ELSE. A payment of 1000 applied to invoice A (800) alone leaves 200
 that belongs to A. A payment of 1000 applied to A (300) and B (400) leaves 300 that belongs to neither: it is customer
@@ -106,6 +108,8 @@ class AccountMove(models.Model):
             if line.reconciled or (line.company_currency_id.is_zero(line.amount_residual)
                                    and line.currency_id.is_zero(line.amount_residual_currency)):
                 continue
+            if self not in line.payment_id.nc_registered_move_ids:
+                continue                 # no evidence it was recorded against this document: customer credit, not excess
             settled = line.matched_debit_ids | line.matched_credit_ids
             if ((settled.debit_move_id | settled.credit_move_id) - line) - lines:
                 continue                 # it settled another document too: customer credit, not this one's excess
