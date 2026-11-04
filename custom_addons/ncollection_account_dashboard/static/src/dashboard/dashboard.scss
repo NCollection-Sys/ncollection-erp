@@ -187,3 +187,49 @@
         print-color-adjust: exact;
     }
 }
+
+// ---- Premium design system, shared with the Sales / Invoicing analysis (.o_nc_prem) -------------------------------
+.nc-fin-dashboard {
+    background: var(--nc-bg, #f6f8fb);
+
+    &__heading { min-width: 0; }
+    &__title { font-weight: 650; letter-spacing: -0.01em; margin-block-end: 8px; }
+    &__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    &__note {
+        padding: 10px 14px; margin-block-end: 16px; border-radius: 8px; font-size: 0.875rem;
+        background: #eef4ff; border: 1px solid #c7d7f5; color: #1d3c72;
+    }
+    &__note--warn { background: #fff8eb; border-color: #f5d9a8; color: #7a4a00; }
+    &__head { align-items: flex-end; flex-wrap: wrap; }
+    &__kpis { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}
+.nc-chip {
+    display: inline-flex; gap: 6px; align-items: center; padding: 3px 10px; font-size: 0.8125rem;
+    background: #fff; border: 1px solid #e4e7ec; border-radius: 999px; color: #667085;
+}
+.nc-kpi {
+    background: #fff; border: 1px solid #e4e7ec; border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); display: flex; flex-direction: column; gap: 6px; min-width: 0;
+
+    &__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    &__label { font-size: 0.8125rem; font-weight: 600; color: #667085; }
+    &__tipbtn { border: 0; background: transparent; color: #667085; padding: 0; cursor: help; line-height: 1; }
+    &__value {
+        font-size: 1.55rem; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+        unicode-bidi: plaintext; color: #1f2933;
+    }
+    &__foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.78rem; min-height: 1.2em; }
+    &__sub { color: #667085; font-size: 0.78rem; }
+    &__delta {
+        font-weight: 600; padding: 1px 6px; border-radius: 6px;
+        &.tone-good { color: #13795b; background: #e7f6f0; }
+        &.tone-bad { color: #b42318; background: #fdecea; }
+        &.tone-neutral { color: #667085; background: #f2f4f7; }
+    }
+    &__tip { margin: 4px 0 0; padding: 8px 10px; font-size: 0.78rem; background: #f2f4f7; border-radius: 8px; color: #1f2933; }
+}
+.nc-panel { border-radius: 12px; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); }
+@media (max-width: 575px) {
+    .nc-fin-dashboard { padding: 14px 12px 32px; &__kpis { grid-template-columns: 1fr 1fr; } }
+    .nc-kpi__value { font-size: 1.2rem; }
+}

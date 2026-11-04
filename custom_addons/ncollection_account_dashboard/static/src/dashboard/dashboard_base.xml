@@ -4,10 +4,21 @@
     <t t-name="ncollection_account_dashboard.FinancialDashboard">
         <div class="nc-fin-dashboard" t-ref="root">
             <div class="nc-fin-dashboard__head">
-                <h1 class="nc-fin-dashboard__title" t-esc="title"/>
-                <span class="nc-fin-dashboard__period" t-if="state.payload">
-                    <t t-esc="state.payload.meta.period.from"/> — <t t-esc="state.payload.meta.period.to"/>
-                </span>
+                <div class="nc-fin-dashboard__heading">
+                    <h1 class="nc-fin-dashboard__title" t-esc="title"/>
+                    <div class="nc-fin-dashboard__chips" t-if="state.payload">
+                        <span class="nc-chip" t-if="state.payload.meta.company">
+                            <i class="fa fa-building-o"/> <t t-esc="state.payload.meta.company"/>
+                        </span>
+                        <span class="nc-chip" t-if="state.payload.meta.currency.name">
+                            <i class="fa fa-money"/> <t t-esc="state.payload.meta.currency.name"/>
+                        </span>
+                        <span class="nc-chip">
+                            <i class="fa fa-calendar"/>
+                            <t t-esc="state.payload.meta.period.from"/> → <t t-esc="state.payload.meta.period.to"/>
+                        </span>
+                    </div>
+                </div>
                 <!-- Additive toolbar slot. Renders nothing unless a subclass
                      defines the sub-template, so Finance / Accountant / Cash
                      are untouched. -->
@@ -16,29 +27,57 @@
                 </t>
             </div>
 
+            <div class="nc-fin-dashboard__note" role="note"
+                 t-if="state.payload and state.payload.meta.other_companies and state.payload.meta.other_companies.length">
+                <i class="fa fa-info-circle"/> <t t-esc="state.payload.meta.scope_note"/>
+            </div>
+
+            <div class="nc-fin-dashboard__note nc-fin-dashboard__note--warn" role="note"
+                 t-if="state.payload and state.payload.unavailable and state.payload.unavailable.length">
+                <i class="fa fa-info-circle"/> <t t-esc="words.unavailable"/>
+                <t t-foreach="state.payload.unavailable" t-as="name" t-key="name"> <span class="nc-chip"><t t-esc="name"/></span></t>
+            </div>
+
             <t t-if="state.loading">
                 <NcLoadingSkeleton variant="'card'" lines="4"/>
             </t>
             <t t-elif="state.error">
                 <NcEmptyState
-                    title="'Unable to load the dashboard'"
-                    description="'Please retry in a moment.'"
+                    title="words.errorTitle"
+                    description="words.errorBody"
                     icon="'fa-exclamation-triangle'"/>
             </t>
             <t t-else="">
                 <t t-if="!state.payload.kpis.length and !state.payload.charts.length and !(state.payload.panels and state.payload.panels.length)">
                     <NcEmptyState
-                        title="'No financial data yet'"
-                        description="'Figures appear once accounting entries are posted.'"/>
+                        title="words.emptyTitle"
+                        description="words.emptyBody"/>
                 </t>
                 <t t-else="">
                     <div class="nc-fin-dashboard__kpis">
                         <t t-foreach="state.payload.kpis" t-as="kpi" t-key="kpi.key">
-                            <t t-set="tr" t-value="trend(kpi)"/>
-                            <NcKpiCard t-if="tr" label="kpi.label" value="formatValue(kpi)"
-                                       trend="tr" sub="kpi.sub or undefined"/>
-                            <NcKpiCard t-else="" label="kpi.label" value="formatValue(kpi)"
-                                       sub="kpi.sub or undefined"/>
+                            <article class="nc-kpi">
+                                <div class="nc-kpi__top">
+                                    <span class="nc-kpi__label" t-esc="kpi.label"/>
+                                    <button t-if="kpi.tip" type="button" class="nc-kpi__tipbtn" t-att-title="kpi.tip"
+                                            t-att-aria-label="kpi.tip"
+                                            t-att-aria-expanded="state.tip === kpi.key ? 'true' : 'false'"
+                                            t-on-click="() => this.toggleTip(kpi.key)">
+                                        <i class="fa fa-info-circle"/>
+                                    </button>
+                                </div>
+                                <div class="nc-kpi__value" t-esc="formatValue(kpi)"/>
+                                <t t-set="chip" t-value="deltaChip(kpi)"/>
+                                <div class="nc-kpi__foot">
+                                    <span t-if="chip" t-attf-class="nc-kpi__delta tone-#{chip.tone}">
+                                        <span aria-hidden="true" t-esc="chip.arrow"/> <t t-esc="chip.text"/>
+                                        <t t-if="chip.word"> · <t t-esc="chip.word"/></t>
+                                    </span>
+                                    <span t-if="chip" class="nc-kpi__sub" t-esc="words.vsPrevious"/>
+                                    <span t-if="kpi.sub" class="nc-kpi__sub" t-esc="kpi.sub"/>
+                                </div>
+                                <p t-if="state.tip === kpi.key" class="nc-kpi__tip" t-esc="kpi.tip"/>
+                            </article>
                         </t>
                     </div>
                     <div class="nc-fin-dashboard__charts">
@@ -62,8 +101,8 @@
                                 <h2 class="nc-panel__title" t-esc="panel.label"/>
                                 <t t-if="!panel.rows.length">
                                     <NcEmptyState
-                                        title="'Nothing in this period'"
-                                        description="'This panel is part of your plan; there is simply no data for the selected range.'"/>
+                                        title="words.panelEmptyTitle"
+                                        description="words.panelEmptyBody"/>
                                 </t>
                                 <ol t-else="" class="nc-panel__rows" t-att-class="'nc-panel__rows--' + panel.type">
                                     <t t-foreach="panel.rows" t-as="row" t-key="row_index">

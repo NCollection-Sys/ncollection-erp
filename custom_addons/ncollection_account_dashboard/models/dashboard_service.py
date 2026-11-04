@@ -58,6 +58,10 @@ _TOP_CUSTOMERS = 5
 # How many rows a department leaderboard / ranking panel shows.
 _RANKING_LIMIT = 8
 
+# An increase of these is unfavourable; these are neither good nor bad.
+_UP_IS_BAD = {'expenses', 'payables', 'liabilities', 'cogs', 'operating_expenses', 'employee_turnover'}
+_NEUTRAL = {'customer_credit', 'vendor_prepayments'}
+
 # Department KPI unit (ncollection.kpi) -> the OWL base's formatValue unit.
 _KPI_UNIT = {'currency': 'currency', 'percent': 'percent', 'ratio': 'number'}
 
@@ -96,28 +100,73 @@ class AccountDashboardService(models.AbstractModel):
             # record rather than using the strings they passed in.
             return self.env[model_name].new({})
 
+    def _scoped(self):
+        """The ACTIVE company only: with several companies ticked the engine would add their records up as if they
+        shared a currency (the report services already carry one ``company_id``)."""
+        return self.with_context(allowed_company_ids=[self.env.company.id])
+
     def _comparison(self, model_name, date_from=None, date_to=None):
         """``(current, previous)`` figure dicts straight from the service."""
         return self._service(model_name, date_from, date_to)._nc_service_comparison()
 
-    @staticmethod
-    def _kpi(key, label, current, previous, unit='currency', source=None):
+    def _kpi(self, key, label, current, previous, unit='currency', source=None):
         """One KPI entry. No arithmetic — value/previous are raw service reads;
-        the view computes the trend arrow from the two."""
+        the view computes the trend arrow from the two. ``tip`` says what the figure means and ``polarity`` whether
+        an increase is favourable (the colour of the trend follows the business meaning, not the sign)."""
         return {
             'key': key,
             'label': label,
             'value': current.get(source or key),
             'previous': previous.get(source or key),
             'unit': unit,
+            'tip': self._kpi_tip(key),
+            'polarity': 'up_bad' if key in _UP_IS_BAD else ('neutral' if key in _NEUTRAL else 'up_good'),
         }
+
+    def _kpi_tip(self, key):
+        _ = self.env._
+        tips = {
+            'revenue': _("Total income of the posted entries in the period (sales and other operating income)."),
+            'total_income': _("Total income of the posted entries in the period (sales and other operating income)."),
+            'expenses': _("Cost of sales plus operating expenses of the posted entries in the period."),
+            'net_profit': _("Revenue minus expenses for the period, as the Profit and Loss statement computes it."),
+            'cash': _("Balance of the bank and cash accounts at the end date. A customer payment still waiting for "
+                      "the bank is not cash yet."),
+            'receivables': _("What customers owe: open invoices at the end date, tax included. Customer credit is "
+                             "not netted in."),
+            'customer_credit': _("Customer payments and credit notes not yet applied to an invoice. Shown apart from "
+                                 "the receivables."),
+            'payables': _("What we owe suppliers: open bills at the end date. Prepayments are not netted in."),
+            'vendor_prepayments': _("Payments made to suppliers ahead of a bill and not yet applied. A supplier "
+                                    "credit note is not a prepayment."),
+            'assets': _("Total assets on the Balance Sheet at the end date."),
+            'liabilities': _("Total liabilities on the Balance Sheet at the end date."),
+            'cogs': _("Cost of sales of the period."),
+            'gross_profit': _("Revenue minus cost of sales."),
+            'operating_expenses': _("Operating expenses of the period, excluding cost of sales."),
+            'gross_margin': _("Gross profit as a percentage of revenue."),
+            'net_margin': _("Net profit as a percentage of revenue."),
+            'avg_deal_size': _("Average untaxed value of the confirmed sales orders in the period, in the company "
+                               "currency."),
+            'employee_turnover': _("Employees who left in the period divided by the average headcount, as a "
+                                   "percentage."),
+            'inventory_turnover': _("Units shipped to customers in the period divided by the units on hand."),
+        }
+        return tips.get(key, '')
 
     def _meta(self, period_from=None, period_to=None):
         company = self.env.company
         report = self._service(_SUMMARY)
+        others = self.env.user.company_ids - company
         return {
+            'company': company.name,
+            'other_companies': others.mapped('name'),
+            'scope_note': self.env._(
+                "Figures are for %(company)s only, in %(currency)s. Other companies are not added in, because they "
+                "may use another currency.", company=company.name, currency=company.currency_id.name),
             'currency': {
                 'symbol': company.currency_id.symbol or company.currency_id.name,
+                'name': company.currency_id.name,
                 'position': company.currency_id.position,
             },
             'period': {
@@ -302,6 +351,7 @@ class AccountDashboardService(models.AbstractModel):
             FINANCIAL_GATE_GROUPS,
             self.env._("The financial dashboards are available to the "
                        "Accountant, the CEO and the workspace owner."))
+        self = self._scoped()
         current, previous = self._comparison(_SUMMARY)
         kpis = [
             self._kpi('revenue', self.env._("Revenue"), current, previous),
@@ -337,6 +387,7 @@ class AccountDashboardService(models.AbstractModel):
             FINANCIAL_GATE_GROUPS,
             self.env._("The financial dashboards are available to the "
                        "Accountant, the CEO and the workspace owner."))
+        self = self._scoped()
         current, previous = self._comparison(_PROFITABILITY)
         kpis = [
             self._kpi('total_income', self.env._("Revenue"), current, previous),
@@ -426,6 +477,7 @@ class AccountDashboardService(models.AbstractModel):
             ('ncollection_core.group_role_ceo', 'base.group_system'),
             self.env._("The CEO dashboard is available to the CEO and the "
                        "workspace owner."))
+        self = self._scoped()
         current, previous = self._comparison(_SUMMARY, date_from, date_to)
         profit_now, profit_prev = self._comparison(_PROFITABILITY, date_from, date_to)
         kpis = [
@@ -495,6 +547,7 @@ class AccountDashboardService(models.AbstractModel):
             FINANCIAL_GATE_GROUPS,
             self.env._("The financial dashboards are available to the "
                        "Accountant, the CEO and the workspace owner."))
+        self = self._scoped()
         current, previous = self._comparison(_SUMMARY)
         kpis = [
             self._kpi('cash', self.env._("Cash"), current, previous),
@@ -543,6 +596,8 @@ class AccountDashboardService(models.AbstractModel):
             'value': data['value'],
             'previous': data['previous'],
             'unit': _KPI_UNIT.get(data['unit'], 'number'),
+            'tip': self._kpi_tip(key),
+            'polarity': 'up_bad' if key in _UP_IS_BAD else 'up_good',
         }
         if data.get('target'):
             card['sub'] = self.env._("Target: %s", data['target'])
@@ -567,6 +622,12 @@ class AccountDashboardService(models.AbstractModel):
                 'value': value or 0.0,
             })
         return rows
+
+    def _unavailable(self, panels, expected):
+        """The panels this dashboard would show but cannot (app not installed, not in the plan, or no access): named
+        on the page instead of silently missing. Never a zero, never a made-up figure."""
+        shown = {p['key'] for p in panels}
+        return [label for key, label in expected if key not in shown]
 
     def _add_panel(self, panels, rows, key, label, ptype, model, field,
                    unit='currency'):
@@ -606,6 +667,7 @@ class AccountDashboardService(models.AbstractModel):
         self._require_role_or_technical_admin(
             'ncollection_core.group_role_sales',
             self.env._("The Sales dashboard is available to the Sales role."))
+        self = self._scoped()
         kpis = [k for k in (
             self._department_kpi('avg_deal_size', self.env._("Average Deal Size")),
         ) if k is not None]
@@ -625,7 +687,9 @@ class AccountDashboardService(models.AbstractModel):
         self._add_panel(panels, leaderboard, 'leaderboard',
                         self.env._("Salesperson Leaderboard"), 'ranking',
                         'sale.order', 'user_id', unit='currency')
-        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
+        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta(),
+                'unavailable': self._unavailable(panels, [
+                    ('pipeline', self.env._("Sales Pipeline")), ('leaderboard', self.env._("Salesperson Leaderboard"))])}
 
     @api.model
     def get_hr_dashboard(self):
@@ -634,6 +698,7 @@ class AccountDashboardService(models.AbstractModel):
         self._require_role_or_technical_admin(
             'ncollection_core.group_role_hr',
             self.env._("The HR dashboard is available to the HR role."))
+        self = self._scoped()
         kpis = [k for k in (
             self._department_kpi('employee_turnover', self.env._("Employee Turnover")),
         ) if k is not None]
@@ -659,7 +724,10 @@ class AccountDashboardService(models.AbstractModel):
         })
         self._add_panel(panels, leave, 'leave', self.env._("Approved Leave by Type"),
                         'ranking', 'hr.leave', 'holiday_status_id', unit='number')
-        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
+        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta(),
+                'unavailable': self._unavailable(panels, [
+                    ('headcount', self.env._("Headcount by Department")),
+                    ('leave', self.env._("Approved Leave by Type"))])}
 
     @api.model
     def get_warehouse_dashboard(self):
@@ -668,6 +736,7 @@ class AccountDashboardService(models.AbstractModel):
         self._require_role_or_technical_admin(
             'ncollection_core.group_role_warehouse',
             self.env._("The Warehouse dashboard is available to the Warehouse role."))
+        self = self._scoped()
         kpis = [k for k in (
             self._department_kpi('inventory_turnover', self.env._("Inventory Turnover")),
         ) if k is not None]
@@ -695,4 +764,7 @@ class AccountDashboardService(models.AbstractModel):
         self._add_panel(panels, movement, 'movement',
                         self.env._("Movement Velocity"), 'ranking',
                         'stock.move', 'product_id', unit='number')
-        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta()}
+        return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta(),
+                'unavailable': self._unavailable(panels, [
+                    ('valuation', self.env._("Stock Valuation by Product")),
+                    ('movement', self.env._("Movement Velocity"))])}

@@ -364,3 +364,24 @@ class TestDashboardKpiAcceptance(AccountTestInvoicingCommon):
         self.assertEqual(self._ws()['open_activities']['value'] - base, 1, "only the activity assigned to this user")
         mine.action_done()
         self.assertEqual(self._ws()['open_activities']['value'] - base, 0, "done is not open")
+
+    # ------------------------------------------------------------------------------- design system: meaning and scope
+    def test_every_kpi_explains_itself_and_declares_its_polarity(self):
+        payload = self.service.get_finance_dashboard()
+        by_key = {k['key']: k for k in payload['kpis']}
+        for key in ('revenue', 'expenses', 'cash', 'receivables', 'customer_credit', 'payables', 'vendor_prepayments'):
+            self.assertTrue(by_key[key]['tip'], "%s has a definition" % key)
+        self.assertEqual(by_key['expenses']['polarity'], 'up_bad', "more expenses is unfavourable")
+        self.assertEqual(by_key['payables']['polarity'], 'up_bad')
+        self.assertEqual(by_key['customer_credit']['polarity'], 'neutral')
+        self.assertEqual(by_key['revenue']['polarity'], 'up_good')
+
+    def test_the_header_names_the_company_and_the_currency_and_the_other_companies_are_not_added_in(self):
+        other = self.company_data_2['company']
+        self.owner.company_ids = [Command.link(other.id)]
+        service = self.service.with_context(allowed_company_ids=[self.env.company.id, other.id])
+        meta = service.get_finance_dashboard()['meta']
+        self.assertEqual(meta['company'], self.env.company.name)
+        self.assertEqual(meta['currency']['name'], self.env.company.currency_id.name)
+        self.assertIn(other.name, meta['other_companies'])
+        self.assertIn('only', meta['scope_note'])

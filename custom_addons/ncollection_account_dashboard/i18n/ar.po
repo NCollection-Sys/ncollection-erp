@@ -605,3 +605,215 @@ msgstr "تحليل المبيعات"
 #: model:ir.actions.client,name:ncollection_account_dashboard.action_invoicing_premium
 msgid "Invoicing Analysis"
 msgstr "تحليل الفوترة"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Figures are for %(company)s only, in %(currency)s. Other companies are not added in, because they may use another currency."
+msgstr "الأرقام لشركة %(company)s فقط، بعملة %(currency)s. لا تُضاف الشركات الأخرى لأنها قد تستخدم عملة مختلفة."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Total income of the posted entries in the period (sales and other operating income)."
+msgstr "إجمالي دخل القيود المرحّلة في الفترة (المبيعات وسائر الدخل التشغيلي)."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Cost of sales plus operating expenses of the posted entries in the period."
+msgstr "تكلفة المبيعات مضافاً إليها المصروفات التشغيلية للقيود المرحّلة في الفترة."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Revenue minus expenses for the period, as the Profit and Loss statement computes it."
+msgstr "الإيرادات ناقص المصروفات للفترة، كما تحسبها قائمة الأرباح والخسائر."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Balance of the bank and cash accounts at the end date. A customer payment still waiting for the bank is not cash yet."
+msgstr "رصيد حسابات البنك والنقد في تاريخ النهاية. دفعة العميل التي تنتظر البنك ليست نقداً بعد."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "What customers owe: open invoices at the end date, tax included. Customer credit is not netted in."
+msgstr "ما يدين به العملاء: الفواتير المفتوحة في تاريخ النهاية شاملة الضريبة. لا يُخصم رصيد العملاء الدائن."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Customer payments and credit notes not yet applied to an invoice. Shown apart from the receivables."
+msgstr "دفعات العملاء والإشعارات الدائنة غير المطبّقة على فاتورة. تُعرض بمعزل عن الذمم المدينة."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "What we owe suppliers: open bills at the end date. Prepayments are not netted in."
+msgstr "ما ندين به للموردين: الفواتير المفتوحة في تاريخ النهاية. لا تُخصم الدفعات المقدمة."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Payments made to suppliers ahead of a bill and not yet applied. A supplier credit note is not a prepayment."
+msgstr "دفعات للموردين قبل الفاتورة ولم تُطبَّق بعد. الإشعار الدائن للمورد ليس دفعة مقدمة."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Total assets on the Balance Sheet at the end date."
+msgstr "إجمالي الأصول في الميزانية العمومية في تاريخ النهاية."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Total liabilities on the Balance Sheet at the end date."
+msgstr "إجمالي الالتزامات في الميزانية العمومية في تاريخ النهاية."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Cost of sales of the period."
+msgstr "تكلفة مبيعات الفترة."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Revenue minus cost of sales."
+msgstr "الإيرادات ناقص تكلفة المبيعات."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Operating expenses of the period, excluding cost of sales."
+msgstr "المصروفات التشغيلية للفترة دون تكلفة المبيعات."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Gross profit as a percentage of revenue."
+msgstr "مجمل الربح كنسبة من الإيرادات."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Net profit as a percentage of revenue."
+msgstr "صافي الربح كنسبة من الإيرادات."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Average untaxed value of the confirmed sales orders in the period, in the company currency."
+msgstr "متوسط قيمة أوامر البيع المؤكدة دون الضريبة في الفترة، بعملة الشركة."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Employees who left in the period divided by the average headcount, as a percentage."
+msgstr "الموظفون الذين غادروا في الفترة مقسومين على متوسط عدد الموظفين، كنسبة مئوية."
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Units shipped to customers in the period divided by the units on hand."
+msgstr "الوحدات المشحونة للعملاء في الفترة مقسومة على الوحدات المتوفرة."
+
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "Unable to load the dashboard"
+msgstr "تعذّر تحميل لوحة البيانات"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "Please retry in a moment."
+msgstr "يرجى إعادة المحاولة بعد قليل."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "No financial data yet"
+msgstr "لا بيانات مالية بعد"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "Figures appear once accounting entries are posted."
+msgstr "تظهر الأرقام بعد ترحيل القيود المحاسبية."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "Nothing in this period"
+msgstr "لا شيء في هذه الفترة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "This panel is part of your plan; there is simply no data for the selected range."
+msgstr "هذه اللوحة ضمن باقتك؛ ولا توجد ببساطة بيانات للنطاق المحدد."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "vs previous period"
+msgstr "مقارنة بالفترة السابقة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "favourable"
+msgstr "إيجابي"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "unfavourable"
+msgstr "سلبي"
+
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+msgid "Not shown here (the app is not installed, is not part of your plan, or your role cannot read it):"
+msgstr "غير معروض هنا (التطبيق غير مثبّت أو ليس ضمن باقتك أو لا يستطيع دورك قراءته):"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Sales Pipeline"
+msgstr "مسار المبيعات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Salesperson Leaderboard"
+msgstr "ترتيب مندوبي المبيعات"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Headcount by Department"
+msgstr "عدد الموظفين حسب القسم"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Approved Leave by Type"
+msgstr "الإجازات المعتمدة حسب النوع"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Stock Valuation by Product"
+msgstr "تقييم المخزون حسب المنتج"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Movement Velocity"
+msgstr "سرعة حركة المخزون"

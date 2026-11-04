@@ -63,7 +63,7 @@ export class NcFinancialDashboard extends Component {
         this.orm = useService("orm");
         this.action = useService("action");
         this.root = useRef("root");
-        this.state = useState({ loading: true, error: false, payload: null });
+        this.state = useState({ loading: true, error: false, payload: null, tip: "" });
         this._charts = [];
         this._chartsDirty = false;
 
@@ -111,6 +111,44 @@ export class NcFinancialDashboard extends Component {
         }
         this.state.loading = false;
         this._chartsDirty = true;
+    }
+
+    // ---- words (translatable) ---------------------------------------------
+
+    get words() {
+        return {
+            errorTitle: _t("Unable to load the dashboard"),
+            errorBody: _t("Please retry in a moment."),
+            emptyTitle: _t("No financial data yet"),
+            emptyBody: _t("Figures appear once accounting entries are posted."),
+            panelEmptyTitle: _t("Nothing in this period"),
+            panelEmptyBody: _t("This panel is part of your plan; there is simply no data for the selected range."),
+            vsPrevious: _t("vs previous period"),
+            unavailable: _t("Not shown here (the app is not installed, is not part of your plan, or your role cannot read it):"),
+            favourable: _t("favourable"),
+            unfavourable: _t("unfavourable"),
+        };
+    }
+
+    toggleTip(key) {
+        this.state.tip = this.state.tip === key ? "" : key;
+    }
+
+    /** The comparison chip: its colour follows the business meaning (polarity), never only the sign of the change. */
+    deltaChip(kpi) {
+        const tr = this.trend(kpi);
+        if (!tr || tr.value === "—") {          // no percentage without a previous figure: no chip, never a made-up trend
+            return null;
+        }
+        const up = tr.dir === "up";
+        const polarity = kpi.polarity || "up_good";
+        let tone = "neutral";
+        if (polarity !== "neutral") {
+            tone = (up && polarity === "up_good") || (!up && polarity === "up_bad") ? "good" : "bad";
+        }
+        const word = { good: this.words.favourable, bad: this.words.unfavourable, neutral: "" }[tone];
+        const text = tr.value === "—" ? "—" : up ? `+${tr.value}` : tr.value;
+        return { tone, arrow: up ? "▲" : "▼", text, word };
     }
 
     // ---- KPI presentation (no financial math — display transforms only) ---
@@ -244,7 +282,8 @@ export class NcFinancialDashboard extends Component {
                 data: s.data,
                 borderColor: palette[i % palette.length],
                 backgroundColor: palette[i % palette.length],
-                tension: 0.3,
+                tension: 0,
+                pointRadius: 3,
             }));
             // eslint-disable-next-line no-undef
             this._charts.push(new Chart(canvas, {
@@ -253,6 +292,17 @@ export class NcFinancialDashboard extends Component {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } },
+                        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${this.formatAmount(c.parsed.y)}` } },
+                    },
+                    scales: {
+                        y: {
+                            title: { display: !!payload.meta.currency?.name, text: payload.meta.currency?.name || "" },
+                            ticks: { callback: (v) => this.formatAmount(v) },
+                        },
+                        x: { grid: { display: false } },
+                    },
                     // #332 — charts did not shrink on a window resize. NOT a
                     // cosmetic preference: `animation: false` removes the
                     // precondition for a Chart.js v4.4.5 ordering trap.
