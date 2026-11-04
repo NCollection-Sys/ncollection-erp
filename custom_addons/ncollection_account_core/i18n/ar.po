@@ -881,12 +881,6 @@ msgstr "الضرائب"
 msgid "Total Amount in Words"
 msgstr "المبلغ الإجمالي كتابةً"
 
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.product_template_form_nc_duplicate
-msgid "Duplicate"
-msgstr "نسخة مماثلة"
-
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_payment_term_form_nc_duplicate
 msgid "Duplicate"
@@ -931,3 +925,9 @@ msgstr "مدفوع بالزيادة"
 #: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_registered_move_ids
 msgid "Recorded Against"
 msgstr "سُجّلت مقابل"
+
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.product_template_form_nc_duplicate
+msgid "<span class=\"o_stat_text\">Duplicate</span>"
+msgstr "<span class=\"o_stat_text\">نسخة مماثلة</span>"

@@ -10,7 +10,7 @@ import { browser } from "@web/core/browser/browser";
 import { user } from "@web/core/user";
 import { _t } from "@web/core/l10n/translation";
 import { patch } from "@web/core/utils/patch";
-import { useEffect, useState } from "@odoo/owl";
+import { onMounted, onPatched, useEffect, useState } from "@odoo/owl";
 
 const COLLAPSED_CLASS = "o_nc_chatter_collapsed";
 
@@ -42,15 +42,17 @@ patch(Chatter.prototype, {
     setup() {
         super.setup(...arguments);
         this.ncChatter = useState({ collapsed: readPreference() });
-        useEffect(
-            (collapsed) => {
-                const el = this.rootRef.el;
-                if (el) {
-                    el.classList.toggle(COLLAPSED_CLASS, collapsed);
-                }
-            },
-            () => [this.ncChatter.collapsed, this.state.thread]
-        );
+        // The class is re-asserted after every mount and patch: the root element can be (re)created by Odoo's own
+        // rendering (a new record, a layout change), and a preference read at start must apply on the very first paint.
+        const sync = () => {
+            const el = this.rootRef.el;
+            if (el) {
+                el.classList.toggle(COLLAPSED_CLASS, this.ncChatter.collapsed);
+            }
+        };
+        onMounted(sync);
+        onPatched(sync);
+        useEffect(sync, () => [this.ncChatter.collapsed, this.state.thread]);
     },
 
     get ncShowCollapseToggle() {

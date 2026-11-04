@@ -3110,5 +3110,5 @@ msgstr "طيّ لوحة السجل"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_partner_form_nc_duplicate
-msgid "Duplicate"
-msgstr "نسخة مماثلة"
+msgid "<span class=\"o_stat_text\">Duplicate</span>"
+msgstr "<span class=\"o_stat_text\">نسخة مماثلة</span>"
