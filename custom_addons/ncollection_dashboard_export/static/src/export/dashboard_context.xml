@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ncollection_dashboard_export.Context">
+        <div class="o_nc_dash_context" t-if="state.info or props.isSample">
+            <div t-if="props.isSample" class="o_nc_dash_sample" role="alert">
+                <i class="fa fa-exclamation-triangle me-2"/>
+                <strong t-out="sampleTitle"/><t t-out="' ' + sampleText"/>
+            </div>
+            <div t-if="state.info?.mixed_currencies and !props.isSample" class="o_nc_dash_sample mb-2" role="alert">
+                <i class="fa fa-exclamation-triangle me-2"/><t t-out="mixedText"/>
+                <t t-foreach="state.info.companies" t-as="c" t-key="c.name"> <span class="badge text-bg-light border"><t t-out="c.name"/>: <t t-out="c.currency"/></span></t>
+            </div>
+            <div t-if="state.info and !props.isSample" class="o_nc_dash_bar d-flex flex-wrap align-items-center gap-3">
+                <span><i class="fa fa-building-o me-1"/><t t-out="state.info.company"/></span>
+                <span class="badge text-bg-light border"><t t-out="amountsIn"/> <t t-out="state.info.currency"/><t t-if="state.info.symbol !== state.info.currency"> (<t t-out="state.info.symbol"/>)</t></span>
+                <button t-if="state.info.definitions.length" type="button" class="btn btn-link btn-sm p-0 ms-auto"
+                        t-on-click="() => state.open = !state.open" t-att-aria-expanded="state.open">
+                    <i class="fa fa-info-circle me-1"/><t t-out="aboutLabel"/>
+                </button>
+            </div>
+            <dl t-if="state.open and state.info?.definitions.length" class="o_nc_dash_defs mb-0">
+                <t t-foreach="state.info.definitions" t-as="d" t-key="d.label">
+                    <dt t-out="d.label"/>
+                    <dd t-out="d.text"/>
+                </t>
+            </dl>
+        </div>
+    </t>
+
+    <t t-inherit="spreadsheet_dashboard.DashboardAction" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_content')]" position="before">
+            <NcDashboardContext dashboardId="activeDashboardId" isSample="!!loader.getActiveDashboard()?.isSample"/>
+        </xpath>
+    </t>
+</templates>

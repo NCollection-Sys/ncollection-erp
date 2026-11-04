@@ -12,11 +12,13 @@ msgstr ""
 
 #. module: ncollection_dashboard_export
 #: model:ir.model.fields,field_description:ncollection_dashboard_export.field_ncollection_spreadsheet_dashboard_export__display_name
+#: model:ir.model.fields,field_description:ncollection_dashboard_export.field_spreadsheet_dashboard__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
 #. module: ncollection_dashboard_export
 #: model:ir.model.fields,field_description:ncollection_dashboard_export.field_ncollection_spreadsheet_dashboard_export__id
+#: model:ir.model.fields,field_description:ncollection_dashboard_export.field_spreadsheet_dashboard__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -73,3 +75,106 @@ msgstr "لوحة البيانات كبيرة جداً للتصدير."
 #: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard_export.py:0
 msgid "The dashboard snapshot is not valid."
 msgstr "لقطة لوحة البيانات غير صالحة."
+
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/dashboard_context.js:0
+msgid "Sample data."
+msgstr "بيانات تجريبية."
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/dashboard_context.js:0
+msgid "These figures are Odoo's illustrative demo numbers, not your company's records (the currency shown on the sample cards is part of the sample). Real figures appear once this company has data."
+msgstr "هذه الأرقام توضيحية من أودو وليست سجلات شركتك (والعملة الظاهرة على البطاقات جزء من العيّنة). تظهر الأرقام الحقيقية عندما تتوفر بيانات لهذه الشركة."
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/dashboard_context.js:0
+msgid "Amounts in"
+msgstr "المبالغ بعملة"
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/dashboard_context.js:0
+msgid "About these figures"
+msgstr "حول هذه الأرقام"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Invoiced"
+msgstr "المفوتر"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Untaxed amount of the customer invoice lines posted in the selected period, in the company currency."
+msgstr "المبلغ دون الضريبة لبنود فواتير العملاء المرحّلة في الفترة المحددة، بعملة الشركة."
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Average Invoice"
+msgstr "متوسط الفاتورة"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Invoiced amount divided by the number of invoices in the period."
+msgstr "المبلغ المفوتر مقسوماً على عدد الفواتير في الفترة."
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "DSO (Days Sales Outstanding)"
+msgstr "متوسط فترة تحصيل المستحقات (DSO)"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "As Odoo's Invoicing dashboard computes it: the receivable ledger balance of the current year divided by (income minus direct costs) times 365. Read it with care: it divides by gross profit, not by revenue, and the receivable balance is net of customer credit, so it overstates the days when direct costs exist. The NCollection Finance dashboard shows what customers owe and the credit they hold separately. A lower number is better."
+msgstr "كما تحسبه لوحة الفوترة في أودو: رصيد دفتر الذمم المدينة للسنة الحالية مقسوماً على (الدخل ناقص التكاليف المباشرة) مضروباً في 365. اقرأه بحذر: فهو يقسم على مجمل الربح لا على الإيرادات، والرصيد صافٍ من رصيد العملاء الدائن، لذا يبالغ في عدد الأيام عند وجود تكاليف مباشرة. تعرض اللوحة المالية في NCollection ما يدين به العملاء والرصيد الذي يحتفظون به كلاً على حدة. كلما انخفض الرقم كان أفضل."
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Revenue"
+msgstr "الإيرادات"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Untaxed total of the confirmed sales orders (state Sales Order) in the period, in the company currency. Quotations are not revenue."
+msgstr "إجمالي أوامر البيع المؤكدة دون الضريبة في الفترة، بعملة الشركة. عروض الأسعار ليست إيرادات."
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Average order amount"
+msgstr "متوسط مبلغ الطلب"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Revenue divided by the number of confirmed orders."
+msgstr "الإيرادات مقسومة على عدد الطلبات المؤكدة."
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Quotations"
+msgstr "عروض الأسعار"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard.py:0
+msgid "Draft plus sent quotations that are not yet confirmed."
+msgstr "عروض الأسعار المسودة والمرسلة التي لم تُؤكَّد بعد."
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/dashboard_context.js:0
+msgid "Several companies with different currencies are selected. Odoo adds their figures together without converting them, so these totals are not in one currency. Select a single company to read them."
+msgstr "تم اختيار عدة شركات بعملات مختلفة. تجمع أودو أرقامها دون تحويل، لذا فهذه الإجماليات ليست بعملة واحدة. اختر شركة واحدة لقراءتها."

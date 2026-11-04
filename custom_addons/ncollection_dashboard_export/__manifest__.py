@@ -2,7 +2,7 @@
 # (proprietary NCollection module — same exemption the other ncollection_* modules carry.)
 {
     'name': 'NCollection Dashboard Export',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Hidden',
     'summary': 'An Export (Excel / PDF) button beside Share on the Dashboards page (/atlas/dashboards)',
     'author': 'NCollection',
@@ -18,6 +18,7 @@
         'spreadsheet.o_spreadsheet': [
             'ncollection_dashboard_export/static/src/export/**/*.js',
             'ncollection_dashboard_export/static/src/export/**/*.xml',
+            'ncollection_dashboard_export/static/src/export/**/*.scss',
         ],
     },
     'auto_install': True,

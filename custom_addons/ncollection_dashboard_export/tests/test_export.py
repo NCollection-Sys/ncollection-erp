@@ -164,3 +164,61 @@ class TestSpreadsheetDashboardExportRoute(HttpCase):
         self.authenticate('dash_export_employee', PASSWORD)
         response = self.url_open('/ncollection/dashboards/export/xlsx', allow_redirects=False)
         self.assertIn(response.status_code, (404, 405))
+
+
+@tagged('post_install', '-at_install')
+class TestDashboardContext(TransactionCase):
+    """Which company and currency the figures are in, and what the checked cards mean."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.group = cls.env['spreadsheet.dashboard.group'].create({'name': 'Ctx group'})
+        cls.dashboard = cls.env['spreadsheet.dashboard'].create({'name': 'Ctx', 'dashboard_group_id': cls.group.id})
+        cls.aed = cls.env.ref('base.AED')
+        cls.aed.active = True
+
+    def test_the_context_names_the_active_companys_own_currency(self):
+        company = self.env['res.company'].create({'name': 'Gulf Co', 'currency_id': self.aed.id})
+        user = self.env['res.users'].create({
+            'name': 'Gulf user', 'login': 'gulf_ctx_user', 'company_id': company.id,
+            'company_ids': [Command.set(company.ids)],
+            'group_ids': [Command.set([self.env.ref('base.group_user').id])]})
+        info = self.env['spreadsheet.dashboard'].with_user(user).with_company(company).nc_dashboard_context(
+            self.dashboard.id)
+        self.assertEqual((info['company'], info['currency']), ('Gulf Co', 'AED'))
+        self.assertTrue(info['symbol'])
+
+    def test_the_currency_follows_the_active_company_when_two_are_allowed(self):
+        other = self.env['res.company'].create({'name': 'Euro Co', 'currency_id': self.env.ref('base.EUR').id})
+        user = self.env.user
+        user.company_ids = [Command.link(other.id)]
+        mine = self.env['spreadsheet.dashboard'].with_context(
+            allowed_company_ids=[self.env.company.id]).nc_dashboard_context(self.dashboard.id)
+        there = self.env['spreadsheet.dashboard'].with_context(
+            allowed_company_ids=[other.id]).nc_dashboard_context(self.dashboard.id)
+        self.assertEqual(there['currency'], 'EUR')
+        both = self.env['spreadsheet.dashboard'].with_context(
+            allowed_company_ids=[other.id, self.env.company.id]).nc_dashboard_context(self.dashboard.id)
+        self.assertEqual(both['mixed_currencies'], other.currency_id != self.env.company.currency_id)
+        self.assertEqual(len(both['companies']), 2)
+        self.assertFalse(there['mixed_currencies'], "one company ticked: one currency")
+        self.assertEqual(mine['currency'], self.env.company.currency_id.name)
+
+    def test_only_checked_dashboards_carry_definitions_and_the_dso_caveat_is_stated(self):
+        service = self.env['spreadsheet.dashboard']
+        self.assertEqual(service.nc_dashboard_context(self.dashboard.id)['definitions'], [])
+        invoicing = service._nc_definitions()['spreadsheet_dashboard_account.dashboard_invoicing']
+        dso = dict(invoicing)['DSO (Days Sales Outstanding)']
+        self.assertIn('gross profit', dso)
+        self.assertIn('365', dso)
+
+    def test_a_dashboard_the_user_cannot_read_gives_no_context(self):
+        from odoo.exceptions import AccessError
+        private = self.env['spreadsheet.dashboard'].create({
+            'name': 'Admins only', 'dashboard_group_id': self.group.id,
+            'group_ids': [Command.set([self.env.ref('base.group_system').id])]})
+        user = self.env['res.users'].create({
+            'name': 'Plain', 'login': 'plain_ctx_user', 'group_ids': [Command.set([self.env.ref('base.group_user').id])]})
+        with self.assertRaises(AccessError):
+            self.env['spreadsheet.dashboard'].with_user(user).nc_dashboard_context(private.id)
