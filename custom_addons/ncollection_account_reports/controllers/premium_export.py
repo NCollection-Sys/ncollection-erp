@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa: E501  (user-facing definitions are single translatable sentences)
 """``GET /ncollection/premium/<sales|invoicing>/export/<xlsx|pdf>``.
 
 A signed-in session; the company is the session's active one (no parameter names a tenant or a company); the dashboard's

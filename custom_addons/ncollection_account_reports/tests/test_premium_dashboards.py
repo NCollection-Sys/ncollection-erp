@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa: E501  (user-facing definitions are single translatable sentences)
 """The NCollection Sales and Invoicing dashboards, reconciled to hand-worked records in an AED company.
 
 Fixtures are deterministic (fixed dates and rates). Every figure is checked against what the documents say, and the
@@ -13,7 +14,7 @@ import openpyxl
 
 from odoo import Command, fields
 from odoo.exceptions import AccessError
-from odoo.tests import TransactionCase, tagged
+from odoo.tests import tagged
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon, AccountTestInvoicingHttpCommon
 from odoo.addons.ncollection_core.models.aggregation import cache as aggregation_cache
@@ -99,6 +100,8 @@ class TestPremiumDashboards(AccountTestInvoicingCommon):
             self.assertTrue(payload['empty'], kind)
             for kpi in payload['kpis']:
                 self.assertIn(kpi['value'], (0, 0.0, None), "%s/%s must be zero or undefined, never invented" % (
+                    kind, kpi['key']))
+                self.assertNotEqual(str(kpi['value']), '-0.0', "%s/%s: a negative zero prints as -0.00" % (
                     kind, kpi['key']))
             for table in payload['tables']:
                 self.assertEqual(table['rows'], [], "%s/%s has no rows" % (kind, table['key']))

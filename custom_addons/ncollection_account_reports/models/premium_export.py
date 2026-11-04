@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa: E501  (user-facing definitions are single translatable sentences)
 """Excel and PDF of the NCollection Sales / Invoicing dashboards.
 
 Unlike the Spreadsheet Dashboards export (a snapshot the browser sends), these files are built from the SERVER payload

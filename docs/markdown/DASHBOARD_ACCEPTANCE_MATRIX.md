@@ -143,3 +143,35 @@ Tests live in `custom_addons/<module>/tests/`. `KA` = `ncollection_account_dashb
 odoo -d uxkpi -i hr,sale,purchase,stock,stock_account,ncollection_account_dashboard \
      --test-enable --test-tags /ncollection_account_dashboard,/ncollection_subscription:TestPlatformDashboardAccuracy,/ncollection_dashboard_export
 ```
+
+## 6. NCollection Sales Analysis and Invoicing Analysis (DASH-UX)
+
+Own dashboards (client actions `ncollection_account_dashboard.sales_premium` / `.invoicing_premium`, menus *Sales Analysis* /
+*Invoicing Analysis*), data service `ncollection.premium.dashboard` in `ncollection_account_reports` (the data layer; the
+dashboard module stays presentation-only, enforced by `test_boundary`), server-built Excel / PDF. The native Spreadsheet Dashboards
+page, its Share button, the Export beside it and the sample-data banner are unchanged.
+
+Rules: real records only (no records = zeros / "not defined", never demo figures); the **active company only**, in its own
+functional currency (other ticked companies are named, never added in); no cache; foreign currency converted with Odoo's own rates at
+the document date; orders (intent) / invoiced (billing) are not labelled revenue. Test file:
+`ncollection_account_reports/tests/test_premium_dashboards.py` (`PD`).
+
+| Dashboard | KPI | Definition | Expected | Actual | Evidence | Status |
+|---|---|---|---|---|---|---|
+| Sales | Confirmed orders / Order value / Average | state `sale`, untaxed, company currency | 2 / 300 / 150 for 100 AED + 50 EUR (rate 4) | as expected; browser (AED company, EUR order 6,000 → 24,000) 3 / 52,200 / 17,400 | `PD.test_sales_figures_reconcile_…`; browser SQL-checked | VERIFIED |
+| Sales | Open quotations, conversion | draft + sent; confirmed ÷ (confirmed + open) | 1; 66.7 % | as expected; browser 2; 60 % | same | VERIFIED |
+| Sales | Invoiced / Credit notes / Net sales | posted `out_invoice` / `out_refund` untaxed, company currency | 500 / 120 / 380 | as expected; browser 60,200 / 1,500 / 58,700 | same | VERIFIED |
+| Sales | Growth | order value vs previous window | undefined when previous = 0 | `—` with reason | `PD.test_undefined_figures_are_not_shown_as_zero` | VERIFIED |
+| Sales | Top customers / products / salespeople, recent orders and quotations | converted per order | Y 200 before X 100 | as expected | `PD` | VERIFIED |
+| Invoicing | Issued, unpaid, partial, paid, collection rate | invoices dated in the period; paid = total − residual | per fixture | as expected; browser 4 / 2 / 1 / 18,600 / 30.9 % | `PD.test_invoicing_figures_reconcile_…` | VERIFIED |
+| Invoicing | Outstanding receivables, customer credit | `ncollection.account.open.items` as of today, not netted | equals the Finance dashboard | equal | same test; browser 41,600 / 1,500 | VERIFIED |
+| Invoicing | Overdue | open invoices with due date < today | 300 / 8,000 | as expected; the table lists the invoice with its age | same | VERIFIED |
+| Invoicing | **DSO** | average receivables (start, end of period; gross, credit not netted) ÷ net credit sales (tax-included invoices − credit notes) × days | March 2025: (0 + 600) / 2 ÷ 1,000 × 31 = **9.3 days**; with a 200 credit note: 500 ÷ 800 × 31 | exactly | `PD.test_dso_*` (3); browser (year): 20,800 ÷ 58,700 × 308 = 109.1 days | VERIFIED |
+| Invoicing | DSO without sales | undefined, not zero | `—` + "Not defined…" | as expected | `PD.test_dso_is_undefined_not_zero_…` | VERIFIED |
+| Both | Empty AED company | nothing recorded | all zero or undefined, AED context, no demo data | as expected; the screenshot caught a `-0.00` credit-note figure, fixed | `PD.test_an_empty_aed_company_…`; browser (Arabic) | CORRECTED AND VERIFIED |
+| Both | Other companies / currencies | active company only | the other company's amounts not added | EUR company 4,000 EUR; both ticked → the first company's AED figures only, others named | `PD.test_other_ticked_companies_…`; browser RPC | VERIFIED |
+| Both | Export (Excel / PDF) | built from the **server** payload | numbers are numbers, text never a formula, 403 without the role, the company parameter is ignored | as expected | `PD.TestPremiumDashboardExportRoute` (4) | VERIFIED |
+
+Export trust model: the **Spreadsheet Dashboards** export is a faithful snapshot of what the browser shows (the server checks the user may
+read the dashboard, validates and bounds the snapshot, and states that it is a snapshot); it is NOT a server-verified accounting
+statement. The NCollection Sales / Invoicing exports ARE server-calculated and say so in the file.

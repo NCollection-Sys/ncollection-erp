@@ -117,7 +117,7 @@ export class NcPremiumDashboard extends Component {
 
     // ---------------------------------------------------------------- formatting (display only)
     number(value, digits = 0) {
-        return Number(value).toLocaleString("en-US", {
+        return (Number(value) + 0).toLocaleString("en-US", {
             minimumFractionDigits: digits,
             maximumFractionDigits: digits,
         });

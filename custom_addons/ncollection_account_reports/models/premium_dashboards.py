@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa: E501  (user-facing definitions are single translatable sentences)
 """NCollection Sales and Invoicing dashboards: real records only, one company, one currency.
 
 Design rules (each is tested in ``tests/test_premium_dashboards.py``):
@@ -151,12 +152,12 @@ class NcollectionPremiumDashboard(models.AbstractModel):
                       previous['conversion'], 'up_good',
                       self.env._("Confirmed orders divided by (confirmed orders + open quotations) created in the "
                                  "period. Undefined when there are none."),
-                      note=None if current['conversion'] is not None else self.env._("Not defined: no orders or "
-                                                                                      "quotations in the period.")),
+                      note=None if current['conversion'] is not None else self.env._(
+                          "Not defined: no orders or quotations in the period.")),
             self._kpi('growth', self.env._("Order value growth"), current['growth'], 'percent', None, 'up_good',
                       self.env._("Order value compared with the previous period of the same length."),
-                      note=None if current['growth'] is not None else self.env._("Not defined: no order value in the "
-                                                                                  "previous period.")),
+                      note=None if current['growth'] is not None else self.env._(
+                          "Not defined: no order value in the previous period.")),
             self._kpi('invoiced', self.env._("Invoiced sales"), current['invoiced'], 'currency', previous['invoiced'],
                       'up_good', self.env._("Posted customer invoices, untaxed, in the period."),
                       {'model': 'account.move', 'domain': self._invoice_domain(start, end, ('out_invoice',)),
@@ -208,7 +209,7 @@ class NcollectionPremiumDashboard(models.AbstractModel):
         quotes = self._converted_orders(start, end, ('draft', 'sent'))
         value = sum(v for _o, v in confirmed)
         invoiced = self._net_invoiced(start, end, ('out_invoice', 'out_refund'))
-        out_invoice, out_refund = invoiced.get('out_invoice', 0.0), -invoiced.get('out_refund', 0.0)
+        out_invoice, out_refund = invoiced.get('out_invoice', 0.0), 0.0 - invoiced.get('out_refund', 0.0)
         count = len(confirmed)
         total_intent = count + len(quotes)
         return {
@@ -388,7 +389,7 @@ class NcollectionPremiumDashboard(models.AbstractModel):
              ('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '<', fields.Date.to_string(today))],
             [], ['amount_residual_signed:sum'])
         return {
-            'issued': len(invoices), 'invoiced': net.get('out_invoice', 0.0), 'credit_notes': -net.get('out_refund', 0.0),
+            'issued': len(invoices), 'invoiced': net.get('out_invoice', 0.0), 'credit_notes': 0.0 - net.get('out_refund', 0.0),
             'paid': paid, 'collection_rate': (paid / total * 100.0) if total else None,
             'unpaid': len(invoices.filtered(lambda m: m.payment_state == 'not_paid')),
             'partial': len(invoices.filtered(lambda m: m.payment_state == 'partial')),

@@ -12,9 +12,11 @@
     padding: 20px 28px 40px;
     background: var(--nc-bg);
     color: var(--nc-ink);
-    min-height: 100%;
-    overflow: auto;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
 
+    .o_nc_prem_head > div { min-width: 0; max-width: 100%; }
     .o_nc_prem_head {
         display: flex;
         flex-wrap: wrap;
@@ -35,7 +37,7 @@
         border: 0; background: transparent; padding: 6px 12px; font-size: 0.8125rem; color: var(--nc-muted); cursor: pointer;
         &.active { background: var(--nc-accent); color: #fff; }
     }
-    .o_nc_range { display: inline-flex; gap: 6px; align-items: center; input { font-size: 0.8125rem; border: 1px solid var(--nc-line); border-radius: 6px; padding: 3px 6px; background: var(--nc-card); } }
+    .o_nc_range { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: 100%; input { font-size: 0.8125rem; border: 1px solid var(--nc-line); border-radius: 6px; padding: 3px 6px; background: var(--nc-card); } }
     .o_nc_export { display: inline-flex; gap: 6px; }
     .o_nc_prem_loading { padding: 40px; text-align: center; color: var(--nc-muted); }
 
@@ -73,7 +75,8 @@
     }
     .o_nc_tip { margin: 4px 0 0; padding: 8px 10px; font-size: 0.78rem; background: #f2f4f7; border-radius: 8px; color: var(--nc-ink); }
 
-    .o_nc_charts, .o_nc_tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-block-end: 14px; }
+    .o_nc_charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-block-end: 14px; }
+    .o_nc_tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px; margin-block-end: 14px; }
     .o_nc_card {
         background: var(--nc-card); border: 1px solid var(--nc-line); border-radius: 12px; padding: 14px 16px;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); min-width: 0;

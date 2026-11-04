@@ -8,7 +8,8 @@
                     <div class="o_nc_prem_chips" t-if="state.payload">
                         <span class="o_nc_chip"><i class="fa fa-building-o"/> <t t-out="state.payload.meta.company"/></span>
                         <span class="o_nc_chip"><i class="fa fa-money"/> <t t-out="state.payload.meta.currency.name"/>
-                            (<t t-out="state.payload.meta.currency.symbol"/>)</span>
+                            <t t-if="state.payload.meta.currency.symbol !== state.payload.meta.currency.name">
+                                (<t t-out="state.payload.meta.currency.symbol"/>)</t></span>
                         <span class="o_nc_chip"><i class="fa fa-calendar"/>
                             <t t-out="state.payload.meta.period.from"/> → <t t-out="state.payload.meta.period.to"/></span>
                     </div>
