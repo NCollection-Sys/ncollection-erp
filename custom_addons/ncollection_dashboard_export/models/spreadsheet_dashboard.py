@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa: E501  (user-facing definitions are one translatable sentence each)
 """What the Dashboards page must tell the reader about the figures it shows.
 
 Odoo's spreadsheet dashboards print bare numbers (``2,690``): the currency is not part of the card. This answers, for the

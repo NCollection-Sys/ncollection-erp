@@ -219,6 +219,7 @@ class TestDashboardContext(TransactionCase):
             'name': 'Admins only', 'dashboard_group_id': self.group.id,
             'group_ids': [Command.set([self.env.ref('base.group_system').id])]})
         user = self.env['res.users'].create({
-            'name': 'Plain', 'login': 'plain_ctx_user', 'group_ids': [Command.set([self.env.ref('base.group_user').id])]})
+            'name': 'Plain', 'login': 'plain_ctx_user',
+            'group_ids': [Command.set([self.env.ref('base.group_user').id])]})
         with self.assertRaises(AccessError):
             self.env['spreadsheet.dashboard'].with_user(user).nc_dashboard_context(private.id)
