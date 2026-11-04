@@ -14,13 +14,12 @@ class SpreadsheetDashboard(models.Model):
 
     @api.model
     def _nc_definitions(self):
-        _ = self.env._
         return {
             'spreadsheet_dashboard_account.dashboard_invoicing': [
-                (_("Invoiced"), _("Untaxed amount of the customer invoice lines posted in the selected period, in the "
+                (self.env._("Invoiced"), self.env._("Untaxed amount of the customer invoice lines posted in the selected period, in the "
                                   "company currency.")),
-                (_("Average Invoice"), _("Invoiced amount divided by the number of invoices in the period.")),
-                (_("DSO (Days Sales Outstanding)"), _(
+                (self.env._("Average Invoice"), self.env._("Invoiced amount divided by the number of invoices in the period.")),
+                (self.env._("DSO (Days Sales Outstanding)"), self.env._(
                     "As Odoo's Invoicing dashboard computes it: the receivable ledger balance of the current year divided by "
                     "(income minus direct costs) times 365. Read it with care: it divides by gross profit, not by revenue, "
                     "and the receivable balance is net of customer credit, so it overstates the days when direct costs "
@@ -28,10 +27,10 @@ class SpreadsheetDashboard(models.Model):
                     "A lower number is better.")),
             ],
             'spreadsheet_dashboard_sale.spreadsheet_dashboard_sales': [
-                (_("Revenue"), _("Untaxed total of the confirmed sales orders (state Sales Order) in the period, in the "
+                (self.env._("Revenue"), self.env._("Untaxed total of the confirmed sales orders (state Sales Order) in the period, in the "
                                  "company currency. Quotations are not revenue.")),
-                (_("Average order amount"), _("Revenue divided by the number of confirmed orders.")),
-                (_("Quotations"), _("Draft plus sent quotations that are not yet confirmed.")),
+                (self.env._("Average order amount"), self.env._("Revenue divided by the number of confirmed orders.")),
+                (self.env._("Quotations"), self.env._("Draft plus sent quotations that are not yet confirmed.")),
             ],
         }
 
