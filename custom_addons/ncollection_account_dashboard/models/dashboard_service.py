@@ -162,6 +162,10 @@ class AccountDashboardService(models.AbstractModel):
         in ``ncollection.aggregation.engine`` (P4-T01), which is exactly what
         ``tests/test_boundary.py`` requires.
         """
+        if (spec.get('model') in ('sale.order', 'purchase.order') and spec.get('aggregates') == ['amount_total:sum']
+                and len(spec.get('groupby') or ()) == 1):
+            # an order total is in the ORDER's currency: rank them in the company's (ncollection_core owns the rule)
+            return self.env['ncollection.dashboard.data'].aggregate_in_company_currency(spec)
         return self.env[_AGGREGATION].aggregate(spec)
 
     def _pipeline_funnel(self):

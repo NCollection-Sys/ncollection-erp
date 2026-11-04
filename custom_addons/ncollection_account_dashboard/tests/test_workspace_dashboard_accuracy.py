@@ -128,3 +128,21 @@ class TestWorkspaceDashboardAccuracy(AccountTestInvoicingCommon):
             self._sale(100.0, when=order_when)
             self.assertAlmostEqual(self._payload(tz='Pacific/Auckland')['sales_this_month']['value'] - base, 100.0, 2,
                                    "the user's month is April: the order belongs to it")
+
+    # --------------------------------------------------------------------- the CEO and Sales dashboards, same rule
+    def test_b_ceo_top_customers_and_sales_leaderboard_add_one_currency(self):
+        partner = self.env['res.partner'].create({'name': 'ZZ Ceo Mix Customer'})
+        for price, cur in ((100.0, None), (200.0, self.eur)):
+            order = self._sale(price, cur)
+            order.partner_id = partner
+            order.user_id = self.owner
+        service = self.env['ncollection.account.dashboard.service'].with_user(self.owner)
+        today = fields.Date.today()
+        rows = service._top_customers(today - timedelta(days=31), today)
+        mine = [r for r in rows if r['label'] == 'ZZ Ceo Mix Customer']
+        self.assertAlmostEqual(mine[0]['value'], 200.0, 2)
+        board = service._ranking_panel({
+            'key': 'leaderboard', 'model': 'sale.order', 'domain': [('state', '=', 'sale'), ('user_id', '=', self.owner.id)],
+            'groupby': ['user_id'], 'aggregates': ['amount_total:sum'], 'order': 'amount_total:sum desc', 'limit': 5})
+        self.assertAlmostEqual(board[0]['value'], 200.0, 2)
+

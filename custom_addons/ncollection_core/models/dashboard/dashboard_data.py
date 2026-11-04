@@ -336,6 +336,36 @@ class NCollectionDashboardData(models.AbstractModel):
         return result['rows'][0][0] or 0.0
 
     @api.model
+    def aggregate_in_company_currency(self, spec):
+        """The engine's answer for a ranking of orders by ``amount_total``, in the ONE currency of the dashboard.
+
+        ``spec`` is an engine spec with a single many2one ``groupby`` and ``amount_total:sum``. When every matching
+        order is in the company currency the engine answers as before (cached). When some are not, each order is
+        converted at the rate of its own date and the groups are ranked on the converted totals. ``None`` when the
+        model is absent or not licensed for the user, exactly as the engine says."""
+        model_name, domain = spec['model'], list(spec.get('domain') or [])
+        if model_name not in self.env:
+            return None
+        currency = self.env.company.currency_id
+        try:
+            mixed = self.env[model_name].search_count(domain + [('currency_id', '!=', currency.id)], limit=1)
+        except (AccessError, UserError):
+            return None
+        if not mixed:
+            return self._engine().aggregate(spec)
+        group = spec['groupby'][0]
+        date_field = 'date_order' if model_name == 'sale.order' else 'date_approve'
+        totals = {}
+        for order in self.env[model_name].search_fetch(
+                domain, [group, 'amount_total', 'currency_id', date_field]):
+            when = fields.Datetime.to_datetime(order[date_field])
+            cell = (order[group].id, order[group].display_name) if order[group] else (False, '')
+            totals[cell] = totals.get(cell, 0.0) + order.currency_id._convert(
+                order.amount_total, currency, self.env.company, when.date() if when else self._today())
+        rows = sorted(totals.items(), key=lambda item: -item[1])
+        return {'rows': rows[:spec['limit']] if spec.get('limit') else rows}
+
+    @api.model
     def _sum_in_company_currency(self, model_name, domain, date_field):
         """``amount_total`` of the orders matching ``domain`` in the ONE currency of the dashboard (the company's).
 
@@ -526,31 +556,17 @@ class NCollectionDashboardData(models.AbstractModel):
         # (id, display_name) tuple so the payload is cacheable inert data (a
         # recordset would be bound to an environment that is gone by the next
         # request). Hence the tuple unpacking here rather than `.display_name`.
-        domain = [('state', '=', 'sale'), ('date_order', '>=', period_from),
-                  ('date_order', '<', period_to + timedelta(days=1))]
-        company = self.env.company
-        currency = company.currency_id
-        if self.env['sale.order'].search_count(domain + [('currency_id', '!=', currency.id)], limit=1):
-            # Orders in more than one currency: add them in ONE (the company's), each at its own order date.
-            totals = {}
-            for order in self.env['sale.order'].search_fetch(
-                    domain, ['partner_id', 'amount_total', 'currency_id', 'date_order']):
-                when = fields.Datetime.to_datetime(order.date_order)
-                key = (order.partner_id.id, order.partner_id.display_name) if order.partner_id else False
-                totals[key] = totals.get(key, 0.0) + order.currency_id._convert(
-                    order.amount_total, currency, company, when.date() if when else self._today())
-            rows = sorted(totals.items(), key=lambda item: -item[1])[:5]
-        else:
-            result = self._engine().aggregate({
-                'key': 'dash:top_customers',
-                'model': 'sale.order',
-                'domain': domain,
-                'groupby': ['partner_id'],
-                'aggregates': ['amount_total:sum'],
-                'limit': 5,
-                'order': 'amount_total:sum desc',
-            })
-            rows = result['rows'] if result else []
+        result = self.aggregate_in_company_currency({
+            'key': 'dash:top_customers',
+            'model': 'sale.order',
+            'domain': [('state', '=', 'sale'), ('date_order', '>=', period_from),
+                       ('date_order', '<', period_to + timedelta(days=1))],
+            'groupby': ['partner_id'],
+            'aggregates': ['amount_total:sum'],
+            'limit': 5,
+            'order': 'amount_total:sum desc',
+        })
+        rows = result['rows'] if result else []
         return {
             'labels': [
                 partner[1] if partner else self.env._('Unknown')
