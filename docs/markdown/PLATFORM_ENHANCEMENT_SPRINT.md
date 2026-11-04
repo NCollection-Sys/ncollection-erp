@@ -95,3 +95,29 @@ Rollback: restore the pre-release dump of each database and the previous source 
 | DASH-UX-07 | P1 | English / Arabic / mobile | Dashboards page | PARTIAL: Dashboards page EN+mobile (earlier), AED band EN | — | see above | invoice filters/sort, Document Layout, product image, chatter collapse/draft in English still not run |
 | DASH-UX-08 | P1 | Export reconciliation | Dashboards page | previously verified; unchanged | `test_export` (12) | earlier | the band is not part of the exported file |
 | REL-01 | P0 | Security / release | all | module `ncollection_dashboard_export` 19.0.1.0.0 → 19.0.1.1.0 | — | — | final regression not re-run on this revision |
+
+## 5. Sales / Invoicing analysis — release additions and tracker update
+
+Architecture (approved): NCollection-owned Sales and Invoicing dashboards; Odoo's Spreadsheet Dashboards, Share and our Export stay.
+Data service `ncollection.premium.dashboard` + server-built Excel/PDF live in `ncollection_account_reports`; the OWL front end, menus and
+Arabic in `ncollection_account_dashboard`; the shared scroll contract (`o_nc_prem`) in `ncollection_branding`.
+
+| Module | Current (runtime) | Target | Migration |
+|---|---|---|---|
+| `ncollection_account_reports` | 19.0.1.12.0 | **19.0.1.14.0** | `-u`: two abstract models, one HTTP route, Arabic |
+| `ncollection_account_dashboard` | 19.0.1.3.0 | **19.0.1.5.0** | `-u`: two client actions, three menus, assets, Arabic |
+| `ncollection_branding` | 19.0.1.18.0 | **19.0.1.19.0** | `-u`: stylesheet only (scroll contract) |
+| `ncollection_dashboard_export` | — | **19.0.1.1.0** | `-i` (context band, mixed-currency warning) |
+| `ncollection_core` / `ncollection_account_core` / `ncollection_subscription` | unchanged by this addition | as §3 | as §3 |
+
+Menus: *Accounting › Dashboards › Sales Analysis / Invoicing Analysis* (Accountant, CEO, Owner) and *Sales Analysis* under the department
+dashboards (Sales role). The RPC mirrors them (`SALES_GROUPS`, `FINANCIAL_GATE_GROUPS`).
+
+| ID | Status | Evidence | Remaining |
+|---|---|---|---|
+| DASH-UX-01/02 | DONE | AED company with data, empty AED company, EUR company, two companies ticked: `PD` tests + browser RPC; sample data banner kept | none |
+| DASH-UX-03 | DONE | KPI tooltips (click or hover) with definition; DSO formula, Arabic title "متوسط فترة تحصيل المستحقات (DSO)", undefined ≠ zero | — |
+| DASH-UX-04 | DONE for Sales and Invoicing | browser screenshots: English desktop (Invoicing, Sales), Arabic RTL desktop, Arabic 375 px, empty company | the pane was hidden, so every page load was slow |
+| DASH-UX-05/06 | PARTIAL | shared component, tokens and responsive grid used by the two new dashboards; the older Finance / Accountant / Cash / CEO / department dashboards were **not** restyled | restyle is a follow-up |
+| DASH-UX-07 | PARTIAL | see the report | English invoice filters / sorting, Document Layout, product image, chatter collapse / draft were **not** run this round |
+| DASH-UX-08 | DONE | Spreadsheet Dashboards export = faithful snapshot (stated); Sales / Invoicing export = server-calculated | — |
