@@ -128,8 +128,10 @@ export class NcPremiumDashboard extends Component {
         if (value === null || value === undefined || !cur) {
             return "—";
         }
-        const text = compact && Math.abs(value) >= 10000
-            ? new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value)
+        const text = compact
+            ? (Math.abs(value) >= 1000
+                ? new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value)
+                : this.number(value, 0))
             : this.number(value, cur.decimals ?? 2);
         return cur.position === "before" ? `${cur.symbol} ${text}` : `${text} ${cur.symbol}`;
     }

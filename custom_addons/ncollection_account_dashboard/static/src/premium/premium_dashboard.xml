@@ -51,7 +51,7 @@
 
                     <section class="o_nc_kpis">
                         <t t-foreach="state.payload.kpis" t-as="k" t-key="k.key">
-                            <article t-attf-class="o_nc_kpi #{k.drill ? 'is-link' : ''}">
+                            <article t-attf-class="o_nc_kpi #{k.drill ? 'is-link' : ''}" t-att-data-key="k.key">
                                 <div class="o_nc_kpi_top">
                                     <span class="o_nc_kpi_label" t-out="k.label"/>
                                     <button type="button" class="o_nc_tipbtn" t-att-title="k.tip" t-att-aria-label="k.tip"
@@ -87,7 +87,7 @@
 
                     <section class="o_nc_tables">
                         <t t-foreach="state.payload.tables" t-as="t" t-key="t.key">
-                            <div class="o_nc_card">
+                            <div class="o_nc_card" t-att-data-table="t.key">
                                 <h2 t-out="t.label"/>
                                 <p t-if="!t.rows.length" class="o_nc_muted o_nc_tbl_empty" t-out="t.empty"/>
                                 <ul t-elif="t.kind === 'ranking'" class="o_nc_rank">

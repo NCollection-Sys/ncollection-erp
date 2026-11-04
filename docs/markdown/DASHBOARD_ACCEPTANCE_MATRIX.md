@@ -175,3 +175,31 @@ the document date; orders (intent) / invoiced (billing) are not labelled revenue
 Export trust model: the **Spreadsheet Dashboards** export is a faithful snapshot of what the browser shows (the server checks the user may
 read the dashboard, validates and bounds the snapshot, and states that it is a snapshot); it is NOT a server-verified accounting
 statement. The NCollection Sales / Invoicing exports ARE server-calculated and say so in the file.
+
+## 7. DSO - accounting review (what is and is not established)
+
+`DSO = average trade receivables / net credit sales x days in the period`, implemented in `ncollection.premium.dashboard._invoicing_window`.
+
+| Question | Answer |
+|---|---|
+| VAT | **Included on both sides.** Receivables are owed tax-included; net credit sales are `amount_total_signed` (tax-included). Consistent. |
+| Which sales | **All posted customer invoices.** Odoo does not record whether an invoice was a credit or a cash sale, so "credit sales" = all invoiced sales. This cannot be established from the data. |
+| Credit notes | Posted credit notes **reduce** net credit sales (`out_refund` is negative in `amount_total_signed`). |
+| Customer credit (unapplied payments / credit notes) | **Not netted** into receivables: the numerator is the gross open receivable (`open_items` owed side). |
+| Receivables | Open lines on receivable accounts at the **start** (day before the period) and the **end** (the period end, capped at today); **two-point average**, not a daily average. Includes manual journal items on receivable accounts. |
+| Period | Inclusive days `(to - from) + 1`; invoices dated inside the period. |
+| Currency | Company currency as booked (`*_signed` columns); no revaluation. |
+| No / negative sales | **Undefined** (`—` with a reason), never zero. |
+| Verified by | `test_dso_*` (3 worked examples, hand-calculated) and the browser (EN / AR, desktop / 375 px): 20,800 / 58,700 x 309 = 109.5 days. |
+
+**Limitation, stated rather than hidden:** because credit sales cannot be separated from cash sales and the average has two points, DSO
+is a **documented, reproducible management indicator, not an independently audited figure**. No accounting record was changed to produce it.
+
+## 8. Browser acceptance (headless Playwright, `e2e/dashboards/`)
+
+41 of 41 checks pass on the final tree (disposable fixture, Edge headless): Sales and Invoicing in EN / AR at 1280 px and 375 px with
+values reconciled to the fixture, drill-downs, KPI tooltips, custom date windows, empty AED company, EUR company, two companies
+ticked, PDF and Excel downloads opened and inspected, Share and Export on the native dashboards, the native sample banner, English invoice
+filters (Overpaid 1 / Taxable 2 / Non-taxable 4 = server counts) and Balance Due sorting, product image (128 px variant), chatter collapse /
+expand / draft / persistence, Document Layout saved by the Tenant Owner, Arabic Duplicate (contact, product, payment term). All 11
+dashboard pages render in EN / AR x desktop / mobile with no horizontal overflow and no page errors.
