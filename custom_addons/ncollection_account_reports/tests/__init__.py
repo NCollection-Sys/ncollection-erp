@@ -27,3 +27,4 @@ from . import test_hub_roles
 from . import test_exclude_zero
 from . import test_summary_period
 from . import test_stamp_scope
+from . import test_premium_dashboards

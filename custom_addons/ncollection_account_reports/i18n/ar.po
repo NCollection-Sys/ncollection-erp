@@ -3099,3 +3099,590 @@ msgstr "الاسم المعروض"
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_open_items__id
 msgid "ID"
 msgstr "المعرّف"
+
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "The Sales dashboard is available to the Sales role, the Accountant, the CEO and the workspace owner."
+msgstr "لوحة المبيعات متاحة لدور المبيعات والمحاسب والرئيس التنفيذي ومالك مساحة العمل."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "The dates are not valid."
+msgstr "التواريخ غير صالحة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "The From date cannot be after the To date."
+msgstr "لا يمكن أن يكون تاريخ البداية بعد تاريخ النهاية."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "The period is longer than five years."
+msgstr "الفترة أطول من خمس سنوات."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Figures are for %(company)s only, in %(currency)s. Other companies are not added in, because they may use another currency."
+msgstr "الأرقام لشركة %(company)s فقط، بعملة %(currency)s. لا تُضاف الشركات الأخرى لأنها قد تستخدم عملة مختلفة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "The Sales app is not installed for this company."
+msgstr "تطبيق المبيعات غير مثبّت لهذه الشركة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "You do not have access to the sales records."
+msgstr "ليست لديك صلاحية الوصول إلى سجلات المبيعات."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Open quotations"
+msgstr "عروض الأسعار المفتوحة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Draft and sent quotations created in the period. Not yet orders."
+msgstr "عروض الأسعار المسودة والمرسلة المنشأة في الفترة. لم تصبح طلبات بعد."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Quotations"
+msgstr "عروض الأسعار"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Confirmed orders"
+msgstr "الطلبات المؤكدة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Sale orders confirmed in the period (state Sales Order)."
+msgstr "أوامر البيع المؤكدة في الفترة (حالة أمر بيع)."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Order value"
+msgstr "قيمة الطلبات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Untaxed total of the confirmed orders, in the company currency. This is sales intent, not accounting revenue."
+msgstr "إجمالي الطلبات المؤكدة دون الضريبة بعملة الشركة. هذه نية بيع وليست إيراداً محاسبياً."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Average order value"
+msgstr "متوسط قيمة الطلب"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Order value divided by the number of confirmed orders."
+msgstr "قيمة الطلبات مقسومة على عدد الطلبات المؤكدة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "No confirmed orders in the period."
+msgstr "لا طلبات مؤكدة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Quotation conversion"
+msgstr "نسبة تحويل عروض الأسعار"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Confirmed orders divided by (confirmed orders + open quotations) created in the period. Undefined when there are none."
+msgstr "الطلبات المؤكدة مقسومة على (الطلبات المؤكدة + عروض الأسعار المفتوحة) المنشأة في الفترة. غير معرّفة عند عدم وجودها."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Not defined: no orders or quotations in the period."
+msgstr "غير معرّف: لا طلبات ولا عروض أسعار في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Order value growth"
+msgstr "نمو قيمة الطلبات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Order value compared with the previous period of the same length."
+msgstr "قيمة الطلبات مقارنة بالفترة السابقة ذات الطول نفسه."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Not defined: no order value in the previous period."
+msgstr "غير معرّف: لا قيمة طلبات في الفترة السابقة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Invoiced sales"
+msgstr "المبيعات المفوترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Posted customer invoices, untaxed, in the period."
+msgstr "فواتير العملاء المرحّلة دون الضريبة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Customer invoices"
+msgstr "فواتير العملاء"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Credit notes"
+msgstr "الإشعارات الدائنة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Posted customer credit notes, untaxed, in the period."
+msgstr "إشعارات العملاء الدائنة المرحّلة دون الضريبة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Net sales"
+msgstr "صافي المبيعات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Invoiced sales minus credit notes (billing basis). Recognised accounting revenue is on the Accountant dashboard."
+msgstr "المبيعات المفوترة ناقص الإشعارات الدائنة (أساس الفوترة). الإيراد المحاسبي المعترف به في لوحة المحاسب."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Order value and net sales, last 6 months"
+msgstr "قيمة الطلبات وصافي المبيعات، آخر 6 أشهر"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Unknown"
+msgstr "غير معروف"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Unassigned"
+msgstr "غير مُسند"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Top customers (order value)"
+msgstr "أفضل العملاء (قيمة الطلبات)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Top products (order value)"
+msgstr "أفضل المنتجات (قيمة الطلبات)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Salesperson ranking (order value)"
+msgstr "ترتيب مندوبي المبيعات (قيمة الطلبات)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Recent confirmed orders"
+msgstr "أحدث الطلبات المؤكدة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Recent open quotations"
+msgstr "أحدث عروض الأسعار المفتوحة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "No records in this period."
+msgstr "لا سجلات في هذه الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "No confirmed orders in this period."
+msgstr "لا طلبات مؤكدة في هذه الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "The Invoicing dashboard is available to the Accountant, the CEO and the workspace owner."
+msgstr "لوحة الفوترة متاحة للمحاسب والرئيس التنفيذي ومالك مساحة العمل."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Invoices issued"
+msgstr "الفواتير الصادرة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Posted customer invoices dated in the period."
+msgstr "فواتير العملاء المرحّلة المؤرخة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Invoiced amount"
+msgstr "المبلغ المفوتر"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Untaxed total of the posted customer invoices in the period."
+msgstr "إجمالي فواتير العملاء المرحّلة دون الضريبة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Untaxed total of the posted customer credit notes (refunds) in the period."
+msgstr "إجمالي إشعارات العملاء الدائنة (المرتجعات) المرحّلة دون الضريبة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Paid amount"
+msgstr "المبلغ المدفوع"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Tax-included amount already collected on the invoices issued in the period (to date)."
+msgstr "المبلغ شاملاً الضريبة المحصَّل حتى الآن على الفواتير الصادرة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Collection rate"
+msgstr "نسبة التحصيل"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Paid amount divided by the tax-included amount of the invoices issued in the period."
+msgstr "المبلغ المدفوع مقسوماً على المبلغ شاملاً الضريبة للفواتير الصادرة في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Not defined: nothing invoiced in the period."
+msgstr "غير معرّف: لا فواتير في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Unpaid invoices"
+msgstr "الفواتير غير المدفوعة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Invoices issued in the period with nothing paid yet."
+msgstr "فواتير صادرة في الفترة لم يُدفع منها شيء بعد."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Partially paid invoices"
+msgstr "الفواتير المدفوعة جزئياً"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Invoices issued in the period that are partly paid."
+msgstr "فواتير صادرة في الفترة مدفوعة جزئياً."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Outstanding receivables"
+msgstr "الذمم المدينة المستحقة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "What customers owe today: open invoices, tax included. Customer credit is NOT netted in (it is shown separately)."
+msgstr "ما يدين به العملاء اليوم: الفواتير المفتوحة شاملة الضريبة. لا يُخصم رصيد العملاء الدائن (يُعرض على حدة)."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Open invoices"
+msgstr "الفواتير المفتوحة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "As of today"
+msgstr "حتى اليوم"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Overdue receivables"
+msgstr "الذمم المتأخرة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Part of the open invoices whose due date has passed, tax included."
+msgstr "جزء الفواتير المفتوحة الذي انقضى تاريخ استحقاقه، شاملاً الضريبة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Overdue invoices"
+msgstr "الفواتير المتأخرة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Customer credit"
+msgstr "رصيد العملاء الدائن"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Unapplied customer payments and credit notes held for customers. Shown apart from the receivables."
+msgstr "دفعات العملاء والإشعارات الدائنة غير المطبّقة المحتفظ بها للعملاء. تُعرض بمعزل عن الذمم المدينة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Average collection period (DSO)"
+msgstr "متوسط فترة تحصيل المستحقات (DSO)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Days Sales Outstanding = average trade receivables ÷ net credit sales × days in the period. Receivables are the open invoices at the start and end of the period (customer credit not netted); net credit sales are the tax-included posted invoices minus credit notes of the period."
+msgstr "أيام المبيعات القائمة = متوسط الذمم التجارية المدينة ÷ صافي المبيعات الآجلة × عدد أيام الفترة. الذمم هي الفواتير المفتوحة في بداية الفترة ونهايتها (دون خصم رصيد العملاء الدائن)، وصافي المبيعات الآجلة هو الفواتير المرحّلة شاملة الضريبة ناقص الإشعارات الدائنة للفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Not defined: no net credit sales in the period."
+msgstr "غير معرّف: لا مبيعات آجلة صافية في الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Net invoiced and payments received, last 6 months"
+msgstr "صافي المفوتر والدفعات المستلمة، آخر 6 أشهر"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Net invoiced"
+msgstr "صافي المفوتر"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Payments received"
+msgstr "الدفعات المستلمة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Overdue invoices (as of today)"
+msgstr "الفواتير المتأخرة (حتى اليوم)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Top customers (net invoiced)"
+msgstr "أفضل العملاء (صافي المفوتر)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Recent invoices and credit notes"
+msgstr "أحدث الفواتير والإشعارات الدائنة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "No overdue invoices."
+msgstr "لا فواتير متأخرة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "No invoices in this period."
+msgstr "لا فواتير في هذه الفترة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Unknown dashboard."
+msgstr "لوحة غير معروفة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Sales Analysis"
+msgstr "تحليل المبيعات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_dashboards.py:0
+msgid "Invoicing Analysis"
+msgstr "تحليل الفوترة"
+
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Period"
+msgstr "الفترة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Basis"
+msgstr "الأساس"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Calculated by the server from the company's records; not a client snapshot."
+msgstr "محسوبة على الخادم من سجلات الشركة، وليست لقطة من المتصفح."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Indicator"
+msgstr "المؤشر"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Value"
+msgstr "القيمة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Previous period"
+msgstr "الفترة السابقة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Unit"
+msgstr "الوحدة"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Definition"
+msgstr "التعريف"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "n/a"
+msgstr "غير متاح"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "days"
+msgstr "أيام"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Calculated by the server from the company's records."
+msgstr "محسوبة على الخادم من سجلات الشركة."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Key figures"
+msgstr "الأرقام الرئيسية"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Sales Analysis"
+msgstr "تحليل المبيعات"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/premium_export.py:0
+msgid "Invoicing Analysis"
+msgstr "تحليل الفوترة"
+
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_premium_dashboard__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_premium_dashboard__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_premium_dashboard_export__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_premium_dashboard_export__id
+msgid "ID"
+msgstr "المعرّف"

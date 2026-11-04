@@ -1,0 +1,104 @@
+// NCollection premium dashboards: restrained enterprise palette, logical (RTL-safe) properties, no global overrides.
+.o_nc_prem {
+    --nc-ink: #1f2933;
+    --nc-muted: #667085;
+    --nc-line: #e4e7ec;
+    --nc-card: #ffffff;
+    --nc-bg: #f6f8fb;
+    --nc-accent: #1f5fa8;
+    --nc-good: #13795b;
+    --nc-bad: #b42318;
+    --nc-warn: #b54708;
+    padding: 20px 28px 40px;
+    background: var(--nc-bg);
+    color: var(--nc-ink);
+    min-height: 100%;
+    overflow: auto;
+
+    .o_nc_prem_head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-block-end: 16px;
+    }
+    .o_nc_prem_title { font-size: 1.5rem; font-weight: 650; margin: 0 0 8px; letter-spacing: -0.01em; }
+    .o_nc_prem_chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .o_nc_chip {
+        display: inline-flex; gap: 6px; align-items: center; padding: 3px 10px; font-size: 0.8125rem;
+        background: var(--nc-card); border: 1px solid var(--nc-line); border-radius: 999px; color: var(--nc-muted);
+    }
+    .o_nc_prem_tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .o_nc_seg { display: inline-flex; border: 1px solid var(--nc-line); border-radius: 8px; overflow: hidden; background: var(--nc-card); }
+    .o_nc_seg_btn {
+        border: 0; background: transparent; padding: 6px 12px; font-size: 0.8125rem; color: var(--nc-muted); cursor: pointer;
+        &.active { background: var(--nc-accent); color: #fff; }
+    }
+    .o_nc_range { display: inline-flex; gap: 6px; align-items: center; input { font-size: 0.8125rem; border: 1px solid var(--nc-line); border-radius: 6px; padding: 3px 6px; background: var(--nc-card); } }
+    .o_nc_export { display: inline-flex; gap: 6px; }
+    .o_nc_prem_loading { padding: 40px; text-align: center; color: var(--nc-muted); }
+
+    .o_nc_note {
+        padding: 10px 14px; margin-block-end: 14px; border-radius: 8px; font-size: 0.875rem;
+        background: #eef4ff; border: 1px solid #c7d7f5; color: #1d3c72;
+        &.o_nc_note_bad { background: #fef3f2; border-color: #fecdca; color: var(--nc-bad); }
+    }
+    .o_nc_empty {
+        display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 16px; margin-block-end: 16px;
+        border: 1px dashed #b8c2d1; border-radius: 10px; background: var(--nc-card); color: var(--nc-muted);
+        i { font-size: 1.4rem; }
+    }
+
+    .o_nc_kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-block-end: 18px; }
+    .o_nc_kpi {
+        background: var(--nc-card); border: 1px solid var(--nc-line); border-radius: 12px; padding: 14px 16px;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); display: flex; flex-direction: column; gap: 6px;
+        &.is-link .o_nc_kpi_value { cursor: pointer; }
+        &.is-link:hover { border-color: #b8c8e6; }
+    }
+    .o_nc_kpi_top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .o_nc_kpi_label { font-size: 0.8125rem; font-weight: 600; color: var(--nc-muted); }
+    .o_nc_tipbtn { border: 0; background: transparent; color: var(--nc-muted); padding: 0; cursor: help; line-height: 1; }
+    .o_nc_kpi_value { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .o_nc_num { font-size: 1.55rem; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; unicode-bidi: plaintext; }
+    .o_nc_unit { font-size: 0.875rem; color: var(--nc-muted); }
+    .o_nc_kpi_foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.78rem; min-height: 1.2em; }
+    .o_nc_muted { color: var(--nc-muted); font-size: 0.78rem; }
+    .o_nc_delta {
+        font-weight: 600; padding: 1px 6px; border-radius: 6px;
+        &.tone-good { color: var(--nc-good); background: #e7f6f0; }
+        &.tone-bad { color: var(--nc-bad); background: #fdecea; }
+        &.tone-neutral { color: var(--nc-muted); background: #f2f4f7; }
+    }
+    .o_nc_tip { margin: 4px 0 0; padding: 8px 10px; font-size: 0.78rem; background: #f2f4f7; border-radius: 8px; color: var(--nc-ink); }
+
+    .o_nc_charts, .o_nc_tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-block-end: 14px; }
+    .o_nc_card {
+        background: var(--nc-card); border: 1px solid var(--nc-line); border-radius: 12px; padding: 14px 16px;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); min-width: 0;
+        h2 { font-size: 0.95rem; font-weight: 650; margin: 0 0 10px; }
+    }
+    .o_nc_chart { position: relative; height: 260px; }
+    .o_nc_tbl_empty { margin: 8px 0 0; }
+    .o_nc_rank { list-style: none; margin: 0; padding: 0; li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 7px 0; border-block-end: 1px solid #f0f2f5; } }
+    .o_nc_rank_name { overflow-wrap: anywhere; }
+    .o_nc_rank_value { font-variant-numeric: tabular-nums; font-weight: 600; unicode-bidi: plaintext; }
+    .o_nc_bar { grid-column: 1 / -1; height: 4px; background: #eef1f6; border-radius: 4px; overflow: hidden; span { display: block; height: 100%; background: var(--nc-accent); border-radius: 4px; } }
+    .o_nc_scroll { overflow-x: auto; }
+    .o_nc_tbl { width: 100%; border-collapse: collapse; font-size: 0.8125rem;
+        td { padding: 7px 6px; border-block-end: 1px solid #f0f2f5; vertical-align: top; }
+        tr.is-link { cursor: pointer; &:hover { background: #f8fafc; } }
+    }
+    .o_nc_doc { display: flex; flex-direction: column; min-width: 130px; }
+    .o_nc_amt { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; unicode-bidi: plaintext; }
+    .o_nc_badge {
+        display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: #f2f4f7; color: var(--nc-muted);
+        &.st-overdue, &.st-not_paid { background: #fdecea; color: var(--nc-bad); }
+        &.st-partial { background: #fff4e5; color: var(--nc-warn); }
+        &.st-paid, &.st-in_payment, &.st-sale { background: #e7f6f0; color: var(--nc-good); }
+    }
+}
+@media (max-width: 575px) {
+    .o_nc_prem { padding: 14px 12px 32px; .o_nc_charts, .o_nc_tables { grid-template-columns: 1fr; } .o_nc_kpis { grid-template-columns: 1fr 1fr; } .o_nc_num { font-size: 1.2rem; } .o_nc_chart { height: 220px; } }
+}

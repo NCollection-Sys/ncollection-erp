@@ -10,7 +10,7 @@
     # (ARCHITECTURE_DATA_PLATFORM.md §7 — Phase 2), so for already-provisioned
     # tenants that is currently a manual ops step. The version bump exists so
     # that orchestrator, when it lands, has a signal to detect.
-    'version': '19.0.1.4.0',
+    'version': '19.0.1.5.0',
     'category': 'Accounting/Dashboard',
     'summary': 'Finance, Accountant and Cash financial dashboards '
                '(presentation only — consumes the executive report services)',
@@ -49,6 +49,9 @@
             # already bundled by ncollection_branding, so they import directly.
             'web/static/lib/Chart/Chart.js',
             'ncollection_account_dashboard/static/src/dashboard/dashboard.scss',
+            'ncollection_account_dashboard/static/src/premium/premium_dashboard.scss',
+            'ncollection_account_dashboard/static/src/premium/premium_dashboard.js',
+            'ncollection_account_dashboard/static/src/premium/premium_dashboard.xml',
             'ncollection_account_dashboard/static/src/dashboard/dashboard_base.js',
             'ncollection_account_dashboard/static/src/dashboard/dashboard_base.xml',
             'ncollection_account_dashboard/static/src/dashboard/finance_dashboard.js',

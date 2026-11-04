@@ -404,3 +404,204 @@ msgstr "رصيد العملاء الدائن"
 #: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
 msgid "Vendor Prepayments"
 msgstr "دفعات مقدمة للموردين"
+
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "The dashboard could not be loaded."
+msgstr "تعذّر تحميل لوحة البيانات."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "This month"
+msgstr "هذا الشهر"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Last month"
+msgstr "الشهر الماضي"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "This quarter"
+msgstr "هذا الربع"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "This year"
+msgstr "هذه السنة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "days"
+msgstr "أيام"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "favourable"
+msgstr "إيجابي"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "unfavourable"
+msgstr "سلبي"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Overdue"
+msgstr "متأخرة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Unpaid"
+msgstr "غير مدفوعة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Partial"
+msgstr "جزئية"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Paid"
+msgstr "مدفوعة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "In payment"
+msgstr "قيد الدفع"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Reversed"
+msgstr "معكوسة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Quotation"
+msgstr "عرض سعر"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Order"
+msgstr "طلب"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Apply"
+msgstr "تطبيق"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Loading…"
+msgstr "جارٍ التحميل…"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Period"
+msgstr "الفترة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "From"
+msgstr "من"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "To"
+msgstr "إلى"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Excel"
+msgstr "Excel"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "PDF"
+msgstr "PDF"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "vs previous period"
+msgstr "مقارنة بالفترة السابقة"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "No records in this period."
+msgstr "لا سجلات في هذه الفترة."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Figures below are zero or not defined; none are estimated."
+msgstr "الأرقام أدناه صفر أو غير معرّفة؛ ولا شيء منها مقدَّر."
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Nothing has been recorded for %(company)s between these dates. %(rest)s"
+msgstr "لم يُسجَّل أي شيء لشركة %(company)s بين هذين التاريخين. %(rest)s"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Sales Analysis"
+msgstr "تحليل المبيعات"
+
+#. module: ncollection_account_dashboard
+#. odoo-javascript
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+msgid "Invoicing Analysis"
+msgstr "تحليل الفوترة"
+
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_premium
+msgid "Sales Analysis"
+msgstr "تحليل المبيعات"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_premium_dept
+msgid "Sales Analysis"
+msgstr "تحليل المبيعات"
+
+#. module: ncollection_account_dashboard
+#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_invoicing_premium
+msgid "Invoicing Analysis"
+msgstr "تحليل الفوترة"
+
+#. module: ncollection_account_dashboard
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_sales_premium
+msgid "Sales Analysis"
+msgstr "تحليل المبيعات"
+
+#. module: ncollection_account_dashboard
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_invoicing_premium
+msgid "Invoicing Analysis"
+msgstr "تحليل الفوترة"

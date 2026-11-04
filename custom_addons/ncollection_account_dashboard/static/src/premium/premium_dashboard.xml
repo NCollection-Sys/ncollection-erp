@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ncollection_account_dashboard.PremiumDashboard">
+        <div class="o_nc_prem" t-ref="root">
+            <header class="o_nc_prem_head">
+                <div>
+                    <h1 class="o_nc_prem_title" t-out="title"/>
+                    <div class="o_nc_prem_chips" t-if="state.payload">
+                        <span class="o_nc_chip"><i class="fa fa-building-o"/> <t t-out="state.payload.meta.company"/></span>
+                        <span class="o_nc_chip"><i class="fa fa-money"/> <t t-out="state.payload.meta.currency.name"/>
+                            (<t t-out="state.payload.meta.currency.symbol"/>)</span>
+                        <span class="o_nc_chip"><i class="fa fa-calendar"/>
+                            <t t-out="state.payload.meta.period.from"/> → <t t-out="state.payload.meta.period.to"/></span>
+                    </div>
+                </div>
+                <div class="o_nc_prem_tools">
+                    <div class="o_nc_seg" role="group" t-att-aria-label="words.period">
+                        <t t-foreach="presets" t-as="p" t-key="p.key">
+                            <button type="button" t-att-class="'o_nc_seg_btn' + (state.preset === p.key ? ' active' : '')"
+                                    t-on-click="() => this.selectPreset(p.key)" t-out="p.label"/>
+                        </t>
+                    </div>
+                    <div class="o_nc_range">
+                        <input type="date" t-model="state.from" t-att-aria-label="words.from"/>
+                        <span>→</span>
+                        <input type="date" t-model="state.to" t-att-aria-label="words.to"/>
+                        <button type="button" class="btn btn-secondary btn-sm" t-on-click="applyCustom" t-out="words.apply"/>
+                    </div>
+                    <span t-if="state.payload and state.payload.available" class="o_nc_export">
+                        <a class="btn btn-light btn-sm" t-att-href="exportUrl('xlsx')"><i class="fa fa-file-excel-o"/> <t t-out="words.excel"/></a>
+                        <a class="btn btn-light btn-sm" t-att-href="exportUrl('pdf')"><i class="fa fa-file-pdf-o"/> <t t-out="words.pdf"/></a>
+                    </span>
+                </div>
+            </header>
+
+            <div t-if="state.loading" class="o_nc_prem_loading" role="status" t-out="words.loading"/>
+            <div t-elif="state.error" class="o_nc_note o_nc_note_bad" role="alert" t-out="state.error"/>
+            <t t-elif="state.payload">
+                <div t-if="state.payload.meta.other_companies.length" class="o_nc_note" role="note">
+                    <i class="fa fa-info-circle"/> <t t-out="state.payload.meta.scope_note"/>
+                </div>
+                <div t-if="!state.payload.available" class="o_nc_note o_nc_note_bad" role="alert"
+                     t-out="state.payload.reason"/>
+                <t t-else="">
+                    <div t-if="state.payload.empty" class="o_nc_empty">
+                        <i class="fa fa-inbox"/>
+                        <strong t-out="words.emptyTitle"/>
+                        <span t-out="emptyBody()"/>
+                    </div>
+
+                    <section class="o_nc_kpis">
+                        <t t-foreach="state.payload.kpis" t-as="k" t-key="k.key">
+                            <article t-attf-class="o_nc_kpi #{k.drill ? 'is-link' : ''}">
+                                <div class="o_nc_kpi_top">
+                                    <span class="o_nc_kpi_label" t-out="k.label"/>
+                                    <button type="button" class="o_nc_tipbtn" t-att-title="k.tip" t-att-aria-label="k.tip"
+                                            t-att-aria-expanded="state.tip === k.key ? 'true' : 'false'"
+                                            t-on-click="() => this.toggleTip(k.key)"><i class="fa fa-info-circle"/></button>
+                                </div>
+                                <div class="o_nc_kpi_value" t-on-click="() => this.drill(k)">
+                                    <span class="o_nc_num" t-out="kpiValue(k)"/>
+                                    <span t-if="kpiUnit(k)" class="o_nc_unit" t-out="kpiUnit(k)"/>
+                                </div>
+                                <t t-set="d" t-value="delta(k)"/>
+                                <div class="o_nc_kpi_foot">
+                                    <span t-if="d" t-attf-class="o_nc_delta tone-#{d.tone}">
+                                        <span aria-hidden="true" t-out="d.arrow"/> <t t-out="d.text"/>
+                                        <t t-if="deltaWord(d)"> · <t t-out="deltaWord(d)"/></t>
+                                    </span>
+                                    <span t-if="d" class="o_nc_muted" t-out="words.vsPrevious"/>
+                                    <span t-if="k.note and !d" class="o_nc_muted" t-out="k.note"/>
+                                </div>
+                                <p t-if="state.tip === k.key" class="o_nc_tip" t-out="k.tip"/>
+                            </article>
+                        </t>
+                    </section>
+
+                    <section class="o_nc_charts">
+                        <t t-foreach="state.payload.charts" t-as="c" t-key="c.key">
+                            <div class="o_nc_card">
+                                <h2 t-out="c.label"/>
+                                <div class="o_nc_chart"><canvas t-att-data-chart-key="c.key"/></div>
+                            </div>
+                        </t>
+                    </section>
+
+                    <section class="o_nc_tables">
+                        <t t-foreach="state.payload.tables" t-as="t" t-key="t.key">
+                            <div class="o_nc_card">
+                                <h2 t-out="t.label"/>
+                                <p t-if="!t.rows.length" class="o_nc_muted o_nc_tbl_empty" t-out="t.empty"/>
+                                <ul t-elif="t.kind === 'ranking'" class="o_nc_rank">
+                                    <li t-foreach="t.rows" t-as="r" t-key="r_index">
+                                        <span class="o_nc_rank_name" t-out="r.label"/>
+                                        <span class="o_nc_rank_value" t-out="money(r.value)"/>
+                                        <span class="o_nc_bar"><span t-att-style="'width:' + barWidth(t, r)"/></span>
+                                    </li>
+                                </ul>
+                                <div t-else="" class="o_nc_scroll">
+                                    <table class="o_nc_tbl">
+                                        <tbody>
+                                            <tr t-foreach="t.rows" t-as="r" t-key="r.id" class="is-link"
+                                                t-on-click="() => this.openRow(t, r)">
+                                                <td class="o_nc_doc">
+                                                    <strong t-out="r.name"/>
+                                                    <span class="o_nc_muted" t-out="r.partner"/>
+                                                </td>
+                                                <td class="o_nc_muted"><t t-out="r.date"/>
+                                                    <t t-if="r.days !== undefined"><br/><t t-out="r.days"/> d</t></td>
+                                                <td class="o_nc_amt" t-out="money(r.value)"/>
+                                                <td><span t-if="stateLabel(r.state)" t-attf-class="o_nc_badge st-#{r.state}"
+                                                          t-out="stateLabel(r.state)"/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+                    </section>
+                </t>
+            </t>
+        </div>
+    </t>
+</templates>

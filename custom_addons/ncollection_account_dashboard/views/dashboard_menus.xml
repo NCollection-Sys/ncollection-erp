@@ -45,6 +45,21 @@
               action="action_accountant_dashboard"
               sequence="20"/>
 
+    <!-- Sales / Invoicing analysis. The RPC mirrors these groups (SALES_GROUPS / FINANCIAL_GATE_GROUPS). -->
+    <menuitem id="menu_sales_premium"
+              name="Sales Analysis"
+              parent="menu_account_dashboard_root"
+              action="action_sales_premium"
+              groups="ncollection_core.group_role_ceo,ncollection_core.group_role_owner,ncollection_core.group_role_accountant"
+              sequence="6"/>
+
+    <menuitem id="menu_invoicing_premium"
+              name="Invoicing Analysis"
+              parent="menu_account_dashboard_root"
+              action="action_invoicing_premium"
+              groups="ncollection_core.group_role_ceo,ncollection_core.group_role_owner,ncollection_core.group_role_accountant"
+              sequence="7"/>
+
     <menuitem id="menu_cash_dashboard"
               name="Cash"
               parent="menu_account_dashboard_root"
@@ -119,6 +134,14 @@
               groups="ncollection_core.group_role_sales"
               action="action_sales_dashboard"
               sequence="10"/>
+
+    <!-- The same Sales Analysis for the Sales role, which does not see the financial menu above. -->
+    <menuitem id="menu_sales_premium_dept"
+              name="Sales Analysis"
+              parent="menu_department_dashboard_root"
+              groups="ncollection_core.group_role_sales"
+              action="action_sales_premium"
+              sequence="11"/>
 
     <menuitem id="menu_hr_dashboard"
               name="HR"

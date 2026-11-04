@@ -21,6 +21,17 @@
         <field name="tag">ncollection_account_dashboard.ceo</field>
     </record>
 
+    <!-- NCollection Sales / Invoicing analysis: real records of the active company, one currency. Distinct from Odoo's
+         own Spreadsheet Dashboards (`/atlas/dashboards`), which stay as they are. -->
+    <record id="action_sales_premium" model="ir.actions.client">
+        <field name="name">Sales Analysis</field>
+        <field name="tag">ncollection_account_dashboard.sales_premium</field>
+    </record>
+    <record id="action_invoicing_premium" model="ir.actions.client">
+        <field name="name">Invoicing Analysis</field>
+        <field name="tag">ncollection_account_dashboard.invoicing_premium</field>
+    </record>
+
     <!-- Department dashboards (#57 / P4-T04) — non-financial. -->
     <record id="action_sales_dashboard" model="ir.actions.client">
         <field name="name">Sales Dashboard</field>
