@@ -43,3 +43,4 @@ from . import screen_title
 from . import res_partner_website
 from . import res_company_delegation
 from . import res_partner_duplicate
+from . import base_document_layout

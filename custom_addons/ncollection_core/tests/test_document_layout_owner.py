@@ -63,3 +63,22 @@ class TestOwnerConfiguresTheDocumentLayout(TransactionCase):
         with self.assertRaises(AccessError):
             self.env['ir.ui.view'].with_user(self.owner).create({
                 'name': 'x', 'type': 'qweb', 'key': 'dl.x', 'arch': '<t t-name="dl.x"/>'})
+
+    def test_the_preview_is_computed_for_the_owner_from_scratch(self):
+        wizard = self._wizard()
+        self.env.registry.clear_cache('templates')      # the compiled template is not already in the cache
+        wizard.invalidate_recordset(['preview'])
+        self.assertTrue(wizard.preview, "computed again, as the Owner, not read from the cache")
+
+    def test_the_preview_of_another_companys_layout_is_refused(self):
+        wizard = self._wizard()
+        wizard.sudo().company_id = self.other
+        wizard.invalidate_recordset(['preview'])
+        with self.assertRaises(AccessError):
+            wizard.preview
+
+    def test_the_elevation_is_only_for_the_workspace_administrator(self):
+        wizard = self._wizard()
+        wizard.invalidate_recordset(['preview'])
+        self.assertTrue(wizard.sudo(False).with_user(self.owner).preview)
+        self.assertFalse(self.owner.has_group('base.group_system'), "the Owner is still not a system administrator")

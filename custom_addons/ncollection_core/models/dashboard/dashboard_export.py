@@ -229,6 +229,8 @@ class DashboardExport(models.AbstractModel):
                              'style="width:%d%%"></span></td></tr>' % (
                                  E(str(label)), E(self._format_value(w.get('format'), value)),
                                  int(abs(value or 0) / peak * 100)))
+            if not data:
+                parts.append('<tr><td colspan="3" class="sub">%s</td></tr>' % E(env_('No data in this period')))
             parts.append('</table>')
         for w in (w for w in widgets if w.get('type') == 'statement'):
             parts.append('<h2>%s <span class="sub">%s</span></h2><table>' % (

@@ -8,6 +8,7 @@ from odoo import models
 
 
 class ProductTemplate(models.Model):
+    _name = 'product.template'
     _inherit = ['product.template', 'nc.duplicate.mixin']
 
     def _nc_duplicate_defaults(self):
@@ -17,4 +18,5 @@ class ProductTemplate(models.Model):
 
 
 class AccountPaymentTerm(models.Model):
+    _name = 'account.payment.term'
     _inherit = ['account.payment.term', 'nc.duplicate.mixin']

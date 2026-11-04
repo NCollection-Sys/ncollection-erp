@@ -7,6 +7,7 @@ from odoo import models
 
 
 class ResPartner(models.Model):
+    _name = 'res.partner'
     _inherit = ['res.partner', 'nc.duplicate.mixin']
 
     def _nc_duplicate_defaults(self):

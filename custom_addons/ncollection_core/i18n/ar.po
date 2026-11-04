@@ -250,10 +250,12 @@ msgid "Colours use 6-digit hex (for example #1F5F8F). Changes apply\n           
 msgstr "تستخدم الألوان رمزًا سداسيًا من 6 خانات (مثل #1F5F8F). تُطبَّق التغييرات عند إعادة تحميل الصفحة التالية. اترك اللون فارغًا لاستخدام الافتراضي من NCollection."
 
 #. module: ncollection_core
+#. odoo-python
 #: model:ir.actions.server,name:ncollection_core.action_workspace_company
 #: model:ir.ui.menu,name:ncollection_core.menu_workspace_company
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_workspace_overview__company_id
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__company_id
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
 msgid "Company"
 msgstr "الشركة"
 
@@ -327,7 +329,9 @@ msgid "Critical"
 msgstr "حرج"
 
 #. module: ncollection_core
+#. odoo-python
 #: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_kpi__unit__currency
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
 msgid "Currency"
 msgstr "العملة"
 
@@ -639,7 +643,9 @@ msgstr "المفتاح"
 
 #. module: ncollection_core
 #. odoo-javascript
+#. odoo-python
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
 msgid "Key figures"
 msgstr "الأرقام الرئيسية"
 
@@ -1262,9 +1268,11 @@ msgstr "الإجراء المقترح"
 
 #. module: ncollection_core
 #. odoo-javascript
+#. odoo-python
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
 #: model:ir.actions.client,name:ncollection_core.action_ncollection_dashboard
 #: model:ir.ui.menu,name:ncollection_core.menu_ncollection_dashboard_root
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
 msgid "Summary"
 msgstr "الملخّص"
 
@@ -1674,13 +1682,17 @@ msgstr "جارٍ تحميل الملخّص…"
 
 #. module: ncollection_core
 #. odoo-javascript
+#. odoo-python
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
 msgid "From"
 msgstr "من"
 
 #. module: ncollection_core
 #. odoo-javascript
+#. odoo-python
 #: code:addons/ncollection_core/static/src/dashboard/dashboard.xml:0
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
 msgid "To"
 msgstr "إلى"
 
@@ -3078,3 +3090,25 @@ msgstr "رصيد العملاء الدائن"
 msgid "Advances and overpayments not yet applied"
 msgstr "دفعات مقدمة وزيادات في السداد لم تُطبَّق بعد"
 
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/dashboard/dashboard_export.py:0
+msgid "No data in this period"
+msgstr "لا توجد بيانات في هذه الفترة"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/chatter_collapse/chatter_collapse.js:0
+msgid "Show the history panel"
+msgstr "إظهار لوحة السجل"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/chatter_collapse/chatter_collapse.js:0
+msgid "Collapse the history panel"
+msgstr "طيّ لوحة السجل"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_partner_form_nc_duplicate
+msgid "Duplicate"
+msgstr "نسخة مماثلة"

@@ -880,3 +880,54 @@ msgstr "الضرائب"
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_invoice_amount_total_words
 msgid "Total Amount in Words"
 msgstr "المبلغ الإجمالي كتابةً"
+
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.product_template_form_nc_duplicate
+msgid "Duplicate"
+msgstr "نسخة مماثلة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_payment_term_form_nc_duplicate
+msgid "Duplicate"
+msgstr "نسخة مماثلة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
+msgid "Overpaid"
+msgstr "مدفوع بالزيادة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
+msgid "Taxable"
+msgstr "خاضع للضريبة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
+msgid "Non-taxable"
+msgstr "غير خاضع للضريبة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_search_nc_overpaid
+msgid "Overpaid"
+msgstr "مدفوع بالزيادة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_overpaid_amount
+msgid "Overpaid Amount"
+msgstr "مبلغ الزيادة المدفوعة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_is_taxable
+msgid "Taxable"
+msgstr "خاضع للضريبة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_is_overpaid
+msgid "Overpaid"
+msgstr "مدفوع بالزيادة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_registered_move_ids
+msgid "Recorded Against"
+msgstr "سُجّلت مقابل"
