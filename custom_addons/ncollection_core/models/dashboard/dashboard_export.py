@@ -194,13 +194,15 @@ class DashboardExport(models.AbstractModel):
         parts = [
             '<!DOCTYPE html><html dir="%s" lang="%s"><head><meta charset="utf-8"/><style>' % (
                 direction, E(self.env.lang or 'en_US')),
-            'body{font-family:"Noto Sans Arabic","Noto Sans","DejaVu Sans",Arial,sans-serif;font-size:12px;color:#1f2933;'
+            'body{font-family:"Noto Sans Arabic","Noto Sans","DejaVu Sans",Arial,sans-serif;font-size:12px;'
+            'color:#1f2933;'
             'direction:%s;margin:0}' % direction,
             'h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;margin:18px 0 6px;border-bottom:1px solid #cbd2d9;'
             'padding-bottom:3px}',
             '.ctx{color:#52606d;margin-bottom:10px}table{width:100%%;border-collapse:collapse;page-break-inside:auto}'
             'tr{page-break-inside:avoid}th,td{border:1px solid #d9e2ec;padding:4px 6px;text-align:%s}'
-            'th{background:#eef2f7}td.n{text-align:%s;white-space:nowrap}.sub{color:#7b8794;font-size:10px}' % (align, other),
+            'th{background:#eef2f7}td.n{text-align:%s;white-space:nowrap}'
+            '.sub{color:#7b8794;font-size:10px}' % (align, other),
             '.bar{background:#3b82f6;height:8px;display:inline-block}.neg{color:#b91c1c}',
             '</style></head><body>',
             '<h1>%s</h1>' % E(env_('Summary dashboard')),

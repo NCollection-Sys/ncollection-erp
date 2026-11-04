@@ -82,7 +82,8 @@ class TestWorkspaceDashboardAccuracy(AccountTestInvoicingCommon):
     # ------------------------------------------------------------------------------------------------ B
     def _sale(self, price, currency=None, when=None):
         currency = currency or self.env.company.currency_id
-        pricelist = self.env['product.pricelist'].sudo().create({'name': 'PL %s' % currency.name, 'currency_id': currency.id})
+        pricelist = self.env['product.pricelist'].sudo().create(
+            {'name': 'PL %s' % currency.name, 'currency_id': currency.id})
         order = self.env['sale.order'].sudo().create({
             'partner_id': self.customer.id, 'pricelist_id': pricelist.id,
             'order_line': [Command.create({'product_id': self.product.id, 'product_uom_qty': 1,
@@ -142,7 +143,7 @@ class TestWorkspaceDashboardAccuracy(AccountTestInvoicingCommon):
         mine = [r for r in rows if r['label'] == 'ZZ Ceo Mix Customer']
         self.assertAlmostEqual(mine[0]['value'], 200.0, 2)
         board = service._ranking_panel({
-            'key': 'leaderboard', 'model': 'sale.order', 'domain': [('state', '=', 'sale'), ('user_id', '=', self.owner.id)],
+            'key': 'leaderboard', 'model': 'sale.order',
+            'domain': [('state', '=', 'sale'), ('user_id', '=', self.owner.id)],
             'groupby': ['user_id'], 'aggregates': ['amount_total:sum'], 'order': 'amount_total:sum desc', 'limit': 5})
         self.assertAlmostEqual(board[0]['value'], 200.0, 2)
-

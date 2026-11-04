@@ -2,12 +2,12 @@
 """Configure Document Layout for the Workspace Administrator (Option A).
 
 Odoo's wizard reads layout VIEW records (``ir.ui.view``: the layout's key, its template for the live preview), and
-``ir.ui.view`` is administrator-only, so the Owner's wizard opened and then failed. Only the READS the wizard makes on its
-own are elevated, and only for a workspace administrator who is not a system administrator:
+``ir.ui.view`` is administrator-only, so the Owner's wizard opened and then failed. Only the READS the wizard makes
+on its own are elevated, and only for a workspace administrator who is not a system administrator:
 
 * the wizard must be for one of THEIR companies;
-* when the preview is rendered over a document (``active_model`` / ``active_id``, the invoice preview) the document must
-  be one they can read.
+* when the preview is rendered over a document (``active_model`` / ``active_id``, the invoice preview) the document
+  must be one they can read.
 
 Nothing is written by this path; the save still goes through the company delegation (own company, allowlisted fields,
 an installed layout only), and every other model keeps its own rules."""

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """DASH-02: the dashboard export is the dashboard's own payload, laid out; it adds no calculation and no access."""
 import io
+import secrets
 import zipfile
 
 import openpyxl
@@ -11,7 +12,7 @@ from odoo.tests import HttpCase, TransactionCase, tagged
 
 from odoo.addons.ncollection_core.models.dashboard.dashboard_export import safe_text
 
-PASSWORD = 'Export-Test-Passw0rd!'
+PASSWORD = secrets.token_urlsafe(18)
 
 
 def _payload(figures=None, statement=None):
