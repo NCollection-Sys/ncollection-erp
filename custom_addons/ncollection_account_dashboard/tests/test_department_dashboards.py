@@ -90,6 +90,9 @@ class TestDepartmentDashboards(TransactionCase):
             return None
 
         self.patch(Engine, 'aggregate', fake)
+        # valuation is read from the stock quants (Odoo 19 has no valuation layer), not aggregated by the engine
+        self.patch(type(self.env['ncollection.dashboard.data']), 'stock_valuation_ranking',
+                   lambda data, limit=10: [{'id': 1, 'label': 'X', 'value': 3.0}])
         expected = {
             'get_sales_dashboard': {'pipeline': 'currency', 'leaderboard': 'currency'},
             'get_hr_dashboard': {'headcount': 'number', 'leave': 'number'},

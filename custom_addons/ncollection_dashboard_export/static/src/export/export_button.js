@@ -75,7 +75,7 @@ function snapshotFigures(getters) {
                         lines.push(["", runtime.baselineDisplay]);
                     }
                 }
-                if (lines.length) {
+                if (lines.some((line) => line.some((part) => part !== "" && part !== null))) {
                     figures.push({ title, lines });
                 }
             } catch {
@@ -102,7 +102,10 @@ function snapshotFilters(getters) {
         for (const filter of getters.getGlobalFilters()) {
             const shown = getters.getFilterDisplayValue(filter.label);
             const parts = Array.isArray(shown) ? shown.flat() : [shown];
-            out.push(`${filter.label}: ${parts.map((p) => filterPart(filter, p)).filter(Boolean).join(" → ")}`);
+            const text = parts.map((p) => filterPart(filter, p)).filter(Boolean).join(" → ");
+            if (text) {
+                out.push(`${filter.label}: ${text}`);       // a filter nobody set is not context
+            }
         }
     } catch {
         // filters are context only; the figures are what matter

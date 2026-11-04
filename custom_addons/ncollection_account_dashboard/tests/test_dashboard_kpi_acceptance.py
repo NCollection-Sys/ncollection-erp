@@ -13,6 +13,7 @@ from datetime import timedelta
 
 from odoo import Command, fields
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
+from odoo.addons.ncollection_core.models.aggregation import cache as aggregation_cache
 from odoo.tests import tagged
 
 
@@ -28,9 +29,11 @@ class TestDashboardKpiAcceptance(AccountTestInvoicingCommon):
         cls.vendor = cls.env['res.partner'].create({'name': 'KPI Vendor'})
         cls.eur = cls.env.ref('base.EUR')
         cls.eur.active = True
+        # the LATEST rate wins, so ours is dated today: 1 company-currency unit = 2 EUR, whatever else exists
+        cls.env['res.currency.rate'].search([('currency_id', '=', cls.eur.id), ('name', '>=', fields.Date.today()),
+                                             ('company_id', '=', cls.env.company.id)]).unlink()
         cls.env['res.currency.rate'].create({
-            'name': fields.Date.today() - timedelta(days=4000), 'currency_id': cls.eur.id, 'rate': 2.0,
-            'company_id': cls.env.company.id})
+            'name': fields.Date.today(), 'currency_id': cls.eur.id, 'rate': 2.0, 'company_id': cls.env.company.id})
         cls.owner = cls.env['res.users'].create({
             'name': 'KPI Owner', 'login': 'kpi_owner_acc', 'company_id': cls.env.company.id,
             'company_ids': [Command.set(cls.env.company.ids)],
@@ -50,6 +53,10 @@ class TestDashboardKpiAcceptance(AccountTestInvoicingCommon):
         cls.company_data_2 = cls.setup_other_company()
 
     # ----------------------------------------------------------------------------------------------- helpers
+    def setUp(self):
+        super().setUp()
+        aggregation_cache.clear()      # the cache is per process and a rolled-back test must not feed the next one
+
     def _kpis(self, payload):
         return {k['key']: k['value'] for k in payload['kpis']}
 
@@ -289,3 +296,71 @@ class TestDashboardKpiAcceptance(AccountTestInvoicingCommon):
         payload = self.env['ncollection.account.dashboard.service'].with_user(hr_user).get_hr_dashboard()
         row = next(r for r in {p['key']: p for p in payload['panels']}['headcount']['rows'] if r['id'] == dept.id)
         self.assertEqual(row['value'], 3, "three active employees; the archived one has left")
+
+    # ------------------------------------------------------------------------------- the Workspace dashboard, the rest
+    def _ws(self):
+        aggregation_cache.clear()
+        data = self.env['ncollection.dashboard.data'].with_user(self.owner)
+        return {w['key']: w for w in data.get_dashboard_payload()['widgets']}
+
+    def test_ws_cash_is_the_liquidity_ledger_and_a_payment_in_transit_is_not_cash(self):
+        base = self._ws()['cash_bank']['value']
+        self._payment(25.0)
+        self.assertAlmostEqual(self._ws()['cash_bank']['value'] - base, 0.0, 2)
+        bank_journal = self.company_data['default_journal_bank']
+        self.env['account.move'].create({
+            'move_type': 'entry', 'date': self.today, 'journal_id': bank_journal.id,
+            'line_ids': [Command.create({'account_id': bank_journal.default_account_id.id, 'debit': 40.0}),
+                         Command.create({'account_id': self.company_data['default_account_revenue'].id,
+                                         'credit': 40.0})]}).action_post()
+        self.assertAlmostEqual(self._ws()['cash_bank']['value'] - base, 40.0, 2)
+
+    def test_ws_open_quotations_count_draft_and_sent_only(self):
+        base = self._ws()['open_quotations']['value']
+        when = fields.Datetime.now()
+        product = self.env['product.product'].create({'name': 'KPI Quote Item', 'type': 'consu'})
+
+        def quotation():
+            return self.env['sale.order'].sudo().create({
+                'partner_id': self.customer.id,
+                'order_line': [Command.create({'product_id': product.id, 'product_uom_qty': 1, 'price_unit': 10.0})]})
+
+        quotation()                                                              # draft
+        quotation().write({'state': 'sent'})                                     # sent
+        self._sale(10.0, self.env.company.currency_id, when)                     # confirmed: not a quotation
+        quotation()._action_cancel()                                             # cancelled: not a quotation
+        self.assertEqual(self._ws()['open_quotations']['value'] - base, 2)
+
+    def test_ws_pending_deliveries_count_transfers_waiting_to_be_processed(self):
+        base = self._ws()['pending_deliveries']['value']
+        order = self._sale(10.0, self.env.company.currency_id, fields.Datetime.now())
+        pickings = order.sudo().picking_ids
+        self.assertTrue(pickings, "confirming a goods order creates its delivery")
+        self.assertEqual(self._ws()['pending_deliveries']['value'] - base, len(pickings))
+        pickings.action_cancel()
+        self.assertEqual(self._ws()['pending_deliveries']['value'] - base, 0, "a cancelled transfer is not pending")
+
+    def test_ws_stock_on_hand_counts_units_in_internal_locations(self):
+        units = self.env.ref('uom.product_uom_unit')
+        dozen = self.env.ref('uom.product_uom_dozen')
+        supplier = self.env.ref('stock.stock_location_suppliers')
+        customer = self.env.ref('stock.stock_location_customers')
+        base = self._ws()['stock_on_hand']['value']
+        self._move(supplier, self.stock_loc, 24.0, units)
+        self._move(self.stock_loc, customer, 1.0, dozen)
+        self.assertAlmostEqual(self._ws()['stock_on_hand']['value'] - base, 12.0, 2, "24 received - 12 shipped")
+
+    def test_ws_revenue_trend_is_posted_revenue_net_of_credit_notes(self):
+        before = self._ws()['revenue_6m']['data'][-1]
+        self._doc(100.0)
+        self._doc(30.0, 'out_refund')
+        self._doc(999.0, post=False)
+        self.assertAlmostEqual(self._ws()['revenue_6m']['data'][-1] - before, 70.0, 2)
+
+    def test_ws_open_activities_are_the_ones_assigned_to_the_user(self):
+        base = self._ws()['open_activities']['value']
+        mine = self.customer.activity_schedule('mail.mail_activity_data_todo', summary='mine', user_id=self.owner.id)
+        self.customer.activity_schedule('mail.mail_activity_data_todo', summary='not mine', user_id=self.keeper.id)
+        self.assertEqual(self._ws()['open_activities']['value'] - base, 1, "only the activity assigned to this user")
+        mine.action_done()
+        self.assertEqual(self._ws()['open_activities']['value'] - base, 0, "done is not open")

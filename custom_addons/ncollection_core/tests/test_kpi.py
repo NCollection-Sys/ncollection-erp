@@ -178,8 +178,12 @@ class TestAverageDealSize(TransactionCase):
 
     def _order(self, amount, when, state="sale"):
         """A confirmed order of a known total on a known date."""
+        # in the COMPANY currency: the figure is a hand-calculated average of known totals, never a conversion
+        pricelist = self.env["product.pricelist"].create({
+            "name": "KPI probe list", "currency_id": self.env.company.currency_id.id})
         order = self.env["sale.order"].create({
             "partner_id": self.partner.id,
+            "pricelist_id": pricelist.id,
             "date_order": when,
             "order_line": [(0, 0, {
                 "name": "probe",

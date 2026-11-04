@@ -376,6 +376,10 @@ class NCollectionDashboardData(models.AbstractModel):
         """
         if 'stock.quant' not in self.env or 'value' not in self.env['stock.quant']._fields:
             return None
+        # the engine answers None when the model is absent or not licensed for this user (Ring 2): same answer here
+        if self._engine().aggregate({'key': 'dash:stock.quant:probe', 'model': 'stock.quant',
+                                     'domain': [('id', '=', 0)], 'aggregates': ['__count']}) is None:
+            return None
         try:
             quants = self.env['stock.quant'].search_fetch(
                 [('location_id.usage', '=', 'internal'), ('company_id', '=', self.env.company.id)],
@@ -383,7 +387,8 @@ class NCollectionDashboardData(models.AbstractModel):
             totals = {}
             for quant in quants:
                 product = quant.product_id
-                totals[(product.id, product.display_name)] = totals.get((product.id, product.display_name), 0.0)                     + quant.value
+                key = (product.id, product.display_name)
+                totals[key] = totals.get(key, 0.0) + quant.value
         except (AccessError, UserError):
             return None
         rows = sorted(totals.items(), key=lambda item: -item[1])[:limit]
@@ -797,6 +802,9 @@ class NCollectionDashboardData(models.AbstractModel):
         ``_summary_period``); both absent means the current year to today. They are validated here and only ever
         move the window inside what the caller may already read.
         """
+        # The dashboard speaks for the ACTIVE company. With two companies ticked the ledgers would otherwise be added
+        # up as if they shared a currency; switching the company shows the other one, never both at once.
+        self = self.with_context(allowed_company_ids=[self.env.company.id])
         chosen = self._parse_summary_period(date_from, date_to)
         if chosen:
             self = self.with_context(nc_summary_from=chosen[0], nc_summary_to=chosen[1])

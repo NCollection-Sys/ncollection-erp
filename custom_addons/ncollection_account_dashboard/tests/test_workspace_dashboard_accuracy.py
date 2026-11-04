@@ -14,6 +14,7 @@ from freezegun import freeze_time
 
 from odoo import Command, fields
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
+from odoo.addons.ncollection_core.models.aggregation import cache as aggregation_cache
 from odoo.tests import tagged
 
 
@@ -28,6 +29,9 @@ class TestWorkspaceDashboardAccuracy(AccountTestInvoicingCommon):
         cls.vendor = cls.env['res.partner'].create({'name': 'Dash Vendor'})
         cls.eur = cls.env.ref('base.EUR')
         cls.eur.active = True
+        cls.env['res.currency.rate'].search([
+            ('currency_id', '=', cls.eur.id), ('company_id', '=', cls.env.company.id),
+            ('name', '>=', fields.Date.today() - timedelta(days=400))]).unlink()
         cls.env['res.currency.rate'].create({
             'name': fields.Date.today() - timedelta(days=400), 'currency_id': cls.eur.id, 'rate': 2.0,
             'company_id': cls.env.company.id})          # 1 company-currency unit = 2 EUR, for every date since
@@ -39,6 +43,7 @@ class TestWorkspaceDashboardAccuracy(AccountTestInvoicingCommon):
         cls.product = cls.env['product.product'].create({'name': 'Dash Item', 'type': 'consu', 'list_price': 10.0})
 
     def _payload(self, **ctx):
+        aggregation_cache.clear()
         data = self.env['ncollection.dashboard.data'].with_user(self.owner).with_context(**ctx)
         return {w['key']: w for w in data.get_dashboard_payload()['widgets']}
 
@@ -147,3 +152,26 @@ class TestWorkspaceDashboardAccuracy(AccountTestInvoicingCommon):
             'domain': [('state', '=', 'sale'), ('user_id', '=', self.owner.id)],
             'groupby': ['user_id'], 'aggregates': ['amount_total:sum'], 'order': 'amount_total:sum desc', 'limit': 5})
         self.assertAlmostEqual(board[0]['value'], 200.0, 2)
+
+    # ------------------------------------------------------------------------------------------------ D
+    def test_d_the_dashboard_speaks_for_the_active_company_only(self):
+        """A user with two companies ticked sees ONE company's figures, never a sum of two ledgers (each in its own
+        currency): the active company's. Switching company shows the other, still never both added."""
+        other = self.setup_other_company()['company']
+        self.owner.company_ids = [Command.link(other.id)]
+        mine = self.env.company
+        base_here = self._payload(allowed_company_ids=[mine.id, other.id])['receivables']['value']
+        invoice = self.env['account.move'].with_company(other).create({
+            'move_type': 'out_invoice', 'partner_id': self.customer.id, 'invoice_date': fields.Date.today(),
+            'company_id': other.id, 'invoice_payment_term_id': False,
+            'journal_id': self.env['account.journal'].search(
+                [('company_id', '=', other.id), ('type', '=', 'sale')], limit=1).id,
+            'invoice_line_ids': [Command.create({'name': 'other co', 'quantity': 1, 'price_unit': 700.0,
+                                                 'tax_ids': [Command.clear()]})]})
+        invoice.action_post()
+        both = self._payload(allowed_company_ids=[mine.id, other.id])['receivables']['value']
+        self.assertAlmostEqual(both - base_here, 0.0, 2, "the other company's 700 is not added to this company's")
+        there = self.env['ncollection.dashboard.data'].with_user(self.owner).with_company(other).with_context(
+            allowed_company_ids=[other.id, mine.id])
+        values = {w['key']: w for w in there.get_dashboard_payload()['widgets']}
+        self.assertAlmostEqual(values['receivables']['value'], 700.0, 2, "with the other company active: its own")

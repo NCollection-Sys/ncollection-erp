@@ -2,9 +2,9 @@
 """Excel and PDF files of a Spreadsheet Dashboard (the Dashboards page, ``/atlas/dashboards``).
 
 The figures on that page are computed in the browser by the spreadsheet engine from data the user was allowed to read.
-The browser sends back a SNAPSHOT of exactly what it shows - the evaluated cells (a number stays a number, with the text
-as displayed beside it) and the figure values (scorecards, charts) - and the server builds BOTH files from that one
-snapshot, so the Excel and the PDF cannot disagree with each other or with the screen.
+The browser sends back a SNAPSHOT of exactly what it shows - the evaluated cells (a number stays a number, with the
+text as displayed beside it) and the figure values (scorecards, charts) - and the server builds BOTH files from
+that one snapshot, so the Excel and the PDF cannot disagree with each other or with the screen.
 
 The snapshot is untrusted input, so it is validated and bounded, and the files are built here (never a client-supplied
 archive passed through): text is written as text and can never become a formula in a spreadsheet application.

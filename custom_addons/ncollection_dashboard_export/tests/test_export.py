@@ -77,7 +77,8 @@ class TestSpreadsheetDashboardExport(TransactionCase):
         self.assertIn('dir="rtl"', self.service.with_context(lang='ar_001').build_html(self.snapshot))
 
     def test_the_snapshot_is_bounded_and_typed(self):
-        wide = {'sheets': [{'name': 'x' * 500, 'rows': [[['s', 'y' * 5000, 'y' * 5000]] + [['n', 1, '1']] * 80] * 1200}]}
+        row = [['s', 'y' * 5000, 'y' * 5000]] + [['n', 1, '1']] * 80
+        wide = {'sheets': [{'name': 'x' * 500, 'rows': [row] * 1200}]}
         cleaned = self.service.clean_snapshot(wide)
         self.assertLessEqual(len(cleaned['sheets'][0]['name']), 80)
         self.assertLessEqual(len(cleaned['sheets'][0]['rows']), 1000)

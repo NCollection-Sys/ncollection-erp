@@ -21,9 +21,11 @@ class TestPlatformDashboardAccuracy(TransactionCase):
         cls.today = fields.Date.context_today(cls.env.user)
         cls.eur = cls.env.ref('base.EUR')
         cls.eur.active = True
+        # the LATEST rate wins, so ours is dated today: 1 company-currency unit = 2 EUR, whatever else exists
+        cls.env['res.currency.rate'].search([('currency_id', '=', cls.eur.id), ('name', '>=', cls.today),
+                                             ('company_id', '=', cls.env.company.id)]).unlink()
         cls.env['res.currency.rate'].create({
-            'name': cls.today - timedelta(days=4000), 'currency_id': cls.eur.id, 'rate': 2.0,
-            'company_id': cls.env.company.id})          # 1 company-currency unit = 2 EUR
+            'name': cls.today, 'currency_id': cls.eur.id, 'rate': 2.0, 'company_id': cls.env.company.id})
         Plan = cls.env['ncollection.subscription.plan']
         cls.home_plan = Plan.create({'name': 'Acc Home', 'code': 'ACCHOME', 'monthly_price': 100.0,
                                      'yearly_price': 1200.0, 'max_users': 5})
