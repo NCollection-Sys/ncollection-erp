@@ -366,6 +366,30 @@ class NCollectionDashboardData(models.AbstractModel):
         return {'rows': rows[:spec['limit']] if spec.get('limit') else rows}
 
     @api.model
+    def stock_valuation_ranking(self, limit=10):
+        """The products holding the most value in the stock on hand, in the company currency.
+
+        ``[{'id', 'label', 'value'}]``, or ``None`` when Inventory valuation is not installed or the user is not
+        allowed to read cost (``stock.quant.value`` is restricted to the Inventory Manager by Odoo itself: a
+        Warehouse user sees no valuation, which is the same answer as "not licensed" - never a wrong figure).
+        Only the current company is valued: another company's stock is in another currency and is never added in.
+        """
+        if 'stock.quant' not in self.env or 'value' not in self.env['stock.quant']._fields:
+            return None
+        try:
+            quants = self.env['stock.quant'].search_fetch(
+                [('location_id.usage', '=', 'internal'), ('company_id', '=', self.env.company.id)],
+                ['product_id', 'value'])
+            totals = {}
+            for quant in quants:
+                product = quant.product_id
+                totals[(product.id, product.display_name)] = totals.get((product.id, product.display_name), 0.0)                     + quant.value
+        except (AccessError, UserError):
+            return None
+        rows = sorted(totals.items(), key=lambda item: -item[1])[:limit]
+        return [{'id': pid, 'label': label, 'value': value} for (pid, label), value in rows]
+
+    @api.model
     def _sum_in_company_currency(self, model_name, domain, date_field):
         """``amount_total`` of the orders matching ``domain`` in the ONE currency of the dashboard (the company's).
 

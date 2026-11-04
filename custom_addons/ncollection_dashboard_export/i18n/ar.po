@@ -1,0 +1,75 @@
+# Arabic (ar_001) translation of ncollection_dashboard_export.
+# NCollection ERP. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_dashboard_export\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_dashboard_export
+#: model:ir.model.fields,field_description:ncollection_dashboard_export.field_ncollection_spreadsheet_dashboard_export__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_dashboard_export
+#: model:ir.model.fields,field_description:ncollection_dashboard_export.field_ncollection_spreadsheet_dashboard_export__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/export_button.xml:0
+msgid "Export"
+msgstr "تصدير"
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/export_button.xml:0
+msgid "Export to Excel"
+msgstr "تصدير إلى Excel"
+
+#. module: ncollection_dashboard_export
+#. odoo-javascript
+#: code:addons/ncollection_dashboard_export/static/src/export/export_button.xml:0
+msgid "Export to PDF"
+msgstr "تصدير إلى PDF"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard_export.py:0
+msgid "Dashboard"
+msgstr "لوحة البيانات"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard_export.py:0
+msgid "Figures"
+msgstr "الأرقام"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard_export.py:0
+msgid "Sheet"
+msgstr "ورقة"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard_export.py:0
+msgid "Summary"
+msgstr "الملخص"
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard_export.py:0
+msgid "The dashboard is too large to export."
+msgstr "لوحة البيانات كبيرة جداً للتصدير."
+
+#. module: ncollection_dashboard_export
+#. odoo-python
+#: code:addons/ncollection_dashboard_export/models/spreadsheet_dashboard_export.py:0
+msgid "The dashboard snapshot is not valid."
+msgstr "لقطة لوحة البيانات غير صالحة."

@@ -3088,3 +3088,14 @@ msgstr "صفر"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.report_partner_statement
 msgid "Balance Due"
 msgstr "الرصيد المستحق"
+
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_open_items__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_open_items__id
+msgid "ID"
+msgstr "المعرّف"

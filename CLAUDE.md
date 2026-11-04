@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **30**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **31**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -122,6 +122,11 @@ adding a module fails CI until someone updates this list.
   locations), correct a mis-scan, validate with the stock engine's own `button_validate`, and count inventory with its
   own `action_apply_inventory`. Inside the Inventory app (no new tile); every call runs as the user, no sudo.
   `auto_install` with `stock`. Decision record: `docs/markdown/APPLICATIONS_AND_BARCODE.md`.
+- `ncollection_dashboard_export` — the **Export** (Excel / PDF) button beside Share on the Dashboards page (`/atlas/dashboards` =
+  Odoo's own Spreadsheet Dashboards, path `dashboards`). The browser sends a snapshot of what the page shows; the server validates
+  and bounds it, reads the dashboard as the user (its access rules decide), and builds BOTH files from that one snapshot: numbers stay
+  numbers, text never becomes a formula, RTL for Arabic. No model, no ACL, one authenticated POST route. `auto_install` with
+  `spreadsheet_dashboard`. (The workspace dashboard's own Export lives in `ncollection_core`.)
 - `ncollection_helpdesk` — SLA response/resolution timers on top of OCA
   `helpdesk_mgmt` (+ `helpdesk_mgmt_rating`), which is what P6-T03 adopts for the
   ticket itself. Also carries the ownership guard on OCA's `/ticket/close`, whose

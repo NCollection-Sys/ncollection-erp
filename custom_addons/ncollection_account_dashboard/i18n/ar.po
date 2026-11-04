@@ -391,3 +391,16 @@ msgstr "المستودع"
 #: model:ir.actions.client,name:ncollection_account_dashboard.action_warehouse_dashboard
 msgid "Warehouse Dashboard"
 msgstr "لوحة المستودع"
+
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Customer Credit"
+msgstr "رصيد العملاء الدائن"
+
+#. module: ncollection_account_dashboard
+#. odoo-python
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
+msgid "Vendor Prepayments"
+msgstr "دفعات مقدمة للموردين"

@@ -77,12 +77,21 @@ class SubscriptionDashboard(models.TransientModel):
 
         # MRR: sum the stored subscription.mrr over active subs — single source of
         # truth with the revenue graph/pivot (no duplicated normalization formula).
-        monthly_revenue = sum(active_subscriptions_recs.mapped('mrr'))
+        # ...in ONE currency: a plan priced in another currency is converted at today's rate, never added up as if
+        # the numbers were comparable.
+        company = self.env.company
+        today = fields.Date.context_today(self)
+        monthly_revenue = sum(
+            sub.currency_id._convert(sub.mrr, company.currency_id, company, today) if sub.currency_id else sub.mrr
+            for sub in active_subscriptions_recs)
 
-        soon = fields.Date.context_today(self) + timedelta(days=30)
+        # "Soon" is the next 30 days. A subscription whose end date has already passed has lapsed; the at-risk
+        # monitor surfaces it, it is not "expiring soon".
+        soon = today + timedelta(days=30)
         expiring_soon = subscription_model.search_count([
             ('status', '=', 'active'),
             ('end_date', '!=', False),
+            ('end_date', '>=', today),
             ('end_date', '<=', soon),
         ])
 

@@ -31,10 +31,14 @@ _SUMMARY_LAYOUT = [
 # bucket. `sign` is -1 for credit-normal types, so all eight KPIs present as
 # positive figures — an executive summary showing "Payables: -40,000" reads as
 # a negative liability, which is not what the number means.
+#
+# The sign is ALREADY applied by the Balance Sheet bucket the account type sits in (a liability bucket has sign -1,
+# so its balance arrives positive). This table used to flip payables a second time, and the Financial Summary showed
+# a supplier debt as a NEGATIVE number (DASH-02, test_f_owed_minus_credit_is_the_ledger_balance).
 _POSITION_TYPES = {
     'cash': ('asset_cash', 1),
     'receivables': ('asset_receivable', 1),
-    'payables': ('liability_payable', -1),
+    'payables': ('liability_payable', 1),
 }
 
 
@@ -62,7 +66,7 @@ class NcollectionFinancialSummary(models.TransientModel):
         self.ensure_one()
         return self._nc_service_figures_for(self.date_from, self.date_to)
 
-    def _nc_service_figures_for(self, date_from, date_to):
+    def _nc_service_figures_for(self, date_from, date_to, open_items=True):
         """The eight FPA KPIs for an explicit period.
 
         Revenue is TOTAL income (sales + other operating), and Expenses is cost
@@ -85,6 +89,18 @@ class NcollectionFinancialSummary(models.TransientModel):
         }
         for key, (account_type, sign) in _POSITION_TYPES.items():
             figures[key] = by_type.get(account_type, 0.0) * sign
+        if not open_items:                       # a trend needs the ledger figures only
+            return figures
+        # The ledger figures above NET a partner's credit against what they owe. The open items on each side, as of
+        # the same date, are what the dashboards show as "owed" (owed - credit = the ledger figure, tested).
+        items = self.env['ncollection.account.open.items']
+        draft = self.target_move != 'posted'
+        owed, credit = items.position('asset_receivable', date_to, self.company_id, draft)
+        payable_owed, prepayments, credit_notes = items.payable_position(date_to, self.company_id, draft)
+        figures.update({
+            'receivables_owed': owed, 'customer_credit': credit,
+            'payables_owed': payable_owed, 'vendor_prepayments': prepayments, 'vendor_credit_notes': credit_notes,
+        })
         return figures
 
     # ---- rendering --------------------------------------------------------

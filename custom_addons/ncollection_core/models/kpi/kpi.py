@@ -210,17 +210,18 @@ class NCollectionKpi(models.Model):
         P1-T17 ``sales_this_month`` provider — counting quotations would mix
         intent with revenue.
         """
+        domain = [('state', '=', 'sale'), ('date_order', '>=', start), ('date_order', '<', end)]
         row = self._single({
             'key': 'kpi:avg_deal_size',
             'model': 'sale.order',
-            'domain': [('state', '=', 'sale'),
-                       ('date_order', '>=', start),
-                       ('date_order', '<', end)],
-            'aggregates': ['amount_total:sum', '__count'],
+            'domain': domain,
+            'aggregates': ['__count'],
         })
         if row is None:
             return None
-        total, count = row[0] or 0.0, row[1] or 0
+        count = row[0] or 0
+        # an order total is in the ORDER's currency: add them up in the company's, each at its own order date
+        total = self.env['ncollection.dashboard.data']._sum_in_company_currency('sale.order', domain, 'date_order')
         return (total / count) if count else 0.0
 
     def _compute_employee_turnover(self, start, end):
@@ -317,7 +318,7 @@ class NCollectionKpi(models.Model):
                        ('location_dest_id.usage', '=', 'customer'),
                        ('date', '>=', start),
                        ('date', '<', end)],
-            'aggregates': ['quantity:sum'],
+            'aggregates': ['product_qty:sum'],     # in the product's own unit, whatever unit the move used
         })
         if shipped is None:
             return None

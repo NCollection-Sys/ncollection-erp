@@ -101,14 +101,14 @@ class AccountDashboardService(models.AbstractModel):
         return self._service(model_name, date_from, date_to)._nc_service_comparison()
 
     @staticmethod
-    def _kpi(key, label, current, previous, unit='currency'):
+    def _kpi(key, label, current, previous, unit='currency', source=None):
         """One KPI entry. No arithmetic — value/previous are raw service reads;
         the view computes the trend arrow from the two."""
         return {
             'key': key,
             'label': label,
-            'value': current.get(key),
-            'previous': previous.get(key),
+            'value': current.get(source or key),
+            'previous': previous.get(source or key),
             'unit': unit,
         }
 
@@ -138,7 +138,7 @@ class AccountDashboardService(models.AbstractModel):
         for offset in range(months - 1, -1, -1):
             start = first_of_this_month - relativedelta(months=offset)
             end = start + relativedelta(months=1, days=-1)
-            figures = report._nc_service_figures_for(start, end)
+            figures = report._nc_service_figures_for(start, end, open_items=False)
             labels.append(start.strftime('%b %Y'))
             for k in keys:
                 series[k].append(figures.get(k, 0.0))
@@ -308,8 +308,10 @@ class AccountDashboardService(models.AbstractModel):
             self._kpi('expenses', self.env._("Expenses"), current, previous),
             self._kpi('net_profit', self.env._("Net Profit"), current, previous),
             self._kpi('cash', self.env._("Cash"), current, previous),
-            self._kpi('receivables', self.env._("Receivables"), current, previous),
-            self._kpi('payables', self.env._("Payables"), current, previous),
+            self._kpi('receivables', self.env._("Receivables"), current, previous, source='receivables_owed'),
+            self._kpi('customer_credit', self.env._("Customer Credit"), current, previous),
+            self._kpi('payables', self.env._("Payables"), current, previous, source='payables_owed'),
+            self._kpi('vendor_prepayments', self.env._("Vendor Prepayments"), current, previous),
             self._kpi('assets', self.env._("Assets"), current, previous),
             self._kpi('liabilities', self.env._("Liabilities"), current, previous),
         ]
@@ -496,8 +498,10 @@ class AccountDashboardService(models.AbstractModel):
         current, previous = self._comparison(_SUMMARY)
         kpis = [
             self._kpi('cash', self.env._("Cash"), current, previous),
-            self._kpi('receivables', self.env._("Receivables"), current, previous),
-            self._kpi('payables', self.env._("Payables"), current, previous),
+            self._kpi('receivables', self.env._("Receivables"), current, previous, source='receivables_owed'),
+            self._kpi('customer_credit', self.env._("Customer Credit"), current, previous),
+            self._kpi('payables', self.env._("Payables"), current, previous, source='payables_owed'),
+            self._kpi('vendor_prepayments', self.env._("Vendor Prepayments"), current, previous),
         ]
         labels, series = self._trend(_SUMMARY, ('cash',))
         charts = [{
@@ -668,14 +672,9 @@ class AccountDashboardService(models.AbstractModel):
             self._department_kpi('inventory_turnover', self.env._("Inventory Turnover")),
         ) if k is not None]
         panels = []
-        valuation = self._ranking_panel({
-            'key': 'valuation',
-            'model': 'stock.valuation.layer',
-            'groupby': ['product_id'],
-            'aggregates': ['value:sum'],
-            'order': 'value:sum desc',
-            'limit': _RANKING_LIMIT,
-        })
+        # Odoo 19 has no stock.valuation.layer: the value of stock on hand is the quant's own `value`
+        # (stock_account, restricted to the Inventory Manager). Read in ncollection_core, which owns every read.
+        valuation = self.env['ncollection.dashboard.data'].stock_valuation_ranking(_RANKING_LIMIT)
         self._add_panel(panels, valuation, 'valuation',
                         self.env._("Stock Valuation by Product"), 'ranking',
                         'stock.valuation.layer', 'product_id')
@@ -689,8 +688,8 @@ class AccountDashboardService(models.AbstractModel):
             'model': 'stock.move',
             'domain': [('state', '=', 'done')],
             'groupby': ['product_id'],
-            'aggregates': ['quantity:sum'],
-            'order': 'quantity:sum desc',
+            'aggregates': ['product_qty:sum'],     # the product's own unit, never a mix of dozens and units
+            'order': 'product_qty:sum desc',
             'limit': _RANKING_LIMIT,
         })
         self._add_panel(panels, movement, 'movement',

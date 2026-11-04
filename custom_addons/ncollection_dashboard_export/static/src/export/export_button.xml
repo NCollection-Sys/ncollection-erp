@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ncollection_dashboard_export.ExportButton">
+        <Dropdown position="'bottom-end'">
+            <button t-att-class="togglerClass" title="Export" aria-label="Export" data-hotkey="shift+e">
+                <i class="fa fa-download me-1"/>Export
+            </button>
+            <t t-set-slot="content">
+                <DropdownItem onSelected="() => this.onExport('xlsx')">
+                    <i class="fa fa-file-excel-o me-2"/>Export to Excel
+                </DropdownItem>
+                <DropdownItem onSelected="() => this.onExport('pdf')">
+                    <i class="fa fa-file-pdf-o me-2"/>Export to PDF
+                </DropdownItem>
+            </t>
+        </Dropdown>
+    </t>
+
+    <!-- placed IMMEDIATELY after the Share button of Odoo's Dashboards page -->
+    <t t-inherit="spreadsheet_dashboard.DashboardAction" t-inherit-mode="extension">
+        <xpath expr="//SpreadsheetShareButton" position="after">
+            <NcDashboardExportButton t-key="'nc-export-' + activeDashboardId"
+                                     model="loader.getActiveDashboard()?.model"
+                                     dashboardId="activeDashboardId"
+                                     togglerClass="'btn-light'"/>
+        </xpath>
+    </t>
+</templates>
