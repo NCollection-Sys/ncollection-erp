@@ -689,7 +689,8 @@ class AccountDashboardService(models.AbstractModel):
                         'sale.order', 'user_id', unit='currency')
         return {'kpis': kpis, 'charts': [], 'panels': panels, 'meta': self._meta(),
                 'unavailable': self._unavailable(panels, [
-                    ('pipeline', self.env._("Sales Pipeline")), ('leaderboard', self.env._("Salesperson Leaderboard"))])}
+                    ('pipeline', self.env._("Sales Pipeline")),
+                    ('leaderboard', self.env._("Salesperson Leaderboard"))])}
 
     @api.model
     def get_hr_dashboard(self):
