@@ -22,6 +22,11 @@ class NcDuplicateMixin(models.AbstractModel):
     _name = 'nc.duplicate.mixin'
     _description = 'Duplicate action for business documents'
 
+    def _nc_duplicate_defaults(self):
+        """Values the copy must NOT inherit, ``{field: value}``: a legal / regulated identity (a tax number, a
+        registration) must never exist twice. Everything else is the model's own ``copy()``. Override per model."""
+        return {}
+
     def _nc_duplicate_blocker(self):
         """A message when THIS document must not be duplicated, else ``False``. Override per model."""
         return False
@@ -33,7 +38,7 @@ class NcDuplicateMixin(models.AbstractModel):
         blocker = self._nc_duplicate_blocker()
         if blocker:
             raise UserError(blocker)
-        new = self.copy()
+        new = self.copy(default=self._nc_duplicate_defaults() or None)
         return {
             'type': 'ir.actions.act_window',
             'res_model': new._name,

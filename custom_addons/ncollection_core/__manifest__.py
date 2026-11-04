@@ -65,6 +65,7 @@
         'views/password_change_templates.xml',
         'views/workspace_appearance_views.xml',
         'views/business_settings_views.xml',
+        'views/res_partner_duplicate_views.xml',
         'views/subscription_blocked_templates.xml',
         'views/launcher_app_views.xml',
         'views/dashboard_action.xml',
@@ -98,6 +99,10 @@
             # The document "Files" paperclip + modal viewer (Odoo's FileViewer, extended), shared by every list that
             # mixes in nc.attachment.mixin (sales / purchase orders, invoices / bills, payments).
             # Customer / Vendor badges: one component for the document forms and the partner dropdown.
+            # UI-01: Collapse / Expand on Odoo's own chatter (history) panel.
+            'ncollection_core/static/src/chatter_collapse/chatter_collapse.scss',
+            'ncollection_core/static/src/chatter_collapse/chatter_collapse.js',
+            'ncollection_core/static/src/chatter_collapse/chatter_collapse.xml',
             'ncollection_core/static/src/partner_roles/partner_roles.scss',
             'ncollection_core/static/src/partner_roles/partner_roles.js',
             # The public application path (/atlas, app_url.py): Odoo's router conversions, after router.js.

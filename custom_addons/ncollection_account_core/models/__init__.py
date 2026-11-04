@@ -9,3 +9,4 @@ from . import account_payment
 from . import amount_words
 from . import document_type
 from . import res_company_settings
+from . import duplicate_records

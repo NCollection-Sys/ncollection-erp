@@ -45,3 +45,5 @@ from . import test_app_url
 from . import test_platform_ux_sprint
 from . import test_tenant_owner_least_privilege
 from . import test_company_delegation
+from . import test_document_layout_owner
+from . import test_duplicate_contacts

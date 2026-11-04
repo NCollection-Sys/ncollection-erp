@@ -1,0 +1,34 @@
+// UI-01: the collapsed chatter. Only the toggle stays; everything else is hidden (display:none keeps the component
+// mounted, so an unsent message survives). In the side layout the panel shrinks to the toggle's width and the form
+// takes the room; in the bottom layout the panel shrinks to one row.
+.o-mail-Chatter.o_nc_chatter_collapsed > :not(.o_nc_chatter_toggle) {
+    display: none !important;
+}
+
+.o-mail-Chatter > .o_nc_chatter_toggle {
+    align-self: flex-end;
+    margin: 0.25rem;
+    flex: 0 0 auto;
+    line-height: 1;
+}
+
+.o-mail-Form-chatter.o-aside:has(.o-mail-Chatter.o_nc_chatter_collapsed) {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    flex-grow: 0;
+}
+
+.o-mail-Form-chatter:has(.o-mail-Chatter.o_nc_chatter_collapsed) {
+    padding-bottom: 0;
+}
+
+// the arrows point toward the edge the panel moves to; in right-to-left the panel is on the left
+.o_rtl .o_nc_chatter_toggle_icon {
+    transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .o-mail-Form-chatter.o-aside {
+        transition: width 0.15s ease-in-out;
+    }
+}

@@ -29,3 +29,4 @@ access_user_reset_password_system,ncollection.user.reset.password.system,model_n
 access_role_access_line_system,ncollection.role.access.line.system,model_ncollection_role_access_line,ncollection_core.group_tenant_admin,1,1,1,1
 access_workspace_overview_system,ncollection.workspace.overview.system,model_ncollection_workspace_overview,ncollection_core.group_tenant_admin,1,1,1,1
 access_nc_business_settings_admin,ncollection.business.settings.admin,model_ncollection_business_settings,ncollection_core.group_tenant_admin,1,1,1,0
+access_base_document_layout_tenant_admin,base.document.layout workspace administrator,web.model_base_document_layout,ncollection_core.group_tenant_admin,1,1,1,0

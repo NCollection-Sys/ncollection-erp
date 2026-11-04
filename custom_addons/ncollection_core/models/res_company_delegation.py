@@ -33,6 +33,11 @@ class ResCompany(models.Model):
             'vat', 'company_registry', 'logo',
             # the tenant's own look (Workspace Administration > Appearance); System Branding is never here
             'nc_primary_color', 'nc_secondary_color', 'nc_sidebar_color', 'nc_login_background', 'nc_stamp',
+            # Odoo's own Configure Document Layout (web's base.document.layout writes these through related
+            # fields): the layout CHOSEN among the installed report.layout records, never a view of one's own;
+            # header / footer / details are sanitized HTML (the Owner holds no sanitize-override group)
+            'external_report_layout_id', 'paperformat_id', 'font', 'primary_color', 'secondary_color',
+            'report_header', 'report_footer', 'company_details', 'layout_background', 'layout_background_image',
         }
 
     def _nc_delegated_company_write(self, vals):
@@ -50,6 +55,10 @@ class ResCompany(models.Model):
 
     def _nc_check_delegated_values(self, vals):
         """Many2one values must belong to the company being changed (or a parent company)."""
+        layout_view = vals.get('external_report_layout_id')
+        if layout_view and not self.env['report.layout'].sudo().search_count([('view_id', '=', layout_view)]):
+            # the document layout is chosen among the installed layouts; any other QWeb view is refused
+            raise ValidationError(self.env._("Choose one of the available document layouts."))
         for name, value in vals.items():
             field = self._fields[name]
             if field.type != 'many2one' or not value:

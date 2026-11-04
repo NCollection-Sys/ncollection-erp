@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- The toggle is the FIRST child of the chatter root and the only one that stays visible when collapsed. -->
+    <t t-inherit="mail.Chatter" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o-mail-Chatter-top')]" position="before">
+            <button t-if="ncShowCollapseToggle" type="button"
+                    class="o_nc_chatter_toggle btn btn-light btn-sm d-print-none"
+                    t-att-title="ncToggleLabel" t-att-aria-label="ncToggleLabel"
+                    t-att-aria-expanded="ncChatter.collapsed ? 'false' : 'true'"
+                    t-on-click="ncToggleCollapse">
+                <i class="fa o_nc_chatter_toggle_icon"
+                   t-att-class="ncChatter.collapsed ? 'fa-angle-double-left' : 'fa-angle-double-right'"/>
+            </button>
+        </xpath>
+    </t>
+</templates>

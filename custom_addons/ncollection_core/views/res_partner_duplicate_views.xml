@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Duplicate, in the button box of a contact (DUP-01). Creating a contact is the right Duplicate needs; the action
+         enforces it, the group only hides the button from users who could not use it. -->
+    <record id="view_partner_form_nc_duplicate" model="ir.ui.view">
+        <field name="name">res.partner.form.nc.duplicate</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_nc_duplicate" type="object" class="oe_stat_button" icon="fa-clone"
+                        groups="base.group_partner_manager" invisible="not id">
+                    <div class="o_stat_info"><span class="o_stat_text">Duplicate</span></div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

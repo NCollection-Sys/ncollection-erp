@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_nc_duplicate" model="ir.ui.view">
+        <field name="name">product.template.form.nc.duplicate</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_nc_duplicate" type="object" class="oe_stat_button" icon="fa-clone"
+                        groups="product.group_product_manager" invisible="not id">
+                    <div class="o_stat_info"><span class="o_stat_text">Duplicate</span></div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_payment_term_form_nc_duplicate" model="ir.ui.view">
+        <field name="name">account.payment.term.form.nc.duplicate</field>
+        <field name="model">account.payment.term</field>
+        <field name="inherit_id" ref="account.view_payment_term_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_nc_duplicate" type="object" string="Duplicate"
+                            groups="account.group_account_manager" invisible="not id"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+</odoo>

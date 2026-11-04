@@ -171,6 +171,15 @@ action = {
               sequence="540"
               groups="ncollection_core.group_role_owner"/>
 
+    <!-- Odoo's own Configure Document Layout (logo, colours, layout, paper, header / footer), for the Owner under
+         Option A: the wizard is granted to group_tenant_admin, and what it writes passes res.company's Workspace
+         Administrator delegation (own company, allowlisted fields, an installed layout only). -->
+    <menuitem id="menu_workspace_document_layout"
+              name="Document Layout"
+              parent="menu_workspace_settings_root"
+              action="web.action_base_document_layout_configurator"
+              sequence="62"/>
+
     <menuitem id="menu_workspace_users"
               name="Users"
               parent="menu_workspace_settings_root"

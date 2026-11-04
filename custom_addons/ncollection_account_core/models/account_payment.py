@@ -53,6 +53,31 @@ class AccountPayment(models.Model):
         string='Unallocated', compute='_compute_nc_unallocated_amount', currency_field='currency_id',
         help="The part of the payment not applied to any document (an outstanding credit on the partner's account).")
 
+    nc_is_overpaid = fields.Boolean(
+        string='Overpaid', compute='_compute_nc_is_overpaid', search='_search_nc_is_overpaid',
+        help="A posted payment that was applied to at least one document and still has an unapplied remainder: the "
+             "excess it brought beyond what it settled. A payment applied to nothing is a customer credit, not this.")
+
+    def _nc_overpaid_line_domain(self):
+        return [('account_id.account_type', 'in', list(_PAY_TERM_TYPES)), ('reconciled', '=', False),
+                '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
+                '|', ('matched_debit_ids', '!=', False), ('matched_credit_ids', '!=', False)]
+
+    @api.depends('state', 'move_id.line_ids.amount_residual', 'move_id.line_ids.amount_residual_currency',
+                 'move_id.line_ids.matched_debit_ids', 'move_id.line_ids.matched_credit_ids')
+    def _compute_nc_is_overpaid(self):
+        for payment in self:
+            payment.nc_is_overpaid = bool(
+                payment.state != 'draft' and payment.move_id
+                and payment.move_id.line_ids.sudo().filtered_domain(payment._nc_overpaid_line_domain()))
+
+    @api.model
+    def _search_nc_is_overpaid(self, operator, value):
+        if operator not in ('=', '!='):
+            raise NotImplementedError(self.env._("Overpaid can only be searched with Yes or No."))
+        found = ['&', ('state', '!=', 'draft'), ('move_id.line_ids', 'any', self._nc_overpaid_line_domain())]
+        return found if bool(value) == (operator == '=') else ['!'] + found
+
     # ------------------------------------------------------------------ eligibility and order (ONE place)
     def _nc_open_document_lines(self):
         """The open receivable / payable journal items this payment can be applied to (read as the user)."""
