@@ -13,7 +13,6 @@
     # the dashboard as the user), one authenticated route. auto_install: every tenant that has the Dashboards page
     # gets the button, with no plan entry.
     'depends': ['spreadsheet_dashboard', 'ncollection_core'],
-    'data': [],
     'assets': {
         # the dashboard action and its Share button live in this bundle, so the extension must too
         'spreadsheet.o_spreadsheet': [
@@ -21,7 +20,5 @@
             'ncollection_dashboard_export/static/src/export/**/*.xml',
         ],
     },
-    'installable': True,
-    'application': False,
     'auto_install': True,
 }

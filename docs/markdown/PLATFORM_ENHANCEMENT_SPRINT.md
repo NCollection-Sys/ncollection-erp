@@ -45,3 +45,41 @@ name): standard and zero-rated are taxable; exempt, out of scope and untaxed are
   `nginx -t` then `nginx -s reload`. Proof: `scripts/dev/nginx_upstream_reresolve_test.sh` (private network; the old config FAILs,
   the new one PASSes).
 * Rollback: restore the pre-release dump of each database (the release procedure's backup volume) and the previous source tree.
+
+## 3. Dashboard accuracy release (DASH-02) — database × module × version × migration
+
+Evidence for every KPI: `DASHBOARD_ACCEPTANCE_MATRIX.md`. This section is only what an operator must do. **Nothing here was executed
+on a shared database**; every row below was rehearsed on a scratch copy (`pg_dump | pg_restore`, source read-only) or a disposable fixture.
+
+| Database (role) | Module | Current | Target | Migration |
+|---|---|---|---|---|
+| `saastest` (platform) | `ncollection_core` | 19.0.1.27.0 | 19.0.1.28.0 | `-u`: new service model, wizard override, ACL rows, translations; no schema change on this DB |
+| | `ncollection_subscription` | 19.0.1.18.0 | 19.0.1.19.0 | `-u`: code only (MRR in one currency, "expiring soon") |
+| | `ncollection_dashboard_export` | — | 19.0.1.0.0 | **`-i`** (an `auto_install` module is NOT installed by `-u` on an existing database) |
+| `ncollection` (accounting tenant and platform modules) | `ncollection_core` | 19.0.1.27.0 | 19.0.1.28.0 | `-u` |
+| | `ncollection_account_core` | 19.0.1.12.0 | 19.0.1.13.0 | `-u`: new stored `account_move.nc_overpaid_amount` + table `nc_payment_registered_move_rel`; **backfill 0** |
+| | `ncollection_account_reports` | 19.0.1.12.0 | 19.0.1.13.0 | `-u`: new abstract model (open items), Financial Summary figures |
+| | `ncollection_account_dashboard` | 19.0.1.3.0 | 19.0.1.4.0 | `-u`: Customer Credit / Vendor Prepayments cards |
+| | `ncollection_subscription` | 19.0.1.18.0 | 19.0.1.19.0 | `-u` (installed on this database too: omitting it leaves a SCHEMA DRIFT error, found by the rehearsal) |
+| | `ncollection_dashboard_export` | — | 19.0.1.0.0 | `-i` |
+| `e2euae` (UAE e-invoicing tenant, **protected**) | `ncollection_core` | 19.0.1.27.0 | 19.0.1.28.0 | `-u` |
+| | `ncollection_account_core` | 19.0.1.12.0 | 19.0.1.13.0 | `-u` (column + table, backfill 0) |
+| | `ncollection_dashboard_export` | — | 19.0.1.0.0 | `-i` |
+| `einvfull`, `einvdev` | as `e2euae` | | | not rehearsed separately (same module set, no data) |
+| `atlas`, `ncollection_demo`, `awtar` | | `awtar` is **behind the runtime** (core 1.24, account_core 1.9, reports 1.10): it needs the earlier releases first | | not in this release's scope |
+
+Order: backup every database → deploy code → `release status` shows each database `UPGRADE_REQUIRED` (branded 503, by design) →
+per database `-u <its modules> -i ncollection_dashboard_export` (never `-u all`) → `_update_translations(['ar_001'])` for the touched
+modules + `clear_all_caches` → smoke. New Arabic terms are not loaded by `-u`.
+
+**Rehearsal results** (disposable fixture built on the runtime tree 5decb87 with invoices, a 1,000 payment on an 800 invoice, a
+partial payment, a credit note, a vendor bill and an advance to the supplier; then the sprint tree):
+
+* every database upgraded with exit 0 and no error; a **second** `-u` was a no-op (same versions, same figures);
+* **existing documents backfill to `nc_overpaid_amount = 0`** (0 non-zero rows on all copies); native `amount_residual` is untouched
+  (`909.3` on the accounting copy before and after; `210.0` on the UAE copy);
+* the Finance dashboard on the fixture: Receivables 280 → **600** (owed) + Customer Credit **320**; Payables −310 → **400** + Vendor
+  Prepayments **90**; Revenue / Net profit / Assets / Liabilities unchanged;
+* the UAE copy: the three e-invoice rows (uuid, XML SHA-256, states, write date) are identical to the live database; no submission.
+
+Rollback: restore the pre-release dump of each database and the previous source tree (the release procedure's backup volume).
