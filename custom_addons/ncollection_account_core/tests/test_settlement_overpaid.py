@@ -109,14 +109,18 @@ class TestSettlementExcess(AccountTestInvoicingCommon):
         credit = self._doc(130.0, move_type='out_refund')
         _recv(invoice.line_ids | credit.line_ids).reconcile()
         self.assertEqual(invoice.amount_residual, 0.0)
-        self.assertEqual(invoice.nc_overpaid_amount, 30.0, "the credit's unapplied remainder is the invoice's excess")
+        self.assertEqual(invoice.nc_overpaid_amount, 0.0,
+                         "a credit note reversing the invoice is not a payment: its remainder stays customer credit")
         self.assertEqual(credit.nc_overpaid_amount, 0.0, "the credit note itself was not overpaid")
 
-    def test_a_payment_set_back_to_draft_removes_the_excess(self):
+    def test_a_payment_set_back_to_draft_keeps_the_excess_until_unreconciled(self):
         doc = self._doc(800.0)
         payment = self._pay(doc, 1000.0)
         self.assertEqual(doc.nc_overpaid_amount, 200.0)
+        # Odoo 19 keeps the reconciliation of a payment set back to draft; the excess follows the reconciliation
         payment.action_draft()
+        self.assertEqual(doc.nc_overpaid_amount, 200.0)
+        _recv(doc.line_ids | payment.move_id.line_ids).remove_move_reconcile()
         self.assertEqual(doc.nc_overpaid_amount, 0.0, "the stored excess follows the reconciliation")
         self.assertEqual(doc.nc_payment_status, 'unpaid')
 
@@ -189,7 +193,8 @@ class TestSettlementExcess(AccountTestInvoicingCommon):
             'invoice_line_ids': [Command.create({'name': 'x', 'quantity': 1, 'price_unit': 10.0,
                                                  'tax_ids': [Command.clear()]})]})
         doc.action_post()
-        mine = self.env['account.move'].search([('nc_is_taxable', '=', False)])
+        mine = self.env['account.move'].with_context(allowed_company_ids=self.env.company.ids).search(
+            [('nc_is_taxable', '=', False)])
         self.assertNotIn(doc, mine, "the record rules still decide which company's documents a search returns")
 
     # ---------------------------------------------------------------- sorting, in the database, over the whole set

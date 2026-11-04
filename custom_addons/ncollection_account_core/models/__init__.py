@@ -10,3 +10,4 @@ from . import amount_words
 from . import document_type
 from . import res_company_settings
 from . import duplicate_records
+from . import onboarding_step
