@@ -178,6 +178,11 @@ class NCollectionDashboardData(models.AbstractModel):
                 'label': self.env._('Payables'), 'icon': 'wallet',
                 'model': 'account.move.line', 'compute': '_compute_payables',
             },
+            {
+                'key': 'customer_credit', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL,
+                'label': self.env._('Customer Credit'), 'icon': 'wallet',
+                'model': 'account.move.line', 'compute': '_compute_customer_credit',
+            },
             # HANDOFF: #119 / F3-T01 -> ncollection_account_dashboard (FPA §7).
             {
                 'key': 'cash_bank', 'type': TYPE_KPI, 'group': GROUP_FINANCIAL,
@@ -262,8 +267,14 @@ class NCollectionDashboardData(models.AbstractModel):
     # company, a record rule or a licence, and every figure still goes through the same gated, access-checked paths.
 
     @api.model
+    def _today(self):
+        """Today in the USER's time zone (the context's ``tz``, else the user's), never the server's: "this month" and
+        "year to date" start where the user's calendar says they do."""
+        return fields.Date.context_today(self)
+
+    @api.model
     def _default_summary_period(self):
-        today = date.today()
+        today = self._today()
         return today.replace(month=1, day=1), today
 
     @api.model
@@ -325,14 +336,32 @@ class NCollectionDashboardData(models.AbstractModel):
         return result['rows'][0][0] or 0.0
 
     @api.model
+    def _sum_in_company_currency(self, model_name, domain, date_field):
+        """``amount_total`` of the orders matching ``domain`` in the ONE currency of the dashboard (the company's).
+
+        Documents in the company currency are summed by the engine; each document in another currency is converted
+        at the rate of its own order date (Odoo's ``_convert``), never added up as if the numbers were comparable.
+        The conversion reads the orders as the user, so access rules still decide which ones count."""
+        company = self.env.company
+        currency = company.currency_id
+        total = self._sum(model_name, domain + [('currency_id', '=', currency.id)], 'amount_total:sum')
+        foreign = self.env[model_name].search_fetch(
+            domain + [('currency_id', '!=', currency.id)], [date_field, 'amount_total', 'currency_id'])
+        for order in foreign:
+            when = fields.Datetime.to_datetime(order[date_field])
+            total += order.currency_id._convert(
+                order.amount_total, currency, company, when.date() if when else self._today())
+        return total
+
+    @api.model
     def _compute_sales_this_month(self):
-        """Confirmed sales this month, with the trend against last month."""
-        today = date.today()
-        this_start = today.replace(day=1)
+        """Confirmed sales this month (tax-inclusive order value, in the company currency), with the trend against
+        last month."""
+        this_start = self._today().replace(day=1)
         last_start = this_start - relativedelta(months=1)
 
         def _total(domain):
-            return self._sum('sale.order', domain, 'amount_total:sum')
+            return self._sum_in_company_currency('sale.order', domain, 'date_order')
 
         current = _total(self._domain_sales_this_month())
         previous = _total([('state', '=', 'sale'), ('date_order', '>=', last_start),
@@ -346,10 +375,14 @@ class NCollectionDashboardData(models.AbstractModel):
     # The domains below are the ONE definition of what each KPI counts: the number (via _sum / search_count) and
     # its drill-down (drill_kpi) both read them, so the list a click opens is exactly the figure on the card.
     @api.model
-    def _domain_residual(self, account_type):
+    def _domain_residual(self, account_type, owed=True):
+        """Open receivable / payable lines. ``owed`` is what the customers owe us (debit residual) or what we owe
+        suppliers (credit residual); the other sign is unallocated CREDIT (an advance, an overpayment), which is
+        money the other side is owed and must never reduce the amount that is owed."""
+        debit_side = (account_type == 'asset_receivable') == bool(owed)
         return [('account_id.account_type', '=', account_type),
                 ('parent_state', '=', 'posted'),
-                ('amount_residual', '!=', 0)]
+                ('amount_residual', '>' if debit_side else '<', 0)]
 
     @api.model
     def _domain_cash_bank(self):
@@ -357,21 +390,22 @@ class NCollectionDashboardData(models.AbstractModel):
 
     @api.model
     def _domain_sales_this_month(self):
-        start = date.today().replace(day=1)
+        start = self._today().replace(day=1)
         return [('state', '=', 'sale'), ('date_order', '>=', start),
                 ('date_order', '<', start + relativedelta(months=1))]
 
     @api.model
     def _domain_purchases_this_month(self):
-        start = date.today().replace(day=1)
+        start = self._today().replace(day=1)
         return [('state', 'in', ('purchase', 'done')), ('date_approve', '>=', start),
                 ('date_approve', '<', start + relativedelta(months=1))]
 
     @api.model
-    def _residual_by_account_type(self, account_type):
-        """Sum of open residual amounts for one account type. Thin by design."""
+    def _residual_by_account_type(self, account_type, owed=True):
+        """Sum of the open residuals on ONE side of an account type (what is owed, or the unallocated credit).
+        The two sides are never netted: a 40 advance does not make a 100 invoice a 60 receivable."""
         return abs(self._sum(
-            'account.move.line', self._domain_residual(account_type), 'amount_residual:sum'))
+            'account.move.line', self._domain_residual(account_type, owed), 'amount_residual:sum'))
 
     @api.model
     def _compute_receivables(self):
@@ -387,6 +421,13 @@ class NCollectionDashboardData(models.AbstractModel):
         return {
             'value': self._residual_by_account_type('liability_payable'),
             'format': 'currency', 'sub': self.env._('Open bills'),
+        }
+
+    @api.model
+    def _compute_customer_credit(self):
+        return {
+            'value': self._residual_by_account_type('asset_receivable', owed=False),
+            'format': 'currency', 'sub': self.env._('Advances and overpayments not yet applied'),
         }
 
     @api.model
@@ -411,11 +452,11 @@ class NCollectionDashboardData(models.AbstractModel):
     @api.model
     def _compute_purchases_this_month(self):
         """Confirmed purchases this month, with the trend against last month."""
-        start = date.today().replace(day=1)
+        start = self._today().replace(day=1)
         last = start - relativedelta(months=1)
 
         def _total(domain):
-            return self._sum('purchase.order', domain, 'amount_total:sum')
+            return self._sum_in_company_currency('purchase.order', domain, 'date_approve')
 
         current = _total(self._domain_purchases_this_month())
         previous = _total([('state', 'in', ('purchase', 'done')), ('date_approve', '>=', last),
@@ -485,17 +526,31 @@ class NCollectionDashboardData(models.AbstractModel):
         # (id, display_name) tuple so the payload is cacheable inert data (a
         # recordset would be bound to an environment that is gone by the next
         # request). Hence the tuple unpacking here rather than `.display_name`.
-        result = self._engine().aggregate({
-            'key': 'dash:top_customers',
-            'model': 'sale.order',
-            'domain': [('state', '=', 'sale'), ('date_order', '>=', period_from),
-                       ('date_order', '<', period_to + timedelta(days=1))],
-            'groupby': ['partner_id'],
-            'aggregates': ['amount_total:sum'],
-            'limit': 5,
-            'order': 'amount_total:sum desc',
-        })
-        rows = result['rows'] if result else []
+        domain = [('state', '=', 'sale'), ('date_order', '>=', period_from),
+                  ('date_order', '<', period_to + timedelta(days=1))]
+        company = self.env.company
+        currency = company.currency_id
+        if self.env['sale.order'].search_count(domain + [('currency_id', '!=', currency.id)], limit=1):
+            # Orders in more than one currency: add them in ONE (the company's), each at its own order date.
+            totals = {}
+            for order in self.env['sale.order'].search_fetch(
+                    domain, ['partner_id', 'amount_total', 'currency_id', 'date_order']):
+                when = fields.Datetime.to_datetime(order.date_order)
+                key = (order.partner_id.id, order.partner_id.display_name) if order.partner_id else False
+                totals[key] = totals.get(key, 0.0) + order.currency_id._convert(
+                    order.amount_total, currency, company, when.date() if when else self._today())
+            rows = sorted(totals.items(), key=lambda item: -item[1])[:5]
+        else:
+            result = self._engine().aggregate({
+                'key': 'dash:top_customers',
+                'model': 'sale.order',
+                'domain': domain,
+                'groupby': ['partner_id'],
+                'aggregates': ['amount_total:sum'],
+                'limit': 5,
+                'order': 'amount_total:sum desc',
+            })
+            rows = result['rows'] if result else []
         return {
             'labels': [
                 partner[1] if partner else self.env._('Unknown')
@@ -638,6 +693,8 @@ class NCollectionDashboardData(models.AbstractModel):
         return {
             'receivables': (MOVE_LINE_MODEL, self._domain_residual('asset_receivable'), env._('Open receivables')),
             'payables': (MOVE_LINE_MODEL, self._domain_residual('liability_payable'), env._('Open payables')),
+            'customer_credit': (MOVE_LINE_MODEL, self._domain_residual('asset_receivable', owed=False),
+                                env._('Customer credit')),
             'cash_bank': (MOVE_LINE_MODEL, self._domain_cash_bank(), env._('Cash & bank')),
             'sales_this_month': ('sale.order', self._domain_sales_this_month(), env._('Sales this month')),
             'open_quotations': ('sale.order', [('state', 'in', ('draft', 'sent'))], env._('Open quotations')),
