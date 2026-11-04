@@ -121,9 +121,9 @@ class NcollectionPremiumExport(models.AbstractModel):
             'table{width:100%%;border-collapse:collapse}th,td{border:1px solid #d9e2ec;padding:4px 6px;'
             'text-align:%s}th{background:#eef2f7}.m{color:#52606d}' % align,
             '</style></head><body>',
-            '<h1>%s</h1><div class="m">%s &middot; %s (%s) &middot; %s &rarr; %s</div>' % (
-                E(self._title(kind)), E(meta['company']), E(meta['currency']['name']), E(meta['currency']['symbol']),
-                E(meta['period']['from']), E(meta['period']['to'])),
+            '<h1>%s</h1><div class="m">%s</div>' % (E(self._title(kind)), ' · '.join([
+                E(meta['company']), E('%s (%s)' % (meta['currency']['name'], meta['currency']['symbol'])),
+                E('%s → %s' % (meta['period']['from'], meta['period']['to']))])),
             '<p class="m">%s</p>' % E(env._("Calculated by the server from the company's records.")),
             '<h2>%s</h2><table><tr><th>%s</th><th>%s</th><th>%s</th></tr>' % (
                 E(env._("Key figures")), E(env._("Indicator")), E(env._("Value")), E(env._("Definition")))]
