@@ -66,7 +66,8 @@ it remains a legal question this work did not settle.
 | D6 | import (CAMT, CSV/XLSX without an id column) | **no duplicate protection at all**: CAMT keeps the bank reference only in `ref`; a re-imported file is booked twice | deterministic fingerprint (journal, date, amount, label, reference, partner account, occurrence) |
 | D7 | QIF | fails with "Missing currency" on a journal in the company currency (`journal.currency_id` only) | effective journal currency |
 | D8 | CSV/XLSX | rows in another currency are dropped silently | kept as OCA designed (one export, one journal per currency), but **listed in the preview** |
-| D9 | translations | `account_reconcile_oca` ships 0 / 128 Arabic terms | 189 OCA view / field / menu / JS terms translated in our catalogue; OCA **Python** messages stay English (Odoo looks them up under their own module) |
+| D10 | engine auto-match | proposes a document only at its FULL open amount: an early-payment-discounted receipt is never proposed, so the discount could not be offered on a transaction's first opening (found by the browser suite) | discounted-amount proposal (unique candidate only), flag read after the engine's stored auto-match; regression test `test_early_discount_offered_on_the_first_opening` |
+| D9 | translations | `account_reconcile_oca` ships 0 / 128 Arabic terms | OCA view / field / menu / JS terms in our catalogue (310 entries in all); the 56 OCA **Python** messages through `i18n_loader.py` + `i18n_oca/` |
 
 ## 4. What `ncollection_bank_reconciliation` adds
 
@@ -109,7 +110,7 @@ contract or a separately licensed service; **NOT IMPLEMENTED** / **NOT VERIFIED*
 | Set Account / write-off / bank fees / interest | yes | yes | — | tests 1, 9; browser (Bank Fees model) | — **VERIFIED** |
 | Internal transfer | Internal Transfers model | yes | — | test 11; browser (both legs, transfer account nets 0) | — **VERIFIED** |
 | Exchange difference | yes | yes (Odoo exchange entries) | independent audit, 9 scenarios | `TestForeignCurrencyAudit`; browser | — **VERIFIED** |
-| Early-payment discount | suggested amount | **none** | Odoo's own discount computation (base / tax / exchange), only inside the window, only the exact discounted total | `test_early_discount_*` (included, excluded, refused cases); browser | `mixed` computation and multi-currency discounts not separately tested — **VERIFIED for included / excluded, same currency** |
+| Early-payment discount | discounted match suggested | **none** (and the engine never proposes a discounted amount) | discounted-amount PROPOSAL (one candidate or none) + *Apply early payment discount* with Odoo's own discount computation (base / tax / exchange), only inside the window, only the exact discounted total | `test_early_discount_*` (included, excluded, refused, first opening, ambiguous); browser (VAT −1.00, paid in full) | `mixed` computation and multi-currency discounts not separately tested — **VERIFIED for included / excluded, same currency** |
 | Batch payments | `account_batch_payment` | none on 19.0 | `ncollection.bank.payment.batch` + *Match a batch* | `test_batch_*`; browser | no bank-file (SEPA/ISO) generation for batches — **VERIFIED for matching** |
 | Sales orders in the matching | match orders → invoice | no | **NOT IMPLEMENTED**: invoice first, then match; the SO reference in a label is matched by label like any reference | — | **NOT IMPLEMENTED** |
 | Upload bills for digitisation (OCR) | IAP service | no | — | — | **EXTERNAL** (Odoo IAP / OCR provider) |
