@@ -57,10 +57,10 @@ async function overflow(page) {
   const misrId = await journal(p, 'Bank Misr');
   const cashId = await journal(p, 'Main Cash');
 
-  await check('card: Bank Misr shows Upload + Transactions, then To Reconcile / Statements / New', async () => {
+  await check('card: Bank Misr shows Upload + Transactions, then To Reconcile / Statements / New / Batches / Duplicates', async () => {
     const card = await dashboard(p);
     const nav = await card.locator('.o_nc_bank_nav a').allInnerTexts();
-    eq(nav.map((s) => s.trim()), ['To Reconcile', 'Statements', 'New'], 'nav');
+    eq(nav.map((s) => s.trim()), ['To Reconcile', 'Statements', 'New', 'Batches', 'Duplicates'], 'nav');
     ok(await card.locator('#all_transactions_btn').isVisible(), 'Transactions button');
     eq((await card.locator('button.o_nc_bank_upload').innerText()).trim(), 'Upload', 'Upload button');
     ok(!/OCA/.test(await card.innerText()), 'no vendor name on the card');
@@ -212,7 +212,7 @@ async function overflow(page) {
   await check('CEO (read-only): no New / Upload on the card, and the server refuses a match', async () => {
     const card = await dashboard(ceo.page);
     const nav = (await card.locator('.o_nc_bank_nav a').allInnerTexts()).map((s) => s.trim());
-    eq(nav, ['To Reconcile', 'Statements'], 'read-only nav');
+    eq(nav, ['To Reconcile', 'Statements', 'Batches', 'Duplicates'], 'read-only nav (no New)');
     const st = await stLine(ceo.page, 'Bank Fees March');
     let refused = '';
     try { await rpc(ceo.page, 'account.bank.statement.line', 'reconcile_bank_line', [[st.id]]); } catch (e) { refused = String(e); }
@@ -239,7 +239,7 @@ async function overflow(page) {
     await check(`Arabic RTL ${vp.tag}: card and workspace translated, no horizontal overflow`, async () => {
       const card = await dashboard(ar.page);
       const nav = (await card.locator('.o_nc_bank_nav a').allInnerTexts()).map((s) => s.trim());
-      eq(nav, ['للتسوية', 'الكشوف', 'جديد'], 'Arabic nav');
+      eq(nav, ['للتسوية', 'الكشوف', 'جديد', 'الدفعات المجمعة', 'المكررات'], 'Arabic nav');
       const o1 = await overflow(ar.page);
       eq(o1.dir, 'rtl', 'direction');
       ok(!o1.x, 'no horizontal overflow on the dashboard');

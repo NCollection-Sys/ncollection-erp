@@ -35,6 +35,12 @@ class AccountStatementImport(models.TransientModel):
     nc_preview_html = fields.Html(string='Preview', readonly=True, sanitize=True)
     nc_preview_checksum = fields.Char(string='Previewed file (SHA-256)', readonly=True)
     nc_preview_count = fields.Integer(string='New transactions in the preview', readonly=True)
+    nc_skipped_count = fields.Integer(string='Rows left out (other currency)', readonly=True)
+    nc_new_total = fields.Float(string='Total of the new transactions', readonly=True)
+    nc_accept_partial = fields.Boolean(
+        string='Import only the rows in the journal currency',
+        help='The file has rows in another currency. By default nothing is imported; tick this to import the rows in '
+             'the journal currency only. The left-out rows are recorded on the statement.')
 
     # ------------------------------------------------------------- parsing
     def _parse_file(self, data_file):
@@ -135,10 +141,14 @@ class AccountStatementImport(models.TransientModel):
         self.ensure_one()
         rows, skipped = self._nc_preview_rows()
         new = [r for r in rows if not r['duplicate']]
+        currency = rows[0]['currency']
+        new_total = currency.round(sum(float(r['vals'].get('amount') or 0.0) for r in new))
         head = Markup('<p><b>%s</b></p>') % self.env._(
             "%(total)s transactions read for %(journal)s (%(currency)s): %(new)s new, %(dup)s already imported and "
-            "skipped.", total=len(rows), journal=rows[0]['journal'].display_name, currency=rows[0]['currency'].name,
+            "skipped.", total=len(rows), journal=rows[0]['journal'].display_name, currency=currency.name,
             new=len(new), dup=len(rows) - len(new))
+        head += Markup('<p class="o_nc_import_total">%s</p>') % self.env._(
+            "Total of the new transactions: %(amount)s", amount=formatLang(self.env, new_total, currency_obj=currency))
         header = Markup('<tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th class="text-end">%s</th>'
                         '<th>%s</th></tr>')
         cells = [header % (
@@ -159,10 +169,12 @@ class AccountStatementImport(models.TransientModel):
             items = Markup('').join(Markup('<li>%s %s · %s</li>') % (s['currency'], s['amount'], s['label'])
                                     for s in skipped)
             table += Markup('<div class="alert alert-warning o_nc_import_skipped"><b>%s</b><ul>%s</ul></div>') % (
-                self.env._("%(count)s rows are in another currency and will NOT be imported into this journal:",
-                           count=len(skipped)), items)
+                self.env._("%(count)s rows are in another currency. Nothing is imported unless you choose to import "
+                           "only the rows in the journal currency; these would then be left out:", count=len(skipped)),
+                items)
         self.write({'nc_preview_html': head + table, 'nc_preview_checksum': self._nc_checksum(),
-                    'nc_preview_count': len(new)})
+                    'nc_preview_count': len(new), 'nc_skipped_count': len(skipped), 'nc_new_total': new_total,
+                    'nc_accept_partial': False})
         return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': self.id, 'view_mode': 'form',
                 'target': 'new', 'context': dict(self.env.context), 'name': self.env._("Preview bank statement")}
 
@@ -176,4 +188,22 @@ class AccountStatementImport(models.TransientModel):
                                            "previewed)."))
             if not self.nc_preview_count:
                 raise UserError(self.env._("Every transaction in this file is already imported; nothing to do."))
-        return super().import_file_button()
+            if self.nc_skipped_count and not self.nc_accept_partial:
+                raise UserError(self.env._(
+                    "%(count)s rows of this file are in another currency, so the file would only be imported in part. "
+                    "Nothing was imported. Tick \"Import only the rows in the journal currency\" to import the rest.",
+                    count=self.nc_skipped_count))
+        skipped, accepted = self.nc_skipped_count, self.nc_preview_count
+        result = super().import_file_button()
+        if self.nc_preview_checksum and skipped:
+            # the statement has no chatter in Odoo 19: the record goes on its first transaction's journal entry
+            action = result.get('params', {}).get('next', result) if result.get(
+                'type') == 'ir.actions.client' else result
+            ids = next((leaf[2] for leaf in action.get('domain') or [] if leaf[0] == 'id'), [])
+            statements = self.env['account.bank.statement'].browse(ids).exists()
+            for statement in statements:
+                statement.line_ids.sorted('id')[:1].move_id.message_post(body=self.env._(
+                    "Partial import accepted by %(user)s: %(accepted)s transactions imported, %(skipped)s rows in "
+                    "another currency left out of %(file)s.", user=self.env.user.name, accepted=accepted,
+                    skipped=skipped, file=self.statement_filename), message_type='notification')
+        return result

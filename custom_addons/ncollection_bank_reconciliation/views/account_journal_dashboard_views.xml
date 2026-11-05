@@ -31,6 +31,8 @@
                     <a type="object" name="action_nc_bank_statements" class="o_nc_bank_nav_statements">Statements</a>
                     <a type="object" name="action_nc_bank_new" class="o_nc_bank_nav_new"
                        groups="account.group_account_user">New</a>
+                    <a type="object" name="action_nc_bank_batches" class="o_nc_bank_nav_batches">Batches</a>
+                    <a type="object" name="action_nc_bank_duplicates" class="o_nc_bank_nav_duplicates">Duplicates</a>
                 </div>
             </xpath>
         </field>

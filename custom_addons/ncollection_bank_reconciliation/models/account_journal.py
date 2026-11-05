@@ -61,6 +61,22 @@ class AccountJournal(models.Model):
         action['context'] = {'default_journal_id': journal.id}
         return action
 
+    def _get_bank_statements_available_import_formats(self):
+        return super()._get_bank_statements_available_import_formats() + ['OFX']
+
+    def action_nc_bank_duplicates(self):
+        """The duplicate review of this journal (read-only detection; nothing is deleted from it)."""
+        journal = self._nc_bank_journal()
+        review = self.env['ncollection.bank.duplicate.review'].create({'journal_id': journal.id})
+        return review.action_refresh()
+
+    def action_nc_bank_batches(self):
+        journal = self._nc_bank_journal()
+        action = self.env['ir.actions.act_window']._for_xml_id('ncollection_bank_reconciliation.action_payment_batch')
+        action['domain'] = [('journal_id', '=', journal.id)]
+        action['context'] = {'default_journal_id': journal.id}
+        return action
+
     def import_account_statement(self):
         """OCA's own "Import" entry point on the journal previews first too."""
         action = super().import_account_statement()

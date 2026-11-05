@@ -1,0 +1,137 @@
+# Arabic for the Python messages of account_statement_import_camt, loaded by ncollection_bank_reconciliation/i18n_loader.py.
+msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Account Servicer Reference"
+msgstr "مرجع البنك"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Additional Entry Information"
+msgstr "معلومات إضافية عن القيد"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Additional Transaction Information"
+msgstr "معلومات إضافية عن المعاملة"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Cheque Number"
+msgstr "رقم الشيك"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Communication"
+msgstr "البيان"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "End To End Id"
+msgstr "المعرّف الشامل"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Instructed Id"
+msgstr "معرّف التعليمات"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Mandate Id"
+msgstr "معرّف التفويض"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Msg Id"
+msgstr "معرّف الرسالة"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Partner Account Number"
+msgstr "رقم حساب الشريك"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Partner Name"
+msgstr "اسم الشريك"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Postal Address"
+msgstr "العنوان البريدي"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Reference"
+msgstr "المرجع"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Return Reason Additional Information"
+msgstr "معلومات إضافية عن سبب الإرجاع"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Return Reason Code"
+msgstr "رمز سبب الإرجاع"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Return Reason Code (Proprietary)"
+msgstr "رمز سبب الإرجاع (خاص بالبنك)"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Reversal Indicator"
+msgstr "مؤشر العكس"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Structured Reference"
+msgstr "المرجع المنظم"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Transaction Date"
+msgstr "تاريخ المعاملة"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Transaction Identification"
+msgstr "معرّف المعاملة"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Transaction Type"
+msgstr "نوع المعاملة"
+
+#. module: account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/models/x.py:0
+msgid "Unstructured Reference"
+msgstr "المرجع غير المنظم"

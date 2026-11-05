@@ -1,0 +1,11 @@
+# Arabic for the Python messages of account_statement_base, loaded by ncollection_bank_reconciliation/i18n_loader.py.
+msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. module: account_statement_base
+#. odoo-python
+#: code:addons/account_statement_base/models/x.py:0
+msgid "Journal Items"
+msgstr "بنود اليومية"

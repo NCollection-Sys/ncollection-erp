@@ -34,6 +34,7 @@ echo "rc=$?"
 grep -a "ERROR\|CRITICAL\|Some modules" "$LOG_DIR/uxbankweb.install.log" | head -3
 echo "== seed"
 run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < "$HERE/bank_fixture.py" 2>&1 | grep -a "Traceback\|Error\|BANKFIX"
+run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < "$HERE/bank_fixture_gaps.py" 2>&1 | grep -a "Traceback\|Error\|GAPFIX"
 printf "mods=env['ir.module.module'].search([('name','in',['ncollection_bank_reconciliation','account_reconcile_oca'])])\nmods._update_translations(['ar_001'])\nenv.registry.clear_all_caches()\nenv.cr.commit()\nprint('TR')\n" \
   | run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error 2>&1 | grep -a "TR\|Error" | head -3
 echo "== serve"

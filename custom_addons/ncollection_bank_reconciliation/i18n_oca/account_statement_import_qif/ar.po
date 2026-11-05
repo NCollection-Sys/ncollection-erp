@@ -1,0 +1,17 @@
+# Arabic for the Python messages of account_statement_import_qif, loaded by ncollection_bank_reconciliation/i18n_loader.py.
+msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. module: account_statement_import_qif
+#. odoo-python
+#: code:addons/account_statement_import_qif/models/x.py:0
+msgid "Could not decipher the QIF file."
+msgstr "تعذّرت قراءة ملف QIF."
+
+#. module: account_statement_import_qif
+#. odoo-python
+#: code:addons/account_statement_import_qif/models/x.py:0
+msgid "This file is either not a bank statement or is not correctly formed."
+msgstr "هذا الملف ليس كشف بنك أو أنه غير سليم البنية."

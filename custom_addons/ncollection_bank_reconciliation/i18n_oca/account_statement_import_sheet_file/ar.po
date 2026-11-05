@@ -1,0 +1,71 @@
+# Arabic for the Python messages of account_statement_import_sheet_file, loaded by ncollection_bank_reconciliation/i18n_loader.py.
+msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "%(code)s: %(filename)s"
+msgstr "%(code)s: %(filename)s"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Account: %s; "
+msgstr "الحساب: %s؛ "
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Bad file/mapping: "
+msgstr "ملف أو تعيين أعمدة غير صالح: "
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Bank: %s; "
+msgstr "البنك: %s؛ "
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "N/A"
+msgstr "غير متوفر"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "No valid encoding was found for the attached file"
+msgstr "لم يُعثر على ترميز صالح للملف المرفق"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Offsets cannot be negative"
+msgstr "لا يمكن أن تكون الإزاحة سالبة"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Transaction ID: %s; "
+msgstr "معرّف المعاملة: %s؛ "
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Use amount_column if you have set Amount type = 'Single value'"
+msgstr "استخدم amount_column إذا كان نوع المبلغ = 'قيمة بسيطة'"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Use amount_debit_column and amount_credit_column if you have set Amount type = 'Distinct Credit/debit Column'"
+msgstr "استخدم amount_debit_column وamount_credit_column إذا كان نوع المبلغ = 'عمودان منفصلان للمدين والدائن'"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/x.py:0
+msgid "Use debit_credit_column if you have set Amount type = 'Absolute value'"
+msgstr "استخدم debit_credit_column إذا كان نوع المبلغ = 'القيمة المطلقة'"

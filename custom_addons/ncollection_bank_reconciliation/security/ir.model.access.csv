@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_payment_batch_readonly,ncollection.bank.payment.batch.readonly,model_ncollection_bank_payment_batch,account.group_account_readonly,1,0,0,0
+access_payment_batch_user,ncollection.bank.payment.batch.user,model_ncollection_bank_payment_batch,account.group_account_user,1,1,1,1
+access_duplicate_review_readonly,ncollection.bank.duplicate.review.readonly,model_ncollection_bank_duplicate_review,account.group_account_readonly,1,1,1,1
+access_duplicate_candidate_readonly,ncollection.bank.duplicate.candidate.readonly,model_ncollection_bank_duplicate_candidate,account.group_account_readonly,1,1,1,1
+access_batch_match_user,ncollection.bank.batch.match.user,model_ncollection_bank_batch_match,account.group_account_user,1,1,1,1

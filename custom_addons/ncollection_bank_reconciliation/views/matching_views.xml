@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Batch match wizard -->
+    <record id="batch_match_view_form" model="ir.ui.view">
+        <field name="name">ncollection.bank.batch.match.form</field>
+        <field name="model">ncollection.bank.batch.match</field>
+        <field name="arch" type="xml">
+            <form string="Match a payment batch">
+                <group>
+                    <field name="statement_line_id"/>
+                    <field name="journal_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="transaction_amount"/>
+                    <field name="batch_id" options="{'no_create': True}"/>
+                    <field name="batch_amount" invisible="not batch_id"/>
+                </group>
+                <footer>
+                    <button name="action_match" type="object" string="Add the batch" class="btn-primary o_nc_batch_add"/>
+                    <button special="cancel" string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_batch_match" model="ir.actions.act_window">
+        <field name="name">Match a payment batch</field>
+        <field name="res_model">ncollection.bank.batch.match</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Payment batches -->
+    <record id="payment_batch_view_list" model="ir.ui.view">
+        <field name="name">ncollection.bank.payment.batch.list</field>
+        <field name="model">ncollection.bank.payment.batch</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="journal_id"/>
+                <field name="payment_type"/>
+                <field name="payment_count"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="amount" sum="Total"/>
+                <field name="state" widget="badge" decoration-success="state == 'matched'" decoration-info="state == 'open'"/>
+            </list>
+        </field>
+    </record>
+    <record id="payment_batch_view_form" model="ir.ui.view">
+        <field name="name">ncollection.bank.payment.batch.form</field>
+        <field name="model">ncollection.bank.payment.batch</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="journal_id" options="{'no_create': True}"/>
+                            <field name="payment_type"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="company_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="payment_count"/>
+                            <field name="amount"/>
+                        </group>
+                    </group>
+                    <field name="payment_ids" options="{'no_create': True}">
+                        <list>
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="partner_id"/>
+                            <field name="memo"/>
+                            <field name="amount_signed" sum="Total"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_payment_batch" model="ir.actions.act_window">
+        <field name="name">Payment Batches</field>
+        <field name="res_model">ncollection.bank.payment.batch</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_payment_batch" name="Payment Batches" parent="account.menu_finance_entries"
+              action="action_payment_batch" sequence="72" groups="account.group_account_readonly"/>
+
+    <!-- Duplicate review -->
+    <record id="duplicate_review_view_form" model="ir.ui.view">
+        <field name="name">ncollection.bank.duplicate.review.form</field>
+        <field name="model">ncollection.bank.duplicate.review</field>
+        <field name="arch" type="xml">
+            <form string="Duplicate review" create="0">
+                <header>
+                    <button name="action_refresh" type="object" string="Search again" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="journal_id"/>
+                        <field name="candidate_count"/>
+                    </group>
+                    <p class="text-muted">
+                        Possible duplicates already booked: same date, amount and label, and no bank transaction id
+                        that tells them apart. Nothing is deleted here; remove a real duplicate from the transaction
+                        itself.
+                    </p>
+                    <field name="candidate_ids" class="o_nc_duplicate_candidates">
+                        <list create="0" delete="0">
+                            <field name="line_a_id"/>
+                            <field name="line_b_id"/>
+                            <field name="date"/>
+                            <field name="label"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="amount"/>
+                            <field name="a_reconciled"/>
+                            <field name="b_reconciled"/>
+                            <field name="reason"/>
+                            <button name="action_open_pair" type="object" string="Open" class="btn-link"/>
+                            <button name="action_not_duplicate" type="object" string="Not a duplicate"
+                                    class="btn-link o_nc_not_duplicate" groups="account.group_account_user"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- OFX in the import wizard's list of formats -->
+    <record id="account_statement_import_form_ofx" model="ir.ui.view">
+        <field name="name">account.statement.import.form.ncollection.ofx</field>
+        <field name="model">account.statement.import</field>
+        <field name="inherit_id" ref="account_statement_import_file.account_statement_import_form"/>
+        <field name="arch" type="xml">
+            <ul id="statement_format" position="inside">
+                <li>Open Financial Exchange (.ofx, .qfx)</li>
+            </ul>
+        </field>
+    </record>
+
+    <!-- Workspace header: early payment discount (only when Odoo's own eligibility test passes) and batch matching. -->
+    <record id="bank_statement_line_form_reconcile_view" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.ncollection</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_form_reconcile_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('o_account_reconcile_oca_statusbar')]/div[hasclass('o_statusbar_buttons')]" position="inside">
+                <field name="nc_early_discount_available" invisible="1"/>
+                <button name="action_nc_apply_early_discount" type="object" string="Apply early payment discount"
+                        class="btn-secondary o_nc_apply_discount" invisible="not nc_early_discount_available or is_reconciled"
+                        groups="account.group_account_user"/>
+                <button name="%(ncollection_bank_reconciliation.action_batch_match)d" type="action" string="Match a batch"
+                        class="btn-secondary o_nc_match_batch" invisible="is_reconciled"
+                        context="{'default_statement_line_id': id}" groups="account.group_account_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

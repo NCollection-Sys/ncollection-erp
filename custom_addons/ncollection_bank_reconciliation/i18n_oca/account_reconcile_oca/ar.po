@@ -1,0 +1,35 @@
+# Arabic for the Python messages of account_reconcile_oca, loaded by ncollection_bank_reconciliation/i18n_loader.py.
+msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/x.py:0
+msgid "No supense lines are allowed when reconciling"
+msgstr "لا يُسمح ببنود معلقة عند التسوية"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/x.py:0
+msgid "Reversal of: %s"
+msgstr "عكس: %s"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/x.py:0
+msgid "Undefined"
+msgstr "غير محدد"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/x.py:0
+msgid "Well done! Everything has been reconciled"
+msgstr "أحسنت! تمت تسوية كل شيء"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/x.py:0
+msgid "You can only reconcile journal items belonging to the same account."
+msgstr "لا يمكنك تسوية إلا بنود يومية تتبع الحساب نفسه."

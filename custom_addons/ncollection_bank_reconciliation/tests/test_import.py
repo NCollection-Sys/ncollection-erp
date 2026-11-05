@@ -129,8 +129,17 @@ class TestStatementImport(BankCommon):
         self.assertEqual(wiz.nc_preview_count, 2)
         self.assertIn('1 rows are in another currency', wiz.nc_preview_html)
         self.assertIn('Euro receipt', wiz.nc_preview_html)
+        self.assertIn('Total of the new transactions', wiz.nc_preview_html)
+        self.assertEqual(round(wiz.nc_new_total, 2), 179.5)
+        with self.assertRaises(UserError):
+            wiz.import_file_button()                     # all-or-nothing by default
+        self.assertFalse(self.lines(), 'nothing imported without an explicit decision')
+        wiz.nc_accept_partial = True
         wiz.import_file_button()
         lines = self.lines()
+        note = ' '.join(lines.sorted('id')[:1].move_id.message_ids.mapped('body'))
+        self.assertIn('Partial import accepted', note)
+        self.assertIn('1 rows in another currency left out', note)
         self.assertEqual(sorted(lines.mapped('amount')), [-120.5, 300.0])
         self.assertEqual(set(lines.mapped('ref')), {'PO-77', 'DEP-1'})
 

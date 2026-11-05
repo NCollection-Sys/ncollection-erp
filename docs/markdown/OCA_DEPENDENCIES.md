@@ -319,3 +319,47 @@ the wrapper, the Enterprise parity matrix and the acceptance evidence: **`docs/m
 * Infrastructure: both repos are in `repos.yml` and in all three `addons_path` copies (`config/odoo.conf`,
   `config/odoo.prod.conf`, `ci.yml`), which `invariants.py` now checks against the pins.
 * Python deps `xlrd` / `openpyxl`: already in the `odoo:19` image (verified), no image change.
+
+### Licence assessment — `ncollection_bank_reconciliation` (LGPL-3 declared) over AGPL-3 dependencies
+
+**What was inspected (2026-11-05, from the pinned manifests, not assumed):**
+
+| Dependency | Manifest licence |
+|---|---|
+| `account_reconcile_oca`, `account_statement_import_file_reconcile_oca`, `_camt`, `_sheet_file`, `_sheet_file_xlsx`, `_qif` | **AGPL-3** |
+| `account_statement_base`, `account_statement_import_base`, `account_statement_import_file` | LGPL-3 |
+
+**How our module relates to them (from the code):**
+* No OCA source is copied: every OCA file stays in `./oca`, unmodified, generated from the pins. Our module contains
+  only our own code. The OFX parser is original (the OCA OFX module was not used or read for it).
+* It **extends** AGPL-3 code at run time: `_inherit` of `account.bank.statement.line` (whose class gains the OCA
+  reconcile mixin), `account.statement.import.sheet.parser` (AGPL-3 module), XML `inherit_id` on the OCA reconcile form
+  and the import form, and calls of OCA methods (`add_multiple_lines`, `_recompute_suspense_line`, `reconcile_bank_line`).
+  In Odoo, inherited models are merged into one class at run time; the GNU licences' own FAQ treats such tight coupling
+  (shared data structures, in-process calls) as forming a single combined work.
+* It translates OCA texts (view / field terms by XML id, Python messages through `i18n_loader.py`); translations are
+  our own work.
+
+**What follows, with confidence:**
+1. LGPL-3 code may be combined with AGPL-3 code (GPL-3 family; LGPL-3 §2 and AGPL-3 §13 allow it), so declaring our own
+   files LGPL-3 is not itself a licence violation: we hold the copyright on them and LGPL-3 is AGPL-compatible.
+2. The **combined program that runs** (Odoo + the AGPL-3 OCA modules + our modules that extend them) is subject to the
+   AGPL-3 terms of its AGPL parts. AGPL-3 §13: when the program is modified and users interact with it over a network,
+   the operator must offer those users the Corresponding Source of the running version. A hosted, multi-tenant
+   NCollection **is** network interaction.
+3. This obligation already existed before this module (seven AGPL-3 OCA modules were already pinned: `auditlog`,
+   `account_asset_management`, `mis_builder`, `account_financial_report`, `report_xlsx`, `auth_session_timeout`,
+   `helpdesk_mgmt`); this module does not create it, it adds more AGPL-3 modules and one more extending module to it.
+
+**What cannot be settled here, and is therefore flagged for QUALIFIED LEGAL REVIEW before any external commercial
+deployment:**
+* whether our modules that extend AGPL-3 modules (now `ncollection_bank_reconciliation`, earlier
+  `ncollection_account_assets`, `ncollection_mis_templates`, `ncollection_helpdesk`, `ncollection_audit`) are a
+  "modified version" whose source must be offered to tenants under §13 (the conservative reading, and OCA's own
+  convention of licensing modules that depend on AGPL modules as AGPL-3), or separate works that only call them;
+* how NCollection will meet §13 in practice (for example a "Source code" link for tenant users to the exact running
+  revision of the AGPL modules and of the modules that extend them), and whether that is commercially acceptable;
+* whether the manifest licence of the extending modules should become `AGPL-3`. It has **not** been changed: changing
+  it is a business and legal decision with consequences for proprietary code, not a metadata fix.
+
+Local development and the local release are unaffected; nothing here is distributed or offered to third parties yet.

@@ -85,29 +85,41 @@ it remains a legal question this work did not settle.
 
 ## 5. Functional parity with Odoo 19 Enterprise (documentation: bank/transactions, reconciliation, reconciliation_models)
 
-| Enterprise behaviour | Community before | Now | Evidence |
-|---|---|---|---|
-| Journal card *Transactions* opens Bank Matching | empty statement list | **YES** OCA workspace, journal-filtered | browser: card + workspace, 5 = 5 lines |
-| *Not Matched* filter / all lines incl. reconciled | — | **YES** *To Reconcile* (4) / *Transactions* (5) | browser |
-| Split view: list left, matching right, global balance | — | **YES** (OCA layout, `Global Balance` 3,575.00 AED = ledger) | screenshot |
-| Manual transaction (*New*: date, label, partner, amount) | statement form only | **YES** card *New* | browser + test |
-| Upload CAMT.053 / CSV / XLSX / QIF | none | **YES** with preview | tests 2, 12, CAMT, CSV |
-| Upload OFX / CODA | — | **NO** — no 19.0 OCA module | limitation |
-| Drag-and-drop a file on the card | — | **NO** — *Upload* link instead | limitation |
-| Match invoices, bills, payments, outstanding items | — | **YES** | tests 3-8, browser |
-| Partial / one-to-many / many-to-one / overpayment / underpayment | — | **YES** | tests 4-7 |
-| Set Account (write-off), bank fees, interest | — | **YES** | tests 1, 9 |
-| Receivable / Payable (unallocated) | — | **YES** | tests 7, 8 |
-| Exchange difference | — | **YES** booked once | test 10 |
-| Internal transfer via transfer account | — | **YES** no revenue/expense | test 11 |
-| Undo (unreconcile) | — | **YES** audited | test 13, browser |
-| Reconciliation models: manual buttons, automatic, journals / partners / amount / label conditions, counterpart lines (fixed, %, regex) | native models, no UI to apply | **YES** (OCA applies native `account.reconcile.model`) | test 9, OCA suite |
-| Automatic matching never posts an ambiguous match | — | **YES** | `test_automatic_matching_never_posts_an_ambiguous_match` |
-| *To check* flag | — | **YES** (OCA) | OCA suite |
-| Match against **Sales Orders**, **Batch payments**, **Upload bills (digitisation)** | — | **NO** — Enterprise / IAP features | limitation |
-| *Find Duplicate Transactions* (after the fact) | — | **PARTIAL** — duplicates are refused at import; no after-the-fact finder | limitation |
-| Bank synchronisation (Ponto, Plaid…) | — | **NO** — needs a provider contract; not offered | limitation |
-| Early-payment discount suggestion | — | **NOT VERIFIED** | limitation |
+Status words: **VERIFIED** = implemented and proven (automated test and/or browser); **EXTERNAL** = needs a provider
+contract or a separately licensed service; **NOT IMPLEMENTED** / **NOT VERIFIED** = said as such.
+
+| Feature | Enterprise reference | OCA support | NCollection implementation | Test evidence | Remaining limitation |
+|---|---|---|---|---|---|
+| Card *Transactions* → Bank Matching | journal card | workspace (`account_reconcile_oca`) | button routed to the workspace | browser 17-suite | — **VERIFIED** |
+| All lines incl. reconciled / *Not Matched* | filter | yes | *Transactions* / *To Reconcile* | browser | — **VERIFIED** |
+| Split view, global balance | yes | yes | OCA layout + phone layout | browser EN/AR/375 px | — **VERIFIED** |
+| Manual transaction (*New*) | yes | form | card *New* | browser | — **VERIFIED** |
+| Import CAMT.053 | yes | `_camt` | + exact account, dedup fingerprint (CAMT had none) | `test_camt053_*` | — **VERIFIED** |
+| Import CSV / XLSX with mapping | yes | `_sheet_file(_xlsx)` | + preview, totals, all-or-nothing on other-currency rows | `test_csv_*` | — **VERIFIED** |
+| Import QIF | yes | `_qif` | + company-currency journals | `test_02`, `test_12`, browser | — **VERIFIED** |
+| Import OFX / QFX | yes | **none on 19.0** (PR #924 open, needs `ofxparse`) | own dependency-free parser, FITID dedup, strict | `test_ofx_*` | — **VERIFIED** |
+| Import CODA (Belgium) | yes | none on 19.0 (Community / OCA `l10n-belgium`) | refused with a clear "format not supported" | `test_ofx_malformed_or_foreign_files_are_refused_whole` | **NOT IMPLEMENTED**: no 19.0 module, no openly licensed reference sample to verify a parser against; no market need in GCC/Egypt |
+| Drag-and-drop file on the card / workspace | yes | no | *Upload* button | — | **NOT IMPLEMENTED** (UX convenience; Upload covers the function) |
+| Preview before import | test-before-import for CSV | no | every format, exact file (SHA-256) | tests + browser | — **VERIFIED** |
+| Duplicate prevention at import | yes | id-based only | bank id or fingerprint | `test_12`, `test_ofx_*`, `test_camt_*` | — **VERIFIED** |
+| *Find Duplicate Transactions* (after the fact) | yes | no | Duplicate review: explained candidates, *Not a duplicate*, never deletes | `test_duplicate_review_*`, browser | deletion of a real duplicate stays the standard Odoo action — **VERIFIED** |
+| Match invoices / bills / payments / outstanding items | yes | yes | + locking, no double use | tests 3-8, browser | — **VERIFIED** |
+| Partial / many-to-one / one-to-many | yes | yes | — | tests 4-6 | — **VERIFIED** |
+| Overpayment → customer credit; vendor advance | yes | partial (stuck Validate) | remainder on the partner's account is bookable | tests 7-8 | — **VERIFIED** |
+| Set Account / write-off / bank fees / interest | yes | yes | — | tests 1, 9; browser (Bank Fees model) | — **VERIFIED** |
+| Internal transfer | Internal Transfers model | yes | — | test 11; browser (both legs, transfer account nets 0) | — **VERIFIED** |
+| Exchange difference | yes | yes (Odoo exchange entries) | independent audit, 9 scenarios | `TestForeignCurrencyAudit`; browser | — **VERIFIED** |
+| Early-payment discount | suggested amount | **none** | Odoo's own discount computation (base / tax / exchange), only inside the window, only the exact discounted total | `test_early_discount_*` (included, excluded, refused cases); browser | `mixed` computation and multi-currency discounts not separately tested — **VERIFIED for included / excluded, same currency** |
+| Batch payments | `account_batch_payment` | none on 19.0 | `ncollection.bank.payment.batch` + *Match a batch* | `test_batch_*`; browser | no bank-file (SEPA/ISO) generation for batches — **VERIFIED for matching** |
+| Sales orders in the matching | match orders → invoice | no | **NOT IMPLEMENTED**: invoice first, then match; the SO reference in a label is matched by label like any reference | — | **NOT IMPLEMENTED** |
+| Upload bills for digitisation (OCR) | IAP service | no | — | — | **EXTERNAL** (Odoo IAP / OCR provider) |
+| Bank synchronisation (Ponto, Plaid, …) | Odoo online sync | `_online_*` providers (not installed) | not offered; card text says so | — | **EXTERNAL** (provider contract + credentials) |
+| Reconciliation models: manual / automatic, journals, partners, amount, label (contains / regex), counterparts fixed / % / regex | yes | yes (native models) | — | test 9, OCA suite, ambiguous-match test | — **VERIFIED** |
+| Never auto-post an ambiguous match | implicit | yes | — | `test_automatic_matching_never_posts_an_ambiguous_match` | — **VERIFIED** |
+| *To check* | yes | yes | — | OCA suite | — **VERIFIED (OCA)** |
+| Undo | yes | yes (stale data bug) | fixed + audited | test 13, FX audit, browser | — **VERIFIED** |
+| Concurrent matching | n/a | no | `NOWAIT` locks | two real sessions | — **VERIFIED** |
+| Arabic UI | yes | 0 % | 310 interface + 56 Python messages | browser AR, `test_oca_python_messages_have_arabic` | the two CAMT schema codes stay as identifiers |
 
 ## 6. Accounting acceptance (disposable fixtures; every figure read back from Odoo's own fields)
 
@@ -132,6 +144,31 @@ it remains a legal question this work did not settle.
 | 17 | Cash journal | +200 on cash |
 | 18 | Arabic / English / mobile | browser suite |
 
+## 6a. Independent foreign-currency audit (OCA/account-reconcile#995)
+
+Fixture: company **AED**, bank journal **EUR**, transaction EUR, invoice EUR; rates set per date (D1 1 EUR = 4.00 AED,
+D2 1 EUR = 4.40 AED); every expected figure computed by hand. `tests/test_fx_audit.py`, 9/9. Actual entries (excerpt
+of the `FXAUDIT` output):
+
+| # | Scenario | Expected | Actual entries | Result |
+|---|---|---|---|---|
+| 1 | same rate (invoice and receipt on D2) | no exchange entry | bank 101407 +440.00 / 100 EUR; receivable −440.00 / −100 EUR; **no EXCH entry** | PASS |
+| 2 | invoice D1 (400.00), receipt D2 (440.00) | gain 40.00 once | bank +440.00; receivable −440.00; EXCH: receivable +40.00 / gain 441000 −40.00 | PASS |
+| 3 | invoice D2, receipt D1 | loss 40.00 once | EXCH: receivable −40.00 / loss 641000 +40.00 | PASS |
+| 4 | partial: 60 of 100 EUR | gain 24.00; 40 EUR / 160.00 AED open | bank +264.00 / 60 EUR; EXCH +24.00 / −24.00; invoice residual 160.00 / 40.00 | PASS |
+| 5 | repeated attempt | refused, still 40.00 | one EXCH entry | PASS |
+| 6 | undo, then rematch | 0 after undo, 40.00 after rematch | EXCH/0001 (+40), EXCH/0002 its reversal, EXCH/0003 (+40): net 40.00, nothing deleted | PASS |
+| 7 | 50 EUR on D1 + 50 EUR on D2 | gain 20.00 | first receipt no EXCH; second +20.00 | PASS |
+| 8 | AED bank receives 440 AED for the EUR invoice | gain 40.00 | bank 101405 +440.00 AED; receivable −440.00 / −100 EUR; EXCH 40.00 | PASS |
+| 9 | ledger | bank 440 = income 400 + gain 40; receivable 0; suspense 0 | `{'101407': 440.0, '400000': -400.0, '441000': -40.0, '121000': 0.0}` | PASS |
+
+**Conclusion.** On this pin and in `edit` mode (the default) the engine books **no** exchange line in the bank entry
+at all: the realised difference is Odoo's own exchange entry created by `reconcile()`, once, reversed (not deleted) on
+undo. The case the issue describes (statement, journal and document in the same foreign currency at the same rate) produces
+**no** exchange entry (scenario 1). The issue's reported path (`_compute_exchange_rate` adding an exchange counterpart
+inside the bank entry) was not reproduced with these fixtures; it remains an upstream report this audit neither confirms
+nor needs a workaround for. The browser suite repeats scenario 2 and 6 through the UI (gain 40.00; undo 0; rematch 40.00).
+
 ## 7. Security (Option A unchanged)
 
 * Write = `account.group_account_user` (Owner and Accountant through their roles); CEO / readonly: no *New* /
@@ -141,16 +178,28 @@ it remains a legal question this work did not settle.
   source) are reads / a non-financial flag.
 * Record rules: OCA's multi-company rule on its reconcile data; statement lines follow core's company rules.
 
-## 8. Release matrix and rehearsal
+## 8. Release matrix (all ten databases of the authorised scope; versions read on the shared server, read-only)
 
-Per database of the release scope (module states read on the shared server, read-only, 2026-11-05):
+Target versions: `ncollection_core` 1.28.0, `ncollection_account_core` 1.13.0, `ncollection_account_reports` 1.14.0,
+`ncollection_account_dashboard` 1.6.0, `ncollection_branding` 1.19.0, `ncollection_subscription` 1.19.0,
+`ncollection_dashboard_export` 1.1.0 (**`-i`**, needs `spreadsheet_dashboard`), `ncollection_bank_reconciliation`
+1.1.0 (**`-i`**, needs `ncollection_account_core`; pulls the nine OCA modules). Today every database is at core 1.27.0,
+account_core 1.12.0, reports 1.12.0, dashboard 1.3.0, branding 1.18.0, subscription 1.18.0.
 
-| Database | Accounting | Bank / cash journals | Statement lines today | Bank release |
+| Database | `-u` (from → to) | `-i` | Arabic reload | Notes |
 |---|---|---|---|---|
-| `ncollection` | tenant accounting | 5 (Ahly, **Misr**, Main Cash, NCollection cash, Tabby) | 0 | `-i ncollection_bank_reconciliation` |
-| `e2euae` (protected e-invoices) | tenant accounting | 1 | 0 | `-i` |
-| `e2eclienta`, `atlas`, `test15`, `einvdev`, `einvfull` | tenant accounting | 1 each | 0 | `-i` |
-| `saastest` (platform), `e2eclientb` (no `ncollection_account_core`), `e2eadmin` (no Accounting) | — | — | — | not installed |
+| `ncollection` | core, account_core, account_reports, account_dashboard, branding, subscription | dashboard_export, **bank_reconciliation** | ncollection_* + account_reconcile_oca | 5 bank/cash journals incl. Misr Bank; 0 statement lines; rehearsed |
+| `e2euae` (protected) | core, account_core, branding | dashboard_export, **bank_reconciliation** | same | 3 e-invoices identical after rehearsal |
+| `e2eclienta` | core, account_core, account_reports, account_dashboard, branding | dashboard_export, **bank_reconciliation** | same | same module set as `atlas` (rehearsed) |
+| `atlas` | core, account_core, account_reports, account_dashboard, branding | dashboard_export, **bank_reconciliation** | same | rehearsed |
+| `test15` | as `atlas` | dashboard_export, **bank_reconciliation** | same | — |
+| `einvdev`, `einvfull` | core, account_core, branding | dashboard_export, **bank_reconciliation** | same | as `e2euae` |
+| `saastest` (platform) | core, branding, subscription | dashboard_export | ncollection_* | **no bank module** (no tenant accounting) |
+| `e2eclientb` | core, branding | dashboard_export | ncollection_* | **no bank module** (no `ncollection_account_core`) |
+| `e2eadmin` | core, branding, subscription | — (no `spreadsheet_dashboard`) | ncollection_* | **no bank module** (no Accounting) |
+
+Prerequisites for every database: `make oca` with the two new repositories, the three `addons_path` entries, a verified
+backup. Never `-u all`.
 
 Zero statement lines everywhere: the empty *Transactions* list the user saw was simply the empty statement list; there
 is no transaction data to migrate.

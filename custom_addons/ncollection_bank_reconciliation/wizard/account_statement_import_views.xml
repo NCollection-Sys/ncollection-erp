@@ -9,6 +9,11 @@
             <field name="statement_filename" position="after">
                 <field name="nc_preview_checksum" invisible="1"/>
                 <field name="nc_preview_count" invisible="1"/>
+                <field name="nc_skipped_count" invisible="1"/>
+                <div class="mt-2 o_nc_accept_partial" invisible="not nc_skipped_count">
+                    <field name="nc_accept_partial"/>
+                    <label for="nc_accept_partial"/>
+                </div>
                 <div class="o_nc_import_preview_wrap mt-3" invisible="not nc_preview_html">
                     <field name="nc_preview_html" nolabel="1"/>
                 </div>
