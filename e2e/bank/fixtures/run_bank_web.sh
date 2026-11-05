@@ -19,7 +19,7 @@ DB=uxbankweb
 REPOS=(account-financial-reporting account-financial-tools mis-builder reporting-engine queue server-auth server-tools
        server-ux helpdesk account-reconcile bank-statement-import)
 AP="/mnt/extra-addons$(printf ',/mnt/oca/%s' "${REPOS[@]}")"
-MODS=sale,purchase,ncollection_core,ncollection_branding,ncollection_account_core,ncollection_account_reports,ncollection_account_dashboard,ncollection_bank_reconciliation
+MODS=sale,purchase,ncollection_core,ncollection_branding,ncollection_account_core,ncollection_account_reports,ncollection_account_dashboard,ncollection_bank_reconciliation,ncollection_bank_reconciliation_sale
 C=(--db_host=db --db_user=odoo --db_password=odoo --data-dir=/tmp/od --max-cron-threads=0 "--addons-path=$AP")
 V=(-v "${DB}_fs:/tmp/od" -v "$A:/mnt/extra-addons:ro" -v "$O:/mnt/oca:ro")
 docker rm -f "${DB}_runner" >/dev/null 2>&1
@@ -35,7 +35,8 @@ grep -a "ERROR\|CRITICAL\|Some modules" "$LOG_DIR/uxbankweb.install.log" | head 
 echo "== seed"
 run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < "$HERE/bank_fixture.py" 2>&1 | grep -a "Traceback\|Error\|BANKFIX"
 run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < "$HERE/bank_fixture_gaps.py" 2>&1 | grep -a "Traceback\|Error\|GAPFIX"
-printf "mods=env['ir.module.module'].search([('name','in',['ncollection_bank_reconciliation','account_reconcile_oca'])])\nmods._update_translations(['ar_001'])\nenv.registry.clear_all_caches()\nenv.cr.commit()\nprint('TR')\n" \
+run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < "$HERE/bank_fixture_sales.py" 2>&1 | grep -a "Traceback\|Error\|SALESFIX"
+printf "mods=env['ir.module.module'].search([('name','in',['ncollection_bank_reconciliation','ncollection_bank_reconciliation_sale','account_reconcile_oca'])])\nmods._update_translations(['ar_001'])\nenv.registry.clear_all_caches()\nenv.cr.commit()\nprint('TR')\n" \
   | run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error 2>&1 | grep -a "TR\|Error" | head -3
 echo "== serve"
 MSYS_NO_PATHCONV=1 docker run -d --name "${DB}_runner" --memory 2000m --network bridge -p 8169:8069 "${V[@]}" odoo:19 \

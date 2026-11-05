@@ -1,0 +1,307 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* ncollection_bank_reconciliation_sale
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0-20260609\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-05 15:27+0000\n"
+"PO-Revision-Date: 2026-11-05 15:27+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "%(order)s already has a draft invoice (%(invoices)s). Post or cancel it first: a second invoice would bill the same lines twice."
+msgstr "لدى %(order)s فاتورة مسودة بالفعل (%(invoices)s). رحّلها أو ألغها أولاً: فالفاتورة الثانية ستحاسب البنود نفسها مرتين."
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "%(order)s belongs to another customer or company than the transaction."
+msgstr "%(order)s يتبع عميلاً أو شركة غير عميل المعاملة وشركتها."
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "%(order)s has nothing left to invoice (it is already invoiced, or nothing is ready to invoice)."
+msgstr "لم يبقَ في %(order)s ما يُفوتَر (فهو مفوتر بالفعل، أو لا شيء جاهز للفوترة)."
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "%(order)s is not a confirmed sales order."
+msgstr "%(order)s ليس أمر بيع مؤكداً."
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "A down payment is created for one sales order at a time."
+msgstr "تُنشأ الدفعة المقدمة لأمر بيع واحد في كل مرة."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation_sale.sale_match_view_form
+msgid "Add their posted invoices"
+msgstr "إضافة فواتيرها المرحّلة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__amount_invoiced
+msgid "Already invoiced"
+msgstr "المفوتر سابقاً"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__transaction_amount
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model,name:ncollection_bank_reconciliation_sale.model_ncollection_bank_sale_match_line
+msgid "Bank Matching: Sales Order Candidate"
+msgstr "مطابقة البنك: أمر بيع مرشح"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model,name:ncollection_bank_reconciliation_sale.model_ncollection_bank_sale_match
+msgid "Bank Matching: Sales Orders"
+msgstr "مطابقة البنك: أوامر البيع"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation_sale.sale_match_view_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation_sale.sale_match_view_form
+msgid "Create invoice"
+msgstr "إنشاء فاتورة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__create_uid
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "Created from the bank matching workspace for the bank transaction %(name)s by %(user)s."
+msgstr "أنشأها %(user)s من مساحة المطابقة البنكية للمعاملة البنكية %(name)s."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__create_date
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "Creating a down payment needs the Sales user right as well; ask a sales user or an administrator."
+msgstr "إنشاء دفعة مقدمة يتطلب صلاحية مستخدم المبيعات أيضاً؛ اطلب ذلك من مستخدم مبيعات أو من المسؤول."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,help:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__date_order
+msgid "Creation date of draft/sent orders,\nConfirmation date of confirmed orders."
+msgstr "تاريخ إنشاء الأوامر المسودة/المرسلة،\nوتاريخ تأكيد الأوامر المؤكدة."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__currency_id
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__partner_id
+msgid "Customer"
+msgstr "العميل"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__display_name
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__percentage
+msgid "Down payment (%)"
+msgstr "الدفعة المقدمة (%)"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields.selection,name:ncollection_bank_reconciliation_sale.selection__ncollection_bank_sale_match__method__fixed
+msgid "Down payment (fixed amount)"
+msgstr "دفعة مقدمة (مبلغ ثابت)"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields.selection,name:ncollection_bank_reconciliation_sale.selection__ncollection_bank_sale_match__method__percentage
+msgid "Down payment (percentage)"
+msgstr "دفعة مقدمة (نسبة مئوية)"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__fixed_amount
+msgid "Down payment amount"
+msgstr "مبلغ الدفعة المقدمة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__id
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__method
+msgid "Invoice"
+msgstr "الفاتورة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__invoice_status
+msgid "Invoice Status"
+msgstr "حالة الفوترة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__currency_id
+msgid "Journal Currency"
+msgstr "عملة اليومية"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__write_uid
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__write_date
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__line_ids
+msgid "Line"
+msgstr "السطر"
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "Nothing could be invoiced for the selected orders."
+msgstr "تعذّرت فوترة أي شيء من الأوامر المحددة."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,help:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__post
+msgid "Off: the invoice stays a draft for review. On: it is posted (normal Odoo posting) and its receivable item is added to this transaction, which you still validate."
+msgstr "إيقاف: تبقى الفاتورة مسودة للمراجعة. تشغيل: تُرحَّل (الترحيل العادي) ويُضاف بند الذمم المدينة إلى هذه المعاملة، وتظل أنت من يعتمدها."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__order_id
+msgid "Order"
+msgstr "الأمر"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__order_currency_id
+msgid "Order Currency"
+msgstr "عملة الأمر"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__date_order
+msgid "Order Date"
+msgstr "تاريخ الأمر"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__other_currency
+msgid "Other Currency"
+msgstr "عملة أخرى"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__partner_id
+msgid "Partner"
+msgstr "الشريك"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__post
+msgid "Post the invoice and add it to the transaction"
+msgstr "ترحيل الفاتورة وإضافتها إلى المعاملة"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields.selection,name:ncollection_bank_reconciliation_sale.selection__ncollection_bank_sale_match__method__delivered
+msgid "Regular invoice"
+msgstr "فاتورة عادية"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation_sale.bank_statement_line_form_reconcile_sales
+msgid "Sales"
+msgstr "المبيعات"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.actions.act_window,name:ncollection_bank_reconciliation_sale.action_sale_match
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation_sale.sale_match_view_form
+msgid "Sales orders"
+msgstr "أوامر البيع"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__selected
+msgid "Selected"
+msgstr "محدد"
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "Set the customer on the transaction first."
+msgstr "حدّد العميل في المعاملة أولاً."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match__statement_line_id
+msgid "Statement Line"
+msgstr "معاملة الكشف"
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "The bank transaction %(name)s is already reconciled."
+msgstr "المعاملة البنكية %(name)s مسوّاة بالفعل."
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "The selected orders have no posted, unpaid invoice to match."
+msgstr "ليس لدى الأوامر المحددة فاتورة مرحّلة وغير مسددة للمطابقة."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation_sale.sale_match_view_form
+msgid "This customer has no confirmed sales order."
+msgstr "ليس لهذا العميل أي أمر بيع مؤكد."
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "Tick at least one sales order."
+msgstr "حدّد أمر بيع واحداً على الأقل."
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__amount_total
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__amount_to_invoice
+msgid "Un-invoiced Balance"
+msgstr "الرصيد غير المفوتر"
+
+#. module: ncollection_bank_reconciliation_sale
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation_sale.field_ncollection_bank_sale_match_line__wizard_id
+msgid "Wizard"
+msgstr "المعالج"
+
+#. module: ncollection_bank_reconciliation_sale
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation_sale/wizard/sale_match.py:0
+msgid "You do not have the right to create invoices."
+msgstr "ليست لديك صلاحية إنشاء الفواتير."

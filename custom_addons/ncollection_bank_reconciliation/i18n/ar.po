@@ -1844,3 +1844,37 @@ msgstr "CAMT مضغوط"
 #: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_ncollection_bank_payment_batch__rating_ids
 msgid "Ratings"
 msgstr "التقييمات"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "%(file)s is empty."
+msgstr "الملف %(file)s فارغ."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-javascript
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/static/src/js/bank_drop.js:0
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "%(file)s is larger than %(limit)s MB, the most that can be imported at once."
+msgstr "حجم الملف %(file)s أكبر من %(limit)s ميغابايت، وهو الحد الأقصى للاستيراد دفعة واحدة."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-javascript
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/static/src/js/bank_drop.js:0
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "%(file)s is not a bank statement file. Accepted: %(types)s."
+msgstr "الملف %(file)s ليس ملف كشف بنكي. الأنواع المقبولة: %(types)s."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-javascript
+#: code:addons/ncollection_bank_reconciliation/static/src/js/bank_drop.js:0
+msgid "Drop one statement file at a time."
+msgstr "أفلت ملف كشف واحداً في كل مرة."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_journal.py:0
+msgid "The dropped file could not be read."
+msgstr "تعذّرت قراءة الملف الذي أُفلت."

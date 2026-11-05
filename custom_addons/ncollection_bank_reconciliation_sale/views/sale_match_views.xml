@@ -27,11 +27,12 @@
                 <field name="line_ids" class="o_nc_sale_orders" nolabel="1">
                     <list editable="bottom" create="0" delete="0">
                         <field name="selected" widget="boolean_toggle"/>
-                        <field name="order_id"/>
-                        <field name="date_order"/>
-                        <field name="partner_id"/>
-                        <field name="currency_id"/>
-                        <field name="other_currency" column_invisible="1"/>
+                        <!-- force_save: a readonly field of a NEW row is otherwise not sent back, and the row has no order -->
+                        <field name="order_id" force_save="1" readonly="1"/>
+                        <field name="date_order" readonly="1"/>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="currency_id" readonly="1"/>
+                        <field name="other_currency" readonly="1" widget="boolean"/>
                         <field name="amount_total"/>
                         <field name="amount_invoiced"/>
                         <field name="amount_to_invoice"/>

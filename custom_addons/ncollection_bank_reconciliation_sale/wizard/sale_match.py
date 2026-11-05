@@ -75,7 +75,9 @@ class SaleMatch(models.TransientModel):
         return [{
             'order_id': order.id,
             # an order named in the bank reference is ticked for the user; the rest are the user's choice
-            'selected': order in mentioned and order.invoice_status == 'to invoice',
+            # (also when it is already invoiced: "Add their posted invoices" is then one click, and Create invoice
+            # explains why it refuses)
+            'selected': order in mentioned,
         } for order in orders]
 
     # -------------------------------------------------------------- actions
