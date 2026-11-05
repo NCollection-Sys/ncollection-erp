@@ -23,7 +23,9 @@ const round = (x) => Math.round(x * 100) / 100;
 
 const OWNER = { user: 'owner_bank', password: 'Owner-Bank-Pass1!', company: 1 };
 const CEO = { user: 'ceo_bank', password: 'Ceo-Bank-Pass1!', company: 1 };
-const QIF = fs.readFileSync(path.join(__dirname, 'fixtures', 'misr_march.qif'), 'utf8');
+// unique per run: the other suites already uploaded misr_march.qif, and a duplicate file imports nothing (correctly)
+const UNIQ = (Date.now() % 100000) / 100;
+const QIF = `!Type:Bank\nD11/03/26\nT-${(10 + UNIQ).toFixed(2)}\nPDrop test ${Date.now()}\n^\nD11/04/26\nT${(20 + UNIQ).toFixed(2)}\nPDrop test credit ${Date.now()}\n^\n`;
 
 async function stLine(page, label) {
   return (await rpc(page, 'account.bank.statement.line', 'search_read', [[['payment_ref', 'like', label]]],
