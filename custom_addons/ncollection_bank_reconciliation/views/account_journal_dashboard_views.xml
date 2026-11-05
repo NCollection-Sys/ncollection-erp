@@ -26,6 +26,9 @@
                 <a type="object" name="action_nc_bank_upload">Upload</a>
             </xpath>
             <xpath expr="//div[@id='dashboard_bank_cash_left']" position="inside">
+                <!-- Marks the card as a drop target for a statement file (static/src/js/bank_drop.js). -->
+                <span class="o_nc_bank_drop_hint d-none" t-att-data-journal-id="record.id.raw_value"
+                      t-att-data-journal-type="journal_type"/>
                 <div class="o_nc_bank_nav d-flex flex-wrap gap-2 mt-2 small">
                     <a type="object" name="action_nc_bank_to_reconcile" class="o_nc_bank_nav_to_reconcile">To Reconcile</a>
                     <a type="object" name="action_nc_bank_statements" class="o_nc_bank_nav_statements">Statements</a>

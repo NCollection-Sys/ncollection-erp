@@ -4,6 +4,8 @@ Each entry point is a journal method so the journal is always ``self`` (never an
 and each one returns an action scoped to that journal. Transactions includes reconciled lines; To Reconcile is the
 same workspace filtered to what still needs matching; Statements stays the separate native statement list.
 """
+import base64
+
 from odoo import models
 from odoo.exceptions import UserError
 
@@ -75,6 +77,26 @@ class AccountJournal(models.Model):
         action = self.env['ir.actions.act_window']._for_xml_id('ncollection_bank_reconciliation.action_payment_batch')
         action['domain'] = [('journal_id', '=', journal.id)]
         action['context'] = {'default_journal_id': journal.id}
+        return action
+
+    def action_nc_bank_drop(self, filename, content_b64):
+        """A file dropped on the journal card or on the matching workspace. It goes through the SAME wizard as the
+        Upload button, with the same server-side checks, and only opens it with the file in place: nothing is
+        parsed, previewed or imported here. The user still presses Preview, sees the totals, and presses Import."""
+        journal = self._nc_bank_journal()
+        if journal.type != 'bank':
+            raise UserError(self.env._("Statement files can only be imported into a bank journal."))
+        journal.env['account.bank.statement.line'].check_access('create')
+        try:
+            raw = base64.b64decode(content_b64 or '', validate=True)
+        except (ValueError, TypeError):
+            raise UserError(self.env._("The dropped file could not be read.")) from None
+        wizard_model = self.env['account.statement.import']
+        wizard_model._nc_check_upload(filename, len(raw))
+        action = journal.action_nc_bank_upload()
+        wizard = wizard_model.with_context(**action['context']).create({
+            'statement_file': content_b64, 'statement_filename': filename})
+        action.update(res_id=wizard.id, view_mode='form', views=[(False, 'form')])
         return action
 
     def import_account_statement(self):

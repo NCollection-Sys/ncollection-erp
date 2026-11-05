@@ -64,3 +64,10 @@
         }
     }
 }
+
+// A statement file is being dragged over a journal card or the matching workspace.
+.o_nc_drop_active {
+    outline: 2px dashed var(--nc-color-primary, #1f5f8b);
+    outline-offset: -2px;
+    background-color: color-mix(in srgb, var(--nc-color-primary, #1f5f8b) 6%, transparent);
+}

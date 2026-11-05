@@ -22,11 +22,18 @@ from collections import Counter
 
 from markupsafe import Markup, escape
 
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import formatLang
 
 from odoo.addons.base.models.res_bank import sanitize_account_number
+
+
+# What the importer reads (CSV / XLSX, CAMT.053 as .xml or .camt, QIF, OFX / QFX, and a zip of CAMT files) and how large a
+# file may be. Enforced on the server for EVERY way a file arrives (the Upload button, the Accounting menu, a drag and
+# drop): the browser's own checks are a convenience, never the control.
+NC_UPLOAD_EXTENSIONS = ('.csv', '.xlsx', '.xml', '.camt', '.qif', '.ofx', '.qfx', '.zip')
+NC_UPLOAD_MAX_BYTES = 10 * 1024 * 1024
 
 
 class AccountStatementImport(models.TransientModel):
@@ -41,6 +48,27 @@ class AccountStatementImport(models.TransientModel):
         string='Import only the rows in the journal currency',
         help='The file has rows in another currency. By default nothing is imported; tick this to import the rows in '
              'the journal currency only. The left-out rows are recorded on the statement.')
+
+    # ------------------------------------------------------------- upload checks
+    @api.model
+    def _nc_check_upload(self, filename, size):
+        """Refuse a file that is too large or not a statement format, before anything reads it."""
+        name = (filename or '').strip().lower()
+        if not name.endswith(NC_UPLOAD_EXTENSIONS):
+            raise UserError(self.env._(
+                "%(file)s is not a bank statement file. Accepted: %(types)s.",
+                file=filename or '?', types=', '.join(NC_UPLOAD_EXTENSIONS)))
+        if size > NC_UPLOAD_MAX_BYTES:
+            raise UserError(self.env._(
+                "%(file)s is larger than %(limit)s MB, the most that can be imported at once.",
+                file=filename, limit=NC_UPLOAD_MAX_BYTES // (1024 * 1024)))
+        if not size:
+            raise UserError(self.env._("%(file)s is empty.", file=filename))
+
+    def _nc_check_own_file(self):
+        self.ensure_one()
+        if self.statement_file:
+            self._nc_check_upload(self.statement_filename, len(base64.b64decode(self.statement_file)))
 
     # ------------------------------------------------------------- parsing
     def _parse_file(self, data_file):
@@ -139,6 +167,7 @@ class AccountStatementImport(models.TransientModel):
 
     def action_nc_preview(self):
         self.ensure_one()
+        self._nc_check_own_file()
         rows, skipped = self._nc_preview_rows()
         new = [r for r in rows if not r['duplicate']]
         currency = rows[0]['currency']
@@ -183,6 +212,7 @@ class AccountStatementImport(models.TransientModel):
         # Every user-facing entry point (the journal card's Upload and the Accounting menu action) sets
         # nc_require_preview; a programmatic import (an OCA test, a script) creates the wizard without it.
         if self.env.context.get('nc_require_preview') or self.nc_preview_checksum:
+            self._nc_check_own_file()
             if self.nc_preview_checksum != self._nc_checksum():
                 raise UserError(self.env._("Preview this file before importing it (the file changed or was not "
                                            "previewed)."))

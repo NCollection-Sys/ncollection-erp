@@ -39,6 +39,9 @@
         'wizard/account_statement_import_views.xml',
     ],
     'assets': {
-        'web.assets_backend': ['ncollection_bank_reconciliation/static/src/scss/bank_card.scss'],
+        'web.assets_backend': [
+            'ncollection_bank_reconciliation/static/src/scss/bank_card.scss',
+            'ncollection_bank_reconciliation/static/src/js/bank_drop.js',
+        ],
     },
 }
