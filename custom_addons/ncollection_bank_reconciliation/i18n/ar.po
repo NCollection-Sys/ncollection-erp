@@ -13,8 +13,14 @@ msgstr ""
 #. module: ncollection_bank_reconciliation
 #. odoo-python
 #: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
-msgid "%(count)s rows are in another currency and will NOT be imported into this journal:"
-msgstr "%(count)s صفوف بعملة أخرى ولن تُستورد في هذه اليومية:"
+msgid "%(count)s rows are in another currency. Nothing is imported unless you choose to import only the rows in the journal currency; these would then be left out:"
+msgstr "%(count)s صفوف بعملة أخرى. لا يُستورد شيء ما لم تختر استيراد صفوف عملة اليومية فقط؛ وعندها تُستبعد هذه الصفوف:"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "%(count)s rows of this file are in another currency, so the file would only be imported in part. Nothing was imported. Tick \"Import only the rows in the journal currency\" to import the rest."
+msgstr "%(count)s صفوف في هذا الملف بعملة أخرى، لذا سيُستورد الملف جزئياً فقط. لم يُستورد شيء. حدّد «استيراد صفوف عملة اليومية فقط» لاستيراد الباقي."
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
@@ -238,7 +244,7 @@ msgstr "مراجعة المكررات"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "Duplicate review: %(journal)s"
 msgstr "مراجعة المكررات: %(journal)s"
 
@@ -324,6 +330,11 @@ msgstr "إذا حُدد، فبعض الرسائل فيها خطأ في التس�
 #: model:ir.model,name:account_statement_import_sheet_file.model_account_statement_import
 msgid "Import Bank Statement Files"
 msgstr "استيراد ملفات كشوف البنك"
+
+#. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__nc_accept_partial
+msgid "Import only the rows in the journal currency"
+msgstr "استيراد صفوف عملة اليومية فقط"
 
 #. module: ncollection_bank_reconciliation
 #: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_ncollection_bank_payment_batch__message_is_follower
@@ -493,6 +504,12 @@ msgstr "فتح"
 msgid "Open Financial Exchange (.ofx, .qfx)"
 msgstr "Open Financial Exchange ‏(.ofx, .qfx)"
 
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Partial import accepted by %(user)s: %(accepted)s transactions imported, %(skipped)s rows in another currency left out of %(file)s."
+msgstr "استيراد جزئي وافق عليه %(user)s: استُوردت %(accepted)s معاملة، واستُبعدت %(skipped)s صفوف بعملة أخرى من %(file)s."
+
 #. modules: ncollection_bank_reconciliation, account_reconcile_oca, account_statement_base
 #. odoo-python
 #: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
@@ -538,7 +555,7 @@ msgstr "مكررة محتملة"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "Possible duplicates"
 msgstr "مكررات محتملة"
 
@@ -599,7 +616,7 @@ msgstr "مراجعة"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "Reviewed by %(user)s: not a duplicate of %(other)s."
 msgstr "راجعها %(user)s: ليست مكررة لـ %(other)s."
 
@@ -607,6 +624,11 @@ msgstr "راجعها %(user)s: ليست مكررة لـ %(other)s."
 #: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_bank_statement_line__nc_duplicate_reviewed
 msgid "Reviewed: not a duplicate"
 msgstr "تمت المراجعة: ليست مكررة"
+
+#. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__nc_skipped_count
+msgid "Rows left out (other currency)"
+msgstr "الصفوف المستبعدة (عملة أخرى)"
 
 #. module: ncollection_bank_reconciliation
 #: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_ncollection_bank_payment_batch__message_has_sms_error
@@ -698,6 +720,11 @@ msgid "The file contains no transactions."
 msgstr "لا يحتوي الملف على أي معاملات."
 
 #. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,help:ncollection_bank_reconciliation.field_account_statement_import__nc_accept_partial
+msgid "The file has rows in another currency. By default nothing is imported; tick this to import the rows in the journal currency only. The left-out rows are recorded on the statement."
+msgstr "في الملف صفوف بعملة أخرى. افتراضياً لا يُستورد شيء؛ حدّد هذا لاستيراد صفوف عملة اليومية فقط. تُسجَّل الصفوف المستبعدة."
+
+#. module: ncollection_bank_reconciliation
 #. odoo-python
 #: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
 msgid "The file is for the bank account %(number)s, which is not exactly the account of %(journal)s."
@@ -767,6 +794,17 @@ msgid "Total"
 msgstr "الإجمالي"
 
 #. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__nc_new_total
+msgid "Total of the new transactions"
+msgstr "إجمالي المعاملات الجديدة"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Total of the new transactions: %(amount)s"
+msgstr "إجمالي المعاملات الجديدة: %(amount)s"
+
+#. module: ncollection_bank_reconciliation
 #: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_ncollection_bank_duplicate_candidate__line_a_id
 msgid "Transaction"
 msgstr "المعاملة"
@@ -799,43 +837,43 @@ msgstr "حساب (بدون مستند)"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "no bank transaction id to tell them apart"
 msgstr "لا معرّف بنكي يميّز بينها"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "same amount"
 msgstr "المبلغ نفسه"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "same bank transaction id"
 msgstr "معرّف المعاملة البنكية نفسه"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "same date"
 msgstr "التاريخ نفسه"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "same label"
 msgstr "البيان نفسه"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "same partner"
 msgstr "الشريك نفسه"
 
 #. module: ncollection_bank_reconciliation
 #. odoo-python
-#: code:addons/ncollection_bank_reconciliation/models/duplicate_review.py:0
+#: code:addons/ncollection_bank_reconciliation/wizard/duplicate_review.py:0
 msgid "same reference"
 msgstr "المرجع نفسه"
 
@@ -1801,3 +1839,8 @@ msgstr "بمبلغ مفتوح"
 #: model_terms:ir.ui.view,arch_db:account_statement_import_camt.account_statement_import_view
 msgid "zipped CAMT"
 msgstr "CAMT مضغوط"
+
+#. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_ncollection_bank_payment_batch__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
