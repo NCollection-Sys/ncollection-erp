@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa: E501,E128  (KPI definitions are single translatable sentences)
 """Dashboard payload service (F3-T01) — orchestration/presentation ONLY.
 
 This is the single server entry point the Finance / Accountant / Cash OWL
@@ -124,33 +125,32 @@ class AccountDashboardService(models.AbstractModel):
         }
 
     def _kpi_tip(self, key):
-        _ = self.env._
         tips = {
-            'revenue': _("Total income of the posted entries in the period (sales and other operating income)."),
-            'total_income': _("Total income of the posted entries in the period (sales and other operating income)."),
-            'expenses': _("Cost of sales plus operating expenses of the posted entries in the period."),
-            'net_profit': _("Revenue minus expenses for the period, as the Profit and Loss statement computes it."),
-            'cash': _("Balance of the bank and cash accounts at the end date. A customer payment still waiting for "
+            'revenue': self.env._("Total income of the posted entries in the period (sales and other operating income)."),
+            'total_income': self.env._("Total income of the posted entries in the period (sales and other operating income)."),
+            'expenses': self.env._("Cost of sales plus operating expenses of the posted entries in the period."),
+            'net_profit': self.env._("Revenue minus expenses for the period, as the Profit and Loss statement computes it."),
+            'cash': self.env._("Balance of the bank and cash accounts at the end date. A customer payment still waiting for "
                       "the bank is not cash yet."),
-            'receivables': _("What customers owe: open invoices at the end date, tax included. Customer credit is "
+            'receivables': self.env._("What customers owe: open invoices at the end date, tax included. Customer credit is "
                              "not netted in."),
-            'customer_credit': _("Customer payments and credit notes not yet applied to an invoice. Shown apart from "
+            'customer_credit': self.env._("Customer payments and credit notes not yet applied to an invoice. Shown apart from "
                                  "the receivables."),
-            'payables': _("What we owe suppliers: open bills at the end date. Prepayments are not netted in."),
-            'vendor_prepayments': _("Payments made to suppliers ahead of a bill and not yet applied. A supplier "
+            'payables': self.env._("What we owe suppliers: open bills at the end date. Prepayments are not netted in."),
+            'vendor_prepayments': self.env._("Payments made to suppliers ahead of a bill and not yet applied. A supplier "
                                     "credit note is not a prepayment."),
-            'assets': _("Total assets on the Balance Sheet at the end date."),
-            'liabilities': _("Total liabilities on the Balance Sheet at the end date."),
-            'cogs': _("Cost of sales of the period."),
-            'gross_profit': _("Revenue minus cost of sales."),
-            'operating_expenses': _("Operating expenses of the period, excluding cost of sales."),
-            'gross_margin': _("Gross profit as a percentage of revenue."),
-            'net_margin': _("Net profit as a percentage of revenue."),
-            'avg_deal_size': _("Average untaxed value of the confirmed sales orders in the period, in the company "
+            'assets': self.env._("Total assets on the Balance Sheet at the end date."),
+            'liabilities': self.env._("Total liabilities on the Balance Sheet at the end date."),
+            'cogs': self.env._("Cost of sales of the period."),
+            'gross_profit': self.env._("Revenue minus cost of sales."),
+            'operating_expenses': self.env._("Operating expenses of the period, excluding cost of sales."),
+            'gross_margin': self.env._("Gross profit as a percentage of revenue."),
+            'net_margin': self.env._("Net profit as a percentage of revenue."),
+            'avg_deal_size': self.env._("Average untaxed value of the confirmed sales orders in the period, in the company "
                                "currency."),
-            'employee_turnover': _("Employees who left in the period divided by the average headcount, as a "
+            'employee_turnover': self.env._("Employees who left in the period divided by the average headcount, as a "
                                    "percentage."),
-            'inventory_turnover': _("Units shipped to customers in the period divided by the units on hand."),
+            'inventory_turnover': self.env._("Units shipped to customers in the period divided by the units on hand."),
         }
         return tips.get(key, '')
 
