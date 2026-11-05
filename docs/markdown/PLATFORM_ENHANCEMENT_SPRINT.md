@@ -105,7 +105,7 @@ Arabic in `ncollection_account_dashboard`; the shared scroll contract (`o_nc_pre
 | Module | Current (runtime) | Target | Migration |
 |---|---|---|---|
 | `ncollection_account_reports` | 19.0.1.12.0 | **19.0.1.14.0** | `-u`: two abstract models, one HTTP route, Arabic |
-| `ncollection_account_dashboard` | 19.0.1.3.0 | **19.0.1.5.0** | `-u`: two client actions, three menus, assets, Arabic |
+| `ncollection_account_dashboard` | 19.0.1.3.0 | **19.0.1.6.0** | `-u`: two client actions, three menus, shared design system (header chips, KPI definitions, polarity, currency-aware charts), assets, Arabic |
 | `ncollection_branding` | 19.0.1.18.0 | **19.0.1.19.0** | `-u`: stylesheet only (scroll contract) |
 | `ncollection_dashboard_export` | — | **19.0.1.1.0** | `-i` (context band, mixed-currency warning) |
 | `ncollection_core` / `ncollection_account_core` / `ncollection_subscription` | unchanged by this addition | as §3 | as §3 |
@@ -121,3 +121,15 @@ dashboards (Sales role). The RPC mirrors them (`SALES_GROUPS`, `FINANCIAL_GATE_G
 | DASH-UX-05/06 | PARTIAL | shared component, tokens and responsive grid used by the two new dashboards; the older Finance / Accountant / Cash / CEO / department dashboards were **not** restyled | restyle is a follow-up |
 | DASH-UX-07 | PARTIAL | see the report | English invoice filters / sorting, Document Layout, product image, chatter collapse / draft were **not** run this round |
 | DASH-UX-08 | DONE | Spreadsheet Dashboards export = faithful snapshot (stated); Sales / Invoicing export = server-calculated | — |
+
+## 6. Final local release checklist (not executed)
+
+Tested revision for the full regression: `6528dc4` (3,360 tests, 0 failed); later commits `6bb457f` change only `self.env._` call style (module tests 73/73, pylint 205).
+Browser acceptance: `e2e/dashboards/` (41/41). Rehearsed on disposable copies: fixture, platform (`saastest`), accounting tenant (`ncollection`), UAE tenant (`e2euae`): exit 0, second `-u` a no-op, translations loaded, existing documents backfill to 0.
+
+1. Back up every database (release procedure backup volume) and keep the previous source tree: this is the rollback.
+2. Deploy the code; each database answers the branded 503 until upgraded (release gate).
+3. Per database: `-u <its modules> -i ncollection_dashboard_export` (never `-u all`), then `_update_translations(['ar_001'])` + `clear_all_caches`.
+   Modules: core 1.28.0, account_core 1.13.0, account_reports 1.14.0, account_dashboard 1.6.0, branding 1.19.0, subscription 1.19.0, dashboard_export 1.1.0.
+4. Nginx (separate approval): `nginx -t` then reload with the committed upstream re-resolution (section 2).
+5. Smoke: `e2e/dashboards/survey.js` against the upgraded tenant (read-only pages) and the Finance / Sales / Invoicing pages by hand.
