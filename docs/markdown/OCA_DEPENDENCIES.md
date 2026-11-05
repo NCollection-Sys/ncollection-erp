@@ -24,6 +24,8 @@ OCA repo, because the pins are commit hashes, not branch names.
 | `OCA/server-ux` | 19.0 | `date_range` | dependency of `mis_builder` | keep |
 | `OCA/server-auth` | 19.0 | `auth_session_timeout` | `ncollection_auth` (P1-T19 session timeout) | keep |
 | `OCA/queue` | 19.0 (pinned `ebb87ea4`) | `queue_job` | `ncollection_saas` provisioning runner (P2-T01) | keep |
+| `OCA/account-reconcile` | 19.0 (pinned `e3d99f3d`) | `account_reconcile_oca`, `account_statement_base` | `ncollection_bank_reconciliation` (Bank Transactions & Matching) | keep — engine-level accounting Community lacks; see `BANK_RECONCILIATION.md` |
+| `OCA/bank-statement-import` | 19.0 (pinned `aa647ee5`) | `account_statement_import_base`, `_file`, `_file_reconcile_oca`, `_camt`, `_sheet_file`, `_sheet_file_xlsx`, `_qif` (NOT the `_online_*` providers) | `ncollection_bank_reconciliation` | keep |
 
 Exact hashes live in `repos.yml` (one block per repo — delete the block to drop the repo).
 
@@ -305,3 +307,15 @@ themselves are untouched (their menus for superseded reports stay hidden, not re
 
 **Still not approved / not done:** installing `partner_statement`, `account_tax_balance` or `report_csv`;
 migrating General Ledger, Aged or any other report.
+
+## Bank Transactions & Reconciliation — ADOPT `account_reconcile_oca` + `bank-statement-import`, wrap natively
+
+Decision, OCA evaluation (versions, licences, upstream issues #995 / #1036), the nine defects found and fixed in
+the wrapper, the Enterprise parity matrix and the acceptance evidence: **`docs/markdown/BANK_RECONCILIATION.md`**.
+
+* Licence: `account_reconcile_oca`, `_file_reconcile_oca`, `_camt`, `_sheet_file`, `_sheet_file_xlsx`, `_qif` are
+  AGPL-3; `account_statement_base`, `_import_base`, `_import_file` are LGPL-3. No new licence class (see #122
+  Licensing above); the LGPL-3-wrapper question now also covers `ncollection_bank_reconciliation`.
+* Infrastructure: both repos are in `repos.yml` and in all three `addons_path` copies (`config/odoo.conf`,
+  `config/odoo.prod.conf`, `ci.yml`), which `invariants.py` now checks against the pins.
+* Python deps `xlrd` / `openpyxl`: already in the `odoo:19` image (verified), no image change.

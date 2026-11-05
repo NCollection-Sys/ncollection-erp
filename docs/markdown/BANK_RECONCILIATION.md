@@ -141,7 +141,30 @@ it remains a legal question this work did not settle.
   source) are reads / a non-financial flag.
 * Record rules: OCA's multi-company rule on its reconcile data; statement lines follow core's company rules.
 
-## 8. Release (NOT executed — needs separate authorisation)
+## 8. Release matrix and rehearsal
+
+Per database of the release scope (module states read on the shared server, read-only, 2026-11-05):
+
+| Database | Accounting | Bank / cash journals | Statement lines today | Bank release |
+|---|---|---|---|---|
+| `ncollection` | tenant accounting | 5 (Ahly, **Misr**, Main Cash, NCollection cash, Tabby) | 0 | `-i ncollection_bank_reconciliation` |
+| `e2euae` (protected e-invoices) | tenant accounting | 1 | 0 | `-i` |
+| `e2eclienta`, `atlas`, `test15`, `einvdev`, `einvfull` | tenant accounting | 1 each | 0 | `-i` |
+| `saastest` (platform), `e2eclientb` (no `ncollection_account_core`), `e2eadmin` (no Accounting) | — | — | — | not installed |
+
+Zero statement lines everywhere: the empty *Transactions* list the user saw was simply the empty statement list; there
+is no transaction data to migrate.
+
+**Rehearsal** (scratch copies `pg_dump | pg_restore`, the source read-only; the previous sprint's `-u` list +
+`-i ncollection_dashboard_export,ncollection_bank_reconciliation`, tree `feature/bank-reconciliation`):
+
+| Copy of | Exit | 10/10 bank modules | Every bank/cash journal → workspace | Arabic card | 2nd upgrade | Accounting |
+|---|---|---|---|---|---|---|
+| `ncollection` | 0 | yes | 5/5 | yes | exit 0, no-op | residual 909.30 unchanged, overpaid backfill 0 |
+| `e2euae` | 0 | yes | 1/1 | yes | exit 0, no-op | residual 210.00 unchanged; **the three e-invoices identical to live** (uuid, XML SHA-256, `validated` / `not_submitted`, write date) |
+| `atlas` | 0 | yes | 1/1 | yes | exit 0, no-op | backfill 0 |
+
+## 9. Release procedure (NOT executed — needs separate authorisation)
 
 Per tenant database that has Accounting: `make oca` (two new repos), then
 `-i ncollection_bank_reconciliation` (pulls the nine OCA modules; an existing database needs `-i`, `-u` installs
