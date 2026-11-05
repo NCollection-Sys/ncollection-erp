@@ -45,3 +45,6 @@ scripts/perf/results/
 /db-backups/
 *.dump
 *.dump.gz
+
+# Playwright screenshots / result files (e2e/dashboards, e2e/bank): evidence, regenerated per run. Never commit.
+/e2e/shots/

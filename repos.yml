@@ -143,3 +143,25 @@
   merges:
     - oca a8c722a03a5c6d76bf86d9feea13ae34c9abb3a5
   target: oca aggregated
+
+# --- Bank reconciliation (BANK-REC. Consumed: account_reconcile_oca, account_statement_base. Consumer:
+# --- ncollection_bank_reconciliation, which adds locking, no double reconciliation, the audited undo and the
+# --- journal card. NOT a sunset pin: Community ships no bank-matching workspace (Enterprise-only), so this is
+# --- engine-level accounting on the Odoo side of the line, like account_asset_management. AGPL-3 (reconcile)
+# --- / LGPL-3 (statement base). Decision record: docs/markdown/BANK_RECONCILIATION.md.)
+./oca/account-reconcile:
+  remotes:
+    oca: https://github.com/OCA/account-reconcile.git
+  merges:
+    - oca e3d99f3dc4a61f44167ce0ce70e9a0a6ad0b7540
+  target: oca aggregated
+
+# --- Bank statement import (BANK-REC. Consumed: account_statement_import_base, _file, _file_reconcile_oca,
+# --- _camt, _sheet_file, _sheet_file_xlsx, _qif. NOT consumed: the _online_* providers (no bank sync is
+# --- offered). Consumer: ncollection_bank_reconciliation (preview, exact journal, duplicate fingerprints).)
+./oca/bank-statement-import:
+  remotes:
+    oca: https://github.com/OCA/bank-statement-import.git
+  merges:
+    - oca aa647ee5ea71187b81d3f52241b9f948908e6dd2
+  target: oca aggregated

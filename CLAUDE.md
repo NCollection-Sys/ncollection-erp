@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **31**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **32**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -191,6 +191,12 @@ adding a module fails CI until someone updates this list.
   provider-neutral contract; built against A-Cube's PUBLISHED Gov AE OpenAPI, NOT yet proven on its sandbox (no
   credential), so release stays blocked. A-Cube webhooks are unsigned (static token): a callback is only a trigger and
   the state is re-read from the API. Docs: `docs/markdown/UAE_EINVOICING.md` §9f.
+- `ncollection_bank_reconciliation` — **Bank Transactions & Matching** for Community. ADOPTS the OCA engine
+  (`account_reconcile_oca` + `bank-statement-import`: CAMT, CSV/XLSX, QIF; no OFX on 19.0, no bank sync) and adds what it
+  lacks: one reconciliation at a time (`FOR UPDATE NOWAIT`), no double reconciliation, the server-side `can_reconcile`
+  mirror, an audited undo that rebuilds the pending match (the engine's was stale), strict import (preview of the exact file,
+  exact account / active company / card journal, duplicate fingerprints for files with no transaction id), and the journal
+  card's To Reconcile / Statements / New / Upload. Every match is Odoo's own `reconcile()`. Docs: `docs/markdown/BANK_RECONCILIATION.md`.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking; also the foreign buyer
   identifier (`nc_foreign_tax_id` + ICD scheme, Guidelines V2.0 §18.2.3) the e-invoicing engine maps to IBT-046.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.

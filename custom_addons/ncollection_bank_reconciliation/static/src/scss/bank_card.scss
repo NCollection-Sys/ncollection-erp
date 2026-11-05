@@ -1,0 +1,66 @@
+// The bank / cash journal card's second row: To Reconcile · Statements · New.
+// Pills in the existing design tokens (falls back to Odoo's own colours where the token is absent). RTL-neutral:
+// logical properties only, so the row mirrors itself in Arabic.
+.o_nc_bank_nav {
+    a {
+        display: inline-flex;
+        align-items: center;
+        padding-block: 0.15rem;
+        padding-inline: 0.6rem;
+        border: 1px solid var(--nc-color-border, #d8dadd);
+        border-radius: 999px;
+        color: var(--nc-color-primary, #1f5f8b);
+        background: var(--nc-color-surface, #fff);
+        text-decoration: none;
+        line-height: 1.4;
+        white-space: nowrap;
+
+        &:hover, &:focus-visible {
+            background: var(--nc-color-primary, #1f5f8b);
+            border-color: var(--nc-color-primary, #1f5f8b);
+            color: #fff;
+        }
+    }
+}
+
+// The OCA matching workspace is a 30 / 70 split. Below the tablet breakpoint that leaves the transaction list about
+// 100 px wide (amounts and labels wrap letter by letter) and the status-bar buttons, fixed at 40 px high, wrap over
+// the table. On a phone: stack it — transactions on top (scrolling on their own), the matching panel below, wide
+// tables scroll inside their own box, never the page.
+@media (max-width: 767.98px) {
+    .o_account_reconcile_oca {
+        flex-flow: column nowrap;
+        height: auto;
+
+        .o_account_reconcile_oca_selector {
+            width: 100%;
+            height: auto;
+            max-height: 42vh;
+            border-right: 0;
+            border-bottom: 1px solid var(--nc-color-border, #d8dadd);
+        }
+
+        .o_account_reconcile_oca_info {
+            width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+
+        .o_kanban_renderer.o_kanban_ungrouped .o_kanban_record {
+            min-width: 0;
+        }
+
+        .o_form_view .o_form_statusbar.o_account_reconcile_oca_statusbar {
+            height: auto;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .o_reconcile_widget_table,
+        .o_reconcile_move_line_view .o_list_renderer {
+            display: block;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+    }
+}

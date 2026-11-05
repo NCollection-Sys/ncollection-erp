@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Preview first, then Import: the server refuses an import whose file was not the one previewed. -->
+    <record id="account_statement_import_form" model="ir.ui.view">
+        <field name="name">account.statement.import.form.ncollection.preview</field>
+        <field name="model">account.statement.import</field>
+        <field name="inherit_id" ref="account_statement_import_file.account_statement_import_form"/>
+        <field name="arch" type="xml">
+            <field name="statement_filename" position="after">
+                <field name="nc_preview_checksum" invisible="1"/>
+                <field name="nc_preview_count" invisible="1"/>
+                <div class="o_nc_import_preview_wrap mt-3" invisible="not nc_preview_html">
+                    <field name="nc_preview_html" nolabel="1"/>
+                </div>
+            </field>
+            <button name="import_file_button" position="attributes">
+                <attribute name="invisible">not nc_preview_checksum or not nc_preview_count</attribute>
+            </button>
+            <button name="import_file_button" position="before">
+                <button name="action_nc_preview" string="Preview" type="object" class="btn-primary o_nc_import_preview_btn"
+                        invisible="nc_preview_checksum"/>
+            </button>
+        </field>
+    </record>
+
+    <!-- The Accounting > Import Statement menu also previews first. -->
+    <record id="account_statement_import_file.account_statement_import_action" model="ir.actions.act_window">
+        <field name="context">{'nc_require_preview': True}</field>
+    </record>
+</odoo>

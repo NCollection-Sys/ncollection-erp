@@ -1,0 +1,1357 @@
+# Arabic translation of ncollection_bank_reconciliation, plus the user-facing terms of the OCA bank-matching
+# workspace and statement import it adopts (those ship no Arabic upstream). OCA Python messages cannot be
+# translated from here (Odoo looks them up under their own module) and stay English.
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "%(count)s rows are in another currency and will NOT be imported into this journal:"
+msgstr "%(count)s صفوف بعملة أخرى ولن تُستورد في هذه اليومية:"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_journal.py:0
+msgid "%(journal)s is not a bank or cash journal."
+msgstr "%(journal)s ليست يومية بنك أو نقد."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "%(total)s transactions read for %(journal)s (%(currency)s): %(new)s new, %(dup)s already imported and skipped."
+msgstr "تمت قراءة %(total)s معاملة لليومية %(journal)s (%(currency)s): %(new)s جديدة، و%(dup)s مستوردة سابقاً وتم تخطيها."
+
+#. module: ncollection_bank_reconciliation
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation.account_journal_dashboard_kanban_view
+msgid "<span>Upload</span>"
+msgstr "<span>رفع</span>"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "A bank transaction of %(company)s cannot be matched with journal items of another company."
+msgstr "لا يمكن مطابقة معاملة بنكية لشركة %(company)s مع قيود يومية لشركة أخرى."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Already imported (skipped)"
+msgstr "مستوردة سابقاً (تم التخطي)"
+
+#. modules: ncollection_bank_reconciliation, account_reconcile_oca
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "Another user is reconciling this bank transaction or one of its counterparts right now. Reload it and try again."
+msgstr "يقوم مستخدم آخر بتسوية هذه المعاملة البنكية أو أحد بنودها المقابلة الآن. أعد التحميل وحاول مرة أخرى."
+
+#. modules: ncollection_bank_reconciliation, account_statement_import_sheet_file_xlsx
+#: model:ir.model,name:ncollection_bank_reconciliation.model_account_statement_import_sheet_parser
+#: model:ir.model,name:account_statement_import_sheet_file_xlsx.model_account_statement_import_sheet_parser
+msgid "Bank Statement Import Sheet Parser"
+msgstr "محلل ملفات استيراد كشوف البنك"
+
+#. modules: ncollection_bank_reconciliation, account_statement_import_base
+#: model:ir.model,name:ncollection_bank_reconciliation.model_account_bank_statement_line
+#: model:ir.model,name:account_statement_import_base.model_account_bank_statement_line
+msgid "Bank Statement Line"
+msgstr "سطر كشف البنك"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "Bank transaction matched by %(user)s with %(items)s."
+msgstr "طابق %(user)s المعاملة البنكية مع %(items)s."
+
+#. modules: ncollection_bank_reconciliation, account_reconcile_oca, account_statement_base
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "Date"
+msgstr "التاريخ"
+
+#. modules: ncollection_bank_reconciliation, account_reconcile_oca, account_statement_base, 
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_bank_statement_line__display_name
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_journal__display_name
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__display_name
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import_sheet_parser__display_name
+#. account_statement_import_base, account_statement_import_camt,
+#. account_statement_import_sheet_file,
+#. account_statement_import_sheet_file_xlsx
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__display_name
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__display_name
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_move_line__display_name
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__display_name
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_model__display_name
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_model_line__display_name
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_res_company__display_name
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:account_statement_base.field_account_bank_statement__display_name
+#: model:ir.model.fields,field_description:account_statement_import_base.field_account_bank_statement_line__display_name
+#: model:ir.model.fields,field_description:account_statement_import_camt.field_account_statement_import_camt_parser__display_name
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_journal__display_name
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import__display_name
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__display_name
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file_xlsx.field_account_statement_import_sheet_parser__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Every transaction in this file is already imported; nothing to do."
+msgstr "كل معاملات هذا الملف مستوردة سابقاً؛ لا يوجد ما يُستورد."
+
+#. modules: ncollection_bank_reconciliation, account_reconcile_oca, account_statement_base, 
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_bank_statement_line__id
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_journal__id
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__id
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import_sheet_parser__id
+#. account_statement_import_base, account_statement_import_camt,
+#. account_statement_import_sheet_file,
+#. account_statement_import_sheet_file_xlsx
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_move_line__id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_model__id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_model_line__id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_res_company__id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_res_config_settings__id
+#: model:ir.model.fields,field_description:account_statement_base.field_account_bank_statement__id
+#: model:ir.model.fields,field_description:account_statement_import_base.field_account_bank_statement_line__id
+#: model:ir.model.fields,field_description:account_statement_import_camt.field_account_statement_import_camt_parser__id
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_journal__id
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import__id
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__id
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file_xlsx.field_account_statement_import_sheet_parser__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. modules: ncollection_bank_reconciliation, account_statement_import_sheet_file
+#: model:ir.model,name:ncollection_bank_reconciliation.model_account_statement_import
+#: model:ir.model,name:account_statement_import_sheet_file.model_account_statement_import
+msgid "Import Bank Statement Files"
+msgstr "استيراد ملفات كشوف البنك"
+
+#. modules: ncollection_bank_reconciliation, account_statement_base, account_statement_import_sheet_file
+#: model:ir.model,name:ncollection_bank_reconciliation.model_account_journal
+#: model:ir.model,name:account_statement_import_sheet_file.model_account_journal
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "Journal"
+msgstr "اليومية"
+
+#. modules: ncollection_bank_reconciliation, account_reconcile_oca
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+msgid "Label"
+msgstr "البيان"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Missing currency code in the bank statement file."
+msgstr "رمز العملة مفقود في ملف كشف البنك."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation.account_journal_dashboard_kanban_view
+msgid "New"
+msgstr "جديد"
+
+#. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__nc_preview_count
+msgid "New transactions in the preview"
+msgstr "المعاملات الجديدة في المعاينة"
+
+#. modules: ncollection_bank_reconciliation, account_reconcile_oca, account_statement_base
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__partner_id
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "Partner"
+msgstr "الشريك"
+
+#. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__nc_preview_html
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation.account_statement_import_form
+msgid "Preview"
+msgstr "معاينة"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Preview bank statement"
+msgstr "معاينة كشف البنك"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Preview this file before importing it (the file changed or was not previewed)."
+msgstr "عاين هذا الملف قبل استيراده (تغيّر الملف أو لم تتم معاينته)."
+
+#. module: ncollection_bank_reconciliation
+#: model:ir.model.fields,field_description:ncollection_bank_reconciliation.field_account_statement_import__nc_preview_checksum
+msgid "Previewed file (SHA-256)"
+msgstr "الملف الذي تمت معاينته (SHA-256)"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "Reconciliation undone by %(user)s; released: %(items)s."
+msgstr "ألغى %(user)s التسوية؛ تم تحرير: %(items)s."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Reference"
+msgstr "المرجع"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_journal.py:0
+msgid "Statement files can only be imported into a bank journal."
+msgstr "لا يمكن استيراد ملفات الكشوف إلا في يومية بنك."
+
+#. module: ncollection_bank_reconciliation
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation.account_journal_dashboard_kanban_view
+msgid "Statements"
+msgstr "الكشوف"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Statements can only be imported into a bank journal."
+msgstr "لا يمكن استيراد الكشوف إلا في يومية بنك."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "Status"
+msgstr "الحالة"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "The bank transaction %(name)s is already reconciled. Undo the reconciliation first if it is wrong."
+msgstr "المعاملة البنكية %(name)s مسوّاة بالفعل. ألغِ التسوية أولاً إذا كانت خاطئة."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "The bank transaction %(name)s is not reconciled; there is nothing to undo."
+msgstr "المعاملة البنكية %(name)s غير مسوّاة؛ لا يوجد ما يُلغى."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "The bank transaction %(name)s still has an amount that is not allocated to anything. Match it, set an account, or set the partner first."
+msgstr "ما زال في المعاملة البنكية %(name)s مبلغ غير مخصص. طابِقه أو حدّد حساباً أو حدّد الشريك أولاً."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "The file contains no transactions."
+msgstr "لا يحتوي الملف على أي معاملات."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "The file is for the bank account %(number)s, which is not exactly the account of %(journal)s."
+msgstr "الملف خاص بالحساب البنكي %(number)s، وهو ليس حساب %(journal)s نفسه تماماً."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "The journal %(journal)s belongs to %(company)s, not to the active company %(active)s. Switch company first."
+msgstr "اليومية %(journal)s تتبع %(company)s وليست الشركة النشطة %(active)s. بدّل الشركة أولاً."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "The parsing of the statement file returned an invalid result."
+msgstr "أعاد تحليل ملف الكشف نتيجة غير صالحة."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "These journal items are already fully reconciled and cannot be matched again: %(items)s"
+msgstr "قيود اليومية هذه مسوّاة بالكامل ولا يمكن مطابقتها مرة أخرى: %(items)s"
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/wizard/account_statement_import.py:0
+msgid "This file belongs to %(journal)s, not to the journal you are uploading into."
+msgstr "هذا الملف يخص %(journal)s، وليس اليومية التي ترفع إليها."
+
+#. module: ncollection_bank_reconciliation
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation.account_journal_dashboard_kanban_view
+msgid "To Reconcile"
+msgstr "للتسوية"
+
+#. module: ncollection_bank_reconciliation
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation.account_journal_dashboard_kanban_view
+msgid "Upload"
+msgstr "رفع"
+
+#. module: ncollection_bank_reconciliation
+#: model_terms:ir.ui.view,arch_db:ncollection_bank_reconciliation.account_journal_dashboard_kanban_view
+msgid "Upload a bank statement file, or add transactions with New."
+msgstr "ارفع ملف كشف بنك، أو أضف المعاملات من «جديد»."
+
+#. module: ncollection_bank_reconciliation
+#. odoo-python
+#: code:addons/ncollection_bank_reconciliation/models/account_bank_statement_line.py:0
+msgid "an account (no document)"
+msgstr "حساب (بدون مستند)"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.view_bank_statement_form
+msgid "<span class=\"o_stat_text\">Journal Items</span>"
+msgstr "<span class=\"o_stat_text\">بنود اليومية</span>"
+
+#. module: account_statement_import_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file.journal_dashboard_view_inherit
+msgid "<span>Import (OCA)</span>"
+msgstr "<span>استيراد</span>"
+
+#. module: account_statement_import_base
+#: model:ir.model.constraint,message:account_statement_import_base.constraint_account_bank_statement_line_unique_import_id
+msgid "A bank account transaction can be imported only once!"
+msgstr "لا يمكن استيراد معاملة الحساب البنكي إلا مرة واحدة!"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__amount_type__absolute_value
+msgid "Absolute value"
+msgstr "القيمة المطلقة"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__account_id
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Account"
+msgstr "الحساب"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__add_account_move_line_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__add_account_move_line_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__add_account_move_line_id
+msgid "Add Account Move Line"
+msgstr "إضافة بند يومية"
+
+#. module: account_reconcile_oca
+#: model:ir.actions.act_window,name:account_reconcile_oca.action_bank_statement_line_create
+msgid "Add Bank Statement Line"
+msgstr "إضافة معاملة بنكية"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/views/reconcile_move_line/reconcile_move_line.xml:0
+msgid "Add all"
+msgstr "إضافة الكل"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__aggregate_id
+msgid "Aggregate"
+msgstr "تجميع"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__aggregate_name
+msgid "Aggregate Name"
+msgstr "اسم التجميع"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,help:account_reconcile_oca.field_account_journal__reconcile_aggregate
+msgid "Aggregation to use on reconcile view"
+msgstr "التجميع المستخدم في شاشة التسوية"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__skip_empty_lines
+msgid "Allows to skip empty lines"
+msgstr "يسمح بتخطي الأسطر الفارغة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__amount_column
+msgid "Amount column"
+msgstr "عمود المبلغ"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Amount in Currency"
+msgstr "المبلغ بالعملة"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+msgid "Amount in currency"
+msgstr "المبلغ بالعملة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__amount_type
+msgid "Amount type"
+msgstr "نوع المبلغ"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__analytic_distribution
+msgid "Analytic Distribution"
+msgstr "التوزيع التحليلي"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_model__search_journal_id
+msgid "Applies on Journal"
+msgstr "يطبق على اليومية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Are you sure that the move should be unreconciled?"
+msgstr "هل أنت متأكد من إلغاء تسوية هذا القيد؟"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__balance_column
+msgid "Balance Column"
+msgstr "عمود الرصيد"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__balance_column
+msgid "Balance after transaction in journal's currency"
+msgstr "الرصيد بعد المعاملة بعملة اليومية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Bank"
+msgstr "البنك"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__bank_account_column
+msgid "Bank Account Column"
+msgstr "عمود الحساب البنكي"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__bank_name_column
+msgid "Bank Name Column"
+msgstr "عمود اسم البنك"
+
+#. modules: account_reconcile_oca, account_statement_base
+#: model:ir.model,name:account_statement_base.model_account_bank_statement
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_bank_statement_form_edit
+#: model_terms:ir.ui.view,arch_db:account_statement_base.view_bank_statement_form
+msgid "Bank Statement"
+msgstr "كشف البنك"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model,name:account_statement_import_sheet_file.model_account_statement_import_sheet_mapping
+msgid "Bank Statement Import Sheet Mapping"
+msgstr "تعيين أعمدة ملف استيراد كشف البنك"
+
+#. module: account_statement_base
+#: model:ir.actions.act_window,name:account_statement_base.account_bank_statement_line_action
+msgid "Bank Statement Lines"
+msgstr "معاملات كشف البنك"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_form_view
+msgid "Bank reconcile"
+msgstr "التسوية البنكية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__can_reconcile
+msgid "Can Reconcile"
+msgstr "قابلة للتسوية"
+
+#. modules: account_reconcile_oca, account_statement_import_file
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_add_view
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file.account_statement_import_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Cash"
+msgstr "النقد"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Chatter"
+msgstr "السجل"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_account_reconcile_form_view
+msgid "Clean"
+msgstr "مسح"
+
+#. module: account_statement_import_sheet_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_sheet_file.account_statement_import_sheet_mapping_tree
+msgid "Columns"
+msgstr "الأعمدة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__offset_column
+msgid "Columns to ignore before starting to parse"
+msgstr "الأعمدة التي يتم تجاهلها قبل بدء التحليل"
+
+#. module: account_reconcile_oca
+#: model:ir.model,name:account_reconcile_oca.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__company_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__company_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__company_currency_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__company_currency_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_journal__company_currency_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__company_currency_id
+msgid "Company Currency"
+msgstr "عملة الشركة"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/views/reconcile_kanban/reconcile.xml:0
+msgid "Create"
+msgstr "إنشاء"
+
+#. modules: account_reconcile_oca, account_statement_import_file, 
+#. account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__create_uid
+#: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__create_uid
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__create_uid
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_parser__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. modules: account_reconcile_oca, account_statement_import_file, 
+#. account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__create_date
+#: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__create_date
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__create_date
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_parser__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+msgid "Credit"
+msgstr "دائن"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__credit_value
+msgid "Credit Value"
+msgstr "قيمة الدائن"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__amount_credit_column
+msgid "Credit amount column"
+msgstr "عمود المبلغ الدائن"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__amount_credit_column
+msgid "Credit amount of transaction in journal's currency"
+msgstr "المبلغ الدائن للمعاملة بعملة اليومية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__currency_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__currency_id
+msgid "Currency"
+msgstr "العملة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__currency_column
+msgid "Currency Column"
+msgstr "عمود العملة"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__data
+msgid "Data"
+msgstr "البيانات"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields.selection,name:account_reconcile_oca.selection__account_journal__reconcile_aggregate__day
+msgid "Day"
+msgstr "يوم"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+msgid "Debit"
+msgstr "مدين"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__debit_value
+msgid "Debit Value"
+msgstr "قيمة المدين"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__amount_debit_column
+msgid "Debit amount column"
+msgstr "عمود المبلغ المدين"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__amount_debit_column
+msgid "Debit amount of transaction in journal's currency"
+msgstr "المبلغ المدين للمعاملة بعملة اليومية"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__debit_credit_column
+msgid "Debit/credit column"
+msgstr "عمود المدين/الدائن"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__float_decimal_sep
+msgid "Decimals Separator"
+msgstr "فاصل الكسور العشرية"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_journal__default_sheet_mapping_id
+msgid "Default Sheet Mapping"
+msgstr "تعيين الأعمدة الافتراضي"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__delimiter
+msgid "Delimiter"
+msgstr "الفاصل"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__description_column
+msgid "Description Column"
+msgstr "عمود الوصف"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__amount_type__distinct_credit_debit
+msgid "Distinct Credit/debit Column"
+msgstr "عمودان منفصلان للمدين والدائن"
+
+#. module: account_statement_import_file
+#: model:ir.model.fields,help:account_statement_import_file.field_account_statement_import__statement_file
+msgid "Download bank statement files from your bank and upload them here."
+msgstr "نزّل ملفات كشوف الحساب من بنكك وارفعها هنا."
+
+#. module: account_reconcile_oca
+#: model:ir.actions.act_window,name:account_reconcile_oca.account_bank_statement_action_edit
+msgid "Edit Bank Statement"
+msgstr "تعديل كشف البنك"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields.selection,name:account_reconcile_oca.selection__account_journal__reconcile_mode__edit
+msgid "Edit Move"
+msgstr "تعديل القيد"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__file_encoding
+msgid "Encoding"
+msgstr "الترميز"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__no_header
+msgid "File does not contain header line"
+msgstr "الملف لا يحتوي على سطر عناوين"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__footer_lines_skip_count
+msgid "Footer lines skip count"
+msgstr "عدد أسطر التذييل المتخطاة"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__foreign_currency_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__foreign_currency_id
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__foreign_currency_id
+msgid "Foreign Currency"
+msgstr "العملة الأجنبية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "From Trade Payable accounts"
+msgstr "من حسابات الدائنين التجاريين"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "From Trade Receivable accounts"
+msgstr "من حسابات المدينين التجاريين"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/views/reconcile_kanban/reconcile.xml:0
+msgid "Global Balance"
+msgstr "الرصيد الإجمالي"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__header_lines_skip_count
+msgid "Header lines skip count"
+msgstr "عدد أسطر الترويسة المتخطاة"
+
+#. module: account_statement_import_file
+#. odoo-python
+#: code:addons/account_statement_import_file/models/account_journal.py:0
+msgid "Import (OCA) (%s)"
+msgstr "استيراد (%s)"
+
+#. module: account_statement_import_file
+#: model:ir.actions.act_window,name:account_statement_import_file.account_statement_import_action
+msgid "Import Bank Statement File"
+msgstr "استيراد ملف كشف البنك"
+
+#. module: account_statement_import_base
+#: model:ir.model.fields,field_description:account_statement_import_base.field_account_bank_statement_line__unique_import_id
+msgid "Import ID"
+msgstr "معرّف الاستيراد"
+
+#. module: account_statement_import_file
+#: model:ir.ui.menu,name:account_statement_import_file.account_statement_import_menu
+msgid "Import Statement"
+msgstr "استيراد كشف"
+
+#. module: account_statement_import_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file.journal_dashboard_view_inherit
+msgid "Import Statement (OCA)"
+msgstr "استيراد كشف"
+
+#. module: account_statement_import_file_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file_reconcile_oca.account_statement_import_form
+msgid "Import and Start to Reconcile"
+msgstr "استيراد وبدء التسوية"
+
+#. module: account_statement_import_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file.account_statement_import_form
+msgid "Import and View"
+msgstr "استيراد وعرض"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__amount_inverse_sign
+msgid "Inverse sign of amount"
+msgstr "عكس إشارة المبلغ"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Invoice"
+msgstr "فاتورة"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__is_reconciled
+msgid "Is Reconciled"
+msgstr "مسوّاة"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_journal_dashboard_kanban_view
+msgid "Items"
+msgstr "بنود"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__currency_id
+msgid "Journal Currency"
+msgstr "عملة اليومية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Journal Entry"
+msgstr "قيد اليومية"
+
+#. module: account_reconcile_oca
+#: model:ir.model,name:account_reconcile_oca.model_account_move_line
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Journal Item"
+msgstr "بند اليومية"
+
+#. module: account_statement_base
+#. odoo-python
+#: code:addons/account_statement_base/models/account_bank_statement.py:0
+msgid "Journal Items"
+msgstr "بنود اليومية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields.selection,name:account_reconcile_oca.selection__account_journal__reconcile_mode__keep
+msgid "Keep Suspense Accounts"
+msgstr "الإبقاء على الحسابات المعلقة"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "Label, Ref or Notes"
+msgstr "البيان أو المرجع أو الملاحظات"
+
+#. modules: account_reconcile_oca, account_statement_import_file, 
+#. account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__write_uid
+#: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__write_uid
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__write_uid
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_parser__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. modules: account_reconcile_oca, account_statement_import_file, 
+#. account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__write_date
+#: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__write_date
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__write_date
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_parser__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_account_id
+msgid "Manual Account"
+msgstr "الحساب اليدوي"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_amount
+msgid "Manual Amount"
+msgstr "المبلغ اليدوي"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_amount_in_currency
+msgid "Manual Amount In Currency"
+msgstr "المبلغ اليدوي بالعملة"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_currency_id
+msgid "Manual Currency"
+msgstr "العملة اليدوية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__manual_delete
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_delete
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_reconcile_abstract__manual_delete
+msgid "Manual Delete"
+msgstr "حذف يدوي"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_model_id
+msgid "Manual Model"
+msgstr "نموذج التسوية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_name
+msgid "Manual Name"
+msgstr "البيان"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__manual_partner_id
+msgid "Manual Partner"
+msgstr "الشريك"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Manual operation"
+msgstr "عملية يدوية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Miscellaneous"
+msgstr "متنوعة"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields.selection,name:account_reconcile_oca.selection__account_journal__reconcile_aggregate__month
+msgid "Month"
+msgstr "شهر"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/wizard/account_statement_import_sheet_parser.py:0
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__delimiter__n/a
+msgid "N/A"
+msgstr "غير متوفر"
+
+#. modules: account_reconcile_oca, account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile__name
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__name
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Name"
+msgstr "الاسم"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/account_bank_statement_line.py:0
+msgid "No supense lines are allowed when reconciling"
+msgstr "لا يُسمح ببنود معلقة عند التسوية"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "Not Reconciled"
+msgstr "غير مسوّاة"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_form
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_tree
+msgid "Notes"
+msgstr "ملاحظات"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__notes_column
+msgid "Notes Column"
+msgstr "عمود الملاحظات"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.actions.act_window,help:account_reconcile_oca.action_bank_statement_line_reconcile_to_check
+msgid "Nothing to check"
+msgstr "لا يوجد ما يُراجع"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.actions.act_window,help:account_reconcile_oca.action_bank_statement_line_move_view_reconcile
+#: model_terms:ir.actions.act_window,help:account_reconcile_oca.action_bank_statement_line_reconcile
+#: model_terms:ir.actions.act_window,help:account_reconcile_oca.action_bank_statement_line_reconcile_all
+msgid "Nothing to reconcile"
+msgstr "لا يوجد ما يُسوّى"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__offset_column
+msgid "Offset Column"
+msgstr "عمود الإزاحة"
+
+#. module: account_statement_import_sheet_file
+#. odoo-python
+#: code:addons/account_statement_import_sheet_file/models/account_statement_import_sheet_mapping.py:0
+msgid "Offsets cannot be negative"
+msgstr "لا يمكن أن تكون الإزاحة سالبة"
+
+#. module: account_reconcile_oca
+#. odoo-javascript
+#: code:addons/account_reconcile_oca/static/src/components/account_reconcile_oca_data/account_reconcile_oca_data.xml:0
+msgid "Open Balance"
+msgstr "الرصيد المفتوح"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_tree
+msgid "Open Journal Entry"
+msgstr "فتح قيد اليومية"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.view_bank_statement_tree
+msgid "Open Statement Lines"
+msgstr "فتح معاملات الكشف"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__original_amount_column
+msgid "Original Amount Column"
+msgstr "عمود المبلغ الأصلي"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__original_currency_column
+msgid "Original Currency Column"
+msgstr "عمود العملة الأصلية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Other Info"
+msgstr "معلومات أخرى"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__partner_name_column
+msgid "Partner Name Column"
+msgstr "عمود اسم الشريك"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__bank_name_column
+msgid "Partner's bank"
+msgstr "بنك الشريك"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__bank_account_column
+msgid "Partner's bank account"
+msgstr "الحساب البنكي للشريك"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Payable"
+msgstr "الدائنون"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Purchases"
+msgstr "المشتريات"
+
+#. module: account_statement_import_qif
+#: model_terms:ir.ui.view,arch_db:account_statement_import_qif.account_statement_import_form
+msgid "Quicken Interchange Format (.qif)"
+msgstr "تنسيق Quicken ‏(.qif)"
+
+#. module: account_statement_import_base
+#: model:ir.model.fields,field_description:account_statement_import_base.field_account_bank_statement_line__raw_data
+#: model_terms:ir.ui.view,arch_db:account_statement_import_base.account_bank_statement_line_form
+msgid "Raw Data"
+msgstr "البيانات الأصلية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Receivable"
+msgstr "المدينون"
+
+#. module: account_reconcile_oca
+#: model:ir.actions.act_window,name:account_reconcile_oca.account_account_account_account_reconcile_act_window
+#: model:ir.actions.act_window,name:account_reconcile_oca.account_account_reconcile_act_window
+#: model:ir.actions.act_window,name:account_reconcile_oca.res_partner_account_account_reconcile_act_window
+#: model:ir.actions.server,name:account_reconcile_oca.action_reconcile
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__reconcile_id
+#: model:ir.ui.menu,name:account_reconcile_oca.account_account_reconcile_menu
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_account_reconcile_form_view
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_journal_dashboard_kanban_view
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.view_account_list
+msgid "Reconcile"
+msgstr "تسوية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__reconcile_aggregate
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_res_company__reconcile_aggregate
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_res_config_settings__reconcile_aggregate
+msgid "Reconcile Aggregate"
+msgstr "تجميع التسوية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_bank_statement_line__reconcile_mode
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_journal__reconcile_mode
+msgid "Reconcile Mode"
+msgstr "وضع التسوية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_journal__reconcile_aggregate
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.res_config_settings_form_view
+msgid "Reconcile aggregation"
+msgstr "تجميع التسوية"
+
+#. module: account_reconcile_oca
+#: model:ir.actions.act_window,name:account_reconcile_oca.action_bank_statement_line_move_view_reconcile
+#: model:ir.actions.act_window,name:account_reconcile_oca.action_bank_statement_line_reconcile_all
+#: model:ir.actions.act_window,name:account_reconcile_oca.action_bank_statement_line_reconcile_to_check
+msgid "Reconcile bank statement lines"
+msgstr "تسوية المعاملات البنكية"
+
+#. modules: account_reconcile_oca, account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_reconcile_view
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "Reconciled"
+msgstr "مسوّاة"
+
+#. module: account_reconcile_oca
+#: model:ir.ui.menu,name:account_reconcile_oca.menu_account_reconcile_model
+msgid "Reconciliation Models"
+msgstr "نماذج التسوية"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__reference_column
+msgid "Reference Column"
+msgstr "عمود المرجع"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Reset reconciliation"
+msgstr "إعادة ضبط التسوية"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/account_bank_statement_line.py:0
+msgid "Reversal of: %s"
+msgstr "عكس: %s"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_tree
+msgid "Revert reconciliation"
+msgstr "التراجع عن التسوية"
+
+#. module: account_reconcile_oca
+#: model:ir.model,name:account_reconcile_oca.model_account_reconcile_model_line
+msgid "Rules for the reconciliation model"
+msgstr "قواعد نموذج التسوية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Sales"
+msgstr "المبيعات"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_add_view
+msgid "Save"
+msgstr "حفظ"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_search_reconcile_view
+msgid "Search Journal Items"
+msgstr "البحث في بنود اليومية"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Set as Checked"
+msgstr "تعيين كمراجَعة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__header_lines_skip_count
+msgid "Set the Header lines number."
+msgstr "حدّد عدد أسطر الترويسة."
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import__sheet_mapping_id
+msgid "Sheet mapping"
+msgstr "تعيين الأعمدة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__amount_type__simple_value
+msgid "Simple value"
+msgstr "قيمة بسيطة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__skip_empty_lines
+msgid "Skip Empty Lines"
+msgstr "تخطي الأسطر الفارغة"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.res_config_settings_form_view
+msgid "Standard aggregation to use on bank reconciliation"
+msgstr "التجميع الافتراضي في التسوية البنكية"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields.selection,name:account_reconcile_oca.selection__account_journal__reconcile_aggregate__statement
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_reconcile_view
+msgid "Statement"
+msgstr "الكشف"
+
+#. module: account_statement_import_file
+#: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__statement_file
+msgid "Statement File"
+msgstr "ملف الكشف"
+
+#. module: account_statement_import_file
+#: model:ir.model.fields,field_description:account_statement_import_file.field_account_statement_import__statement_filename
+msgid "Statement Filename"
+msgstr "اسم ملف الكشف"
+
+#. module: account_statement_import_sheet_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_sheet_file.view_account_journal_form_n43
+msgid "Statement Import Map"
+msgstr "تعيين استيراد الكشف"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.actions.act_window,name:account_statement_import_sheet_file.action_statement_import_sheet_report_mappings
+#: model:ir.ui.menu,name:account_statement_import_sheet_file.menu_statement_import_sheet_mapping
+msgid "Statement Sheet Mappings"
+msgstr "تعيينات أعمدة الكشوف"
+
+#. module: account_reconcile_oca
+#: model:ir.actions.act_window,name:account_reconcile_oca.action_bank_statement_line_reconcile
+msgid "Statement lines"
+msgstr "معاملات الكشف"
+
+#. module: account_statement_import_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file.account_statement_import_form
+msgid "Supported formats:"
+msgstr "التنسيقات المدعومة:"
+
+#. module: account_statement_import_sheet_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_sheet_file.account_statement_import_form
+msgid "TXT/CSV/XLSX mapping:"
+msgstr "تعيين TXT/CSV/XLSX:"
+
+#. module: account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_form
+msgid "Technical Information"
+msgstr "معلومات تقنية"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__quotechar
+msgid "Text qualifier"
+msgstr "محدد النص"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,help:account_reconcile_oca.field_account_bank_statement_line__foreign_currency_id
+msgid "The optional other currency if it is a multi-currency entry."
+msgstr "العملة الأخرى الاختيارية إذا كان القيد متعدد العملات."
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__float_thousands_sep
+msgid "Thousands Separator"
+msgstr "فاصل الآلاف"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__timestamp_column
+msgid "Timestamp Column"
+msgstr "عمود التاريخ"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__timestamp_format
+msgid "Timestamp Format"
+msgstr "تنسيق التاريخ"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "To Check"
+msgstr "للمراجعة"
+
+#. modules: account_reconcile_oca, account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_reconcile_view
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "To check"
+msgstr "للمراجعة"
+
+#. modules: account_statement_base, account_statement_import_camt
+#. odoo-python
+#: code:addons/account_statement_import_camt/wizard/account_statement_import_camt_parser.py:0
+#: model_terms:ir.ui.view,arch_db:account_statement_base.account_bank_statement_line_search
+msgid "Transaction Type"
+msgstr "نوع المعاملة"
+
+#. modules: account_reconcile_oca, account_statement_base
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_journal_dashboard_kanban_view
+#: model_terms:ir.ui.view,arch_db:account_statement_base.view_bank_statement_form
+msgid "Transactions"
+msgstr "المعاملات"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/account_bank_statement_line.py:0
+msgid "Undefined"
+msgstr "غير محدد"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,field_description:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__transaction_id_column
+msgid "Unique transaction ID column"
+msgstr "عمود المعرّف الفريد للمعاملة"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "Unreconcile"
+msgstr "إلغاء التسوية"
+
+#. module: account_statement_import_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file.account_statement_import_form
+msgid "Upload Bank Statements"
+msgstr "رفع كشوف البنك"
+
+#. module: account_statement_import_file
+#: model_terms:ir.ui.view,arch_db:account_statement_import_file.account_statement_import_form
+msgid "Upload a bank statement file"
+msgstr "ارفع ملف كشف بنك"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields,field_description:account_reconcile_oca.field_account_account_reconcile_data__user_id
+msgid "User"
+msgstr "المستخدم"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__credit_value
+msgid "Value of debit/credit column that indicates if it's a credit"
+msgstr "قيمة عمود المدين/الدائن التي تدل على الدائن"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields,help:account_statement_import_sheet_file.field_account_statement_import_sheet_mapping__debit_value
+msgid "Value of debit/credit column that indicates if it's a debit"
+msgstr "قيمة عمود المدين/الدائن التي تدل على المدين"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_move_line_tree_reconcile_view
+msgid "View"
+msgstr "عرض"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "View move"
+msgstr "عرض القيد"
+
+#. module: account_reconcile_oca
+#: model:ir.model.fields.selection,name:account_reconcile_oca.selection__account_journal__reconcile_aggregate__week
+msgid "Week"
+msgstr "أسبوع"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/account_journal.py:0
+msgid "Well done! Everything has been reconciled"
+msgstr "أحسنت! تمت تسوية كل شيء"
+
+#. module: account_reconcile_oca
+#. odoo-python
+#: code:addons/account_reconcile_oca/models/account_move_line.py:0
+msgid "You can only reconcile journal items belonging to the same account."
+msgstr "لا يمكنك تسوية إلا بنود يومية تتبع الحساب نفسه."
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__delimiter__comma
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__float_decimal_sep__comma
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__float_thousands_sep__comma
+msgid "comma (,)"
+msgstr "فاصلة (,)"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__delimiter__dot
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__float_decimal_sep__dot
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__float_thousands_sep__dot
+msgid "dot (.)"
+msgstr "نقطة (.)"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "fully paid"
+msgstr "مدفوعة بالكامل"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__float_decimal_sep__none
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__float_thousands_sep__none
+msgid "none"
+msgstr "بلا"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__float_thousands_sep__quote
+msgid "quote (')"
+msgstr "علامة اقتباس (')"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__delimiter__semicolon
+msgid "semicolon (;)"
+msgstr "فاصلة منقوطة (;)"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__delimiter__space
+msgid "space"
+msgstr "مسافة"
+
+#. module: account_statement_import_sheet_file
+#: model:ir.model.fields.selection,name:account_statement_import_sheet_file.selection__account_statement_import_sheet_mapping__delimiter__tab
+msgid "tab"
+msgstr "علامة جدولة"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.account_journal_dashboard_kanban_view
+msgid "to check"
+msgstr "للمراجعة"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "will be reduced by"
+msgstr "ستُخفّض بمقدار"
+
+#. module: account_reconcile_oca
+#: model_terms:ir.ui.view,arch_db:account_reconcile_oca.bank_statement_line_form_reconcile_view
+msgid "with an open amount"
+msgstr "بمبلغ مفتوح"
+
+#. module: account_statement_import_camt
+#: model_terms:ir.ui.view,arch_db:account_statement_import_camt.account_statement_import_view
+msgid "zipped CAMT"
+msgstr "CAMT مضغوط"

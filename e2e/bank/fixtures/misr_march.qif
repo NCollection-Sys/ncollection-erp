@@ -1,0 +1,13 @@
+!Type:Bank
+D10/20/26
+T-60.00
+PMerchant fee October
+^
+D10/21/26
+T1,200.00
+PTransfer Nile Customer
+^
+D10/22/26
+T-410.00
+PSupplier Delta
+^
