@@ -36,8 +36,8 @@
             width: 100%;
             height: auto;
             max-height: 42vh;
-            border-right: 0;
-            border-bottom: 1px solid var(--nc-color-border, #d8dadd);
+            border: 0;
+            border-block-end: 1px solid var(--nc-color-border, #d8dadd);
         }
 
         .o_account_reconcile_oca_info {
