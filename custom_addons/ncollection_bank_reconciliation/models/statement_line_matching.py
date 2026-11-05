@@ -18,6 +18,8 @@ Payment batch
 Duplicate review
     Read-only detection with explanations (``ncollection.bank.duplicate.review``); see that model.
 """
+import json
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -39,7 +41,14 @@ class AccountBankStatementLine(models.Model):
         self.ensure_one()
         if self.is_reconciled:
             return None
-        data = (self.reconcile_data_info or {}).get('data', [])
+        # On a transaction's FIRST opening there is no stored match yet: computing reconcile_data_info runs the
+        # engine's auto-matching, which STORES its proposal in reconcile_data. Read the info first (that triggers it),
+        # then the stored proposal, so the very first opening already sees the proposed documents.
+        info = self.reconcile_data_info or {}
+        stored = self.reconcile_data
+        if isinstance(stored, str):
+            stored = json.loads(stored)
+        data = ((stored or {}).get('data') if stored else None) or info.get('data', [])
         others = [d for d in data if d.get('kind') == 'other']
         if not others or any(not d.get('id') for d in others):
             return None      # a manual line is already in the match: let the user decide
@@ -63,7 +72,7 @@ class AccountBankStatementLine(models.Model):
             return None      # no discount to apply
         return items, currency
 
-    @api.depends('reconcile_data_info', 'is_reconciled', 'amount', 'date')
+    @api.depends('reconcile_data', 'reconcile_data_info', 'is_reconciled', 'amount', 'date')
     def _compute_nc_early_discount_available(self):
         for st_line in self:
             try:
@@ -128,6 +137,46 @@ class AccountBankStatementLine(models.Model):
         self.reconcile_data_info = self._recompute_suspense_line(data, aux, info.get('manual_reference'))
         self.can_reconcile = self.reconcile_data_info.get('can_reconcile', False)
         return True
+
+    def _do_auto_reconcile(self, reconcile_if_possible=True):
+        """The engine proposes a document only when its FULL open amount equals the payment. Odoo Enterprise also
+        proposes a DISCOUNTED match (documentation: "exact and discounted matches"): a customer paying 1,029 for a
+        1,050 invoice with 2% early-payment discount. When the engine found nothing and the transaction has a partner,
+        propose
+        that partner's one open document whose discounted total equals the payment, if it is still inside its discount
+        window at the transaction date. Exactly one candidate or nothing (never an ambiguous guess), and it is only a
+        PROPOSAL: nothing is posted here, the user applies the discount and validates."""
+        res = super()._do_auto_reconcile(reconcile_if_possible=reconcile_if_possible)
+        for st_line in self.filtered(lambda line: not line.is_reconciled and line.partner_id):
+            data = (st_line.reconcile_data_info or {}).get('data', [])
+            if any(d.get('kind') == 'other' for d in data):
+                continue
+            candidate = st_line._nc_discounted_candidate()
+            if candidate:
+                st_line._add_account_move_line(candidate)
+        return res
+
+    def _nc_discounted_candidate(self):
+        self.ensure_one()
+        currency = self.foreign_currency_id or self.currency_id
+        amount = self.amount_currency if self.foreign_currency_id else self.amount
+        if currency.is_zero(amount):
+            return self.env['account.move.line']
+        items = self.env['account.move.line'].search([
+            ('partner_id', 'child_of', self.partner_id.commercial_partner_id.id),
+            ('company_id', '=', self.company_id.id),
+            ('display_type', '=', 'payment_term'),
+            ('parent_state', '=', 'posted'),
+            ('reconciled', '=', False),
+            ('currency_id', '=', currency.id),
+            ('discount_date', '>=', self.date),
+        ])
+        matches = items.filtered(
+            lambda ml: (ml.amount_currency > 0) == (amount > 0)
+            and currency.compare_amounts(abs(ml.discount_amount_currency), abs(amount)) == 0
+            and currency.is_zero(ml.amount_residual_currency - ml.amount_currency)
+            and ml.move_id._is_eligible_for_early_payment_discount(currency, self.date))
+        return matches if len(matches) == 1 else self.env['account.move.line']
 
     # ---------------------------------------------------------------- batch
     def action_nc_match_batch(self, batch):

@@ -137,7 +137,8 @@ class TestGapClosure(BankCommon):
             'line_ids': [Command.create({'value': 'percent', 'value_amount': 100.0, 'nb_days': 30})]})
 
     def _taxed_invoice(self, term):
-        tax = self.env['account.tax'].create({'name': 'VAT 5% (test)', 'amount': 5.0, 'type_tax_use': 'sale'})
+        tax = self.env['account.tax'].search([('name', '=', 'VAT 5% (test)'), ('company_id', '=', self.company.id)], limit=1)
+        tax = tax or self.env['account.tax'].create({'name': 'VAT 5% (test)', 'amount': 5.0, 'type_tax_use': 'sale'})
         move = self.env['account.move'].create({
             'move_type': 'out_invoice', 'partner_id': self.customer.id, 'invoice_date': self.day, 'date': self.day,
             'invoice_payment_term_id': term.id,
@@ -174,6 +175,29 @@ class TestGapClosure(BankCommon):
         """'excluded': the discount is on the untaxed amount only (2% of 1,000 = 20), the tax is unchanged."""
         _inv, tax, st = self._discount_flow('excluded', 1030.0)
         self.assertFalse(st.move_id.line_ids.filtered(lambda ml: ml.tax_line_id == tax), 'no tax correction')
+
+    def test_early_discount_offered_on_the_first_opening(self):
+        """Regression (found in the browser): on a transaction never opened before, the engine's auto-match stores its
+        proposal while the workspace loads; the discount must already be offered on that first load (web_read), not only
+        on a later visit."""
+        inv, _tax = self._taxed_invoice(self._discount_term('included'))
+        st = self.line(1029.0, partner=self.customer, label='Customer transfer', date=self.day + timedelta(days=3))
+        self.assertFalse(st.reconcile_data, 'never opened: nothing stored yet')
+        st.invalidate_recordset()
+        result = st.web_read({'nc_early_discount_available': {}, 'reconcile_data_info': {}})
+        proposed = [d.get('id') for d in result[0]['reconcile_data_info']['data'] if d.get('kind') == 'other']
+        self.assertEqual(proposed, self.open_item(inv).ids, 'the DISCOUNTED amount proposes the invoice (no label match)')
+        self.assertTrue(result[0]['nc_early_discount_available'], 'and the discount is offered on that same load')
+
+    def test_discounted_match_is_never_an_ambiguous_guess(self):
+        term = self._discount_term('included')
+        self._taxed_invoice(term)
+        self._taxed_invoice(term)                       # two invoices with the same discounted total
+        st = self.line(1029.0, partner=self.customer, label='Customer transfer', date=self.day + timedelta(days=3))
+        st.invalidate_recordset()
+        proposed = [d for d in st.reconcile_data_info['data'] if d.get('kind') == 'other']
+        self.assertFalse(proposed, 'two equal candidates: nothing proposed')
+        self.assertFalse(st.is_reconciled, 'and nothing posted')
 
     def test_no_discount_outside_the_window_or_for_another_amount(self):
         inv, _tax = self._taxed_invoice(self._discount_term('included'))

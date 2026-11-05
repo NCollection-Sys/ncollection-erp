@@ -55,13 +55,22 @@ async function modelButton(page, transfer) {
   for (const m of models) {
     const lines = await rpc(page, 'account.reconcile.model.line', 'read', [m.line_ids, ['account_id']]);
     const isTransfer = lines.some((l) => l.account_id && l.account_id[0] === company.transfer_account_id[0]);
-    if (isTransfer === transfer) return page.locator('.o_form_view button:visible', { hasText: m.name }).first();
+    if (isTransfer === transfer) return page.locator('.o_selection_badge', { hasText: m.name }).first();   // OCA renders models as badges
   }
   throw new Error('no ' + (transfer ? 'internal-transfer' : 'bank-fee') + ' model');
 }
-async function addItem(page, docName) {
-  if (!(await page.locator('.o_reconcile_widget_table').innerText()).includes(docName)) {
-    await page.locator('.o_reconcile_move_line_view .o_data_row', { hasText: docName }).first().click();
+async function addItem(page, label, docName) {
+  // Is the document already in the pending match? Judged from what the workspace SHOWS (its match table): the
+  // proposal is the form's own state, which a separate server read does not see. Compared on the number part, since an
+  // Arabic-prefixed name is displayed in visual order (2026/00004/الفات). Clicking an already-proposed row would
+  // UNSELECT it, so the row is clicked only when the document is not shown.
+  const number = docName.split('/').slice(-2).join('/');
+  const shown = (await page.locator('.o_reconcile_widget_table').innerText()).includes(number);
+  if (!shown) {
+    // the document list lives on the workspace's Reconcile tab; an earlier action may have left another tab open
+    const tab = page.locator('.o_notebook .nav-link', { hasText: /^\s*Reconcile\s*$/ }).first();
+    if (await tab.count()) { await tab.click(); await page.waitForTimeout(800); }
+    await page.locator('.o_reconcile_move_line_view .o_data_row', { hasText: number }).first().click();
     await page.waitForTimeout(1500);
   }
 }
@@ -117,10 +126,7 @@ async function validate(page) {
     await openJournal(p, 'EUR Bank');
     await select(p, 'EUR receipt Nile');
     const inv = (await rpc(p, 'account.move', 'search_read', [[['currency_id.name', '=', 'EUR'], ['move_type', '=', 'out_invoice']]], { fields: ['name'] }))[0];
-    if (!(await p.locator('.o_reconcile_widget_table').innerText()).includes(inv.name)) {
-      await p.locator('.o_reconcile_move_line_view .o_data_row', { hasText: inv.name }).first().click();
-      await p.waitForTimeout(1500);
-    }
+    await addItem(p, 'EUR receipt Nile', inv.name);
     await shot(p, 'gap_fx_before');
     await validate(p);
     const st = await stLine(p, 'EUR receipt Nile');
@@ -137,12 +143,23 @@ async function validate(page) {
   });
 
   await check('early payment discount: button shown, applied, invoice paid in full, tax corrected', async () => {
+    const own = await session(browser, { ...OWNER, lang: 'en_US', viewport: { width: 1400, height: 900 } });
+    const p = own.page;
+    CURRENT = p;
+    try {
     await openJournal(p, 'Ahly Bank');
+    // the workspace auto-opens its first transaction; select another one first so this one is genuinely loaded
+    await select(p, 'Deposit slip 42');
     await select(p, 'Early payment Nile');
     const disc = (await rpc(p, 'account.move', 'search_read', [[['invoice_payment_term_id.name', '=', '2/10 net 30']]], { fields: ['name'] }))[0];
-    await addItem(p, disc.name);
     const btn = p.locator('button.o_nc_apply_discount:visible').first();
-    await btn.waitFor({ state: 'visible', timeout: 20000 });     // offered once the form has loaded the match
+    // The workspace proposes the invoice itself (same partner, the discounted amount). Only if it did not, add it.
+    try {
+      await btn.waitFor({ state: 'visible', timeout: 10000 });
+    } catch (e) {
+      await addItem(p, 'Early payment Nile', disc.name);
+      await btn.waitFor({ state: 'visible', timeout: 15000 });
+    }
     await btn.click();
     await p.waitForTimeout(2000);
     await shot(p, 'gap_discount_applied');
@@ -156,6 +173,10 @@ async function validate(page) {
     eq(round(tax), 1, 'VAT reversed on the discount: 2% of 50');
     eq(round(lines.reduce((a, l) => a + l.balance, 0)), 0, 'balanced');
     return `${inv.payment_state}`;
+    } finally {
+      CURRENT = s.page;
+      await own.context.close();
+    }
   });
 
   await check('batch: "Match a batch" adds both payments; one bank line settles them', async () => {
@@ -201,27 +222,33 @@ async function validate(page) {
   });
 
   await check('undo and retry in the UI after a multi-currency match: gain reversed, then booked once again', async () => {
+    const own = await session(browser, { ...OWNER, lang: 'en_US', viewport: { width: 1400, height: 900 } });
+    const p = own.page;
+    CURRENT = p;
+    try {
     await openJournal(p, 'EUR Bank');
     await select(p, 'EUR receipt Nile');
     await shot(p, 'gap_undo_before');
-    const undo = p.locator('.o_form_view button:visible', { hasText: 'Unreconcile' }).first();
+    const undo = p.getByText('Unreconcile', { exact: true }).first();
     await undo.waitFor({ state: 'visible', timeout: 20000 });
     await undo.click();
-    const dlg = p.locator('.modal-dialog');
-    if (await dlg.count()) await dlg.getByRole('button', { name: /^(Ok|OK|Confirm)$/ }).first().click();
+    const confirm = p.locator('.modal-dialog').getByRole('button', { name: /^(Ok|OK|Confirm)$/ }).first();
+    await confirm.waitFor({ state: 'visible', timeout: 15000 });   // OCA asks "Are you sure…?"
+    await confirm.click();
     await p.waitForTimeout(3000);
     const fx = async () => round(-(await rpc(p, 'account.move.line', 'search_read', [[['account_id', '=', company.income_currency_exchange_account_id[0]], ['parent_state', '=', 'posted']]], { fields: ['balance'] })).reduce((a, l) => a + l.balance, 0));
     eq(await fx(), 0, 'gain reversed by the undo');
     eq((await stLine(p, 'EUR receipt Nile')).is_reconciled, false, 'open again');
     await select(p, 'EUR receipt Nile');
     const inv = (await rpc(p, 'account.move', 'search_read', [[['currency_id.name', '=', 'EUR'], ['move_type', '=', 'out_invoice']]], { fields: ['name'] }))[0];
-    if (!(await p.locator('.o_reconcile_widget_table').innerText()).includes(inv.name)) {
-      await p.locator('.o_reconcile_move_line_view .o_data_row', { hasText: inv.name }).first().click();
-      await p.waitForTimeout(1500);
-    }
+    await addItem(p, 'EUR receipt Nile', inv.name);
     await validate(p);
     eq(await fx(), 40, 'booked once again, not twice');
     return 'net gain 40.00';
+    } finally {
+      CURRENT = s.page;
+      await own.context.close();
+    }
   });
   await check('no page errors (Owner)', async () => { eq(s.errors, [], 'page errors'); });
   await s.context.close();
