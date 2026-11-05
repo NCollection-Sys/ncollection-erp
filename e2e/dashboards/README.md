@@ -9,4 +9,4 @@ is not throttled the way a hidden browser pane is. It never touches the shared s
   sorting, product image, chatter, Document Layout, Arabic Duplicate.
 * `survey.js` - screenshots + overflow metrics of every NCollection dashboard (`node survey.js ar_001 375x812 tag_`).
 * Host assumptions: Playwright in `D:/Projects/ncollection-erp/e2e/node_modules`, Edge (`PW_CHANNEL` to change), Docker for the
-  file inspector. Paths in `lib.js` and `fixtures/*.sh` are the author's Windows paths; adjust before reuse.
+  file inspector. `lib.js` holds the Playwright path; `fixtures/*.sh` derive the repo from their own location and the db container via `docker compose ps -q db` (set `OCA_DIR` / `COMPOSE_DIR` in a worktree).
