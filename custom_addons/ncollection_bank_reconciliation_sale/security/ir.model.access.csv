@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sale_match_user,ncollection.bank.sale.match.user,model_ncollection_bank_sale_match,account.group_account_user,1,1,1,1
+access_sale_match_line_user,ncollection.bank.sale.match.line.user,model_ncollection_bank_sale_match_line,account.group_account_user,1,1,1,1

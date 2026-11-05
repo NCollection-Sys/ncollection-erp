@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sale_match_view_form" model="ir.ui.view">
+        <field name="name">ncollection.bank.sale.match.form</field>
+        <field name="model">ncollection.bank.sale.match</field>
+        <field name="arch" type="xml">
+            <form string="Sales orders">
+                <group>
+                    <group>
+                        <field name="statement_line_id"/>
+                        <field name="partner_id"/>
+                        <field name="transaction_amount"/>
+                    </group>
+                    <group>
+                        <field name="company_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="order_currency_id" invisible="1"/>
+                        <field name="method"/>
+                        <field name="percentage" invisible="method != 'percentage'"/>
+                        <field name="fixed_amount" invisible="method != 'fixed'"/>
+                        <field name="post"/>
+                    </group>
+                </group>
+                <p class="text-muted" invisible="line_ids">
+                    This customer has no confirmed sales order.
+                </p>
+                <field name="line_ids" class="o_nc_sale_orders" nolabel="1">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="selected" widget="boolean_toggle"/>
+                        <field name="order_id"/>
+                        <field name="date_order"/>
+                        <field name="partner_id"/>
+                        <field name="currency_id"/>
+                        <field name="other_currency" column_invisible="1"/>
+                        <field name="amount_total"/>
+                        <field name="amount_invoiced"/>
+                        <field name="amount_to_invoice"/>
+                        <field name="invoice_status" widget="badge"
+                               decoration-success="invoice_status == 'invoiced'"
+                               decoration-warning="invoice_status == 'to invoice'"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_create_invoice" type="object" string="Create invoice"
+                            class="btn-primary o_nc_sale_create"/>
+                    <button name="action_add_posted_invoices" type="object" string="Add their posted invoices"
+                            class="btn-secondary o_nc_sale_add"/>
+                    <button special="cancel" string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_sale_match" model="ir.actions.act_window">
+        <field name="name">Sales orders</field>
+        <field name="res_model">ncollection.bank.sale.match</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="bank_statement_line_form_reconcile_sales" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.reconcile.ncollection.sales</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account_reconcile_oca.bank_statement_line_form_reconcile_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('o_account_reconcile_oca_statusbar')]/div[hasclass('o_statusbar_buttons')]" position="inside">
+                <button name="%(ncollection_bank_reconciliation_sale.action_sale_match)d" type="action" string="Sales"
+                        class="btn-secondary o_nc_sales" invisible="is_reconciled or not partner_id"
+                        context="{'default_statement_line_id': id}" groups="account.group_account_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
