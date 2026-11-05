@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **32**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **33**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -196,7 +196,11 @@ adding a module fails CI until someone updates this list.
   lacks: one reconciliation at a time (`FOR UPDATE NOWAIT`), no double reconciliation, the server-side `can_reconcile`
   mirror, an audited undo that rebuilds the pending match (the engine's was stale), strict import (preview of the exact file,
   exact account / active company / card journal, duplicate fingerprints for files with no transaction id), and the journal
-  card's To Reconcile / Statements / New / Upload. Every match is Odoo's own `reconcile()`. Docs: `docs/markdown/BANK_RECONCILIATION.md`.
+  card's To Reconcile / Statements / New / Upload (also by **drag and drop**: the same wizard, server-checked type / size, preview still
+  mandatory), OFX, payment batches, early-payment discounts, duplicate review. Every match is Odoo's own `reconcile()`. Docs: `docs/markdown/BANK_RECONCILIATION.md`.
+- `ncollection_bank_reconciliation_sale` — the **Sales action** of that workspace (`auto_install` with `sale`): the customer's confirmed
+  orders, invoices created by Odoo's own invoicing (regular, or the native down payment), posted only by explicit choice, then matched
+  as ordinary receivables. A sales order is never a receivable; no revenue from a bank line; no sudo.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking; also the foreign buyer
   identifier (`nc_foreign_tax_id` + ICD scheme, Guidelines V2.0 §18.2.3) the e-invoicing engine maps to IBT-046.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.

@@ -29,9 +29,9 @@ from odoo.tools import formatLang
 from odoo.addons.base.models.res_bank import sanitize_account_number
 
 
-# What the importer reads (CSV / XLSX, CAMT.053 as .xml or .camt, QIF, OFX / QFX, and a zip of CAMT files) and how large a
-# file may be. Enforced on the server for EVERY way a file arrives (the Upload button, the Accounting menu, a drag and
-# drop): the browser's own checks are a convenience, never the control.
+# What the importer reads (CSV / XLSX, CAMT.053 as .xml or .camt, QIF, OFX / QFX, a zip of CAMT files) and how large a
+# file may be. Enforced on the server for EVERY way a file arrives (the Upload button, the Accounting menu, a drag
+# and drop): the browser's own checks are a convenience, never the control.
 NC_UPLOAD_EXTENSIONS = ('.csv', '.xlsx', '.xml', '.camt', '.qif', '.ofx', '.qfx', '.zip')
 NC_UPLOAD_MAX_BYTES = 10 * 1024 * 1024
 
