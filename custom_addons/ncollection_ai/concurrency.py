@@ -9,9 +9,9 @@ refused at once with a friendly message instead of queueing behind the provider.
 The limit is a Postgres ADVISORY LOCK per slot. Advisory locks are scoped to the current DATABASE, which is exactly the
 per-tenant scope wanted, and they hold across worker processes, which a Python counter would not.
 
-WHY THIS IS NOT IN models/. ``tests/test_isolation.py`` forbids ``cursor()`` / ``registry(`` in every model file, because
-a model must read only through ``self.env`` (one database). This helper needs a cursor of its OWN, since a streamed answer
-outlives the request's cursor, but it never touches data and it only ever uses the registry its caller hands it
+WHY THIS IS NOT IN models/. ``tests/test_isolation.py`` forbids ``cursor()`` / ``registry(`` in every model file,
+because a model must read only through ``self.env`` (one database). This helper needs a cursor of its OWN, since a
+streamed answer outlives the request's cursor, but it never touches data and it only ever uses the registry its caller hands it
 (``env.registry`` = the request's database). It builds no Registry, opens no connection by name, and reads no table;
 a test pins that.
 """

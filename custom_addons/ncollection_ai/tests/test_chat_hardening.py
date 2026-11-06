@@ -189,6 +189,7 @@ class TestConcurrencyCap(TransactionCase):
     def test_a_refused_batch_question_calls_the_gateway_not_at_all(self):
         self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, '1')
         called = []
+
         def fake_complete(_self, prompt, max_tokens=1024):
             called.append(1)
             return {'text': 'x'}
