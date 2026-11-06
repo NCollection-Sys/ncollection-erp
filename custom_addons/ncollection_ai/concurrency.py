@@ -12,14 +12,16 @@ Odoo's workers are shared by every database on the server, so two limits apply:
 A refused request is told so at once with a friendly message; the only waiting allowed is a fraction of a second
 (``AiAdmission``), because a waiting request holds a worker too.
 
-Both limits are Postgres ADVISORY LOCKS, one per slot, so they hold across worker processes, which a Python counter would
+Both limits are Postgres ADVISORY LOCKS, one per slot, so they hold across worker processes, which a Python
 not. The per-database lock lives in the tenant's own database (advisory locks are database-scoped, exactly the scope
-wanted); the server-wide lock lives in the maintenance database, the one place every tenant's request can see in common.
+wanted); the server-wide lock lives in the maintenance database, the one place every
+tenant request can see.
 
 WHY THIS IS NOT IN models/. ``tests/test_isolation.py`` forbids ``cursor()`` / ``registry(`` in every model file,
 because a model must read only through ``self.env`` (one database). These helpers need cursors of their OWN, since a
 streamed answer outlives the request's cursor, but they never touch data: the tenant slot uses only the registry its
-caller hands it (``env.registry`` = the request's database); the server slot opens only the fixed maintenance database and
+caller hands it (``env.registry`` = the request's database); the server slot opens only the fixed
+maintenance database and
 executes only advisory-lock calls. Tests pin both.
 """
 import time
@@ -82,7 +84,7 @@ class AiSlot:
 def global_limit(workers, configured=None):
     """How many AI requests may be in flight across ALL tenants, given Odoo's ``workers`` setting.
 
-    Pre-forked (``workers`` > 0): never more than ``workers - 1``, so at least one worker always serves everything else;
+    Pre-forked (``workers`` > 0): never more than ``workers - 1``, so one worker always serves the rest;
     the default is half of them (at least 1). Threaded mode (``workers`` = 0) has no fixed pool: default 2.
     """
     workers = int(workers or 0)
@@ -141,7 +143,7 @@ class AiAdmission:
             time.sleep(self._POLL_SECONDS)
 
     def release(self):
-        """Last in, first out (savepoint-based test cursors require it; harmless for independent production cursors)."""
+        """Last in, first out (savepoint-based test cursors require it)."""
         held, self._held = self._held, []
         for slot in held:
             slot.release()
