@@ -11,7 +11,8 @@ per-tenant scope wanted, and they hold across worker processes, which a Python c
 
 WHY THIS IS NOT IN models/. ``tests/test_isolation.py`` forbids ``cursor()`` / ``registry(`` in every model file,
 because a model must read only through ``self.env`` (one database). This helper needs a cursor of its OWN, since a
-streamed answer outlives the request's cursor, but it never touches data and it only ever uses the registry its caller hands it
+streamed answer outlives the request's cursor, but it never touches data and it only ever uses the registry its
+caller hands it
 (``env.registry`` = the request's database). It builds no Registry, opens no connection by name, and reads no table;
 a test pins that.
 """
