@@ -13,7 +13,8 @@ A refused request is told so at once with a friendly message; the only waiting a
 (``AiAdmission``), because a waiting request holds a worker too.
 
 Both limits are Postgres ADVISORY LOCKS, one per slot, so they hold across worker processes, which a Python
-not. The per-database lock lives in the tenant's own database (advisory locks are database-scoped, exactly the scope
+counter would not. The per-database lock lives in the tenant's own database
+(advisory locks are database-scoped, exactly the scope
 wanted); the server-wide lock lives in the maintenance database, the one place every
 tenant request can see.
 
