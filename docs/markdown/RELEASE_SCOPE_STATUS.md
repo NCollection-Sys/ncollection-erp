@@ -33,8 +33,8 @@ contains the Option A / Platform UX line). Target databases for the local upgrad
 
 | Item | Why |
 |---|---|
-| A-Cube e-invoicing adapter proven on the sandbox | Needs an A-Cube credential; not available and not permitted. Built against the published OpenAPI only. The e-invoicing release stays blocked on this; it does not affect the three target databases (the engine is a gated module, not enabled for them). |
-| `#81` invoice-amount audit criterion | `auditlog` cannot audit `account.move` (recursion, #431); the task was re-scoped and the criterion is recorded as not met. Financial audit UX is `#124`. |
+| A-Cube e-invoicing adapter proven on the sandbox | `UAE_EINVOICING.md` §9f: built against the published OpenAPI, "NOT yet proven on its sandbox (no credential), so release stays blocked". Needs an A-Cube credential; none is available and none may be used. Scope check done: `ncollection_uae_einvoicing` and `_acube` are installed in none of the three target databases and are GATED modules (UAE country + verified UAE books + Accounting + an explicit per-tenant enable, never in a plan), so this upgrade does not install or change them and the block does not stop it. The e-invoicing release itself remains blocked. |
+| P8-T05 / `#81` invoice-amount audit criterion | **Not met, and the ledger says "done".** `DELIVERABLE_1_SYSTEM_DESIGN.md` P8-T05 acceptance: changing an invoice amount produces an audit entry with old / new values, user, IP and time. `ncollection_audit/README.rst` records the criterion as NOT met (`auditlog` overflows the recursion limit on `account.move` / `.line`, #431; `res.users` and `res.partner` withheld too, #428 / #429) and says #81 "was rescoped to infrastructure-only". `PROGRESS.md` lists P8-T05 as "done 2026-08-14". **No approval artefact for the rescope was found in the repository**; the only record is the module's own README. So: infrastructure is complete and tested; the criterion as written is an unmet requirement. `ncollection_audit` is installed in none of the three target databases, so the release neither delivers nor breaks it. Financial audit UX is `#124`. |
 | Host security gate | Tamper Protection and cloud-delivered protection were off at the last check; credentials not rotated from a clean device. Blocks the shared upgrade, not development. |
 
 ## 4. Explicitly deferred by prior agreement
@@ -71,5 +71,28 @@ should know that N concurrent streams hold N workers.
 ## 6. Unresolved items left by the AI widget work
 
 * Streaming is not proven against a live provider (see section 2).
-* A user can read their own transcript rows but the transcript remains a convenience, never evidence (cron-deleted after
-  `ncollection_ai.transcript_retention_days`, default 90, `0` keeps forever).
+* A transcript is a convenience, never evidence (cron-deleted after `ncollection_ai.transcript_retention_days`, default 90, `0` keeps forever).
+* `ncollection_demo` cannot run the chat widget: the gateway accepts only alphanumeric tenant names (CLAUDE.md fixture rule, "tenant key === subdomain ===
+  database name"), and the signed tenant is the database name. Found in the rehearsal: the widget showed "'tenant' must be 1-63 alphanumeric characters".
+  Decision needed from the owner: do not install `ncollection_ai` on `ncollection_demo` (recommended), or relax the gateway's tenant rule (a security-hygiene change
+  that bounds the per-tenant dictionaries; not made here).
+
+## 7. Streaming implementation review (worker exhaustion, timeouts, authorization, throttling, data exposure)
+
+| Concern | Finding | Evidence / action |
+|---|---|---|
+| Worker exhaustion | **Real problem.** An AI request, batch or streamed, holds one web worker for the provider's latency; workers are shared by all tenants (production `workers = 4`). | Measured on `--workers=2`, 7.7 s answers: two concurrent streams delayed an ordinary request by **6,175 ms** (idle: 20 ms). Fixed with a per-database cap (`ncollection_ai.max_concurrent_requests`, default 2, Postgres advisory lock per slot): with the cap at 1, the second stream was refused in **52 ms** and the ordinary request took **25 ms**. Tests: `TestConcurrencyCap`, the route test, `worker_probe.js`. Residual: the cap is per tenant, so many tenants asking at once can still fill the pool; size `workers` accordingly. |
+| Timeouts | Odoo reads with a 30 s idle timeout and a 512 KB total cap; the gateway bounds a provider stream at 60 s and 64 KB; production `limit_time_real` is 1200 s, never reached. A stalled provider ends the stream with an error line and saves nothing. | `TestStreamingPlumbing`, `acceptance_stream.js` (gateway stopped mid-use). |
+| Authorization | Same code as the batch RPC (gate, #375 flag, caps, secret scans, registry lookup) before the first byte; `auth='user'`; Odoo's CSRF token required (a request without it is refused); a plain user gets 403; anonymous is redirected. | Module tests + browser (plain user 403, no-token 4xx). |
+| Throttling | Gateway: per-tenant token budget, request rate, circuit breaker, all decided before the first byte. **Gap found and fixed:** a stream that ended early was not charged at all, so cancelling after the first chunk was free model use. It is now charged the estimate for what was produced. | `TestAbandonedStream`. |
+| Sensitive data | The gateway sees only the sanitised prompt (identity tokens, not names); its log line is metadata only; the stream endpoint returns re-hydrated text to the authorised user only (the same text the batch path returned); nginx's access log records the route, not the form body; the CSRF token and key never appear in a response. No new exposure found. | Source review + `test_isolation` / gateway tests. |
+| Not proven | Live provider streaming and the model's obedience to the answer-language instruction. | Section 2. |
+
+## 8. Rehearsal findings that change the upgrade plan
+
+* **The release gate requires modules that `-u` does not install.** After the planned `-u`/`-i` lists, `ncollection_demo` answered a branded 503 (`UPGRADE_REQUIRED`,
+  `absent=ncollection_sale_attachments,ncollection_stock_barcode`): both are `auto_install` with `sale` / `stock`, which were already installed, so Odoo never
+  triggered them. They must be listed with `-i`. `ncollection` and `awtar` already had them.
+* **Two OCA repositories must be added to the runtime's `./oca`** (`account-reconcile` @ e3d99f3d, `bank-statement-import` @ aa647ee5; tars in the recovery folder) and
+  the release `odoo.conf` (two more `addons_path` entries) must be live in the container: recreate it, never restart (#427).
+* `ncollection_demo` is classified by the gate as a PLATFORM database (it has `ncollection_saas` installed), so it is gated like one.

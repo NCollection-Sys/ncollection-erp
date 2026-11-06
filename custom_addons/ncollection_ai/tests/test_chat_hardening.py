@@ -148,6 +148,86 @@ class TestTranscriptHardening(TransactionCase):
 
 
 @tagged('post_install', '-at_install')
+class TestConcurrencyCap(TransactionCase):
+    """An AI request holds a web worker for the provider's latency; each database gets at most N in flight."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        _make_users(cls)
+
+    def _fake_slots(self, taken):
+        """Make `AiSlot._try` succeed only for slots not in `taken` (the real lock is per-session, and a test
+        transaction is ONE session, so the real call would always re-enter)."""
+        def fake_try(slot_self, cr, index):
+            if index in taken:
+                return False
+            taken.add(index)
+            return True
+        return patch.object(chat_module.AiSlot, '_try', fake_try)
+
+    def test_the_default_is_two_and_a_bad_value_falls_back(self):
+        chat = self.Chat.with_user(self.acct)
+        self.assertEqual(chat._max_concurrent(), chat_module._DEFAULT_MAX_CONCURRENT)
+        for raw, expected in (('1', 1), ('5', 5), ('0', 1), ('-2', 1), ('many', chat_module._DEFAULT_MAX_CONCURRENT)):
+            self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, raw)
+            self.assertEqual(chat._max_concurrent(), expected, raw)
+
+    def test_the_slot_after_the_limit_is_refused_at_once_with_a_friendly_message(self):
+        self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, '2')
+        taken = set()
+        with self._fake_slots(taken):
+            chat = self.Chat.with_user(self.acct)
+            first, second = chat._take_slot(), chat._take_slot()
+            self.assertEqual(taken, {0, 1})
+            with self.assertRaisesRegex(UserError, 'busy'):
+                chat._take_slot()
+            # Test cursors are savepoints, so they must be closed last-in first-out (production cursors are independent).
+            second.release()
+            first.release()
+
+    def test_a_refused_batch_question_calls_the_gateway_not_at_all(self):
+        self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, '1')
+        called = []
+        with self._fake_slots({0}), patch(_COMPLETE, new=lambda s, p, max_tokens=1024: called.append(1) or {'text': 'x'}):
+            with self.assertRaises(UserError):
+                self.Chat.with_user(self.acct).send_suggested('workspace_summary')
+        self.assertFalse(called)
+        self.assertFalse(self.Message.sudo().search([('user_id', '=', self.acct.id)]))
+
+    def test_the_slot_is_released_even_when_the_pipeline_fails(self):
+        released = []
+        original = chat_module.AiSlot.release
+
+        def spy(slot_self):
+            released.append(1)
+            return original(slot_self)
+
+        def boom(*a, **k):
+            raise UserError('gateway down')
+
+        with patch.object(chat_module.AiSlot, 'release', spy), patch(_COMPLETE, new=boom):
+            with self.assertRaises(UserError):
+                self.Chat.with_user(self.acct).send_suggested('workspace_summary')
+        self.assertEqual(released, [1])
+
+    def test_the_slot_helper_builds_no_registry_and_opens_no_connection_by_name(self):
+        import inspect
+        from odoo.addons.ncollection_ai import concurrency
+        source = inspect.getsource(concurrency.AiSlot)
+        for smell in ("Registry(", "db_connect", "psycopg2", "FROM ", "SELECT * "):
+            self.assertNotIn(smell, source, smell)
+        self.assertEqual(source.count("self._registry.cursor()"), 1)
+
+    def test_the_stream_route_gives_the_slot_back_when_it_finishes(self):
+        import inspect
+        from odoo.addons.ncollection_ai.controllers import chat_stream
+        source = inspect.getsource(chat_stream.AiChatStream.stream)
+        self.assertIn('_take_slot()', source)
+        self.assertGreaterEqual(source.count('slot.release()'), 2, 'released on a failed start AND when the stream ends')
+
+
+@tagged('post_install', '-at_install')
 class TestLanguageConsistency(TransactionCase):
 
     @classmethod
@@ -294,6 +374,14 @@ class TestStreamRoute(HttpCase):
         data['csrf_token'] = http.Request.csrf_token(self)
         return self.url_open('/ncollection/ai/chat/stream', data=data)
 
+    def _no_slot(self):
+        """HTTP tests run the generator after the request cursor is closed, which a SAVEPOINT-based test cursor cannot
+        survive (production cursors are independent connections). The slot itself is covered by TestConcurrencyCap."""
+        class _Dummy:
+            def release(self):
+                pass
+        return patch('odoo.addons.ncollection_ai.models.chat.AiChat._take_slot', new=lambda s: _Dummy())
+
     def _fake_stream(self, chunks):
         def fake(_self, prompt, max_tokens=1024):
             return iter([{'delta': c} for c in chunks] + [{'done': True, 'usage': {'total_tokens': 9}}])
@@ -301,7 +389,7 @@ class TestStreamRoute(HttpCase):
 
     def test_a_streamed_answer_arrives_in_pieces_and_is_saved_once(self):
         self.authenticate('hard_acct', 'Hard-Acct-Pass1!')
-        with self._fake_stream(['Hello ', 'there ', 'friend.']):
+        with self._no_slot(), self._fake_stream(['Hello ', 'there ', 'friend.']):
             response = self._post(kind='suggested', value='workspace_summary')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers.get('X-Accel-Buffering'), 'no')
@@ -333,13 +421,28 @@ class TestStreamRoute(HttpCase):
                 _ndjson({'delta': 'half an ans'}),
                 {'too_long': 'L', 'unreadable': 'U', 'provider': 'P', 'cut_off': 'CUT'})
         self.authenticate('hard_acct', 'Hard-Acct-Pass1!')
-        with patch(_STREAM, new=cut):
+        with self._no_slot(), patch(_STREAM, new=cut):
             response = self._post(kind='suggested', value='workspace_summary')
         events = [json.loads(line) for line in response.text.splitlines() if line]
         self.assertEqual(events[-1]['type'], 'error')
         self.assertEqual(events[-1]['message'], 'CUT')
         self.assertFalse(self.env['ncollection.ai.chat.message'].sudo().search(
             [('user_id', '=', self.acct.id)]))
+
+    def test_a_second_stream_over_the_cap_is_a_400_and_never_reaches_the_gateway(self):
+        self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, '1')
+        self.authenticate('hard_acct', 'Hard-Acct-Pass1!')
+        reached = []
+
+        def fake(_self, prompt, max_tokens=1024):
+            reached.append(1)
+            return iter([])
+
+        with patch.object(chat_module.AiSlot, '_try', lambda s, cr, i: False), patch(_STREAM, new=fake):
+            response = self._post(kind='suggested', value='workspace_summary')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('busy', response.json()['message'])
+        self.assertFalse(reached)
 
     def test_an_anonymous_request_is_not_served(self):
         self.authenticate(None, None)

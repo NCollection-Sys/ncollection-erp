@@ -228,6 +228,8 @@ if the stream route is unavailable the widget falls back to the batch RPC. The
 only provider proven end to end is the mock; the Anthropic SSE parser is
 unit-tested on recorded frame shapes and has not run against the live API.
 
+**Concurrency cap.** An AI request holds one web worker for the provider's whole latency (batch and streamed alike). Measured on a `--workers=2` server with a 7.7 s answer, two concurrent questions delayed an ordinary request by 6.2 s, and the workers are shared by every tenant. Each database therefore gets at most `ncollection_ai.max_concurrent_requests` AI requests in flight (default 2; a Postgres advisory lock per slot, so it holds across worker processes); the next is refused at once with a friendly message. With the cap at 1 the same experiment refused the second stream in 52 ms and the ordinary request took 25 ms. The gateway additionally charges a stream that ends early for what it produced, so cancelling after the first chunk is not free model use. Size `workers` for the number of tenants that may ask at the same time.
+
 **Transcript integrity and size.** Users hold READ access only; the service
 writes both rows with ``sudo()`` and an explicit ``user_id`` from the
 authenticated request, so nobody can plant an ``assistant`` row through the

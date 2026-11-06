@@ -50,8 +50,13 @@ class AiChatStream(http.Controller):
         try:
             plan = env['ncollection.ai.chat']._stream_plan(kind, value)
             prepared = plan['prepared']
-            events = env['ncollection.ai.gateway']._stream(
-                prepared['prompt'], prepared['max_answer_tokens'])
+            slot = env['ncollection.ai.chat']._take_slot()
+            try:
+                events = env['ncollection.ai.gateway']._stream(
+                    prepared['prompt'], prepared['max_answer_tokens'])
+            except Exception:
+                slot.release()
+                raise
         except (AccessError, UserError) as exc:
             status = 403 if isinstance(exc, AccessError) else 400
             return request.make_json_response(
@@ -96,6 +101,7 @@ class AiChatStream(http.Controller):
                 _logger.exception("AI chat stream failed")
                 yield _line({'type': 'error', 'message': generic})
             finally:
+                slot.release()
                 close = getattr(events, 'close', None)
                 if close:
                     close()

@@ -238,22 +238,29 @@ class Gateway:
         """Yield `{"delta": text}` items, then one `{"done": True, ...}`.
 
         Usage is charged once, at the end, from the provider's own final count. A
-        stream the client abandons (the generator is closed early) is charged for
-        what was estimated up front by nothing and recorded as the failure it is
-        not - it is simply not recorded, which under-charges rather than
-        over-charges; the pre-check above is what bounds a tenant.
+        stream that ends early (the caller closed it, or the provider failed
+        part-way) is charged the ESTIMATE for what was produced - never nothing,
+        or cancelling every stream after its first chunk would be free model use.
         """
         started = time.monotonic()
         completion = None
+        produced = 0
         try:
             for item in self.provider.stream(prompt, max_tokens):
                 if isinstance(item, str):
+                    produced += len(item)
                     yield {"delta": item}
                 else:
                     completion = item
         except ProviderError:
             breaker.record_failure()
             raise
+        finally:
+            if completion is None:
+                # Abandoned (the caller closed the stream) or failed part-way: the provider still generated what
+                # was produced. Charging nothing would let a client cancel every stream after the first chunk and
+                # use the model for free, so the estimate (~4 chars/token, as everywhere) is charged.
+                self.ledger.record(tenant, max(1, len(prompt) // 4) + produced // 4)
         if completion is None:
             breaker.record_failure()
             raise ProviderError("provider stream ended without a final result")

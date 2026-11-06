@@ -26,6 +26,25 @@ from providers import (  # noqa: E402
 )
 
 
+class TestAbandonedStream(unittest.TestCase):
+
+    def test_a_stream_closed_after_the_first_chunk_is_still_charged(self):
+        from gateway import Gateway
+        gateway = Gateway({"NC_AI_PROVIDER": "mock", "NC_AI_GATEWAY_KEY": "k"})
+        self.assertEqual(gateway.ledger.usage("t1")["tokens_used"], 0)
+        events = gateway.begin_stream("t1", "a reasonably long prompt " * 4, 256)
+        next(events)            # the first chunk is produced ...
+        events.close()          # ... and the caller goes away
+        self.assertGreater(gateway.ledger.usage("t1")["tokens_used"], 0)
+
+    def test_a_completed_stream_is_charged_once_from_the_providers_count(self):
+        from gateway import Gateway
+        gateway = Gateway({"NC_AI_PROVIDER": "mock", "NC_AI_GATEWAY_KEY": "k"})
+        events = list(gateway.begin_stream("t2", "hello there", 256))
+        self.assertTrue(events[-1].get("done"))
+        self.assertEqual(gateway.ledger.usage("t2")["tokens_used"], events[-1]["usage"]["total_tokens"])
+
+
 class TestStreamingProviders(unittest.TestCase):
 
     def test_the_default_stream_is_one_chunk_then_a_completion(self):

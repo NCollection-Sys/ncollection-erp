@@ -18,9 +18,9 @@ async function check(name, fn) {
 const eq = (a, b, msg) => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${msg}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`); };
 const ok = (v, msg) => { if (!v) throw new Error(msg); };
 
-const OWNER = { user: 'owner_bank', password: 'Owner-Bank-Pass1!', company: 1 };
-const ACCT = { user: 'acct_bank', password: 'Acct-Bank-Pass1!', company: 1 };
-const CEO = { user: 'ceo_bank', password: 'Ceo-Bank-Pass1!', company: 1 };
+const OWNER = { user: 'owner_bank', password: 'Owner-Bank-Pass1!', company: Number(process.env.BANK_COMPANY || 1) };
+const ACCT = { user: 'acct_bank', password: 'Acct-Bank-Pass1!', company: Number(process.env.BANK_COMPANY || 1) };
+const CEO = { user: 'ceo_bank', password: 'Ceo-Bank-Pass1!', company: Number(process.env.BANK_COMPANY || 1) };
 
 async function journal(page, name) {
   return (await rpc(page, 'account.journal', 'search', [[['name', '=', name]]]))[0];

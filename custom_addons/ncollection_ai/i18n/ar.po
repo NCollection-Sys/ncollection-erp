@@ -368,3 +368,9 @@ msgstr "أعاد مزوّد الذكاء الاصطناعي خطأً."
 #: code:addons/ncollection_ai/models/gateway_client.py:0
 msgid "The AI answer was cut off before it finished. Nothing was saved."
 msgstr "انقطعت إجابة الذكاء الاصطناعي قبل اكتمالها. لم يتم حفظ أي شيء."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "The assistant is busy answering other questions on this workspace. Please try again in a moment."
+msgstr "المساعد مشغول بالإجابة عن أسئلة أخرى في مساحة العمل هذه. يُرجى المحاولة بعد لحظة."

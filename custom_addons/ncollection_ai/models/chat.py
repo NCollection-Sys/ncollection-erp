@@ -32,6 +32,7 @@ from odoo.exceptions import UserError, ValidationError
 # One definition of each policy constant (#374's lesson): the gate tuple and
 # the question cap are ai_question.py's, imported rather than copied. The copy
 # that drifts is an authorization check.
+from ..concurrency import AiSlot
 from .ai_question import _ALLOWED_GROUPS, _MAX_QUESTION_CHARS
 
 # How much history the widget receives on open. A bound, not a paginator:
@@ -72,6 +73,11 @@ def _prompt_catalog():
                 'ncollection_ai/data/suggested_prompts.json', 'r') as handle:
             _CATALOG_CACHE.update(json.load(handle))
     return _CATALOG_CACHE
+
+
+# Concurrency cap: see ncollection_ai/concurrency.py (an AI request holds a web worker for the provider's latency).
+MAX_CONCURRENT_PARAM = 'ncollection_ai.max_concurrent_requests'
+_DEFAULT_MAX_CONCURRENT = 2
 
 
 class AiChatMessage(models.Model):
@@ -216,6 +222,23 @@ class AiChat(models.AbstractModel):
         }
 
     # ------------------------------------------------------------------ sends
+    def _max_concurrent(self):
+        raw = self.env['ir.config_parameter'].sudo().get_param(
+            MAX_CONCURRENT_PARAM, default=str(_DEFAULT_MAX_CONCURRENT))
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return _DEFAULT_MAX_CONCURRENT
+
+    def _take_slot(self):
+        """Reserve an AI request slot for this database or refuse at once."""
+        slot = AiSlot(self.env.registry, self._max_concurrent())
+        if not slot.acquire():
+            raise UserError(self.env._(
+                "The assistant is busy answering other questions on this "
+                "workspace. Please try again in a moment."))
+        return slot
+
     def _resolve_suggested(self, key):
         """Gate + registry lookup. Returns (text shown in the transcript,
         canonical question sent to the provider).
@@ -248,7 +271,11 @@ class AiChat(models.AbstractModel):
     def send_suggested(self, key):
         """Run one SERVER-OWNED prompt through the pipeline (batch delivery)."""
         display, question = self._resolve_suggested(key)
-        result = self.env['ncollection.ai.question']._run_pipeline(question)
+        slot = self._take_slot()
+        try:
+            result = self.env['ncollection.ai.question']._run_pipeline(question)
+        finally:
+            slot.release()
         return self._persist_exchange(display, result)
 
     def _stream_plan(self, kind, value):
@@ -281,7 +308,11 @@ class AiChat(models.AbstractModel):
         ask() itself runs, not a copy of it. With the flag off this raises
         before anything is read or sent, and no history is written.
         """
-        result = self.env['ncollection.ai.question'].ask(question)
+        slot = self._take_slot()
+        try:
+            result = self.env['ncollection.ai.question'].ask(question)
+        finally:
+            slot.release()
         # Mirror ask()'s own cap so the transcript shows what was processed,
         # not a 10k-character paste the pipeline never saw.
         return self._persist_exchange(
