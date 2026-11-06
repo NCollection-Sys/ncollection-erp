@@ -257,18 +257,38 @@ class TestTenantAndTimestampValidation(GatewayServerCase):
         """`$` matches before a trailing newline, so `match()` accepted
         "acme\n" — from a stock JSON escape, no exotic bytes. Third instance of
         this anchor bug in one week (the PII filter shipped it twice)."""
-        for bad in ("acme\n", "acme\r", "\n", "ac me", "acme-1", "acme_1",
-                    "a" * 64, ""):
+        for bad in ("acme\n", "acme\r", "\n", "ac me", "acme-1", "acme.1", "_acme",
+                    "acme_\n", "acmé", "a/../b", "a;b", "a'b", "a" * 64, ""):
             status, _ = _post(self.url_complete(),
                               {"tenant": bad, "prompt": "hi"}, tenant=bad)
             self.assertIn(status, (400, 401), "tenant %r must not be accepted" % bad)
 
     def test_a_real_database_name_is_still_accepted(self):
         """The other half — the platform's own fixtures must still work."""
-        for good in ("acme", "rtclienta", "e2eadmin", "cronscopeplatform"):
+        for good in ("acme", "rtclienta", "e2eadmin", "cronscopeplatform",
+                     "ncollection_demo", "a_b_c", "a" * 63):
             status, _ = _post(self.url_complete(),
                               {"tenant": good, "prompt": "hi"})
             self.assertEqual(status, 200, good)
+
+    def test_underscore_names_cannot_impersonate_each_other_or_share_a_budget(self):
+        """Widening the charset must not let one tenant act as another: the key is derived from the exact string."""
+        from tenant_auth import derive_tenant_key
+        names = ("ncollection", "ncollection_demo", "ncollection_demo_", "ncollection__demo", "ncollectiondemo")
+        keys = {derive_tenant_key(TEST_MASTER, n) for n in names}
+        self.assertEqual(len(keys), len(names), "every distinct name has its own key")
+        for signer in names:
+            for claimed in names:
+                if signer == claimed:
+                    continue
+                status, _ = _post(self.url_complete(), {"tenant": claimed, "prompt": "hi"}, tenant=signer)
+                self.assertEqual(status, 401, "%s must not act as %s" % (signer, claimed))
+        status, _ = _post(self.url_complete(), {"tenant": "ncollection_demo", "prompt": "hi"})
+        self.assertEqual(status, 200)
+
+    def test_an_underscore_tenant_is_refused_without_a_signature(self):
+        status, _ = _post(self.url_complete(), {"tenant": "ncollection_demo", "prompt": "hi"}, master=None)
+        self.assertEqual(status, 401)
 
     def test_a_nan_timestamp_cannot_make_a_signature_immortal(self):
         """float('nan') parses, and every comparison with NaN is False, so the

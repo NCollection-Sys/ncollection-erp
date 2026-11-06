@@ -81,7 +81,7 @@ OCA_VENV := .oca-venv
         cron-scope-verify cron-scope-clean \
         upgrade-verify upgrade-clean upgrade-rehearse upgrade-preflight edge-verify \
         release-status upgrade-platform-verify \
-        ai-up ai-down ai-logs ai-test ai-verify ai-context-sample \
+        ai-key ai-up ai-down ai-logs ai-test ai-verify ai-context-sample \
         demo-tenant demo-clean staging-config staging-build go-live-check stack-settled \
         einvoice-e2e einvoice-validator-check einvoice-validator-build einvoice-validator-up einvoice-validator-sb-up \
         einvoice-validator-down
@@ -343,6 +343,9 @@ edge-verify: ## Render + nginx -t the production edge for one or more domains:  
 # suite — routing, e2e, provisioning, both cron harnesses, financial bootstrap,
 # upgrade — for a feature none of them exercise.
 AI_COMPOSE ?= $(COMPOSE) -f docker-compose.ai.yml
+
+ai-key: ## Create a development-only NC_AI_GATEWAY_KEY in .env (mock provider only; never printed)
+	bash scripts/ai/ensure_dev_gateway_key.sh .env
 
 ai-up: ## Start the AI gateway satellite (mock provider by default)
 	$(AI_COMPOSE) up -d ai-gateway

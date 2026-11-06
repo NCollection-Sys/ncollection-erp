@@ -20,6 +20,7 @@ from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import HttpCase, TransactionCase, tagged
 
+from odoo.addons.ncollection_ai import concurrency
 from odoo.addons.ncollection_ai.models import chat as chat_module
 from odoo.addons.ncollection_ai.models.pii import StreamRehydrator
 
@@ -27,6 +28,50 @@ _COMPLETE = ('odoo.addons.ncollection_ai.models.gateway_client'
              '.AiGatewayClient._complete')
 _STREAM = ('odoo.addons.ncollection_ai.models.gateway_client'
            '.AiGatewayClient._stream')
+
+
+class _FakeCursor:
+    """Stands in for the maintenance-database cursor; the real lock call is replaced by the patched `_try`."""
+
+    def execute(self, *args, **kwargs):
+        self.statements = getattr(self, 'statements', []) + [args[0] if args else '']
+
+    def fetchone(self):
+        return (True,)
+
+    def commit(self):
+        pass
+
+    def close(self):
+        pass
+
+
+class _Both:
+    """Enter two patchers as one context manager."""
+
+    def __init__(self, first, second):
+        self._patchers = (first, second)
+
+    def __enter__(self):
+        for patcher in self._patchers:
+            patcher.start()
+
+    def __exit__(self, *exc):
+        for patcher in reversed(self._patchers):
+            patcher.stop()
+
+
+def _fake_slots(taken):
+    """Make `AiSlot._try` succeed only for (lock class, slot) pairs not in `taken` (the real lock is per-session, and a
+    test transaction is ONE session, so the real call would always re-enter)."""
+    def fake_try(slot_self, cr, index):
+        key = (slot_self._lock_class(), index)
+        if key in taken:
+            return False
+        taken.add(key)
+        return True
+    return _Both(patch.object(concurrency.AiSlot, '_try', fake_try),
+                 patch.object(concurrency.GlobalAiSlot, '_cursor', lambda s: _FakeCursor()))
 
 
 def _make_users(cls):
@@ -156,15 +201,7 @@ class TestConcurrencyCap(TransactionCase):
         super().setUpClass()
         _make_users(cls)
 
-    def _fake_slots(self, taken):
-        """Make `AiSlot._try` succeed only for slots not in `taken` (the real lock is per-session, and a test
-        transaction is ONE session, so the real call would always re-enter)."""
-        def fake_try(slot_self, cr, index):
-            if index in taken:
-                return False
-            taken.add(index)
-            return True
-        return patch.object(chat_module.AiSlot, '_try', fake_try)
+    _fake_slots = staticmethod(lambda taken: _fake_slots(taken))
 
     def test_the_default_is_two_and_a_bad_value_falls_back(self):
         chat = self.Chat.with_user(self.acct)
@@ -174,17 +211,87 @@ class TestConcurrencyCap(TransactionCase):
             self.assertEqual(chat._max_concurrent(), expected, raw)
 
     def test_the_slot_after_the_limit_is_refused_at_once_with_a_friendly_message(self):
-        self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, '2')
+        params = self.env['ir.config_parameter'].sudo()
+        params.set_param(chat_module.MAX_CONCURRENT_PARAM, '2')
+        params.set_param(chat_module.MAX_GLOBAL_PARAM, '5')
+        params.set_param(chat_module.SLOT_WAIT_PARAM, '0')
         taken = set()
         with self._fake_slots(taken):
             chat = self.Chat.with_user(self.acct)
             first, second = chat._take_slot(), chat._take_slot()
-            self.assertEqual(taken, {0, 1})
+            self.assertEqual({k for k in taken if k[0] == concurrency._LOCK_CLASS},
+                             {(concurrency._LOCK_CLASS, 0), (concurrency._LOCK_CLASS, 1)})
             with self.assertRaisesRegex(UserError, 'busy'):
                 chat._take_slot()
             # Test cursors are savepoints: close them last-in first-out (production cursors are independent).
             second.release()
             first.release()
+
+    def test_the_global_limit_follows_the_worker_count_and_never_takes_the_last_worker(self):
+        for workers, configured, expected in (
+                (2, None, 1), (4, None, 2), (8, None, 4), (3, None, 1), (1, None, 1),
+                (4, 99, 3), (2, 5, 1), (4, 1, 1), (0, None, 2), (0, 7, 7), (6, 0, 1)):
+            self.assertEqual(concurrency.global_limit(workers, configured), expected, (workers, configured))
+
+    def test_the_global_cap_refuses_a_tenant_that_still_has_its_own_slots_free(self):
+        """Another tenant (or database) already holds the server-wide slots: this tenant has per-database capacity but
+        is refused, and takes no per-database slot while refused."""
+        params = self.env['ir.config_parameter'].sudo()
+        params.set_param(chat_module.MAX_CONCURRENT_PARAM, '3')
+        params.set_param(chat_module.MAX_GLOBAL_PARAM, '1')
+        params.set_param(chat_module.SLOT_WAIT_PARAM, '0')
+        taken = {(concurrency._GLOBAL_LOCK_CLASS, 0)}
+        with self._fake_slots(taken):
+            with self.assertRaisesRegex(UserError, 'busy'):
+                self.Chat.with_user(self.acct)._take_slot()
+        self.assertFalse([k for k in taken if k[0] == concurrency._LOCK_CLASS])
+
+    def test_the_wait_is_bounded_and_a_slot_freed_inside_it_is_taken(self):
+        import time
+        params = self.env['ir.config_parameter'].sudo()
+        params.set_param(chat_module.MAX_CONCURRENT_PARAM, '1')
+        params.set_param(chat_module.MAX_GLOBAL_PARAM, '5')
+        params.set_param(chat_module.SLOT_WAIT_PARAM, '250')
+        chat = self.Chat.with_user(self.acct)
+        taken = {(concurrency._LOCK_CLASS, 0)}
+        with self._fake_slots(taken):
+            started = time.monotonic()
+            with self.assertRaises(UserError):
+                chat._take_slot()
+            elapsed = time.monotonic() - started
+        self.assertGreaterEqual(elapsed, 0.2)
+        self.assertLess(elapsed, 1.5)
+        attempts = []
+
+        def fake_try(slot_self, cr, index):
+            if slot_self._lock_class() == concurrency._LOCK_CLASS:
+                attempts.append(1)
+                return len(attempts) >= 3      # the tenant slot frees up after two polls
+            return True
+
+        with patch.object(concurrency.AiSlot, '_try', fake_try), \
+                patch.object(concurrency.GlobalAiSlot, '_cursor', lambda s: _FakeCursor()):
+            slot = chat._take_slot()
+            slot.release()
+        self.assertEqual(len(attempts), 3)
+
+    def test_an_unreachable_maintenance_database_fails_closed(self):
+        self.env['ir.config_parameter'].sudo().set_param(chat_module.SLOT_WAIT_PARAM, '0')
+
+        def down(slot_self):
+            raise RuntimeError('no maintenance database')
+
+        with patch.object(concurrency.GlobalAiSlot, '_cursor', down):
+            with self.assertRaisesRegex(UserError, 'busy'):
+                self.Chat.with_user(self.acct)._take_slot()
+
+    def test_the_server_slot_executes_only_advisory_lock_calls_in_the_fixed_maintenance_database(self):
+        import inspect
+        source = inspect.getsource(concurrency.GlobalAiSlot) + inspect.getsource(concurrency.AiSlot)
+        self.assertEqual(concurrency._MAINTENANCE_DB, 'postgres')
+        self.assertIn("db_connect(_MAINTENANCE_DB)", source)
+        for smell in ("FROM ", "INSERT", "UPDATE", "DELETE", "SELECT *"):
+            self.assertNotIn(smell, source, smell)
 
     def test_a_refused_batch_question_calls_the_gateway_not_at_all(self):
         self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, '1')
@@ -194,7 +301,7 @@ class TestConcurrencyCap(TransactionCase):
             called.append(1)
             return {'text': 'x'}
 
-        with self._fake_slots({0}), patch(_COMPLETE, new=fake_complete):
+        with self._fake_slots({(concurrency._LOCK_CLASS, 0)}), patch(_COMPLETE, new=fake_complete):
             with self.assertRaises(UserError):
                 self.Chat.with_user(self.acct).send_suggested('workspace_summary')
         self.assertFalse(called)
@@ -202,7 +309,7 @@ class TestConcurrencyCap(TransactionCase):
 
     def test_the_slot_is_released_even_when_the_pipeline_fails(self):
         released = []
-        original = chat_module.AiSlot.release
+        original = concurrency.AiAdmission.release
 
         def spy(slot_self):
             released.append(1)
@@ -211,14 +318,13 @@ class TestConcurrencyCap(TransactionCase):
         def boom(*args, **kwargs):
             raise RuntimeError('gateway down')
 
-        with patch.object(chat_module.AiSlot, 'release', spy), patch(_COMPLETE, new=boom):
+        with patch.object(concurrency.AiAdmission, 'release', spy), patch(_COMPLETE, new=boom):
             with self.assertRaises(RuntimeError):
                 self.Chat.with_user(self.acct).send_suggested('workspace_summary')
         self.assertEqual(released, [1])
 
     def test_the_slot_helper_builds_no_registry_and_opens_no_connection_by_name(self):
         import inspect
-        from .. import concurrency
         source = inspect.getsource(concurrency.AiSlot)
         for smell in ("Registry(", "db_connect", "psycopg2", "FROM ", "SELECT * "):
             self.assertNotIn(smell, source, smell)
@@ -444,7 +550,7 @@ class TestStreamRoute(HttpCase):
             reached.append(1)
             return iter([])
 
-        with patch.object(chat_module.AiSlot, '_try', lambda s, cr, i: False), patch(_STREAM, new=fake):
+        with _fake_slots({(concurrency._GLOBAL_LOCK_CLASS, i) for i in range(8)}), patch(_STREAM, new=fake):
             response = self._post(kind='suggested', value='workspace_summary')
         self.assertEqual(response.status_code, 400)
         self.assertIn('busy', response.json()['message'])

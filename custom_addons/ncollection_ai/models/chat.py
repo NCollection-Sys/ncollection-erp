@@ -24,6 +24,7 @@ exact property this must not have. A two-field model with a record rule is
 the smaller and safer tool.
 """
 import json
+import logging
 from datetime import timedelta
 
 from odoo import api, fields, models, tools
@@ -32,7 +33,7 @@ from odoo.exceptions import UserError, ValidationError
 # One definition of each policy constant (#374's lesson): the gate tuple and
 # the question cap are ai_question.py's, imported rather than copied. The copy
 # that drifts is an authorization check.
-from ..concurrency import AiSlot
+from ..concurrency import AiAdmission, global_limit
 from .ai_question import _ALLOWED_GROUPS, _MAX_QUESTION_CHARS
 
 # How much history the widget receives on open. A bound, not a paginator:
@@ -75,9 +76,16 @@ def _prompt_catalog():
     return _CATALOG_CACHE
 
 
+_logger = logging.getLogger(__name__)
+
 # Concurrency cap: see ncollection_ai/concurrency.py (an AI request holds a web worker for the provider's latency).
 MAX_CONCURRENT_PARAM = 'ncollection_ai.max_concurrent_requests'
 _DEFAULT_MAX_CONCURRENT = 2
+# Server-wide cap (all tenants together), derived from Odoo's `workers` unless overridden; and the bounded wait.
+MAX_GLOBAL_PARAM = 'ncollection_ai.max_concurrent_global'
+SLOT_WAIT_PARAM = 'ncollection_ai.slot_wait_ms'
+_DEFAULT_SLOT_WAIT_MS = 300
+_MAX_SLOT_WAIT_MS = 2000
 
 
 class AiChatMessage(models.Model):
@@ -230,13 +238,34 @@ class AiChat(models.AbstractModel):
         except (TypeError, ValueError):
             return _DEFAULT_MAX_CONCURRENT
 
+    def _server_limit(self):
+        raw = self.env['ir.config_parameter'].sudo().get_param(MAX_GLOBAL_PARAM)
+        try:
+            configured = int(raw) if raw else None
+        except (TypeError, ValueError):
+            configured = None
+        return global_limit(tools.config['workers'], configured)
+
+    def _slot_wait_seconds(self):
+        raw = self.env['ir.config_parameter'].sudo().get_param(SLOT_WAIT_PARAM, default=str(_DEFAULT_SLOT_WAIT_MS))
+        try:
+            ms = int(raw)
+        except (TypeError, ValueError):
+            ms = _DEFAULT_SLOT_WAIT_MS
+        return min(max(ms, 0), _MAX_SLOT_WAIT_MS) / 1000.0
+
     def _take_slot(self):
-        """Reserve an AI request slot for this database or refuse at once."""
-        slot = AiSlot(self.env.registry, self._max_concurrent())
-        if not slot.acquire():
+        """Reserve a server-wide AND a per-database AI slot (bounded wait) or refuse with a friendly message."""
+        slot = AiAdmission(self.env.registry, self._max_concurrent(), self._server_limit(), self._slot_wait_seconds())
+        try:
+            granted = slot.acquire()
+        except Exception:  # the maintenance database is unreachable: fail closed, never run unbounded
+            _logger.warning("AI admission could not take a slot; refusing the request", exc_info=True)
+            granted = False
+        if not granted:
             raise UserError(self.env._(
-                "The assistant is busy answering other questions on this "
-                "workspace. Please try again in a moment."))
+                "The assistant is busy answering other questions. "
+                "Please try again in a moment."))
         return slot
 
     def _resolve_suggested(self, key):

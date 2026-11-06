@@ -59,7 +59,12 @@ from providers import ProviderError, build_provider  # noqa: E402
 # blindness twice (c309d52 trailing \b, 54e3e71 the inner guard one level in).
 # Anchors in this codebase mean less than they look like they mean: prefer
 # fullmatch()/lookarounds over trusting ^...$ or \b.
-_TENANT_RE = re.compile(r"[A-Za-z0-9]{1,63}")
+# A tenant is an Odoo database name. Odoo itself allows letters, digits, '_', '-' and '.', and real fixtures use '_'
+# (ncollection_demo). This gate accepts the SAFE subset: ASCII letters/digits, plus '_' after the first character.
+# Hyphen and dot stay refused (Postgres quoting / hostname and path ambiguity). The widening is safe because
+# identity is proven by the HMAC under a key derived from this exact string (KDF_LABEL || tenant, fixed prefix, so no
+# two distinct names share a key); the regex only bounds the per-tenant dictionaries and rejects hostile text.
+_TENANT_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_]{0,62}")
 
 from tenant_auth import (  # noqa: E402
     HEADER_SIGNATURE, HEADER_TIMESTAMP, verify,
@@ -413,8 +418,9 @@ class Handler(BaseHTTPRequestHandler):
         # breaker/ledger dicts: without it, anyone holding the master could mint
         # unlimited distinct tenant strings and grow both without limit.
         if not _TENANT_RE.fullmatch(tenant):
-            self._send(400, {"error": "'tenant' must be 1-63 alphanumeric "
-                                      "characters (it is a database name)"})
+            self._send(400, {"error": "'tenant' must be 1-63 letters, digits or "
+                                      "underscores, starting with a letter or "
+                                      "digit (it is a database name)"})
             return
 
         # AUTHENTICATE THE CLAIM BEFORE IT IS USED FOR ANYTHING (#373).
