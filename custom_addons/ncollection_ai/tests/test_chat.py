@@ -457,6 +457,19 @@ class TestChatIntegration(TransactionCase):
         # by the escape-first renderer.
         self.assertEqual(script.count('markup('), 1)
 
+    def test_chips_follow_in_app_navigation_not_only_page_loads(self):
+        """ROUTE_CHANGE fires only on page load and browser back/forward; a
+        move made inside the app goes through the action service, which
+        announces ACTION_MANAGER:UI-UPDATED instead. The five-context browser
+        run measured the chips staying on the previous module without the
+        second subscription. Source guard (the browser proof is
+        e2e/ai/acceptance_contexts.js)."""
+        script = self._read('static/src/chat/chat_widget.js')
+        self.assertIn('useBus(routerBus, "ROUTE_CHANGE"', script)
+        self.assertIn('useBus(this.env.bus, "ACTION_MANAGER:UI-UPDATED"', script)
+        # Only a CHANGED context may cost a request.
+        self.assertIn('this.moduleCtx !== this.lastCtx', script)
+
     def test_visible_template_text_is_translatable_not_a_js_expression(self):
         """Odoo extracts static template text/attributes for translation but
         not JS expressions inside t-att-*: a literal in one would stay English

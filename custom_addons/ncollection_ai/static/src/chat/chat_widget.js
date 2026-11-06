@@ -113,6 +113,19 @@ export class NcAiChatWidget extends Component {
             }
         });
 
+        // ROUTE_CHANGE fires on page load and browser back/forward ONLY. A move made inside the app (opening a
+        // record, a breadcrumb, a menu) goes through the action service, which never triggers it, so the chips
+        // stayed on the previous module. The action manager announces every UI update on the env bus; the router
+        // applies its own push on a zero-delay timeout queued before that announcement, so one zero-delay hop of
+        // ours reads the settled route. Only a CHANGED context costs a request.
+        useBus(this.env.bus, "ACTION_MANAGER:UI-UPDATED", () => {
+            browser.setTimeout(() => {
+                if (this.state.enabled && this.state.open && this.moduleCtx !== this.lastCtx) {
+                    this.refreshSuggestions().catch(() => {});
+                }
+            }, 0);
+        });
+
         // Keep the transcript pinned to the latest message.
         useEffect(
             () => {
@@ -138,6 +151,7 @@ export class NcAiChatWidget extends Component {
     }
 
     async refreshState() {
+        this.lastCtx = this.moduleCtx;
         const state = await this.orm.call("ncollection.ai.chat", "get_state", [], {
             module_ctx: this.moduleCtx,
         });
@@ -151,6 +165,7 @@ export class NcAiChatWidget extends Component {
     }
 
     async refreshSuggestions() {
+        this.lastCtx = this.moduleCtx;
         // include_history=false: this refresh only wants the chips, and the
         // server should not re-read 40 transcript rows to serve a navigation
         // event (an odoo-reviewer finding — the widget discarded them).

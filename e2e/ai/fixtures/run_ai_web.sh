@@ -4,6 +4,7 @@
 # service. The gateway signing key is generated here, lives only in the environment of the two disposable containers
 # and is never written to a file or printed.
 #   usage: run_ai_web.sh up | clean         (OCA_DIR defaults to <repo>/oca; host port 8169 on 127.0.0.1)
+#   AI_INSTALL=ncollection_ai,sale,crm,account,stock AI_SEED=ai_context_fixture.py adds the module-context records (acceptance_contexts.js)
 set -u
 winpath() { (cd "$1" && { pwd -W 2>/dev/null || pwd; }); }
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -33,11 +34,11 @@ until docker exec "$PG" pg_isready -U odoo -d postgres >/dev/null 2>&1; do sleep
 docker run --rm --user root -v "${DB}_fs:/tmp/od" --entrypoint chown odoo:19 -R odoo:odoo /tmp/od
 run() { docker run --rm -i --memory 2000m --network "$NETN" -e NC_AI_GATEWAY_KEY -e HOST="$PG" -e USER=odoo -e PASSWORD=aitest-only "${V[@]}" odoo:19 "$@"; }
 echo "== install"
-run odoo -d "$DB" "${C[@]}" -i ncollection_ai --load-language=ar_001 --without-demo=all --no-http --stop-after-init --log-level=warn \
+run odoo -d "$DB" "${C[@]}" -i "${AI_INSTALL:-ncollection_ai}" --load-language=ar_001 --without-demo=all --no-http --stop-after-init --log-level=warn \
   > "${LOG_DIR:-/tmp}/uxaiweb.install.log" 2>&1
 echo "rc=$?"; grep -a "ERROR\|CRITICAL\|Some modules" "${LOG_DIR:-/tmp}/uxaiweb.install.log" | head -3
-echo "== seed"
-run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < "$HERE/ai_fixture.py" 2>&1 | grep -a "Traceback\|Error\|AIFIX"
+echo "== seed"; SEED="${AI_SEED:-/dev/null}"; [ "$SEED" = /dev/null ] || SEED="$HERE/$SEED"
+run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < <(cat "$HERE/ai_fixture.py" "$SEED") 2>&1 | grep -a "Traceback\|Error\|AIFIX"
 echo "== serve"
 docker run -d --name "$OD" --memory 2000m --network "$NETN" -p 127.0.0.1:8169:8069 -e NC_AI_GATEWAY_KEY -e HOST="$PG" -e USER=odoo -e PASSWORD=aitest-only "${V[@]}" odoo:19 \
   odoo -d "$DB" "${C[@]}" --db-filter="^$DB\$" --log-level=warn >/dev/null
