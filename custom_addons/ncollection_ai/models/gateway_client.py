@@ -92,6 +92,8 @@ def _sign(master, tenant, timestamp, body):
 
 
 _MAX_RESPONSE_BYTES = 256 * 1024
+# A streamed answer is bounded as a whole as well as per line.
+_MAX_STREAM_BYTES = 512 * 1024
 
 _DEFAULT_URL = 'http://ai-gateway:8080'
 
@@ -107,6 +109,103 @@ class AiGatewayClient(models.AbstractModel):
     def _base_url(self):
         return self.env['ir.config_parameter'].sudo().get_param(
             'ncollection_ai.gateway_url', _DEFAULT_URL).rstrip('/')
+
+    def _signed_request(self, path, prompt, max_tokens):
+        """Build the signed POST for the streaming endpoint (same signing as _complete)."""
+        # The tenant name identifies the budget bucket. env.cr.dbname IS the
+        # tenant on this platform (db-per-tenant), so there is nothing to look
+        # up and nothing a caller could spoof by passing the wrong value.
+        body = json.dumps({
+            'tenant': self.env.cr.dbname,
+            'prompt': prompt,
+            'max_tokens': max_tokens,
+        }).encode('utf-8')
+        master = os.environ.get(_GATEWAY_KEY_ENV, '')
+        if not master:
+            raise UserError(self.env._(
+                "The AI service is not configured on this deployment "
+                "(%s is unset), so this workspace cannot prove its identity to "
+                "it. Nothing was sent.", _GATEWAY_KEY_ENV))
+        timestamp = '%d' % int(time.time())
+        return urllib.request.Request(
+            '%s%s' % (self._base_url(), path), data=body, method='POST',
+            headers={
+                'content-type': 'application/json',
+                _HEADER_TIMESTAMP: timestamp,
+                _HEADER_SIGNATURE: _sign(master, self.env.cr.dbname,
+                                         timestamp, body),
+            })
+
+    def _http_error_message(self, exc):
+        """The gateway's own friendly error text (it carries no tenant content)."""
+        try:
+            detail = json.loads(exc.read().decode('utf-8'))
+            return detail.get('message') or detail.get('error')
+        except (ValueError, OSError):
+            return 'HTTP %s' % exc.code
+
+    @api.model
+    def _stream(self, prompt, max_tokens=1024):
+        """Stream a SANITISED prompt: yields ``{'delta': text}`` events, then
+        one ``{'done': True, 'usage': {...}}``.
+
+        Admission (auth, budget, breaker) is decided by the gateway BEFORE its
+        first byte, so a refusal raises UserError here exactly as _complete
+        does, before this generator yields anything. After the first byte an
+        in-band error line or a stream that ends without ``done`` is a
+        failure too: an answer cut mid-sentence is never presented as complete.
+        Reads are line-bounded and total-bounded.
+        """
+        request = self._signed_request('/v1/stream', prompt, max_tokens)
+        try:
+            response = urllib.request.urlopen(request, timeout=_TIMEOUT)
+        except urllib.error.HTTPError as exc:
+            raise UserError(self._http_error_message(exc)) from None
+        except urllib.error.URLError as exc:
+            raise UserError(self.env._(
+                "The AI service is not reachable (%s). If this is a development "
+                "environment, start it with `make ai-up`.", exc.reason
+            )) from None
+        # Translated NOW, inside the request: the returned generator is consumed
+        # after the request's cursor is closed, where a translation lookup
+        # would fail. Plain strings are all it needs.
+        messages = {
+            'too_long': self.env._(
+                "The AI answer was longer than allowed and was stopped."),
+            'unreadable': self.env._(
+                "The AI service returned an unreadable response."),
+            'provider': self.env._("The AI provider returned an error."),
+            'cut_off': self.env._(
+                "The AI answer was cut off before it finished. Nothing was saved."),
+        }
+        return self._stream_events(response, messages)
+
+    @staticmethod
+    def _stream_events(response, messages):
+        total = 0
+        finished = False
+        try:
+            with response:
+                while True:
+                    line = response.readline(_MAX_RESPONSE_BYTES)
+                    if not line:
+                        break
+                    total += len(line)
+                    if total > _MAX_STREAM_BYTES:
+                        raise UserError(messages['too_long'])
+                    try:
+                        event = json.loads(line.decode('utf-8'))
+                    except ValueError:
+                        raise UserError(messages['unreadable']) from None
+                    if event.get('error'):
+                        raise UserError(event.get('message') or messages['provider'])
+                    if event.get('done'):
+                        finished = True
+                    yield event
+        except OSError:
+            raise UserError(messages['unreadable']) from None
+        if not finished:
+            raise UserError(messages['cut_off'])
 
     @api.model
     def _complete(self, prompt, max_tokens=1024):

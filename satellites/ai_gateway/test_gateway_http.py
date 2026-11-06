@@ -320,5 +320,65 @@ class TestOversizedRequest(GatewayServerCase):
         self.assertEqual(status, 413)
 
 
+def _post_stream(url: str, payload: dict, master: str | None = TEST_MASTER):
+    """POST to the stream endpoint; returns (status, content_type, events)."""
+    body = json.dumps(payload).encode("utf-8")
+    headers = {"content-type": "application/json"}
+    if master:
+        stamp = "%d" % int(time.time())
+        headers[HEADER_TIMESTAMP] = stamp
+        headers[HEADER_SIGNATURE] = sign(master, str(payload.get("tenant", "")), stamp, body)
+    request = urllib.request.Request(url, data=body, method="POST", headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            events = [json.loads(line) for line in response.read().decode("utf-8").splitlines() if line]
+            return response.status, response.headers.get("content-type"), events
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.headers.get("content-type"), [json.loads(exc.read().decode("utf-8"))]
+
+
+class TestStreaming(GatewayServerCase):
+    """P5-T06 streaming: the same admission as /v1/complete, then NDJSON."""
+
+    def test_a_stream_is_several_deltas_then_one_done_with_usage(self):
+        status, ctype, events = _post_stream(f"{self.base}/v1/stream",
+                                             {"tenant": "t1", "prompt": "hello there"})
+        self.assertEqual(status, 200)
+        self.assertEqual(ctype, "application/x-ndjson")
+        deltas = [e["delta"] for e in events if "delta" in e]
+        self.assertGreater(len(deltas), 3, "the mock must really stream, not send one chunk")
+        self.assertTrue(events[-1].get("done"))
+        self.assertEqual(events[-1]["provider"], "mock")
+        self.assertGreater(events[-1]["usage"]["total_tokens"], 0)
+        self.assertEqual([e for e in events[:-1] if "delta" not in e], [])
+
+    def test_the_stream_is_authenticated_exactly_like_complete(self):
+        status, _, _ = _post_stream(f"{self.base}/v1/stream",
+                                    {"tenant": "t1", "prompt": "x"}, master=None)
+        self.assertEqual(status, 401)
+        status, _, _ = _post_stream(f"{self.base}/v1/stream",
+                                    {"tenant": "t1", "prompt": "x"}, master="wrong-master")
+        self.assertEqual(status, 401)
+
+    def test_streamed_usage_is_charged_to_the_budget(self):
+        _post_stream(f"{self.base}/v1/stream", {"tenant": "t1", "prompt": "hello there"})
+        used = Handler.gateway.ledger.usage("t1")
+        self.assertTrue(used, "a finished stream must be recorded against the tenant")
+
+
+class TestStreamingAdmission(GatewayServerCase):
+    """A refused stream is an ordinary status code, never a 200 that dies."""
+
+    ENV = {"NC_AI_PROVIDER": "mock", "NC_AI_GATEWAY_KEY": TEST_MASTER,
+           "NC_AI_TOKEN_BUDGET": "50", "NC_AI_MAX_REQUESTS": "100"}
+
+    def test_an_exhausted_budget_is_429_before_any_stream_starts(self):
+        status, ctype, events = _post_stream(f"{self.base}/v1/stream",
+                                             {"tenant": "t1", "prompt": "x" * 400})
+        self.assertEqual(status, 429)
+        self.assertEqual(ctype, "application/json")
+        self.assertEqual(events[0]["error"], "ai_budget_exhausted")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

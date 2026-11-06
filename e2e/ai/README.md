@@ -29,6 +29,13 @@ gateway's answer and the two persisted rows. It also covers: a plain user gets n
 in-app (SPA) navigation refreshes the chips, Arabic/RTL on `default` and `account.move` (desktop and 390 px), and tenant isolation
 (the gateway only ever sees the one tenant name, and the private server holds only the disposable database). Screenshots go to `e2e/shots/ctx_*.png`.
 
+`acceptance_stream.js` (9 checks, run after the other two on the same stack; `run_ai_web.sh` slows the mock to 150 ms per chunk): the
+answer visibly GROWS in the browser before the rows exist and the saved rows replace it; no ORM forgery (create refused, own user
+included); a 6000-character typed question is cut to the cap; the stream route refuses a plain user (403) and a POST without the CSRF
+token; the Arabic transcript shows the Arabic label; a 404 on the stream route falls back to the batch RPC; a stopped gateway shows a
+clear error, saves nothing and leaves no pending bubble, and the widget works again afterwards. `acceptance_contexts.js` now also runs
+the Arabic OWNER through all five contexts (RTL, Arabic chips equal to the server's Arabic set, answer round trip).
+
 Defect found by this suite (fixed in `chat_widget.js`): chips followed page loads and browser back/forward only, because `ROUTE_CHANGE`
 is not fired by the action service. Opening a record or using a breadcrumb left the previous module's prompts on screen.
 Facts worth knowing: on a LIST route the context is the list's model (`router.current.model`); the context is the model of the

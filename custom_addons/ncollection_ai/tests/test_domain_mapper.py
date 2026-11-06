@@ -268,7 +268,13 @@ class TestDomainMapperBoundary(TransactionCase):
         self.assertFalse(
             data.filtered(lambda d: d.model in (
                 'ir.ui.view', 'ir.ui.menu', 'ir.actions.act_window',
-                'ir.actions.client', 'ir.actions.server')),
+                'ir.actions.client') or (
+                # The transcript-retention cron (P5-T06) owns a server action
+                # of its own (usage 'ir_cron'). That is the cron's machinery,
+                # not a surface anyone can open or run from the UI.
+                d.model == 'ir.actions.server'
+                and self.env['ir.actions.server'].browse(d.res_id).usage
+                != 'ir_cron')),
             "ncollection_ai must not ship a user-facing surface (#375)")
 
     def test_free_text_questions_remain_off_and_unchanged(self):

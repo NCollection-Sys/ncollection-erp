@@ -92,6 +92,7 @@ export class NcAiChatWidget extends Component {
             suggestions: [],
             messages: [],
             sending: false,
+            streaming: false,
             unread: false,
             error: "",
             typed: "",
@@ -219,8 +220,128 @@ export class NcAiChatWidget extends Component {
         }
     }
 
+    /**
+     * STREAMED delivery (P5-T06 acceptance: "streaming responses").
+     *
+     * POSTs to /ncollection/ai/chat/stream with Odoo's own CSRF token and reads
+     * the newline-delimited JSON as it arrives: each "delta" extends a pending
+     * assistant bubble, "done" swaps the pending bubbles for the two rows the
+     * server saved, "error" removes them (nothing was saved). The pending text
+     * goes through the same escape-first renderer as any message.
+     *
+     * Returns true (answered), false (refused / failed, error shown) or
+     * "fallback" when this browser or deployment cannot stream - the caller
+     * then uses the batch RPC, so the widget keeps working either way.
+     */
+    async _stream(kind, value, shown) {
+        if (this.state.sending) {
+            return false;
+        }
+        if (!browser.fetch || typeof TextDecoder === "undefined") {
+            return "fallback";
+        }
+        this.state.sending = true;
+        this.state.error = "";
+        this.state.streaming = false;
+        const userKey = "pending-user";
+        const botKey = "pending-bot";
+        const dropPending = () => {
+            this.state.messages = this.state.messages.filter(
+                (m) => m.id !== userKey && m.id !== botKey
+            );
+        };
+        try {
+            const response = await browser.fetch("/ncollection/ai/chat/stream", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    kind,
+                    value: value || "",
+                    csrf_token: odoo.csrf_token || "",
+                }),
+            });
+            if ([404, 405, 501].includes(response.status) || !response.body) {
+                return "fallback";
+            }
+            if (!response.ok) {
+                // An admission refusal (gate, #375 flag, secret scan, budget):
+                // a normal JSON error, decided before anything was streamed.
+                let message = "";
+                try {
+                    message = (await response.json()).message;
+                } catch {
+                    // not JSON: the generic notice below
+                }
+                throw new Error(message || _t("The assistant could not answer."));
+            }
+            this.state.messages = this.state.messages.concat([
+                { id: userKey, role: "user", body: shown },
+                { id: botKey, role: "assistant", body: "" },
+            ]);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+            let finished = false;
+            const handle = (line) => {
+                if (!line.trim()) {
+                    return;
+                }
+                const event = JSON.parse(line);
+                if (event.type === "delta") {
+                    this.state.streaming = true;
+                    const bot = this.state.messages.find((m) => m.id === botKey);
+                    if (bot) {
+                        bot.body += event.text;
+                    }
+                } else if (event.type === "done") {
+                    dropPending();
+                    this.state.messages = this.state.messages.concat(event.messages || []);
+                    finished = true;
+                } else if (event.type === "error") {
+                    throw new Error(event.message);
+                }
+            };
+            for (;;) {
+                const { value: chunk, done } = await reader.read();
+                if (done) {
+                    break;
+                }
+                buffer += decoder.decode(chunk, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+                lines.forEach(handle);
+            }
+            handle(buffer);
+            if (!finished) {
+                throw new Error(_t("The assistant could not answer."));
+            }
+            if (!this.state.open) {
+                this.state.unread = true;
+            }
+            return true;
+        } catch (error) {
+            dropPending();
+            this.state.error =
+                (error && error.message) || _t("The assistant could not answer.");
+            return false;
+        } finally {
+            this.state.sending = false;
+            this.state.streaming = false;
+        }
+    }
+
+    async _deliver(kind, value, shown) {
+        const outcome = await this._stream(kind, value, shown);
+        if (outcome === "fallback") {
+            return this._send(kind === "suggested" ? "send_suggested" : "send_typed", [value]);
+        }
+        return outcome;
+    }
+
     async onSuggested(key) {
-        await this._send("send_suggested", [key]);
+        const chip = this.state.suggestions.find((c) => c.key === key);
+        await this._deliver("suggested", key, chip ? chip.label : key);
     }
 
     async onSubmitTyped(ev) {
@@ -230,7 +351,7 @@ export class NcAiChatWidget extends Component {
             return;
         }
         this.state.typed = "";
-        const sent = await this._send("send_typed", [question]);
+        const sent = await this._deliver("typed", question, question);
         if (!sent && !this.state.typed) {
             // A refusal is an EXPECTED flow here (the secret scan, the #375
             // flag, a gateway hiccup). Destroying a long typed question on

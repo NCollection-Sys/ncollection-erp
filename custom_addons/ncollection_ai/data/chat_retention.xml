@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Transcript retention (P5-T06 / #63).
+
+         The assistant's chat history is a per-user convenience, not a record
+         (the README says so: a transcript is never evidence). It is deleted
+         after `ncollection_ai.transcript_retention_days` days by the daily job
+         below. Set the parameter to 0 (or less) to keep transcripts forever.
+
+         noupdate: a tenant's tuning of the window or of the job's schedule
+         survives module upgrades, exactly like ncollection_auth's retention
+         (the idiom this mirrors). The job runs on the cron worker but does
+         only local database work - no outbound call, so it is not the kind of
+         work #310 keeps off the cron worker. -->
+    <data noupdate="1">
+        <function model="ir.config_parameter" name="set_param">
+            <value>ncollection_ai.transcript_retention_days</value>
+            <value>90</value>
+        </function>
+
+        <record id="cron_gc_ai_transcripts" model="ir.cron">
+            <field name="name">NCollection: AI chat transcript retention</field>
+            <field name="model_id" ref="ncollection_ai.model_ncollection_ai_chat_message"/>
+            <field name="state">code</field>
+            <field name="code">model._gc_transcripts()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

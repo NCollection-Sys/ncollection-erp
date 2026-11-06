@@ -195,6 +195,30 @@ _MIN_PHONE_DIGITS = 9
 _MAX_PHONE_DIGITS = 15
 
 
+class StreamRehydrator:
+    """See `ncollection.ai.pii._stream_rehydrator`. Pure: no ORM, no I/O."""
+
+    _TAIL = re.compile(r'\w+$')
+
+    def __init__(self, rehydrate, mapping):
+        self._rehydrate = rehydrate
+        self._mapping = mapping
+        self._held = ''
+
+    def feed(self, chunk):
+        """Return the text that is now safe to show (possibly empty)."""
+        text = self._held + (chunk or '')
+        tail = self._TAIL.search(text)
+        cut = tail.start() if tail else len(text)
+        self._held = text[cut:]
+        return self._rehydrate(text[:cut], self._mapping)
+
+    def flush(self):
+        """The stream ended: release whatever was held back."""
+        text, self._held = self._held, ''
+        return self._rehydrate(text, self._mapping)
+
+
 class AiPiiSanitiser(models.AbstractModel):
     """Sanitise a context payload, and re-hydrate the model's answer.
 
@@ -451,6 +475,20 @@ class AiPiiSanitiser(models.AbstractModel):
         return token
 
     # -------------------------------------------------------------- rehydrate
+    @api.model
+    def _stream_rehydrator(self, mapping):
+        """A rehydrator for TEXT THAT ARRIVES IN PIECES (the streaming path).
+
+        A token such as PARTNER_1 can straddle two chunks ("PARTN" + "ER_1"), and
+        PARTNER_1 is a prefix of PARTNER_10. So the trailing run of word
+        characters is HELD BACK until a non-word character (or the end) proves
+        the token is complete; only then is the real identity put back. The
+        real name therefore never needs to exist in a half-substituted form,
+        and a half token is never shown. The persisted answer does not depend on
+        this: it is always `_rehydrate(full_text)`, identical to the batch path.
+        """
+        return StreamRehydrator(self._rehydrate, mapping)
+
     @api.model
     def _rehydrate(self, text, mapping):
         """Put the real identities back, inside this database.

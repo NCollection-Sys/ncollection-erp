@@ -85,6 +85,21 @@ class Provider:
     def complete(self, prompt: str, max_tokens: int) -> Completion:
         raise NotImplementedError
 
+    def stream(self, prompt: str, max_tokens: int):
+        """Yield text chunks (str), then ONE final `Completion` carrying the usage.
+
+        The default is honest rather than clever: a provider with no streaming
+        wire format yields its whole answer as a single chunk, so the stream
+        endpoint works against every provider and only the ones that can
+        actually stream get the latency benefit. The final item is always a
+        `Completion`; a consumer that never sees one must treat the stream as
+        failed (a connection cut mid-answer is not a short answer).
+        """
+        completion = self.complete(prompt, max_tokens)
+        if completion.text:
+            yield completion.text
+        yield completion
+
 
 class MockProvider(Provider):
     """The default. Deterministic, offline, and reaches nothing.
@@ -110,6 +125,31 @@ class MockProvider(Provider):
         return Completion(
             text=text,
             input_tokens=input_tokens,
+            output_tokens=min(max_tokens, max(1, len(text) // 4)),
+            provider=self.name,
+            model="mock-1",
+        )
+
+    def stream(self, prompt: str, max_tokens: int):
+        # Word-sized chunks of a longer deterministic text, so the stream path
+        # is exercised for real: more than one chunk, a placeholder-looking
+        # token that can straddle a chunk boundary, and the usage at the end.
+        completion = self.complete(prompt, max_tokens)
+        words = ("[mock completion] This answer is streamed in several small "
+                 "pieces so the widget can show it as it arrives.").split(" ")
+        text = ""
+        # NC_AI_MOCK_STREAM_DELAY_MS slows the mock so a browser test can SEE
+        # the answer grow; 0 (the default) keeps every unit test instant.
+        delay = float(os.environ.get("NC_AI_MOCK_STREAM_DELAY_MS", "0") or 0) / 1000.0
+        for index, word in enumerate(words):
+            piece = word if index == 0 else " " + word
+            text += piece
+            yield piece
+            if delay:
+                time.sleep(delay)
+        yield Completion(
+            text=text,
+            input_tokens=completion.input_tokens,
             output_tokens=min(max_tokens, max(1, len(text) // 4)),
             provider=self.name,
             model="mock-1",
@@ -199,6 +239,91 @@ class AnthropicProvider(Provider):
             )
         except (ValueError, KeyError, TypeError):
             raise ProviderError("provider returned an unparseable response") from None
+
+
+    def stream(self, prompt: str, max_tokens: int):
+        body = json.dumps({
+            "model": self._model,
+            "max_tokens": max_tokens,
+            "stream": True,
+            "messages": [{"role": "user", "content": prompt}],
+        }).encode("utf-8")
+        request = urllib.request.Request(
+            self._URL, data=body, method="POST",
+            headers={"content-type": "application/json",
+                     "anthropic-version": self._VERSION,
+                     "x-api-key": self._api_key})
+        ctx = ssl.create_default_context()
+        started = time.monotonic()
+        total = 0
+        text = ""
+        try:
+            opener = urllib.request.build_opener(_NoRedirect())
+            with opener.open(request, timeout=RPC_TIMEOUT, context=ctx) as response:
+                def lines():
+                    nonlocal total
+                    for raw in response:
+                        if time.monotonic() - started > RPC_DEADLINE:
+                            raise ProviderError(
+                                "provider exceeded the %ss total deadline" % RPC_DEADLINE)
+                        total += len(raw)
+                        if total > MAX_RESPONSE_BYTES:
+                            raise ProviderError(
+                                "provider response exceeded %s bytes" % MAX_RESPONSE_BYTES)
+                        yield raw.decode("utf-8", "replace")
+                final = None
+                for item in parse_anthropic_stream(lines()):
+                    if isinstance(item, dict):
+                        final = item
+                    else:
+                        text += item
+                        yield item
+        except urllib.error.HTTPError as exc:
+            raise ProviderError("provider returned HTTP %s" % exc.code) from None
+        except urllib.error.URLError as exc:
+            raise ProviderError("provider unreachable: %s" % exc.reason) from None
+        if final is None:
+            raise ProviderError("provider stream ended without a final frame")
+        yield Completion(text=text, input_tokens=final["usage"]["input_tokens"],
+                         output_tokens=final["usage"]["output_tokens"],
+                         provider=self.name, model=final["model"] or self._model)
+
+
+def parse_anthropic_stream(lines):
+    """Yield text chunks, then the usage dict, from an Anthropic SSE stream.
+
+    Pure (it takes an iterable of decoded lines), so it is unit-tested without a
+    network. Only the three events that matter are read: the input token count
+    (message_start), each text delta (content_block_delta), and the output
+    token count (message_delta). Everything else - ping, block start/stop - is
+    ignored. Raises ProviderError for an error event or an unparseable frame.
+    """
+    usage = {"input_tokens": 0, "output_tokens": 0}
+    model = ""
+    for line in lines:
+        line = line.strip()
+        if not line.startswith("data:"):
+            continue
+        try:
+            event = json.loads(line[5:].strip())
+        except ValueError:
+            raise ProviderError("provider sent an unparseable stream frame") from None
+        kind = event.get("type")
+        if kind == "message_start":
+            message = event.get("message", {})
+            model = message.get("model", model)
+            usage["input_tokens"] = int(message.get("usage", {}).get("input_tokens", 0))
+        elif kind == "content_block_delta":
+            delta = event.get("delta", {})
+            if delta.get("type") == "text_delta" and delta.get("text"):
+                yield delta["text"]
+        elif kind == "message_delta":
+            usage["output_tokens"] = int(event.get("usage", {}).get("output_tokens", 0))
+        elif kind == "error":
+            # The error type only - the message may echo content.
+            raise ProviderError("provider stream error: %s"
+                                % str(event.get("error", {}).get("type", "unknown"))[:40])
+    yield {"usage": usage, "model": model}
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):

@@ -24,9 +24,10 @@ exact property this must not have. A two-field model with a record rule is
 the smaller and safer tool.
 """
 import json
+from datetime import timedelta
 
 from odoo import api, fields, models, tools
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 # One definition of each policy constant (#374's lesson): the gate tuple and
 # the question cap are ai_question.py's, imported rather than copied. The copy
@@ -37,6 +38,21 @@ from .ai_question import _ALLOWED_GROUPS, _MAX_QUESTION_CHARS
 # the widget is an assistant, not an archive, and an unbounded read of a
 # long-lived row set is how dashboards go slow one quarter after shipping.
 _HISTORY_LIMIT = 40
+
+# Server-side size policy for a stored row. A user row can never exceed the
+# question cap ask() already enforces; an assistant row is bounded well above
+# what max_answer_tokens produces (~4 chars/token) and well below anything that
+# could make a transcript read expensive. The service TRUNCATES to these before
+# writing; the model constraint is the backstop that makes "no oversized row"
+# a property of the table rather than of one caller.
+_MAX_ASSISTANT_CHARS = 20000
+
+# Transcript retention: rows older than this many days are deleted by the daily
+# job. Configurable per tenant (the parameter is seeded noupdate); <= 0 keeps
+# rows forever. A transcript is a convenience, not a record, so the default is
+# a quarter, not "forever".
+RETENTION_PARAM = 'ncollection_ai.transcript_retention_days'
+_DEFAULT_RETENTION_DAYS = 90
 
 # The registry is static per process — a data file inside the module — so it
 # is read once and cached at module level. dict.update keeps the reference
@@ -75,6 +91,42 @@ class AiChatMessage(models.Model):
     # widget's markdown subset is applied. An Html field would sanitise on
     # write and tempt someone to render it raw.
     body = fields.Text(required=True)
+
+    @api.constrains('body', 'role')
+    def _check_body_size(self):
+        for record in self:
+            cap = (_MAX_ASSISTANT_CHARS if record.role == 'assistant'
+                   else _MAX_QUESTION_CHARS)
+            if len(record.body or '') > cap:
+                raise ValidationError(self.env._(
+                    "A chat message cannot be longer than %s characters.", cap))
+
+    @api.model
+    def _retention_days(self):
+        raw = self.env['ir.config_parameter'].sudo().get_param(
+            RETENTION_PARAM, default=str(_DEFAULT_RETENTION_DAYS))
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            # A mistyped value must not silently turn deletion off (or on for
+            # everything): fall back to the shipped default.
+            return _DEFAULT_RETENTION_DAYS
+
+    @api.model
+    def _gc_transcripts(self):
+        """Daily job: delete transcript rows older than the retention window.
+
+        Returns how many rows were removed. sudo() on purpose: the job is the
+        platform's housekeeping, no user has (or should have) unlink rights.
+        """
+        days = self._retention_days()
+        if days <= 0:
+            return 0
+        cutoff = fields.Datetime.now() - timedelta(days=days)
+        rows = self.sudo().search([('create_date', '<', cutoff)])
+        count = len(rows)
+        rows.unlink()
+        return count
 
 
 class AiChat(models.AbstractModel):
@@ -164,14 +216,17 @@ class AiChat(models.AbstractModel):
         }
 
     # ------------------------------------------------------------------ sends
-    @api.model
-    def send_suggested(self, key):
-        """Run one SERVER-OWNED prompt through the pipeline.
+    def _resolve_suggested(self, key):
+        """Gate + registry lookup. Returns (text shown in the transcript,
+        canonical question sent to the provider).
 
         The key is the only client input, and it is treated as untrusted: it
         selects from the registry or it is refused. No client-supplied text
         participates in the prompt on this path, which is what lets it run
-        with the #375 flag off.
+        with the #375 flag off. The provider always gets the registry's
+        English text (what a reviewer can read in the JSON file); the
+        TRANSCRIPT shows the chip label in the viewer's language, so an
+        Arabic user does not see an English question they never typed.
         """
         self._require_any_group(_ALLOWED_GROUPS, self.env._(
             "The AI assistant is available to the Accountant, the CEO and "
@@ -186,10 +241,36 @@ class AiChat(models.AbstractModel):
             raise UserError(self.env._(
                 "Unknown suggested prompt. Reload the page and pick one of "
                 "the offered suggestions."))
+        display = self._chip_labels().get(key) or entry['label']
+        return display, entry['question']
 
-        question = entry['question']
+    @api.model
+    def send_suggested(self, key):
+        """Run one SERVER-OWNED prompt through the pipeline (batch delivery)."""
+        display, question = self._resolve_suggested(key)
         result = self.env['ncollection.ai.question']._run_pipeline(question)
-        return self._persist_exchange(question, result)
+        return self._persist_exchange(display, result)
+
+    def _stream_plan(self, kind, value):
+        """Admission + preparation for the STREAMING controller.
+
+        Private (not RPC-callable): the controller is the only caller, and it
+        runs this inside the request, as the user, before a single byte is
+        streamed - so every refusal (gate, #375 flag, secret scan, unknown
+        key, budget) is decided with the same code and the same ordering as
+        the batch methods. Returns the transcript text and the prepared
+        (sanitised) prompt; nothing has been sent anywhere yet.
+        """
+        question_service = self.env['ncollection.ai.question']
+        if kind == 'suggested':
+            display, question = self._resolve_suggested(value)
+        elif kind == 'typed':
+            question = question_service._admit_typed(value)
+            display = question
+        else:
+            raise UserError(self.env._("Unknown request."))
+        return {'display': display,
+                'prepared': question_service._prepare_pipeline(question)}
 
     @api.model
     def send_typed(self, question):
@@ -215,10 +296,17 @@ class AiChat(models.AbstractModel):
         method, so a failed request leaves no transcript at all: a chat log
         showing an answer that was never given is worse than no log.
         """
-        Message = self.env['ncollection.ai.chat.message']
+        # The ACL grants users READ only. The service is the one writer, with
+        # sudo() and an EXPLICIT user_id taken from the authenticated request
+        # (never from client input), so a user cannot plant "assistant" rows
+        # through normal ORM/RPC access - the transcript is the assistant's
+        # own record again. Sizes are capped here and by the model constraint.
+        Message = self.env['ncollection.ai.chat.message'].sudo()
         records = Message.create([
-            {'role': 'user', 'body': question},
-            {'role': 'assistant', 'body': result.get('answer') or ''},
+            {'user_id': self.env.uid, 'role': 'user',
+             'body': (question or '')[:_MAX_QUESTION_CHARS]},
+            {'user_id': self.env.uid, 'role': 'assistant',
+             'body': (result.get('answer') or '')[:_MAX_ASSISTANT_CHARS]},
         ])
         return {
             'messages': [

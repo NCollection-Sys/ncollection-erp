@@ -402,9 +402,10 @@ _PROMPT_TEMPLATE = """You are a business analyst for {company}.
 Answer the user's question using ONLY the workspace data below. If the data does
 not contain the answer, say so plainly rather than guessing.
 
-Identities appear as tokens such as PARTNER_1; use them exactly as written.
+Identities appear as tokens such as PARTNER_1; use them exactly as written
+(never translate or alter them).
 All amounts are in {currency}.
-
+{language_line}
 --- WORKSPACE DATA ---
 {context}
 --- END DATA ---
@@ -494,6 +495,18 @@ class AiQuestion(models.AbstractModel):
 
         Returns ``{'answer', 'dropped_sections', 'usage'}``.
         """
+        question = self._admit_typed(question)
+        return self._run_pipeline(
+            question, max_context_tokens=max_context_tokens,
+            max_answer_tokens=max_answer_tokens)
+
+    def _admit_typed(self, question):
+        """The full admission gauntlet for FREE-TYPED text; returns the question.
+
+        ask() and the streaming path both call this, so there is ONE copy of
+        the financial gate, the #375 flag, the cap and both secret scans. It is
+        private (not RPC-callable) and raises before anything is read or sent.
+        """
         # BEFORE anything is read. An authorization check that runs after the
         # context is built has already done the privileged read it was meant to
         # prevent — harmless here because nothing is returned, but it makes the
@@ -556,35 +569,58 @@ class AiQuestion(models.AbstractModel):
                 "token. Nothing was sent. Please remove it and ask in plain "
                 "words — this assistant works from your workspace data, so it "
                 "does not need one."))
+        return question
 
-        return self._run_pipeline(
-            question, max_context_tokens=max_context_tokens,
-            max_answer_tokens=max_answer_tokens)
+    def _language_line(self):
+        """One instruction line naming the language the answer must use.
 
-    def _run_pipeline(self, question, max_context_tokens=2000,
-                      max_answer_tokens=1024):
-        """build → sanitise → send → rehydrate, for an ALREADY-AUTHORIZED question.
+        Derived from the viewer's language, never from user text, so it is a
+        constant per language and cannot carry anything from a question. Without
+        it the provider answers in whatever language the (English) registry
+        question or the data suggests, which for an Arabic user was English.
+        """
+        code = (self.env.lang or 'en_US')
+        if code.startswith('ar'):
+            name = 'Arabic'
+        elif code.startswith('en'):
+            name = 'English'
+        else:
+            lang = self.env['res.lang']._lang_get(code)
+            name = ((lang.name or 'English').split('/')[0].strip() or 'English')
+        return ('Write the whole answer in %s (identity tokens stay exactly '
+                'as written).\n' % name)
 
-        Private on purpose, and the split is a security boundary, not tidiness
-        (P5-T06 / #63): every caller owns its own admission decision.
+    def _prepare_pipeline(self, question, max_context_tokens=2000,
+                          max_answer_tokens=1024):
+        """build -> sanitise -> prompt, for an ALREADY-AUTHORIZED question.
 
-          ask()             financial gate + free-text gate + secret scans —
-                            the full gauntlet, because its input is user prose.
-          send_suggested()  financial gate + a server-owned registry lookup —
-                            no free-text gate, because the text never came from
-                            a user. That is #375's line, drawn in code: the
-                            flag governs ARBITRARY USER PROSE, and bypassing it
-                            for anything else must be impossible. This method
-                            being _private (not RPC-callable) is what makes
-                            "impossible" true — an @api.model here would be a
-                            public unauthenticated-prose endpoint.
-
-        Everything data-protective stays INSIDE the pipeline where no caller
-        can skip it: the sanitiser (identities, secrets-by-shape, document
-        prefixes) runs on the whole payload regardless of who asked, and
-        re-hydration happens here because only this database holds the mapping.
+        Returns what the two delivery paths (batch and streamed) share: the
+        sanitised prompt, the token mapping that never leaves this database,
+        and what the context builder had to drop. Nothing is sent here.
         """
         import json  # local: keeps the module import-light for a rarely-used path
+
+        # build → sanitise → send → rehydrate, for an ALREADY-AUTHORIZED question.
+        #
+        # Private on purpose, and the split is a security boundary, not tidiness
+        # (P5-T06 / #63): every caller owns its own admission decision.
+        #
+        # ask()             financial gate + free-text gate + secret scans —
+        # the full gauntlet, because its input is user prose.
+        # send_suggested()  financial gate + a server-owned registry lookup —
+        # no free-text gate, because the text never came from
+        # a user. That is #375's line, drawn in code: the
+        # flag governs ARBITRARY USER PROSE, and bypassing it
+        # for anything else must be impossible. This method
+        # being _private (not RPC-callable) is what makes
+        # "impossible" true — an @api.model here would be a
+        # public unauthenticated-prose endpoint.
+        #
+        # Everything data-protective stays INSIDE the pipeline where no caller
+        # can skip it: the sanitiser (identities, secrets-by-shape, document
+        # prefixes) runs on the whole payload regardless of who asked, and
+        # re-hydration happens here because only this database holds the mapping.
+        #
 
         context = self.env['ncollection.ai.context']._build(
             max_tokens=max_context_tokens)
@@ -612,10 +648,25 @@ class AiQuestion(models.AbstractModel):
             currency=workspace.get('currency', 'the workspace currency'),
             context=json.dumps(clean['context'], indent=2, default=str),
             question=clean['question'],
+            language_line=self._language_line(),
         )
+        return {'prompt': prompt, 'mapping': mapping,
+                'dropped_sections': context['dropped'],
+                'max_answer_tokens': max_answer_tokens}
 
+    def _run_pipeline(self, question, max_context_tokens=2000,
+                      max_answer_tokens=1024):
+        """prepare -> send -> rehydrate (the batch path); see _prepare_pipeline.
+
+        Private on purpose: every caller owns its own admission decision
+        (ask() = the full gauntlet, send_suggested() = a registry lookup).
+        """
+        prepared = self._prepare_pipeline(
+            question, max_context_tokens=max_context_tokens,
+            max_answer_tokens=max_answer_tokens)
+        mapping = prepared['mapping']
         response = self.env['ncollection.ai.gateway']._complete(
-            prompt, max_tokens=max_answer_tokens)
+            prepared['prompt'], max_tokens=prepared['max_answer_tokens'])
 
         return {
             # Re-hydrated HERE, inside the database that owns the mapping.
@@ -623,6 +674,6 @@ class AiQuestion(models.AbstractModel):
                 response.get('text', ''), mapping),
             # Surfaced rather than silent: an answer built on truncated evidence
             # should be visibly so.
-            'dropped_sections': context['dropped'],
+            'dropped_sections': prepared['dropped_sections'],
             'usage': response.get('usage', {}),
         }

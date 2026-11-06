@@ -276,8 +276,8 @@ class TestChatService(TransactionCase):
             self.Chat.with_user(self.acct_b).get_state()['history'], [])
 
     def test_a_user_cannot_forge_history_into_anothers_transcript(self):
-        """user_id is not client-assignable in effect: the record rule vetoes
-        a create that lands outside the creator's own transcript."""
+        """No ORM create exists for users at all (read-only ACL), so a row
+        planted into another user's transcript is refused twice over."""
         with self.assertRaises(AccessError):
             self.Message.with_user(self.acct_b).create({
                 'user_id': self.acct_a.id,
@@ -492,10 +492,13 @@ class TestChatIntegration(TransactionCase):
             'name': 'chat_perf', 'login': 'chat_perf',
             'group_ids': [(6, 0, [self.base_user.id, accountant.id])],
         })
-        self.env['ncollection.ai.chat.message'].with_user(user).create(
-            [{'role': 'user', 'body': 'q%d' % i} for i in range(60)])
+        # Users hold READ only now (no ORM create); the service is the writer.
+        self.env['ncollection.ai.chat.message'].sudo().create(
+            [{'user_id': user.id, 'role': 'user', 'body': 'q%d' % i}
+             for i in range(60)])
         chat = self.Chat.with_user(user)
         chat.get_state(include_history=False)  # warm the caches
+        chat.get_state()  # ...and the message ACL / record-rule caches too
         before = self.cr.sql_log_count
         chat.get_state(include_history=False)
         self.assertLessEqual(self.cr.sql_log_count - before, 4)

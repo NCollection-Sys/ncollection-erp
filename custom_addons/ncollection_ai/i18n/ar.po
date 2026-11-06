@@ -328,6 +328,43 @@ msgstr "افتح مساعد الذكاء الاصطناعي"
 
 #. module: ncollection_ai
 #. odoo-javascript
+#: code:addons/ncollection_ai/controllers/chat_stream.py:0
 #: code:addons/ncollection_ai/static/src/chat/chat_widget.js:0
 msgid "The assistant could not answer."
 msgstr "تعذّر على المساعد الإجابة."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "A chat message cannot be longer than %s characters."
+msgstr "لا يمكن أن تتجاوز رسالة المحادثة %s حرفًا."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Unknown request."
+msgstr "طلب غير معروف."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI answer was longer than allowed and was stopped."
+msgstr "كانت إجابة الذكاء الاصطناعي أطول من المسموح فتم إيقافها."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI service returned an unreadable response."
+msgstr "أعادت خدمة الذكاء الاصطناعي ردًّا غير قابل للقراءة."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI provider returned an error."
+msgstr "أعاد مزوّد الذكاء الاصطناعي خطأً."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI answer was cut off before it finished. Nothing was saved."
+msgstr "انقطعت إجابة الذكاء الاصطناعي قبل اكتمالها. لم يتم حفظ أي شيء."

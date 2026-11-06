@@ -5,3 +5,4 @@ from . import test_ai_question
 from . import test_gateway_client
 from . import test_domain_mapper
 from . import test_chat
+from . import test_chat_hardening

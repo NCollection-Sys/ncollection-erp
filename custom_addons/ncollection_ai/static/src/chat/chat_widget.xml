@@ -24,7 +24,7 @@
                             <t t-else=""><t t-out="renderBody(msg)"/></t>
                         </div>
                     </t>
-                    <div t-if="state.sending" class="nc-ai-chat__typing" aria-live="polite">
+                    <div t-if="state.sending and !state.streaming" class="nc-ai-chat__typing" aria-live="polite">
                         <span/><span/><span/>
                     </div>
                     <div t-if="state.error" class="nc-ai-chat__error" role="alert">

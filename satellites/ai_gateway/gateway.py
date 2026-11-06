@@ -219,6 +219,67 @@ class Gateway:
         }
 
 
+    def begin_stream(self, tenant: str, prompt: str, max_tokens: int):
+        """Admit a streamed completion and return its event generator.
+
+        ALL admission happens HERE, before the caller sends a single header: the
+        breaker, then the budget ceiling - the same order and the same estimate as
+        `complete`, so a refused stream is an ordinary 429/503 the client can read,
+        never a 200 that dies half-way. Raises exactly what `complete` raises.
+        """
+        breaker = self.breaker_for(tenant)
+        breaker.before_call()
+        estimated = max(1, len(prompt) // 4) + max_tokens
+        self.ledger.check(tenant, estimated)
+        return self._stream_events(tenant, breaker, prompt, max_tokens)
+
+
+    def _stream_events(self, tenant, breaker, prompt, max_tokens):
+        """Yield `{"delta": text}` items, then one `{"done": True, ...}`.
+
+        Usage is charged once, at the end, from the provider's own final count. A
+        stream the client abandons (the generator is closed early) is charged for
+        what was estimated up front by nothing and recorded as the failure it is
+        not - it is simply not recorded, which under-charges rather than
+        over-charges; the pre-check above is what bounds a tenant.
+        """
+        started = time.monotonic()
+        completion = None
+        try:
+            for item in self.provider.stream(prompt, max_tokens):
+                if isinstance(item, str):
+                    yield {"delta": item}
+                else:
+                    completion = item
+        except ProviderError:
+            breaker.record_failure()
+            raise
+        if completion is None:
+            breaker.record_failure()
+            raise ProviderError("provider stream ended without a final result")
+        breaker.record_success()
+        self.ledger.record(tenant, completion.total_tokens)
+        _log.info(json.dumps({
+            "event": "completion_stream",
+            "tenant": tenant,
+            "provider": completion.provider,
+            "model": completion.model,
+            "input_tokens": completion.input_tokens,
+            "output_tokens": completion.output_tokens,
+            "elapsed_ms": int((time.monotonic() - started) * 1000),
+        }))
+        yield {
+            "done": True,
+            "usage": {
+                "input_tokens": completion.input_tokens,
+                "output_tokens": completion.output_tokens,
+                "total_tokens": completion.total_tokens,
+            },
+            "provider": completion.provider,
+            "model": completion.model,
+        }
+
+
 class Handler(BaseHTTPRequestHandler):
     """Two endpoints. A gateway with more surface than it needs is a gateway
     with more surface to get wrong."""
@@ -234,6 +295,34 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_stream(self, tenant: str, events) -> None:
+        """Write the events as NDJSON, one flushed line each.
+
+        Headers go out only after admission succeeded (the caller built the
+        generator first), so every refusal is a normal status code. After that
+        the status is already 200, so a provider failure mid-answer is reported
+        IN-BAND as `{"error": ...}` - the consumer treats any stream that does
+        not end in `done` as failed. Connection: close, no content-length.
+        """
+        self.send_response(200)
+        self.send_header("content-type", "application/x-ndjson")
+        self.send_header("cache-control", "no-store")
+        self.send_header("connection", "close")
+        self.end_headers()
+        self.close_connection = True
+        try:
+            for event in events:
+                self.wfile.write(json.dumps(event).encode("utf-8") + b"\n")
+                self.wfile.flush()
+        except ProviderError as exc:
+            _log.warning(json.dumps({"event": "provider_error",
+                                     "tenant": tenant, "detail": str(exc)}))
+            self.wfile.write(json.dumps({
+                "error": "ai_provider_error",
+                "message": "The AI provider returned an error."}).encode("utf-8") + b"\n")
+        except (BrokenPipeError, ConnectionResetError):
+            events.close()   # the caller went away; stop pulling from the provider
 
     def _drain(self, remaining: int) -> None:
         """Read and discard a bounded number of body bytes.
@@ -269,9 +358,10 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, {"error": "not found"})
 
     def do_POST(self):  # noqa: N802
-        if self.path != "/v1/complete":
+        if self.path not in ("/v1/complete", "/v1/stream"):
             self._send(404, {"error": "not found"})
             return
+        streaming = self.path == "/v1/stream"
 
         try:
             length = int(self.headers.get("content-length") or 0)
@@ -343,7 +433,11 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         try:
-            self._send(200, self.gateway.complete(tenant, prompt, max_tokens))
+            if streaming:
+                events = self.gateway.begin_stream(tenant, prompt, max_tokens)
+                self._send_stream(tenant, events)
+            else:
+                self._send(200, self.gateway.complete(tenant, prompt, max_tokens))
         except BudgetExceeded as exc:
             # THE ACCEPTANCE CRITERION: "budget exhaustion returns a friendly
             # error". 429 with an explanation and a retry hint — never a 500,

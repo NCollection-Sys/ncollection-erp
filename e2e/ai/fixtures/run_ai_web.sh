@@ -29,7 +29,7 @@ V=(-v "${DB}_fs:/tmp/od" -v "$A:/mnt/extra-addons:ro" -v "$O:/mnt/oca:ro")
 docker network create "$NETN" >/dev/null
 docker run -d --name "$PG" --network "$NETN" --memory 1g -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=aitest-only postgres:16 >/dev/null
 docker run -d --name "$GW" --network "$NETN" --network-alias ai-gateway --memory 256m -v "$G:/app:ro" -w /app \
-  -e NC_AI_GATEWAY_KEY -e NC_AI_PROVIDER=mock -e NC_AI_PORT=8080 -e PYTHONUNBUFFERED=1 python:3.12-slim python3 gateway.py >/dev/null
+  -e NC_AI_GATEWAY_KEY -e NC_AI_PROVIDER=mock -e NC_AI_MOCK_STREAM_DELAY_MS=150 -e NC_AI_PORT=8080 -e PYTHONUNBUFFERED=1 python:3.12-slim python3 gateway.py >/dev/null
 until docker exec "$PG" pg_isready -U odoo -d postgres >/dev/null 2>&1; do sleep 2; done
 docker run --rm --user root -v "${DB}_fs:/tmp/od" --entrypoint chown odoo:19 -R odoo:odoo /tmp/od
 run() { docker run --rm -i --memory 2000m --network "$NETN" -e NC_AI_GATEWAY_KEY -e HOST="$PG" -e USER=odoo -e PASSWORD=aitest-only "${V[@]}" odoo:19 "$@"; }

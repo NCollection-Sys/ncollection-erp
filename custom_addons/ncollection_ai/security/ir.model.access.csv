@@ -1,4 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_nc_ai_chat_message_accountant,nc.ai.chat.message accountant,model_ncollection_ai_chat_message,ncollection_core.group_role_accountant,1,0,1,0
-access_nc_ai_chat_message_ceo,nc.ai.chat.message ceo,model_ncollection_ai_chat_message,ncollection_core.group_role_ceo,1,0,1,0
-access_nc_ai_chat_message_system,nc.ai.chat.message system,model_ncollection_ai_chat_message,base.group_system,1,0,1,0
+access_nc_ai_chat_message_accountant,nc.ai.chat.message accountant,model_ncollection_ai_chat_message,ncollection_core.group_role_accountant,1,0,0,0
+access_nc_ai_chat_message_ceo,nc.ai.chat.message ceo,model_ncollection_ai_chat_message,ncollection_core.group_role_ceo,1,0,0,0
+access_nc_ai_chat_message_system,nc.ai.chat.message system,model_ncollection_ai_chat_message,base.group_system,1,0,0,0

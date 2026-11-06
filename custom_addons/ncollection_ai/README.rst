@@ -216,29 +216,46 @@ returned verbatim, and rendered client-side by an escape-first markdown subset
 (bold, inline code, ``- `` bullets): every character is HTML-escaped before
 any tag is introduced, so there is no path from model output to markup.
 
-**Deliberate v1 limits:**
+**Streaming (P5-T06 acceptance).** The widget streams: ``POST
+/ncollection/ai/chat/stream`` (Odoo CSRF token, ``auth='user'``) relays the
+gateway's ``/v1/stream`` as newline-delimited JSON; each piece is re-hydrated
+incrementally (a half identity token is never shown) and rendered by the same
+escape-first renderer. Admission is the SAME code as the batch RPCs and runs
+before the first byte; the exchange is saved once, only after the provider's
+final ``done``, so a cut-off answer leaves no transcript. A stream holds one
+web worker for its duration, never the cron worker (the #310 hazard §6 names);
+if the stream route is unavailable the widget falls back to the batch RPC. The
+only provider proven end to end is the mock; the Anthropic SSE parser is
+unit-tested on recorded frame shapes and has not run against the live API.
 
-* **Batch, not streaming.** ``AI_PLATFORM_DESIGN.md`` §6 prescribes streaming
-  for chat, but the shipped P5-T02 gateway is batch-only and §6 itself ties
-  streaming to the #310 cron constraint. Decision recorded at the plan gate:
-  a typing indicator now; SSE is its own ticket, starting at the satellite.
+**Transcript integrity and size.** Users hold READ access only; the service
+writes both rows with ``sudo()`` and an explicit ``user_id`` from the
+authenticated request, so nobody can plant an ``assistant`` row through the
+ORM or RPC. A user row is capped at the question cap (2000 characters), an
+assistant row at 20000; the service truncates and a model constraint refuses
+anything larger.
+
+**Retention.** A daily cron deletes transcript rows older than
+``ncollection_ai.transcript_retention_days`` (default 90; ``0`` or less keeps
+them forever). The parameter and the cron are seeded ``noupdate``, so a tenant's
+tuning survives upgrades.
+
+**Language.** The transcript shows the suggestion's label in the viewer's
+language; the provider still receives the registry's English question (what a
+reviewer can read in the JSON file) inside a prompt that tells it to answer in
+the viewer's language. Whether a real model obeys that instruction is not
+provable offline.
+
+**Remaining limits:**
+
 * **Module context is best-effort.** The widget reads the active model from
   the router (record pages); anywhere it cannot, the server's ``default``
   prompt set applies. The server treats ``module_ctx`` as untrusted either
   way.
-* **Transcripts have no retention policy yet.** Rows live until the user is
-  deleted (``ondelete='cascade'``). If they accumulate, borrow
-  ``ncollection_auth``'s minimisation schedule rather than inventing a second
-  one.
-* **A gated user can insert rows into their OWN transcript** by calling
-  ``create()`` directly over RPC — the ACL grants create so the service can
-  persist as the user, and the record rule pins ``user_id``, so the reach is
-  strictly self. Cross-user forgery is blocked and tested; rendering is
-  escape-first, so planted markup is inert. Closing the self-insert path
-  would need a ``sudo()`` write channel, which this module deliberately does
-  not have (security review, 2026-08-14: LOW, accept-and-document). The
-  consequence to respect: **a transcript is a user's own notebook, not
-  evidence** — never treat it as an audit record.
+* **A transcript is a convenience, not evidence.** It is deleted after the
+  retention window and is not an audit record (earlier versions let a user
+  plant their own rows; that path is closed, but the log is still not a
+  compliance artefact).
 
 Languages and the browser proof
 -------------------------------

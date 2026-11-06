@@ -26,6 +26,54 @@ from providers import (  # noqa: E402
 )
 
 
+class TestStreamingProviders(unittest.TestCase):
+
+    def test_the_default_stream_is_one_chunk_then_a_completion(self):
+        from providers import Completion, Provider
+
+        class Plain(Provider):
+            name = "plain"
+
+            def complete(self, prompt, max_tokens):
+                return Completion("whole answer", 3, 2, "plain", "m")
+
+        items = list(Plain().stream("p", 10))
+        self.assertEqual(items[0], "whole answer")
+        self.assertIsInstance(items[-1], Completion)
+        self.assertEqual(len(items), 2)
+
+    def test_the_mock_streams_many_chunks_whose_join_is_the_final_text(self):
+        from providers import Completion
+        items = list(MockProvider().stream("a prompt", 256))
+        chunks = [i for i in items if isinstance(i, str)]
+        self.assertGreater(len(chunks), 3)
+        self.assertEqual("".join(chunks), items[-1].text)
+        self.assertIsInstance(items[-1], Completion)
+
+    def test_the_anthropic_sse_parser_yields_text_then_usage(self):
+        from providers import parse_anthropic_stream
+        lines = [
+            "event: message_start",
+            'data: {"type":"message_start","message":{"model":"m1","usage":{"input_tokens":11}}}',
+            "",
+            'data: {"type":"ping"}',
+            'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Hel"}}',
+            'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"lo"}}',
+            'data: {"type":"message_delta","usage":{"output_tokens":5}}',
+            'data: {"type":"message_stop"}',
+        ]
+        items = list(parse_anthropic_stream(lines))
+        self.assertEqual(items[:2], ["Hel", "lo"])
+        self.assertEqual(items[-1], {"usage": {"input_tokens": 11, "output_tokens": 5}, "model": "m1"})
+
+    def test_an_error_frame_and_a_garbage_frame_are_provider_errors(self):
+        from providers import parse_anthropic_stream
+        with self.assertRaises(ProviderError):
+            list(parse_anthropic_stream(['data: {"type":"error","error":{"type":"overloaded_error"}}']))
+        with self.assertRaises(ProviderError):
+            list(parse_anthropic_stream(["data: not json"]))
+
+
 class FakeClock:
     """A clock the tests move by hand."""
 

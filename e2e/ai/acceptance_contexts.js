@@ -13,6 +13,7 @@ const USERS = {
   owner: { user: 'ai_owner', password: 'Ai-Owner-Pass1!' },
   ar: { user: 'ai_acct_ar', password: 'Ai-AcctAr-Pass1!' },
   plain: { user: 'ai_plain', password: 'Ai-Plain-Pass1!' },
+  ownerAr: { user: 'ai_owner_ar', password: 'Ai-OwnerAr-Pass1!' },
 };
 const results = [];
 let CURRENT = null;
@@ -56,8 +57,8 @@ async function openPanel(page, rtl = false) {
   if (!(await page.locator('.nc-ai-chat__panel').count())) await page.click('.nc-ai-chat__bubble');
   await page.waitForSelector('.nc-ai-chat__chip', { timeout: 15000 });
 }
-async function serverChips(page, ctx) {
-  const st = await rpc(page, 'ncollection.ai.chat', 'get_state', [], { module_ctx: ctx, include_history: false });
+async function serverChips(page, ctx, lang) {
+  const st = await rpc(page, 'ncollection.ai.chat', 'get_state', [], { module_ctx: ctx, include_history: false, ...(lang ? { context: { lang } } : {}) });
   return st.suggestions.map((s) => s.label);
 }
 const chipTexts = (page) => page.locator('.nc-ai-chat__chip').allInnerTexts().then((a) => a.map((t) => t.trim()));
@@ -105,7 +106,7 @@ const count = (page) => rpc(page, 'ncollection.ai.chat.message', 'search_count',
       const s = roles[who]; CURRENT = s.page;
       const before = await count(s.page);
       await s.page.locator('.nc-ai-chat__chip').first().click();
-      await s.page.waitForFunction((n) => document.querySelectorAll('.nc-ai-chat__msg--assistant').length > n, await s.page.locator('.nc-ai-chat__msg--assistant').count(), { timeout: 45000 });
+      for (let t = 0; t < 180 && (await count(s.page)) < before + 2; t++) await s.page.waitForTimeout(250);
       eq(await count(s.page), before + 2, 'two rows written');
       const rows = await rpc(s.page, 'ncollection.ai.chat.message', 'search_read', [[]], { fields: ['role'], order: 'id desc', limit: 2 });
       eq(rows.map((r) => r.role), ['assistant', 'user'], 'last two roles');
@@ -183,6 +184,27 @@ const count = (page) => rpc(page, 'ncollection.ai.chat.message', 'search_count',
       eq(box.dir, 'rtl', 'direction');
       ok(box.br < box.vw / 2 + 40 && box.pl >= 0 && box.pr <= box.vw && !box.over, 'layout ' + JSON.stringify(box));
       await shot(ar.page, `ctx_${model.replace('.', '_')}_ar`);
+    });
+  }
+  // The Arabic accountant can only open the two accounting contexts; the Arabic OWNER opens all five.
+  const arOwner = await S(USERS.ownerAr, { lang: 'ar_001' });
+  for (const model of CONTEXTS) {
+    await check(`${model} [Arabic owner]: RTL, Arabic chips equal the server's Arabic set for that context, answer round trip`, async () => {
+      CURRENT = arOwner.page; arOwner.ctxSent.length = 0;
+      if (model === 'default') await arOwner.page.goto(`${BASE}/atlas`); else await openRecord(arOwner.page, model, ids[model]);
+      await openPanel(arOwner.page, true);
+      ok(arOwner.ctxSent.includes(model), `context ${model} not sent: ${JSON.stringify(arOwner.ctxSent)}`);
+      const chips = await chipTexts(arOwner.page);
+      ok(chips.length >= 3 && chips.every((t) => arabic.test(t)), 'chips Arabic: ' + JSON.stringify(chips));
+      eq(chips, await serverChips(arOwner.page, model, 'ar_001'), 'chips vs server (Arabic) registry');
+      eq(await arOwner.page.evaluate(() => getComputedStyle(document.body).direction), 'rtl', 'direction');
+      const before = await count(arOwner.page);
+      await arOwner.page.locator('.nc-ai-chat__chip').first().click();
+      for (let t = 0; t < 180 && (await count(arOwner.page)) < before + 2; t++) await arOwner.page.waitForTimeout(250);
+      eq(await count(arOwner.page), before + 2, 'two rows written');
+      const [, userRow] = await rpc(arOwner.page, 'ncollection.ai.chat.message', 'search_read', [[]], { fields: ['role', 'body'], order: 'id desc', limit: 2 });
+      ok(arabic.test(userRow.body), 'transcript question is Arabic: ' + userRow.body);
+      await shot(arOwner.page, `ctx_${model.replace('.', '_')}_ar_owner`);
     });
   }
   await check('Arabic mobile 390px on an account.move record: RTL panel fits', async () => {

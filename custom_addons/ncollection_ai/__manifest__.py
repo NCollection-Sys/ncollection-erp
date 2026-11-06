@@ -9,7 +9,7 @@
     'summary': 'Tenant-side AI context injection (P5-T03), the '
                'natural-language search-domain mapper (P5-T05, off by '
                'default) and the assistant chat widget (P5-T06)',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'category': 'Productivity',
     'author': 'NCollection',
     'license': 'LGPL-3',
@@ -18,6 +18,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/chat_security.xml',
+        'data/chat_retention.xml',
     ],
     'assets': {
         'web.assets_backend': [

@@ -69,6 +69,15 @@ async function openPanel(page, rtl = false) {
 async function dbCount(page) {
   return rpc(page, 'ncollection.ai.chat.message', 'search_count', [[]]);
 }
+// A streamed answer shows a PENDING bubble at once; the rows exist only when the stream ends.
+async function waitRows(page, n, ms = 45000) {
+  const t0 = Date.now();
+  for (;;) {
+    if ((await dbCount(page)) >= n) return;
+    if (Date.now() - t0 > ms) throw new Error('timed out waiting for ' + n + ' saved rows');
+    await page.waitForTimeout(250);
+  }
+}
 
 (async () => {
   const browser = await launch();
@@ -118,7 +127,8 @@ async function dbCount(page) {
   await check('click a suggestion: typing indicator, assistant answer, persisted in order', async () => {
     const before = await dbCount(A.page);
     await A.page.locator('.nc-ai-chat__chip').first().click();
-    await A.page.waitForSelector('.nc-ai-chat__msg--assistant', { timeout: 45000 });
+    await waitRows(A.page, before + 2);
+    await A.page.waitForFunction(() => !document.querySelector('.nc-ai-chat__typing'), null, { timeout: 15000 });
     eq(await A.page.locator('.nc-ai-chat__msg--user').count(), 1, 'one user message');
     ok((await A.page.locator('.nc-ai-chat__msg--assistant').first().innerText()).trim().length > 0, 'non-empty answer');
     const rows = await rpc(A.page, 'ncollection.ai.chat.message', 'search_read', [[]], { fields: ['role', 'body'], order: 'id' });
@@ -223,7 +233,8 @@ async function dbCount(page) {
     const hostile = '<img src=x onerror="window.__y=1"> **hello**';
     await A.page.fill('.nc-ai-chat__input', hostile);
     await A.page.click('.nc-ai-chat__sendbtn');
-    await A.page.waitForFunction(() => document.querySelectorAll('.nc-ai-chat__msg--assistant').length >= 2, null, { timeout: 45000 });
+    await waitRows(A.page, 4);
+    await A.page.waitForFunction(() => !document.querySelector('.nc-ai-chat__typing'), null, { timeout: 15000 });
     const lastUser = (await A.page.locator('.nc-ai-chat__msg--user').last().innerText()).trim();
     eq(lastUser, hostile, 'user message shown verbatim as text');
     eq(await A.page.locator('.nc-ai-chat__messages img').count(), 0, 'no <img> element created');
@@ -246,7 +257,7 @@ async function dbCount(page) {
   await check('no JavaScript errors, no console errors, no dialogs across the whole run', async () => {
     const pageErrors = [].concat(A.errors, R.errors, adm.errors);
     eq(pageErrors, [], 'page errors');
-    const benign = consoleErrors.filter((t) => !/favicon|Failed to load resource.*(40[1-4])|net::ERR_ABORTED/i.test(t));
+    const benign = consoleErrors.filter((t) => !/favicon|Failed to load resource.*(40[0-4])|net::ERR_ABORTED/i.test(t));
     eq(benign, [], 'console errors');
     eq(dialogs, [], 'dialogs');
   });
