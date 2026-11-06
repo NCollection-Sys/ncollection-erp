@@ -182,14 +182,18 @@ class TestConcurrencyCap(TransactionCase):
             self.assertEqual(taken, {0, 1})
             with self.assertRaisesRegex(UserError, 'busy'):
                 chat._take_slot()
-            # Test cursors are savepoints, so they must be closed last-in first-out (production cursors are independent).
+            # Test cursors are savepoints: close them last-in first-out (production cursors are independent).
             second.release()
             first.release()
 
     def test_a_refused_batch_question_calls_the_gateway_not_at_all(self):
         self.env['ir.config_parameter'].sudo().set_param(chat_module.MAX_CONCURRENT_PARAM, '1')
         called = []
-        with self._fake_slots({0}), patch(_COMPLETE, new=lambda s, p, max_tokens=1024: called.append(1) or {'text': 'x'}):
+        def fake_complete(_self, prompt, max_tokens=1024):
+            called.append(1)
+            return {'text': 'x'}
+
+        with self._fake_slots({0}), patch(_COMPLETE, new=fake_complete):
             with self.assertRaises(UserError):
                 self.Chat.with_user(self.acct).send_suggested('workspace_summary')
         self.assertFalse(called)
@@ -203,17 +207,17 @@ class TestConcurrencyCap(TransactionCase):
             released.append(1)
             return original(slot_self)
 
-        def boom(*a, **k):
-            raise UserError('gateway down')
+        def boom(*args, **kwargs):
+            raise RuntimeError('gateway down')
 
         with patch.object(chat_module.AiSlot, 'release', spy), patch(_COMPLETE, new=boom):
-            with self.assertRaises(UserError):
+            with self.assertRaises(RuntimeError):
                 self.Chat.with_user(self.acct).send_suggested('workspace_summary')
         self.assertEqual(released, [1])
 
     def test_the_slot_helper_builds_no_registry_and_opens_no_connection_by_name(self):
         import inspect
-        from odoo.addons.ncollection_ai import concurrency
+        from .. import concurrency
         source = inspect.getsource(concurrency.AiSlot)
         for smell in ("Registry(", "db_connect", "psycopg2", "FROM ", "SELECT * "):
             self.assertNotIn(smell, source, smell)
@@ -221,10 +225,11 @@ class TestConcurrencyCap(TransactionCase):
 
     def test_the_stream_route_gives_the_slot_back_when_it_finishes(self):
         import inspect
-        from odoo.addons.ncollection_ai.controllers import chat_stream
+        from ..controllers import chat_stream
         source = inspect.getsource(chat_stream.AiChatStream.stream)
         self.assertIn('_take_slot()', source)
-        self.assertGreaterEqual(source.count('slot.release()'), 2, 'released on a failed start AND when the stream ends')
+        self.assertGreaterEqual(
+            source.count('slot.release()'), 2, 'released on a failed start AND when the stream ends')
 
 
 @tagged('post_install', '-at_install')
