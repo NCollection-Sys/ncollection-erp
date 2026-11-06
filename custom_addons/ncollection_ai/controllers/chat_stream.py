@@ -30,7 +30,7 @@ carries ``X-Accel-Buffering: no`` so nginx forwards each line as it arrives.
 import json
 import logging
 
-from odoo import _, api, http
+from odoo import api, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 
@@ -65,7 +65,7 @@ class AiChatStream(http.Controller):
         mapping = prepared['mapping']
         display = plan['display']
         dropped = prepared['dropped_sections']
-        generic = _("The assistant could not answer.")
+        generic = env._("The assistant could not answer.")
 
         def generate():
             parts, usage = [], {}
