@@ -58,13 +58,12 @@
                 <!-- No issue-tracker references in tenant-facing copy: a
                      customer cannot see this repo's #375. -->
                 <div t-else="" class="nc-ai-chat__hint">
-                    Free-typed questions are switched off on this workspace.
-                    The suggestions above are always available.
+                    Free-typed questions are switched off on this workspace. The suggestions above are always available.
                 </div>
             </div>
 
             <button class="nc-ai-chat__bubble" t-on-click="toggle"
-                    t-att-title="state.open ? 'Minimize the AI assistant' : 'Open the AI assistant'"
+                    t-att-title="toggleTitle"
                     aria-label="AI assistant">
                 <span class="nc-ai-chat__bubble-icon">✦</span>
                 <span t-if="state.unread" class="nc-ai-chat__dot" aria-label="New answer"/>

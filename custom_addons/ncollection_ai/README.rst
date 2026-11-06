@@ -240,6 +240,30 @@ any tag is introduced, so there is no path from model output to markup.
   consequence to respect: **a transcript is a user's own notebook, not
   evidence** — never treat it as an audit record.
 
+Languages and the browser proof
+-------------------------------
+
+The widget ships English and Arabic (RTL). The suggestion chips come from
+``data/suggested_prompts.json``, which Odoo's translation export cannot read,
+so each label is ALSO written as a ``self.env._()`` literal in
+``models/chat.py`` (``_chip_labels``) and translated in ``i18n/ar.po``. To add a
+prompt: add it to the JSON, add its label to ``_chip_labels``, add the Arabic
+msgstr; ``test_every_chip_label_is_translatable`` and
+``test_every_chip_label_has_an_arabic_translation_on_file`` fail until all three
+agree. Only the label is translated: the question text sent to the provider
+(and echoed in the transcript) is the registry's English text, by design.
+JavaScript ``_t()`` terms are not picked up by the export in this repo, so they
+are kept in ``ar.po`` by hand (look for ``odoo-javascript`` entries for
+``chat_widget.js``).
+
+``e2e/ai/acceptance_chat.js`` is the browser acceptance (13 checks: gate,
+suggestion round trip, reload, renderer XSS by parsing the output into the
+DOM, English and Arabic at desktop and 390 px, isolation, free text on/off).
+``e2e/ai/fixtures/run_ai_web.sh`` builds a fully private stack for it (own
+Postgres, the mock-provider gateway satellite, Odoo from the working tree; the
+gateway key is generated per run, kept in the environment only, and the stack is
+removed with ``run_ai_web.sh clean``).
+
 Credits
 =======
 

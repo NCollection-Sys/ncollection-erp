@@ -327,3 +327,166 @@ class TestChatService(TransactionCase):
         stored = self.Message.with_user(self.acct_a).search(
             [('role', '=', 'assistant')])
         self.assertEqual(stored.body, hostile)
+
+
+@tagged('post_install', '-at_install')
+class TestChatIntegration(TransactionCase):
+    """Proofs added when P5-T06 was ported onto the release line (Option A,
+    Arabic, the shipped asset sources). They exercise what changed around the
+    widget, not the widget's own logic (TestChatService owns that)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.Chat = cls.env['ncollection.ai.chat']
+        cls.base_user = cls.env.ref('base.group_user')
+
+    def _read(self, relative):
+        import os
+        module_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(module_dir, relative), encoding='utf-8') as handle:
+            return handle.read()
+
+    # ---------------------------------------------------------- Option A role
+    def test_a_tenant_owner_without_system_rights_can_use_the_assistant(self):
+        """Option A removes base.group_system / erp_manager from the tenant
+        Owner. The assistant must not have depended on them: the Owner reaches
+        the gate through its CEO implication, and the history rule binds the
+        Owner exactly like everyone else."""
+        owner_group = self.env.ref('ncollection_core.group_role_owner')
+        owner = self.env['res.users'].create({
+            'name': 'chat_owner', 'login': 'chat_owner',
+            'group_ids': [(6, 0, [self.base_user.id, owner_group.id])],
+        })
+        self.assertFalse(owner.has_group('base.group_system'),
+                         'fixture invalid: Owner must not hold system rights')
+        state = self.Chat.with_user(owner).get_state()
+        self.assertTrue(state['enabled'])
+        self.assertTrue(state['suggestions'])
+
+    def test_a_plain_internal_user_stays_disabled(self):
+        user = self.env['res.users'].create({
+            'name': 'chat_plain', 'login': 'chat_plain',
+            'group_ids': [(6, 0, [self.base_user.id])],
+        })
+        self.assertEqual(self.Chat.with_user(user).get_state(),
+                         {'enabled': False})
+
+    # ------------------------------------------------------------- languages
+    def test_every_chip_label_is_translatable(self):
+        """The JSON registry cannot be exported for translation, so each label
+        is repeated as a gettext literal in chat.py. A key present in the file
+        but missing there would silently stay English for Arabic users."""
+        from ..models.chat import _prompt_catalog
+        catalog = _prompt_catalog()
+        labels = self.Chat._chip_labels()
+        self.assertEqual(sorted(labels), sorted(catalog['prompts']),
+                         'chat.py _chip_labels() and suggested_prompts.json '
+                         'must list exactly the same prompt keys')
+        for key, entry in catalog['prompts'].items():
+            self.assertEqual(labels[key], entry['label'],
+                             'English label of %r drifted between the two '
+                             'places' % key)
+
+    def test_every_chip_label_has_an_arabic_translation_on_file(self):
+        """Static proof, independent of which languages the test database has
+        loaded: each chip label must have a non-empty msgstr in ar.po."""
+        import re
+        po = self._read('i18n/ar.po')
+        for label in self.Chat._chip_labels().values():
+            escaped = label.replace('\\', '\\\\').replace('"', '\\"')
+            pattern = r'msgid "%s"\nmsgstr "[^"\n]+"' % re.escape(escaped)
+            self.assertRegex(po, pattern, 'no Arabic for chip %r' % label)
+
+    def test_chips_are_served_in_the_viewers_language(self):
+        """End to end: load Arabic, switch a user to it, and the chips the
+        server returns are Arabic while the registry question stays English."""
+        self.env['res.lang']._activate_lang('ar_001')
+        self.env['ir.module.module'].search(
+            [('name', '=', 'ncollection_ai')])._update_translations(['ar_001'])
+        accountant = self.env.ref('ncollection_core.group_role_accountant')
+        user = self.env['res.users'].create({
+            'name': 'chat_ar', 'login': 'chat_ar', 'lang': 'ar_001',
+            'group_ids': [(6, 0, [self.base_user.id, accountant.id])],
+        })
+        # The web client sends the user's language in the RPC context; with_user
+        # alone does not carry it, so the test does what call_kw does.
+        chat = self.Chat.with_user(user).with_context(lang=user.lang)
+        chips = chat.get_state()['suggestions']
+        self.assertTrue(chips)
+        english =self.Chat.with_context(lang='en_US')._chip_labels()
+        for chip in chips:
+            self.assertNotEqual(chip['label'], english[chip['key']],
+                                'chip %r stayed English' % chip['key'])
+        from ..models.chat import _prompt_catalog
+        self.assertEqual(
+            _prompt_catalog()['prompts']['workspace_summary']['question'],
+            'Summarise the financial position of this workspace.')
+
+    # ------------------------------------------------- data and asset hygiene
+    def test_registry_text_cannot_carry_markup(self):
+        """The registry is hand-edited. Labels and questions are rendered and
+        persisted as text; keep them free of markup characters so a careless
+        edit can never become an injection vector."""
+        from ..models.chat import _prompt_catalog
+        for key, entry in _prompt_catalog()['prompts'].items():
+            for field in ('label', 'question'):
+                self.assertFalse(
+                    set(entry[field]) & set('<>&'),
+                    '%s.%s contains a markup character' % (key, field))
+
+    def test_the_shipped_sources_have_one_raw_output_and_no_html_sinks(self):
+        """XSS guard on the actual files. Provider output is untrusted: the
+        only raw-HTML output allowed is the escape-first renderBody() call;
+        any other t-out/t-raw, innerHTML, insertAdjacentHTML, outerHTML or
+        document.write added later fails this test and needs a review."""
+        import re
+        template = self._read('static/src/chat/chat_widget.xml')
+        script = self._read('static/src/chat/chat_widget.js')
+        # Comments may NAME the sinks (the header says there is no innerHTML);
+        # only executable code counts.
+        script = re.sub(r'/\*.*?\*/', '', script, flags=re.S)
+        script = re.sub(r'(?m)^\s*//.*$', '', script)
+        self.assertEqual(template.count('t-out='), 1)
+        self.assertIn('t-out="renderBody(msg)"', template)
+        self.assertNotIn('t-raw', template)
+        for sink in ('innerHTML', 'outerHTML', 'insertAdjacentHTML',
+                     'document.write', 'eval(', 'new Function'):
+            self.assertNotIn(sink, script, 'HTML/code sink %r added' % sink)
+        # markup() is the one deliberate trust boundary, and it is fed only
+        # by the escape-first renderer.
+        self.assertEqual(script.count('markup('), 1)
+
+    def test_visible_template_text_is_translatable_not_a_js_expression(self):
+        """Odoo extracts static template text/attributes for translation but
+        not JS expressions inside t-att-*: a literal in one would stay English
+        in Arabic."""
+        import re
+        template = self._read('static/src/chat/chat_widget.xml')
+        pattern = r't-att-(?:title|placeholder|aria-label)="([^"]*)"'
+        for expression in re.findall(pattern, template):
+            self.assertNotRegex(expression, r"['\"]",
+                                'literal text in a t-att expression: %s'
+                                % expression)
+
+    # ------------------------------------------------------------ performance
+    def test_the_navigation_refresh_is_cheap(self):
+        """Route changes call get_state(include_history=False): the whole call
+        stays a handful of queries regardless of how long the history is, and
+        the full read stays bounded."""
+        accountant = self.env.ref('ncollection_core.group_role_accountant')
+        user = self.env['res.users'].create({
+            'name': 'chat_perf', 'login': 'chat_perf',
+            'group_ids': [(6, 0, [self.base_user.id, accountant.id])],
+        })
+        self.env['ncollection.ai.chat.message'].with_user(user).create(
+            [{'role': 'user', 'body': 'q%d' % i} for i in range(60)])
+        chat = self.Chat.with_user(user)
+        chat.get_state(include_history=False)  # warm the caches
+        before = self.cr.sql_log_count
+        chat.get_state(include_history=False)
+        self.assertLessEqual(self.cr.sql_log_count - before, 4)
+        before = self.cr.sql_log_count
+        state = chat.get_state()
+        self.assertLessEqual(self.cr.sql_log_count - before, 6)
+        self.assertEqual(len(state['history']), 40, 'history must stay bounded')

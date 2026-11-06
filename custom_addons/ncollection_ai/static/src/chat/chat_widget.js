@@ -125,6 +125,12 @@ export class NcAiChatWidget extends Component {
         );
     }
 
+    get toggleTitle() {
+        // A JS expression inside t-att-title is not extracted for translation;
+        // a getter built on _t() is.
+        return this.state.open ? _t("Minimize the AI assistant") : _t("Open the AI assistant");
+    }
+
     get moduleCtx() {
         // Best-effort: the router exposes the active model on record routes;
         // everywhere else the server's 'default' fallback applies.

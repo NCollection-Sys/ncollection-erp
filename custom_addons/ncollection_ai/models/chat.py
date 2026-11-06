@@ -110,8 +110,10 @@ class AiChat(models.AbstractModel):
         # Labels only. The canonical question text stays server-side until it
         # is actually sent — the client never needs it to render a chip, and
         # minimum state is the contract.
+        labels = self._chip_labels()
         suggestions = [
-            {'key': key, 'label': catalog['prompts'][key]['label']}
+            {'key': key,
+             'label': labels.get(key) or catalog['prompts'][key]['label']}
             for key in keys if key in catalog['prompts']
         ]
 
@@ -132,6 +134,33 @@ class AiChat(models.AbstractModel):
             'free_text': self.env['ncollection.ai.question']._free_text_enabled(),
             'suggestions': suggestions,
             'history': history,
+        }
+
+    def _chip_labels(self):
+        """The suggestion chips' labels, in the viewer's language.
+
+        The labels live in data/suggested_prompts.json, which Odoo's translation
+        export cannot read, so an Arabic user saw English chips. The literals
+        are therefore repeated here as ``self.env._()`` calls (extractable, and
+        resolved in the caller's language at request time). The JSON label stays
+        the fallback for a key added to the file but not yet listed here, and
+        ``test_every_chip_label_is_translatable`` turns that drift into a red
+        build. Only the CHIP LABEL is translated: the canonical question text
+        that is sent to the provider (and echoed in the transcript) is the
+        registry's English text, unchanged -- what crosses the boundary must be
+        exactly what a reviewer can read in the JSON file (#375).
+        """
+        return {
+            'workspace_summary': self.env._("Summarise our financial position"),
+            'top_debtor': self.env._("Who owes us the most?"),
+            'receivable_total': self.env._("Total outstanding receivables"),
+            'unpaid_customers': self.env._("Customers with unpaid invoices"),
+            'top_customers': self.env._("Top three customers"),
+            'last_month_invoiced': self.env._("Last month's invoicing"),
+            'invoicing_trend': self.env._("Invoicing trend"),
+            'reporting_currency': self.env._("Reporting currency"),
+            'best_month': self.env._("Best invoicing month"),
+            'top_vs_receivables': self.env._("Top customer vs receivables"),
         }
 
     # ------------------------------------------------------------------ sends

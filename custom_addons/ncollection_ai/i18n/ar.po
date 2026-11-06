@@ -111,3 +111,223 @@ msgstr "أعادت خدمة الذكاء الاصطناعي ردًّا غير ق
 #: code:addons/ncollection_ai/models/ai_question.py:0
 msgid "Your question looks like it contains a password, key or token. Nothing was sent. Please remove it and ask in plain words — this assistant works from your workspace data, so it does not need one."
 msgstr "يبدو أن سؤالك يتضمن كلمة مرور أو مفتاحًا أو رمزًا. لم يُرسل شيء. أزله واسأل بكلمات بسيطة — فهذا المساعد يعمل من بيانات مساحة عملك ولا يحتاج إلى ذلك."
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "AI Assistant"
+msgstr "مساعد الذكاء الاصطناعي"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "AI assistant"
+msgstr "مساعد الذكاء الاصطناعي"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_chat_message
+msgid "AI assistant chat history (private per user)"
+msgstr "سجل محادثات مساعد الذكاء الاصطناعي (خاص بكل مستخدم)"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_chat
+msgid "AI chat widget service (P5-T06)"
+msgstr "خدمة أداة محادثة الذكاء الاصطناعي (P5-T06)"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_gateway
+msgid "AI gateway satellite client (HTTP, no provider keys)"
+msgstr "عميل بوابة الذكاء الاصطناعي (HTTP، بدون مفاتيح المزوّد)"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_pii
+msgid "AI prompt PII sanitisation (tenant-side, pre-transit)"
+msgstr "تنقية البيانات الشخصية في طلب الذكاء الاصطناعي (على جانب المستأجر، قبل الإرسال)"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_context
+msgid "AI prompt context builder (tenant-scoped)"
+msgstr "منشئ سياق طلب الذكاء الاصطناعي (على نطاق المستأجر)"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_question
+msgid "AI question orchestration (build, sanitise, send, rehydrate)"
+msgstr "تنسيق أسئلة الذكاء الاصطناعي (بناء، تنقية، إرسال، استعادة)"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "Ask about this workspace's data — pick a suggestion below."
+msgstr "اسأل عن بيانات مساحة العمل هذه — اختر اقتراحًا أدناه."
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "Ask about your workspace data…"
+msgstr "اسأل عن بيانات مساحة عملك…"
+
+#. module: ncollection_ai
+#: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_chat_message__role__assistant
+msgid "Assistant"
+msgstr "المساعد"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Best invoicing month"
+msgstr "أفضل شهر في الفوترة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__body
+msgid "Body"
+msgstr "المحتوى"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Customers with unpaid invoices"
+msgstr "العملاء الذين لديهم فواتير غير مدفوعة"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "Free-typed questions are switched off on this workspace. The suggestions above are always available."
+msgstr "الأسئلة المكتوبة يدويًا معطّلة في مساحة العمل هذه. الاقتراحات أعلاه متاحة دائمًا."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Invoicing trend"
+msgstr "اتجاه الفوترة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Last month's invoicing"
+msgstr "فوترة الشهر الماضي"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "Minimize"
+msgstr "تصغير"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_domain_mapper
+msgid "Natural-language to Odoo domain mapper (P5-T05)"
+msgstr "محوّل اللغة الطبيعية إلى نطاق Odoo (P5-T05)"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "New answer"
+msgstr "إجابة جديدة"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/ai_question.py:0
+msgid "Please type a question to ask."
+msgstr "يرجى كتابة سؤال لطرحه."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Reporting currency"
+msgstr "عملة التقارير"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__role
+msgid "Role"
+msgstr "الدور"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+msgid "Send"
+msgstr "إرسال"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Summarise our financial position"
+msgstr "لخّص مركزنا المالي"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/tests/test_chat.py:0
+msgid "The AI assistant is temporarily unavailable."
+msgstr "مساعد الذكاء الاصطناعي غير متاح مؤقتًا."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Top customer vs receivables"
+msgstr "أكبر عميل مقابل الذمم المدينة"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Top three customers"
+msgstr "أكبر ثلاثة عملاء"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Total outstanding receivables"
+msgstr "إجمالي الذمم المدينة المستحقة"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Unknown suggested prompt. Reload the page and pick one of the offered suggestions."
+msgstr "اقتراح غير معروف. أعد تحميل الصفحة واختر أحد الاقتراحات المعروضة."
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__user_id
+#: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_chat_message__role__user
+msgid "User"
+msgstr "المستخدم"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid "Who owes us the most?"
+msgstr "من يدين لنا بأكبر مبلغ؟"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.js:0
+msgid "Minimize the AI assistant"
+msgstr "تصغير مساعد الذكاء الاصطناعي"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.js:0
+msgid "Open the AI assistant"
+msgstr "افتح مساعد الذكاء الاصطناعي"
+
+#. module: ncollection_ai
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.js:0
+msgid "The assistant could not answer."
+msgstr "تعذّر على المساعد الإجابة."
