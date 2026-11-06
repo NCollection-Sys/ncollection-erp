@@ -19,7 +19,8 @@ clean() {
 [ "${1:-}" = up ] || { echo "usage: $0 up|clean"; exit 2; }
 clean
 A="$(winpath "$ROOT/custom_addons")"; G="$(winpath "$ROOT/satellites/ai_gateway")"; O="$(winpath "${OCA_DIR:-$ROOT/oca}")"
-export NC_AI_GATEWAY_KEY="$(head -c 48 /dev/urandom | base64 | tr -dc A-Za-z0-9 | head -c 40)"
+NC_AI_GATEWAY_KEY="$(head -c 48 /dev/urandom | base64 | tr -dc A-Za-z0-9 | head -c 40)"
+export NC_AI_GATEWAY_KEY
 REPOS=(account-financial-reporting account-financial-tools mis-builder reporting-engine queue server-auth server-tools server-ux helpdesk)
 AP="/mnt/extra-addons$(printf ',/mnt/oca/%s' "${REPOS[@]}")"
 C=(--db_host="$PG" --db_user=odoo --db_password=aitest-only --data-dir=/tmp/od --max-cron-threads=0 "--addons-path=$AP")
@@ -40,5 +41,5 @@ run odoo shell -d "$DB" "${C[@]}" --no-http --log-level=error < "$HERE/ai_fixtur
 echo "== serve"
 docker run -d --name "$OD" --memory 2000m --network "$NETN" -p 127.0.0.1:8169:8069 -e NC_AI_GATEWAY_KEY -e HOST="$PG" -e USER=odoo -e PASSWORD=aitest-only "${V[@]}" odoo:19 \
   odoo -d "$DB" "${C[@]}" --db-filter="^$DB\$" --log-level=warn >/dev/null
-for i in $(seq 1 40); do curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8169/web/login | grep -q 200 && break; sleep 3; done
+for _ in $(seq 1 40); do curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8169/web/login | grep -q 200 && break; sleep 3; done
 echo served; unset NC_AI_GATEWAY_KEY

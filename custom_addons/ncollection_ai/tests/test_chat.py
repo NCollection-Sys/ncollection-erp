@@ -414,7 +414,7 @@ class TestChatIntegration(TransactionCase):
         chat = self.Chat.with_user(user).with_context(lang=user.lang)
         chips = chat.get_state()['suggestions']
         self.assertTrue(chips)
-        english =self.Chat.with_context(lang='en_US')._chip_labels()
+        english = self.Chat.with_context(lang='en_US')._chip_labels()
         for chip in chips:
             self.assertNotEqual(chip['label'], english[chip['key']],
                                 'chip %r stayed English' % chip['key'])
