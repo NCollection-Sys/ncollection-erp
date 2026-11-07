@@ -21,6 +21,4 @@
         'security/audit_rules.xml',
         'views/invoice_audit_views.xml',
     ],
-    'installable': True,
-    'application': False,
 }

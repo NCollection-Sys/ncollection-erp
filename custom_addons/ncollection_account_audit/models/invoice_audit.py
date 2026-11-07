@@ -36,9 +36,9 @@ def client_ip():
     try:
         if request and request.httprequest:
             return request.httprequest.remote_addr or ''
-    except RuntimeError:  # no request bound to this thread
-        pass
-    return ''
+    except RuntimeError:  # no request bound to this thread: the answer is the empty string below
+        return ""
+    return ""
 
 
 class InvoiceAmountAudit(models.Model):
@@ -53,12 +53,12 @@ class InvoiceAmountAudit(models.Model):
     res_id = fields.Integer(string='Invoice ID', readonly=True, index=True)
     move_name = fields.Char(string='Invoice number', readonly=True)
     move_type = fields.Char(readonly=True)
-    state = fields.Char(string='State', readonly=True)
+    state = fields.Char(readonly=True)
     partner_name = fields.Char(string='Partner', readonly=True)
     company_id = fields.Many2one('res.company', required=True, readonly=True, ondelete='restrict', index=True)
     currency_id = fields.Many2one('res.currency', readonly=True)
     # Actor: the user row may be archived or removed later, the login stays.
-    user_id = fields.Many2one('res.users', string='User', readonly=True, ondelete='set null')
+    user_id = fields.Many2one('res.users', readonly=True, ondelete='set null')
     user_login = fields.Char(string='User login', readonly=True)
     ip_address = fields.Char(string='IP address', readonly=True)
     logged_at = fields.Datetime(string='Timestamp', required=True, readonly=True, index=True)
@@ -145,8 +145,8 @@ class InvoiceAmountAudit(models.Model):
         return self.sudo().create(vals)
 
     # ------------------------------------------------------------------ immutability
-    def write(self, vals):
+    def write(self, vals):  # pylint: disable=method-required-super (immutability is the point)
         raise UserError(self.env._("Audit entries cannot be modified."))
 
-    def unlink(self):
+    def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink (evidence is never deleted)
         raise UserError(self.env._("Audit entries cannot be deleted."))
