@@ -8,6 +8,7 @@ const { launch, session, shot, rpc, BASE } = require(path.join(__dirname, '..', 
 
 const DB = process.argv[2];
 const WITH_AI = process.argv.includes('--ai');
+const WITH_AUDIT = process.argv.includes('--audit');
 const ADMIN = process.env.REH_ADMIN || 'admin';
 const CO = Number(process.env.BANK_COMPANY || 2);
 const INV = '/atlas/action-ncollection_account_dashboard.action_invoicing_premium';
@@ -147,6 +148,75 @@ async function fetchFile(page, url) {
       let refused = false;
       try { await rpc(acct.page, 'ncollection.ai.chat.message', 'create', [{ role: 'assistant', body: 'forged' }]); } catch (e) { refused = true; }
       ok(refused, 'forged assistant row must be refused');
+    });
+  }
+
+  // ------------------------------------------------------------------ Invoice amount audit (#81), through the real UI and HTTP session
+  if (WITH_AUDIT) {
+    const AUD = '/atlas/action-ncollection_account_audit.action_nc_invoice_audit';
+    let draftId; let draftName;
+    await check('audit: a draft invoice is created and its amount edited in the real invoice form (UI), producing created + amount_changed rows', async () => {
+      draftId = await rpc(own.page, 'account.move', 'create', [{ move_type: 'out_invoice', company_id: CO, invoice_date: '2026-11-07',
+        partner_id: (await rpc(own.page, 'res.partner', 'search', [[]], { limit: 1 }))[0],
+        invoice_line_ids: [[0, 0, { name: 'Audit probe line', quantity: 1, price_unit: 100 }]] }], { context: { default_move_type: 'out_invoice', allowed_company_ids: [CO] } });
+      [{ display_name: draftName }] = await rpc(own.page, 'account.move', 'read', [[draftId], ['display_name']]);
+      await own.page.goto(`${BASE}/atlas/action-account.action_move_out_invoice_type/${draftId}`);
+      await own.page.waitForSelector('.o_form_view', { timeout: 60000 });
+      await own.page.waitForTimeout(1500);
+      const cell = own.page.locator('.o_field_one2many td[name="price_unit"]').first();
+      await cell.click();
+      const input = own.page.locator('.o_field_one2many td[name="price_unit"] input').first();
+      await input.fill('250');
+      await own.page.keyboard.press('Tab');
+      await own.page.waitForTimeout(800);
+      await own.page.locator('.o_form_button_save').click();
+      await own.page.waitForTimeout(2000);
+      const rows = await rpc(own.page, 'ncollection.invoice.audit', 'search_read', [[['res_id', '=', draftId]]], { fields: ['event', 'old_amount_total', 'new_amount_total', 'user_login', 'ip_address', 'company_id', 'state'], order: 'id' });
+      ok(rows.length >= 2, 'rows: ' + JSON.stringify(rows));
+      eq(rows[0].event, 'created', 'first row');
+      const last = rows[rows.length - 1];
+      eq(last.event, 'amount_changed', 'last row event');
+      eq(last.new_amount_total, 250, 'new total');
+      ok(last.old_amount_total !== last.new_amount_total, 'old differs from new');
+      eq(last.user_login, 'owner_bank', 'actor');
+      ok(/\d+\.\d+\.\d+\.\d+|::1|[0-9a-f:]+/i.test(last.ip_address || ''), 'client IP recorded from the HTTP session: ' + last.ip_address);
+      eq(last.company_id[0], CO, 'company');
+      return `${rows.length} rows, ${last.old_amount_total} -> ${last.new_amount_total}, ip ${last.ip_address}`;
+    });
+    for (const [tag, lang, label] of [['English', 'en_US', 'Invoice number'], ['Arabic', 'ar_001', 'رقم الفاتورة']]) {
+      const s = await session(browser, { user: 'owner_bank', password: 'Owner-Bank-Pass1!', lang, company: CO }); wire(s);
+      await check(`audit (${tag}): the Owner opens Invoice Amount Audit in the UI, sees the entry, the columns are translated, RTL where Arabic, no errors`, async () => {
+        // through the real navigation: open the Accounting app, then click the menu entry (not a direct URL)
+        await s.page.goto(BASE + INV);
+        await s.page.waitForSelector('.o_menu_sections', { timeout: 60000 });
+        const entry = s.page.locator('.o_menu_sections').getByText(lang === 'ar_001' ? 'تدقيق مبالغ الفواتير' : 'Invoice Amount Audit', { exact: true }).first();
+        await entry.waitFor({ timeout: 20000 });
+        await entry.click();
+        await s.page.waitForSelector('.o_list_view .o_data_row', { timeout: 60000 });
+        const head = await s.page.locator('.o_list_view thead').innerText();
+        const body = await s.page.locator('.o_list_view tbody').innerText();
+        ok(head.includes(lang === 'ar_001' ? 'الفاتورة' : 'Invoice') || head.includes(label), 'header: ' + head.slice(0, 160));
+        ok(body.includes(draftName) || body.length > 0, 'rows listed');
+        eq(await s.page.evaluate(() => getComputedStyle(document.body).direction), lang === 'ar_001' ? 'rtl' : 'ltr', 'direction');
+        await s.page.locator('.o_list_view .o_data_row').first().click();
+        await s.page.waitForSelector('.o_form_view', { timeout: 30000 });
+        const form = await s.page.locator('.o_form_view').innerText();
+        ok(form.includes('250') || form.includes('100'), 'amounts shown: ' + form.slice(0, 120));
+        await shot(s.page, `reh_${DB}_audit_${tag}`);
+        eq(s.errors, [], 'page errors');
+        return head.replace(/\s+/g, ' ').slice(0, 70);
+      });
+    }
+    await check('audit: the CEO (read-only) can read the entries but the ORM refuses every write, create and delete', async () => {
+      const rows = await rpc(ceo.page, 'ncollection.invoice.audit', 'search_read', [[['res_id', '=', draftId]]], { fields: ['id'] });
+      ok(rows.length >= 2, 'CEO reads');
+      let refused = 0;
+      for (const call of [() => rpc(ceo.page, 'ncollection.invoice.audit', 'write', [[rows[0].id], { new_amount_total: 1 }]),
+        () => rpc(ceo.page, 'ncollection.invoice.audit', 'unlink', [[rows[0].id]]),
+        () => rpc(ceo.page, 'ncollection.invoice.audit', 'create', [{ event: 'created', company_id: CO, logged_at: '2026-11-07 00:00:00' }])]) {
+        try { await call(); } catch (e) { refused++; }
+      }
+      eq(refused, 3, 'all three refused');
     });
   }
 

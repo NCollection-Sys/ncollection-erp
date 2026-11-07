@@ -1,0 +1,188 @@
+# Arabic (ar_001) translation of ncollection_account_audit.
+# NCollection ERP — #81 invoice amount audit. Engineering draft; pending native review.
+msgid ""
+msgstr ""
+"Project-Id-Version: ncollection_account_audit\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__event
+msgid "Event"
+msgstr "الحدث"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__move_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_search
+msgid "Invoice"
+msgstr "الفاتورة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__res_id
+msgid "Invoice ID"
+msgstr "معرّف الفاتورة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__move_name
+msgid "Invoice number"
+msgstr "رقم الفاتورة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__move_type
+msgid "Move Type"
+msgstr "نوع القيد"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__state
+msgid "State"
+msgstr "الحالة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__partner_name
+msgid "Partner"
+msgstr "الشريك"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__currency_id
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__user_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_search
+msgid "User"
+msgstr "المستخدم"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__user_login
+msgid "User login"
+msgstr "اسم دخول المستخدم"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__ip_address
+msgid "IP address"
+msgstr "عنوان IP"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__logged_at
+msgid "Timestamp"
+msgstr "الوقت"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__trigger
+msgid "Trigger"
+msgstr "المُحفِّز"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__old_amount_untaxed
+msgid "Old Amount Untaxed"
+msgstr "المبلغ قبل الضريبة (قبل)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__old_amount_tax
+msgid "Old Amount Tax"
+msgstr "الضريبة (قبل)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__old_amount_total
+msgid "Old Amount Total"
+msgstr "الإجمالي (قبل)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__new_amount_untaxed
+msgid "New Amount Untaxed"
+msgstr "المبلغ قبل الضريبة (بعد)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__new_amount_tax
+msgid "New Amount Tax"
+msgstr "الضريبة (بعد)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__new_amount_total
+msgid "New Amount Total"
+msgstr "الإجمالي (بعد)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__old_lines_total
+msgid "Old lines total"
+msgstr "إجمالي البنود (قبل)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__new_lines_total
+msgid "New lines total"
+msgstr "إجمالي البنود (بعد)"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__digest
+msgid "Digest"
+msgstr "البصمة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields.selection,name:ncollection_account_audit.selection__ncollection_invoice_audit__event__created
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_search
+msgid "Created"
+msgstr "أُنشئت"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields.selection,name:ncollection_account_audit.selection__ncollection_invoice_audit__event__amount_changed
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_search
+msgid "Amount changed"
+msgstr "تغيّر المبلغ"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields.selection,name:ncollection_account_audit.selection__ncollection_invoice_audit__event__deleted
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_search
+msgid "Deleted"
+msgstr "حُذفت"
+
+#. module: ncollection_account_audit
+#: model:ir.model,name:ncollection_account_audit.model_ncollection_invoice_audit
+msgid "Invoice amount audit entry"
+msgstr "سجل تدقيق مبلغ الفاتورة"
+
+#. module: ncollection_account_audit
+#: model:ir.actions.act_window,name:ncollection_account_audit.action_nc_invoice_audit
+#: model:ir.ui.menu,name:ncollection_account_audit.menu_nc_invoice_audit
+msgid "Invoice Amount Audit"
+msgstr "تدقيق مبالغ الفواتير"
+
+#. module: ncollection_account_audit
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_list
+msgid "Old"
+msgstr "قبل"
+
+#. module: ncollection_account_audit
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_list
+msgid "New"
+msgstr "بعد"
+
+#. module: ncollection_account_audit
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_form
+msgid "Before"
+msgstr "قبل"
+
+#. module: ncollection_account_audit
+#: model_terms:ir.ui.view,arch_db:ncollection_account_audit.view_nc_invoice_audit_form
+msgid "After"
+msgstr "بعد"
+
+#. module: ncollection_account_audit
+#: code:addons/ncollection_account_audit/models/invoice_audit.py:0
+msgid "Audit entries cannot be modified."
+msgstr "لا يمكن تعديل سجلات التدقيق."
+
+#. module: ncollection_account_audit
+#: code:addons/ncollection_account_audit/models/invoice_audit.py:0
+msgid "Audit entries cannot be deleted."
+msgstr "لا يمكن حذف سجلات التدقيق."
+

@@ -2,8 +2,8 @@
 
 **Criterion (DELIVERABLE_1_SYSTEM_DESIGN.md, P8-T05):** "changing an invoice amount produces an audit entry with old/new values, user, IP, and timestamp."
 
-**Status:** implemented and tested in `ncollection_account_audit` 19.0.1.0.0. **Not installed on any database, in no plan, never `auto_install`.** Installing it is a
-separate, explicit decision (section 6). The earlier statement that the task was "done" was wrong for this criterion; `ncollection_audit` (OCA `auditlog` infrastructure) is unchanged.
+**Status:** implemented and tested in `ncollection_account_audit` 19.0.1.0.0. **In the release matrix as pass 2 for `ncollection`, `awtar` and `ncollection_demo`; in no plan and never `auto_install`; not installed on the shared databases until the controlled upgrade runs.**
+The earlier statement that the task was "done" was wrong for this criterion; `ncollection_audit` (OCA `auditlog` infrastructure) is unchanged.
 
 ## 1. Why not OCA `auditlog` (OCA-first check, measured)
 
@@ -56,11 +56,24 @@ nothing, journal entries are not audited, posting + payment + credit note behave
 ## 5. Install, rollback, upgrade impact
 
 * Depends on `account` and `ncollection_core`; no OCA dependency, no change to `repos.yml`, no new group.
-* Install on a database: `-i ncollection_account_audit` (it creates one table and one menu: Accounting > Reporting > Invoice Amount Audit). Rollback: uninstall the module (drops the table; the rows go with it),
+* Install on a database: `-i ncollection_account_audit` (it creates one table and one menu: Accounting > Invoice Amount Audit). Rollback: uninstall the module (drops the table; the rows go with it),
   or restore the database backup.
 * Because it wraps every invoice and line write, install it on a database only after the owner approves; it adds two small reads of the invoice's amounts per outermost write.
 
 ## 6. Release decision
+It is part of the three-database matrix (`RELEASE_LOCAL_UPGRADE_PLAN.md` section 2, pass 2), installed by the controlled procedure after pass 1 of each database. Rehearsed on disposable copies of all three: installed, idempotent, no schema drift, the UI (English and Arabic) lists and shows the entries, unauthorized users are refused.
 
-It is not in the three-database matrix. The shared upgrade is unaffected whether or not the owner later installs it. Until it is installed on a database, **that database has no
-invoice-amount audit trail**; the requirement is met by the code, not by any deployed database.
+## 7. Posted-invoice line edits: what stock Odoo does (measured, release closure)
+
+Probe on a database with ONLY `account` installed (no NCollection module), a posted 100.00 invoice, as superuser:
+
+| Step | line `price_unit` / `price_subtotal` | booked `amount_total` / untaxed | journal items (debit / credit) | residual |
+|---|---|---|---|---|
+| posted | 100 / 100 | 100 / 100 | product 0 / 100, receivable 100 / 0 | 100 |
+| `price_unit = 999` | 999 / 999 | 100 / 100 | unchanged | 100 |
+| `quantity = 5` | 999 / 4995 | 100 / 100 | unchanged | 100 |
+
+So this is **standard Odoo 19 behaviour**, not a custom-module issue and not a test artifact. Accounting integrity of the books is intact (journal items, taxes, residual, reconciliation are untouched);
+what diverges is the line's own price figures against the booked entry. The audit is accurate here: it compares the booked amounts and the lines total separately, so the entry shows booked equal,
+lines different. Editing journal-item fields (`debit`, `credit`, `balance`) of a posted entry is a different matter: core refuses it by the balance and lock checks (tested: refused, no row).
+No change to accounting core is made. **Policy decision for the owner (not release-blocking):** whether to add a constraint refusing price / quantity / discount / tax edits on posted lines.

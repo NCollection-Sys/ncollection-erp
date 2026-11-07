@@ -85,7 +85,7 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_nc_invoice_audit" name="Invoice Amount Audit" parent="account.menu_finance_reports"
+    <menuitem id="menu_nc_invoice_audit" name="Invoice Amount Audit" parent="account.menu_finance"
               action="action_nc_invoice_audit" sequence="95"
               groups="account.group_account_manager,ncollection_core.group_role_owner,ncollection_core.group_role_ceo"/>
 </odoo>

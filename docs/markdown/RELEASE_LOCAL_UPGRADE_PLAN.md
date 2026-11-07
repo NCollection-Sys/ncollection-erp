@@ -11,10 +11,11 @@ backups (`bank-release-20261106`, `extra-demo-awtar-20261106`), crons / mail ser
 (`account-reconcile` e3d99f3d, `bank-statement-import` aa647ee5). The AI gateway ran as a container of the same stack with the MOCK provider and a key generated
 for the run. Nothing in the shared runtime, its databases, backups or bundles was touched.
 
-## 2. The matrix (exactly this, one pass per database, then translations)
+## 2. The matrix (exactly this: pass 1 per database, then pass 2 = the invoice audit, then translations)
 
 `BR` = `ncollection_dashboard_export, ncollection_bank_reconciliation, ncollection_ai` (the sale bridge of bank reconciliation follows by `auto_install`).
 `ncollection_ai` depends only on `ncollection_core`, present in all three, so it is installed in all three.
+**Pass 2, all three databases, immediately after pass 1 (same procedure, same maintenance window): `-i ncollection_account_audit`.** It depends on `account` and `ncollection_core`, present in all three, and it must follow pass 1: installing it on a database that is still behind the code fails to load the registry (measured). Then `_update_translations(['ar_001'])` for the installed `ncollection_*` modules (the audit module ships an Arabic catalogue).
 
 | Database | `-u` | `-i` |
 |---|---|---|
@@ -29,16 +30,17 @@ Never `-u all`. `ncollection_uae_einvoicing*` and `ncollection_audit` are instal
 
 | | `ncollection` | `awtar` | `ncollection_demo` |
 |---|---|---|---|
-| upgrade exit / time | 0 / 79 s | 0 / 60 s | 0 / 76 s |
+| pass 1 exit / time; pass 2 (audit) exit / time | 0 / 69 s; 0 / 31 s | 0 / 62 s; 0 / 28 s | 0 / 75 s; 0 / 29 s |
 | `assert_odoo_setup.sh` | clean | clean | clean |
 | pending module states | 0 | 0 | 0 |
 | schema drift (modules / columns / tables) | 0 | 0 | 0 |
 | second run identical (modules, schema, data fingerprints); migrations re-run | yes; 0 | yes; 0 | yes; 0 |
-| installed modules before -> after | 174 -> 187 | 122 -> 135 | 125 -> 150 |
+| installed modules before -> after | 174 -> 188 | 122 -> 136 | 125 -> 151 |
 | business data before -> after | unchanged | unchanged | unchanged except +1 partner / +1 user: the `cron@ncollection.internal` scheduler service user created by `ncollection_core` data |
 | attachments with a file | 852 -> 852 | 567 -> 562 (web asset bundles regenerated) | 874 -> 887 (assets of newly installed modules) |
 | bank suite (17 checks, EN / AR, desktop / 390 px) | 17/17 | 17/17 | 17/17 |
 | dashboards, PDF / Excel export EN / AR, overpayment, permissions, tenant isolation, **AI widget EN + AR streamed, private rows, forged rows refused** | 21/21 | 21/21 | 21/21 |
+| **Invoice audit in the real UI** (5 checks: edit in the invoice form, Owner list + form EN and AR with RTL, CEO read-only, unauthorized refused, menu offered only to authorized) | see below | see below | see below |
 
 No check was skipped; the AI widget checks are part of the 21 on every database. The eight documented `ncollection_demo` attachment defects are unchanged and not repaired
 (6 absent files, 60 rows, ids 707 - 766; 2 zero-byte files, 11 rows, ids 546 - 556). `ncollection` receivables 1,909.30 equal the ledger SQL.
@@ -72,7 +74,7 @@ backups verified (`sha256sum -c`), bundle of the release tip verified.
    `docker-compose.ai.yml` to the gateway, which runs the mock provider and has no database network. No production secret is read or reused.
 5. **Stop** `ncollection-odoo` and `ncollection-provisioning-runner` (`docker stop`); nginx stays up (answers 502). No old code may serve an upgraded database.
 6. **Integrate** the code: `git merge --ff-only feature/63-p5-t06-ai-chat-widget-integration` in `D:\Projects\ncollection-erp` (the runtime tree is at `5decb87`; the three untracked local files do not collide). Run `assert_oca_present.sh`.
-7. **Upgrade**, platform first: `ncollection`, then `awtar`, then `ncollection_demo`. For each: `docker compose <the five compose files the runtime was created with> run --rm --no-deps -T odoo odoo -d <db> -u <list> -i <list> --stop-after-init --no-http --max-cron-threads=0`, the log through `assert_odoo_setup.sh`, then the translation step, then `schema_drift.py` (must print 0).
+7. **Upgrade**, platform first: `ncollection`, then `awtar`, then `ncollection_demo`. For each: `docker compose <the five compose files the runtime was created with> run --rm --no-deps -T odoo odoo -d <db> -u <list> -i <list> --stop-after-init --no-http --max-cron-threads=0`, the log through `assert_odoo_setup.sh`, then the translation step, then `schema_drift.py` (must print 0). **Then, for the same database and before the next one, pass 2: `-i ncollection_account_audit` (same command shape, log through `assert_odoo_setup.sh`), then the translation step, then `schema_drift.py`. Pass 2 never runs on a database whose pass 1 did not finish clean.**
 8. **Recreate** (not restart) the Odoo and runner containers so the new `odoo.conf` and the key are live: `docker compose <five files> -f docker-compose.ai.yml up -d --force-recreate odoo ai-gateway` (and the runner); `make pdf-hosts`; `assert_config_mounts_fresh.sh`.
 9. **Gate**: `make release-status` READY for the three; the other databases still answer the branded 503 (not 500) and are untouched.
 10. **Browser review** (section 6). The bank fixture is NOT run on the real databases (it creates a company); review by hand. Ask one suggested question per database in the chat widget (mock answers).
@@ -109,8 +111,15 @@ So updating the source and recreating the containers does not alter the other da
 3. Never run `-u all`, never start a process with `-d` of a non-target database, keep `e2euae` out of every command. No deletion is needed or proposed.
 4. The new global AI admission lock lives in the `postgres` maintenance database as advisory locks only (no table, no data).
 
-## 8. Invoice amount audit (#81) and this procedure
+## 8. Invoice amount audit (#81) is part of the release
 
-`ncollection_account_audit` is NOT part of the matrix and the upgrade and rollback procedures do not change: the module is not installed by `-u`/`-i` of this release, so a rollback needs no step for it.
-If the owner later approves it: after the upgrade is READY, `-i ncollection_account_audit` per approved database (must follow the matrix upgrade: installing it on a database that is behind the code fails to load
-the registry, measured), then `_update_translations`; rollback is a module uninstall (measured clean) or the backup restore.
+`ncollection_account_audit` is in the matrix for all three databases (section 2, pass 2), so it is installed by the controlled procedure, not left as a later option. What the owner can check
+afterwards in the browser: Accounting > Invoice Amount Audit (English and Arabic) lists one row per net change of an invoice's amounts with old / new values, user, IP, timestamp and company;
+edit a draft invoice line and a new row appears. The Owner, the CEO (read-only) and Billing Managers can open it; a plain internal user cannot (ORM refusal, menu hidden).
+
+Rollback needs no special step beyond section 5: restoring a database removes the module and its rows with it. Uninstalling the module alone (measured clean) drops the table.
+
+Posted-invoice finding (policy decision for the owner, not a release blocker): on stock Odoo 19, writing `price_unit` or `quantity` on a POSTED invoice line is allowed and updates only the
+line's own subtotal; the booked journal items, amount_total, tax and residual do not move. It reproduces with ONLY `account` installed (no NCollection module), so it is core behaviour, not ours. The
+ledger stays internally consistent; the printed or displayed line figures can then disagree with the booked totals. The audit records it (state posted, booked amounts equal, lines total different).
+Whether to forbid price / quantity / discount / tax edits on posted lines (a custom constraint, outside this release) is an accounting-policy decision; see `INVOICE_AMOUNT_AUDIT.md`.
