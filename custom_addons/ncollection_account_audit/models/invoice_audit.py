@@ -148,5 +148,5 @@ class InvoiceAmountAudit(models.Model):
     def write(self, vals):  # pylint: disable=method-required-super
         raise UserError(self.env._("Audit entries cannot be modified."))
 
-    def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink
-        raise UserError(self.env._("Audit entries cannot be deleted."))
+    def unlink(self):  # pylint: disable=method-required-super
+        raise UserError(self.env._("Audit entries cannot be deleted."))  # pylint: disable=no-raise-unlink
