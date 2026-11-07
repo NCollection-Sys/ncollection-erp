@@ -40,11 +40,14 @@ Never `-u all`. `ncollection_uae_einvoicing*` and `ncollection_audit` are instal
 | attachments with a file | 852 -> 852 | 567 -> 562 (web asset bundles regenerated) | 874 -> 887 (assets of newly installed modules) |
 | bank suite (17 checks, EN / AR, desktop / 390 px) | 17/17 | 17/17 | 17/17 |
 | dashboards, PDF / Excel export EN / AR, overpayment, permissions, tenant isolation, **AI widget EN + AR streamed, private rows, forged rows refused** | 21/21 | 21/21 | 21/21 |
-| **Invoice audit in the real UI** (5 checks: edit in the invoice form, Owner list + form EN and AR with RTL, CEO read-only, unauthorized refused, menu offered only to authorized) | see below | see below | see below |
+| **Invoice audit in the real UI** (invoice line edited in the form -> created + amount_changed rows, 100 -> 250, client IP recorded; entry opened from the Accounting menu in English and Arabic with RTL; CEO read-only, writes refused) | 4/5 in the full run, see note; 2/2 after the test fix | 5/5 | 5/5 |
+| **Audit authorization (ORM, per role)**: plain internal user, Owner, CEO, accountant role | plain refused; Owner and CEO read and are offered the menu; accountant role refused | same | same |
+| browser suite total (bank excluded) | 24/25 in the full run (the 1 failure: see note) | 25/25 | 25/25 |
 
 No check was skipped; the AI widget checks are part of the 21 on every database. The eight documented `ncollection_demo` attachment defects are unchanged and not repaired
 (6 absent files, 60 rows, ids 707 - 766; 2 zero-byte files, 11 rows, ids 546 - 556). `ncollection` receivables 1,909.30 equal the ledger SQL.
 
+Note on the one failed check on `ncollection`: the English run could not click the new menu entry because the platform database has so many Accounting menu sections that Odoo moves the last one (this entry) into the navbar's overflow ("more") dropdown at 1280 px; the entry exists and works (the Arabic run, with shorter labels, found it directly). The check was changed to open the overflow dropdown when needed and then passed on that same upgraded copy in English and Arabic (2/2, no page errors). This is a layout fact for the browser review: on `ncollection` look under the "more" (three dots) menu of the Accounting app.
 Multi-tenant streaming probe (`e2e/rehearsal/multi_tenant_probe.js`, ONE server holding all three databases, `--workers=3`, answers of about 7.7 s): server-wide cap 1.
 Of three simultaneous streams (one per tenant) exactly one was admitted; the other two were refused with the friendly message after 379 and 790 ms; an ordinary request
 on every tenant took 19 ms while the stream ran (idle 18 - 25 ms); a new stream was admitted afterwards (no leaked slot). 5/5.

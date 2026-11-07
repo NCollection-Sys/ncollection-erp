@@ -189,7 +189,14 @@ async function fetchFile(page, url) {
         // through the real navigation: open the Accounting app, then click the menu entry (not a direct URL)
         await s.page.goto(BASE + INV);
         await s.page.waitForSelector('.o_menu_sections', { timeout: 60000 });
-        const entry = s.page.locator('.o_menu_sections').getByText(lang === 'ar_001' ? 'تدقيق مبالغ الفواتير' : 'Invoice Amount Audit', { exact: true }).first();
+        const label = lang === 'ar_001' ? 'تدقيق مبالغ الفواتير' : 'Invoice Amount Audit';
+        let entry = s.page.locator('.o_menu_sections').getByText(label, { exact: true }).first();
+        await s.page.waitForTimeout(1200);
+        if (!(await entry.isVisible())) {
+          // many menu sections: Odoo moves the last ones into the navbar's overflow ("more") dropdown
+          await s.page.locator('.o_menu_sections_more').click();
+          entry = s.page.locator('.o-dropdown--menu').getByText(label, { exact: true }).first();
+        }
         await entry.waitFor({ timeout: 20000 });
         await entry.click();
         await s.page.waitForSelector('.o_list_view .o_data_row', { timeout: 60000 });
