@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""#81 / P8-T05 acceptance: "changing an invoice amount produces an audit entry with old/new values, user, IP, timestamp".
-
+"""#81 / P8-T05 acceptance: "changing an invoice amount produces an audit entry with old/new values,
+user, IP, timestamp".
 Permitted changes, rejected changes, audit integrity and accounting regression."""
 from unittest.mock import patch
 
@@ -106,7 +106,8 @@ class TestInvoiceAmountAudit(AccountTestInvoicingCommon):
         invoice = self._invoice((100.0,))
         base = invoice.invoice_line_ids[0]
         new_line = self.env['account.move.line'].create({
-            'move_id': invoice.id, 'name': 'added', 'price_unit': 40.0, 'quantity': 1, 'account_id': base.account_id.id})
+            'move_id': invoice.id, 'name': 'added', 'price_unit': 40.0, 'quantity': 1,
+            'account_id': base.account_id.id})
         self.assertEqual(len(self._entries(invoice, 'amount_changed')), 1)
         new_line.unlink()
         rows = self._entries(invoice, 'amount_changed')
@@ -251,7 +252,8 @@ class TestInvoiceAmountAudit(AccountTestInvoicingCommon):
         self.assertEqual(invoice.amount_total, total, 'payment does not change the amount')
         self.assertEqual(len(self._entries(invoice)), entries, 'a payment is not an amount change')
         reversal = self.env['account.move.reversal'].with_context(
-            active_model='account.move', active_ids=invoice.ids).create({'journal_id': invoice.journal_id.id}).refund_moves()
+            active_model='account.move', active_ids=invoice.ids).create(
+            {'journal_id': invoice.journal_id.id}).refund_moves()
         credit = self.env['account.move'].browse(reversal['res_id'])
         self.assertEqual(credit.amount_total, total)
         self.assertEqual(self._entries(credit).mapped('event'), ['created'])

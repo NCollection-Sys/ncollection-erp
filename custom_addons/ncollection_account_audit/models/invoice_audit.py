@@ -48,7 +48,7 @@ class InvoiceAmountAudit(models.Model):
     _rec_name = 'move_name'
 
     event = fields.Selection(EVENTS, required=True, readonly=True, index=True)
-    # Identity of the invoice. `move_id` is a real link while the invoice exists; `res_id` and `move_name` never change.
+    # Identity of the invoice. `move_id` links while the invoice exists; `res_id` and `move_name` never change.
     move_id = fields.Many2one('account.move', string='Invoice', readonly=True, ondelete='set null', index=True)
     res_id = fields.Integer(string='Invoice ID', readonly=True, index=True)
     move_name = fields.Char(string='Invoice number', readonly=True)

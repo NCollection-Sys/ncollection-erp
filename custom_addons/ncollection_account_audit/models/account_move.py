@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """Capture of invoice amount changes (see ``invoice_audit.py`` and docs/markdown/INVOICE_AMOUNT_AUDIT.md).
 
-HOW. ``amount_untaxed`` / ``amount_tax`` / ``amount_total`` are stored COMPUTED fields: editing a line moves them through
+HOW. ``amount_untaxed`` / ``amount_tax`` / ``amount_total`` are stored COMPUTED fields: editing a line moves them via
 recompute-flush and never through ``account.move.write``, which is why a field-level rule on the move alone logs
 nothing. So the three amounts are compared before and after the OUTERMOST ORM operation on a move or a move line:
 
-* an operation nested inside another audited operation (a move write that writes its lines, a create with line commands)
+* an operation nested inside another audited operation (a move write that writes lines, a create with line commands)
   is covered by the outer one, so one user action is ONE entry, never several overlapping ones;
 * an operation that leaves the amounts unchanged (a label, a note, a no-op write, posting) records nothing;
 * an operation that fails raises before anything is recorded, and the transaction or savepoint is rolled back with it,
@@ -63,8 +63,8 @@ class AccountMove(models.Model):
                 'amount_untaxed': move.amount_untaxed,
                 'amount_tax': move.amount_tax,
                 'amount_total': move.amount_total,
-                # What the invoice LINES say. Core lets a line's price be edited on a posted invoice without re-pricing the
-                # booked entry, so the booked total can stay put while the lines no longer agree with it; both are kept.
+                # What the invoice LINES say. Core lets a line price be edited on a posted invoice without
+                # re-pricing the booked entry, so the booked total can stay put while the lines no longer agree.
                 'lines_total': sum(move.invoice_line_ids.filtered(
                     lambda line: line.display_type == 'product').mapped('price_total')),
             }
