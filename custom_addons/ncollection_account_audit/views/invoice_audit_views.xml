@@ -87,5 +87,5 @@
 
     <menuitem id="menu_nc_invoice_audit" name="Invoice Amount Audit" parent="account.menu_finance"
               action="action_nc_invoice_audit" sequence="95"
-              groups="account.group_account_manager,ncollection_core.group_role_owner,ncollection_core.group_role_ceo"/>
+              groups="account.group_account_user,ncollection_core.group_role_accountant,ncollection_core.group_role_owner,ncollection_core.group_role_ceo"/>
 </odoo>

@@ -2,3 +2,5 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_nc_invoice_audit_manager,ncollection.invoice.audit manager,model_ncollection_invoice_audit,account.group_account_manager,1,0,0,0
 access_nc_invoice_audit_owner,ncollection.invoice.audit owner,model_ncollection_invoice_audit,ncollection_core.group_role_owner,1,0,0,0
 access_nc_invoice_audit_ceo,ncollection.invoice.audit ceo,model_ncollection_invoice_audit,ncollection_core.group_role_ceo,1,0,0,0
+access_nc_invoice_audit_accountant,ncollection.invoice.audit accountant,model_ncollection_invoice_audit,account.group_account_user,1,0,0,0
+access_nc_invoice_audit_role_accountant,ncollection.invoice.audit accountant role,model_ncollection_invoice_audit,ncollection_core.group_role_accountant,1,0,0,0

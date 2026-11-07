@@ -41,7 +41,7 @@ Never `-u all`. `ncollection_uae_einvoicing*` and `ncollection_audit` are instal
 | bank suite (17 checks, EN / AR, desktop / 390 px) | 17/17 | 17/17 | 17/17 |
 | dashboards, PDF / Excel export EN / AR, overpayment, permissions, tenant isolation, **AI widget EN + AR streamed, private rows, forged rows refused** | 21/21 | 21/21 | 21/21 |
 | **Invoice audit in the real UI** (invoice line edited in the form -> created + amount_changed rows, 100 -> 250, client IP recorded; entry opened from the Accounting menu in English and Arabic with RTL; CEO read-only, writes refused) | 4/5 in the full run, see note; 2/2 after the test fix | 5/5 | 5/5 |
-| **Audit authorization (ORM, per role)**: plain internal user, Owner, CEO, accountant role | plain refused; Owner and CEO read and are offered the menu; accountant role refused | same | same |
+| **Audit authorization (ORM, per role)**: plain internal user, Owner, CEO, accountant role | plain refused; Owner, CEO and accountants read and are offered the menu; nobody can write, create or delete (owner decision, 2026-11-07: accountants read-only) | same | same |
 | browser suite total (bank excluded) | 24/25 in the full run (the 1 failure: see note) | 25/25 | 25/25 |
 
 No check was skipped; the AI widget checks are part of the 21 on every database. The eight documented `ncollection_demo` attachment defects are unchanged and not repaired
@@ -108,9 +108,13 @@ ACTIVE, plus an upgraded `awtar`), starting the release code with the runtime's 
 
 So updating the source and recreating the containers does not alter the other databases: the release gate refuses to load their registry. Recommended, no code change:
 1. Keep the runtime flags as they are (the proof above).
-2. **Optional hardening for the upgrade window** (a compose override file used only for that window, never an edit of `docker-compose.yml`): `--db-filter=^(?=(?:ncollection|ncollection_demo|awtar)$)%d$`.
-   Measured: the three targets still serve (200), every other host name is redirected to the database selector and no registry of it is loaded. Cost: tenants outside the three become unreachable
-   until the override is removed; no registry row or database is touched. Remove the override after the review.
+2. **Upgrade-window database filter: USED (owner decision, 2026-11-07).** A compose override file, used only for the maintenance window, never an edit of `docker-compose.yml` or `config/odoo.conf`, sets the web container to
+   `--db-filter=^(?=(?:ncollection|ncollection_demo|awtar)$)%d$`. The expression is checked with Odoo's own `db_filter` against ALL 26 databases of the shared server by `scripts/upgrade/check_db_filter.py`
+   (no network, no database): `ncollection.localhost`, `awtar.localhost` and `ncollection_demo.localhost` (also with a port and with `www.`) each select exactly their own database; the other 23 select nothing; bare
+   `localhost`, an IP, an empty host, `evil.localhost` and `xncollection.localhost` select nothing (nginx sends bare `localhost` to `ncollection.localhost`). Result: 26 checked, 3 targets, 0 violations.
+   Cost: tenants outside the three are unreachable until the override is removed; no registry row or database is touched.
+   **Removal after maintenance (reversible):** delete the override file, then `docker compose up -d --force-recreate odoo` (recreate, not restart, #427), `make pdf-hosts`, reload nginx (it caches the odoo IP), and check
+   `http://ncollection.localhost/web/login` answers 200 and a not-upgraded tenant host answers the branded 503. Record the removal in the upgrade log.
 3. Never run `-u all`, never start a process with `-d` of a non-target database, keep `e2euae` out of every command. No deletion is needed or proposed.
 4. The new global AI admission lock lives in the `postgres` maintenance database as advisory locks only (no table, no data).
 
@@ -118,7 +122,7 @@ So updating the source and recreating the containers does not alter the other da
 
 `ncollection_account_audit` is in the matrix for all three databases (section 2, pass 2), so it is installed by the controlled procedure, not left as a later option. What the owner can check
 afterwards in the browser: Accounting > Invoice Amount Audit (English and Arabic) lists one row per net change of an invoice's amounts with old / new values, user, IP, timestamp and company;
-edit a draft invoice line and a new row appears. The Owner, the CEO (read-only) and Billing Managers can open it; a plain internal user cannot (ORM refusal, menu hidden).
+edit a draft invoice line and a new row appears. Accountants, Billing Managers, the Owner and the CEO can open it, all read-only; a plain internal user cannot (ORM refusal, menu hidden).
 
 Rollback needs no special step beyond section 5: restoring a database removes the module and its rows with it. Uninstalling the module alone (measured clean) drops the table.
 

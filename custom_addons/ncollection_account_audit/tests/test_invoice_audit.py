@@ -222,6 +222,47 @@ class TestInvoiceAmountAudit(AccountTestInvoicingCommon):
         with self.assertRaises(AccessError):
             self.Audit.with_user(self.plain).search([])
 
+    def _accountants(self):
+        user = self.env.ref('base.group_user')
+        odoo_acc = self.env['res.users'].create({
+            'name': 'audit_acc', 'login': 'audit_acc', 'password': 'Audit-Acc-Pass1!',
+            'group_ids': [Command.set([user.id, self.env.ref('account.group_account_user').id])]})
+        role_acc = self.env['res.users'].create({
+            'name': 'audit_role_acc', 'login': 'audit_role_acc', 'password': 'Audit-Role-Pass1!',
+            'group_ids': [Command.set([user.id, self.env.ref('ncollection_core.group_role_accountant').id])]})
+        return odoo_acc | role_acc
+
+    def test_accountants_read_the_trail_but_cannot_create_modify_or_delete_it(self):
+        invoice = self._invoice((100.0,))
+        invoice.invoice_line_ids[0].price_unit = 150.0
+        for accountant in self._accountants():
+            audit = self.Audit.with_user(accountant)
+            rows = audit.search([('res_id', '=', invoice.id)])
+            self.assertEqual(len(rows), 2, accountant.login)
+            self.assertEqual(rows.nc_verify(), [], accountant.login)
+            for call in (lambda: rows[0].write({'new_amount_total': 1.0}), rows[0].unlink):
+                with self.assertRaises(UserError), self.cr.savepoint():
+                    call()
+            with self.assertRaises(AccessError), self.cr.savepoint():
+                audit.create({'event': 'created', 'company_id': self.env.company.id,
+                              'logged_at': fields.Datetime.now()})
+        self.assertEqual(len(self._entries(invoice)), 2)
+        self.assertEqual(self._entries(invoice).nc_verify(), [])
+
+    def test_accountants_see_only_their_own_companies_entries(self):
+        invoice = self._invoice((100.0,))
+        other = self.env['res.company'].create({'name': 'Audit Other Co 2'})
+        for accountant in self._accountants():
+            accountant.write({'company_id': other.id, 'company_ids': [Command.set([other.id])]})
+            seen = self.Audit.with_user(accountant).with_company(other).search([('res_id', '=', invoice.id)])
+            self.assertFalse(seen, accountant.login)
+
+    def test_the_menu_is_offered_to_accountants_and_not_to_a_plain_user(self):
+        menu = self.env.ref('ncollection_account_audit.menu_nc_invoice_audit')
+        for accountant in self._accountants():
+            self.assertIn(menu.id, self.env['ir.ui.menu'].with_user(accountant)._visible_menu_ids(), accountant.login)
+        self.assertNotIn(menu.id, self.env['ir.ui.menu'].with_user(self.plain)._visible_menu_ids())
+
     def test_another_company_cannot_see_the_entries(self):
         invoice = self._invoice((100.0,))
         other = self.env['res.company'].create({'name': 'Audit Other Co'})

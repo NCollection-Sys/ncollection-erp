@@ -29,7 +29,7 @@ product lines' `price_total` before and after.
 | No misleading rows | no row when the amounts are unchanged (a note, a label, posting, a payment); a failed operation raises before anything is recorded and rolls back with its transaction |
 | Events | `created`, `amount_changed`, `deleted` |
 | Accounting protections | untouched: the audited operation runs exactly as before; the audit only reads amounts (as `sudo`) and writes its own table. Nothing weakens the posted-entry lock, hash, lock dates or tax locks |
-| Access | read-only ACL for Billing/Accounting Manager, Owner and CEO; create, write, unlink for nobody; rows are created with `sudo` by the service; record rule `company_id in company_ids` |
+| Access | read-only ACL for Accountants (Odoo Accountant group and the NCollection Accountant role), Billing/Accounting Manager, Owner and CEO; create, write, unlink for nobody; rows are created with `sudo` by the service; record rule `company_id in company_ids` |
 | Integrity | `write` and `unlink` raise, even for `sudo`; a SHA-256 digest of each row's content lets `nc_verify()` find a row altered with SQL |
 | Logs | the module never writes to the server log (a test asserts no log record at any level) |
 | Tenant isolation | the table lives in the tenant's database; nothing crosses databases |
@@ -77,3 +77,10 @@ So this is **standard Odoo 19 behaviour**, not a custom-module issue and not a t
 what diverges is the line's own price figures against the booked entry. The audit is accurate here: it compares the booked amounts and the lines total separately, so the entry shows booked equal,
 lines different. Editing journal-item fields (`debit`, `credit`, `balance`) of a posted entry is a different matter: core refuses it by the balance and lock checks (tested: refused, no row).
 No change to accounting core is made. **Policy decision for the owner (not release-blocking):** whether to add a constraint refusing price / quantity / discount / tax edits on posted lines.
+**Owner decision (2026-11-07): no new posted-invoice editing restriction in this release.** Standard Odoo behaviour is preserved and posted-invoice accounting is not silently changed. The possible discrepancy
+between a posted line's own figures (`price_unit`, `quantity`, subtotal) and the booked accounting values is recorded as a **separate, future accounting-policy decision** (whether to refuse price / quantity /
+discount / tax edits on posted lines). Until then the audit keeps recording the difference accurately: booked amounts and lines total are stored side by side in every entry.
+
+## 8. Who can read the trail (owner decision, 2026-11-07)
+Accountants (Odoo's `account.group_account_user` and the NCollection `group_role_accountant`) have READ-ONLY access, in addition to Billing / Accounting Manager, Owner and CEO. Company isolation is the same record rule;
+nobody can create, modify or delete an entry (the model refuses write / unlink, the ACL grants no create), and `nc_verify()` is unaffected. Three tests cover it (read, refusal, digest, company, menu).
