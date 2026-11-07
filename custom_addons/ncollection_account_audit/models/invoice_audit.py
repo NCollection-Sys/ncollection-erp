@@ -145,8 +145,8 @@ class InvoiceAmountAudit(models.Model):
         return self.sudo().create(vals)
 
     # ------------------------------------------------------------------ immutability
-    def write(self, vals):  # pylint: disable=method-required-super (immutability is the point)
+    def write(self, vals):  # pylint: disable=method-required-super
         raise UserError(self.env._("Audit entries cannot be modified."))
 
-    def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink (evidence is never deleted)
+    def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink
         raise UserError(self.env._("Audit entries cannot be deleted."))

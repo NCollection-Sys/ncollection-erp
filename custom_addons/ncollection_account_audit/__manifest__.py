@@ -9,11 +9,11 @@
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',
-    # WHY A NATIVE MODEL AND NOT A RULE ON OCA `auditlog` (ncollection_audit): auditlog on account.move.line overflows the
+    # WHY A NATIVE MODEL AND NOT A RULE ON OCA `auditlog` (ncollection_audit): auditlog on account.move.line overflows
     # recursion limit (79 nested write_full frames, #431), and on account.move alone logs nothing, because amount_total
     # is a stored COMPUTED field. This module compares the three stored amounts before and after the outermost ORM
     # write / create / unlink on invoices and invoice lines and records only a real net change. Design record:
-    # docs/markdown/INVOICE_AMOUNT_AUDIT.md. NOT installed by any plan or `auto_install`: installing it on a database is
+    # docs/markdown/INVOICE_AMOUNT_AUDIT.md. NOT installed by any plan or `auto_install`: installing is
     # a separate, explicit decision.
     'depends': ['account', 'ncollection_core'],
     'data': [
