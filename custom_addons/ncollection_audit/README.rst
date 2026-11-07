@@ -119,3 +119,10 @@ Testing
 ``make test m=ncollection_audit`` — 24 tests. The invoice acceptance tests need
 ``account``; on a database without it they skip, and ``scripts/ci/check_skips.py``
 fails CI on an unexpected skip rather than counting it as a pass.
+
+The invoice-amount criterion, delivered elsewhere
+=================================================
+
+The criterion this module could not meet is delivered by ``ncollection_account_audit`` (a native model, no ``auditlog``
+rule on ``account.move`` / ``account.move.line``, so the recursion in #431 does not apply). See
+``docs/markdown/INVOICE_AMOUNT_AUDIT.md``. This module's withheld models and the test that pins them are unchanged.

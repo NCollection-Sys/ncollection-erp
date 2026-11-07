@@ -144,7 +144,7 @@
 | P8-T02 | REST Business Endpoints | DEV-1 | P8-T01 | [#78](https://github.com/NCollection-Sys/ncollection-erp/issues/78) | 🔨 open |  |
 | P8-T03 | Webhooks System | DEV-1 | P8-T02 | [#79](https://github.com/NCollection-Sys/ncollection-erp/issues/79) | 🔨 open |  |
 | P8-T04 | Full Observability Stack | DEV-1 | P2-T10 | [#80](https://github.com/NCollection-Sys/ncollection-erp/issues/80) | 🔨 open |  |
-| P8-T05 | Audit Trail | DEV-2 | P1-T07 | [#81](https://github.com/NCollection-Sys/ncollection-erp/issues/81) | ✅ done | 2026-08-14 |
+| P8-T05 | Audit Trail | DEV-2 | P1-T07 | [#81](https://github.com/NCollection-Sys/ncollection-erp/issues/81) | ✅ infrastructure done 2026-08-14; the invoice-amount criterion is delivered by `ncollection_account_audit` (implemented and tested, NOT installed anywhere; see INVOICE_AMOUNT_AUDIT.md) | 2026-11-07 |
 | P8-T06 | Developer SDKs | DEV-2 | P8-T02 | [#82](https://github.com/NCollection-Sys/ncollection-erp/issues/82) | 🔨 open |  |
 | P8-T07 | API Documentation Portal | DEV-3 | P8-T02 | [#83](https://github.com/NCollection-Sys/ncollection-erp/issues/83) | 🔨 open |  |
 | P8-T08 | Integration Directory UI | DEV-3 | P8-T02 | [#84](https://github.com/NCollection-Sys/ncollection-erp/issues/84) | 🔨 open |  |

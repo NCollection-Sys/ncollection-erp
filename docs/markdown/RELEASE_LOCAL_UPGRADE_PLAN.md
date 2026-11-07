@@ -90,3 +90,27 @@ D: 6 GB and C: 13 GB free). Memory: upgrade container 2.5 GB plus Postgres; comm
 `awtar`: Accounting dashboard (bank journal card: Upload, Transactions, To Reconcile, Statements), the Invoicing and Sales premium dashboards with PDF and Excel export,
 an invoice with an over-payment, the chat widget (English and Arabic), Arabic through the language switch. `ncollection`: the platform administration plus the same accounting screens and the widget.
 `ncollection_demo`: dashboards, invoices (it now has the accounting layer) and the widget.
+
+## 7. Shared-runtime isolation: databases that are deliberately NOT upgraded
+
+The shared Postgres holds 26 non-template databases; three are upgraded. Measured on restored COPIES from the verified backup (e2euae, e2eclienta, atlas, test15 with their crons left
+ACTIVE, plus an upgraded `awtar`), starting the release code with the runtime's own flags and no `-d` (`--db-filter=^%d$ --no-database-list --proxy-mode`, one cron thread):
+
+* every not-upgraded database answered the branded **503 `UPGRADE_REQUIRED`** (never a 500), `awtar` answered 200; the log shows `crons NOT run (no registry loaded, no job executed)` for each; 0 tracebacks;
+* fingerprints (modules, columns, row counts, posted residual, active crons, `lastcall`) of all not-upgraded databases and the protected e-invoice attachments (548 / 550 / 551 in the e2euae copy) were
+  **identical before and after** the server had run (`scripts/rehearsal-three-db/results/iso*.txt`);
+* the runtime's own commands already limit the blast radius: the web container has `--max-cron-threads=0` and no database list; the provisioning runner is pinned to `-d ncollection --db-filter=^ncollection$`.
+
+So updating the source and recreating the containers does not alter the other databases: the release gate refuses to load their registry. Recommended, no code change:
+1. Keep the runtime flags as they are (the proof above).
+2. **Optional hardening for the upgrade window** (a compose override file used only for that window, never an edit of `docker-compose.yml`): `--db-filter=^(?=(?:ncollection|ncollection_demo|awtar)$)%d$`.
+   Measured: the three targets still serve (200), every other host name is redirected to the database selector and no registry of it is loaded. Cost: tenants outside the three become unreachable
+   until the override is removed; no registry row or database is touched. Remove the override after the review.
+3. Never run `-u all`, never start a process with `-d` of a non-target database, keep `e2euae` out of every command. No deletion is needed or proposed.
+4. The new global AI admission lock lives in the `postgres` maintenance database as advisory locks only (no table, no data).
+
+## 8. Invoice amount audit (#81) and this procedure
+
+`ncollection_account_audit` is NOT part of the matrix and the upgrade and rollback procedures do not change: the module is not installed by `-u`/`-i` of this release, so a rollback needs no step for it.
+If the owner later approves it: after the upgrade is READY, `-i ncollection_account_audit` per approved database (must follow the matrix upgrade: installing it on a database that is behind the code fails to load
+the registry, measured), then `_update_translations`; rollback is a module uninstall (measured clean) or the backup restore.

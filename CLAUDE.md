@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **33**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **34**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -99,6 +99,7 @@ adding a module fails CI until someone updates this list.
   Group-restricted fields and `ncollection.auth.log` are never logged —
   `auditlog` ignores
   `groups=` and its log table is readable by a lower-trust group.
+- `ncollection_account_audit` — the **invoice amount audit** (#81 acceptance criterion): one immutable `ncollection.invoice.audit` row per NET change of an invoice's amounts (old / new, user, IP, time, company, invoice identity, content digest), taken by comparing the stored amounts around the OUTERMOST ORM write / create / unlink on an invoice or its lines. A native model, because OCA `auditlog` cannot audit `account.move` (#431). **Not installed on any database and in no plan**: installing it is a separate decision. Docs: `docs/markdown/INVOICE_AMOUNT_AUDIT.md`.
 - `ncollection_branding` — **System Branding** (ONE record: the system's name, favicon, system / login / administration logos, browser title, copyright text and primary / secondary
   colours in the existing `--nc-color-*` tokens, resolved by `nc_brand()` for every surface, changed ONLY by the `System Branding Manager` group (platform staff and a Platform Administrator inside a tenant; the tenant Owner cannot); never the tenant's colours or the company's identity — three identities, three places;
   the persisted names stay `ncollection.product.branding` — docs: `docs/markdown/SYSTEM_BRANDING.md`), theme, logo, colors, and the document layer: the NCollection print layout (default), document types,
@@ -417,6 +418,7 @@ So tenant key === subdomain === database name, always.
 - `RUNBOOK_RELEASE_UPGRADE.md` — deploying code to a database that exists: backup, deploy, preflight, rehearse on a copy, targeted upgrade, smoke, traffic. Never `-u all`.
 - `RELEASE_COMPATIBILITY_GATE.md` — why a database the code is ahead of answers a branded 503 instead of an HTTP 500: the gate before the registry (`ncollection_core/release_gate.py`, server-wide), the states, holds, the platform's status channel, provisioning `validating`, Company Entry, Fleet Migration (platform first, enforced), and how an
   operator reads a blocked PLATFORM database (`make release-status db=ncollection`).
+- `INVOICE_AMOUNT_AUDIT.md` — the invoice-amount audit (#81): why a native model, what is captured and what is not, install and rollback.
 - `SYSTEM_BRANDING.md` — system branding vs tenant branding vs company identity, the one resolver, favicon / logo validation, where "Odoo" was removed and what stays.
 - `DOCUMENT_PRINTING_AND_STAMPS.md` — the one print pipeline, View = Print, the NCollection layout, the stamp system, how to prove a PDF.
 - `BRANCH_PROTECTION.md` — required CI checks + 1-approval policy, and why none of it is
