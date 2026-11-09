@@ -16,9 +16,6 @@ from . import test_kpi
 from . import test_config_sync_key
 from . import test_reseller_branding_apply
 from . import test_pushed_rate
-from . import test_anomaly_statistics
-from . import test_anomaly_acceptance
-from . import test_anomaly_visibility
 # #374 — the shared financial gate is wired to its consumers, not re-copied
 from . import test_financial_gate
 # P6-T02 (#66) — portal users see only their own records

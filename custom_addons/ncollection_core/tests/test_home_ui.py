@@ -16,7 +16,6 @@ _CORE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # the identity of the NCollection applications that were already on Home; none of these may move or change action
 _APP_ROOTS = {
     'ncollection_core.menu_ncollection_dashboard_root': 'ncollection_core.action_ncollection_dashboard',
-    'ncollection_core.menu_ncollection_alert': 'ncollection_core.action_ncollection_alert',
     'ncollection_account_reports.menu_nc_reports_root': 'ncollection_account_reports.action_nc_report_hub',
     'ncollection_stock_barcode.menu_nc_barcode_root': 'ncollection_stock_barcode.action_nc_barcode_scanner',
 }
@@ -64,7 +63,7 @@ class TestHomeUi(TransactionCase):
         self.assertTrue(summary['web_icon_data'], "its icon travels with the tile, so the client never shows a letter")
 
     def test_the_icon_files_are_the_family_size_and_load_from_the_modules_own_path(self):
-        for module, name in (('ncollection_core', 'icon_summary.png'), ('ncollection_core', 'icon_alerts.png'),
+        for module, name in (('ncollection_core', 'icon_summary.png'), 
                              ('ncollection_core', 'icon_workspace.png'), ('ncollection_account_dashboard', 'icon.png'),
                              ('ncollection_reseller', 'icon.png'), ('ncollection_stock_barcode', 'icon.png'),
                              ('ncollection_account_reports', 'icon.png'), ('ncollection_subscription', 'icon.png'),
@@ -115,7 +114,6 @@ class TestHomeUi(TransactionCase):
         self._arabic()
         expected = {
             'ncollection_core.menu_ncollection_dashboard_root': ('Summary', 'الملخّص'),
-            'ncollection_core.menu_ncollection_alert': ('Anomaly Alerts', 'تنبيهات الشذوذ'),
             'ncollection_core.menu_workspace_settings_root': ('Workspace Administration', 'إدارة مساحة العمل'),
             'ncollection_stock_barcode.menu_nc_barcode_root': ('Barcode', 'الباركود'),
         }

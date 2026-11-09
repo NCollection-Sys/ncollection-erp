@@ -35,8 +35,6 @@ from . import dashboard
 from . import aggregation
 # P4-T02 operational KPIs — self-contained subtree, see kpi/__init__.py
 from . import kpi
-# P5-T04 anomaly detection — self-contained subtree, see anomaly/__init__.py
-from . import anomaly
 # P8-T10 error telemetry & structured incident logging (Issue #444)
 from . import error_log
 from . import screen_title

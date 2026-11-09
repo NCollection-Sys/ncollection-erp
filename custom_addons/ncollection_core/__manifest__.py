@@ -35,7 +35,7 @@
     # 19.0.1.21.0: Workspace Administration Center (users, roles = real groups, password reset with forced change,
     # audit) and the platform's user-administration service (ncollection.admin.service). New models, data and
     # menus, so `-u` is what applies it to an existing tenant.
-    'version': '19.0.1.28.0',
+    'version': '19.0.1.29.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -58,7 +58,6 @@
         # P5-T04 follow-up (#346): record rules scoping alerts by role.
         # After ir.model.access.csv, because a rule is meaningless
         # without the ACL that lets the group reach the model at all.
-        'security/alert_security.xml',
         'data/role_templates.xml',
         'views/workspace_settings_views.xml',
         'views/workspace_admin_views.xml',
@@ -75,13 +74,11 @@
         # readability of the data files.
         'views/home_action.xml',
         'data/kpi_data.xml',
-        # P5-T04 anomaly detection. (Order is cosmetic here: init_models()
+        # The scheduler service user (generic non-interactive identity; Anomaly Alerts were removed in 19.0.1.29.0). (Order is cosmetic: init_models()
         # reflects every Python model into ir.model before ANY of a module's
         # data files load, so model_id ref= would resolve either way.)
-        'views/alert_views.xml',
         # Must load BEFORE any cron that binds to it.
         'data/cron_user.xml',
-        'data/anomaly_cron.xml',
         # P8-T10 error telemetry & structured incident logging (Issue #444)
         'views/error_log_views.xml',
     ],
