@@ -1,0 +1,13 @@
+// Invoice line table (customer invoices AND vendor bills): every column header is centred, including Label, while the
+// editable values keep their own alignment (numbers stay right-aligned / logical-end aligned, text starts at the logical
+// start). `text-align: center` on the header only; `th` content wraps instead of overflowing on narrow screens.
+.o_form_view .o_field_widget[name="invoice_line_ids"] .o_list_table > thead > tr > th {
+    text-align: center;
+    .o_list_number_th, .o_column_title { text-align: center; }
+    .o_list_number_th { justify-content: center; }
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+// The discount summary above Untaxed Amount reads like the totals block it sits on.
+.o_form_view .nc_discount_summary { margin-bottom: 0; }

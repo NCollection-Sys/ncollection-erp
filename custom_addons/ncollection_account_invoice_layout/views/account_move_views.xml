@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- INVOICE LINES: a money Discount next to Disc.%, and an Amount / Total incl. Tax the user can type. The standard
+         read-only Amount (price_subtotal) and Total columns stay in the view as hidden columns (other code reads them);
+         the editable replacements carry the same labels. Customer invoices and vendor bills share this view. -->
+    <record id="view_move_form_nc_invoice_layout" model="ir.ui.view">
+        <field name="name">account.move.form.nc.invoice.layout</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="priority">60</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
+                <attribute name="aggregated_fields">nc_amount,nc_total_incl</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='discount']" position="after">
+                <field name="nc_discount_mode" column_invisible="True"/>
+                <field name="nc_discount_fixed" column_invisible="True"/>
+                <field name="nc_discount_amount" string="Discount" optional="show" on_change="1"/>
+            </xpath>
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='price_subtotal']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='price_subtotal']" position="after">
+                <field name="nc_amount" string="Amount" optional="show" on_change="1"
+                       column_invisible="parent.move_type not in ['in_invoice', 'in_refund', 'in_receipt'] and parent.company_price_include == 'tax_included'"/>
+            </xpath>
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='price_total'][2]" position="replace">
+                <field name="nc_total_incl" string="Total incl. Tax" optional="show" on_change="1"
+                       column_invisible="parent.company_price_include == 'tax_included' and parent.move_type not in ('in_invoice', 'in_refund', 'in_receipt')"/>
+            </xpath>
+            <!-- The discount summary, ABOVE Untaxed Amount, only when something was discounted. -->
+            <xpath expr="//group[hasclass('oe_subtotal_footer')]" position="before">
+                <group class="oe_subtotal_footer nc_discount_summary" invisible="not nc_has_discount">
+                    <field name="nc_has_discount" invisible="1"/>
+                    <field name="nc_total_discount" string="Total Discount"/>
+                    <field name="nc_total_after_discount" string="Total After Discount"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
