@@ -14,7 +14,9 @@
     'depends': ['account', 'ncollection_account_core'],
     'data': [
         'security/ir.model.access.csv',
+        'security/rules.xml',
         'views/account_move_views.xml',
+        'views/adjustment_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

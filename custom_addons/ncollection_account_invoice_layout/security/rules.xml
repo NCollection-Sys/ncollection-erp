@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Multi-company isolation, mirrored at the ORM (a menu or a hidden field is not a control). -->
+    <record id="rule_nc_adj_type_company" model="ir.rule">
+        <field name="name">Invoice adjustment types: own companies</field>
+        <field name="model_id" ref="model_ncollection_invoice_adjustment_type"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_nc_adj_company" model="ir.rule">
+        <field name="name">Invoice adjustments: own companies</field>
+        <field name="model_id" ref="model_ncollection_invoice_adjustment"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

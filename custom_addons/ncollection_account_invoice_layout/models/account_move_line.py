@@ -34,6 +34,14 @@ from odoo.tools import float_is_zero, float_round
 
 _SEARCH_RADIUS = 3          # price steps examined each side of the solved price
 _PRODUCT = 'product'
+_BASIS_FIELDS = {'price_unit', 'quantity', 'discount', 'tax_ids', 'nc_discount_fixed', 'nc_discount_mode', 'nc_discount_amount',
+                 'nc_amount', 'nc_total_incl', 'product_id'}
+# What a user can change on a line. Core also writes bookkeeping flags (dirty markers, term keys) on every line while it
+# synchronises a move; those are not the user's edit and must pass.
+_PROTECTED_LINE_FIELDS = {
+    'name', 'quantity', 'price_unit', 'discount', 'tax_ids', 'account_id', 'analytic_distribution', 'product_id',
+    'product_uom_id', 'nc_discount_amount', 'nc_discount_fixed', 'nc_discount_mode', 'nc_amount', 'nc_total_incl',
+    'move_id', 'display_type', 'nc_adjustment_id', 'price_subtotal', 'price_total'}
 
 
 class AccountMoveLine(models.Model):
@@ -121,12 +129,32 @@ class AccountMoveLine(models.Model):
         for vals in vals_list:
             if 'discount' in vals and not {'nc_discount_mode', 'nc_discount_amount', 'nc_discount_fixed'} & set(vals):
                 vals['nc_discount_mode'] = 'percent'
-        return super().create(vals_list)
+        lines = super().create(vals_list)
+        lines._nc_resync_adjustments()
+        return lines
 
     def write(self, vals):
+        self._nc_check_adjustment_lines_untouched(vals)
         if 'discount' in vals and not {'nc_discount_mode', 'nc_discount_amount', 'nc_discount_fixed'} & set(vals):
             vals = dict(vals, nc_discount_mode='percent')
-        return super().write(vals)
+        result = super().write(vals)
+        if _BASIS_FIELDS & set(vals):
+            self._nc_resync_adjustments()
+        return result
+
+    def unlink(self):
+        self._nc_check_adjustment_lines_untouched()
+        moves = self.move_id.filtered('nc_adjustment_ids')
+        result = super().unlink()
+        moves.exists()._nc_sync_adjustments()
+        return result
+
+    def _nc_resync_adjustments(self):
+        """A product line changed: percentage adjustments are recalculated (the adjustment lines themselves never count)."""
+        if self.env.context.get('nc_adjustment_sync'):
+            return
+        moves = self.filtered(lambda l: l.display_type == _PRODUCT and not l.nc_adjustment_id).move_id.filtered('nc_adjustment_ids')
+        moves._nc_sync_adjustments()
 
     # ------------------------------------------------------------------ Amount / Total incl. Tax
     @api.depends('price_subtotal', 'price_total')
@@ -236,3 +264,19 @@ class AccountMoveLine(models.Model):
                         "No unit price at the current price precision gives exactly %(target)s. The closest, %(achieved)s, "
                         "was used (unit price %(price)s).", target=target, achieved=achieved, price=price)}
         return {'warning': warning} if warning else None
+
+    # ------------------------------------------------------------------ the line an invoice adjustment is booked on
+    nc_adjustment_id = fields.Many2one(
+        'ncollection.invoice.adjustment', string='Charge / discount', copy=False, ondelete='set null', index=True,
+        help="Set on the line that books an invoice-level charge or discount: it is managed from the Charges & "
+             "Adjustments block of the invoice, not edited here.")
+
+    def _nc_check_adjustment_lines_untouched(self, vals=None):
+        """A booked adjustment line is changed only by the adjustment itself (a user editing it here would be undone)."""
+        if self.env.context.get('nc_adjustment_sync'):
+            return
+        locked = self.filtered('nc_adjustment_id')
+        if locked and (vals is None or _PROTECTED_LINE_FIELDS & set(vals)):
+            raise UserError(self.env._(
+                "\"%s\" is an invoice charge or discount. Change it in the Charges & Adjustments block of the invoice.",
+                locked[0].name or ''))

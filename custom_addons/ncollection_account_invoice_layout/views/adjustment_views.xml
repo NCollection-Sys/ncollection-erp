@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nc_adjustment_type_list" model="ir.ui.view">
+        <field name="name">ncollection.invoice.adjustment.type.list</field>
+        <field name="model">ncollection.invoice.adjustment.type</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="kind"/>
+                <field name="value_mode"/>
+                <field name="default_value"/>
+                <field name="applies_to"/>
+                <field name="account_id"/>
+                <field name="auto_add"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_nc_adjustment_type_form" model="ir.ui.view">
+        <field name="name">ncollection.invoice.adjustment.type.form</field>
+        <field name="model">ncollection.invoice.adjustment.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <group>
+                        <group string="Definition">
+                            <field name="name"/>
+                            <field name="kind"/>
+                            <field name="value_mode"/>
+                            <field name="default_value"/>
+                            <field name="basis" invisible="value_mode != 'percent' or kind == 'discount'"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Where it applies">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="applies_to"/>
+                            <field name="auto_add"/>
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                    <group string="Accounting">
+                        <group>
+                            <field name="account_id"/>
+                            <field name="tax_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="analytic_distribution" widget="analytic_distribution" groups="analytic.group_analytic_accounting"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        A charge increases the invoice, a discount decreases it. Each adjustment is booked as a real invoice line on
+                        its account with its taxes, so the journal entry, receivable / payable and reconciliation stay Odoo's own.
+                        Order: line discounts, then invoice discounts, then charges, then taxes.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_nc_adjustment_type" model="ir.actions.act_window">
+        <field name="name">Charges &amp; Discounts</field>
+        <field name="res_model">ncollection.invoice.adjustment.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_nc_invoice_layout" name="Invoice Layout &amp; Calculations" parent="account.menu_finance_configuration"
+              sequence="55" groups="account.group_account_manager"/>
+    <menuitem id="menu_nc_adjustment_type" name="Charges &amp; Discounts" parent="menu_nc_invoice_layout" sequence="10"
+              action="action_nc_adjustment_type" groups="account.group_account_manager"/>
+
+    <!-- The Charges & Adjustments block of the invoice, ABOVE the Terms and Conditions. -->
+    <record id="view_move_form_nc_adjustments" model="ir.ui.view">
+        <field name="name">account.move.form.nc.adjustments</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="priority">61</field>
+        <field name="arch" type="xml">
+            <xpath expr="//group[hasclass('oe_invoice_lines_tab')]" position="before">
+                <div class="nc_adjustments" invisible="move_type == 'entry' or (state != 'draft' and not nc_adjustment_ids)">
+                    <separator string="Charges &amp; Adjustments"/>
+                    <field name="nc_adjustment_ids" nolabel="1" readonly="state != 'draft'" mode="list">
+                        <list editable="bottom">
+                            <field name="sequence" column_invisible="True"/>
+                            <field name="value_mode" column_invisible="True"/>
+                            <field name="company_id" column_invisible="True"/>
+                            <field name="currency_id" column_invisible="True"/>
+                            <field name="type_id" options="{'no_create': True}"/>
+                            <field name="kind" optional="show" readonly="1"/>
+                            <field name="value"/>
+                            <field name="tax_ids" widget="many2many_tags" optional="show" options="{'no_create': True}"/>
+                            <field name="amount"/>
+                        </list>
+                    </field>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

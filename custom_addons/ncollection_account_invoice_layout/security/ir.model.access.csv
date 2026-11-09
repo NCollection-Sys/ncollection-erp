@@ -1,1 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nc_adj_type_invoice,ncollection.invoice.adjustment.type invoicing,model_ncollection_invoice_adjustment_type,account.group_account_invoice,1,0,0,0
+access_nc_adj_type_manager,ncollection.invoice.adjustment.type manager,model_ncollection_invoice_adjustment_type,account.group_account_manager,1,1,1,1
+access_nc_adj_invoice,ncollection.invoice.adjustment invoicing,model_ncollection_invoice_adjustment,account.group_account_invoice,1,1,1,1
+access_nc_adj_readonly,ncollection.invoice.adjustment readonly,model_ncollection_invoice_adjustment,account.group_account_readonly,1,0,0,0
+access_nc_adj_type_readonly,ncollection.invoice.adjustment.type readonly,model_ncollection_invoice_adjustment_type,account.group_account_readonly,1,0,0,0

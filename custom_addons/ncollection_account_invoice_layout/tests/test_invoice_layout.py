@@ -70,7 +70,7 @@ class TestInvoiceLayoutCalculations(AccountTestInvoicingCommon):
         move.action_post()
         product = move.line_ids.filtered(lambda l: l.display_type == 'product')
         self.assertEqual(-sum(product.mapped('balance')), 290.0)
-        self.assertEqual(sum(move.line_ids.mapped('balance')), 0.0)
+        self.assertEqual(move.company_currency_id.round(sum(move.line_ids.mapped("balance"))), 0.0)
         receivable = move.line_ids.filtered(lambda l: l.account_id.account_type == 'asset_receivable')
         self.assertEqual(receivable.balance, move.amount_total)
 
@@ -149,7 +149,7 @@ class TestInvoiceLayoutCalculations(AccountTestInvoicingCommon):
         self.assertEqual(line.price_total, 207.0)
         move.invoice_date = '2026-03-01'
         move.action_post()
-        self.assertEqual(sum(move.line_ids.mapped('balance')), 0.0)
+        self.assertEqual(move.company_currency_id.round(sum(move.line_ids.mapped("balance"))), 0.0)
         payable = move.line_ids.filtered(lambda l: l.account_id.account_type == 'liability_payable')
         self.assertEqual(-payable.balance, move.amount_total)
 
@@ -174,7 +174,7 @@ class TestInvoiceLayoutCalculations(AccountTestInvoicingCommon):
         self.assertEqual(refund_line.nc_discount_amount, 30.0)
         self.assertEqual(reversal.amount_untaxed, move.amount_untaxed)
         reversal.action_post()
-        self.assertEqual(sum(reversal.line_ids.mapped('balance')), 0.0)
+        self.assertEqual(reversal.company_currency_id.round(sum(reversal.line_ids.mapped('balance'))), 0.0)
 
     def test_ordinary_percentage_invoices_are_unchanged(self):
         move = self._move(discount=12.5)
