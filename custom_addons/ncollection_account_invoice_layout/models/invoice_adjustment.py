@@ -34,7 +34,7 @@ class InvoiceAdjustmentType(models.Model):
     active = fields.Boolean(default=True)
     sequence = fields.Integer(default=10)
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company, index=True)
-    kind = fields.Selection(KINDS, string='Kind', required=True, default='charge')
+    kind = fields.Selection(KINDS, required=True, default='charge')
     value_mode = fields.Selection([('fixed', 'Fixed amount'), ('percent', 'Percentage')], string='Value', required=True,
                                   default='fixed')
     default_value = fields.Float(string='Default value', digits=(16, 4))
@@ -49,7 +49,7 @@ class InvoiceAdjustmentType(models.Model):
     auto_add = fields.Boolean(
         string='On every new invoice', help="A new invoice starts with this adjustment, ready for its value.")
     account_id = fields.Many2one(
-        'account.account', string='Account', required=True, check_company=True,
+        'account.account', required=True, check_company=True,
         domain="[('account_type', 'not in', ('asset_receivable', 'liability_payable', 'off_balance'))]")
     tax_ids = fields.Many2many('account.tax', string='Taxes', check_company=True,
                                help="The taxes of the booked line. A VAT-able freight charge carries the sales VAT.")
@@ -94,9 +94,9 @@ class InvoiceAdjustment(models.Model):
     kind = fields.Selection(related='type_id.kind', store=True)
     value_mode = fields.Selection(related='type_id.value_mode')
     sequence = fields.Integer(related='type_id.sequence', store=True)
-    value = fields.Float(string='Value', digits=(16, 4), help="An amount, or a percentage when the adjustment is a percentage.")
+    value = fields.Float(digits=(16, 4), help="An amount, or a percentage when the adjustment is a percentage.")
     tax_ids = fields.Many2many('account.tax', string='Taxes', check_company=True)
-    amount = fields.Monetary(string='Amount', currency_field='currency_id', readonly=True,
+    amount = fields.Monetary(currency_field='currency_id', readonly=True,
                              help="The money booked, tax-excluded and always positive; a discount is booked negative.")
     line_id = fields.Many2one('account.move.line', string='Invoice line', readonly=True, ondelete='set null', copy=False)
 
