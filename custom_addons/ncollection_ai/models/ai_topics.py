@@ -67,7 +67,7 @@ TOPICS = (
      ('مبيعات', 'المبيعات', 'طلبات', 'الطلبات', 'إيرادات', 'أفضل العملاء'), _sales),
     ('purchases', ('purchase', 'purchases', 'purchase order'),
      ('مشتريات', 'المشتريات', 'أوامر الشراء'), _purchases),
-    ('payments', ('payment', 'payments', 'collected', 'received', 'cash in'),
+    ('payments', ('payment', 'payments', 'paid', 'pay ', 'collected', 'received', 'cash in'),
      ('مدفوعات', 'الدفعات', 'المقبوضات', 'تحصيل', 'مقبوض'), _payments),
     ('inventory', ('inventory', 'stock', 'on hand', 'warehouse', 'quantity'),
      ('مخزون', 'المخزون', 'مستودع', 'الكمية', 'البضاعة'), _inventory),
