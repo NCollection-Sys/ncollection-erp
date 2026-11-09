@@ -63,7 +63,7 @@ class TestHomeUi(TransactionCase):
         self.assertTrue(summary['web_icon_data'], "its icon travels with the tile, so the client never shows a letter")
 
     def test_the_icon_files_are_the_family_size_and_load_from_the_modules_own_path(self):
-        for module, name in (('ncollection_core', 'icon_summary.png'), 
+        for module, name in (('ncollection_core', 'icon_summary.png'),
                              ('ncollection_core', 'icon_workspace.png'), ('ncollection_account_dashboard', 'icon.png'),
                              ('ncollection_reseller', 'icon.png'), ('ncollection_stock_barcode', 'icon.png'),
                              ('ncollection_account_reports', 'icon.png'), ('ncollection_subscription', 'icon.png'),

@@ -168,7 +168,8 @@ class SpreadsheetDashboardExport(models.AbstractModel):
             parts.append('<h2>%s</h2><table><tbody>' % E(figure['title']))
             for line in lines:
                 parts.append('<tr>%s</tr>' % ''.join(
-                    '<%s>%s</%s>' % ('td class="n"' if i else 'th dir="auto"', E(pdf.tidy_amount(part)), 'td' if i else 'th')
+                    '<%s>%s</%s>' % ('td class="n"' if i else 'th dir="auto"', E(pdf.tidy_amount(part)),
+                                     'td' if i else 'th')
                     for i, part in enumerate(line)))
             parts.append('</tbody></table>')
         for data in snapshot['sheets']:
@@ -185,7 +186,8 @@ class SpreadsheetDashboardExport(models.AbstractModel):
                     for cell in row))
                 parts.append('</thead><tbody>' if index == 0 else '')
             parts.append('</tbody></table>')
-        return pdf.document(snapshot['name'] or self.env._("Dashboard"), list(snapshot['filters'] or ()), ''.join(parts))
+        title = snapshot['name'] or self.env._("Dashboard")
+        return pdf.document(title, list(snapshot['filters'] or ()), ''.join(parts))
 
     @api.model
     def build_pdf(self, snapshot):

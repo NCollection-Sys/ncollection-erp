@@ -201,7 +201,8 @@ class DashboardExport(models.AbstractModel):
         for w in (w for w in widgets if w.get('type') == 'chart'):
             data = list(zip(w.get('labels') or (), w.get('data') or ()))
             peak = max([abs(v or 0) for _l, v in data] or [0]) or 1
-            parts.append('<h2>%s</h2><table><thead><tr><th>%s</th><th class="n">%s</th><th></th></tr></thead><tbody>' % (
+            parts.append('<h2>%s</h2><table><thead><tr><th>%s</th><th class="n">%s</th><th></th></tr>'
+                         '</thead><tbody>' % (
                 E(str(w.get('label') or '')), E(env_('Label')), E(env_('Value'))))
             for label, value in data:
                 parts.append('<tr><td dir="auto">%s</td><td class="n">%s</td><td style="width:35%%"><span class="bar" '

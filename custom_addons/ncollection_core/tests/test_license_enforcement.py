@@ -186,6 +186,7 @@ class TestLicenseEnforcement(TransactionCase):
             return_value=frozenset({"mis"}),
         ):
             self.env["res.partner"].with_user(cron_user).check_access("read")
+
     def test_the_scheduler_account_cannot_authenticate(self):
         """The scheduler account is a non-interactive identity.
 
