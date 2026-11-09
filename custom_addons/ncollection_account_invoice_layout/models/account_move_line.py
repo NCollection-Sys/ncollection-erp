@@ -54,7 +54,11 @@ class AccountMoveLine(models.Model):
     nc_discount_fixed = fields.Monetary(
         string='Fixed discount', currency_field='currency_id', copy=True,
         help="The discount in money when the mode is Fixed amount, in the basis of the Price column.")
-    discount = fields.Float(compute='_compute_nc_discount', store=True, readonly=False)
+    nc_discount_percent = fields.Float(
+        string="Discount percentage (as entered)", digits="Discount", copy=True,
+        help="The percentage the user typed. It is the source of Disc.% in Percentage mode, so a recomputation never has to read "
+             "the field it is computing.")
+    discount = fields.Float(compute="_compute_nc_discount", store=True, readonly=False)
     nc_discount_amount = fields.Monetary(
         string='Discount', currency_field='currency_id', compute='_compute_nc_discount_amount',
         inverse='_inverse_nc_discount_amount',
@@ -67,14 +71,14 @@ class AccountMoveLine(models.Model):
         inverse='_inverse_nc_total_incl', help="Line total with tax. Typing a value solves the unit price.")
 
     # ------------------------------------------------------------------ discount: percentage <-> money
-    @api.depends('nc_discount_mode', 'nc_discount_fixed', 'quantity', 'price_unit')
+    @api.depends('nc_discount_mode', 'nc_discount_fixed', 'nc_discount_percent', 'quantity', 'price_unit')
     def _compute_nc_discount(self):
         for line in self:
             if line.nc_discount_mode == 'amount':
                 gross = line.quantity * line.price_unit
                 line.discount = line.nc_discount_fixed / gross * 100.0 if gross else 0.0
             else:
-                line.discount = line.discount      # the user's percentage stays
+                line.discount = line.nc_discount_percent
 
     @api.depends('nc_discount_mode', 'nc_discount_fixed', 'discount', 'quantity', 'price_unit', 'currency_id')
     def _compute_nc_discount_amount(self):
@@ -99,6 +103,7 @@ class AccountMoveLine(models.Model):
         for line in self:
             if line.display_type == _PRODUCT:
                 line.nc_discount_mode = 'percent'
+                line.nc_discount_percent = line.discount
 
     @api.onchange('nc_discount_amount')
     def _onchange_nc_discount_amount(self):
@@ -129,6 +134,7 @@ class AccountMoveLine(models.Model):
         for vals in vals_list:
             if 'discount' in vals and not {'nc_discount_mode', 'nc_discount_amount', 'nc_discount_fixed'} & set(vals):
                 vals['nc_discount_mode'] = 'percent'
+                vals['nc_discount_percent'] = vals['discount']
         lines = super().create(vals_list)
         lines._nc_resync_adjustments()
         return lines
@@ -136,7 +142,7 @@ class AccountMoveLine(models.Model):
     def write(self, vals):
         self._nc_check_adjustment_lines_untouched(vals)
         if 'discount' in vals and not {'nc_discount_mode', 'nc_discount_amount', 'nc_discount_fixed'} & set(vals):
-            vals = dict(vals, nc_discount_mode='percent')
+            vals = dict(vals, nc_discount_mode='percent', nc_discount_percent=vals['discount'])
         result = super().write(vals)
         if _BASIS_FIELDS & set(vals):
             self._nc_resync_adjustments()

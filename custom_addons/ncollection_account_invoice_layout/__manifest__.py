@@ -12,6 +12,7 @@
     # Design record and worked examples: docs/markdown/INVOICE_LAYOUT_AND_CALCULATIONS.md.
     # Every figure comes from Odoo's own tax engine (account.tax._add_tax_details_in_base_line), never from a second formula.
     'depends': ['account', 'ncollection_account_core'],
+    'post_init_hook': 'post_init_hook',
     'data': [
         'security/ir.model.access.csv',
         'security/rules.xml',

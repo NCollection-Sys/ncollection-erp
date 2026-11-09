@@ -1,0 +1,497 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* ncollection_account_invoice_layout
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0-20260609\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-09 23:22+0000\n"
+"PO-Revision-Date: 2026-11-09 23:22+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
+msgid "\"%s\" is not available for this kind of document or company."
+msgstr "«%s» غير متاح لهذا النوع من المستندات أو لهذه الشركة."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
+msgid "A discount is always calculated on the invoice lines."
+msgstr "يُحسب الخصم دائماً على بنود الفاتورة."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__auto_add
+msgid "A new invoice starts with this adjustment, ready for its value."
+msgstr "تبدأ كل فاتورة جديدة بهذا التعديل جاهزاً لإدخال قيمته."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
+msgid "A percentage cannot exceed 100."
+msgstr "لا يمكن أن تتجاوز النسبة المئوية 100."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
+msgid "A percentage of \"%s\" cannot exceed 100."
+msgstr "لا يمكن أن تتجاوز النسبة المئوية لـ «%s» 100."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__account_id
+msgid "Account"
+msgstr "الحساب"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_adjustment_type_form
+msgid "Accounting"
+msgstr "المحاسبة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__type_id
+msgid "Adjustment"
+msgstr "التعديل"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_amount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__amount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.constraint,message:ncollection_account_invoice_layout.constraint_ncollection_invoice_adjustment_unique_type_per_move
+msgid "An adjustment can be added to an invoice only once."
+msgstr "لا يمكن إضافة التعديل نفسه إلى الفاتورة إلا مرة واحدة."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__value
+msgid "An amount, or a percentage when the adjustment is a percentage."
+msgstr "مبلغ، أو نسبة مئوية عندما يكون التعديل بنسبة."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__analytic_distribution
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__analytic_distribution
+msgid "Analytic Distribution"
+msgstr "التوزيع التحليلي"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__analytic_precision
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__analytic_precision
+msgid "Analytic Precision"
+msgstr "دقة التحليل"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__applies_to
+msgid "Applies To"
+msgstr "ينطبق على"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_adjustment_type_form
+msgid "Archived"
+msgstr "مؤرشف"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "Cannot reach this figure"
+msgstr "تعذّر الوصول إلى هذا الرقم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__kind__charge
+msgid "Charge"
+msgstr "رسم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_adjustment_id
+msgid "Charge / discount"
+msgstr "رسم / خصم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_adjustment_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_adjustment_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_adjustments
+msgid "Charges & Adjustments"
+msgstr "الرسوم والتعديلات"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.actions.act_window,name:ncollection_account_invoice_layout.action_nc_adjustment_type
+#: model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_adjustment_type
+msgid "Charges & Discounts"
+msgstr "الرسوم والخصومات"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "Closest figure used"
+msgstr "تم استخدام أقرب رقم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__company_id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__create_uid
+msgid "Created by"
+msgstr "أنشأه"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__create_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__create_date
+msgid "Created on"
+msgstr "أُنشئ في"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__currency_id
+msgid "Currency"
+msgstr "العملة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__applies_to__both
+msgid "Customer invoices and vendor bills"
+msgstr "فواتير العملاء وفواتير الموردين"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__applies_to__customer
+msgid "Customer invoices only"
+msgstr "فواتير العملاء فقط"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__default_value
+msgid "Default value"
+msgstr "القيمة الافتراضية"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_adjustment_type_form
+msgid "Definition"
+msgstr "التعريف"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_discount_amount
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__kind__discount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+msgid "Discount"
+msgstr "الخصم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__discount
+msgid "Discount (%)"
+msgstr "الخصم (%)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_discount_mode
+msgid "Discount mode"
+msgstr "نمط الخصم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_discount_percent
+msgid "Discount percentage (as entered)"
+msgstr "نسبة الخصم (كما أُدخلت)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__distribution_analytic_account_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__distribution_analytic_account_ids
+msgid "Distribution Analytic Account"
+msgstr "حساب التوزيع التحليلي"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__account_move_line__nc_discount_mode__amount
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__value_mode__fixed
+msgid "Fixed amount"
+msgstr "مبلغ ثابت"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_discount_fixed
+msgid "Fixed discount"
+msgstr "خصم ثابت"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_invoice_layout
+msgid "Invoice Layout & Calculations"
+msgstr "تخطيط الفاتورة والحسابات"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model,name:ncollection_account_invoice_layout.model_ncollection_invoice_adjustment
+msgid "Invoice charge / discount"
+msgstr "رسم / خصم على الفاتورة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model,name:ncollection_account_invoice_layout.model_ncollection_invoice_adjustment_type
+msgid "Invoice charge / discount definition"
+msgstr "تعريف الرسم / الخصم على الفاتورة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__line_id
+msgid "Invoice line"
+msgstr "بند الفاتورة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__basis__lines
+msgid "Invoice lines (after line discounts)"
+msgstr "بنود الفاتورة (بعد خصومات البنود)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__basis__lines_after_discount
+msgid "Invoice lines after the invoice discounts"
+msgstr "بنود الفاتورة بعد خصومات الفاتورة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model,name:ncollection_account_invoice_layout.model_account_move
+msgid "Journal Entry"
+msgstr "قيد اليومية"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model,name:ncollection_account_invoice_layout.model_account_move_line
+msgid "Journal Item"
+msgstr "عنصر اليومية"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__kind
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__kind
+msgid "Kind"
+msgstr "النوع"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__name
+msgid "Label"
+msgstr "التسمية"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__write_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move_line__nc_total_incl
+msgid "Line total with tax. Typing a value solves the unit price."
+msgstr "إجمالي البند مع الضريبة. إدخال قيمة يحسب سعر الوحدة."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__move_id
+msgid "Move"
+msgstr "القيد"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_has_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_has_discount
+msgid "Nc Has Discount"
+msgstr "يوجد خصم"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "No unit price at the current price precision gives exactly %(target)s. The closest, %(achieved)s, was used (unit price %(price)s)."
+msgstr "لا يوجد سعر وحدة بدقة السعر الحالية يعطي %(target)s تماماً. تم استخدام الأقرب، %(achieved)s (سعر الوحدة %(price)s)."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__auto_add
+msgid "On every new invoice"
+msgstr "في كل فاتورة جديدة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__basis
+msgid "Only for a percentage. Discounts always use the first basis; a charge may use the second."
+msgstr "للنسبة المئوية فقط. تستخدم الخصومات دائماً الأساس الأول؛ وقد يستخدم الرسم الأساس الثاني."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__account_move_line__nc_discount_mode__percent
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__value_mode__percent
+msgid "Percentage"
+msgstr "نسبة مئوية"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__basis
+msgid "Percentage of"
+msgstr "النسبة من"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "Posted invoice lines cannot be re-priced here. Reset the invoice to draft first, or issue a credit note."
+msgstr "لا يمكن إعادة تسعير بنود فاتورة مرحّلة من هنا. أعد الفاتورة إلى مسودة أولاً، أو أصدر إشعاراً دائناً."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__sequence
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move_line__nc_adjustment_id
+msgid "Set on the line that books an invoice-level charge or discount: it is managed from the Charges & Adjustments block of the invoice, not edited here."
+msgstr "يُحدَّد على البند الذي يسجّل رسماً أو خصماً على مستوى الفاتورة: يُدار من قسم الرسوم والتعديلات في الفاتورة ولا يُعدَّل هنا."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_ids
+msgid "Taxes"
+msgstr "الضرائب"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
+msgid "The default value of \"%s\" cannot be negative."
+msgstr "لا يمكن أن تكون القيمة الافتراضية لـ «%s» سالبة."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move_line__nc_discount_fixed
+msgid "The discount in money when the mode is Fixed amount, in the basis of the Price column."
+msgstr "الخصم كمبلغ عندما يكون النمط «مبلغ ثابت»، على أساس عمود السعر."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move_line__nc_discount_amount
+msgid "The discount in money, in the basis of the Price column (quantity x price x Disc.%)."
+msgstr "الخصم كمبلغ، على أساس عمود السعر (الكمية × السعر × نسبة الخصم)."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "The discount of %(fixed)s on line \"%(line)s\" is more than the line's value of %(gross)s (quantity x price) or has the opposite sign."
+msgstr "الخصم %(fixed)s على البند «%(line)s» أكبر من قيمة البند %(gross)s (الكمية × السعر) أو بإشارة معاكسة."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_after_discount
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_total_after_discount
+msgid "The discounted, tax-excluded total of the product lines, before tax and before invoice-level charges."
+msgstr "إجمالي بنود المنتجات بعد الخصم وبدون الضريبة، قبل الضريبة وقبل رسوم الفاتورة."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__amount
+msgid "The money booked, tax-excluded and always positive; a discount is booked negative."
+msgstr "المبلغ المسجّل بدون الضريبة وهو موجب دائماً؛ ويُسجَّل الخصم بالسالب."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move_line__nc_discount_percent
+msgid "The percentage the user typed. It is the source of Disc.% in Percentage mode, so a recomputation never has to read the field it is computing."
+msgstr "النسبة التي أدخلها المستخدم. هي مصدر نسبة الخصم في نمط النسبة المئوية."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "The quantity of \"%s\" is zero, so no unit price can produce a total."
+msgstr "كمية «%s» صفر، لذا لا يمكن لأي سعر وحدة أن يعطي إجمالياً."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_ids
+msgid "The taxes of the booked line. A VAT-able freight charge carries the sales VAT."
+msgstr "ضرائب البند المسجّل. رسم الشحن الخاضع لضريبة القيمة المضافة يحمل ضريبة المبيعات."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "The unit price of \"%s\" has no effect on its total (a 100%% discount, or a fixed tax only), so the requested figure cannot be reached."
+msgstr "سعر وحدة «%s» لا يؤثر على إجماليه (خصم 100%% أو ضريبة ثابتة فقط)، لذا لا يمكن بلوغ الرقم المطلوب."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
+msgid "The value of \"%s\" cannot be negative: choose Charge or Discount instead."
+msgstr "لا يمكن أن تكون قيمة «%s» سالبة: اختر رسماً أو خصماً بدلاً من ذلك."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_after_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_total_after_discount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+msgid "Total After Discount"
+msgstr "الإجمالي بعد الخصم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_total_discount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+msgid "Total Discount"
+msgstr "إجمالي الخصم"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_total_incl
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+msgid "Total incl. Tax"
+msgstr "الإجمالي شامل الضريبة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__value
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__value_mode
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__value_mode
+msgid "Value"
+msgstr "القيمة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__applies_to__vendor
+msgid "Vendor bills only"
+msgstr "فواتير الموردين فقط"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_adjustment_type_form
+msgid "Where it applies"
+msgstr "مجال التطبيق"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move_line__nc_discount_mode
+msgid "Which of Disc.% and Discount the user entered. The other one is derived from it."
+msgstr "أيّ من نسبة الخصم والخصم أدخله المستخدم. يُشتق الآخر منه."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/account_move_line.py:0
+msgid "\"%s\" is an invoice charge or discount. Change it in the Charges & Adjustments block of the invoice."
+msgstr "«%s» رسم أو خصم على مستوى الفاتورة. عدّله من قسم الرسوم والتعديلات في الفاتورة."
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_adjustment_type_form
+msgid "A charge increases the invoice, a discount decreases it. Each adjustment is booked as a real invoice line on\n                        its account with its taxes, so the journal entry, receivable / payable and reconciliation stay Odoo's own.\n                        Order: line discounts, then invoice discounts, then charges, then taxes."
+msgstr "الرسم يزيد الفاتورة والخصم ينقصها. يُسجَّل كل تعديل كبند فاتورة حقيقي على حسابه مع ضرائبه، فيبقى قيد اليومية والذمم والتسوية من Odoo نفسه. الترتيب: خصومات البنود، ثم خصومات الفاتورة، ثم الرسوم، ثم الضرائب."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_discount
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_total_discount
+msgid "All line discounts, tax-excluded: what the lines would total without any discount, minus what they total."
+msgstr "كل خصومات البنود بدون الضريبة: ما كانت ستبلغه البنود بدون أي خصم مطروحاً منه إجماليها."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
+msgid "Charges and discounts of a posted invoice cannot be changed. Reset it to draft, or issue a credit note."
+msgstr "لا يمكن تغيير الرسوم والخصومات في فاتورة مرحّلة. أعدها إلى مسودة، أو أصدر إشعاراً دائناً."
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move_line__nc_amount
+msgid "Discounted, tax-excluded line total. Typing a value solves the unit price."
+msgstr "إجمالي البند بعد الخصم وبدون الضريبة. إدخال قيمة يحسب سعر الوحدة."

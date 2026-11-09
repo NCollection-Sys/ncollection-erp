@@ -259,7 +259,7 @@
         transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    &__bubble.is-open &__bubble-icon { transform: rotate(135deg); }
+    &__bubble.is-open .nc-ai-chat__bubble-icon { transform: rotate(135deg); }
 
     &__panel {
         transform-origin: bottom right;
@@ -276,8 +276,8 @@
     @media (max-width: 575.98px) {
         &__panel {
             width: calc(100vw - 1.5rem);
-            height: min(72vh, 32rem);
-            max-height: calc(100dvh - 6.5rem);
+            height: #{"min(72vh, 32rem)"};
+            max-height: #{"calc(100dvh - 6.5rem)"};
         }
     }
 }

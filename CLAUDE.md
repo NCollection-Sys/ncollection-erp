@@ -66,7 +66,7 @@ adding a module fails CI until someone updates this list.
 **Tenant layer** (installed into each tenant database):
 - `ncollection_core` — the security spine: 8 role groups + implications, license
   enforcement, menu visibility (Ring 1), workspace config, the financial gate, the
-  aggregation engine, KPIs, anomaly detection, the customer dashboard. Also the **Workspace Administration Center**
+  aggregation engine, KPIs, the customer dashboard (Anomaly Alerts were removed in 19.0.1.29.0). Also the **Workspace Administration Center**
   (Overview, Users, Roles & Permissions, Teams, Security, Company, Appearance, Document Stamps, System): `ncollection.role` =
   a named view of REAL `res.groups` (standard templates + custom roles that can never carry administration),
   `res.users.nc_role_ids` derived from the groups, password reset with forced change (`nc_must_change_password` +
@@ -100,6 +100,7 @@ adding a module fails CI until someone updates this list.
   `auditlog` ignores
   `groups=` and its log table is readable by a lower-trust group.
 - `ncollection_account_audit` — the **invoice amount audit** (#81 acceptance criterion): one immutable `ncollection.invoice.audit` row per NET change of an invoice's amounts (old / new, user, IP, time, company, invoice identity, content digest), taken by comparing the stored amounts around the OUTERMOST ORM write / create / unlink on an invoice or its lines. A native model, because OCA `auditlog` cannot audit `account.move` (#431). **In the release matrix (pass 2 on the three target databases), in no plan, never auto_install**. Docs: `docs/markdown/INVOICE_AMOUNT_AUDIT.md`.
+- `ncollection_account_invoice_layout` — **invoice layout & calculations** (customer invoices AND vendor bills): a money **Discount** column that works both ways with Disc.% (fixed vs percentage mode; the engine gets the exact percentage), **Amount** and **Total incl. Tax** the user can type (the unit price is solved with Odoo's own tax engine), centred line headers, **Total Discount / Total After Discount** above Untaxed Amount, and **configurable invoice-level charges and discounts** (freight, global discount, any other: data, no code) booked as REAL invoice lines on their own account and taxes. Draft invoices only; a posted invoice is never re-priced. Not built: column reordering. Docs: `docs/markdown/INVOICE_LAYOUT_AND_CALCULATIONS.md`.
 - `ncollection_branding` — **System Branding** (ONE record: the system's name, favicon, system / login / administration logos, browser title, copyright text and primary / secondary
   colours in the existing `--nc-color-*` tokens, resolved by `nc_brand()` for every surface, changed ONLY by the `System Branding Manager` group (platform staff and a Platform Administrator inside a tenant; the tenant Owner cannot); never the tenant's colours or the company's identity — three identities, three places;
   the persisted names stay `ncollection.product.branding` — docs: `docs/markdown/SYSTEM_BRANDING.md`), theme, logo, colors, and the document layer: the NCollection print layout (default), document types,
@@ -419,6 +420,7 @@ So tenant key === subdomain === database name, always.
 - `RELEASE_COMPATIBILITY_GATE.md` — why a database the code is ahead of answers a branded 503 instead of an HTTP 500: the gate before the registry (`ncollection_core/release_gate.py`, server-wide), the states, holds, the platform's status channel, provisioning `validating`, Company Entry, Fleet Migration (platform first, enforced), and how an
   operator reads a blocked PLATFORM database (`make release-status db=ncollection`).
 - `INVOICE_AMOUNT_AUDIT.md` — the invoice-amount audit (#81): why a native model, what is captured and what is not, install and rollback.
+- `INVOICE_LAYOUT_AND_CALCULATIONS.md` — the invoice line discount / Amount / Total formulas with worked examples, the charges & discounts model, calculation order, what is not built.
 - `SYSTEM_BRANDING.md` — system branding vs tenant branding vs company identity, the one resolver, favicon / logo validation, where "Odoo" was removed and what stays.
 - `DOCUMENT_PRINTING_AND_STAMPS.md` — the one print pipeline, View = Print, the NCollection layout, the stamp system, how to prove a PDF.
 - `BRANCH_PROTECTION.md` — required CI checks + 1-approval policy, and why none of it is

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- WHO SEES UAE E-INVOICING in Accounting. Accountants, Billing Managers and above (they all hold, or imply,
+         account.group_account_user) can open, prepare and validate e-invoices: READ-ONLY on the accounting documents. The
+         configuration (service provider, write-only credentials, tax and payment maps, retention) is for the workspace
+         Owner and the platform / system administrator only. The licence gate is unchanged: the module is installed only
+         where the tenant is entitled (gated module), and every method re-checks the group at the ORM. -->
+    <record id="account.group_account_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('ncollection_uae_einvoicing.group_einvoice_user'))]"/>
+    </record>
+    <record id="ncollection_core.group_role_owner" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('ncollection_uae_einvoicing.group_einvoice_manager'))]"/>
+    </record>
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('ncollection_uae_einvoicing.group_einvoice_manager'))]"/>
+    </record>
+</odoo>
