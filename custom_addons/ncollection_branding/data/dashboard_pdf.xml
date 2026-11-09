@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The page of every Dashboard PDF (see models/dashboard_pdf.py): A4, 14 mm sides, room for the footer. Not the
+         company's letterhead format, which has a tall top margin made for a pre-printed header. -->
+    <record id="paperformat_nc_dashboard" model="report.paperformat">
+        <field name="name">NCollection dashboard (A4)</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">16</field>
+        <field name="margin_bottom">18</field>
+        <field name="margin_left">14</field>
+        <field name="margin_right">14</field>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+    </record>
+    <record id="action_nc_dashboard_pdf" model="ir.actions.report">
+        <field name="name">NCollection dashboard PDF</field>
+        <field name="model">res.company</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_branding.nc_dashboard_pdf</field>
+        <field name="report_file">ncollection_branding.nc_dashboard_pdf</field>
+        <field name="paperformat_id" ref="paperformat_nc_dashboard"/>
+    </record>
+</odoo>

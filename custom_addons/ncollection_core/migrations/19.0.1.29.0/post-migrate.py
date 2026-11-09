@@ -35,3 +35,15 @@ def migrate(cr, version):
     cr.execute("""
         DELETE FROM ir_model_access WHERE model_id IN (SELECT id FROM ir_model WHERE model = 'ncollection.alert')""")
     _logger.info("Anomaly Alerts removal: %s record(s) removed (%s access row(s)).", removed, cr.rowcount)
+    # the table: dropped only when nothing would be lost (empty, or its rows are in the archive made by pre-migrate)
+    cr.execute("SELECT to_regclass('ncollection_alert')")
+    if cr.fetchone()[0]:
+        cr.execute("SELECT count(*) FROM ncollection_alert")
+        rows = cr.fetchone()[0]
+        cr.execute("SELECT to_regclass('ncollection_alert_archive')")
+        archived = bool(cr.fetchone()[0])
+        if not rows or archived:
+            cr.execute("DROP TABLE ncollection_alert")
+            _logger.info("Anomaly Alerts removal: table ncollection_alert dropped (%s row(s), archived=%s).", rows, archived)
+        else:
+            _logger.warning("Anomaly Alerts removal: ncollection_alert kept, %s row(s) are not archived.", rows)

@@ -44,6 +44,7 @@ Applies NCollection corporate identity across the Odoo backend:
         'views/document_stamp_views.xml',
         'views/print_settings_views.xml',
         'views/report_layout_templates.xml',
+        'data/dashboard_pdf.xml',
         'data/res_company_data.xml',
         'data/res_company_logo.xml',
         'data/system_parameters.xml',

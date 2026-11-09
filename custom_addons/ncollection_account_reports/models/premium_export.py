@@ -98,7 +98,6 @@ class NcollectionPremiumExport(models.AbstractModel):
     @api.model
     def build_html(self, kind, payload):
         meta, env, E = payload['meta'], self.env, escape
-        direction, align = ('rtl', 'right') if self._is_rtl() else ('ltr', 'left')
         decimals = meta['currency']['decimals']
 
         def shown(kpi):
@@ -114,37 +113,27 @@ class NcollectionPremiumExport(models.AbstractModel):
             return '%d' % value
 
         parts = [
-            '<!DOCTYPE html><html dir="%s" lang="%s"><head><meta charset="utf-8"/><style>' % (
-                direction, E(self.env.lang or 'en_US')),
-            'body{font-family:"Noto Sans Arabic","Noto Sans","DejaVu Sans",Arial,sans-serif;font-size:12px;'
-            'color:#1f2933;direction:%s}h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;margin:16px 0 6px}' % direction,
-            'table{width:100%%;border-collapse:collapse}th,td{border:1px solid #d9e2ec;padding:4px 6px;'
-            'text-align:%s}th{background:#eef2f7}.m{color:#52606d}' % align,
-            '</style></head><body>',
-            '<h1>%s</h1><div class="m">%s</div>' % (E(self._title(kind)), ' · '.join([
-                E(meta['company']), E('%s (%s)' % (meta['currency']['name'], meta['currency']['symbol'])),
-                E('%s → %s' % (meta['period']['from'], meta['period']['to']))])),
-            '<p class="m">%s</p>' % E(env._("Calculated by the server from the company's records.")),
-            '<h2>%s</h2><table><tr><th>%s</th><th>%s</th><th>%s</th></tr>' % (
+            '<p class="nc-note">%s</p>' % E(env._("Calculated by the server from the company's records.")),
+            '<h2>%s</h2><table class="nc-kpi"><thead><tr><th>%s</th><th class="n">%s</th><th>%s</th></tr></thead><tbody>' % (
                 E(env._("Key figures")), E(env._("Indicator")), E(env._("Value")), E(env._("Definition")))]
         for kpi in payload['kpis']:
             note = ' ' + kpi['note'] if kpi.get('note') else ''
-            parts.append('<tr><td>%s</td><td>%s</td><td class="m">%s</td></tr>' % (
+            parts.append('<tr><td>%s</td><td class="n">%s</td><td class="m">%s</td></tr>' % (
                 E(kpi['label']), shown(kpi), E(kpi['tip'] + note)))
-        parts.append('</table>')
+        parts.append('</tbody></table>')
         for table in payload['tables']:
-            parts.append('<h2>%s</h2><table>' % E(table['label']))
+            parts.append('<h2>%s</h2><table><tbody>' % E(table['label']))
             if not table['rows']:
                 parts.append('<tr><td class="m">%s</td></tr>' % E(table['empty']))
             for item in table['rows']:
-                parts.append('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (
+                parts.append('<tr><td dir="auto">%s</td><td dir="auto">%s</td><td>%s</td><td class="n">%s</td></tr>' % (
                     E(str(item.get('label') or item.get('name'))), E(item.get('partner') or ''),
                     E(item.get('date') or ''), E(format(item['value'], ',.%df' % decimals))))
-            parts.append('</table>')
-        parts.append('</body></html>')
-        return ''.join(parts)
+            parts.append('</tbody></table>')
+        return env['ncollection.dashboard.pdf'].document(self._title(kind), [
+            '%s (%s)' % (meta['currency']['name'], meta['currency']['symbol']),
+            '%s → %s' % (meta['period']['from'], meta['period']['to'])], ''.join(parts), company=meta['company'])
 
     @api.model
     def build_pdf(self, kind, payload):
-        return self.env['ir.actions.report']._run_wkhtmltopdf(
-            [self.build_html(kind, payload)], footer=None, landscape=False, set_viewport_size=True)
+        return self.env['ncollection.dashboard.pdf'].render(self.build_html(kind, payload), self._title(kind))

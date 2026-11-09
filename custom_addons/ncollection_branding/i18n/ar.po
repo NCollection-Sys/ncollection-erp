@@ -1575,6 +1575,8 @@ msgid "Colours and typography"
 msgstr "الألوان والخطوط"
 
 #. module: ncollection_branding
+#. odoo-python
+#: code:addons/ncollection_branding/models/dashboard_pdf.py:0
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
 msgid "Page"
 msgstr "الصفحة"

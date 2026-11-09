@@ -184,76 +184,55 @@ class DashboardExport(models.AbstractModel):
     @api.model
     def build_html(self, payload):
         meta = payload['meta']
-        rtl = self._is_rtl()
-        direction = 'rtl' if rtl else 'ltr'
-        align = 'right' if rtl else 'left'
-        other = 'left' if rtl else 'right'
         E = escape
         env_ = self.env._
         widgets = payload['widgets']
-        parts = [
-            '<!DOCTYPE html><html dir="%s" lang="%s"><head><meta charset="utf-8"/><style>' % (
-                direction, E(self.env.lang or 'en_US')),
-            'body{font-family:"Noto Sans Arabic","Noto Sans","DejaVu Sans",Arial,sans-serif;font-size:12px;'
-            'color:#1f2933;'
-            'direction:%s;margin:0}' % direction,
-            'h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;margin:18px 0 6px;border-bottom:1px solid #cbd2d9;'
-            'padding-bottom:3px}',
-            '.ctx{color:#52606d;margin-bottom:10px}table{width:100%%;border-collapse:collapse;page-break-inside:auto}'
-            'tr{page-break-inside:avoid}th,td{border:1px solid #d9e2ec;padding:4px 6px;text-align:%s}'
-            'th{background:#eef2f7}td.n{text-align:%s;white-space:nowrap}'
-            '.sub{color:#7b8794;font-size:10px}' % (align, other),
-            '.bar{background:#3b82f6;height:8px;display:inline-block}.neg{color:#b91c1c}',
-            '</style></head><body>',
-            '<h1>%s</h1>' % E(env_('Summary dashboard')),
-            '<div class="ctx">%s</div>' % ' &middot; '.join([
-                E(meta.get('company_name') or ''), E(self.env.company.currency_id.name or ''),
-                '%s %s \u2192 %s' % (E(env_('From')), E(meta['period']['date_from']), E(meta['period']['date_to'])),
-                '%s %s' % (E(env_('Exported by')), E(meta.get('user_name') or ''))]),
-        ]
+        parts = []
         kpis = [w for w in widgets if w.get('type') == 'kpi']
         if kpis:
-            parts.append('<h2>%s</h2><table><tr><th>%s</th><th>%s</th><th>%s</th></tr>' % (
+            parts.append('<h2>%s</h2><table class="nc-kpi"><thead><tr><th>%s</th><th class="n">%s</th><th>%s</th></tr></thead><tbody>' % (
                 E(env_('Key figures')), E(env_('Metric')), E(env_('Value')), E(env_('Basis'))))
             for w in kpis:
                 negative = (w.get('value') or 0) < 0
-                parts.append('<tr><td>%s</td><td class="n%s">%s</td><td class="sub">%s</td></tr>' % (
+                parts.append('<tr><td>%s</td><td class="n%s">%s</td><td class="m">%s</td></tr>' % (
                     E(str(w.get('label') or '')), ' neg' if negative else '',
                     E(self._format_value(w.get('format'), w.get('value'))), E(str(w.get('sub') or ''))))
-            parts.append('</table>')
+            parts.append('</tbody></table>')
         for w in (w for w in widgets if w.get('type') == 'chart'):
             data = list(zip(w.get('labels') or (), w.get('data') or ()))
             peak = max([abs(v or 0) for _l, v in data] or [0]) or 1
-            parts.append('<h2>%s</h2><table><tr><th>%s</th><th>%s</th><th></th></tr>' % (
+            parts.append('<h2>%s</h2><table><thead><tr><th>%s</th><th class="n">%s</th><th></th></tr></thead><tbody>' % (
                 E(str(w.get('label') or '')), E(env_('Label')), E(env_('Value'))))
             for label, value in data:
-                parts.append('<tr><td>%s</td><td class="n">%s</td><td style="width:35%%"><span class="bar" '
+                parts.append('<tr><td dir="auto">%s</td><td class="n">%s</td><td style="width:35%%"><span class="bar" '
                              'style="width:%d%%"></span></td></tr>' % (
                                  E(str(label)), E(self._format_value(w.get('format'), value)),
                                  int(abs(value or 0) / peak * 100)))
             if not data:
-                parts.append('<tr><td colspan="3" class="sub">%s</td></tr>' % E(env_('No data in this period')))
-            parts.append('</table>')
+                parts.append('<tr><td colspan="3" class="m">%s</td></tr>' % E(env_('No data in this period')))
+            parts.append('</tbody></table>')
         for w in (w for w in widgets if w.get('type') == 'statement'):
-            parts.append('<h2>%s <span class="sub">%s</span></h2><table>' % (
+            parts.append('<h2>%s <span class="nc-sub">%s</span></h2><table><tbody>' % (
                 E(str(w.get('label') or '')), E(str(w.get('period') or ''))))
             for line in w.get('rows') or ():
                 level = int(line.get('level') or 0)
-                pad = 6 + 14 * min(level, 6)
+                pad = 8 + 14 * min(level, 6)
                 weight = 'bold' if not level else 'normal'
+                side = 'right' if self.env['ncollection.dashboard.pdf'].is_rtl() else 'left'
                 parts.append('<tr><td style="padding-%s:%dpx;font-weight:%s">%s</td><td class="n%s">%s</td></tr>' % (
-                    align, pad, weight, E(str(line.get('label') or '')),
+                    side, pad, weight, E(str(line.get('label') or '')),
                     ' neg' if (line.get('value') or 0) < 0 else '',
                     E(formatLang(self.env, line.get('value') or 0.0, currency_obj=self.env.company.currency_id))))
-            parts.append('</table>')
-        parts.append('</body></html>')
-        return ''.join(parts)
+            parts.append('</tbody></table>')
+        return self.env['ncollection.dashboard.pdf'].document(env_('Summary dashboard'), [
+            self.env.company.currency_id.name or '',
+            '%s %s → %s' % (env_('From'), meta['period']['date_from'], meta['period']['date_to']),
+            '%s %s' % (env_('Exported by'), meta.get('user_name') or '')], ''.join(parts),
+            company=meta.get('company_name') or None)
 
     @api.model
     def build_pdf(self, payload):
-        html = self.build_html(payload)
-        return self.env['ir.actions.report']._run_wkhtmltopdf(
-            [html], footer=None, landscape=False, set_viewport_size=True)
+        return self.env['ncollection.dashboard.pdf'].render(self.build_html(payload), self.env._('Summary dashboard'))
 
     @api.model
     def xlsx_b64(self, payload):                      # symmetry with the report engine's contract (tests)

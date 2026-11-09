@@ -160,43 +160,34 @@ class SpreadsheetDashboardExport(models.AbstractModel):
     # ------------------------------------------------------------------ PDF
     @api.model
     def build_html(self, snapshot):
-        rtl = self.is_rtl()
-        direction, align, other = ('rtl', 'right', 'left') if rtl else ('ltr', 'left', 'right')
         E = escape
-        parts = [
-            '<!DOCTYPE html><html dir="%s" lang="%s"><head><meta charset="utf-8"/><style>' % (
-                direction, E(self.env.lang or 'en_US')),
-            'body{font-family:"Noto Sans Arabic","Noto Sans","DejaVu Sans",Arial,sans-serif;font-size:12px;'
-            'color:#1f2933;direction:%s;margin:0}' % direction,
-            'h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;margin:18px 0 6px;border-bottom:1px solid #cbd2d9;'
-            'padding-bottom:3px}.ctx{color:#52606d;margin-bottom:10px}',
-            'table{width:100%%;border-collapse:collapse;page-break-inside:auto}tr{page-break-inside:avoid}'
-            'th,td{border:1px solid #d9e2ec;padding:3px 6px;text-align:%s}td.n{text-align:%s;white-space:nowrap}'
-            % (align, other),
-            '</style></head><body>',
-            '<h1>%s</h1>' % E(snapshot['name'] or self.env._("Dashboard")),
-        ]
-        if snapshot['filters']:
-            parts.append('<div class="ctx">%s</div>' % ' &middot; '.join(E(item) for item in snapshot['filters']))
+        pdf = self.env['ncollection.dashboard.pdf']
+        parts = []
         for figure in snapshot['figures']:
-            parts.append('<h2>%s</h2><table>' % E(figure['title']))
-            for line in figure['lines']:
+            lines = figure['lines']
+            parts.append('<h2>%s</h2><table><tbody>' % E(figure['title']))
+            for line in lines:
                 parts.append('<tr>%s</tr>' % ''.join(
-                    '<%s>%s</%s>' % ('td' if i else 'th', E(part), 'td' if i else 'th')
+                    '<%s>%s</%s>' % ('td class="n"' if i else 'th dir="auto"', E(pdf.tidy_amount(part)), 'td' if i else 'th')
                     for i, part in enumerate(line)))
-            parts.append('</table>')
+            parts.append('</tbody></table>')
         for data in snapshot['sheets']:
             parts.append('<h2>%s</h2><table>' % E(data['name']))
-            for row in data['rows']:
+            for index, row in enumerate(data['rows']):
+                if index == 0:
+                    parts.append('<thead>')
+                tag = 'th' if index == 0 else 'td'
                 parts.append('<tr>%s</tr>' % ''.join(
-                    '<td class="%s">%s</td>' % ('n' if cell and cell[0] == 'n' else '',
-                                                E(cell[2] or str(cell[1])) if cell else '')
+                    '<%s class="%s"%s>%s</%s>' % (
+                        tag, 'n' if cell and cell[0] == 'n' else '',
+                        '' if cell and cell[0] == 'n' else ' dir="auto"',
+                        E(pdf.tidy_amount(cell[2] or str(cell[1]))) if cell else '', tag)
                     for cell in row))
-            parts.append('</table>')
-        parts.append('</body></html>')
-        return ''.join(parts)
+                parts.append('</thead><tbody>' if index == 0 else '')
+            parts.append('</tbody></table>')
+        return pdf.document(snapshot['name'] or self.env._("Dashboard"), list(snapshot['filters'] or ()), ''.join(parts))
 
     @api.model
     def build_pdf(self, snapshot):
-        return self.env['ir.actions.report']._run_wkhtmltopdf(
-            [self.build_html(snapshot)], footer=None, landscape=False, set_viewport_size=True)
+        return self.env['ncollection.dashboard.pdf'].render(
+            self.build_html(snapshot), snapshot['name'] or self.env._("Dashboard"))
