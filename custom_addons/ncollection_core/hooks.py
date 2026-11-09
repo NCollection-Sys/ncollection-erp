@@ -63,6 +63,8 @@ ROLE_IMPLICATIONS = {
         # would give Manager a financial write (D5) and CEO a write where D2 says read-only.
         'purchase.group_purchase_manager',
         'stock.group_stock_manager',
+        # UAE e-invoicing configuration (provider, write-only credentials, maps): the Owner of an entitled workspace.
+        'ncollection_uae_einvoicing.group_einvoice_manager',
     ],
 }
 

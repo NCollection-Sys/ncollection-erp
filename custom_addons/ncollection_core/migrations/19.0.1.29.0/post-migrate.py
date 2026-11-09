@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Remove every Anomaly Alerts record that a plain module upgrade would leave behind.
 
-The data files that defined them are gone from the manifest. Odoo deletes the non-``noupdate`` ones by itself, but the two
+The data files that defined them are gone from the manifest. Odoo deletes the non-``noupdate`` ones by itself, but the
+two
 crons were ``noupdate`` and the menu, action, views and rules must not depend on that rule, so they are removed here
-explicitly. Only records of THIS feature are named; the scheduler service user / group (a general non-interactive identity
+explicitly. Only records of THIS feature are named; the scheduler service user / group (a general non-interactive
+identity
 used by the platform's administration service), the release gate, the audit modules and every other alert (security,
 release-health) are untouched. Idempotent: a second run finds nothing.
 """
+
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -22,10 +25,13 @@ _RECORDS = (
 
 def migrate(cr, version):
     from odoo import api, SUPERUSER_ID
+
     env = api.Environment(cr, SUPERUSER_ID, {})
     removed = 0
     for model, names in _RECORDS:
-        data = env['ir.model.data'].search([('module', '=', 'ncollection_core'), ('model', '=', model), ('name', 'in', list(names))])
+        data = env['ir.model.data'].search(
+            [('module', '=', 'ncollection_core'), ('model', '=', model), ('name', 'in', list(names))]
+        )
         records = env[model].browse(data.mapped('res_id')).exists()
         if records:
             removed += len(records)
@@ -44,6 +50,8 @@ def migrate(cr, version):
         archived = bool(cr.fetchone()[0])
         if not rows or archived:
             cr.execute("DROP TABLE ncollection_alert")
-            _logger.info("Anomaly Alerts removal: table ncollection_alert dropped (%s row(s), archived=%s).", rows, archived)
+            _logger.info(
+                "Anomaly Alerts removal: table ncollection_alert dropped (%s row(s), archived=%s).", rows, archived
+            )
         else:
             _logger.warning("Anomaly Alerts removal: ncollection_alert kept, %s row(s) are not archived.", rows)

@@ -190,8 +190,9 @@ class DashboardExport(models.AbstractModel):
         parts = []
         kpis = [w for w in widgets if w.get('type') == 'kpi']
         if kpis:
-            parts.append('<h2>%s</h2><table class="nc-kpi"><thead><tr><th>%s</th><th class="n">%s</th><th>%s</th></tr></thead><tbody>' % (
-                E(env_('Key figures')), E(env_('Metric')), E(env_('Value')), E(env_('Basis'))))
+            heads = (E(env_('Key figures')), E(env_('Metric')), E(env_('Value')), E(env_('Basis')))
+            parts.append('<h2>%s</h2><table class="nc-kpi"><thead><tr><th>%s</th><th class="n">%s</th>'
+                         '<th>%s</th></tr></thead><tbody>' % heads)
             for w in kpis:
                 negative = (w.get('value') or 0) < 0
                 parts.append('<tr><td>%s</td><td class="n%s">%s</td><td class="m">%s</td></tr>' % (
@@ -201,9 +202,9 @@ class DashboardExport(models.AbstractModel):
         for w in (w for w in widgets if w.get('type') == 'chart'):
             data = list(zip(w.get('labels') or (), w.get('data') or ()))
             peak = max([abs(v or 0) for _l, v in data] or [0]) or 1
+            heads = (E(str(w.get('label') or '')), E(env_('Label')), E(env_('Value')))
             parts.append('<h2>%s</h2><table><thead><tr><th>%s</th><th class="n">%s</th><th></th></tr>'
-                         '</thead><tbody>' % (
-                E(str(w.get('label') or '')), E(env_('Label')), E(env_('Value'))))
+                         '</thead><tbody>' % heads)
             for label, value in data:
                 parts.append('<tr><td dir="auto">%s</td><td class="n">%s</td><td style="width:35%%"><span class="bar" '
                              'style="width:%d%%"></span></td></tr>' % (

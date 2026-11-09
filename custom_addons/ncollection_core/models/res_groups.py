@@ -54,8 +54,10 @@ class ResGroups(models.Model):
         """
         result = super()._register_hook()
         try:
-            from odoo.addons.ncollection_core.hooks import _sync_role_implications
+            from odoo.addons.ncollection_core.hooks import _sync_role_implications, _sync_scheduler_read_access
             _sync_role_implications(self.env)
+            # the scheduler's read-only ACLs on the apps installed since core (kept here when Anomaly Alerts went)
+            _sync_scheduler_read_access(self.env)
         except Exception:                                    # pragma: no cover
             # a registry that fails to load is an outage; a missing link is a gap
             _logger.exception("ncollection_core: syncing role implications failed")

@@ -177,12 +177,48 @@ msgid "After"
 msgstr "بعد"
 
 #. module: ncollection_account_audit
+#. odoo-python
 #: code:addons/ncollection_account_audit/models/invoice_audit.py:0
 msgid "Audit entries cannot be modified."
 msgstr "لا يمكن تعديل سجلات التدقيق."
 
 #. module: ncollection_account_audit
+#. odoo-python
 #: code:addons/ncollection_account_audit/models/invoice_audit.py:0
 msgid "Audit entries cannot be deleted."
 msgstr "لا يمكن حذف سجلات التدقيق."
 
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__create_uid
+msgid "Created by"
+msgstr "أنشأه"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__create_date
+msgid "Created on"
+msgstr "أُنشئ في"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_account_move__display_name
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_account_move_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_account_move__id
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_account_move_line__id
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: ncollection_account_audit
+#: model:ir.model.fields,field_description:ncollection_account_audit.field_ncollection_invoice_audit__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"

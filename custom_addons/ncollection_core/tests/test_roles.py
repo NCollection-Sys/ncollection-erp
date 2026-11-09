@@ -77,6 +77,7 @@ MATRIX_ALLOWED_DIRECT = {
         'account.group_account_user',
         'purchase.group_purchase_manager',
         'stock.group_stock_manager',
+        'ncollection_uae_einvoicing.group_einvoice_manager',
     },
 }
 

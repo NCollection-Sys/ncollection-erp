@@ -2,13 +2,16 @@
 """The ONE page design of every Dashboard PDF (Sales, Invoicing, the Summary dashboard, the Spreadsheet Dashboards).
 
 WHY A DEDICATED PAPER FORMAT. ``ir.actions.report._run_wkhtmltopdf`` called without a report takes the COMPANY's paper
-format - the one made for a letterhead document, with a tall top margin and thin sides. A dashboard sent through it started
+format - the one made for a letterhead document, with a tall top margin and thin sides. A dashboard sent through it
+started
 half way down the page, hard against the left edge. These exports pass ``action_nc_dashboard_pdf`` instead, whose paper
 format is A4 with real margins on every side (``data/dashboard_pdf.xml``), and a footer with the page number.
 
-The builders (account_reports, core, dashboard_export) only produce the BODY; the design lives here so the three cannot drift.
+The builders (account_reports, core, dashboard_export) only produce the BODY; the design lives here so the three
+cannot drift.
 Figures are never re-computed here: this module lays out what the caller already calculated.
 """
+
 import re
 from html import escape
 
@@ -52,11 +55,16 @@ function subst() { var vars = {}; var q = document.location.search.substring(1).
   ['page', 'topage'].forEach(function (c) { var e = document.getElementsByClassName(c);
     for (var j = 0; j < e.length; ++j) e[j].textContent = vars[c]; }); }
 </script><style>
-body { margin: 0; font-family: "Noto Sans Arabic","Noto Sans","DejaVu Sans",Arial,sans-serif; font-size: 8pt; color: #7b8794; }
+body { margin: 0; font-family: "Noto Sans Arabic","Noto Sans","DejaVu Sans",Arial,sans-serif; font-size: 8pt; color:
+#7b8794; }
 .f { border-top: 1px solid #cbd2d9; padding-top: 4px; display: table; width: 100%%; }
-.f > span { display: table-cell; } .f > span:first-child { max-width: 120mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f > span { display: table-cell; } .f > span:first-child { max-width: 120mm; overflow: hidden; text-overflow:
+ellipsis; white-space: nowrap; }
 .f > span + span { text-align: %(end)s; white-space: nowrap; }
-</style></head><body onload="subst()"><div class="f"><span>%(left)s</span><span>%(page)s <span class="page"></span> / <span class="topage"></span></span></div></body></html>"""
+</style></head><body onload="subst()">
+<div class="f"><span>%(left)s</span>
+<span>%(page)s <span class="page"></span> / <span class="topage"></span></span></div>
+</body></html>"""
 
 
 class DashboardPdf(models.AbstractModel):
@@ -70,13 +78,14 @@ class DashboardPdf(models.AbstractModel):
 
     @api.model
     def tidy_amount(self, text):
-        """Put a space between a figure and a glued currency code (display only; the Excel file keeps the cell as is)."""
+        """Put a space between a figure and a glued currency code (display only; the Excel file keeps the cell as
+        is)."""
         if not isinstance(text, str):
             return text
-        match = _GLUED_CODE.match(text.strip())
+        match = _GLUED_CODE.fullmatch(text.strip())
         if match:
             return '%s %s' % (match.group(1), match.group(2))
-        match = _GLUED_PREFIX.match(text.strip())
+        match = _GLUED_PREFIX.fullmatch(text.strip())
         if match and match.group(1).isupper():
             return '%s %s' % (match.group(2), match.group(1))
         return text
@@ -85,20 +94,36 @@ class DashboardPdf(models.AbstractModel):
     def document(self, title, context_parts, body, company=None):
         """A complete HTML document: header (company, title, context line), then ``body`` (already escaped HTML)."""
         rtl = self.is_rtl()
-        css = _CSS % {'dir': 'rtl' if rtl else 'ltr', 'start': 'right' if rtl else 'left', 'end': 'left' if rtl else 'right'}
+        css = _CSS % {
+            'dir': 'rtl' if rtl else 'ltr',
+            'start': 'right' if rtl else 'left',
+            'end': 'left' if rtl else 'right',
+        }
         context = ''.join('<span>%s</span>' % escape(str(part)) for part in context_parts if part)
-        return ('<!DOCTYPE html><html dir="%s" lang="%s"><head><meta charset="utf-8"/><style>%s</style></head><body>'
-                '<div class="nc-head"><div class="nc-company">%s</div><h1>%s</h1><div class="nc-ctx">%s</div></div>%s'
-                '</body></html>') % ('rtl' if rtl else 'ltr', escape(self.env.lang or 'en_US'), css,
-                                     escape(company or self.env.company.name or ''), escape(title or ''), context, body)
+        return (
+            '<!DOCTYPE html><html dir="%s" lang="%s"><head><meta charset="utf-8"/><style>%s</style></head><body>'
+            '<div class="nc-head"><div class="nc-company">%s</div><h1>%s</h1><div class="nc-ctx">%s</div></div>%s'
+            '</body></html>'
+        ) % (
+            'rtl' if rtl else 'ltr',
+            escape(self.env.lang or 'en_US'),
+            css,
+            escape(company or self.env.company.name or ''),
+            escape(title or ''),
+            context,
+            body,
+        )
 
     @api.model
     def render(self, html, title='', landscape=False):
         """The PDF of ``html`` on the dashboard paper format, with a footer (company, title, page n / N)."""
         rtl = self.is_rtl()
         footer = _FOOTER % {
-            'dir': 'rtl' if rtl else 'ltr', 'end': 'left' if rtl else 'right',
+            'dir': 'rtl' if rtl else 'ltr',
+            'end': 'left' if rtl else 'right',
             'left': escape('%s · %s' % (self.env.company.name or '', title or '')),
-            'page': escape(self.env._("Page"))}
+            'page': escape(self.env._("Page")),
+        }
         return self.env['ir.actions.report']._run_wkhtmltopdf(
-            [html], report_ref='ncollection_branding.action_nc_dashboard_pdf', footer=footer, landscape=landscape)
+            [html], report_ref='ncollection_branding.action_nc_dashboard_pdf', footer=footer, landscape=landscape
+        )

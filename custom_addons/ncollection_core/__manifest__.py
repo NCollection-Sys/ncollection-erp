@@ -74,7 +74,8 @@
         # readability of the data files.
         'views/home_action.xml',
         'data/kpi_data.xml',
-        # The scheduler service user (generic non-interactive identity; Anomaly Alerts were removed in 19.0.1.29.0). (Order is cosmetic: init_models()
+        # The scheduler service user (generic non-interactive identity; Anomaly Alerts were removed in 19.0.1.29.0).
+        # (Order is cosmetic: init_models()
         # reflects every Python model into ir.model before ANY of a module's
         # data files load, so model_id ref= would resolve either way.)
         # Must load BEFORE any cron that binds to it.

@@ -12,63 +12,118 @@ DEFINITIONS (one set, used everywhere; worked examples in docs/markdown/INVOICE_
 
 MODE. A line is in one of two modes, never both:
 
-* ``percent``: the user's number is Disc.%; the Discount is derived from it.  Quantity or price change: percentage stays.
+* ``percent``: the user's number is Disc.%; the Discount is derived from it.  Quantity or price change: percentage
+stays.
 * ``amount``:  the user's number is the Discount; ``nc_discount_fixed`` is authoritative and Disc.% is derived from it.
   Quantity or price change: the money amount stays, the percentage is recomputed.
   The tax engine is fed the EXACT percentage (fixed / gross x 100), not the 2-decimal stored one, so the booked
   subtotal is gross - fixed to the cent and the stored, rounded Disc.% can never move the books.
 
 AMOUNT / TOTAL INCL. TAX are editable. Typing a target solves the unit price with Odoo's tax engine (never a second
-tax formula): the engine's result is affine in the price (a percentage tax, a price-included tax and a fixed tax are all
-affine), so two probes give the exact price, which is then snapped to the price precision and the nearest neighbour that
+tax formula): the engine's result is affine in the price (a percentage tax, a price-included tax and a fixed tax are
+all
+affine), so two probes give the exact price, which is then snapped to the price precision and the nearest neighbour
+that
 the engine's own ROUNDING turns into the target is chosen. Quantity, taxes and the discount (percentage or fixed) are
 never touched. A target that cannot be reached (zero quantity, a 100 % discount, a fixed tax) is refused with a clear
 message instead of booking a wrong figure.
 
-POSTED invoices: none of these fields may be used. Core lets a posted line's price be written (measured, INVOICE_AMOUNT_AUDIT.md
+POSTED invoices: none of these fields may be used. Core lets a posted line's price be written (measured,
+INVOICE_AMOUNT_AUDIT.md
 section 7); this module does not add a second way to do it and does not change that policy.
 """
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_is_zero, float_round
 
-_SEARCH_RADIUS = 3          # price steps examined each side of the solved price
+_SEARCH_RADIUS = 3  # price steps examined each side of the solved price
 _PRODUCT = 'product'
-_BASIS_FIELDS = {'price_unit', 'quantity', 'discount', 'tax_ids', 'nc_discount_fixed', 'nc_discount_mode', 'nc_discount_amount',
-                 'nc_amount', 'nc_total_incl', 'product_id'}
-# What a user can change on a line. Core also writes bookkeeping flags (dirty markers, term keys) on every line while it
+_BASIS_FIELDS = {
+    'price_unit',
+    'quantity',
+    'discount',
+    'tax_ids',
+    'nc_discount_fixed',
+    'nc_discount_mode',
+    'nc_discount_amount',
+    'nc_amount',
+    'nc_total_incl',
+    'product_id',
+}
+# What a user can change on a line. Core also writes bookkeeping flags (dirty markers, term keys) on every line while
+# it
 # synchronises a move; those are not the user's edit and must pass.
 _PROTECTED_LINE_FIELDS = {
-    'name', 'quantity', 'price_unit', 'discount', 'tax_ids', 'account_id', 'analytic_distribution', 'product_id',
-    'product_uom_id', 'nc_discount_amount', 'nc_discount_fixed', 'nc_discount_mode', 'nc_amount', 'nc_total_incl',
-    'move_id', 'display_type', 'nc_adjustment_id', 'price_subtotal', 'price_total'}
+    'name',
+    'quantity',
+    'price_unit',
+    'discount',
+    'tax_ids',
+    'account_id',
+    'analytic_distribution',
+    'product_id',
+    'product_uom_id',
+    'nc_discount_amount',
+    'nc_discount_fixed',
+    'nc_discount_mode',
+    'nc_amount',
+    'nc_total_incl',
+    'move_id',
+    'display_type',
+    'nc_adjustment_id',
+    'price_subtotal',
+    'price_total',
+}
 
 
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
     nc_discount_mode = fields.Selection(
-        [('percent', 'Percentage'), ('amount', 'Fixed amount')], string='Discount mode', default='percent',
-        required=True, copy=True,
-        help="Which of Disc.% and Discount the user entered. The other one is derived from it.")
+        [('percent', 'Percentage'), ('amount', 'Fixed amount')],
+        string='Discount mode',
+        default='percent',
+        required=True,
+        copy=True,
+        help="Which of Disc.% and Discount the user entered. The other one is derived from it.",
+    )
     nc_discount_fixed = fields.Monetary(
-        string='Fixed discount', currency_field='currency_id', copy=True,
-        help="The discount in money when the mode is Fixed amount, in the basis of the Price column.")
+        string='Fixed discount',
+        currency_field='currency_id',
+        copy=True,
+        help="The discount in money when the mode is Fixed amount, in the basis of the Price column.",
+    )
     nc_discount_percent = fields.Float(
-        string="Discount percentage (as entered)", digits="Discount", copy=True,
-        help="The percentage the user typed. It is the source of Disc.% in Percentage mode, so a recomputation never has to read "
-             "the field it is computing.")
+        string="Discount percentage (as entered)",
+        digits="Discount",
+        copy=True,
+        help="The percentage the user typed. It is the source of Disc.% in Percentage mode, so a recomputation "
+             "never has to read "
+        "the field it is computing.",
+    )
     discount = fields.Float(compute="_compute_nc_discount", store=True, readonly=False)
     nc_discount_amount = fields.Monetary(
-        string='Discount', currency_field='currency_id', compute='_compute_nc_discount_amount',
+        string='Discount',
+        currency_field='currency_id',
+        compute='_compute_nc_discount_amount',
         inverse='_inverse_nc_discount_amount',
-        help="The discount in money, in the basis of the Price column (quantity x price x Disc.%).")
+        help="The discount in money, in the basis of the Price column (quantity x price x Disc.%).",
+    )
     nc_amount = fields.Monetary(
-        string='Amount', currency_field='currency_id', compute='_compute_nc_amounts', inverse='_inverse_nc_amount',
-        help="Discounted, tax-excluded line total. Typing a value solves the unit price.")
+        string='Amount',
+        currency_field='currency_id',
+        compute='_compute_nc_amounts',
+        inverse='_inverse_nc_amount',
+        help="Discounted, tax-excluded line total. Typing a value solves the unit price.",
+    )
     nc_total_incl = fields.Monetary(
-        string='Total incl. Tax', currency_field='currency_id', compute='_compute_nc_amounts',
-        inverse='_inverse_nc_total_incl', help="Line total with tax. Typing a value solves the unit price.")
+        string='Total incl. Tax',
+        currency_field='currency_id',
+        compute='_compute_nc_amounts',
+        inverse='_inverse_nc_total_incl',
+        help="Line total with tax. Typing a value solves the unit price.",
+    )
 
     # ------------------------------------------------------------------ discount: percentage <-> money
     @api.depends('nc_discount_mode', 'nc_discount_fixed', 'nc_discount_percent', 'quantity', 'price_unit')
@@ -99,7 +154,8 @@ class AccountMoveLine(models.Model):
 
     @api.onchange('discount')
     def _onchange_nc_discount_percent(self):
-        """The user typed Disc.%: the percentage is now the source (a programmatic change never reaches an onchange)."""
+        """The user typed Disc.%: the percentage is now the source (a programmatic change never reaches an
+        onchange)."""
         for line in self:
             if line.display_type == _PRODUCT:
                 line.nc_discount_mode = 'percent'
@@ -123,10 +179,15 @@ class AccountMoveLine(models.Model):
             if float_is_zero(fixed, precision_rounding=rounding):
                 continue
             if fixed * gross < 0 or abs(fixed) > abs(gross) + rounding:
-                raise ValidationError(self.env._(
-                    "The discount of %(fixed)s on line \"%(line)s\" is more than the line's value of %(gross)s "
-                    "(quantity x price) or has the opposite sign.",
-                    fixed=fixed, line=line.name or '', gross=line.currency_id.round(gross) if line.currency_id else gross))
+                raise ValidationError(
+                    self.env._(
+                        "The discount of %(fixed)s on line \"%(line)s\" is more than the line's value of %(gross)s "
+                        "(quantity x price) or has the opposite sign.",
+                        fixed=fixed,
+                        line=line.name or '',
+                        gross=line.currency_id.round(gross) if line.currency_id else gross,
+                    )
+                )
 
     # ------------------------------------------------------------------ write: a typed Disc.% means percentage mode
     @api.model_create_multi
@@ -156,10 +217,13 @@ class AccountMoveLine(models.Model):
         return result
 
     def _nc_resync_adjustments(self):
-        """A product line changed: percentage adjustments are recalculated (the adjustment lines themselves never count)."""
+        """A product line changed: percentage adjustments are recalculated (the adjustment lines themselves never
+        count)."""
         if self.env.context.get('nc_adjustment_sync'):
             return
-        moves = self.filtered(lambda l: l.display_type == _PRODUCT and not l.nc_adjustment_id).move_id.filtered('nc_adjustment_ids')
+        moves = self.filtered(
+            lambda line: line.display_type == _PRODUCT and not line.nc_adjustment_id
+        ).move_id.filtered('nc_adjustment_ids')
         moves._nc_sync_adjustments()
 
     # ------------------------------------------------------------------ Amount / Total incl. Tax
@@ -185,8 +249,12 @@ class AccountMoveLine(models.Model):
 
     def _nc_refuse_posted(self):
         if self.move_id and self.move_id.state == 'posted':
-            raise UserError(self.env._(
-                "Posted invoice lines cannot be re-priced here. Reset the invoice to draft first, or issue a credit note."))
+            raise UserError(
+                self.env._(
+                    "Posted invoice lines cannot be re-priced here. Reset the invoice to draft first, or issue a "
+                    "credit note."
+                )
+            )
 
     def _nc_probe(self, price, rounded=False):
         """(tax-excluded, tax-included) total of THIS line if its unit price were ``price``, from Odoo's own engine.
@@ -210,21 +278,28 @@ class AccountMoveLine(models.Model):
         return details['raw_total_excluded_currency'], details['raw_total_included_currency']
 
     def _nc_solve_price(self, kind, target):
-        """The unit price whose booked ``kind`` ('amount' = tax-excluded, 'total' = tax-included) is closest to ``target``.
+        """The unit price whose booked ``kind`` ('amount' = tax-excluded, 'total' = tax-included) is closest to
+        ``target``.
 
         Returns (price, achieved, exact). Raises UserError when no price can reach any target."""
         self.ensure_one()
         index = 0 if kind == 'amount' else 1
         if not self.quantity:
-            raise UserError(self.env._("The quantity of \"%s\" is zero, so no unit price can produce a total.", self.name or ''))
+            raise UserError(
+                self.env._("The quantity of \"%s\" is zero, so no unit price can produce a total.", self.name or '')
+            )
         first, second = self._nc_probe(1.0)[index], self._nc_probe(2.0)[index]
         slope = second - first
         if float_is_zero(slope, precision_digits=9):
-            raise UserError(self.env._(
-                "The unit price of \"%s\" has no effect on its total (a 100%% discount, or a fixed tax only), "
-                "so the requested figure cannot be reached.", self.name or ''))
+            raise UserError(
+                self.env._(
+                    "The unit price of \"%s\" has no effect on its total (a 100%% discount, or a fixed tax only), "
+                    "so the requested figure cannot be reached.",
+                    self.name or '',
+                )
+            )
         digits = self.env['decimal.precision'].precision_get('Product Price')
-        step = 10.0 ** -digits
+        step = 10.0**-digits
         exact_price = 1.0 + (target - first) / slope
         centre = float_round(exact_price, precision_digits=digits)
         best = None
@@ -247,7 +322,7 @@ class AccountMoveLine(models.Model):
             current = line.price_subtotal if kind == 'amount' else line.price_total
             rounding = line.currency_id.rounding if line.currency_id else 0.01
             if float_is_zero(target - current, precision_rounding=rounding):
-                continue                      # a value the engine already produces: nothing to solve
+                continue  # a value the engine already produces: nothing to solve
             price, _achieved, _exact = line._nc_solve_price(kind, target)
             line.price_unit = price
 
@@ -267,22 +342,38 @@ class AccountMoveLine(models.Model):
                 warning = {
                     'title': self.env._("Closest figure used"),
                     'message': self.env._(
-                        "No unit price at the current price precision gives exactly %(target)s. The closest, %(achieved)s, "
-                        "was used (unit price %(price)s).", target=target, achieved=achieved, price=price)}
+                        "No unit price at the current price precision gives exactly %(target)s. The closest, "
+                        "%(achieved)s, "
+                        "was used (unit price %(price)s).",
+                        target=target,
+                        achieved=achieved,
+                        price=price,
+                    ),
+                }
         return {'warning': warning} if warning else None
 
     # ------------------------------------------------------------------ the line an invoice adjustment is booked on
     nc_adjustment_id = fields.Many2one(
-        'ncollection.invoice.adjustment', string='Charge / discount', copy=False, ondelete='set null', index=True,
+        'ncollection.invoice.adjustment',
+        string='Charge / discount',
+        copy=False,
+        ondelete='set null',
+        index=True,
         help="Set on the line that books an invoice-level charge or discount: it is managed from the Charges & "
-             "Adjustments block of the invoice, not edited here.")
+        "Adjustments block of the invoice, not edited here.",
+    )
 
     def _nc_check_adjustment_lines_untouched(self, vals=None):
-        """A booked adjustment line is changed only by the adjustment itself (a user editing it here would be undone)."""
+        """A booked adjustment line is changed only by the adjustment itself (a user editing it here would be
+        undone)."""
         if self.env.context.get('nc_adjustment_sync'):
             return
         locked = self.filtered('nc_adjustment_id')
         if locked and (vals is None or _PROTECTED_LINE_FIELDS & set(vals)):
-            raise UserError(self.env._(
-                "\"%s\" is an invoice charge or discount. Change it in the Charges & Adjustments block of the invoice.",
-                locked[0].name or ''))
+            raise UserError(
+                self.env._(
+                    "\"%s\" is an invoice charge or discount. Change it in the Charges & Adjustments block of the"
+                    " invoice.",
+                    locked[0].name or '',
+                )
+            )
