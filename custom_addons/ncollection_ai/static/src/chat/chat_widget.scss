@@ -228,3 +228,86 @@
     0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
     30% { transform: translateY(-0.2rem); opacity: 1; }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Motion. One restrained interaction, not several stacked: the bubble's icon turns a quarter-plus while the panel rises
+// out of it (translate + fade + a slight scale) and sinks back on close. Nothing loops except the busy ring while an
+// answer is being produced. Direction-aware (the panel grows from the bubble's side in both LTR and RTL) and switched
+// off entirely for people who ask for reduced motion.
+// ---------------------------------------------------------------------------------------------------------------------
+.nc-ai-chat {
+    &__bubble {
+        transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover { transform: scale(1.06); }
+        &:active { transform: scale(0.94); }
+        &:focus-visible { outline: 3px solid var(--nc-color-secondary, #2D7AB7); outline-offset: 3px; }
+
+        &.is-busy::after {            // a soft ring while the assistant is answering
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid var(--nc-color-secondary, #2D7AB7);
+            opacity: 0;
+            animation: nc-ai-chat-ring 1.4s ease-out infinite;
+        }
+    }
+
+    &__bubble-icon {
+        display: inline-block;
+        transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    &__bubble.is-open &__bubble-icon { transform: rotate(135deg); }
+
+    &__panel {
+        transform-origin: bottom right;
+        animation: nc-ai-chat-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+        &.is-closing {
+            animation: nc-ai-chat-out 0.18s ease-in both;
+            pointer-events: none;
+        }
+    }
+
+    &__msg { animation: nc-ai-chat-msg 0.22s ease-out both; }
+
+    @media (max-width: 575.98px) {
+        &__panel {
+            width: calc(100vw - 1.5rem);
+            height: min(72vh, 32rem);
+            max-height: calc(100dvh - 6.5rem);
+        }
+    }
+}
+
+// the panel grows from the bubble's own corner: the left one when the page is right-to-left
+:dir(rtl) .nc-ai-chat__panel { transform-origin: bottom left; }
+
+@keyframes nc-ai-chat-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes nc-ai-chat-out {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+
+@keyframes nc-ai-chat-msg {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes nc-ai-chat-ring {
+    0% { opacity: 0.55; transform: scale(0.92); }
+    100% { opacity: 0; transform: scale(1.35); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nc-ai-chat, .nc-ai-chat * {
+        animation: none !important;
+        transition: none !important;
+    }
+}

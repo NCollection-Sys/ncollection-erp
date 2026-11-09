@@ -101,6 +101,64 @@ class Provider:
         yield completion
 
 
+
+
+# ---------------------------------------------------------------------------
+# The mock's grounded answer
+# ---------------------------------------------------------------------------
+# The mock reaches nothing and understands nothing, but it can still be USEFUL in a demonstration: when the prompt carries
+# workspace data (the labelled, pseudonymised sections the tenant built), it states the headline figures of those sections
+# in plain words. That is arithmetic over the prompt, not "AI", and the text says so. A real provider replaces all of it.
+_DATA_MARK_START = "--- WORKSPACE DATA ---\n"
+_DATA_MARK_END = "\n--- END DATA ---"
+# section key -> (value column, English label, Arabic label)
+_SECTIONS = {
+    "receivables": ("amount_residual:sum", "Open customer invoices", "فواتير العملاء المفتوحة"),
+    "overdue_receivables": ("amount_residual:sum", "Overdue customer invoices", "فواتير العملاء المتأخرة"),
+    "payables": ("amount_residual:sum", "Open vendor bills", "فواتير الموردين المفتوحة"),
+    "recent_invoices": ("amount_total:sum", "Invoiced in the last months", "المفوتر في الأشهر الأخيرة"),
+    "sales_by_month": ("amount_total:sum", "Confirmed sales orders", "أوامر البيع المؤكدة"),
+    "top_customers": ("amount_total:sum", "Top customers by orders", "أفضل العملاء حسب الطلبات"),
+    "purchases_by_supplier": ("amount_total:sum", "Confirmed purchases", "المشتريات المؤكدة"),
+    "customer_payments_by_month": ("amount:sum", "Customer payments received", "المدفوعات المستلمة من العملاء"),
+    "stock_on_hand": ("quantity:sum", "Units on hand (top products)", "الوحدات في المخزون (أعلى المنتجات)"),
+}
+
+
+def grounded_summary(prompt: str) -> str:
+    """Headline figures of the data sections found in ``prompt`` ('' when there are none)."""
+    start = prompt.find(_DATA_MARK_START)
+    end = prompt.find(_DATA_MARK_END, start + 1)
+    if start < 0 or end < 0:
+        return ""
+    try:
+        data = json.loads(prompt[start + len(_DATA_MARK_START):end])
+    except ValueError:
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    arabic = "answer in Arabic" in prompt
+    workspace = data.get("workspace") if isinstance(data.get("workspace"), dict) else {}
+    currency = str(workspace.get("currency") or "")
+    lines = []
+    for key, (column, english, arabic_label) in _SECTIONS.items():
+        rows = data.get(key)
+        if not isinstance(rows, list) or not rows:
+            continue
+        values = [r.get(column) for r in rows if isinstance(r, dict) and isinstance(r.get(column), (int, float))]
+        if not values:
+            continue
+        total = sum(values)
+        figure = "{:,.0f}".format(total) if key == "stock_on_hand" else "{:,.2f} {}".format(total, currency).strip()
+        top = next((str(v) for r in rows if isinstance(r, dict)
+                    for k, v in r.items() if k in ("partner_id", "product_id") and v), "")
+        label = arabic_label if arabic else english
+        lines.append("%s: %s%s" % (label, figure, (" (%s %s)" % ("الأعلى" if arabic else "top", top)) if top else ""))
+    if not lines:
+        return ""
+    head = ("إجابة تجريبية من بياناتك (لا يوجد مزوّد ذكاء اصطناعي متصل): " if arabic
+            else "Demo answer from your workspace data (no AI provider is connected): ")
+    return head + "; ".join(lines) + "."
 class MockProvider(Provider):
     """The default. Deterministic, offline, and reaches nothing.
 
@@ -121,7 +179,7 @@ class MockProvider(Provider):
         # ~4 chars/token is the usual rough ratio; exact enough for budget tests
         # and honest about being an estimate.
         input_tokens = max(1, len(prompt) // 4)
-        text = "[mock completion]"
+        text = "[mock completion]" + ((" " + grounded_summary(prompt)) if grounded_summary(prompt) else "")
         return Completion(
             text=text,
             input_tokens=input_tokens,
@@ -136,7 +194,7 @@ class MockProvider(Provider):
         # token that can straddle a chunk boundary, and the usage at the end.
         completion = self.complete(prompt, max_tokens)
         words = ("[mock completion] This answer is streamed in several small "
-                 "pieces so the widget can show it as it arrives.").split(" ")
+                 "pieces so the widget can show it as it arrives." + (" " + grounded_summary(prompt) if grounded_summary(prompt) else "")).split(" ")
         text = ""
         # NC_AI_MOCK_STREAM_DELAY_MS slows the mock so a browser test can SEE
         # the answer grow; 0 (the default) keeps every unit test instant.

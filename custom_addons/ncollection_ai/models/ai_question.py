@@ -22,6 +22,8 @@ import re
 
 from odoo import api, models
 from odoo.exceptions import UserError
+
+from . import ai_topics
 # #374: ONE definition of the financial gate, shared with the dashboards.
 from odoo.addons.ncollection_core.models.financial_gate import (
     FINANCIAL_GATE_GROUPS,
@@ -622,7 +624,10 @@ class AiQuestion(models.AbstractModel):
         # re-hydration happens here because only this database holds the mapping.
         #
 
-        context = self.env['ncollection.ai.context']._build(
+        context_service = self.env['ncollection.ai.context']
+        # The default facts plus the READ-ONLY topics the question mentions (ai_topics.py): run as the asking user.
+        context = context_service._build(
+            specs=context_service._default_specs() + ai_topics.select_specs(question),
             max_tokens=max_context_tokens)
 
         # Sanitise the WHOLE payload — context and question together.

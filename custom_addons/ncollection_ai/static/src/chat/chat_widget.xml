@@ -5,7 +5,8 @@
         <!-- Renders NOTHING for users outside the financial gate. UX only:
              the server re-checks the gate on every RPC (Standing Rule 4). -->
         <div t-if="state.enabled" class="nc-ai-chat">
-            <div t-if="state.open" class="nc-ai-chat__panel" role="dialog" aria-label="AI assistant">
+            <div t-if="state.open" t-attf-class="nc-ai-chat__panel {{ state.closing ? 'is-closing' : '' }}" role="dialog" aria-label="AI assistant"
+                 t-on-keydown="onPanelKeydown">
                 <div class="nc-ai-chat__header">
                     <span class="nc-ai-chat__title">AI Assistant</span>
                     <button class="nc-ai-chat__iconbtn" title="Minimize"
@@ -62,7 +63,8 @@
                 </div>
             </div>
 
-            <button class="nc-ai-chat__bubble" t-on-click="toggle"
+            <button t-attf-class="nc-ai-chat__bubble {{ state.open and !state.closing ? 'is-open' : '' }} {{ state.sending ? 'is-busy' : '' }}" t-on-click="toggle"
+                    t-att-aria-expanded="state.open and !state.closing ? 'true' : 'false'"
                     t-att-title="toggleTitle"
                     aria-label="AI assistant">
                 <span class="nc-ai-chat__bubble-icon">✦</span>

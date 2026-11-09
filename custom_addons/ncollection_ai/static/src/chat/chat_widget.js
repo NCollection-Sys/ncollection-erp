@@ -88,6 +88,7 @@ export class NcAiChatWidget extends Component {
         this.state = useState({
             enabled: false,
             open: browser.localStorage.getItem(OPEN_STORAGE_KEY) === "1",
+            closing: false,
             freeText: false,
             suggestions: [],
             messages: [],
@@ -179,12 +180,45 @@ export class NcAiChatWidget extends Component {
         }
     }
 
+
     toggle() {
-        this.state.open = !this.state.open;
-        browser.localStorage.setItem(OPEN_STORAGE_KEY, this.state.open ? "1" : "0");
+        if (this.state.closing) {
+            return;
+        }
         if (this.state.open) {
-            this.state.unread = false;
-            this.refreshSuggestions().catch(() => {});
+            this.close();
+            return;
+        }
+        this.state.open = true;
+        browser.localStorage.setItem(OPEN_STORAGE_KEY, "1");
+        this.state.unread = false;
+        this.refreshSuggestions().catch(() => {});
+        // focus follows the panel: the typed input when there is one, else the first suggestion
+        setTimeout(() => {
+            document.querySelector(".nc-ai-chat__input, .nc-ai-chat__chip")?.focus();
+        }, 60);
+    }
+
+    close() {
+        browser.localStorage.setItem(OPEN_STORAGE_KEY, "0");
+        const reduced = browser.matchMedia && browser.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const finish = () => {
+            this.state.open = false;
+            this.state.closing = false;
+            document.querySelector(".nc-ai-chat__bubble")?.focus();
+        };
+        if (reduced) {
+            finish();
+            return;
+        }
+        this.state.closing = true;      // the panel plays its exit animation, then is removed
+        setTimeout(finish, 180);
+    }
+
+    onPanelKeydown(ev) {
+        if (ev.key === "Escape") {
+            ev.stopPropagation();
+            this.close();
         }
     }
 
