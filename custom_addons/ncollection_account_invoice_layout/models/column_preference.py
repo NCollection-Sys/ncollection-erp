@@ -22,7 +22,7 @@ class InvoiceColumnPreference(models.Model):
 
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company, index=True)
     user_id = fields.Many2one(
-        'res.users', string='User', index=True, ondelete='cascade', help="Empty = the company default."
+        'res.users', index=True, ondelete='cascade', help="Empty = the company default."
     )
     list_key = fields.Selection(LIST_KEYS, required=True, default='invoice_lines')
     column_order = fields.Char(
