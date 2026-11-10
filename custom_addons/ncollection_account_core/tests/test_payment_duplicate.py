@@ -6,7 +6,7 @@ the reconciliation of the counterpart lines), never a value this module stored.
 """
 from lxml import html
 
-from odoo import Command, fields
+from odoo import fields
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.exceptions import AccessError, UserError
 from odoo.tests import tagged
