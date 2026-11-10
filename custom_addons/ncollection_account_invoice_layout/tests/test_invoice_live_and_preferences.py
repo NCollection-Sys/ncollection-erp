@@ -80,7 +80,7 @@ class TestInvoiceLiveAdjustments(AccountTestInvoicingCommon):
         self.assertEqual(move.amount_untaxed, 360.0)
         self.assertEqual(len(move.invoice_line_ids.filtered('nc_adjustment_id')), 1)
 
-    # --- the money Discount typed IN THE FORM (the onchange path; the ORM tests only reach the inverse) ----------------
+    # --- the money Discount typed IN THE FORM (the onchange path; the ORM tests only reach the inverse) -----------
     def _product_line(self, move):
         return move.invoice_line_ids.filtered(lambda line: line.display_type == 'product')
 

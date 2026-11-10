@@ -163,8 +163,9 @@ class AccountMoveLine(models.Model):
     @api.onchange('discount')
     def _onchange_nc_discount_percent(self):
         """The user typed Disc.%: the percentage is now the source. Odoo ALSO runs this when Disc.% merely followed a
-        fixed discount (the onchange cascade: typed Discount, or a quantity / price edit on a fixed-discount line); that
-        must not flip the line back to percentage mode, so a Disc.% equal to the one the fixed amount gives is ignored."""
+        fixed discount (the onchange cascade: typed Discount, or a quantity / price edit on a fixed-discount line);
+        that must not flip the line back to percentage mode, so a Disc.% equal to the one the fixed amount gives is
+        ignored."""
         digits = self.env['decimal.precision'].precision_get('Discount')
         for line in self:
             if line.display_type != _PRODUCT:
