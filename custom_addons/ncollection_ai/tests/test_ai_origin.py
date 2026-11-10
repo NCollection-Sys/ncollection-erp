@@ -31,7 +31,7 @@ class TestAnswerOrigin(TransactionCase):
     def test_the_mock_provider_is_never_labelled_as_a_model(self):
         # the stream controller maps the gateway's provider name; the mapping lives in one place and is explicit
         import inspect
-        from odoo.addons.ncollection_ai.controllers import chat_stream
+        from ..controllers import chat_stream
 
         source = inspect.getsource(chat_stream)
         self.assertIn("'demo' if provider == 'mock' else 'model'", source)

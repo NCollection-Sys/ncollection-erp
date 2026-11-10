@@ -45,7 +45,7 @@ class TestAnomalyAlertsRemoved(TransactionCase):
         # the scheduler identity (used by the administration service) and the release gate are not the feature
         self.assertTrue(self.env.ref('ncollection_core.group_cron_service', raise_if_not_found=False))
         self.assertTrue(self.env.ref('ncollection_core.user_cron_service', raise_if_not_found=False))
-        from odoo.addons.ncollection_core import release_gate  # noqa: F401 - importable and loaded
+        from .. import release_gate  # noqa: F401 - importable and loaded
 
     def test_the_migration_archives_history_before_dropping_the_table_and_is_idempotent(self):
         cr = self.env.cr
