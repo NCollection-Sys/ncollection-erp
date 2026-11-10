@@ -890,6 +890,7 @@ msgid "Total Amount in Words"
 msgstr "المبلغ الإجمالي كتابةً"
 
 #. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_duplicate
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_payment_term_form_nc_duplicate
 msgid "Duplicate"
 msgstr "نسخة مماثلة"
@@ -953,3 +954,15 @@ msgstr "يمكن البحث في «مدفوع بالزيادة» بنعم أو �
 #: code:addons/ncollection_account_core/models/account_move_status.py:0
 msgid "Taxable can only be searched with Yes or No."
 msgstr "يمكن البحث في «خاضع للضريبة» بنعم أو لا فقط."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/duplicate_records.py:0
+msgid "This payment is one side of an internal transfer and cannot be duplicated."
+msgstr "هذه الدفعة أحد طرفي تحويل داخلي ولا يمكن إنشاء نسخة مماثلة منها."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/duplicate_records.py:0
+msgid "Only customer and vendor payments can be duplicated."
+msgstr "يمكن إنشاء نسخة مماثلة من دفعات العملاء والموردين فقط."

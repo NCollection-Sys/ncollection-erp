@@ -140,6 +140,8 @@ adding a module fails CI until someone updates this list.
   reconciliations, never stored) and **payment allocation**: the payment form's Confirm posts natively, then applies the
   payment through Odoo's own `js_assign_outstanding_line` (= `reconcile()`), selected document first, then earliest due;
   the rest stays an outstanding credit. No parallel invoice / payment / reconciliation engine. Print Receipt / View = one report.
+  **Duplicate** on customer / vendor payments (form header; always a NEW DRAFT through Odoo's own `copy()`, never the entry,
+  the reconciliation, the reference or the attachments). The receipt prints under every Configure Document Layout choice.
 - `ncollection_account_reports` — native report engine: filters, drill-down, PDF + XLSX. Also the **Reports hub**
   (7 categories; native Odoo analysis menus are re-filed into it with the group that already holds the ORM right),
   **Tax Analysis**, and the hardening of the OCA report wizards (restricted to accounting read-only on every registry

@@ -6,7 +6,15 @@
          reconciliation ledger, not a receipt. This one says what a receipt says: who paid, when, how, how much, what it
          settled and what is left, from the payment's NATIVE reconciliation (the partials Odoo keeps: one row per
          document the payment was applied to, the amount applied, the balance still due on it) and from nothing of ours.
-         The payment is never shown as if it were one of the documents it was applied to. -->
+         The payment is never shown as if it were one of the documents it was applied to.
+
+         LAYOUTS. The o_nc_* classes below are styled by the Professional layout (ncollection_branding) and by nothing
+         else, so under any other Configure Document Layout choice (Light, Boxed, Bold, Striped, Bubble, Wave, Folder)
+         the tables used to print bare: no width, no padding, and the layout's table frame drawn around every small
+         block. Under a stock layout the two DATA tables therefore take Odoo's own report classes (table o_main_table),
+         so each layout draws them exactly as it draws its invoice lines; the amount panel, the totals and the
+         signature lines are not data grids, so they opt out of the layout's table design (o_ignore_layout_styling,
+         Odoo's own switch) and carry the small neutral stylesheet below. The Professional output is unchanged. -->
     <template id="report_payment_receipt_document_nc" inherit_id="account.report_payment_receipt_document">
         <xpath expr="//div[hasclass('page')]" position="replace">
             <t t-set="nc_applied" t-value="o._nc_applied_rows()"/>
@@ -16,6 +24,9 @@
             <t t-set="nc_words" t-value="o._nc_amount_in_words()"/>
             <t t-set="nc_applied_total" t-value="sum(row['applied'] for row in nc_rows)"/>
             <t t-set="nc_rtl" t-value="o.env['res.lang']._get_data(code=o.env.lang or 'en_US').direction == 'rtl'"/>
+            <t t-set="nc_stock" t-value="o.company_id.external_report_layout_id.key != 'ncollection_branding.external_layout_nc'"/>
+            <t t-set="nc_data_class" t-value="'o_nc_table table o_main_table' if nc_stock else 'o_nc_table'"/>
+            <t t-set="nc_plain_class" t-value="' o_ignore_layout_styling' if nc_stock else ''"/>
             <t t-set="layout_document_title">
                 <span t-field="o.payment_receipt_title"/> <span t-field="o.name"/>
             </t>
@@ -28,8 +39,31 @@
                 </div>
             </t>
 
-            <div class="page">
-                <table class="o_nc_table" name="nc_receipt_info">
+            <div t-attf-class="page o_nc_receipt#{' o_nc_receipt_stock' if nc_stock else ''}">
+                <style t-if="nc_stock">
+                    .o_nc_receipt_stock .o_nc_label { display: block; color: #5c6670; font-size: 9.4pt; font-weight: bold; text-transform: uppercase; margin-bottom: 1.2mm; }
+                    .o_nc_receipt_stock table.o_nc_table { width: 100%; margin: 0 0 7mm 0; }
+                    .o_nc_receipt_stock table.o_nc_table th, .o_nc_receipt_stock table.o_nc_table td { padding: 2.2mm 2.8mm; vertical-align: middle; }
+                    .o_nc_receipt_stock table.o_nc_table tr { page-break-inside: avoid; }
+                    .o_nc_receipt_stock table.o_nc_table thead { display: table-header-group; }
+                    .o_nc_receipt_stock table.o_nc_amount, .o_nc_receipt_stock table.o_nc_totals, .o_nc_receipt_stock table.o_nc_signatures {
+                        border-collapse: collapse; border: 0 none !important; background: transparent; page-break-inside: avoid; }
+                    .o_nc_receipt_stock table.o_nc_amount tbody, .o_nc_receipt_stock table.o_nc_amount tr, .o_nc_receipt_stock table.o_nc_totals tbody, .o_nc_receipt_stock table.o_nc_totals tr,
+                    .o_nc_receipt_stock table.o_nc_signatures tbody, .o_nc_receipt_stock table.o_nc_signatures tr { border: 0 none !important; background: transparent; }
+                    .o_nc_receipt_stock table.o_nc_amount { width: 100%; margin: 0 0 7mm 0; }
+                    .o_nc_receipt_stock table.o_nc_amount td { border: 0.25mm solid #ced4da !important; padding: 3.2mm 3.8mm; vertical-align: top; background: #f8f9fa; }
+                    .o_nc_receipt_stock table.o_nc_amount .o_nc_figure { font-size: 19pt; font-weight: bold; line-height: 1.15; white-space: nowrap; }
+                    .o_nc_receipt_stock table.o_nc_amount .o_nc_words { font-size: 10.5pt; line-height: 1.45; }
+                    .o_nc_receipt_stock .o_nc_note { color: #495057; font-size: 9pt; margin: 0 0 7mm 0; }
+                    .o_nc_receipt_stock table.o_nc_totals { margin-top: 1mm; margin-bottom: 0; }
+                    .o_nc_receipt_stock table.o_nc_totals td { padding: 2mm 2.8mm; border: 0 none !important; border-bottom: 0.2mm solid #dee2e6 !important; background: transparent; }
+                    .o_nc_receipt_stock table.o_nc_totals tr.o_nc_grand td { border-top: 0.45mm solid #343a40 !important; border-bottom: 0 none !important; font-size: 11.5pt; font-weight: bold; }
+                    .o_nc_receipt_stock table.o_nc_signatures { width: 100%; margin-top: 26mm; }
+                    .o_nc_receipt_stock table.o_nc_signatures td { width: 40%; border: 0 none !important; border-top: 0.3mm solid #495057 !important; padding: 2mm 0 0 0; color: #343a40; font-size: 10.5pt; background: transparent; }
+                    .o_nc_receipt_stock table.o_nc_signatures td.o_nc_gap { width: 20%; border-top: 0 none !important; }
+                    .o_nc_receipt_stock .o_nc_status { font-weight: bold; }
+                </style>
+                <table t-att-class="nc_data_class" name="nc_receipt_info">
                     <thead>
                         <tr>
                             <th>Payment date</th>
@@ -50,18 +84,18 @@
                     </tbody>
                 </table>
 
-                <table class="o_nc_table o_nc_amount" name="nc_receipt_amount">
+                <table t-attf-class="#{'o_nc_amount' if nc_stock else 'o_nc_table o_nc_amount'}#{nc_plain_class}" name="nc_receipt_amount">
                     <tbody>
                         <tr>
                             <td style="width: 38%;">
                                 <div class="o_nc_label">Amount</div>
-                                <div style="font-size: 19pt; font-weight: bold;">
+                                <div class="o_nc_figure" style="font-size: 19pt; font-weight: bold;">
                                     <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
                                 </div>
                             </td>
                             <td t-if="nc_words" dir="auto">
                                 <div class="o_nc_label">Amount in words</div>
-                                <div t-out="nc_words"/>
+                                <div class="o_nc_words" t-out="nc_words"/>
                             </td>
                         </tr>
                     </tbody>
@@ -69,7 +103,7 @@
 
                 <t t-if="nc_rows">
                     <div class="o_nc_label" style="margin-bottom: 1.5mm;">Applied to</div>
-                    <table class="o_nc_table" name="nc_receipt_documents">
+                    <table t-att-class="nc_data_class" name="nc_receipt_documents">
                         <thead>
                             <tr>
                                 <th><span t-out="nc_labels['document']"/></th>
@@ -98,7 +132,7 @@
                     This payment has not been confirmed yet, so nothing has been applied.
                 </p>
 
-                <table class="o_nc_totals" name="nc_receipt_totals" t-attf-style="width: 52%; margin-#{'right' if nc_rtl else 'left'}: auto;">
+                <table t-attf-class="o_nc_totals#{nc_plain_class}" name="nc_receipt_totals" t-attf-style="width: 52%; margin-#{'right' if nc_rtl else 'left'}: auto;">
                     <tr>
                         <td>Applied to documents</td>
                         <td class="text-end"><span t-out="nc_applied_total" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
@@ -113,7 +147,7 @@
                     </tr>
                 </table>
 
-                <table class="o_nc_signatures">
+                <table t-attf-class="o_nc_signatures#{nc_plain_class}">
                     <tr>
                         <td>Received by</td>
                         <td class="o_nc_gap"/>

@@ -16,3 +16,4 @@ from . import test_stamp_per_document
 from . import test_business_settings
 from . import test_settlement_overpaid
 from . import test_duplicate_records
+from . import test_payment_duplicate

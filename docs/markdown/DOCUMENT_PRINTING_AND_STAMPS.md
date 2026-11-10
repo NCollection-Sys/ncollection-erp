@@ -39,6 +39,24 @@ The letterhead's logo is the **company's** logo, or its name when it has none. T
 company logo, and the NCollection mark this module seeded until 19.0.1.15.0) are removed on install and on every upgrade, exact bytes
 only (`res.company._nc_clear_vendor_logos`): printed on an invoice they read as the company's own. An uploaded logo is never touched.
 
+### The Payment Receipt under the other layouts (Light, Boxed, Bold, Striped, Bubble, Wave, Folder)
+
+The receipt (`ncollection_account_core/report/payment_receipt.xml`) is our own page, and its `o_nc_*` classes are styled by
+the Professional layout only. Under any other Configure Document Layout choice it used to print bare: tables with no width
+and no padding, and the layout's table frame (Bubble's rounded box, Boxed's grid) drawn around every small block.
+
+* Its two DATA tables (payment details, Applied to) now take Odoo's own report classes (`table o_main_table`) when the
+  company's layout is not Professional, so each layout draws them exactly as it draws its invoice lines. Each layout keeps
+  its identity; nothing is imposed on it.
+* The amount panel, the totals and the signature lines are not data grids. They opt out of the layout's table design with
+  Odoo's own switch (`o_ignore_layout_styling`) and carry a small neutral stylesheet scoped to `.o_nc_receipt_stock`.
+* Under Professional nothing changes: same classes, no extra stylesheet (asserted by a test).
+* Only markup and CSS: `_nc_applied_rows`, the amounts and the words are untouched.
+
+Proof is visual, per the rule below: the receipt was rendered with real wkhtmltopdf in all eight layouts, English and
+Arabic, for a customer receipt, a draft, and a vendor payment of 1,234,567.89 with a long reference applied to 24 bills
+(two to three pages), and each page was looked at. Tests: `test_payment_duplicate.py::TestPaymentReceiptLayouts`.
+
 ## Print Settings (one per kind of printed document)
 
 The Print Settings of a document live on its **document type** (`ncollection.document.type`, shipped as data by the module that prints it:

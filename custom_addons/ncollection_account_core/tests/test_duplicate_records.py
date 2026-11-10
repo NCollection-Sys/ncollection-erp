@@ -25,7 +25,7 @@ class TestDuplicateRecords(AccountTestInvoicingCommon):
         self.assertEqual(term.name, 'Net 21')
 
     def test_documents_that_must_not_be_copied_do_not_offer_a_duplicate(self):
-        for model in ('account.payment', 'account.bank.statement', 'ir.attachment', 'account.move.line'):
+        for model in ('account.bank.statement', 'ir.attachment', 'account.move.line'):
             self.assertFalse(hasattr(self.env[model], 'action_nc_duplicate'), model)
         for model in ('ncollection.einvoice', 'ncollection.einvoice.history', 'ncollection.auth.log'):
             if model in self.env:

@@ -70,6 +70,35 @@ release gate READY; browser acceptance. Only on `ncollection_demo` afterwards: s
 * A half-applied module (`to upgrade` / `to install`): RUNBOOK_RELEASE_UPGRADE.md; never `-u all`.
 * Pre-upgrade backups of the current state: `D:\Backups\upgrade-pre-20261107` (verified, 11 files); fresh ones are taken again before the real upgrade.
 
+## Follow-up releases after the consolidated upgrade
+
+| Commit | What | Shared runtime |
+|---|---|---|
+| `0239d0a` | the consolidated release above | applied 2026-11-10 (three databases) |
+| `9ed9f9a` | a money Discount typed in the invoice form was discarded (onchange read the value after changing the mode) | applied 2026-11-10, invoice layout 19.0.1.1.1 |
+| `e53725d` | a quantity save turned a fixed discount into a percentage; a total that only followed an edit re-solved the price; the price solver's slope came from rounded probes (200.32 for 200.00) | awaits the 6 GB commit-headroom gate; invoice layout 19.0.1.1.2 |
+| payment duplicate + receipt layouts (branch `feature/payment-duplicate-receipt-layout`) | Duplicate on customer / vendor payments; the Payment Receipt under every Configure Document Layout choice | NOT applied; needs a separate approval; accounting core 19.0.1.14.0 |
+
+Lesson recorded with `9ed9f9a`: `odoo.tests.Form` sends more fields than the web client does. A typed-column fix is proven
+with the real browser on a private copy BEFORE it is proposed for the shared runtime, and regression tests replay the
+client's real payloads.
+
+### Release matrix for the payment / receipt release (NOT executed)
+
+Per database (`ncollection`, `awtar`, `ncollection_demo`), after a fresh backup and with at least 6 GB commit headroom:
+`-u ncollection_account_core` (and `ncollection_account_invoice_layout` if `e53725d` has not been applied yet), Arabic
+terms, schema drift 0, release gate READY, browser acceptance (Duplicate on a draft and on a posted payment, the receipt
+PDF in the company's layout). No new table or column; one new view (`view_account_payment_form_nc_duplicate`).
+
+### Rollback of the follow-up releases
+
+Code: `git checkout` the previous commit of the table above and restart Odoo. Data: each step has its own verified
+backup set (`D:\Backups\upgrade-pre-20261110` before `0239d0a`, `D:\Backups\hotfix-pre-20261110` before `9ed9f9a`; a
+fresh one is taken before each further step). The invoice-layout fixes and the payment / receipt release change no stored
+data on upgrade, so rolling the code back and running `-u` on the same modules is enough; a database restore is needed
+only if documents created after the upgrade must be discarded as well. Payments created with Duplicate are ordinary
+drafts and survive a code rollback.
+
 ## Limits and decisions that remain
 
 * Phones: the invoice line cards have no column table, so the arrangement does not apply there (Odoo's own mobile layout).
