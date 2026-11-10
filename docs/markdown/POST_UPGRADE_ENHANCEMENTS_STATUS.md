@@ -1,68 +1,79 @@
 # Post-upgrade enhancements: requirement matrix, status, release matrix (branch `feature/post-upgrade-enhancements`)
 
-Base: `236a7ff` (the release installed in `ncollection`, `awtar`, `ncollection_demo`). Nothing here has been applied to a shared database or the
-shared runtime. Every result below was measured on disposable copies (private Postgres, internal network); "browser" means a real Chromium
-(Edge) session against such a copy.
+Base: `236a7ff` (the release installed in `ncollection`, `awtar`, `ncollection_demo`). **Nothing here has been applied to a shared database or the shared runtime.** Every
+result below was measured on disposable copies (private Postgres on an internal network, copies of the live databases made with a read-only `pg_dump`); "browser" means a
+real Chromium (Edge) session against such a copy.
 
-Legend: **DONE** implemented and tested; **PARTIAL** implemented, with the missing part named; **NOT DONE** not built; **PROVIDER** needs a live
-provider / sandbox that was not used (not permitted).
+Legend: **FULL** fully implemented and tested; **LIVE** implemented, verified with the mock / local stand-in, requires live provider acceptance; **INCOMPLETE** not finished;
+**DEFERRED** deferred by owner approval (none).
 
-## 1. Invoice customisation (`ncollection_account_invoice_layout`)
+## Requirement matrix
 
-| Item | Status | Evidence / gap |
-|---|---|---|
-| 1.1 show / hide every line column, optional-columns selector | DONE | Discount, Amount, Total incl. Tax are optional columns of the standard selector (Odoo remembers the choice per user); customer invoices and vendor bills share the view |
-| 1.1 reorder columns, saved order, company default | **NOT DONE** | needs an OWL list-renderer extension; documented in INVOICE_LAYOUT_AND_CALCULATIONS.md section 6 |
-| 1.1 centred headers incl. Label, EN / AR / RTL, narrow screens | DONE | SCSS; browser check: every header `text-align: center` (EN and AR) |
-| 1.2 Discount column, two-way with Disc.%, fixed vs percentage mode | DONE | 18 tests + browser; exact percentage fed to the engine, books to the cent |
-| 1.3 editable Amount (solves the unit price) | DONE | tests + real list editing in the browser (360.00 typed -> price 200, Disc.% 10 kept) |
-| 1.4 editable Total incl. Tax | DONE | tests (percentage, grouped, price-included handled by the engine's affine probe); refusals for zero quantity / 100 % discount |
-| 1.5 charges and discounts below the lines (freight, global discount, configurable) | DONE | data-defined types, real invoice lines, calculation order, tests for customer invoice, vendor bill, credit note, posted refusal |
-| 1.6 central configuration area, ACL, audit of changes | PARTIAL | Accounting > Configuration > Invoice Layout & Calculations > Charges & Discounts (Accounting Manager only, ORM-enforced, company rule). Column order configuration is part of the NOT DONE above. Configuration changes are not written to the audit log |
-| 1.7 Total Discount / Total After Discount above Untaxed Amount | DONE | EN / AR browser; hidden when nothing is discounted |
-| 1.8 tests | PARTIAL | 33 module tests + browser (EN, AR); responsive layout of the new columns checked at 1440 px only |
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| 1.1 | Show / hide invoice line columns, all custom columns in the selector | FULL | optional columns; the Odoo menu check boxes are saved per user on the server; `cols.js` browser run |
+| 1.2 | Free column order, reorder UI (drag and drop + arrows), saved company default, per-user override, persistence, customer invoices = vendor bills | FULL | `column_arrange.js`, `ncollection.invoice.column.pref`; browser: arrows, real mouse drag, save for me, company default, reset, hide, reload, vendor bill; 8/8 at 1440 px EN and AR, 8/8 at 768 px EN and AR; 6 server tests on resolution / ACL / isolation |
+| 1.3 | Centred headers incl. Label, EN / AR RTL | FULL | SCSS; browser `text-align: center` on every header, EN and AR |
+| 1.4 | Responsive desktop / tablet / mobile | FULL (scoped) | desktop + tablet: the column table and dialog; phone 375 px: Odoo shows invoice lines as cards (no table, so no column menu), the charges block and discount summary render with no horizontal overflow, EN and AR (`mobile.js`, screenshots) |
+| 1.5 | Money Discount column two-way with Disc.%; fixed vs percentage mode | FULL | 18 tests + browser |
+| 1.6 | Editable Amount and Total incl. Tax (inverse unit price, taxes and discount kept) | FULL | tests + real list editing (360.00 typed -> price 200, Disc.% 10 kept) |
+| 1.7 | Footer charges / discounts (freight, global fixed or %) as REAL accounting lines | FULL | 15 tests: customer invoice, vendor bill, credit note, foreign currency, tax-included, rounding, several adjustments, posted refusal, balanced postings |
+| 1.8 | Live recalculation while editing (not only on save) | FULL (one stated limit) | `_onchange_nc_adjustments`; browser: discount 23.00 -> 95.00 AED unsaved after a quantity change; Form-based tests. A row added just now books its line on save (amount and preview are live) |
+| 1.9 | No duplicate lines, no recursion, no invalid bases, consistent journal | FULL | repeated-save test, basis excludes adjustment lines, echo of the live price not applied, every posting test checks balance |
+| 1.10 | Central "Invoice Layout & Calculations" area, ACL, audit | FULL | Accounting > Configuration > Invoice Layout & Calculations: Charges & Discounts, Invoice Column Defaults (Accounting Manager; record rules + server check); chatter tracking of the definitions and of every company-default change (the tracking mechanism is wired and tested; the test transaction disables message creation, so the committed-write proof is the rehearsal shell probe) |
+| 1.11 | Total Discount / Total After Discount above Untaxed Amount | FULL | browser EN / AR |
+| 1.12 | Posted-invoice protection not weakened | FULL | refusal tests; core posted-line behaviour unchanged (policy decision stays separate, INVOICE_AMOUNT_AUDIT.md section 7) |
+| 2 | Anomaly Alerts removed everywhere, migration-safe | FULL | model, detectors, crons (and their server-action external ids), menu, views, rules, ACLs, Home tile removed; verified on a FRESH database (platform + tenant modules) and on copies of all three databases: table, ir_model, crons, menus, actions, views, ACLs, rules all 0; history archived to `ncollection_alert_archive` before the table drop (test with rows); idempotent; release health, audit modules, scheduler identity and other alerts untouched; `test_anomaly_alerts_removed.py` |
+| 3.1 | Odoo 20 AI research (authoritative sources, licensing) | FULL (with a stated evidence limit) | `AI_ODOO20_RESEARCH.md`: public Community repo has no AI module on 19.0 / 20.0 / master; the Enterprise-only / credits statements come from third-party summaries and are marked unverified; no Enterprise code read or copied |
+| 3.2 | Read-only, privilege-respecting useful answers | FULL (mock) | `ai_topics.py` (payables, overdue, sales, purchases, payments, stock; EN + AR); runs as the asking user; PII tokens; 166 + 55 gateway tests |
+| 3.3 | Real conversational model | LIVE | gateway has `mock` and `anthropic`; no credential, no call made; exact configuration and 6-step acceptance in `AI_ODOO20_RESEARCH.md` section 6 |
+| 3.4 | Model vs mock vs deterministic summary are distinguishable | FULL | each assistant message stores `origin` (`model` / `demo`) and model id; the widget prints "AI model: <id>" or "Demo mode: a summary of your data, not an AI model"; 3 tests |
+| 3.5 | Animations (bubble, panel, messages), reduced motion, RTL, mobile | FULL | CSS; browser EN / AR: enter / exit transitions, icon rotation, Escape, focus return, reduced motion, RTL origin, mobile sizing |
+| 4 | UAE e-invoicing audit, local demo in `ncollection_demo`, no provider submission, protected invoices | FULL (local); A-Cube LIVE | installed on a copy of `ncollection_demo` only; menus under Accounting > UAE E-Invoicing; fail-closed licence proven ("not licensed" until the mirror names the module); seed with the labelled `LOCAL-UAE-DEMO` mirror (the same record config-sync writes, enforcement code unchanged, refuses any database but `ncollection_demo`); local flow with the official validator: draft -> ready -> locally checked, submission `not_submitted`, XML archived; role visibility measured; A-Cube never contacted; `e2euae` untouched, attachments 548 / 550 / 551 checksums identical |
+| 5 | Dashboard PDFs: A4, margins, no clipping, tables, currency, EN / AR | FULL | Sales, Invoicing, Summary, Spreadsheet Dashboards x EN / AR rendered: A4 210 x 297 mm, first text 16 mm from the top, 14 mm side margin, repeated headers, 1-2 pages, "4,901 AED"; RTL footer "page n / N" fixed in this round; Excel unchanged. The Accounting dashboards (Finance / Accountant / Cash / CEO) have no PDF export of their own; the Reports hub PDFs use their own paper formats and were not changed |
 
-## 2. Anomaly Alerts removal: DONE
+## Tests run on the final code (private stack, fresh database, no unrelated large suites)
 
-`ncollection.alert`, its four detectors, the two crons, the menu / action / views, the four record rules, the nine access rows and the Home tile are gone;
-migration `19.0.1.29.0` archives any rows into `ncollection_alert_archive` (no model, nothing reads it) and drops the table (measured on copies of `ncollection`
-and `ncollection_demo`: 0 rows, table, crons, menu and ir.model row all gone). Kept on purpose: the scheduler service user / group and its read-only ACLs (a
-general non-interactive identity used by the administration service; its ACL sync moved to the core group hook), release-health monitoring, audit
-modules, security alerts. No tenant provisioning default referenced the feature (search of the whole tree).
+* Focused regression, one run: invoice layout (48), invoice amount audit, AI (+ origin), core (incl. anomaly removal, role matrix, release gate), branding (incl. translation coverage),
+  account reports (premium exports), account core (payment allocation, line contract), dashboard export, bank reconciliation + sales action, UAE e-invoicing + localization,
+  sale / purchase documents: **2200 tests, 1 failure** (a core test that pinned the invoice line column list and did not know the layout module's columns). Fixed; the class was re-run: 2 of 2 pass.
+  The remaining "ERROR" lines in that log are the tests' own deliberate faults (duplicate-key probes, a forced HTTP 500, a rejected ASP adapter).
+* No skipped test was counted as a pass; no skip was added to `expected_skips.txt`. (The word "skipped" in the log belongs to role-link install messages.)
+* Static gates at the final commit: flake8, invariants (+tests), architecture guard (+tests), skip gate tests, role matrix (+tests), doc counts (+tests): green; pylint-odoo 205 / 205 baseline.
+* Not re-run, on purpose: the full CI matrix and `make verify-all` (unrelated suites: routing, provisioning, config-sync, cron, e2e).
 
-## 3. AI assistant
+## Final upgrade rehearsal (copies of the three live databases; nothing shared touched)
 
-| Item | Status | Evidence / gap |
-|---|---|---|
-| 3.1 Odoo 20 AI research | **NOT DONE** | no authoritative source was consulted in this session; no claim is made |
-| 3.2 useful, read-only, user-privileged answers | DONE (mock) | `ai_topics.py`: payables, overdue, sales, purchases, payments, stock; EN + AR keywords; run through the aggregation engine as the asking user; PII-pseudonymised; mock answers state real figures and say they are a demo; 166 module tests, 55 gateway tests |
-| 3.2 write actions | by design none | nothing can create / post / cancel / delete |
-| 3.3 provider adapters, admin-only key, retries | PARTIAL | the gateway already has the Anthropic adapter and the mock; no second provider, no tool-calling protocol; **PROVIDER**: no live answer was ever requested |
-| 3.4 / 3.5 animation (bubble, panel, messages, busy ring) | DONE | CSS; browser: enter animation, icon rotation, exit animation, Escape, focus return, reduced motion, RTL origin, mobile sizing rule |
-| 3.6 mobile / RTL screenshots | PARTIAL | desktop EN and AR checked; the mobile sizing rule is CSS only, not screenshot-verified |
+Matrix: `-u ncollection_core,ncollection_branding,ncollection_account_reports,ncollection_dashboard_export,ncollection_ai,ncollection_account_audit -i ncollection_account_invoice_layout`
+(+ `ncollection_account_localization_uae`, `ncollection_uae_einvoicing`, `ncollection_uae_einvoicing_acube` on `ncollection_demo` only).
 
-## 4. UAE e-invoicing (local review)
+| Database | pass 1 | second identical run | schema drift | pending states | unbalanced moves | Anomaly objects |
+|---|---|---|---|---|---|---|
+| `ncollection` | rc 0, 67 s, setup assert clean | fingerprints (modules, columns, row counts, residuals) identical | 0 | 0 | 0 (46 posted) | 0 |
+| `awtar` | rc 0, 58 s | identical | 0 | 0 | 0 (2 posted) | 0 |
+| `ncollection_demo` | rc 0, 66 s | identical | 0 | 0 | 0 (6 posted) | 0 |
 
-Audit: `ncollection_uae_einvoicing` (engine, PINT-AE, isolated validator, append-only history, retention), `ncollection_uae_einvoicing_acube` (adapter, NOT proven on a
-sandbox), `ncollection_account_localization_uae` (TRN / FTA). Status: DONE for visibility: installed on a copy of `ncollection_demo`; Accounting > UAE E-Invoicing
-(E-Invoices, Received, Self-Billing, Configuration: Settings, Tax Mapping, Payment Means, Service Providers, Holidays) is shown to Accountants, Billing Managers
-(`account.group_account_user` implies the user group), the Owner (`ROLE_IMPLICATIONS`, documented in ROLE_MATRIX.md) and system administrators. No A-Cube call was
-made; `e2euae` and its three protected invoices were not touched. **PROVIDER**: A-Cube sandbox acceptance stays blocked.
+Arabic terms loaded (`_update_translations`); core 19.0.1.29.0, AI 19.0.1.4.0, layout 19.0.1.1.0. The e-invoice local demonstration was then seeded on the `ncollection_demo` copy (twice: the second
+run changes nothing), exercised and shown in the browser.
 
-## 5. Dashboard PDF exports: DONE
+## Release matrix for the shared upgrade (NOT executed, awaits owner approval)
 
-One page design (`ncollection.dashboard.pdf` in `ncollection_branding`): a dedicated A4 paper format (the cause was the company's letterhead format with its tall top margin
-and thin sides), 14 mm sides, header (company, title, context), footer (company, title, page n / N), repeated table headers, no split rows, `dir=auto` cells, currency
-codes spaced ("4,901AED" -> "4,901 AED"; display only, Excel unchanged), Arabic RTL. Sales, Invoicing, Summary and Spreadsheet Dashboards share it. Rendered and inspected
-as PNG pages (EN and AR, 1 and 2 pages): margins, wrapping of very long labels, pagination. Findings fixed on the way: Arabic cells clipped by bidi (now `dir=auto`),
-narrow first column, footer overflow.
+Per database, in this order: fresh backup + manifest; pass 1 (the `-u` / `-i` above); pass 2 `-i ncollection_account_audit` only if it is not installed (it is, on all three); Arabic terms; schema drift (0);
+release gate READY; browser acceptance. Only on `ncollection_demo` afterwards: start `einvoice-validator` and `einvoice-validator-sb`, run `scripts/upgrade/seed_uae_einvoice_demo.py`
+(licence mirror `LOCAL-UAE-DEMO`, owner to confirm), never any provider. `e2euae` and every other database stay out of every command.
 
-## 6. Release matrix for the next shared upgrade (NOT executed)
+## Rollback and recovery
 
-| Database | `-u` | `-i` |
-|---|---|---|
-| `ncollection`, `awtar`, `ncollection_demo` | `ncollection_core`, `ncollection_branding`, `ncollection_account_reports`, `ncollection_dashboard_export`, `ncollection_ai`, `ncollection_account_audit` (Arabic catalogue, access) | `ncollection_account_invoice_layout` |
-| `ncollection_demo` only (e-invoicing review) | as above | `ncollection_account_localization_uae`, `ncollection_uae_einvoicing`, `ncollection_uae_einvoicing_acube`; start `einvoice-validator` and `einvoice-validator-sb` (compose `docker-compose.einvoice.yml`, token from `.env`) |
+* Per database: restore the pre-upgrade dump taken immediately before (`pg_restore` into a fresh database, filestore tar alongside); the code rollback is `git checkout 236a7ff` plus a container restart.
+* What the upgrade changes that a restore reverts: schema (new tables `ncollection_invoice_adjustment*`, `ncollection_invoice_column_pref`; new columns on `ncollection_ai_chat_message`;
+  `ncollection_alert` dropped after being archived), data (the Anomaly Alerts menu / crons), module states. `ncollection_alert_archive` lives in the database and is restored with it.
+* A half-applied module (`to upgrade` / `to install`): RUNBOOK_RELEASE_UPGRADE.md; never `-u all`.
+* Pre-upgrade backups of the current state: `D:\Backups\upgrade-pre-20261107` (verified, 11 files); fresh ones are taken again before the real upgrade.
 
-Order: pass 1 `-u`, pass 2 `-i`, Arabic terms (`_update_translations`), drift check, as in RELEASE_LOCAL_UPGRADE_PLAN.md. Rollback: restore the pre-upgrade dump of each database;
-`ncollection_alert_archive` goes with the database. `e2euae` and every other database stay out of every command.
+## Limits and decisions that remain
+
+* Phones: the invoice line cards have no column table, so the arrangement does not apply there (Odoo's own mobile layout).
+* A newly added charge row books its invoice line on save; everything else recalculates live.
+* Real AI provider and A-Cube sandbox: not authorized, not contacted (LIVE rows).
+* The `LOCAL-UAE-DEMO` mirror is written by a local script into `ncollection_demo` (a platform database that has no tenant of its own); the platform's own tenant / plan route is not used. The owner confirms or rejects this before it runs.
+* Windows host trust and unrotated credentials: unchanged and out of scope here.
