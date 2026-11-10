@@ -47,12 +47,17 @@ class TestInvoiceLineAmounts(AccountTestInvoicingCommon):
         return [(f.get('name'), f.get('string')) for f in line_list.findall('field')]
 
     def test_amount_follows_price_and_the_tax_included_total_follows_amount(self):
-        # ncollection_account_invoice_layout (when installed) adds its own editable columns beside these: not part of this contract
+        raw = self._line_columns()
         layout = {'nc_amount', 'nc_total_incl', 'nc_discount_amount', 'nc_discount_mode', 'nc_discount_fixed'}
-        names = [name for name, _label in self._line_columns() if name not in layout]
+        names = [name for name, _label in raw if name not in layout]
         price = names.index('price_unit')
-        self.assertEqual(names[price + 1:price + 4], ['price_subtotal', 'price_total', 'price_total'])
-        self.assertIn(('price_total', 'Total incl. Tax'), self._line_columns())
+        if 'nc_total_incl' in dict(raw):
+            # ncollection_account_invoice_layout is installed: it swaps the labelled Total incl. Tax for its editable column
+            self.assertEqual(names[price + 1:price + 3], ['price_subtotal', 'price_total'])
+            self.assertIn(('nc_total_incl', 'Total incl. Tax'), raw)
+        else:
+            self.assertEqual(names[price + 1:price + 4], ['price_subtotal', 'price_total', 'price_total'])
+            self.assertIn(('price_total', 'Total incl. Tax'), raw)
         for kept in ('quantity', 'discount', 'tax_ids', 'product_id', 'name'):
             self.assertIn(kept, names, "no business column is removed")
 
