@@ -114,13 +114,14 @@ class TestInvoiceLiveAdjustments(AccountTestInvoicingCommon):
         self.assertEqual(line.discount, 10.0)
         self.assertEqual(line.price_subtotal, 720.0)
 
-    # --- what the WEB CLIENT really sends (found in the real browser; odoo.tests.Form sends more fields than it does) --
+    # --- what the WEB CLIENT really sends (found in the real browser; odoo.tests.Form sends more fields) ----------
     def test_saving_a_quantity_edit_keeps_a_fixed_discount_fixed(self):
         move = self._move(qty=2.0, price=200.0)
         line = self._product_line(move)
         line.nc_discount_amount = 100.0
         # the browser saves the quantity together with the Disc.% that merely followed it, and no discount mode
-        move.write({'invoice_line_ids': [Command.update(line.id, {'quantity': 4.0, 'discount': 12.5, 'nc_amount': 700.0})]})
+        sent = {'quantity': 4.0, 'discount': 12.5, 'nc_amount': 700.0}
+        move.write({'invoice_line_ids': [Command.update(line.id, sent)]})
         self.assertEqual(line.nc_discount_mode, 'amount')
         self.assertEqual(line.nc_discount_fixed, 100.0)
         self.assertEqual(line.discount, 12.5)
@@ -138,8 +139,8 @@ class TestInvoiceLiveAdjustments(AccountTestInvoicingCommon):
                  'nc_discount_amount', 'nc_amount', 'nc_total_incl', 'price_subtotal', 'price_total')
         # quantity 4 -> 3 while the client still holds the figures of quantity 4
         sent = {'quantity': 3.0, 'discount': 10.0, 'nc_discount_percent': 10.0, 'nc_discount_amount': 80.0,
-                'nc_amount': line.nc_amount, 'nc_total_incl': line.nc_total_incl, 'price_subtotal': line.price_subtotal,
-                'move_id': {'id': move.id}}
+                'nc_amount': line.nc_amount, 'nc_total_incl': line.nc_total_incl,
+                'price_subtotal': line.price_subtotal, 'move_id': {'id': move.id}}
         value = line.onchange(sent, ['quantity'], {name: {} for name in names})['value']
         self.assertNotIn('price_unit', value, "the unit price drifted to 200.32 here")
         self.assertEqual(value['nc_amount'], 540.0)
