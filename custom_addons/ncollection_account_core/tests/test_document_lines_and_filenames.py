@@ -47,7 +47,9 @@ class TestInvoiceLineAmounts(AccountTestInvoicingCommon):
         return [(f.get('name'), f.get('string')) for f in line_list.findall('field')]
 
     def test_amount_follows_price_and_the_tax_included_total_follows_amount(self):
-        names = [name for name, _label in self._line_columns()]
+        # ncollection_account_invoice_layout (when installed) adds its own editable columns beside these: not part of this contract
+        layout = {'nc_amount', 'nc_total_incl', 'nc_discount_amount', 'nc_discount_mode', 'nc_discount_fixed'}
+        names = [name for name, _label in self._line_columns() if name not in layout]
         price = names.index('price_unit')
         self.assertEqual(names[price + 1:price + 4], ['price_subtotal', 'price_total', 'price_total'])
         self.assertIn(('price_total', 'Total incl. Tax'), self._line_columns())

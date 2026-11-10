@@ -75,10 +75,44 @@ No new editing restriction and no new way to re-price a posted line: the editabl
 posted line be written (INVOICE_AMOUNT_AUDIT.md section 7); that stays a separate accounting-policy decision. The invoice amount audit records
 every amount change of these fields like any other (tests in `test_invoice_adjustments.py`).
 
-## 6. Not implemented in this release (stated, not hidden)
+## 5a. Live recalculation while editing (`_onchange_nc_adjustments`)
 
-* **Column REORDERING and a per-company column order**: the new columns appear in Odoo's optional-columns selector (shown / hidden, remembered per user by
-  Odoo), headers are centred, RTL and narrow screens work; dragging columns into a new order and storing a company default order are NOT built (they need an
-  OWL list-renderer extension with its own browser tests).
-* The Charges & Adjustments block recalculates percentages on save (the totals update when the invoice is saved), not on every keystroke.
+While an invoice is open for editing, changing a product line or a row of the Charges & Adjustments block re-runs the ONE calculation
+(`account.move._nc_adjustment_amounts`, the same function the save uses): every row shows its money at once, the "Untaxed after Charges & Discounts" preview
+(`nc_adjusted_untaxed`) follows, and an adjustment whose invoice line already exists re-prices that line, so Untaxed Amount, Taxes and Total follow before saving.
+A row added just now books its invoice line when the invoice is saved (it is keyed on the adjustment, so it can never be booked twice). When the web client sends the
+live price of a booked line back on save, the server does not apply that echo; the save re-books the authoritative value from the adjustment. A hand edit of a booked line
+is still refused. Browser-measured: a 10 % global discount moved from 23.00 to 95.00 AED, unsaved, when a line quantity went from 2 to 10.
+
+## 5b. Column order and visibility (`column_arrange.js`, `ncollection.invoice.column.pref`)
+
+* A maintainable `patch(ListRenderer.prototype)` limited to the invoice-lines list (`account.move.line` with the Discount column): only `getActiveColumns` (order),
+  `computeOptionalActiveFields` / `saveOptionalActiveFields` (visibility) and one new entry in the existing column menu change. Cells, inline editing, onchange and keyboard
+  navigation are Odoo's own. The invoice lines use the account module's primary template copy, so the menu entry extends BOTH `web.ListRenderer` and
+  `account.SectionAndNoteListRenderer`.
+* **Arrange columns** (column menu, last icon of the header row): a dialog with drag and drop (desktop) and up / down buttons (touch, keyboard), a check box per optional
+  column, and the buttons **Save for me**, **Set as company default** (Accounting Managers only) and **Back to company default**.
+* Resolution: the user's own row, else the company default, else the view's order. Customer invoices, vendor bills and credit notes share one list key, so they behave identically.
+  The Odoo column menu check boxes are also saved as the user's own preference on the server, not only in the browser.
+* Storage: one row per (company, user, list) holding column NAMES only (validated against `account.move.line`). A user reads their own row and the company default and
+  writes only their own; the company default is writable by Accounting Managers only (record rules AND a server check). Changes to a company default are tracked in the chatter
+  of the record (Accounting > Configuration > Invoice Layout & Calculations > Invoice Column Defaults), as are changes to the charge / discount definitions (`mail.thread` tracking).
+* Phones: Odoo shows the invoice lines as cards there (no table, so no column menu); the arrangement applies to the table layouts (desktop, tablet). The charges block and the discount
+  summary were checked at 375 px, English and Arabic: no horizontal overflow.
+
+## 5c. Configuration map
+
+| Setting | Where | Who |
+|---|---|---|
+| Charge / discount definitions (kind, fixed / %, basis, account, taxes, analytic, applicability, auto-add, sequence) | Accounting > Configuration > Invoice Layout & Calculations > Charges & Discounts | Accounting Manager (ORM + company rule; changes tracked) |
+| Company default column order and hidden columns | the Arrange columns dialog, or Invoice Column Defaults | Accounting Manager (tracked) |
+| User column order and visibility | the Arrange columns dialog / the column menu | the user, own row only |
+| Taxes and accounts of a charge | on the definition (editable per invoice row for the tax) | Accounting Manager (definition), invoicing users (row) |
+| Calculation order and bases | fixed by design (section 4); no expression language | - |
+
+## 6. Limits (stated, not hidden)
+
 * A global discount over lines with DIFFERENT tax rates uses the taxes chosen on the adjustment; Odoo's `global_discount` tax allocation is not used.
+* A freshly added adjustment row books its line on save (its amount and the preview are live; Untaxed / Total change on save).
+* Drag and drop is a desktop gesture; touch and keyboard use the arrow buttons.
+* Phones show invoice lines as cards: the column arrangement does not apply there.
