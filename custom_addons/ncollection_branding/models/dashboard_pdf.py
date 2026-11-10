@@ -63,7 +63,7 @@ ellipsis; white-space: nowrap; }
 .f > span + span { text-align: %(end)s; white-space: nowrap; }
 </style></head><body onload="subst()">
 <div class="f"><span>%(left)s</span>
-<span>%(page)s <span class="page"></span> / <span class="topage"></span></span></div>
+<span>%(page)s <span dir="ltr" style="unicode-bidi:isolate;display:inline-block"><span class="page"></span> / <span class="topage"></span></span></span></div>
 </body></html>"""
 
 
