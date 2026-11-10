@@ -22,6 +22,8 @@ msgstr "اكتب سؤالًا للبحث عنه."
 #: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__display_name
 #: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__display_name
 #: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -31,6 +33,8 @@ msgstr "الاسم المعروض"
 #: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__id
 #: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__id
 #: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -328,6 +332,7 @@ msgstr "افتح مساعد الذكاء الاصطناعي"
 
 #. module: ncollection_ai
 #. odoo-javascript
+#. odoo-python
 #: code:addons/ncollection_ai/controllers/chat_stream.py:0
 #: code:addons/ncollection_ai/static/src/chat/chat_widget.js:0
 msgid "The assistant could not answer."
@@ -374,3 +379,16 @@ msgstr "انقطعت إجابة الذكاء الاصطناعي قبل اكتم�
 #: code:addons/ncollection_ai/models/chat.py:0
 msgid "The assistant is busy answering other questions on this workspace. Please try again in a moment."
 msgstr "المساعد مشغول بالإجابة عن أسئلة أخرى في مساحة العمل هذه. يُرجى المحاولة بعد لحظة."
+
+#. module: ncollection_ai
+#: model:ir.actions.server,name:ncollection_ai.cron_gc_ai_transcripts_ir_actions_server
+msgid "NCollection: AI chat transcript retention"
+msgstr "NCollection: الاحتفاظ بسجل محادثات المساعد"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/chat.py:0
+msgid ""
+"The assistant is busy answering other questions. Please try again in a "
+"moment."
+msgstr "المساعد مشغول بالإجابة عن أسئلة أخرى. حاول مرة أخرى بعد قليل."
