@@ -1178,3 +1178,20 @@ translation coverage 5 / 5; pylint at baseline 205; upgrade rehearsal PASS.
 Customer: whether a branch issues under the parent's TRN (the engine uses the document company). Regulatory: §13. Deferred
 deployment decision: the database password on the odoo command line (§9g.2). `e2euae` lists 8 sales taxes without a PINT-AE
 category (unused by its invoices; classify them before using them). `einvdev` / `einvfull` need their owner's upgrade.
+
+## 9h. Local review in Accounting (demonstration, 2026-11-10; NOT applied to a shared database)
+
+Measured on a disposable copy of `ncollection_demo` with the isolated validator workers (`einvoice-validator`, `einvoice-validator-sb`) on the copy's private network.
+
+* **Install** (`-i ncollection_account_localization_uae,ncollection_uae_einvoicing,ncollection_uae_einvoicing_acube`, after the pass-1 upgrade of the core modules).
+* **Menus** (Accounting > UAE E-Invoicing): E-Invoices, Received E-Invoices, Self-Billing Agreements, Configuration (Settings, Tax Mapping, Payment Means Mapping,
+  Service Providers, Official Holidays, Evidence Exports). Who sees what (ORM-checked): Accountant and Billing Manager: E-Invoices and Received (user group, read-only on the
+  accounting documents; `account.group_account_user` implies it, `security/role_links.xml`); Owner (`ROLE_IMPLICATIONS`, ROLE_MATRIX.md) and the system administrator: also the
+  Configuration menu; a plain internal user: nothing, and the ORM refuses the model.
+* **Licence mirror.** The engine runs only when the workspace licence NAMES the module (fail-closed). A database with no platform record (a demonstration database) needs the
+  labelled plan `LOCAL-UAE-DEMO`; `scripts/upgrade/seed_uae_einvoice_demo.py` creates it, enables the company configuration with the tax mapping of the UAE chart and seeds one
+  clearly named demonstration buyer, product and posted invoice (TEST identifiers, never a real company's registration). Idempotent.
+* **Workflow proven locally with the OFFICIAL validator** (no provider configured, nothing sent): draft -> ready -> locally checked (XML generated and archived) ->
+  validation_failed (the official rule `ibr-132-ae` rejected a demonstration buyer TRN that did not end in 03, shown in the Results page) -> corrected -> validated;
+  submission state stays "not submitted". The provider button exists but there is no provider, and A-Cube was never contacted.
+* **Still blocked, unchanged:** the A-Cube sandbox acceptance (no credential), so nothing here is a production certification. `e2euae` and its three protected invoices were not touched.
