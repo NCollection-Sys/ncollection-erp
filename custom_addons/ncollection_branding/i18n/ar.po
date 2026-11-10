@@ -122,6 +122,7 @@ msgstr "الاتصال بالدعم"
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__display_name
 #: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -149,6 +150,7 @@ msgstr "نسيت كلمة المرور؟"
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__id
 #: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__id
 msgid "ID"
 msgstr "المعرّف"
 
