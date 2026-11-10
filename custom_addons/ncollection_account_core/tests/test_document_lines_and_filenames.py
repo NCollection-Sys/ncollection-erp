@@ -48,7 +48,8 @@ class TestInvoiceLineAmounts(AccountTestInvoicingCommon):
 
     def test_amount_follows_price_and_the_tax_included_total_follows_amount(self):
         raw = self._line_columns()
-        layout = {'nc_amount', 'nc_total_incl', 'nc_discount_amount', 'nc_discount_mode', 'nc_discount_fixed'}
+        layout = {'nc_amount', 'nc_total_incl', 'nc_discount_amount', 'nc_discount_mode', 'nc_discount_fixed',
+                  'nc_discount_percent'}
         names = [name for name, _label in raw if name not in layout]
         price = names.index('price_unit')
         if 'nc_total_incl' in dict(raw):

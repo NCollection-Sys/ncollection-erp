@@ -80,6 +80,40 @@ class TestInvoiceLiveAdjustments(AccountTestInvoicingCommon):
         self.assertEqual(move.amount_untaxed, 360.0)
         self.assertEqual(len(move.invoice_line_ids.filtered('nc_adjustment_id')), 1)
 
+    # --- the money Discount typed IN THE FORM (the onchange path; the ORM tests only reach the inverse) ----------------
+    def _product_line(self, move):
+        return move.invoice_line_ids.filtered(lambda line: line.display_type == 'product')
+
+    def test_typing_the_money_discount_in_the_form_drives_the_percentage(self):
+        move = self._move(qty=2.0, price=200.0)  # 400
+        with Form(move) as form:
+            with form.invoice_line_ids.edit(0) as line:
+                line.nc_discount_amount = 100.0
+                # found on the real application: the onchange answered the OLD amount and Disc.% never moved
+                self.assertEqual(line.nc_discount_amount, 100.0)
+                self.assertEqual(line.discount, 25.0)
+                line.quantity = 4.0  # 800: a fixed discount stays the same money, the percentage follows
+                self.assertEqual(line.nc_discount_amount, 100.0)
+                self.assertEqual(line.discount, 12.5)
+        line = self._product_line(move)
+        self.assertEqual(line.nc_discount_mode, 'amount')
+        self.assertEqual(line.nc_discount_fixed, 100.0)
+        self.assertEqual(line.price_subtotal, 700.0)
+
+    def test_typing_the_percentage_in_the_form_after_a_fixed_discount_returns_to_percentage_mode(self):
+        move = self._move(qty=2.0, price=200.0)
+        with Form(move) as form:
+            with form.invoice_line_ids.edit(0) as line:
+                line.nc_discount_amount = 100.0
+                line.discount = 10.0
+                self.assertEqual(line.nc_discount_amount, 40.0)
+                line.quantity = 4.0  # a percentage discount follows the line value
+                self.assertEqual(line.nc_discount_amount, 80.0)
+        line = self._product_line(move)
+        self.assertEqual(line.nc_discount_mode, 'percent')
+        self.assertEqual(line.discount, 10.0)
+        self.assertEqual(line.price_subtotal, 720.0)
+
     def test_changing_the_adjustment_value_reprices_totals_before_saving(self):
         move = self._move()
         adj = self._adjust(move, self.freight, 10.0)

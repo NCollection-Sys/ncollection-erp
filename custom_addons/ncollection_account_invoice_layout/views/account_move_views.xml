@@ -15,6 +15,8 @@
             <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='discount']" position="after">
                 <field name="nc_discount_mode" column_invisible="True"/>
                 <field name="nc_discount_fixed" column_invisible="True"/>
+                <!-- round-tripped by the web client: without it an unsaved Disc.% was lost at the next quantity / price edit -->
+                <field name="nc_discount_percent" column_invisible="True"/>
                 <field name="nc_discount_amount" string="Discount" optional="show" on_change="1"/>
             </xpath>
             <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='price_subtotal']" position="attributes">

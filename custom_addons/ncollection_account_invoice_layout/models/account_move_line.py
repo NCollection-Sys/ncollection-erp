@@ -35,7 +35,7 @@ section 7); this module does not add a second way to do it and does not change t
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_is_zero, float_round
+from odoo.tools import float_compare, float_is_zero, float_round
 
 _SEARCH_RADIUS = 3  # price steps examined each side of the solved price
 _PRODUCT = 'product'
@@ -148,25 +148,54 @@ class AccountMoveLine(models.Model):
         for line in self:
             if line.display_type != _PRODUCT:
                 continue
+            amount = line.nc_discount_amount
+            if line.nc_discount_mode == 'percent':
+                # the web client sends the Discount back when it merely followed Disc.% (see the onchange below): a
+                # value equal to what the percentage gives is that echo, not a fixed discount typed by the user
+                derived = line.quantity * line.price_unit * line.discount / 100.0
+                rounding = line.currency_id.rounding if line.currency_id else 0.01
+                if float_compare(amount, derived, precision_rounding=rounding) == 0:
+                    continue
             line._nc_refuse_posted()
             line.nc_discount_mode = 'amount'
-            line.nc_discount_fixed = line.nc_discount_amount
+            line.nc_discount_fixed = amount
 
     @api.onchange('discount')
     def _onchange_nc_discount_percent(self):
-        """The user typed Disc.%: the percentage is now the source (a programmatic change never reaches an
-        onchange)."""
+        """The user typed Disc.%: the percentage is now the source. Odoo ALSO runs this when Disc.% merely followed a
+        fixed discount (the onchange cascade: typed Discount, or a quantity / price edit on a fixed-discount line); that
+        must not flip the line back to percentage mode, so a Disc.% equal to the one the fixed amount gives is ignored."""
+        digits = self.env['decimal.precision'].precision_get('Discount')
         for line in self:
-            if line.display_type == _PRODUCT:
-                line.nc_discount_mode = 'percent'
-                line.nc_discount_percent = line.discount
+            if line.display_type != _PRODUCT:
+                continue
+            if line.nc_discount_mode == 'amount':
+                gross = line.quantity * line.price_unit
+                derived = line.nc_discount_fixed / gross * 100.0 if gross else 0.0
+                if float_compare(line.discount, derived, precision_digits=digits) == 0:
+                    continue
+            typed = line.discount  # read FIRST: the mode change below recomputes Disc.% from the stored percentage
+            line.nc_discount_percent = typed
+            line.nc_discount_mode = 'percent'
 
     @api.onchange('nc_discount_amount')
     def _onchange_nc_discount_amount(self):
+        """The user typed the money Discount: the amount is now the source. The mirror of the method above: Odoo also
+        runs this when the Discount merely followed Disc.% (typed percentage, or a quantity / price edit on a
+        percentage line), which must not turn the line into a fixed discount."""
         for line in self:
-            if line.display_type == _PRODUCT:
-                line.nc_discount_mode = 'amount'
-                line.nc_discount_fixed = line.nc_discount_amount
+            if line.display_type != _PRODUCT:
+                continue
+            # read the typed value FIRST: changing the mode invalidates this computed field, and reading it after
+            # that returned the recomputed 0 instead of what the user typed
+            typed = line.nc_discount_amount
+            if line.nc_discount_mode == 'percent':
+                derived = line.quantity * line.price_unit * line.discount / 100.0
+                rounding = line.currency_id.rounding if line.currency_id else 0.01
+                if float_compare(typed, derived, precision_rounding=rounding) == 0:
+                    continue
+            line.nc_discount_fixed = typed
+            line.nc_discount_mode = 'amount'
 
     @api.constrains('nc_discount_mode', 'nc_discount_fixed', 'quantity', 'price_unit')
     def _check_nc_discount_fixed(self):
