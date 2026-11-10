@@ -18,7 +18,7 @@ class AccountMove(models.Model):
         currency_field='currency_id',
         compute='_compute_nc_discount_totals',
         help="All line discounts, tax-excluded: what the lines would total without any discount, minus what they "
-             "total.",
+        "total.",
     )
     nc_total_after_discount = fields.Monetary(
         string='Total After Discount',
@@ -27,6 +27,12 @@ class AccountMove(models.Model):
         help="The discounted, tax-excluded total of the product lines, before tax and before invoice-level charges.",
     )
     nc_has_discount = fields.Boolean(compute='_compute_nc_discount_totals')
+    nc_adjusted_untaxed = fields.Monetary(
+        string='Untaxed after Charges & Discounts',
+        currency_field='currency_id',
+        compute='_compute_nc_adjusted_untaxed',
+        help="Live preview: product lines + charges - discounts, before tax. Equals Untaxed Amount once saved.",
+    )
 
     def _prepare_product_base_line_for_taxes_computation(self, product_line):
         """A fixed-amount discount feeds the tax engine its EXACT percentage so the subtotal is gross - fixed to
@@ -94,6 +100,8 @@ class AccountMove(models.Model):
         return moves
 
     def write(self, vals):
+        if 'invoice_line_ids' in vals:
+            self = self.with_context(nc_line_command_write=True)
         result = super().write(vals)
         if not self.env.context.get('nc_adjustment_sync') and (
             {'invoice_line_ids', 'line_ids', 'currency_id', 'invoice_date'} & set(vals)
@@ -118,6 +126,53 @@ class AccountMove(models.Model):
                         }
                     )
 
+    def _nc_adjustment_amounts(self):
+        """{adjustment: money} for the adjustments of ONE invoice (saved or still being edited): the single
+        calculation behind the stored Amount, the booked lines and the live onchange."""
+        self.ensure_one()
+        currency = self.currency_id or self.company_id.currency_id
+        basis = currency.round(self._nc_adjustment_basis())
+        adjustments = self.nc_adjustment_ids.sorted(lambda a: (a.sequence, a._origin.id or 0))
+        amounts = {}
+        discount_total = 0.0
+        for adj in adjustments.filtered(lambda a: a.kind == 'discount'):
+            amount = adj.value if adj.value_mode == 'fixed' else basis * adj.value / 100.0
+            amounts[adj] = currency.round(min(amount, max(basis - discount_total, 0.0)))
+            discount_total += amounts[adj]
+        for adj in adjustments.filtered(lambda a: a.kind == 'charge'):
+            if adj.value_mode == 'fixed':
+                amount = adj.value
+            else:
+                base = basis - discount_total if adj.type_id.basis == 'lines_after_discount' else basis
+                amount = base * adj.value / 100.0
+            amounts[adj] = currency.round(amount)
+        return amounts
+
+    @api.depends('invoice_line_ids.price_subtotal', 'nc_adjustment_ids.amount', 'nc_adjustment_ids.kind')
+    def _compute_nc_adjusted_untaxed(self):
+        for move in self:
+            charges = sum(a.amount for a in move.nc_adjustment_ids if a.kind == 'charge')
+            discounts = sum(a.amount for a in move.nc_adjustment_ids if a.kind == 'discount')
+            move.nc_adjusted_untaxed = move._nc_adjustment_basis() + charges - discounts
+
+    @api.onchange('invoice_line_ids', 'nc_adjustment_ids')
+    def _onchange_nc_adjustments(self):
+        """LIVE recalculation while editing: every adjustment row shows its money, and an adjustment whose invoice line
+        already exists re-prices that line, so Untaxed / Taxes / Total follow at once. A row added just now is booked
+        as its line when the invoice is saved (never twice: the booking is keyed on the adjustment)."""
+        for move in self:
+            if move.state != 'draft' or not move.is_invoice(include_receipts=True) or not move.nc_adjustment_ids:
+                continue
+            for adj, amount in move._nc_adjustment_amounts().items():
+                sign = -1.0 if adj.kind == 'discount' else 1.0
+                adj.amount = amount
+                key = adj._origin.id
+                line = move.invoice_line_ids.filtered(
+                    lambda l, key=key: key and l.nc_adjustment_id and l.nc_adjustment_id._origin.id == key
+                )[:1]
+                if line and line.price_unit != sign * amount:
+                    line.price_unit = sign * amount
+
     def _nc_adjustment_basis(self):
         """P: the discounted, tax-excluded product lines that are NOT adjustment lines."""
         self.ensure_one()
@@ -135,24 +190,11 @@ class AccountMove(models.Model):
             adjustments = move.nc_adjustment_ids.sorted(lambda a: (a.sequence, a.id))
             if not adjustments and not move.invoice_line_ids.filtered('nc_adjustment_id'):
                 continue
-            currency = move.currency_id or move.company_id.currency_id
-            basis = currency.round(move._nc_adjustment_basis())
-            amounts = {}
-            discount_total = 0.0
-            for adj in adjustments.filtered(lambda a: a.kind == 'discount'):
-                amount = adj.value if adj.value_mode == 'fixed' else basis * adj.value / 100.0
-                amounts[adj.id] = currency.round(min(amount, max(basis - discount_total, 0.0)))
-                discount_total += amounts[adj.id]
-            for adj in adjustments.filtered(lambda a: a.kind == 'charge'):
-                if adj.value_mode == 'fixed':
-                    amount = adj.value
-                else:
-                    base = basis - discount_total if adj.type_id.basis == 'lines_after_discount' else basis
-                    amount = base * adj.value / 100.0
-                amounts[adj.id] = currency.round(amount)
+            amounts = move._nc_adjustment_amounts()
             sync = move.with_context(nc_adjustment_sync=True, check_move_validity=False)
+            currency = move.currency_id or move.company_id.currency_id
             for adj in adjustments:
-                amount = amounts[adj.id]
+                amount = amounts[adj]
                 sign = -1.0 if adj.kind == 'discount' else 1.0
                 adj.with_context(nc_adjustment_sync=True).write({'amount': amount})
                 line_vals = {

@@ -23,6 +23,10 @@
                                  escape-first markdown subset — never raw HTML. -->
                             <t t-if="msg.role === 'user'"><span t-esc="msg.body"/></t>
                             <t t-else=""><t t-out="renderBody(msg)"/></t>
+                            <div t-if="msg.role === 'assistant' and msg.origin" t-attf-class="nc-ai-chat__origin nc-ai-chat__origin--{{ msg.origin }}">
+                                <t t-if="msg.origin === 'demo'">Demo mode: a summary of your data, not an AI model</t>
+                                <t t-else="">AI model<t t-if="msg.model_name">: <t t-esc="msg.model_name"/></t></t>
+                            </div>
                         </div>
                     </t>
                     <div t-if="state.sending and !state.streaming" class="nc-ai-chat__typing" aria-live="polite">

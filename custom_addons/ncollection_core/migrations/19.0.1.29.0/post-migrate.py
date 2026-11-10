@@ -16,6 +16,11 @@ _logger = logging.getLogger(__name__)
 
 _RECORDS = (
     ('ir.cron', ('cron_detect_anomalies', 'cron_send_alert_digest')),
+    # the crons' own server actions: deleting the cron removes the action but leaves its external id behind
+    (
+        'ir.actions.server',
+        ('cron_detect_anomalies_ir_actions_server', 'cron_send_alert_digest_ir_actions_server'),
+    ),
     ('ir.ui.menu', ('menu_ncollection_alert',)),
     ('ir.actions.act_window', ('action_ncollection_alert',)),
     ('ir.ui.view', ('view_ncollection_alert_list', 'view_ncollection_alert_form', 'view_ncollection_alert_search')),

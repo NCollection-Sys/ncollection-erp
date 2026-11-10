@@ -311,3 +311,11 @@
         transition: none !important;
     }
 }
+
+// Who answered: a demonstration (mock provider) must never look like a language model.
+.nc-ai-chat__origin {
+    margin-top: .35rem;
+    font-size: .72rem;
+    opacity: .75;
+    &--demo { color: var(--nc-color-warning, #a15c00); }
+}

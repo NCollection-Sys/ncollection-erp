@@ -7,3 +7,4 @@ from . import test_domain_mapper
 from . import test_chat
 from . import test_chat_hardening
 from . import test_ai_topics
+from . import test_ai_origin

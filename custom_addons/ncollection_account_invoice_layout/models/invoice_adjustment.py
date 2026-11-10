@@ -31,18 +31,18 @@ KINDS = [('charge', 'Charge'), ('discount', 'Discount')]
 class InvoiceAdjustmentType(models.Model):
     _name = 'ncollection.invoice.adjustment.type'
     _description = 'Invoice charge / discount definition'
-    _inherit = ['analytic.mixin']
+    _inherit = ['analytic.mixin', 'mail.thread']
     _order = 'sequence, id'
 
-    name = fields.Char(string='Label', required=True, translate=True)
-    active = fields.Boolean(default=True)
+    name = fields.Char(string='Label', required=True, translate=True, tracking=True)
+    active = fields.Boolean(default=True, tracking=True)
     sequence = fields.Integer(default=10)
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company, index=True)
-    kind = fields.Selection(KINDS, required=True, default='charge')
+    kind = fields.Selection(KINDS, required=True, default='charge', tracking=True)
     value_mode = fields.Selection(
         [('fixed', 'Fixed amount'), ('percent', 'Percentage')], string='Value', required=True, default='fixed'
     )
-    default_value = fields.Float(string='Default value', digits=(16, 4))
+    default_value = fields.Float(string='Default value', digits=(16, 4), tracking=True)
     basis = fields.Selection(
         [
             ('lines', 'Invoice lines (after line discounts)'),

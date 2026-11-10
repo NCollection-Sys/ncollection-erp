@@ -11,4 +11,35 @@
         <field name="model_id" ref="model_ncollection_invoice_adjustment"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
+
+    <!-- Column preferences: own companies (global); a user reads their own + the company default and writes only their
+         own row; an Accounting Manager manages the company default (and sees all rows). -->
+    <record id="rule_nc_colpref_company" model="ir.rule">
+        <field name="name">Invoice column preferences: own companies</field>
+        <field name="model_id" ref="model_ncollection_invoice_column_pref"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_nc_colpref_user_read" model="ir.rule">
+        <field name="name">Invoice column preferences: user reads own + company default</field>
+        <field name="model_id" ref="model_ncollection_invoice_column_pref"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="domain_force">['|', ('user_id', '=', user.id), ('user_id', '=', False)]</field>
+    </record>
+    <record id="rule_nc_colpref_user_write" model="ir.rule">
+        <field name="name">Invoice column preferences: user writes only own row</field>
+        <field name="model_id" ref="model_ncollection_invoice_column_pref"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+    </record>
+    <record id="rule_nc_colpref_manager" model="ir.rule">
+        <field name="name">Invoice column preferences: Accounting Manager manages the company default</field>
+        <field name="model_id" ref="model_ncollection_invoice_column_pref"/>
+        <field name="groups" eval="[(4, ref('account.group_account_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
 </odoo>

@@ -99,7 +99,7 @@ class AccountMoveLine(models.Model):
         digits="Discount",
         copy=True,
         help="The percentage the user typed. It is the source of Disc.% in Percentage mode, so a recomputation "
-             "never has to read "
+        "never has to read "
         "the field it is computing.",
     )
     discount = fields.Float(compute="_compute_nc_discount", store=True, readonly=False)
@@ -201,6 +201,16 @@ class AccountMoveLine(models.Model):
         return lines
 
     def write(self, vals):
+        if self.env.context.get('nc_line_command_write') and set(vals) <= {
+            'price_unit',
+            'nc_amount',
+            'nc_total_incl',
+        }:
+            # the web client echoes the live-recalculated price of a booked adjustment line when the invoice is saved:
+            # the invoice's own sync re-books the authoritative value right after, so the echo is simply not applied
+            self -= self.filtered('nc_adjustment_id')
+            if not self:
+                return True
         self._nc_check_adjustment_lines_untouched(vals)
         if 'discount' in vals and not {'nc_discount_mode', 'nc_discount_amount', 'nc_discount_fixed'} & set(vals):
             vals = dict(vals, nc_discount_mode='percent', nc_discount_percent=vals['discount'])

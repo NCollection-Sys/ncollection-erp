@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Company defaults for the invoice line columns (users arrange their own from the column menu on an invoice). -->
+    <record id="view_nc_colpref_list" model="ir.ui.view">
+        <field name="name">ncollection.invoice.column.pref.list</field>
+        <field name="model">ncollection.invoice.column.pref</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="scope"/>
+                <field name="list_key"/>
+                <field name="column_order"/>
+                <field name="column_hidden"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_nc_colpref_form" model="ir.ui.view">
+        <field name="name">ncollection.invoice.column.pref.form</field>
+        <field name="model">ncollection.invoice.column.pref</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="user_id"/>
+                        <field name="list_key"/>
+                        <field name="column_order" placeholder="product_id,name,quantity,price_unit"/>
+                        <field name="column_hidden"/>
+                    </group>
+                    <div class="text-muted">
+                        An empty User is the company default. Normally set from an invoice: column menu, Arrange columns,
+                        Set as company default. Changes are recorded below.
+                    </div>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_nc_colpref" model="ir.actions.act_window">
+        <field name="name">Invoice Column Defaults</field>
+        <field name="res_model">ncollection.invoice.column.pref</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('user_id', '=', False)]</field>
+    </record>
+    <menuitem id="menu_nc_colpref" name="Invoice Column Defaults" parent="menu_nc_invoice_layout" sequence="20"
+              action="action_nc_colpref" groups="account.group_account_manager"/>
+</odoo>

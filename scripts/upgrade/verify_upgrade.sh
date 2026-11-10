@@ -355,8 +355,8 @@ a_impl="$(q "$CORE_DB" "SELECT count(*) FROM res_groups_implied_rel WHERE gid=$c
 
 [ "$a_pw" = "0" ] && ok "the shipped credential is GONE (password IS NULL)" \
   || no "the cron user can still authenticate — the credential survived the upgrade"
-[ "$a_member" = "1" ] && ok "restored to group_cron_service (alerts can be recorded)" \
-  || no "not in group_cron_service — every detected anomaly would be discarded silently"
+[ "$a_member" = "1" ] && ok "restored to group_cron_service (scheduled jobs keep their identity)" \
+  || no "not in group_cron_service — scheduled jobs would lose their identity"
 [ "$a_swept" = "0" ] && ok "all $b_swept materialised app-group membership(s) revoked" \
   || no "$a_swept app-group membership(s) survived — the scheduler keeps write/unlink it should not have"
 [ "$a_pp" = "0" ] && ok "product/purchase memberships revoked (the closure bug stays fixed)" \
@@ -370,8 +370,8 @@ a_read="$(q "$CORE_DB" "SELECT count(*) FROM ir_model_access WHERE group_id=$cro
 # delivered it. Those are different claims and this arm cannot separate them.
 #
 # Measured: deleting that call from the migration outright leaves this suite at
-# 30 passed, 0 failed. The reason is alert.py's _register_hook (models/anomaly/
-# alert.py), which re-grants whenever `granted < present` on ANY registry load
+# 30 passed, 0 failed. The reason is res_groups.py's _register_hook (models/
+# res_groups.py), which re-grants whenever `granted < present` on ANY registry load
 # — the R-014 belt-and-braces fix. So the migration's call is redundant with a
 # mechanism that runs on every boot, and no assertion reachable from here can
 # tell the two apart.

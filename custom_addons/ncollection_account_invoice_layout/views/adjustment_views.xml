@@ -57,6 +57,7 @@
                         Order: line discounts, then invoice discounts, then charges, then taxes.
                     </div>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -95,6 +96,9 @@
                             <field name="amount"/>
                         </list>
                     </field>
+                    <group class="nc_adjusted_untaxed" invisible="not nc_adjustment_ids">
+                        <field name="nc_adjusted_untaxed" string="Untaxed after Charges &amp; Discounts"/>
+                    </group>
                 </div>
             </xpath>
         </field>

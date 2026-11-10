@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ncollection_account_invoice_layout.ColumnArrangeDialog">
+        <Dialog title="title" size="'md'">
+            <p class="text-muted small mb-2">
+                Drag a column (or use the arrows) to change its order, and tick the columns to show. The choice applies to
+                customer invoices and vendor bills.
+            </p>
+            <ul class="list-group nc_arrange_list">
+                <li t-foreach="state.rows" t-as="row" t-key="row.name"
+                    class="list-group-item d-flex align-items-center gap-2 nc_arrange_row"
+                    draggable="true"
+                    t-att-data-name="row.name"
+                    t-on-dragstart="(ev) => this.onDragStart(ev, row_index)"
+                    t-on-dragover="onDragOver"
+                    t-on-drop="(ev) => this.onDrop(ev, row_index)">
+                    <i class="fa fa-bars text-muted nc_drag_handle" title="Drag to reorder"/>
+                    <input type="checkbox" class="form-check-input m-0" t-att-checked="row.visible"
+                           t-att-disabled="!row.optional" t-on-change="(ev) => this.onToggle(row, ev)"/>
+                    <span class="flex-grow-1" t-esc="row.label"/>
+                    <button type="button" class="btn btn-sm btn-light nc_move_up" aria-label="Move up"
+                            t-on-click="() => this.move(row_index, -1)"><i class="fa fa-chevron-up"/></button>
+                    <button type="button" class="btn btn-sm btn-light nc_move_down" aria-label="Move down"
+                            t-on-click="() => this.move(row_index, 1)"><i class="fa fa-chevron-down"/></button>
+                </li>
+            </ul>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary nc_save_user" t-on-click="() => this.save('user')">Save for me</button>
+                <button t-if="props.canCompany" class="btn btn-secondary nc_save_company" t-on-click="() => this.save('company')">Set as company default</button>
+                <button t-if="props.source === 'user'" class="btn btn-light nc_reset_user" t-on-click="reset">Back to company default</button>
+                <button class="btn btn-light" t-on-click="props.close">Cancel</button>
+            </t>
+        </Dialog>
+    </t>
+
+    <t t-inherit="web.ListRenderer" t-inherit-mode="extension">
+        <xpath expr="//t[@t-foreach='optionalFieldGroups']" position="before">
+            <t t-if="ncIsInvoiceLines">
+                <DropdownItem class="'nc_arrange_columns'" onSelected="() => this.ncOpenArrange()">
+                    <i class="fa fa-arrows me-2"/>Arrange columns…
+                </DropdownItem>
+                <div role="separator" class="dropdown-divider"/>
+            </t>
+        </xpath>
+    </t>
+
+    <!-- the invoice lines use the account module's own primary copy of the list template -->
+    <t t-inherit="account.SectionAndNoteListRenderer" t-inherit-mode="extension">
+        <xpath expr="//t[@t-foreach='optionalFieldGroups']" position="before">
+            <t t-if="ncIsInvoiceLines">
+                <DropdownItem class="'nc_arrange_columns'" onSelected="() => this.ncOpenArrange()">
+                    <i class="fa fa-arrows me-2"/>Arrange columns…
+                </DropdownItem>
+                <div role="separator" class="dropdown-divider"/>
+            </t>
+        </xpath>
+    </t>
+</templates>

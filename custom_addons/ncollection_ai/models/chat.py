@@ -105,6 +105,11 @@ class AiChatMessage(models.Model):
     # widget's markdown subset is applied. An Html field would sanitise on
     # write and tempt someone to render it raw.
     body = fields.Text(required=True)
+    # WHO produced an assistant answer, so the interface never lets a demonstration pass for a language model:
+    # 'model' = a configured provider's model answered; 'demo' = the built-in mock provider (a deterministic summary of
+    # the user's own figures, or a canned sentence, never a language model). Empty on rows saved before this existed.
+    origin = fields.Selection([('model', 'AI model'), ('demo', 'Demo mode')], readonly=True)
+    model_name = fields.Char(readonly=True, help="The model identifier the gateway reported for this answer.")
 
     @api.constrains('body', 'role')
     def _check_body_size(self):
@@ -191,7 +196,7 @@ class AiChat(models.AbstractModel):
         if include_history:
             history = self.env['ncollection.ai.chat.message'].search_read(
                 [('user_id', '=', self.env.uid)],
-                ['role', 'body', 'create_date'],
+                ['role', 'body', 'origin', 'model_name', 'create_date'],
                 order='id desc', limit=_HISTORY_LIMIT)
             history.reverse()  # oldest first, the way a transcript reads
 
@@ -366,11 +371,14 @@ class AiChat(models.AbstractModel):
             {'user_id': self.env.uid, 'role': 'user',
              'body': (question or '')[:_MAX_QUESTION_CHARS]},
             {'user_id': self.env.uid, 'role': 'assistant',
-             'body': (result.get('answer') or '')[:_MAX_ASSISTANT_CHARS]},
+             'body': (result.get('answer') or '')[:_MAX_ASSISTANT_CHARS],
+             'origin': result.get('origin') or False,
+             'model_name': (result.get('model_name') or '')[:80] or False},
         ])
         return {
             'messages': [
                 {'id': message.id, 'role': message.role, 'body': message.body,
+                 'origin': message.origin or False, 'model_name': message.model_name or False,
                  'create_date': fields.Datetime.to_string(message.create_date)}
                 for message in records
             ],

@@ -45,3 +45,4 @@ from . import test_company_delegation
 from . import test_document_layout_owner
 from . import test_duplicate_contacts
 from . import test_dashboard_export
+from . import test_anomaly_alerts_removed

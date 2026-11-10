@@ -11,3 +11,13 @@
 
 // The discount summary above Untaxed Amount reads like the totals block it sits on.
 .o_form_view .nc_discount_summary { margin-bottom: 0; }
+
+// Arrange-columns dialog: drag handle, the row being dragged; tap-sized buttons on phones.
+.nc_arrange_list {
+    .nc_arrange_row { cursor: grab; user-select: none; }
+    .nc_arrange_row.nc_dragging { opacity: .45; }
+    .nc_drag_handle { cursor: grab; }
+}
+@media (max-width: 767.98px) {
+    .nc_arrange_list .btn { min-width: 2.5rem; min-height: 2.5rem; }
+}

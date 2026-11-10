@@ -22,6 +22,7 @@ Usage: ``odoo shell -d <db> < scripts/upgrade/seed_uae_einvoice_demo.py``  (need
 from odoo import Command, fields
 
 company = env.company  # noqa: F821 - ``env`` is provided by ``odoo shell``
+assert env.cr.dbname == 'ncollection_demo', 'REFUSING: this seed is for the ncollection_demo demonstration database only (got %s)' % env.cr.dbname  # noqa: F821
 ae = env.ref('base.ae')  # noqa: F821
 Config = env['ncollection.workspace.config'].sudo()  # noqa: F821
 if not Config.search([], limit=1):

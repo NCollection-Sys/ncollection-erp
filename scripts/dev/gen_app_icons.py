@@ -47,15 +47,6 @@ def summary(draw):
             draw.rounded_rectangle((_s(x), _s(y), _s(x + 32), _s(y + 32)), radius=_s(6), fill=WHITE)
 
 
-def alerts(draw):
-    """Anomaly Alerts: a bell."""
-    draw.pieslice((_s(34), _s(24), _s(94), _s(84)), 180, 360, fill=WHITE)        # the dome
-    draw.polygon([(_s(34), _s(54)), (_s(94), _s(54)), (_s(104), _s(88)), (_s(24), _s(88))], fill=WHITE)
-    draw.rounded_rectangle((_s(22), _s(86), _s(106), _s(94)), radius=_s(4), fill=WHITE)
-    draw.ellipse((_s(54), _s(94), _s(74), _s(112)), fill=WHITE)                   # the clapper
-    draw.rounded_rectangle((_s(60), _s(16), _s(68), _s(28)), radius=_s(3), fill=WHITE)
-
-
 def workspace(draw):
     """Workspace Settings: a gear."""
     cx = cy = 64
@@ -113,7 +104,7 @@ def cheque(draw):
 
 # module -> {file name: glyph}. A file name other than icon.png is for a module that owns several Home tiles.
 ICONS = {
-    'ncollection_core': {'icon_summary.png': summary, 'icon_alerts.png': alerts, 'icon_workspace.png': workspace},
+    'ncollection_core': {'icon_summary.png': summary, 'icon_workspace.png': workspace},
     'ncollection_account_dashboard': {'icon.png': departments},
     'ncollection_reseller': {'icon.png': reseller},
     'ncollection_subscription': {'icon.png': platform},

@@ -73,7 +73,7 @@ class AiChatStream(http.Controller):
         generic = env._("The assistant could not answer.")
 
         def generate():
-            parts, usage = [], {}
+            parts, usage, provider, model_name = [], {}, '', ''
             try:
                 for event in events:
                     if 'delta' in event:
@@ -83,6 +83,8 @@ class AiChatStream(http.Controller):
                             yield _line({'type': 'delta', 'text': text})
                     elif event.get('done'):
                         usage = event.get('usage', {})
+                        provider = str(event.get('provider') or '')
+                        model_name = str(event.get('model') or '')
                 tail = rehydrator.flush()
                 if tail:
                     yield _line({'type': 'delta', 'text': tail})
@@ -93,7 +95,9 @@ class AiChatStream(http.Controller):
                     saved_env = api.Environment(cr, uid, {'lang': lang})
                     result = saved_env['ncollection.ai.chat']._persist_exchange(
                         display, {'answer': answer, 'usage': usage,
-                                  'dropped_sections': dropped})
+                                  'dropped_sections': dropped,
+                                  'origin': 'demo' if provider == 'mock' else 'model',
+                                  'model_name': model_name})
                 yield _line(dict(result, type='done'))
             except UserError as exc:
                 yield _line({'type': 'error', 'message': str(exc)})

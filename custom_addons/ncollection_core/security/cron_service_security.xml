@@ -55,8 +55,8 @@
         -->
         <record id="group_cron_service" model="res.groups">
             <field name="name">Scheduler (service)</field>
-            <field name="comment">Non-interactive tenant service account: may
-                record anomaly alerts produced by scheduled detection. Not a
+            <field name="comment">Non-interactive tenant service account for
+                scheduled jobs (read access to the apps installed). Not a
                 system user, so plan entitlement still applies to everything it
                 reads. Not for human users.</field>
         </record>
