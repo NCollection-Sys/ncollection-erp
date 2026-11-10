@@ -38,6 +38,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare, float_is_zero, float_round
 
 _SEARCH_RADIUS = 3  # price steps examined each side of the solved price
+_PROBE_SPAN = 10000.0
 _PRODUCT = 'product'
 _BASIS_FIELDS = {
     'price_unit',
@@ -243,11 +244,34 @@ class AccountMoveLine(models.Model):
                 return True
         self._nc_check_adjustment_lines_untouched(vals)
         if 'discount' in vals and not {'nc_discount_mode', 'nc_discount_amount', 'nc_discount_fixed'} & set(vals):
-            vals = dict(vals, nc_discount_mode='percent', nc_discount_percent=vals['discount'])
+            # a fixed-discount line whose quantity / price changed: the web client sends the Disc.% that FOLLOWED the
+            # edit together with it. That is the derived percentage, not one the user typed, so the line stays fixed.
+            followed = self.filtered(lambda line: line._nc_discount_follows_fixed(vals))
+            others = self - followed
+            if followed and others:
+                others.write(vals)
+                self = followed
+            if followed:
+                vals = {name: value for name, value in vals.items() if name != 'discount'}
+                if not vals:
+                    return True
+            else:
+                vals = dict(vals, nc_discount_mode='percent', nc_discount_percent=vals['discount'])
         result = super().write(vals)
         if _BASIS_FIELDS & set(vals):
             self._nc_resync_adjustments()
         return result
+
+    def _nc_discount_follows_fixed(self, vals):
+        """True when ``vals['discount']`` is just the percentage this FIXED-discount line gives with the quantity and
+        price of the same write."""
+        self.ensure_one()
+        if self.display_type != _PRODUCT or self.nc_discount_mode != 'amount':
+            return False
+        gross = vals.get('quantity', self.quantity) * vals.get('price_unit', self.price_unit)
+        derived = self.nc_discount_fixed / gross * 100.0 if gross else 0.0
+        digits = self.env['decimal.precision'].precision_get('Discount')
+        return float_compare(vals['discount'], derived, precision_digits=digits) == 0
 
     def unlink(self):
         self._nc_check_adjustment_lines_untouched()
@@ -328,8 +352,10 @@ class AccountMoveLine(models.Model):
             raise UserError(
                 self.env._("The quantity of \"%s\" is zero, so no unit price can produce a total.", self.name or '')
             )
-        first, second = self._nc_probe(1.0)[index], self._nc_probe(2.0)[index]
-        slope = second - first
+        # two probes FAR apart: Odoo's "raw" tax-included total is already rounded per line, so a slope taken from
+        # prices 1 and 2 was off by up to 0.2 % and the search below then missed the exact price (200.32 for 200.00)
+        first, second = self._nc_probe(1.0)[index], self._nc_probe(1.0 + _PROBE_SPAN)[index]
+        slope = (second - first) / _PROBE_SPAN
         if float_is_zero(slope, precision_digits=9):
             raise UserError(
                 self.env._(
@@ -341,6 +367,8 @@ class AccountMoveLine(models.Model):
         digits = self.env['decimal.precision'].precision_get('Product Price')
         step = 10.0**-digits
         exact_price = 1.0 + (target - first) / slope
+        for _step in range(3):  # refine on the real engine near the answer (rounding makes it only nearly linear)
+            exact_price += (target - self._nc_probe(exact_price)[index]) / slope
         centre = float_round(exact_price, precision_digits=digits)
         best = None
         for offset in range(-_SEARCH_RADIUS, _SEARCH_RADIUS + 1):
@@ -372,6 +400,12 @@ class AccountMoveLine(models.Model):
             if line.display_type != _PRODUCT or not line.move_id:
                 continue
             target = line.nc_amount if kind == 'amount' else line.nc_total_incl
+            current = line.price_subtotal if kind == 'amount' else line.price_total
+            rounding = line.currency_id.rounding if line.currency_id else 0.01
+            if float_is_zero(target - current, precision_rounding=rounding):
+                # Odoo also runs this onchange when the figure merely FOLLOWED another edit (quantity, discount):
+                # it is then what the engine already produces, and re-solving the price could only move it
+                continue
             try:
                 price, achieved, exact = line._nc_solve_price(kind, target)
             except UserError as error:

@@ -114,6 +114,48 @@ class TestInvoiceLiveAdjustments(AccountTestInvoicingCommon):
         self.assertEqual(line.discount, 10.0)
         self.assertEqual(line.price_subtotal, 720.0)
 
+    # --- what the WEB CLIENT really sends (found in the real browser; odoo.tests.Form sends more fields than it does) --
+    def test_saving_a_quantity_edit_keeps_a_fixed_discount_fixed(self):
+        move = self._move(qty=2.0, price=200.0)
+        line = self._product_line(move)
+        line.nc_discount_amount = 100.0
+        # the browser saves the quantity together with the Disc.% that merely followed it, and no discount mode
+        move.write({'invoice_line_ids': [Command.update(line.id, {'quantity': 4.0, 'discount': 12.5, 'nc_amount': 700.0})]})
+        self.assertEqual(line.nc_discount_mode, 'amount')
+        self.assertEqual(line.nc_discount_fixed, 100.0)
+        self.assertEqual(line.discount, 12.5)
+        self.assertEqual(line.price_subtotal, 700.0)
+        # a percentage the fixed amount does NOT give is a typed percentage
+        move.write({'invoice_line_ids': [Command.update(line.id, {'discount': 10.0})]})
+        self.assertEqual(line.nc_discount_mode, 'percent')
+        self.assertEqual(line.price_subtotal, 720.0)
+
+    def test_a_total_that_followed_a_quantity_edit_never_moves_the_price(self):
+        move = self._move(qty=4.0, price=200.0)
+        line = self._product_line(move)
+        line.discount = 10.0
+        names = ('quantity', 'price_unit', 'discount', 'nc_discount_mode', 'nc_discount_fixed', 'nc_discount_percent',
+                 'nc_discount_amount', 'nc_amount', 'nc_total_incl', 'price_subtotal', 'price_total')
+        # quantity 4 -> 3 while the client still holds the figures of quantity 4
+        sent = {'quantity': 3.0, 'discount': 10.0, 'nc_discount_percent': 10.0, 'nc_discount_amount': 80.0,
+                'nc_amount': line.nc_amount, 'nc_total_incl': line.nc_total_incl, 'price_subtotal': line.price_subtotal,
+                'move_id': {'id': move.id}}
+        value = line.onchange(sent, ['quantity'], {name: {} for name in names})['value']
+        self.assertNotIn('price_unit', value, "the unit price drifted to 200.32 here")
+        self.assertEqual(value['nc_amount'], 540.0)
+        self.assertEqual(value['nc_discount_amount'], 60.0)
+
+    def test_the_price_solver_is_exact_on_a_discounted_multi_quantity_line(self):
+        move = self._move(qty=3.0, price=150.0)
+        line = self._product_line(move)
+        line.discount = 10.0
+        for price in (200.0, 204.0, 1234.56):
+            line.price_unit = price
+            total, amount = line.price_total, line.price_subtotal
+            line.price_unit = 150.0
+            self.assertEqual(line._nc_solve_price('total', total), (price, total, True))
+            self.assertEqual(line._nc_solve_price('amount', amount), (price, amount, True))
+
     def test_changing_the_adjustment_value_reprices_totals_before_saving(self):
         move = self._move()
         adj = self._adjust(move, self.freight, 10.0)
