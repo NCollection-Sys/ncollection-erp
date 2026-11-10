@@ -80,7 +80,7 @@ class InvoiceColumnPreference(models.Model):
 
     @api.model
     def nc_save(self, list_key, order, hidden, scope='user'):
-        """Save the preference. ``scope='company'`` needs the Accounting Manager group (checked here AND by the ACL)."""
+        """Save the preference. ``scope=company`` needs the Accounting Manager group (checked here and by the ACL)."""
         values = {
             'column_order': ','.join(self._clean(order)),
             'column_hidden': ','.join(self._clean(hidden)),

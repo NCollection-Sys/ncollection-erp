@@ -168,7 +168,7 @@ class AccountMove(models.Model):
                 adj.amount = amount
                 key = adj._origin.id
                 line = move.invoice_line_ids.filtered(
-                    lambda l, key=key: key and l.nc_adjustment_id and l.nc_adjustment_id._origin.id == key
+                    lambda ln, key=key: key and ln.nc_adjustment_id and ln.nc_adjustment_id._origin.id == key
                 )[:1]
                 if line and line.price_unit != sign * amount:
                     line.price_unit = sign * amount

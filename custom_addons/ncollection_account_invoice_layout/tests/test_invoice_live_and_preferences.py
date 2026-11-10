@@ -102,7 +102,7 @@ class TestInvoiceLiveAdjustments(AccountTestInvoicingCommon):
             move.write({'invoice_line_ids': []})  # a no-op write must not rebook
         self.assertEqual(len(move.invoice_line_ids.filtered('nc_adjustment_id')), 2)
         self.assertEqual(
-            move.line_ids.filtered(lambda l: l.nc_adjustment_id and l.display_type == 'product')[:1].move_id, move
+            move.line_ids.filtered(lambda ln: ln.nc_adjustment_id and ln.display_type == 'product')[:1].move_id, move
         )
 
     def test_many_adjustments_keep_the_documented_order_and_balance(self):

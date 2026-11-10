@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Anomaly Alerts are gone everywhere, history is archived before the table goes, and nothing unrelated went with them."""
+"""Anomaly Alerts are gone everywhere; history is archived before the table goes; nothing unrelated went."""
 
 import importlib.util
 import os
@@ -42,7 +42,7 @@ class TestAnomalyAlertsRemoved(TransactionCase):
         self.assertFalse(self.env['ir.model'].search([('model', '=', 'ncollection.alert')]))
 
     def test_unrelated_machinery_survives(self):
-        # the scheduler identity (used by the platform's administration service) and the release gate are not part of the feature
+        # the scheduler identity (used by the administration service) and the release gate are not the feature
         self.assertTrue(self.env.ref('ncollection_core.group_cron_service', raise_if_not_found=False))
         self.assertTrue(self.env.ref('ncollection_core.user_cron_service', raise_if_not_found=False))
         from odoo.addons.ncollection_core import release_gate  # noqa: F401 - importable and loaded
