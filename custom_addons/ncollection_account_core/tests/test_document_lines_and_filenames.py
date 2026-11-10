@@ -52,7 +52,7 @@ class TestInvoiceLineAmounts(AccountTestInvoicingCommon):
         names = [name for name, _label in raw if name not in layout]
         price = names.index('price_unit')
         if 'nc_total_incl' in dict(raw):
-            # ncollection_account_invoice_layout is installed: it swaps the labelled Total incl. Tax for its editable column
+            # ncollection_account_invoice_layout swaps the labelled Total incl. Tax for its editable column
             self.assertEqual(names[price + 1:price + 3], ['price_subtotal', 'price_total'])
             self.assertIn(('nc_total_incl', 'Total incl. Tax'), raw)
         else:
