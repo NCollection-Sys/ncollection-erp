@@ -64,7 +64,8 @@ ellipsis; white-space: nowrap; }
 </style></head><body onload="subst()">
 <div class="f"><span>%(left)s</span>
 <span>%(page)s <span dir="ltr"
-style="unicode-bidi:isolate;display:inline-block"><span class="page"></span> / <span class="topage"></span></span></span></div>
+style="unicode-bidi:isolate;display:inline-block">
+<span class="page"></span> / <span class="topage"></span></span></span></div>
 </body></html>"""
 
 
