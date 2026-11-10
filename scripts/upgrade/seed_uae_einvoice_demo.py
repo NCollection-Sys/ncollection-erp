@@ -1,3 +1,4 @@
+# flake8: noqa: F821
 """Seed a LOCAL, DEMONSTRATION-ONLY UAE e-invoicing workflow (run inside ``odoo shell -d <demo database>``).
 
 What it does, idempotently (a second run changes nothing):

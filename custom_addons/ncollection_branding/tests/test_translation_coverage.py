@@ -58,7 +58,8 @@ _BARE_HTML_OK = {
     'ncollection_branding/models/vendor_content.py':
         "rewrite PATTERNS applied to the stored HTML of module mail templates; shown to no user as written",
     'ncollection_branding/models/dashboard_pdf.py':
-        "the dashboard PDF page: CSS and markup only. Every user-visible word is passed in (already translated) and escaped",
+        "the dashboard PDF page: CSS and markup only. Every user-visible word is passed in already translated "
+        "and escaped",
     'ncollection_core/controllers/platform_entry.py':
         "the pre-login token bridge: auth-less, no user language is known, and it must reveal nothing",
     'ncollection_core/release_gate.py':
