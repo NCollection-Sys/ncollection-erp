@@ -222,6 +222,20 @@ class TestPaymentReceiptLayouts(AccountTestInvoicingCommon):
         self.assertEqual(self._classes(doc, 'nc_receipt_amount'), {'o_nc_table', 'o_nc_amount'})
         self.assertEqual(self._classes(doc, 'nc_receipt_totals'), {'o_nc_totals'})
 
+    def test_the_totals_and_the_signature_lines_are_one_unbreakable_block(self):
+        """A long list of documents must not leave the signature lines alone on a last page."""
+        for key in ('web.external_layout_standard', 'web.external_layout_boxed',
+                    'ncollection_branding.external_layout_nc'):
+            if not self.env.ref(key, raise_if_not_found=False):
+                continue
+            with self.subTest(layout=key):
+                doc = self._receipt(key)
+                block = doc.xpath("//div[@name='nc_receipt_close']")
+                self.assertEqual(len(block), 1)
+                self.assertIn('page-break-inside: avoid', block[0].get('style'))
+                self.assertEqual(len(block[0].xpath("./table[@name='nc_receipt_totals']")), 1)
+                self.assertEqual(len(block[0].xpath("./table[contains(@class, 'o_nc_signatures')]")), 1)
+
     def test_the_figures_do_not_depend_on_the_layout(self):
         texts = set()
         for key in ('web.external_layout_standard', 'web.external_layout_bubble', 'web.external_layout_boxed'):

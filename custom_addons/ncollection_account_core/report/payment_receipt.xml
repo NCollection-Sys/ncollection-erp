@@ -58,7 +58,7 @@
                     .o_nc_receipt_stock table.o_nc_totals { margin-top: 1mm; margin-bottom: 0; }
                     .o_nc_receipt_stock table.o_nc_totals td { padding: 2mm 2.8mm; border: 0 none !important; border-bottom: 0.2mm solid #dee2e6 !important; background: transparent; }
                     .o_nc_receipt_stock table.o_nc_totals tr.o_nc_grand td { border-top: 0.45mm solid #343a40 !important; border-bottom: 0 none !important; font-size: 11.5pt; font-weight: bold; }
-                    .o_nc_receipt_stock table.o_nc_signatures { width: 100%; margin-top: 26mm; }
+                    .o_nc_receipt_stock table.o_nc_signatures { width: 100%; margin-top: 20mm; }
                     .o_nc_receipt_stock table.o_nc_signatures td { width: 40%; border: 0 none !important; border-top: 0.3mm solid #495057 !important; padding: 2mm 0 0 0; color: #343a40; font-size: 10.5pt; background: transparent; }
                     .o_nc_receipt_stock table.o_nc_signatures td.o_nc_gap { width: 20%; border-top: 0 none !important; }
                     .o_nc_receipt_stock .o_nc_status { font-weight: bold; }
@@ -132,6 +132,9 @@
                     This payment has not been confirmed yet, so nothing has been applied.
                 </p>
 
+                <!-- The closing block: totals + signature lines, never split. With a long "Applied to" list the
+                     signature lines used to fall alone onto a last page; now the totals travel with them. -->
+                <div class="o_nc_receipt_close" name="nc_receipt_close" style="page-break-inside: avoid;">
                 <table t-attf-class="o_nc_totals#{nc_plain_class}" name="nc_receipt_totals" t-attf-style="width: 52%; margin-#{'right' if nc_rtl else 'left'}: auto;">
                     <tr>
                         <td>Applied to documents</td>
@@ -154,6 +157,7 @@
                         <td>Authorised signature</td>
                     </tr>
                 </table>
+                </div>
             </div>
         </xpath>
     </template>
