@@ -95,6 +95,7 @@ class AccountMove(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         moves = super().create(vals_list)
+        moves._nc_carry_reversed_adjustments()
         moves._nc_add_default_adjustments()
         moves._nc_sync_adjustments()
         return moves
@@ -253,13 +254,19 @@ class AccountMove(models.Model):
             )
         return rows
 
-    def _reverse_moves(self, default_values_list=None, cancel=False):
+    def _nc_carry_reversed_adjustments(self):
         """A credit note (or a reversal) carries the invoice's charges and discounts AS adjustments, linked to the
-        lines Odoo copied, so it shows and prints them the same way and never as product rows."""
-        reverse_moves = super()._reverse_moves(default_values_list=default_values_list, cancel=cancel)
+        lines Odoo copied, so it shows and prints them the same way and never as product rows.
+
+        Called from ``create``: Odoo creates a reversal with ``reversed_entry_id`` set and the source's lines copied
+        (the link is copy=False). ``_reverse_moves`` itself is an engine method this module must not override
+        (ncollection_account_core/tests/test_engine_boundary.py)."""
         Adjustment = self.env['ncollection.invoice.adjustment'].with_context(nc_adjustment_sync=True)
-        for move, reverse in zip(self, reverse_moves):
-            if not move.nc_adjustment_ids or not reverse.is_invoice(include_receipts=True):
+        for reverse in self.filtered(lambda m: m.reversed_entry_id and m.is_invoice(include_receipts=True)):
+            move = reverse.reversed_entry_id
+            if not move.nc_adjustment_ids or reverse.nc_adjustment_ids.filtered(
+                lambda a: a.type_id in move.nc_adjustment_ids.type_id
+            ):
                 continue
             free = reverse.invoice_line_ids.filtered(lambda line: line.display_type == 'product')
             for adj in move.nc_adjustment_ids:
@@ -286,7 +293,6 @@ class AccountMove(models.Model):
                             {'nc_adjustment_id': new_adj.id}
                         )
                         free -= match
-        return reverse_moves
 
     def _nc_adjustment_basis(self):
         """P: the discounted, tax-excluded product lines that are NOT adjustment lines."""

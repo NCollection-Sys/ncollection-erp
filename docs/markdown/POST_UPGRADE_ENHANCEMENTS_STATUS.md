@@ -76,14 +76,26 @@ release gate READY; browser acceptance. Only on `ncollection_demo` afterwards: s
 |---|---|---|
 | `0239d0a` | the consolidated release above | applied 2026-11-10 (three databases) |
 | `9ed9f9a` | a money Discount typed in the invoice form was discarded (onchange read the value after changing the mode) | applied 2026-11-10, invoice layout 19.0.1.1.1 |
-| `e53725d` | a quantity save turned a fixed discount into a percentage; a total that only followed an edit re-solved the price; the price solver's slope came from rounded probes (200.32 for 200.00) | awaits the 6 GB commit-headroom gate; invoice layout 19.0.1.1.2 |
-| payment duplicate + receipt layouts (branch `feature/payment-duplicate-receipt-layout`) | Duplicate on customer / vendor payments; the Payment Receipt under every Configure Document Layout choice | NOT applied; needs a separate approval; accounting core 19.0.1.14.0 |
+| `e53725d` | a quantity save turned a fixed discount into a percentage; a total that only followed an edit re-solved the price; the price solver's slope came from rounded probes (200.32 for 200.00) | applied 2026-11-11 inside `84f807b`; invoice layout 19.0.1.1.2 |
+| `84f807b` (branch `feature/payment-duplicate-receipt-layout`) | Duplicate on customer / vendor payments; the Payment Receipt under every Configure Document Layout choice; totals + signature lines never split | applied 2026-11-11; accounting core 19.0.1.14.1 |
+| branch `feature/invoice-adjustments-separation` | Charges & Adjustments never shown or printed as product lines; Charges & Discounts section on the PDF; VAT-sound pro-rata global discounts; credit notes carry the adjustments | release candidate; invoice layout 19.0.1.2.0 (removes the stored column `ncollection_invoice_adjustment.line_id`, adds `ncollection_invoice_adjustment_type.tax_mode`) |
 
 Lesson recorded with `9ed9f9a`: `odoo.tests.Form` sends more fields than the web client does. A typed-column fix is proven
 with the real browser on a private copy BEFORE it is proposed for the shared runtime, and regression tests replay the
 client's real payloads.
 
-### Release matrix for the payment / receipt release (NOT executed)
+### Release matrix for the adjustments-separation release
+
+Per database (`ncollection`, `awtar`, `ncollection_demo`), after a fresh backup and with at least 6 GB commit headroom:
+`-u ncollection_account_invoice_layout` only; Arabic terms; schema drift 0; release gate READY; browser acceptance (an
+invoice with charges and discounts: products only in the item table, the block and Journal Items show the
+adjustments; the PDF section). Existing adjustment types keep "The taxes below" for charges; a DISCOUNT type created
+before this release gets the column default ("The taxes below") as well, so no booked figure changes on upgrade; an
+administrator switches a discount type to "Same taxes as the invoice lines" for the pro-rata VAT split.
+Rollback: `git checkout` the previous commit and `-u ncollection_account_invoice_layout`; draft invoices re-book on
+their next save, posted invoices are never re-priced.
+
+### Release matrix for the payment / receipt release (executed 2026-11-11 as `84f807b`)
 
 Per database (`ncollection`, `awtar`, `ncollection_demo`), after a fresh backup and with at least 6 GB commit headroom:
 `-u ncollection_account_core` (and `ncollection_account_invoice_layout` if `e53725d` has not been applied yet), Arabic

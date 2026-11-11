@@ -69,6 +69,37 @@ Invoice discount 30, freight 25: Untaxed Amount 225, Total Discount 50 (20 + 30)
 Draft invoices only: a posted invoice keeps the lines it was posted with, and these fields refuse to change them. Duplicates and credit notes copy the booked
 lines as ordinary lines (identical figures). A booked line is changed only from the block, never by hand.
 
+## 4a. Presentation: adjustments are never product lines (19.0.1.2.0)
+
+An adjustment is booked as a real `account.move.line` of the invoice (its account, its taxes): taxes, totals, the
+receivable / payable, the invoice amount audit and the e-invoice read it like any other line. It carries the explicit
+link `account.move.line.nc_adjustment_id`, and that link decides where it is SHOWN:
+
+| Surface | Shows the booked adjustment lines? | How |
+|---|---|---|
+| Invoice form, Invoice Lines table | no | `static/src/commercial_lines.js`: the list renderer of the invoice lines (the one that loads `nc_adjustment_id`) sees a view of its list without the linked lines; rows, footer sums, keyboard navigation and the empty state use it, every edit / add / delete / save runs on Odoo's own list. Data, not DOM: it survives a reload, an onchange and a save. |
+| Invoice form, Charges & Adjustments block | yes, one row per adjustment | the adjustment records |
+| Invoice form, Journal Items tab | yes, every booked line | Odoo's own `line_ids` |
+| Printed invoice / bill / credit note, product table | no | `account.move._get_move_lines_to_report` |
+| Printed invoice, Charges & Discounts section | yes, one row per adjustment (label, value, taxes, signed amount) | `report/invoice_adjustments.xml`, from the booked lines |
+| Printed totals | included once | Odoo's own `tax_totals` |
+
+Why not a separate `display_type` (as Odoo does for cash rounding / early-payment discount lines): every consumer of
+`invoice_line_ids` (tax computation while editing, the UBL / PINT-AE builders, reports, stock and sale links) would
+then miss the adjustment and need its own change. Keeping the line a product line and moving only the PRESENTATION
+keeps one accounting truth.
+
+**Taxes from** (on the adjustment type): *The taxes below* books one line with the type's taxes (charges by default; a
+VAT-able freight carries the sales VAT, a charge outside the VAT scope carries none). *Same taxes as the invoice lines*
+(discounts by default) splits the amount over the VAT groups of the product lines, pro rata to each group's tax-excluded
+subtotal, one booked line per group, the rounding remainder on the largest group: each VAT base is reduced by its own
+share. Worked example (browser-verified): 300 at 5 % + 100 at 0 %, freight 40 at 5 %, 5 % global discount, 5.00 fixed
+discount -> discount lines -15 (5 %) / -5 (0 %) and -3.75 (5 %) / -1.25 (0 %); VAT 5 % on 321.25 = 16.06, VAT 0 % on
+93.75; untaxed 415.00, total 431.06. A price-included tax is grossed up so the booked tax-excluded amount is exact.
+
+**Credit notes and reversals** carry the invoice's adjustments AS adjustments, linked to the lines Odoo copied, so they
+show and print the same way.
+
 ## 5. Posted invoices (unchanged policy)
 
 No new editing restriction and no new way to re-price a posted line: the editable fields refuse a posted invoice. Core Odoo still lets `price_unit` of a
@@ -112,7 +143,10 @@ is still refused. Browser-measured: a 10 % global discount moved from 23.00 to 9
 
 ## 6. Limits (stated, not hidden)
 
-* A global discount over lines with DIFFERENT tax rates uses the taxes chosen on the adjustment; Odoo's `global_discount` tax allocation is not used.
+* A global discount over lines with different tax rates is split pro rata over the VAT groups when its type takes its
+  taxes from the invoice lines (the default for discounts); with "The taxes below" it books one line with those taxes.
+* A booked discount line has a negative unit price. PINT-AE prefers a document-level allowance (BG-20) for an invoice
+  discount; the e-invoicing engine validates the XML and blocks what the official rules refuse, it never adjusts it.
 * A freshly added adjustment row books its line on save (its amount and the preview are live; Untaxed / Total change on save).
 * Drag and drop is a desktop gesture; touch and keyboard use the arrow buttons.
 * Phones show invoice lines as cards: the column arrangement does not apply there.
