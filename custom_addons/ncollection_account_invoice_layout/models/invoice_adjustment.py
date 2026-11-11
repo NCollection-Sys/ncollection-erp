@@ -95,8 +95,9 @@ class InvoiceAdjustmentType(models.Model):
         default='fixed',
         tracking=True,
         help="Same taxes as the invoice lines: the amount is split over the VAT groups of the invoice lines, "
-        "pro rata, so each VAT base is reduced (or increased) by its own share; use it for a global discount over several VAT "
-        "rates. The taxes below: one line with exactly these taxes; use it for a freight or service charge.",
+        "pro rata, so each VAT base is reduced (or increased) by its own share; use it for a global discount over "
+        "several VAT rates. The taxes below: one line with exactly these taxes; use it for a freight or service "
+        "charge.",
     )
     tax_ids = fields.Many2many(
         'account.tax',
