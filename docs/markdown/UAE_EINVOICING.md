@@ -1195,3 +1195,35 @@ Measured on a disposable copy of `ncollection_demo` with the isolated validator 
   validation_failed (the official rule `ibr-132-ae` rejected a demonstration buyer TRN that did not end in 03, shown in the Results page) -> corrected -> validated;
   submission state stays "not submitted". The provider button exists but there is no provider, and A-Cube was never contacted.
 * **Still blocked, unchanged:** the A-Cube sandbox acceptance (no credential), so nothing here is a production certification. `e2euae` and its three protected invoices were not touched.
+
+## 9i. Invoice Charges & Adjustments and the e-invoice (measured 2026-11-11; a KNOWN GAP, not a compliance claim)
+
+The invoice layout module books each invoice-level charge or discount (freight, a global discount) as a real invoice
+line linked to its adjustment (`account.move.line.nc_adjustment_id`): a charge is a positive line, a discount a
+NEGATIVE-price line, one per VAT group when its taxes follow the invoice lines. The e-invoicing engine reads the
+invoice's product lines and, by design, does not decide on its own that a line is a document-level allowance (BG-20)
+or charge (BG-21): that is the per-document toggle on the e-invoice's lines (`ncollection.einvoice.line.adjustment`,
+D-13). Nothing connects the two today.
+
+Measured with the LOCAL official validator only, on `ncollection_demo`, inside rolled-back transactions (nothing kept,
+no number consumed, no provider, A-Cube never contacted):
+
+| Case | Adjustment line on the e-invoice | Result |
+|---|---|---|
+| A: freight charge 40.00 at 5 % | left as an item line | not ready: the line's unit of measure has no UN/ECE code (`NCOLLECTION:unit-code-unmapped`) |
+| B: 10 % global discount | left as an item line | BLOCKED: `NCOLLECTION:unclassified-negative-line` (a UAE e-invoice cannot carry a negative line), and the official totals rules fail (`ibr-co-13`, `aligned-ibrp-s-09`) because the item total no longer matches the booked untaxed amount |
+| A and B | marked as document charge / allowance, no reason | XML generated with `cac:AllowanceCharge`, official validation FAILED: `ibr-038` / `ibr-033` (a document charge / allowance needs a reason or a reason code) |
+| A and B | marked as document charge / allowance WITH a reason (the adjustment's label) | XML generated, **official local validation PASSED** (`validated`), submission "not submitted" |
+
+So:
+* An invoice with Charges & Adjustments is NOT e-invoice-ready as it is. The engine refuses it (fail-closed); it never
+  sends a negative line and never adjusts a figure.
+* It becomes valid when, on the e-invoice, each adjustment line is marked as a document allowance (discount) or charge
+  (charge) WITH a reason or an official reason code (UNCL5189 / UNCL7161). Today that is a manual step on each
+  e-invoice.
+* Not yet built (proposed, needs its own approval): mark the lines linked to an adjustment automatically when the
+  e-invoice is prepared (discount -> allowance, charge -> charge, reason = the adjustment's label, an optional official
+  reason code on the adjustment type). The engine's reconciliation then needs no change.
+* Not verified: the A-Cube sandbox or any ASP acceptance of such a document (no credential), and whether the Ministry's
+  accredited platform accepts the reason text without an official code. Nothing here is a production certification.
+
