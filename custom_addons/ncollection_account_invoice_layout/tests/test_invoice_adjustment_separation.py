@@ -125,8 +125,8 @@ class TestInvoiceAdjustmentSeparation(AccountTestInvoicingCommon):
             discount.value = value
             move.write({'invoice_line_ids': [Command.update(move.invoice_line_ids[0].id, {'quantity': 2.0})]})
             move.write({'invoice_line_ids': [Command.update(move.invoice_line_ids[0].id, {'quantity': 1.0})]})
-        self.assertEqual(len(move.invoice_line_ids.filtered(lambda l: l.nc_adjustment_id == discount)), 2)
-        self.assertEqual(len(move.invoice_line_ids.filtered(lambda l: l.nc_adjustment_id == freight)), 1)
+        self.assertEqual(len(move.invoice_line_ids.filtered(lambda ln: ln.nc_adjustment_id == discount)), 2)
+        self.assertEqual(len(move.invoice_line_ids.filtered(lambda ln: ln.nc_adjustment_id == freight)), 1)
         freight.unlink()
         discount.unlink()
         self.assertFalse(move.invoice_line_ids.filtered('nc_adjustment_id'))
