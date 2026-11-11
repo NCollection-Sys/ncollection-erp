@@ -45,15 +45,18 @@
                     <group string="Accounting">
                         <group>
                             <field name="account_id"/>
-                            <field name="tax_ids" widget="many2many_tags"/>
+                            <field name="tax_mode"/>
+                            <field name="tax_ids" widget="many2many_tags" invisible="tax_mode == 'lines'"/>
                         </group>
                         <group>
                             <field name="analytic_distribution" widget="analytic_distribution" groups="analytic.group_analytic_accounting"/>
                         </group>
                     </group>
                     <div class="text-muted">
-                        A charge increases the invoice, a discount decreases it. Each adjustment is booked as a real invoice line on
-                        its account with its taxes, so the journal entry, receivable / payable and reconciliation stay Odoo's own.
+                        A charge increases the invoice, a discount decreases it, before tax. Each adjustment is booked as a real
+                        accounting line on its account with its taxes (one per VAT group when the taxes follow the invoice lines), so the
+                        journal entry, receivable / payable and reconciliation stay Odoo's own. It is shown in the Charges &amp; Adjustments
+                        block of the invoice and printed in its own section, never as a product line.
                         Order: line discounts, then invoice discounts, then charges, then taxes.
                     </div>
                 </sheet>
@@ -87,12 +90,14 @@
                         <list editable="bottom">
                             <field name="sequence" column_invisible="True"/>
                             <field name="value_mode" column_invisible="True"/>
+                            <field name="tax_mode" column_invisible="True"/>
                             <field name="company_id" column_invisible="True"/>
                             <field name="currency_id" column_invisible="True"/>
                             <field name="type_id" options="{'no_create': True}"/>
                             <field name="kind" optional="show" readonly="1"/>
                             <field name="value"/>
-                            <field name="tax_ids" widget="many2many_tags" optional="show" options="{'no_create': True}"/>
+                            <field name="tax_ids" widget="many2many_tags" optional="show" options="{'no_create': True}"
+                                   invisible="tax_mode == 'lines'"/>
                             <field name="amount"/>
                         </list>
                     </field>

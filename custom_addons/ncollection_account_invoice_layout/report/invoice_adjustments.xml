@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- THE CHARGES & DISCOUNTS SECTION of the printed invoice / bill / credit note.
+
+         The product table prints the commercial lines only (account.move._get_move_lines_to_report leaves out the lines
+         linked to an adjustment); this section, right under it, prints each charge and invoice-level discount once,
+         from the BOOKED lines: label, value, taxes, signed amount. The totals below are Odoo's own (tax_totals), which
+         already contain those lines, so nothing is added twice and no total is computed here.
+
+         Table classes: the same as the product table (table o_main_table), so every Configure Document Layout choice
+         draws it as it draws the invoice lines, and the Professional layout styles it through its o_main_table rules. -->
+    <template id="report_invoice_document_nc_adjustments" inherit_id="account.report_invoice_document">
+        <xpath expr="//table[@name='invoice_line_table']" position="after">
+            <t t-set="nc_adjustments" t-value="o._nc_report_adjustments()"/>
+            <t t-if="nc_adjustments">
+                <t t-set="nc_show_incl" t-value="o.company_price_include == 'tax_included'"/>
+                <div class="o_nc_adjustments_title" style="margin: 5mm 0 1.5mm 0; font-weight: bold; page-break-after: avoid;">
+                    Charges &amp; Discounts
+                </div>
+                <table class="table o_main_table table-borderless mb-0 o_nc_adjustments" name="nc_invoice_adjustments"
+                       style="page-break-inside: avoid;">
+                    <thead>
+                        <tr>
+                            <th name="th_nc_adj_description" class="text-start"><span>Description</span></th>
+                            <th name="th_nc_adj_taxes" class="text-end"><span>Taxes</span></th>
+                            <th name="th_nc_adj_amount" class="text-end"><span>Amount</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="nc_adjustments" t-as="adj">
+                            <td name="td_nc_adj_description">
+                                <span t-out="adj['name']"/><t t-if="adj['value_mode'] == 'percent'"> </t>
+                                <!-- isolated left-to-right, so "(5%)" keeps its brackets in an Arabic document -->
+                                <span t-if="adj['value_mode'] == 'percent'" class="text-muted" dir="ltr"
+                                      style="unicode-bidi: embed; white-space: nowrap;"
+                                      t-out="'(' + ('%g' % adj['value']) + '%)'"/>
+                            </td>
+                            <td name="td_nc_adj_taxes" class="text-end"><span t-out="adj['taxes']"/></td>
+                            <td name="td_nc_adj_amount" class="text-end text-nowrap">
+                                <span t-out="adj['total'] if nc_show_incl else adj['subtotal']"
+                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+        </xpath>
+    </template>
+</odoo>

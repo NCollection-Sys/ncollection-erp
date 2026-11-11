@@ -232,7 +232,10 @@ class TestInvoiceLiveAdjustments(AccountTestInvoicingCommon):
         self.assertEqual(bill.amount_untaxed, 550.0)
         bill.action_post()
         reversal = bill._reverse_moves([{'invoice_date': '2026-03-02'}])
-        self.assertEqual(len(reversal.invoice_line_ids.filtered('nc_adjustment_id')), 0)  # not copied, never doubled
+        # the credit note carries the charge as an adjustment linked to the ONE line Odoo copied: never doubled
+        self.assertEqual(len(reversal.nc_adjustment_ids), 1)
+        self.assertEqual(len(reversal.invoice_line_ids.filtered('nc_adjustment_id')), 1)
+        self.assertEqual(reversal.amount_untaxed, bill.amount_untaxed)
 
     def test_posted_invoice_adjustments_stay_protected(self):
         move = self._move()

@@ -13,6 +13,9 @@
                 <attribute name="aggregated_fields">nc_amount,nc_total_incl</attribute>
             </xpath>
             <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='discount']" position="after">
+                <!-- the explicit link of a booked charge / discount: commercial_lines.js leaves those lines out of this
+                     list (they are shown in Charges & Adjustments and stay in Journal Items) -->
+                <field name="nc_adjustment_id" column_invisible="True"/>
                 <field name="nc_discount_mode" column_invisible="True"/>
                 <field name="nc_discount_fixed" column_invisible="True"/>
                 <!-- round-tripped by the web client: without it an unsaved Disc.% was lost at the next quantity / price edit -->

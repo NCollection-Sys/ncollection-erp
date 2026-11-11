@@ -16,10 +16,24 @@ CALCULATION ORDER (also in docs/markdown/INVOICE_LAYOUT_AND_CALCULATIONS.md)
      part of any basis, so an adjustment cannot feed itself or another one's percentage.
   2. discounts: fixed amount, or percentage of P.  G = their total.
   3. charges:   fixed amount, or percentage of P (basis "lines") or of P - G (basis "lines after discount").
-  4. taxes: each adjustment line carries the taxes of its type (editable per invoice), computed by Odoo's engine.
+  4. taxes, by the TAX MODE of the type:
+     * "The taxes below" (fixed): one booked line carrying the taxes of the type (editable per invoice). A VAT-able
+       freight charge carries the sales VAT; a charge outside the VAT scope carries none.
+     * "Same taxes as the invoice lines" (lines): the adjustment is split over the tax groups of the product lines,
+       pro rata to each group's tax-excluded subtotal, one booked line per group with that group's taxes. This is the
+       sound treatment of a global discount over lines with different VAT rates (5 %, 0 %, exempt...): each VAT base
+       is reduced by its own share, so the VAT of each rate is exact. The rounding remainder goes to the largest group.
+     Odoo's own tax engine computes every tax; a price-included tax is grossed up so the booked tax-excluded amount is
+     exactly the adjustment's.
   Untaxed Amount = P - G + F (F = charges). Total Discount = line discounts + G. Total After Discount = P - G.
 
 Only DRAFT invoices change; a posted invoice keeps the lines it was posted with.
+
+PRESENTATION. The booked lines are accounting records (Journal Items) and stay in ``invoice_line_ids``, so taxes,
+totals, the invoice amount audit and the e-invoice keep reading one truth. They are identified by
+``account.move.line.nc_adjustment_id`` and are therefore left OUT of the commercial item list: the invoice form's
+Invoice Lines table (commercial_lines.js) and the printed product table (``_get_move_lines_to_report``). The form shows
+them in the Charges & Adjustments block, the PDF in its own Charges & Discounts section; never twice.
 """
 
 from odoo import api, fields, models
@@ -71,12 +85,39 @@ class InvoiceAdjustmentType(models.Model):
         check_company=True,
         domain="[('account_type', 'not in', ('asset_receivable', 'liability_payable', 'off_balance'))]",
     )
+    tax_mode = fields.Selection(
+        [
+            ('lines', 'Same taxes as the invoice lines (split pro rata)'),
+            ('fixed', 'The taxes below'),
+        ],
+        string='Taxes from',
+        required=True,
+        default='fixed',
+        tracking=True,
+        help="Same taxes as the invoice lines: the amount is split over the VAT groups of the invoice lines, pro rata, "
+        "so each VAT base is reduced (or increased) by its own share; use it for a global discount over several VAT "
+        "rates. The taxes below: one line with exactly these taxes; use it for a freight or service charge.",
+    )
     tax_ids = fields.Many2many(
         'account.tax',
         string='Taxes',
         check_company=True,
-        help="The taxes of the booked line. A VAT-able freight charge carries the sales VAT.",
+        help="The taxes of the booked line when Taxes from is 'The taxes below'. A VAT-able freight charge carries the "
+        "sales VAT; a charge outside the VAT scope carries none.",
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            # a discount follows the taxes of the lines it reduces unless the administrator says otherwise
+            if 'tax_mode' not in vals and vals.get('kind') == 'discount':
+                vals['tax_mode'] = 'lines'
+        return super().create(vals_list)
+
+    @api.onchange('kind')
+    def _onchange_kind_tax_mode(self):
+        for rec in self:
+            rec.tax_mode = 'lines' if rec.kind == 'discount' else 'fixed'
 
     @api.constrains('value_mode', 'basis', 'kind', 'default_value')
     def _check_type(self):
@@ -97,7 +138,7 @@ class InvoiceAdjustmentType(models.Model):
 
     def write(self, vals):
         result = super().write(vals)
-        if {'account_id', 'tax_ids', 'kind', 'name'} & set(vals):
+        if {'account_id', 'tax_ids', 'kind', 'name', 'tax_mode'} & set(vals):
             drafts = self.env['ncollection.invoice.adjustment'].search(
                 [('type_id', 'in', self.ids), ('move_id.state', '=', 'draft')]
             )
@@ -125,14 +166,19 @@ class InvoiceAdjustment(models.Model):
     value_mode = fields.Selection(related='type_id.value_mode')
     sequence = fields.Integer(related='type_id.sequence', store=True)
     value = fields.Float(digits=(16, 4), help="An amount, or a percentage when the adjustment is a percentage.")
+    tax_mode = fields.Selection(related='type_id.tax_mode')
     tax_ids = fields.Many2many('account.tax', string='Taxes', check_company=True)
     amount = fields.Monetary(
         currency_field='currency_id',
         readonly=True,
         help="The money booked, tax-excluded and always positive; a discount is booked negative.",
     )
-    line_id = fields.Many2one(
-        'account.move.line', string='Invoice line', readonly=True, ondelete='set null', copy=False
+    line_ids = fields.One2many(
+        'account.move.line',
+        'nc_adjustment_id',
+        string='Booked lines',
+        readonly=True,
+        help="The journal items that book this adjustment: one, or one per VAT group when the taxes follow the lines.",
     )
 
     _unique_type_per_move = models.Constraint(
@@ -189,7 +235,7 @@ class InvoiceAdjustment(models.Model):
     def unlink(self):
         self._nc_check_move_draft()
         moves = self.move_id
-        lines = self.line_id
+        lines = self.line_ids
         result = super().unlink()
         if lines.exists():
             lines.with_context(nc_adjustment_sync=True).unlink()

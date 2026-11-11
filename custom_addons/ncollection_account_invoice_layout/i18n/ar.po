@@ -28,12 +28,29 @@ msgid "\"%s\" is not available for this kind of document or company."
 msgstr "«%s» غير متاح لهذا النوع من المستندات أو لهذه الشركة."
 
 #. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.report_invoice_document_nc_adjustments
+msgid "<span>Amount</span>"
+msgstr "<span>المبلغ</span>"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.report_invoice_document_nc_adjustments
+msgid "<span>Description</span>"
+msgstr "<span>الوصف</span>"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.report_invoice_document_nc_adjustments
+msgid "<span>Taxes</span>"
+msgstr "<span>الضرائب</span>"
+
+#. module: ncollection_account_invoice_layout
 #: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_adjustment_type_form
 msgid ""
-"A charge increases the invoice, a discount decreases it. Each adjustment is booked as a real invoice line on\n"
-"                        its account with its taxes, so the journal entry, receivable / payable and reconciliation stay Odoo's own.\n"
+"A charge increases the invoice, a discount decreases it, before tax. Each adjustment is booked as a real\n"
+"                        accounting line on its account with its taxes (one per VAT group when the taxes follow the invoice lines), so the\n"
+"                        journal entry, receivable / payable and reconciliation stay Odoo's own. It is shown in the Charges &amp; Adjustments\n"
+"                        block of the invoice and printed in its own section, never as a product line.\n"
 "                        Order: line discounts, then invoice discounts, then charges, then taxes."
-msgstr "الرسم يزيد الفاتورة والخصم ينقصها. يُسجَّل كل تعديل كبند فاتورة حقيقي على حسابه مع ضرائبه، فيبقى قيد اليومية والذمم والتسوية من Odoo نفسه. الترتيب: خصومات البنود، ثم خصومات الفاتورة، ثم الرسوم، ثم الضرائب."
+msgstr "الرسم يزيد الفاتورة والخصم ينقصها، قبل الضريبة. يُقيَّد كل تعديل كقيد محاسبي حقيقي على حسابه وبضرائبه (قيد لكل مجموعة ضريبية عندما تتبع الضرائب بنود الفاتورة)، فيبقى قيد اليومية والذمم المدينة / الدائنة والتسوية كما هي في النظام. يظهر في قسم «الرسوم والتعديلات» في الفاتورة ويُطبع في قسمه الخاص، ولا يظهر أبدًا كبند منتج. الترتيب: خصومات البنود، ثم خصومات الفاتورة، ثم الرسوم، ثم الضرائب."
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
@@ -161,6 +178,11 @@ msgid "Back to company default"
 msgstr "العودة إلى الافتراضي للشركة"
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__line_ids
+msgid "Booked lines"
+msgstr "القيود المسجّلة"
+
+#. module: ncollection_account_invoice_layout
 #. odoo-javascript
 #: code:addons/ncollection_account_invoice_layout/static/src/column_arrange.xml:0
 msgid "Cancel"
@@ -193,6 +215,11 @@ msgstr "الرسوم والتعديلات"
 #: model:ir.actions.act_window,name:ncollection_account_invoice_layout.action_nc_adjustment_type
 #: model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_adjustment_type
 msgid "Charges & Discounts"
+msgstr "الرسوم والخصومات"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.report_invoice_document_nc_adjustments
+msgid "Charges &amp; Discounts"
 msgstr "الرسوم والخصومات"
 
 #. module: ncollection_account_invoice_layout
@@ -413,11 +440,6 @@ msgid "Invoice charge / discount definition"
 msgstr "تعريف الرسم / الخصم على الفاتورة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__line_id
-msgid "Invoice line"
-msgstr "بند الفاتورة"
-
-#. module: ncollection_account_invoice_layout
 #: model:ir.model,name:ncollection_account_invoice_layout.model_ncollection_invoice_column_pref
 msgid "Invoice line column order and visibility"
 msgstr "ترتيب أعمدة بنود الفاتورة وظهورها"
@@ -605,6 +627,17 @@ msgid "SMS Delivery error"
 msgstr "خطأ في تسليم الرسائل النصية"
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__tax_mode__lines
+msgid "Same taxes as the invoice lines (split pro rata)"
+msgstr "نفس ضرائب بنود الفاتورة (موزعة بالتناسب)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_mode
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_mode
+msgid "Same taxes as the invoice lines: the amount is split over the VAT groups of the invoice lines, pro rata, so each VAT base is reduced (or increased) by its own share; use it for a global discount over several VAT rates. The taxes below: one line with exactly these taxes; use it for a freight or service charge."
+msgstr "نفس ضرائب بنود الفاتورة: يُوزَّع المبلغ على مجموعات ضريبة القيمة المضافة في بنود الفاتورة بالتناسب، فينقص (أو يزيد) كل وعاء ضريبي بحصته؛ استخدمه للخصم الإجمالي على عدة نسب ضريبية. الضرائب أدناه: قيد واحد بهذه الضرائب تحديدًا؛ استخدمه لرسوم الشحن أو الخدمة."
+
+#. module: ncollection_account_invoice_layout
 #. odoo-javascript
 #: code:addons/ncollection_account_invoice_layout/static/src/column_arrange.xml:0
 msgid "Save for me"
@@ -639,6 +672,12 @@ msgid "Taxes"
 msgstr "الضرائب"
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_mode
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_mode
+msgid "Taxes from"
+msgstr "مصدر الضرائب"
+
+#. module: ncollection_account_invoice_layout
 #. odoo-python
 #: code:addons/ncollection_account_invoice_layout/models/invoice_adjustment.py:0
 msgid "The default value of \"%s\" cannot be negative."
@@ -667,6 +706,11 @@ msgid "The discounted, tax-excluded total of the product lines, before tax and b
 msgstr "إجمالي بنود المنتجات بعد الخصم وبدون الضريبة، قبل الضريبة وقبل رسوم الفاتورة."
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__line_ids
+msgid "The journal items that book this adjustment: one, or one per VAT group when the taxes follow the lines."
+msgstr "قيود اليومية التي تسجّل هذا التعديل: قيد واحد، أو قيد لكل مجموعة ضريبية عندما تتبع الضرائب البنود."
+
+#. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__amount
 msgid "The money booked, tax-excluded and always positive; a discount is booked negative."
 msgstr "المبلغ المسجّل بدون الضريبة وهو موجب دائماً؛ ويُسجَّل الخصم بالسالب."
@@ -683,9 +727,14 @@ msgid "The quantity of \"%s\" is zero, so no unit price can produce a total."
 msgstr "كمية «%s» صفر، لذا لا يمكن لأي سعر وحدة أن يعطي إجمالياً."
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__tax_mode__fixed
+msgid "The taxes below"
+msgstr "الضرائب أدناه"
+
+#. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_ids
-msgid "The taxes of the booked line. A VAT-able freight charge carries the sales VAT."
-msgstr "ضرائب البند المسجّل. رسم الشحن الخاضع لضريبة القيمة المضافة يحمل ضريبة المبيعات."
+msgid "The taxes of the booked line when Taxes from is 'The taxes below'. A VAT-able freight charge carries the sales VAT; a charge outside the VAT scope carries none."
+msgstr "ضرائب القيد المسجّل عندما يكون «مصدر الضرائب» هو «الضرائب أدناه». رسوم الشحن الخاضعة للضريبة تحمل ضريبة المبيعات؛ والرسوم خارج نطاق الضريبة لا تحمل أي ضريبة."
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python

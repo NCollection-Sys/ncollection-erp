@@ -167,11 +167,126 @@ class AccountMove(models.Model):
                 sign = -1.0 if adj.kind == 'discount' else 1.0
                 adj.amount = amount
                 key = adj._origin.id
-                line = move.invoice_line_ids.filtered(
+                lines = move.invoice_line_ids.filtered(
                     lambda ln, key=key: key and ln.nc_adjustment_id and ln.nc_adjustment_id._origin.id == key
-                )[:1]
-                if line and line.price_unit != sign * amount:
-                    line.price_unit = sign * amount
+                )
+                if not lines:
+                    continue
+                parts = {self._nc_tax_key(taxes): part for taxes, part in move._nc_adjustment_split(adj, amount)}
+                for line in lines:
+                    part = parts.get(self._nc_tax_key(line.tax_ids))
+                    if part is None:
+                        continue
+                    price = move._nc_adjustment_price_unit(line.tax_ids, sign * part)
+                    if line.price_unit != price:
+                        line.price_unit = price
+
+    @staticmethod
+    def _nc_tax_key(taxes):
+        return tuple(sorted(taxes._origin.ids if hasattr(taxes, '_origin') else taxes.ids))
+
+    def _nc_adjustment_split(self, adj, amount):
+        """[(taxes, tax-excluded amount)] for ONE adjustment of this invoice: the booked line(s) it needs.
+
+        Taxes from 'The taxes below': one part with the adjustment's taxes. Taxes from 'the invoice lines': one part
+        per tax group of the product lines, pro rata to the group's tax-excluded subtotal; the rounding remainder goes
+        to the largest group, so the parts always add up to the amount exactly."""
+        self.ensure_one()
+        currency = self.currency_id or self.company_id.currency_id
+        if adj.tax_mode != 'lines':
+            return [(adj.tax_ids, amount)]
+        groups = {}
+        for line in self.invoice_line_ids.filtered(
+            lambda ln: ln.display_type == 'product' and not ln.nc_adjustment_id
+        ):
+            key = self._nc_tax_key(line.tax_ids)
+            taxes, subtotal = groups.get(key, (line.tax_ids, 0.0))
+            groups[key] = (taxes, subtotal + line.price_subtotal)
+        basis = sum(subtotal for _taxes, subtotal in groups.values())
+        if not groups or currency.is_zero(basis):
+            return [(adj.tax_ids, amount)]
+        ordered = sorted(groups.values(), key=lambda g: abs(g[1]), reverse=True)
+        parts = []
+        allocated = 0.0
+        for taxes, subtotal in ordered[1:]:
+            part = currency.round(amount * subtotal / basis)
+            parts.append((taxes, part))
+            allocated += part
+        parts.insert(0, (ordered[0][0], currency.round(amount - allocated)))
+        return [(taxes, part) for taxes, part in parts if not currency.is_zero(part)]
+
+    def _nc_adjustment_price_unit(self, taxes, amount):
+        """The unit price that books ``amount`` TAX-EXCLUDED with these taxes: a price-included tax is added on top,
+        so the line's tax-excluded subtotal is the adjustment's amount, not the amount minus its VAT."""
+        taxes = taxes._origin if hasattr(taxes, '_origin') else taxes
+        included = taxes.filtered('price_include')
+        if not included:
+            return amount
+        currency = self.currency_id or self.company_id.currency_id
+        result = taxes.compute_all(amount, currency=currency, quantity=1.0, handle_price_include=False)
+        extra = sum(tax['amount'] for tax in result['taxes'] if tax['id'] in included.ids)
+        return currency.round(amount + extra)
+
+    def _get_move_lines_to_report(self):
+        """The printed item list: the commercial lines only. A booked charge / discount prints in its own section
+        (``_nc_report_adjustments``), never as a product row as well."""
+        return super()._get_move_lines_to_report().filtered(lambda line: not line.nc_adjustment_id)
+
+    def _nc_report_adjustments(self):
+        """The Charges & Discounts section of the printed invoice, from the BOOKED lines (what the journal entry and
+        the totals contain), one row per adjustment: label, its taxes, signed amount tax-excluded and tax-included."""
+        self.ensure_one()
+        rows = []
+        lines = self.invoice_line_ids.filtered(lambda line: line.display_type == 'product' and line.nc_adjustment_id)
+        for adj in lines.nc_adjustment_id.sorted(lambda a: (a.sequence, a.id)):
+            booked = lines.filtered(lambda line, adj=adj: line.nc_adjustment_id == adj)
+            rows.append(
+                {
+                    'name': adj.type_id.name,
+                    'kind': adj.kind,
+                    'value': adj.value,
+                    'value_mode': adj.value_mode,
+                    'taxes': ', '.join(booked.tax_ids.mapped(lambda tax: tax.invoice_label or tax.name)),
+                    'subtotal': sum(booked.mapped('price_subtotal')),
+                    'total': sum(booked.mapped('price_total')),
+                }
+            )
+        return rows
+
+    def _reverse_moves(self, default_values_list=None, cancel=False):
+        """A credit note (or a reversal) carries the invoice's charges and discounts AS adjustments, linked to the
+        lines Odoo copied, so it shows and prints them the same way and never as product rows."""
+        reverse_moves = super()._reverse_moves(default_values_list=default_values_list, cancel=cancel)
+        Adjustment = self.env['ncollection.invoice.adjustment'].with_context(nc_adjustment_sync=True)
+        for move, reverse in zip(self, reverse_moves):
+            if not move.nc_adjustment_ids or not reverse.is_invoice(include_receipts=True):
+                continue
+            free = reverse.invoice_line_ids.filtered(lambda line: line.display_type == 'product')
+            for adj in move.nc_adjustment_ids:
+                new_adj = Adjustment.create(
+                    {
+                        'move_id': reverse.id,
+                        'type_id': adj.type_id.id,
+                        'value': adj.value,
+                        'tax_ids': [(6, 0, adj.tax_ids.ids)],
+                        'analytic_distribution': adj.analytic_distribution,
+                        'amount': adj.amount,
+                    }
+                )
+                for src in adj.line_ids:
+                    match = free.filtered(
+                        lambda line, src=src: not line.nc_adjustment_id
+                        and line.account_id == src.account_id
+                        and line.name == src.name
+                        and line.tax_ids == src.tax_ids
+                        and line.currency_id.compare_amounts(line.price_unit, src.price_unit) == 0
+                    )[:1]
+                    if match:
+                        match.with_context(nc_adjustment_sync=True, check_move_validity=False).write(
+                            {'nc_adjustment_id': new_adj.id}
+                        )
+                        free -= match
+        return reverse_moves
 
     def _nc_adjustment_basis(self):
         """P: the discounted, tax-excluded product lines that are NOT adjustment lines."""
@@ -193,36 +308,40 @@ class AccountMove(models.Model):
             amounts = move._nc_adjustment_amounts()
             sync = move.with_context(nc_adjustment_sync=True, check_move_validity=False)
             currency = move.currency_id or move.company_id.currency_id
+            Line = self.env['account.move.line'].with_context(nc_adjustment_sync=True, check_move_validity=False)
             for adj in adjustments:
                 amount = amounts[adj]
                 sign = -1.0 if adj.kind == 'discount' else 1.0
                 adj.with_context(nc_adjustment_sync=True).write({'amount': amount})
-                line_vals = {
-                    'name': adj.type_id.name,
-                    'quantity': 1.0,
-                    'price_unit': sign * amount,
-                    'discount': 0.0,
-                    'nc_discount_mode': 'percent',
-                    'account_id': adj.type_id.account_id.id,
-                    'tax_ids': [(6, 0, adj.tax_ids.ids)],
-                    'analytic_distribution': adj.analytic_distribution or adj.type_id.analytic_distribution,
-                    'nc_adjustment_id': adj.id,
-                    'sequence': 9000 + adj.sequence,
-                }
-                line = adj.line_id.exists()
-                if currency.is_zero(amount):
+                parts = [] if currency.is_zero(amount) else move._nc_adjustment_split(adj, amount)
+                existing = {}
+                for line in move.invoice_line_ids.filtered(lambda ln, adj=adj: ln.nc_adjustment_id == adj):
+                    key = self._nc_tax_key(line.tax_ids)
+                    if key in existing:
+                        existing[key + ('dup',)] = line  # a duplicate is never kept
+                    else:
+                        existing[key] = line
+                for taxes, part in parts:
+                    line_vals = {
+                        'name': adj.type_id.name,
+                        'quantity': 1.0,
+                        'price_unit': move._nc_adjustment_price_unit(taxes, sign * part),
+                        'discount': 0.0,
+                        'nc_discount_mode': 'percent',
+                        'account_id': adj.type_id.account_id.id,
+                        'tax_ids': [(6, 0, taxes.ids)],
+                        'analytic_distribution': adj.analytic_distribution or adj.type_id.analytic_distribution,
+                        'nc_adjustment_id': adj.id,
+                        'sequence': 9000 + adj.sequence,
+                    }
+                    line = existing.pop(self._nc_tax_key(taxes), None)
                     if line:
-                        line.with_context(nc_adjustment_sync=True).unlink()
-                    continue
-                if line:
-                    line.with_context(nc_adjustment_sync=True, check_move_validity=False).write(line_vals)
-                else:
-                    line = (
-                        self.env['account.move.line']
-                        .with_context(nc_adjustment_sync=True, check_move_validity=False)
-                        .create(dict(line_vals, move_id=move.id, display_type='product'))
-                    )
-                    adj.with_context(nc_adjustment_sync=True).write({'line_id': line.id})
+                        line.with_context(nc_adjustment_sync=True, check_move_validity=False).write(line_vals)
+                    else:
+                        Line.create(dict(line_vals, move_id=move.id, display_type='product'))
+                stale = self.env['account.move.line'].concat(*existing.values())
+                if stale:
+                    stale.with_context(nc_adjustment_sync=True).unlink()
             # a line whose adjustment is gone must not stay booked
             orphan = sync.invoice_line_ids.filtered(
                 lambda line: line.nc_adjustment_id and line.nc_adjustment_id not in adjustments
