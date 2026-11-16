@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- WHY THIS EXISTS: OCA auditlog files its whole menu under Settings > Technical (base.menu_custom), which only
+         base.group_system in developer mode reaches. Since the tenant Owner stopped being a technical administrator
+         (Option A), an entitled workspace could not see its own Audit Log. It now lives in Workspace Administration.
+         Entitlement: this module is installed only where the plan includes it, so the menu exists only there.
+         Authorisation: the Workspace Administrator role implies auditlog's READ-ONLY user group; the ACLs (auditlog
+         user = read only, manager unlink removed by this module) are the server-side mirror of the menu. -->
+    <record id="ncollection_core.group_tenant_admin" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
+    </record>
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
+    </record>
+
+    <menuitem id="menu_nc_audit_root" name="Audit Log" parent="ncollection_core.menu_workspace_settings_root"
+              sequence="29" groups="auditlog.group_auditlog_user"/>
+    <menuitem id="menu_nc_audit_logs" name="Activity" parent="menu_nc_audit_root" sequence="1"
+              action="auditlog.action_auditlog_log_tree"/>
+    <menuitem id="menu_nc_audit_lines" name="Field Changes" parent="menu_nc_audit_root" sequence="2"
+              action="auditlog.action_auditlog_line"/>
+    <menuitem id="menu_nc_audit_sessions" name="Sessions" parent="menu_nc_audit_root" sequence="3"
+              action="auditlog.action_auditlog_http_session_tree"/>
+    <menuitem id="menu_nc_audit_rules_ro" name="What Is Recorded" parent="menu_nc_audit_root" sequence="8"
+              action="auditlog.action_auditlog_rule_tree"/>
+</odoo>

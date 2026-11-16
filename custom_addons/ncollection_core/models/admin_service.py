@@ -47,11 +47,20 @@ class AdminService(models.AbstractModel):
 
     # ------------------------------------------------------------------ guards
     @api.model
+    def _nc_service_keys(self):
+        """{method: allowed request keys}. A module adding a service method extends this (and nothing else): a method
+        missing here is refused before it runs."""
+        return dict(_KEYS)
+
+    @api.model
     def _service_only(self, method, vals):
         user = self.env.user
         if not user.has_group('ncollection_core.group_config_sync') or user.share or user.nc_platform_proxy:
             raise AccessError(self.env._("Only the platform service channel can use this."))
-        if not isinstance(vals, dict) or set(vals) - _KEYS[method]:
+        allowed = self._nc_service_keys().get(method)
+        if allowed is None:
+            raise UserError(self.env._("This workspace does not offer this service."))
+        if not isinstance(vals, dict) or set(vals) - allowed:
             raise UserError(self.env._("Malformed request."))
         actor = vals.get('actor')
         if (not isinstance(actor, dict) or set(actor) - {'ref', 'name'}

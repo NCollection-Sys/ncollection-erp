@@ -135,6 +135,15 @@ class Tenant(models.Model):
             'res_model': Users._name, 'res_id': users.id, 'view_mode': 'form', 'target': 'current',
         }
 
+    def action_open_audit_log(self):
+        """The workspace's general Audit Log, read-only metadata (wizards/tenant_audit.py).
+        Same two checks as Users."""
+        self.ensure_one()
+        self._nc_admin_authorise()
+        audit = self.env['ncollection.tenant.audit'].create({'tenant_id': self.id})
+        audit._nc_load(0)
+        return audit._nc_reopen()
+
     def action_reset_admin_password(self):
         """Reset the Tenant Administrator's password: finds that account by the login recorded at provisioning."""
         self.ensure_one()

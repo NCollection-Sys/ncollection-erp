@@ -258,3 +258,32 @@ class TestTenantAdmin(TransactionCase):
                       'ncollection.tenant.user.create'):
             with self.subTest(model), self.assertRaises(AccessError):
                 self.env[model].with_user(self.clerk).search([])
+
+    # ------------------------------------------------------------------ the Audit Log window (final review #9)
+    def test_audit_log_is_read_only_metadata_authorised_and_noted(self):
+        reply = {'available': True, 'subscribed_rules': 4, 'total': 1, 'rows': [
+            {'id': 5, 'date': '2026-11-16 10:00:00', 'user': 'Sara', 'model': 'sale.order',
+             'model_name': 'Sales Order',
+             'res_id': 9, 'record': 'S00009', 'method': 'write', 'changes': 2}]}
+        post = MagicMock(return_value=_reply(reply))
+        with patch.dict(os.environ, ENV), patch(MODULE + '.requests.post', post):
+            action = self.atlas.with_user(self.alice).action_open_audit_log()
+        audit = self.env['ncollection.tenant.audit'].browse(action['res_id'])
+        self.assertEqual((audit.state, audit.total, audit.line_ids.record), ('available', 1, 'S00009'))
+        sent = json.loads(post.call_args.kwargs['data'])['vals']
+        self.assertEqual(set(sent), {'offset', 'limit', 'model', 'date_from', 'date_to', 'actor'})
+        self.assertIn('Audit Log read from the platform', self.atlas.message_ids[:1].body)
+        for user in (self.bob, self.clerk):
+            with self.subTest(user=user.login), self.assertRaises(AccessError), \
+                    patch.dict(os.environ, ENV), patch(MODULE + '.requests.post', MagicMock()):
+                self.atlas.with_user(user).action_open_audit_log()
+
+    def test_a_workspace_without_the_audit_log_says_so(self):
+        for body, status in (({}, 404), ({'name': 'odoo.exceptions.UserError',
+                                          'message': 'This workspace does not offer this service.'}, 422)):
+            post = MagicMock(return_value=_reply(body, status))
+            with self.subTest(status=status), patch.dict(os.environ, ENV), patch(MODULE + '.requests.post', post):
+                action = self.atlas.with_user(self.alice).action_open_audit_log()
+            audit = self.env['ncollection.tenant.audit'].browse(action['res_id'])
+            self.assertEqual(audit.state, 'unavailable')
+            self.assertFalse(audit.line_ids)

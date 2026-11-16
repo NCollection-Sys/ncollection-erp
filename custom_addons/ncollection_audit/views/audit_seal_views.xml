@@ -28,6 +28,6 @@
     </record>
 
     <menuitem id="menu_nc_audit_seal" name="Audit Seals"
-              parent="auditlog.menu_audit" action="action_nc_audit_seal"
+              parent="menu_nc_audit_root" action="action_nc_audit_seal"
               sequence="90" groups="auditlog.group_auditlog_user"/>
 </odoo>
