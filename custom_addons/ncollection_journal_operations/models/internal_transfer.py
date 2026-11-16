@@ -79,7 +79,7 @@ class InternalTransfer(models.Model):
             for journal in rec.source_journal_id | rec.destination_journal_id:
                 if journal.type not in ('bank', 'cash'):
                     raise ValidationError(self.env._("%(journal)s is not a bank or cash journal.",
-                                            journal=journal.display_name))
+                                                     journal=journal.display_name))
             if rec.destination_journal_id.company_id != rec.source_journal_id.company_id:
                 raise ValidationError(self.env._("Both journals must belong to the same company."))
             if rec.destination_amount <= 0:
@@ -124,14 +124,14 @@ class InternalTransfer(models.Model):
         company = self.company_id
         if not company.transfer_account_id:
             raise UserError(self.env._("Set the Internal Transfer account in the accounting settings of %(company)s.",
-                              company=company.display_name))
+                                       company=company.display_name))
         self._check_journals()
         source_method = self._method_line(self.source_journal_id, 'outbound')
         destination_method = self._method_line(self.destination_journal_id, 'inbound')
         if not source_method or not destination_method:
-            raise UserError(self.env._("Both journals need a payment method (Outgoing on %(source)s, Incoming on %(dest)s).",
-                              source=self.source_journal_id.display_name,
-                              dest=self.destination_journal_id.display_name))
+            raise UserError(self.env._(
+                "Both journals need a payment method (Outgoing on %(source)s, Incoming on %(dest)s).",
+                source=self.source_journal_id.display_name, dest=self.destination_journal_id.display_name))
         name = self.env['ir.sequence'].next_by_code('ncollection.internal.transfer') or '/'
         memo = self.memo or self.env._("Internal Transfer %(name)s", name=name)
         Payment = self.env['account.payment']
@@ -154,18 +154,18 @@ class InternalTransfer(models.Model):
         transfer_lines = (source.move_id | destination.move_id).line_ids.filtered(
             lambda line: line.account_id == company.transfer_account_id and not line.reconciled)
         if len(transfer_lines) != 2:
-            raise UserError(self.env._("The transfer could not be booked on the Internal Transfer account; nothing was saved."))
+            raise UserError(self.env._(
+                "The transfer could not be booked on the Internal Transfer account; nothing was saved."))
         transfer_lines.reconcile()
         self.write({'name': name, 'state': 'posted', 'source_payment_id': source.id,
-                       'destination_payment_id': destination.id})
-        self.message_post(body=self.env._("Posted: %(source)s from %(from)s, %(dest)s into %(to)s.",
-                                 source=source.name, dest=destination.name,
-                                 **{'from': self.source_journal_id.display_name,
-                                    'to': self.destination_journal_id.display_name}))
+                    'destination_payment_id': destination.id})
+        self.message_post(body=self.env._(
+            "Posted: %(source)s from %(from)s, %(dest)s into %(to)s.", source=source.name, dest=destination.name,
+            **{'from': self.source_journal_id.display_name, 'to': self.destination_journal_id.display_name}))
         return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
             'type': 'success', 'title': self.env._('Internal Transfer posted'),
             'message': self.env._("%(name)s: each side completes when its bank confirms it (or with Mark as Paid).",
-                         name=name), 'next': {'type': 'ir.actions.act_window_close'}}}
+                                  name=name), 'next': {'type': 'ir.actions.act_window_close'}}}
 
     @api.depends('state', 'source_payment_id.state', 'destination_payment_id.state')
     def _compute_progress(self):

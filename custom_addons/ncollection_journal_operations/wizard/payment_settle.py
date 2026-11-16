@@ -36,6 +36,6 @@ class PaymentSettle(models.TransientModel):
         return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
             'type': 'success', 'title': self.env._('Marked as Paid'),
             'message': self.env._("%(payment)s is now %(state)s (bank transaction %(line)s).", payment=payment.name,
-                         state=dict(payment._fields['state']._description_selection(self.env))[payment.state],
-                         line=st_line.display_name),
+                                  state=dict(payment._fields['state']._description_selection(self.env))[payment.state],
+                                  line=st_line.display_name),
             'next': {'type': 'ir.actions.act_window_close', 'infos': {'reload': True}}}}
