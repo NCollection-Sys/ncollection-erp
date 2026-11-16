@@ -51,8 +51,8 @@
                     <div class="o_nc_ops_figures order-first">
                         <div class="o_nc_ops_balance" title="Posted ledger balance of the journal's account (bank-confirmed or not)">
                             <div class="o_nc_ops_label">Current Balance</div>
-                            <div class="o_nc_ops_value" dir="ltr"
-                                 t-att-class="dashboard.nc_balance_negative ? 'text-danger' : ''">
+                            <div dir="ltr"
+                                 t-attf-class="o_nc_ops_value {{ dashboard.nc_balance_negative ? 'text-danger' : '' }}">
                                 <t t-if="dashboard.nc_balance_approx">≈ </t><t t-out="dashboard.nc_balance"/>
                             </div>
                         </div>
@@ -68,7 +68,7 @@
                             </div>
                             <div class="o_nc_ops_split small" dir="ltr" t-if="dashboard.nc_pending_count">
                                 <span class="text-success">↓ <t t-out="dashboard.nc_pending_in"/></span>
-                                <span class="text-danger ms-2">↑ <t t-out="dashboard.nc_pending_out"/></span>
+                                <span class="text-danger">↑ <t t-out="dashboard.nc_pending_out"/></span>
                             </div>
                         </a>
                     </div>
