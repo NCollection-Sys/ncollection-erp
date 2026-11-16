@@ -7,7 +7,7 @@ from the residual. ``_synchronize_to_moves`` (engine-guarded) is not touched.
 """
 from psycopg2 import errors
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 OPERATION_DIRECTION = {'payment': 'outbound', 'receipt': 'inbound'}
@@ -97,12 +97,13 @@ class AccountPayment(models.Model):
 
     @api.depends('nc_counterpart_type', 'nc_counterpart_account_id', 'nc_operation')
     def _compute_destination_account_id(self):
-        super()._compute_destination_account_id()
+        res = super()._compute_destination_account_id()
         for pay in self:
             if pay.nc_operation == 'transfer':
                 pay.destination_account_id = pay.company_id.transfer_account_id
             elif pay.nc_counterpart_type == 'account':
                 pay.destination_account_id = pay.nc_counterpart_account_id
+        return res
 
     @api.onchange('nc_counterpart_type')
     def _onchange_nc_counterpart_type(self):
@@ -133,7 +134,7 @@ class AccountPayment(models.Model):
                 continue
             source = vals.get('nc_source_journal_id')
             if not source:
-                raise ValidationError(_("An operation from a journal card needs its card journal."))
+                raise ValidationError(self.env._("An operation from a journal card needs its card journal."))
             vals['journal_id'] = source  # the card decides, whatever the context or the client sent
             if operation in OPERATION_DIRECTION:
                 vals['payment_type'] = OPERATION_DIRECTION[operation]
@@ -156,7 +157,7 @@ class AccountPayment(models.Model):
                     new = vals[name]
                     old = pay[name].id if pay._fields[name].type == 'many2one' else pay[name]
                     if (new or False) != (old or False):
-                        raise ValidationError(_("%(field)s cannot be changed on %(payment)s.",
+                        raise ValidationError(self.env._("%(field)s cannot be changed on %(payment)s.",
                                                 field=pay._fields[name].string, payment=pay.display_name))
         res = super().write(vals)
         if {'journal_id', 'payment_type', 'partner_id', 'partner_type', 'nc_counterpart_type',
@@ -167,39 +168,39 @@ class AccountPayment(models.Model):
     def _nc_check_operation(self):
         for pay in self:
             if pay.journal_id != pay.nc_source_journal_id:
-                raise ValidationError(_("%(payment)s must stay in %(journal)s, the journal it was created from.",
+                raise ValidationError(self.env._("%(payment)s must stay in %(journal)s, the journal it was created from.",
                                         payment=pay.display_name, journal=pay.nc_source_journal_id.display_name))
             if pay.journal_id.type not in ('bank', 'cash'):
-                raise ValidationError(_("Journal card operations exist only for bank and cash journals."))
+                raise ValidationError(self.env._("Journal card operations exist only for bank and cash journals."))
             expected = OPERATION_DIRECTION.get(pay.nc_operation)
             if expected and pay.payment_type != expected:
-                raise ValidationError(_("A %(operation)s cannot change direction.",
+                raise ValidationError(self.env._("A %(operation)s cannot change direction.",
                                         operation=dict(pay._fields['nc_operation'].selection)[pay.nc_operation]))
             if pay.nc_operation == 'transfer':
                 if not pay.nc_transfer_id:
-                    raise ValidationError(_("An internal transfer payment is created by its transfer only."))
+                    raise ValidationError(self.env._("An internal transfer payment is created by its transfer only."))
                 continue
             kind = pay.nc_counterpart_type
             if not kind:
-                raise ValidationError(_("Choose the Type: Customer, Supplier or Account."))
+                raise ValidationError(self.env._("Choose the Type: Customer, Supplier or Account."))
             if kind == 'account':
                 account = pay.nc_counterpart_account_id
                 if pay.partner_id:
-                    raise ValidationError(_("An Account operation has no partner."))
+                    raise ValidationError(self.env._("An Account operation has no partner."))
                 if not account:
-                    raise ValidationError(_("Choose the account of this operation."))
+                    raise ValidationError(self.env._("Choose the account of this operation."))
                 if (account.account_type in ('asset_receivable', 'liability_payable', 'asset_cash', 'off_balance')
                         or account in pay._nc_forbidden_counterpart_accounts()
                         or account.company_ids and pay.company_id not in account.company_ids
                         or not account.active):
-                    raise ValidationError(_(
+                    raise ValidationError(self.env._(
                         "%(account)s cannot be used directly: use Customer or Supplier for receivables and payables, "
                         "Internal Transfer for another bank or cash account.", account=account.display_name))
                 if pay.destination_account_id != account:
-                    raise ValidationError(_("The operation must post against %(account)s.",
+                    raise ValidationError(self.env._("The operation must post against %(account)s.",
                                             account=account.display_name))
             elif pay.partner_type != kind:
-                raise ValidationError(_("The partner type must match the Type."))
+                raise ValidationError(self.env._("The partner type must match the Type."))
 
     # ------------------------------------------------------------ mark as paid
     def action_nc_mark_as_paid(self):
@@ -208,7 +209,7 @@ class AccountPayment(models.Model):
         self._nc_check_can_settle()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Mark as Paid'),
+            'name': self.env._('Mark as Paid'),
             'res_model': 'ncollection.payment.settle',
             'view_mode': 'form',
             'target': 'new',
@@ -218,23 +219,23 @@ class AccountPayment(models.Model):
     def _nc_check_can_settle(self):
         self.ensure_one()
         if not self.env.user.has_group('account.group_account_user'):
-            raise AccessError(_("Only an accountant can mark a payment as paid."))
+            raise AccessError(self.env._("Only an accountant can mark a payment as paid."))
         self.check_access('write')
         self.env['account.bank.statement.line'].check_access('create')
         if self.company_id not in self.env.companies:
-            raise AccessError(_("%(payment)s belongs to another company.", payment=self.display_name))
+            raise AccessError(self.env._("%(payment)s belongs to another company.", payment=self.display_name))
         if self.state not in ('in_process', 'paid'):
-            raise UserError(_("Only a posted payment can be marked as paid (%(payment)s is %(state)s).",
+            raise UserError(self.env._("Only a posted payment can be marked as paid (%(payment)s is %(state)s).",
                               payment=self.display_name,
                               state=dict(self._fields['state']._description_selection(self.env))[self.state]))
         if not self._nc_open_liquidity_lines():
-            raise UserError(_("%(payment)s has nothing left on an outstanding account.", payment=self.display_name))
+            raise UserError(self.env._("%(payment)s has nothing left on an outstanding account.", payment=self.display_name))
 
     def _nc_lock(self):
         try:
             self.env.cr.execute('SELECT id FROM account_payment WHERE id IN %s FOR UPDATE NOWAIT', [tuple(self.ids)])
         except errors.LockNotAvailable:
-            raise UserError(_("This payment is being completed by another user. Reload it in a moment.")) from None
+            raise UserError(self.env._("This payment is being completed by another user. Reload it in a moment.")) from None
         self.invalidate_recordset()
         self.move_id.line_ids.invalidate_recordset()
 
@@ -265,26 +266,26 @@ class AccountPayment(models.Model):
         date = date or fields.Date.context_today(self)
         lines = self._nc_open_liquidity_lines()
         if len(lines.account_id) != 1:
-            raise UserError(_("%(payment)s waits on several accounts; reconcile it from Reconcile instead.",
+            raise UserError(self.env._("%(payment)s waits on several accounts; reconcile it from Reconcile instead.",
                               payment=self.display_name))
         journal = self.journal_id
         amount, foreign_currency, foreign_amount = self._nc_settlement_amounts(lines, date)
         journal_currency = journal.currency_id or self.company_id.currency_id
         if journal_currency.is_zero(amount):
-            raise UserError(_("%(payment)s has nothing left to settle.", payment=self.display_name))
+            raise UserError(self.env._("%(payment)s has nothing left to settle.", payment=self.display_name))
         StLine = self.env['account.bank.statement.line']
         waiting = StLine.search([
             ('journal_id', '=', journal.id), ('is_reconciled', '=', False), ('move_id.state', '=', 'posted'),
             ('amount', '=', amount), ('nc_settlement_payment_id', '=', False)], limit=3)
         if waiting:
-            raise UserError(_(
+            raise UserError(self.env._(
                 "The bank already reported %(count)s unmatched transaction(s) of this amount in %(journal)s "
                 "(%(refs)s). Match the payment with it in Reconcile, so it is not counted twice.",
                 count=len(waiting), journal=journal.display_name,
                 refs=', '.join(waiting.mapped(lambda st: st.payment_ref or st.display_name))))
         if StLine.search_count([('unique_import_id', '=', f'{SETTLEMENT_PREFIX}{self.id}')]):
-            raise UserError(_("%(payment)s was already marked as paid.", payment=self.display_name))
-        label = _("Mark as Paid: %(payment)s", payment=self.name)
+            raise UserError(self.env._("%(payment)s was already marked as paid.", payment=self.display_name))
+        label = self.env._("Mark as Paid: %(payment)s", payment=self.name)
         vals = {
             'journal_id': journal.id,
             'date': date,
@@ -306,9 +307,9 @@ class AccountPayment(models.Model):
         st_line.move_id.checked = True
         self.invalidate_recordset(['state', 'is_matched', 'is_reconciled'])
         if self._nc_open_liquidity_lines():
-            raise UserError(_("%(payment)s could not be fully settled; nothing was saved.", payment=self.display_name))
+            raise UserError(self.env._("%(payment)s could not be fully settled; nothing was saved.", payment=self.display_name))
         liquidity = st_line.move_id.line_ids.filtered(lambda line: line.account_id == journal.default_account_id)
-        self.message_post(body=_(
+        self.message_post(body=self.env._(
             "Marked as Paid on %(date)s by %(user)s: %(amount)s moved from %(source)s to %(target)s "
             "(statement line %(line)s).",
             date=date, user=self.env.user.name, amount=journal_currency.format(abs(amount)),

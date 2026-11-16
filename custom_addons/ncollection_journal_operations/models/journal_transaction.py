@@ -18,27 +18,27 @@ class JournalTransaction(models.Model):
     _order = 'date desc, id desc'
     _rec_name = 'reference'
 
-    journal_id = fields.Many2one('account.journal', string='Journal', readonly=True)
+    journal_id = fields.Many2one('account.journal', readonly=True)
     company_id = fields.Many2one('res.company', readonly=True)
     company_currency_id = fields.Many2one('res.currency', string='Company Currency', related='company_id.currency_id')
     date = fields.Date(readonly=True)
-    reference = fields.Char(string='Reference', readonly=True)
-    description = fields.Char(string='Description', readonly=True)
+    reference = fields.Char(readonly=True)
+    description = fields.Char(readonly=True)
     operation = fields.Selection([
         ('receipt', 'Receipt'), ('payment', 'Payment'), ('transfer', 'Internal Transfer'),
         ('account', 'Account'), ('bank', 'Bank Transaction'), ('entry', 'Journal Entry')],
         string='Type', readonly=True)
     direction = fields.Selection([('in', 'Incoming'), ('out', 'Outgoing')], readonly=True)
     partner_id = fields.Many2one('res.partner', string='Customer / Supplier', readonly=True)
-    account_id = fields.Many2one('account.account', string='Account', readonly=True)
+    account_id = fields.Many2one('account.account', readonly=True)
     payment_method_line_id = fields.Many2one('account.payment.method.line', string='Method', readonly=True)
     currency_id = fields.Many2one('res.currency', readonly=True)
-    amount = fields.Monetary(string='Amount', currency_field='currency_id', readonly=True)
+    amount = fields.Monetary(currency_field='currency_id', readonly=True)
     amount_in = fields.Monetary(string='Incoming', currency_field='currency_id', readonly=True)
     amount_out = fields.Monetary(string='Outgoing', currency_field='currency_id', readonly=True)
     pending_balance = fields.Monetary(string='Pending', currency_field='company_currency_id', readonly=True)
     liquidity_balance = fields.Monetary(string='In Account', currency_field='company_currency_id', readonly=True)
-    running_balance = fields.Monetary(string='Running Balance', currency_field='company_currency_id', readonly=True)
+    running_balance = fields.Monetary(currency_field='company_currency_id', readonly=True)
     status = fields.Selection([
         ('in_process', 'In Process'), ('awaiting_bank', 'Paid, awaiting bank'), ('paid', 'Paid'),
         ('reconciled', 'Reconciled'),

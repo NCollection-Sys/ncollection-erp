@@ -1,7 +1,7 @@
 """The bank / cash card figures and actions. Every journal of type bank or cash gets them from its configuration;
 nothing is keyed on a name, id, account, method or currency. Figures are read with the user's own rights, in two
 grouped queries for all the cards on the dashboard (no query per card)."""
-from odoo import _, models
+from odoo import models
 from odoo.exceptions import UserError
 
 
@@ -94,7 +94,7 @@ class AccountJournal(models.Model):
         return result
 
     def _fill_bank_cash_dashboard_data(self, dashboard_data):
-        super()._fill_bank_cash_dashboard_data(dashboard_data)
+        res = super()._fill_bank_cash_dashboard_data(dashboard_data)
         figures = self._nc_ops_journals()._nc_ops_figures()
         for journal in self._nc_ops_journals():
             data = figures[journal.id]
@@ -111,12 +111,13 @@ class AccountJournal(models.Model):
                 'nc_pending_count': data['pending_count'],
                 'nc_pending_approx': data['pending_approx'],
             })
+        return res
 
     # ------------------------------------------------------------------ actions
     def _nc_ops_journal(self):
         self.ensure_one()
         if self.type not in ('bank', 'cash'):
-            raise UserError(_("%(journal)s is not a bank or cash journal.", journal=self.display_name))
+            raise UserError(self.env._("%(journal)s is not a bank or cash journal.", journal=self.display_name))
         self.check_access('read')
         return self
 
@@ -124,7 +125,7 @@ class AccountJournal(models.Model):
         journal = self._nc_ops_journal()
         self.env['account.payment'].check_access('create')
         view = 'ncollection_journal_operations.view_payment_form_operation'
-        name = _('Payment') if operation == 'payment' else _('Receipt')
+        name = self.env._('Payment') if operation == 'payment' else self.env._('Receipt')
         return {
             'type': 'ir.actions.act_window',
             'name': f'{journal.display_name} · {name}',
@@ -153,7 +154,7 @@ class AccountJournal(models.Model):
         self.env['ncollection.internal.transfer'].check_access('create')
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{journal.display_name} · {_("Internal Transfer")}',
+            'name': f'{journal.display_name} · {self.env._("Internal Transfer")}',
             'res_model': 'ncollection.internal.transfer',
             'view_mode': 'form',
             'target': 'current',
@@ -170,7 +171,7 @@ class AccountJournal(models.Model):
             'ncollection_journal_operations.action_journal_transaction')
         action['domain'] = [('journal_id', '=', journal.id)]
         action['context'] = {'nc_journal_id': journal.id}
-        action['display_name'] = f'{journal.display_name} · {_("Transactions")}'
+        action['display_name'] = f'{journal.display_name} · {self.env._("Transactions")}'
         return action
 
     def action_nc_ops_pending(self):
@@ -179,5 +180,5 @@ class AccountJournal(models.Model):
         action = self.env['ir.actions.act_window']._for_xml_id(
             'ncollection_journal_operations.action_pending_payments')
         action['domain'] = [('id', 'in', payments.ids), ('journal_id', '=', journal.id)]
-        action['display_name'] = f'{journal.display_name} · {_("Pending Balance")}'
+        action['display_name'] = f'{journal.display_name} · {self.env._("Pending Balance")}'
         return action

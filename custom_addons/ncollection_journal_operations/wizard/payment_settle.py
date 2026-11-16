@@ -1,4 +1,4 @@
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 
 
 class PaymentSettle(models.TransientModel):
@@ -7,10 +7,10 @@ class PaymentSettle(models.TransientModel):
     _description = 'Mark a Payment as Paid'
 
     payment_id = fields.Many2one('account.payment', required=True, readonly=True, ondelete='cascade')
-    date = fields.Date(string='Date', required=True, default=fields.Date.context_today,
+    date = fields.Date(required=True, default=fields.Date.context_today,
                        help="The day the money actually reached (or left) the bank or the cash box.")
     currency_id = fields.Many2one(related='payment_id.currency_id')
-    amount = fields.Monetary(string='Amount', compute='_compute_preview', currency_field='currency_id')
+    amount = fields.Monetary(compute='_compute_preview', currency_field='currency_id')
     from_account_id = fields.Many2one('account.account', string='From', compute='_compute_preview')
     to_account_id = fields.Many2one('account.account', string='To', compute='_compute_preview')
     direction = fields.Selection([('in', 'Receipt'), ('out', 'Payment')], compute='_compute_preview')
@@ -34,8 +34,8 @@ class PaymentSettle(models.TransientModel):
         payment = self.payment_id
         st_line = payment._nc_mark_as_paid(self.date)
         return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
-            'type': 'success', 'title': _('Marked as Paid'),
-            'message': _("%(payment)s is now %(state)s (bank transaction %(line)s).", payment=payment.name,
+            'type': 'success', 'title': self.env._('Marked as Paid'),
+            'message': self.env._("%(payment)s is now %(state)s (bank transaction %(line)s).", payment=payment.name,
                          state=dict(payment._fields['state']._description_selection(self.env))[payment.state],
                          line=st_line.display_name),
             'next': {'type': 'ir.actions.act_window_close', 'infos': {'reload': True}}}}

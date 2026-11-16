@@ -22,7 +22,7 @@ class JournalOpsTerminology(models.AbstractModel):
 
     @api.model
     def _apply(self):
-        active = set(self.env['res.lang'].search([]).mapped('code'))
+        active = {code for code, _name in self.env['res.lang'].get_installed()}
         for xmlid, names in TERMS.items():
             record = self.env.ref(xmlid, raise_if_not_found=False)
             if not record:

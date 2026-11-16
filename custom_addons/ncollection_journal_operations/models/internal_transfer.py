@@ -11,7 +11,7 @@ claimed to have arrived before the receiving journal has it. The pair is cross-r
 """
 from psycopg2 import errors
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -22,7 +22,7 @@ class InternalTransfer(models.Model):
     _order = 'date desc, id desc'
     _check_company_auto = True
 
-    name = fields.Char(string='Reference', readonly=True, copy=False, default=lambda self: _('New'))
+    name = fields.Char(string='Reference', readonly=True, copy=False, default=lambda self: self.env._('New'))
     state = fields.Selection([('draft', 'Draft'), ('posted', 'Posted')], default='draft', readonly=True,
                              tracking=True, copy=False)
     progress = fields.Selection(
@@ -38,13 +38,13 @@ class InternalTransfer(models.Model):
         domain="[('type', 'in', ('bank', 'cash')), ('id', '!=', source_journal_id), ('company_id', '=', company_id)]")
     source_currency_id = fields.Many2one('res.currency', compute='_compute_currencies', store=True)
     destination_currency_id = fields.Many2one('res.currency', compute='_compute_currencies', store=True)
-    amount = fields.Monetary(string='Amount', currency_field='source_currency_id', required=True, tracking=True)
+    amount = fields.Monetary(currency_field='source_currency_id', required=True, tracking=True)
     destination_amount = fields.Monetary(
         string='Amount Received', currency_field='destination_currency_id', compute='_compute_destination_amount',
         store=True, readonly=False, tracking=True,
         help="Only differs from Amount when the two journals have different currencies (today's rate by default).")
     multi_currency = fields.Boolean(compute='_compute_currencies', store=True)
-    date = fields.Date(string='Date', required=True, default=fields.Date.context_today, tracking=True)
+    date = fields.Date(required=True, default=fields.Date.context_today, tracking=True)
     memo = fields.Char(string='Description', tracking=True)
     source_payment_id = fields.Many2one('account.payment', readonly=True, copy=False)
     destination_payment_id = fields.Many2one('account.payment', readonly=True, copy=False)
@@ -75,31 +75,31 @@ class InternalTransfer(models.Model):
     def _check_journals(self):
         for rec in self:
             if rec.source_journal_id == rec.destination_journal_id:
-                raise ValidationError(_("From Journal and To Journal must be different."))
+                raise ValidationError(self.env._("From Journal and To Journal must be different."))
             for journal in rec.source_journal_id | rec.destination_journal_id:
                 if journal.type not in ('bank', 'cash'):
-                    raise ValidationError(_("%(journal)s is not a bank or cash journal.",
+                    raise ValidationError(self.env._("%(journal)s is not a bank or cash journal.",
                                             journal=journal.display_name))
             if rec.destination_journal_id.company_id != rec.source_journal_id.company_id:
-                raise ValidationError(_("Both journals must belong to the same company."))
+                raise ValidationError(self.env._("Both journals must belong to the same company."))
             if rec.destination_amount <= 0:
-                raise ValidationError(_("The amount received must be positive."))
+                raise ValidationError(self.env._("The amount received must be positive."))
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if (vals.get('amount') or 0.0) <= 0:
-                raise ValidationError(_("The amount to transfer must be positive."))
+                raise ValidationError(self.env._("The amount to transfer must be positive."))
         return super().create(vals_list)
 
     def write(self, vals):
         if 'amount' in vals and (vals['amount'] or 0.0) <= 0:
-            raise ValidationError(_("The amount to transfer must be positive."))
+            raise ValidationError(self.env._("The amount to transfer must be positive."))
         if 'source_journal_id' in vals and any(rec.source_journal_id.id != vals['source_journal_id'] for rec in self):
-            raise ValidationError(_("From Journal cannot be changed."))
+            raise ValidationError(self.env._("From Journal cannot be changed."))
         if set(vals) - {'message_main_attachment_id', 'state', 'name', 'source_payment_id',
                         'destination_payment_id'} and self.filtered(lambda rec: rec.state != 'draft'):
-            raise UserError(_("A posted transfer cannot be edited."))
+            raise UserError(self.env._("A posted transfer cannot be edited."))
         return super().write(vals)
 
     @staticmethod
@@ -117,23 +117,23 @@ class InternalTransfer(models.Model):
             self.env.cr.execute('SELECT id FROM ncollection_internal_transfer WHERE id = %s FOR UPDATE NOWAIT',
                                 [self.id])
         except errors.LockNotAvailable:
-            raise UserError(_("This transfer is being posted by another user.")) from None
+            raise UserError(self.env._("This transfer is being posted by another user.")) from None
         self.invalidate_recordset()
         if self.state != 'draft' or self.source_payment_id:
-            raise UserError(_("%(transfer)s is already posted.", transfer=self.name))
+            raise UserError(self.env._("%(transfer)s is already posted.", transfer=self.name))
         company = self.company_id
         if not company.transfer_account_id:
-            raise UserError(_("Set the Internal Transfer account in the accounting settings of %(company)s.",
+            raise UserError(self.env._("Set the Internal Transfer account in the accounting settings of %(company)s.",
                               company=company.display_name))
         self._check_journals()
         source_method = self._method_line(self.source_journal_id, 'outbound')
         destination_method = self._method_line(self.destination_journal_id, 'inbound')
         if not source_method or not destination_method:
-            raise UserError(_("Both journals need a payment method (Outgoing on %(source)s, Incoming on %(dest)s).",
+            raise UserError(self.env._("Both journals need a payment method (Outgoing on %(source)s, Incoming on %(dest)s).",
                               source=self.source_journal_id.display_name,
                               dest=self.destination_journal_id.display_name))
         name = self.env['ir.sequence'].next_by_code('ncollection.internal.transfer') or '/'
-        memo = self.memo or _("Internal Transfer %(name)s", name=name)
+        memo = self.memo or self.env._("Internal Transfer %(name)s", name=name)
         Payment = self.env['account.payment']
         common = {'nc_operation': 'transfer', 'nc_transfer_id': self.id, 'date': self.date, 'memo': memo,
                   'partner_id': False}
@@ -154,17 +154,17 @@ class InternalTransfer(models.Model):
         transfer_lines = (source.move_id | destination.move_id).line_ids.filtered(
             lambda line: line.account_id == company.transfer_account_id and not line.reconciled)
         if len(transfer_lines) != 2:
-            raise UserError(_("The transfer could not be booked on the Internal Transfer account; nothing was saved."))
+            raise UserError(self.env._("The transfer could not be booked on the Internal Transfer account; nothing was saved."))
         transfer_lines.reconcile()
-        super().write({'name': name, 'state': 'posted', 'source_payment_id': source.id,
+        self.write({'name': name, 'state': 'posted', 'source_payment_id': source.id,
                        'destination_payment_id': destination.id})
-        self.message_post(body=_("Posted: %(source)s from %(from)s, %(dest)s into %(to)s.",
+        self.message_post(body=self.env._("Posted: %(source)s from %(from)s, %(dest)s into %(to)s.",
                                  source=source.name, dest=destination.name,
                                  **{'from': self.source_journal_id.display_name,
                                     'to': self.destination_journal_id.display_name}))
         return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
-            'type': 'success', 'title': _('Internal Transfer posted'),
-            'message': _("%(name)s: each side completes when its bank confirms it (or with Mark as Paid).",
+            'type': 'success', 'title': self.env._('Internal Transfer posted'),
+            'message': self.env._("%(name)s: each side completes when its bank confirms it (or with Mark as Paid).",
                          name=name), 'next': {'type': 'ir.actions.act_window_close'}}}
 
     @api.depends('state', 'source_payment_id.state', 'destination_payment_id.state')
