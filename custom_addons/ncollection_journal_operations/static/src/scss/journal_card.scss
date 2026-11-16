@@ -76,7 +76,7 @@
 }
 
 .o_nc_ops_flag {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 0.3rem;
     margin-block-start: 0.2rem;
@@ -191,7 +191,16 @@
     margin-block-end: 0.15rem;
 }
 
+.o_nc_graph_empty > div {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .o_nc_graph_empty {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
     width: 100%;
     font-size: 0.8rem;
     padding: 0.6rem 0.75rem;

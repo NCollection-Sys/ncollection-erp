@@ -51,34 +51,36 @@
                     <div class="o_nc_ops_figures order-first">
                         <div t-attf-class="o_nc_ops_balance {{ dashboard.nc_balance_negative ? 'o_nc_negative' : '' }}"
                              title="Posted ledger balance of the journal's account, whether the bank has confirmed it or not">
-                            <div class="o_nc_ops_label">Current Balance
-                                <span class="o_nc_ops_hint">posted</span>
+                            <div class="o_nc_ops_label">
+                                <div>Current Balance</div>
+                                <div class="o_nc_ops_hint">posted</div>
                             </div>
                             <div class="o_nc_ops_value" dir="ltr">
                                 <t t-if="dashboard.nc_balance_approx">≈ </t><t t-out="dashboard.nc_balance"/>
                             </div>
                             <div t-if="dashboard.nc_balance_negative" class="o_nc_ops_flag" role="status">
                                 <i class="fa fa-exclamation-triangle" role="img" aria-hidden="true"/>
-                                <span>Negative balance</span>
+                                <div>Negative balance</div>
                             </div>
                         </div>
                         <a type="object" name="action_nc_ops_pending" class="o_nc_ops_pending"
                            title="Receipts and payments booked but still on an outstanding account: not yet in the journal's account">
-                            <div class="o_nc_ops_label">Pending Balance
-                                <span class="o_nc_ops_count" t-if="dashboard.nc_pending_count">
+                            <div class="o_nc_ops_label">
+                                <div>Pending Balance</div>
+                                <div class="o_nc_ops_count" t-if="dashboard.nc_pending_count">
                                     <t t-out="dashboard.nc_pending_count"/> <t t-if="dashboard.nc_pending_count == 1">operation</t><t t-else="">operations</t>
-                                </span>
+                                </div>
                             </div>
                             <div class="o_nc_ops_value" dir="ltr">
                                 <t t-if="dashboard.nc_pending_approx">≈ </t><t t-out="dashboard.nc_pending"/>
                             </div>
                             <div class="o_nc_ops_split" t-if="dashboard.nc_pending_count">
-                                <span class="o_nc_in"><i class="fa fa-arrow-down" role="img" aria-hidden="true"/>
-                                    <span class="o_nc_ops_hint">Incoming</span>
-                                    <bdi dir="ltr"><t t-out="dashboard.nc_pending_in"/></bdi></span>
-                                <span class="o_nc_out"><i class="fa fa-arrow-up" role="img" aria-hidden="true"/>
-                                    <span class="o_nc_ops_hint">Outgoing</span>
-                                    <bdi dir="ltr"><t t-out="dashboard.nc_pending_out"/></bdi></span>
+                                <div class="o_nc_in"><i class="fa fa-arrow-down" role="img" aria-hidden="true"/>
+                                    <div class="o_nc_ops_hint">Incoming</div>
+                                    <div dir="ltr" class="o_nc_amount"><t t-out="dashboard.nc_pending_in"/></div></div>
+                                <div class="o_nc_out"><i class="fa fa-arrow-up" role="img" aria-hidden="true"/>
+                                    <div class="o_nc_ops_hint">Outgoing</div>
+                                    <div dir="ltr" class="o_nc_amount"><t t-out="dashboard.nc_pending_out"/></div></div>
                             </div>
                             <div class="o_nc_ops_hint" t-else="">Nothing waiting</div>
                         </a>
@@ -89,10 +91,11 @@
                  posted movement says so instead of drawing invented history. -->
             <xpath expr="//field[@name='kanban_dashboard_graph']" position="replace">
                 <div t-if="dashboard.nc_ops and dashboard.nc_graph_empty" class="o_nc_graph_empty text-muted">
-                    <i class="fa fa-line-chart me-1" role="img" aria-hidden="true"/>No posted movements yet: the balance history appears with the first one.
+                    <i class="fa fa-line-chart" role="img" aria-hidden="true"/>
+                    <div>No posted movements yet: the balance history appears with the first one.</div>
                 </div>
                 <div t-else="" t-attf-class="{{ dashboard.nc_ops ? 'o_nc_graph' : '' }}">
-                    <span t-if="dashboard.nc_ops" class="o_nc_graph_caption">Balance, last 30 days (posted)</span>
+                    <div t-if="dashboard.nc_ops" class="o_nc_graph_caption">Balance, last 30 days (posted)</div>
                     <field name="kanban_dashboard_graph" t-att-graph_type="['cash', 'bank', 'credit'].includes(journal_type) ? 'line' : 'bar'" widget="dashboard_graph"/>
                 </div>
             </xpath>
