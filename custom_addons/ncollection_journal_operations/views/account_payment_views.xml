@@ -55,7 +55,7 @@
                 <field name="nc_counterpart_type" required="1" readonly="state != 'draft'"/>
                 <field name="partner_id" string="Payee" required="nc_counterpart_type in ('customer', 'supplier')"
                        invisible="nc_counterpart_type not in ('customer', 'supplier')" readonly="state != 'draft'"
-                       domain="[('customer_rank', '>', 0)] if nc_counterpart_type == 'customer' else [('supplier_rank', '>', 0)]"
+                       domain="['|', ('customer_rank', '>', 0), ('commercial_partner_id.customer_rank', '>', 0)] if nc_counterpart_type == 'customer' else ['|', ('supplier_rank', '>', 0), ('commercial_partner_id.supplier_rank', '>', 0)]"
                        context="{'res_partner_search_mode': nc_counterpart_type, 'default_is_company': True}"
                        options="{'no_quick_create': True}"/>
                 <field name="nc_counterpart_account_id" string="Payee" required="nc_counterpart_type == 'account'"

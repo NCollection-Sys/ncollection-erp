@@ -141,13 +141,19 @@ SELECT rows.*,
   FROM rows
 )""")
 
-    def action_open_source(self):
+    def _nc_source_record(self):
+        """The authoritative record behind the row, from its real links (never from its label): a transfer side opens
+        its transfer, a payment its payment, a bank transaction / confirmation its statement line, else the entry."""
         self.ensure_one()
-        record = self.payment_id or self.statement_line_id.move_id or self.move_id
-        return {'type': 'ir.actions.act_window', 'res_model': record._name, 'res_id': record.id,
-                'view_mode': 'form', 'target': 'current'}
+        if self.operation in ('settlement', 'bank') and self.statement_line_id:
+            return self.statement_line_id
+        if self.payment_id.nc_transfer_id:
+            return self.payment_id.nc_transfer_id
+        return self.payment_id or self.statement_line_id or self.move_id
 
-    def action_open_move(self):
-        self.ensure_one()
-        return {'type': 'ir.actions.act_window', 'res_model': 'account.move', 'res_id': self.move_id.id,
-                'view_mode': 'form', 'target': 'current'}
+    def action_open_source(self):
+        """The row action (the whole row is clickable). Read access is checked as the user before anything opens."""
+        record = self._nc_source_record()
+        record.check_access('read')
+        return {'type': 'ir.actions.act_window', 'res_model': record._name, 'res_id': record.id,
+                'view_mode': 'form', 'views': [(False, 'form')], 'target': 'current'}

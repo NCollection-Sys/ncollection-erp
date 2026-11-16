@@ -558,3 +558,72 @@ class TestSecurity(JournalOpsCommon):
         self.assertEqual(rows.company_id, self.company)
         figures = self.bank.with_user(user)._nc_ops_figures()
         self.assertAlmostEqual(figures[self.bank.id]['balance'], 5.0)
+
+
+@tagged('post_install', '-at_install')
+class TestPayeeAndRows(JournalOpsCommon):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.both = cls.env['res.partner'].create({'name': 'Ops Both Roles', 'customer_rank': 1, 'supplier_rank': 1})
+        cls.contact = cls.env['res.partner'].create({'name': 'Ops Plain Contact'})
+        cls.supplier_person = cls.env['res.partner'].create({'name': 'Ops Supplier Clerk',
+                                                             'parent_id': cls.supplier.id})
+
+    def test_eligibility_follows_odoo_ranks_and_commercial_partner(self):
+        Pay = self.env['account.payment']
+        self.assertTrue(Pay._nc_payee_eligible(self.both, 'customer'))
+        self.assertTrue(Pay._nc_payee_eligible(self.both, 'supplier'))
+        self.assertTrue(Pay._nc_payee_eligible(self.supplier_person, 'supplier'), "contact of a supplier company")
+        self.assertFalse(Pay._nc_payee_eligible(self.supplier, 'customer'))
+        self.assertFalse(Pay._nc_payee_eligible(self.contact, 'customer'))
+        found = self.env['res.partner'].search(Pay._nc_payee_domain('supplier'))
+        self.assertIn(self.both, found)
+        self.assertNotIn(self.customer, found)
+
+    def test_server_refuses_ineligible_payee(self):
+        with self.assertRaises(ValidationError):
+            self._op(self.bank, 'payment', 'supplier', 10.0, self.customer, post=False)
+        pay = self._op(self.bank, 'payment', 'supplier', 10.0, self.supplier, post=False)
+        with self.assertRaises(ValidationError):
+            pay.partner_id = self.contact
+
+    def test_type_switch_keeps_a_dual_role_partner_and_clears_others(self):
+        form = Form(self.env['account.payment'].with_context(
+            default_nc_operation='payment', default_nc_source_journal_id=self.bank.id,
+            default_journal_id=self.bank.id, default_payment_type='outbound'),
+            view='ncollection_journal_operations.view_payment_form_operation')
+        form.nc_counterpart_type = 'supplier'
+        form.partner_id = self.both
+        form.nc_counterpart_type = 'customer'
+        self.assertEqual(form.partner_id, self.both, "a partner of both roles stays selected")
+        form.partner_id = self.customer
+        form.nc_counterpart_type = 'supplier'
+        self.assertFalse(form.partner_id, "a customer-only partner is cleared")
+        form.partner_id = self.both
+        form.amount = 7.0
+        pay = form.save()
+        self.assertEqual((pay.partner_id, pay.partner_type), (self.both, 'supplier'))
+
+    def test_row_opens_its_authoritative_record(self):
+        receipt = self._op(self.bank, 'receipt', 'customer', 40.0, self.customer)
+        receipt._nc_mark_as_paid()
+        self._bank_line(self.bank, 9.0, 'deposit')
+        transfer = self.env['ncollection.internal.transfer'].create({
+            'source_journal_id': self.bank.id, 'destination_journal_id': self.cash.id, 'amount': 5.0})
+        transfer.action_post()
+        self.env.flush_all()
+        rows = self.env['ncollection.journal.transaction'].search([('journal_id', '=', self.bank.id)])
+        opened = {r.operation: r.action_open_source() for r in rows}
+        self.assertEqual((opened['receipt']['res_model'], opened['receipt']['res_id']),
+                         ('account.payment', receipt.id))
+        self.assertEqual(opened['settlement']['res_model'], 'account.bank.statement.line')
+        self.assertEqual(opened['bank']['res_model'], 'account.bank.statement.line')
+        self.assertEqual((opened['transfer']['res_model'], opened['transfer']['res_id']),
+                         ('ncollection.internal.transfer', transfer.id))
+
+    def test_list_row_is_the_action_and_icons_are_gone(self):
+        arch = self.env.ref('ncollection_journal_operations.view_journal_transaction_list').arch
+        self.assertIn('action="action_open_source"', arch)
+        self.assertNotIn('<button', arch)

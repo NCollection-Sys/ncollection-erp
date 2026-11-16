@@ -114,8 +114,7 @@ class AccountPayment(models.Model):
                 pay.partner_type = pay.nc_counterpart_type
                 pay.nc_counterpart_account_id = False
                 partner = pay.partner_id
-                rank = 'customer_rank' if pay.nc_counterpart_type == 'customer' else 'supplier_rank'
-                if partner and not partner[rank]:
+                if partner and not pay._nc_payee_eligible(partner, pay.nc_counterpart_type):
                     pay.partner_id = False
             elif pay.nc_counterpart_type == 'account':
                 pay.partner_id = False
@@ -209,6 +208,26 @@ class AccountPayment(models.Model):
                                                      account=account.display_name))
             elif pay.partner_type != kind:
                 raise ValidationError(self.env._("The partner type must match the Type."))
+            elif pay.state == 'draft' and pay.partner_id and not pay._nc_payee_eligible(pay.partner_id, kind):
+                label = dict(pay._fields['nc_counterpart_type'].selection)[kind]
+                raise ValidationError(self.env._("%(partner)s is not a %(type)s.",
+                                                 partner=pay.partner_id.display_name, type=label))
+
+    @api.model
+    def _nc_payee_domain(self, kind):
+        """Partners eligible as Payee for ``kind``: Odoo's own classification (customer_rank / supplier_rank) on the
+        partner or its commercial entity. A partner with both ranks qualifies for both types."""
+        rank = 'customer_rank' if kind == 'customer' else 'supplier_rank'
+        return ['|', (rank, '>', 0), (f'commercial_partner_id.{rank}', '>', 0)]
+
+    def _nc_payee_eligible(self, partner, kind):
+        if kind not in ('customer', 'supplier') or not partner:
+            return False
+        company = self.company_id or self.env.company
+        domain = self._nc_payee_domain(kind) + [
+            ('id', '=', partner.id), ('active', '=', True),
+            '|', ('company_id', '=', False), ('company_id', 'parent_of', company.id)]
+        return bool(self.env['res.partner'].search_count(domain, limit=1))
 
     # ------------------------------------------------------------ mark as paid
     def action_nc_mark_as_paid(self):
