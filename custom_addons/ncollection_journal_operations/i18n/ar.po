@@ -1183,3 +1183,25 @@ msgid ""
 "                    checked this with the bank. The amount moves from the outstanding account to the journal's account\n"
 "                    and the payment is matched with it; your name and the date are recorded on the payment."
 msgstr "أنت تؤكد بنفسك أن هذا المبلغ وصل إلى الحساب (أو خرج منه). لم يتحقق النظام من ذلك لدى البنك. يُنقل المبلغ من الحساب المعلّق إلى حساب الدفتر وتُطابَق الدفعة معه، ويُسجَّل اسمك والتاريخ على الدفعة."
+
+msgid "Transfer Status"
+msgstr "حالة التحويل"
+
+msgid "In Progress"
+msgstr "قيد التنفيذ"
+
+msgid "Choose the Payment Method of %(journal)s."
+msgstr "اختر طريقة الدفع لدفتر %(journal)s."
+
+msgid "%(method)s is not an outgoing payment method of %(journal)s."
+msgstr "%(method)s ليست طريقة دفع صادرة لدفتر %(journal)s."
+
+msgid "%(partner)s is not a %(type)s."
+msgstr "%(partner)s ليس %(type)s."
+
+msgid ""
+"An outgoing method of the From Journal. A method with an outstanding account leaves the money there until the bank "
+"confirms it (In Progress); a method without one books it straight to the journal account."
+msgstr ""
+"طريقة صادرة من دفتر المصدر. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكده البنك (قيد التنفيذ)؛ والطريقة بدونه "
+"تقيده مباشرة في حساب الدفتر."

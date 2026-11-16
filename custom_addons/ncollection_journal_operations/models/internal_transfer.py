@@ -36,6 +36,14 @@ class InternalTransfer(models.Model):
     destination_journal_id = fields.Many2one(
         'account.journal', string='To Journal', required=True, check_company=True, tracking=True,
         domain="[('type', 'in', ('bank', 'cash')), ('id', '!=', source_journal_id), ('company_id', '=', company_id)]")
+    payment_method_line_id = fields.Many2one(
+        'account.payment.method.line', string='Payment Method', compute='_compute_payment_method_line_id',
+        store=True, readonly=False, precompute=True, tracking=True,
+        domain="[('journal_id', '=', source_journal_id), ('payment_type', '=', 'outbound')]",
+        help="An outgoing method of the From Journal. A method with an outstanding account leaves the money there until "
+             "the bank confirms it (In Progress); a method without one books it straight to the journal account.")
+    nc_status = fields.Selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('paid', 'Paid')],
+                                 string='Transfer Status', compute='_compute_progress')
     source_currency_id = fields.Many2one('res.currency', compute='_compute_currencies', store=True)
     destination_currency_id = fields.Many2one('res.currency', compute='_compute_currencies', store=True)
     amount = fields.Monetary(currency_field='source_currency_id', required=True, tracking=True)
@@ -52,6 +60,22 @@ class InternalTransfer(models.Model):
     destination_state = fields.Selection(related='destination_payment_id.state', string='Received')
 
     _amount_positive = models.Constraint('CHECK(amount > 0)', 'The amount to transfer must be positive.')
+
+    @api.depends('source_journal_id')
+    def _compute_payment_method_line_id(self):
+        for rec in self:
+            lines = rec.source_journal_id.outbound_payment_method_line_ids.sorted(lambda line: (line.sequence, line.id))
+            if rec.payment_method_line_id not in lines:
+                rec.payment_method_line_id = lines[:1]
+
+    @api.constrains('payment_method_line_id', 'source_journal_id')
+    def _check_payment_method_line(self):
+        for rec in self:
+            line = rec.payment_method_line_id
+            if line and (line.journal_id != rec.source_journal_id or line.payment_type != 'outbound'):
+                raise ValidationError(self.env._(
+                    "%(method)s is not an outgoing payment method of %(journal)s.",
+                    method=line.display_name, journal=rec.source_journal_id.display_name))
 
     @api.depends('source_journal_id', 'destination_journal_id')
     def _compute_currencies(self):
@@ -141,7 +165,11 @@ class InternalTransfer(models.Model):
             raise UserError(self.env._("Set the Internal Transfer account in the accounting settings of %(company)s.",
                                        company=company.display_name))
         self._check_journals()
-        source_method = self._method_line(self.source_journal_id, 'outbound')
+        source_method = self.payment_method_line_id
+        if not source_method:
+            raise UserError(self.env._("Choose the Payment Method of %(journal)s.",
+                                       journal=self.source_journal_id.display_name))
+        self._check_payment_method_line()
         destination_method = self._method_line(self.destination_journal_id, 'inbound')
         if not source_method or not destination_method:
             raise UserError(self.env._(
@@ -186,6 +214,9 @@ class InternalTransfer(models.Model):
     @api.depends('state', 'source_payment_id.state', 'destination_payment_id.state')
     def _compute_progress(self):
         for rec in self:
+            rec.nc_status = 'draft' if rec.state != 'posted' else (
+                'paid' if rec.source_payment_id.state == 'paid' and rec.destination_payment_id.state == 'paid'
+                else 'in_progress')
             if rec.state != 'posted':
                 rec.progress = rec.state
             elif rec.source_payment_id.state == 'paid' and rec.destination_payment_id.state == 'paid':

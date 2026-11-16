@@ -627,3 +627,63 @@ class TestPayeeAndRows(JournalOpsCommon):
         arch = self.env.ref('ncollection_journal_operations.view_journal_transaction_list').arch
         self.assertIn('action="action_open_source"', arch)
         self.assertNotIn('<button', arch)
+
+
+@tagged('post_install', '-at_install')
+class TestTransferPaymentMethod(JournalOpsCommon):
+
+    def _transfer(self, src, dst, amount=10.0, **extra):
+        return self.env['ncollection.internal.transfer'].create({
+            'source_journal_id': src.id, 'destination_journal_id': dst.id, 'amount': amount, **extra})
+
+    def test_defaults_to_the_first_outgoing_method_of_the_source(self):
+        first = self.bank.outbound_payment_method_line_ids.sorted(lambda line: (line.sequence, line.id))[:1]
+        transfer = self._transfer(self.bank, self.cash)
+        self.assertEqual(transfer.payment_method_line_id, first)
+        transfer.action_post()
+        self.assertEqual(transfer.source_payment_id.payment_method_line_id, first)
+
+    def test_another_journals_method_is_refused(self):
+        foreign = self.bank2.outbound_payment_method_line_ids[:1]
+        with self.assertRaises(ValidationError):
+            self._transfer(self.bank, self.cash, payment_method_line_id=foreign.id)
+        inbound = self.bank.inbound_payment_method_line_ids[:1]
+        with self.assertRaises(ValidationError):
+            self._transfer(self.bank, self.cash, payment_method_line_id=inbound.id)
+
+    def test_outstanding_method_is_in_progress_until_both_banks_confirm(self):
+        transfer = self._transfer(self.bank, self.cash)
+        transfer.action_post()
+        self.assertEqual(transfer.nc_status, 'in_progress')
+        transfer.source_payment_id._nc_mark_as_paid()
+        transfer.invalidate_recordset(['nc_status', 'progress'])
+        self.assertEqual(transfer.nc_status, 'in_progress', "the receiving side has not arrived yet")
+        transfer.destination_payment_id._nc_mark_as_paid()
+        transfer.invalidate_recordset(['nc_status', 'progress'])
+        self.assertEqual(transfer.nc_status, 'paid')
+
+    def test_direct_methods_on_both_sides_are_paid_at_once_and_balanced(self):
+        for journal, lines in ((self.bank, 'outbound_payment_method_line_ids'),
+                               (self.cash, 'inbound_payment_method_line_ids')):
+            journal[lines][:1].payment_account_id = journal.default_account_id
+        before = {j: self._figures(j)['balance'] for j in (self.bank, self.cash)}
+        transfer = self._transfer(self.bank, self.cash, amount=25.0)
+        transfer.action_post()
+        self.assertEqual(transfer.nc_status, 'paid')
+        moves = transfer.source_payment_id.move_id | transfer.destination_payment_id.move_id
+        for move in moves:
+            self.assertAlmostEqual(sum(move.line_ids.mapped('balance')), 0.0)
+        tl = moves.line_ids.filtered(lambda line: line.account_id == self.company.transfer_account_id)
+        self.assertTrue(all(tl.mapped('reconciled')), "the transfer account is cleared, never bypassed")
+        self.assertAlmostEqual(self._figures(self.bank)['balance'], before[self.bank] - 25.0)
+        self.assertAlmostEqual(self._figures(self.cash)['balance'], before[self.cash] + 25.0)
+
+    def test_all_four_routes_keep_the_chosen_method(self):
+        cash2 = self._nc_journal('Ops Cash Two', 'cash', 'OPC2', self.fees.copy({'code': '101937',
+                                 'account_type': 'asset_current', 'reconcile': True}),
+                                 self.fees.copy({'code': '101938', 'account_type': 'asset_current', 'reconcile': True}))
+        for src, dst in ((self.bank, self.bank2), (self.bank, self.cash), (self.cash, self.bank), (self.cash, cash2)):
+            transfer = self._transfer(src, dst)
+            transfer.action_post()
+            self.assertEqual(transfer.source_payment_id.payment_method_line_id, transfer.payment_method_line_id)
+            self.assertEqual(transfer.nc_status, 'in_progress')
