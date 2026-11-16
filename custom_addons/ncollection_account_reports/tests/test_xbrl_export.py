@@ -56,7 +56,8 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         self.assertAlmostEqual(facts['Assets'][0][1], facts['CurrentAssets'][0][1] + facts['NoncurrentAssets'][0][1])
         schema = root.find('{%s}schemaRef' % NS['link'])
         self.assertEqual(schema.get('{%s}href' % NS['xlink']), TAXONOMY_ENTRY_POINT)
-        self.assertEqual(root.find('.//{%s}measure' % NS['xbrli']).text, 'iso4217:' + self.env.company.currency_id.name)
+        measure = root.find('.//{%s}measure' % NS['xbrli']).text
+        self.assertEqual(measure, 'iso4217:' + self.env.company.currency_id.name)
         self.assertIsNotNone(root.find('.//{%s}instant' % NS['xbrli']))
 
     def test_profit_and_loss_facts_signs_and_unmapped_lines(self):
