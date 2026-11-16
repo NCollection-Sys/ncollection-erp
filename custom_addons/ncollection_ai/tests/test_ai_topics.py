@@ -66,3 +66,49 @@ class TestAiTopics(TransactionCase):
             'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
         with self.assertRaises(Exception):
             self.env['ncollection.ai.question'].with_user(plain).ask("what do we owe suppliers")
+
+
+@tagged('post_install', '-at_install')
+class TestNewTopicsAndReadiness(TransactionCase):
+
+    def test_revenue_is_invoices_not_orders_or_receipts(self):
+        keys = [s['key'] for s in ai_topics.select_specs("What was our revenue last quarter?", _TODAY)]
+        self.assertIn('revenue_by_month', keys)
+        self.assertNotIn('sales_by_month', keys)
+        self.assertNotIn('customer_payments_by_month', keys)
+        spec = next(s for s in ai_topics.select_specs("revenue", _TODAY) if s['key'] == 'revenue_by_month')
+        self.assertEqual(spec['model'], 'account.move')
+        self.assertIn(('state', '=', 'posted'), spec['domain'])
+
+    def test_each_new_topic_in_both_languages(self):
+        cases = {"What is our bank balance?": 'bank_cash_balances', "كم رصيد البنك؟": 'bank_cash_balances',
+                 "How many bank lines are left to reconcile?": 'bank_lines_to_reconcile',
+                 "ما هي المصروفات هذا العام؟": 'supplier_bills_by_month',
+                 "Show supplier bills": 'supplier_bills_by_month',
+                 "What are the top products?": 'top_products_12_months', "أفضل المنتجات": 'top_products_12_months'}
+        for question, key in cases.items():
+            self.assertIn(key, [s['key'] for s in ai_topics.select_specs(question, _TODAY)], question)
+
+    def test_every_topic_is_a_read_group_and_never_a_write(self):
+        for _key, _en, _ar, factory in ai_topics.TOPICS:
+            for spec in factory(_TODAY):
+                self.assertEqual(set(spec) - {'key', 'model', 'domain', 'groupby', 'aggregates', 'limit', 'order'},
+                                 set(), spec['key'])
+                self.assertLessEqual(spec['limit'], 12)
+
+    def test_readiness_without_a_gateway_is_unavailable_and_admin_only(self):
+        from odoo.exceptions import AccessError, UserError
+        from odoo.tests import new_test_user
+        admin = new_test_user(self.env, login='nc_ai_admin',
+                              groups='base.group_user,ncollection_core.group_tenant_admin')
+        plain = new_test_user(self.env, login='nc_ai_plain', groups='base.group_user')
+        self.env['ir.config_parameter'].set_param('ncollection_ai.gateway_url', 'http://127.0.0.1:9')
+        Readiness = self.env['ncollection.ai.readiness']
+        state = Readiness.with_user(admin)._nc_probe()
+        self.assertEqual((state['reachable'], state['authenticated'], state['mode']), (False, False, 'unavailable'))
+        with self.assertRaises(AccessError):
+            Readiness.with_user(plain).action_open()
+        record = Readiness.with_user(admin).create(state)
+        with self.assertRaises(UserError):
+            record.action_set_free_text()
+        self.assertFalse(self.env['ncollection.ai.question']._free_text_enabled())

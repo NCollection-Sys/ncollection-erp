@@ -370,10 +370,13 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, {"error": "not found"})
 
     def do_POST(self):  # noqa: N802
-        if self.path not in ("/v1/complete", "/v1/stream"):
+        if self.path not in ("/v1/complete", "/v1/stream", "/v1/auth-check"):
             self._send(404, {"error": "not found"})
             return
         streaming = self.path == "/v1/stream"
+        # A READINESS probe: proves the workspace's signed identity is accepted, and says which provider answers,
+        # WITHOUT calling it (no tokens, no cost, no content). The prompt is not needed and not read.
+        auth_check = self.path == "/v1/auth-check"
 
         try:
             length = int(self.headers.get("content-length") or 0)
@@ -398,13 +401,13 @@ class Handler(BaseHTTPRequestHandler):
             raw_body = self.rfile.read(length)
             payload = json.loads(raw_body.decode("utf-8"))
             tenant = str(payload["tenant"])
-            prompt = str(payload["prompt"])
+            prompt = str(payload.get("prompt") or "") if auth_check else str(payload["prompt"])
             max_tokens = int(payload.get("max_tokens", DEFAULT_MAX_TOKENS))
         except (ValueError, KeyError, TypeError):
             # No echo of what was sent — the body is tenant content.
             self._send(400, {"error": "body must be JSON with 'tenant' and 'prompt'"})
             return
-        if not tenant or not prompt:
+        if not tenant or (not prompt and not auth_check):
             self._send(400, {"error": "'tenant' and 'prompt' must be non-empty"})
             return
 
@@ -443,6 +446,12 @@ class Handler(BaseHTTPRequestHandler):
             # No detail about WHY. A caller learning "timestamp too old" versus
             # "bad signature" is being handed an oracle.
             self._send(401, {"error": "unauthenticated"})
+            return
+        if auth_check:
+            provider = self.gateway.provider
+            self._send(200, {"authenticated": True, "provider": provider.name,
+                             "model": getattr(provider, "_model", "") or "",
+                             "real_provider": provider.name != "mock"})
             return
 
         try:

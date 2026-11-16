@@ -264,7 +264,14 @@ class TestDomainMapperBoundary(TransactionCase):
 
     def test_the_module_adds_no_user_facing_surface(self):
         """PROOF 13 — no view, menu, action or controller ships with it."""
-        data = self.env['ir.model.data'].search([('module', '=', 'ncollection_ai')])
+        # The ONE deliberate exception (owner decision 2026-11-16, final review #10): the administrator-only AI
+        # Readiness screen. Named one by one, so anything else still fails this proof.
+        readiness = {'view_ai_readiness_form', 'action_ai_readiness', 'menu_ai_readiness'}
+        data = self.env['ir.model.data'].search(
+            [('module', '=', 'ncollection_ai'), ('name', 'not in', list(readiness))])
+        menu = self.env.ref('ncollection_ai.menu_ai_readiness')
+        self.assertTrue(set(menu.group_ids.mapped(lambda g: g.get_external_id()[g.id]))
+                        <= {'ncollection_core.group_tenant_admin', 'base.group_system'}, "administrators only")
         self.assertFalse(
             data.filtered(lambda d: d.model in (
                 'ir.ui.view', 'ir.ui.menu', 'ir.actions.act_window',

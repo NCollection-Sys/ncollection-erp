@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ai_readiness_form" model="ir.ui.view">
+        <field name="name">ncollection.ai.readiness.form</field>
+        <field name="model">ncollection.ai.readiness</field>
+        <field name="arch" type="xml">
+            <form create="0" delete="0" edit="0">
+                <header>
+                    <button name="action_refresh" type="object" string="Check Again" icon="fa-refresh"/>
+                    <button name="action_set_free_text" type="object" string="Allow Free-Typed Questions"
+                            class="btn-primary" invisible="free_text"/>
+                    <button name="action_unset_free_text" type="object" string="Switch Off Free-Typed Questions"
+                            invisible="not free_text"/>
+                    <field name="mode" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="status" invisible="mode != 'demo'">
+                        Demo mode: answers come from the built-in mock, which summarises your own figures without a
+                        language model. Nothing leaves the platform.
+                    </div>
+                    <group>
+                        <group string="Service">
+                            <field name="reachable"/>
+                            <field name="authenticated"/>
+                            <field name="real_provider"/>
+                            <field name="provider"/>
+                            <field name="model"/>
+                        </group>
+                        <group string="This workspace">
+                            <field name="tools_ready"/>
+                            <field name="tools_detail"/>
+                            <field name="free_text"/>
+                            <field name="external_authorized"/>
+                        </group>
+                    </group>
+                    <field name="notes" invisible="not notes" nolabel="1"/>
+                    <p class="text-muted">Each state is checked separately; the identity check never calls the model and
+                        costs nothing. Answers are always built from data you are allowed to read, and the assistant never
+                        changes a record.</p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_ai_readiness" model="ir.actions.server">
+        <field name="name">AI Assistant</field>
+        <field name="model_id" ref="model_ncollection_ai_readiness"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open()</field>
+    </record>
+    <menuitem id="menu_ai_readiness" name="AI Assistant" parent="ncollection_core.menu_workspace_settings_root"
+              action="action_ai_readiness" sequence="86" groups="ncollection_core.group_tenant_admin,base.group_system"/>
+</odoo>

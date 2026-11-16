@@ -402,3 +402,19 @@ class TestStreamingAdmission(GatewayServerCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestAuthCheck(GatewayServerCase):
+    """The readiness probe: identity accepted and provider named, the provider never called."""
+
+    def test_signed_probe_is_accepted_and_spends_nothing(self):
+        before = Handler.gateway.ledger.usage("t1")
+        status, body = _post(f"{self.base}/v1/auth-check", {"tenant": "t1"})
+        self.assertEqual(status, 200)
+        self.assertEqual((body["authenticated"], body["provider"], body["real_provider"]), (True, "mock", False))
+        self.assertEqual(Handler.gateway.ledger.usage("t1"), before, "no tokens spent")
+
+    def test_wrong_key_or_forged_tenant_is_refused(self):
+        self.assertEqual(_post(f"{self.base}/v1/auth-check", {"tenant": "t1"}, master="wrong")[0], 401)
+        self.assertEqual(_post(f"{self.base}/v1/auth-check", {"tenant": "t1"}, tenant="t2")[0], 401)
+        self.assertEqual(_post(f"{self.base}/v1/auth-check", {"tenant": "t1"}, master=None)[0], 401)

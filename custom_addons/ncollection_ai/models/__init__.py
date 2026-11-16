@@ -11,3 +11,4 @@ from . import domain_mapper
 # P5-T06. History + the curated-prompt path; imports ai_question's constants,
 # so it stays below it here.
 from . import chat
+from . import readiness

@@ -111,6 +111,103 @@ def _inventory(_today):
     ]
 
 
+def _revenue(today):
+    """REVENUE = posted customer invoices net of credit notes, untaxed, company currency, by invoice month. Not
+    sales orders (a commitment) and not receipts (cash): the three are different questions."""
+    return [
+        {
+            'key': 'revenue_by_month',
+            'model': 'account.move',
+            'domain': [('move_type', 'in', ('out_invoice', 'out_refund')), ('state', '=', 'posted'),
+                       ('invoice_date', '>=', (today.replace(day=1) - datetime.timedelta(days=365)).isoformat())],
+            'groupby': ['invoice_date:month'],
+            'aggregates': ['amount_untaxed_signed:sum'],
+            'limit': 12,
+            'order': 'invoice_date:month desc',
+        }
+    ]
+
+
+def _expenses(today):
+    """Supplier bills net of refunds, untaxed, by bill month (an accrual view, not cash paid)."""
+    return [
+        {
+            'key': 'supplier_bills_by_month',
+            'model': 'account.move',
+            'domain': [('move_type', 'in', ('in_invoice', 'in_refund')), ('state', '=', 'posted'),
+                       ('invoice_date', '>=', (today.replace(day=1) - datetime.timedelta(days=365)).isoformat())],
+            'groupby': ['invoice_date:month'],
+            'aggregates': ['amount_untaxed_signed:sum'],
+            'limit': 12,
+            'order': 'invoice_date:month desc',
+        }
+    ]
+
+
+def _bank_cash(_today):
+    """Posted ledger balance of every bank / cash account (what the journal card calls Current Balance), and the
+    money still pending on outstanding accounts, as two separate facts."""
+    return [
+        {
+            'key': 'bank_cash_balances',
+            'model': 'account.move.line',
+            'domain': [('account_id.account_type', '=', 'asset_cash'), ('parent_state', '=', 'posted')],
+            'groupby': ['account_id'],
+            'aggregates': ['balance:sum'],
+            'limit': 12,
+            'order': 'balance:sum desc',
+        },
+        # Incoming and outgoing APART: adding them would be a meaningless number.
+        {
+            'key': 'receipts_pending_bank',
+            'model': 'account.payment',
+            'domain': [('state', '=', 'in_process'), ('payment_type', '=', 'inbound')],
+            'groupby': ['journal_id'],
+            'aggregates': ['amount_company_currency_signed:sum'],
+            'limit': 12,
+            'order': 'amount_company_currency_signed:sum desc',
+        },
+        {
+            'key': 'payments_pending_bank',
+            'model': 'account.payment',
+            'domain': [('state', '=', 'in_process'), ('payment_type', '=', 'outbound')],
+            'groupby': ['journal_id'],
+            'aggregates': ['amount_company_currency_signed:sum'],
+            'limit': 12,
+            'order': 'amount_company_currency_signed:sum asc',
+        },
+    ]
+
+
+def _reconciliation(_today):
+    return [
+        {
+            'key': 'bank_lines_to_reconcile',
+            'model': 'account.bank.statement.line',
+            'domain': [('is_reconciled', '=', False)],
+            'groupby': ['journal_id'],
+            'aggregates': ['amount:sum'],
+            'limit': 12,
+            'order': 'amount:sum desc',
+        }
+    ]
+
+
+def _top_products(today):
+    return [
+        {
+            'key': 'top_products_12_months',
+            'model': 'sale.order.line',
+            'domain': [('state', '=', 'sale'),
+                       ('order_id.date_order', '>=', (today - datetime.timedelta(days=365)).isoformat())],
+            'groupby': ['product_id'],
+            'aggregates': ['price_subtotal:sum', 'product_uom_qty:sum'],
+            'limit': 10,
+            'order': 'price_subtotal:sum desc',
+        }
+    ]
+
+
 TOPICS = (
     (
         'payables',
@@ -126,8 +223,8 @@ TOPICS = (
     ),
     (
         'sales',
-        ('sales', 'orders', 'revenue', 'top customer', 'best customer', 'selling'),
-        ('مبيعات', 'المبيعات', 'طلبات', 'الطلبات', 'إيرادات', 'أفضل العملاء'),
+        ('sales', 'orders', 'top customer', 'best customer', 'selling'),
+        ('مبيعات', 'المبيعات', 'طلبات', 'الطلبات', 'أفضل العملاء'),
         _sales,
     ),
     ('purchases', ('purchase', 'purchases', 'purchase order'), ('مشتريات', 'المشتريات', 'أوامر الشراء'), _purchases),
@@ -143,6 +240,16 @@ TOPICS = (
         ('مخزون', 'المخزون', 'مستودع', 'الكمية', 'البضاعة'),
         _inventory,
     ),
+    ('revenue', ('revenue', 'income', 'turnover', 'invoiced', 'compare', 'growth', 'trend'),
+     ('إيرادات', 'الإيرادات', 'دخل', 'مقارنة', 'نمو', 'اتجاه'), _revenue),
+    ('expenses', ('expense', 'expenses', 'bills', 'costs', 'spending', 'supplier bill'),
+     ('مصروفات', 'المصروفات', 'فواتير الموردين', 'تكاليف'), _expenses),
+    ('bank_cash', ('bank', 'cash', 'balance', 'liquidity', 'pending'),
+     ('بنك', 'البنك', 'نقد', 'الصندوق', 'رصيد', 'معلق'), _bank_cash),
+    ('reconciliation', ('reconcile', 'reconciliation', 'unmatched', 'statement'),
+     ('مطابقة', 'تسوية', 'كشف الحساب'), _reconciliation),
+    ('top_products', ('top product', 'best product', 'best-selling', 'best selling', 'product'),
+     ('أفضل المنتجات', 'المنتجات الأكثر', 'منتج'), _top_products),
 )
 
 

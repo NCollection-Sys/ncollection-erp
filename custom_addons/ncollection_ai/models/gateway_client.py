@@ -28,6 +28,7 @@ design; queued/async invocation is P5-T04's problem, not this module's. The
 deadline below bounds the damage if one is made from somewhere it should not be.
 """
 import hashlib
+import logging
 import hmac
 import json
 import os
@@ -68,6 +69,7 @@ _TIMEOUT = 30
 # rule_ai_gateway_kdf_agrees, which EXECUTES both implementations and compares
 # their output, so a reordered concatenation fails CI even though every
 # substring is still present.
+_logger = logging.getLogger(__name__)
 _GATEWAY_KEY_ENV = 'NC_AI_GATEWAY_KEY'
 _KDF_LABEL = b'nc-ai-gateway:'
 _HEADER_TIMESTAMP = 'X-NC-Timestamp'
@@ -122,10 +124,11 @@ class AiGatewayClient(models.AbstractModel):
         }).encode('utf-8')
         master = os.environ.get(_GATEWAY_KEY_ENV, '')
         if not master:
+            # Neutral for the user; the configuration detail is on the administrator's AI Readiness screen.
+            _logger.warning("AI request refused: %s is not set on this server", _GATEWAY_KEY_ENV)
             raise UserError(self.env._(
-                "The AI service is not configured on this deployment "
-                "(%s is unset), so this workspace cannot prove its identity to "
-                "it. Nothing was sent.", _GATEWAY_KEY_ENV))
+                "The AI assistant is not available on this workspace yet. Nothing was sent. "
+                "A Workspace Administrator can see why under Workspace Administration > AI Assistant."))
         timestamp = '%d' % int(time.time())
         return urllib.request.Request(
             '%s%s' % (self._base_url(), path), data=body, method='POST',
@@ -230,10 +233,11 @@ class AiGatewayClient(models.AbstractModel):
         # for a caller to spoof, which is why the claim is worth signing.
         master = os.environ.get(_GATEWAY_KEY_ENV, '')
         if not master:
+            # Neutral for the user; the configuration detail is on the administrator's AI Readiness screen.
+            _logger.warning("AI request refused: %s is not set on this server", _GATEWAY_KEY_ENV)
             raise UserError(self.env._(
-                "The AI service is not configured on this deployment "
-                "(%s is unset), so this workspace cannot prove its identity to "
-                "it. Nothing was sent.", _GATEWAY_KEY_ENV))
+                "The AI assistant is not available on this workspace yet. Nothing was sent. "
+                "A Workspace Administrator can see why under Workspace Administration > AI Assistant."))
         timestamp = '%d' % int(time.time())
         request = urllib.request.Request(
             '%s/v1/complete' % self._base_url(), data=body, method='POST',

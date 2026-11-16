@@ -113,9 +113,23 @@ _DATA_MARK_START = "--- WORKSPACE DATA ---\n"
 _DATA_MARK_END = "\n--- END DATA ---"
 # section key -> (value column, English label, Arabic label)
 _SECTIONS = {
+    # The question's own topics first (the tenant adds them only when the question asks), the general picture after.
+    "revenue_by_month": ("amount_untaxed_signed:sum", "Revenue (posted invoices, untaxed)",
+                         "الإيرادات (فواتير مرحّلة، قبل الضريبة)"),
+    "supplier_bills_by_month": ("amount_untaxed_signed:sum", "Supplier bills (untaxed)",
+                                "فواتير الموردين (قبل الضريبة)"),
+    "bank_cash_balances": ("balance:sum", "Bank and cash balance (posted)", "رصيد البنك والنقد (مرحّل)"),
+    "receipts_pending_bank": ("amount_company_currency_signed:sum", "Receipts in process (not yet in the bank)",
+                              "مقبوضات قيد التنفيذ (لم تصل البنك بعد)"),
+    "payments_pending_bank": ("amount_company_currency_signed:sum", "Payments in process (not yet out of the bank)",
+                              "مدفوعات قيد التنفيذ (لم تخرج من البنك بعد)"),
+    "bank_lines_to_reconcile": ("amount:sum", "Bank lines still to reconcile",
+                                "حركات بنكية بانتظار المطابقة"),
+    "top_products_12_months": ("price_subtotal:sum", "Top products by sales (12 months)",
+                               "أفضل المنتجات مبيعًا (12 شهرًا)"),
     "receivables": ("amount_residual:sum", "Open customer invoices", "فواتير العملاء المفتوحة"),
     "overdue_receivables": ("amount_residual:sum", "Overdue customer invoices", "فواتير العملاء المتأخرة"),
-    "payables": ("amount_residual:sum", "Open vendor bills", "فواتير الموردين المفتوحة"),
+    "payables": ("amount_residual:sum", "Open supplier bills", "فواتير الموردين المفتوحة"),
     "recent_invoices": ("amount_total:sum", "Invoiced in the last months", "المفوتر في الأشهر الأخيرة"),
     "sales_by_month": ("amount_total:sum", "Confirmed sales orders", "أوامر البيع المؤكدة"),
     "top_customers": ("amount_total:sum", "Top customers by orders", "أفضل العملاء حسب الطلبات"),
@@ -156,6 +170,7 @@ def grounded_summary(prompt: str) -> str:
         lines.append("%s: %s%s" % (label, figure, (" (%s %s)" % ("الأعلى" if arabic else "top", top)) if top else ""))
     if not lines:
         return ""
+    lines = lines[:4]
     head = ("إجابة تجريبية من بياناتك (لا يوجد مزوّد ذكاء اصطناعي متصل): " if arabic
             else "Demo answer from your workspace data (no AI provider is connected): ")
     return head + "; ".join(lines) + "."
@@ -407,4 +422,8 @@ def build_provider(env: dict | None = None) -> Provider:
             api_key=env.get("NC_AI_API_KEY", ""),
             model=env.get("NC_AI_MODEL", "claude-sonnet-4-5"),
         )
-    raise ProviderError("unknown NC_AI_PROVIDER %r (known: mock, anthropic)" % name)
+    if name == "openai":
+        from provider_openai import OpenAIProvider  # noqa: PLC0415 (its own module; it imports this one)
+        return OpenAIProvider(api_key=env.get("NC_AI_API_KEY", ""),
+                              model=env.get("NC_AI_MODEL", "") or OpenAIProvider.DEFAULT_MODEL)
+    raise ProviderError("unknown NC_AI_PROVIDER %r (known: mock, anthropic, openai)" % name)

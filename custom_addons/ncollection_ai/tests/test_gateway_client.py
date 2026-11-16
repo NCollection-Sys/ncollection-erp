@@ -125,7 +125,9 @@ class TestGatewayClient(TransactionCase):
             with patch('urllib.request.urlopen', new=fake_urlopen):
                 with self.assertRaises(UserError) as caught:
                     self.gateway._complete('prompt')
-        self.assertIn(gateway_client._GATEWAY_KEY_ENV, str(caught.exception))
+        # The user sees a neutral message (no configuration detail); the administrator's readiness screen names it.
+        self.assertNotIn(gateway_client._GATEWAY_KEY_ENV, str(caught.exception))
+        self.assertIn('not available', str(caught.exception))
         self.assertFalse(sent, "nothing may be transmitted without a signature")
 
     # --------------------------------------------------------- error mapping
