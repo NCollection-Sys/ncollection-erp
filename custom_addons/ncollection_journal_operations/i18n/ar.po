@@ -804,6 +804,7 @@ msgstr "صادر"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__status__paid
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__paid
 msgid "Paid"
 msgstr "مدفوع"
 
@@ -833,6 +834,8 @@ msgid "Payment"
 msgstr "سند صرف"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__payment_method_line_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
 msgid "Payment Method"
 msgstr "طريقة الدفع"
@@ -1184,24 +1187,39 @@ msgid ""
 "                    and the payment is matched with it; your name and the date are recorded on the payment."
 msgstr "أنت تؤكد بنفسك أن هذا المبلغ وصل إلى الحساب (أو خرج منه). لم يتحقق النظام من ذلك لدى البنك. يُنقل المبلغ من الحساب المعلّق إلى حساب الدفتر وتُطابَق الدفعة معه، ويُسجَّل اسمك والتاريخ على الدفعة."
 
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__nc_status
 msgid "Transfer Status"
 msgstr "حالة التحويل"
 
+#. module: ncollection_journal_operations
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__in_progress
 msgid "In Progress"
 msgstr "قيد التنفيذ"
 
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "Choose the Payment Method of %(journal)s."
 msgstr "اختر طريقة الدفع لدفتر %(journal)s."
 
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "%(method)s is not an outgoing payment method of %(journal)s."
 msgstr "%(method)s ليست طريقة دفع صادرة لدفتر %(journal)s."
 
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/account_payment.py:0
 msgid "%(partner)s is not a %(type)s."
 msgstr "%(partner)s ليس %(type)s."
 
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__payment_method_line_id
 msgid ""
-"An outgoing method of the From Journal. A method with an outstanding account leaves the money there until the bank "
-"confirms it (In Progress); a method without one books it straight to the journal account."
+"An outgoing method of the From Journal. A method with an outstanding account leaves the money there until "
+"the bank confirms it (In Progress); a method without one books it straight to the journal account."
 msgstr ""
-"طريقة صادرة من دفتر المصدر. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكده البنك (قيد التنفيذ)؛ والطريقة بدونه "
-"تقيده مباشرة في حساب الدفتر."
+"طريقة صادرة من دفتر المصدر. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكده البنك (قيد التنفيذ)؛ "
+"والطريقة بدونه تقيده مباشرة في حساب الدفتر."
