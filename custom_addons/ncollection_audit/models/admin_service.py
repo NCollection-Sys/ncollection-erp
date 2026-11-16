@@ -1,7 +1,8 @@
 """The platform's READ-ONLY window on this workspace's general Audit Log (OCA ``auditlog``).
 
 Reached exactly like Tenant Administration: the platform calls ``ncollection.admin.service.list_audit_logs`` over
-JSON-2 with this tenant's derived bearer (ncollection_core/models/admin_service.py: service account only, fixed request keys,
+JSON-2 with this tenant's derived bearer
+(ncollection_core/models/admin_service.py: service account only, fixed request keys,
 the platform administrator named in ``actor``). The platform never reads this database directly.
 
 What leaves the workspace: event METADATA only (when, who, which model and record, which operation, how many fields
