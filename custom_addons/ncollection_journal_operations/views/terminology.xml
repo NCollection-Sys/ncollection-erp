@@ -1,30 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- User-facing wording only: "Supplier" for "Vendor", and the customer-side payments menu is "Receipts".
-         Technical names, XML ids, models, fields and APIs are unchanged. Menus and actions are Odoo records, so their
-         English name is set here and their Arabic one in i18n/ar.po (re-applied whenever this module is upgraded;
-         the release matrix upgrades every installed ncollection_* module). View labels are view inheritance. -->
-    <record id="account.menu_action_account_payments_receivable" model="ir.ui.menu">
-        <field name="name">Receipts</field>
-    </record>
-    <record id="account.menu_finance_payables" model="ir.ui.menu">
-        <field name="name">Suppliers</field>
-    </record>
-    <record id="account.menu_account_supplier" model="ir.ui.menu">
-        <field name="name">Suppliers</field>
-    </record>
-    <record id="account.action_account_payments" model="ir.actions.act_window">
-        <field name="name">Customer Receipts</field>
-    </record>
-    <record id="account.action_account_payments_payable" model="ir.actions.act_window">
-        <field name="name">Supplier Payments</field>
-    </record>
-    <record id="account.res_partner_action_supplier" model="ir.actions.act_window">
-        <field name="name">Suppliers</field>
-    </record>
-    <record id="account.res_partner_action_supplier_bills" model="ir.actions.act_window">
-        <field name="name">Supplier Bills</field>
-    </record>
+         Technical names, XML ids, models, fields and APIs are unchanged. Menu and action names are Odoo's own
+         records: models/terminology.py sets them in English and Arabic on every install / upgrade of this module
+         (the release matrix upgrades every installed ncollection_* module). View labels are view inheritance. -->
+    <function model="ncollection.journal.ops.terminology" name="_apply"/>
 
     <record id="view_account_supplier_payment_tree_nc_terms" model="ir.ui.view">
         <field name="name">account.supplier.payment.list.nc.terms</field>
