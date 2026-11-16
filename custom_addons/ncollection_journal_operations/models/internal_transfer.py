@@ -59,7 +59,8 @@ class InternalTransfer(models.Model):
             company_currency = rec.source_journal_id.company_id.currency_id
             rec.source_currency_id = rec.source_journal_id.currency_id or company_currency
             rec.destination_currency_id = rec.destination_journal_id.currency_id or company_currency
-            rec.multi_currency = bool(rec.destination_journal_id) and rec.source_currency_id != rec.destination_currency_id
+            rec.multi_currency = (bool(rec.destination_journal_id)
+                                  and rec.source_currency_id != rec.destination_currency_id)
 
     @api.depends('amount', 'date', 'source_currency_id', 'destination_currency_id')
     def _compute_destination_amount(self):
@@ -77,7 +78,8 @@ class InternalTransfer(models.Model):
                 raise ValidationError(_("From Journal and To Journal must be different."))
             for journal in rec.source_journal_id | rec.destination_journal_id:
                 if journal.type not in ('bank', 'cash'):
-                    raise ValidationError(_("%(journal)s is not a bank or cash journal.", journal=journal.display_name))
+                    raise ValidationError(_("%(journal)s is not a bank or cash journal.",
+                                            journal=journal.display_name))
             if rec.destination_journal_id.company_id != rec.source_journal_id.company_id:
                 raise ValidationError(_("Both journals must belong to the same company."))
             if rec.destination_amount <= 0:

@@ -287,7 +287,8 @@ class AccountPayment(models.Model):
         vals = {
             'journal_id': journal.id,
             'date': date,
-            'payment_ref': _("Mark as Paid: %(payment)s", payment=self.name) + (f' — {self.memo}' if self.memo else ''),
+            'payment_ref': _("Mark as Paid: %(payment)s", payment=self.name)
+                           + (f' — {self.memo}' if self.memo else ''),
             'partner_id': self.partner_id.id,
             'amount': amount,
             'counterpart_account_id': lines.account_id.id,

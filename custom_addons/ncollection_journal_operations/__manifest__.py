@@ -4,9 +4,9 @@
     'name': 'NCollection Bank & Cash Journal Operations',
     'version': '19.0.1.0.0',
     'category': 'Accounting/Accounting',
-    'summary': 'Bank and cash journal cards as an operations centre: ledger Current Balance, Pending Balance, complete '
-               'Transactions, Payment / Receipt (Customer, Supplier or Account), Internal Transfer, Reconcile, and Mark '
-               'as Paid for in-process payments. Every bank / cash journal, existing or new.',
+    'summary': 'Bank and cash journal cards as an operations centre: ledger Current Balance, Pending Balance, '
+               'complete Transactions, Payment / Receipt (Customer, Supplier or Account), Internal Transfer, '
+               'Reconcile and Mark as Paid. Every bank / cash journal, existing or new.',
     'author': 'NCollection',
     'website': 'https://ncollection.com',
     'license': 'LGPL-3',

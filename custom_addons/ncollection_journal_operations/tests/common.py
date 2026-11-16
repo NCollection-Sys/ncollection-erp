@@ -24,7 +24,8 @@ class JournalOpsCommon(AccountTestInvoicingCommon):
         cls.bank = cls._nc_journal('Ops Bank One', 'bank', 'OPB1',
                                    outstanding('101931', 'Ops Out Receipts 1'), outstanding('101932', 'Ops Out Pay 1'))
         cls.bank2 = cls._nc_journal('Ops Bank Two', 'bank', 'OPB2',
-                                    outstanding('101933', 'Ops Out Receipts 2'), outstanding('101934', 'Ops Out Pay 2'))
+                                    outstanding('101933', 'Ops Out Receipts 2'),
+                                    outstanding('101934', 'Ops Out Pay 2'))
         cls.cash = cls._nc_journal('Ops Cash', 'cash', 'OPC1',
                                    outstanding('101935', 'Ops Out Receipts C'), outstanding('101936', 'Ops Out Pay C'))
         cls.customer = cls.env['res.partner'].create({'name': 'Ops Customer', 'customer_rank': 1})

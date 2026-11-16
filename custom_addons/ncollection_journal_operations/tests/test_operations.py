@@ -352,8 +352,8 @@ class TestTransactions(JournalOpsCommon):
 
     def _rows(self, journal):
         self.env.flush_all()
-        return self.env['ncollection.journal.transaction'].search([('journal_id', '=', journal.id)],
-                                                                   order='date, id')
+        return self.env['ncollection.journal.transaction'].search(
+            [('journal_id', '=', journal.id)], order='date, id')
 
     def test_one_row_per_operation_and_running_balance(self):
         self._bank_line(self.bank, 300.0, 'deposit')
