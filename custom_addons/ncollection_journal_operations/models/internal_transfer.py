@@ -12,7 +12,7 @@ claimed to have arrived before the receiving journal has it. The pair is cross-r
 from psycopg2 import errors
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 
 class InternalTransfer(models.Model):
@@ -71,7 +71,7 @@ class InternalTransfer(models.Model):
             else:
                 rec.destination_amount = rec.amount
 
-    @api.constrains('source_journal_id', 'destination_journal_id', 'destination_amount')
+    @api.constrains('source_journal_id', 'destination_journal_id', 'destination_amount', 'amount')
     def _check_journals(self):
         for rec in self:
             if rec.source_journal_id == rec.destination_journal_id:
@@ -84,6 +84,10 @@ class InternalTransfer(models.Model):
                 raise ValidationError(self.env._("Both journals must belong to the same company."))
             if rec.destination_amount <= 0:
                 raise ValidationError(self.env._("The amount received must be positive."))
+            if (rec.destination_journal_id and not rec.multi_currency
+                    and rec.source_currency_id.compare_amounts(rec.destination_amount, rec.amount)):
+                raise ValidationError(self.env._(
+                    "In one currency the amount received must equal the amount sent."))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -97,10 +101,18 @@ class InternalTransfer(models.Model):
             raise ValidationError(self.env._("The amount to transfer must be positive."))
         if 'source_journal_id' in vals and any(rec.source_journal_id.id != vals['source_journal_id'] for rec in self):
             raise ValidationError(self.env._("From Journal cannot be changed."))
-        if set(vals) - {'message_main_attachment_id', 'state', 'name', 'source_payment_id',
-                        'destination_payment_id'} and self.filtered(lambda rec: rec.state != 'draft'):
+        if set(vals) & self._POSTING_FIELDS:
+            # Only action_post sets these (through _nc_set_posted); a context flag would be client-controlled.
+            raise UserError(self.env._("A transfer is posted with Confirm Transfer only."))
+        if set(vals) - {'message_main_attachment_id'} and self.filtered(lambda rec: rec.state != 'draft'):
             raise UserError(self.env._("A posted transfer cannot be edited."))
         return super().write(vals)
+
+    _POSTING_FIELDS = {'state', 'name', 'source_payment_id', 'destination_payment_id'}
+
+    def _nc_set_posted(self, vals):
+        """The one writer of the posting fields, called from action_post after both payments exist."""
+        return super(InternalTransfer, self).write(vals)  # pylint: disable=super-method-mismatch
 
     @staticmethod
     def _method_line(journal, direction):
@@ -112,6 +124,9 @@ class InternalTransfer(models.Model):
     def action_post(self):
         """Create and post both sides once. Locked: a second click or a second user is refused, never doubled."""
         self.ensure_one()
+        if not self.env.user.has_group('account.group_account_user'):
+            raise AccessError(self.env._("Only an accountant can post an internal transfer."))
+        self.check_access('write')
         self.env['account.payment'].check_access('create')
         try:
             self.env.cr.execute('SELECT id FROM ncollection_internal_transfer WHERE id = %s FOR UPDATE NOWAIT',
@@ -157,8 +172,8 @@ class InternalTransfer(models.Model):
             raise UserError(self.env._(
                 "The transfer could not be booked on the Internal Transfer account; nothing was saved."))
         transfer_lines.reconcile()
-        self.write({'name': name, 'state': 'posted', 'source_payment_id': source.id,
-                    'destination_payment_id': destination.id})
+        self._nc_set_posted({'name': name, 'state': 'posted', 'source_payment_id': source.id,
+                             'destination_payment_id': destination.id})
         self.message_post(body=self.env._(
             "Posted: %(sender)s from %(from)s, %(receiver)s into %(to)s.",
             sender=source.name, receiver=destination.name,

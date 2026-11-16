@@ -12,6 +12,8 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 
 OPERATION_DIRECTION = {'payment': 'outbound', 'receipt': 'inbound'}
 SETTLEMENT_PREFIX = 'nc-settle-'
+# Receivable / payable go through Customer / Supplier; liquidity and credit cards through Internal Transfer.
+BLOCKED_ACCOUNT_TYPES = ('asset_receivable', 'liability_payable', 'asset_cash', 'liability_credit_card', 'off_balance')
 
 
 class AccountPayment(models.Model):
@@ -63,7 +65,7 @@ class AccountPayment(models.Model):
             pay.nc_allowed_account_ids = Account.search([
                 *Account._check_company_domain(pay.company_id),
                 ('active', '=', True),
-                ('account_type', 'not in', ('asset_receivable', 'liability_payable', 'asset_cash', 'off_balance')),
+                ('account_type', 'not in', BLOCKED_ACCOUNT_TYPES),
                 ('id', 'not in', pay._nc_forbidden_counterpart_accounts().ids),
             ])
 
@@ -144,29 +146,34 @@ class AccountPayment(models.Model):
             elif kind == 'account':
                 vals['partner_id'] = False
         payments = super().create(vals_list)
-        payments.filtered('nc_operation')._nc_check_operation()
+        payments._nc_operations()._nc_check_operation()
         return payments
 
     _IMMUTABLE = ('nc_operation', 'nc_source_journal_id', 'nc_transfer_id')
 
+    def _nc_operations(self):
+        """Every record the operation rules apply to, including a crafted Account type without an operation."""
+        return self.filtered(lambda pay: pay.nc_operation or pay.nc_counterpart_type == 'account')
+
     def write(self, vals):
-        touched = [name for name in self._IMMUTABLE if name in vals]
-        if touched:
-            for pay in self.filtered('nc_operation'):
-                for name in touched:
-                    new = vals[name]
-                    old = pay[name].id if pay._fields[name].type == 'many2one' else pay[name]
-                    if (new or False) != (old or False):
-                        raise ValidationError(self.env._("%(field)s cannot be changed on %(payment)s.",
-                                                         field=pay._fields[name].string, payment=pay.display_name))
+        # Set at creation only: never added to, moved on or removed from an existing payment, whatever its origin.
+        for name in (name for name in self._IMMUTABLE if name in vals):
+            for pay in self:
+                old = pay[name].id if pay._fields[name].type == 'many2one' else pay[name]
+                if (vals[name] or False) != (old or False):
+                    raise ValidationError(self.env._("%(field)s cannot be changed on %(payment)s.",
+                                                     field=pay._fields[name].string, payment=pay.display_name))
         res = super().write(vals)
         if {'journal_id', 'payment_type', 'partner_id', 'partner_type', 'nc_counterpart_type',
                 'nc_counterpart_account_id', 'destination_account_id'} & set(vals):
-            self.filtered('nc_operation')._nc_check_operation()
+            self._nc_operations()._nc_check_operation()
         return res
 
     def _nc_check_operation(self):
         for pay in self:
+            if not pay.nc_operation:
+                raise ValidationError(self.env._(
+                    "An Account payment or receipt is created from a bank or cash journal card only."))
             if pay.journal_id != pay.nc_source_journal_id:
                 raise ValidationError(self.env._(
                     "%(payment)s must stay in %(journal)s, the journal it was created from.",
@@ -190,7 +197,7 @@ class AccountPayment(models.Model):
                     raise ValidationError(self.env._("An Account operation has no partner."))
                 if not account:
                     raise ValidationError(self.env._("Choose the account of this operation."))
-                if (account.account_type in ('asset_receivable', 'liability_payable', 'asset_cash', 'off_balance')
+                if (account.account_type in BLOCKED_ACCOUNT_TYPES
                         or account in pay._nc_forbidden_counterpart_accounts()
                         or account.company_ids and pay.company_id not in account.company_ids
                         or not account.active):

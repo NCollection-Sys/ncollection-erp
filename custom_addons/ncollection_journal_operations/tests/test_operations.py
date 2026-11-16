@@ -120,6 +120,24 @@ class TestPaymentReceipt(JournalOpsCommon):
         with self.assertRaises(ValidationError):
             pay.nc_operation = 'receipt'
 
+    def test_rpc_cannot_bypass_the_card_rules(self):
+        method = self.bank.outbound_payment_method_line_ids[:1]
+        with self.assertRaises(ValidationError):
+            self.env['account.payment'].create({
+                'journal_id': self.bank.id, 'payment_type': 'outbound', 'nc_counterpart_type': 'account',
+                'nc_counterpart_account_id': self.bank2.default_account_id.id, 'amount': 5.0,
+                'payment_method_line_id': method.id})
+        plain = self.env['account.payment'].create({
+            'journal_id': self.bank.id, 'payment_type': 'inbound', 'partner_type': 'customer',
+            'partner_id': self.customer.id, 'amount': 5.0})
+        for vals in ({'nc_operation': 'receipt'}, {'nc_source_journal_id': self.bank.id}):
+            with self.subTest(vals=vals), self.assertRaises(ValidationError):
+                plain.write(vals)
+        card = self.env['account.account'].create({'code': '201991', 'name': 'Card (ops test)',
+                                                   'account_type': 'liability_credit_card'})
+        with self.assertRaises(ValidationError):
+            self._op(self.bank, 'payment', 'account', 5.0, account=card, post=False)
+
     def test_payee_type_must_match(self):
         pay = self._op(self.bank, 'receipt', 'account', 10.0, partner=self.customer, account=self.other_income,
                        post=False)
@@ -248,31 +266,53 @@ class TestMarkAsPaid(JournalOpsCommon):
 @tagged('post_install', '-at_install')
 class TestBankFileAfterMarkAsPaid(JournalOpsCommon):
 
-    def _file_vals(self, amount, day):
-        return [{'transactions': [{'payment_ref': 'BANK CREDIT', 'amount': amount, 'date': day,
-                                   'unique_import_id': 'bank-abc-1'}]}]
+    def _file_vals(self, amount, day, label='BANK CREDIT', bank_id='bank-abc-1', partner=None):
+        line = {'payment_ref': label, 'amount': amount, 'date': day, 'unique_import_id': bank_id}
+        if partner:
+            line['partner_id'] = partner.id
+        return [{'transactions': [line]}]
 
-    def test_import_recognises_the_settlement(self):
-        receipt = self._op(self.bank, 'receipt', 'customer', 90.0, self.customer)
+    def _id(self, vals):
+        return vals[0]['transactions'][0]['unique_import_id']
+
+    def test_import_recognises_the_settlement_and_a_reimport(self):
+        receipt = self._op(self.bank, 'receipt', 'customer', 90.0, self.customer, memo='INV 5521 Nile')
         settlement = receipt._nc_mark_as_paid()
         wizard = self.env['account.statement.import']
+        today = fields.Date.today()
         preview = wizard.with_context(nc_skipped_rows=[])._complete_stmts_vals(
-            self._file_vals(90.0, fields.Date.today()), self.bank, False)
-        self.assertEqual(preview[0]['transactions'][0]['unique_import_id'], settlement.unique_import_id)
+            self._file_vals(90.0, today, 'TRF NILE inv 5521 nile'), self.bank, False)
+        self.assertEqual(self._id(preview), settlement.unique_import_id)
         self.assertFalse(settlement.nc_bank_confirmed, "the preview writes nothing")
-        wizard._complete_stmts_vals(self._file_vals(90.0, fields.Date.today()), self.bank, False)
+        wizard._complete_stmts_vals(self._file_vals(90.0, today, 'TRF NILE inv 5521 nile'), self.bank, False)
         self.assertTrue(settlement.nc_bank_confirmed)
-        again = wizard._complete_stmts_vals(self._file_vals(90.0, fields.Date.today()), self.bank, False)
-        self.assertNotEqual(again[0]['transactions'][0]['unique_import_id'], settlement.unique_import_id,
-                            "a confirmed settlement is consumed once")
+        self.assertTrue(settlement.nc_bank_import_id)
+        again = wizard._complete_stmts_vals(self._file_vals(90.0, today, 'TRF NILE inv 5521 nile'), self.bank, False)
+        self.assertEqual(self._id(again), settlement.unique_import_id, "the same file again stays the same line")
+        other = wizard._complete_stmts_vals(
+            self._file_vals(90.0, today, 'INV 5521 Nile', bank_id='bank-xyz-9'), self.bank, False)
+        self.assertNotEqual(self._id(other), settlement.unique_import_id, "a confirmed settlement is used once")
 
-    def test_other_amount_or_far_date_is_a_new_transaction(self):
-        receipt = self._op(self.bank, 'receipt', 'customer', 90.0, self.customer)
+    def test_partner_is_an_identity_link(self):
+        receipt = self._op(self.bank, 'receipt', 'customer', 70.0, self.customer)
         settlement = receipt._nc_mark_as_paid()
-        for amount, day in ((91.0, fields.Date.today()), (90.0, fields.Date.add(fields.Date.today(), days=20))):
+        vals = self.env['account.statement.import']._complete_stmts_vals(
+            self._file_vals(70.0, fields.Date.today(), partner=self.customer), self.bank, False)
+        self.assertEqual(self._id(vals), settlement.unique_import_id)
+
+    def test_amount_and_date_alone_never_swallow_a_line(self):
+        receipt = self._op(self.bank, 'receipt', 'customer', 90.0, self.customer, memo='INV 5521 Nile')
+        settlement = receipt._nc_mark_as_paid()
+        other_customer = self.env['res.partner'].create({'name': 'Other payer', 'customer_rank': 1})
+        cases = [(90.0, fields.Date.today(), 'BANK CREDIT', None),
+                 (90.0, fields.Date.today(), 'BANK CREDIT', other_customer),
+                 (91.0, fields.Date.today(), 'INV 5521 Nile', None),
+                 (90.0, fields.Date.add(fields.Date.today(), days=20), 'INV 5521 Nile', None)]
+        for amount, day, label, partner in cases:
             vals = self.env['account.statement.import']._complete_stmts_vals(
-                self._file_vals(amount, day), self.bank, False)
-            self.assertNotEqual(vals[0]['transactions'][0]['unique_import_id'], settlement.unique_import_id)
+                self._file_vals(amount, day, label, partner=partner), self.bank, False)
+            self.assertNotEqual(self._id(vals), settlement.unique_import_id, (amount, label))
+        self.assertFalse(settlement.nc_bank_confirmed)
 
 
 @tagged('post_install', '-at_install')
@@ -329,6 +369,19 @@ class TestInternalTransfer(JournalOpsCommon):
         self.assertEqual(self.env['account.payment'].search_count([('nc_transfer_id', '=', transfer.id)]), 2)
         with self.assertRaises(ValidationError):
             transfer.source_journal_id = self.bank2
+
+    def test_posting_fields_are_not_writable_and_sides_are_equal(self):
+        transfer = self._transfer(self.bank, self.cash, 20.0)
+        with self.assertRaises(UserError):
+            transfer.write({'state': 'posted'})
+        with self.assertRaises(ValidationError):
+            transfer.destination_amount = 30.0
+        transfer.action_post()
+        with self.assertRaises(UserError):
+            transfer.write({'state': 'draft', 'source_payment_id': False})
+        with self.assertRaises(UserError):
+            transfer.action_post()
+        self.assertEqual(self.env['account.payment'].search_count([('nc_transfer_id', '=', transfer.id)]), 2)
 
     def test_other_company_destination_refused(self):
         other = self.company_data_2['default_journal_bank']

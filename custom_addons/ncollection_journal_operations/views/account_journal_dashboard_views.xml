@@ -12,7 +12,7 @@
         <field name="arch" type="xml">
             <xpath expr="//button[@id='all_transactions_btn']" position="replace">
                 <button id="all_transactions_btn" type="object" name="action_nc_ops_transactions"
-                        class="btn btn-primary o_nc_ops_transactions">
+                        class="btn btn-primary o_nc_ops_transactions" groups="account.group_account_readonly">
                     <i class="fa fa-list-ul me-1" role="img" aria-hidden="true"/><span>Transactions</span>
                 </button>
             </xpath>

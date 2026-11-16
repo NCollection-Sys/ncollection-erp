@@ -9,6 +9,9 @@ class AccountBankStatementLine(models.Model):
         ondelete='restrict',
         help="This line was created by Mark as Paid for that payment. A bank file line of the same amount imported "
              "within 7 days is recognised as this transaction instead of being added again.")
+    nc_bank_import_id = fields.Char(
+        string='Bank Import ID', copy=False, readonly=True, index='btree_not_null',
+        help="The bank's own id of the file line recognised as this Mark-as-Paid transaction.")
     nc_bank_confirmed = fields.Boolean(
         string='Confirmed by Bank File', copy=False, readonly=True,
         help="A later bank statement import contained this Mark-as-Paid transaction.")

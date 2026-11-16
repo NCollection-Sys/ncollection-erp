@@ -77,12 +77,10 @@ class AccountJournal(models.Model):
                 journals._nc_pending_domain() + [('amount_residual', sign, 0)],
                 groupby=['journal_id', 'currency_id'],
                 aggregates=['amount_residual:sum', 'amount_residual_currency:sum', 'payment_id:count_distinct'])
-        currencies = {}
         for journal, currency, residual, residual_currency, count in pending:
             data = result.get(journal.id)
             if data is None:
                 continue
-            currencies.setdefault(journal.id, set()).add(currency.id)
             journal_currency = journal.currency_id or journal.company_id.currency_id
             value = residual_currency if currency == journal_currency else residual
             if currency != journal_currency and journal_currency != journal.company_id.currency_id:
