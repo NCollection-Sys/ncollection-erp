@@ -22,13 +22,13 @@ _MAX_ROWS = 100
 _KEYS = {'actor', 'offset', 'limit', 'model', 'date_from', 'date_to'}
 
 
-def _date(value, name):
+def _date(env, value):
     if value in (None, '', False):
         return None
     try:
         return datetime.strptime(str(value), '%Y-%m-%d')
     except ValueError:
-        raise UserError(f"Malformed request ({name}).") from None
+        raise UserError(env._("Malformed request.")) from None
 
 
 class AdminService(models.AbstractModel):
@@ -51,7 +51,7 @@ class AdminService(models.AbstractModel):
         if model and (not isinstance(model, str) or len(model) > 128 or not model.replace('.', '').replace('_', '')
                       .isalnum()):
             raise UserError(self.env._("Malformed request."))
-        date_from, date_to = _date(vals.get('date_from'), 'date_from'), _date(vals.get('date_to'), 'date_to')
+        date_from, date_to = _date(self.env, vals.get('date_from')), _date(self.env, vals.get('date_to'))
         domain = []
         if model:
             domain.append(('model_model', '=', model))

@@ -79,7 +79,7 @@ class TenantAuditLine(models.TransientModel):
     remote_id = fields.Integer(string='Event', readonly=True)
     date = fields.Char(string='When', readonly=True)
     user = fields.Char(readonly=True)
-    model = fields.Char(string='Model', readonly=True)
+    model = fields.Char(readonly=True)
     model_name = fields.Char(string='Document Type', readonly=True)
     res_id = fields.Integer(string='Record ID', readonly=True)
     record = fields.Char(readonly=True)

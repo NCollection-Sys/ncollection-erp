@@ -43,14 +43,14 @@ TARGETS = [('menu', 'Menu'), ('action', 'Page Title (Action)'), ('field', 'Field
            ('selection', 'Choice Label'), ('view', 'Screen Text (Button, Tab, Section)')]
 
 
-def _clean(value, limit):
+def _clean(env, value, limit):
     value = (value or '').strip()
     if not value:
-        raise ValidationError("The text cannot be empty.")
+        raise ValidationError(env._("The text cannot be empty."))
     if len(value) > limit:
-        raise ValidationError(f"The text is longer than {limit} characters.")
+        raise ValidationError(env._("The text is longer than %(limit)s characters.", limit=limit))
     if FORBIDDEN_CHARS.search(value):
-        raise ValidationError("Use plain text: < > { } and control characters are not allowed.")
+        raise ValidationError(env._("Use plain text: < > { } and control characters are not allowed."))
     return value
 
 
@@ -79,7 +79,7 @@ class LabelRule(models.Model):
                 continue
             old, new = (part.strip() for part in line.split('=>', 1))
             if old and new:
-                out.append((_clean(old, MAX_LABEL), _clean(new, MAX_LABEL)))
+                out.append((_clean(self.env, old, MAX_LABEL), _clean(self.env, new, MAX_LABEL)))
         return out
 
     @api.constrains('pairs')
@@ -119,8 +119,8 @@ class LabelOverride(models.Model):
     target_type = fields.Selection(TARGETS, string='Element', required=True)
     lang = fields.Char(string='Language', required=True, default=lambda self: self.env.lang or 'en_US')
     menu_id = fields.Many2one('ir.ui.menu', ondelete='cascade')
-    action_id = fields.Many2one('ir.actions.act_window', string='Action', ondelete='cascade')
-    field_id = fields.Many2one('ir.model.fields', string='Field', ondelete='cascade')
+    action_id = fields.Many2one('ir.actions.act_window', ondelete='cascade')
+    field_id = fields.Many2one('ir.model.fields', ondelete='cascade')
     selection_id = fields.Many2one('ir.model.fields.selection', string='Choice', ondelete='cascade')
     view_id = fields.Many2one('ir.ui.view', string='Screen', ondelete='cascade')
     source_term = fields.Char(string='Text on the Screen',
@@ -171,7 +171,7 @@ class LabelOverride(models.Model):
                 raise ValidationError(self.env._("Texts of security and technical settings cannot be changed."))
             if rec.target_type == 'menu' and rec.menu_id._nc_is_technical_menu():
                 raise ValidationError(self.env._("Technical menus cannot be renamed."))
-            _clean(rec.value, MAX_HELP if rec.target_type == 'help' else MAX_LABEL)
+            _clean(self.env, rec.value, MAX_HELP if rec.target_type == 'help' else MAX_LABEL)
             if rec.target_type == 'view':
                 if not rec.source_term:
                     raise ValidationError(self.env._("Give the text exactly as the screen shows it."))
@@ -279,7 +279,11 @@ class LabelOverride(models.Model):
 
 
 class LabelEngine(models.AbstractModel):
-    """Applies the platform rules, then the tenant overrides, to Odoo's own translated columns."""
+    """Applies the platform rules, then the tenant overrides, to Odoo's own translated columns.
+
+    The full scans below (search([])) are deliberate: a terminology rule must reach every menu, action, field and
+    view; they run only when the signature changed (an install / upgrade), never per request."""
+    # pylint: disable=no-search-all
     _name = 'ncollection.label.engine'
     _description = 'Label Engine'
 
@@ -388,10 +392,10 @@ class LabelAudit(models.Model):
     old_value = fields.Char(string='Before', readonly=True)
     new_value = fields.Char(string='After', readonly=True)
 
-    def write(self, vals):
+    def write(self, vals):  # pylint: disable=method-required-super  (append-only: never written)
         raise AccessError(self.env._("The interface text history cannot be changed."))
 
-    def unlink(self):
+    def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink  (append-only: never deleted)
         raise AccessError(self.env._("The interface text history cannot be deleted."))
 
 
