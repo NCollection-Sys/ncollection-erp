@@ -81,6 +81,24 @@ class TestPaymentReceipt(JournalOpsCommon):
                 if kind == 'account':
                     self.assertFalse(pay.partner_id, "no placeholder partner")
 
+    def test_card_form_shows_only_the_payee_partner_field(self):
+        from lxml import etree
+        view = self.env.ref('ncollection_journal_operations.view_payment_form_operation')
+        arch = etree.fromstring(self.env['account.payment'].get_views([(view.id, 'form')])['views']['form']['arch'])
+        partners = arch.xpath("//field[@name='partner_id']")
+        shown = [node for node in partners if node.get('invisible') not in ('1', 'True')]
+        self.assertEqual(len(shown), 1, [etree.tostring(node)[:200] for node in shown])
+        self.assertEqual(shown[0].get('string'), 'Payee')
+        self.assertIn('nc_counterpart_type', shown[0].get('invisible'))
+        for kind, partner in (('customer', self.customer), ('supplier', self.supplier)):
+            action = self.bank.action_nc_ops_receipt()
+            form = Form(self.env['account.payment'].with_context(**action['context']), view=view)
+            form.nc_counterpart_type = kind
+            form.partner_id = partner
+            form.amount = 3.0
+            pay = form.save()
+            self.assertEqual((pay.partner_id, pay.partner_type), (partner, kind))
+
     def test_bank_fees_through_the_card_form(self):
         action = self.bank.action_nc_ops_payment()
         form = Form(self.env['account.payment'].with_context(**action['context']),

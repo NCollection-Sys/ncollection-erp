@@ -40,6 +40,14 @@
             <xpath expr="//field[@name='payment_type']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
+            <!-- Odoo's own Customer / Vendor fields are hidden FIRST and selected by their partner_type condition, so the
+                 Payee field added below can never be matched by these selectors. -->
+            <xpath expr="//field[@name='partner_id'][contains(@invisible, 'partner_type != ')][contains(@invisible, 'customer')]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='partner_id'][contains(@invisible, 'partner_type != ')][contains(@invisible, 'supplier')]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <xpath expr="//field[@name='payment_type']" position="before">
                 <field name="nc_source_journal_id" invisible="1"/>
                 <field name="nc_allowed_account_ids" invisible="1"/>
@@ -53,12 +61,6 @@
                 <field name="nc_counterpart_account_id" string="Payee" required="nc_counterpart_type == 'account'"
                        invisible="nc_counterpart_type != 'account'" readonly="state != 'draft'"
                        options="{'no_create': True}"/>
-            </xpath>
-            <xpath expr="//field[@name='partner_id'][contains(@invisible, 'customer')]" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='partner_id'][contains(@invisible, 'supplier')]" position="attributes">
-                <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//field[@name='memo']" position="attributes">
                 <attribute name="string">Description</attribute>
