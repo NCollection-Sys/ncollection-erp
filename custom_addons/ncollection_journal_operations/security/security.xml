@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rule_journal_transaction_company" model="ir.rule">
+        <field name="name">Journal transactions: allowed companies</field>
+        <field name="model_id" ref="model_ncollection_journal_transaction"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_internal_transfer_company" model="ir.rule">
+        <field name="name">Internal transfers: allowed companies</field>
+        <field name="model_id" ref="model_ncollection_internal_transfer"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Bank / cash card: Current Balance (ledger), Pending Balance (clickable) in place of Odoo's "Payments", the
+         Transactions button opening the complete history, and Payment · Receipt · Internal Transfer · Reconcile.
+         The figures come from _fill_bank_cash_dashboard_data (dashboard.nc_*), so every bank / cash journal has
+         them; nothing here names a journal. groups= only hides what the server refuses anyway. -->
+    <record id="account_journal_dashboard_kanban_view" model="ir.ui.view">
+        <field name="name">account.journal.dashboard.kanban.ncollection.operations</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.account_journal_dashboard_kanban_view"/>
+        <field name="priority">95</field>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@id='all_transactions_btn']" position="replace">
+                <button id="all_transactions_btn" type="object" name="action_nc_ops_transactions"
+                        class="btn btn-primary o_nc_ops_transactions">
+                    <i class="fa fa-list-ul me-1" role="img" aria-hidden="true"/><span>Transactions</span>
+                </button>
+            </xpath>
+            <xpath expr="//div[@id='dashboard_bank_cash_left']" position="inside">
+                <div class="o_nc_ops_actions" role="group" aria-label="Operations" t-if="dashboard.nc_ops"
+                     groups="account.group_account_user">
+                    <button type="object" name="action_nc_ops_payment" class="btn btn-secondary o_nc_ops_payment"
+                            title="New outgoing payment from this journal">
+                        <i class="fa fa-arrow-up" role="img" aria-hidden="true"/><span>Payment</span>
+                    </button>
+                    <button type="object" name="action_nc_ops_receipt" class="btn btn-secondary o_nc_ops_receipt"
+                            title="New incoming receipt into this journal">
+                        <i class="fa fa-arrow-down" role="img" aria-hidden="true"/><span>Receipt</span>
+                    </button>
+                    <button type="object" name="action_nc_ops_transfer" class="btn btn-secondary o_nc_ops_transfer"
+                            title="Move money from this journal to another bank or cash journal">
+                        <i class="fa fa-exchange" role="img" aria-hidden="true"/><span>Internal Transfer</span>
+                    </button>
+                    <button type="object" name="action_nc_ops_reconcile" class="btn btn-secondary o_nc_ops_reconcile"
+                            title="Match this journal's bank transactions">
+                        <i class="fa fa-check-square-o" role="img" aria-hidden="true"/><span>Reconcile</span>
+                    </button>
+                </div>
+            </xpath>
+            <!-- Odoo's Balance only exists after a statement or a direct payment: ours is the ledger, always. -->
+            <xpath expr="//div[@id='dashboard_bank_cash_right']/div[@t-if='dashboard.nb_lines_bank_account_balance &gt; 0']"
+                   position="attributes">
+                <attribute name="t-if">dashboard.nb_lines_bank_account_balance &gt; 0 and !dashboard.nc_ops</attribute>
+            </xpath>
+            <xpath expr="//div[@id='dashboard_bank_cash_right']/div[@t-if='dashboard.nb_lines_outstanding_pay_account_balance &gt; 0']"
+                   position="attributes">
+                <attribute name="t-if">dashboard.nb_lines_outstanding_pay_account_balance &gt; 0 and !dashboard.nc_ops</attribute>
+            </xpath>
+            <xpath expr="//div[@id='dashboard_bank_cash_right']" position="inside">
+                <t t-if="dashboard.nc_ops">
+                    <div class="o_nc_ops_figures order-first">
+                        <div class="o_nc_ops_balance" title="Posted ledger balance of the journal's account (bank-confirmed or not)">
+                            <div class="o_nc_ops_label">Current Balance</div>
+                            <div class="o_nc_ops_value" dir="ltr"
+                                 t-att-class="dashboard.nc_balance_negative ? 'text-danger' : ''">
+                                <t t-if="dashboard.nc_balance_approx">≈ </t><t t-out="dashboard.nc_balance"/>
+                            </div>
+                        </div>
+                        <a type="object" name="action_nc_ops_pending" class="o_nc_ops_pending"
+                           title="Receipts and payments still waiting on an outstanding account (incoming ↓, outgoing ↑)">
+                            <div class="o_nc_ops_label">Pending Balance
+                                <span class="badge rounded-pill text-bg-light ms-1" t-if="dashboard.nc_pending_count">
+                                    <t t-out="dashboard.nc_pending_count"/>
+                                </span>
+                            </div>
+                            <div class="o_nc_ops_value" dir="ltr">
+                                <t t-if="dashboard.nc_pending_approx">≈ </t><t t-out="dashboard.nc_pending"/>
+                            </div>
+                            <div class="o_nc_ops_split small" dir="ltr" t-if="dashboard.nc_pending_count">
+                                <span class="text-success">↓ <t t-out="dashboard.nc_pending_in"/></span>
+                                <span class="text-danger ms-2">↑ <t t-out="dashboard.nc_pending_out"/></span>
+                            </div>
+                        </a>
+                    </div>
+                </t>
+            </xpath>
+        </field>
+    </record>
+</odoo>

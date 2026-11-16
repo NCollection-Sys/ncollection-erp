@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_payment_settle_form" model="ir.ui.view">
+        <field name="name">ncollection.payment.settle.form</field>
+        <field name="model">ncollection.payment.settle</field>
+        <field name="arch" type="xml">
+            <form string="Mark as Paid">
+                <field name="direction" invisible="1"/>
+                <p class="text-muted">
+                    The amount still waiting on the outstanding account moves to the journal's account, and the payment
+                    is matched with it. A bank file imported later with the same amount is recognised, not added twice.
+                </p>
+                <group>
+                    <group>
+                        <field name="payment_id" options="{'no_open': True}"/>
+                        <field name="amount"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="date"/>
+                    </group>
+                    <group>
+                        <field name="from_account_id" options="{'no_open': True}"/>
+                        <field name="to_account_id" options="{'no_open': True}"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_confirm" string="Mark as Paid" type="object" class="btn-primary"
+                            data-hotkey="q"/>
+                    <button string="Discard" special="cancel" class="btn-secondary" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

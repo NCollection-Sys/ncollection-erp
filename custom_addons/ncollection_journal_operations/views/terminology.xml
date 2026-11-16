@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- User-facing wording only: "Supplier" for "Vendor", and the customer-side payments menu is "Receipts".
+         Technical names, XML ids, models, fields and APIs are unchanged. Menus and actions are Odoo records, so their
+         English name is set here and their Arabic one in i18n/ar.po (re-applied whenever this module is upgraded;
+         the release matrix upgrades every installed ncollection_* module). View labels are view inheritance. -->
+    <record id="account.menu_action_account_payments_receivable" model="ir.ui.menu">
+        <field name="name">Receipts</field>
+    </record>
+    <record id="account.menu_finance_payables" model="ir.ui.menu">
+        <field name="name">Suppliers</field>
+    </record>
+    <record id="account.menu_account_supplier" model="ir.ui.menu">
+        <field name="name">Suppliers</field>
+    </record>
+    <record id="account.action_account_payments" model="ir.actions.act_window">
+        <field name="name">Customer Receipts</field>
+    </record>
+    <record id="account.action_account_payments_payable" model="ir.actions.act_window">
+        <field name="name">Supplier Payments</field>
+    </record>
+    <record id="account.res_partner_action_supplier" model="ir.actions.act_window">
+        <field name="name">Suppliers</field>
+    </record>
+    <record id="account.res_partner_action_supplier_bills" model="ir.actions.act_window">
+        <field name="name">Supplier Bills</field>
+    </record>
+
+    <record id="view_account_supplier_payment_tree_nc_terms" model="ir.ui.view">
+        <field name="name">account.supplier.payment.list.nc.terms</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_supplier_payment_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="attributes">
+                <attribute name="string">Supplier</attribute>
+            </field>
+        </field>
+    </record>
+    <record id="view_account_payment_search_nc_terms" model="ir.ui.view">
+        <field name="name">account.payment.search.nc.terms</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Customer/Supplier</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='inbound_filter']" position="attributes">
+                <attribute name="string">Customer Receipts</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='outbound_filter']" position="attributes">
+                <attribute name="string">Supplier Payments</attribute>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_move_form_nc_terms" model="ir.ui.view">
+        <field name="name">account.move.form.nc.terms</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@for='partner_id'][contains(@invisible, 'in_invoice')]" position="attributes">
+                <attribute name="string">Supplier</attribute>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_invoice_tree_nc_terms" model="ir.ui.view">
+        <field name="name">account.invoice.list.nc.terms</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_partner_display_name'][contains(@column_invisible, 'in_invoice')]" position="attributes">
+                <attribute name="string">Supplier</attribute>
+            </xpath>
+        </field>
+    </record>
+    <record id="partner_view_buttons_nc_terms" model="ir.ui.view">
+        <field name="name">res.partner.buttons.nc.terms</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="account.partner_view_buttons"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='supplier_invoice_count']" position="attributes">
+                <attribute name="string">Supplier Bills</attribute>
+            </xpath>
+            <xpath expr="//field[@name='supplier_invoice_count']/.." position="attributes">
+                <attribute name="help">Supplier Bills</attribute>
+            </xpath>
+        </field>
+    </record>
+    <record id="account_journal_dashboard_kanban_view_nc_terms" model="ir.ui.view">
+        <field name="name">account.journal.dashboard.kanban.nc.terms</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.account_journal_dashboard_kanban_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//a[@name='create_supplier_payment']" position="replace">
+                <a role="menuitem" type="object" name="create_supplier_payment">Supplier Payment</a>
+            </xpath>
+        </field>
+    </record>
+</odoo>

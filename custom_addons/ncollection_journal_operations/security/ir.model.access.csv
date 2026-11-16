@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_journal_transaction_readonly,ncollection.journal.transaction.readonly,model_ncollection_journal_transaction,account.group_account_readonly,1,0,0,0
+access_journal_transaction_invoice,ncollection.journal.transaction.invoice,model_ncollection_journal_transaction,account.group_account_invoice,1,0,0,0
+access_internal_transfer_readonly,ncollection.internal.transfer.readonly,model_ncollection_internal_transfer,account.group_account_readonly,1,0,0,0
+access_internal_transfer_user,ncollection.internal.transfer.user,model_ncollection_internal_transfer,account.group_account_user,1,1,1,0
+access_payment_settle_user,ncollection.payment.settle.user,model_ncollection_payment_settle,account.group_account_user,1,1,1,0
