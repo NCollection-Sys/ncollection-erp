@@ -44,7 +44,7 @@ custom SaaS layer on top. Database-per-tenant. Repo: `NCollection-Sys/ncollectio
 - The working database is **`ncollection`** (admin login `admin`/`admin`). `make bootstrap
   db=ncollection` creates it and installs our modules.
 
-## Custom addons — **35**<!--count:custom_addons--> of them (count enforced; see #408)
+## Custom addons — **36**<!--count:custom_addons--> of them (count enforced; see #408)
 
 This list said **four** until #408, and described two of them as empty. They are not:
 `ncollection_core` is 8.6k lines and `ncollection_saas` is 9.9k. An agent told those were
@@ -205,6 +205,15 @@ adding a module fails CI until someone updates this list.
 - `ncollection_bank_reconciliation_sale` — the **Sales action** of that workspace (`auto_install` with `sale`): the customer's confirmed
   orders, invoices created by Odoo's own invoicing (regular, or the native down payment), posted only by explicit choice, then matched
   as ordinary receivables. A sales order is never a receivable; no revenue from a bank line; no sudo.
+- `ncollection_journal_operations` — every **bank / cash journal card** (by `type`, existing or new) as an operations centre:
+  **Current Balance** = posted ledger balance of the journal's account (no reconciliation needed), **Pending Balance** = residual of
+  posted payments still on an outstanding account (incoming / outgoing apart, clickable; by accounting, so a Community "Paid"
+  receipt still on Outstanding Receipts counts), complete **Transactions** (SQL view, one row per operation), and **Payment ·
+  Receipt** (Type Customer / Supplier / Account, Payee, journal and direction locked server-side), **Internal Transfer** (two
+  payments on the company transfer account, reconciled), **Reconcile** (the existing OCA workspace). **Mark as Paid** = one Odoo
+  statement line + `reconcile()` under a row lock, once per payment (`unique_import_id nc-settle-<id>`); a bank file line of the
+  same amount within 7 days later takes that id and is skipped. Vendor → Supplier, Customers > Payments → Receipts (wording only).
+  `auto_install`. Docs: `docs/markdown/JOURNAL_OPERATIONS.md`.
 - `ncollection_account_localization_uae` — TRN validation + FTA compliance tracking; also the foreign buyer
   identifier (`nc_foreign_tax_id` + ICD scheme, Guidelines V2.0 §18.2.3) the e-invoicing engine maps to IBT-046.
 - `ncollection_mis_templates` — ready-made Balance Sheet and P&L MIS templates.
