@@ -261,9 +261,9 @@ msgstr "يجب أن يتبع الدفتران الشركة نفسها."
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid ""
-"Both journals need a payment method (Outgoing on %(source)s, Incoming on "
-"%(dest)s)."
-msgstr "يحتاج الدفتران إلى طريقة دفع (صادرة في %(source)s، وواردة في %(dest)s)."
+"Both journals need a payment method (Outgoing on %(sender)s, Incoming on "
+"%(receiver)s)."
+msgstr "يحتاج الدفتران إلى طريقة دفع (صادرة في %(sender)s، وواردة في %(receiver)s)."
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_source_journal_id
@@ -612,9 +612,9 @@ msgstr "تم التعليم كمدفوع"
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/account_payment.py:0
 msgid ""
-"Marked as Paid on %(date)s by %(user)s: %(amount)s moved from %(source)s to "
+"Marked as Paid on %(date)s by %(user)s: %(amount)s moved from %(sender)s to "
 "%(target)s (statement line %(line)s)."
-msgstr "تم التعليم كمدفوع في %(date)s بواسطة %(user)s: نُقل مبلغ %(amount)s من %(source)s إلى %(target)s (سطر الكشف %(line)s)."
+msgstr "تم التعليم كمدفوع في %(date)s بواسطة %(user)s: نُقل مبلغ %(amount)s من %(sender)s إلى %(target)s (سطر الكشف %(line)s)."
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
@@ -823,8 +823,8 @@ msgstr "الرصيد الدفتري المرحَّل لحساب الدفتر (س
 #. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
-msgid "Posted: %(source)s from %(from)s, %(dest)s into %(to)s."
-msgstr "تم الترحيل: %(source)s من %(from)s، و%(dest)s إلى %(to)s."
+msgid "Posted: %(sender)s from %(from)s, %(receiver)s into %(to)s."
+msgstr "تم الترحيل: %(sender)s من %(from)s، و%(receiver)s إلى %(to)s."
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form

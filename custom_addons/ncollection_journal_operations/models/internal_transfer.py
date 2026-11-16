@@ -130,8 +130,8 @@ class InternalTransfer(models.Model):
         destination_method = self._method_line(self.destination_journal_id, 'inbound')
         if not source_method or not destination_method:
             raise UserError(self.env._(
-                "Both journals need a payment method (Outgoing on %(source)s, Incoming on %(dest)s).",
-                source=self.source_journal_id.display_name, dest=self.destination_journal_id.display_name))
+                "Both journals need a payment method (Outgoing on %(sender)s, Incoming on %(receiver)s).",
+                sender=self.source_journal_id.display_name, receiver=self.destination_journal_id.display_name))
         name = self.env['ir.sequence'].next_by_code('ncollection.internal.transfer') or '/'
         memo = self.memo or self.env._("Internal Transfer %(name)s", name=name)
         Payment = self.env['account.payment']
@@ -160,7 +160,8 @@ class InternalTransfer(models.Model):
         self.write({'name': name, 'state': 'posted', 'source_payment_id': source.id,
                     'destination_payment_id': destination.id})
         self.message_post(body=self.env._(
-            "Posted: %(source)s from %(from)s, %(dest)s into %(to)s.", source=source.name, dest=destination.name,
+            "Posted: %(sender)s from %(from)s, %(receiver)s into %(to)s.",
+            sender=source.name, receiver=destination.name,
             **{'from': self.source_journal_id.display_name, 'to': self.destination_journal_id.display_name}))
         return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
             'type': 'success', 'title': self.env._('Internal Transfer posted'),
