@@ -284,11 +284,11 @@ class AccountPayment(models.Model):
                 refs=', '.join(waiting.mapped(lambda st: st.payment_ref or st.display_name))))
         if StLine.search_count([('unique_import_id', '=', f'{SETTLEMENT_PREFIX}{self.id}')]):
             raise UserError(_("%(payment)s was already marked as paid.", payment=self.display_name))
+        label = _("Mark as Paid: %(payment)s", payment=self.name)
         vals = {
             'journal_id': journal.id,
             'date': date,
-            'payment_ref': _("Mark as Paid: %(payment)s", payment=self.name)
-                           + (f' — {self.memo}' if self.memo else ''),
+            'payment_ref': f'{label} — {self.memo}' if self.memo else label,
             'partner_id': self.partner_id.id,
             'amount': amount,
             'counterpart_account_id': lines.account_id.id,
