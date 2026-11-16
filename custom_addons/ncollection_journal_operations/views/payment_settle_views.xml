@@ -6,9 +6,14 @@
         <field name="arch" type="xml">
             <form string="Mark as Paid">
                 <field name="direction" invisible="1"/>
+                <div class="alert alert-warning" role="alert">
+                    You are confirming yourself that this money has reached (or left) the account. The system has not
+                    checked this with the bank. The amount moves from the outstanding account to the journal's account
+                    and the payment is matched with it; your name and the date are recorded on the payment.
+                </div>
                 <p class="text-muted">
-                    The amount still waiting on the outstanding account moves to the journal's account, and the payment
-                    is matched with it. A bank file imported later with the same amount is recognised, not added twice.
+                    A bank file imported later with the same amount and a matching partner or reference is recognised,
+                    not added twice.
                 </p>
                 <group>
                     <group>
@@ -23,7 +28,7 @@
                     </group>
                 </group>
                 <footer>
-                    <button name="action_confirm" string="Mark as Paid" type="object" class="btn-primary"
+                    <button name="action_confirm" string="Confirm: Mark as Paid" type="object" class="btn-primary"
                             data-hotkey="q"/>
                     <button string="Discard" special="cancel" class="btn-secondary" data-hotkey="x"/>
                 </footer>

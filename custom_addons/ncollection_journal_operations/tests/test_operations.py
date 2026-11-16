@@ -408,6 +408,31 @@ class TestTransactions(JournalOpsCommon):
         return self.env['ncollection.journal.transaction'].search(
             [('journal_id', '=', journal.id)], order='date, id')
 
+    def _ledger(self, journal, cutoff=None):
+        domain = [('account_id', '=', journal.default_account_id.id), ('parent_state', '=', 'posted')]
+        if cutoff:
+            domain.append(('date', '<=', cutoff))
+        return sum(self.env['account.move.line'].search(domain).mapped('balance'))
+
+    def _assert_running_equals_ledger(self, journal):
+        rows = self._rows(journal)
+        for cutoff in sorted(set(rows.mapped('date'))):
+            upto = rows.filtered(lambda r: r.date <= cutoff).sorted(lambda r: (r.date, r.id))
+            self.assertAlmostEqual(upto[-1].running_balance, self._ledger(journal, cutoff),
+                                   msg=f"running balance at {cutoff}")
+        self.assertAlmostEqual(sum(rows.mapped('liquidity_balance')), self._ledger(journal))
+        return rows
+
+    def _match(self, payment, amount, day, ref):
+        """A bank line of ``amount`` (may differ from the payment) matched with the payment's outstanding line."""
+        outstanding = payment._nc_open_liquidity_lines()
+        st_line = self.env['account.bank.statement.line'].create({
+            'journal_id': payment.journal_id.id, 'date': day, 'payment_ref': ref, 'amount': amount,
+            'counterpart_account_id': outstanding.account_id.id})
+        (st_line.move_id.line_ids.filtered(lambda line: line.account_id == outstanding.account_id)
+         | outstanding).reconcile()
+        return st_line
+
     def test_one_row_per_operation_and_running_balance(self):
         self._bank_line(self.bank, 300.0, 'deposit')
         receipt = self._op(self.bank, 'receipt', 'customer', 100.0, self.customer)
@@ -415,19 +440,52 @@ class TestTransactions(JournalOpsCommon):
         pending = self._op(self.bank, 'payment', 'supplier', 30.0, self.supplier)
         fee = self._op(self.bank, 'payment', 'account', 5.0, account=self.fees)
         fee._nc_mark_as_paid()
-        rows = self._rows(self.bank)
-        self.assertEqual(len(rows.filtered(lambda r: r.payment_id == receipt)), 1)
-        self.assertFalse(rows.filtered(lambda r: r.statement_line_id.nc_settlement_payment_id),
-                         "the Mark-as-Paid line is not a second row")
+        rows = self._assert_running_equals_ledger(self.bank)
+        self.assertEqual(len(rows.filtered(lambda r: r.payment_id == receipt and r.operation == 'receipt')), 1)
+        confirmation = rows.filtered(lambda r: r.statement_line_id.nc_settlement_payment_id == receipt)
+        self.assertEqual(confirmation.operation, 'settlement')
+        self.assertEqual(confirmation.payment_id, receipt)
+        self.assertFalse(confirmation.amount_in or confirmation.amount_out, "never a second incoming amount")
+        self.assertAlmostEqual(sum(rows.mapped('amount_in')), 400.0)
         self.assertEqual(len(rows.filtered(lambda r: r.operation == 'bank')), 1)
-        row = rows.filtered(lambda r: r.payment_id == pending)
+        row = rows.filtered(lambda r: r.payment_id == pending and r.operation == 'payment')
         self.assertEqual(row.status, 'in_process')
         self.assertAlmostEqual(row.pending_balance, -30.0)
         self.assertAlmostEqual(row.liquidity_balance, 0.0)
-        self.assertEqual(rows.filtered(lambda r: r.payment_id == fee).operation, 'account')
-        last = rows.sorted(lambda r: (r.date, r.id))[-1]
-        self.assertAlmostEqual(last.running_balance, self._figures(self.bank)['balance'])
+        self.assertEqual(rows.filtered(lambda r: r.payment_id == fee and r.operation != 'settlement')
+                         .operation, 'account')
         self.assertAlmostEqual(self._figures(self.bank)['balance'], 395.0)
+
+    def test_partial_and_different_amounts_follow_the_posted_lines_at_every_cutoff(self):
+        today = fields.Date.today()
+        day = lambda n: fields.Date.add(today, days=n)  # noqa: E731
+        self._bank_line(self.bank, 1000.0, 'opening', date=day(-20))
+        receipt = self._op(self.bank, 'receipt', 'customer', 100.0, self.customer, date=day(-15))
+        self._match(receipt, 95.0, day(-10), 'bank says 95')            # partial, different amount, later date
+        self.assertAlmostEqual(receipt.nc_pending_amount, 5.0)
+        payment = self._op(self.bank, 'payment', 'supplier', 40.0, self.supplier, date=day(-9))
+        self._match(payment, -40.0, day(-3), 'cheque cleared')          # settled a week later
+        self.env['account.move'].create({                               # a manual entry on the bank account
+            'move_type': 'entry', 'date': day(-5), 'journal_id': self.company_data['default_journal_misc'].id,
+            'line_ids': [(0, 0, {'account_id': self.bank.default_account_id.id, 'debit': 7.0, 'name': 'adj'}),
+                         (0, 0, {'account_id': self.other_income.id, 'credit': 7.0, 'name': 'adj'})]}).action_post()
+        receipt._nc_mark_as_paid(day(-1))                               # the remaining 5, on its own date
+        rows = self._assert_running_equals_ledger(self.bank)
+        self.assertAlmostEqual(self._ledger(self.bank), 1000 + 95 - 40 + 7 + 5)
+        self.assertAlmostEqual(rows.filtered(lambda r: r.operation == 'receipt').liquidity_balance, 0.0,
+                               "nothing is counted at the nominal amount on the payment's date")
+        settlements = rows.filtered(lambda r: r.operation == 'settlement')
+        self.assertEqual(sorted(settlements.mapped('liquidity_balance')), [-40.0, 5.0, 95.0])
+        self.assertAlmostEqual(self._figures(self.bank)['balance'], self._ledger(self.bank))
+        before_settlement = rows.filtered(lambda r: r.date <= day(-11)).sorted(lambda r: (r.date, r.id))[-1]
+        self.assertAlmostEqual(before_settlement.running_balance, 1000.0, msg="the receipt was not yet in the bank")
+
+    def test_direct_method_counts_on_the_payment_row(self):
+        method = self.bank2.inbound_payment_method_line_ids[:1]
+        method.payment_account_id = self.bank2.default_account_id
+        receipt = self._op(self.bank2, 'receipt', 'customer', 80.0, self.customer)
+        rows = self._assert_running_equals_ledger(self.bank2)
+        self.assertAlmostEqual(rows.filtered(lambda r: r.payment_id == receipt).liquidity_balance, 80.0)
 
     def test_other_journal_not_shown(self):
         self._op(self.bank2, 'receipt', 'customer', 10.0, self.customer)

@@ -39,16 +39,21 @@ shows each currency.
 
 Pending list = exactly the payments behind that number (same domain, `nc_pending_amount != 0`).
 
-**Transactions** = `ncollection.journal.transaction` (SQL view, read only), one row per business operation:
-1. every posted payment of the journal (in process, paid; cancelled / rejected / draft excluded): amount, pending,
-   status, method, partner or account, type (Payment / Receipt / Internal Transfer / Account);
-2. every posted statement line of the journal that is NOT the settlement of a payment of the same journal (a line
-   reconciled with one of that payment's liquidity lines, or created by Mark as Paid) — so a matched payment is one row;
+**Transactions** = `ncollection.journal.transaction` (SQL view, read only):
+1. every posted payment of the journal: amount, pending, status, method, partner or account, type (Payment / Receipt /
+   Internal Transfer / Account);
+2. every posted statement line: a plain **Bank Transaction**, or a **Bank Confirmation** when it settles a payment of
+   the same journal (Mark as Paid, or matched with the payment's outstanding line). A confirmation is linked to its
+   payment and has no Incoming / Outgoing amount, so the money of one operation is never counted twice;
 3. every other posted line on the journal's default account with no payment and no statement line (opening balances,
    manual entries).
-`liquidity_amount` is what reached the default account (for a payment: amount minus its pending residual); the running
-balance is the window sum of `liquidity_amount` in (date, id) order over the whole journal, so it equals Current
-Balance on the last row. A payment settled later is counted at its own date (documented approximation).
+
+**Running balance — exact, by posted lines.** Every posted line on the journal's account belongs to exactly one row,
+and `liquidity_balance` is the sum of that row's posted lines on the account (company currency), never a nominal
+payment amount. A receipt of 100 matched by a bank line of 95 counts 95 on the bank line's date, the remaining 5 on
+the date it is settled; a payment settled a week later reaches the balance that week. The running balance is the
+window sum in (date, id) order, so the row at any cutoff equals the posted ledger of the account at that date
+(test `test_partial_and_different_amounts_follow_the_posted_lines_at_every_cutoff`).
 
 ## 3. Operations
 
@@ -77,9 +82,15 @@ crafted context or RPC cannot move an operation to another journal or reverse it
 
 ## 4. Mark as Paid
 
-Eligible iff: posted move, state `in_process`, company in the user's companies, and at least one liquidity line on a
-reconcilable account other than the default account with a non-zero residual. The user needs
-`account.group_account_user` and create rights on statement lines (checked, no sudo).
+**What it is, and is not.** Mark as Paid records the USER's confirmation that the money reached (or left) the account.
+Nothing is checked with the bank. The dialog says so in a warning, the button reads "Confirm: Mark as Paid", and the
+chatter note says "confirmed by the user, not verified with the bank". A later bank file is what confirms it
+(`nc_bank_confirmed`).
+
+Eligible iff: posted move, state `in_process` (or Community's `paid` with the money still on the outstanding
+account), company in the user's companies, and at least one liquidity line on a reconcilable account other than the
+default account with a non-zero residual. The user needs `account.group_account_user` and create rights on statement
+lines (checked, no sudo).
 
 Steps, in one transaction: `SELECT … FOR UPDATE NOWAIT` on the payment (a second click / user gets "being completed");
 re-read and re-check eligibility; refuse if an UNRECONCILED statement line of the same journal has the same amount
@@ -89,10 +100,18 @@ outstanding account of the posted line; reconcile its counterpart line with the 
 `reconcile()` (exchange differences by Odoo); link it (`nc_settlement_payment_id`, unique) and post a chatter note.
 Odoo then recomputes the payment to `paid`; invoice / bill reconciliation is untouched.
 
-**A statement imported later**: in `_complete_stmts_vals`, a file line with the same journal and amount, dated
-within 7 days of an unconfirmed Mark-as-Paid settlement, is NOT created; the settlement is marked bank-confirmed with
-the bank's id / reference. The preview shows it as "already recorded (Mark as Paid)". Two settlements of the same
-amount are consumed in date order, one per file line.
+**Two sessions at once** (measured on a private copy with two real, committed database sessions,
+`scratchpad/jo_conc.py`): B arriving while A held its uncommitted lock, and A and B starting at the same instant —
+both times exactly one settlement, the other session refused ("being completed by another user"), +1 statement line
+and +1 journal entry only, payment `paid` and matched. A third attempt after the commit is refused because nothing is
+left on the outstanding account, and `unique_import_id nc-settle-<payment>` is unique in the database.
+
+**A statement imported later**: in `_complete_stmts_vals`, a file line with the same journal and exact amount, dated
+within 7 days of a Mark-as-Paid settlement, AND linked to it by identity (same partner, or the payment's number /
+memo in the label or reference) takes the settlement's `unique_import_id`, so the OCA importer skips it; the
+settlement is marked bank-confirmed and keeps the bank's own id, so re-importing the same file is skipped too. Amount
+and date alone never match. Measured: the same money imported once (skipped), an unrelated line of the same amount
+imported, the same file again added nothing.
 
 ## 5. Security
 

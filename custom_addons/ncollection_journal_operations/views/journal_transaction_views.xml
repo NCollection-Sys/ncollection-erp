@@ -5,7 +5,7 @@
         <field name="model">ncollection.journal.transaction</field>
         <field name="arch" type="xml">
             <list create="0" edit="0" delete="0" decoration-success="direction == 'in'"
-                  decoration-danger="direction == 'out'" decoration-muted="status == 'in_process'">
+                  decoration-danger="direction == 'out'" decoration-muted="status == 'in_process' or operation == 'settlement'">
                 <field name="date"/>
                 <field name="reference"/>
                 <field name="operation" widget="badge"/>

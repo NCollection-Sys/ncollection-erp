@@ -321,7 +321,8 @@ class AccountPayment(models.Model):
                                        payment=self.display_name))
         liquidity = st_line.move_id.line_ids.filtered(lambda line: line.account_id == journal.default_account_id)
         self.message_post(body=self.env._(
-            "Marked as Paid on %(date)s by %(user)s: %(amount)s moved from %(sender)s to %(target)s "
+            "Marked as Paid on %(date)s by %(user)s (confirmed by the user, not verified with the bank): "
+            "%(amount)s moved from %(sender)s to %(target)s "
             "(statement line %(line)s).",
             date=date, user=self.env.user.name, amount=journal_currency.format(abs(amount)),
             sender=lines.account_id.display_name, target=liquidity.account_id.display_name,

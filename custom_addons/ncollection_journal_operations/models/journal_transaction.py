@@ -1,12 +1,15 @@
 """Transactions of a bank / cash journal: one row per business operation (docs/markdown/JOURNAL_OPERATIONS.md §2).
 
-1. posted payments of the journal (in process or paid);
-2. posted statement lines that are NOT the settlement of one of those payments (a line reconciled with a line of a
-   payment of the same journal, or created by Mark as Paid) — a matched payment stays ONE row;
+1. posted payments of the journal;
+2. posted statement lines: a plain bank transaction, or a "Bank Confirmation" when it settles a payment of the same
+   journal (Mark as Paid, or matched with the payment's outstanding line). A confirmation is linked to its payment and
+   is never counted again in Incoming / Outgoing;
 3. any other posted line on the journal's liquidity account (opening balances, manual entries).
 
-``liquidity_balance`` is what reached the journal's liquidity account, in company currency; ``running_balance`` is its
-window sum over the whole journal, so the last row equals the ledger balance. Read only; nothing is stored.
+Every posted line on the journal's account belongs to exactly one row, and ``liquidity_balance`` is the SUM OF THOSE
+POSTED LINES (company currency), never a nominal payment amount: a bank line matched for a different amount, a
+partial match or a write-off counts exactly what was booked, on its own date. ``running_balance`` is the window sum in
+(date, id) order, so the row at any cutoff equals the ledger balance at that date. Read only; nothing is stored.
 """
 from odoo import fields, models, tools
 
@@ -26,7 +29,8 @@ class JournalTransaction(models.Model):
     description = fields.Char(readonly=True)
     operation = fields.Selection([
         ('receipt', 'Receipt'), ('payment', 'Payment'), ('transfer', 'Internal Transfer'),
-        ('account', 'Account'), ('bank', 'Bank Transaction'), ('entry', 'Journal Entry')],
+        ('account', 'Account'), ('bank', 'Bank Transaction'), ('settlement', 'Bank Confirmation'),
+        ('entry', 'Journal Entry')],
         string='Type', readonly=True)
     direction = fields.Selection([('in', 'Incoming'), ('out', 'Outgoing')], readonly=True)
     partner_id = fields.Many2one('res.partner', string='Customer / Supplier', readonly=True)
@@ -64,7 +68,8 @@ pay AS (
            CASE WHEN p.payment_type = 'inbound' THEN 'in' ELSE 'out' END AS direction,
            p.partner_id, p.destination_account_id AS account_id, p.payment_method_line_id, p.currency_id,
            CASE WHEN p.payment_type = 'inbound' THEN p.amount ELSE -p.amount END AS amount,
-           p.amount_company_currency_signed AS company_amount,
+           (SELECT COALESCE(SUM(l.balance), 0) FROM account_move_line l
+             WHERE l.move_id = m.id AND l.account_id = j.default_account_id) AS liquidity,
            COALESCE((SELECT SUM(l.amount_residual)
                        FROM account_move_line l JOIN account_account a ON a.id = l.account_id
                       WHERE l.move_id = m.id AND a.reconcile IS TRUE AND l.reconciled IS NOT TRUE
@@ -76,26 +81,26 @@ pay AS (
       FROM account_payment p
       JOIN journals j ON j.id = p.journal_id
       JOIN account_move m ON m.id = p.move_id AND m.state = 'posted'
-     WHERE p.state IN ('in_process', 'paid')
 ),
 st AS (
+    -- Every posted statement line. One that settles a payment of the same journal (Mark as Paid, or matched with
+    -- the payment's outstanding line) is a "settlement": its own date, its own posted amount, linked to the payment.
     SELECT s.id, s.journal_id, j.company_id, m.date, m.name AS reference, s.payment_ref AS description,
            s.partner_id, s.amount,
            (SELECT COALESCE(SUM(l.balance), 0) FROM account_move_line l
              WHERE l.move_id = m.id AND l.account_id = j.default_account_id) AS liquidity,
-           s.is_reconciled, m.id AS move_id, m.currency_id
+           s.is_reconciled, m.id AS move_id, m.currency_id,
+           COALESCE(s.nc_settlement_payment_id, (
+               SELECT MIN(op.id)
+                 FROM account_move_line sl
+                 JOIN account_partial_reconcile pr ON sl.id IN (pr.debit_move_id, pr.credit_move_id)
+                 JOIN account_move_line ol ON ol.id = CASE WHEN pr.debit_move_id = sl.id
+                                                           THEN pr.credit_move_id ELSE pr.debit_move_id END
+                 JOIN account_payment op ON op.id = ol.payment_id
+                WHERE sl.move_id = m.id AND op.journal_id = s.journal_id)) AS settled_payment_id
       FROM account_bank_statement_line s
       JOIN journals j ON j.id = s.journal_id
       JOIN account_move m ON m.id = s.move_id AND m.state = 'posted'
-     WHERE s.nc_settlement_payment_id IS NULL
-       AND NOT EXISTS (
-           SELECT 1
-             FROM account_move_line sl
-             JOIN account_partial_reconcile pr ON sl.id IN (pr.debit_move_id, pr.credit_move_id)
-             JOIN account_move_line ol ON ol.id = CASE WHEN pr.debit_move_id = sl.id
-                                                       THEN pr.credit_move_id ELSE pr.debit_move_id END
-             JOIN account_payment op ON op.id = ol.payment_id
-            WHERE sl.move_id = m.id AND op.journal_id = s.journal_id)
 ),
 misc AS (
     SELECT l.id, j.id AS journal_id, l.company_id, l.date, m.name AS reference, l.name AS description,
@@ -110,15 +115,16 @@ misc AS (
 rows AS (
     SELECT pay.id * 10 + 1 AS id, journal_id, company_id, date, reference, description, operation, direction,
            partner_id, account_id, payment_method_line_id, currency_id, amount,
-           pending AS pending_balance, company_amount - pending AS liquidity_balance,
+           pending AS pending_balance, liquidity AS liquidity_balance,
            CASE WHEN state = 'paid' AND pending <> 0 THEN 'awaiting_bank' ELSE state END AS status,
            pay.id AS payment_id, NULL::integer AS statement_line_id, move_id
       FROM pay
     UNION ALL
-    SELECT st.id * 10 + 2, journal_id, company_id, date, reference, description, 'bank',
+    SELECT st.id * 10 + 2, journal_id, company_id, date, reference, description,
+           CASE WHEN settled_payment_id IS NULL THEN 'bank' ELSE 'settlement' END,
            CASE WHEN amount >= 0 THEN 'in' ELSE 'out' END, partner_id, NULL, NULL, currency_id, amount,
            0, liquidity, CASE WHEN is_reconciled THEN 'reconciled' ELSE 'to_reconcile' END,
-           NULL, st.id, move_id
+           settled_payment_id, st.id, move_id
       FROM st
     UNION ALL
     SELECT misc.id * 10 + 3, journal_id, company_id, date, reference, description, 'entry',
@@ -127,8 +133,9 @@ rows AS (
       FROM misc
 )
 SELECT rows.*,
-       CASE WHEN rows.amount > 0 THEN rows.amount ELSE 0 END AS amount_in,
-       CASE WHEN rows.amount < 0 THEN -rows.amount ELSE 0 END AS amount_out,
+       -- A settlement is the bank confirming money its payment already counts: never a second in / out.
+       CASE WHEN rows.amount > 0 AND rows.operation <> 'settlement' THEN rows.amount ELSE 0 END AS amount_in,
+       CASE WHEN rows.amount < 0 AND rows.operation <> 'settlement' THEN -rows.amount ELSE 0 END AS amount_out,
        SUM(rows.liquidity_balance) OVER (PARTITION BY rows.journal_id ORDER BY rows.date, rows.id
                                          ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_balance
   FROM rows
