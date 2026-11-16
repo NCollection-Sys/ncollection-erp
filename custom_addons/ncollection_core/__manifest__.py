@@ -35,7 +35,7 @@
     # 19.0.1.21.0: Workspace Administration Center (users, roles = real groups, password reset with forced change,
     # audit) and the platform's user-administration service (ncollection.admin.service). New models, data and
     # menus, so `-u` is what applies it to an existing tenant.
-    'version': '19.0.1.29.0',
+    'version': '19.0.1.30.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -61,6 +61,8 @@
         'data/role_templates.xml',
         'views/workspace_settings_views.xml',
         'views/workspace_admin_views.xml',
+        'views/label_override_views.xml',
+        'data/label_rules.xml',
         'views/password_change_templates.xml',
         'views/workspace_appearance_views.xml',
         'views/business_settings_views.xml',

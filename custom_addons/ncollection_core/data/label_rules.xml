@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- The platform's terminology: Supplier, never Vendor (English; Odoo's Arabic already says مورد). Editable
+         afterwards by the Platform Administrator; an upgrade never overwrites the edit. -->
+    <record id="label_rule_supplier" model="ncollection.label.rule">
+        <field name="name">Supplier, not Vendor</field>
+        <field name="lang">en_US</field>
+        <field name="pairs">Vendors =&gt; Suppliers
+Vendor =&gt; Supplier</field>
+    </record>
+    <record id="label_rule_supplier_ar" model="ncollection.label.rule">
+        <field name="name">مورد، لا بائع</field>
+        <field name="lang">ar_001</field>
+        <field name="pairs">البائع =&gt; المورد
+بائع =&gt; مورد</field>
+    </record>
+</odoo>

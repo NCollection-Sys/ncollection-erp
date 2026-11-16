@@ -21,3 +21,9 @@ access_role_access_line_system,ncollection.role.access.line.system,model_ncollec
 access_workspace_overview_system,ncollection.workspace.overview.system,model_ncollection_workspace_overview,ncollection_core.group_tenant_admin,1,1,1,1
 access_nc_business_settings_admin,ncollection.business.settings.admin,model_ncollection_business_settings,ncollection_core.group_tenant_admin,1,1,1,0
 access_base_document_layout_tenant_admin,base.document.layout workspace administrator,web.model_base_document_layout,ncollection_core.group_tenant_admin,1,1,1,0
+access_label_override_admin,ncollection.label.override.admin,model_ncollection_label_override,ncollection_core.group_tenant_admin,1,1,1,1
+access_label_override_system,ncollection.label.override.system,model_ncollection_label_override,base.group_system,1,1,1,1
+access_label_rule_admin,ncollection.label.rule.admin,model_ncollection_label_rule,ncollection_core.group_tenant_admin,1,0,0,0
+access_label_rule_system,ncollection.label.rule.system,model_ncollection_label_rule,base.group_system,1,1,1,1
+access_label_audit_admin,ncollection.label.audit.admin,model_ncollection_label_audit,ncollection_core.group_tenant_admin,1,0,0,0
+access_label_audit_system,ncollection.label.audit.system,model_ncollection_label_audit,base.group_system,1,0,0,0

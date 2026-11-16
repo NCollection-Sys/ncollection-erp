@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Interface Text: a tenant's own labels (ncollection.label.override) over the platform's terminology rules
+         (ncollection.label.rule), both on Odoo's own translation storage. models/label_override.py. -->
+    <record id="view_label_override_list" model="ir.ui.view">
+        <field name="name">ncollection.label.override.list</field>
+        <field name="model">ncollection.label.override</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="target_type"/>
+                <field name="menu_id" optional="show"/>
+                <field name="action_id" optional="show"/>
+                <field name="field_id" optional="show"/>
+                <field name="view_id" optional="hide"/>
+                <field name="source_term" optional="hide"/>
+                <field name="lang"/>
+                <field name="original"/>
+                <field name="value"/>
+                <button name="action_reset" type="object" string="Reset" icon="fa-undo"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_label_override_form" model="ir.ui.view">
+        <field name="name">ncollection.label.override.form</field>
+        <field name="model">ncollection.label.override</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_reset" type="object" string="Reset to Original" invisible="not id or not active"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Reset" bg_color="text-bg-secondary" invisible="active"/>
+                    <group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                            <field name="target_type" readonly="id"/>
+                            <field name="lang" readonly="id"/>
+                            <field name="menu_id" invisible="target_type != 'menu'" required="target_type == 'menu'"
+                                   readonly="id" options="{'no_create': True}"/>
+                            <field name="action_id" invisible="target_type != 'action'" required="target_type == 'action'"
+                                   readonly="id" options="{'no_create': True}"/>
+                            <field name="field_id" invisible="target_type not in ('field', 'help')"
+                                   required="target_type in ('field', 'help')" readonly="id" options="{'no_create': True}"/>
+                            <field name="selection_id" invisible="target_type != 'selection'"
+                                   required="target_type == 'selection'" readonly="id" options="{'no_create': True}"/>
+                            <field name="view_id" invisible="target_type != 'view'" required="target_type == 'view'"
+                                   readonly="id" options="{'no_create': True}"/>
+                            <field name="source_term" invisible="target_type != 'view'" required="target_type == 'view'"
+                                   readonly="id"/>
+                        </group>
+                        <group>
+                            <field name="original" invisible="not id"/>
+                            <field name="value"/>
+                            <field name="company_scope_note"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info mb-0" role="note">
+                        Plain text only. The change applies to the whole workspace in this language and survives
+                        upgrades; Reset restores the original (or the platform's) wording. Technical names, data and
+                        calculations never change.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_label_override_search" model="ir.ui.view">
+        <field name="name">ncollection.label.override.search</field>
+        <field name="model">ncollection.label.override</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="value"/>
+                <field name="original"/>
+                <field name="source_term"/>
+                <filter name="archived" string="Reset" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_type" string="Element" context="{'group_by': 'target_type'}"/>
+                    <filter name="group_lang" string="Language" context="{'group_by': 'lang'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_label_override" model="ir.actions.act_window">
+        <field name="name">Interface Text</field>
+        <field name="res_model">ncollection.label.override</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Rename a menu, page title, field, choice, button or tab</p>
+            <p>Your text replaces the original in the chosen language for the whole workspace, and Reset brings the
+               original back.</p>
+        </field>
+    </record>
+
+    <record id="view_label_rule_list" model="ir.ui.view">
+        <field name="name">ncollection.label.rule.list</field>
+        <field name="model">ncollection.label.rule</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="lang"/>
+                <field name="pairs"/>
+                <field name="last_applied"/>
+                <field name="last_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_label_rule" model="ir.actions.act_window">
+        <field name="name">Terminology</field>
+        <field name="res_model">ncollection.label.rule</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_label_audit_list" model="ir.ui.view">
+        <field name="name">ncollection.label.audit.list</field>
+        <field name="model">ncollection.label.audit</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0">
+                <field name="create_date" string="When"/>
+                <field name="user_id"/>
+                <field name="event"/>
+                <field name="element"/>
+                <field name="lang"/>
+                <field name="old_value"/>
+                <field name="new_value"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_label_audit" model="ir.actions.act_window">
+        <field name="name">Interface Text History</field>
+        <field name="res_model">ncollection.label.audit</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Developer Mode: one click for the people allowed to use it. Odoo's own technical menus stay restricted to
+         base.group_no_one / base.group_system: switching it on gives a Workspace Administrator the field and view
+         inspector (to find the text to rename), not technical administration. -->
+    <record id="action_developer_mode" model="ir.actions.act_url">
+        <field name="name">Developer Mode</field>
+        <field name="url">/odoo?debug=1</field>
+        <field name="target">self</field>
+    </record>
+
+    <menuitem id="menu_workspace_interface_text" name="Interface Text" parent="menu_workspace_settings_root"
+              sequence="80" groups="ncollection_core.group_tenant_admin,base.group_system"/>
+    <menuitem id="menu_workspace_label_overrides" name="Labels" parent="menu_workspace_interface_text"
+              action="action_label_override" sequence="1"/>
+    <menuitem id="menu_workspace_label_rules" name="Terminology" parent="menu_workspace_interface_text"
+              action="action_label_rule" sequence="2"/>
+    <menuitem id="menu_workspace_label_audit" name="History" parent="menu_workspace_interface_text"
+              action="action_label_audit" sequence="3"/>
+    <menuitem id="menu_workspace_developer_mode" name="Developer Mode" parent="menu_workspace_interface_text"
+              action="action_developer_mode" sequence="9"/>
+
+</odoo>
