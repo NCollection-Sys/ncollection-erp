@@ -277,6 +277,15 @@ class AccountPayment(models.Model):
         return self.env._("Payment Receipt")
 
     # ------------------------------------------------------------------ the printed receipt
+    def _nc_receipt_uses_nc_layout(self):
+        """Whether the company prints with the NCollection layout. The layout is an ``ir.ui.view`` record, readable by
+        administrators only: reading its ``key`` as the user is what made Print Receipt answer 403 for every
+        non-administrator (a Tenant Owner included). Only that one technical key is read with elevated rights, and
+        nothing the user could not otherwise know; the payment itself is still read as the user."""
+        self.ensure_one()
+        layout = self.company_id.sudo().external_report_layout_id
+        return layout.key == 'ncollection_branding.external_layout_nc'
+
     def _nc_amount_in_words(self):
         """The payment amount in words, in the language the receipt is printed in; empty when that is not available (an
         unsupported language or currency) rather than failing the whole receipt."""

@@ -24,7 +24,7 @@
             <t t-set="nc_words" t-value="o._nc_amount_in_words()"/>
             <t t-set="nc_applied_total" t-value="sum(row['applied'] for row in nc_rows)"/>
             <t t-set="nc_rtl" t-value="o.env['res.lang']._get_data(code=o.env.lang or 'en_US').direction == 'rtl'"/>
-            <t t-set="nc_stock" t-value="o.company_id.external_report_layout_id.key != 'ncollection_branding.external_layout_nc'"/>
+            <t t-set="nc_stock" t-value="not o._nc_receipt_uses_nc_layout()"/>
             <t t-set="nc_data_class" t-value="'o_nc_table table o_main_table' if nc_stock else 'o_nc_table'"/>
             <t t-set="nc_plain_class" t-value="' o_ignore_layout_styling' if nc_stock else ''"/>
             <t t-set="layout_document_title">
