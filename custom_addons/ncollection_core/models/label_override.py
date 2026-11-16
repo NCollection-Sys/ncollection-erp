@@ -2,10 +2,12 @@
 
 WHERE THE TEXT LIVES (Odoo 19, verified):
   * menu / window-action names, field labels and help (``ir.model.fields``), selection labels
-    (``ir.model.fields.selection``) and view texts (``ir.ui.view.arch_db`` terms) are translated jsonb columns, one value
+    (``ir.model.fields.selection``) and view texts (``ir.ui.view.arch_db`` terms) are translated jsonb
+    columns, one value
     per language, en_US included. The web client reads them in the user's language (field labels through
     ``ir.model.fields.get_field_string``, cached; views through the combined arch, cached).
-  * Python ``_()`` / JS ``_t()`` strings are loaded from each module's own ``i18n`` files and cannot be changed from the
+  * Python ``_()`` / JS ``_t()`` strings are loaded from each module's own ``i18n`` files and cannot be
+  changed from the
     database. They are NOT editable here (coverage matrix: docs/markdown/LABELS_AND_TERMINOLOGY.md).
 
 SCOPE. Those columns are database-wide, and a database is one tenant: an override is tenant-wide by construction. It
@@ -13,7 +15,8 @@ is never per company (that would need a parallel string store read by every view
 
 PRECEDENCE (lowest first): the module's original text  <  platform terminology rule  <  tenant label override.
 Module upgrades reload the original text, so everything is re-applied at registry load whenever the installed module
-versions or the rules / overrides changed (one signature in ir.config_parameter): idempotent, cheap when nothing changed.
+versions or the rules / overrides changed (one signature in ir.config_parameter): idempotent, cheap when
+nothing changed.
 
 NEVER: technical names, xml ids, field names, model names, selection KEYS, view structure (only existing TEXT terms are
 replaced, never an attribute or a node), access rights or rule texts. Values are plain text (no markup).
@@ -120,13 +123,15 @@ class LabelOverride(models.Model):
     field_id = fields.Many2one('ir.model.fields', string='Field', ondelete='cascade')
     selection_id = fields.Many2one('ir.model.fields.selection', string='Choice', ondelete='cascade')
     view_id = fields.Many2one('ir.ui.view', string='Screen', ondelete='cascade')
-    source_term = fields.Char(string='Text on the Screen', help="The exact text as the screen shows it in this language.")
+    source_term = fields.Char(string='Text on the Screen',
+                              help="The exact text as the screen shows it in this language.")
     original = fields.Char(string='Original Text', readonly=True, copy=False)
     value = fields.Char(string='New Text', required=True)
     company_scope_note = fields.Char(compute='_compute_scope_note', string='Applies To')
 
     _unique_target = models.Constraint(
-        'UNIQUE NULLS NOT DISTINCT (target_type, lang, menu_id, action_id, field_id, selection_id, view_id, source_term)',
+        'UNIQUE NULLS NOT DISTINCT '
+        '(target_type, lang, menu_id, action_id, field_id, selection_id, view_id, source_term)',
         'This text already has an override in this language.')
 
     def _compute_scope_note(self):
@@ -248,13 +253,15 @@ class LabelOverride(models.Model):
         return record[self._nc_column()] or ''
 
     def _nc_restore(self):
-        """Put back the module's text, then let the engine re-apply the rules (an archived override no longer counts)."""
+        """Put back the module's text, then let the engine re-apply the rules (an archived override no longer
+        counts)."""
         for rec in self.with_context(active_test=False):
             record = rec._nc_record()
             if not record:
                 continue
             if rec.target_type == 'view':
-                record.update_field_translations('arch_db', {rec.lang: {rec.value: rec.source_term}}, source_lang=rec.lang)
+                record.update_field_translations('arch_db', {rec.lang: {rec.value: rec.source_term}},
+                                                 source_lang=rec.lang)
             elif rec.original:
                 record.update_field_translations(rec._nc_column(), {rec.lang: rec.original})
 
@@ -285,7 +292,8 @@ class LabelEngine(models.AbstractModel):
             _logger.exception("Interface texts were not re-applied; the module texts stay in place.")
 
     def _nc_signature(self):
-        self.env.cr.execute("SELECT name, latest_version FROM ir_module_module WHERE state = 'installed' ORDER BY name")
+        self.env.cr.execute(
+            "SELECT name, latest_version FROM ir_module_module WHERE state = 'installed' ORDER BY name")
         modules = self.env.cr.fetchall()
         self.env.cr.execute("""SELECT 'r', id, write_date::text FROM ncollection_label_rule WHERE active
                                UNION ALL SELECT 'o', id, write_date::text FROM ncollection_label_override WHERE active
@@ -340,15 +348,16 @@ class LabelEngine(models.AbstractModel):
                         count += 1
 
         simple(self.env['ir.ui.menu'].search([]), 'name', skip=lambda m: m._nc_is_technical_menu())
-        simple(self.env['ir.actions.act_window'].search([]), 'name', skip=lambda a: self._nc_protected(a.res_model or ''))
+        simple(self.env['ir.actions.act_window'].search([]), 'name',
+               skip=lambda a: self._nc_protected(a.res_model or ''))
         candidates = self.env['ir.model.fields'].search([])
         simple(candidates, 'field_description', skip=lambda f: self._nc_protected(f.model))
         simple(candidates.filtered('help'), 'help', skip=lambda f: self._nc_protected(f.model))
         simple(self.env['ir.model.fields.selection'].search([]), 'name',
                skip=lambda s: self._nc_protected(s.field_id.model))
         View = self.env['ir.ui.view'].with_context(**ctx)
-        for view in View.search([('type', 'in', ('form', 'list', 'kanban', 'search', 'qweb', 'pivot', 'graph',
-                                                  'calendar', 'activity'))]):
+        kinds = ('form', 'list', 'kanban', 'search', 'qweb', 'pivot', 'graph', 'calendar', 'activity')
+        for view in View.search([('type', 'in', kinds)]):
             if self._nc_protected(view.model or ''):
                 continue
             arch = view.arch_db or ''

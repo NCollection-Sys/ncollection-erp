@@ -40,8 +40,9 @@ class InternalTransfer(models.Model):
         'account.payment.method.line', string='Payment Method', compute='_compute_payment_method_line_id',
         store=True, readonly=False, precompute=True, tracking=True,
         domain="[('journal_id', '=', source_journal_id), ('payment_type', '=', 'outbound')]",
-        help="An outgoing method of the From Journal. A method with an outstanding account leaves the money there until "
-             "the bank confirms it (In Progress); a method without one books it straight to the journal account.")
+        help="An outgoing method of the From Journal. A method with an outstanding account leaves the money there "
+             "until the bank confirms it (In Progress); a method without one books it straight to the journal "
+             "account.")
     nc_status = fields.Selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('paid', 'Paid')],
                                  string='Transfer Status', compute='_compute_progress')
     source_currency_id = fields.Many2one('res.currency', compute='_compute_currencies', store=True)
@@ -64,7 +65,8 @@ class InternalTransfer(models.Model):
     @api.depends('source_journal_id')
     def _compute_payment_method_line_id(self):
         for rec in self:
-            lines = rec.source_journal_id.outbound_payment_method_line_ids.sorted(lambda line: (line.sequence, line.id))
+            lines = rec.source_journal_id.outbound_payment_method_line_ids.sorted(
+                lambda line: (line.sequence, line.id))
             if rec.payment_method_line_id not in lines:
                 rec.payment_method_line_id = lines[:1]
 

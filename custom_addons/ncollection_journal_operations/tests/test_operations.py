@@ -679,9 +679,9 @@ class TestTransferPaymentMethod(JournalOpsCommon):
         self.assertAlmostEqual(self._figures(self.cash)['balance'], before[self.cash] + 25.0)
 
     def test_all_four_routes_keep_the_chosen_method(self):
-        cash2 = self._nc_journal('Ops Cash Two', 'cash', 'OPC2', self.fees.copy({'code': '101937',
-                                 'account_type': 'asset_current', 'reconcile': True}),
-                                 self.fees.copy({'code': '101938', 'account_type': 'asset_current', 'reconcile': True}))
+        current = {'account_type': 'asset_current', 'reconcile': True}
+        cash2 = self._nc_journal('Ops Cash Two', 'cash', 'OPC2', self.fees.copy({'code': '101937', **current}),
+                                 self.fees.copy({'code': '101938', **current}))
         for src, dst in ((self.bank, self.bank2), (self.bank, self.cash), (self.cash, self.bank), (self.cash, cash2)):
             transfer = self._transfer(src, dst)
             transfer.action_post()

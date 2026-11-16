@@ -36,7 +36,8 @@ class TestLabelOverride(TransactionCase):
         term = sorted(t for t in self.Override._nc_view_terms(view, 'en_US') if t.isalpha() and len(t) > 4)[0]
         self.Override.with_user(self.admin).create({
             'target_type': 'view', 'view_id': view.id, 'source_term': term, 'lang': 'en_US', 'value': 'Zzlabeltext'})
-        arch = self.env['res.partner'].with_context(lang='en_US').get_views([(view.id, 'form')])['views']['form']['arch']
+        views = self.env['res.partner'].with_context(lang='en_US').get_views([(view.id, 'form')])
+        arch = views['views']['form']['arch']
         self.assertIn('Zzlabeltext', arch)
 
     def test_menu_rule_and_precedence(self):
