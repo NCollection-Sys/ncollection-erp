@@ -93,3 +93,23 @@ class NcollectionAccountReportXlsx(http.Controller):
             # Financial figures — never let a shared cache or proxy retain them.
             ('Cache-Control', 'private, no-store'),
         ])
+
+    @http.route('/ncollection/account_reports/xbrl/<string:report_model>/<int:report_id>',
+                type='http', auth='user', methods=['GET'])
+    def download_xbrl(self, report_model, report_id, **kwargs):
+        """The report run as an XBRL instance. Same guards as the XLSX route, plus: only the reports with an IFRS
+        mapping (an unsupported or forged model is a 404, indistinguishable from a bad URL)."""
+        if report_model not in request.env['ncollection.account.report.xbrl']._nc_supported_models():
+            raise request.not_found()
+        wizard = request.env[report_model].browse(report_id)
+        if not wizard.exists():
+            raise request.not_found()
+        wizard.check_access('read')
+        payload = request.env['ncollection.account.report.xbrl']._nc_build(wizard)
+        filename = '%s.xbrl' % wizard._nc_report_title()
+        return request.make_response(payload, headers=[
+            ('Content-Type', 'application/xml; charset=utf-8'),
+            ('Content-Length', len(payload)),
+            ('Content-Disposition', content_disposition(filename)),
+            ('Cache-Control', 'private, no-store'),
+        ])
