@@ -38,17 +38,12 @@
                     </div>
                     <group>
                         <group>
-                            <label for="amount"/>
-                            <div class="o_row">
-                                <field name="amount" readonly="state != 'draft'"/>
-                                <field name="source_currency_id" readonly="1" options="{'no_open': True}"
-                                       groups="base.group_multi_currency"/>
-                            </div>
-                            <label for="destination_amount" invisible="not multi_currency"/>
-                            <div class="o_row" invisible="not multi_currency">
-                                <field name="destination_amount" readonly="state != 'draft'"/>
-                                <field name="destination_currency_id" readonly="1" options="{'no_open': True}"/>
-                            </div>
+                            <!-- The monetary widget already shows each journal's currency. -->
+                            <field name="source_currency_id" invisible="1"/>
+                            <field name="destination_currency_id" invisible="1"/>
+                            <field name="amount" readonly="state != 'draft'"/>
+                            <field name="destination_amount" invisible="not multi_currency"
+                                   readonly="state != 'draft'"/>
                             <field name="date" readonly="state != 'draft'"/>
                         </group>
                         <group>

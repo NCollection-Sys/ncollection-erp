@@ -80,6 +80,13 @@
                        groups="analytic.group_analytic_accounting"
                        options="{'account_field': 'nc_counterpart_account_id', 'business_domain': 'general'}"/>
             </xpath>
+            <!-- An Account operation has no partner, so no partner bank account. -->
+            <xpath expr="//field[@name='partner_bank_id'][contains(@invisible, 'customer')]" position="attributes">
+                <attribute name="invisible" add="nc_counterpart_type == 'account'" separator=" or "/>
+            </xpath>
+            <xpath expr="//field[@name='partner_bank_id'][contains(@invisible, 'supplier')]" position="attributes">
+                <attribute name="invisible" add="nc_counterpart_type == 'account'" separator=" or "/>
+            </xpath>
         </field>
     </record>
 
