@@ -6,7 +6,10 @@ class PaymentSettle(models.TransientModel):
     _name = 'ncollection.payment.settle'
     _description = 'Mark a Payment as Paid'
 
-    payment_id = fields.Many2one('account.payment', required=True, readonly=True, ondelete='cascade')
+    payment_id = fields.Many2one('account.payment', string='Reference', required=True, readonly=True,
+                                 ondelete='cascade')
+    other_date = fields.Boolean(
+        string="Another date", help="Tick to record the money on a date other than today.")
     date = fields.Date(required=True, default=fields.Date.context_today,
                        help="The day the money actually reached (or left) the bank or the cash box.")
     currency_id = fields.Many2one(related='payment_id.currency_id')

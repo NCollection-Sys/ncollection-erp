@@ -20,7 +20,8 @@
                         <field name="payment_id" options="{'no_open': True}"/>
                         <field name="amount"/>
                         <field name="currency_id" invisible="1"/>
-                        <field name="date"/>
+                        <field name="other_date"/>
+                        <field name="date" readonly="not other_date" force_save="1"/>
                     </group>
                     <group>
                         <field name="from_account_id" options="{'no_open': True}"/>
