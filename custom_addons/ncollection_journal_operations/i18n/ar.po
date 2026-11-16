@@ -547,6 +547,7 @@ msgstr "عند استخدام عملة واحدة يجب أن يساوي الم�
 #: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__direction__in
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
 msgid "Incoming"
 msgstr "وارد"
 
@@ -799,6 +800,7 @@ msgstr "العمليات"
 #: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__direction__out
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
 msgid "Outgoing"
 msgstr "صادر"
 
@@ -1223,3 +1225,54 @@ msgid ""
 msgstr ""
 "طريقة صادرة من دفتر المصدر. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكده البنك (قيد التنفيذ)؛ "
 "والطريقة بدونه تقيده مباشرة في حساب الدفتر."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "posted"
+msgstr "مُرحَّل"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Negative balance"
+msgstr "رصيد سالب"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "operation"
+msgstr "عملية"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "operations"
+msgstr "عمليات"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Nothing waiting"
+msgstr "لا شيء معلّق"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Balance, last 30 days (posted)"
+msgstr "الرصيد، آخر 30 يومًا (مُرحَّل)"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Posted ledger balance of the journal's account, whether the bank has confirmed it or not"
+msgstr "الرصيد المُرحَّل لحساب الدفتر، سواء أكّده البنك أم لا"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Receipts and payments booked but still on an outstanding account: not yet in the journal's account"
+msgstr "مقبوضات ومدفوعات مقيدة لكنها ما زالت في حساب معلّق: لم تصل بعد إلى حساب الدفتر"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "No posted movements yet: the balance history appears with the first one."
+msgstr "لا توجد حركات مُرحَّلة بعد: يظهر سجل الرصيد مع أول حركة."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+msgid "Current Balance (posted)"
+msgstr "الرصيد الحالي (مُرحَّل)"

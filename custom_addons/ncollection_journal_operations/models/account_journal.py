@@ -1,8 +1,17 @@
 """The bank / cash card figures and actions. Every journal of type bank or cash gets them from its configuration;
 nothing is keyed on a name, id, account, method or currency. Figures are read with the user's own rights, in two
 grouped queries for all the cards on the dashboard (no query per card)."""
-from odoo import models
+from datetime import timedelta
+
+from odoo import fields, models
 from odoo.exceptions import UserError
+from odoo.tools.misc import format_date, get_lang
+
+GRAPH_DAYS = 30
+
+
+def res_sample(dashboard_data, journal):
+    return dashboard_data.get(journal.id, {}).get('is_sample_data', False)
 
 
 class AccountJournal(models.Model):
@@ -94,6 +103,7 @@ class AccountJournal(models.Model):
     def _fill_bank_cash_dashboard_data(self, dashboard_data):
         res = super()._fill_bank_cash_dashboard_data(dashboard_data)
         figures = self._nc_ops_journals()._nc_ops_figures()
+        history = self._nc_ops_journals()._nc_ledger_history()
         for journal in self._nc_ops_journals():
             data = figures[journal.id]
             currency = journal.currency_id or journal.company_id.sudo().currency_id
@@ -108,8 +118,76 @@ class AccountJournal(models.Model):
                 'nc_pending_out': currency.format(abs(data['pending_out'])),
                 'nc_pending_count': data['pending_count'],
                 'nc_pending_approx': data['pending_approx'],
+                'nc_graph_empty': not history.get(journal.id),
+                'is_sample_data': False if history.get(journal.id) else res_sample(dashboard_data, journal),
             })
         return res
+
+    # -------------------------------------------------------------------- graph
+    def _nc_ledger_history(self):
+        """{journal_id: [(date, balance)] or []}: the POSTED ledger balance of each journal's account at the start of
+        the window, after every day with a movement, and today, in the same currency rule as the Current Balance
+        figure, so the last point IS that figure. [] when the account has never had a posted line (honest empty
+        state: no sample, no invented history). One grouped query for all the cards."""
+        journals = self._nc_ops_journals().filtered('default_account_id')
+        today = fields.Date.context_today(self)
+        start = today - timedelta(days=GRAPH_DAYS)
+        result = {journal.id: [] for journal in self._nc_ops_journals()}
+        if not journals:
+            return result
+        Line = self.env['account.move.line']
+        domain = [('account_id', 'in', journals.default_account_id.ids), ('parent_state', '=', 'posted'),
+                  ('company_id', 'in', self.env.companies.ids)]
+        groups = Line._read_group(domain, groupby=['account_id', 'currency_id', 'date:day'],
+                                  aggregates=['balance:sum', 'amount_currency:sum'])
+        figures = journals._nc_ops_figures()
+        for journal in journals:
+            journal_currency = journal.currency_id
+            company_currency = journal.company_id.currency_id
+            per_day = {}
+            any_line = False
+            for account, currency, day, balance, amount_currency in groups:
+                if account != journal.default_account_id:
+                    continue
+                any_line = True
+                if journal_currency and currency == journal_currency:
+                    value = amount_currency
+                elif journal_currency and journal_currency != company_currency:
+                    value = company_currency._convert(balance, journal_currency, journal.company_id)
+                else:
+                    value = balance
+                per_day[day] = per_day.get(day, 0.0) + value
+            if not any_line:
+                continue
+            opening = sum(value for day, value in per_day.items() if day < start)
+            points = [(start, opening)]
+            running = opening
+            for day in sorted(d for d in per_day if start <= d <= today):
+                running += per_day[day]
+                points.append((day, running))
+            running_total = figures[journal.id]['balance']
+            if points[-1][0] != today:
+                points.append((today, running_total))
+            result[journal.id] = points
+        return result
+
+    def _get_bank_cash_graph_data(self):
+        """Bank / cash cards plot the posted LEDGER balance (what Current Balance shows), not Odoo's statement balance
+        and never its random sample data. Other journal types keep Odoo's graph."""
+        result = super()._get_bank_cash_graph_data()
+        history = self._nc_ledger_history()
+        locale = get_lang(self.env).code
+        for journal in self._nc_ops_journals():
+            points = history.get(journal.id)
+            if not points:
+                continue
+            currency = journal.currency_id or journal.company_id.currency_id
+            values = [{'x': format_date(self.env, day, date_format='d MMM', lang_code=locale),
+                       'name': format_date(self.env, day, date_format='d MMMM y', lang_code=locale),
+                       'y': currency.round(amount)} for day, amount in points]
+            result[journal.id] = [{'values': values, 'title': '', 'key': self.env._('Current Balance (posted)'),
+                                   'area': True, 'color': '#2f6f8f', 'is_sample_data': False}]
+        return result
 
     # ------------------------------------------------------------------ actions
     def _nc_ops_journal(self):

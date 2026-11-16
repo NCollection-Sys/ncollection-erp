@@ -687,3 +687,23 @@ class TestTransferPaymentMethod(JournalOpsCommon):
             transfer.action_post()
             self.assertEqual(transfer.source_payment_id.payment_method_line_id, transfer.payment_method_line_id)
             self.assertEqual(transfer.nc_status, 'in_progress')
+
+
+@tagged('post_install', '-at_install')
+class TestCardGraph(JournalOpsCommon):
+
+    def test_graph_is_the_posted_ledger_and_ends_on_the_current_balance(self):
+        receipt = self._op(self.bank, 'receipt', 'customer', 70.0, self.customer)
+        receipt._nc_mark_as_paid()
+        self._op(self.bank, 'payment', 'account', 20.0, account=self.fees)._nc_mark_as_paid()
+        graph = self.bank._get_bank_cash_graph_data()[self.bank.id][0]
+        self.assertFalse(graph['is_sample_data'])
+        self.assertAlmostEqual(graph['values'][-1]['y'], self._figures(self.bank)['balance'])
+        self.assertAlmostEqual(graph['values'][-1]['y'], 50.0)
+
+    def test_no_posted_line_is_an_honest_empty_state_not_sample_data(self):
+        self._op(self.cash, 'receipt', 'customer', 15.0, self.customer)  # pending only: nothing on the cash account
+        self.assertEqual(self.cash._nc_ledger_history()[self.cash.id], [])
+        data = {self.cash.id: {}}
+        self.cash._fill_bank_cash_dashboard_data(data)
+        self.assertTrue(data[self.cash.id]['nc_graph_empty'])
