@@ -30,7 +30,8 @@ EXTERNAL_PARAM = 'ncollection_ai.external_provider_authorized'
 _TIMEOUT = 5
 
 
-class AiReadiness(models.TransientModel):  # pylint: disable=no-wizard-in-models  (one screen, kept beside the probe)
+# One screen, kept beside the probe it displays.
+class AiReadiness(models.TransientModel):  # pylint: disable=no-wizard-in-models
     _name = 'ncollection.ai.readiness'
     _description = 'AI Assistant readiness'
 

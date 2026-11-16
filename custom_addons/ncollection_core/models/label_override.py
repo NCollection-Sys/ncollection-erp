@@ -392,10 +392,11 @@ class LabelAudit(models.Model):
     old_value = fields.Char(string='Before', readonly=True)
     new_value = fields.Char(string='After', readonly=True)
 
-    def write(self, vals):  # pylint: disable=method-required-super  (append-only: never written)
+    # Append-only: never written, never deleted (the refusals ARE the behaviour).
+    def write(self, vals):  # pylint: disable=method-required-super
         raise AccessError(self.env._("The interface text history cannot be changed."))
 
-    def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink  (append-only: never deleted)
+    def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink
         raise AccessError(self.env._("The interface text history cannot be deleted."))
 
 
