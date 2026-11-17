@@ -72,6 +72,11 @@ adding a module fails CI until someone updates this list.
   `res.users.nc_role_ids` derived from the groups, password reset with forced change (`nc_must_change_password` +
   `/ncollection/password/change`), `ncollection.admin.service` for the platform, and the inline View endpoint
   `/ncollection/document/view/<model>/<id>`. Docs: `docs/markdown/WORKSPACE_AND_TENANT_ADMINISTRATION.md`.
+  **Unified Settings** (the Workspace Administration Center renamed Settings; Odoo's own is "Technical Settings"): per-section
+  levels hidden/view/edit/administer pushed by the platform (`ncollection_saas` plan defaults + tenant overrides that only
+  narrow, synced as `workspace.config.settings_policy`), enforced at the ORM; delegation = section groups. **Interface Text**:
+  platform terminology rules (Supplier, not Vendor) + audited label overrides, workspace or company scope, in-page editor.
+  Docs: `LABELS_AND_TERMINOLOGY.md`.
 - `ncollection_api` — the public REST API (#77): `/api/v1`, OAuth2
   client-credentials, scoped tokens, per-client rate limiting, metadata-only
   request logging. **Extends Odoo core's `res.users.apikeys`** rather than
@@ -99,6 +104,8 @@ adding a module fails CI until someone updates this list.
   Group-restricted fields and `ncollection.auth.log` are never logged —
   `auditlog` ignores
   `groups=` and its log table is readable by a lower-trust group.
+  Visible to entitled Workspace Administrators under Settings > Audit Log (read-only); the platform reads activity metadata
+  (never values) through the tenant-administration channel.
 - `ncollection_account_audit` — the **invoice amount audit** (#81 acceptance criterion): one immutable `ncollection.invoice.audit` row per NET change of an invoice's amounts (old / new, user, IP, time, company, invoice identity, content digest), taken by comparing the stored amounts around the OUTERMOST ORM write / create / unlink on an invoice or its lines. A native model, because OCA `auditlog` cannot audit `account.move` (#431). **In the release matrix (pass 2 on the three target databases), in no plan, never auto_install**. Docs: `docs/markdown/INVOICE_AMOUNT_AUDIT.md`.
 - `ncollection_account_invoice_layout` — **invoice layout & calculations** (customer invoices AND vendor bills): a money **Discount** column that works both ways with Disc.% (fixed vs percentage mode; the engine gets the exact percentage), **Amount** and **Total incl. Tax** the user can type (the unit price is solved with Odoo's own tax engine), centred line headers, **Total Discount / Total After Discount** above Untaxed Amount, and **configurable invoice-level charges and discounts** (freight, global discount, any other: data, no code) booked as REAL invoice lines on their own account and taxes. Draft invoices only; a posted invoice is never re-priced. **Arrange columns** (drag and drop / arrows): free column order and visibility, a company default (Accounting Manager) plus a per-user override, one list renderer patch; the charges block recalculates live while editing; configuration changes are tracked. Docs: `docs/markdown/INVOICE_LAYOUT_AND_CALCULATIONS.md`.
 - `ncollection_branding` — **System Branding** (ONE record: the system's name, favicon, system / login / administration logos, browser title, copyright text and primary / secondary

@@ -873,6 +873,12 @@ All key P2 ──► P2-T18 (gate)
 
 ---
 
+## 18b. Tenant Settings (owner decision 2026-11-16)
+
+One tenant Settings app (the former Workspace Administration) over the existing data, governed by a platform policy
+(plan defaults + per-tenant overrides that only narrow, entitlement, delegation by group) delivered through config-sync.
+Design and enforcement: `WORKSPACE_AND_TENANT_ADMINISTRATION.md`; security summary: `ARCHITECTURE_SECURITY.md` §6b.
+
 ## 19. Cross-Cutting Concerns
 
 ### 19.1 Testing Strategy

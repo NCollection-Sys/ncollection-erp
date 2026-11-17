@@ -198,6 +198,14 @@ The language a user picks is saved on the user and also written into the live se
 the same request, so the page reload that follows is rendered in the right direction
 (LTR/RTL) the first time; Odoo alone refreshes the session language only while rendering.
 
+## 6b. Tenant Settings policy (2026-11)
+
+Platform-controlled levels per tenant Settings section (hidden / view / edit / administer), pushed by config-sync,
+enforced at the ORM on every write path and in the menu layer; a tenant can only narrow them; delegation is group
+membership on delegable sections only. Full model, precedence table and tests:
+`WORKSPACE_AND_TENANT_ADMINISTRATION.md`, "Settings: one app, governed by the platform". The platform's Audit Log window
+uses the existing tenant-administration channel (derived bearer, fixed keys, metadata only, bounded, recorded).
+
 ## 7. Secrets Management
 
 **Lifecycle by stage** — the rule is *never in git, ever* (enforced by `.gitignore` + CI secret scanning):

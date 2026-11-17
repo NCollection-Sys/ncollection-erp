@@ -106,6 +106,49 @@ Security, Company, Appearance, Document Stamps, Print Settings, System. Every sc
   organisation model).
 * A company administrator cannot manage other tenants, cannot widen the licence, and cannot create platform roles.
 
+## Settings: one app, governed by the platform (final review, 2026-11)
+
+The tenant's **Settings** app is the former Workspace Administration (same menu record, renamed). Odoo's own Settings
+(`base.menu_administration`, `base.group_system` only) is renamed **Technical Settings**, so platform staff never see two
+apps called Settings. Every page keeps the data where it always lived (`res.company`, `res.users`, `ncollection.role`,
+`ncollection.business.settings`, `ncollection.document.stamp`, ...): **no setting is stored twice**, and existing values
+are untouched by the upgrade.
+
+**Sections and levels** (`ncollection_core/models/settings_policy.py`). Each page is a section with a level:
+`hidden` < `view` < `edit` < `administer` (= edit + may delegate). Sections: Overview, Users, Roles & Permissions, Teams &
+Departments, Security, Company, Business Settings, Accounting Defaults, Document Layout, Appearance, Document Stamps,
+Print Settings, Interface Text, Audit Log, AI Assistant, System.
+
+**Effective level, most restrictive wins:**
+
+| # | Layer | Where | Can it widen? |
+|---|---|---|---|
+| 1 | Platform restriction: plan default, lowered by a per-tenant override | platform (`ncollection_saas`, plan / tenant forms > Settings Policy) | the override can only LOWER the plan (constraint) |
+| 2 | Entitlement: a section whose application is not licensed is hidden (Accounting Defaults, Audit Log, AI) | platform, from `_nc_effective_module_list` | no |
+| 3 | Tenant delegation: only where (1) says administer AND the section is delegable | tenant (Settings > Delegated Settings) | no: a delegate gets `edit` on that section only |
+| 4 | User role: Odoo groups, ACLs, record rules | tenant | no |
+| 5 | Company: records stay company-scoped; company fields only for the user's companies | tenant | no |
+
+Delivery: config-sync pushes the computed levels as JSON into `ncollection.workspace.config.settings_policy` (a synced,
+platform-only field: a tenant Owner cannot write it). The key is sent only once a plan or tenant line exists, so a tenant
+not yet upgraded keeps syncing. With nothing pushed, every section is `administer`: the upgrade changes nothing until the
+platform decides. Every policy change is noted on each affected tenant's chatter (who, section, old -> new).
+
+**Enforcement is server-side**, on the real write paths: the company delegation guard (each company field belongs to ONE
+section), user administration (`nc_*` methods), roles, interface texts, document stamps, print settings, the AI free-text
+switch. Hidden sections lose their menus (`ir.ui.menu._visible_menu_ids`); a view-only section refuses writes with an
+AccessError. The platform's own service channel (superuser) passes, as before.
+
+**Delegation is group membership** (Odoo's own store: ACLs and the menu cache key on groups). Delegable sections: Company,
+Business Settings, Accounting Defaults, Document Layout, Appearance, Document Stamps, Print Settings, Interface Text.
+Never delegable: Users, Roles, Teams, Security, Audit Log, AI, System, Overview. Delegation changes are recorded in the
+interface-text history.
+
+**Permission matrix** (`ncollection_account_core/tests/test_tenant_admin_matrix.py`, 6 roles x 21 checks, plus the receipt
+route per role): Owner and Tenant Administrator reach and save every page; Accounting Manager sees only Document Stamps
+(the role already implies Document Stamp Manager) and cannot change company defaults; Accountant, read-only and plain
+users see no Settings app and every save is refused; nobody but platform staff holds `base.group_system`.
+
 ## Apps, Developer Mode and "Become Superuser" (platform only)
 
 * **Apps** (`base.menu_management`) is hidden in a tenant for everyone but the real superuser and the platform administrator

@@ -18,9 +18,28 @@ no write, no unlink through the ORM).
 
 ## Scope
 
-Odoo stores these texts **per database**, and a database is one tenant: an override is tenant-wide, in every
-company of that tenant. **Per-company labels are not supported**; that would need a second string store read by every
-view, and Odoo has no supported hook for it. The form shows the scope ("This whole workspace").
+Odoo stores these texts **per database**, and a database is one tenant. Two scopes:
+
+* **Whole workspace** (default): Odoo's own translation of the text is changed, so every surface shows it.
+* **One company**: field labels, field help and menu names. Stored with `company_id`, NOT written to the shared
+  translations; layered on at read time for users working in that company (`ir.model.fields.get_field_string /
+  get_field_help`, `ir.ui.menu.load_menus`), from a cache keyed by company and language. Screen texts (buttons, tabs,
+  view `string=`), page titles and choice labels are rendered from one shared combined view / action record, so they are
+  workspace-wide only; the form refuses a company on them.
+
+Precedence (lowest first): original < platform terminology rule < workspace override < company override.
+
+## In-page editor
+
+A switch in the top bar (offered when the user reaches Interface Text at edit level). While on, editable texts are
+outlined; a click on a field label, a list column, a menu or a button opens a dialog with the current text, the new
+text, the scope (workspace / my company, where supported), Save and Reset. The element is identified from Odoo's own
+metadata (the label's field widget, the column's field name, the menu id, the button text within the current model),
+never by searching page text, and saved through `ncollection.label.override.nc_quick_edit`, which applies the model's
+validation, rights, platform policy and audit. A field label that the view overrides with its own `string=` is renamed
+where the user sees it (the view text) as well as on the field. After saving, the web client's caches are dropped and
+the page reloads; the label version is also mixed into the web client's cache key, so other users' browsers drop their
+cached views and menus on their next load. Values are plain text (`< > { }` refused).
 
 ## Coverage matrix
 
@@ -77,7 +96,7 @@ says مورد for every one. Two are reworded in English by extending the method
 
 ## Developer Mode
 
-Workspace Administration > Interface Text > Developer Mode opens `/odoo?debug=1` for Workspace and Platform
-Administrators. Odoo's technical menus stay restricted to `base.group_no_one` / `base.group_system`; for a Workspace
-Administrator debug mode is the field and view inspector used to find the text to rename, not technical
-administration.
+Settings > Activate Developer Mode (the existing menu) turns on Odoo's own developer mode, which sticks only for the tenant
+Owner, the platform administrator and the superuser (`ir.http._handle_debug`). The label editor does NOT need it: it
+works in normal mode for whoever may edit Interface Text. Odoo's technical menus stay restricted to
+`base.group_no_one` / `base.group_system`.
