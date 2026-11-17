@@ -17,14 +17,18 @@ from odoo.exceptions import ValidationError
 from odoo.addons.ncollection_core.models.settings_policy import CAPABILITIES, LEVELS, RANK, SECTIONS
 
 # Section -> the module that must be entitled for it to exist at all.
+# Matched against the DEPENDENCY CLOSURE of the tenant's licensed modules, exactly as Ring 1 licenses menus
+# (ir.ui.menu._ncollection_expand_dependencies): a plan licenses apps such as `sale_management` / `account`, and
+# everything they depend on comes with them. Matching the bare plan list hid Sales Settings on a plan that lists
+# `sale_management`, and made the receipts grant impossible (found by the platform-to-tenant integration check).
 SECTION_MODULE = {
-    'accounting_defaults': 'ncollection_account_core',
+    'accounting_defaults': 'account',
     'audit_log': 'ncollection_audit',
     'ai': 'ncollection_ai',
     'sales': 'sale',
     'purchase': 'purchase',
     'inventory': 'stock',
-    'receipts': 'ncollection_account_core',
+    'receipts': 'account',
 }
 # A capability (core CAPABILITIES) WIDENS a Workspace Administrator's rights, so it is OFF unless a line grants it:
 # any level from "view" up grants it, "hidden" (or no line) does not. Pushed as 'granted' / 'denied'.
@@ -126,7 +130,7 @@ class Tenant(models.Model):
         tenant_lines = {line.section: line.level for line in self.settings_policy_line_ids}
         if not plan_lines and not tenant_lines:
             return {}
-        modules = set(self._nc_effective_module_list())
+        modules = self.env['ir.ui.menu']._ncollection_expand_dependencies(set(self._nc_effective_module_list()))
         out = {}
         for key, _label, _m, _d in SECTIONS:
             level = plan_lines.get(key, 'administer')

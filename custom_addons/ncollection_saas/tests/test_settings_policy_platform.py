@@ -18,7 +18,7 @@ class TestSettingsPolicyPlatform(TransactionCase):
             'company_name': 'Policy Co', 'database_name': 'policyco', 'database_status': 'not_provisioned',
             'status': 'trial', 'plan_id': cls.plan.id})
 
-    def _policy(self, modules=('ncollection_account_core', 'ncollection_audit', 'ncollection_ai')):
+    def _policy(self, modules=('account', 'ncollection_audit', 'ncollection_ai')):
         with patch.object(type(self.tenant), '_nc_effective_module_list', return_value=list(modules)):
             return self.tenant._nc_settings_policy()
 
@@ -76,3 +76,12 @@ class TestSettingsPolicyPlatform(TransactionCase):
             {'plan_id': self.plan.id, 'section': 'sales', 'level': 'administer'})
         self.assertEqual(self._policy()['sales'], 'hidden', "no Sales app licensed")
         self.assertEqual(self._policy(modules=('sale',))['sales'], 'administer')
+        # a plan licenses the APP; its dependencies come with it (Ring 1's closure)
+        self.assertEqual(self._policy(modules=('sale_management',))['sales'], 'administer')
+
+    def test_receipts_follow_the_licensed_accounting_app(self):
+        self.env['ncollection.settings.policy.line'].create(
+            {'plan_id': self.plan.id, 'section': 'receipts', 'level': 'view'})
+        self.assertEqual(self._policy(modules=('account',))['receipts'], 'granted')
+        self.assertEqual(self._policy(modules=('ncollection_account_reports',))['receipts'], 'granted')
+        self.assertEqual(self._policy(modules=('crm',))['receipts'], 'denied')
