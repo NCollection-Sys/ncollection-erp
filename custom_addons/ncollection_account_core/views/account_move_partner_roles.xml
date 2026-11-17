@@ -16,7 +16,7 @@
                     <field name="nc_partner_is_customer" invisible="1"/>
                     <field name="nc_partner_is_vendor" invisible="1"/>
                     <div class="badge rounded-pill o_nc_role_badge o_nc_role_customer" invisible="not nc_partner_is_customer">Customer</div>
-                    <div class="badge rounded-pill o_nc_role_badge o_nc_role_vendor" invisible="not nc_partner_is_vendor">Vendor</div>
+                    <div class="badge rounded-pill o_nc_role_badge o_nc_role_vendor" invisible="not nc_partner_is_vendor">Supplier</div>
                 </div>
             </xpath>
         </field>

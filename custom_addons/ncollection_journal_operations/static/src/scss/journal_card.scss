@@ -21,18 +21,17 @@
 
 .o_nc_ops_balance,
 .o_nc_ops_pending {
+    // The SAME frame as the four operation buttons below (.o_nc_ops_actions .btn): thin neutral border, the button
+    // radius, no fill (the card is white), no coloured accent bar. Informational panels, not buttons.
     border: 1px solid $border-color;
-    border-radius: 0.5rem;
+    border-radius: $btn-border-radius;
+    background-color: transparent;
     padding: 0.55rem 0.7rem;
     min-width: 0;
 }
 
 .o_nc_ops_balance {
-    border-inline-start: 4px solid $primary;
-
     &.o_nc_negative {
-        border-inline-start-color: $danger;
-
         .o_nc_ops_value {
             color: $danger;
         }
@@ -89,7 +88,6 @@
     display: block;
     color: inherit;
     text-decoration: none;
-    border-inline-start: 4px solid $warning;
     transition: background-color 0.15s ease, box-shadow 0.15s ease;
 
     .o_nc_ops_value {

@@ -26,7 +26,7 @@ def _with_roles_key(context):
 
 class NcPartnerRolesMixin(models.AbstractModel):
     _name = 'nc.partner.roles.mixin'
-    _description = 'Show the partner Customer / Vendor badges on this document'
+    _description = 'Show the partner Customer / Supplier badges on this document'
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):

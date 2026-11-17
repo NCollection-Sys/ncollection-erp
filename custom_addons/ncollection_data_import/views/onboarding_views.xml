@@ -12,7 +12,7 @@
                         <p class="text-muted">
                             A guided path over the standard importer. Recommended order —
                             each step can reference the ones before it:
-                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>.
+                            <b>Products → Customers → Suppliers → Opening Stock → Opening Balances</b>.
                         </p>
                     </div>
                     <group>

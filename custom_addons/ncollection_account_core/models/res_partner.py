@@ -42,7 +42,7 @@ class ResPartner(models.Model):
 
     def _nc_role_labels(self):
         """The badge labels of this partner, in the user's language, in the order of ``_nc_roles``."""
-        labels = {'customer': self.env._("Customer"), 'vendor': self.env._("Vendor")}
+        labels = {'customer': self.env._("Customer"), 'vendor': self.env._("Supplier")}
         return [labels[role] for role in self._nc_roles()]
 
     @api.model

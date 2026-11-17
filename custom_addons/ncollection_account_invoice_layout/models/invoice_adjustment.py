@@ -71,7 +71,7 @@ class InvoiceAdjustmentType(models.Model):
         [
             ('both', 'Customer invoices and vendor bills'),
             ('customer', 'Customer invoices only'),
-            ('vendor', 'Vendor bills only'),
+            ('vendor', 'Supplier bills only'),
         ],
         default='both',
         required=True,

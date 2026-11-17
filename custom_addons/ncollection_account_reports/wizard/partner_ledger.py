@@ -77,7 +77,7 @@ class NcollectionPartnerLedger(models.TransientModel):
 
     partner_scope = fields.Selection(
         [('receivable', 'Customers'),
-         ('payable', 'Vendors'),
+         ('payable', 'Suppliers'),
          ('both', 'Both')],
         default='receivable', required=True, string='Scope',
         help="Which side of the ledger to report. A partner ledger is only "
@@ -95,7 +95,7 @@ class NcollectionPartnerLedger(models.TransientModel):
     def _nc_report_title(self):
         return {
             'receivable': self.env._("Partner Ledger — Customers"),
-            'payable': self.env._("Partner Ledger — Vendors"),
+            'payable': self.env._("Partner Ledger — Suppliers"),
         }.get(self.partner_scope, self.env._("Partner Ledger"))
 
     def _nc_report_action_ref(self):

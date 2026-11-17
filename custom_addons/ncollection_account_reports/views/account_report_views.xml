@@ -733,13 +733,13 @@
     </record>
 
     <record id="action_report_partner_statement_wizard" model="ir.actions.act_window">
-        <field name="name">Customer / Vendor Statement</field>
+        <field name="name">Customer / Supplier Statement</field>
         <field name="res_model">ncollection.account.report.statement</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
 
-    <menuitem id="menu_report_partner_statement" name="Customer / Vendor Statement"
+    <menuitem id="menu_report_partner_statement" name="Customer / Supplier Statement"
               parent="menu_ncollection_account_reports"
               action="action_report_partner_statement_wizard" sequence="60"/>
 

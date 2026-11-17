@@ -20,7 +20,7 @@
         <field name="record_domain">[('move_type', '=', 'out_refund')]</field>
     </record>
     <record id="doc_type_vendor_bill" model="ncollection.document.type">
-        <field name="name">Vendor Bill</field>
+        <field name="name">Supplier Bill</field>
         <field name="code">vendor_bill</field>
         <field name="manager_group_ids" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
         <field name="sequence">30</field>
@@ -28,7 +28,7 @@
         <field name="record_domain">[('move_type', 'in', ('in_invoice', 'in_receipt'))]</field>
     </record>
     <record id="doc_type_vendor_credit_note" model="ncollection.document.type">
-        <field name="name">Vendor Credit Note</field>
+        <field name="name">Supplier Credit Note</field>
         <field name="code">vendor_credit_note</field>
         <field name="manager_group_ids" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
         <field name="sequence">40</field>

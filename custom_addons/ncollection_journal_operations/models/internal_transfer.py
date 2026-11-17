@@ -43,6 +43,12 @@ class InternalTransfer(models.Model):
         help="An outgoing method of the From Journal. A method with an outstanding account leaves the money there "
              "until the bank confirms it (In Progress); a method without one books it straight to the journal "
              "account.")
+    destination_payment_method_line_id = fields.Many2one(
+        'account.payment.method.line', string='Incoming Payment Method',
+        compute='_compute_destination_payment_method_line_id', store=True, readonly=False, precompute=True,
+        tracking=True, domain="[('journal_id', '=', destination_journal_id), ('payment_type', '=', 'inbound')]",
+        help="An incoming method of the To Journal, used by the receiving payment. A method with an outstanding "
+             "account keeps the money there until the receiving bank confirms it (In Progress).")
     nc_status = fields.Selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('paid', 'Paid')],
                                  string='Transfer Status', compute='_compute_progress')
     source_currency_id = fields.Many2one('res.currency', compute='_compute_currencies', store=True)
@@ -70,7 +76,18 @@ class InternalTransfer(models.Model):
             if rec.payment_method_line_id not in lines:
                 rec.payment_method_line_id = lines[:1]
 
-    @api.constrains('payment_method_line_id', 'source_journal_id')
+    @api.depends('destination_journal_id')
+    def _compute_destination_payment_method_line_id(self):
+        """The first incoming method of the To Journal in the journal's own order; kept when still valid, replaced
+        (or emptied) when the To Journal changes."""
+        for rec in self:
+            lines = rec.destination_journal_id.inbound_payment_method_line_ids.sorted(
+                lambda line: (line.sequence, line.id))
+            if rec.destination_payment_method_line_id not in lines:
+                rec.destination_payment_method_line_id = lines[:1]
+
+    @api.constrains('payment_method_line_id', 'source_journal_id', 'destination_payment_method_line_id',
+                    'destination_journal_id')
     def _check_payment_method_line(self):
         for rec in self:
             line = rec.payment_method_line_id
@@ -78,6 +95,11 @@ class InternalTransfer(models.Model):
                 raise ValidationError(self.env._(
                     "%(method)s is not an outgoing payment method of %(journal)s.",
                     method=line.display_name, journal=rec.source_journal_id.display_name))
+            line = rec.destination_payment_method_line_id
+            if line and (line.journal_id != rec.destination_journal_id or line.payment_type != 'inbound'):
+                raise ValidationError(self.env._(
+                    "%(method)s is not an incoming payment method of %(journal)s.",
+                    method=line.display_name, journal=rec.destination_journal_id.display_name))
 
     @api.depends('source_journal_id', 'destination_journal_id')
     def _compute_currencies(self):
@@ -140,13 +162,6 @@ class InternalTransfer(models.Model):
         """The one writer of the posting fields, called from action_post after both payments exist."""
         return super(InternalTransfer, self).write(vals)  # pylint: disable=super-method-mismatch
 
-    @staticmethod
-    def _method_line(journal, direction):
-        lines = journal.inbound_payment_method_line_ids if direction == 'inbound' \
-            else journal.outbound_payment_method_line_ids
-        manual = lines.filtered(lambda line: line.code == 'manual')
-        return (manual or lines)[:1]
-
     def action_post(self):
         """Create and post both sides once. Locked: a second click or a second user is refused, never doubled."""
         self.ensure_one()
@@ -172,7 +187,10 @@ class InternalTransfer(models.Model):
             raise UserError(self.env._("Choose the Payment Method of %(journal)s.",
                                        journal=self.source_journal_id.display_name))
         self._check_payment_method_line()
-        destination_method = self._method_line(self.destination_journal_id, 'inbound')
+        destination_method = self.destination_payment_method_line_id
+        if not destination_method:
+            raise UserError(self.env._("Choose the Incoming Payment Method of %(journal)s.",
+                                       journal=self.destination_journal_id.display_name))
         if not source_method or not destination_method:
             raise UserError(self.env._(
                 "Both journals need a payment method (Outgoing on %(sender)s, Incoming on %(receiver)s).",

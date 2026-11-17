@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- An internal transfer leg is a liquidity movement, not a customer receipt or a supplier payment. Identified by
+         the authoritative link to its transfer (nc_transfer_id, set only when a transfer is posted), never by an empty
+         partner, a sign or a reference: a real receipt without partner (an Account operation) stays listed. The
+         transfer stays visible on both journals' Transactions and in Internal Transfers. Odoo's actions carry no
+         domain of their own, so this is the whole domain. -->
+    <record id="account.action_account_payments" model="ir.actions.act_window">
+        <field name="domain">[('nc_transfer_id', '=', False)]</field>
+    </record>
+    <record id="account.action_account_payments_payable" model="ir.actions.act_window">
+        <field name="domain">[('nc_transfer_id', '=', False)]</field>
+    </record>
     <!-- User-facing wording only: "Supplier" for "Vendor", and the customer-side payments menu is "Receipts".
          Technical names, XML ids, models, fields and APIs are unchanged. Menu and action names are Odoo's own
          records: models/terminology.py sets them in English and Arabic on every install / upgrade of this module

@@ -27,7 +27,7 @@
                             <div class="text-muted small">From Journal</div>
                             <field name="source_journal_id" readonly="1" options="{'no_open': True}"
                                    class="fs-4 fw-bold"/>
-                            <div class="text-muted small mt-1">Payment Method</div>
+                            <div class="text-muted small mt-1">Outgoing Payment Method</div>
                             <field name="payment_method_line_id" required="1" readonly="state != 'draft'" context="{'hide_payment_journal_id': 1}"
                                    options="{'no_create': True, 'no_open': True}"/>
                         </div>
@@ -37,6 +37,11 @@
                             <div class="text-muted small">To Journal</div>
                             <field name="destination_journal_id" options="{'no_create': True, 'no_open': True}"
                                    readonly="state != 'draft'" class="fs-4 fw-bold" placeholder="Choose the receiving journal"/>
+                            <div class="text-muted small mt-1">Incoming Payment Method</div>
+                            <field name="destination_payment_method_line_id" required="destination_journal_id"
+                                   readonly="state != 'draft' or not destination_journal_id"
+                                   context="{'hide_payment_journal_id': 1}" options="{'no_create': True, 'no_open': True}"
+                                   placeholder="No incoming method on this journal"/>
                         </div>
                     </div>
                     <group>

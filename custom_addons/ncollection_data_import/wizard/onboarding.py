@@ -241,7 +241,7 @@ class NcollectionDataImportOnboarding(models.TransientModel):
         ctx = dict(ENTITY_CONTEXT.get(self.entity, {}))
         names = {
             'customers': self.env._("Customers"),
-            'suppliers': self.env._("Vendors"),
+            'suppliers': self.env._("Suppliers"),
             'products': self.env._("Products"),
             'opening_stock': self.env._("Opening Stock (Physical Inventory)"),
             'opening_balances': self.env._("Opening Balances (Chart of Accounts)"),

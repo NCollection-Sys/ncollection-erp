@@ -82,8 +82,8 @@ class AccountMove(models.Model):
         labels = {
             'out_invoice': self.env._("Customer Invoice"),
             'out_refund': self.env._("Customer Credit Note"),
-            'in_invoice': self.env._("Vendor Bill"),
-            'in_refund': self.env._("Vendor Credit Note"),
+            'in_invoice': self.env._("Supplier Bill"),
+            'in_refund': self.env._("Supplier Credit Note"),
             'out_receipt': self.env._("Sales Receipt"),
             'in_receipt': self.env._("Purchase Receipt"),
         }

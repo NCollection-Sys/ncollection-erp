@@ -203,7 +203,7 @@ msgstr "عميل"
 #. module: ncollection_account_core
 #. odoo-python
 #: code:addons/ncollection_account_core/models/res_partner.py:0 model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_partner_roles
-msgid "Vendor"
+msgid "Supplier"
 msgstr "مورد"
 
 #. module: ncollection_account_core
@@ -607,13 +607,13 @@ msgstr "لم تُطبَّق هذه الدفعة على أي فاتورة؛ يُ�
 #. module: ncollection_account_core
 #. odoo-python
 #: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_bill code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Vendor Bill"
+msgid "Supplier Bill"
 msgstr "فاتورة مورّد"
 
 #. module: ncollection_account_core
 #. odoo-python
 #: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_credit_note code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Vendor Credit Note"
+msgid "Supplier Credit Note"
 msgstr "إشعار دائن من المورّد"
 
 #. module: ncollection_account_core

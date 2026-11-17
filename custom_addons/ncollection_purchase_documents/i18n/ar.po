@@ -53,7 +53,7 @@ msgstr "أمر شراء"
 
 #. module: ncollection_purchase_documents
 #: model:ir.ui.menu,name:ncollection_purchase_documents.menu_purchase_nc_vendor_bills
-msgid "Vendor Bills"
+msgid "Supplier Bills"
 msgstr "فواتير الموردين"
 
 #. module: ncollection_purchase_documents

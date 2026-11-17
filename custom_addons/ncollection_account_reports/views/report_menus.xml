@@ -96,11 +96,11 @@
     <menuitem id="menu_report_partner_ledger" name="Partner Ledger" parent="menu_nc_reports_root"
               action="action_nc_view_partner_ledger" groups="account.group_account_readonly"/>
     <record id="action_nc_view_partner_statement" model="ir.actions.client">
-        <field name="name">Customer / Vendor Statement</field>
+        <field name="name">Customer / Supplier Statement</field>
         <field name="tag">ncollection_account_reports.report_viewer</field>
         <field name="context">{'nc_report_model': 'ncollection.account.report.statement'}</field>
     </record>
-    <menuitem id="menu_report_partner_statement" name="Customer / Vendor Statement" parent="menu_nc_reports_root"
+    <menuitem id="menu_report_partner_statement" name="Customer / Supplier Statement" parent="menu_nc_reports_root"
               action="action_nc_view_partner_statement" groups="account.group_account_readonly"/>
     <record id="action_nc_view_aged_partner" model="ir.actions.client">
         <field name="name">Aged Receivable / Payable</field>

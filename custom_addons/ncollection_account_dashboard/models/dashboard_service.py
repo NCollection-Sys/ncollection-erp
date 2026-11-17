@@ -361,7 +361,7 @@ class AccountDashboardService(models.AbstractModel):
             self._kpi('receivables', self.env._("Receivables"), current, previous, source='receivables_owed'),
             self._kpi('customer_credit', self.env._("Customer Credit"), current, previous),
             self._kpi('payables', self.env._("Payables"), current, previous, source='payables_owed'),
-            self._kpi('vendor_prepayments', self.env._("Vendor Prepayments"), current, previous),
+            self._kpi('vendor_prepayments', self.env._("Supplier Prepayments"), current, previous),
             self._kpi('assets', self.env._("Assets"), current, previous),
             self._kpi('liabilities', self.env._("Liabilities"), current, previous),
         ]
@@ -554,7 +554,7 @@ class AccountDashboardService(models.AbstractModel):
             self._kpi('receivables', self.env._("Receivables"), current, previous, source='receivables_owed'),
             self._kpi('customer_credit', self.env._("Customer Credit"), current, previous),
             self._kpi('payables', self.env._("Payables"), current, previous, source='payables_owed'),
-            self._kpi('vendor_prepayments', self.env._("Vendor Prepayments"), current, previous),
+            self._kpi('vendor_prepayments', self.env._("Supplier Prepayments"), current, previous),
         ]
         labels, series = self._trend(_SUMMARY, ('cash',))
         charts = [{

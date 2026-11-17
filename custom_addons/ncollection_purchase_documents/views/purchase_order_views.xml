@@ -68,7 +68,7 @@
     <!-- Purchase opens on VENDOR BILLS: Odoo's own vendor-bill action (New = a vendor bill, straight away, no RFQ or
          purchase order needed), first in the Purchase menu, for the users who may bill. RFQs and Purchase Orders
          stay where they are. -->
-    <menuitem id="menu_purchase_nc_vendor_bills" name="Vendor Bills" parent="purchase.menu_purchase_root"
+    <menuitem id="menu_purchase_nc_vendor_bills" name="Supplier Bills" parent="purchase.menu_purchase_root"
               action="account.action_move_in_invoice_type" groups="account.group_account_invoice" sequence="0"/>
 
     <!-- Line amounts (LINE-01/02): Amount right after Price, then the line total including tax (price_total, the

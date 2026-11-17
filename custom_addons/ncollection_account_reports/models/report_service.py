@@ -66,7 +66,7 @@ _ARABIC_NAMES = {
     'Sales by Salesperson': 'المبيعات حسب مندوب المبيعات',
     'Invoice Analysis': 'تحليل الفواتير',
     'Purchase Analysis': 'تحليل المشتريات',
-    'Purchases by Vendor': 'المشتريات حسب المورّد',
+    'Purchases by Supplier': 'المشتريات حسب المورّد',
     'Purchases by Product': 'المشتريات حسب المنتج',
     'Stock Analysis': 'تحليل المخزون',
     'Inventory Valuation': 'تقييم المخزون',
@@ -85,9 +85,9 @@ _ARABIC_NAMES = {
     'Journal Ledger': 'دفتر اليومية',
     'Open Items': 'البنود المفتوحة',
     'Customer Payments': 'مدفوعات العملاء',
-    'Vendor Payments': 'مدفوعات الموردين',
-    'Vendor Bill Analysis': 'تحليل فواتير الموردين',
-    'Vendor On-time Delivery': 'التسليم في الموعد — الموردون',
+    'Supplier Payments': 'مدفوعات الموردين',
+    'Supplier Bill Analysis': 'تحليل فواتير الموردين',
+    'Supplier On-time Delivery': 'التسليم في الموعد — الموردون',
     'Scrap Analysis': 'تحليل الهالك',
     'Quotations': 'عروض الأسعار',
     'Sales Orders': 'أوامر البيع',
@@ -191,13 +191,13 @@ _NATIVE_REPORT_MENUS = {
         'account.action_account_payments', 'Customer Payments', 'receivables',
         ('account.group_account_readonly',)),
     'menu_vendor_payments': (
-        'account.action_account_payments_payable', 'Vendor Payments', 'receivables',
+        'account.action_account_payments_payable', 'Supplier Payments', 'receivables',
         ('account.group_account_readonly',)),
     'menu_vendor_bill_analysis': (
-        'account.action_account_invoice_report_all_supp', 'Vendor Bill Analysis', 'receivables',
+        'account.action_account_invoice_report_all_supp', 'Supplier Bill Analysis', 'receivables',
         ('account.group_account_readonly',)),
     'menu_vendor_on_time': (
-        'purchase_stock.action_purchase_vendor_delay_report', 'Vendor On-time Delivery', 'purchases',
+        'purchase_stock.action_purchase_vendor_delay_report', 'Supplier On-time Delivery', 'purchases',
         ('purchase.group_purchase_user',)),
     'menu_scrap_analysis': (
         'stock.action_stock_scrap', 'Scrap Analysis', 'inventory',
@@ -310,7 +310,7 @@ class NcReportService(models.AbstractModel):
                 ('ncollection_account_reports.menu_rfq', None),
                 ('ncollection_account_reports.menu_purchase_order_lines', None),
                 ('purchase.purchase_report', 'Purchase Analysis'),
-                ('ncollection_account_reports.menu_purchase_by_vendor', 'Purchases by Vendor'),
+                ('ncollection_account_reports.menu_purchase_by_vendor', 'Purchases by Supplier'),
                 ('ncollection_account_reports.menu_purchase_by_product', 'Purchases by Product'),
                 ('ncollection_account_reports.menu_vendor_on_time', None),
             ]),
@@ -375,7 +375,7 @@ class NcReportService(models.AbstractModel):
     # report grouped the way the Sales ones are; they are created from the
     # existing action (never a second report) and only when purchase is installed.
     _GROUPED_PURCHASE = (
-        ('action_purchase_by_vendor', 'menu_purchase_by_vendor', 'Purchases by Vendor', 'partner_id'),
+        ('action_purchase_by_vendor', 'menu_purchase_by_vendor', 'Purchases by Supplier', 'partner_id'),
         ('action_purchase_by_product', 'menu_purchase_by_product', 'Purchases by Product', 'product_id'),
     )
 
@@ -563,7 +563,7 @@ class NcReportService(models.AbstractModel):
             'ncollection_account_reports.menu_vendor_payments': _(
                 "Payments made to vendors, by partner, journal and date."),
             'ncollection_account_reports.menu_vendor_bill_analysis': _(
-                "Vendor bills and credit notes by vendor, month and payment state."),
+                "Supplier bills and credit notes by supplier, month and payment state."),
             'ncollection_account_reports.menu_vendor_on_time': _(
                 "How reliably each vendor delivers on the promised date."),
             'ncollection_account_reports.menu_scrap_analysis': _(

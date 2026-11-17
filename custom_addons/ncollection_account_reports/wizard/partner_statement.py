@@ -34,12 +34,12 @@ class NcollectionPartnerStatement(models.TransientModel):
     _name = 'ncollection.account.report.statement'
     # Prototype inheritance: same fields, same row arithmetic, new model.
     _inherit = ['ncollection.account.report.partner.ledger']
-    _description = 'NCollection Customer / Vendor Statement'
+    _description = 'NCollection Customer / Supplier Statement'
 
     def _nc_report_title(self):
         return (self.env._("Customer Statement")
                 if self.partner_scope == 'receivable'
-                else self.env._("Vendor Statement"))
+                else self.env._("Supplier Statement"))
 
     def _nc_report_action_ref(self):
         return 'ncollection_account_reports.action_report_partner_statement'

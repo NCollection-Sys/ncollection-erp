@@ -79,7 +79,7 @@ class StatementPrint(models.TransientModel):
 
     def _nc_statement_party_label(self):
         _ = self.env._
-        return {'receivable': _("Customer"), 'payable': _("Vendor")}.get(self.partner_scope, _("Partner"))
+        return {'receivable': _("Customer"), 'payable': _("Supplier")}.get(self.partner_scope, _("Partner"))
 
     def _nc_statement_party(self, partner):
         address = partner._display_address(without_company=True) or ''

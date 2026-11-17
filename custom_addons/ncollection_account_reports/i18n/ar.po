@@ -411,7 +411,7 @@ msgstr "العميل"
 
 #. module: ncollection_account_reports
 #: model:ir.actions.act_window,name:ncollection_account_reports.action_report_partner_statement_wizard model:ir.actions.client,name:ncollection_account_reports.action_nc_view_partner_statement model:ir.ui.menu,name:ncollection_account_reports.menu_report_partner_statement
-msgid "Customer / Vendor Statement"
+msgid "Customer / Supplier Statement"
 msgstr "كشف حساب العميل / المورّد"
 
 #. module: ncollection_account_reports
@@ -931,7 +931,7 @@ msgstr "تحليل مراكز التكلفة — NCollection"
 
 #. module: ncollection_account_reports
 #: model:ir.model,name:ncollection_account_reports.model_ncollection_account_report_statement
-msgid "NCollection Customer / Vendor Statement"
+msgid "NCollection Customer / Supplier Statement"
 msgstr "كشف حساب العميل / المورّد — NCollection"
 
 #. module: ncollection_account_reports
@@ -1281,7 +1281,7 @@ msgstr "دفتر الأستاذ للشركاء — العملاء"
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/partner_ledger.py:0
-msgid "Partner Ledger — Vendors"
+msgid "Partner Ledger — Suppliers"
 msgstr "دفتر الأستاذ للشركاء — المورّدون"
 
 #. module: ncollection_account_reports
@@ -1457,7 +1457,7 @@ msgstr "المشتريات حسب المنتج"
 
 #. module: ncollection_account_reports
 #: model:ir.actions.act_window,name:ncollection_account_reports.action_purchase_by_vendor model:ir.ui.menu,name:ncollection_account_reports.menu_purchase_by_vendor
-msgid "Purchases by Vendor"
+msgid "Purchases by Supplier"
 msgstr "المشتريات حسب المورّد"
 
 #. module: ncollection_account_reports
@@ -2126,39 +2126,39 @@ msgstr "نسبة الفرق %"
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/print_forms.py:0
-msgid "Vendor"
+msgid "Supplier"
 msgstr "المورد"
 
 #. module: ncollection_account_reports
 #: model:ir.ui.menu,name:ncollection_account_reports.menu_vendor_bill_analysis
-msgid "Vendor Bill Analysis"
+msgid "Supplier Bill Analysis"
 msgstr "تحليل فواتير الموردين"
 
 #. module: ncollection_account_reports
 #: model:ir.ui.menu,name:ncollection_account_reports.menu_vendor_on_time
-msgid "Vendor On-time Delivery"
+msgid "Supplier On-time Delivery"
 msgstr "التسليم في الموعد من الموردين"
 
 #. module: ncollection_account_reports
 #: model:ir.ui.menu,name:ncollection_account_reports.menu_vendor_payments
-msgid "Vendor Payments"
+msgid "Supplier Payments"
 msgstr "مدفوعات الموردين"
 
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/partner_statement.py:0
-msgid "Vendor Statement"
+msgid "Supplier Statement"
 msgstr "كشف حساب المورّد"
 
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
-msgid "Vendor bills and credit notes by vendor, month and payment state."
+msgid "Supplier bills and credit notes by supplier, month and payment state."
 msgstr "فواتير الموردين والإشعارات الدائنة حسب المورّد والشهر وحالة الدفع."
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_partner_ledger__partner_scope__payable model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_statement__partner_scope__payable
-msgid "Vendors"
+msgid "Suppliers"
 msgstr "المورّدون"
 
 #. module: ncollection_account_reports

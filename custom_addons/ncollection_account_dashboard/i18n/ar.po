@@ -17,8 +17,7 @@ msgstr "المحاسب"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/accountant_dashboard.js:0
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_accountant_dashboard
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/accountant_dashboard.js:0 model:ir.actions.client,name:ncollection_account_dashboard.action_accountant_dashboard
 msgid "Accountant Dashboard"
 msgstr "لوحة المحاسب"
 
@@ -59,22 +58,19 @@ msgstr "الرئيس التنفيذي"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.js:0
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_ceo_dashboard
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.js:0 model:ir.actions.client,name:ncollection_account_dashboard.action_ceo_dashboard
 msgid "CEO Dashboard"
 msgstr "لوحة الرئيس التنفيذي"
 
 #. module: ncollection_account_dashboard
 #. odoo-python
-#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
-#: model:ir.ui.menu,name:ncollection_account_dashboard.menu_cash_dashboard
+#: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0 model:ir.ui.menu,name:ncollection_account_dashboard.menu_cash_dashboard
 msgid "Cash"
 msgstr "النقد"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/cash_dashboard.js:0
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_cash_dashboard
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/cash_dashboard.js:0 model:ir.actions.client,name:ncollection_account_dashboard.action_cash_dashboard
 msgid "Cash Dashboard"
 msgstr "لوحة النقد"
 
@@ -130,8 +126,7 @@ msgstr "المالية"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/finance_dashboard.js:0
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_finance_dashboard
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/finance_dashboard.js:0 model:ir.actions.client,name:ncollection_account_dashboard.action_finance_dashboard
 msgid "Finance Dashboard"
 msgstr "اللوحة المالية"
 
@@ -160,8 +155,7 @@ msgstr "الموارد البشرية"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/hr_dashboard.js:0
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_hr_dashboard
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/hr_dashboard.js:0 model:ir.actions.client,name:ncollection_account_dashboard.action_hr_dashboard
 msgid "HR Dashboard"
 msgstr "لوحة الموارد البشرية"
 
@@ -291,8 +285,7 @@ msgstr "المبيعات"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/sales_dashboard.js:0
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_sales_dashboard
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/sales_dashboard.js:0 model:ir.actions.client,name:ncollection_account_dashboard.action_sales_dashboard
 msgid "Sales Dashboard"
 msgstr "لوحة المبيعات"
 
@@ -387,11 +380,9 @@ msgstr "المستودع"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/warehouse_dashboard.js:0
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_warehouse_dashboard
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/warehouse_dashboard.js:0 model:ir.actions.client,name:ncollection_account_dashboard.action_warehouse_dashboard
 msgid "Warehouse Dashboard"
 msgstr "لوحة المستودع"
-
 
 #. module: ncollection_account_dashboard
 #. odoo-python
@@ -402,9 +393,8 @@ msgstr "رصيد العملاء الدائن"
 #. module: ncollection_account_dashboard
 #. odoo-python
 #: code:addons/ncollection_account_dashboard/models/dashboard_service.py:0
-msgid "Vendor Prepayments"
+msgid "Supplier Prepayments"
 msgstr "دفعات مقدمة للموردين"
-
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
@@ -580,7 +570,6 @@ msgstr "تحليل المبيعات"
 msgid "Invoicing Analysis"
 msgstr "تحليل الفوترة"
 
-
 #. module: ncollection_account_dashboard
 #: model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_premium
 msgid "Sales Analysis"
@@ -720,7 +709,6 @@ msgstr "الموظفون الذين غادروا في الفترة مقسومي�
 msgid "Units shipped to customers in the period divided by the units on hand."
 msgstr "الوحدات المشحونة للعملاء في الفترة مقسومة على الوحدات المتوفرة."
 
-
 #. module: ncollection_account_dashboard
 #. odoo-javascript
 #: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
@@ -774,7 +762,6 @@ msgstr "إيجابي"
 #: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
 msgid "unfavourable"
 msgstr "سلبي"
-
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
