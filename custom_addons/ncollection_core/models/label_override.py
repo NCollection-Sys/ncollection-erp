@@ -397,7 +397,8 @@ class LabelAudit(models.Model):
         raise AccessError(self.env._("The interface text history cannot be changed."))
 
     def unlink(self):  # pylint: disable=method-required-super,no-raise-unlink
-        raise AccessError(self.env._("The interface text history cannot be deleted."))
+        message = self.env._("The interface text history cannot be deleted.")
+        raise AccessError(message)  # pylint: disable=no-raise-unlink
 
 
 class IrUiMenu(models.Model):
