@@ -8,8 +8,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_branding
 #. odoo-python
@@ -43,7 +42,10 @@ msgstr "خطأ خادم %s"
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_branded
-msgid "<small class=\"text-muted\">\n                        Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the source distribution).\n                    </small>"
+msgid ""
+"<small class=\"text-muted\">\n"
+"                        Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the source distribution).\n"
+"                    </small>"
 msgstr "<small class=\"text-muted\">مبني على تقنيات مفتوحة المصدر (GNU LGPL v3 — راجع docs/LEGAL.md في حزمة المصدر).</small>"
 
 #. module: ncollection_branding
@@ -104,8 +106,7 @@ msgid "Click to copy Incident ID"
 msgstr "انقر لنسخ معرّف الحادثة"
 
 #. module: ncollection_branding
-#: model:ir.actions.client,name:ncollection_branding.action_component_playground
-#: model:ir.ui.menu,name:ncollection_branding.menu_component_playground
+#: model:ir.actions.client,name:ncollection_branding.action_component_playground model:ir.ui.menu,name:ncollection_branding.menu_component_playground
 msgid "Component Library"
 msgstr "مكتبة المكوّنات"
 
@@ -115,14 +116,7 @@ msgid "Contact Support"
 msgstr "الاتصال بالدعم"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_groups__display_name model:ir.model.fields,field_description:ncollection_branding.field_mail_message__display_name model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__display_name model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -143,14 +137,7 @@ msgid "Forgot password?"
 msgstr "نسيت كلمة المرور؟"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_groups__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_mail_message__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__id model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id model:ir.model.fields,field_description:ncollection_branding.field_res_users__id model:ir.model.fields,field_description:ncollection_branding.field_res_groups__id model:ir.model.fields,field_description:ncollection_branding.field_mail_message__id model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__id model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -187,8 +174,7 @@ msgid "Login Background"
 msgstr "خلفية تسجيل الدخول"
 
 #. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split model_terms:ir.ui.view,arch_db:ncollection_branding.ncollection_error_layout
 msgid "NCollection"
 msgstr "NCollection"
 
@@ -199,11 +185,7 @@ msgid "NCollection Component Library"
 msgstr "مكتبة مكوّنات NCollection"
 
 #. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.brand_promotion_message_branded
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.mail_notification_layout_branded
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.mail_notification_light_branded
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.nc_email_logo_header
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_branded
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.brand_promotion_message_branded model_terms:ir.ui.view,arch_db:ncollection_branding.mail_notification_layout_branded model_terms:ir.ui.view,arch_db:ncollection_branding.mail_notification_light_branded model_terms:ir.ui.view,arch_db:ncollection_branding.nc_email_logo_header model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_branded
 msgid "NCollection ERP"
 msgstr "NCollection ERP"
 
@@ -263,7 +245,9 @@ msgstr "العودة إلى مساحة العمل"
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.login_layout_split
-msgid "Sales, inventory, invoicing, and people — one workspace, your brand,\n                               running on infrastructure built for the region."
+msgid ""
+"Sales, inventory, invoicing, and people — one workspace, your brand,\n"
+"                               running on infrastructure built for the region."
 msgstr "المبيعات والمخزون والفوترة والأفراد — مساحة عمل واحدة وعلامتك التجارية، تعمل على بنية تحتية مصممة للمنطقة."
 
 #. module: ncollection_branding
@@ -362,32 +346,12 @@ msgid "Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the
 msgstr "مبني على تقنية مفتوحة المصدر (GNU LGPL v3 — راجع docs/LEGAL.md في توزيعة الكود المصدري)."
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_http__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__display_name
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_http__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_users__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_http__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__id
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__id model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__id model:ir.model.fields,field_description:ncollection_branding.field_res_company__id model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id model:ir.model.fields,field_description:ncollection_branding.field_res_users__id model:ir.model.fields,field_description:ncollection_branding.field_ir_http__id model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -398,10 +362,7 @@ msgstr "ختم الشركة"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_res_company__nc_stamp
-msgid ""
-"The company's official stamp / seal, a PNG (transparency is kept). It is "
-"printed at the end of the company's documents, by the shared print layout, "
-"for this company only."
+msgid "The company's official stamp / seal, a PNG (transparency is kept). It is printed at the end of the company's documents, by the shared print layout, for this company only."
 msgstr "ختم الشركة الرسمي، بصيغة PNG (تُحفظ الشفافية). يُطبع في نهاية مستندات الشركة عبر قالب الطباعة المشترك، لهذه الشركة فقط."
 
 #. module: ncollection_branding
@@ -442,9 +403,7 @@ msgstr "%(w)s × %(h)s مم، على بُعد %(x)s مم من اليسار و%(y
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__image
-msgid ""
-"A PNG (transparency is kept, the proportions are never changed for you), up "
-"to 2 MB and 4000 pixels on a side. It is stored exactly as uploaded."
+msgid "A PNG (transparency is kept, the proportions are never changed for you), up to 2 MB and 4000 pixels on a side. It is stored exactly as uploaded."
 msgstr "صورة PNG (تُحفظ الشفافية ولا تُغيَّر النِّسَب تلقائيًا)، حتى 2 ميغابايت و4000 بكسل في أي جهة. تُحفظ كما رُفعت تمامًا."
 
 #. module: ncollection_branding
@@ -454,10 +413,7 @@ msgstr "يجب أن يكون رمز نوع المستند فريدًا."
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__record_domain
-msgid ""
-"A domain on the printed record that tells this kind of document apart from "
-"the other kinds the same report prints, for example the move type. Empty "
-"(the default) means every record of the report."
+msgid "A domain on the printed record that tells this kind of document apart from the other kinds the same report prints, for example the move type. Empty (the default) means every record of the report."
 msgstr "نطاق على السجل المطبوع يميّز هذا النوع من المستندات عن الأنواع الأخرى التي يطبعها التقرير نفسه، مثل نوع القيد. إن تُرك فارغًا (الافتراضي) فهو يشمل كل سجلات التقرير."
 
 #. module: ncollection_branding
@@ -477,16 +433,13 @@ msgid "Applies to"
 msgstr "ينطبق على"
 
 #. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_search
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_search
 msgid "Archived"
 msgstr "مؤرشف"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__keep_ratio
-msgid ""
-"Changing the width (or the height) changes the other so the image is never "
-"stretched."
+msgid "Changing the width (or the height) changes the other so the image is never stretched."
 msgstr "تغيير العرض (أو الارتفاع) يغيّر الآخر حتى لا تُشوَّه الصورة."
 
 #. module: ncollection_branding
@@ -521,16 +474,12 @@ msgid "Create your first document stamp"
 msgstr "أنشئ أول ختم للمستندات"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__create_uid
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__create_uid
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__create_uid
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__create_uid model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__create_uid model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__create_date
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__create_date
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__create_date
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__create_date model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__create_date model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -555,15 +504,12 @@ msgid "Document"
 msgstr "المستند"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_stamp
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
-#: model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_mode
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_show_stamp model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_mode
 msgid "Document Stamp"
 msgstr "ختم المستند"
 
 #. module: ncollection_branding
-#: model:ir.actions.act_window,name:ncollection_branding.action_document_stamp
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_list
+#: model:ir.actions.act_window,name:ncollection_branding.action_document_stamp model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_list
 msgid "Document Stamps"
 msgstr "أختام المستندات"
 
@@ -576,9 +522,7 @@ msgstr "لأسفل"
 #. module: ncollection_branding
 #. odoo-javascript
 #: code:addons/ncollection_branding/static/src/stamp_designer/stamp_designer.xml:0
-msgid ""
-"Drag the stamp, or its corner to resize. Hold Shift on the arrows to move by"
-" 5 mm."
+msgid "Drag the stamp, or its corner to resize. Hold Shift on the arrows to move by 5 mm."
 msgstr "اسحب الختم، أو زاويته لتغيير الحجم. اضغط Shift مع الأسهم للتحريك بمقدار 5 مم."
 
 #. module: ncollection_branding
@@ -623,16 +567,12 @@ msgid "Larger"
 msgstr "أكبر"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__write_uid
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__write_uid
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__write_uid
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__write_uid model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__write_uid model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__write_date
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__write_date
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__write_date
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__write_date model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__write_date model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -648,9 +588,7 @@ msgid "Left"
 msgstr "يسار"
 
 #. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.external_layout_nc
-#: model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_system_logo
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_logo_source
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.external_layout_nc model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_system_logo model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__nc_logo_source
 msgid "Logo"
 msgstr "الشعار"
 
@@ -671,10 +609,7 @@ msgstr "فقط عندما"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__paper_format_ids
-msgid ""
-"Optional. Leave empty for any paper. Name a paper format and this stamp "
-"applies only to documents printed on it, and wins over a stamp that names "
-"none."
+msgid "Optional. Leave empty for any paper. Name a paper format and this stamp applies only to documents printed on it, and wins over a stamp that names none."
 msgstr "اختياري. اتركه فارغًا لأي ورق. حدّد قياس ورق ليُطبَّق هذا الختم على المستندات المطبوعة عليه فقط، وله الأولوية على ختم لا يحدد قياسًا."
 
 #. module: ncollection_branding
@@ -749,9 +684,7 @@ msgstr "يمين"
 #. module: ncollection_branding
 #. odoo-python
 #: code:addons/ncollection_branding/controllers/stamp_preview.py:0
-msgid ""
-"Sample sheet: there is no %(kind)s yet, so the stamp is shown on an empty "
-"page."
+msgid "Sample sheet: there is no %(kind)s yet, so the stamp is shown on an empty page."
 msgstr "ورقة نموذجية: لا يوجد %(kind)s بعد، لذا يظهر الختم على صفحة فارغة."
 
 #. module: ncollection_branding
@@ -771,8 +704,7 @@ msgid "Stable identifier used by data and code; never shown."
 msgstr "معرّف ثابت تستخدمه البيانات والشيفرة؛ لا يُعرض أبدًا."
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__name
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__name model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_stamp_form
 msgid "Stamp"
 msgstr "ختم"
 
@@ -790,16 +722,12 @@ msgstr "معاينة الختم"
 #. module: ncollection_branding
 #. odoo-python
 #: code:addons/ncollection_branding/models/document_type.py:0
-msgid ""
-"The condition of %(name)s must be a plain domain list such as [('state', "
-"'=', 'sale')]."
+msgid "The condition of %(name)s must be a plain domain list such as [('state', '=', 'sale')]."
 msgstr "يجب أن يكون شرط %(name)s قائمة نطاق بسيطة مثل [('state', '=', 'sale')]."
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__document_type_ids
-msgid ""
-"The kinds of document this stamp is printed on. A stamp applies to nothing "
-"until it names at least one."
+msgid "The kinds of document this stamp is printed on. A stamp applies to nothing until it names at least one."
 msgstr "أنواع المستندات التي يُطبع عليها هذا الختم. لا يُطبَّق الختم على أي شيء حتى يحدد نوعًا واحدًا على الأقل."
 
 #. module: ncollection_branding
@@ -834,9 +762,7 @@ msgstr "ارفع ختمًا بصيغة PNG، واختر المستندات ال�
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_stamp__priority
-msgid ""
-"When several stamps could apply to a document, the HIGHER priority is the "
-"one printed."
+msgid "When several stamps could apply to a document, the HIGHER priority is the one printed."
 msgstr "عندما يصلح أكثر من ختم لمستند، يُطبع الختم صاحب الأولوية الأعلى."
 
 #. module: ncollection_branding
@@ -947,16 +873,12 @@ msgstr "الاسم المختصر"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__logo
-msgid ""
-"The application's logo. Also used for the login page and the administration "
-"screens unless they have their own below. NOT the company logo of a tenant."
+msgid "The application's logo. Also used for the login page and the administration screens unless they have their own below. NOT the company logo of a tenant."
 msgstr "شعار التطبيق. يُستخدم أيضًا في صفحة تسجيل الدخول وشاشات الإدارة ما لم يكن لها شعار خاص أدناه. وليس شعار شركة المستأجر."
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__favicon
-msgid ""
-"The browser-tab icon (PNG or ICO, ideally square, 32x32 or larger). Empty = "
-"the icon shipped with the product."
+msgid "The browser-tab icon (PNG or ICO, ideally square, 32x32 or larger). Empty = the icon shipped with the product."
 msgstr "أيقونة تبويب المتصفح (PNG أو ICO، ويفضّل مربعة 32×32 أو أكبر). الفارغ = الأيقونة المرفقة مع المنتج."
 
 #. module: ncollection_branding
@@ -981,9 +903,7 @@ msgstr "يُستخدم في صفحة تسجيل الدخول وشاشات الإ
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__name
-msgid ""
-"What the application is called: browser title, login page, error pages, "
-"e-mails."
+msgid "What the application is called: browser title, login page, error pages, e-mails."
 msgstr "اسم التطبيق: عنوان المتصفح وصفحة تسجيل الدخول وصفحات الأخطاء والرسائل الإلكترونية."
 
 #. module: ncollection_branding
@@ -998,9 +918,7 @@ msgstr "سيعمل فور عودة الاتصال."
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.res_config_settings_view_form_no_vendor_names
-msgid ""
-"API Keys allow your users to access the workspace with external tools when "
-"multi-factor authentication is enabled."
+msgid "API Keys allow your users to access the workspace with external tools when multi-factor authentication is enabled."
 msgstr "تتيح مفاتيح API لمستخدميك الوصول إلى مساحة العمل بأدوات خارجية عند تفعيل المصادقة متعددة العوامل."
 
 #. module: ncollection_branding
@@ -1010,11 +928,7 @@ msgstr "الخدمات داخل التطبيق"
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__manager_group_ids
-msgid ""
-"Besides Settings administrators (who may stamp every kind), the groups "
-"allowed to create or change a stamp for this kind of document. Enforced by "
-"the model on every write path, not only in the form. A kind with no group "
-"here can be stamped by Settings administrators only."
+msgid "Besides Settings administrators (who may stamp every kind), the groups allowed to create or change a stamp for this kind of document. Enforced by the model on every write path, not only in the form. A kind with no group here can be stamped by Settings administrators only."
 msgstr "إضافةً إلى مسؤولي الإعدادات (الذين يستطيعون ختم كل الأنواع)، المجموعات المسموح لها بإنشاء ختم لهذا النوع من المستندات أو تعديله. يُطبَّق ذلك في النموذج على كل مسار كتابة وليس في الشاشة فقط. النوع الذي لا توجد له مجموعة هنا لا يختمه إلا مسؤولو الإعدادات."
 
 #. module: ncollection_branding
@@ -1080,12 +994,8 @@ msgstr "طاقم المنصة وحده يستطيع تغيير هوية النظ
 #. module: ncollection_branding
 #. odoo-python
 #: code:addons/ncollection_branding/models/system_branding_grant.py:0
-msgid ""
-"Only platform staff can give the System Branding Manager right: it changes "
-"the identity of the system, not of this workspace."
-msgstr ""
-"طاقم المنصة وحده يستطيع منح صلاحية مدير هوية النظام: فهي تغيّر هوية النظام، "
-"لا هوية مساحة العمل هذه."
+msgid "Only platform staff can give the System Branding Manager right: it changes the identity of the system, not of this workspace."
+msgstr "طاقم المنصة وحده يستطيع منح صلاحية مدير هوية النظام: فهي تغيّر هوية النظام، لا هوية مساحة العمل هذه."
 
 #. module: ncollection_branding
 #: model:ir.model.fields,help:ncollection_branding.field_ncollection_product_branding__copyright_text
@@ -1114,7 +1024,9 @@ msgstr "الملكية"
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "Shown under the sign-in page. Empty: © the\n                                current year and the system name."
+msgid ""
+"Shown under the sign-in page. Empty: © the\n"
+"                                current year and the system name."
 msgstr "يظهر أسفل صفحة تسجيل الدخول. الفارغ: © السنة الحالية واسم النظام."
 
 #. module: ncollection_branding
@@ -1124,10 +1036,7 @@ msgstr "صفحات تسجيل الدخول وكلمة المرور. الفارغ
 
 #. module: ncollection_branding
 #. odoo-python
-#: code:addons/ncollection_branding/models/product_branding.py:0
-#: model:ir.actions.server,name:ncollection_branding.action_product_branding
-#: model:ir.ui.menu,name:ncollection_branding.menu_product_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
+#: code:addons/ncollection_branding/models/product_branding.py:0 model:ir.actions.server,name:ncollection_branding.action_product_branding model:ir.ui.menu,name:ncollection_branding.menu_product_branding model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
 msgid "System Branding"
 msgstr "هوية النظام"
 
@@ -1142,9 +1051,7 @@ msgid "System colours"
 msgstr "ألوان النظام"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__logo
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_logo_source__system
+#: model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__logo model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_logo_source__system
 msgid "System logo"
 msgstr "شعار النظام"
 
@@ -1186,7 +1093,10 @@ msgstr "اللون الرئيسي للنظام: صفحة تسجيل الدخول
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "The system's own colours: the sign-in page, error\n                                pages, e-mail frame and the browser's theme colour. A workspace that has not chosen\n                                its own colours uses these too; a workspace's colours never repaint these pages."
+msgid ""
+"The system's own colours: the sign-in page, error\n"
+"                                pages, e-mail frame and the browser's theme colour. A workspace that has not chosen\n"
+"                                its own colours uses these too; a workspace's colours never repaint these pages."
 msgstr "ألوان النظام الخاصة: صفحة تسجيل الدخول وصفحات الخطأ وإطار البريد ولون سمة المتصفح. مساحة العمل التي لم تختر ألوانها تستخدم هذه الألوان أيضًا؛ أما ألوان مساحة العمل فلا تعيد صبغ هذه الصفحات."
 
 #. module: ncollection_branding
@@ -1197,7 +1107,13 @@ msgstr "توجد هوية نظام واحدة فقط."
 
 #. module: ncollection_branding
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
-msgid "This is the identity of the <strong>system</strong>: its name, logo, icon, browser title,\n                        copyright line and colours, as seen on the sign-in page, error pages, e-mails and the browser\n                        tab. It is separate from <strong>tenant branding</strong> (the colours and login background of\n                        a workspace) and from the <strong>company identity</strong> (the legal name, logo and stamp\n                        printed on its invoices); neither can change this and this cannot change them. Changes apply at\n                        the next page load."
+msgid ""
+"This is the identity of the <strong>system</strong>: its name, logo, icon, browser title,\n"
+"                        copyright line and colours, as seen on the sign-in page, error pages, e-mails and the browser\n"
+"                        tab. It is separate from <strong>tenant branding</strong> (the colours and login background of\n"
+"                        a workspace) and from the <strong>company identity</strong> (the legal name, logo and stamp\n"
+"                        printed on its invoices); neither can change this and this cannot change them. Changes apply at\n"
+"                        the next page load."
 msgstr "هذه هي هوية <strong>النظام</strong>: اسمه وشعاره وأيقونته وعنوان المتصفح وسطر حقوق النشر وألوانه، كما تظهر في صفحة تسجيل الدخول وصفحات الخطأ والرسائل الإلكترونية وتبويب المتصفح. وهي منفصلة عن <strong>هوية المستأجر</strong> (ألوان مساحة العمل وخلفية تسجيل الدخول) وعن <strong>هوية الشركة</strong> (الاسم القانوني والشعار والختم المطبوعة على فواتيرها)؛ فلا يستطيع أي منهما تغيير هذه الهوية ولا تغيّرها هي. تُطبَّق التغييرات عند تحميل الصفحة التالي."
 
 #. module: ncollection_branding
@@ -1209,7 +1125,6 @@ msgstr "اسم النظام: عنوان المتصفح (ما لم يُحدَّد
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_product_branding_form
 msgid "e.g. © 2026 Acme Cloud Ltd. All rights reserved."
 msgstr "مثال: © 2026 Acme Cloud Ltd. All rights reserved."
-
 
 #. module: ncollection_branding
 #. odoo-python
@@ -1256,12 +1171,17 @@ msgstr "في %(system)s"
 #. module: ncollection_branding
 #. odoo-python
 #: code:addons/ncollection_branding/models/res_users.py:0
-msgid "Policy on how to handle Chatter notifications:\n- By Emails: notifications are sent to your email address\n- In %(system)s: notifications appear in your %(system)s Inbox"
-msgstr "طريقة التعامل مع إشعارات المحادثات:\n- عبر البريد الإلكتروني: تُرسل الإشعارات إلى بريدك الإلكتروني\n- في %(system)s: تظهر الإشعارات في صندوق الوارد في %(system)s"
+msgid ""
+"Policy on how to handle Chatter notifications:\n"
+"- By Emails: notifications are sent to your email address\n"
+"- In %(system)s: notifications appear in your %(system)s Inbox"
+msgstr ""
+"طريقة التعامل مع إشعارات المحادثات:\n"
+"- عبر البريد الإلكتروني: تُرسل الإشعارات إلى بريدك الإلكتروني\n"
+"- في %(system)s: تظهر الإشعارات في صندوق الوارد في %(system)s"
 
 #. module: ncollection_branding
-#: model:ir.actions.act_window,name:ncollection_branding.action_print_settings
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
+#: model:ir.actions.act_window,name:ncollection_branding.action_print_settings model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
 msgid "Print Settings"
 msgstr "إعدادات الطباعة"
 
@@ -1276,8 +1196,7 @@ msgid "The paper, orientation and margins this document prints on, in Preview an
 msgstr "الورق والاتجاه والهوامش التي يُطبع عليها هذا المستند، في المعاينة والطباعة على حد سواء. تشترك فيه المستندات التي يطبعها التقرير نفسه. إذا تُرك فارغاً: ورق المستندات المناسب للترويسة، وإلا فتنسيق ورق الشركة. التقرير الذي يحدد تنسيق ورقه بنفسه (الشيك) يحتفظ به."
 
 #. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
 msgid "Document paper (default)"
 msgstr "ورق المستندات (افتراضي)"
 
@@ -1288,7 +1207,9 @@ msgstr "لا توجد مستندات قابلة للطباعة"
 
 #. module: ncollection_branding
 #: model_terms:ir.actions.act_window,help:ncollection_branding.action_print_settings
-msgid "Each printed document (invoice, receipt, quotation...) is listed here with its paper format and optional\n               sections. Preview and Print always use the same settings."
+msgid ""
+"Each printed document (invoice, receipt, quotation...) is listed here with its paper format and optional\n"
+"               sections. Preview and Print always use the same settings."
 msgstr "كل مستند مطبوع (فاتورة، إيصال، عرض سعر...) مدرج هنا مع تنسيق ورقه وأقسامه الاختيارية. تستخدم المعاينة والطباعة دائماً الإعدادات نفسها."
 
 #. module: ncollection_branding
@@ -1479,13 +1400,7 @@ msgid "No logo (company name)"
 msgstr "بلا شعار (اسم الشركة)"
 
 #. module: ncollection_branding
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_font__default
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__default
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__default
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__default
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__default
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__default
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__default
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__ncollection_document_type__nc_font__default model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__default model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__default model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__default model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__default model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__default model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__default
 msgid "Default"
 msgstr "الافتراضي"
 
@@ -1545,14 +1460,12 @@ msgid "Print Template"
 msgstr "قالب الطباعة"
 
 #. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
-#: model:ir.actions.act_window,name:ncollection_branding.action_print_settings
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list model:ir.actions.act_window,name:ncollection_branding.action_print_settings
 msgid "Print Templates"
 msgstr "قوالب الطباعة"
 
 #. module: ncollection_branding
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_list
 msgid "Preview"
 msgstr "معاينة"
 
@@ -1578,8 +1491,7 @@ msgstr "الألوان والخطوط"
 
 #. module: ncollection_branding
 #. odoo-python
-#: code:addons/ncollection_branding/models/dashboard_pdf.py:0
-#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
+#: code:addons/ncollection_branding/models/dashboard_pdf.py:0 model_terms:ir.ui.view,arch_db:ncollection_branding.view_document_type_print_settings_form
 msgid "Page"
 msgstr "الصفحة"
 
@@ -1630,7 +1542,9 @@ msgstr "تذييل تقارير الشركة"
 
 #. module: ncollection_branding
 #: model_terms:ir.actions.act_window,help:ncollection_branding.action_print_settings
-msgid "Each printed document (invoice, receipt, quotation...) has its template here: title, logo, colours, page,\n               sections and language. Preview, View and Print always use the same template."
+msgid ""
+"Each printed document (invoice, receipt, quotation...) has its template here: title, logo, colours, page,\n"
+"               sections and language. Preview, View and Print always use the same template."
 msgstr "لكل مستند مطبوع (فاتورة، إيصال، عرض سعر...) قالبه هنا: العنوان والشعار والألوان والصفحة والأقسام واللغة. تستخدم المعاينة والعرض والطباعة القالب نفسه دائمًا."
 
 #. module: ncollection_branding
@@ -1710,22 +1624,12 @@ msgid "Nc Stamp Mode Editable"
 msgstr "يمكن تغيير ختم المستند"
 
 #. module: ncollection_branding
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__off
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__off
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__off
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__off
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__off
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__off
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__off model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__off model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__off model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__off model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__off model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__off
 msgid "Off"
 msgstr "إيقاف"
 
 #. module: ncollection_branding
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__on
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__on
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__on
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__on
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__on
-#: model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__on
+#: model:ir.model.fields.selection,name:ncollection_branding.selection__account_move__nc_stamp_mode__on model:ir.model.fields.selection,name:ncollection_branding.selection__account_payment__nc_stamp_mode__on model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_print_mixin__nc_stamp_mode__on model:ir.model.fields.selection,name:ncollection_branding.selection__nc_document_stamp_mixin__nc_stamp_mode__on model:ir.model.fields.selection,name:ncollection_branding.selection__purchase_order__nc_stamp_mode__on model:ir.model.fields.selection,name:ncollection_branding.selection__sale_order__nc_stamp_mode__on
 msgid "On"
 msgstr "تشغيل"
 
@@ -1744,3 +1648,48 @@ msgstr "مختوم افتراضيًا"
 #: model:ir.model.fields,help:ncollection_branding.field_nc_document_stamp_mixin__nc_stamp_default_on
 msgid "What Default means for this document: its kind's Print Setting."
 msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_base_document_layout__nc_footer_center model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_footer_center model_terms:ir.ui.view,arch_db:ncollection_branding.view_base_document_layout_nc_footer_zones
+msgid "Center Footer"
+msgstr "التذييل الأوسط"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_base_document_layout__nc_footer_left model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_footer_left model_terms:ir.ui.view,arch_db:ncollection_branding.view_base_document_layout_nc_footer_zones
+msgid "Left Footer"
+msgstr "التذييل الأيسر"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_base_document_layout__nc_footer_center model:ir.model.fields,help:ncollection_branding.field_res_company__nc_footer_center
+msgid "Printed at the bottom centre of every page of the company's documents."
+msgstr "يُطبع في وسط أسفل كل صفحة من مستندات الشركة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_base_document_layout__nc_footer_left model:ir.model.fields,help:ncollection_branding.field_res_company__nc_footer_left
+msgid "Printed at the bottom left of every page of the company's documents."
+msgstr "يُطبع في يسار أسفل كل صفحة من مستندات الشركة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_base_document_layout__nc_footer_right model:ir.model.fields,help:ncollection_branding.field_res_company__nc_footer_right
+msgid "Printed at the bottom right of every page of the company's documents."
+msgstr "يُطبع في يمين أسفل كل صفحة من مستندات الشركة."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,field_description:ncollection_branding.field_base_document_layout__nc_footer_right model:ir.model.fields,field_description:ncollection_branding.field_res_company__nc_footer_right model_terms:ir.ui.view,arch_db:ncollection_branding.view_base_document_layout_nc_footer_zones
+msgid "Right Footer"
+msgstr "التذييل الأيمن"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_base_document_layout_nc_footer_zones
+msgid "e.g. Address, phone"
+msgstr "مثال: العنوان، الهاتف"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_base_document_layout_nc_footer_zones
+msgid "e.g. Bank account, IBAN"
+msgstr "مثال: الحساب البنكي، IBAN"
+
+#. module: ncollection_branding
+#: model_terms:ir.ui.view,arch_db:ncollection_branding.view_base_document_layout_nc_footer_zones
+msgid "e.g. TRN, licence number"
+msgstr "مثال: الرقم الضريبي، رقم الرخصة"

@@ -1347,7 +1347,7 @@ msgid "Workspace Appearance"
 msgstr "مظهر مساحة العمل"
 
 #. module: ncollection_core
-#: model:ir.ui.menu,name:ncollection_core.menu_workspace_settings_root
+#: model:ir.ui.menu,name:ncollection_core.menu_workspace_settings_root model:ir.ui.menu,name:ncollection_core.menu_workspace_settings_for_system
 msgid "Workspace Settings"
 msgstr "إعدادات مساحة العمل"
 
@@ -2648,7 +2648,7 @@ msgid "Only a workspace administrator can change the business settings."
 msgstr "لا يمكن تغيير إعدادات الأعمال إلا لمسؤول مساحة العمل."
 
 #. module: ncollection_core
-#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form code:addons/ncollection_core/static/src/label_editor/label_editor.xml:0 model_terms:ir.ui.view,arch_db:ncollection_core.view_settings_delegation_form
 msgid "Save"
 msgstr "حفظ"
 
@@ -3408,3 +3408,148 @@ msgstr "الإعدادات: المبيعات"
 #: code:addons/ncollection_core/models/label_override.py:0
 msgid "This text is a screen text (button, tab, section or a label set by the screen): it applies to the whole workspace and cannot be changed for one company only. Choose \"Whole workspace\"."
 msgstr "هذا النص من نصوص الشاشة (زر أو تبويب أو قسم أو تسمية تحددها الشاشة): ينطبق على مساحة العمل كلها ولا يمكن تغييره لشركة واحدة فقط. اختر \"مساحة العمل كلها\"."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Configure Document Layout"
+msgstr "تهيئة تخطيط المستندات"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Document types, paper and print behaviour."
+msgstr "أنواع المستندات والورق وسلوك الطباعة."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Edit Appearance"
+msgstr "تعديل المظهر"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Edit Company"
+msgstr "تعديل الشركة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Invite, activate and deactivate the people of this workspace."
+msgstr "ادعُ مستخدمي مساحة العمل وفعّلهم وأوقفهم."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Layout, colours, header and the three footer zones of printed documents."
+msgstr "التخطيط والألوان والترويسة ومناطق التذييل الثلاث للمستندات المطبوعة."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Let named users change one settings section, where the platform allows it."
+msgstr "اسمح لمستخدمين محددين بتغيير قسم إعدادات واحد حيث تسمح المنصة."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Manage Delegation"
+msgstr "إدارة التفويض"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Manage Labels"
+msgstr "إدارة التسميات"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Manage Roles"
+msgstr "إدارة الأدوار"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Manage Stamps"
+msgstr "إدارة الأختام"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Manage Teams"
+msgstr "إدارة الفرق"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Manage Users"
+msgstr "إدارة المستخدمين"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Name, address, tax and registration numbers, logo."
+msgstr "الاسم والعنوان والرقم الضريبي ورقم التسجيل والشعار."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Open Overview"
+msgstr "فتح النظرة العامة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Open Print Settings"
+msgstr "فتح إعدادات الطباعة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Open Security"
+msgstr "فتح الأمان"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Open System"
+msgstr "فتح النظام"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Plan, users and health of this workspace."
+msgstr "الخطة والمستخدمون وحالة مساحة العمل."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Rename labels, menus and screen texts; terminology and history."
+msgstr "إعادة تسمية التسميات والقوائم ونصوص الشاشة؛ المصطلحات والسجل."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Sales teams and departments."
+msgstr "فرق المبيعات والأقسام."
+
+#. module: ncollection_core
+#: model:ir.model,name:ncollection_core.model_nc_partner_roles_mixin
+msgid "Show the partner Customer / Supplier badges on this document"
+msgstr "إظهار شارات العميل / المورد للشريك في هذا المستند"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Sign-in history and security events."
+msgstr "سجل تسجيل الدخول وأحداث الأمان."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Stamp templates printed on documents."
+msgstr "قوالب الأختام المطبوعة على المستندات."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "This workspace's colours and login page."
+msgstr "ألوان مساحة العمل وصفحة تسجيل الدخول."
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_ws_access model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Users & Access"
+msgstr "المستخدمون والوصول"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "What each role may do."
+msgstr "ما يحق لكل دور القيام به."
+
+#. module: ncollection_core
+#: model:ir.ui.menu,name:ncollection_core.menu_ws_workspace model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Workspace"
+msgstr "مساحة العمل"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
+msgid "Workspace information and developer tools."
+msgstr "معلومات مساحة العمل وأدوات المطوّر."

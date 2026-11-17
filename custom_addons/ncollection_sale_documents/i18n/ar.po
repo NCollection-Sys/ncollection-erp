@@ -211,3 +211,13 @@ msgstr "وحدات القياس والتعبئة"
 #: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__group_product_variant
 msgid "Variants"
 msgstr "المتغيرات"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
+msgid "Pricing & Invoicing"
+msgstr "التسعير والفوترة"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
+msgid "Quotations & Orders"
+msgstr "عروض الأسعار والطلبات"

@@ -11,9 +11,7 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_audit
-#: model:ir.actions.act_window,name:ncollection_audit.action_nc_audit_seal
-#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_seal
-#: model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_seal_list
+#: model:ir.actions.act_window,name:ncollection_audit.action_nc_audit_seal model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_seal model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_seal_list
 msgid "Audit Seals"
 msgstr "أختام التدقيق"
 
@@ -48,10 +46,7 @@ msgid "Digest"
 msgstr "التجزئة"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__display_name
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -66,10 +61,7 @@ msgid "From Log"
 msgstr "من السجل"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__id
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__id
 msgid "ID"
 msgstr "المعرّف"
 

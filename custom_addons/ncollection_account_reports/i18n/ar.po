@@ -2908,3 +2908,80 @@ msgstr "تصدير XBRL متاح للميزانية العمومية وقائم�
 #: code:addons/ncollection_account_reports/models/account_report.py:0 code:addons/ncollection_account_reports/models/xbrl_export.py:0
 msgid "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the Statement of Changes in Equity only."
 msgstr "تصدير XBRL متاح للميزانية العمومية وقائمة الأرباح والخسائر وقائمة التدفقات النقدية وقائمة التغيرات في حقوق الملكية فقط."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "A management analysis, not an IFRS financial statement: no taxonomy concept means the same thing."
+msgstr "تحليل إداري وليس قائمة مالية وفق IFRS: لا يوجد مفهوم في التصنيف يعني الشيء نفسه."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "A tax return analysis, not an IFRS statement; a tax authority taxonomy would be needed."
+msgstr "تحليل إقرار ضريبي وليس قائمة وفق IFRS؛ يلزم تصنيف صادر عن الجهة الضريبية."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "An account-level listing: IFRS has no concept per account row, so a mapping would be invented."
+msgstr "كشف على مستوى الحسابات: لا يوجد في IFRS مفهوم لكل حساب، فأي ربط سيكون مختلَقًا."
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,field_description:ncollection_account_reports.field_account_account__nc_equity_component
+msgid "Component of Equity"
+msgstr "مكوّن حقوق الملكية"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__account_account__nc_equity_component__issued_capital
+msgid "Issued capital"
+msgstr "رأس المال المصدَر"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__account_account__nc_equity_component__other_reserves
+msgid "Other reserves"
+msgstr "احتياطيات أخرى"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__account_account__nc_equity_component__retained_earnings
+msgid "Retained earnings"
+msgstr "الأرباح المحتجزة"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__account_account__nc_equity_component__share_premium
+msgid "Share premium"
+msgstr "علاوة الإصدار"
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields,help:ncollection_account_reports.field_account_account__nc_equity_component
+msgid "The IFRS component of equity this account belongs to (used by the Changes in Equity XBRL export)."
+msgstr "مكوّن حقوق الملكية وفق IFRS الذي ينتمي إليه هذا الحساب (يُستخدم في تصدير XBRL لقائمة التغيرات في حقوق الملكية)."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "The UAE VAT return is filed with the FTA, which publishes no XBRL taxonomy for it."
+msgstr "يُقدَّم إقرار ضريبة القيمة المضافة في الإمارات إلى الهيئة الاتحادية للضرائب، ولا تنشر تصنيف XBRL له."
+
+#. module: ncollection_account_reports
+#: model:ir.model.fields.selection,name:ncollection_account_reports.selection__account_account__nc_equity_component__treasury_shares
+msgid "Treasury shares"
+msgstr "أسهم الخزينة"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "XBRL (.xbrl)"
+msgstr "XBRL (.xbrl)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "XBRL is not available for %(report)s. %(reason)s"
+msgstr "تصدير XBRL غير متاح لـ %(report)s. %(reason)s"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "— not available"
+msgstr "— غير متاح"

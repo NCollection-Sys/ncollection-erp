@@ -861,3 +861,13 @@ msgstr "يمكن إنشاء نسخة مماثلة من دفعات العملاء
 #: model:res.groups,name:ncollection_account_core.group_platform_receipt_access
 msgid "Platform grant: Receipts & accounting (read only)"
 msgstr "منحة المنصة: الإيصالات والمحاسبة (قراءة فقط)"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Default receivable, payable, income, expense and transfer accounts."
+msgstr "الحسابات الافتراضية للذمم المدينة والدائنة والإيرادات والمصروفات والتحويل."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Edit Accounting Defaults"
+msgstr "تعديل الإعدادات المحاسبية الافتراضية"

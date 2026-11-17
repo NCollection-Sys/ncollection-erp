@@ -24,7 +24,10 @@ msgstr "تم التحقق من %s صف دون أخطاء مانعة — يمكن
 
 #. module: ncollection_data_import
 #: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
-msgid "A guided path over the standard importer. Recommended order —\n                            each step can reference the ones before it:\n                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>."
+msgid ""
+"A guided path over the standard importer. Recommended order —\n"
+"                            each step can reference the ones before it:\n"
+"                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>."
 msgstr "مسار موجَّه فوق أداة الاستيراد القياسية. الترتيب الموصى به — يمكن لكل خطوة الإشارة إلى الخطوات التي قبلها: <b>المنتجات ← العملاء ← الموردون ← المخزون الافتتاحي ← الأرصدة الافتتاحية</b>."
 
 #. module: ncollection_data_import
@@ -49,8 +52,7 @@ msgstr "أنشئ في"
 
 #. module: ncollection_data_import
 #. odoo-python
-#: code:addons/ncollection_data_import/wizard/onboarding.py:0
-#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__customers
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0 model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__customers
 msgid "Customers"
 msgstr "العملاء"
 
@@ -91,8 +93,7 @@ msgid "ID"
 msgstr "المعرّف"
 
 #. module: ncollection_data_import
-#: model:ir.actions.act_window,name:ncollection_data_import.action_data_import_onboarding
-#: model:ir.ui.menu,name:ncollection_data_import.menu_data_import_onboarding
+#: model:ir.actions.act_window,name:ncollection_data_import.action_data_import_onboarding model:ir.ui.menu,name:ncollection_data_import.menu_data_import_onboarding
 msgid "Import Tenant Data"
 msgstr "استيراد بيانات مساحة العمل"
 
@@ -146,8 +147,7 @@ msgstr "اختر مجموعة بيانات أولًا."
 
 #. module: ncollection_data_import
 #. odoo-python
-#: code:addons/ncollection_data_import/wizard/onboarding.py:0
-#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__products
+#: code:addons/ncollection_data_import/wizard/onboarding.py:0 model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__products
 msgid "Products"
 msgstr "المنتجات"
 
@@ -187,7 +187,9 @@ msgstr "ارفع ملف CSV للتحقق منه أولًا."
 
 #. module: ncollection_data_import
 #: model_terms:ir.ui.view,arch_db:ncollection_data_import.view_data_import_onboarding_form
-msgid "Upload a filled-in CSV to dry-run it: no data is written, and any\n                        problems are reported per row in plain language."
+msgid ""
+"Upload a filled-in CSV to dry-run it: no data is written, and any\n"
+"                        problems are reported per row in plain language."
 msgstr "ارفع ملف CSV معبّأ لتجربته دون كتابة أي بيانات؛ وتُبلَّغ أي مشكلات لكل صف بلغة واضحة."
 
 #. module: ncollection_data_import
