@@ -1,6 +1,6 @@
 # XBRL export
 
-Profile: **IFRS Accounting Taxonomy 2025, Full IFRS** (owner decision 2026-11-16). Entry point referenced by
+Reports: **Balance Sheet, Profit and Loss, Cash Flow**. Profile: **IFRS Accounting Taxonomy 2025, Full IFRS** (owner decision 2026-11-16). Entry point referenced by
 `schemaRef`, never copied into the repository:
 `https://xbrl.ifrs.org/taxonomy/2025-03-27/full_ifrs_entry_point_2025-03-27.xsd`. Nothing from the taxonomy is
 redistributed, so no packaging licence question arises. Validator: **Arelle `arelle-release==2.37.78`**, run in a
@@ -46,7 +46,8 @@ PDF and Excel. Nothing is written.
 | Balance Sheet | yes | yes | **yes** |
 | Profit and Loss | yes | yes | **yes** |
 | Trial Balance, General Ledger, Partner Ledger, Partner Statement, Aged Balances | yes | yes | no: account-level listings with no IFRS concept per row (a "mapping" would be invented) |
-| Cash Flow, Changes in Equity | yes | yes | not yet: mappable (`CashFlowsFromUsedInOperatingActivities`, …) but the report buckets need their own reviewed map; next profile step |
+| Cash Flow (indirect) | yes | yes | **yes**: ProfitLoss, AdjustmentsForDepreciationExpense, CashFlowsFromUsedIn{Operating,Investing,Financing}Activities, IncreaseDecreaseInCashAndCashEquivalentsBeforeEffectOfExchangeRateChanges, CashAndCashEquivalents (opening and closing instants). Not exported: "Movement in working capital" (no single concept) |
+| Changes in Equity | yes | yes | applicable, not implemented: needs the IFRS equity-components dimension (ComponentsOfEquityAxis); the report's columns must be mapped member by member first |
 | Tax Analysis, UAE VAT report | yes | yes | no: tax returns are not IFRS statements |
 | Financial Summary, Profitability, Revenue / Expense Analysis, Dimension Analysis, Budget vs Actual, Asset Register | yes | yes | no: management analyses, no IFRS concept |
 | Sales / Invoicing premium dashboards, Spreadsheet dashboards export | yes | yes | no: operational data |
@@ -59,6 +60,7 @@ Unsupported reports have no XBRL button, and the route answers 404 for them.
 |---|---|---|---|
 | Balance Sheet (2026-11-16, comparison 2025-11-16) | 0 | 0 | Assets 1,278.25 = report; Equity & Liabilities 1,278.25 = report |
 | Profit and Loss (2026-01-01 – 2026-11-16, comparison previous year) | 0 | 0 | Revenue 8,670.50 · Other Income 0.00 · Cost of Sales 53.12 · Profit 6,335.47, all = report |
+| Cash Flow (2026-01-01 – 2026-11-17, re-run 2026-11-17 with BS and P&L) | 0 | 0 | Operating 2,400.00 · Investing 0 · Financing 0 · Net change 2,400.00 · Profit 6,335.47 · Cash 0.00 → 2,400.00, all = report |
 | Negative control (one invented concept) | 2 (`xmlSchema:elementUnexpected`, `xbrl:schemaImportMissing`) | — | proves the taxonomy was really loaded |
 
 Downloaded through a real browser session from the route. Automated tests: `tests/test_xbrl_export.py` (facts equal

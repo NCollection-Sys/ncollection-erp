@@ -804,6 +804,8 @@
                     <button name="action_view" type="object" string="View" class="btn-primary"/>
                     <button name="action_export_pdf" type="object" string="Export PDF"/>
                     <button name="action_export_xlsx" type="object" string="Export XLSX"/>
+                    <button name="action_export_xbrl" type="object" string="Export XBRL"
+                            title="XBRL instance, IFRS Accounting Taxonomy 2025"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

@@ -310,7 +310,8 @@ class NcollectionAccountReport(models.AbstractModel):
         """XBRL (IFRS Accounting Taxonomy 2025) for the reports that map onto it: models/xbrl_export.py."""
         self.ensure_one()
         if self._name not in self.env['ncollection.account.report.xbrl']._nc_supported_models():
-            raise UserError(self.env._("XBRL is available for the Balance Sheet and the Profit and Loss only."))
+            raise UserError(self.env._(
+                "XBRL is available for the Balance Sheet, the Profit and Loss and the Cash Flow only."))
         return {
             'type': 'ir.actions.act_url',
             'url': '/ncollection/account_reports/xbrl/%s/%d' % (self._name, self.id),

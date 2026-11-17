@@ -77,6 +77,23 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         self.assertNotIn('GrossProfit', facts, "the report's gross profit includes other income: not IFRS GrossProfit")
         self.assertNotIn('OperatingExpense', facts)
 
+    def test_cash_flow_facts_are_the_report_figures(self):
+        wizard = self.env['ncollection.account.report.cash.flow'].create(
+            {'date_from': self.year_start, 'date_to': datetime.date.today(), 'comparison_type': 'none'})
+        root, facts = self._facts(wizard)
+        figures = wizard._nc_totals()
+        for concept, key in (('CashFlowsFromUsedInOperatingActivities', 'operating'),
+                             ('CashFlowsFromUsedInInvestingActivities', 'investing'),
+                             ('CashFlowsFromUsedInFinancingActivities', 'financing'),
+                             ('IncreaseDecreaseInCashAndCashEquivalentsBeforeEffectOfExchangeRateChanges',
+                              'net_change')):
+            self.assertAlmostEqual(facts[concept][0][1], figures[key], msg=concept)
+        cash = {ctx: value for ctx, value in facts['CashAndCashEquivalents']}
+        self.assertEqual(len(cash), 2, "opening and closing instants")
+        self.assertAlmostEqual(max(cash.items())[1] - min(cash.items())[1],
+                               figures['cash_close'] - figures['cash_open'])
+        self.assertNotIn('WorkingCapital', ''.join(facts))
+
     def test_comparison_period_is_a_second_context(self):
         wizard = self.env['ncollection.account.report.profit.loss'].create(
             {'date_from': self.year_start, 'date_to': datetime.date.today(), 'comparison_type': 'previous_year'})

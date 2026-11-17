@@ -22,6 +22,7 @@ with elevated rights and nothing is written.
 """
 import re
 
+from dateutil.relativedelta import relativedelta
 from lxml import etree
 
 from odoo import api, models
@@ -47,6 +48,17 @@ BALANCE_SHEET_MAP = (
     ('Equity', ('equity', 'accumulated_earnings')),
     ('EquityAndLiabilities', ('current_liabilities', 'long_term_liabilities', 'equity', 'accumulated_earnings')),
 )
+# Indirect-method Cash Flow (wizard/cash_flow.py ``_nc_cash_flow_figures``). Not exported: "Movement in working
+# capital" (no single concept). The net change is the figure BEFORE exchange-rate effects, which the report does not
+# compute separately, so the matching concept is the "before effect" one.
+CASH_FLOW_DURATION = (
+    ('ProfitLoss', 'net_profit'),
+    ('AdjustmentsForDepreciationExpense', 'depreciation'),
+    ('CashFlowsFromUsedInOperatingActivities', 'operating'),
+    ('CashFlowsFromUsedInInvestingActivities', 'investing'),
+    ('CashFlowsFromUsedInFinancingActivities', 'financing'),
+    ('IncreaseDecreaseInCashAndCashEquivalentsBeforeEffectOfExchangeRateChanges', 'net_change'),
+)
 PROFIT_LOSS_MAP = (
     ('Revenue', 'revenue'),
     ('OtherIncome', 'other_income'),
@@ -62,14 +74,16 @@ class AccountReportXbrl(models.AbstractModel):
     @api.model
     def _nc_supported_models(self):
         return {'ncollection.account.report.balance.sheet': 'balance_sheet',
-                'ncollection.account.report.profit.loss': 'profit_loss'}
+                'ncollection.account.report.profit.loss': 'profit_loss',
+                'ncollection.account.report.cash.flow': 'cash_flow'}
 
     @api.model
     def _nc_facts(self, wizard):
         """[(concept, period_type, start, end, value)] from the report's own figures, current then comparison."""
         kind = self._nc_supported_models().get(wizard._name)
         if not kind:
-            raise UserError(self.env._("XBRL is available for the Balance Sheet and the Profit and Loss only."))
+            raise UserError(self.env._(
+                "XBRL is available for the Balance Sheet, the Profit and Loss and the Cash Flow only."))
         records = [wizard]
         comparison = wizard._nc_comparison_record() if hasattr(wizard, '_nc_comparison_record') else None
         if comparison is not None:
@@ -80,6 +94,13 @@ class AccountReportXbrl(models.AbstractModel):
                 totals = wizard._nc_bucket_totals(record)[0]
                 for concept, keys in BALANCE_SHEET_MAP:
                     facts.append((concept, 'instant', None, record.date_to, sum(totals[k] for k in keys)))
+            elif kind == 'cash_flow':
+                figures = wizard._nc_cash_flow_figures(record)
+                for concept, key in CASH_FLOW_DURATION:
+                    facts.append((concept, 'duration', record.date_from, record.date_to, figures[key]))
+                opening = record.date_from - relativedelta(days=1)
+                facts.append(('CashAndCashEquivalents', 'instant', None, opening, figures['cash_open']))
+                facts.append(('CashAndCashEquivalents', 'instant', None, record.date_to, figures['cash_close']))
             else:
                 figures = wizard._nc_pl_figures(record)[0]
                 if not record.date_from:
