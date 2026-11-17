@@ -54,3 +54,16 @@ class TestReceiptPrintAccess(HttpCase, AccountTestInvoicingCommon):
         response = self._get('nc_rcpt_emp')
         self.assertEqual(response.status_code, 403)
         self.assertIn('account.payment', response.text, "refused on the business record, not on a technical view")
+
+
+@tagged('post_install', '-at_install')
+class TestSupplierWordingInCode(AccountTestInvoicingCommon):
+    """The two Odoo Python strings reworded by extension follow the platform rule (Vendor -> Supplier)."""
+
+    def test_draft_refund_name_and_journal_placeholder(self):
+        refund = self.env['account.move'].with_context(lang='en_US').create({
+            'move_type': 'in_refund', 'partner_id': self.partner_a.id})
+        self.assertIn('Supplier', refund.with_context(lang='en_US')._get_move_display_name())
+        self.assertNotIn('Vendor', refund.with_context(lang='en_US')._get_move_display_name())
+        journal = self.env['account.journal'].with_context(lang='en_US').new({'type': 'purchase'})
+        self.assertTrue(journal.name_placeholder.startswith('Supplier Bills'), journal.name_placeholder)

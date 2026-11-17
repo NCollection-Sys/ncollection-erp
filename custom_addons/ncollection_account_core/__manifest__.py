@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.14.2',
+    'version': '19.0.1.15.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
                'restriction hooks, common mixins and the accounting engine '

@@ -12,3 +12,4 @@ from . import res_company_settings
 from . import duplicate_records
 from . import onboarding_step
 from . import payment_register_evidence
+from . import terminology_code_strings

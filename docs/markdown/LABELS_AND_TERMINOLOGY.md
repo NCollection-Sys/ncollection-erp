@@ -50,8 +50,30 @@ Values are plain text: `< > { }` and control characters are refused, maximum 120
 | Choice labels | 17 | 0 |
 | Views (texts) | 55 | 6 views still contain the word, only in technical names (`name="vendor"`) and code comments, never shown |
 | Arabic labels "بائع" (seller) | 3 | 0 (`البائع → المورد`, `بائع → مورد`) |
-| Odoo Python `_()` strings in account / purchase / product | 14 | unchanged in English (limitation above; Arabic already says مورد) |
+| Odoo Python `_()` strings in account / purchase / product | 14 | 2 reworded by extension (below); 12 unchanged in English |
 | Odoo JS `_t()` strings in purchase | 4 | unchanged in English |
+
+### Remaining code strings, one by one
+
+Odoo returns `_()` / `_t()` text **verbatim in English** (`odoo/tools/translate.py` `get_translation`: `if lang ==
+'en_US': translation = source`), so no translation can reword them. Arabic users see Odoo's own Arabic, which already
+says مورد for every one. Two are reworded in English by extending the method that builds them
+(`ncollection_account_core/models/terminology_code_strings.py`, through the same platform rule).
+
+| String (English) | Where a user meets it | Status |
+|---|---|---|
+| `Vendor Bills` (journal name placeholder) | creating a purchase journal | **reworded**: "Supplier Bills" |
+| `Draft Vendor Credit Note` | name of a draft supplier refund in lists, breadcrumbs, links | **reworded**: "Draft Supplier Credit Note" |
+| `Vendor Bills` (analytic account smart button) | Analytic account form, button label | unchanged (button text comes from Python) |
+| `The field 'Vendor' is required, please complete it to validate the Vendor Bill.` | posting a bill without a partner | unchanged (error raised inside Odoo's posting check; rewording means re-implementing it) |
+| `Vendor Bill Created` | chatter note on a bill created from a document | unchanged |
+| `Only vendor bills allow for deductibility of product/services.` | tax deductibility error (rare) | unchanged |
+| `Unable to cancel purchase order(s): … related vendor bills.` | cancelling a billed purchase order | unchanged |
+| `You can only upload a bill for a single vendor at a time.` (Python and JS) | uploading bills on a purchase order | unchanged |
+| `Select Vendor Bill lines…`, `…same vendor.`, `Vendor Bill lines can only be added to one Purchase Order.` | bill-line matching on purchase orders | unchanged |
+| `This vendor bill has been created from: ` / `modified from: ` | chatter note | unchanged |
+| `Import Template for Vendor Pricelists` | product supplier pricelist import template name | unchanged |
+| JS tour texts (`Search a vendor name…`, `Send the request for quotation to your vendor.`) | Odoo's onboarding tour only, not started for tenants | unreachable in normal use |
 
 ## Developer Mode
 
