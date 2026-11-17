@@ -144,6 +144,17 @@ def _expenses(today):
     ]
 
 
+_PENDING = [
+    ('payment_id', '!=', False),
+    ('payment_id.state', 'in', ('in_process', 'paid')),
+    ('parent_state', '=', 'posted'),
+    ('journal_id.type', 'in', ('bank', 'cash')),
+    ('account_id.reconcile', '=', True),
+    ('reconciled', '=', False),
+    ('account_id.account_type', 'not in', ('asset_receivable', 'liability_payable', 'asset_cash')),
+]
+
+
 def _bank_cash(_today):
     """Posted ledger balance of every bank / cash account (what the journal card calls Current Balance), and the
     money still pending on outstanding accounts, as two separate facts."""
@@ -157,24 +168,27 @@ def _bank_cash(_today):
             'limit': 12,
             'order': 'balance:sum desc',
         },
-        # Incoming and outgoing APART: adding them would be a meaningless number.
+        # PENDING = the Journal Operations card's definition, not Odoo's payment state: the residual of posted
+        # payment lines still waiting on an OUTSTANDING account (reconcilable, unreconciled, neither the
+        # receivable / payable counterpart nor a liquidity account). A receipt Odoo Community marks "Paid" because
+        # it settled an invoice is still here until the bank confirms it. Incoming and outgoing apart.
         {
             'key': 'receipts_pending_bank',
-            'model': 'account.payment',
-            'domain': [('state', '=', 'in_process'), ('payment_type', '=', 'inbound')],
+            'model': 'account.move.line',
+            'domain': _PENDING + [('amount_residual', '>', 0)],
             'groupby': ['journal_id'],
-            'aggregates': ['amount_company_currency_signed:sum'],
+            'aggregates': ['amount_residual:sum'],
             'limit': 12,
-            'order': 'amount_company_currency_signed:sum desc',
+            'order': 'amount_residual:sum desc',
         },
         {
             'key': 'payments_pending_bank',
-            'model': 'account.payment',
-            'domain': [('state', '=', 'in_process'), ('payment_type', '=', 'outbound')],
+            'model': 'account.move.line',
+            'domain': _PENDING + [('amount_residual', '<', 0)],
             'groupby': ['journal_id'],
-            'aggregates': ['amount_company_currency_signed:sum'],
+            'aggregates': ['amount_residual:sum'],
             'limit': 12,
-            'order': 'amount_company_currency_signed:sum asc',
+            'order': 'amount_residual:sum asc',
         },
     ]
 
