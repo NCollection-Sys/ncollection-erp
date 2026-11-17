@@ -18,7 +18,7 @@ under a near concept would be a false statement in a machine-readable file.
 
   Changes in Equity        the TOTAL EQUITY column only, with no ComponentsOfEquityAxis member: Equity at the opening
                            (day before the period) and closing instants, ProfitLoss (the movement of the accumulated
-                           result: the period's income and expense) and IncreaseDecreaseInEquity (the total movement)
+                           result: the period's income and expense) and ChangesInEquity (the total movement)
 
 NOT exported for Changes in Equity, on purpose: the per-component columns. The report's components are Odoo account
 TYPES ("equity" holds share capital AND reserves AND, on many charts, retained earnings; "equity_unaffected" is the
@@ -121,7 +121,7 @@ class AccountReportXbrl(models.AbstractModel):
                 facts.append(('Equity', 'instant', None, opening, figures['total'][0]))
                 facts.append(('ProfitLoss', 'duration', record.date_from, record.date_to,
                               figures['accumulated_result'][1]))
-                facts.append(('IncreaseDecreaseInEquity', 'duration', record.date_from, record.date_to,
+                facts.append(('ChangesInEquity', 'duration', record.date_from, record.date_to,
                               figures['total'][1]))
                 facts.append(('Equity', 'instant', None, record.date_to, figures['total'][2]))
             else:

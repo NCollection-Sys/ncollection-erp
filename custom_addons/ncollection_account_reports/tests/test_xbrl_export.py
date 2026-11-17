@@ -104,8 +104,8 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         self.assertEqual(len(equity), 2)
         self.assertAlmostEqual(equity[0][1], opening)
         self.assertAlmostEqual(equity[1][1], closing)
-        self.assertAlmostEqual(facts['IncreaseDecreaseInEquity'][0][1], movement)
-        self.assertAlmostEqual(equity[0][1] + facts['IncreaseDecreaseInEquity'][0][1], equity[1][1])
+        self.assertAlmostEqual(facts['ChangesInEquity'][0][1], movement)
+        self.assertAlmostEqual(equity[0][1] + facts['ChangesInEquity'][0][1], equity[1][1])
         pl = self.env['ncollection.account.report.profit.loss'].create(
             {'date_from': self.year_start, 'date_to': today})
         self.assertAlmostEqual(facts['ProfitLoss'][0][1], pl._nc_totals()['net_profit'],
