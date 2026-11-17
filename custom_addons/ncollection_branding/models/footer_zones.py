@@ -27,7 +27,7 @@ class ResCompany(models.Model):
                                   help="Printed at the bottom right of every page of the company's documents.")
 
 
-class BaseDocumentLayout(models.TransientModel):
+class BaseDocumentLayout(models.TransientModel):  # pylint: disable=no-wizard-in-models
     _inherit = 'base.document.layout'
 
     nc_footer_left = fields.Html(related='company_id.nc_footer_left', readonly=False)
