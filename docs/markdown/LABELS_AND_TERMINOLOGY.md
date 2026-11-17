@@ -117,3 +117,11 @@ Settings > Activate Developer Mode (the existing menu) turns on Odoo's own devel
 Owner, the platform administrator and the superuser (`ir.http._handle_debug`). The label editor does NOT need it: it
 works in normal mode for whoever may edit Interface Text. Odoo's technical menus stay restricted to
 `base.group_no_one` / `base.group_system`.
+
+## NCollection's own strings (owner review 2026-11)
+
+The purple role badges in partner dropdowns ("Customer | Vendor") were NCollection's OWN label
+(`ncollection_account_core/models/res_partner.py` `_nc_role_labels`), a code string, which the terminology rule cannot
+reach in English. Fixed at the source: every user-visible "Vendor" in NCollection's own Python, views and data now says
+Supplier (role badges, document kinds and file names, report names, dashboard KPI, invoice charge scope, onboarding,
+menus), with the Arabic re-keyed. Technical identifiers (`vendor` role key, xml ids, fields) are unchanged.

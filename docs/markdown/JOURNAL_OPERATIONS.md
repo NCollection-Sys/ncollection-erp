@@ -125,3 +125,16 @@ English: Vendor → Supplier on the accounting / purchase menus, actions and for
 inheritance (technical names untouched); Accounting > Customers > Payments → Receipts. Arabic: already "المورد"; the
 new terms are in `i18n/ar.po`. Python-coded messages of Odoo itself cannot be re-worded in English without changing
 core (Odoo never translates `en_US`); see limitations.
+
+## Owner review 2026-11
+
+* **Incoming Payment Method.** An internal transfer has an Outgoing Payment Method (From Journal) and an Incoming
+  Payment Method (To Journal, `destination_payment_method_line_id`): the To Journal's incoming methods only, the first in
+  journal order by default, replaced when the To Journal changes, validated server-side, and USED by the receiving
+  payment. Posted transfers recorded before this release take the method their receiving payment really used
+  (migration). Status follows both payments' real state (Paid only when both are paid).
+* **Not a customer receipt / supplier payment.** Odoo's Customer Receipts and Supplier Payments actions get the domain
+  `nc_transfer_id = False` (they had none). A transfer leg is identified by that authoritative link only; a receipt or
+  payment without partner (an Account operation) stays listed. Transfers stay on both journals' Transactions (the row
+  opens the transfer) and in Internal Transfers.
+* **Balance panels** use the operation buttons' frame (thin neutral border, button radius, no fill, no coloured bar).

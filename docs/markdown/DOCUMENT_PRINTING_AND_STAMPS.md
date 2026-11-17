@@ -156,3 +156,13 @@ position and size in **millimetres** from the top-left of the paper, keep-propor
   be unstyled: **render it, convert it to an image, look at it** (the QA scripts used for this work are described in R-035).
 * Tests: `ncollection_branding/tests/test_stamp_overlay.py`, `test_document_stamp.py`; `ncollection_account_core/tests/test_document_stamp.py` (real
   wkhtmltopdf); `ncollection_core` View route and parity tests; Playwright `invoices-first.spec.ts`, `product-branding.spec.ts`; `ncollection_account_core/tests/test_document_stamp.py::TestAccountingStampEntry` (menu / group / domain, adviser may configure, accountant may not, multi-company) and `ncollection_branding/tests/test_stamp_image_security.py` (the image is group-restricted: model, `/web/image`, report context, overlay still works, no cross-company leak).
+
+## Footer zones (owner review 2026-11)
+
+Configure Document Layout has Left Footer, Center Footer and Right Footer instead of the single Footer
+(`res.company.nc_footer_left / _center / _right`, translatable HTML, per company, saved through the Workspace
+Administrator delegation, section Document Layout). Every company layout (Odoo's seven and the NCollection layout)
+prints them as physical LEFT | CENTER | RIGHT (the row is laid out left-to-right in Arabic too; each zone's text takes
+its own direction), instead of the single Footer, never both. A company with no zone prints its legacy Footer as before;
+the upgrade copies a legacy Footer into the Center zone once. A document type's own footer text (Print Settings) still
+wins on the NCollection layout.

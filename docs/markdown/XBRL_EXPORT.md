@@ -70,3 +70,30 @@ requirement is therefore **partially complete**, not "fully complete".
 
 Downloaded through a real browser session from the route. Automated tests: `tests/test_xbrl_export.py` (facts equal
 the report and the independently summed income ledger, comparison context, no GrossProfit, route refusals).
+
+## Export menu integration (owner review 2026-11)
+
+The report viewer (every NCollection financial report opened with View) has ONE Export menu: Excel (.xlsx), PDF,
+XBRL (.xbrl). It is driven by the report service (`nc_report_run` returns `xbrl_unavailable`, `nc_report_export`
+accepts `xbrl`), so every report reached through the viewer shows XBRL the same way:
+
+* a report with an IFRS mapping downloads the instance (same wizard record, same filters, dates, company, currency);
+* every other report shows "XBRL (.xbrl) — not available" DISABLED, with the reason underneath; asking the service
+  anyway is refused with the same reason. No `.xbrl` file is ever produced for it.
+
+| Report | PDF | Excel | XBRL in Export menu | Taxonomy / mapping | Limitation |
+|---|---|---|---|---|---|
+| Balance Sheet | yes | yes | download | IFRS 2025 Full: CurrentAssets, NoncurrentAssets, Assets, CurrentLiabilities, NoncurrentLiabilities, Liabilities, Equity, EquityAndLiabilities | — |
+| Profit and Loss | yes | yes | download | Revenue, OtherIncome, CostOfSales, ProfitLoss | Gross Profit / Operating Expenses not exported (no equivalent concept) |
+| Cash Flow | yes | yes | download | Operating / Investing / Financing, net change before FX, depreciation, cash instants | working-capital line not exported |
+| Changes in Equity | yes | yes | download | Equity (opening / closing), ProfitLoss, ChangesInEquity; per ComponentsOfEquityAxis member when every equity account with a balance has a Component of Equity | components only when mapped (Accounting > Chart of Accounts > account form > Component of Equity); unmapped: total column |
+| Trial Balance, General Ledger, Partner Ledger, Partner Statement, Aged Balances | yes | yes | disabled + reason | — | account-level listings: no IFRS concept per row |
+| Tax Analysis | yes | yes | disabled + reason | — | a tax return analysis; needs a tax authority taxonomy |
+| UAE VAT report | yes | yes | disabled + reason | — | the FTA publishes no XBRL taxonomy for the VAT return |
+| Financial Summary, Profitability, Revenue / Expense, Cost / Profit Centre, Department, Comparison, Executive | yes | yes | disabled + reason | — | management analyses |
+| Dashboards (workspace, spreadsheet) | yes | yes | not offered | — | operational data, not a financial statement |
+
+Equity components (`account.account.nc_equity_component`): Issued capital, Share premium, Treasury shares, Retained
+earnings, Other reserves. The current-year earnings account and the profit and loss accounts are retained earnings by
+nature. A ledger with ANY unmapped equity account carrying a balance exports the total column only, so the components
+always add up to the total (tested).

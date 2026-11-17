@@ -285,3 +285,15 @@ Playwright specs under `e2e/tests/`.
 * A typed password is held in a transient row between the form save and the button; it is cleared first thing in the action.
 * The temporary password is shown in a sticky notification: it can be read once, then it is gone (there is no "copy" of it anywhere).
 * Departments / teams are HR's; there is no organisation tree of our own.
+
+## Settings interface (owner review 2026-11)
+
+The tenant Settings app IS Odoo's own settings view (`js_class="base_settings"`): left sidebar of apps with their icons,
+search, Save / Discard, the unsaved-changes guard. Apps: General Settings (Users & Access, Company, Workspace blocks of
+"Manage ..." links, each shown only at the user's level), Accounting, Sales, Purchase, Inventory (key/value settings,
+hidden / read-only by level, checked again server-side on Save, which calls `execute` = the guarded save). Top menu,
+like Odoo's Settings: General Settings | Users & Access | Company | Workspace.
+
+ONE Home tile named "Settings" with Odoo's settings icon per user: a technical administrator (base.group_system,
+platform staff) sees Odoo's Settings (renamed back from "Technical Settings"), which carries "Workspace Settings"; every
+other user sees the workspace Settings app. Audit Log is its own Home app (companion of OCA `auditlog`).
