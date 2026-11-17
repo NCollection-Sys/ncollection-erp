@@ -25,6 +25,7 @@ import hashlib
 import json
 import logging
 import re
+import uuid
 
 
 from odoo import api, fields, models, tools
@@ -267,47 +268,68 @@ class LabelOverride(models.Model):
 
     @api.model
     def nc_quick_edit(self, vals):
-        """The in-page editor's ONE entry point: find or create (or reset) the override of an element the browser
-        identified by its metadata. Validation, rights, policy and audit are the model's own (create / write)."""
+        """The in-page editor's ONE entry point. The browser sends what it identified (a field, a menu, or a screen
+        text of the current model) and the text it shows; this finds or creates (or resets) the override(s) that
+        change exactly that text. A field label may be the field's own label AND / OR a view's string= for it, so
+        every source of the visible words is covered; a screen text present in several views of the model is
+        renamed in each. Validation, rights, policy and audit are the model's own (create / write / reset)."""
         if not isinstance(vals, dict):
             raise ValidationError(self.env._("Malformed request."))
         kind = vals.get('kind')
         lang = vals.get('lang') or self.env.lang or 'en_US'
+        text = str(vals.get('text') or '').strip()
+        reset = bool(vals.get('reset'))
         company = self.env.company if vals.get('scope') == 'company' else self.env['res.company']
-        domain = [('lang', '=', lang), ('company_id', '=', company.id or False)]
-        create = {'lang': lang, 'company_id': company.id or False}
-        if kind in ('field', 'help'):
-            field = self.env['ir.model.fields']._get(str(vals.get('model') or ''), str(vals.get('field') or ''))
-            if not field:
-                raise ValidationError(self.env._("Unknown field."))
-            domain += [('target_type', '=', kind), ('field_id', '=', field.id)]
-            create.update(target_type=kind, field_id=field.id)
-        elif kind == 'menu':
+        Override = self.with_context(active_test=False)
+        targets = []  # (domain, create vals)
+        if kind == 'menu':
             menu = self.env['ir.ui.menu'].browse(int(vals.get('menu_id') or 0)).exists()
             if not menu:
                 raise ValidationError(self.env._("Unknown menu."))
-            domain += [('target_type', '=', 'menu'), ('menu_id', '=', menu.id)]
-            create.update(target_type='menu', menu_id=menu.id)
-        elif kind == 'view':
-            text = str(vals.get('text') or '').strip()
-            views = self.env['ir.ui.view'].sudo().search([('model', '=', str(vals.get('model') or ''))])
-            view = next((v for v in views if text in self._nc_view_terms(v, lang)), None)
-            if not view:
-                raise ValidationError(self.env._("This text is not a screen text that can be renamed here."))
-            domain += [('target_type', '=', 'view'), ('view_id', '=', view.id), ('source_term', '=', text)]
-            create.update(target_type='view', view_id=view.id, source_term=text)
+            targets.append(([('target_type', '=', 'menu'), ('menu_id', '=', menu.id),
+                             ('company_id', '=', company.id or False)],
+                            {'target_type': 'menu', 'menu_id': menu.id, 'company_id': company.id or False}))
+        elif kind in ('field', 'view'):
+            model = str(vals.get('model') or '')
+            field = kind == 'field' and self.env['ir.model.fields']._get(model, str(vals.get('field') or ''))
+            if kind == 'field' and not field:
+                raise ValidationError(self.env._("Unknown field."))
+            if field:
+                current = (field.with_context(lang=lang).field_description or '').strip()
+                mine = Override.search([('target_type', '=', 'field'), ('field_id', '=', field.id),
+                                        ('lang', '=', lang), ('company_id', '=', company.id or False)], limit=1)
+                if not text or current == text or (mine and mine.value == text):
+                    targets.append(([('target_type', '=', 'field'), ('field_id', '=', field.id),
+                                     ('company_id', '=', company.id or False)],
+                                    {'target_type': 'field', 'field_id': field.id,
+                                     'company_id': company.id or False}))
+            views = self.env['ir.ui.view'].sudo().search([('model', '=', model)]) if model else self.env['ir.ui.view']
+            for view in views:
+                existing = Override.search([('target_type', '=', 'view'), ('view_id', '=', view.id),
+                                            ('lang', '=', lang), ('value', '=', text)], limit=1)
+                source = existing.source_term if existing else (
+                    text if text in self._nc_view_terms(view, lang) else None)
+                if source:
+                    targets.append(([('target_type', '=', 'view'), ('view_id', '=', view.id),
+                                     ('source_term', '=', source)],
+                                    {'target_type': 'view', 'view_id': view.id, 'source_term': source}))
         else:
             raise ValidationError(self.env._("This kind of text cannot be renamed here."))
-        existing = self.with_context(active_test=False).search(domain, limit=1)
-        if vals.get('reset'):
-            if existing.active:
-                existing.action_reset()
-            return {'reset': True}
-        value = vals.get('value')
-        if existing:
-            existing.write({'value': value, 'active': True})
-            return {'id': existing.id}
-        return {'id': self.create(dict(create, value=value)).id}
+        if not targets:
+            raise ValidationError(self.env._("This text is not a screen text that can be renamed here."))
+        ids = []
+        for domain, create in targets:
+            existing = Override.search(domain + [('lang', '=', lang)], limit=1)
+            if reset:
+                if existing.active:
+                    existing.action_reset()
+                continue
+            if existing:
+                existing.write({'value': vals.get('value'), 'active': True})
+                ids.append(existing.id)
+            else:
+                ids.append(self.create(dict(create, lang=lang, value=vals.get('value'))).id)
+        return {'reset': True} if reset else {'ids': ids}
 
     @api.model
     def nc_can_edit(self):
@@ -348,6 +370,7 @@ class LabelOverride(models.Model):
 
     def _nc_apply(self):
         self.env.registry.clear_cache()  # the company overlay is cached
+        self.env.registry.clear_cache('stable')  # field labels / help (ir.model.fields._get_fields_cached)
         for rec in self.filtered(lambda r: r.active and not r.company_id):
             record = rec._nc_record()
             if not record:
@@ -407,6 +430,9 @@ class LabelEngine(models.AbstractModel):
         self.env['ncollection.label.override'].sudo().search([])._nc_apply()
         self.env.registry.clear_cache()
         self.env.registry.clear_cache('templates')
+        self.env.registry.clear_cache('stable')
+        # every browser must drop its cached views / menus (IrHttpLabels.session_info)
+        Param.set_param('ncollection_core.label_version', uuid.uuid4().hex)
         Param.set_param(SIGNATURE_PARAM, self._nc_signature())
         return changed
 
@@ -537,3 +563,21 @@ class IrUiMenuLabels(models.Model):
             if menu_id in menus:
                 menus[menu_id] = dict(menus[menu_id], name=value)
         return menus
+
+
+LABEL_VERSION_PARAM = 'ncollection_core.label_version'
+
+
+class IrHttpLabels(models.AbstractModel):
+    _inherit = 'ir.http'
+
+    def session_info(self):
+        """Odoo's web client keeps views and menus in a browser cache keyed by ``registry_hash`` and shows that copy
+        first. A label change does not touch the registry, so the label version is mixed into the key: every browser
+        drops its cached views / menus on its next load after a label change, and only then."""
+        info = super().session_info()
+        version = self.env['ir.config_parameter'].sudo().get_param(LABEL_VERSION_PARAM)
+        if version and info.get('registry_hash'):
+            info['registry_hash'] = tools.misc.hmac(
+                self.env(su=True), 'webclient-cache', '%s-%s' % (info['registry_hash'], version))
+        return info

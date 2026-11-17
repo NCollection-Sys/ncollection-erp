@@ -113,7 +113,7 @@ class TestCompanyScopedLabels(TransactionCase):
         result = self.Override.with_user(self.admin).with_company(self.c1).nc_quick_edit(
             {'kind': 'field', 'model': 'res.partner', 'field': 'ref', 'lang': 'en_US', 'value': 'Customer No.',
              'scope': 'company'})
-        record = self.Override.browse(result['id'])
+        record = self.Override.browse(result['ids'])
         self.assertEqual(record.company_id, self.c1)
         self.assertEqual(self._label(self.c1), 'Customer No.')
         self.assertEqual(self._label(self.c2), original, "the other company keeps the original")
@@ -125,7 +125,9 @@ class TestCompanyScopedLabels(TransactionCase):
         self.assertEqual(self._label(self.c1), original)
 
     def test_company_only_menu_name(self):
-        menu = self.env['ir.ui.menu'].create({'name': 'Lbl Scoped Menu', 'action': 'ir.actions.act_window,%d' % self.env.ref('base.action_partner_form').id})
+        action = self.env.ref('base.action_partner_form')
+        menu = self.env['ir.ui.menu'].create(
+            {'name': 'Lbl Scoped Menu', 'action': 'ir.actions.act_window,%d' % action.id})
         self.Override.with_user(self.admin).with_company(self.c1).nc_quick_edit(
             {'kind': 'menu', 'menu_id': menu.id, 'lang': 'en_US', 'value': 'Our Menu', 'scope': 'company'})
         self.env.registry.clear_cache()

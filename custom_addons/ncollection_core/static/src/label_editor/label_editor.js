@@ -9,6 +9,7 @@ import { Dialog } from "@web/core/dialog/dialog";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { browser } from "@web/core/browser/browser";
+import { rpcBus } from "@web/core/network/rpc";
 import { _t } from "@web/core/l10n/translation";
 
 const BODY_CLASS = "o_nc_label_edit";
@@ -37,6 +38,19 @@ export class NcLabelDialog extends Component {
             await this.orm.call("ncollection.label.override", "nc_quick_edit", [
                 { ...this.props.target, scope: this.state.scope, ...extra },
             ]);
+            // Odoo's web client shows menus and views from its own caches first (stale-while-revalidate): drop
+            // them, so the reload renders the text the server now serves.
+            rpcBus.trigger("CLEAR-CACHES");
+            browser.localStorage.removeItem("webclient_menus");
+            // The persistent cache is IndexedDB: drop it outright and only then reload.
+            await new Promise((resolve) => {
+                const request = browser.indexedDB ? browser.indexedDB.deleteDatabase("rpc") : null;
+                if (!request) {
+                    return resolve();
+                }
+                request.onsuccess = request.onerror = request.onblocked = () => resolve();
+                browser.setTimeout(resolve, 1500);
+            });
             browser.location.reload();
         } catch (error) {
             this.state.busy = false;
@@ -101,16 +115,21 @@ export class NcLabelEditorSystray extends Component {
         }
         const header = el.closest("th[data-name]");
         if (header) {
-            return { kind: "field", model: this._model(), field: header.dataset.name, text: header.innerText.trim() };
+            const text = (header.querySelector(".o_column_title, span") || header).innerText.trim();
+            return { kind: "field", model: this._model(), field: header.dataset.name, text };
         }
-        const label = el.closest(".o_form_label, .o_td_label label, label.o_form_label");
+        const label = el.closest("label.o_form_label, .o_td_label label");
         if (label) {
-            const cell = label.closest(".o_cell, .o_wrap_label, .o_td_label") || label.parentElement;
-            const widget = cell && (cell.nextElementSibling || cell).querySelector("[name]");
-            const name = label.getAttribute("for") ? document.getElementById(label.getAttribute("for")) : null;
-            const field = (widget && widget.getAttribute("name")) || (name && name.closest("[name]")?.getAttribute("name"));
-            if (field) {
-                return { kind: "field", model: this._model(), field, text: label.innerText.trim() };
+            // The label's own words, without Odoo's "?" help marker (<sup>).
+            const text = [...label.childNodes].filter((n) => n.nodeName !== "SUP").map((n) => n.textContent)
+                .join("").trim();
+            // The field is the widget the label points at (for="<field>_<n>"), never a neighbouring container.
+            const input = label.getAttribute("for") && document.getElementById(label.getAttribute("for"));
+            const row = label.closest(".o_cell, .o_wrap_label, .o_td_label");
+            const widget = (input && input.closest(".o_field_widget[name]")) ||
+                (row && row.nextElementSibling && row.nextElementSibling.querySelector(".o_field_widget[name]"));
+            if (widget) {
+                return { kind: "field", model: this._model(), field: widget.getAttribute("name"), text };
             }
         }
         const button = el.closest("button[name], .nav-link, .o_form_label, .o_horizontal_separator");
