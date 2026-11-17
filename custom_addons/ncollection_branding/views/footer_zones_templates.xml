@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Three footer zones (models/footer_zones.py). PHYSICAL positions: the table is laid out left-to-right in every
+         document, so Left is always on the left of the page, also in an Arabic (RTL) document; each zone's text takes
+         its own direction (dir="auto"). Fixed widths, wrapping, no clipping. `company` is the company, or Odoo's
+         Configure Document Layout wizard in its preview (it carries the same three fields). -->
+    <template id="nc_footer_zones">
+        <table class="o_nc_footer_zones" dir="ltr"
+               style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+            <tr>
+                <td style="width: 33.33%; text-align: left; vertical-align: top; padding: 0 2mm 0 0; word-wrap: break-word;">
+                    <div class="o_nc_footer_left" dir="auto" t-if="company.nc_footer_left" t-field="company.nc_footer_left"/>
+                </td>
+                <td style="width: 33.34%; text-align: center; vertical-align: top; padding: 0 2mm; word-wrap: break-word;">
+                    <div class="o_nc_footer_center" dir="auto" t-if="company.nc_footer_center" t-field="company.nc_footer_center"/>
+                </td>
+                <td style="width: 33.33%; text-align: right; vertical-align: top; padding: 0 0 0 2mm; word-wrap: break-word;">
+                    <div class="o_nc_footer_right" dir="auto" t-if="company.nc_footer_right" t-field="company.nc_footer_right"/>
+                </td>
+            </tr>
+        </table>
+    </template>
+
+    <!-- Odoo's seven company layouts: the zones replace the single Footer when any zone has content; otherwise the
+         layout prints exactly what it printed before ($0 = the original node). Page numbers and the rest of each
+         layout's footer are untouched. -->
+    <template id="nc_footer_zones_striped" inherit_id="web.external_layout_striped">
+        <xpath expr="//*[@t-field='company.report_footer']" position="replace">
+            <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
+                <t t-call="ncollection_branding.nc_footer_zones"/>
+            </t>
+            <t t-else="">$0</t>
+        </xpath>
+    </template>
+    <template id="nc_footer_zones_boxed" inherit_id="web.external_layout_boxed">
+        <xpath expr="//*[@t-field='company.report_footer']" position="replace">
+            <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
+                <t t-call="ncollection_branding.nc_footer_zones"/>
+            </t>
+            <t t-else="">$0</t>
+        </xpath>
+    </template>
+    <template id="nc_footer_zones_bold" inherit_id="web.external_layout_bold">
+        <xpath expr="//*[@t-field='company.report_footer']" position="replace">
+            <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
+                <t t-call="ncollection_branding.nc_footer_zones"/>
+            </t>
+            <t t-else="">$0</t>
+        </xpath>
+    </template>
+    <template id="nc_footer_zones_standard" inherit_id="web.external_layout_standard">
+        <xpath expr="//*[@t-field='company.report_footer']" position="replace">
+            <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
+                <div class="flex-grow-1 me-2"><t t-call="ncollection_branding.nc_footer_zones"/></div>
+            </t>
+            <t t-else="">$0</t>
+        </xpath>
+    </template>
+    <template id="nc_footer_zones_folder" inherit_id="web.external_layout_folder">
+        <xpath expr="//*[@t-field='company.report_footer']" position="replace">
+            <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
+                <div class="flex-grow-1 me-2"><t t-call="ncollection_branding.nc_footer_zones"/></div>
+            </t>
+            <t t-else="">$0</t>
+        </xpath>
+    </template>
+    <template id="nc_footer_zones_wave" inherit_id="web.external_layout_wave">
+        <xpath expr="//*[@t-field='company.report_footer']" position="replace">
+            <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
+                <t t-call="ncollection_branding.nc_footer_zones"/>
+            </t>
+            <t t-else="">$0</t>
+        </xpath>
+    </template>
+    <template id="nc_footer_zones_bubble" inherit_id="web.external_layout_bubble">
+        <xpath expr="//*[@t-field='company.report_footer']" position="replace">
+            <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
+                <div class="border-top pt-2"><t t-call="ncollection_branding.nc_footer_zones"/></div>
+            </t>
+            <t t-else="">$0</t>
+        </xpath>
+    </template>
+
+    <!-- The NCollection layout: the zones above its page-number line; a document type's own footer text (Print
+         Settings) still wins, as before. -->
+    <template id="nc_footer_zones_nc" inherit_id="ncollection_branding.external_layout_nc">
+        <xpath expr="//div[contains(@t-attf-class, 'o_nc_footer')]/table" position="before">
+            <t t-if="not nc_opts['footer_text'] and (company.nc_footer_left or company.nc_footer_center or company.nc_footer_right)">
+                <t t-call="ncollection_branding.nc_footer_zones"/>
+            </t>
+        </xpath>
+        <xpath expr="//div[contains(@t-attf-class, 'o_nc_footer')]//div[@t-elif='company.report_footer']" position="attributes">
+            <attribute name="t-elif">company.report_footer and not (company.nc_footer_left or company.nc_footer_center or company.nc_footer_right)</attribute>
+        </xpath>
+    </template>
+
+    <!-- Odoo's Configure Document Layout: the single Footer becomes Left / Center / Right. -->
+    <record id="view_base_document_layout_nc_footer_zones" model="ir.ui.view">
+        <field name="name">base.document.layout.nc.footer.zones</field>
+        <field name="model">base.document.layout</field>
+        <field name="inherit_id" ref="web.view_base_document_layout"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='report_footer']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='report_footer']" position="after">
+                <field name="nc_footer_left" string="Left Footer" options="{'resizable': false}"
+                       placeholder="e.g. Address, phone"/>
+                <field name="nc_footer_center" string="Center Footer" options="{'resizable': false}"
+                       placeholder="e.g. Bank account, IBAN"/>
+                <field name="nc_footer_right" string="Right Footer" options="{'resizable': false}"
+                       placeholder="e.g. TRN, licence number"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

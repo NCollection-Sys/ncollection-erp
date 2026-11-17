@@ -38,6 +38,7 @@ class ResCompany(models.Model):
             # header / footer / details are sanitized HTML (the Owner holds no sanitize-override group)
             'external_report_layout_id', 'paperformat_id', 'font', 'primary_color', 'secondary_color',
             'report_header', 'report_footer', 'company_details', 'layout_background', 'layout_background_image',
+            'nc_footer_left', 'nc_footer_center', 'nc_footer_right',
         }
 
     def _nc_delegated_company_write(self, vals):

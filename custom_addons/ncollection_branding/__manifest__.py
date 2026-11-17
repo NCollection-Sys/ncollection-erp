@@ -1,6 +1,6 @@
 {
     'name': 'NCollection Branding',
-    'version': '19.0.1.19.0',
+    'version': '19.0.1.20.0',
     'category': 'Theme/Customization',
     'summary': 'NCollection branding: system branding, tenant colours, document layout and stamps',
     'description': """
@@ -44,6 +44,7 @@ Applies NCollection corporate identity across the Odoo backend:
         'views/document_stamp_views.xml',
         'views/print_settings_views.xml',
         'views/report_layout_templates.xml',
+        'views/footer_zones_templates.xml',
         'data/dashboard_pdf.xml',
         'data/res_company_data.xml',
         'data/res_company_logo.xml',

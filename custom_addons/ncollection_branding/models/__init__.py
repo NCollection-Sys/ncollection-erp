@@ -15,3 +15,4 @@ from . import document_stamp_mixin
 from . import ir_actions_report
 from . import mail_thread
 from . import dashboard_pdf
+from . import footer_zones
