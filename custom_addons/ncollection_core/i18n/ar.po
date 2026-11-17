@@ -210,6 +210,7 @@ msgid "CEO"
 msgstr "الرئيس التنفيذي"
 
 #. module: ncollection_core
+#. odoo-javascript
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_user_invite_form model_terms:ir.ui.view,arch_db:ncollection_core.view_user_reset_password_form code:addons/ncollection_core/static/src/label_editor/label_editor.xml:0
 msgid "Cancel"
 msgstr "إلغاء"
@@ -608,6 +609,7 @@ msgid "Measurement"
 msgstr "القياس"
 
 #. module: ncollection_core
+#. odoo-javascript
 #: model:ir.model,name:ncollection_core.model_ir_ui_menu code:addons/ncollection_core/static/src/label_editor/label_editor.js:0 model:ir.model.fields,field_description:ncollection_core.field_ncollection_label_override__menu_id model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_label_override__target_type__menu
 msgid "Menu"
 msgstr "القائمة"

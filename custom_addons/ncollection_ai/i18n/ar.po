@@ -557,3 +557,9 @@ msgstr "المزوّد"
 #: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_readiness__mode__unavailable
 msgid "Unavailable"
 msgstr "غير متاح"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "This server has no %s: it cannot prove the workspace's identity."
+msgstr "لا يحتوي هذا الخادم على %s: لا يمكنه إثبات هوية مساحة العمل."

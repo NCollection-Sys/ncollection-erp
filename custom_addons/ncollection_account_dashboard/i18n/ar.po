@@ -586,11 +586,13 @@ msgid "Invoicing Analysis"
 msgstr "تحليل الفوترة"
 
 #. module: ncollection_account_dashboard
+#. odoo-javascript
 #: model:ir.actions.client,name:ncollection_account_dashboard.action_sales_premium code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0 model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_premium model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_premium_dept
 msgid "Sales Analysis"
 msgstr "تحليل المبيعات"
 
 #. module: ncollection_account_dashboard
+#. odoo-javascript
 #: model:ir.actions.client,name:ncollection_account_dashboard.action_invoicing_premium code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0 model:ir.ui.menu,name:ncollection_account_dashboard.menu_invoicing_premium
 msgid "Invoicing Analysis"
 msgstr "تحليل الفوترة"
