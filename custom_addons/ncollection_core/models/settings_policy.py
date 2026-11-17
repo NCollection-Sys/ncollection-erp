@@ -78,7 +78,7 @@ SECTION_GROUP = {
 
 # PLATFORM-GRANTED BUSINESS CAPABILITIES of the Workspace Administrator. Unlike a section (default administer, so an
 # upgrade changes nothing), a capability is OFF unless the platform pushes 'granted': it widens what a Workspace
-# Administrator may do, so only the platform management app may switch it on. Granting = the capability group is implied
+# Administrator may do, so only the platform may switch it on. Granting = the capability group is implied
 # by group_tenant_admin (Odoo 19 computes implied membership, so revoking removes it at once). The group itself is
 # Odoo's own access (its ACLs and record rules decide everything); no route or check is bypassed.
 #   key -> (label, the group implied while granted)
