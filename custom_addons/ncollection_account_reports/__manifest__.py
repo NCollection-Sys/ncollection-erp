@@ -45,6 +45,7 @@
         'report/report_templates.xml',
         'data/document_types.xml',
         'views/account_report_views.xml',
+        'views/equity_component_views.xml',
         'views/report_menus.xml',
     ],
     'assets': {

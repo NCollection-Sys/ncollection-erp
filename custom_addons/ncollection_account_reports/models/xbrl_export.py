@@ -39,6 +39,8 @@ from lxml import etree
 from odoo import api, models
 from odoo.exceptions import UserError
 
+from .equity_component import EQUITY_MEMBERS
+
 TAXONOMY_ENTRY_POINT = 'https://xbrl.ifrs.org/taxonomy/2025-03-27/full_ifrs_entry_point_2025-03-27.xsd'
 NS = {
     'xbrli': 'http://www.xbrl.org/2003/instance',
@@ -46,6 +48,7 @@ NS = {
     'xlink': 'http://www.w3.org/1999/xlink',
     'iso4217': 'http://www.xbrl.org/2003/iso4217',
     'ifrs-full': 'https://xbrl.ifrs.org/taxonomy/2025-03-27/ifrs-full',
+    'xbrldi': 'http://xbrl.org/2006/xbrldi',
 }
 ENTITY_SCHEME = 'https://www.ncollection.com/xbrl/entity'
 
@@ -146,6 +149,7 @@ class AccountReportXbrl(models.AbstractModel):
                 facts.append(('ChangesInEquity', 'duration', record.date_from, record.date_to,
                               figures['total'][1]))
                 facts.append(('Equity', 'instant', None, record.date_to, figures['total'][2]))
+                facts.extend(self._nc_equity_component_facts(record, opening))
             else:
                 figures = wizard._nc_pl_figures(record)[0]
                 if not record.date_from:
@@ -153,6 +157,34 @@ class AccountReportXbrl(models.AbstractModel):
                 for concept, key in PROFIT_LOSS_MAP:
                     facts.append((concept, 'duration', record.date_from, record.date_to, figures[key]))
         return facts
+
+    @api.model
+    def _nc_equity_component_facts(self, record, opening):
+        """Equity per ComponentsOfEquityAxis member (opening and closing instants, period movement), from the
+        report's own per-account balances. [] unless EVERY equity account with a balance has a component: a partly
+        mapped ledger would claim components that do not add up to the total."""
+        _figures, opening_by_account, closing_by_account = record._nc_equity_figures()
+        per_member = {}
+        for account in set(opening_by_account) | set(closing_by_account):
+            open_bal = opening_by_account.get(account, 0.0)
+            close_bal = closing_by_account.get(account, 0.0)
+            if account.account_type == 'equity':
+                if not account.nc_equity_component:
+                    if record.company_id.currency_id.is_zero(open_bal) and \
+                            record.company_id.currency_id.is_zero(close_bal):
+                        continue
+                    return []
+                member = EQUITY_MEMBERS[account.nc_equity_component]
+            else:   # equity_unaffected and the profit and loss accounts: retained earnings by nature
+                member = EQUITY_MEMBERS['retained_earnings']
+            o, c = per_member.get(member, (0.0, 0.0))
+            per_member[member] = (o + open_bal, c + close_bal)
+        out = []
+        for member, (o, c) in sorted(per_member.items()):
+            out.append(('Equity', 'instant', None, opening, o, member))
+            out.append(('ChangesInEquity', 'duration', record.date_from, record.date_to, c - o, member))
+            out.append(('Equity', 'instant', None, record.date_to, c, member))
+        return out
 
     @api.model
     def _nc_entity_identifier(self, company):
@@ -174,16 +206,20 @@ class AccountReportXbrl(models.AbstractModel):
         identifier = self._nc_entity_identifier(company)
         contexts = {}
 
-        def context_id(period_type, start, end):
-            key = (period_type, start, end)
+        def context_id(period_type, start, end, member=None):
+            key = (period_type, start, end, member)
             if key in contexts:
                 return contexts[key]
             cid = ('I' + end.isoformat()) if period_type == 'instant' else ('D%s_%s' % (start.isoformat(),
                                                                                         end.isoformat()))
-            cid = 'c_' + cid.replace('-', '')
+            cid = 'c_' + cid.replace('-', '') + ('_' + member if member else '')
             ctx = etree.SubElement(root, '{%s}context' % NS['xbrli'], {'id': cid})
             entity = etree.SubElement(ctx, '{%s}entity' % NS['xbrli'])
             etree.SubElement(entity, '{%s}identifier' % NS['xbrli'], {'scheme': ENTITY_SCHEME}).text = identifier
+            if member:
+                segment = etree.SubElement(entity, '{%s}segment' % NS['xbrli'])
+                etree.SubElement(segment, '{%s}explicitMember' % NS['xbrldi'],
+                                 {'dimension': 'ifrs-full:ComponentsOfEquityAxis'}).text = 'ifrs-full:' + member
             period = etree.SubElement(ctx, '{%s}period' % NS['xbrli'])
             if period_type == 'instant':
                 etree.SubElement(period, '{%s}instant' % NS['xbrli']).text = end.isoformat()
@@ -193,14 +229,15 @@ class AccountReportXbrl(models.AbstractModel):
             contexts[key] = cid
             return cid
 
-        for concept, period_type, start, end, _value in facts:
-            context_id(period_type, start, end)
+        facts = [fact if len(fact) == 6 else fact + (None,) for fact in facts]
+        for concept, period_type, start, end, _value, member in facts:
+            context_id(period_type, start, end, member)
         unit_id = 'u_' + currency.name
         unit = etree.SubElement(root, '{%s}unit' % NS['xbrli'], {'id': unit_id})
         etree.SubElement(unit, '{%s}measure' % NS['xbrli']).text = 'iso4217:' + currency.name
         decimals = currency.decimal_places
-        for concept, period_type, start, end, value in facts:
+        for concept, period_type, start, end, value, member in facts:
             fact = etree.SubElement(root, '{%s}%s' % (NS['ifrs-full'], concept), {
-                'contextRef': contexts[(period_type, start, end)], 'unitRef': unit_id, 'decimals': str(decimals)})
+                'contextRef': contexts[(period_type, start, end, member)], 'unitRef': unit_id, 'decimals': str(decimals)})
             fact.text = '{:.{p}f}'.format(currency.round(value) + 0.0, p=decimals)
         return etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True)

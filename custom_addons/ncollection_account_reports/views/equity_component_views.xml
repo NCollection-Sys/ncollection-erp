@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_form_nc_equity_component" model="ir.ui.view">
+        <field name="name">account.account.form.nc.equity.component</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="account.view_account_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='account_type']" position="after">
+                <field name="nc_equity_component" invisible="account_type != 'equity'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

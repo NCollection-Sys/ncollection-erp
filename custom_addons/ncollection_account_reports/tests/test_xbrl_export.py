@@ -100,6 +100,7 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
             {'date_from': self.year_start, 'date_to': today})
         root, facts = self._facts(wizard)
         opening, movement, closing = wizard._nc_totals()
+        facts = {k: [f for f in v if 'Member' not in f[0]] for k, v in facts.items()}   # the total column
         equity = sorted(facts['Equity'])                 # c_I<opening> sorts before c_I<closing>
         self.assertEqual(len(equity), 2)
         self.assertAlmostEqual(equity[0][1], opening)
@@ -113,7 +114,37 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         bs = self.env['ncollection.account.report.balance.sheet'].create({'date_to': today})
         bs_equity = sum(bs._nc_bucket_totals(bs)[0][k] for k in ('equity', 'accumulated_earnings'))
         self.assertAlmostEqual(equity[1][1], bs_equity, msg="closing equity ties to the Balance Sheet")
-        self.assertIsNone(root.find('.//{%s}segment' % NS['xbrli']), "no component member is claimed")
+
+    def test_equity_components_only_when_every_equity_account_is_mapped(self):
+        today = datetime.date.today()
+        capital = self.env['account.account'].create({'code': '310901', 'name': 'Share Capital (xbrl)',
+                                                      'account_type': 'equity'})
+        bank = self.company_data['default_journal_bank']
+        move = self.env['account.move'].create({'move_type': 'entry', 'journal_id': bank.id, 'date': today,
+            'line_ids': [Command.create({'account_id': bank.default_account_id.id, 'debit': 1000.0}),
+                         Command.create({'account_id': capital.id, 'credit': 1000.0})]})
+        move.action_post()
+        wizard = self.env['ncollection.account.report.equity.changes'].create(
+            {'date_from': self.year_start, 'date_to': today})
+        root, _facts = self._facts(wizard)
+        self.assertIsNone(root.find('.//{%s}segment' % NS['xbrli']), "an unmapped equity account: total only")
+        others = self.env['account.account'].search([('account_type', '=', 'equity'),
+                                                     ('company_ids', 'in', self.env.company.id)])
+        others.nc_equity_component = 'other_reserves'
+        capital.nc_equity_component = 'issued_capital'
+        root, facts = self._facts(wizard)
+        members = {}
+        for ctx in root.findall('{%s}context' % NS['xbrli']):
+            m = ctx.find('.//{%s}explicitMember' % NS['xbrldi'])
+            if m is not None:
+                self.assertEqual(m.get('dimension'), 'ifrs-full:ComponentsOfEquityAxis')
+                members[ctx.get('id')] = m.text
+        self.assertIn('ifrs-full:IssuedCapitalMember', members.values())
+        closing_ctx = 'c_I%s' % today.isoformat().replace('-', '')
+        by_member = {members[c]: v for c, v in facts['Equity'] if c.startswith(closing_ctx + '_')}
+        total = [v for c, v in facts['Equity'] if c == closing_ctx][0]
+        self.assertAlmostEqual(by_member['ifrs-full:IssuedCapitalMember'], 1000.0)
+        self.assertAlmostEqual(sum(by_member.values()), total, msg="the components add up to the total column")
 
     def test_comparison_period_is_a_second_context(self):
         wizard = self.env['ncollection.account.report.profit.loss'].create(
@@ -124,6 +155,22 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         wizard.comparison_type = 'none'
         _root, facts = self._facts(wizard)
         self.assertEqual(len(facts['Revenue']), 1)
+
+    def test_the_export_menu_offers_xbrl_for_every_report(self):
+        """The report viewer's Export menu: XBRL downloads where a mapping exists; every other report says why."""
+        from odoo.exceptions import UserError
+        Service = self.env['ncollection.report.service']
+        today = datetime.date.today()
+        bs = Service.nc_report_run('ncollection.account.report.balance.sheet', {'date_to': str(today)})
+        self.assertFalse(bs['xbrl_unavailable'])
+        act = Service.nc_report_export(bs['wizard']['model'], bs['wizard']['id'], 'xbrl')
+        self.assertEqual(act['type'], 'ir.actions.act_url')
+        self.assertIn('/ncollection/account_reports/xbrl/', act['url'])
+        tb = Service.nc_report_run('ncollection.account.report.trial.balance',
+                                   {'date_from': str(self.year_start), 'date_to': str(today)})
+        self.assertTrue(tb['xbrl_unavailable'], "a disabled entry with its reason, not a missing one")
+        with self.assertRaises(UserError):
+            Service.nc_report_export(tb['wizard']['model'], tb['wizard']['id'], 'xbrl')
 
     def test_route_downloads_and_refuses_what_it_must(self):
         wizard = self.env['ncollection.account.report.balance.sheet'].with_user(self.reader).create(
