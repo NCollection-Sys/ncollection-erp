@@ -16,16 +16,12 @@ msgid "Duplicate"
 msgstr "نسخة مماثلة"
 
 #. module: ncollection_sale_documents
-#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__display_name
-#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__display_name
-#: model:ir.model.fields,field_description:ncollection_sale_documents.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__display_name model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__display_name model:ir.model.fields,field_description:ncollection_sale_documents.field_res_company__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_sale_documents
-#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__id
-#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__id
-#: model:ir.model.fields,field_description:ncollection_sale_documents.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_sale_order__id model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__id model:ir.model.fields,field_description:ncollection_sale_documents.field_res_company__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -40,10 +36,8 @@ msgid "Invoices"
 msgstr "الفواتير"
 
 #. module: ncollection_sale_documents
-#: model:ir.model,name:ncollection_sale_documents.model_sale_order
-#: model:ncollection.document.type,name:ncollection_sale_documents.doc_type_sales_order
 #. odoo-python
-#: code:addons/ncollection_sale_documents/models/sale_order.py:0
+#: model:ir.model,name:ncollection_sale_documents.model_sale_order model:ncollection.document.type,name:ncollection_sale_documents.doc_type_sales_order code:addons/ncollection_sale_documents/models/sale_order.py:0
 msgid "Sales Order"
 msgstr "أمر البيع"
 
@@ -64,15 +58,12 @@ msgstr "اربط برنامجك الخاص"
 
 #. module: ncollection_sale_documents
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_portal_connect_branded
-msgid ""
-"Use the above REST URL to get structured data of this order in UBL format."
+msgid "Use the above REST URL to get structured data of this order in UBL format."
 msgstr "استخدم رابط REST أعلاه للحصول على بيانات منظَّمة لهذا الطلب بصيغة UBL."
 
 #. module: ncollection_sale_documents
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.sale_order_portal_connect_branded
-msgid ""
-"Use the structured copy of this order below to bring it into your own "
-"system."
+msgid "Use the structured copy of this order below to bring it into your own system."
 msgstr "استخدم النسخة المنظَّمة من هذا الطلب أدناه لإدخالها إلى نظامك الخاص."
 
 #. module: ncollection_sale_documents
@@ -185,3 +176,38 @@ msgstr "عروض الأسعار"
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
 msgid "Sales"
 msgstr "المبيعات"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__default_invoice_policy
+msgid "Invoicing Policy"
+msgstr "سياسة الفوترة"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__group_auto_done_setting
+msgid "Lock Confirmed Sales"
+msgstr "قفل المبيعات المؤكدة"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
+msgid "Products"
+msgstr "المنتجات"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__group_warning_sale
+msgid "Sale Order Warnings"
+msgstr "تحذيرات أوامر البيع"
+
+#. module: ncollection_sale_documents
+#: model:ir.actions.act_window,name:ncollection_sale_documents.action_nc_sales_settings model:ir.ui.menu,name:ncollection_sale_documents.menu_workspace_sales_settings
+msgid "Sales Settings"
+msgstr "إعدادات المبيعات"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__group_uom
+msgid "Units of Measure & Packagings"
+msgstr "وحدات القياس والتعبئة"
+
+#. module: ncollection_sale_documents
+#: model:ir.model.fields,field_description:ncollection_sale_documents.field_ncollection_business_settings__group_product_variant
+msgid "Variants"
+msgstr "المتغيرات"

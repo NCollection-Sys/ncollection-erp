@@ -2902,3 +2902,9 @@ msgstr "ملف XBRL وفق تصنيف IFRS المحاسبي 2025"
 #: code:addons/ncollection_account_reports/models/account_report.py:0 code:addons/ncollection_account_reports/models/xbrl_export.py:0
 msgid "XBRL is available for the Balance Sheet, the Profit and Loss and the Cash Flow only."
 msgstr "تصدير XBRL متاح للميزانية العمومية وقائمة الأرباح والخسائر وقائمة التدفقات النقدية فقط."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/account_report.py:0 code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the Statement of Changes in Equity only."
+msgstr "تصدير XBRL متاح للميزانية العمومية وقائمة الأرباح والخسائر وقائمة التدفقات النقدية وقائمة التغيرات في حقوق الملكية فقط."

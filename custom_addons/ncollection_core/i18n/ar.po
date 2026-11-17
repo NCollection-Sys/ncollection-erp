@@ -3366,3 +3366,45 @@ msgid ""
 "Your text replaces the original in the chosen language for the whole workspace, and Reset brings the\n"
 "               original back."
 msgstr "يحل نصك محل الأصل باللغة المختارة في مساحة العمل كلها، وزر الاستعادة يعيد الأصل."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/label_override.py:0
+msgid "Company-only text is available for field labels, field help, choice labels and menu names; screen texts and page titles apply to the whole workspace."
+msgstr "النص الخاص بشركة واحدة متاح لتسميات الحقول وتلميحاتها وتسميات الخيارات وأسماء القوائم؛ أما نصوص الشاشة وعناوين الصفحات فتنطبق على مساحة العمل كلها."
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__inventory
+msgid "Inventory Settings"
+msgstr "إعدادات المخزون"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__purchase
+msgid "Purchase Settings"
+msgstr "إعدادات المشتريات"
+
+#. module: ncollection_core
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__sales
+msgid "Sales Settings"
+msgstr "إعدادات المبيعات"
+
+#. module: ncollection_core
+#: model:res.groups,name:ncollection_core.group_settings_inventory
+msgid "Settings: Inventory"
+msgstr "الإعدادات: المخزون"
+
+#. module: ncollection_core
+#: model:res.groups,name:ncollection_core.group_settings_purchase
+msgid "Settings: Purchase"
+msgstr "الإعدادات: المشتريات"
+
+#. module: ncollection_core
+#: model:res.groups,name:ncollection_core.group_settings_sales
+msgid "Settings: Sales"
+msgstr "الإعدادات: المبيعات"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/label_override.py:0
+msgid "This text is a screen text (button, tab, section or a label set by the screen): it applies to the whole workspace and cannot be changed for one company only. Choose \"Whole workspace\"."
+msgstr "هذا النص من نصوص الشاشة (زر أو تبويب أو قسم أو تسمية تحددها الشاشة): ينطبق على مساحة العمل كلها ولا يمكن تغييره لشركة واحدة فقط. اختر \"مساحة العمل كلها\"."

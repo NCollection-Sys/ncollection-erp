@@ -101,9 +101,7 @@ msgstr "الباركود"
 
 #. module: ncollection_stock_barcode
 #. odoo-javascript
-#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
-#: model:ir.actions.client,name:ncollection_stock_barcode.action_nc_barcode_scanner
-#: model:ir.ui.menu,name:ncollection_stock_barcode.menu_nc_barcode_scanner
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0 model:ir.actions.client,name:ncollection_stock_barcode.action_nc_barcode_scanner model:ir.ui.menu,name:ncollection_stock_barcode.menu_nc_barcode_scanner
 msgid "Barcode Scanner"
 msgstr "ماسح الباركود"
 
@@ -470,3 +468,71 @@ msgstr "الوجهة"
 #: code:addons/ncollection_stock_barcode/models/stock_barcode.py:0
 msgid "source"
 msgstr "المصدر"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__annual_inventory_month
+msgid "Annual Inventory Month"
+msgstr "شهر الجرد السنوي"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__group_stock_tracking_owner
+msgid "Consignment"
+msgstr "بضاعة الأمانة"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__annual_inventory_day
+msgid "Day of the month"
+msgstr "يوم الشهر"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__group_lot_on_delivery_slip
+msgid "Display Lots & Serial Numbers on Delivery Slips"
+msgstr "عرض أرقام الدفعات والأرقام التسلسلية في إيصالات التسليم"
+
+#. module: ncollection_stock_barcode
+#: model_terms:ir.ui.view,arch_db:ncollection_stock_barcode.view_nc_business_settings_form_inventory
+msgid "Inventory"
+msgstr "المخزون"
+
+#. module: ncollection_stock_barcode
+#: model:ir.actions.act_window,name:ncollection_stock_barcode.action_nc_inventory_settings model:ir.ui.menu,name:ncollection_stock_barcode.menu_workspace_inventory_settings
+msgid "Inventory Settings"
+msgstr "إعدادات المخزون"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__group_stock_production_lot
+msgid "Lots & Serial Numbers"
+msgstr "أرقام الدفعات والأرقام التسلسلية"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__group_stock_tracking_lot
+msgid "Packages"
+msgstr "الطرود"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__group_stock_reception_report
+msgid "Reception Report"
+msgstr "تقرير الاستلام"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__group_stock_sign_delivery
+msgid "Signature"
+msgstr "التوقيع"
+
+#. module: ncollection_stock_barcode
+#: model_terms:ir.ui.view,arch_db:ncollection_stock_barcode.view_nc_business_settings_form_inventory
+msgid "Traceability"
+msgstr "التتبع"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__group_warning_stock
+msgid "Warnings for Stock"
+msgstr "تحذيرات المخزون"
+
+#. module: ncollection_stock_barcode
+#. odoo-python
+#: code:addons/ncollection_stock_barcode/wizards/inventory_settings.py:0
+msgid ""
+"You have product(s) in stock that have lot/serial number tracking enabled. \n"
+"Switch off tracking on all the products before switching off this setting."
+msgstr "لديك منتجات في المخزون مفعّل لها تتبع أرقام الدفعات/الأرقام التسلسلية. أوقف التتبع في جميع المنتجات قبل إيقاف هذا الإعداد."

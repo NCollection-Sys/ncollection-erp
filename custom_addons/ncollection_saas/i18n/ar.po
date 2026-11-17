@@ -3763,3 +3763,122 @@ msgstr "متى"
 #: code:addons/ncollection_saas/models/settings_policy.py:0
 msgid "plan %s"
 msgstr "الخطة %s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__ai
+msgid "AI Assistant"
+msgstr "المساعد الذكي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__appearance
+msgid "Appearance"
+msgstr "المظهر"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__business
+msgid "Business Settings"
+msgstr "إعدادات الأعمال"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__company
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__document_layout
+msgid "Document Layout"
+msgstr "تخطيط المستندات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__document_stamps
+msgid "Document Stamps"
+msgstr "أختام المستندات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__inventory
+msgid "Inventory Settings"
+msgstr "إعدادات المخزون"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_settings_policy_line__level
+msgid "Level"
+msgstr "المستوى"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__overview
+msgid "Overview"
+msgstr "نظرة عامة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__print_settings
+msgid "Print Settings"
+msgstr "إعدادات الطباعة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__purchase
+msgid "Purchase Settings"
+msgstr "إعدادات المشتريات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__receipts
+msgid "Receipts & accounting (read only)"
+msgstr "الإيصالات والمحاسبة (قراءة فقط)"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__roles
+msgid "Roles & Permissions"
+msgstr "الأدوار والصلاحيات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__sales
+msgid "Sales Settings"
+msgstr "إعدادات المبيعات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__security
+msgid "Security"
+msgstr "الأمان"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/settings_policy.py:0
+msgid "Settings policy changed: %(s)s %(o)s -> %(v)s"
+msgstr "تغيّرت سياسة الإعدادات: %(s)s %(o)s -> %(v)s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/settings_policy.py:0
+msgid "Settings policy removed: %(s)s (back to the default)"
+msgstr "أُزيلت سياسة الإعدادات: %(s)s (عودة إلى الافتراضي)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/settings_policy.py:0
+msgid "Settings policy set: %(s)s = %(v)s"
+msgstr "عُيّنت سياسة الإعدادات: %(s)s = %(v)s"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__system
+msgid "System"
+msgstr "النظام"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__teams
+msgid "Teams & Departments"
+msgstr "الفرق والأقسام"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_subscription_plan_form_settings_policy
+msgid ""
+"The default level of each tenant Settings page for every tenant on this plan.\n"
+"                        A section with no line is \"Administer\". Hidden: the page does not exist; View only: it opens\n"
+"                        read-only; Edit: the Workspace Administrator changes it; Administer: and may delegate it.\n"
+"                        A capability (\"Receipts &amp; accounting (read only)\") is the opposite: OFF with no line;\n"
+"                        any level from View up grants it to every Workspace Administrator of the tenant."
+msgstr "المستوى الافتراضي لكل صفحة إعدادات لكل مستأجر على هذه الخطة. القسم بلا سطر مستواه \"إدارة\". مخفي: الصفحة غير موجودة؛ عرض فقط: تُفتح للقراءة؛ تعديل: يغيّرها مسؤول مساحة العمل؛ إدارة: ويمكنه تفويضها. أما الصلاحية (\"الإيصالات والمحاسبة (قراءة فقط)\") فعلى العكس: معطّلة إن لم يوجد سطر؛ وأي مستوى من \"عرض فقط\" فأعلى يمنحها لكل مسؤولي مساحة العمل لدى المستأجر."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/settings_policy.py:0
+msgid "this tenant"
+msgstr "هذا المستأجر"

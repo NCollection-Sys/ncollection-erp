@@ -16,39 +16,28 @@ msgid "Duplicate"
 msgstr "نسخة مماثلة"
 
 #. module: ncollection_purchase_documents
-#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__display_name
-#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__display_name
-#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__display_name model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__display_name model:ir.model.fields,field_description:ncollection_purchase_documents.field_res_company__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_purchase_documents
-#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__id
-#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__id
-#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__id model:ir.model.fields,field_description:ncollection_purchase_documents.field_ncollection_business_settings__id model:ir.model.fields,field_description:ncollection_purchase_documents.field_res_company__id
 msgid "ID"
 msgstr "المعرّف"
 
 #. module: ncollection_purchase_documents
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_kpis_tree_nc_document_actions
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_tree_nc_document_actions
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_view_tree_nc_document_actions
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_kpis_tree_nc_document_actions model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_tree_nc_document_actions model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_view_tree_nc_document_actions
 msgid "Edit"
 msgstr "تعديل"
 
 #. module: ncollection_purchase_documents
-#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__nc_attachment_count
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_kpis_tree_nc_document_actions
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_tree_nc_document_actions
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_view_tree_nc_document_actions
+#: model:ir.model.fields,field_description:ncollection_purchase_documents.field_purchase_order__nc_attachment_count model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_kpis_tree_nc_document_actions model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_tree_nc_document_actions model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_view_tree_nc_document_actions
 msgid "Files"
 msgstr "الملفات"
 
 #. module: ncollection_purchase_documents
 #: model:ir.model.fields,help:ncollection_purchase_documents.field_purchase_order__nc_attachment_count
-msgid ""
-"Number of files attached to this document (not the binary fields stored as "
-"attachments)."
+msgid "Number of files attached to this document (not the binary fields stored as attachments)."
 msgstr "عدد الملفات المرفقة بهذا المستند (وليس الحقول الثنائية المخزّنة كمرفقات)."
 
 #. module: ncollection_purchase_documents
@@ -57,10 +46,8 @@ msgid "Preview"
 msgstr "معاينة"
 
 #. module: ncollection_purchase_documents
-#: model:ir.model,name:ncollection_purchase_documents.model_purchase_order
-#: model:ncollection.document.type,name:ncollection_purchase_documents.doc_type_purchase_order
 #. odoo-python
-#: code:addons/ncollection_purchase_documents/models/purchase_order.py:0
+#: model:ir.model,name:ncollection_purchase_documents.model_purchase_order model:ncollection.document.type,name:ncollection_purchase_documents.doc_type_purchase_order code:addons/ncollection_purchase_documents/models/purchase_order.py:0
 msgid "Purchase Order"
 msgstr "أمر شراء"
 
@@ -70,16 +57,13 @@ msgid "Vendor Bills"
 msgstr "فواتير الموردين"
 
 #. module: ncollection_purchase_documents
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_kpis_tree_nc_document_actions
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_tree_nc_document_actions
-#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_view_tree_nc_document_actions
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_kpis_tree_nc_document_actions model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_tree_nc_document_actions model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_view_tree_nc_document_actions
 msgid "View"
 msgstr "عرض"
 
 #. module: ncollection_purchase_documents
-#: model:ncollection.document.type,name:ncollection_purchase_documents.doc_type_purchase_rfq
 #. odoo-python
-#: code:addons/ncollection_purchase_documents/models/purchase_order.py:0
+#: model:ncollection.document.type,name:ncollection_purchase_documents.doc_type_purchase_rfq code:addons/ncollection_purchase_documents/models/purchase_order.py:0
 msgid "Request for Quotation"
 msgstr "طلب عرض سعر"
 
@@ -90,16 +74,12 @@ msgstr "اربط برنامجك الخاص"
 
 #. module: ncollection_purchase_documents
 #: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_portal_connect_branded
-msgid ""
-"Use the above REST URL to get structured data of this purchase order in UBL "
-"format."
+msgid "Use the above REST URL to get structured data of this purchase order in UBL format."
 msgstr "استخدم رابط REST أعلاه للحصول على بيانات منظَّمة لأمر الشراء هذا بصيغة UBL."
 
 #. module: ncollection_purchase_documents
 #: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.purchase_order_portal_connect_branded
-msgid ""
-"Use the structured copy of this purchase order below to bring it into your "
-"own system."
+msgid "Use the structured copy of this purchase order below to bring it into your own system."
 msgstr "استخدم النسخة المنظَّمة من أمر الشراء هذا أدناه لإدخاله إلى نظامك الخاص."
 
 #. module: ncollection_purchase_documents
@@ -200,4 +180,14 @@ msgstr "تذكير الاستلام"
 #. module: ncollection_purchase_documents
 #: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase
 msgid "Vendors"
+msgstr "الموردون"
+
+#. module: ncollection_purchase_documents
+#: model:ir.actions.act_window,name:ncollection_purchase_documents.action_nc_purchase_settings model:ir.ui.menu,name:ncollection_purchase_documents.menu_workspace_purchase_settings
+msgid "Purchase Settings"
+msgstr "إعدادات المشتريات"
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase
+msgid "Suppliers"
 msgstr "الموردون"
