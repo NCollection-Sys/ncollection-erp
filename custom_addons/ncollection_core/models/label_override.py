@@ -317,8 +317,9 @@ class LabelOverride(models.Model):
                 views = self.env['ir.ui.view']
                 if not targets:
                     raise ValidationError(self.env._(
-                        "This text is a screen text (button, tab, section or a label set by the screen): it applies to "
-                        "the whole workspace and cannot be changed for one company only. Choose \"Whole workspace\"."))
+                        "This text is a screen text (button, tab, section or a label set by the screen): it applies "
+                        "to the whole workspace and cannot be changed for one company only. Choose \"Whole "
+                        "workspace\"."))
             for view in views:
                 existing = Override.search([('target_type', '=', 'view'), ('view_id', '=', view.id),
                                             ('lang', '=', lang), ('value', '=', text)], limit=1)
@@ -382,8 +383,8 @@ class LabelOverride(models.Model):
         for rec in self.filtered('company_id'):
             if rec.target_type not in COMPANY_SCOPED:
                 raise ValidationError(self.env._(
-                    "Company-only text is available for field labels, field help, choice labels and menu names; screen "
-                    "texts and page titles apply to the whole workspace."))
+                    "Company-only text is available for field labels, field help, choice labels and menu names; "
+                    "screen texts and page titles apply to the whole workspace."))
 
     def _nc_apply(self):
         self.env.registry.clear_cache()  # the company overlay is cached
@@ -563,7 +564,6 @@ class IrModelFields(models.Model):
                 if kind == 'help' and model == model_name:
                     result[name] = value
         return result
-
 
     @api.model
     def get_field_selection(self, model_name, field_name):

@@ -69,7 +69,8 @@ class TestPlatformReceiptCapability(TestReceiptPrintAccess):
     and the grant never makes anyone a technical administrator, and revoking it removes the access at once."""
 
     def _push(self, granted):
-        config = self.env['ncollection.workspace.config'].sudo().search([], limit=1) or             self.env['ncollection.workspace.config'].sudo().create({})
+        config = self.env['ncollection.workspace.config'].sudo().search([], limit=1) or \
+            self.env['ncollection.workspace.config'].sudo().create({})
         config.write({'settings_policy': json.dumps({'receipts': 'granted' if granted else 'denied'})})
 
     def _admin(self, login):
@@ -109,7 +110,8 @@ class TestPlatformReceiptCapability(TestReceiptPrintAccess):
 
     def test_tenant_cannot_grant_itself(self):
         admin = self._admin('nc_cap_self')
-        config = self.env['ncollection.workspace.config'].sudo().search([], limit=1) or             self.env['ncollection.workspace.config'].sudo().create({})
+        config = self.env['ncollection.workspace.config'].sudo().search([], limit=1) or \
+            self.env['ncollection.workspace.config'].sudo().create({})
         with self.assertRaises(AccessError):
             config.with_user(admin).write({'settings_policy': json.dumps({'receipts': 'granted'})})
 

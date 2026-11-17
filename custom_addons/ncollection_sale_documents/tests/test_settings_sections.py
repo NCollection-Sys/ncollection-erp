@@ -16,8 +16,8 @@ class TestSettingsSections(TransactionCase):
         super().setUpClass()
         company = cls.env.company
         common = dict(company_id=company.id, company_ids=[(6, 0, company.ids)])
-        cls.admin = new_test_user(cls.env, login='sec_admin', groups='base.group_user,ncollection_core.group_tenant_admin',
-                                  **common)
+        cls.admin = new_test_user(cls.env, login='sec_admin',
+                                  groups='base.group_user,ncollection_core.group_tenant_admin', **common)
         cls.delegate = new_test_user(cls.env, login='sec_delegate',
                                      groups='base.group_user,ncollection_core.group_settings_sales', **common)
         cls.plain = new_test_user(cls.env, login='sec_plain', groups='base.group_user', **common)

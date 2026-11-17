@@ -54,7 +54,8 @@ class NcBusinessSettings(models.TransientModel):
         """{section: the user's level}, restricted to the one section of the menu the page was opened from."""
         policy = self.env['ncollection.settings.policy']
         only = self.env.context.get('nc_settings_section')
-        return {key: (policy._nc_level(key) if (not only or only == key) else 'hidden') for key in self._nc_page_sections}
+        return {key: (policy._nc_level(key) if (not only or only == key) else 'hidden')
+                for key in self._nc_page_sections}
 
     def _compute_nc_levels(self):
         levels = self._nc_page_levels()

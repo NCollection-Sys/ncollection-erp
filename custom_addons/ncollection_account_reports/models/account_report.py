@@ -311,7 +311,8 @@ class NcollectionAccountReport(models.AbstractModel):
         self.ensure_one()
         if self._name not in self.env['ncollection.account.report.xbrl']._nc_supported_models():
             raise UserError(self.env._(
-                "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the Statement of Changes in Equity only."))
+                "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the "
+                "Statement of Changes in Equity only."))
         return {
             'type': 'ir.actions.act_url',
             'url': '/ncollection/account_reports/xbrl/%s/%d' % (self._name, self.id),

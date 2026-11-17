@@ -95,7 +95,8 @@ class AccountReportXbrl(models.AbstractModel):
         kind = self._nc_supported_models().get(wizard._name)
         if not kind:
             raise UserError(self.env._(
-                "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the Statement of Changes in Equity only."))
+                "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the "
+                "Statement of Changes in Equity only."))
         records = [wizard]
         comparison = wizard._nc_comparison_record() if hasattr(wizard, '_nc_comparison_record') else None
         if comparison is not None:
