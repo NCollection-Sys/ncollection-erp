@@ -117,7 +117,45 @@ are untouched by the upgrade.
 **Sections and levels** (`ncollection_core/models/settings_policy.py`). Each page is a section with a level:
 `hidden` < `view` < `edit` < `administer` (= edit + may delegate). Sections: Overview, Users, Roles & Permissions, Teams &
 Departments, Security, Company, Business Settings, Accounting Defaults, Document Layout, Appearance, Document Stamps,
-Print Settings, Interface Text, Audit Log, AI Assistant, System.
+Print Settings, Interface Text, **Sales Settings, Purchase Settings, Inventory Settings**, Audit Log, AI Assistant,
+System.
+
+**Sales / Purchase / Inventory Settings** (acceptance review of `7a3c297`). The same Business Settings page
+(`ncollection.business.settings`, the existing safe engine: an explicit allow-list per module, each value validated
+against Odoo's own field and applied where Odoo stores it, `res.config.settings.execute()` never called, so nothing is
+ever installed), split into one section per application. Each setting belongs to ONE section
+(`_nc_setting_sections`); the page opened from a section's menu shows that section only, at the user's level
+(hidden = not read, view = read-only, edit = saved), and the server checks the level again for every changed value.
+
+| Section | Settings (Odoo's own field names) | Module |
+|---|---|---|
+| Sales | quotation validity, online signature / payment, prepayment %, lock confirmed sales, sale warnings, invoicing policy (`ir.default`; automatic invoicing reset off as Odoo does), discounts, pro-forma, automatic invoice, variants, units of measure | `ncollection_sale_documents` |
+| Purchase | lock confirmed orders, order approval + amount, purchase warnings, receipt reminder | `ncollection_purchase_documents` |
+| Inventory | lots & serial numbers (Odoo's own refusal while tracked products exist is kept), lots on delivery slips, packages, consignment, stock warnings, signature, reception report, annual inventory day / month | `ncollection_stock_barcode` (the NCollection module every Inventory tenant gets) |
+
+Deliberately NOT offered: anything `module_*` (it installs code), Storage Locations and Multi-Step Routes (Odoo's
+settings page also (de)activates warehouse operation types and views; doing half of that would leave warehouses
+inconsistent), and many2one settings across companies. Entitlement: Sales needs `sale`, Purchase `purchase`,
+Inventory `stock`. These three menus are exempt from the "native front door follows Accounting" rule
+(`SETTINGS_SECTION_MENUS`): a Settings page follows its own application. Tests:
+`ncollection_sale_documents/tests/test_settings_sections.py` (admin save + reload, unchanged values left alone, plain
+user refused, Sales delegate limited to Sales, platform stops delegation, view-only refused on save, hidden neither
+read nor written, menu hidden), plus one test file each in the Purchase and Inventory modules.
+
+**Platform-granted capability: Receipts & accounting (read only).** A Workspace Administrator holds no accounting role
+by default, so they cannot read payments and the receipt route answers 403. That default is deliberate, not a missing
+group: a receipt shows the payment, its partner and the reconciled documents, which is accounting data. Balance Cloud
+Management can now GRANT it per plan or per tenant (policy line "Receipts & accounting (read only)"):
+
+* OFF unless a line grants it (the opposite of a section's default); a tenant override can only restrict it; without an
+  accounting application nothing is granted. Pushed as `receipts: granted / denied` in the same `settings_policy` JSON.
+* Applied in the tenant by making `group_tenant_admin` imply `ncollection_account_core.group_platform_receipt_access`,
+  which implies Odoo's own `account.group_account_readonly`: Odoo's ACLs and record rules decide every read; no
+  posting, no payment, no `base.group_system`, no route bypassed. Odoo 19 computes implied membership, so revoking
+  removes it at once. A tenant cannot grant it to itself (the field is platform-only).
+* Tests (`ncollection_account_core/tests/test_receipt_access.py::TestPlatformReceiptCapability`, real report route):
+  granted administrator 200, restricted administrator 403 on `account.payment`, revoking gives 403 at once, an ordinary
+  user 403 even when granted, a tenant write of the grant refused.
 
 **Effective level, most restrictive wins:**
 
@@ -140,8 +178,8 @@ switch. Hidden sections lose their menus (`ir.ui.menu._visible_menu_ids`); a vie
 AccessError. The platform's own service channel (superuser) passes, as before.
 
 **Delegation is group membership** (Odoo's own store: ACLs and the menu cache key on groups). Delegable sections: Company,
-Business Settings, Accounting Defaults, Document Layout, Appearance, Document Stamps, Print Settings, Interface Text.
-Never delegable: Users, Roles, Teams, Security, Audit Log, AI, System, Overview. Delegation changes are recorded in the
+Business Settings, Accounting Defaults, Document Layout, Appearance, Document Stamps, Print Settings, Interface Text,
+Sales / Purchase / Inventory Settings. Never delegable: Users, Roles, Teams, Security, Audit Log, AI, System, Overview. Delegation changes are recorded in the
 interface-text history.
 
 **Permission matrix** (`ncollection_account_core/tests/test_tenant_admin_matrix.py`, 6 roles x 21 checks, plus the receipt

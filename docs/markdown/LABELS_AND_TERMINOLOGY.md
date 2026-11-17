@@ -21,11 +21,24 @@ no write, no unlink through the ORM).
 Odoo stores these texts **per database**, and a database is one tenant. Two scopes:
 
 * **Whole workspace** (default): Odoo's own translation of the text is changed, so every surface shows it.
-* **One company**: field labels, field help and menu names. Stored with `company_id`, NOT written to the shared
-  translations; layered on at read time for users working in that company (`ir.model.fields.get_field_string /
-  get_field_help`, `ir.ui.menu.load_menus`), from a cache keyed by company and language. Screen texts (buttons, tabs,
-  view `string=`), page titles and choice labels are rendered from one shared combined view / action record, so they are
-  workspace-wide only; the form refuses a company on them.
+* **One company**: field labels, field help, **choice labels** and menu names. Stored with `company_id`, NOT written
+  to the shared translations; layered on at read time for users working in that company (`ir.model.fields.
+  get_field_string / get_field_help / get_field_selection`, `ir.ui.menu.load_menus`), from a cache keyed by company and
+  language.
+
+| Text | One company | Why |
+|---|---|---|
+| Field label (the field's own label) | yes | read through `get_field_string`, overlaid per company |
+| Field help | yes | `get_field_help` |
+| Choice label (selection value) | yes (this release) | `get_field_selection` |
+| Menu name | yes | `load_menus` |
+| Screen text: button, tab, section, a label set by the screen (`string=` in a view) | no | one translation of the combined view, shared by every company and cached per view |
+| Page title (action name) | no | one translated action record |
+
+The in-page editor used to save a company-only edit of a SCREEN text for the whole workspace without saying so (the
+company was ignored on view targets). It now refuses it ("applies to the whole workspace ... Choose Whole workspace")
+and saves nothing (test `test_screen_text_is_never_silently_widened_to_the_workspace`). In a multi-company tenant this
+matters most for field labels that a screen overrides with `string=`: those are screen texts.
 
 Precedence (lowest first): original < platform terminology rule < workspace override < company override.
 
@@ -76,23 +89,27 @@ Values are plain text: `< > { }` and control characters are refused, maximum 120
 
 Odoo returns `_()` / `_t()` text **verbatim in English** (`odoo/tools/translate.py` `get_translation`: `if lang ==
 'en_US': translation = source`), so no translation can reword them. Arabic users see Odoo's own Arabic, which already
-says مورد for every one. Two are reworded in English by extending the method that builds them
-(`ncollection_account_core/models/terminology_code_strings.py`, through the same platform rule).
+says مورد for every one. A string is reworded in English ONLY when an Odoo method **returns** it: that method is
+extended and the platform rule is applied to its result (`ncollection_account_core/models/terminology_code_strings.py`).
+A string Odoo RAISES in an error, posts inside a method, or builds in JavaScript is left alone: rewording it would mean
+catching exceptions or messages by their text, the unsafe interception this project does not do.
 
-| String (English) | Where a user meets it | Status |
-|---|---|---|
-| `Vendor Bills` (journal name placeholder) | creating a purchase journal | **reworded**: "Supplier Bills" |
-| `Draft Vendor Credit Note` | name of a draft supplier refund in lists, breadcrumbs, links | **reworded**: "Draft Supplier Credit Note" |
-| `Vendor Bills` (analytic account smart button) | Analytic account form, button label | unchanged (button text comes from Python) |
-| `The field 'Vendor' is required, please complete it to validate the Vendor Bill.` | posting a bill without a partner | unchanged (error raised inside Odoo's posting check; rewording means re-implementing it) |
-| `Vendor Bill Created` | chatter note on a bill created from a document | unchanged |
-| `Only vendor bills allow for deductibility of product/services.` | tax deductibility error (rare) | unchanged |
-| `Unable to cancel purchase order(s): … related vendor bills.` | cancelling a billed purchase order | unchanged |
-| `You can only upload a bill for a single vendor at a time.` (Python and JS) | uploading bills on a purchase order | unchanged |
-| `Select Vendor Bill lines…`, `…same vendor.`, `Vendor Bill lines can only be added to one Purchase Order.` | bill-line matching on purchase orders | unchanged |
-| `This vendor bill has been created from: ` / `modified from: ` | chatter note | unchanged |
-| `Import Template for Vendor Pricelists` | product supplier pricelist import template name | unchanged |
-| JS tour texts (`Search a vendor name…`, `Send the request for quotation to your vendor.`) | Odoo's onboarding tour only, not started for tenants | unreachable in normal use |
+| # | String (English) | User-visible? | Mechanism in Odoo | Decision |
+|---|---|---|---|---|
+| 1 | `Vendor Bills` (journal name placeholder) | yes, creating a purchase journal | returned by `_compute_name_placeholder` | **reworded**: Supplier Bills |
+| 2 | `Draft Vendor Credit Note` | yes, lists, breadcrumbs, links | returned by `_get_move_display_name` | **reworded** |
+| 3 | `Vendor Bill Created` | yes, chatter of every new bill | returned by `account.move._creation_message` | **reworded (this release)**: Supplier Bill Created |
+| 4 | `Vendor Bills` (analytic account button: list title) | yes | returned by `action_view_vendor_bill` | **reworded (this release)** |
+| 5 | `Import Template for Vendor Pricelists` | yes, import dialog of supplier pricelists | returned by `get_import_templates` | **reworded (this release)** |
+| 6 | `The field 'Vendor' is required, please complete it to validate the Vendor Bill.` | yes, posting a bill without partner | collected and RAISED inside `_post` | unchanged (needs exception interception) |
+| 7 | `Only vendor bills allow for deductibility of product/services.` | rarely | raised in a constraint | unchanged |
+| 8 | `Unable to cancel purchase order(s): ... related vendor bills.` | yes, cancelling a billed PO | raised in `button_cancel` | unchanged |
+| 9 | `You can only upload a bill for a single vendor at a time.` (Python + JS) | yes, upload on POs | raised (Python) / JS notification | unchanged |
+| 10 | `Select Vendor Bill lines...`, `...same vendor.`, `Vendor Bill lines can only be added to one Purchase Order.` | yes, bill-line matching | raised in the matching wizard | unchanged |
+| 11 | `This vendor bill has been created from:` / `modified from:` | yes, chatter of bills from POs | built and posted inside purchase's own method | unchanged (posted inside the method) |
+| 12 | JS tour texts (`Search a vendor name...`, ...) | no: onboarding tour, never started for tenants | JavaScript | unreachable in normal use |
+
+Five are reworded; the rest are listed with their reason. Arabic is correct for all of them.
 
 ## Developer Mode
 

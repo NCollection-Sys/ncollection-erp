@@ -47,12 +47,16 @@ PDF and Excel. Nothing is written.
 | Profit and Loss | yes | yes | **yes** |
 | Trial Balance, General Ledger, Partner Ledger, Partner Statement, Aged Balances | yes | yes | no: account-level listings with no IFRS concept per row (a "mapping" would be invented) |
 | Cash Flow (indirect) | yes | yes | **yes**: ProfitLoss, AdjustmentsForDepreciationExpense, CashFlowsFromUsedIn{Operating,Investing,Financing}Activities, IncreaseDecreaseInCashAndCashEquivalentsBeforeEffectOfExchangeRateChanges, CashAndCashEquivalents (opening and closing instants). Not exported: "Movement in working capital" (no single concept) |
-| Changes in Equity | yes | yes | applicable, not implemented: needs the IFRS equity-components dimension (ComponentsOfEquityAxis); the report's columns must be mapped member by member first |
+| Changes in Equity | yes | yes | **partial: the total-equity column**: `Equity` at the opening instant (day before the period) and the closing instant, `ProfitLoss` (movement of the accumulated result), `IncreaseDecreaseInEquity` (total movement); no dimension, so the facts mean "equity as a whole". **Not exported: the per-component columns** (ComponentsOfEquityAxis members). The report's components are Odoo account TYPES ("equity" holds share capital, reserves and, on many charts, retained earnings; "equity_unaffected" is the current-year earnings account) while IFRS members are economic components (IssuedCapitalMember, RetainedEarningsMember, OtherReservesMember, ...): the books keep no account-to-member mapping, so any member would be invented. Nor the split of the non-profit movement (dividends, share issues, transfers): the ledger does not classify those. Supporting them needs a per-account component mapping maintained by the accountant (a business decision; not built) |
 | Tax Analysis, UAE VAT report | yes | yes | no: tax returns are not IFRS statements |
 | Financial Summary, Profitability, Revenue / Expense Analysis, Dimension Analysis, Budget vs Actual, Asset Register | yes | yes | no: management analyses, no IFRS concept |
 | Sales / Invoicing premium dashboards, Spreadsheet dashboards export | yes | yes | no: operational data |
 
 Unsupported reports have no XBRL button, and the route answers 404 for them.
+
+**Coverage, stated accurately:** three statements complete (Balance Sheet, Profit and Loss, Cash Flow), one partial
+(Changes in Equity: total column only), every other report not applicable for the reason in the table. The XBRL
+requirement is therefore **partially complete**, not "fully complete".
 
 ## Evidence (restored copy of `ncollection`, 2026-11-16)
 
