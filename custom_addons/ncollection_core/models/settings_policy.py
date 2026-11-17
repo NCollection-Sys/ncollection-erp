@@ -51,6 +51,9 @@ SECTIONS = (
     ('document_stamps', 'Document Stamps', ('ncollection_core.menu_workspace_document_stamps',), True),
     ('print_settings', 'Print Settings', ('ncollection_core.menu_workspace_print_settings',), True),
     ('interface_text', 'Interface Text', ('ncollection_core.menu_workspace_interface_text',), True),
+    ('sales', 'Sales Settings', ('ncollection_sale_documents.menu_workspace_sales_settings',), True),
+    ('purchase', 'Purchase Settings', ('ncollection_purchase_documents.menu_workspace_purchase_settings',), True),
+    ('inventory', 'Inventory Settings', ('ncollection_stock_barcode.menu_workspace_inventory_settings',), True),
     ('audit_log', 'Audit Log', ('ncollection_audit.menu_nc_audit_root',), False),
     ('ai', 'AI Assistant', ('ncollection_ai.menu_ai_readiness',), False),
     ('system', 'System', ('ncollection_core.menu_workspace_system',), False),
@@ -68,6 +71,19 @@ SECTION_GROUP = {
     'document_stamps': 'ncollection_branding.group_stamp_manager',
     'print_settings': 'ncollection_branding.group_stamp_manager',
     'interface_text': 'ncollection_core.group_settings_interface_text',
+    'sales': 'ncollection_core.group_settings_sales',
+    'purchase': 'ncollection_core.group_settings_purchase',
+    'inventory': 'ncollection_core.group_settings_inventory',
+}
+
+# PLATFORM-GRANTED BUSINESS CAPABILITIES of the Workspace Administrator. Unlike a section (default administer, so an
+# upgrade changes nothing), a capability is OFF unless the platform pushes 'granted': it widens what a Workspace
+# Administrator may do, so only Balance Cloud Management may switch it on. Granting = the capability group is implied
+# by group_tenant_admin (Odoo 19 computes implied membership, so revoking removes it at once). The group itself is
+# Odoo's own access (its ACLs and record rules decide everything); no route or check is bypassed.
+#   key -> (label, the group implied while granted)
+CAPABILITIES = {
+    'receipts': ('Receipts & accounting (read only)', 'ncollection_account_core.group_platform_receipt_access'),
 }
 
 # Company fields -> the section whose page owns them (res_company_delegation.py lists the same fields).
@@ -83,6 +99,11 @@ COMPANY_FIELD_SECTION = {
                      'transfer_account_id', 'account_journal_suspense_account_id',
                      'default_cash_difference_income_account_id', 'default_cash_difference_expense_account_id'),
                     'accounting_defaults'),
+    # the company fields of the application sections (Sales / Purchase / Inventory Settings)
+    **dict.fromkeys(('quotation_validity_days', 'portal_confirmation_sign', 'portal_confirmation_pay',
+                     'prepayment_percent'), 'sales'),
+    **dict.fromkeys(('po_lock', 'po_double_validation', 'po_double_validation_amount'), 'purchase'),
+    **dict.fromkeys(('annual_inventory_month', 'annual_inventory_day'), 'inventory'),
 }
 
 
@@ -105,8 +126,38 @@ class SettingsPolicy(models.AbstractModel):
             pushed = {}
         if not isinstance(pushed, dict):
             pushed = {}
-        return {key: (pushed.get(key) if pushed.get(key) in RANK else ('administer' if not pushed else 'hidden'))
+        sections = {k: v for k, v in pushed.items() if k not in CAPABILITIES}
+        return {key: (pushed.get(key) if pushed.get(key) in RANK else ('administer' if not sections else 'hidden'))
                 for key in SECTION_KEYS}
+
+    @api.model
+    def _nc_capabilities(self):
+        """{capability: bool} as the platform pushed it; every capability OFF when nothing was pushed."""
+        raw = self.env['ncollection.workspace.config'].sudo().search([], limit=1).settings_policy or ''
+        try:
+            pushed = json.loads(raw) if raw else {}
+        except ValueError:
+            pushed = {}
+        if not isinstance(pushed, dict):
+            pushed = {}
+        return {key: pushed.get(key) == 'granted' for key in CAPABILITIES}
+
+    @api.model
+    def _nc_apply_capabilities(self):
+        """Make group_tenant_admin imply exactly the granted capability groups. Idempotent; a capability whose
+        module is not installed is skipped (nothing to grant)."""
+        admin = self.env.ref(TENANT_ADMIN).sudo()
+        granted = self._nc_capabilities()
+        for key, (_label, xmlid) in CAPABILITIES.items():
+            group = self.env.ref(xmlid, raise_if_not_found=False)
+            if not group:
+                continue
+            has = group in admin.implied_ids
+            if granted[key] and not has:
+                admin.write({'implied_ids': [(4, group.id)]})
+            elif not granted[key] and has:
+                admin.write({'implied_ids': [(3, group.id)]})
+        return granted
 
     @api.model
     def _nc_level(self, section, user=None):

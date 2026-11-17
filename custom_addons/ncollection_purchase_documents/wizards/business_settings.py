@@ -33,3 +33,11 @@ class NcBusinessSettings(models.TransientModel):
 
     def _nc_apply_po_approval(self, company, value):
         company.write({'po_double_validation': 'two_step' if value else 'one_step'})
+
+    @api.model
+    def _nc_setting_sections(self):
+        sections = super()._nc_setting_sections()
+        sections.update(dict.fromkeys((
+            'lock_confirmed_po', 'po_order_approval', 'po_double_validation_amount', 'group_warning_purchase',
+            'group_send_reminder'), 'purchase'))
+        return sections

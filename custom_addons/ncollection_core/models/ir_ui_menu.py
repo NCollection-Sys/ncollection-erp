@@ -58,6 +58,13 @@ NATIVE_FOLLOWS_LICENCE = {
     'ncollection_sale_documents': 'account',
     'ncollection_purchase_documents': 'account',
 }
+# ...except their Settings pages: a Settings section follows ITS OWN application (Sales Settings: sale), through the
+# Settings policy's entitlement (ncollection_saas SECTION_MODULE -> hidden), not the module that happens to host it.
+SETTINGS_SECTION_MENUS = frozenset({
+    'ncollection_sale_documents.menu_workspace_sales_settings',
+    'ncollection_purchase_documents.menu_workspace_purchase_settings',
+    'ncollection_stock_barcode.menu_workspace_inventory_settings',
+})
 
 # Root menus that are NOT customer applications and are therefore left out of
 # the tenant app launcher (#455). They are not hidden — a user who may see them
@@ -390,10 +397,10 @@ class IrUiMenu(models.Model):
         # visible. This is why the search is NOT restricted to parent_id=False.
         data = self.env['ir.model.data'].sudo().search_read(
             [('model', '=', 'ir.ui.menu'), ('module', 'in', list(blocked_modules))],
-            ['res_id'],
+            ['res_id', 'module', 'name'],
         )
         owned = self.sudo().with_context(active_test=False).browse(
-            [d['res_id'] for d in data]).exists()
+            [d['res_id'] for d in data if '%s.%s' % (d['module'], d['name']) not in SETTINGS_SECTION_MENUS]).exists()
         if not owned:
             return set()
 

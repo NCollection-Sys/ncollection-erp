@@ -1,26 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Purchase Settings: a section of the unified Settings (see the Sales one). -->
     <record id="view_nc_business_settings_form_purchase" model="ir.ui.view">
         <field name="name">ncollection.business.settings.form.purchase</field>
         <field name="model">ncollection.business.settings</field>
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
-                <page string="Purchase" name="purchase">
+                <page string="Purchase" name="purchase" invisible="nc_level_purchase == 'hidden'">
                     <group>
                         <group string="Orders">
                             <field name="company_currency_id" invisible="1"/>
-                            <field name="lock_confirmed_po"/>
-                            <field name="po_order_approval"/>
-                            <field name="po_double_validation_amount" invisible="not po_order_approval"/>
+                            <field name="lock_confirmed_po" readonly="nc_level_purchase == 'view'"/>
+                            <field name="po_order_approval" readonly="nc_level_purchase == 'view'"/>
+                            <field name="po_double_validation_amount" invisible="not po_order_approval"
+                                   readonly="nc_level_purchase == 'view'"/>
                         </group>
-                        <group string="Vendors">
-                            <field name="group_warning_purchase"/>
-                            <field name="group_send_reminder"/>
+                        <group string="Suppliers">
+                            <field name="group_warning_purchase" readonly="nc_level_purchase == 'view'"/>
+                            <field name="group_send_reminder" readonly="nc_level_purchase == 'view'"/>
                         </group>
                     </group>
                 </page>
             </xpath>
         </field>
     </record>
+
+    <record id="action_nc_purchase_settings" model="ir.actions.act_window">
+        <field name="name">Purchase Settings</field>
+        <field name="res_model">ncollection.business.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'nc_settings_section': 'purchase'}</field>
+    </record>
+
+    <menuitem id="menu_workspace_purchase_settings" name="Purchase Settings"
+              parent="ncollection_core.menu_workspace_settings_root" action="action_nc_purchase_settings" sequence="17"
+              groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_purchase"/>
 </odoo>

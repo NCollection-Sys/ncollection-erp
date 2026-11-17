@@ -192,4 +192,7 @@ class TestSalesDocumentsOwnOnlyTheInvoicesEntry(TransactionCase):
         entry that is an Accounting door (the Sales root stays owned by `sale`)."""
         owned = self.env['ir.model.data'].sudo().search([
             ('model', '=', 'ir.ui.menu'), ('module', '=', 'ncollection_sale_documents')]).mapped('name')
-        self.assertEqual(owned, ['menu_sale_nc_invoices'])
+        # its Settings page is owned here too but follows its own application (SETTINGS_SECTION_MENUS)
+        self.assertEqual(sorted(owned), sorted(['menu_sale_nc_invoices', 'menu_workspace_sales_settings']))
+        from odoo.addons.ncollection_core.models.ir_ui_menu import SETTINGS_SECTION_MENUS  # noqa: PLC0415
+        self.assertIn('ncollection_sale_documents.menu_workspace_sales_settings', SETTINGS_SECTION_MENUS)

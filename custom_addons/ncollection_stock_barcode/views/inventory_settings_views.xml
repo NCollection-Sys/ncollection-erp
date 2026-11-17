@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inventory Settings: a section of the unified Settings (see ncollection_sale_documents' Sales Settings). -->
+    <record id="view_nc_business_settings_form_inventory" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.inventory</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
+                <page string="Inventory" name="inventory" invisible="nc_level_inventory == 'hidden'">
+                    <group>
+                        <group string="Traceability">
+                            <field name="group_stock_production_lot" readonly="nc_level_inventory == 'view'"/>
+                            <field name="group_lot_on_delivery_slip" invisible="not group_stock_production_lot"
+                                   readonly="nc_level_inventory == 'view'"/>
+                            <field name="group_stock_tracking_lot" readonly="nc_level_inventory == 'view'"/>
+                            <field name="group_stock_tracking_owner" readonly="nc_level_inventory == 'view'"/>
+                        </group>
+                        <group string="Operations">
+                            <field name="group_warning_stock" readonly="nc_level_inventory == 'view'"/>
+                            <field name="group_stock_sign_delivery" readonly="nc_level_inventory == 'view'"/>
+                            <field name="group_stock_reception_report" readonly="nc_level_inventory == 'view'"/>
+                            <field name="annual_inventory_month" readonly="nc_level_inventory == 'view'"/>
+                            <field name="annual_inventory_day" readonly="nc_level_inventory == 'view'"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_nc_inventory_settings" model="ir.actions.act_window">
+        <field name="name">Inventory Settings</field>
+        <field name="res_model">ncollection.business.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'nc_settings_section': 'inventory'}</field>
+    </record>
+
+    <menuitem id="menu_workspace_inventory_settings" name="Inventory Settings"
+              parent="ncollection_core.menu_workspace_settings_root" action="action_nc_inventory_settings"
+              sequence="18" groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_inventory"/>
+</odoo>

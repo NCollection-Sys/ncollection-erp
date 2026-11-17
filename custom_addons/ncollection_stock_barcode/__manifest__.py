@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Stock Barcode',
-    'version': '19.0.1.1.1',
+    'version': '19.0.1.2.0',
     'category': 'Inventory/Inventory',
     'summary': 'Barcode scanning workflow for receipts, deliveries, transfers and inventory counts, '
                'on Odoo Community stock (hardware scanner or camera).',
@@ -27,6 +27,7 @@ rights, in the user's own company. See models/stock_barcode.py.
     'depends': ['stock', 'barcodes', 'ncollection_core', 'ncollection_branding'],
     'data': [
         'views/barcode_menus.xml',
+        'views/inventory_settings_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

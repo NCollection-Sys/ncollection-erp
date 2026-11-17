@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.15.0',
+    'version': '19.0.1.16.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
                'restriction hooks, common mixins and the accounting engine '
@@ -26,6 +26,7 @@
     # Odoo's own native fields — no fiscal-year model, no posting/tax logic
     # (FPA §4/§6). The engine-boundary guard lives in tests/test_engine_boundary.
     'data': [
+        'security/platform_capabilities.xml',
         # #474: the single financial application, named "Accounting".
         # #474: readonly < user < manager, so an accounting Administrator can
         # actually READ the native reports (measured: they could not).

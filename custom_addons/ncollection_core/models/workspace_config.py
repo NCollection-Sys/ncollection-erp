@@ -148,6 +148,8 @@ class WorkspaceConfig(models.Model):
                 raise AccessError(self.env._(
                     "Your plan and licence are set by NCollection, not from inside your workspace."))
         result = super().write(vals)
+        if 'settings_policy' in vals:
+            self.env['ncollection.settings.policy'].sudo()._nc_apply_capabilities()
         # Menu visibility (and its ormcached layers, including
         # ir.ui.menu.load_menus) must recompute after any config change.
         self.env.registry.clear_cache()

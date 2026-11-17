@@ -10,7 +10,9 @@
                 <page string="Settings Policy" name="settings_policy" groups="ncollection_subscription.group_platform_admin">
                     <p class="text-muted">The default level of each tenant Settings page for every tenant on this plan.
                         A section with no line is "Administer". Hidden: the page does not exist; View only: it opens
-                        read-only; Edit: the Workspace Administrator changes it; Administer: and may delegate it.</p>
+                        read-only; Edit: the Workspace Administrator changes it; Administer: and may delegate it.
+                        A capability ("Receipts &amp; accounting (read only)") is the opposite: OFF with no line;
+                        any level from View up grants it to every Workspace Administrator of the tenant.</p>
                     <field name="settings_policy_line_ids">
                         <list editable="bottom">
                             <field name="section"/>

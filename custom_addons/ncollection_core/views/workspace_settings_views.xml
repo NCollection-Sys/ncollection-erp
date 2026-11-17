@@ -169,7 +169,7 @@ action = {
               name="Settings"
               web_icon="ncollection_core,static/description/icon_workspace.png"
               sequence="540"
-              groups="ncollection_core.group_role_owner,ncollection_core.group_tenant_admin,ncollection_core.group_settings_company,ncollection_core.group_settings_business,ncollection_core.group_settings_accounting_defaults,ncollection_core.group_settings_document_layout,ncollection_core.group_settings_appearance,ncollection_core.group_settings_interface_text,ncollection_branding.group_stamp_manager"/>
+              groups="ncollection_core.group_role_owner,ncollection_core.group_tenant_admin,ncollection_core.group_settings_company,ncollection_core.group_settings_business,ncollection_core.group_settings_accounting_defaults,ncollection_core.group_settings_document_layout,ncollection_core.group_settings_appearance,ncollection_core.group_settings_interface_text,ncollection_core.group_settings_sales,ncollection_core.group_settings_purchase,ncollection_core.group_settings_inventory,ncollection_branding.group_stamp_manager"/>
 
     <!-- Odoo's own Configure Document Layout (logo, colours, layout, paper, header / footer), for the Owner under
          Option A: the wizard is granted to group_tenant_admin, and what it writes passes res.company's Workspace

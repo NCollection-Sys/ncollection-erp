@@ -16,9 +16,13 @@
                     </div>
                     <group>
                         <field name="company_id" options="{'no_open': True}"/>
+                        <field name="nc_level_business" invisible="1"/>
+                        <field name="nc_level_sales" invisible="1"/>
+                        <field name="nc_level_purchase" invisible="1"/>
+                        <field name="nc_level_inventory" invisible="1"/>
                     </group>
                     <notebook name="nc_business_settings">
-                        <page string="General" name="general">
+                        <page string="General" name="general" invisible="nc_level_business == 'hidden'">
                             <p class="text-muted">These settings apply to the company shown above.</p>
                         </page>
                     </notebook>
@@ -32,6 +36,7 @@
         <field name="res_model">ncollection.business.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
+        <field name="context">{'nc_settings_section': 'business'}</field>
     </record>
 
     <menuitem id="menu_workspace_business_settings"

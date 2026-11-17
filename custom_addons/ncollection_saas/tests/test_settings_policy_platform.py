@@ -58,3 +58,21 @@ class TestSettingsPolicyPlatform(TransactionCase):
     def test_a_line_belongs_to_a_plan_or_a_tenant(self):
         with self.assertRaises(ValidationError):
             self.env['ncollection.settings.policy.line'].create({'section': 'company', 'level': 'view'})
+
+    def test_receipt_capability_is_off_unless_granted(self):
+        Line = self.env['ncollection.settings.policy.line']
+        Line.create({'plan_id': self.plan.id, 'section': 'company', 'level': 'edit'})
+        self.assertEqual(self._policy()['receipts'], 'denied', "a capability is never on by default")
+        with self.assertRaises(ValidationError):           # the plan does not grant it: a tenant line cannot either
+            Line.create({'tenant_id': self.tenant.id, 'section': 'receipts', 'level': 'view'})
+        Line.create({'plan_id': self.plan.id, 'section': 'receipts', 'level': 'view'})
+        self.assertEqual(self._policy()['receipts'], 'granted')
+        self.assertEqual(self._policy(modules=())['receipts'], 'denied', "no accounting: nothing to grant")
+        Line.create({'tenant_id': self.tenant.id, 'section': 'receipts', 'level': 'hidden'})
+        self.assertEqual(self._policy()['receipts'], 'denied', "a tenant override can restrict it")
+
+    def test_application_sections_follow_their_application(self):
+        self.env['ncollection.settings.policy.line'].create(
+            {'plan_id': self.plan.id, 'section': 'sales', 'level': 'administer'})
+        self.assertEqual(self._policy()['sales'], 'hidden', "no Sales app licensed")
+        self.assertEqual(self._policy(modules=('sale',))['sales'], 'administer')

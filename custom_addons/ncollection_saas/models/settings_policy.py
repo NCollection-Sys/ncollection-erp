@@ -14,14 +14,20 @@ import json
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
-from odoo.addons.ncollection_core.models.settings_policy import LEVELS, RANK, SECTIONS
+from odoo.addons.ncollection_core.models.settings_policy import CAPABILITIES, LEVELS, RANK, SECTIONS
 
 # Section -> the module that must be entitled for it to exist at all.
 SECTION_MODULE = {
     'accounting_defaults': 'ncollection_account_core',
     'audit_log': 'ncollection_audit',
     'ai': 'ncollection_ai',
+    'sales': 'sale',
+    'purchase': 'purchase',
+    'inventory': 'stock',
+    'receipts': 'ncollection_account_core',
 }
+# A capability (core CAPABILITIES) WIDENS a Workspace Administrator's rights, so it is OFF unless a line grants it:
+# any level from "view" up grants it, "hidden" (or no line) does not. Pushed as 'granted' / 'denied'.
 LEVEL_SELECTION = [('hidden', 'Hidden'), ('view', 'View only'), ('edit', 'Edit'),
                    ('administer', 'Administer (and delegate)')]
 
@@ -33,7 +39,8 @@ class SettingsPolicyLine(models.Model):
 
     plan_id = fields.Many2one('ncollection.subscription.plan', ondelete='cascade', index=True)
     tenant_id = fields.Many2one('ncollection.tenant', ondelete='cascade', index=True)
-    section = fields.Selection([(key, label) for key, label, _m, _d in SECTIONS], required=True)
+    section = fields.Selection([(key, label) for key, label, _m, _d in SECTIONS]
+                               + [(key, label) for key, (label, _g) in CAPABILITIES.items()], required=True)
     level = fields.Selection(LEVEL_SELECTION, required=True, default='administer')
 
     _one_per_owner = models.Constraint(
@@ -46,7 +53,7 @@ class SettingsPolicyLine(models.Model):
                 raise ValidationError(self.env._("A policy line belongs to a plan OR to a tenant."))
             if line.tenant_id:
                 plan = {p.section: p.level for p in line.tenant_id.plan_id.settings_policy_line_ids}
-                ceiling = plan.get(line.section, 'administer')
+                ceiling = plan.get(line.section, 'hidden' if line.section in CAPABILITIES else 'administer')
                 if RANK[line.level] > RANK[ceiling]:
                     raise ValidationError(self.env._(
                         "%(section)s: a tenant override cannot give more than its plan (%(plan)s).",
@@ -129,6 +136,13 @@ class Tenant(models.Model):
             if needed and needed not in modules:
                 level = 'hidden'
             out[key] = level
+        for key in CAPABILITIES:
+            level = plan_lines.get(key, 'hidden')
+            if key in tenant_lines and RANK[tenant_lines[key]] < RANK[level]:
+                level = tenant_lines[key]
+            needed = SECTION_MODULE.get(key)
+            granted = level != 'hidden' and not (needed and needed not in modules)
+            out[key] = 'granted' if granted else 'denied'
         return out
 
     @api.depends('plan_id.settings_policy_line_ids.level', 'settings_policy_line_ids.level')

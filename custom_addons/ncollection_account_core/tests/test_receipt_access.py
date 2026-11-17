@@ -1,3 +1,6 @@
+import json
+
+from odoo.exceptions import AccessError
 from odoo.tests import HttpCase, new_test_user, tagged
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
@@ -54,6 +57,61 @@ class TestReceiptPrintAccess(HttpCase, AccountTestInvoicingCommon):
         response = self._get('nc_rcpt_emp')
         self.assertEqual(response.status_code, 403)
         self.assertIn('account.payment', response.text, "refused on the business record, not on a technical view")
+
+
+@tagged('post_install', '-at_install')
+class TestPlatformReceiptCapability(TestReceiptPrintAccess):
+    """A Workspace Administrator with NO accounting role, three ways, over the real report route:
+
+      granted   the platform pushed receipts=granted -> 200 (Odoo's read-only accounting, implied by the admin group)
+      denied    the platform pushed nothing / denied  -> 403 on account.payment, exactly as before
+      plain     an ordinary user, whatever the platform pushed -> 403
+    and the grant never makes anyone a technical administrator, and revoking it removes the access at once."""
+
+    def _push(self, granted):
+        config = self.env['ncollection.workspace.config'].sudo().search([], limit=1) or             self.env['ncollection.workspace.config'].sudo().create({})
+        config.write({'settings_policy': json.dumps({'receipts': 'granted' if granted else 'denied'})})
+
+    def _admin(self, login):
+        return new_test_user(self.env, login=login, company_id=self.env.company.id,
+                             groups='base.group_user,ncollection_core.group_tenant_admin')
+
+    def test_granted_admin_prints(self):
+        admin = self._admin('nc_cap_granted')
+        self._push(True)
+        self.assertTrue(admin.has_group('account.group_account_readonly'))
+        self.assertFalse(admin.has_group('base.group_system'))
+        self.assertFalse(admin.has_group('account.group_account_invoice'), "read only: no invoicing / payment rights")
+        response = self._get('nc_cap_granted')
+        self.assertEqual(response.status_code, 200, response.text[:300])
+        self.assertIn(self.payment.name, response.text)
+
+    def test_restricted_admin_is_refused(self):
+        self._admin('nc_cap_denied')
+        self._push(False)
+        response = self._get('nc_cap_denied')
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('account.payment', response.text)
+
+    def test_revoking_removes_it_at_once(self):
+        admin = self._admin('nc_cap_revoked')
+        self._push(True)
+        self.assertTrue(admin.has_group('account.group_account_readonly'))
+        self._push(False)
+        self.env.invalidate_all()
+        self.assertFalse(admin.has_group('account.group_account_readonly'))
+        self.assertEqual(self._get('nc_cap_revoked').status_code, 403)
+
+    def test_ordinary_user_is_refused_even_when_granted(self):
+        new_test_user(self.env, login='nc_cap_plain', groups='base.group_user', company_id=self.env.company.id)
+        self._push(True)
+        self.assertEqual(self._get('nc_cap_plain').status_code, 403)
+
+    def test_tenant_cannot_grant_itself(self):
+        admin = self._admin('nc_cap_self')
+        config = self.env['ncollection.workspace.config'].sudo().search([], limit=1) or             self.env['ncollection.workspace.config'].sudo().create({})
+        with self.assertRaises(AccessError):
+            config.with_user(admin).write({'settings_policy': json.dumps({'receipts': 'granted'})})
 
 
 @tagged('post_install', '-at_install')

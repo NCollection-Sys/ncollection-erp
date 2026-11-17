@@ -15,6 +15,10 @@ instead, and only those.
     group (Odoo's own ``res.groups._apply_group`` / ``_remove_group``). ``res.config.settings.execute()`` is never
     called, so no module is ever installed from here.
   * Always the current company (``env.company``), never a company sent by the client. Every change is audited.
+  * Each setting belongs to a SECTION of the unified Settings (``_nc_setting_sections``: Sales, Purchase, Inventory;
+    anything else is Business Settings). The platform's level for that section, narrowed to the user, decides it:
+    hidden = not offered and not readable from here, view = shown read-only, edit = saved. Checked server-side for
+    every changed value, so a delegate of Sales Settings can change sales settings and nothing else.
 """
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
@@ -27,6 +31,36 @@ class NcBusinessSettings(models.TransientModel):
     _description = 'Business Settings'
 
     company_id = fields.Many2one('res.company', readonly=True, default=lambda self: self.env.company)
+    # The user's level on each section this page shows ('hidden' outside the page's own section, when opened from
+    # one section's menu). Drives the view only; the server checks again on save.
+    nc_level_business = fields.Char(compute='_compute_nc_levels')
+    nc_level_sales = fields.Char(compute='_compute_nc_levels')
+    nc_level_purchase = fields.Char(compute='_compute_nc_levels')
+    nc_level_inventory = fields.Char(compute='_compute_nc_levels')
+
+    _nc_page_sections = ('business', 'sales', 'purchase', 'inventory')
+
+    @api.model
+    def _nc_setting_sections(self):
+        """{setting: section} for settings that are not Business Settings. Extended by the owning modules."""
+        return {}
+
+    @api.model
+    def _nc_section_of(self, name):
+        return self._nc_setting_sections().get(name, 'business')
+
+    @api.model
+    def _nc_page_levels(self):
+        """{section: the user's level}, restricted to the one section of the menu the page was opened from."""
+        policy = self.env['ncollection.settings.policy']
+        only = self.env.context.get('nc_settings_section')
+        return {key: (policy._nc_level(key) if (not only or only == key) else 'hidden') for key in self._nc_page_sections}
+
+    def _compute_nc_levels(self):
+        levels = self._nc_page_levels()
+        for page in self:
+            for key in self._nc_page_sections:
+                page['nc_level_%s' % key] = levels[key]
 
     @api.model
     def _nc_settings_spec(self):
@@ -38,7 +72,10 @@ class NcBusinessSettings(models.TransientModel):
 
     @api.model
     def _nc_require_tenant_admin(self):
-        if not (self.env.su or self.env.user.has_group(TENANT_ADMIN)):
+        """At least one section of this page is open to the user (a Workspace Administrator, or a delegate)."""
+        if self.env.su or self.env.user.has_group(TENANT_ADMIN):
+            return
+        if not any(level != 'hidden' for level in self._nc_page_levels().values()):
             raise AccessError(self.env._("Only a workspace administrator can change the business settings."))
 
     @api.model
@@ -57,7 +94,9 @@ class NcBusinessSettings(models.TransientModel):
     def default_get(self, fields_list):
         self._nc_require_tenant_admin()
         res = super().default_get(fields_list)
-        res.update(self._nc_native_values([name for name in self._nc_settings_spec() if name in fields_list]))
+        levels = self._nc_page_levels()
+        res.update(self._nc_native_values([name for name in self._nc_settings_spec() if name in fields_list
+                                           and levels[self._nc_section_of(name)] != 'hidden']))
         return res
 
     def _nc_check_value(self, name, value):
@@ -81,12 +120,19 @@ class NcBusinessSettings(models.TransientModel):
             self.env['ir.config_parameter'].sudo().set_param(field.config_parameter, value)
             return
         elif getattr(field, 'implied_group', None):
-            groups = self.env.ref(getattr(field, 'group', None) or 'base.group_user').sudo()
+            # ``group`` may name several groups, comma-separated (Odoo's own res_config reads it the same way).
+            groups = self.env['res.groups'].sudo()
+            for xmlid in (getattr(field, 'group', None) or 'base.group_user').split(','):
+                groups |= self.env.ref(xmlid.strip()).sudo()
             implied = self.env.ref(field.implied_group).sudo()
             if value:
                 groups._apply_group(implied)
             else:
                 groups._remove_group(implied)
+            return
+        elif getattr(field, 'default_model', None) and name.startswith('default_'):
+            # A default value Odoo's settings page stores as ir.default (res_config.py ``set_values`` does the same).
+            self.env['ir.default'].sudo().set(field.default_model, name[len('default_'):], value)
             return
         raise UserError(self.env._("%(setting)s cannot be changed here.", setting=field.string))
 
@@ -95,13 +141,19 @@ class NcBusinessSettings(models.TransientModel):
         self._nc_require_tenant_admin()
         spec = self._nc_settings_spec()
         company = self.env.company                     # never a client-supplied company
-        before = self._nc_native_values(list(spec))
+        levels = self._nc_page_levels()
+        visible = [name for name in spec if levels[self._nc_section_of(name)] != 'hidden']
+        before = self._nc_native_values(visible)
         changed = []
+        policy = self.env['ncollection.settings.policy']
         for name, how in spec.items():
+            if name not in visible:
+                continue                               # never read from here, never written from here
             value = self[name]
             value = value.id if isinstance(value, models.BaseModel) else value
             if value == before.get(name) or (not value and not before.get(name)):
                 continue
+            policy._nc_require(self._nc_section_of(name), 'edit')
             self._nc_check_value(name, value)
             if how == 'native':
                 self._nc_apply_native(company, name, value)
@@ -111,4 +163,8 @@ class NcBusinessSettings(models.TransientModel):
         if changed:
             self.env.user._nc_audit('admin_settings_change', 'business settings of company %s: %s' % (
                 company.id, ', '.join(sorted(changed))))
-        return self.env['ir.actions.act_window']._for_xml_id('ncollection_core.action_nc_business_settings')
+        action = self.env['ir.actions.act_window']._for_xml_id('ncollection_core.action_nc_business_settings')
+        only = self.env.context.get('nc_settings_section')
+        if only in self._nc_page_sections:
+            action['context'] = {'nc_settings_section': only}
+        return action

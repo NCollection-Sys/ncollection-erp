@@ -195,4 +195,7 @@ class TestPurchaseDocumentsOwnOnlyTheBillsEntry(TransactionCase):
     def test_the_licence_follow_applies_to_exactly_one_menu(self):
         owned = self.env['ir.model.data'].sudo().search([
             ('model', '=', 'ir.ui.menu'), ('module', '=', 'ncollection_purchase_documents')]).mapped('name')
-        self.assertEqual(owned, ['menu_purchase_nc_vendor_bills'])
+        # its Settings page is owned here too but follows its own application (SETTINGS_SECTION_MENUS)
+        self.assertEqual(sorted(owned), sorted(['menu_purchase_nc_vendor_bills', 'menu_workspace_purchase_settings']))
+        from odoo.addons.ncollection_core.models.ir_ui_menu import SETTINGS_SECTION_MENUS  # noqa: PLC0415
+        self.assertIn('ncollection_purchase_documents.menu_workspace_purchase_settings', SETTINGS_SECTION_MENUS)

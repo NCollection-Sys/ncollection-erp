@@ -3,3 +3,4 @@ from . import test_purchase_documents
 from . import test_bills_first
 from . import test_bill_products
 from . import test_business_settings
+from . import test_settings_section

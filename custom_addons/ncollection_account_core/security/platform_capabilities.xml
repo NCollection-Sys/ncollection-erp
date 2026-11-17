@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A capability the PLATFORM grants a workspace (ncollection_core settings_policy CAPABILITIES, pushed by
+         config-sync): while "receipts" is granted, group_tenant_admin implies this group, so every Workspace
+         Administrator may read accounting and print receipts. It is Odoo's own read-only accounting access
+         (account.group_account_readonly: its ACLs and record rules), nothing more: no posting, no payment, no
+         technical administration. Nobody is a member directly; revoking the capability removes it at once. -->
+    <record id="group_platform_receipt_access" model="res.groups">
+        <field name="name">Platform grant: Receipts &amp; accounting (read only)</field>
+        <field name="implied_ids" eval="[(4, ref('account.group_account_readonly'))]"/>
+    </record>
+</odoo>
