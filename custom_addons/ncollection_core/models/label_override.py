@@ -27,7 +27,7 @@ import logging
 import re
 
 
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 from odoo.exceptions import AccessError, ValidationError
 
 _logger = logging.getLogger(__name__)
@@ -39,6 +39,7 @@ FORBIDDEN_CHARS = re.compile(r'[<>{}\x00-\x08\x0b\x0c\x0e-\x1f]')
 # Models whose texts carry security meaning: never relabelled by a tenant.
 PROTECTED_MODELS = {'res.groups', 'ir.rule', 'ir.model.access', 'ir.config_parameter', 'res.users.apikeys',
                     'ncollection.role', 'auditlog.rule', 'auditlog.log'}
+COMPANY_SCOPED = ('field', 'help', 'menu')
 TARGETS = [('menu', 'Menu'), ('action', 'Page Title (Action)'), ('field', 'Field Label'), ('help', 'Field Help'),
            ('selection', 'Choice Label'), ('view', 'Screen Text (Button, Tab, Section)')]
 
@@ -127,16 +128,22 @@ class LabelOverride(models.Model):
                               help="The exact text as the screen shows it in this language.")
     original = fields.Char(string='Original Text', readonly=True, copy=False)
     value = fields.Char(string='New Text', required=True)
+    company_id = fields.Many2one(
+        'res.company', string='Only for Company', ondelete='cascade',
+        help="Empty: the whole workspace (Odoo's own translation of the text is changed). Set: only users working in "
+             "this company see the new text; it is layered on when labels and menus are read, nothing shared changes. "
+             "Company scope covers field labels, field help and menu names.")
     company_scope_note = fields.Char(compute='_compute_scope_note', string='Applies To')
 
     _unique_target = models.Constraint(
         'UNIQUE NULLS NOT DISTINCT '
-        '(target_type, lang, menu_id, action_id, field_id, selection_id, view_id, source_term)',
+        '(target_type, lang, menu_id, action_id, field_id, selection_id, view_id, source_term, company_id)',
         'This text already has an override in this language.')
 
     def _compute_scope_note(self):
         for rec in self:
-            rec.company_scope_note = self.env._("This whole workspace (every company)")
+            rec.company_scope_note = (self.env._("Only %s", rec.company_id.name) if rec.company_id
+                                      else self.env._("This whole workspace (every company)"))
 
     # ----------------------------------------------------------------- guard
     def _nc_check_editor(self):
@@ -188,6 +195,9 @@ class LabelOverride(models.Model):
     def create(self, vals_list):
         self._nc_check_editor()
         for vals in vals_list:
+            company = vals.get('company_id')
+            if company and not self.env.su and company not in self.env.user.company_ids.ids:
+                raise AccessError(self.env._("You can only set texts for your own companies."))
             vals['value'] = (vals.get('value') or '').strip()
         records = super().create(vals_list)
         for rec in records:
@@ -243,6 +253,71 @@ class LabelOverride(models.Model):
     def _nc_signature_reset(self):
         self.env['ir.config_parameter'].sudo().set_param(SIGNATURE_PARAM, '')
 
+    @api.model
+    @tools.ormcache('company_id', 'lang')
+    def _nc_company_overlay(self, company_id, lang):
+        """{('field'|'help', model, name) or ('menu', id): text} of the active company-only overrides."""
+        out = {}
+        for rec in self.sudo().search([('company_id', '=', company_id), ('lang', '=', lang)]):
+            if rec.target_type in ('field', 'help'):
+                out[(rec.target_type, rec.field_id.model, rec.field_id.name)] = rec.value
+            elif rec.target_type == 'menu':
+                out[('menu', rec.menu_id.id)] = rec.value
+        return out
+
+    @api.model
+    def nc_quick_edit(self, vals):
+        """The in-page editor's ONE entry point: find or create (or reset) the override of an element the browser
+        identified by its metadata. Validation, rights, policy and audit are the model's own (create / write)."""
+        if not isinstance(vals, dict):
+            raise ValidationError(self.env._("Malformed request."))
+        kind = vals.get('kind')
+        lang = vals.get('lang') or self.env.lang or 'en_US'
+        company = self.env.company if vals.get('scope') == 'company' else self.env['res.company']
+        domain = [('lang', '=', lang), ('company_id', '=', company.id or False)]
+        create = {'lang': lang, 'company_id': company.id or False}
+        if kind in ('field', 'help'):
+            field = self.env['ir.model.fields']._get(str(vals.get('model') or ''), str(vals.get('field') or ''))
+            if not field:
+                raise ValidationError(self.env._("Unknown field."))
+            domain += [('target_type', '=', kind), ('field_id', '=', field.id)]
+            create.update(target_type=kind, field_id=field.id)
+        elif kind == 'menu':
+            menu = self.env['ir.ui.menu'].browse(int(vals.get('menu_id') or 0)).exists()
+            if not menu:
+                raise ValidationError(self.env._("Unknown menu."))
+            domain += [('target_type', '=', 'menu'), ('menu_id', '=', menu.id)]
+            create.update(target_type='menu', menu_id=menu.id)
+        elif kind == 'view':
+            text = str(vals.get('text') or '').strip()
+            views = self.env['ir.ui.view'].sudo().search([('model', '=', str(vals.get('model') or ''))])
+            view = next((v for v in views if text in self._nc_view_terms(v, lang)), None)
+            if not view:
+                raise ValidationError(self.env._("This text is not a screen text that can be renamed here."))
+            domain += [('target_type', '=', 'view'), ('view_id', '=', view.id), ('source_term', '=', text)]
+            create.update(target_type='view', view_id=view.id, source_term=text)
+        else:
+            raise ValidationError(self.env._("This kind of text cannot be renamed here."))
+        existing = self.with_context(active_test=False).search(domain, limit=1)
+        if vals.get('reset'):
+            if existing.active:
+                existing.action_reset()
+            return {'reset': True}
+        value = vals.get('value')
+        if existing:
+            existing.write({'value': value, 'active': True})
+            return {'id': existing.id}
+        return {'id': self.create(dict(create, value=value)).id}
+
+    @api.model
+    def nc_can_edit(self):
+        """Whether the in-page editor's switch is offered to this user (Interface Text at edit level)."""
+        try:
+            self.env['ncollection.settings.policy']._nc_require('interface_text', 'edit')
+        except AccessError:
+            return False
+        return self.has_access('create')
+
     def _nc_current_text(self):
         self.ensure_one()
         record = self._nc_record().with_context(lang=self.lang)
@@ -255,16 +330,25 @@ class LabelOverride(models.Model):
         counts)."""
         for rec in self.with_context(active_test=False):
             record = rec._nc_record()
-            if not record:
-                continue
+            if not record or rec.company_id:
+                continue  # a company-only text never touched the shared translation
             if rec.target_type == 'view':
                 record.update_field_translations('arch_db', {rec.lang: {rec.value: rec.source_term}},
                                                  source_lang=rec.lang)
             elif rec.original:
                 record.update_field_translations(rec._nc_column(), {rec.lang: rec.original})
 
+    @api.constrains('company_id', 'target_type')
+    def _check_company_scope(self):
+        for rec in self.filtered('company_id'):
+            if rec.target_type not in COMPANY_SCOPED:
+                raise ValidationError(self.env._(
+                    "Company-only text is available for field labels, field help and menu names; screen texts, page "
+                    "titles and choices apply to the whole workspace."))
+
     def _nc_apply(self):
-        for rec in self.filtered('active'):
+        self.env.registry.clear_cache()  # the company overlay is cached
+        for rec in self.filtered(lambda r: r.active and not r.company_id):
             record = rec._nc_record()
             if not record:
                 continue
@@ -409,3 +493,47 @@ class IrUiMenu(models.Model):
         technical = {self.env.ref('base.group_no_one').id, self.env.ref('base.group_system').id}
         path = [int(part) for part in (self.parent_path or '').split('/') if part]
         return bool((root and root.id in path) or (set(self.group_ids.ids) & technical))
+
+
+class IrModelFields(models.Model):
+    _inherit = 'ir.model.fields'
+
+    @api.model
+    def get_field_string(self, model_name):
+        """Company-only labels layered on Odoo's (cached) translated labels; a copy, never the cached dict."""
+        result = super().get_field_string(model_name)
+        overlay = self.env['ncollection.label.override']._nc_company_overlay(self.env.company.id, self.env.lang)
+        if overlay:
+            result = dict(result)
+            for (kind, model, name), value in ((k, v) for k, v in overlay.items() if len(k) == 3):
+                if kind == 'field' and model == model_name:
+                    result[name] = value
+        return result
+
+    @api.model
+    def get_field_help(self, model_name):
+        result = super().get_field_help(model_name)
+        overlay = self.env['ncollection.label.override']._nc_company_overlay(self.env.company.id, self.env.lang)
+        if overlay:
+            result = dict(result)
+            for (kind, model, name), value in ((k, v) for k, v in overlay.items() if len(k) == 3):
+                if kind == 'help' and model == model_name:
+                    result[name] = value
+        return result
+
+
+class IrUiMenuLabels(models.Model):
+    _inherit = 'ir.ui.menu'
+
+    def load_menus(self, debug):
+        """Company-only menu names layered on the (uid / lang cached) menu tree; the cached structure is copied."""
+        menus = super().load_menus(debug)
+        overlay = self.env['ncollection.label.override']._nc_company_overlay(self.env.company.id, self.env.lang)
+        renames = {key[1]: value for key, value in overlay.items() if key[0] == 'menu'}
+        if not renames:
+            return menus
+        menus = dict(menus)
+        for menu_id, value in renames.items():
+            if menu_id in menus:
+                menus[menu_id] = dict(menus[menu_id], name=value)
+        return menus

@@ -14,6 +14,7 @@
                 <field name="view_id" optional="hide"/>
                 <field name="source_term" optional="hide"/>
                 <field name="lang"/>
+                <field name="company_id" optional="show"/>
                 <field name="original"/>
                 <field name="value"/>
                 <button name="action_reset" type="object" string="Reset" icon="fa-undo"/>
@@ -52,6 +53,7 @@
                         <group>
                             <field name="original" invisible="not id"/>
                             <field name="value"/>
+                            <field name="company_id" readonly="id" invisible="target_type not in ('field', 'help', 'menu')" options="{'no_create': True}"/>
                             <field name="company_scope_note"/>
                         </group>
                     </group>

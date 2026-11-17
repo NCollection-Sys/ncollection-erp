@@ -1,0 +1,8 @@
+// In-page label editor: while on, the elements that can be renamed are outlined (and keep their normal look otherwise).
+.o_nc_label_edit {
+    .o_form_label, th[data-name], [data-section], button[name], .o_form_view .nav-link {
+        outline: 1px dashed $warning;
+        outline-offset: 2px;
+        cursor: text !important;
+    }
+}

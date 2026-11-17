@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ncollection_core.NcLabelEditorSystray">
+        <div t-if="state.allowed" class="o_nc_label_editor_toggle d-flex align-items-center">
+            <button type="button" t-on-click="toggle" t-att-aria-pressed="state.on ? 'true' : 'false'"
+                    t-attf-class="btn btn-sm {{ state.on ? 'btn-warning' : 'btn-link' }}"
+                    title="Edit labels: click a field label, column, menu or button to rename it">
+                <i class="fa fa-i-cursor" role="img" aria-hidden="true"/>
+                <span class="ms-1 d-none d-md-inline" t-if="state.on">Editing labels</span>
+            </button>
+        </div>
+    </t>
+
+    <t t-name="ncollection_core.NcLabelDialog">
+        <Dialog title.translate="Rename this text" size="'md'">
+            <div class="o_nc_label_dialog">
+                <div class="text-muted small mb-1" t-esc="kindLabel"/>
+                <div class="mb-2"><span class="fw-semibold">Now: </span><bdi t-esc="props.target.text"/></div>
+                <label class="form-label" for="nc_label_value">New text</label>
+                <input id="nc_label_value" class="form-control" maxlength="120" t-model="state.value"/>
+                <div class="mt-3" t-if="companyAllowed">
+                    <label class="form-label" for="nc_label_scope">Applies to</label>
+                    <select id="nc_label_scope" class="form-select" t-model="state.scope">
+                        <option value="workspace">The whole workspace</option>
+                        <option value="company">Only my current company</option>
+                    </select>
+                </div>
+                <p class="text-muted small mt-3 mb-0">Plain text, in your current language. Reset brings back the
+                    original wording. Every change is recorded.</p>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary" t-on-click="save" t-att-disabled="state.busy">Save</button>
+                <button class="btn btn-secondary" t-on-click="reset" t-att-disabled="state.busy">Reset to original</button>
+                <button class="btn btn-link" t-on-click="props.close">Cancel</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

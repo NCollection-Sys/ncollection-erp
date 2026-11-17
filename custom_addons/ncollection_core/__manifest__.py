@@ -111,6 +111,10 @@
             'ncollection_core/static/src/router/app_path.js',
             # Print opens the document PDF in a new tab (actions marked nc_print_in_tab), never a download.
             'ncollection_core/static/src/js/print_in_tab.js',
+            # Settings > Interface Text: the in-page label editor (top-bar switch, metadata-identified targets).
+            'ncollection_core/static/src/label_editor/label_editor.scss',
+            'ncollection_core/static/src/label_editor/label_editor.js',
+            'ncollection_core/static/src/label_editor/label_editor.xml',
             'ncollection_core/static/src/attachments/nc_file_viewer.scss',
             'ncollection_core/static/src/attachments/nc_file_viewer.js',
             'ncollection_core/static/src/attachments/nc_file_viewer.xml',
