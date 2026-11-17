@@ -43,7 +43,7 @@ class NcollectionTaxAnalysis(models.TransientModel):
         [('tax', 'By tax'),
          ('account', 'By tax account'),
          ('customer', 'By customer'),
-         ('vendor', 'By vendor'),
+         ('vendor', 'By supplier'),
          ('taxability', 'Taxable vs non-taxable')],
         default='tax', required=True, string='View',
         help="How the tax is broken down. Every view reads the same journal "

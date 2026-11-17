@@ -20,7 +20,7 @@
                             These apply to this company only.
                         </p>
                     </div>
-                    <group string="Customers and vendors">
+                    <group string="Customers and suppliers">
                         <group>
                             <field name="nc_default_receivable_id" options="{'no_create': True}"/>
                             <field name="nc_default_payable_id" options="{'no_create': True}"/>

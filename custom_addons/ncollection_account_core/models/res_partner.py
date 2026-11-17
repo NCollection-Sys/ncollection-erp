@@ -25,7 +25,7 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     nc_is_customer = fields.Boolean(compute='_compute_nc_roles', string='Is a customer')
-    nc_is_vendor = fields.Boolean(compute='_compute_nc_roles', string='Is a vendor')
+    nc_is_vendor = fields.Boolean(compute='_compute_nc_roles', string='Is a supplier')
 
     @api.depends('customer_rank', 'supplier_rank', 'commercial_partner_id.customer_rank',
                  'commercial_partner_id.supplier_rank')

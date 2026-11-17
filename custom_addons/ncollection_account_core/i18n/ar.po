@@ -44,7 +44,7 @@ msgstr "العنوان المخصّص"
 
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
-msgid "Customers and vendors"
+msgid "Customers and suppliers"
 msgstr "العملاء والموردون"
 
 #. module: ncollection_account_core
@@ -213,7 +213,7 @@ msgstr "عميل"
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_vendor
-msgid "Is a vendor"
+msgid "Is a supplier"
 msgstr "مورد"
 
 #. module: ncollection_account_core
@@ -223,7 +223,7 @@ msgstr "الشريك عميل"
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_vendor
-msgid "Partner is a vendor"
+msgid "Partner is a supplier"
 msgstr "الشريك مورد"
 
 #. module: ncollection_account_core
@@ -238,7 +238,7 @@ msgstr "الشريك عميل"
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_partner_is_vendor model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_vendor
-msgid "Partner is a vendor"
+msgid "Partner is a supplier"
 msgstr "الشريك مورد"
 
 #. module: ncollection_account_core
@@ -248,7 +248,7 @@ msgstr "عميل"
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_res_users__nc_is_vendor model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_vendor
-msgid "Is a vendor"
+msgid "Is a supplier"
 msgstr "مورد"
 
 #. module: ncollection_account_core
@@ -854,7 +854,7 @@ msgstr "هذه الدفعة أحد طرفي تحويل داخلي ولا يمك�
 #. module: ncollection_account_core
 #. odoo-python
 #: code:addons/ncollection_account_core/models/duplicate_records.py:0
-msgid "Only customer and vendor payments can be duplicated."
+msgid "Only customer and supplier payments can be duplicated."
 msgstr "يمكن إنشاء نسخة مماثلة من دفعات العملاء والموردين فقط."
 
 #. module: ncollection_account_core

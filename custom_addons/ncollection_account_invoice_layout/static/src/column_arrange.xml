@@ -4,7 +4,7 @@
         <Dialog title="title" size="'md'">
             <p class="text-muted small mb-2">
                 Drag a column (or use the arrows) to change its order, and tick the columns to show. The choice applies to
-                customer invoices and vendor bills.
+                customer invoices and supplier bills.
             </p>
             <ul class="list-group nc_arrange_list">
                 <li t-foreach="state.rows" t-as="row" t-key="row.name"

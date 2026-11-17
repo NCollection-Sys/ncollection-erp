@@ -119,4 +119,4 @@ class AccountMove(models.Model):
 
     # ------------------------------------------------------------------ Customer / Vendor tags beside the partner
     nc_partner_is_customer = fields.Boolean(related='partner_id.nc_is_customer', string='Partner is a customer')
-    nc_partner_is_vendor = fields.Boolean(related='partner_id.nc_is_vendor', string='Partner is a vendor')
+    nc_partner_is_vendor = fields.Boolean(related='partner_id.nc_is_vendor', string='Partner is a supplier')

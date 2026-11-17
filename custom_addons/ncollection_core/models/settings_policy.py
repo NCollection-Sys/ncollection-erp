@@ -171,6 +171,11 @@ class SettingsPolicy(models.AbstractModel):
             return platform if platform != 'hidden' else 'hidden'
         if user.has_group(TENANT_ADMIN):
             return platform
+        platform_admin = self.env.ref('ncollection_subscription.group_platform_admin', raise_if_not_found=False)
+        if platform_admin and platform_admin in user.all_group_ids:
+            # A Platform Administrator administers the workspace settings (the Settings app lists the group); on a
+            # tenant they are bound by the same platform level as the workspace's own administrators.
+            return platform
         if section == 'users' and user.has_group('base.group_erp_manager'):
             # Odoo's own user administrator (Access Rights) keeps administering users, within the platform's level;
             # what each may change is still decided by the user methods' own group checks.

@@ -266,7 +266,7 @@ msgstr "العملة"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__applies_to__both
-msgid "Customer invoices and vendor bills"
+msgid "Customer invoices and supplier bills"
 msgstr "فواتير العملاء وفواتير الموردين"
 
 #. module: ncollection_account_invoice_layout
@@ -324,7 +324,7 @@ msgstr "حساب التوزيع التحليلي"
 #: code:addons/ncollection_account_invoice_layout/static/src/column_arrange.xml:0
 msgid ""
 "Drag a column (or use the arrows) to change its order, and tick the columns to show. The choice applies to\n"
-"                customer invoices and vendor bills."
+"                customer invoices and supplier bills."
 msgstr "اسحب العمود (أو استخدم الأسهم) لتغيير ترتيبه، وحدّد الأعمدة المراد عرضها. ينطبق الاختيار على فواتير العملاء وفواتير الموردين."
 
 #. module: ncollection_account_invoice_layout
@@ -415,7 +415,7 @@ msgstr "بنود الفاتورة (بعد خصومات البنود)"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_column_pref__list_key__invoice_lines
-msgid "Invoice lines (customer invoices, vendor bills, credit notes)"
+msgid "Invoice lines (customer invoices, supplier bills, credit notes)"
 msgstr "بنود الفاتورة (فواتير العملاء، فواتير الموردين، الإشعارات الدائنة)"
 
 #. module: ncollection_account_invoice_layout

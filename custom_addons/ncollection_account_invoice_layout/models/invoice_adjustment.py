@@ -69,7 +69,7 @@ class InvoiceAdjustmentType(models.Model):
     )
     applies_to = fields.Selection(
         [
-            ('both', 'Customer invoices and vendor bills'),
+            ('both', 'Customer invoices and supplier bills'),
             ('customer', 'Customer invoices only'),
             ('vendor', 'Supplier bills only'),
         ],

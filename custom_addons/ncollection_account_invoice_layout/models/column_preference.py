@@ -11,7 +11,7 @@ Changes to a company default are tracked in the record's chatter (who, when, old
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, ValidationError
 
-LIST_KEYS = [('invoice_lines', 'Invoice lines (customer invoices, vendor bills, credit notes)')]
+LIST_KEYS = [('invoice_lines', 'Invoice lines (customer invoices, supplier bills, credit notes)')]
 
 
 class InvoiceColumnPreference(models.Model):

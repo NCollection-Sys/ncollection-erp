@@ -39,7 +39,7 @@ class AccountPayment(models.Model):
         if self.paired_internal_transfer_payment_id:
             return self.env._("This payment is one side of an internal transfer and cannot be duplicated.")
         if self.partner_type not in ('customer', 'supplier') or self.payment_type not in ('inbound', 'outbound'):
-            return self.env._("Only customer and vendor payments can be duplicated.")
+            return self.env._("Only customer and supplier payments can be duplicated.")
         return super()._nc_duplicate_blocker()
 
     def _nc_duplicate_defaults(self):

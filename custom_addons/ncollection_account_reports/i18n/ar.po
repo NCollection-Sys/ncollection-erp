@@ -42,7 +42,7 @@ msgstr "تتطلّب المقارنة المخصّصة تاريخَي بداية
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
-msgid "A printable statement to send to a customer or vendor."
+msgid "A printable statement to send to a customer or supplier."
 msgstr "كشف حساب قابل للطباعة لإرساله إلى عميل أو مورّد."
 
 #. module: ncollection_account_reports
@@ -209,7 +209,7 @@ msgstr "حسب حساب الضريبة"
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_tax_analysis__group_by__vendor
-msgid "By vendor"
+msgid "By supplier"
 msgstr "حسب المورّد"
 
 #. module: ncollection_account_reports
@@ -1216,7 +1216,7 @@ msgstr "التحويلات الصادرة إلى العملاء: الجاهزة 
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
-msgid "Output and input tax by tax, tax account, customer, vendor or taxability."
+msgid "Output and input tax by tax, tax account, customer, supplier or taxability."
 msgstr "ضريبة المخرجات والمدخلات حسب الضريبة أو حساب الضريبة أو العميل أو المورّد أو قابلية الخضوع للضريبة."
 
 #. module: ncollection_account_reports
@@ -1496,7 +1496,7 @@ msgstr "الاستلامات"
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
-msgid "Receivable and payable movements per customer or vendor."
+msgid "Receivable and payable movements per customer or supplier."
 msgstr "حركات الذمم المدينة والدائنة لكل عميل أو مورّد."
 
 #. module: ncollection_account_reports
@@ -1717,7 +1717,7 @@ msgstr "عرض المزيد (المتبقي: %s)"
 #. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/models/report_service.py:0
-msgid "Spend by vendor and product"
+msgid "Spend by supplier and product"
 msgstr "المشتريات حسب المورّد والمنتج"
 
 #. module: ncollection_account_reports
