@@ -33,8 +33,7 @@ class NcBusinessSettings(models.TransientModel):
     group_warning_stock = fields.Boolean(string='Warnings for Stock')
     group_stock_sign_delivery = fields.Boolean(string='Signature')
     group_stock_reception_report = fields.Boolean(string='Reception Report')
-    annual_inventory_month = fields.Selection(_native_selection('annual_inventory_month'),
-                                              string='Annual Inventory Month')
+    annual_inventory_month = fields.Selection(_native_selection('annual_inventory_month'))
     annual_inventory_day = fields.Integer(string='Day of the month')
 
     @api.model
