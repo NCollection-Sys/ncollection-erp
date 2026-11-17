@@ -11,20 +11,26 @@ class TestReceiptPrintAccess(HttpCase, AccountTestInvoicingCommon):
     "You are not allowed to access 'View' (ir.ui.view) records" — the template read the company layout's view key
     as the user; ir.ui.view is readable by base.group_system only).
 
-    NOTE: a fresh test database does NOT reproduce the 403 (verified: these pass without the fix too). The fix was
-    proven on a restored copy of a real tenant over HTTP: 403 + traceback before, 200 + PDF after, nothing else
-    changed. These tests guard the allowed / refused outcomes, not the original trigger."""
+    REPRODUCES the production 403 (RED on the old template: Owner and accountant 403; GREEN with the fix). Two things
+    had hidden it: the fixture used the Standard layout, and an HttpCase request shares the test's transaction cache,
+    so a layout written in setUp was already cached and its key never reached the access check. The tenant that
+    failed uses Bubble, and the cache is now cleared before each request, as in a real one.
+    """
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.env.company.external_report_layout_id = cls.env.ref('web.external_layout_standard')
+        # The restored tenant that answered 403 prints with Bubble (read from the shared database).
+        cls.env.company.external_report_layout_id = cls.env.ref('web.external_layout_bubble')
         cls.payment = cls.env['account.payment'].create({
             'payment_type': 'inbound', 'partner_type': 'customer', 'partner_id': cls.partner_a.id, 'amount': 12.5})
         cls.payment.action_post()
 
     def _get(self, login):
         self.authenticate(login, login)
+        # The request shares this test's transaction: drop the cached layout (written above as superuser), or the
+        # template's read of its key never reaches the access check, as it does in a real request.
+        self.env.invalidate_all()
         return self.url_open(RECEIPT_URL % self.payment.id)
 
     def test_owner_without_system_rights_prints_the_receipt(self):
