@@ -138,6 +138,9 @@ class AuditlogLog(models.Model):
                 _logger.exception(
                     "ncollection_audit: could not digest audit log %s; the row "
                     "is kept and will verify as untrusted", record.id)
+        # WRITTEN NOW, not left in the cache: a module install loads data with cache invalidations between batches,
+        # and an unflushed digest was dropped there (only the first row of a batch kept it).
+        records.flush_recordset(['nc_content_hash'])
         return records
 
     # ---- the digest ------------------------------------------------------

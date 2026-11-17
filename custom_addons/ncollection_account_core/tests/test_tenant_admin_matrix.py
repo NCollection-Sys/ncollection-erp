@@ -37,7 +37,7 @@ class TestTenantAdminMatrix(HttpCase, AccountTestInvoicingCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.users = {name: new_test_user(cls.env, login='nc_mx_%s' % name, password='nc_mx_%s' % name,
+        cls.users = {name: new_test_user(cls.env, login='nc_mx_%s' % name,
                                          groups=groups, company_id=cls.env.company.id)
                      for name, groups in USERS.items()}
         cls.target = new_test_user(cls.env, login='nc_mx_target', groups='base.group_user',

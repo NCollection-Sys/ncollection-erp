@@ -210,6 +210,10 @@ class AuditlogRule(models.Model):
                 continue
             if record.model.startswith('ncollection.audit'):
                 continue
+            # Interface texts keep their OWN append-only history (ncollection.label.audit), and the label engine
+            # writes its rules at every registry load: auditing them would add rows before the seal machinery runs.
+            if record.model.startswith('ncollection.label.'):
+                continue
             if record.model in SENSITIVE_MODELS:
                 continue
             names.append(record.model)

@@ -120,7 +120,7 @@ class TestAuditRules(AuditCommon):
             model = self.env.get(record.model)
             if model is None or model._transient or model._abstract:
                 continue
-            if record.model.startswith('ncollection.audit'):
+            if record.model.startswith(('ncollection.audit', 'ncollection.label.')):
                 continue
             if record.model in SENSITIVE_MODELS:
                 continue          # excluded on purpose — see the auth-log test

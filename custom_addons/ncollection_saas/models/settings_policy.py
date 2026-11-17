@@ -61,8 +61,8 @@ class SettingsPolicyLine(models.Model):
         for line in self:
             scope = self.env._('plan %s', line.plan_id.name) if line.plan_id else self.env._('this tenant')
             for tenant in line._nc_tenants():
-                tenant.message_post(body='%s (%s)' % (text(line), scope), author_id=self.env.user.partner_id.id,
-                                    subtype_xmlid='mail.mt_note')
+                tenant.message_post(body=self.env._("%(text)s (%(scope)s)", text=text(line), scope=scope),
+                                    author_id=self.env.user.partner_id.id, subtype_xmlid='mail.mt_note')
 
     def _nc_resync(self, tenants=None):
         for tenant in (tenants if tenants is not None else self._nc_tenants()).filtered(

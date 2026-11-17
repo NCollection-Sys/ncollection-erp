@@ -200,9 +200,12 @@ class LabelOverride(models.Model):
             if company and not self.env.su and company not in self.env.user.company_ids.ids:
                 raise AccessError(self.env._("You can only set texts for your own companies."))
             vals['value'] = (vals.get('value') or '').strip()
+        for vals in vals_list:
+            # The original text is read BEFORE the record exists and created with it: no write right after create
+            # (OCA auditlog, which records ncollection.* models, fails on such a write inside the same create).
+            vals['original'] = self.new(dict(vals, original=False))._nc_current_text()  # never client-sent
         records = super().create(vals_list)
         for rec in records:
-            rec.sudo().original = rec._nc_current_text()
             rec._nc_log('create', rec.original, rec.value)
         records._nc_signature_reset()
         self.env['ncollection.label.engine'].sudo()._nc_apply_all(force=True)
@@ -342,7 +345,9 @@ class LabelOverride(models.Model):
 
     def _nc_current_text(self):
         self.ensure_one()
-        record = self._nc_record().with_context(lang=self.lang)
+        # The technical record (menu, field, choice) is readable by administrators of Access Rights only; its TEXT
+        # is what the user is renaming, so only that one value is read with elevated rights.
+        record = self._nc_record().sudo().with_context(lang=self.lang)
         if self.target_type == 'view':
             return self.source_term
         return record[self._nc_column()] or ''

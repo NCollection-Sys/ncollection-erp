@@ -179,7 +179,8 @@ class SettingsPolicy(models.AbstractModel):
         return out
 
 
-class SettingsDelegation(models.TransientModel):
+# The delegation screen sits beside the policy it edits.
+class SettingsDelegation(models.TransientModel):  # pylint: disable=no-wizard-in-models
     """The delegation screen. Nothing is stored here: saving writes the section groups (the one store)."""
     _name = 'ncollection.settings.delegation'
     _description = 'Settings delegation'
@@ -231,7 +232,7 @@ class SettingsDelegation(models.TransientModel):
         return self.action_open()
 
 
-class SettingsDelegationLine(models.TransientModel):
+class SettingsDelegationLine(models.TransientModel):  # pylint: disable=no-wizard-in-models
     _name = 'ncollection.settings.delegation.line'
     _description = 'Settings delegation line'
 
@@ -255,22 +256,12 @@ class _SectionGuarded(models.AbstractModel):
     _description = 'Settings section guard'
     _nc_section = None
 
-    def _nc_guard(self):
-        if self._nc_section and not self.env.su:
+    def check_access(self, operation):
+        """Hooked on Odoo's own access check (create / write / unlink all call it), NOT by overriding create /
+        write: OCA auditlog patches those methods, and an extra layer there broke its per-row digests."""
+        if operation in ('create', 'write', 'unlink') and self._nc_section and not self.env.su:
             self.env['ncollection.settings.policy']._nc_require(self._nc_section, 'edit')
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        self._nc_guard()
-        return super().create(vals_list)
-
-    def write(self, vals):
-        self._nc_guard()
-        return super().write(vals)
-
-    def unlink(self):
-        self._nc_guard()
-        return super().unlink()
+        return super().check_access(operation)
 
 
 class DocumentStamp(models.Model):

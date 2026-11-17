@@ -25,9 +25,10 @@ class AccountJournal(models.Model):
     @api.depends('type')
     def _compute_name_placeholder(self):
         """The placeholder of a new purchase journal ("Vendor Bills")."""
-        super()._compute_name_placeholder()
+        result = super()._compute_name_placeholder()
         for journal in self:
             journal.name_placeholder = _reword(self.env, journal.name_placeholder)
+        return result
 
 
 class AccountMove(models.Model):
