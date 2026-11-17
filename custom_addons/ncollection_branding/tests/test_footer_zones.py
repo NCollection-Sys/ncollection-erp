@@ -23,7 +23,8 @@ class TestFooterZones(TransactionCase):
             self.env['report.layout'].create({'name': view.name, 'view_id': view.id})
         company.external_report_layout_id = view
         body = self.env['ir.ui.view'].with_context(lang=lang)._render_template(
-            'web.report_invoice_wizard_preview', {'company': company, 'preview_css': '', 'is_html_empty': is_html_empty})
+            'web.report_invoice_wizard_preview',
+            {'company': company, 'preview_css': '', 'is_html_empty': is_html_empty})
         return lhtml.fromstring(str(body))
 
     def test_zones_replace_the_single_footer_in_every_layout(self):

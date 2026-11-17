@@ -120,7 +120,8 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         capital = self.env['account.account'].create({'code': '310901', 'name': 'Share Capital (xbrl)',
                                                       'account_type': 'equity'})
         bank = self.company_data['default_journal_bank']
-        move = self.env['account.move'].create({'move_type': 'entry', 'journal_id': bank.id, 'date': today,
+        move = self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': bank.id, 'date': today,
             'line_ids': [Command.create({'account_id': bank.default_account_id.id, 'debit': 1000.0}),
                          Command.create({'account_id': capital.id, 'credit': 1000.0})]})
         move.action_post()

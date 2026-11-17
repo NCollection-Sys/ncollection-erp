@@ -238,6 +238,7 @@ class AccountReportXbrl(models.AbstractModel):
         decimals = currency.decimal_places
         for concept, period_type, start, end, value, member in facts:
             fact = etree.SubElement(root, '{%s}%s' % (NS['ifrs-full'], concept), {
-                'contextRef': contexts[(period_type, start, end, member)], 'unitRef': unit_id, 'decimals': str(decimals)})
+                'contextRef': contexts[(period_type, start, end, member)], 'unitRef': unit_id,
+                'decimals': str(decimals)})
             fact.text = '{:.{p}f}'.format(currency.round(value) + 0.0, p=decimals)
         return etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True)

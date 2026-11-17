@@ -11,4 +11,5 @@ def migrate(cr, version):
     env = api.Environment(cr, SUPERUSER_ID, {})
     langs = [code for code, _name in env['res.lang'].get_installed() if code != 'en_US']
     if langs:
-        env['ir.module.module'].search([('name', '=', 'ncollection_stock_barcode')])._update_translations(langs, overwrite=False)
+        module = env['ir.module.module'].search([('name', '=', 'ncollection_stock_barcode')])
+        module._update_translations(langs, overwrite=False)

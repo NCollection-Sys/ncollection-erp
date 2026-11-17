@@ -2,7 +2,8 @@
 """Three independent footer zones for printed documents (owner review 2026-11): Left, Center, Right.
 
 Stored per company beside Odoo's own ``report_footer`` (same type: translatable, sanitized HTML), edited in Odoo's own
-Configure Document Layout (``base.document.layout``, related fields), printed by ``ncollection_branding.nc_footer_zones``
+Configure Document Layout (``base.document.layout``, related fields), printed by
+``ncollection_branding.nc_footer_zones``
 in every company layout (views/footer_zones_templates.xml). The zones are PHYSICAL positions (left | center | right of
 the page) in LTR and RTL documents alike; inside each zone the text runs in its own direction.
 
