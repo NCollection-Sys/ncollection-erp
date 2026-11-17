@@ -17,8 +17,7 @@ msgid "A chat message cannot be longer than %s characters."
 msgstr "لا يمكن أن تتجاوز رسالة المحادثة %s حرفًا."
 
 #. module: ncollection_ai
-#. odoo-javascript
-#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0 model:ir.ui.menu,name:ncollection_ai.menu_ai_readiness
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
 

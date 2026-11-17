@@ -73,7 +73,12 @@ class NcBusinessSettings(models.TransientModel):
 
     @api.model
     def _nc_require_tenant_admin(self):
-        """At least one section of this page is open to the user (a Workspace Administrator, or a delegate)."""
+        """At least one section of this page is open to the user (a Workspace Administrator, or a delegate); a page
+        opened for ONE section (its menu, its URL, an RPC with that context) needs at least view on that section, so a
+        hidden section is refused outright rather than opened empty."""
+        only = self.env.context.get('nc_settings_section')
+        if only in self._nc_page_sections and not self.env.su:
+            self.env['ncollection.settings.policy']._nc_require(only, 'view')
         if self.env.su or self.env.user.has_group(TENANT_ADMIN):
             return
         if not any(level != 'hidden' for level in self._nc_page_levels().values()):

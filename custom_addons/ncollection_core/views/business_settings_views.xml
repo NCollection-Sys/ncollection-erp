@@ -12,7 +12,10 @@
                 </header>
                 <sheet>
                     <div class="oe_title">
-                        <h1>Business Settings</h1>
+                        <h1 invisible="nc_level_business == 'hidden'">Business Settings</h1>
+                        <h1 invisible="nc_level_business != 'hidden' or nc_level_sales == 'hidden'">Sales Settings</h1>
+                        <h1 invisible="nc_level_business != 'hidden' or nc_level_purchase == 'hidden'">Purchase Settings</h1>
+                        <h1 invisible="nc_level_business != 'hidden' or nc_level_inventory == 'hidden'">Inventory Settings</h1>
                     </div>
                     <group>
                         <field name="company_id" options="{'no_open': True}"/>

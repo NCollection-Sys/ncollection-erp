@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
-                <page string="Accounting" name="accounting">
+                <page string="Accounting" name="accounting" invisible="nc_level_business == 'hidden'">
                     <group>
                         <group string="Taxes">
                             <field name="sale_tax_id" options="{'no_create': True}"/>

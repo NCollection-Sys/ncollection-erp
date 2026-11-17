@@ -3374,17 +3374,17 @@ msgid "Company-only text is available for field labels, field help, choice label
 msgstr "النص الخاص بشركة واحدة متاح لتسميات الحقول وتلميحاتها وتسميات الخيارات وأسماء القوائم؛ أما نصوص الشاشة وعناوين الصفحات فتنطبق على مساحة العمل كلها."
 
 #. module: ncollection_core
-#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__inventory
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__inventory model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
 msgid "Inventory Settings"
 msgstr "إعدادات المخزون"
 
 #. module: ncollection_core
-#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__purchase
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__purchase model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
 msgid "Purchase Settings"
 msgstr "إعدادات المشتريات"
 
 #. module: ncollection_core
-#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__sales
+#: model:ir.model.fields.selection,name:ncollection_core.selection__ncollection_settings_delegation_line__section__sales model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
 msgid "Sales Settings"
 msgstr "إعدادات المبيعات"
 

@@ -78,7 +78,9 @@ class TestSettingsSections(TransactionCase):
     def test_hidden_section_is_not_read_nor_written(self):
         self._policy(sales='hidden')
         start = self.env.company.quotation_validity_days
-        page = self._page(self.admin, 'sales')
+        with self.assertRaises(AccessError):            # its own page (menu, URL, RPC) is refused outright
+            self._page(self.admin, 'sales')
+        page = self.env['ncollection.business.settings'].with_user(self.admin).create({})   # the all-sections page
         self.assertEqual(page.nc_level_sales, 'hidden')
         page.quotation_validity_days = start + 7
         page.action_nc_save()                          # nothing visible -> nothing written
