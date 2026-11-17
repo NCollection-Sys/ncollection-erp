@@ -90,6 +90,28 @@ class AccountReportXbrl(models.AbstractModel):
                 'ncollection.account.report.equity.changes': 'equity_changes'}
 
     @api.model
+    def _nc_unavailable_reason(self, model):
+        """Why ``model`` has no XBRL export (shown in the Export menu), or False when it has one. Never a fake file:
+        a report that is not an IFRS statement says so (docs/markdown/XBRL_EXPORT.md, the report-by-report matrix)."""
+        if model in self._nc_supported_models():
+            return False
+        ledgers = self.env._("An account-level listing: IFRS has no concept per account row, so a mapping would be "
+                             "invented.")
+        reasons = {
+            'ncollection.account.report.trial.balance': ledgers,
+            'ncollection.account.report.general.ledger': ledgers,
+            'ncollection.account.report.partner.ledger': ledgers,
+            'ncollection.account.report.statement': ledgers,
+            'ncollection.account.report.aged.partner': ledgers,
+            'ncollection.account.report.tax.analysis': self.env._(
+                "A tax return analysis, not an IFRS statement; a tax authority taxonomy would be needed."),
+            'ncollection.account.report.uae.vat': self.env._(
+                "The UAE VAT return is filed with the FTA, which publishes no XBRL taxonomy for it."),
+        }
+        return reasons.get(model) or self.env._(
+            "A management analysis, not an IFRS financial statement: no taxonomy concept means the same thing.")
+
+    @api.model
     def _nc_facts(self, wizard):
         """[(concept, period_type, start, end, value)] from the report's own figures, current then comparison."""
         kind = self._nc_supported_models().get(wizard._name)

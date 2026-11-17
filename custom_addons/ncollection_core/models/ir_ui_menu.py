@@ -22,7 +22,7 @@ Design:
 import inspect
 import logging
 
-from odoo import api, models
+from odoo import api, models, tools
 from odoo.addons.base.models.ir_ui_menu import IrUiMenu as IrUiMenuBase
 
 _logger = logging.getLogger(__name__)
@@ -142,7 +142,20 @@ class IrUiMenu(models.Model):
         # only what was delegated). Level depends on groups and the synced config only, so the per-groups cache holds.
         policy = self.env['ncollection.settings.policy']
         visible = visible - policy._nc_hidden_menu_ids() - policy._nc_menus_without_level()
+        # ONE Home app called Settings per user: a technical administrator (platform staff) has Odoo's own Settings,
+        # which carries a "Workspace Settings" entry to this page; the workspace app would be a second Settings tile.
+        if self.env.user.has_group('base.group_system'):
+            visible = visible - self._nc_workspace_settings_tree_ids()
         return visible
+
+    @api.model
+    @tools.ormcache()
+    def _nc_workspace_settings_tree_ids(self):
+        root = self.env.ref('ncollection_core.menu_workspace_settings_root', raise_if_not_found=False)
+        if not root or not root.parent_path:
+            return frozenset()
+        return frozenset(self.sudo().with_context(active_test=False).search(
+            [('parent_path', '=like', root.parent_path + '%')]).ids)
 
     # Apps (module management) belongs to the platform, not to any tenant user - the Owner included: every module
     # operation is refused to them at the model (ir_module.py), so the menu only led to a screen whose buttons fail.

@@ -1,27 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Purchase Settings: a section of the unified Settings (see the Sales one). -->
+    <!-- Purchase: an app of the tenant Settings page (Odoo's own settings view, ncollection_core
+         business_settings_views.xml). Hidden / read-only by the user's level on the "purchase" section; the server
+         checks the same level for every changed value. -->
     <record id="view_nc_business_settings_form_purchase" model="ir.ui.view">
         <field name="name">ncollection.business.settings.form.purchase</field>
         <field name="model">ncollection.business.settings</field>
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
-                <page string="Purchase" name="purchase" invisible="nc_level_purchase == 'hidden'">
-                    <group>
-                        <group string="Orders">
-                            <field name="company_currency_id" invisible="1"/>
-                            <field name="lock_confirmed_po" readonly="nc_level_purchase == 'view'"/>
-                            <field name="po_order_approval" readonly="nc_level_purchase == 'view'"/>
-                            <field name="po_double_validation_amount" invisible="not po_order_approval"
-                                   readonly="nc_level_purchase == 'view'"/>
-                        </group>
-                        <group string="Suppliers">
-                            <field name="group_warning_purchase" readonly="nc_level_purchase == 'view'"/>
-                            <field name="group_send_reminder" readonly="nc_level_purchase == 'view'"/>
-                        </group>
-                    </group>
-                </page>
+            <xpath expr="//form" position="inside">
+                <app data-string="Purchase" string="Purchase" name="purchase" invisible="nc_level_purchase == 'hidden'">
+                        <field name="company_currency_id" invisible="1"/>
+                    <block title="Orders">
+                        <setting id="nc_lock_confirmed_po"><field name="lock_confirmed_po" readonly="nc_level_purchase == 'view'"/></setting>
+                        <setting id="nc_po_order_approval"><field name="po_order_approval" readonly="nc_level_purchase == 'view'"/></setting>
+                        <setting id="nc_po_double_validation_amount" invisible="not po_order_approval"><field name="po_double_validation_amount" readonly="nc_level_purchase == 'view'"/></setting>
+                    </block>
+                    <block title="Suppliers">
+                        <setting id="nc_group_warning_purchase"><field name="group_warning_purchase" readonly="nc_level_purchase == 'view'"/></setting>
+                        <setting id="nc_group_send_reminder"><field name="group_send_reminder" readonly="nc_level_purchase == 'view'"/></setting>
+                    </block>
+                </app>
             </xpath>
         </field>
     </record>
@@ -31,10 +30,10 @@
         <field name="res_model">ncollection.business.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
-        <field name="context">{'nc_settings_section': 'purchase'}</field>
+        <field name="context">{'nc_settings_section': 'purchase', 'module': 'purchase'}</field>
     </record>
 
-    <menuitem id="menu_workspace_purchase_settings" name="Purchase Settings"
+    <menuitem id="menu_workspace_purchase_settings" name="Purchase Settings" active="False"
               parent="ncollection_core.menu_workspace_settings_root" action="action_nc_purchase_settings" sequence="17"
               groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_purchase"/>
 </odoo>

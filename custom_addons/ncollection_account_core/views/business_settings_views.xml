@@ -1,38 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Accounting: an app of the tenant Settings page (Odoo's own settings view, ncollection_core
+         business_settings_views.xml). Hidden / read-only by the user's level on the "business" section; the server
+         checks the same level for every changed value. -->
     <record id="view_nc_business_settings_form_accounting" model="ir.ui.view">
         <field name="name">ncollection.business.settings.form.accounting</field>
         <field name="model">ncollection.business.settings</field>
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
-                <page string="Accounting" name="accounting" invisible="nc_level_business == 'hidden'">
-                    <group>
-                        <group string="Taxes">
-                            <field name="sale_tax_id" options="{'no_create': True}"/>
-                            <field name="purchase_tax_id" options="{'no_create': True}"/>
-                            <field name="tax_calculation_rounding_method"/>
-                            <field name="account_price_include"/>
-                        </group>
-                        <group string="Invoices">
-                            <field name="qr_code"/>
-                            <field name="display_invoice_amount_total_words"/>
-                            <field name="use_invoice_terms"/>
-                            <field name="incoterm_id" options="{'no_create': True}"/>
-                            <field name="group_cash_rounding"/>
-                            <field name="group_sale_delivery_address"/>
-                        </group>
-                    </group>
-                </page>
+            <xpath expr="//form" position="inside">
+                <app data-string="Accounting" string="Accounting" name="account" invisible="nc_level_business == 'hidden'">
+                    <block title="Taxes">
+                        <setting id="nc_sale_tax_id"><field name="sale_tax_id" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_purchase_tax_id"><field name="purchase_tax_id" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_tax_calculation_rounding_method"><field name="tax_calculation_rounding_method" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_account_price_include"><field name="account_price_include" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                    <block title="Invoices">
+                        <setting id="nc_qr_code"><field name="qr_code" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_display_invoice_amount_total_words"><field name="display_invoice_amount_total_words" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_use_invoice_terms"><field name="use_invoice_terms" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_incoterm_id"><field name="incoterm_id" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_cash_rounding"><field name="group_cash_rounding" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_sale_delivery_address"><field name="group_sale_delivery_address" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                    <block title="Accounting Defaults" invisible="nc_level_accounting_defaults == 'hidden'">
+                        <setting id="nc_accounting_defaults" string="Accounting Defaults"
+                                 help="Default receivable, payable, income, expense and transfer accounts.">
+                            <button name="%(action_nc_accounting_defaults)d" icon="oi-arrow-right" type="action"
+                                    string="Edit Accounting Defaults" class="btn-link"/>
+                        </setting>
+                    </block>
+                </app>
             </xpath>
         </field>
     </record>
 
-    <!-- Accounting Defaults in the Workspace Administration Center: the Owner no longer reaches Odoo's Settings menu
-         (Option A); the form saves through res.company's Workspace Administrator delegation. -->
+    <!-- Accounting Defaults stays its own page (a res.company form saved through the Workspace Administrator
+         delegation); the Settings page links to it (Accounting app) and the Workspace menu lists it. -->
     <menuitem id="menu_workspace_accounting_defaults"
               name="Accounting Defaults"
-              parent="ncollection_core.menu_workspace_settings_root"
+              parent="ncollection_core.menu_ws_workspace"
               action="action_nc_accounting_defaults"
               sequence="16"/>
 </odoo>

@@ -30,6 +30,14 @@
                             <div t-if="state.exportOpen" class="o_nc_rep__dropdown" role="menu">
                                 <button type="button" role="menuitem" t-on-click="() => this.exportReport('xlsx')">Excel (.xlsx)</button>
                                 <button type="button" role="menuitem" t-on-click="() => this.exportReport('pdf')">PDF</button>
+                                <button t-if="!state.data.xbrl_unavailable" type="button" role="menuitem"
+                                        class="o_nc_rep__xbrl" t-on-click="() => this.exportReport('xbrl')"
+                                        title="XBRL instance, IFRS Accounting Taxonomy 2025">XBRL (.xbrl)</button>
+                                <button t-else="" type="button" role="menuitem" disabled="disabled"
+                                        class="o_nc_rep__xbrl o_nc_rep__unavailable" t-att-title="state.data.xbrl_unavailable">
+                                    XBRL (.xbrl) <small class="text-muted">— not available</small>
+                                    <span class="o_nc_rep__reason" t-esc="state.data.xbrl_unavailable"/>
+                                </button>
                             </div>
                         </div>
                         <button class="btn btn-secondary" type="button" t-on-click="() => this.printReport()">

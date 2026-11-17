@@ -1,50 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Sales Settings: a section of the unified Settings. Hidden / read-only by the user's level on the "sales"
-         section (platform policy + delegation); the server checks the same level on save. -->
+    <!-- Sales: an app of the tenant Settings page (Odoo's own settings view, ncollection_core
+         business_settings_views.xml). Hidden / read-only by the user's level on the "sales" section; the server
+         checks the same level for every changed value. -->
     <record id="view_nc_business_settings_form_sales" model="ir.ui.view">
         <field name="name">ncollection.business.settings.form.sales</field>
         <field name="model">ncollection.business.settings</field>
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
-                <page string="Sales" name="sales" invisible="nc_level_sales == 'hidden'">
-                    <group>
-                        <group string="Quotations">
-                            <field name="quotation_validity_days" readonly="nc_level_sales == 'view'"/>
-                            <field name="portal_confirmation_sign" readonly="nc_level_sales == 'view'"/>
-                            <field name="portal_confirmation_pay" readonly="nc_level_sales == 'view'"/>
-                            <field name="prepayment_percent" invisible="not portal_confirmation_pay"
-                                   readonly="nc_level_sales == 'view'"/>
-                            <field name="group_auto_done_setting" readonly="nc_level_sales == 'view'"/>
-                            <field name="group_warning_sale" readonly="nc_level_sales == 'view'"/>
-                        </group>
-                        <group string="Pricing and Invoicing">
-                            <field name="default_invoice_policy" readonly="nc_level_sales == 'view'"/>
-                            <field name="group_discount_per_so_line" readonly="nc_level_sales == 'view'"/>
-                            <field name="group_proforma_sales" readonly="nc_level_sales == 'view'"/>
-                            <field name="automatic_invoice" invisible="default_invoice_policy != 'order'"
-                                   readonly="nc_level_sales == 'view'"/>
-                        </group>
-                        <group string="Products">
-                            <field name="group_product_variant" readonly="nc_level_sales == 'view'"/>
-                            <field name="group_uom" readonly="nc_level_sales == 'view'"/>
-                        </group>
-                    </group>
-                </page>
+            <xpath expr="//form" position="inside">
+                <app data-string="Sales" string="Sales" name="sale" invisible="nc_level_sales == 'hidden'">
+                    <block title="Quotations &amp; Orders">
+                        <setting id="nc_quotation_validity_days"><field name="quotation_validity_days" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_portal_confirmation_sign"><field name="portal_confirmation_sign" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_portal_confirmation_pay"><field name="portal_confirmation_pay" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_prepayment_percent" invisible="not portal_confirmation_pay"><field name="prepayment_percent" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_group_auto_done_setting"><field name="group_auto_done_setting" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_group_warning_sale"><field name="group_warning_sale" readonly="nc_level_sales == 'view'"/></setting>
+                    </block>
+                    <block title="Pricing &amp; Invoicing">
+                        <setting id="nc_default_invoice_policy"><field name="default_invoice_policy" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_group_discount_per_so_line"><field name="group_discount_per_so_line" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_group_proforma_sales"><field name="group_proforma_sales" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_automatic_invoice" invisible="default_invoice_policy != 'order'"><field name="automatic_invoice" readonly="nc_level_sales == 'view'"/></setting>
+                    </block>
+                    <block title="Products">
+                        <setting id="nc_group_product_variant"><field name="group_product_variant" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_group_uom"><field name="group_uom" readonly="nc_level_sales == 'view'"/></setting>
+                    </block>
+                </app>
             </xpath>
         </field>
     </record>
 
+    <!-- Opens Settings on the Sales app, Sales section only (the menu is not shown: the sidebar is the navigation). -->
     <record id="action_nc_sales_settings" model="ir.actions.act_window">
         <field name="name">Sales Settings</field>
         <field name="res_model">ncollection.business.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
-        <field name="context">{'nc_settings_section': 'sales'}</field>
+        <field name="context">{'nc_settings_section': 'sales', 'module': 'sale'}</field>
     </record>
 
-    <menuitem id="menu_workspace_sales_settings" name="Sales Settings"
+    <menuitem id="menu_workspace_sales_settings" name="Sales Settings" active="False"
               parent="ncollection_core.menu_workspace_settings_root" action="action_nc_sales_settings" sequence="16"
               groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_sales"/>
 </odoo>

@@ -1,30 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Inventory Settings: a section of the unified Settings (see ncollection_sale_documents' Sales Settings). -->
+    <!-- Inventory: an app of the tenant Settings page (Odoo's own settings view, ncollection_core
+         business_settings_views.xml). Hidden / read-only by the user's level on the "inventory" section; the server
+         checks the same level for every changed value. -->
     <record id="view_nc_business_settings_form_inventory" model="ir.ui.view">
         <field name="name">ncollection.business.settings.form.inventory</field>
         <field name="model">ncollection.business.settings</field>
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook[@name='nc_business_settings']" position="inside">
-                <page string="Inventory" name="inventory" invisible="nc_level_inventory == 'hidden'">
-                    <group>
-                        <group string="Traceability">
-                            <field name="group_stock_production_lot" readonly="nc_level_inventory == 'view'"/>
-                            <field name="group_lot_on_delivery_slip" invisible="not group_stock_production_lot"
-                                   readonly="nc_level_inventory == 'view'"/>
-                            <field name="group_stock_tracking_lot" readonly="nc_level_inventory == 'view'"/>
-                            <field name="group_stock_tracking_owner" readonly="nc_level_inventory == 'view'"/>
-                        </group>
-                        <group string="Operations">
-                            <field name="group_warning_stock" readonly="nc_level_inventory == 'view'"/>
-                            <field name="group_stock_sign_delivery" readonly="nc_level_inventory == 'view'"/>
-                            <field name="group_stock_reception_report" readonly="nc_level_inventory == 'view'"/>
-                            <field name="annual_inventory_month" readonly="nc_level_inventory == 'view'"/>
-                            <field name="annual_inventory_day" readonly="nc_level_inventory == 'view'"/>
-                        </group>
-                    </group>
-                </page>
+            <xpath expr="//form" position="inside">
+                <app data-string="Inventory" string="Inventory" name="stock" invisible="nc_level_inventory == 'hidden'">
+                    <block title="Traceability">
+                        <setting id="nc_group_stock_production_lot"><field name="group_stock_production_lot" readonly="nc_level_inventory == 'view'"/></setting>
+                        <setting id="nc_group_lot_on_delivery_slip" invisible="not group_stock_production_lot"><field name="group_lot_on_delivery_slip" readonly="nc_level_inventory == 'view'"/></setting>
+                        <setting id="nc_group_stock_tracking_lot"><field name="group_stock_tracking_lot" readonly="nc_level_inventory == 'view'"/></setting>
+                        <setting id="nc_group_stock_tracking_owner"><field name="group_stock_tracking_owner" readonly="nc_level_inventory == 'view'"/></setting>
+                    </block>
+                    <block title="Operations">
+                        <setting id="nc_group_warning_stock"><field name="group_warning_stock" readonly="nc_level_inventory == 'view'"/></setting>
+                        <setting id="nc_group_stock_sign_delivery"><field name="group_stock_sign_delivery" readonly="nc_level_inventory == 'view'"/></setting>
+                        <setting id="nc_group_stock_reception_report"><field name="group_stock_reception_report" readonly="nc_level_inventory == 'view'"/></setting>
+                        <setting id="nc_annual_inventory_month"><field name="annual_inventory_month" readonly="nc_level_inventory == 'view'"/></setting>
+                        <setting id="nc_annual_inventory_day"><field name="annual_inventory_day" readonly="nc_level_inventory == 'view'"/></setting>
+                    </block>
+                </app>
             </xpath>
         </field>
     </record>
@@ -34,10 +33,10 @@
         <field name="res_model">ncollection.business.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
-        <field name="context">{'nc_settings_section': 'inventory'}</field>
+        <field name="context">{'nc_settings_section': 'inventory', 'module': 'stock'}</field>
     </record>
 
-    <menuitem id="menu_workspace_inventory_settings" name="Inventory Settings"
+    <menuitem id="menu_workspace_inventory_settings" name="Inventory Settings" active="False"
               parent="ncollection_core.menu_workspace_settings_root" action="action_nc_inventory_settings"
               sequence="18" groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_inventory"/>
 </odoo>

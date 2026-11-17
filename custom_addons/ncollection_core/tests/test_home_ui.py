@@ -114,7 +114,7 @@ class TestHomeUi(TransactionCase):
         self._arabic()
         expected = {
             'ncollection_core.menu_ncollection_dashboard_root': ('Summary', 'الملخّص'),
-            'ncollection_core.menu_workspace_settings_root': ('Workspace Administration', 'إدارة مساحة العمل'),
+            'ncollection_core.menu_workspace_settings_root': ('Settings', 'الإعدادات'),
             'ncollection_stock_barcode.menu_nc_barcode_root': ('Barcode', 'الباركود'),
         }
         for xmlid, (english, arabic) in expected.items():

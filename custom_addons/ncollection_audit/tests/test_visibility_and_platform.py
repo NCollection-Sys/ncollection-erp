@@ -44,9 +44,17 @@ class TestAuditVisibility(AuditCommon):
         with self.assertRaises(AccessError):
             self.Log.with_user(self.plain).search([])
 
-    def test_menu_is_no_longer_under_technical_settings(self):
-        self.assertEqual(self.root.parent_id, self.env.ref('ncollection_core.menu_workspace_settings_root'))
+    def test_menu_is_a_home_app_not_technical_settings(self):
+        self.assertFalse(self.root.parent_id, "a root menu: its own Home tile")
+        self.assertTrue(self.root.action, "the launcher shows only roots that open something")
+        self.assertTrue(self.root.web_icon)
         self.assertEqual(self.env.ref('ncollection_audit.menu_nc_audit_seal').parent_id, self.root)
+        apps = {app.get('xmlid') or app.get('id') for app in
+                self.env['ir.ui.menu'].with_user(self.tenant_admin).nc_tenant_apps()}
+        self.assertTrue({'ncollection_audit.menu_nc_audit_root', self.root.id} & apps, apps)
+        plain_apps = {app.get('xmlid') or app.get('id') for app in
+                      self.env['ir.ui.menu'].with_user(self.plain).nc_tenant_apps()}
+        self.assertFalse({'ncollection_audit.menu_nc_audit_root', self.root.id} & plain_apps)
 
     def test_platform_window_is_metadata_only_and_bounded(self):
         service = self.env['ncollection.admin.service'].with_user(self.service_user)

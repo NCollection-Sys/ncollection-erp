@@ -1,50 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Business Settings (Option A): the business settings a workspace Owner changes, now that Odoo's General
-         Settings belongs to the platform. Sales, Purchase and Accounting add their own pages. -->
+    <!-- THE tenant Settings page (owner review 2026-11: it must be the same interface as Odoo's own Settings, not
+         another page of tabs). It IS Odoo's settings view: js_class="base_settings" gives the left sidebar of apps with
+         their icons, the search box, Save / Discard and the unsaved-changes guard, exactly as in Technical Settings.
+         What it shows is still ncollection.business.settings: an explicit allow-list, each value applied where Odoo
+         stores it, every change checked server-side against the section's policy level (wizards/business_settings.py).
+         Save calls ``execute`` (the view's contract), which is action_nc_save.
+
+         Apps (sidebar): General Settings (here) and the ones the application modules add (Accounting, Sales, Purchase,
+         Inventory). An app is hidden when the user's level on its section is hidden; its fields are read-only on view.
+         Pages that are not key/value settings (Users, Roles, Company, ...) are "Manage ..." links, as Odoo's own
+         "Manage Users", each shown only when the user's level on that section allows it; the page itself checks again. -->
     <record id="view_nc_business_settings_form" model="ir.ui.view">
         <field name="name">ncollection.business.settings.form</field>
         <field name="model">ncollection.business.settings</field>
         <field name="arch" type="xml">
-            <form string="Business Settings">
-                <header>
-                    <button name="action_nc_save" type="object" string="Save" class="btn-primary"/>
-                </header>
-                <sheet>
-                    <div class="oe_title">
-                        <h1 invisible="nc_level_business == 'hidden'">Business Settings</h1>
-                        <h1 invisible="nc_level_business != 'hidden' or nc_level_sales == 'hidden'">Sales Settings</h1>
-                        <h1 invisible="nc_level_business != 'hidden' or nc_level_purchase == 'hidden'">Purchase Settings</h1>
-                        <h1 invisible="nc_level_business != 'hidden' or nc_level_inventory == 'hidden'">Inventory Settings</h1>
-                    </div>
-                    <group>
-                        <field name="company_id" options="{'no_open': True}"/>
-                        <field name="nc_level_business" invisible="1"/>
-                        <field name="nc_level_sales" invisible="1"/>
-                        <field name="nc_level_purchase" invisible="1"/>
-                        <field name="nc_level_inventory" invisible="1"/>
-                    </group>
-                    <notebook name="nc_business_settings">
-                        <page string="General" name="general" invisible="nc_level_business == 'hidden'">
-                            <p class="text-muted">These settings apply to the company shown above.</p>
-                        </page>
-                    </notebook>
-                </sheet>
+            <form string="Settings" class="oe_form_configuration" js_class="base_settings">
+                <field name="company_id" invisible="1"/>
+                <field name="nc_level_overview" invisible="1"/>
+                <field name="nc_level_users" invisible="1"/>
+                <field name="nc_level_roles" invisible="1"/>
+                <field name="nc_level_teams" invisible="1"/>
+                <field name="nc_level_security" invisible="1"/>
+                <field name="nc_level_company" invisible="1"/>
+                <field name="nc_level_business" invisible="1"/>
+                <field name="nc_level_accounting_defaults" invisible="1"/>
+                <field name="nc_level_document_layout" invisible="1"/>
+                <field name="nc_level_appearance" invisible="1"/>
+                <field name="nc_level_document_stamps" invisible="1"/>
+                <field name="nc_level_print_settings" invisible="1"/>
+                <field name="nc_level_interface_text" invisible="1"/>
+                <field name="nc_level_sales" invisible="1"/>
+                <field name="nc_level_purchase" invisible="1"/>
+                <field name="nc_level_inventory" invisible="1"/>
+                <field name="nc_level_audit_log" invisible="1"/>
+                <field name="nc_level_ai" invisible="1"/>
+                <field name="nc_level_system" invisible="1"/>
+                <field name="nc_can_delegate" invisible="1"/>
+                <app data-string="General Settings" string="General Settings" name="nc_general_settings"
+                     logo="/base/static/description/settings.png">
+                    <block title="Users &amp; Access" name="nc_access">
+                        <setting id="nc_users" string="Users" help="Invite, activate and deactivate the people of this workspace."
+                                 invisible="nc_level_users == 'hidden'">
+                            <button name="%(action_workspace_users)d" icon="oi-arrow-right" type="action"
+                                    string="Manage Users" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_roles" string="Roles &amp; Permissions" help="What each role may do."
+                                 invisible="nc_level_roles == 'hidden'">
+                            <button name="%(action_role)d" icon="oi-arrow-right" type="action"
+                                    string="Manage Roles" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_teams" string="Teams &amp; Departments" help="Sales teams and departments."
+                                 invisible="nc_level_teams == 'hidden'">
+                            <button name="%(action_workspace_teams)d" icon="oi-arrow-right" type="action"
+                                    string="Manage Teams" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_security" string="Security" help="Sign-in history and security events."
+                                 invisible="nc_level_security == 'hidden'">
+                            <button name="%(action_workspace_security)d" icon="oi-arrow-right" type="action"
+                                    string="Open Security" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_delegation" string="Delegated Settings"
+                                 help="Let named users change one settings section, where the platform allows it."
+                                 invisible="not nc_can_delegate">
+                            <button name="%(action_settings_delegation)d" icon="oi-arrow-right" type="action"
+                                    string="Manage Delegation" class="btn-link"/>
+                        </setting>
+                    </block>
+                    <block title="Company" name="nc_company">
+                        <setting id="nc_company_details" string="Company" help="Name, address, tax and registration numbers, logo."
+                                 invisible="nc_level_company == 'hidden'">
+                            <button name="%(action_workspace_company)d" icon="oi-arrow-right" type="action"
+                                    string="Edit Company" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_document_layout" string="Document Layout"
+                                 help="Layout, colours, header and the three footer zones of printed documents."
+                                 invisible="nc_level_document_layout == 'hidden'">
+                            <button name="%(web.action_base_document_layout_configurator)d" icon="oi-arrow-right"
+                                    type="action" string="Configure Document Layout" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_appearance" string="Appearance" help="This workspace's colours and login page."
+                                 invisible="nc_level_appearance == 'hidden'">
+                            <button name="%(action_workspace_appearance)d" icon="oi-arrow-right" type="action"
+                                    string="Edit Appearance" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_stamps" string="Document Stamps" help="Stamp templates printed on documents."
+                                 invisible="nc_level_document_stamps == 'hidden'">
+                            <button name="%(ncollection_branding.action_document_stamp)d" icon="oi-arrow-right"
+                                    type="action" string="Manage Stamps" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_print" string="Print Settings" help="Document types, paper and print behaviour."
+                                 invisible="nc_level_print_settings == 'hidden'">
+                            <button name="%(ncollection_branding.action_print_settings)d" icon="oi-arrow-right"
+                                    type="action" string="Open Print Settings" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_interface_text" string="Interface Text"
+                                 help="Rename labels, menus and screen texts; terminology and history."
+                                 invisible="nc_level_interface_text == 'hidden'">
+                            <button name="%(action_label_override)d" icon="oi-arrow-right" type="action"
+                                    string="Manage Labels" class="btn-link"/>
+                            <button name="%(action_label_rule)d" icon="oi-arrow-right" type="action"
+                                    string="Terminology" class="btn-link"/>
+                        </setting>
+                    </block>
+                    <block title="Workspace" name="nc_workspace">
+                        <setting id="nc_overview" string="Overview" help="Plan, users and health of this workspace."
+                                 invisible="nc_level_overview == 'hidden'">
+                            <button name="%(action_workspace_overview)d" icon="oi-arrow-right" type="action"
+                                    string="Open Overview" class="btn-link"/>
+                        </setting>
+                        <setting id="nc_system" string="System" help="Workspace information and developer tools."
+                                 invisible="nc_level_system == 'hidden'">
+                            <button name="%(action_workspace_system)d" icon="oi-arrow-right" type="action"
+                                    string="Open System" class="btn-link"/>
+                        </setting>
+                    </block>
+                </app>
             </form>
         </field>
     </record>
 
     <record id="action_nc_business_settings" model="ir.actions.act_window">
-        <field name="name">Business Settings</field>
+        <field name="name">Settings</field>
         <field name="res_model">ncollection.business.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
-        <field name="context">{'nc_settings_section': 'business'}</field>
+        <field name="context">{}</field>
     </record>
 
+    <!-- The page IS the Settings app: the app opens on it (as Odoo's Settings opens on General Settings). -->
+    <record id="menu_workspace_settings_root" model="ir.ui.menu">
+        <field name="action" ref="action_nc_business_settings"/>
+        <field name="web_icon">base,static/description/settings.png</field>
+    </record>
     <menuitem id="menu_workspace_business_settings"
-              name="Business Settings"
+              name="General Settings"
               parent="menu_workspace_settings_root"
               action="action_nc_business_settings"
-              sequence="15"/>
+              sequence="1"/>
 </odoo>

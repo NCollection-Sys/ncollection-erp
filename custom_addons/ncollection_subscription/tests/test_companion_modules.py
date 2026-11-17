@@ -39,8 +39,10 @@ class TestCompanionModules(TransactionCase):
         return self.env['ncollection.tenant'].create(vals)
 
     # ------------------------------------------------------------------ the table
-    def test_the_table_is_exactly_cheque_printing_following_accounting(self):
-        self.assertEqual(COMPANION_MODULES, {CHEQUE: 'account'})
+    def test_the_table_is_exactly_cheque_printing_and_the_audit_app(self):
+        self.assertEqual(COMPANION_MODULES, {CHEQUE: 'account', 'ncollection_audit': 'auditlog'})
+        self.assertEqual(companion_host('ncollection_audit'), 'auditlog')
+        self.assertEqual(companions_of(['auditlog']), ['ncollection_audit'])
         self.assertEqual(companion_host(CHEQUE), 'account')
         self.assertIsNone(companion_host('account'))
         self.assertEqual(companions_of(['crm', 'account']), [CHEQUE])

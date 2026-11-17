@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Unified Settings (models/settings_policy.py). The tenant's ONE Settings app is the former Workspace
-         Administration; Odoo's own Settings (base.menu_administration) stays a technical tool for base.group_system and
-         is named so, so platform staff never see two apps called "Settings". -->
+         Administration; Odoo's own Settings (base.menu_administration) stays the technical tool of base.group_system. Both
+         are called "Settings" with the same icon, and each user sees exactly ONE of them on Home (ir_ui_menu.py hides
+         the workspace app from technical administrators, whose Settings carries a "Workspace Settings" entry). -->
     <function model="ir.ui.menu" name="_nc_set_menu_translation"
               eval="('ncollection_core.menu_workspace_settings_root', 'ar_001', 'الإعدادات')"/>
     <function model="ir.ui.menu" name="_nc_set_menu_translation"
-              eval="('base.menu_administration', 'en_US', 'Technical Settings')"/>
+              eval="('base.menu_administration', 'en_US', 'Settings')"/>
     <function model="ir.ui.menu" name="_nc_set_menu_translation"
-              eval="('base.menu_administration', 'ar_001', 'الإعدادات التقنية')"/>
+              eval="('base.menu_administration', 'ar_001', 'الإعدادات')"/>
 
     <record id="view_settings_delegation_form" model="ir.ui.view">
         <field name="name">ncollection.settings.delegation.form</field>

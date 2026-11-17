@@ -315,5 +315,5 @@ class TestReportHub(AccountTestInvoicingCommon):
         def names(user):
             cat = self.Service.with_user(user).nc_report_catalog()
             return {r['name'] for c in cat['categories'] for r in c['reports']}
-        self.assertLessEqual({'Customer Payments', 'Vendor Payments', 'Vendor Bill Analysis'}, names(accountant))
-        self.assertFalse({'Customer Payments', 'Vendor Payments', 'Vendor Bill Analysis'} & names(plain))
+        self.assertLessEqual({'Customer Payments', 'Supplier Payments', 'Supplier Bill Analysis'}, names(accountant))
+        self.assertFalse({'Customer Payments', 'Supplier Payments', 'Supplier Bill Analysis'} & names(plain))

@@ -36,12 +36,12 @@ class TestPartnerRoles(AccountTestInvoicingCommon):
 
     def test_the_dropdown_line_carries_the_tags(self):
         self.assertIn('`Customer`', self._formatted(self.customer))
-        self.assertNotIn('`Vendor`', self._formatted(self.customer))
-        self.assertIn('`Vendor`', self._formatted(self.vendor))
+        self.assertNotIn('`Supplier`', self._formatted(self.customer))
+        self.assertIn('`Supplier`', self._formatted(self.vendor))
         self.assertNotIn('`Customer`', self._formatted(self.vendor))
         both = self._formatted(self.both)
         self.assertIn('`Customer`', both)
-        self.assertIn('`Vendor`', both)
+        self.assertIn('`Supplier`', both)
 
     def test_neither_gets_no_tag_and_the_name_is_unchanged(self):
         formatted = self._formatted(self.neither)
@@ -66,7 +66,7 @@ class TestPartnerRoles(AccountTestInvoicingCommon):
             'Roletest', {'display_name': {}})
         by_name = {row['display_name']: row['__formatted_display_name'] for row in result}
         self.assertIn('`Customer`', by_name['Roletest Customer'])
-        self.assertIn('`Vendor`', by_name['Roletest Vendor'])
+        self.assertIn('`Supplier`', by_name['Roletest Vendor'])
         self.assertNotIn('`', by_name['Roletest Neither'])
         arabic = self.env['res.partner'].with_context(lang='ar_001', nc_partner_roles=True).web_name_search(
             'Roletest', {'display_name': {}})
@@ -155,7 +155,7 @@ class TestPartnerRoles(AccountTestInvoicingCommon):
         self.assertEqual(rows[self.vendor.id]['__nc_roles'], ['vendor'])
         self.assertEqual(rows[self.neither.id]['__nc_roles'], [])
         both = rows[self.both.id]['__formatted_display_name']
-        self.assertLess(both.index('`Customer`'), both.index('`Vendor`'), 'the badges follow the role order')
+        self.assertLess(both.index('`Customer`'), both.index('`Supplier`'), 'the badges follow the role order')
         plain = self.env['res.partner'].web_name_search('Roletest', {'display_name': {}})
         self.assertFalse(any('__nc_roles' in row for row in plain), 'only where a document opted in')
 

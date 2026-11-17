@@ -17,7 +17,9 @@ class TestWorkspaceAppearance(TransactionCase):
         menu = self.env.ref("ncollection_core.menu_workspace_appearance")
         root = self.env.ref("ncollection_core.menu_workspace_settings_root")
         # nested under the P1-T12 Workspace Settings root (the integration hook)
-        self.assertEqual(menu.parent_id, root)
+        # nested in the Settings app (its Company menu since the settings page became Odoo's own settings view)
+        self.assertEqual(menu.parent_id, self.env.ref('ncollection_core.menu_ws_company'))
+        self.assertEqual(menu.parent_id.parent_id, root)
         # Owner gating is inherited from the gated parent root menu
         owner = self.env.ref("ncollection_core.group_role_owner")
         self.assertIn(owner, root.group_ids,

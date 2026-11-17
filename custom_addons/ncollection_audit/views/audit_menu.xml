@@ -13,8 +13,11 @@
         <field name="implied_ids" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
     </record>
 
-    <menuitem id="menu_nc_audit_root" name="Audit Log" parent="ncollection_core.menu_workspace_settings_root"
-              sequence="29" groups="auditlog.group_auditlog_user"/>
+    <!-- A HOME APP (owner review 2026-11: an entitled workspace must find its Audit Log on Home, not inside Settings).
+         Root menu with its own icon and an action (the launcher shows only roots that open something); the Settings
+         policy section "audit_log" governs this same menu, and Settings links to it. -->
+    <menuitem id="menu_nc_audit_root" name="Audit Log" sequence="75" groups="auditlog.group_auditlog_user"
+              web_icon="auditlog,static/description/icon.png" action="auditlog.action_auditlog_log_tree"/>
     <menuitem id="menu_nc_audit_logs" name="Activity" parent="menu_nc_audit_root" sequence="1"
               action="auditlog.action_auditlog_log_tree"/>
     <menuitem id="menu_nc_audit_lines" name="Field Changes" parent="menu_nc_audit_root" sequence="2"

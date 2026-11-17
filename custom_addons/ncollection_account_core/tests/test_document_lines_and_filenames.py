@@ -12,8 +12,8 @@ class TestPrintedFileNames(AccountTestInvoicingCommon):
 
     def test_each_kind_of_accounting_document_is_named_by_what_it_is_and_its_number(self):
         expected = {
-            'out_invoice': 'Customer Invoice', 'out_refund': 'Customer Credit Note', 'in_invoice': 'Vendor Bill',
-            'in_refund': 'Vendor Credit Note', 'out_receipt': 'Sales Receipt', 'in_receipt': 'Purchase Receipt',
+            'out_invoice': 'Customer Invoice', 'out_refund': 'Customer Credit Note', 'in_invoice': 'Supplier Bill',
+            'in_refund': 'Supplier Credit Note', 'out_receipt': 'Sales Receipt', 'in_receipt': 'Purchase Receipt',
         }
         for move_type, label in expected.items():
             with self.subTest(move_type=move_type):

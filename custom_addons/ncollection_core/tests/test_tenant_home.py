@@ -122,7 +122,7 @@ class TestTenantHomeApps(TransactionCase):
         # And it is a REAL, openable card — the #477 invariant, for this one too.
         web_menus = self.Menu.with_user(owner).load_web_menus(False)
         card = owner_apps['ncollection_core.menu_workspace_settings_root']
-        self.assertEqual(card['name'], 'Workspace Administration')
+        self.assertEqual(card['name'], 'Settings')
         self.assertIn(card['id'], web_menus)
         self.assertTrue(web_menus[card['id']]['actionID'])
         # No second Settings module was created to make this work.

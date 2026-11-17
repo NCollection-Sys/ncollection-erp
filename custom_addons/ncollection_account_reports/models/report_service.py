@@ -826,6 +826,9 @@ class NcReportService(models.AbstractModel):
             'wizard': {'model': wizard._name, 'id': wizard.id},
             'source': 'oca' if wizard._name in {a[0] for a in ALTERNATIVE_SOURCES.values()} else 'native',
             'title': wizard._nc_report_title(),
+            # The Export menu shows XBRL for EVERY report: a download where a mapping exists, otherwise disabled with
+            # the reason (never hidden, never a fake file).
+            'xbrl_unavailable': self.env['ncollection.account.report.xbrl']._nc_unavailable_reason(wizard._name),
             'company': wizard.company_id.name,
             'currency': {'id': currency.id, 'symbol': currency.symbol,
                          'name': currency.name, 'position': currency.position,
@@ -871,6 +874,12 @@ class NcReportService(models.AbstractModel):
             wizard.check_access("read")      # exists() skips record rules; see nc_report_detail
         if not wizard:
             raise UserError(self.env._("The report run expired — apply the filters again."))
+        if kind == 'xbrl':
+            reason = self.env['ncollection.account.report.xbrl']._nc_unavailable_reason(wizard._name)
+            if reason:
+                raise UserError(self.env._("XBRL is not available for %(report)s. %(reason)s",
+                                           report=wizard._nc_report_title(), reason=reason))
+            return wizard.action_export_xbrl()
         return wizard.action_export_pdf() if kind == 'pdf' else wizard.action_export_xlsx()
 
 

@@ -31,6 +31,10 @@ Adding another companion is one entry here (plus its manifest), with no change t
 # companion module -> the module whose entitlement it follows. Keys are technical module names.
 COMPANION_MODULES = {
     'ncollection_cheque_print': 'account',
+    # The plan picker offers OCA "Audit Log" (auditlog, an application); its own screens live under Settings >
+    # Technical, which a Workspace Administrator never reaches. NCollection's Audit Log app (Home tile, read-only
+    # screens, retention, tamper evidence) is what makes it usable, so it comes with it and is never ticked alone.
+    'ncollection_audit': 'auditlog',
 }
 
 

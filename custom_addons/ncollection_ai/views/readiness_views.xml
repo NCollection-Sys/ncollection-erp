@@ -47,6 +47,6 @@
         <field name="state">code</field>
         <field name="code">action = model.action_open()</field>
     </record>
-    <menuitem id="menu_ai_readiness" name="AI Assistant" parent="ncollection_core.menu_workspace_settings_root"
+    <menuitem id="menu_ai_readiness" name="AI Assistant" parent="ncollection_core.menu_ws_workspace"
               action="action_ai_readiness" sequence="86" groups="ncollection_core.group_tenant_admin,base.group_system"/>
 </odoo>

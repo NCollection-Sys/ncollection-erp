@@ -23,6 +23,8 @@ instead, and only those.
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from ..models.settings_policy import DELEGABLE, SECTION_KEYS
+
 TENANT_ADMIN = 'ncollection_core.group_tenant_admin'
 
 
@@ -33,10 +35,11 @@ class NcBusinessSettings(models.TransientModel):
     company_id = fields.Many2one('res.company', readonly=True, default=lambda self: self.env.company)
     # The user's level on each section this page shows ('hidden' outside the page's own section, when opened from
     # one section's menu). Drives the view only; the server checks again on save.
-    nc_level_business = fields.Char(compute='_compute_nc_levels')
-    nc_level_sales = fields.Char(compute='_compute_nc_levels')
-    nc_level_purchase = fields.Char(compute='_compute_nc_levels')
-    nc_level_inventory = fields.Char(compute='_compute_nc_levels')
+    # One level per Settings section (the page shows a section's app / link only when it is not hidden).
+    for _key in SECTION_KEYS:
+        locals()['nc_level_%s' % _key] = fields.Char(compute='_compute_nc_levels')
+    del _key
+    nc_can_delegate = fields.Boolean(compute='_compute_nc_levels')
 
     _nc_page_sections = ('business', 'sales', 'purchase', 'inventory')
 
@@ -57,11 +60,28 @@ class NcBusinessSettings(models.TransientModel):
         return {key: (policy._nc_level(key) if (not only or only == key) else 'hidden')
                 for key in self._nc_page_sections}
 
+    @api.model
+    def _nc_all_levels(self):
+        """{section: level} for EVERY Settings section: the page sections narrowed as above, the others as the policy
+        gives them (they are links to their own pages, which check again)."""
+        policy = self.env['ncollection.settings.policy']
+        levels = {key: policy._nc_level(key) for key in SECTION_KEYS if key not in self._nc_page_sections}
+        levels.update(self._nc_page_levels())
+        return levels
+
     def _compute_nc_levels(self):
-        levels = self._nc_page_levels()
+        levels = self._nc_all_levels()
+        can_delegate = (self.env.user.has_group(TENANT_ADMIN) or self.env.user.has_group('base.group_system')) and \
+            any(levels.get(key) == 'administer' for key in DELEGABLE)
         for page in self:
-            for key in self._nc_page_sections:
+            for key in SECTION_KEYS:
                 page['nc_level_%s' % key] = levels[key]
+            page.nc_can_delegate = can_delegate
+
+    def execute(self):
+        """Save, as Odoo's settings view expects (its Save button calls ``execute``), then reload the page."""
+        self.action_nc_save()
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     @api.model
     def _nc_settings_spec(self):
@@ -81,7 +101,7 @@ class NcBusinessSettings(models.TransientModel):
             self.env['ncollection.settings.policy']._nc_require(only, 'view')
         if self.env.su or self.env.user.has_group(TENANT_ADMIN):
             return
-        if not any(level != 'hidden' for level in self._nc_page_levels().values()):
+        if not any(level != 'hidden' for level in self._nc_all_levels().values()):
             raise AccessError(self.env._("Only a workspace administrator can change the business settings."))
 
     @api.model

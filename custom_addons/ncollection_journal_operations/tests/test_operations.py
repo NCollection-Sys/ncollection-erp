@@ -1,6 +1,7 @@
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import Form, tagged
+from odoo.tools.safe_eval import safe_eval
 
 from .common import JournalOpsCommon
 
@@ -687,6 +688,77 @@ class TestTransferPaymentMethod(JournalOpsCommon):
             transfer.action_post()
             self.assertEqual(transfer.source_payment_id.payment_method_line_id, transfer.payment_method_line_id)
             self.assertEqual(transfer.nc_status, 'in_progress')
+
+
+@tagged('post_install', '-at_install')
+class TestTransferIncomingMethod(JournalOpsCommon):
+    """The receiving leg's own Incoming Payment Method (owner review 2026-11): real, validated, used by the posted
+    payment; and transfer legs never listed as customer receipts / supplier payments."""
+
+    def _transfer(self, src, dst, amount=10.0, **extra):
+        return self.env['ncollection.internal.transfer'].create({
+            'source_journal_id': src.id, 'destination_journal_id': dst.id, 'amount': amount, **extra})
+
+    def _second_inbound(self, journal, name, account):
+        method = journal.inbound_payment_method_line_ids[:1].payment_method_id
+        return self.env['account.payment.method.line'].create({
+            'name': name, 'journal_id': journal.id, 'payment_method_id': method.id, 'payment_account_id': account.id,
+            'sequence': 99})
+
+    def test_defaults_to_the_first_incoming_method_and_follows_the_to_journal(self):
+        first_cash = self.cash.inbound_payment_method_line_ids.sorted(lambda line: (line.sequence, line.id))[:1]
+        transfer = self._transfer(self.bank, self.cash)
+        self.assertEqual(transfer.destination_payment_method_line_id, first_cash)
+        transfer.destination_journal_id = self.bank2
+        first_bank2 = self.bank2.inbound_payment_method_line_ids.sorted(lambda line: (line.sequence, line.id))[:1]
+        self.assertEqual(transfer.destination_payment_method_line_id, first_bank2, "replaced when To Journal changes")
+
+    def test_the_chosen_incoming_method_is_the_one_the_receiving_payment_uses(self):
+        direct = self._second_inbound(self.cash, 'Counter Deposit', self.cash.default_account_id)
+        transfer = self._transfer(self.bank, self.cash, amount=40.0, destination_payment_method_line_id=direct.id)
+        transfer.action_post()
+        self.assertEqual(transfer.destination_payment_id.payment_method_line_id, direct)
+        self.assertEqual(transfer.source_payment_id.payment_method_line_id, transfer.payment_method_line_id)
+        self.assertEqual(transfer.destination_payment_id.state, 'paid', "direct method: booked on the cash account")
+        self.assertNotEqual(transfer.source_payment_id.state, 'paid', "the source still waits for its bank")
+        self.assertEqual(transfer.nc_status, 'in_progress', "both legs count: one is not settled")
+        dest_line = transfer.destination_payment_id.move_id.line_ids.filtered(lambda line: line.debit)
+        self.assertEqual(dest_line.account_id, self.cash.default_account_id)
+
+    def test_wrong_incoming_methods_are_refused(self):
+        with self.assertRaises(ValidationError):           # another journal's method
+            self._transfer(self.bank, self.cash,
+                           destination_payment_method_line_id=self.bank2.inbound_payment_method_line_ids[:1].id)
+        with self.assertRaises(ValidationError):           # an outgoing method of the right journal
+            self._transfer(self.bank, self.cash,
+                           destination_payment_method_line_id=self.cash.outbound_payment_method_line_ids[:1].id)
+
+    def test_journal_without_incoming_method_cannot_be_posted(self):
+        transfer = self._transfer(self.bank, self.cash)
+        self.cash.inbound_payment_method_line_ids.unlink()
+        transfer.invalidate_recordset()
+        transfer.destination_payment_method_line_id = False
+        with self.assertRaises(UserError):
+            transfer.action_post()
+
+    def test_transfer_legs_are_not_customer_receipts_or_supplier_payments(self):
+        transfer = self._transfer(self.cash, self.bank, amount=15.0)
+        transfer.action_post()
+        legs = transfer.source_payment_id | transfer.destination_payment_id
+        no_partner_receipt = self._op(self.bank, 'receipt', 'account', 9.0, account=self.other_income)
+        receipt = self._op(self.bank, 'receipt', 'customer', 11.0, self.customer)
+        payment = self._op(self.bank, 'payment', 'supplier', 12.0, self.supplier)
+        for xmlid, own in (('account.action_account_payments', receipt | no_partner_receipt),
+                           ('account.action_account_payments_payable', payment)):
+            action = self.env.ref(xmlid)
+            listed = self.env['account.payment'].search(safe_eval(action.domain or '[]'))
+            self.assertFalse(listed & legs, xmlid)
+            self.assertEqual(listed & own, own, "real business payments (with or without partner) stay listed")
+        rows = self.env['ncollection.journal.transaction'].search([('payment_id', 'in', legs.ids)])
+        self.assertEqual(set(rows.mapped('journal_id').ids), {self.cash.id, self.bank.id},
+                         "the transfer stays on both journals' Transactions")
+        for row in rows:
+            self.assertEqual(row._nc_source_record(), transfer)
 
 
 @tagged('post_install', '-at_install')

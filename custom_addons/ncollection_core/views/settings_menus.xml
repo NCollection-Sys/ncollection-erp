@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The Settings app's top menu, organised like Odoo's own Settings app (General Settings | Users & Companies |
+         ...): the app opens on General Settings (the settings page, business_settings_views.xml), and the pages that
+         are not key/value settings are grouped in three menus. Loaded last so every page menu exists; only parents
+         change, so each menu keeps its action, groups and policy section. -->
+    <menuitem id="menu_ws_access" name="Users &amp; Access" parent="menu_workspace_settings_root" sequence="10"/>
+    <menuitem id="menu_ws_company" name="Company" parent="menu_workspace_settings_root" sequence="20"/>
+    <menuitem id="menu_ws_workspace" name="Workspace" parent="menu_workspace_settings_root" sequence="30"/>
+
+    <record id="menu_workspace_users" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_access"/></record>
+    <record id="menu_workspace_roles" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_access"/></record>
+    <record id="menu_workspace_teams" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_access"/></record>
+    <record id="menu_workspace_security" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_access"/></record>
+    <record id="menu_workspace_delegation" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_access"/></record>
+
+    <record id="menu_workspace_company" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_company"/></record>
+    <record id="menu_workspace_document_layout" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_company"/></record>
+    <record id="menu_workspace_appearance" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_company"/></record>
+    <record id="menu_workspace_document_stamps" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_company"/></record>
+    <record id="menu_workspace_print_settings" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_company"/></record>
+    <record id="menu_workspace_interface_text" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_company"/></record>
+
+    <record id="menu_workspace_overview" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_workspace"/></record>
+    <record id="menu_workspace_system" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_workspace"/></record>
+    <record id="menu_workspace_product_branding" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_workspace"/></record>
+    <record id="menu_workspace_developer_mode" model="ir.ui.menu"><field name="parent_id" ref="menu_ws_workspace"/></record>
+
+    <!-- Platform staff (base.group_system) see Odoo's Settings app, not this one (one Settings tile per user); this is
+         their way into the workspace's own settings page. -->
+    <menuitem id="menu_workspace_settings_for_system" name="Workspace Settings" parent="base.menu_administration"
+              action="action_nc_business_settings" sequence="2" groups="base.group_system"/>
+</odoo>

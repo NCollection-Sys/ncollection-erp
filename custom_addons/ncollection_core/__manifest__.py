@@ -86,6 +86,7 @@
         'data/cron_user.xml',
         # P8-T10 error telemetry & structured incident logging (Issue #444)
         'views/error_log_views.xml',
+        'views/settings_menus.xml',
     ],
     # P1-T17 customer dashboard. NOTE the deliberate absence of new entries in
     # 'depends': the dashboard reads sale/account/crm through SOFT checks

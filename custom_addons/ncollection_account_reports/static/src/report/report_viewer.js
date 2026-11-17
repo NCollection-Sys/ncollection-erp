@@ -594,6 +594,7 @@ export class NcReportViewer extends Component {
             this.state.data.wizard.model, this.state.data.wizard.id, kind,
         ]);
         if (kind !== "pdf") {
+            // xlsx and xbrl are downloads (act_url with target download)
             return this.action.doAction(act);
         }
         // Odoo downloads a PDF with a background request. A download manager or a
