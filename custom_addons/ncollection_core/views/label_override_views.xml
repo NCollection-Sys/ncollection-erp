@@ -135,14 +135,6 @@
         <field name="view_mode">list</field>
     </record>
 
-    <!-- Developer Mode: one click for the people allowed to use it. Odoo's own technical menus stay restricted to
-         base.group_no_one / base.group_system: switching it on gives a Workspace Administrator the field and view
-         inspector (to find the text to rename), not technical administration. -->
-    <record id="action_developer_mode" model="ir.actions.act_url">
-        <field name="name">Developer Mode</field>
-        <field name="url">/odoo?debug=1</field>
-        <field name="target">self</field>
-    </record>
 
     <menuitem id="menu_workspace_interface_text" name="Interface Text" parent="menu_workspace_settings_root"
               sequence="80" groups="ncollection_core.group_tenant_admin,base.group_system"/>
@@ -152,7 +144,5 @@
               action="action_label_rule" sequence="2"/>
     <menuitem id="menu_workspace_label_audit" name="History" parent="menu_workspace_interface_text"
               action="action_label_audit" sequence="3"/>
-    <menuitem id="menu_workspace_developer_mode" name="Developer Mode" parent="menu_workspace_interface_text"
-              action="action_developer_mode" sequence="9"/>
 
 </odoo>

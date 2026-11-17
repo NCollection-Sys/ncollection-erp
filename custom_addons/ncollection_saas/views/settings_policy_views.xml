@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Balance Cloud Management: what each tenant may do in its Settings app (models/settings_policy.py). -->
+    <record id="view_subscription_plan_form_settings_policy" model="ir.ui.view">
+        <field name="name">ncollection.subscription.plan.form.settings.policy</field>
+        <field name="model">ncollection.subscription.plan</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_subscription_plan_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Settings Policy" name="settings_policy" groups="ncollection_subscription.group_platform_admin">
+                    <p class="text-muted">The default level of each tenant Settings page for every tenant on this plan.
+                        A section with no line is "Administer". Hidden: the page does not exist; View only: it opens
+                        read-only; Edit: the Workspace Administrator changes it; Administer: and may delegate it.</p>
+                    <field name="settings_policy_line_ids">
+                        <list editable="bottom">
+                            <field name="section"/>
+                            <field name="level"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_tenant_form_settings_policy" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form.settings.policy</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='platform_access']" position="before">
+                <page string="Settings Policy" name="settings_policy" groups="ncollection_subscription.group_platform_admin">
+                    <group>
+                        <group string="Overrides for this tenant">
+                            <p class="text-muted" colspan="2">Lower than the plan only; to give more, change the plan.</p>
+                            <field name="settings_policy_line_ids" nolabel="1" colspan="2">
+                                <list editable="bottom">
+                                    <field name="section"/>
+                                    <field name="level"/>
+                                </list>
+                            </field>
+                        </group>
+                        <group string="Effective (what the workspace receives)">
+                            <field name="settings_policy_effective" nolabel="1" colspan="2"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -37,7 +37,7 @@ REQUIRED_CRON_XMLIDS = (
 )
 
 _SYNCABLE_FIELDS = frozenset({
-    'allowed_module_names', 'plan_code', 'subscription_status', 'max_users',
+    'allowed_module_names', 'plan_code', 'subscription_status', 'max_users', 'settings_policy',
 })
 
 # Platform-pushed ECB exchange rate (#308). Like the brand keys these are NOT

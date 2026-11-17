@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- One group per delegable Settings section (models/settings_policy.py SECTION_GROUP). Holding it = the section
+         was delegated to you by a Workspace Administrator, where the platform allows it. The Workspace Administrator
+         implies them all; nothing else does. Document Stamps / Print Settings reuse Document Stamp Manager. -->
+    <record id="group_settings_company" model="res.groups">
+        <field name="name">Settings: Company</field>
+    </record>
+    <record id="group_settings_business" model="res.groups">
+        <field name="name">Settings: Business Settings</field>
+    </record>
+    <record id="group_settings_accounting_defaults" model="res.groups">
+        <field name="name">Settings: Accounting Defaults</field>
+    </record>
+    <record id="group_settings_document_layout" model="res.groups">
+        <field name="name">Settings: Document Layout</field>
+    </record>
+    <record id="group_settings_appearance" model="res.groups">
+        <field name="name">Settings: Appearance</field>
+    </record>
+    <record id="group_settings_interface_text" model="res.groups">
+        <field name="name">Settings: Interface Text</field>
+    </record>
+    <record id="group_tenant_admin" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_settings_company')), (4, ref('group_settings_business')),
+                                          (4, ref('group_settings_accounting_defaults')),
+                                          (4, ref('group_settings_document_layout')),
+                                          (4, ref('group_settings_appearance')),
+                                          (4, ref('group_settings_interface_text'))]"/>
+    </record>
+</odoo>

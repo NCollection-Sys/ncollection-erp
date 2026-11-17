@@ -131,6 +131,10 @@ class IrUiMenu(models.Model):
         platform_only = self._ncollection_platform_only_menu_ids()
         if platform_only:
             visible = visible - platform_only
+        # Unified Settings: the sections the platform hides, and those this user has no level on (a delegate sees
+        # only what was delegated). Level depends on groups and the synced config only, so the per-groups cache holds.
+        policy = self.env['ncollection.settings.policy']
+        visible = visible - policy._nc_hidden_menu_ids() - policy._nc_menus_without_level()
         return visible
 
     # Apps (module management) belongs to the platform, not to any tenant user - the Owner included: every module

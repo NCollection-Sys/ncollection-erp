@@ -115,6 +115,7 @@ class AiReadiness(models.TransientModel):  # pylint: disable=no-wizard-in-models
     @api.model
     def action_open(self):
         self._nc_check_admin()
+        self.env['ncollection.settings.policy']._nc_require('ai', 'view')
         record = self.create(self._nc_probe())
         return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': record.id, 'view_mode': 'form',
                 'target': 'current', 'name': self.env._('AI Assistant Readiness')}
@@ -126,6 +127,7 @@ class AiReadiness(models.TransientModel):  # pylint: disable=no-wizard-in-models
         """Turn free-typed questions ON: a Workspace Administrator's decision, refused while the backend cannot answer
         them (states 1-3)."""
         self._nc_check_admin()
+        self.env['ncollection.settings.policy']._nc_require('ai', 'edit')
         state = self._nc_probe()
         if not (state['reachable'] and state['authenticated'] and state['tools_ready']):
             raise UserError(self.env._("Free-typed questions need a reachable, authenticated gateway and at least one "
@@ -135,5 +137,6 @@ class AiReadiness(models.TransientModel):  # pylint: disable=no-wizard-in-models
 
     def action_unset_free_text(self):
         self._nc_check_admin()
+        self.env['ncollection.settings.policy']._nc_require('ai', 'edit')
         self.env['ir.config_parameter'].sudo().set_param(FREE_TEXT_PARAM, 'False')
         return self.action_open()

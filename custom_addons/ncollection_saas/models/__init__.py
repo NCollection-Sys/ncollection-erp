@@ -32,3 +32,4 @@ from . import tenant_admin
 from . import system_branding_sync
 # Delete Tenant: a disposable tenant removed for good (database, filestore, platform records), with an audit record.
 from . import tenant_deletion
+from . import settings_policy

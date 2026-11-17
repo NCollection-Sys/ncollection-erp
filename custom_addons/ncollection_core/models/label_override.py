@@ -142,9 +142,7 @@ class LabelOverride(models.Model):
     def _nc_check_editor(self):
         if self.env.su:
             return
-        user = self.env.user
-        if not (user.has_group('ncollection_core.group_tenant_admin') or user.has_group('base.group_system')):
-            raise AccessError(self.env._("Only a Workspace Administrator can change interface text."))
+        self.env['ncollection.settings.policy']._nc_require('interface_text', 'edit')
 
     def _nc_record(self):
         self.ensure_one()

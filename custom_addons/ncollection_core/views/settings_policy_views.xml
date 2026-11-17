@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Unified Settings (models/settings_policy.py). The tenant's ONE Settings app is the former Workspace
+         Administration; Odoo's own Settings (base.menu_administration) stays a technical tool for base.group_system and
+         is named so, so platform staff never see two apps called "Settings". -->
+    <function model="ir.ui.menu" name="_nc_set_menu_translation"
+              eval="('ncollection_core.menu_workspace_settings_root', 'ar_001', 'الإعدادات')"/>
+    <function model="ir.ui.menu" name="_nc_set_menu_translation"
+              eval="('base.menu_administration', 'en_US', 'Technical Settings')"/>
+    <function model="ir.ui.menu" name="_nc_set_menu_translation"
+              eval="('base.menu_administration', 'ar_001', 'الإعدادات التقنية')"/>
+
+    <record id="view_settings_delegation_form" model="ir.ui.view">
+        <field name="name">ncollection.settings.delegation.form</field>
+        <field name="model">ncollection.settings.delegation</field>
+        <field name="arch" type="xml">
+            <form create="0" delete="0">
+                <header>
+                    <button name="action_save" type="object" string="Save" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="note">
+                        Let a colleague manage one settings page without making them a Workspace Administrator. Only the
+                        pages the platform allows can be delegated; users, roles, security and the audit log never can.
+                        Every change is recorded.
+                    </div>
+                    <field name="line_ids" nolabel="1">
+                        <list editable="bottom" create="0" delete="0">
+                            <field name="section"/>
+                            <field name="allowed"/>
+                            <field name="user_ids" widget="many2many_tags" readonly="not allowed"
+                                   options="{'no_create': True}"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_settings_delegation" model="ir.actions.server">
+        <field name="name">Delegated Settings</field>
+        <field name="model_id" ref="model_ncollection_settings_delegation"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open()</field>
+    </record>
+
+    <menuitem id="menu_workspace_delegation" name="Delegated Settings" parent="menu_workspace_settings_root"
+              action="action_settings_delegation" sequence="26"
+              groups="ncollection_core.group_tenant_admin,base.group_system"/>
+</odoo>

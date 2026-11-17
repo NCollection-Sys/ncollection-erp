@@ -35,7 +35,7 @@
     # 19.0.1.21.0: Workspace Administration Center (users, roles = real groups, password reset with forced change,
     # audit) and the platform's user-administration service (ncollection.admin.service). New models, data and
     # menus, so `-u` is what applies it to an existing tenant.
-    'version': '19.0.1.30.0',
+    'version': '19.0.1.31.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -49,6 +49,7 @@
     'depends': ['base', 'web', 'ncollection_branding'],
     'data': [
         'security/role_groups.xml',
+        'security/settings_policy_security.xml',
         'security/config_sync_security.xml',
         # Before ir.model.access.csv: that file has a row keyed on
         # group_cron_service, and a CSV cannot forward-reference a
@@ -62,6 +63,7 @@
         'views/workspace_settings_views.xml',
         'views/workspace_admin_views.xml',
         'views/label_override_views.xml',
+        'views/settings_policy_views.xml',
         'data/label_rules.xml',
         'views/password_change_templates.xml',
         'views/workspace_appearance_views.xml',

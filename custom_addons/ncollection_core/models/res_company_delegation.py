@@ -45,12 +45,22 @@ class ResCompany(models.Model):
         if self.env.su or not vals:
             return False
         user = self.env.user
-        if user.has_group('base.group_erp_manager') or not user.has_group(TENANT_ADMIN):
+        if user.has_group('base.group_erp_manager'):
             return False
         if set(vals) - (self._nc_tenant_admin_company_fields() & set(self._fields)):
             return False
+        # Unified Settings: each field belongs to ONE section; the Workspace Administrator, or a user that section
+        # was delegated to, may change it, and only as far as the platform's level for that section allows.
+        from .settings_policy import SECTION_GROUP, company_field_section  # noqa: PLC0415 (same package)
+        sections = {company_field_section(name) for name in vals}
+        if not user.has_group(TENANT_ADMIN) and not all(
+                section in SECTION_GROUP and user.has_group(SECTION_GROUP[section]) for section in sections):
+            return False
         if self - user.company_ids:
             raise AccessError(self.env._("You can only change the companies you belong to."))
+        policy = self.env['ncollection.settings.policy']
+        for section in sections:
+            policy._nc_require(section, 'edit')
         return True
 
     def _nc_check_delegated_values(self, vals):

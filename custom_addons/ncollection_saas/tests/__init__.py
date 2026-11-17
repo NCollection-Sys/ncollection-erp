@@ -33,3 +33,4 @@ from . import test_tenant_deletion
 from . import test_platform_workspace_admin
 from . import test_provisioning_first_sync
 from . import test_provisioning_shell_no_http
+from . import test_settings_policy_platform

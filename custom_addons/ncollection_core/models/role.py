@@ -162,6 +162,7 @@ class NcollectionRole(models.Model):
     def _nc_require_administrator(self):
         if not self.env.user.has_group(ADMIN_GROUP):
             raise AccessError(self.env._("Only a workspace administrator can manage roles."))
+        self.env["ncollection.settings.policy"]._nc_require("roles", "edit")
 
     @api.model
     def _nc_new_code(self, name):

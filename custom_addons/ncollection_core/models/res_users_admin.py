@@ -92,6 +92,7 @@ class ResUsers(models.Model):
 
     def nc_set_roles(self, role_ids):
         """Make ``role_ids`` the roles of these users (public: the workspace user form and the platform service)."""
+        self.env['ncollection.settings.policy']._nc_require('users', 'edit')  # unified Settings policy
         roles = self.env['ncollection.role'].browse(role_ids).exists()
         for user in self:
             user._nc_apply_roles(roles)
@@ -164,6 +165,7 @@ class ResUsers(models.Model):
     def nc_set_active(self, active):
         """Activate or deactivate. Deactivation keeps every guard of ``action_ncollection_deactivate`` (not yourself,
         not the last Owner); activation is limited by the plan's user count like any new user."""
+        self.env['ncollection.settings.policy']._nc_require('users', 'edit')  # unified Settings policy
         for user in self:
             if user.share or user.nc_platform_proxy:
                 raise UserError(self.env._("Only the workspace's own users can be activated or deactivated here."))
@@ -191,6 +193,7 @@ class ResUsers(models.Model):
     # ------------------------------------------------------------------ profile
     def nc_update_profile(self, name=None, email=None):
         """Change the name and / or the contact email of ONE workspace user (never the login, never the groups)."""
+        self.env['ncollection.settings.policy']._nc_require('users', 'edit')  # unified Settings policy
         self.ensure_one()
         self._nc_check_password_target()                    # the same rule as a reset: who may act on this account
         changes = {}
@@ -215,6 +218,7 @@ class ResUsers(models.Model):
         ``new_password`` None  -> a temporary password is generated and returned (this is the only time it exists in
         clear). Otherwise the explicit password is used (policy checked) and nothing is returned.
         """
+        self.env['ncollection.settings.policy']._nc_require('users', 'edit')  # unified Settings policy
         self.ensure_one()
         self._nc_check_password_target()
         if new_password is not None and not isinstance(new_password, str):
@@ -281,6 +285,7 @@ class ResUsers(models.Model):
         The plan's seat limit is checked here explicitly, because a superuser call (the platform service) is exempt
         in ``create`` and must not become a way around the plan.
         """
+        self.env['ncollection.settings.policy']._nc_require('users', 'edit')  # unified Settings policy
         name, login = (name or '').strip(), (login or '').strip()
         if not name or not login:
             raise UserError(self.env._("A user needs a name and a username."))

@@ -47,3 +47,4 @@ from . import test_duplicate_contacts
 from . import test_dashboard_export
 from . import test_anomaly_alerts_removed
 from . import test_label_override
+from . import test_settings_policy

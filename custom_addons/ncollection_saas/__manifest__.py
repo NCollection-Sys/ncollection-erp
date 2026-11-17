@@ -37,7 +37,7 @@
     # entry points for the READY tenants that gain a companion (19.0.6.16.0/post-migrate.py, the 19.0.6.8.0 pattern).
     # 19.0.6.17.0: Tenant Administration: Users & Access (users, roles, password reset through the tenant's
     # ncollection.admin.service) and the reorganised tenant form. New transient models and views: `-u` applies it.
-    'version': '19.0.6.25.0',
+    'version': '19.0.6.26.0',
     'category': 'Services/SaaS',
     'summary': 'SaaS provisioning + auto-provisioning + config sync + fleet migration '
                '(P2-T01/T02/T03, P3-T14)',
@@ -77,6 +77,7 @@
         'views/platform_summary_views.xml',
         # Tenant Administration: users, roles and password reset, through the tenant's admin service.
         'views/tenant_admin_views.xml',
+        'views/settings_policy_views.xml',
         'views/tenant_deletion_views.xml',
         'data/platform_workspace_admin.xml',
     ],
