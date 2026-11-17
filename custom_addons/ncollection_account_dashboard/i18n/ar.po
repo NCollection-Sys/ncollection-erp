@@ -494,7 +494,7 @@ msgstr "طلب"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0 code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
 msgid "Apply"
 msgstr "تطبيق"
 
@@ -512,13 +512,13 @@ msgstr "الفترة"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0 code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
 msgid "From"
 msgstr "من"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
+#: code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0 code:addons/ncollection_account_dashboard/static/src/dashboard/ceo_dashboard.xml:0
 msgid "To"
 msgstr "إلى"
 
@@ -586,12 +586,12 @@ msgid "Invoicing Analysis"
 msgstr "تحليل الفوترة"
 
 #. module: ncollection_account_dashboard
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_sales_premium
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_sales_premium code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0 model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_premium model:ir.ui.menu,name:ncollection_account_dashboard.menu_sales_premium_dept
 msgid "Sales Analysis"
 msgstr "تحليل المبيعات"
 
 #. module: ncollection_account_dashboard
-#: model:ir.actions.client,name:ncollection_account_dashboard.action_invoicing_premium
+#: model:ir.actions.client,name:ncollection_account_dashboard.action_invoicing_premium code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0 model:ir.ui.menu,name:ncollection_account_dashboard.menu_invoicing_premium
 msgid "Invoicing Analysis"
 msgstr "تحليل الفوترة"
 
@@ -747,19 +747,19 @@ msgstr "هذه اللوحة ضمن باقتك؛ ولا توجد ببساطة ب�
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0 code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
 msgid "vs previous period"
 msgstr "مقارنة بالفترة السابقة"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0 code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
 msgid "favourable"
 msgstr "إيجابي"
 
 #. module: ncollection_account_dashboard
 #. odoo-javascript
-#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0
+#: code:addons/ncollection_account_dashboard/static/src/dashboard/dashboard_base.js:0 code:addons/ncollection_account_dashboard/static/src/premium/premium_dashboard.js:0
 msgid "unfavourable"
 msgstr "سلبي"
 

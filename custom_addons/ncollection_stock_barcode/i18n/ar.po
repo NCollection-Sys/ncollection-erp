@@ -148,7 +148,7 @@ msgid "Difference"
 msgstr "الفرق"
 
 #. module: ncollection_stock_barcode
-#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_stock_barcode__display_name
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_stock_barcode__display_name model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__display_name model:ir.model.fields,field_description:ncollection_stock_barcode.field_res_company__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -159,7 +159,7 @@ msgid "Forget this location"
 msgstr "نسيان هذا الموقع"
 
 #. module: ncollection_stock_barcode
-#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_stock_barcode__id
+#: model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_stock_barcode__id model:ir.model.fields,field_description:ncollection_stock_barcode.field_ncollection_business_settings__id model:ir.model.fields,field_description:ncollection_stock_barcode.field_res_company__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -267,7 +267,7 @@ msgstr "تم اعتماد العملية %s."
 
 #. module: ncollection_stock_barcode
 #. odoo-javascript
-#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0
+#: code:addons/ncollection_stock_barcode/static/src/scanner/scanner.xml:0 model_terms:ir.ui.view,arch_db:ncollection_stock_barcode.view_nc_business_settings_form_inventory
 msgid "Operations"
 msgstr "العمليات"
 
@@ -536,3 +536,13 @@ msgid ""
 "You have product(s) in stock that have lot/serial number tracking enabled. \n"
 "Switch off tracking on all the products before switching off this setting."
 msgstr "لديك منتجات في المخزون مفعّل لها تتبع أرقام الدفعات/الأرقام التسلسلية. أوقف التتبع في جميع المنتجات قبل إيقاف هذا الإعداد."
+
+#. module: ncollection_stock_barcode
+#: model:ir.model,name:ncollection_stock_barcode.model_ncollection_business_settings
+msgid "Business Settings"
+msgstr "إعدادات الأعمال"
+
+#. module: ncollection_stock_barcode
+#: model:ir.model,name:ncollection_stock_barcode.model_res_company
+msgid "Companies"
+msgstr "الشركات"

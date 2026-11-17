@@ -8,8 +8,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
 #. module: ncollection_auth
 #: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__create_uid
@@ -27,8 +26,7 @@ msgid "Db Name"
 msgstr "اسم قاعدة البيانات"
 
 #. module: ncollection_auth
-#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__display_name
-#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__display_name
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__display_name model:ir.model.fields,field_description:ncollection_auth.field_res_users__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -38,8 +36,7 @@ msgid "Event Type"
 msgstr "نوع الحدث"
 
 #. module: ncollection_auth
-#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__id
-#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__id
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__id model:ir.model.fields,field_description:ncollection_auth.field_res_users__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -94,8 +91,7 @@ msgid "Password reset requested"
 msgstr "تم طلب إعادة تعيين كلمة المرور"
 
 #. module: ncollection_auth
-#: model:ir.model,name:ncollection_auth.model_res_users
-#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__user_id
+#: model:ir.model,name:ncollection_auth.model_res_users model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__user_id
 msgid "User"
 msgstr "المستخدم"
 
@@ -107,17 +103,13 @@ msgstr "وكيل المستخدم"
 #. module: ncollection_auth
 #. odoo-python
 #: code:addons/ncollection_auth/controllers/reset_password.py:0
-msgid ""
-"If an account matches, password reset instructions have been sent to its "
-"email address."
+msgid "If an account matches, password reset instructions have been sent to its email address."
 msgstr "إذا كان هناك حساب مطابق، فقد أُرسلت تعليمات إعادة تعيين كلمة المرور إلى بريده الإلكتروني."
 
 #. module: ncollection_auth
 #. odoo-python
 #: code:addons/ncollection_auth/controllers/reset_password.py:0
-msgid ""
-"Password reset by email is not set up for this workspace. Please ask your "
-"administrator to reset it."
+msgid "Password reset by email is not set up for this workspace. Please ask your administrator to reset it."
 msgstr "إعادة تعيين كلمة المرور عبر البريد الإلكتروني غير مفعّلة لمساحة العمل هذه. يرجى طلب إعادة التعيين من المسؤول."
 
 #. module: ncollection_auth
@@ -126,18 +118,12 @@ msgid "Used password-reset / signup link"
 msgstr "رابط إعادة تعيين كلمة المرور / التسجيل المستخدَم"
 
 #. module: ncollection_auth
-#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__display_name
-#: model:ir.model.fields,field_description:ncollection_auth.field_res_partner__display_name
-#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__display_name
-#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__display_name
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__display_name model:ir.model.fields,field_description:ncollection_auth.field_res_partner__display_name model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__display_name model:ir.model.fields,field_description:ncollection_auth.field_res_users__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_auth
-#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__id
-#: model:ir.model.fields,field_description:ncollection_auth.field_res_partner__id
-#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__id
-#: model:ir.model.fields,field_description:ncollection_auth.field_res_users__id
+#: model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_spent_token__id model:ir.model.fields,field_description:ncollection_auth.field_res_partner__id model:ir.model.fields,field_description:ncollection_auth.field_ncollection_auth_log__id model:ir.model.fields,field_description:ncollection_auth.field_res_users__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -222,16 +208,13 @@ msgid "Password reset by an administrator"
 msgstr "أعاد مسؤول تعيين كلمة المرور"
 
 #. module: ncollection_auth
-#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
-#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
 msgid "Platform administrator"
 msgstr "مسؤول المنصة"
 
 #. module: ncollection_auth
 #: model:ir.model.fields,help:ncollection_auth.field_ncollection_auth_log__actor_ref
-msgid ""
-"Platform administrator behind the action (set by the platform channel), if "
-"any."
+msgid "Platform administrator behind the action (set by the platform channel), if any."
 msgstr "مسؤول المنصة الذي طلب الإجراء (تحدده قناة المنصة)، إن وُجد."
 
 #. module: ncollection_auth
@@ -250,8 +233,7 @@ msgid "Security"
 msgstr "الأمان"
 
 #. module: ncollection_auth
-#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list
-#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
+#: model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_list model_terms:ir.ui.view,arch_db:ncollection_auth.view_auth_log_search
 msgid "Security log"
 msgstr "سجل الأمان"
 

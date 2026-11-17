@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Balance Cloud Management: what each tenant may do in its Settings app (models/settings_policy.py). -->
+    <!-- the platform management app: what each tenant may do in its Settings app (models/settings_policy.py). -->
     <record id="view_subscription_plan_form_settings_policy" model="ir.ui.view">
         <field name="name">ncollection.subscription.plan.form.settings.policy</field>
         <field name="model">ncollection.subscription.plan</field>

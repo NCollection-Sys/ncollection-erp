@@ -17,7 +17,8 @@ msgid "A chat message cannot be longer than %s characters."
 msgstr "لا يمكن أن تتجاوز رسالة المحادثة %s حرفًا."
 
 #. module: ncollection_ai
-#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0 model:ir.ui.menu,name:ncollection_ai.menu_ai_readiness
+#. odoo-javascript
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0 model:ir.ui.menu,name:ncollection_ai.menu_ai_readiness model:ir.actions.server,name:ncollection_ai.action_ai_readiness
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
 
@@ -98,12 +99,12 @@ msgid "Body"
 msgstr "المحتوى"
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__create_uid
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__create_uid model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__create_date
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__create_date model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -125,7 +126,7 @@ msgid "Demo mode: a summary of your data, not an AI model"
 msgstr "وضع تجريبي: ملخص لبياناتك وليس نموذج ذكاء اصطناعي"
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -136,7 +137,7 @@ msgid "Free-typed questions are switched off on this workspace. The suggestions 
 msgstr "الأسئلة المكتوبة يدويًا معطّلة في مساحة العمل هذه. الاقتراحات أعلاه متاحة دائمًا."
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -147,12 +148,12 @@ msgid "Invoicing trend"
 msgstr "اتجاه الفوترة"
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__write_uid
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__write_uid model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__write_date
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__write_date model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -531,3 +532,28 @@ msgstr "مساحة العمل هذه"
 #: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__tools_detail
 msgid "Topics available"
 msgstr "المواضيع المتاحة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__key_configured
+msgid "Key Configured"
+msgstr "المفتاح مُهيّأ"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__model
+msgid "Model"
+msgstr "النموذج"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__notes
+msgid "Notes"
+msgstr "ملاحظات"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__provider
+msgid "Provider"
+msgstr "المزوّد"
+
+#. module: ncollection_ai
+#: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_readiness__mode__unavailable
+msgid "Unavailable"
+msgstr "غير متاح"

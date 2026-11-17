@@ -78,7 +78,7 @@ SECTION_GROUP = {
 
 # PLATFORM-GRANTED BUSINESS CAPABILITIES of the Workspace Administrator. Unlike a section (default administer, so an
 # upgrade changes nothing), a capability is OFF unless the platform pushes 'granted': it widens what a Workspace
-# Administrator may do, so only Balance Cloud Management may switch it on. Granting = the capability group is implied
+# Administrator may do, so only the platform management app may switch it on. Granting = the capability group is implied
 # by group_tenant_admin (Odoo 19 computes implied membership, so revoking removes it at once). The group itself is
 # Odoo's own access (its ACLs and record rules decide everything); no route or check is bypassed.
 #   key -> (label, the group implied while granted)
@@ -170,6 +170,10 @@ class SettingsPolicy(models.AbstractModel):
         if self.env.su or user.has_group('base.group_system'):
             return platform if platform != 'hidden' else 'hidden'
         if user.has_group(TENANT_ADMIN):
+            return platform
+        if section == 'users' and user.has_group('base.group_erp_manager'):
+            # Odoo's own user administrator (Access Rights) keeps administering users, within the platform's level;
+            # what each may change is still decided by the user methods' own group checks.
             return platform
         if section in DELEGABLE and platform == 'administer' and user.has_group(SECTION_GROUP[section]):
             return 'edit'

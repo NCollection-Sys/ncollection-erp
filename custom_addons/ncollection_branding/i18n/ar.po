@@ -12,7 +12,7 @@ msgstr ""
 
 #. module: ncollection_branding
 #. odoo-python
-#: code:addons/ncollection_branding/models/res_company.py:0
+#: code:addons/ncollection_branding/models/res_company.py:0 code:addons/ncollection_branding/models/product_branding.py:0
 msgid "%(value)r is not a valid colour for '%(field)s'. Use a 6-digit hex colour such as #1F5F8F."
 msgstr "%(value)r ليس لونًا صالحًا لـ '%(field)s'. استخدم لونًا سداسيًا عشريًا من 6 خانات مثل #1F5F8F."
 
@@ -346,12 +346,12 @@ msgid "Built on open-source technology (GNU LGPL v3 — see docs/LEGAL.md in the
 msgstr "مبني على تقنية مفتوحة المصدر (GNU LGPL v3 — راجع docs/LEGAL.md في توزيعة الكود المصدري)."
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_http__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__display_name
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_company__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_users__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_http__display_name model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__display_name model:ir.model.fields,field_description:ncollection_branding.field_base_document_layout__display_name model:ir.model.fields,field_description:ncollection_branding.field_mail_message__display_name model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__display_name model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__display_name model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__display_name model:ir.model.fields,field_description:ncollection_branding.field_res_groups__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_branding
-#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__id model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__id model:ir.model.fields,field_description:ncollection_branding.field_res_company__id model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id model:ir.model.fields,field_description:ncollection_branding.field_res_users__id model:ir.model.fields,field_description:ncollection_branding.field_ir_http__id model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__id
+#: model:ir.model.fields,field_description:ncollection_branding.field_ir_ui_menu__id model:ir.model.fields,field_description:ncollection_branding.field_ir_actions_report__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_stamp__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_document_type__id model:ir.model.fields,field_description:ncollection_branding.field_res_company__id model:ir.model.fields,field_description:ncollection_branding.field_res_config_settings__id model:ir.model.fields,field_description:ncollection_branding.field_res_users__id model:ir.model.fields,field_description:ncollection_branding.field_ir_http__id model:ir.model.fields,field_description:ncollection_branding.field_ir_qweb__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_product_branding__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_vendor_content__id model:ir.model.fields,field_description:ncollection_branding.field_base_document_layout__id model:ir.model.fields,field_description:ncollection_branding.field_mail_message__id model:ir.model.fields,field_description:ncollection_branding.field_mail_thread__id model:ir.model.fields,field_description:ncollection_branding.field_nc_document_stamp_mixin__id model:ir.model.fields,field_description:ncollection_branding.field_ncollection_dashboard_pdf__id model:ir.model.fields,field_description:ncollection_branding.field_res_groups__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -1693,3 +1693,39 @@ msgstr "مثال: الحساب البنكي، IBAN"
 #: model_terms:ir.ui.view,arch_db:ncollection_branding.view_base_document_layout_nc_footer_zones
 msgid "e.g. TRN, licence number"
 msgstr "مثال: الرقم الضريبي، رقم الرخصة"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_res_groups
+msgid "Access Groups"
+msgstr "مجموعات الوصول"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_base_document_layout
+msgid "Company Document Layout"
+msgstr "مخطط مستندات الشركة"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_mail_thread
+msgid "Email Thread"
+msgstr "المحادثة البريدية"
+
+#. module: ncollection_branding
+#: model:ir.model,name:ncollection_branding.model_mail_message
+msgid "Message"
+msgstr "الرسالة"
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_ncollection_document_type__nc_show_stamp
+msgid "On: the Document Stamps that match this kind of document are printed on it (Print, View and Preview are the same render). Off: this kind prints without a stamp; the stamps and their placement are kept, and nothing already posted or archived changes."
+msgstr "تطبيق أختام المستندات المطابقة لهذا المستند."
+
+#. module: ncollection_branding
+#: model:ir.model.fields,help:ncollection_branding.field_res_users__notification_type
+msgid ""
+"Policy on how to handle Chatter notifications:\n"
+"- By Emails: notifications are sent to your email address\n"
+"- In Odoo: notifications appear in your Odoo Inbox"
+msgstr ""
+"سياسة التعامل مع إشعارات تطبيق الدردشة:\n"
+"- التعامل معها عن طريق رسائل البريد الإلكتروني: تُرسل الإشعارات إلى بريدك الإلكتروني\n"
+"- التعامل معها في أودو: تظهر الإشعارات في صندوق الوارد في حسابك على أودو"

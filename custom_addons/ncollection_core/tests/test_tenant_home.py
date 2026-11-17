@@ -125,10 +125,9 @@ class TestTenantHomeApps(TransactionCase):
         self.assertEqual(card['name'], 'Settings')
         self.assertIn(card['id'], web_menus)
         self.assertTrue(web_menus[card['id']]['actionID'])
-        # No second Settings module was created to make this work.
-        self.assertEqual(
-            self.env['ir.ui.menu'].search_count(
-                [('name', '=', 'Settings'), ('parent_id', '=', False)]), 1)
+        # ONE Settings card per user: Odoo's own Settings app (also named Settings, for platform staff) is not
+        # offered next to it.
+        self.assertEqual([a['name'] for a in owner_apps.values()].count('Settings'), 1)
 
     def test_an_unauthorised_user_cannot_open_settings_directly(self):
         """Hiding the card is not the control — the server refusing is."""

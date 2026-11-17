@@ -27,7 +27,7 @@ msgstr "تم التحقق من %s صف دون أخطاء مانعة — يمكن
 msgid ""
 "A guided path over the standard importer. Recommended order —\n"
 "                            each step can reference the ones before it:\n"
-"                            <b>Products → Customers → Vendors → Opening Stock → Opening Balances</b>."
+"                            <b>Products → Customers → Suppliers → Opening Stock → Opening Balances</b>."
 msgstr "مسار موجَّه فوق أداة الاستيراد القياسية. الترتيب الموصى به — يمكن لكل خطوة الإشارة إلى الخطوات التي قبلها: <b>المنتجات ← العملاء ← الموردون ← المخزون الافتتاحي ← الأرصدة الافتتاحية</b>."
 
 #. module: ncollection_data_import
@@ -158,7 +158,7 @@ msgid "Some rows share the same External ID (%(ids)s). Each row must point to a 
 msgstr "تتشارك بعض الصفوف المعرّف الخارجي نفسه (%(ids)s). يجب أن يشير كل صف إلى سجل مختلف — فالصفوف ذات المعرّف نفسه تستبدل بعضها بدلًا من الإنشاء أو التحديث بشكل منفصل."
 
 #. module: ncollection_data_import
-#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__suppliers
+#: model:ir.model.fields.selection,name:ncollection_data_import.selection__ncollection_data_import_onboarding__entity__suppliers code:addons/ncollection_data_import/wizard/onboarding.py:0
 msgid "Suppliers"
 msgstr "الموردون"
 

@@ -46,7 +46,7 @@ msgid "Digest"
 msgstr "التجزئة"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__display_name
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_admin_service__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -61,7 +61,7 @@ msgid "From Log"
 msgstr "من السجل"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__id
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_admin_service__id
 msgid "ID"
 msgstr "المعرّف"
 

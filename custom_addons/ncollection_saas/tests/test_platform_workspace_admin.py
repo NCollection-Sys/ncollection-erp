@@ -19,6 +19,16 @@ class TestPlatformWorkspaceAdmin(TransactionCase):
         visible = self.env['ir.ui.menu'].with_user(staff)._visible_menu_ids()
         self.assertIn(root.id, visible)
         self.assertIn(self.env.ref('ncollection_core.menu_workspace_print_settings').id, visible)
+        # A TECHNICAL administrator (base.group_system) has Odoo's own Settings app instead (one Settings tile per
+        # user); its "Workspace Settings" entry opens the same settings page.
+        tech = self.env['res.users'].create({
+            'name': 'Platform Tech WA', 'login': 'plat_tech_wa',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id, self.env.ref('base.group_system').id])]})
+        tech_visible = self.env['ir.ui.menu'].with_user(tech)._visible_menu_ids()
+        self.assertNotIn(root.id, tech_visible)
+        entry = self.env.ref('ncollection_core.menu_workspace_settings_for_system')
+        self.assertIn(entry.id, tech_visible)
+        self.assertEqual(entry.action, self.env.ref('ncollection_core.action_nc_business_settings'))
         clerk = self.env['res.users'].create({'name': 'Clerk WA', 'login': 'plat_clerk_wa',
                                               'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
         self.assertNotIn(root.id, self.env['ir.ui.menu'].with_user(clerk)._visible_menu_ids())

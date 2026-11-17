@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Platform control of the tenant Settings app (Balance Cloud Management side of ncollection_core/settings_policy.py).
+"""Platform control of the tenant Settings app (the platform management app side of ncollection_core/settings_policy.py).
 
   plan line     the default level of a section for every tenant on the plan
   tenant line   a per-tenant override that can only LOWER the plan's level (a tenant can never be given more than its

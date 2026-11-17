@@ -18,7 +18,7 @@ msgstr "%(account)s لا يمكن أن يكون %(field)s لـ %(company)s."
 
 #. module: ncollection_account_core
 #. odoo-python
-#: code:addons/ncollection_account_core/models/res_company_defaults.py:0 model:ir.actions.server,name:ncollection_account_core.action_nc_accounting_defaults model:ir.ui.menu,name:ncollection_account_core.menu_nc_accounting_defaults model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form model:ir.ui.menu,name:ncollection_account_core.menu_workspace_accounting_defaults
+#: code:addons/ncollection_account_core/models/res_company_defaults.py:0 model:ir.actions.server,name:ncollection_account_core.action_nc_accounting_defaults model:ir.ui.menu,name:ncollection_account_core.menu_nc_accounting_defaults model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form model:ir.ui.menu,name:ncollection_account_core.menu_workspace_accounting_defaults model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
 msgid "Accounting Defaults"
 msgstr "الإعدادات الافتراضية للمحاسبة"
 
@@ -252,12 +252,12 @@ msgid "Is a vendor"
 msgstr "مورد"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_move__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__display_name model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_move__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__display_name model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_analytic_account__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_journal__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__display_name model:ir.model.fields,field_description:ncollection_account_core.field_product_supplierinfo__display_name model:ir.model.fields,field_description:ncollection_account_core.field_product_template__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__id model:ir.model.fields,field_description:ncollection_account_core.field_account_move__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__id model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__id model:ir.model.fields,field_description:ncollection_account_core.field_account_move__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__id model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id model:ir.model.fields,field_description:ncollection_account_core.field_account_analytic_account__id model:ir.model.fields,field_description:ncollection_account_core.field_account_journal__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__id model:ir.model.fields,field_description:ncollection_account_core.field_product_supplierinfo__id model:ir.model.fields,field_description:ncollection_account_core.field_product_template__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -525,7 +525,7 @@ msgid "Invoice"
 msgstr "فاتورة"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc model:ir.model,name:ncollection_account_core.model_account_journal
 msgid "Journal"
 msgstr "دفتر اليومية"
 
@@ -784,7 +784,7 @@ msgid "Total Amount in Words"
 msgstr "المبلغ الإجمالي كتابةً"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_duplicate model_terms:ir.ui.view,arch_db:ncollection_account_core.view_payment_term_form_nc_duplicate
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_duplicate model_terms:ir.ui.view,arch_db:ncollection_account_core.view_payment_term_form_nc_duplicate model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_duplicate
 msgid "Duplicate"
 msgstr "نسخة مماثلة"
 
@@ -814,12 +814,12 @@ msgid "Overpaid Amount"
 msgstr "مبلغ الزيادة المدفوعة"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_is_taxable
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_is_taxable model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_is_taxable model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
 msgid "Taxable"
 msgstr "خاضع للضريبة"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_is_overpaid
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_is_overpaid model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__overpaid model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_search_nc_overpaid
 msgid "Overpaid"
 msgstr "مدفوع بالزيادة"
 
@@ -871,3 +871,53 @@ msgstr "الحسابات الافتراضية للذمم المدينة والد
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
 msgid "Edit Accounting Defaults"
 msgstr "تعديل الإعدادات المحاسبية الافتراضية"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_account_analytic_account
+msgid "Analytic Account"
+msgstr "الحساب التحليلي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_payment_status model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_payment_status
+msgid "Derived from the accounting (residual, due date and reconciliations); never set by hand. Sorted: Overdue, Unpaid, Partially Paid, Paid in Full, Overpaid."
+msgstr "مستخلصة من المحاسبة (المتبقي وتاريخ الاستحقاق والتسويات)؛ لا تُعيَّن يدويًا أبدًا."
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_onboarding_onboarding_step
+msgid "Onboarding Step"
+msgstr "خطة تمهيدية"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_account_payment_register
+msgid "Pay"
+msgstr "الدفع"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_account_payment_term
+msgid "Payment Terms"
+msgstr "شروط السداد"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_ncollection_document_type
+msgid "Printed document type"
+msgstr "نوع المستند المطبوع"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_product_template
+msgid "Product"
+msgstr "المنتج"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_product_supplierinfo
+msgid "Supplier Pricelist"
+msgstr "قائمة أسعار المورد"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_paid model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_paid
+msgid "What has been received for this document, in its own currency: the amount applied (total minus amount due) plus any excess. Paid Amount + Balance Due = total."
+msgstr "ما طُبِّق على هذا المستند حتى الآن (الإجمالي ناقص المبلغ المستحق)، بعملته."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_due model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_due
+msgid "What is still due, in its own currency (the native residual). NEGATIVE when the document is overpaid: the excess already received, shown from the settlement's point of view (the native amount due and the accounting are untouched)."
+msgstr "ما يزال مستحقًا على هذا المستند، بعملته (المبلغ المتبقي)."

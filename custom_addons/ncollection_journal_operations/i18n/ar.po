@@ -403,7 +403,7 @@ msgid "Display Name"
 msgstr "الاسم المعروض"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__progress__draft model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__state__draft
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__progress__draft model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__state__draft model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__draft
 msgid "Draft"
 msgstr "مسودة"
 
