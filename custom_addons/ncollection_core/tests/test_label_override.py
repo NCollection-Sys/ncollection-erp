@@ -138,6 +138,32 @@ class TestCompanyScopedLabels(TransactionCase):
         self.assertEqual(names[self.c1], 'Our Menu')
         self.assertNotEqual(names[self.c2], 'Our Menu')
 
+    def test_company_only_choice_label(self):
+        selection = self.env['ir.model.fields.selection'].search([
+            ('field_id.model', '=', 'res.partner'), ('field_id.name', '=', 'type'), ('value', '=', 'invoice')])
+        self.assertTrue(selection)
+        self.Override.with_user(self.admin).create({
+            'target_type': 'selection', 'selection_id': selection.id, 'lang': 'en_US', 'value': 'Billing Desk',
+            'company_id': self.c1.id})
+        self.env.registry.clear_cache()
+        labels = {}
+        for company in (self.c1, self.c2):
+            env = self.env(user=self.admin, context={'lang': 'en_US', 'allowed_company_ids': [company.id]})
+            labels[company] = dict(env['res.partner'].fields_get(['type'])['type']['selection'])['invoice']
+        self.assertEqual(labels[self.c1], 'Billing Desk')
+        self.assertNotEqual(labels[self.c2], 'Billing Desk')
+        self.assertNotEqual(selection.with_context(lang='en_US').name, 'Billing Desk', "shared text untouched")
+
+    def test_screen_text_is_never_silently_widened_to_the_workspace(self):
+        view = self.env.ref('base.view_partner_form')
+        term = sorted(t for t in self.Override._nc_view_terms(view, 'en_US') if t.isalpha() and len(t) > 4)[0]
+        before = self.Override.with_context(active_test=False).search_count([])
+        with self.assertRaises(ValidationError):
+            self.Override.with_user(self.admin).with_company(self.c1).nc_quick_edit(
+                {'kind': 'view', 'model': 'res.partner', 'text': term, 'lang': 'en_US', 'value': 'X',
+                 'scope': 'company'})
+        self.assertEqual(self.Override.with_context(active_test=False).search_count([]), before)
+
     def test_screen_text_cannot_be_company_only_and_other_companies_are_refused(self):
         view = self.env.ref('base.view_partner_form')
         term = sorted(t for t in self.Override._nc_view_terms(view, 'en_US') if t.isalpha() and len(t) > 4)[0]

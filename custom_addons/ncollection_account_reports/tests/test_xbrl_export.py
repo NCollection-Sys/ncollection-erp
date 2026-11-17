@@ -94,6 +94,26 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
                                figures['cash_close'] - figures['cash_open'])
         self.assertNotIn('WorkingCapital', ''.join(facts))
 
+    def test_changes_in_equity_total_column(self):
+        today = datetime.date.today()
+        wizard = self.env['ncollection.account.report.equity.changes'].create(
+            {'date_from': self.year_start, 'date_to': today})
+        root, facts = self._facts(wizard)
+        opening, movement, closing = wizard._nc_totals()
+        equity = sorted(facts['Equity'])                 # c_I<opening> sorts before c_I<closing>
+        self.assertEqual(len(equity), 2)
+        self.assertAlmostEqual(equity[0][1], opening)
+        self.assertAlmostEqual(equity[1][1], closing)
+        self.assertAlmostEqual(facts['IncreaseDecreaseInEquity'][0][1], movement)
+        self.assertAlmostEqual(equity[0][1] + facts['IncreaseDecreaseInEquity'][0][1], equity[1][1])
+        pl = self.env['ncollection.account.report.profit.loss'].create({'date_from': self.year_start, 'date_to': today})
+        self.assertAlmostEqual(facts['ProfitLoss'][0][1], pl._nc_totals()['net_profit'],
+                               msg="independently: the Profit and Loss of the same period")
+        bs = self.env['ncollection.account.report.balance.sheet'].create({'date_to': today})
+        bs_equity = sum(bs._nc_bucket_totals(bs)[0][k] for k in ('equity', 'accumulated_earnings'))
+        self.assertAlmostEqual(equity[1][1], bs_equity, msg="closing equity ties to the Balance Sheet")
+        self.assertIsNone(root.find('.//{%s}segment' % NS['xbrli']), "no component member is claimed")
+
     def test_comparison_period_is_a_second_context(self):
         wizard = self.env['ncollection.account.report.profit.loss'].create(
             {'date_from': self.year_start, 'date_to': datetime.date.today(), 'comparison_type': 'previous_year'})

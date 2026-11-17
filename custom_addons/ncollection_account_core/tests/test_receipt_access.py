@@ -116,7 +116,7 @@ class TestPlatformReceiptCapability(TestReceiptPrintAccess):
 
 @tagged('post_install', '-at_install')
 class TestSupplierWordingInCode(AccountTestInvoicingCommon):
-    """The two Odoo Python strings reworded by extension follow the platform rule (Vendor -> Supplier)."""
+    """The Odoo Python strings reworded by extension follow the platform rule (Vendor -> Supplier)."""
 
     def test_draft_refund_name_and_journal_placeholder(self):
         refund = self.env['account.move'].with_context(lang='en_US').create({
@@ -125,3 +125,15 @@ class TestSupplierWordingInCode(AccountTestInvoicingCommon):
         self.assertNotIn('Vendor', refund.with_context(lang='en_US')._get_move_display_name())
         journal = self.env['account.journal'].with_context(lang='en_US').new({'type': 'purchase'})
         self.assertTrue(journal.name_placeholder.startswith('Supplier Bills'), journal.name_placeholder)
+
+    def test_three_more_returned_strings(self):
+        bill = self.env['account.move'].with_context(lang='en_US').create({
+            'move_type': 'in_invoice', 'partner_id': self.partner_a.id})
+        self.assertEqual(bill._creation_message(), 'Supplier Bill Created')
+        # an existing plan: a NEW plan adds a column at runtime (x_plan<N>_id), which the schema-drift check reports
+        analytic_plan = self.env['account.analytic.plan'].search([], limit=1)
+        self.assertTrue(analytic_plan)
+        analytic = self.env['account.analytic.account'].create({'name': 'A', 'plan_id': analytic_plan.id})
+        self.assertEqual(analytic.with_context(lang='en_US').action_view_vendor_bill()['name'], 'Supplier Bills')
+        label = self.env['product.supplierinfo'].with_context(lang='en_US').get_import_templates()[0]['label']
+        self.assertNotIn('Vendor', label)

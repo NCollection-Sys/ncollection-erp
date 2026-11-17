@@ -40,7 +40,7 @@ FORBIDDEN_CHARS = re.compile(r'[<>{}\x00-\x08\x0b\x0c\x0e-\x1f]')
 # Models whose texts carry security meaning: never relabelled by a tenant.
 PROTECTED_MODELS = {'res.groups', 'ir.rule', 'ir.model.access', 'ir.config_parameter', 'res.users.apikeys',
                     'ncollection.role', 'auditlog.rule', 'auditlog.log'}
-COMPANY_SCOPED = ('field', 'help', 'menu')
+COMPANY_SCOPED = ('field', 'help', 'menu', 'selection')
 TARGETS = [('menu', 'Menu'), ('action', 'Page Title (Action)'), ('field', 'Field Label'), ('help', 'Field Help'),
            ('selection', 'Choice Label'), ('view', 'Screen Text (Button, Tab, Section)')]
 
@@ -260,13 +260,17 @@ class LabelOverride(models.Model):
     @api.model
     @tools.ormcache('company_id', 'lang')
     def _nc_company_overlay(self, company_id, lang):
-        """{('field'|'help', model, name) or ('menu', id): text} of the active company-only overrides."""
+        """{('field'|'help', model, name), ('menu', id) or ('selection', model, field, value): text} of the active
+        company-only overrides."""
         out = {}
         for rec in self.sudo().search([('company_id', '=', company_id), ('lang', '=', lang)]):
             if rec.target_type in ('field', 'help'):
                 out[(rec.target_type, rec.field_id.model, rec.field_id.name)] = rec.value
             elif rec.target_type == 'menu':
                 out[('menu', rec.menu_id.id)] = rec.value
+            elif rec.target_type == 'selection':
+                out[('selection', rec.selection_id.field_id.model, rec.selection_id.field_id.name,
+                     rec.selection_id.value)] = rec.value
         return out
 
     @api.model
@@ -307,6 +311,14 @@ class LabelOverride(models.Model):
                                     {'target_type': 'field', 'field_id': field.id,
                                      'company_id': company.id or False}))
             views = self.env['ir.ui.view'].sudo().search([('model', '=', model)]) if model else self.env['ir.ui.view']
+            if company:
+                # A screen text (a view's string=, a button, a tab) is one translation shared by every company: it
+                # cannot be company-only. Never widen the user's choice to the whole workspace behind their back.
+                views = self.env['ir.ui.view']
+                if not targets:
+                    raise ValidationError(self.env._(
+                        "This text is a screen text (button, tab, section or a label set by the screen): it applies to "
+                        "the whole workspace and cannot be changed for one company only. Choose \"Whole workspace\"."))
             for view in views:
                 existing = Override.search([('target_type', '=', 'view'), ('view_id', '=', view.id),
                                             ('lang', '=', lang), ('value', '=', text)], limit=1)
@@ -370,8 +382,8 @@ class LabelOverride(models.Model):
         for rec in self.filtered('company_id'):
             if rec.target_type not in COMPANY_SCOPED:
                 raise ValidationError(self.env._(
-                    "Company-only text is available for field labels, field help and menu names; screen texts, page "
-                    "titles and choices apply to the whole workspace."))
+                    "Company-only text is available for field labels, field help, choice labels and menu names; screen "
+                    "texts and page titles apply to the whole workspace."))
 
     def _nc_apply(self):
         self.env.registry.clear_cache()  # the company overlay is cached
@@ -551,6 +563,20 @@ class IrModelFields(models.Model):
                 if kind == 'help' and model == model_name:
                     result[name] = value
         return result
+
+
+    @api.model
+    def get_field_selection(self, model_name, field_name):
+        """Company-only choice labels layered on Odoo's (cached) translated choices; a new list, never the cache."""
+        result = super().get_field_selection(model_name, field_name)
+        overlay = self.env['ncollection.label.override']._nc_company_overlay(self.env.company.id, self.env.lang)
+        renames = {key[3]: value for key, value in overlay.items()
+                   if key[0] == 'selection' and key[1] == model_name and key[2] == field_name}
+        if not renames:
+            return result
+        known = {key for key, _label in result}
+        return [(key, renames.get(key, label)) for key, label in result] + [
+            (key, value) for key, value in renames.items() if key not in known]
 
 
 class IrUiMenuLabels(models.Model):

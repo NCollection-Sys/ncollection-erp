@@ -16,6 +16,17 @@ NOT exported, on purpose: the report's "Gross Profit" includes other income (IFR
 sales), and its "Operating Expenses" bucket has no single equivalent concept in the full taxonomy. Exporting them
 under a near concept would be a false statement in a machine-readable file.
 
+  Changes in Equity        the TOTAL EQUITY column only, with no ComponentsOfEquityAxis member: Equity at the opening
+                           (day before the period) and closing instants, ProfitLoss (the movement of the accumulated
+                           result: the period's income and expense) and IncreaseDecreaseInEquity (the total movement)
+
+NOT exported for Changes in Equity, on purpose: the per-component columns. The report's components are Odoo account
+TYPES ("equity" holds share capital AND reserves AND, on many charts, retained earnings; "equity_unaffected" is the
+current-year earnings account), while the IFRS members are economic components (IssuedCapitalMember,
+RetainedEarningsMember, OtherReservesMember, ...). No account-to-member mapping is kept in the books, so any member
+would be a guess. Nor the split of the non-profit movement (dividends, share issues, transfers): the ledger does not
+classify those movements either. See docs/markdown/XBRL_EXPORT.md.
+
 WHAT THIS IS NOT. A filing. The file says nothing about whether the company's statements comply with IFRS, and it has
 not been tested against any regulator's filing rules (docs/markdown/XBRL_EXPORT.md). No accounting record is read
 with elevated rights and nothing is written.
@@ -75,7 +86,8 @@ class AccountReportXbrl(models.AbstractModel):
     def _nc_supported_models(self):
         return {'ncollection.account.report.balance.sheet': 'balance_sheet',
                 'ncollection.account.report.profit.loss': 'profit_loss',
-                'ncollection.account.report.cash.flow': 'cash_flow'}
+                'ncollection.account.report.cash.flow': 'cash_flow',
+                'ncollection.account.report.equity.changes': 'equity_changes'}
 
     @api.model
     def _nc_facts(self, wizard):
@@ -83,7 +95,7 @@ class AccountReportXbrl(models.AbstractModel):
         kind = self._nc_supported_models().get(wizard._name)
         if not kind:
             raise UserError(self.env._(
-                "XBRL is available for the Balance Sheet, the Profit and Loss and the Cash Flow only."))
+                "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the Statement of Changes in Equity only."))
         records = [wizard]
         comparison = wizard._nc_comparison_record() if hasattr(wizard, '_nc_comparison_record') else None
         if comparison is not None:
@@ -101,6 +113,16 @@ class AccountReportXbrl(models.AbstractModel):
                 opening = record.date_from - relativedelta(days=1)
                 facts.append(('CashAndCashEquivalents', 'instant', None, opening, figures['cash_open']))
                 facts.append(('CashAndCashEquivalents', 'instant', None, record.date_to, figures['cash_close']))
+            elif kind == 'equity_changes':
+                record._nc_assert_whole_entity()
+                figures = record._nc_equity_figures()[0]
+                opening = record.date_from - relativedelta(days=1)
+                facts.append(('Equity', 'instant', None, opening, figures['total'][0]))
+                facts.append(('ProfitLoss', 'duration', record.date_from, record.date_to,
+                              figures['accumulated_result'][1]))
+                facts.append(('IncreaseDecreaseInEquity', 'duration', record.date_from, record.date_to,
+                              figures['total'][1]))
+                facts.append(('Equity', 'instant', None, record.date_to, figures['total'][2]))
             else:
                 figures = wizard._nc_pl_figures(record)[0]
                 if not record.date_from:
