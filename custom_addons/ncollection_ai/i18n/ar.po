@@ -45,8 +45,7 @@ msgstr "عميل بوابة الذكاء الاصطناعي (HTTP، بدون م�
 
 #. module: ncollection_ai
 #. odoo-javascript
-#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0
-#: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_chat_message__origin__model
+#: code:addons/ncollection_ai/static/src/chat/chat_widget.xml:0 model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_chat_message__origin__model
 msgid "AI model"
 msgstr "نموذج ذكاء اصطناعي"
 
@@ -127,13 +126,7 @@ msgid "Demo mode: a summary of your data, not an AI model"
 msgstr "وضع تجريبي: ملخص لبياناتك وليس نموذج ذكاء اصطناعي"
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__display_name
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__display_name
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__display_name
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__display_name
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__display_name
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__display_name
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__display_name
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__display_name model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -144,13 +137,7 @@ msgid "Free-typed questions are switched off on this workspace. The suggestions 
 msgstr "الأسئلة المكتوبة يدويًا معطّلة في مساحة العمل هذه. الاقتراحات أعلاه متاحة دائمًا."
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__id
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__id
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__id
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__id
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__id
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__id
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__id
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_context__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_domain_mapper__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_gateway__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_pii__id model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_question__id
 msgid "ID"
 msgstr "المعرّف"
 
@@ -299,8 +286,7 @@ msgstr "كانت إجابة الذكاء الاصطناعي أطول من الم
 
 #. module: ncollection_ai
 #. odoo-python
-#: code:addons/ncollection_ai/models/ai_question.py:0
-#: code:addons/ncollection_ai/models/chat.py:0
+#: code:addons/ncollection_ai/models/ai_question.py:0 code:addons/ncollection_ai/models/chat.py:0
 msgid "The AI assistant is available to the Accountant, the CEO and the workspace owner."
 msgstr "مساعد الذكاء الاصطناعي متاح للمحاسب والرئيس التنفيذي ومالك مساحة العمل."
 
@@ -388,8 +374,7 @@ msgid "Unknown suggested prompt. Reload the page and pick one of the offered sug
 msgstr "اقتراح غير معروف. أعد تحميل الصفحة واختر أحد الاقتراحات المعروضة."
 
 #. module: ncollection_ai
-#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__user_id
-#: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_chat_message__role__user
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_chat_message__user_id model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_chat_message__role__user
 msgid "User"
 msgstr "المستخدم"
 
@@ -404,3 +389,146 @@ msgstr "من يدين لنا بأكبر مبلغ؟"
 #: code:addons/ncollection_ai/models/ai_question.py:0
 msgid "Your question looks like it contains a password, key or token. Nothing was sent. Please remove it and ask in plain words — this assistant works from your workspace data, so it does not need one."
 msgstr "يبدو أن سؤالك يتضمن كلمة مرور أو مفتاحًا أو رمزًا. لم يُرسل شيء. أزله واسأل بكلمات بسيطة — فهذا المساعد يعمل من بيانات مساحة عملك ولا يحتاج إلى ذلك."
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__reachable
+msgid "1. Gateway reachable"
+msgstr "1. البوابة متاحة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__authenticated
+msgid "2. Gateway authenticated"
+msgstr "2. البوابة موثَّقة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__tools_ready
+msgid "3. Business-data tools operational"
+msgstr "3. أدوات بيانات الأعمال تعمل"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__real_provider
+msgid "4. Real model provider configured"
+msgstr "4. مزوّد نموذج حقيقي مُعَدّ"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__free_text
+msgid "5. Free-typed questions allowed"
+msgstr "5. الأسئلة الحرة مسموحة"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__external_authorized
+msgid "6. External provider use authorised"
+msgstr "6. استخدام المزوّد الخارجي مصرَّح به"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "A real provider is configured but the platform has not authorised sending business context to it."
+msgstr "مزوّد حقيقي مُعَدّ لكن المنصة لم تصرّح بإرسال سياق الأعمال إليه."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "AI Assistant Readiness"
+msgstr "جاهزية المساعد الذكي"
+
+#. module: ncollection_ai
+#: model:ir.model,name:ncollection_ai.model_ncollection_ai_readiness
+msgid "AI Assistant readiness"
+msgstr "جاهزية المساعد الذكي"
+
+#. module: ncollection_ai
+#: model_terms:ir.ui.view,arch_db:ncollection_ai.view_ai_readiness_form
+msgid "Allow Free-Typed Questions"
+msgstr "السماح بالأسئلة الحرة"
+
+#. module: ncollection_ai
+#: model_terms:ir.ui.view,arch_db:ncollection_ai.view_ai_readiness_form
+msgid "Check Again"
+msgstr "تحقق مجددًا"
+
+#. module: ncollection_ai
+#: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_readiness__mode__demo
+msgid "Demo (mock provider, no real model)"
+msgstr "تجريبي (مزوّد محاكٍ، بلا نموذج حقيقي)"
+
+#. module: ncollection_ai
+#: model_terms:ir.ui.view,arch_db:ncollection_ai.view_ai_readiness_form
+msgid ""
+"Demo mode: answers come from the built-in mock, which summarises your own figures without a\n"
+"                        language model. Nothing leaves the platform."
+msgstr "الوضع التجريبي: الإجابات من المحاكي المدمج الذي يلخص أرقامك دون نموذج لغوي. لا يغادر شيء المنصة."
+
+#. module: ncollection_ai
+#: model_terms:ir.ui.view,arch_db:ncollection_ai.view_ai_readiness_form
+msgid ""
+"Each state is checked separately; the identity check never calls the model and\n"
+"                        costs nothing. Answers are always built from data you are allowed to read, and the assistant never\n"
+"                        changes a record."
+msgstr "تُفحص كل حالة على حدة؛ فحص الهوية لا يستدعي النموذج ولا يكلف شيئًا. الإجابات تُبنى دائمًا من بيانات يحق لك قراءتها، والمساعد لا يغيّر أي سجل."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "Free-typed questions need a reachable, authenticated gateway and at least one business-data topic. See the states above."
+msgstr "الأسئلة الحرة تتطلب بوابة متاحة وموثَّقة وموضوع بيانات أعمال واحدًا على الأقل. راجع الحالات أعلاه."
+
+#. module: ncollection_ai
+#: model:ir.model.fields.selection,name:ncollection_ai.selection__ncollection_ai_readiness__mode__live
+msgid "Live model"
+msgstr "نموذج حقيقي"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__mode
+msgid "Mode"
+msgstr "الوضع"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "Only a Workspace Administrator can see the AI readiness."
+msgstr "مسؤول مساحة العمل وحده يرى جاهزية المساعد الذكي."
+
+#. module: ncollection_ai
+#: model_terms:ir.ui.view,arch_db:ncollection_ai.view_ai_readiness_form
+msgid "Service"
+msgstr "الخدمة"
+
+#. module: ncollection_ai
+#: model_terms:ir.ui.view,arch_db:ncollection_ai.view_ai_readiness_form
+msgid "Switch Off Free-Typed Questions"
+msgstr "إيقاف الأسئلة الحرة"
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/gateway_client.py:0
+msgid "The AI assistant is not available on this workspace yet. Nothing was sent. A Workspace Administrator can see why under Settings > AI Assistant."
+msgstr "المساعد الذكي غير متاح في مساحة العمل هذه بعد. لم يُرسل شيء. يمكن لمسؤول مساحة العمل معرفة السبب من الإعدادات > المساعد الذكي."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "The AI gateway did not answer at %s."
+msgstr "لم تُجب بوابة الذكاء الاصطناعي على %s."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "The gateway refused this workspace's identity (HTTP %s): the key on this server and on the gateway differ."
+msgstr "رفضت البوابة هوية مساحة العمل هذه (HTTP %s): المفتاح على هذا الخادم يختلف عن مفتاح البوابة."
+
+#. module: ncollection_ai
+#. odoo-python
+#: code:addons/ncollection_ai/models/readiness.py:0
+msgid "The gateway's identity check did not answer."
+msgstr "لم يُجب فحص الهوية في البوابة."
+
+#. module: ncollection_ai
+#: model_terms:ir.ui.view,arch_db:ncollection_ai.view_ai_readiness_form
+msgid "This workspace"
+msgstr "مساحة العمل هذه"
+
+#. module: ncollection_ai
+#: model:ir.model.fields,field_description:ncollection_ai.field_ncollection_ai_readiness__tools_detail
+msgid "Topics available"
+msgstr "المواضيع المتاحة"

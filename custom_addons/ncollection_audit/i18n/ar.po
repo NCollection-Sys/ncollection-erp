@@ -132,3 +132,34 @@ msgstr "يُضبط عندما تُزيل سياسة الاحتفاظ سجلات 
 #: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__to_log_id
 msgid "To Log"
 msgstr "إلى السجل"
+
+#. module: ncollection_audit
+#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_root
+msgid "Audit Log"
+msgstr "سجل التدقيق"
+
+#. module: ncollection_audit
+#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_logs
+msgid "Activity"
+msgstr "النشاط"
+
+#. module: ncollection_audit
+#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_lines
+msgid "Field Changes"
+msgstr "تغييرات الحقول"
+
+#. module: ncollection_audit
+#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_sessions
+msgid "Sessions"
+msgstr "الجلسات"
+
+#. module: ncollection_audit
+#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_rules_ro
+msgid "What Is Recorded"
+msgstr "ما يُسجَّل"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/admin_service.py:0
+msgid "Malformed request."
+msgstr "طلب غير صالح."

@@ -128,7 +128,7 @@ class AiGatewayClient(models.AbstractModel):
             _logger.warning("AI request refused: %s is not set on this server", _GATEWAY_KEY_ENV)
             raise UserError(self.env._(
                 "The AI assistant is not available on this workspace yet. Nothing was sent. "
-                "A Workspace Administrator can see why under Workspace Administration > AI Assistant."))
+                "A Workspace Administrator can see why under Settings > AI Assistant."))
         timestamp = '%d' % int(time.time())
         return urllib.request.Request(
             '%s%s' % (self._base_url(), path), data=body, method='POST',
@@ -237,7 +237,7 @@ class AiGatewayClient(models.AbstractModel):
             _logger.warning("AI request refused: %s is not set on this server", _GATEWAY_KEY_ENV)
             raise UserError(self.env._(
                 "The AI assistant is not available on this workspace yet. Nothing was sent. "
-                "A Workspace Administrator can see why under Workspace Administration > AI Assistant."))
+                "A Workspace Administrator can see why under Settings > AI Assistant."))
         timestamp = '%d' % int(time.time())
         request = urllib.request.Request(
             '%s/v1/complete' % self._base_url(), data=body, method='POST',

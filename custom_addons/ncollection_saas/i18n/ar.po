@@ -19,8 +19,14 @@ msgstr "تم تخطي %(n)s مستأجر (لا يوجد حساب لمزامنة 
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/config_sync.py:0
-msgid "%(body)s\n\nThis failure cannot heal itself — the nightly reconcile will keep retrying without success until the cause is fixed (typically a stale per-tenant key; see #221)."
-msgstr "%(body)s\n\nلا يمكن لهذا الفشل أن يُصلح نفسه — ستواصل المطابقة الليلية المحاولة دون نجاح إلى أن يُعالج السبب (غالبًا مفتاح قديم خاص بالمستأجر؛ راجع #221)."
+msgid ""
+"%(body)s\n"
+"\n"
+"This failure cannot heal itself — the nightly reconcile will keep retrying without success until the cause is fixed (typically a stale per-tenant key; see #221)."
+msgstr ""
+"%(body)s\n"
+"\n"
+"لا يمكن لهذا الفشل أن يُصلح نفسه — ستواصل المطابقة الليلية المحاولة دون نجاح إلى أن يُعالج السبب (غالبًا مفتاح قديم خاص بالمستأجر؛ راجع #221)."
 
 #. module: ncollection_saas
 #. odoo-python
@@ -36,8 +42,7 @@ msgstr "لا يمكن دخول %s الآن (لم تتم تهيئتها، أو أ
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/platform_entry.py:0
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/models/platform_entry.py:0 code:addons/ncollection_saas/models/tenant_admin.py:0
 msgid "%s could not be reached. Try again in a moment."
 msgstr "تعذّر الوصول إلى %s. حاول مرة أخرى بعد قليل."
 
@@ -103,7 +108,11 @@ msgstr "تم رفض '%s'. أعد فتح الطلب قبل التهيئة."
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
-msgid ")\n                            is the shared baseline for every tenant that uses it. Anything\n                            changed on this tab applies to <strong>this tenant only</strong>\n                            — the plan and every other tenant stay exactly as they were."
+msgid ""
+")\n"
+"                            is the shared baseline for every tenant that uses it. Anything\n"
+"                            changed on this tab applies to <strong>this tenant only</strong>\n"
+"                            — the plan and every other tenant stay exactly as they were."
 msgstr ") هي الأساس المشترك لكل مستأجر يستخدمها. أي تغيير على هذا التبويب يسري على <strong>هذا المستأجر فقط</strong> — وتبقى الخطة وكل مستأجر آخر كما هي تمامًا."
 
 #. module: ncollection_saas
@@ -113,12 +122,46 @@ msgstr "0 = تجريبي؛ 1..N = موجات تدريجية."
 
 #. module: ncollection_saas
 #: model:mail.template,body_html:ncollection_saas.mail_template_checkout_verify
-msgid "<div style=\"font-family:Arial,sans-serif;color:#0F172A;\">\n                    <p>Hi <t t-out=\"object.contact_name or object.company_name\"/>,</p>\n                    <p>Thanks for registering <strong t-out=\"object.company_name\"/>. Confirm your\n                       contact email so we can review your request. Your workspace\n                       <strong t-out=\"object.database_name\"/> is created once an\n                       administrator approves it.</p>\n                    <p>\n                        <a t-attf-href=\"{{ object.get_base_url() }}/nc/checkout/verify/{{ object.checkout_token }}\" style=\"display:inline-block;padding:10px 18px;background:#1F5F8F;color:#fff;                                   text-decoration:none;border-radius:6px;\">Confirm my email</a>\n                    </p>\n                    <p style=\"color:#64748B;font-size:13px;\">If you didn't request this, you can ignore this email.</p>\n                </div>\n            "
+msgid ""
+"<div style=\"font-family:Arial,sans-serif;color:#0F172A;\">\n"
+"                    <p>Hi <t t-out=\"object.contact_name or object.company_name\"/>,</p>\n"
+"                    <p>Thanks for registering <strong t-out=\"object.company_name\"/>. Confirm your\n"
+"                       contact email so we can review your request. Your workspace\n"
+"                       <strong t-out=\"object.database_name\"/> is created once an\n"
+"                       administrator approves it.</p>\n"
+"                    <p>\n"
+"                        <a t-attf-href=\"{{ object.get_base_url() }}/nc/checkout/verify/{{ object.checkout_token }}\" style=\"display:inline-block;padding:10px 18px;background:#1F5F8F;color:#fff;                                   text-decoration:none;border-radius:6px;\">Confirm my email</a>\n"
+"                    </p>\n"
+"                    <p style=\"color:#64748B;font-size:13px;\">If you didn't request this, you can ignore this email.</p>\n"
+"                </div>\n"
+"            "
 msgstr "<div style=\"font-family:Arial,sans-serif;color:#0F172A;\"><p>مرحبًا <t t-out=\"object.contact_name or object.company_name\"/>،</p><p>شكرًا لتسجيل <strong t-out=\"object.company_name\"/>. أكّد بريدك الإلكتروني للتواصل حتى نراجع طلبك. يتم إنشاء مساحة عملك <strong t-out=\"object.database_name\"/> بعد موافقة المسؤول.</p><p><a t-attf-href=\"{{ object.get_base_url() }}/nc/checkout/verify/{{ object.checkout_token }}\" style=\"display:inline-block;padding:10px 18px;background:#1F5F8F;color:#fff; text-decoration:none;border-radius:6px;\">تأكيد بريدي الإلكتروني</a></p><p style=\"color:#64748B;font-size:13px;\">إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة.</p></div>"
 
 #. module: ncollection_saas
 #: model:mail.template,body_html:ncollection_saas.mail_template_tenant_welcome
-msgid "<div style=\"margin:0;padding:0;\">\n                    <p>Hi <t t-out=\"object.contact_name or object.company_name or ''\"/>,</p>\n                    <p>Your registration was approved and your NCollection workspace for\n                        <strong t-out=\"object.company_name or ''\"/> is ready.</p>\n                    <p>\n                        <a t-att-href=\"object.portal_url\" t-att-style=\"'background:%s;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;' % (object.create_uid.company_id.email_secondary_color or '#1F5F8F')\">\n                            Open your workspace\n                        </a>\n                    </p>\n                    <p>Workspace address: <t t-out=\"object.portal_url or ''\"/></p>\n                    <p t-if=\"object.admin_login\">Username: <strong t-out=\"object.admin_login\"/></p>\n                    <p t-if=\"ctx.get('nc_setup_url')\">\n                        To get started, set your password here:\n                        <a t-att-href=\"ctx.get('nc_setup_url')\" t-out=\"ctx.get('nc_setup_url')\"/>\n                    </p>\n                    <p t-else=\"\">\n                        Sign in with this username and the password you chose when you\n                        registered. If you have forgotten it, use “Forgot password?” on the\n                        login page.\n                    </p>\n                </div>\n            "
+msgid ""
+"<div style=\"margin:0;padding:0;\">\n"
+"                    <p>Hi <t t-out=\"object.contact_name or object.company_name or ''\"/>,</p>\n"
+"                    <p>Your registration was approved and your NCollection workspace for\n"
+"                        <strong t-out=\"object.company_name or ''\"/> is ready.</p>\n"
+"                    <p>\n"
+"                        <a t-att-href=\"object.portal_url\" t-att-style=\"'background:%s;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;' % (object.create_uid.company_id.email_secondary_color or '#1F5F8F')\">\n"
+"                            Open your workspace\n"
+"                        </a>\n"
+"                    </p>\n"
+"                    <p>Workspace address: <t t-out=\"object.portal_url or ''\"/></p>\n"
+"                    <p t-if=\"object.admin_login\">Username: <strong t-out=\"object.admin_login\"/></p>\n"
+"                    <p t-if=\"ctx.get('nc_setup_url')\">\n"
+"                        To get started, set your password here:\n"
+"                        <a t-att-href=\"ctx.get('nc_setup_url')\" t-out=\"ctx.get('nc_setup_url')\"/>\n"
+"                    </p>\n"
+"                    <p t-else=\"\">\n"
+"                        Sign in with this username and the password you chose when you\n"
+"                        registered. If you have forgotten it, use “Forgot password?” on the\n"
+"                        login page.\n"
+"                    </p>\n"
+"                </div>\n"
+"            "
 msgstr "<div style=\"margin:0;padding:0;\"><p>مرحبًا <t t-out=\"object.contact_name or object.company_name or ''\"/>،</p><p>تمت الموافقة على تسجيلك وأصبحت مساحة عمل NCollection الخاصة بـ <strong t-out=\"object.company_name or ''\"/> جاهزة.</p><p><a t-att-href=\"object.portal_url\" t-att-style=\"'background:%s;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;' % (object.create_uid.company_id.email_secondary_color or '#1F5F8F')\">افتح مساحة عملك</a></p><p>عنوان مساحة العمل: <t t-out=\"object.portal_url or ''\"/></p><p t-if=\"object.admin_login\">اسم المستخدم: <strong t-out=\"object.admin_login\"/></p><p t-if=\"ctx.get('nc_setup_url')\">للبدء، عيّن كلمة مرورك هنا: <a t-att-href=\"ctx.get('nc_setup_url')\" t-out=\"ctx.get('nc_setup_url')\"/></p><p t-else=\"\">سجّل الدخول بهذا الاسم وكلمة المرور التي اخترتها عند التسجيل. وإذا نسيتها فاستخدم «نسيت كلمة المرور؟» في صفحة الدخول.</p></div>"
 
 #. module: ncollection_saas
@@ -205,7 +248,9 @@ msgstr "يوجد بالفعل سجلّ نطاق لهذا الـ FQDN."
 
 #. module: ncollection_saas
 #: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_domain
-msgid "A domain record is created for every provisioned tenant. Platform\n                subdomains ride the wildcard certificate automatically."
+msgid ""
+"A domain record is created for every provisioned tenant. Platform\n"
+"                subdomains ride the wildcard certificate automatically."
 msgstr "يُنشأ سجل نطاق لكل مستأجر مُهيّأ. وتعتمد النطاقات الفرعية للمنصة تلقائيًا على الشهادة العامة (wildcard)."
 
 #. module: ncollection_saas
@@ -217,8 +262,14 @@ msgstr "فشلت استعادة %(db)s في المكان يدويًا بعد ح�
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/config_sync.py:0
-msgid "A required job is DISABLED on %(db)s: %(detail)s\n\nThe system deactivates a cron by itself after repeated failures, so this is usually a symptom rather than someone switching it off. The job stays off until re-enabled by hand."
-msgstr "مهمة مطلوبة معطّلة على %(db)s: %(detail)s\n\nيعطّل النظام المهمة المجدولة بنفسه بعد إخفاقات متكررة، لذا فهذا عادةً عَرَض وليس إيقافًا متعمدًا. وتبقى المهمة متوقفة حتى تُعاد يدويًا."
+msgid ""
+"A required job is DISABLED on %(db)s: %(detail)s\n"
+"\n"
+"The system deactivates a cron by itself after repeated failures, so this is usually a symptom rather than someone switching it off. The job stays off until re-enabled by hand."
+msgstr ""
+"مهمة مطلوبة معطّلة على %(db)s: %(detail)s\n"
+"\n"
+"يعطّل النظام المهمة المجدولة بنفسه بعد إخفاقات متكررة، لذا فهذا عادةً عَرَض وليس إيقافًا متعمدًا. وتبقى المهمة متوقفة حتى تُعاد يدويًا."
 
 #. module: ncollection_saas
 #: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__cron_health_state__degraded
@@ -231,9 +282,7 @@ msgid "Accepts Pushed Rates"
 msgstr "يقبل الأسعار المُرسَلة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_needaction
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_needaction
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_needaction
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_needaction model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_needaction model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_needaction
 msgid "Action Needed"
 msgstr "إجراء مطلوب"
 
@@ -243,36 +292,27 @@ msgid "Activate"
 msgstr "تفعيل"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__active
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__active
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__active model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__active
 msgid "Active"
 msgstr "نشط"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_ids
 msgid "Activities"
 msgstr "الأنشطة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_exception_decoration
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_exception_decoration
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_exception_decoration
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_exception_decoration model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_exception_decoration model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_exception_decoration
 msgid "Activity Exception Decoration"
 msgstr "تمييز الأنشطة المستثناة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_state
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_state
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_state
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_state model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_state model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_state
 msgid "Activity State"
 msgstr "حالة النشاط"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_type_icon
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_type_icon
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_type_icon
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_type_icon model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_type_icon model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_type_icon
 msgid "Activity Type Icon"
 msgstr "أيقونة نوع النشاط"
 
@@ -308,9 +348,7 @@ msgid "Approve this registration and create the company's workspace now?"
 msgstr "الموافقة على هذا التسجيل وإنشاء مساحة عمل الشركة الآن؟"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_attachment_count
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_attachment_count
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_attachment_count
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_attachment_count model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_attachment_count model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_attachment_count
 msgid "Attachment Count"
 msgstr "عدد المرفقات"
 
@@ -330,9 +368,7 @@ msgid "Back to pricing"
 msgstr "العودة إلى التسعير"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__backup_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__backup_id
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__backup_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__backup_id model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
 msgid "Backup"
 msgstr "نسخة احتياطية"
 
@@ -359,8 +395,7 @@ msgid "Backup file %(f)s does not belong to tenant '%(db)s' (expected it under %
 msgstr "الملف %(f)s لا يتبع المستأجر '%(db)s' (كان متوقعًا تحت %(root)s). استعادة ملف لم ينتجه هذا السجل ستعرض بيانات مستأجر آخر."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__nc_base_domain
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__nc_base_domain model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
 msgid "Base Domain"
 msgstr "النطاق الأساسي"
 
@@ -391,13 +426,7 @@ msgid "Canary failed — fleet rollout halted."
 msgstr "فشل الاختبار التجريبي — توقّف طرح الأسطول."
 
 #. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -460,8 +489,7 @@ msgid "Completed At"
 msgstr "اكتمل في"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_state
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__config_sync_state model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
 msgid "Config Sync"
 msgstr "مزامنة الإعدادات"
 
@@ -496,8 +524,14 @@ msgstr "تعافت مزامنة الإعدادات لـ %(db)s."
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/config_sync.py:0
-msgid "Config sync to %(db)s has returned an unreadable required-job report %(n)s times in a row (%(detail)s).\n\nThe pushes themselves SUCCEEDED — the configuration is being applied. What is missing is the tenant's self-report, so the platform currently cannot tell whether that tenant's compliance jobs are running. The job-health shown for it is stale, not healthy."
-msgstr "أعادت مزامنة الإعدادات إلى %(db)s تقرير مهام مطلوبة غير قابل للقراءة %(n)s مرات متتالية (%(detail)s).\n\nنجحت عمليات الدفع نفسها — فالإعدادات تُطبَّق. الناقص هو التقرير الذاتي للمستأجر، لذا لا تستطيع المنصة حاليًا معرفة ما إذا كانت مهام الامتثال لديه تعمل. حالة صحة المهام المعروضة له قديمة وليست سليمة."
+msgid ""
+"Config sync to %(db)s has returned an unreadable required-job report %(n)s times in a row (%(detail)s).\n"
+"\n"
+"The pushes themselves SUCCEEDED — the configuration is being applied. What is missing is the tenant's self-report, so the platform currently cannot tell whether that tenant's compliance jobs are running. The job-health shown for it is stale, not healthy."
+msgstr ""
+"أعادت مزامنة الإعدادات إلى %(db)s تقرير مهام مطلوبة غير قابل للقراءة %(n)s مرات متتالية (%(detail)s).\n"
+"\n"
+"نجحت عمليات الدفع نفسها — فالإعدادات تُطبَّق. الناقص هو التقرير الذاتي للمستأجر، لذا لا تستطيع المنصة حاليًا معرفة ما إذا كانت مهام الامتثال لديه تعمل. حالة صحة المهام المعروضة له قديمة وليست سليمة."
 
 #. module: ncollection_saas
 #. odoo-python
@@ -513,7 +547,12 @@ msgstr "إعادة مفتاح مزامنة الإعدادات"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
-msgid "Configuration synchronisation pushes this tenant's entitlement,\n                        limits and subscription status into its own database, where\n                        licensing is enforced. It runs automatically on every change and\n                        is retried by a reconciliation cron; the buttons in the header\n                        force it now."
+msgid ""
+"Configuration synchronisation pushes this tenant's entitlement,\n"
+"                        limits and subscription status into its own database, where\n"
+"                        licensing is enforced. It runs automatically on every change and\n"
+"                        is retried by a reconciliation cron; the buttons in the header\n"
+"                        force it now."
 msgstr "تدفع مزامنة الإعدادات استحقاق هذا المستأجر وحدوده وحالة اشتراكه إلى قاعدة بياناته، حيث يُفرض الترخيص. وتعمل تلقائيًا عند كل تغيير ويُعاد محاولتها بمهمة مطابقة؛ وأزرار الترويسة تفرضها الآن."
 
 #. module: ncollection_saas
@@ -542,40 +581,12 @@ msgid "Create this tenant's database and workspace now?"
 msgstr "إنشاء قاعدة بيانات هذا المستأجر ومساحة عمله الآن؟"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__create_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__create_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__create_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__create_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__create_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__create_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -639,8 +650,7 @@ msgid "Database '%s' already exists (collision)."
 msgstr "قاعدة البيانات '%s' موجودة بالفعل (تعارض)."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__database_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__database_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__database_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__database_name
 msgid "Database Name"
 msgstr "اسم قاعدة البيانات"
 
@@ -669,29 +679,7 @@ msgid "Disabled on the tenant: %(jobs)s"
 msgstr "معطّلة على المستأجر: %(jobs)s"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_provisioning_job__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_saas_subprocess_mixin__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_product_branding__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__display_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__display_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_provisioning_job__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_saas_subprocess_mixin__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__display_name model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_product_branding__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__display_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__display_name
 msgid "Display Name"
 msgstr "الاسم المعروض"
 
@@ -716,17 +704,12 @@ msgid "Domains"
 msgstr "النطاقات"
 
 #. module: ncollection_saas
-#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_domain
-#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_domains
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_domain model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_domains
 msgid "Domains & SSL"
 msgstr "النطاقات و SSL"
 
 #. module: ncollection_saas
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__done
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__done
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__done
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__done model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__done model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__done model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
 msgid "Done"
 msgstr "تم"
 
@@ -752,7 +735,11 @@ msgstr "سعر الدولار الأمريكي المنشور من البنك ا
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
-msgid "Each row is a deliberate exception to the plan, with who made it\n                        and why. Deleting a row restores exactly what the plan says.\n                        Removing a module withdraws the licence and hides the app — it\n                        never uninstalls the module or deletes any data."
+msgid ""
+"Each row is a deliberate exception to the plan, with who made it\n"
+"                        and why. Deleting a row restores exactly what the plan says.\n"
+"                        Removing a module withdraws the licence and hides the app — it\n"
+"                        never uninstalls the module or deletes any data."
 msgstr "كل صف استثناء متعمَّد من الخطة، مع من أنشأه ولماذا. حذف الصف يعيد ما تقوله الخطة تمامًا. إزالة وحدة تسحب الترخيص وتخفي التطبيق — ولا تُلغي تثبيت الوحدة ولا تحذف أي بيانات."
 
 #. module: ncollection_saas
@@ -815,14 +802,7 @@ msgid "FAILED: %s"
 msgstr "فشل: %s"
 
 #. module: ncollection_saas
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__failed
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__failed
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__failed
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__localization_applied_state__error
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__failed
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__failed model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__failed model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__failed model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__localization_applied_state__error model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__failed model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
 msgid "Failed"
 msgstr "فشل"
 
@@ -842,8 +822,7 @@ msgid "Fetched At"
 msgstr "تم الجلب في"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__finished_at
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__finished_at
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__finished_at model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__finished_at
 msgid "Finished At"
 msgstr "انتهى في"
 
@@ -853,9 +832,7 @@ msgid "Fleet Migration"
 msgstr "ترحيل الأسطول"
 
 #. module: ncollection_saas
-#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_fleet_migration
-#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_fleet_migration
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_fleet_migration model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_fleet_migration model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
 msgid "Fleet Migrations"
 msgstr "ترحيلات الأسطول"
 
@@ -878,23 +855,17 @@ msgid "Fleet migration: tenant %s needs manual recovery"
 msgstr "ترحيل الأسطول: المستأجر %s يحتاج إلى استعادة يدوية"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_follower_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_follower_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_follower_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_follower_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_follower_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_follower_ids
 msgid "Followers"
 msgstr "المتابعون"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_partner_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_partner_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_partner_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_partner_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_partner_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_partner_ids
 msgid "Followers (Partners)"
 msgstr "المتابعون (الشركاء)"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_type_icon
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_type_icon
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_type_icon
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_type_icon model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_type_icon model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_type_icon
 msgid "Font awesome icon e.g. fa-tasks"
 msgstr "أيقونة Font Awesome مثل fa-tasks"
 
@@ -909,21 +880,17 @@ msgid "Fully-qualified hostname, e.g. acme.example.com."
 msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.example.com."
 
 #. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
 msgid "Group by Status"
 msgstr "تجميع حسب الحالة"
 
 #. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
 msgid "Group by Type"
 msgstr "تجميع حسب النوع"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__has_message
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__has_message
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__has_message
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__has_message model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__has_message model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__has_message
 msgid "Has Message"
 msgstr "يحتوي على رسالة"
 
@@ -933,60 +900,27 @@ msgid "Healthy"
 msgstr "سليم"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_provisioning_job__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_saas_subprocess_mixin__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_product_branding__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_provisioning_job__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_saas_subprocess_mixin__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__id model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_product_branding__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__id
 msgid "ID"
 msgstr "المعرّف"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_exception_icon
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_exception_icon
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_exception_icon
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_exception_icon model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_exception_icon model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_exception_icon
 msgid "Icon"
 msgstr "الأيقونة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_exception_icon
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_exception_icon
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_exception_icon
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_exception_icon model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_exception_icon model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_exception_icon
 msgid "Icon to indicate an exception activity."
 msgstr "أيقونة تشير إلى نشاط استثنائي."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_needaction
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_needaction
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_needaction
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_needaction model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_needaction model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_needaction
 msgid "If checked, new messages require your attention."
 msgstr "إذا تم تحديده، فإن الرسائل الجديدة تتطلب انتباهك."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_error
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_sms_error
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_error
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_sms_error
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_error
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_sms_error
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_error model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_sms_error model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_error model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_sms_error model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_error model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_sms_error
 msgid "If checked, some messages have a delivery error."
 msgstr "إذا تم تحديده، فإن بعض الرسائل بها خطأ في التسليم."
 
@@ -1095,9 +1029,7 @@ msgid "Investigate config sync: %s"
 msgstr "افحص مزامنة الإعدادات: %s"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_is_follower
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_is_follower
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_is_follower
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_is_follower model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_is_follower model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_is_follower
 msgid "Is Follower"
 msgstr "متابِع"
 
@@ -1118,40 +1050,12 @@ msgid "Last Push"
 msgstr "آخر دفعة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__write_uid
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__write_uid
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__write_uid model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__write_date
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__write_date
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup_restore_wizard__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_exchange_rate__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__write_date model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -1210,16 +1114,12 @@ msgid "Message"
 msgstr "الرسالة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_error
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_error
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_error
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_error model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_error model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_error
 msgid "Message Delivery error"
 msgstr "خطأ في تسليم الرسالة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_ids
 msgid "Messages"
 msgstr "الرسائل"
 
@@ -1276,21 +1176,17 @@ msgid "Modules Installed On"
 msgstr "الوحدات المثبّتة على"
 
 #. module: ncollection_saas
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__backup_type__monthly
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__backup_type__monthly model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_pricing
 msgid "Monthly"
 msgstr "شهري"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__my_activity_date_deadline
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__my_activity_date_deadline
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__my_activity_date_deadline
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__my_activity_date_deadline model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__my_activity_date_deadline model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__my_activity_date_deadline
 msgid "My Activity Deadline"
 msgstr "الموعد النهائي لنشاطي"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__enterable_tenant_ids
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_dashboard__enterable_tenant_ids model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_platform_summary_companies
 msgid "My Companies"
 msgstr "شركاتي"
 
@@ -1345,12 +1241,7 @@ msgid "NCollection: scan tenant domains & SSL expiry"
 msgstr "NCollection: فحص نطاقات المستأجرين وانتهاء صلاحية SSL"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__name
 msgid "Name"
 msgstr "الاسم"
 
@@ -1366,30 +1257,22 @@ msgid "Needs attention"
 msgstr "يحتاج إلى انتباه"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_calendar_event_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_calendar_event_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_calendar_event_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_calendar_event_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_calendar_event_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_calendar_event_id
 msgid "Next Activity Calendar Event"
 msgstr "حدث التقويم للنشاط التالي"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_date_deadline
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_date_deadline
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_date_deadline
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_date_deadline model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_date_deadline model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_date_deadline
 msgid "Next Activity Deadline"
 msgstr "الموعد النهائي للنشاط التالي"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_summary
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_summary
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_summary
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_summary model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_summary model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_summary
 msgid "Next Activity Summary"
 msgstr "ملخص النشاط التالي"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_type_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_type_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_type_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_type_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_type_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_type_id
 msgid "Next Activity Type"
 msgstr "نوع النشاط التالي"
 
@@ -1452,30 +1335,22 @@ msgid "Nothing to do"
 msgstr "لا شيء للقيام به"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_needaction_counter
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_needaction_counter
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_needaction_counter
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_needaction_counter model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_needaction_counter model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_needaction_counter
 msgid "Number of Actions"
 msgstr "عدد الإجراءات"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_error_counter
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_error_counter
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_error_counter
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_error_counter model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_error_counter model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_error_counter
 msgid "Number of errors"
 msgstr "عدد الأخطاء"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_needaction_counter
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_needaction_counter
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_needaction_counter
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_needaction_counter model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_needaction_counter model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_needaction_counter
 msgid "Number of messages requiring action"
 msgstr "عدد الرسائل التي تتطلب إجراءً"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_error_counter
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_error_counter
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_error_counter
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__message_has_error_counter model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__message_has_error_counter model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__message_has_error_counter
 msgid "Number of messages with delivery error"
 msgstr "عدد الرسائل التي بها خطأ في التسليم"
 
@@ -1538,8 +1413,7 @@ msgid "Optional note for the record (kept if you reject)"
 msgstr "ملاحظة اختيارية للسجل (تُحفظ إذا رفضت)"
 
 #. module: ncollection_saas
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__pending
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__pending
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__pending model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__pending
 msgid "Pending"
 msgstr "قيد الانتظار"
 
@@ -1616,8 +1490,12 @@ msgstr "تجهيز قاعدة بيانات المستأجر '%s'"
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/tenant.py:0
-msgid "Provisioning FAILED for tenant %(name)s (database '%(db)s'). Latest job log:\n%(log)s"
-msgstr "فشل التجهيز للمستأجر %(name)s (قاعدة البيانات '%(db)s'). آخر سجلّ للمهمة:\n%(log)s"
+msgid ""
+"Provisioning FAILED for tenant %(name)s (database '%(db)s'). Latest job log:\n"
+"%(log)s"
+msgstr ""
+"فشل التجهيز للمستأجر %(name)s (قاعدة البيانات '%(db)s'). آخر سجلّ للمهمة:\n"
+"%(log)s"
 
 #. module: ncollection_saas
 #. odoo-python
@@ -1659,9 +1537,7 @@ msgid "Rate Date"
 msgstr "تاريخ السعر"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__rating_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__rating_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__rating_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__rating_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__rating_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__rating_ids
 msgid "Ratings"
 msgstr "التقييمات"
 
@@ -1817,9 +1693,7 @@ msgid "Required-job reporting RECOVERED for %(db)s."
 msgstr "تعافى الإبلاغ عن المهام المطلوبة لـ %(db)s."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_user_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_user_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_user_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__activity_user_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activity_user_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__activity_user_id
 msgid "Responsible User"
 msgstr "المستخدم المسؤول"
 
@@ -1829,8 +1703,7 @@ msgid "Restore"
 msgstr "استعادة"
 
 #. module: ncollection_saas
-#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_backup_restore_wizard
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_backup_restore_wizard model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_restore_wizard_form
 msgid "Restore Backup"
 msgstr "استعادة النسخة الاحتياطية"
 
@@ -1907,8 +1780,7 @@ msgid "Restoring a tenant in place requires Settings administrator rights."
 msgstr "تتطلب الاستعادة في المكان صلاحيات مسؤول الإعدادات."
 
 #. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__message
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__message
 msgid "Result"
 msgstr "النتيجة"
 
@@ -1946,7 +1818,9 @@ msgstr "يستخدم شهادة البدل (Wildcard)"
 
 #. module: ncollection_saas
 #: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_fleet_migration
-msgid "Roll a shared-addon upgrade across every tenant database with a\n               canary gate, per-tenant snapshots, and failure isolation."
+msgid ""
+"Roll a shared-addon upgrade across every tenant database with a\n"
+"               canary gate, per-tenant snapshots, and failure isolation."
 msgstr "تنفيذ ترقية الوحدات المشتركة على كل قواعد بيانات المستأجرين مع بوابة اختبار أولية ولقطات لكل مستأجر وعزل للإخفاقات."
 
 #. module: ncollection_saas
@@ -1988,9 +1862,7 @@ msgid "SCRATCH COPY NOT REMOVED -- '%s' still exists and holds tenant data; drop
 msgstr "لم تُزَل النسخة التجريبية -- لا تزال '%s' موجودة وتحوي بيانات مستأجر؛ احذفها يدويًا"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_sms_error
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_sms_error
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_sms_error
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__message_has_sms_error model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__message_has_sms_error model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__message_has_sms_error
 msgid "SMS Delivery error"
 msgstr "خطأ في تسليم الرسائل القصيرة"
 
@@ -2103,35 +1975,42 @@ msgid "Start free trial"
 msgstr "ابدأ الفترة التجريبية المجانية"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__started_at
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__started_at
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__started_at model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__started_at
 msgid "Started At"
 msgstr "بدأ في"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__state
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__state
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__state model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__state
 msgid "State"
 msgstr "الحالة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__status
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__state
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__status model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__state
 msgid "Status"
 msgstr "الحالة"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_state
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_state
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_state
-msgid "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities."
-msgstr "الحالة بناءً على الأنشطة\nمتأخر: تاريخ الاستحقاق قد مضى\nاليوم: تاريخ النشاط هو اليوم\nمخطط: أنشطة مستقبلية."
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_state model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_state model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"الحالة بناءً على الأنشطة\n"
+"متأخر: تاريخ الاستحقاق قد مضى\n"
+"اليوم: تاريخ النشاط هو اليوم\n"
+"مخطط: أنشطة مستقبلية."
 
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/saas_subprocess.py:0
-msgid "Step %(label)s failed (exit %(code)s):\n%(out)s"
-msgstr "فشلت الخطوة %(label)s (رمز الخروج %(code)s):\n%(out)s"
+msgid ""
+"Step %(label)s failed (exit %(code)s):\n"
+"%(out)s"
+msgstr ""
+"فشلت الخطوة %(label)s (رمز الخروج %(code)s):\n"
+"%(out)s"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
@@ -2154,24 +2033,12 @@ msgid "Target Count"
 msgstr "العدد المستهدف"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__line_ids
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__line_ids model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list
 msgid "Targets"
 msgstr "الأهداف"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__tenant_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__tenant_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration_line__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_users__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__tenant_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__tenant_id
 msgid "Tenant"
 msgstr "مستأجر"
 
@@ -2211,15 +2078,12 @@ msgid "Tenant Addressing"
 msgstr "عنونة المستأجر"
 
 #. module: ncollection_saas
-#: model:ir.model,name:ncollection_saas.model_ncollection_backup
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
+#: model:ir.model,name:ncollection_saas.model_ncollection_backup model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_form
 msgid "Tenant Backup"
 msgstr "النسخة الاحتياطية للمستأجر"
 
 #. module: ncollection_saas
-#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_backup
-#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_backups
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_tree
+#: model:ir.actions.act_window,name:ncollection_saas.action_ncollection_backup model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_backups model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_tree
 msgid "Tenant Backups"
 msgstr "النسخ الاحتياطية للمستأجرين"
 
@@ -2280,12 +2144,16 @@ msgstr "عدد المستأجرين لكل موجة تدريجية بعد نجا
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_modules
-msgid "The <strong>plan</strong>\n                            ("
+msgid ""
+"The <strong>plan</strong>\n"
+"                            ("
 msgstr "<strong>الخطة</strong> ("
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.checkout_verify_invalid
-msgid "The confirmation link is invalid or has already\n                        been used. You can start again from the pricing page."
+msgid ""
+"The confirmation link is invalid or has already\n"
+"                        been used. You can start again from the pricing page."
 msgstr "رابط التأكيد غير صالح أو سبق استخدامه. يمكنك البدء من جديد من صفحة الأسعار."
 
 #. module: ncollection_saas
@@ -2307,8 +2175,7 @@ msgstr "المهمة المفتوحة لتقرير ذاتي غير مقروء ب
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/platform_entry.py:0
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
+#: code:addons/ncollection_saas/models/platform_entry.py:0 code:addons/ncollection_saas/models/tenant_admin.py:0
 msgid "The platform is not configured to reach tenants (service key missing)."
 msgstr "المنصة غير مهيأة للوصول إلى المستأجرين (مفتاح الخدمة مفقود)."
 
@@ -2356,9 +2223,7 @@ msgid "Timing: %(detail)s; total %(total)ss."
 msgstr "التوقيت: %(detail)s؛ الإجمالي %(total)s ث."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_exception_decoration
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_exception_decoration
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_exception_decoration
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__activity_exception_decoration model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__activity_exception_decoration model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__activity_exception_decoration
 msgid "Type of the exception activity on record."
 msgstr "نوع النشاط الاستثنائي في السجل."
 
@@ -2444,16 +2309,12 @@ msgid "Wave size must be at least 1."
 msgstr "يجب أن يكون حجم الموجة 1 على الأقل."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__website_message_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__website_message_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__website_message_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__website_message_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__website_message_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__website_message_ids
 msgid "Website Messages"
 msgstr "رسائل الموقع الإلكتروني"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__website_message_ids
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__website_message_ids
-#: model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__website_message_ids
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_backup__website_message_ids model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__website_message_ids model:ir.model.fields,help:ncollection_saas.field_ncollection_fleet_migration__website_message_ids
 msgid "Website communication history"
 msgstr "سجل التواصل على الموقع الإلكتروني"
 
@@ -2547,8 +2408,7 @@ msgstr "فحص التوطين"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/fleet_migration_line.py:0
-#: code:addons/ncollection_saas/models/module_install.py:0
+#: code:addons/ncollection_saas/models/fleet_migration_line.py:0 code:addons/ncollection_saas/models/module_install.py:0
 msgid "module install"
 msgstr "تثبيت الوحدات"
 
@@ -2705,29 +2565,25 @@ msgstr "موظفو منصّة NCollection: لوحة معلومات مسؤول Sa
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_users.py:0
 msgid "%(admin)s %(what)s the user %(login)s."
 msgstr "%(admin)s %(what)s المستخدم %(login)s."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "%(admin)s created the user %(login)s."
 msgstr "أنشأ %(admin)s المستخدم %(login)s."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "%(admin)s reset the password of %(user)s (%(how)s)."
 msgstr "أعاد %(admin)s تعيين كلمة مرور %(user)s (%(how)s)."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "%(admin)s set the roles of %(user)s to: %(roles)s."
 msgstr "حدّد %(admin)s أدوار %(user)s لتصبح: %(roles)s."
 
@@ -2746,9 +2602,7 @@ msgstr "لم تقبل %s الطلب (قناة الخدمة غير مخوّلة).
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/tenant_admin.py:0
-msgid ""
-"%s does not support this yet: its workspace modules are out of date. Upgrade"
-" ncollection_core on it (Fleet Migration), then try again."
+msgid "%s does not support this yet: its workspace modules are out of date. Upgrade ncollection_core on it (Fleet Migration), then try again."
 msgstr "لا تدعم %s هذا بعد: وحدات مساحة عملها قديمة. رقِّ ncollection_core عليها (ترحيل الأسطول) ثم حاول مجددًا."
 
 #. module: ncollection_saas
@@ -2804,8 +2658,7 @@ msgid "Configuration Sync"
 msgstr "مزامنة الإعدادات"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__email
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__email
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__email model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__email
 msgid "Contact email"
 msgstr "البريد الإلكتروني للتواصل"
 
@@ -2823,8 +2676,7 @@ msgid ""
 msgstr "كل ما هنا يعمل على مساحة عمل الشركة نفسها، فقط إذا كنت ضمن قائمة وصول المنصة الخاصة بها، ويُسجَّل باسمك هنا وفي سجل التدقيق الخاص بمساحة العمل. لا تخزّن المنصة كلمات مرور المستأجرين أبدًا."
 
 #. module: ncollection_saas
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_create__mode__temporary
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_password__mode__temporary
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_create__mode__temporary model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_password__mode__temporary
 msgid "Generate a temporary password"
 msgstr "إنشاء كلمة مرور مؤقتة"
 
@@ -2849,8 +2701,7 @@ msgid "Max Users"
 msgstr "الحد الأقصى للمستخدمين"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__mode
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__mode
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__mode model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__mode
 msgid "Mode"
 msgstr "الوضع"
 
@@ -2886,10 +2737,7 @@ msgstr "كلمة المرور الجديدة"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_create_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "Add User"
 msgstr "إضافة مستخدم"
 
@@ -2913,8 +2761,7 @@ msgstr "كلمة المرور"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "Password reset"
 msgstr "إعادة تعيين كلمة المرور"
 
@@ -2924,10 +2771,7 @@ msgid "Refresh"
 msgstr "تحديث"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__remote_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__remote_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__remote_id
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__remote_id
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__remote_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__remote_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__remote_id model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__remote_id
 msgid "Remote"
 msgstr "المعرّف البعيد"
 
@@ -2938,10 +2782,7 @@ msgstr "إعادة تعيين كلمة مرور المسؤول"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_password_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "Reset password"
 msgstr "إعادة تعيين كلمة المرور"
 
@@ -2951,23 +2792,18 @@ msgid "Role"
 msgstr "الدور"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__role_option_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__role_option_ids
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__role_option_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__role_option_ids model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_roles_form model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
 msgid "Roles"
 msgstr "الأدوار"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "Roles of %s"
 msgstr "أدوار %s"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__available_role_ids
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__available_role_ids
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__available_role_ids model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__available_role_ids
 msgid "Roles offered"
 msgstr "الأدوار المعروضة"
 
@@ -2982,24 +2818,18 @@ msgid "Sequence"
 msgstr "التسلسل"
 
 #. module: ncollection_saas
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_create__mode__explicit
-#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_password__mode__explicit
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_create__mode__explicit model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_user_password__mode__explicit
 msgid "Set a password myself"
 msgstr "سأحدد كلمة المرور بنفسي"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
-msgid ""
-"Temporary password for %(user)s: %(password)s  -  give it to them now: it is"
-" not shown again."
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "Temporary password for %(user)s: %(password)s  -  give it to them now: it is not shown again."
 msgstr "كلمة المرور المؤقتة للمستخدم %(user)s: %(password)s  -  سلّمها له الآن: لن تُعرض مرة أخرى."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__is_tenant_admin
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__is_tenant_admin model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
 msgid "Tenant Administrator"
 msgstr "مسؤول المستأجر"
 
@@ -3016,8 +2846,7 @@ msgstr "لم يُعثر على حساب المسؤول %s في مساحة الع
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
-msgid ""
-"The company's users can be managed once its workspace has been provisioned."
+msgid "The company's users can be managed once its workspace has been provisioned."
 msgstr "يمكن إدارة مستخدمي الشركة بعد تجهيز مساحة عملها."
 
 #. module: ncollection_saas
@@ -3029,8 +2858,7 @@ msgstr "تُحدَّد كلمة المرور داخل مساحة عمل الشر
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "The password of %s was changed."
 msgstr "تم تغيير كلمة مرور %s."
 
@@ -3057,58 +2885,46 @@ msgstr "لا يوجد حساب مسؤول مسجّل لهذا المستأجر."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "Type the new password, or choose a temporary one."
 msgstr "اكتب كلمة المرور الجديدة، أو اختر كلمة مرور مؤقتة."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "Type the password, or choose a temporary one."
 msgstr "اكتب كلمة المرور، أو اختر كلمة مرور مؤقتة."
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__user_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__user_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_password__user_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_roles__user_name
 msgid "User"
 msgstr "المستخدم"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
-msgid ""
-"User %(login)s created. Temporary password: %(password)s  -  give it to them"
-" now: it is not shown again."
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+msgid "User %(login)s created. Temporary password: %(password)s  -  give it to them now: it is not shown again."
 msgstr "تم إنشاء المستخدم %(login)s. كلمة المرور المؤقتة: %(password)s  -  سلّمها له الآن: لن تُعرض مرة أخرى."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "User %s created."
 msgstr "تم إنشاء المستخدم %s."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "User created"
 msgstr "إنشاء مستخدم"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__login
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__login
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__login
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__login model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__login model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_users model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__login
 msgid "Username"
 msgstr "اسم المستخدم"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__users_id
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__users_id model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_users_form
 msgid "Users"
 msgstr "المستخدمون"
 
@@ -3119,8 +2935,7 @@ msgstr "المستخدمون والوصول"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_users.py:0
 msgid "Users of %s"
 msgstr "مستخدمو %s"
 
@@ -3142,22 +2957,19 @@ msgstr "غير مصرّح لك بإدارة مستخدمي %s."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "a password chosen by the administrator"
 msgstr "كلمة مرور اختارها المسؤول"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "a temporary password"
 msgstr "كلمة مرور مؤقتة"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_users.py:0
 msgid "activated"
 msgstr "فعّل"
 
@@ -3173,8 +2985,7 @@ msgstr "المسموح به في الخطة."
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_users.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_users.py:0
 msgid "deactivated"
 msgstr "عطّل"
 
@@ -3190,8 +3001,7 @@ msgstr "مثال: sara.m"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/models/tenant_admin.py:0
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
+#: code:addons/ncollection_saas/models/tenant_admin.py:0 code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
 msgid "none"
 msgstr "لا شيء"
 
@@ -3213,16 +3023,13 @@ msgstr "تعديل"
 
 #. module: ncollection_saas
 #. odoo-python
-#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
+#: code:addons/ncollection_saas/wizards/tenant_user_dialogs.py:0 model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
 msgid "Edit user"
 msgstr "تعديل المستخدم"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_user_edit_form
-msgid ""
-"Only the name and the contact email are changed here. The username, the "
-"roles and the password have their own actions."
+msgid "Only the name and the contact email are changed here. The username, the roles and the password have their own actions."
 msgstr "يُغيَّر هنا الاسم والبريد الإلكتروني للتواصل فقط. لاسم المستخدم والأدوار وكلمة المرور إجراءاتها الخاصة."
 
 #. module: ncollection_saas
@@ -3309,8 +3116,7 @@ msgstr "مسؤول المنصة وحده يستطيع فحص حالة إصدار
 
 #. module: ncollection_saas
 #. odoo-python
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
-#: code:addons/ncollection_saas/models/platform_entry.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release code:addons/ncollection_saas/models/platform_entry.py:0
 msgid "Not ready for the current release"
 msgstr "غير جاهزة للإصدار الحالي"
 
@@ -3329,8 +3135,12 @@ msgstr "تم التحقق من الإصدار: الوحدات مطابقة لل�
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/provisioning_job.py:0
-msgid "Release validation failed for '%(db)s': the new database is %(state)s.\n%(detail)s"
-msgstr "فشل التحقق من الإصدار لـ '%(db)s': قاعدة البيانات الجديدة في حالة %(state)s.\n%(detail)s"
+msgid ""
+"Release validation failed for '%(db)s': the new database is %(state)s.\n"
+"%(detail)s"
+msgstr ""
+"فشل التحقق من الإصدار لـ '%(db)s': قاعدة البيانات الجديدة في حالة %(state)s.\n"
+"%(detail)s"
 
 #. module: ncollection_saas
 #. odoo-python
@@ -3359,8 +3169,12 @@ msgstr "تعذّرت قراءة حالة إصدار %(db)s (%(state)s)."
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/fleet_migration_line.py:0
-msgid "%(db)s needs an operator, not an upgrade:\n%(detail)s"
-msgstr "%(db)s تحتاج إلى مشغّل وليس إلى ترقية:\n%(detail)s"
+msgid ""
+"%(db)s needs an operator, not an upgrade:\n"
+"%(detail)s"
+msgstr ""
+"%(db)s تحتاج إلى مشغّل وليس إلى ترقية:\n"
+"%(detail)s"
 
 #. module: ncollection_saas
 #. odoo-python
@@ -3371,21 +3185,18 @@ msgstr "%(db)s تحتاج إلى ترقية %(mods)s مع بقية الوحدا�
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/fleet_migration_line.py:0
-msgid "%(db)s was upgraded, but its release gate is %(state)s, not READY: it stays closed.\n%(detail)s"
-msgstr "تمت ترقية %(db)s، لكن بوابة الإصدار فيها في حالة %(state)s وليست جاهزة: تبقى مغلقة.\n%(detail)s"
+msgid ""
+"%(db)s was upgraded, but its release gate is %(state)s, not READY: it stays closed.\n"
+"%(detail)s"
+msgstr ""
+"تمت ترقية %(db)s، لكن بوابة الإصدار فيها في حالة %(state)s وليست جاهزة: تبقى مغلقة.\n"
+"%(detail)s"
 
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/fleet_migration.py:0
-msgid ""
-"Release the platform database first: %(db)s is %(state)s for this release, "
-"not READY (%(detail)s). Upgrade exactly its required modules (%(mods)s), "
-"validate it and open it; no tenant was touched."
-msgstr ""
-"أصدِر قاعدة بيانات المنصة أولاً: %(db)s في حالة %(state)s لهذا الإصدار، "
-"وليست جاهزة (%(detail)s). قم بترقية الوحدات المطلوبة لها بالضبط (%(mods)s)، "
-"ثم تحقّق منها وافتحها؛ لم يُمسّ أي مستأجر."
-
+msgid "Release the platform database first: %(db)s is %(state)s for this release, not READY (%(detail)s). Upgrade exactly its required modules (%(mods)s), validate it and open it; no tenant was touched."
+msgstr "أصدِر قاعدة بيانات المنصة أولاً: %(db)s في حالة %(state)s لهذا الإصدار، وليست جاهزة (%(detail)s). قم بترقية الوحدات المطلوبة لها بالضبط (%(mods)s)، ثم تحقّق منها وافتحها؛ لم يُمسّ أي مستأجر."
 
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__nc_release_fingerprint
@@ -3415,12 +3226,8 @@ msgstr "<strong>غير جاهزة للإصدار الحالي</strong>"
 #. module: ncollection_saas
 #. odoo-python
 #: code:addons/ncollection_saas/models/tenant_release.py:0
-msgid ""
-"The tenant answered HTTP %s to the release status (its code predates the "
-"release gate, or the service key does not match)."
-msgstr ""
-"أجاب المستأجر عن حالة الإصدار برمز HTTP %s (شيفرته أقدم من بوابة الإصدار، "
-"أو مفتاح الخدمة لا يطابق)."
+msgid "The tenant answered HTTP %s to the release status (its code predates the release gate, or the service key does not match)."
+msgstr "أجاب المستأجر عن حالة الإصدار برمز HTTP %s (شيفرته أقدم من بوابة الإصدار، أو مفتاح الخدمة لا يطابق)."
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
@@ -3428,8 +3235,7 @@ msgid "Release"
 msgstr "الإصدار"
 
 #. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__database_name
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_release model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__database_name
 msgid "Database"
 msgstr "قاعدة البيانات"
 
@@ -3534,22 +3340,18 @@ msgid "Choose the role of the new user."
 msgstr "اختر دور المستخدم الجديد."
 
 #. module: ncollection_saas
-#: model:ir.actions.act_window,name:ncollection_saas.action_tenant_delete
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form
-#: model:ir.model,name:ncollection_saas.model_ncollection_tenant_delete_wizard
+#: model:ir.actions.act_window,name:ncollection_saas.action_tenant_delete model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_delete_wizard_form model:ir.model,name:ncollection_saas.model_ncollection_tenant_delete_wizard
 msgid "Delete Tenant"
 msgstr "حذف المستأجر"
 
 #. module: ncollection_saas
-#: model:ir.actions.act_window,name:ncollection_saas.action_tenant_deletion
-#: model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_tenant_deletion
+#: model:ir.actions.act_window,name:ncollection_saas.action_tenant_deletion model:ir.ui.menu,name:ncollection_saas.menu_ncollection_saas_tenant_deletion
 msgid "Tenant Deletions"
 msgstr "عمليات حذف المستأجرين"
 
 #. module: ncollection_saas
 #. odoo-python
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_form
-#: code:addons/ncollection_saas/models/tenant_deletion.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_form code:addons/ncollection_saas/models/tenant_deletion.py:0
 msgid "Tenant deletion"
 msgstr "حذف مستأجر"
 
@@ -3609,8 +3411,7 @@ msgid "Delete failed"
 msgstr "فشل الحذف"
 
 #. module: ncollection_saas
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_list
-#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_list model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_deletion_form
 msgid "Requested"
 msgstr "تاريخ الطلب"
 
@@ -3736,8 +3537,7 @@ msgid "Failed at the %(step)s step: %(error)s"
 msgstr "فشل عند خطوة %(step)s: %(error)s"
 
 #. module: ncollection_saas
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__company_name
-#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__company_name
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__company_name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_delete_wizard__company_name
 msgid "Company Name"
 msgstr "اسم الشركة"
 
@@ -3756,3 +3556,210 @@ msgstr "رابط المستأجر"
 #: code:addons/ncollection_saas/models/tenant.py:0
 msgid "%s still has a database or files. Use Actions > Delete Tenant: it removes the database, its files and this record together, so nothing is left behind."
 msgstr "لا يزال لـ %s قاعدة بيانات أو ملفات. استخدم الإجراءات > حذف المستأجر: فهو يحذف قاعدة البيانات وملفاتها وهذا السجل معًا فلا يبقى شيء خلفه."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/settings_policy.py:0
+msgid "%(section)s: a tenant override cannot give more than its plan (%(plan)s)."
+msgstr "%(section)s: لا يمكن لاستثناء المستأجر أن يمنح أكثر من خطته (%(plan)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/settings_policy.py:0
+msgid "A policy line belongs to a plan OR to a tenant."
+msgstr "سطر السياسة يتبع خطة أو مستأجرًا، لا كليهما."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__accounting_defaults
+msgid "Accounting Defaults"
+msgstr "الإعدادات المحاسبية الافتراضية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__level__administer
+msgid "Administer (and delegate)"
+msgstr "إدارة (مع التفويض)"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/tenant_audit.py:0
+msgid "Audit Log of %s"
+msgstr "سجل التدقيق لـ %s"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/tenant_audit.py:0
+msgid "Audit Log read from the platform (%(rows)s of %(total)s events, filter: %(filter)s)."
+msgstr "قُرئ سجل التدقيق من المنصة (%(rows)s من %(total)s حدثًا، المرشح: %(filter)s)."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit_line__model_name
+msgid "Document Type"
+msgstr "نوع المستند"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_settings_policy
+msgid "Effective (what the workspace receives)"
+msgstr "الفعلي (ما تستلمه مساحة العمل)"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__settings_policy_effective
+msgid "Effective Settings policy"
+msgstr "سياسة الإعدادات الفعلية"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit_line__remote_id
+msgid "Event"
+msgstr "الحدث"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit__total
+msgid "Events"
+msgstr "الأحداث"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit_line__changes
+msgid "Fields Changed"
+msgstr "الحقول المغيَّرة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__level__hidden
+msgid "Hidden"
+msgstr "مخفي"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__section__interface_text
+msgid "Interface Text"
+msgstr "نصوص الواجهة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_settings_policy
+msgid "Lower than the plan only; to give more, change the plan."
+msgstr "أقل من الخطة فقط؛ لمنح المزيد غيّر الخطة."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit__model
+msgid "Model (technical name)"
+msgstr "النموذج (الاسم التقني)"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_audit_form
+msgid "Newer"
+msgstr "الأحدث"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant_audit__state__unavailable
+msgid "Not available on this workspace"
+msgstr "غير متاح في مساحة العمل هذه"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_audit_form
+msgid "Older"
+msgstr "الأقدم"
+
+#. module: ncollection_saas
+#: model:ir.model.constraint,message:ncollection_saas.constraint_ncollection_settings_policy_line_one_per_owner
+msgid "One line per section."
+msgstr "سطر واحد لكل قسم."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant_audit__model
+msgid "Optional, e.g. sale.order"
+msgstr "اختياري، مثل sale.order"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_settings_policy
+msgid "Overrides for this tenant"
+msgstr "استثناءات هذا المستأجر"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_audit_form
+msgid ""
+"Read-only, read now from the workspace. Only what happened (when, who, which\n"
+"                        record, which operation) is shown here; the changed values stay inside the workspace. Each read\n"
+"                        is recorded on this company."
+msgstr "للقراءة فقط، يُقرأ الآن من مساحة العمل. يظهر هنا ما حدث فقط (متى، ومن، وأي سجل، وأي عملية)؛ وتبقى القيم المغيَّرة داخل مساحة العمل. تُسجَّل كل قراءة على هذه الشركة."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit_line__record
+msgid "Record"
+msgstr "السجل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit_line__res_id
+msgid "Record ID"
+msgstr "معرّف السجل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit__subscribed_rules
+msgid "Recorded models"
+msgstr "النماذج المسجَّلة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_settings_policy_line__section
+msgid "Section"
+msgstr "القسم"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_subscription_plan_form_settings_policy model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_form_settings_policy
+msgid "Settings Policy"
+msgstr "سياسة الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__settings_policy_line_ids
+msgid "Settings overrides"
+msgstr "استثناءات الإعدادات"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_subscription_plan__settings_policy_line_ids
+msgid "Settings policy"
+msgstr "سياسة الإعدادات"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_tenant_audit_form
+msgid "Showing from"
+msgstr "العرض من"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_settings_policy_line
+msgid "Tenant Settings policy line"
+msgstr "سطر سياسة إعدادات المستأجر"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_tenant_audit_line
+msgid "Tenant audit event (snapshot row)"
+msgstr "حدث تدقيق المستأجر (سطر لقطة)"
+
+#. module: ncollection_saas
+#: model:ir.model,name:ncollection_saas.model_ncollection_tenant_audit
+msgid "Tenant audit log (snapshot)"
+msgstr "سجل تدقيق المستأجر (لقطة)"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_subscription_plan_form_settings_policy
+msgid ""
+"The default level of each tenant Settings page for every tenant on this plan.\n"
+"                        A section with no line is \"Administer\". Hidden: the page does not exist; View only: it opens\n"
+"                        read-only; Edit: the Workspace Administrator changes it; Administer: and may delegate it."
+msgstr "المستوى الافتراضي لكل صفحة إعدادات لكل مستأجر على هذه الخطة. القسم بلا سطر مستواه \"إدارة\". مخفي: الصفحة غير موجودة؛ عرض فقط: تُفتح للقراءة؛ تعديل: يغيّرها مسؤول مساحة العمل؛ إدارة: ويمكنه تفويضها."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/wizards/tenant_audit.py:0
+msgid "This workspace has no general Audit Log (not in its plan or not installed). Nothing was recorded there, so nothing is shown."
+msgstr "لا يوجد في مساحة العمل هذه سجل تدقيق عام (ليس ضمن خطتها أو غير مثبت). لم يُسجَّل شيء هناك، لذلك لا يُعرض شيء."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_settings_policy_line__level__view
+msgid "View only"
+msgstr "عرض فقط"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_audit_line__date
+msgid "When"
+msgstr "متى"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/settings_policy.py:0
+msgid "plan %s"
+msgstr "الخطة %s"
