@@ -169,9 +169,13 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         self.assertIn('/ncollection/account_reports/xbrl/', act['url'])
         tb = Service.nc_report_run('ncollection.account.report.trial.balance',
                                    {'date_from': str(self.year_start), 'date_to': str(today)})
-        self.assertTrue(tb['xbrl_unavailable'], "a disabled entry with its reason, not a missing one")
+        self.assertFalse(tb['xbrl_unavailable'], "the Trial Balance exports XBRL Global Ledger")
+        self.assertIn('Global Ledger', tb['xbrl_profile'])
+        gl = Service.nc_report_run('ncollection.account.report.summary',
+                                   {'date_from': str(self.year_start), 'date_to': str(today)})
+        self.assertTrue(gl['xbrl_unavailable'], "a disabled entry with its reason, not a missing one")
         with self.assertRaises(UserError):
-            Service.nc_report_export(tb['wizard']['model'], tb['wizard']['id'], 'xbrl')
+            Service.nc_report_export(gl['wizard']['model'], gl['wizard']['id'], 'xbrl')
 
     def test_route_downloads_and_refuses_what_it_must(self):
         wizard = self.env['ncollection.account.report.balance.sheet'].with_user(self.reader).create(
@@ -181,10 +185,12 @@ class TestXbrlExport(AccountTestInvoicingCommon, HttpCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn(b'ifrs-full', res.content)
         self.assertIn('no-store', res.headers.get('Cache-Control', ''))
-        trial = self.env['ncollection.account.report.trial.balance'].with_user(self.reader).create({}) \
-            if 'ncollection.account.report.trial.balance' in self.env else None
-        if trial:
-            self.assertEqual(self.url_open(_ROUTE % (trial._name, trial.id)).status_code, 404, "no IFRS mapping")
+        ledger = self.env['ncollection.account.report.summary'].with_user(self.reader).create({})
+        self.assertEqual(self.url_open(_ROUTE % (ledger._name, ledger.id)).status_code, 404, "no mapping")
+        trial = self.env['ncollection.account.report.trial.balance'].with_user(self.reader).create({})
+        res = self.url_open(_ROUTE % (trial._name, trial.id))
+        self.assertEqual(res.status_code, 200, "the Trial Balance downloads as XBRL Global Ledger")
+        self.assertIn(b'trialbalance', res.content)
         self.assertEqual(self.url_open(_ROUTE % ('res.users', 1)).status_code, 404, "forged model")
         self.authenticate('nc_xbrl_other', 'nc_xbrl_other_pw')
         self.assertIn(self.url_open(_ROUTE % (wizard._name, wizard.id)).status_code, (403, 404),

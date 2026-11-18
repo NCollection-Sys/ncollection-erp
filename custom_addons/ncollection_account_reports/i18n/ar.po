@@ -3007,3 +3007,75 @@ msgstr "قابل للتطبيق (أعمار الذمم المدينة والدا
 #: code:addons/ncollection_account_reports/models/xbrl_export.py:0
 msgid "Applicable (IAS 16 property, plant and equipment reconciliation), not built yet: no file is produced."
 msgstr "قابل للتطبيق (تسوية الممتلكات والآلات والمعدات وفق IAS 16) ولم يُنفَّذ بعد: لا يُنتَج أي ملف."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "XBRL Global Ledger 2015 (trial balance)"
+msgstr "دفتر الأستاذ العام XBRL 2015 (ميزان المراجعة)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "IFRS Accounting Taxonomy 2025"
+msgstr "تصنيف IFRS المحاسبي 2025"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/report_service.py:0
+msgid "Unknown filter."
+msgstr "عامل تصفية غير معروف."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/account_report.py:0
+msgid "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow, the Statement of Changes in Equity, the Trial Balance, the General Ledger and the Partner Ledger only."
+msgstr "يتوفر XBRL للميزانية العمومية وقائمة الأرباح والخسائر وقائمة التدفقات النقدية وقائمة التغيرات في حقوق الملكية وميزان المراجعة ودفتر الأستاذ العام ودفتر أستاذ الشركاء فقط."
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Not available"
+msgstr "غير متاح"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Why is XBRL not available?"
+msgstr "لماذا XBRL غير متاح؟"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "No match"
+msgstr "لا توجد نتائج"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Nothing to choose"
+msgstr "لا يوجد ما يمكن اختياره"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Loading…"
+msgstr "جارٍ التحميل…"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "Show more…"
+msgstr "عرض المزيد…"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "XBRL Global Ledger 2015 (ledger)"
+msgstr "دفتر الأستاذ العام XBRL 2015 (دفتر الأستاذ)"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "A statement sent to one customer or supplier, not a ledger export: use the Partner Ledger's XBRL Global Ledger export for the same entries."
+msgstr "كشف حساب يُرسل إلى عميل أو مورد واحد، وليس تصديراً لدفتر الأستاذ: استخدم تصدير XBRL لدفتر الأستاذ العام من دفتر أستاذ الشركاء للقيود نفسها."

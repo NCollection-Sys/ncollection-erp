@@ -29,3 +29,5 @@ from . import test_summary_period
 from . import test_stamp_scope
 from . import test_premium_dashboards
 from . import test_xbrl_export
+from . import test_xbrl_gl
+from . import test_report_suggest

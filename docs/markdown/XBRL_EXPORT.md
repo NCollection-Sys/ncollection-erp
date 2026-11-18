@@ -118,3 +118,30 @@ no XBRL taxonomy for the VAT return. **Management analyses:** no taxonomy concep
 So: 4 of 21 export XBRL today (one with an optional component extension), 2 are buildable IFRS work, 15 are not IFRS
 statements. The ERP is NOT "XBRL-complete"; it is complete for the four primary financial statements.
 
+
+## XBRL Global Ledger: Trial Balance, General Ledger, Partner Ledger (owner review 2026-11-18)
+
+Ledger listings now export a real XBRL instance in XBRL International's **Global Ledger** taxonomy (XBRL GL 2015-03-25
+Recommendation, Palette entry point `plt/case-c-b-m-u-t/gl-plt-all-2015-03-25.xsd`, public and freely usable), not
+IFRS: the account is DATA there (`accountMainID` / `accountMainDescription`), never an invented concept.
+Code: `models/xbrl_gl.py`.
+
+- **Trial Balance**: `entriesType` = `trialbalance`, shaped like the Recommendation's own sample `ids/BP_TrialBalance.xml`:
+  per account a beginning balance, the period debit and the period credit (`period_change`, D / C) and an ending balance.
+  Amounts are never negative; the sign is the debit / credit code.
+- **General Ledger / Partner Ledger**: `entriesType` = `ledger`; per account (per partner) one `entryHeader` with the
+  beginning balance, every journal item of the period (account, partner as `identifierReference`, entry number as
+  `documentNumber`, posting date, label, D / C) and the ending balance.
+- The figures are the report's own rows under the report's filters (journals, accounts, partners, posted / all, zero
+  rows); the filters are written into `entriesComment`.
+
+Evidence (restored copies, 2026-11-18): Arelle 2.37.78 with the official taxonomy, **0 errors** on `ncollection` and
+`awtar`; an independent parse reconciled every fact with the report (21 accounts / 84 facts; with the journal filter
+Ahly Bank + Main Cash, 14 accounts / 56 facts, totals 64,293.39 = the screen); a negative control (an invented element
+and an invalid D/C code) gives `xmlSchema:elementUnexpected` / `xbrl:schemaImportMissing` / `xmlSchema:valueError`, so
+the taxonomy was really loaded. Downloaded in the real browser from the viewer's Export menu (filename
+`Trial Balance.xbrl`, `application/xml`). Not a regulatory filing: no regulator publishes an XBRL GL profile for these.
+
+**Coverage now:** 7 of 21 viewer reports export XBRL (4 IFRS statements + 3 XBRL GL ledgers); 2 are applicable IFRS
+work not built (Aged Balances, Asset Register); 12 have no taxonomy that means the same thing (management analyses,
+the VAT return the FTA files without XBRL, Tax Analysis, the customer / supplier statement — use the Partner Ledger).

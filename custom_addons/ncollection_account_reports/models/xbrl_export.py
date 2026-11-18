@@ -39,6 +39,7 @@ from lxml import etree
 from odoo import api, models
 from odoo.exceptions import UserError
 
+from . import xbrl_gl
 from .equity_component import EQUITY_MEMBERS
 
 TAXONOMY_ENTRY_POINT = 'https://xbrl.ifrs.org/taxonomy/2025-03-27/full_ifrs_entry_point_2025-03-27.xsd'
@@ -90,7 +91,20 @@ class AccountReportXbrl(models.AbstractModel):
         return {'ncollection.account.report.balance.sheet': 'balance_sheet',
                 'ncollection.account.report.profit.loss': 'profit_loss',
                 'ncollection.account.report.cash.flow': 'cash_flow',
-                'ncollection.account.report.equity.changes': 'equity_changes'}
+                'ncollection.account.report.equity.changes': 'equity_changes',
+                'ncollection.account.report.trial.balance': 'trial_balance_gl',
+                'ncollection.account.report.general.ledger': 'general_ledger_gl',
+                'ncollection.account.report.partner.ledger': 'partner_ledger_gl'}
+
+    @api.model
+    def _nc_profile(self, model):
+        """The taxonomy a supported report is exported with (shown on its Export menu entry)."""
+        kind = self._nc_supported_models().get(model)
+        if kind == 'trial_balance_gl':
+            return self.env._("XBRL Global Ledger 2015 (trial balance)")
+        if kind in ('general_ledger_gl', 'partner_ledger_gl'):
+            return self.env._("XBRL Global Ledger 2015 (ledger)")
+        return self.env._("IFRS Accounting Taxonomy 2025")
 
     @api.model
     def _nc_unavailable_reason(self, model):
@@ -98,15 +112,10 @@ class AccountReportXbrl(models.AbstractModel):
         a report that is not an IFRS statement says so (docs/markdown/XBRL_EXPORT.md, the report-by-report matrix)."""
         if model in self._nc_supported_models():
             return False
-        ledgers = self.env._("An account-level listing: IFRS has no concept per account row, so a mapping would be "
-                             "invented.")
-        gl = self.env._("An account-level listing: IFRS has no concept per account row. The XBRL Global Ledger "
-                        "taxonomy (not IFRS) could carry it; not built.")
         reasons = {
-            'ncollection.account.report.trial.balance': gl,
-            'ncollection.account.report.general.ledger': gl,
-            'ncollection.account.report.partner.ledger': ledgers,
-            'ncollection.account.report.statement': ledgers,
+            'ncollection.account.report.statement': self.env._(
+                "A statement sent to one customer or supplier, not a ledger export: use the Partner Ledger's XBRL "
+                "Global Ledger export for the same entries."),
             'ncollection.account.report.aged.partner': self.env._(
                 "Applicable (IFRS 7 ageing of receivables and payables), not built yet: no file is produced."),
             'ncollection.account.report.asset.register': self.env._(
@@ -203,6 +212,13 @@ class AccountReportXbrl(models.AbstractModel):
     def _nc_build(self, wizard):
         """The XBRL instance (bytes, UTF-8). Read with the user's own rights: the caller checked access."""
         wizard.ensure_one()
+        kind = self._nc_supported_models().get(wizard._name)
+        if kind == 'trial_balance_gl':
+            return xbrl_gl.build_trial_balance(self, wizard)
+        if kind == 'general_ledger_gl':
+            return xbrl_gl.build_ledger(self, wizard, 'account_id')
+        if kind == 'partner_ledger_gl':
+            return xbrl_gl.build_ledger(self, wizard, 'partner_id')
         company = wizard.company_id or self.env.company
         currency = company.currency_id
         facts = self._nc_facts(wizard)

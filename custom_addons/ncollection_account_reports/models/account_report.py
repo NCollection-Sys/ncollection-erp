@@ -307,12 +307,13 @@ class NcollectionAccountReport(models.AbstractModel):
     # ---- XLSX (xlsxwriter — no OCA dep) ---------------------------------
 
     def action_export_xbrl(self):
-        """XBRL (IFRS Accounting Taxonomy 2025) for the reports that map onto it: models/xbrl_export.py."""
+        """XBRL for the reports that map onto a taxonomy: IFRS 2025 for the statements, XBRL GL for the Trial
+        Balance (models/xbrl_export.py, models/xbrl_gl.py)."""
         self.ensure_one()
         if self._name not in self.env['ncollection.account.report.xbrl']._nc_supported_models():
             raise UserError(self.env._(
-                "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow and the "
-                "Statement of Changes in Equity only."))
+                "XBRL is available for the Balance Sheet, the Profit and Loss, the Cash Flow, the "
+                "Statement of Changes in Equity, the Trial Balance, the General Ledger and the Partner Ledger only."))
         return {
             'type': 'ir.actions.act_url',
             'url': '/ncollection/account_reports/xbrl/%s/%d' % (self._name, self.id),
