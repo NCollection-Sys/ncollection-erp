@@ -241,6 +241,18 @@ class TestAdministratorInvariantUnderOptionA(TransactionCase):
                                                     ('nc_platform_proxy', '=', False), ('id', '=', keeper.id)])
         self.assertEqual(seats, 0, "not a customer seat")
 
+    def test_an_api_key_on_the_maintenance_administrator_is_never_accepted(self):
+        """The bearer doors (JSON-2, REST) trust the uid the key check returns. A key written onto the account behind
+        the ORM must still be refused, while an ordinary user's key keeps working."""
+        self._a_fresh_tenant()
+        keeper = self.env['res.groups']._nc_ensure_maintenance_admin()
+        clerk = new_test_user(self.env, login='nc_key_clerk', groups='base.group_user')
+        Keys = self.env['res.users.apikeys']
+        key = Keys.with_user(clerk).sudo()._generate('rpc', 'clerk key', None)
+        self.assertEqual(Keys._check_credentials(scope='rpc', key=key), clerk.id, "an ordinary key still works")
+        self.env.cr.execute("UPDATE res_users_apikeys SET user_id = %s WHERE user_id = %s", [keeper.id, clerk.id])
+        self.assertIsNone(Keys._check_credentials(scope='rpc', key=key), "the same key on the maintenance account")
+
     def test_idempotent_and_self_repairing(self):
         from ..models.res_groups import MAINTENANCE_LOGIN
         self._a_fresh_tenant()
