@@ -223,7 +223,7 @@ class TestAdministratorInvariantUnderOptionA(TransactionCase):
 
     def test_the_maintenance_administrator_cannot_sign_in_and_is_not_a_seat(self):
         from odoo.exceptions import AccessDenied
-        from odoo.addons.ncollection_core.models.res_groups import MAINTENANCE_LOGIN
+        from ..models.res_groups import MAINTENANCE_LOGIN
         self._a_fresh_tenant()
         self.env['res.groups']._nc_enforce_owner_least_privilege()
         keeper = self.env['res.users'].with_context(active_test=False).search([('login', '=', MAINTENANCE_LOGIN)])
@@ -242,7 +242,7 @@ class TestAdministratorInvariantUnderOptionA(TransactionCase):
         self.assertEqual(seats, 0, "not a customer seat")
 
     def test_idempotent_and_self_repairing(self):
-        from odoo.addons.ncollection_core.models.res_groups import MAINTENANCE_LOGIN
+        from ..models.res_groups import MAINTENANCE_LOGIN
         self._a_fresh_tenant()
         groups = self.env['res.groups']
         first = groups._nc_ensure_maintenance_admin()
@@ -254,7 +254,7 @@ class TestAdministratorInvariantUnderOptionA(TransactionCase):
             [('login', '=', MAINTENANCE_LOGIN)]), 1)
 
     def test_a_real_account_on_the_reserved_login_is_never_promoted(self):
-        from odoo.addons.ncollection_core.models.res_groups import MAINTENANCE_LOGIN
+        from ..models.res_groups import MAINTENANCE_LOGIN
         squatter = new_test_user(self.env, login=MAINTENANCE_LOGIN, groups='base.group_user')
         with self.assertRaises(UserError):
             self.env['res.groups']._nc_ensure_maintenance_admin()
