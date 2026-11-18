@@ -21,23 +21,39 @@
                         </button>
                         <button t-if="showExpand" class="btn btn-secondary" type="button" t-on-click="expandAll">Expand all</button>
                         <button t-if="showExpand" class="btn btn-secondary" type="button" t-on-click="collapseAll">Collapse all</button>
-                        <div class="o_nc_rep__menu">
-                            <button class="btn btn-secondary" type="button"
-                                    t-on-click="() => this.state.exportOpen = !this.state.exportOpen"
-                                    t-att-aria-expanded="state.exportOpen">
+                        <div class="o_nc_rep__menu" t-ref="exportMenu"
+                             t-on-keydown="onExportKeydown" t-on-focusout="onExportFocusout">
+                            <button class="btn btn-secondary" type="button" t-ref="exportButton"
+                                    t-on-click="toggleExport" aria-haspopup="menu"
+                                    t-att-aria-expanded="state.exportOpen ? 'true' : 'false'">
                                 <i class="fa fa-download" aria-hidden="true"/> Export
                             </button>
-                            <div t-if="state.exportOpen" class="o_nc_rep__dropdown" role="menu">
+                            <div t-if="state.exportOpen" class="o_nc_rep__dropdown" role="menu" aria-label="Export">
                                 <button type="button" role="menuitem" t-on-click="() => this.exportReport('xlsx')">Excel (.xlsx)</button>
                                 <button type="button" role="menuitem" t-on-click="() => this.exportReport('pdf')">PDF</button>
                                 <button t-if="!state.data.xbrl_unavailable" type="button" role="menuitem"
                                         class="o_nc_rep__xbrl" t-on-click="() => this.exportReport('xbrl')"
-                                        title="XBRL instance, IFRS Accounting Taxonomy 2025">XBRL (.xbrl)</button>
-                                <button t-else="" type="button" role="menuitem" disabled="disabled"
-                                        class="o_nc_rep__xbrl o_nc_rep__unavailable" t-att-title="state.data.xbrl_unavailable">
-                                    XBRL (.xbrl) <small class="text-muted">— not available</small>
-                                    <span class="o_nc_rep__reason" t-esc="state.data.xbrl_unavailable"/>
+                                        t-att-aria-label="'XBRL (.xbrl) — ' + state.data.xbrl_profile">
+                                    XBRL (.xbrl) <small class="o_nc_rep__profile" t-esc="state.data.xbrl_profile"/>
                                 </button>
+                                <t t-else="">
+                                    <!-- a short status in the menu; the reason only on demand (tooltip, or the (i) toggle
+                                         for keyboard and touch), never a paragraph over the report -->
+                                    <div class="o_nc_rep__xbrl o_nc_rep__unavailable" role="menuitem" aria-disabled="true"
+                                         t-att-title="state.data.xbrl_unavailable">
+                                        <span>XBRL (.xbrl)</span>
+                                        <small class="text-muted">Not available</small>
+                                        <button type="button" class="o_nc_rep__why btn btn-link p-0"
+                                                aria-label="Why is XBRL not available?"
+                                                t-att-aria-expanded="state.xbrlHelp ? 'true' : 'false'"
+                                                aria-controls="o_nc_rep_xbrl_reason"
+                                                t-on-click.stop="() => this.state.xbrlHelp = !this.state.xbrlHelp">
+                                            <i class="fa fa-info-circle" aria-hidden="true"/>
+                                        </button>
+                                    </div>
+                                    <p t-if="state.xbrlHelp" id="o_nc_rep_xbrl_reason" class="o_nc_rep__reason" role="note"
+                                       t-esc="state.data.xbrl_unavailable"/>
+                                </t>
                             </div>
                         </div>
                         <button class="btn btn-secondary" type="button" t-on-click="() => this.printReport()">
@@ -83,33 +99,16 @@
                     </t>
                     <div t-if="has('company_id') and multiCompany" class="o_nc_rep__f">
                         <label for="f_co">Company</label>
-                        <select id="f_co" t-model.number="state.values.company_id">
+                        <select id="f_co" t-model.number="state.values.company_id" t-on-change="() => this.closePicker()">
                             <t t-foreach="companies" t-as="co" t-key="co.id">
                                 <option t-att-value="co.id" t-esc="co.name"/>
                             </t>
                         </select>
                     </div>
                     <t t-foreach="['journal_ids', 'account_ids', 'partner_ids']" t-as="fname" t-key="fname">
-                        <div t-if="has(fname)" class="o_nc_rep__f o_nc_rep__f--picker">
-                            <label t-esc="field(fname).label"/>
-                            <div class="o_nc_rep__tags">
-                                <t t-foreach="state.values[fname]" t-as="rec" t-key="rec.id">
-                                    <span class="o_nc_rep__tag">
-                                        <t t-esc="rec.name"/>
-                                        <button type="button" t-att-aria-label="'Remove ' + rec.name"
-                                                t-on-click="() => this.unpick(this.field(fname), rec.id)">×</button>
-                                    </span>
-                                </t>
-                                <input type="text" autocomplete="off" placeholder="Search…"
-                                       t-att-value="state.picker.field === fname ? state.picker.term : ''"
-                                       t-on-input="(ev) => this.searchRelation(this.field(fname), ev.target.value)"/>
-                            </div>
-                            <ul t-if="state.picker.field === fname and state.picker.options.length" class="o_nc_rep__options">
-                                <t t-foreach="state.picker.options" t-as="opt" t-key="opt.id">
-                                    <li><button type="button" t-on-click="() => this.pick(this.field(fname), opt)" t-esc="opt.name"/></li>
-                                </t>
-                            </ul>
-                        </div>
+                        <t t-if="has(fname)" t-call="ncollection_account_reports.ReportViewer.Picker">
+                            <t t-set="pf" t-value="field(fname)"/>
+                        </t>
                     </t>
                     <t t-foreach="extraFilters" t-as="xf" t-key="xf.name">
                         <div t-if="xf.type === 'selection'" class="o_nc_rep__f">
@@ -127,25 +126,9 @@
                         <div t-elif="xf.type === 'boolean'" class="o_nc_rep__f o_nc_rep__f--check">
                             <label><input type="checkbox" t-model="state.values[xf.name]"/> <t t-esc="xf.label"/></label>
                         </div>
-                        <div t-elif="xf.type === 'many2many'" class="o_nc_rep__f o_nc_rep__f--picker">
-                            <label t-esc="xf.label"/>
-                            <div class="o_nc_rep__tags">
-                                <t t-foreach="state.values[xf.name]" t-as="rec" t-key="rec.id">
-                                    <span class="o_nc_rep__tag">
-                                        <t t-esc="rec.name"/>
-                                        <button type="button" t-on-click="() => this.unpick(xf, rec.id)">×</button>
-                                    </span>
-                                </t>
-                                <input type="text" autocomplete="off" placeholder="Search…"
-                                       t-att-value="state.picker.field === xf.name ? state.picker.term : ''"
-                                       t-on-input="(ev) => this.searchRelation(xf, ev.target.value)"/>
-                            </div>
-                            <ul t-if="state.picker.field === xf.name and state.picker.options.length" class="o_nc_rep__options">
-                                <t t-foreach="state.picker.options" t-as="opt" t-key="opt.id">
-                                    <li><button type="button" t-on-click="() => this.pick(xf, opt)" t-esc="opt.name"/></li>
-                                </t>
-                            </ul>
-                        </div>
+                        <t t-elif="xf.type === 'many2many'" t-call="ncollection_account_reports.ReportViewer.Picker">
+                            <t t-set="pf" t-value="xf"/>
+                        </t>
                     </t>
                     <div class="o_nc_rep__f o_nc_rep__f--buttons">
                         <button type="submit" class="btn btn-primary">Apply</button>
@@ -290,6 +273,57 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </t>
+
+
+    <!-- One many2many filter (Journals, Accounts, Partners, a report's extra many2many filters): chips of the chosen
+         records + an input whose suggestions open on focus. `pf` is the filter's metadata (name, label, relation). -->
+    <t t-name="ncollection_account_reports.ReportViewer.Picker">
+        <t t-set="pOpen" t-value="state.picker.open and state.picker.field === pf.name"/>
+        <div class="o_nc_rep__f o_nc_rep__f--picker" t-att-data-field="pf.name">
+            <label t-att-for="'f_pick_' + pf.name" t-esc="pf.label"/>
+            <div class="o_nc_rep__tags" t-att-class="{'o_nc_rep__tags--open': pOpen}">
+                <t t-foreach="state.values[pf.name]" t-as="rec" t-key="rec.id">
+                    <span class="o_nc_rep__tag">
+                        <t t-esc="rec.name"/>
+                        <button type="button" t-att-aria-label="'Remove ' + rec.name"
+                                t-on-click="() => this.unpick(pf, rec.id)">×</button>
+                    </span>
+                </t>
+                <input type="text" autocomplete="off" placeholder="Search…" role="combobox"
+                       t-att-id="'f_pick_' + pf.name"
+                       aria-autocomplete="list"
+                       t-att-aria-expanded="pOpen ? 'true' : 'false'"
+                       t-att-aria-controls="'f_pick_list_' + pf.name"
+                       t-att-aria-activedescendant="pOpen and state.picker.active &gt;= 0 ? ('f_pick_opt_' + pf.name + '_' + state.picker.active) : false"
+                       t-att-value="state.picker.field === pf.name ? state.picker.term : ''"
+                       t-on-focus="() => this.openPicker(pf)"
+                       t-on-click="() => this.openPicker(pf)"
+                       t-on-keydown="(ev) => this.onPickerKeydown(pf, ev)"
+                       t-on-input="(ev) => this.searchRelation(pf, ev.target.value)"/>
+            </div>
+            <ul t-if="pOpen" class="o_nc_rep__options" role="listbox" t-att-id="'f_pick_list_' + pf.name"
+                t-att-aria-label="pf.label">
+                <t t-foreach="state.picker.options" t-as="opt" t-key="opt.id">
+                    <li role="option" t-att-id="'f_pick_opt_' + pf.name + '_' + opt_index"
+                        t-att-data-index="opt_index"
+                        t-att-aria-selected="opt_index === state.picker.active ? 'true' : 'false'"
+                        t-att-class="{'o_nc_rep__opt--active': opt_index === state.picker.active}">
+                        <button type="button" tabindex="-1" t-on-mousedown.prevent=""
+                                t-on-click="(ev) => this.pick(pf, opt, ev.target.closest('.o_nc_rep__f--picker').querySelector('input'))"
+                                t-esc="opt.name"/>
+                    </li>
+                </t>
+                <li t-if="!state.picker.options.length and !state.picker.loading" class="o_nc_rep__empty" role="presentation">
+                    <t t-if="state.picker.term">No match</t><t t-else="">Nothing to choose</t>
+                </li>
+                <li t-if="state.picker.loading and !state.picker.options.length" class="o_nc_rep__empty" role="presentation">Loading…</li>
+                <li t-if="state.picker.more" role="presentation">
+                    <button type="button" class="o_nc_rep__more" t-on-mousedown.prevent=""
+                            t-on-click="() => this.loadMore(pf)">Show more…</button>
+                </li>
+            </ul>
         </div>
     </t>
 

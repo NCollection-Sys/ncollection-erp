@@ -765,6 +765,46 @@ class NcReportService(models.AbstractModel):
         return shared + extras
 
     @api.model
+    def nc_report_suggest(self, model, field_name, term='', company_id=None, exclude_ids=None, offset=0, limit=20):
+        """Suggestions for a report's many2many filter (Journals, Accounts, Partners, and the extra many2many
+        filters a report defines), INCLUDING an empty term: the picker lists what can be chosen as soon as it is
+        focused. Runs as the user (ACL + record rules decide, no sudo), restricted to the report's company where the
+        record carries one, so a multi-company user sees the journals / accounts of the company being reported.
+        Returns {'records': [{id, name}], 'more': bool}."""
+        Model = self._nc_engine_model(self._nc_resolve_source(model))
+        Model.check_access('create')          # the same right running the report needs: no report, no suggestions
+        if field_name not in self._nc_filter_names(Model):
+            raise UserError(self.env._("Unknown filter."))
+        field = Model._fields[field_name]
+        if field.type != 'many2many':
+            raise UserError(self.env._("Unknown filter."))
+        Comodel = self.env[field.comodel_name]
+        company_ids = self.env.user.company_ids.ids
+        company = int(company_id) if company_id and int(company_id) in company_ids else self.env.company.id
+        domain = []
+        if 'company_ids' in Comodel._fields:                      # account.account (Odoo 19: shared accounts)
+            domain.append(('company_ids', 'in', [company]))
+        elif 'company_id' in Comodel._fields:
+            domain.extend(['|', ('company_id', '=', False), ('company_id', '=', company)])
+        if exclude_ids:
+            domain.append(('id', 'not in', [int(i) for i in exclude_ids]))
+        limit = max(1, min(int(limit or 20), 80))
+        offset = max(0, int(offset or 0))
+        term = (term or '').strip()
+        if term:
+            found = Comodel.name_search(term, domain=domain, limit=offset + limit + 1)
+            rows = [(rid, name) for rid, name in found][offset:]
+        else:
+            records = Comodel.search(domain, offset=offset, limit=limit + 1)
+            rows = [(record.id, record.display_name) for record in records]
+        more = len(rows) > limit                                  # one extra row was fetched to know this
+        rows = rows[:limit]
+        if Comodel._name == 'account.journal':                    # "Bank (BNK1)": the code tells two banks apart
+            codes = {journal.id: journal.code for journal in Comodel.browse([rid for rid, _name in rows])}
+            rows = [(rid, '%s (%s)' % (name, codes[rid]) if codes.get(rid) else name) for rid, name in rows]
+        return {'records': [{'id': rid, 'name': name} for rid, name in rows], 'more': more}
+
+    @api.model
     def _nc_clean_filters(self, Model, filters):
         vals = {}
         for name in self._nc_filter_names(Model):
@@ -773,7 +813,13 @@ class NcReportService(models.AbstractModel):
             value = filters[name]
             field = Model._fields[name]
             if field.type == 'many2many':
-                vals[name] = [(6, 0, [int(i) for i in (value or [])])]
+                # Only records the user can SEE (ACL + record rules, as the user, no sudo): a forged id of another
+                # company's journal / account / partner is dropped, never echoed back with its name.
+                ids = [int(i) for i in (value or [])]
+                if ids:
+                    ids = self.env[field.comodel_name].with_context(active_test=False).search(
+                        [('id', 'in', ids)]).ids
+                vals[name] = [(6, 0, ids)]
             elif field.type == 'many2one':
                 vals[name] = int(value) if value else False
             elif field.type == 'boolean':
@@ -829,6 +875,7 @@ class NcReportService(models.AbstractModel):
             # The Export menu shows XBRL for EVERY report: a download where a mapping exists, otherwise disabled with
             # the reason (never hidden, never a fake file).
             'xbrl_unavailable': self.env['ncollection.account.report.xbrl']._nc_unavailable_reason(wizard._name),
+            'xbrl_profile': self.env['ncollection.account.report.xbrl']._nc_profile(wizard._name),
             'company': wizard.company_id.name,
             'currency': {'id': currency.id, 'symbol': currency.symbol,
                          'name': currency.name, 'position': currency.position,

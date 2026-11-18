@@ -20,7 +20,9 @@
  * from a drilled record (that route no longer carries our parameters). It is
  * never written to storage.
  */
-import { Component, onMounted, onWillStart, useState } from "@odoo/owl";
+import {
+    Component, onMounted, onWillStart, onWillUnmount, useExternalListener, useRef, useState,
+} from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { router } from "@web/core/browser/router";
@@ -63,12 +65,18 @@ export class NcReportViewer extends Component {
             values: {},
             collapsed: {},   // group/row key -> true
             shown: {},       // group key -> rows shown
-            picker: { field: "", term: "", options: [] },
+            picker: { field: "", term: "", options: [], active: -1, more: false, loading: false, open: false },
             exportOpen: false,
+            xbrlHelp: false,
             details: {},     // partner id -> { open, loading, rows }
         });
         this.mounted = false;
         this.pendingState = null;
+        this.exportMenu = useRef("exportMenu");
+        this.exportButton = useRef("exportButton");
+        useExternalListener(window, "pointerdown", (ev) => this.onWindowPointerDown(ev), { capture: true });
+        useExternalListener(window, "keydown", (ev) => this.onWindowKeydown(ev));
+        onWillUnmount(() => browser.clearTimeout(this.searchTimer));
         onWillStart(async () => {
             await this.run(this.initialFilters());
         });
@@ -546,32 +554,213 @@ export class NcReportViewer extends Component {
     }
 
     // --------------------------------------------------------- pickers
-    async searchRelation(field, term) {
-        this.state.picker.field = field.name;
-        this.state.picker.term = term;
-        // answers can arrive out of order; only the latest keystroke may paint
-        const ticket = (this.searchTicket = (this.searchTicket || 0) + 1);
-        if (!term || term.length < 1) {
-            this.state.picker.options = [];
-            return;
+    // Journals / Accounts / Partners (and a report's extra many2many filters): the suggestions open as soon as the
+    // field is focused (empty term = the first records the user may choose, for the report's company), typing
+    // filters them (debounced), arrows + Enter pick, Escape / a click outside close. The server decides what may
+    // be listed (ncollection.report.service.nc_report_suggest runs as the user, no sudo).
+    openPicker(field) {
+        if (this.state.picker.field !== field.name) {
+            this.state.picker = { field: field.name, term: "", options: [], active: -1, more: false,
+                                  loading: false, open: true };
         }
-        const recs = await this.orm.call(field.relation, "name_search", [term], { limit: 8 });
-        if (ticket !== this.searchTicket) {
-            return;
-        }
-        const taken = new Set((this.state.values[field.name] || []).map((r) => r.id));
-        this.state.picker.options = recs
-            .filter(([id]) => !taken.has(id))
-            .map(([id, name]) => ({ id, name }));
+        this.state.picker.open = true;
+        this.closeExport();
+        this.fetchSuggestions(field, this.state.picker.term, false);
     }
 
-    pick(field, option) {
-        this.state.values[field.name].push(option);
-        this.state.picker = { field: "", term: "", options: [] };
+    searchRelation(field, term) {
+        if (this.state.picker.field !== field.name) {
+            this.openPicker(field);
+        }
+        this.state.picker.term = term;
+        this.state.picker.open = true;
+        browser.clearTimeout(this.searchTimer);
+        this.searchTimer = browser.setTimeout(() => this.fetchSuggestions(field, term, false), 200);
+    }
+
+    async fetchSuggestions(field, term, append) {
+        // answers can arrive out of order; only the latest request may paint
+        const ticket = (this.searchTicket = (this.searchTicket || 0) + 1);
+        const picker = this.state.picker;
+        picker.loading = true;
+        const taken = (this.state.values[field.name] || []).map((r) => r.id);
+        const result = await this.orm.call("ncollection.report.service", "nc_report_suggest", [
+            this.state.data.wizard.model, field.name, term || "",
+        ], {
+            company_id: this.state.values.company_id || false,
+            exclude_ids: taken,
+            offset: append ? picker.options.length : 0,
+            limit: 20,
+        });
+        if (ticket !== this.searchTicket || this.state.picker.field !== field.name) {
+            return;
+        }
+        picker.options = append ? picker.options.concat(result.records) : result.records;
+        picker.more = result.more;
+        picker.loading = false;
+        if (!append) {
+            picker.active = picker.options.length ? 0 : -1;
+        }
+    }
+
+    loadMore(field) {
+        this.fetchSuggestions(field, this.state.picker.term, true);
+    }
+
+    onPickerKeydown(field, ev) {
+        const picker = this.state.picker;
+        if (ev.key === "Escape") {
+            if (picker.open) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                this.closePicker();
+            }
+            return;
+        }
+        if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+            ev.preventDefault();
+            if (!picker.open || picker.field !== field.name) {
+                this.openPicker(field);
+                return;
+            }
+            const n = picker.options.length;
+            if (n) {
+                picker.active = (picker.active + (ev.key === "ArrowDown" ? 1 : n - 1)) % n;
+                const el = ev.target.closest(".o_nc_rep__f--picker")?.querySelector(
+                    `.o_nc_rep__options [data-index="${picker.active}"]`);
+                el?.scrollIntoView({ block: "nearest" });
+            }
+            return;
+        }
+        if (ev.key === "Enter") {
+            ev.preventDefault();      // never submit / refresh the report from a picker
+            const option = picker.options[picker.active];
+            if (picker.open && option) {
+                this.pick(field, option, ev.target);
+            }
+            return;
+        }
+        if (ev.key === "Backspace" && !ev.target.value && (this.state.values[field.name] || []).length) {
+            const values = this.state.values[field.name];
+            this.unpick(field, values[values.length - 1].id);
+        }
+        if (ev.key === "Tab") {
+            this.closePicker();
+        }
+    }
+
+    closePicker() {
+        browser.clearTimeout(this.searchTimer);
+        this.searchTicket = (this.searchTicket || 0) + 1;
+        this.state.picker = { field: "", term: "", options: [], active: -1, more: false, loading: false,
+                              open: false };
+    }
+
+    pick(field, option, input) {
+        this.state.values[field.name].push({ id: option.id, name: option.name });
+        // stay in the field, ready for the next choice (multi-selection is kept)
+        this.state.picker.term = "";
+        this.state.picker.options = this.state.picker.options.filter((o) => o.id !== option.id);
+        this.state.picker.active = Math.min(this.state.picker.active, this.state.picker.options.length - 1);
+        if (input) {
+            input.value = "";
+            input.focus();
+        }
+        this.fetchSuggestions(field, "", false);
     }
 
     unpick(field, id) {
         this.state.values[field.name] = this.state.values[field.name].filter((r) => r.id !== id);
+        if (this.state.picker.field === field.name && this.state.picker.open) {
+            this.fetchSuggestions(field, this.state.picker.term, false);
+        }
+    }
+
+    // ------------------------------------------------------ dropdowns
+    toggleExport() {
+        if (this.state.exportOpen) {
+            this.closeExport();
+            return;
+        }
+        this.closePicker();
+        this.state.exportOpen = true;
+        this.state.xbrlHelp = false;
+    }
+
+    closeExport(restoreFocus = false) {
+        if (!this.state.exportOpen) {
+            return;
+        }
+        this.state.exportOpen = false;
+        this.state.xbrlHelp = false;
+        if (restoreFocus) {
+            this.exportButton.el?.focus();
+        }
+    }
+
+    onExportKeydown(ev) {
+        if (ev.key === "Escape") {
+            ev.preventDefault();
+            ev.stopPropagation();
+            this.closeExport(true);
+            return;
+        }
+        if (ev.key !== "ArrowDown" && ev.key !== "ArrowUp" && ev.key !== "Home" && ev.key !== "End") {
+            return;
+        }
+        ev.preventDefault();
+        if (!this.state.exportOpen) {
+            this.state.exportOpen = true;
+            return;
+        }
+        const items = [...(this.exportMenu.el?.querySelectorAll('[role="menuitem"]:not([disabled])') || [])];
+        if (!items.length) {
+            return;
+        }
+        const i = items.indexOf(document.activeElement);
+        let next = 0;
+        if (ev.key === "End") {
+            next = items.length - 1;
+        } else if (ev.key === "ArrowDown") {
+            next = i < 0 ? 0 : (i + 1) % items.length;
+        } else if (ev.key === "ArrowUp") {
+            next = i <= 0 ? items.length - 1 : i - 1;
+        }
+        items[next].focus();
+    }
+
+    // One window listener closes whatever is open when the user presses or taps OUTSIDE it (capture phase: the
+    // click is not swallowed and nothing else is triggered, no refresh, no download), and on Escape.
+    onWindowPointerDown(ev) {
+        const target = ev.target;
+        if (this.state.exportOpen && !this.exportMenu.el?.contains(target)) {
+            this.closeExport();
+        }
+        if (this.state.picker.open) {
+            const box = target.closest && target.closest(".o_nc_rep__f--picker");
+            if (!box || box.dataset.field !== this.state.picker.field) {
+                this.closePicker();
+            }
+        }
+    }
+
+    onExportFocusout(ev) {
+        // Tab away from the menu closes it (focus moved to something outside it)
+        if (this.state.exportOpen && ev.relatedTarget && !this.exportMenu.el?.contains(ev.relatedTarget)) {
+            this.closeExport();
+        }
+    }
+
+    onWindowKeydown(ev) {
+        if (ev.key !== "Escape") {
+            return;
+        }
+        if (this.state.exportOpen) {
+            this.closeExport(true);
+        }
+        if (this.state.picker.open) {
+            this.closePicker();
+        }
     }
 
     // ----------------------------------------------------------- print
