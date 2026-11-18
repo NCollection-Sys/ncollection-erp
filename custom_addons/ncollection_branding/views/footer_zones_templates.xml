@@ -2,22 +2,44 @@
 <odoo>
     <!-- Three footer zones (models/footer_zones.py). PHYSICAL positions: the table is laid out left-to-right in every
          document, so Left is always on the left of the page, also in an Arabic (RTL) document; each zone's text takes
-         its own direction (dir="auto"). Fixed widths, wrapping, no clipping. `company` is the company, or Odoo's
-         Configure Document Layout wizard in its preview (it carries the same three fields). -->
+         its own direction (dir="auto") and keeps its physical alignment.
+
+         BORDERLESS AND CONTENT-ADAPTIVE (owner review 2026-11-18): wkhtmltopdf's old WebKit does not lay out flex
+         or grid reliably, so the structure stays a table, but an INVISIBLE one: every border, background and
+         separator is cancelled inline (!important, so no company layout's table rule can draw a cell), and the
+         table uses the AUTOMATIC layout with no cell widths: a zone's column is as wide as its content needs, an
+         empty zone takes no width, and when the three cannot share one line the browser wraps each zone inside its
+         own column (no overlap, no clipping). The gap between zones sits on the content, so an empty zone adds
+         none. `company` is the company, or Odoo's Configure Document Layout wizard in its preview (it carries the
+         same three fields). -->
     <template id="nc_footer_zones">
-        <table class="o_nc_footer_zones" dir="ltr"
-               style="width: 100%; table-layout: fixed; border-collapse: collapse;">
-            <tr>
-                <td style="width: 33.33%; text-align: left; vertical-align: top; padding: 0 2mm 0 0; word-wrap: break-word;">
-                    <div class="o_nc_footer_left" dir="auto" t-if="company.nc_footer_left" t-field="company.nc_footer_left"/>
+        <!-- A short zone (40 characters or fewer) stays on one line, so a long neighbour wraps instead of it. -->
+        <t t-set="nc_fz_nowrap_l" t-value="bool(company.nc_footer_left) and len(company.nc_footer_left.striptags().strip()) &lt;= 40"/>
+        <t t-set="nc_fz_nowrap_c" t-value="bool(company.nc_footer_center) and len(company.nc_footer_center.striptags().strip()) &lt;= 40"/>
+        <t t-set="nc_fz_nowrap_r" t-value="bool(company.nc_footer_right) and len(company.nc_footer_right.striptags().strip()) &lt;= 40"/>
+        <t t-set="nc_fz_cell" t-value="'border-style: none !important; border-width: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; vertical-align: top; overflow-wrap: break-word; word-wrap: break-word;'"/>
+        <!-- o_ignore_layout_styling: Odoo's own opt-out from the company layout's table style (report_tables.scss
+             borders and stripes every other table of the document, tbody included). -->
+        <table class="o_nc_footer_zones o_ignore_layout_styling" dir="ltr"
+               style="width: 100%; table-layout: auto; border-collapse: separate; border-spacing: 0; border-style: none !important; border-width: 0 !important; background: transparent !important; margin: 0;">
+            <tbody style="border-style: none !important; border-width: 0 !important;">
+            <tr style="border-style: none !important; border-width: 0 !important; background: transparent !important;">
+                <td class="o_nc_fz_left" t-att-style="nc_fz_cell + ' text-align: left;' + (' white-space: nowrap;' if nc_fz_nowrap_l else '')">
+                    <div class="o_nc_footer_left" dir="auto" style="text-align: left;"
+                         t-if="company.nc_footer_left" t-field="company.nc_footer_left"/>
                 </td>
-                <td style="width: 33.34%; text-align: center; vertical-align: top; padding: 0 2mm; word-wrap: break-word;">
-                    <div class="o_nc_footer_center" dir="auto" t-if="company.nc_footer_center" t-field="company.nc_footer_center"/>
+                <td class="o_nc_fz_center" t-att-style="nc_fz_cell + ' text-align: center;' + (' white-space: nowrap;' if nc_fz_nowrap_c else '')">
+                    <div class="o_nc_footer_center" dir="auto"
+                         t-att-style="'text-align: center;' + (' padding-left: 4mm;' if company.nc_footer_left else '') + (' padding-right: 4mm;' if company.nc_footer_right else '')"
+                         t-if="company.nc_footer_center" t-field="company.nc_footer_center"/>
                 </td>
-                <td style="width: 33.33%; text-align: right; vertical-align: top; padding: 0 0 0 2mm; word-wrap: break-word;">
-                    <div class="o_nc_footer_right" dir="auto" t-if="company.nc_footer_right" t-field="company.nc_footer_right"/>
+                <td class="o_nc_fz_right" t-att-style="nc_fz_cell + ' text-align: right;' + (' white-space: nowrap;' if nc_fz_nowrap_r else '')">
+                    <div class="o_nc_footer_right" dir="auto"
+                         t-att-style="'text-align: right;' + (' padding-left: 4mm;' if (company.nc_footer_left and not company.nc_footer_center) else '')"
+                         t-if="company.nc_footer_right" t-field="company.nc_footer_right"/>
                 </td>
             </tr>
+            </tbody>
         </table>
     </template>
 
@@ -75,7 +97,7 @@
     <template id="nc_footer_zones_bubble" inherit_id="web.external_layout_bubble">
         <xpath expr="//*[@t-field='company.report_footer']" position="replace">
             <t t-if="company.nc_footer_left or company.nc_footer_center or company.nc_footer_right">
-                <div class="border-top pt-2"><t t-call="ncollection_branding.nc_footer_zones"/></div>
+                <div class="pt-2"><t t-call="ncollection_branding.nc_footer_zones"/></div>
             </t>
             <t t-else="">$0</t>
         </xpath>

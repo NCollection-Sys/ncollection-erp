@@ -166,3 +166,13 @@ prints them as physical LEFT | CENTER | RIGHT (the row is laid out left-to-right
 its own direction), instead of the single Footer, never both. A company with no zone prints its legacy Footer as before;
 the upgrade copies a legacy Footer into the Center zone once. A document type's own footer text (Print Settings) still
 wins on the NCollection layout.
+
+**Borderless and content-adaptive (owner review 2026-11-18).** The zones print with no visible structure: the row is an
+automatic-layout table (wkhtmltopdf's WebKit does not lay out flex or grid reliably) with every border, divider and
+background cancelled inline on the table, its tbody, rows and cells, and Odoo's `o_ignore_layout_styling` so no company
+layout styles it. Bootstrap's reboot gives table parts a zero-width *solid* border, which wkhtmltopdf still draws as a
+hairline: hence `border-style: none` everywhere, not `border: 0`. Widths follow the content: an empty zone takes no
+width, a long zone takes what the others leave, and when the three cannot share a line each wraps inside its own
+column (no overlap, no clipping). A zone of 40 characters or fewer stays on one line. Proven on real PDFs: the ten
+content cases, the eight layouts, a four-page invoice, a payment receipt, a sales order and a purchase order, Arabic
+and mixed text; zero strokes in the footer band, zero overlapping words, nothing outside the page.

@@ -77,3 +77,23 @@ class TestFooterZones(TransactionCase):
         self.assertEqual(str(self.env.company.nc_footer_center), '<p>WIZARD-CENTER</p>')
         if wizard.report_layout_id:
             self.assertIn('WIZARD-CENTER', str(wizard.preview))
+
+    def test_borderless_and_content_adaptive(self):
+        """Owner review 2026-11-18: no visible table (no border, divider or background on the table, its tbody,
+        rows or cells, and opted out of the layout's table style), no fixed / equal column widths (automatic layout:
+        a zone is as wide as its content), a short zone kept on one line, a long one allowed to wrap."""
+        long_text = '<p>%s</p>' % ('Balance Cloud LLC, Office 1204, Business Bay Tower, Dubai ' * 2)
+        self.env.company.write({'nc_footer_left': long_text, 'nc_footer_center': False,
+                                'nc_footer_right': '<p>TRN 100</p>'})
+        for xmlid in LAYOUTS:
+            with self.subTest(layout=xmlid):
+                table = self._render(xmlid).xpath("//table[contains(@class, 'o_nc_footer_zones')]")[0]
+                self.assertIn('o_ignore_layout_styling', table.get('class'))
+                self.assertIn('table-layout: auto', table.get('style'))
+                for node in [table] + table.xpath('.//tbody | .//tr | .//td'):
+                    style = node.get('style') or ''
+                    self.assertIn('border-style: none !important', style, node.tag)
+                    self.assertNotIn('width: 33', style, "no equal fixed columns")
+                cells = table.xpath('.//td')
+                self.assertNotIn('nowrap', cells[0].get('style'), "a long zone wraps")
+                self.assertIn('white-space: nowrap', cells[2].get('style'), "a short zone stays on one line")
