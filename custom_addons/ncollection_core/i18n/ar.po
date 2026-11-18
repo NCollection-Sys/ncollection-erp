@@ -3574,7 +3574,7 @@ msgstr "الحقول"
 #. module: ncollection_core
 #: model:ir.ui.menu,name:ncollection_core.menu_workspace_business_settings model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form
 msgid "General Settings"
-msgstr "إعدادات الأعمال"
+msgstr "الإعدادات العامة"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_label_rule__last_applied

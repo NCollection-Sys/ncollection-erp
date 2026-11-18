@@ -4,6 +4,9 @@
          ...): the app opens on General Settings (the settings page, business_settings_views.xml), and the pages that
          are not key/value settings are grouped in three menus. Loaded last so every page menu exists; only parents
          change, so each menu keeps its action, groups and policy section. -->
+    <!-- An upgrade keeps a menu's existing translation; these renamed menus get their Arabic name explicitly. -->
+    <function model="ir.ui.menu" name="_nc_set_menu_translation"
+              eval="('ncollection_core.menu_workspace_business_settings', 'ar_001', 'الإعدادات العامة')"/>
     <menuitem id="menu_ws_access" name="Users &amp; Access" parent="menu_workspace_settings_root" sequence="10"/>
     <menuitem id="menu_ws_company" name="Company" parent="menu_workspace_settings_root" sequence="20"/>
     <menuitem id="menu_ws_workspace" name="Workspace" parent="menu_workspace_settings_root" sequence="30"/>
