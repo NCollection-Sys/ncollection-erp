@@ -81,7 +81,8 @@ class TestTrialBalanceXbrlGl(AccountTestInvoicingCommon):
         self.assertTrue(any(e['ending_balance'] < 0 for e in per.values()), "a credit balance is written as C")
 
     def test_the_filters_of_the_report_are_the_filters_of_the_file(self):
-        receivable = self.moves[0].line_ids.filtered(lambda l: l.account_id.account_type == 'asset_receivable').account_id
+        lines = self.moves[0].line_ids
+        receivable = lines.filtered(lambda ml: ml.account_id.account_type == 'asset_receivable').account_id
         wizard = self.env['ncollection.account.report.trial.balance'].create(
             {'date_from': self.year_start, 'date_to': self.today, 'account_ids': [(6, 0, receivable.ids)]})
         root, per = self._check(wizard)
