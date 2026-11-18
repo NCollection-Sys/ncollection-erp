@@ -125,6 +125,10 @@ class AiContextBuilder(models.AbstractModel):
             result = engine.aggregate(spec)
             if result and result.get('rows'):
                 sections[spec['key']] = self._label_rows(spec, result['rows'])
+            elif result is not None and 'rows' in result:
+                # AVAILABLE and empty (the caller may read it; nothing matches): an empty section, so "no open
+                # supplier bills" is an answer instead of a silently missing topic. Unavailable stays absent.
+                sections[spec['key']] = []
 
         return self._truncate(sections, max_tokens)
 
