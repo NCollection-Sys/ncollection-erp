@@ -127,9 +127,9 @@ _SECTIONS = {
                                 "حركات بنكية بانتظار المطابقة"),
     "top_products_12_months": ("price_subtotal:sum", "Top products by sales (12 months)",
                                "أفضل المنتجات مبيعًا (12 شهرًا)"),
+    "payables": ("amount_residual:sum", "Open supplier bills", "فواتير الموردين المفتوحة"),
     "receivables": ("amount_residual:sum", "Open customer invoices", "فواتير العملاء المفتوحة"),
     "overdue_receivables": ("amount_residual:sum", "Overdue customer invoices", "فواتير العملاء المتأخرة"),
-    "payables": ("amount_residual:sum", "Open supplier bills", "فواتير الموردين المفتوحة"),
     "recent_invoices": ("amount_total:sum", "Invoiced in the last months", "المفوتر في الأشهر الأخيرة"),
     "sales_by_month": ("amount_total:sum", "Confirmed sales orders", "أوامر البيع المؤكدة"),
     "top_customers": ("amount_total:sum", "Top customers by orders", "أفضل العملاء حسب الطلبات"),
@@ -157,7 +157,13 @@ def grounded_summary(prompt: str) -> str:
     lines = []
     for key, (column, english, arabic_label) in _SECTIONS.items():
         rows = data.get(key)
-        if not isinstance(rows, list) or not rows:
+        if isinstance(rows, list) and not rows:
+            # The tenant included the section (the question asked for it, or it is part of the general picture) and it
+            # is EMPTY: say so. Dropping it silently made an answer about supplier bills read as an answer about
+            # customers.
+            lines.append("%s: %s" % (arabic_label if arabic else english, "لا يوجد" if arabic else "none"))
+            continue
+        if not isinstance(rows, list):
             continue
         values = [r.get(column) for r in rows if isinstance(r, dict) and isinstance(r.get(column), (int, float))]
         if not values:

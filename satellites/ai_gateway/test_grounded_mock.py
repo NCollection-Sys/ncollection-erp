@@ -44,3 +44,12 @@ class GroundedMockTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EmptyTopicTest(unittest.TestCase):
+    def test_an_asked_topic_with_no_data_says_none_before_the_general_picture(self):
+        data = {"workspace": {"currency": "AED"}, "payables": [],
+                "receivables": [{"partner_id": "PARTNER_1", "amount_residual:sum": 210.0}]}
+        text = grounded_summary(_prompt(data))
+        self.assertIn("Open supplier bills: none", text)
+        self.assertLess(text.index("Open supplier bills"), text.index("Open customer invoices"))
