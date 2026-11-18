@@ -299,7 +299,7 @@ class AuditlogRule(models.Model):
         # RE-ENTRANCE GUARD: auditlog's unlink reloads the registry, which runs this seeding again; without the guard
         # that nested run withdraws again and the reloads never end (measured: RecursionError).
         if not _WITHDRAWING:
-            stale = self.sudo().with_context(active_test=False).search([]).filtered(
+            stale = self.sudo().with_context(active_test=False).search([('model_id', '!=', False)]).filtered(
                 lambda rule: (rule.name or '').startswith('NCollection audit:') and rule.model_id.model in self.env
                 and self._nc_platform_extended(self.env[rule.model_id.model]))
             if stale:

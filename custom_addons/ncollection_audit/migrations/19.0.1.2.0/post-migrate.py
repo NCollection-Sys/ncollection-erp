@@ -10,7 +10,8 @@ def migrate(cr, version):
     env = api.Environment(cr, SUPERUSER_ID, {})
     Rule = env['auditlog.rule'].sudo().with_context(active_test=False)
     platform = Rule.search([]).filtered(
-        lambda rule: rule.model_id.model in env and env['auditlog.rule']._nc_platform_extended(env[rule.model_id.model])
+        lambda rule: rule.model_id.model in env
+        and env['auditlog.rule']._nc_platform_extended(env[rule.model_id.model])
         and rule.name.startswith('NCollection audit:'))
     if platform:
         if hasattr(platform, 'unsubscribe'):
