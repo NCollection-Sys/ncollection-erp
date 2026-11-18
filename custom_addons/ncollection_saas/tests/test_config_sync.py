@@ -100,7 +100,9 @@ class TestConfigSync(TransactionCase):
         before = self.env['queue.job'].search_count([])
         sub.write({'plan_id': plan2.id})
         self.assertEqual(tenant.plan_id, plan2, "tenant plan follows its current subscription")
-        self.assertEqual(self.env['queue.job'].search_count([]), before + 1)
+        # the upgrade adds `stock`: licensing (sync) AND the install of what is now licensed, like a plan edit (#461)
+        self.assertEqual(self.env['queue.job'].search_count([]), before + 2)
+        self.assertTrue(self.env['queue.job'].search_count([('func_string', 'like', 'run_module_install')]))
 
     # ---- json2/bearer client --------------------------------------------
 

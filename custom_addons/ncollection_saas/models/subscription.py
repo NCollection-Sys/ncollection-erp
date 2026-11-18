@@ -83,7 +83,15 @@ class Subscription(models.Model):
         """A plan change on a subscription (upgrade/downgrade) propagates to the
         tenant: it keeps tenant.plan_id (the config source of truth, matching
         the provisioning seed) in step, then pushes the new module set / limits
-        into the tenant workspace (P2-T03)."""
+        into the tenant workspace (P2-T03).
+
+        A plan that LICENSES MORE also has to INSTALL more, exactly like a plan edit (#461, config_sync.py): licensing
+        alone shows an application that does not exist in the tenant's database. Installs are queued only for tenants
+        whose licensed set grew; a downgrade re-pushes licensing and never uninstalls (module_install.py)."""
+        before = {}
+        if 'plan_id' in vals:
+            before = {sub.tenant_id.id: set(sub.tenant_id._nc_effective_module_list())
+                      for sub in self if sub.tenant_id}
         res = super().write(vals)
         if 'plan_id' in vals:
             to_sync = self.env['ncollection.tenant']
@@ -95,6 +103,9 @@ class Subscription(models.Model):
                 if tenant:
                     to_sync |= tenant
             to_sync._config_sync_enqueue()
+            gaining = to_sync.filtered(lambda t: set(t._nc_effective_module_list()) - before.get(t.id, set()))
+            if gaining:
+                gaining._nc_enqueue_module_install()
         return res
 
     def _trigger_provisioning(self):

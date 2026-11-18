@@ -191,3 +191,81 @@ class TestOwnerLeastPrivilegeOnAnExistingDatabase(TransactionCase):
         admin = new_test_user(self.env, login='plat_admin', groups=OWNER + ',base.group_system')
         self.assertEqual(self.env['res.groups']._nc_enforce_owner_least_privilege(), [])
         self.assertTrue(admin.has_group('base.group_system'))
+
+
+@tagged('post_install', '-at_install')
+class TestAdministratorInvariantUnderOptionA(TransactionCase):
+    """Production job 6: a NEW tenant's `admin` Owner is the only active member of base.group_system (the superuser is
+    archived). Option A took it away, and the very next user create (the config-sync service account) failed with
+    Odoo's "You must have at least an administrator user." - as did creating any user in a tenant with no entry proxy.
+    """
+
+    def _a_fresh_tenant(self):
+        _patch_platform_group(self, None)
+        system = self.env.ref('base.group_system')
+        admin = self.env.ref('base.user_admin')
+        others = system.user_ids - admin  # leave `admin` the ONLY active holder, as in a new tenant
+        if others:
+            others.write({'group_ids': [(3, system.id)]})
+        admin.write({'group_ids': [(4, self.env.ref('ncollection_core.group_role_owner').id)]})
+        self.assertEqual(system.user_ids, admin, "the fresh-tenant state is reproduced")
+        return system, admin
+
+    def test_a_user_can_still_be_created_after_option_a(self):
+        system, admin = self._a_fresh_tenant()
+        self.env['res.groups']._nc_enforce_owner_least_privilege()
+        self.env.invalidate_all()
+        self.assertFalse(admin.has_group('base.group_system'), "the Owner is still not a technical administrator")
+        user = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Config sync', 'login': 'inv_service', 'group_ids': [(6, 0, self.env.ref('base.group_user').ids)]})
+        self.assertTrue(user.exists())
+        self.assertTrue(system.user_ids, "base.group_system keeps an active member")
+
+    def test_the_maintenance_administrator_cannot_sign_in_and_is_not_a_seat(self):
+        from odoo.exceptions import AccessDenied
+        from odoo.addons.ncollection_core.models.res_groups import MAINTENANCE_LOGIN
+        self._a_fresh_tenant()
+        self.env['res.groups']._nc_enforce_owner_least_privilege()
+        keeper = self.env['res.users'].with_context(active_test=False).search([('login', '=', MAINTENANCE_LOGIN)])
+        self.assertEqual(len(keeper), 1)
+        self.assertTrue(keeper.active and keeper.nc_platform_proxy and not keeper.nc_platform_ref)
+        self.assertTrue(keeper.has_group('base.group_system'))
+        self.assertFalse(keeper.has_group('ncollection_core.group_role_owner'))
+        self.assertFalse(keeper.sudo().password, "no password is stored")
+        self.assertFalse(keeper.partner_id.email, "no reset link can reach it")
+        for credential in ({'type': 'password', 'login': MAINTENANCE_LOGIN, 'password': ''},
+                           {'type': 'password', 'login': MAINTENANCE_LOGIN, 'password': 'admin'}):
+            with self.assertRaises(AccessDenied):
+                keeper.with_user(keeper)._check_credentials(credential, {'interactive': True})
+        seats = self.env['res.users'].search_count([('active', '=', True), ('share', '=', False),
+                                                    ('nc_platform_proxy', '=', False), ('id', '=', keeper.id)])
+        self.assertEqual(seats, 0, "not a customer seat")
+
+    def test_idempotent_and_self_repairing(self):
+        from odoo.addons.ncollection_core.models.res_groups import MAINTENANCE_LOGIN
+        self._a_fresh_tenant()
+        groups = self.env['res.groups']
+        first = groups._nc_ensure_maintenance_admin()
+        self.assertEqual(groups._nc_ensure_maintenance_admin(), first)
+        first.write({'active': False})                         # archived by mistake (as the superuser could)
+        self.assertEqual(groups._nc_ensure_maintenance_admin(), first)
+        self.assertTrue(first.active)
+        self.assertEqual(self.env['res.users'].with_context(active_test=False).search_count(
+            [('login', '=', MAINTENANCE_LOGIN)]), 1)
+
+    def test_a_real_account_on_the_reserved_login_is_never_promoted(self):
+        from odoo.addons.ncollection_core.models.res_groups import MAINTENANCE_LOGIN
+        squatter = new_test_user(self.env, login=MAINTENANCE_LOGIN, groups='base.group_user')
+        with self.assertRaises(UserError):
+            self.env['res.groups']._nc_ensure_maintenance_admin()
+        self.assertFalse(squatter.has_group('base.group_system'))
+
+    def test_the_owner_cannot_touch_the_maintenance_administrator(self):
+        self._a_fresh_tenant()
+        keeper = self.env['res.groups']._nc_ensure_maintenance_admin()
+        owner = new_test_user(self.env, login='inv_owner', groups=OWNER)
+        with self.assertRaises(UserError):  # AccessError is a UserError
+            keeper.with_user(owner).write({'active': False})
+        with self.assertRaises(UserError):  # AccessError is a UserError
+            keeper.with_user(owner).nc_set_active(False)
+        self.assertTrue(keeper.active)

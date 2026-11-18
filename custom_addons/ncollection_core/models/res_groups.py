@@ -2,8 +2,13 @@
 import logging
 
 from odoo import SUPERUSER_ID, api, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
+
+# The reserved login of the platform maintenance administrator (see _nc_ensure_maintenance_admin). No '@', no
+# 'platform.' prefix (that one belongs to the entry proxies of named platform administrators).
+MAINTENANCE_LOGIN = '__nc_platform_maintenance__'
 
 
 class ResGroups(models.Model):
@@ -26,6 +31,9 @@ class ResGroups(models.Model):
         technical = self.browse([g.id for g in (self.env.ref('base.group_system', raise_if_not_found=False),
                                                 self.env.ref('base.group_erp_manager', raise_if_not_found=False))
                                  if g]).sudo()
+        # BEFORE any Owner loses the technical groups: Odoo refuses every later user write while base.group_system has
+        # no ACTIVE member, and in a new tenant the `admin` Owner is its only one (the superuser is archived).
+        self._nc_ensure_maintenance_admin()
         implied = owner.sudo().implied_ids & technical
         if implied:
             owner.sudo().write({'implied_ids': [(3, group.id) for group in implied]})
@@ -42,6 +50,50 @@ class ResGroups(models.Model):
                              ', '.join(direct.mapped('name')), user.id, user.login)
         return changed
 
+    @api.model
+    def _nc_ensure_maintenance_admin(self):
+        """The tenant's platform MAINTENANCE administrator: the one active holder of base.group_system Odoo requires.
+
+        Odoo 19 (``res.users._check_at_least_one_administrator``) refuses any user create or group change while
+        ``base.group_system`` has no ACTIVE member. Under Option A no Owner holds it, and the superuser is archived, so
+        without this account a tenant cannot create a user at all - provisioning failed at its seed for exactly that
+        reason (the config-sync service account is a user create).
+
+        It is a platform account (``nc_platform_proxy``) with NO ``nc_platform_ref``, so it can NEVER sign in:
+        ``_check_credentials`` refuses every password for a proxy, and an entry grant needs a ref. It holds
+        no password, no email (no reset link can reach it), no API key and no customer role. As a proxy it is not a
+        customer seat, it is hidden from workspace user lists and the administration service, and only the
+        superuser can create or change it. Its single purpose is to satisfy the invariant. Idempotent;
+        reactivates and repairs the account if it was archived or stripped. Returns the account.
+        """
+        env = api.Environment(self.env.cr, SUPERUSER_ID, {'active_test': False, 'no_reset_password': True})
+        Users = env['res.users']
+        system = env.ref('base.group_system')
+        user = Users.search([('login', '=', MAINTENANCE_LOGIN)], limit=1)
+        if user and not user.nc_platform_proxy:
+            # a real account squatting the reserved login: never promote it
+            raise UserError(env._("The login '%s' is reserved for the platform maintenance account.",
+                                  MAINTENANCE_LOGIN))
+        if not user:
+            company = env.ref('base.main_company', raise_if_not_found=False) or env['res.company'].search([], limit=1)
+            user = Users.create({
+                'name': env._('Platform Maintenance (system)'), 'login': MAINTENANCE_LOGIN,
+                'nc_platform_proxy': True, 'company_id': company.id, 'company_ids': [(6, 0, company.ids)],
+                'group_ids': [(6, 0, [system.id])]})
+            _logger.info("Platform maintenance administrator created (id %s).", user.id)
+            return user
+        vals = {}
+        if not user.active:
+            vals['active'] = True
+        if system not in user.group_ids:
+            vals['group_ids'] = [(4, system.id)]
+        if user.nc_platform_ref:
+            vals['nc_platform_ref'] = False
+        if vals:
+            user.write(vals)
+            _logger.info("Platform maintenance administrator repaired: %s.", ', '.join(sorted(vals)))
+        return user
+
     def _register_hook(self):
         """Keep the role -> app-group links in step with the installed apps.
 
@@ -55,9 +107,14 @@ class ResGroups(models.Model):
         result = super()._register_hook()
         try:
             from odoo.addons.ncollection_core.hooks import _sync_role_implications, _sync_scheduler_read_access
-            _sync_role_implications(self.env)
-            # the scheduler's read-only ACLs on the apps installed since core (kept here when Anomaly Alerts went)
-            _sync_scheduler_read_access(self.env)
+            # In a SAVEPOINT: after a module install every worker reloads its registry at once and runs this; a
+            # concurrent-update failure must roll back only this sync. Without it the swallowed error left the whole
+            # transaction aborted, the next registry step failed, and that request answered HTTP 500 (production,
+            # 2026-11-18, the platform install of mass_mailing).
+            with self.env.cr.savepoint():
+                _sync_role_implications(self.env)
+                # the scheduler's read-only ACLs on the apps installed since core (kept here when Anomaly Alerts went)
+                _sync_scheduler_read_access(self.env)
         except Exception:                                    # pragma: no cover
             # a registry that fails to load is an outage; a missing link is a gap
             _logger.exception("ncollection_core: syncing role implications failed")

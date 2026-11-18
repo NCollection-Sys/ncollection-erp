@@ -34,3 +34,5 @@ from . import test_platform_workspace_admin
 from . import test_provisioning_first_sync
 from . import test_provisioning_shell_no_http
 from . import test_settings_policy_platform
+from . import test_provisioning_single_run
+from . import test_subscription_plan_install

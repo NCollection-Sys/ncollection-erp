@@ -19,6 +19,7 @@ import time
 from datetime import timedelta
 
 import psycopg2
+import psycopg2.errors
 
 from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import UserError, ValidationError
@@ -145,6 +146,14 @@ class ProvisioningJob(models.Model):
             raise UserError(self.env._(
                 "Job for database '%s' is already done; refusing to re-run.", self.database_name))
         if self.status == 'running':
+            return True
+        # ONE run at a time, proven by the database rather than by the status: 'running' is written in THIS transaction
+        # and is invisible to another worker until the run ends, so two runs of the same job (a re-queue while the
+        # first was still building) both passed the guard above, and the second "cleared its own leftover" - the
+        # database the first was creating (production job 6). The row lock is held for the whole run; a concurrent run
+        # cannot take it (or finds the row changed since its snapshot) and steps aside without touching anything.
+        if not self._nc_lock_for_run():
+            _logger.info("Provisioning job %s is already being run by another worker; skipped.", self.id)
             return True
         # THE APPROVAL GATE. A self-registered company has no database until an
         # administrator approves it, and this is the one place every path —
@@ -550,6 +559,17 @@ class ProvisioningJob(models.Model):
             raise UserError(self.env._(
                 "Provisioning quota exceeded: %(n)s jobs in the last hour (limit %(limit)s).",
                 n=recent, limit=limit))
+
+    def _nc_lock_for_run(self):
+        """Lock this job's row for the rest of the transaction; False if another transaction holds it or has changed
+        it since this one's snapshot (REPEATABLE READ). The failed attempt is contained in a savepoint."""
+        try:
+            with self.env.cr.savepoint(flush=False):
+                self.env.cr.execute(
+                    "SELECT id FROM ncollection_provisioning_job WHERE id = %s FOR UPDATE NOWAIT", [self.id])
+        except (psycopg2.errors.LockNotAvailable, psycopg2.errors.SerializationFailure):
+            return False
+        return True
 
     def _set_status(self, status, message):
         self.write({'status': status})
