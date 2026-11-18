@@ -147,6 +147,9 @@ _NC_WITHHELD = {
 # minimises on a schedule this module knows nothing about.
 #
 # These models keep their OWN audit story. Flagged by security review.
+# The platform layer (CLAUDE.md two-layer separation); its models are never seeded (see _nc_audited_models).
+PLATFORM_MODULES = frozenset({'ncollection_saas', 'ncollection_subscription', 'ncollection_billing',
+                              'ncollection_reseller'})
 SENSITIVE_MODELS = frozenset({
     'ncollection.auth.log',
     # UAE e-invoices: the payload and the findings hold both parties' identifiers and the amounts, and the e-invoice
@@ -216,8 +219,23 @@ class AuditlogRule(models.Model):
                 continue
             if record.model in SENSITIVE_MODELS:
                 continue
+            # PLATFORM-LAYER models (tenants, plans, subscriptions, billing, resellers) are NOT audited through OCA
+            # auditlog: its write/create hook on them bypassed the platform's own write logic (plan fan-out,
+            # install queueing, the immutable database name, the deletion guard) - measured, 22 SaaS / billing /
+            # reseller tests fail with these rules and pass without them. Those records keep their own history
+            # (tenant chatter, deletion audit, billing documents).
+            if self._nc_platform_extended(model):
+                continue
             names.append(record.model)
         return sorted(set(names))
+
+    @api.model
+    def _nc_platform_extended(self, model):
+        """Whether a platform-layer module defines or extends this model (its class hierarchy holds a class from one
+        of PLATFORM_MODULES). ir.model.modules names only the defining module, which missed e.g. System Branding,
+        defined by ncollection_branding and extended by ncollection_saas."""
+        prefixes = tuple('odoo.addons.%s.' % name for name in PLATFORM_MODULES)
+        return any((cls.__module__ or '').startswith(prefixes) for cls in type(model).__mro__)
 
     # ---- seeding ---------------------------------------------------------
 
@@ -273,6 +291,15 @@ class AuditlogRule(models.Model):
         """
         IrModel = self.env['ir.model'].sudo()
         created = self.browse()
+        # WITHDRAW this module's own rule on a model a platform module now extends (a rule seeded before that module
+        # was installed): see _nc_platform_extended. Only rules this module named; anything else is left alone.
+        stale = self.sudo().with_context(active_test=False).search([('name', '=like', 'NCollection audit: %')]).filtered(
+            lambda rule: rule.model_id.model in self.env
+            and self._nc_platform_extended(self.env[rule.model_id.model]))
+        if stale:
+            if hasattr(stale, 'unsubscribe'):
+                stale.unsubscribe()
+            stale.unlink()
         for name in self._nc_audited_models():
             model = IrModel.search([('model', '=', name)], limit=1)
             if not model:

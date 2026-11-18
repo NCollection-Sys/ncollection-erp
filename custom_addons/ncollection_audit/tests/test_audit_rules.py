@@ -124,12 +124,24 @@ class TestAuditRules(AuditCommon):
                 continue
             if record.model in SENSITIVE_MODELS:
                 continue          # excluded on purpose — see the auth-log test
+            if self.Rule._nc_platform_extended(model):
+                continue          # platform layer: never through auditlog (see the platform test below)
             expected.add(record.model)
         seeded = set(self.Rule.search([]).mapped('model_model'))
         self.assertFalse(
             expected - seeded,
             "these ncollection models exist here and are NOT audited: %s"
             % sorted(expected - seeded))
+
+    def test_platform_layer_models_are_never_audited_through_auditlog(self):
+        """auditlog's hook on a platform model bypassed the platform's own write logic (plan fan-out, install
+        queueing, immutable database name, deletion guard, branding resync): measured, those tests fail with the rule
+        and pass without it. Non-vacuous on a database where a platform module is installed."""
+        seeded = set(self.Rule.search([]).mapped('model_model'))
+        for name in seeded:
+            model = self.env.get(name)
+            if model is not None:
+                self.assertFalse(self.Rule._nc_platform_extended(model), name)
 
     def test_the_audit_module_does_not_audit_itself(self):
         """Non-vacuous everywhere: `ncollection.audit.seal` exists in every
