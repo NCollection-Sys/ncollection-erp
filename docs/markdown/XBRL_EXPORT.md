@@ -97,3 +97,24 @@ Equity components (`account.account.nc_equity_component`): Issued capital, Share
 earnings, Other reserves. The current-year earnings account and the profit and loss accounts are retained earnings by
 nature. A ledger with ANY unmapped equity account carrying a balance exports the total column only, so the components
 always add up to the total (tested).
+
+## Coverage totals (acceptance review of c340bfa, 2026-11-18)
+
+21 reports are opened through the report viewer (every `nc_report_model` action). Each shows XBRL in its Export menu:
+a download, or a disabled entry with the reason below. No report produces a file it cannot stand behind.
+
+| Class | Count | Reports |
+|---|---|---|
+| Fully supported and validated (Arelle 0 errors, figures = report) | 4 | Balance Sheet, Profit and Loss, Cash Flow, Changes in Equity (total column) |
+| Supported with a required accounting mapping | 1 (extension of the above) | Changes in Equity per component: needs "Component of Equity" on every equity account with a balance; without it, total column only |
+| Applicable, not yet implemented | 2 | Aged Balances (IFRS 7 ageing of receivables / payables), Asset Register (IAS 16 property, plant and equipment reconciliation) |
+| Not applicable with the IFRS taxonomy | 15 | Trial Balance, General Ledger, Partner Ledger, Partner Statement, Report Reference, Tax Analysis, UAE VAT Return, Financial Summary, Profitability, Revenue Analysis, Expense Analysis, Cost Centres, Profit Centres, Departments, Budget vs Actual |
+
+**Trial Balance / General Ledger / Partner Ledger:** IFRS has no concept per account row. A valid path exists in a
+DIFFERENT taxonomy, XBRL Global Ledger (XBRL GL, gl-cor / gl-bus), which carries journal entries and account
+balances; it is not IFRS, is not built, and would be a separate decision. **Tax Analysis / UAE VAT:** the FTA publishes
+no XBRL taxonomy for the VAT return. **Management analyses:** no taxonomy concept means the same thing.
+
+So: 4 of 21 export XBRL today (one with an optional component extension), 2 are buildable IFRS work, 15 are not IFRS
+statements. The ERP is NOT "XBRL-complete"; it is complete for the four primary financial statements.
+

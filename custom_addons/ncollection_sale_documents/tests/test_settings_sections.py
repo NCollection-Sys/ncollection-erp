@@ -87,3 +87,54 @@ class TestSettingsSections(TransactionCase):
         self.assertEqual(self.env.company.quotation_validity_days, start)
         menu = self.env.ref('ncollection_sale_documents.menu_workspace_sales_settings')
         self.assertIn(menu.id, self.env['ncollection.settings.policy']._nc_hidden_menu_ids())
+
+
+@tagged('post_install', '-at_install')
+class TestSettingsExecutePath(TestSettingsSections):
+    """The Save of Odoo's settings view calls ``execute``: the same guarded save, nothing more."""
+
+    def _page_all(self, user, **vals):
+        return self.env['ncollection.business.settings'].with_user(user).create(vals)
+
+    def test_execute_is_the_guarded_save(self):
+        result = self._page_all(self.admin, quotation_validity_days=23).execute()
+        self.assertEqual(result, {'type': 'ir.actions.client', 'tag': 'reload'})
+        self.assertEqual(self.env.company.quotation_validity_days, 23)
+
+    def test_execute_cannot_install_or_remove_a_module(self):
+        fields_ = self.env['ncollection.business.settings']._fields
+        self.assertFalse([name for name in fields_ if name.startswith('module_')],
+                         "no module_* setting exists on the page, so nothing can be installed from it")
+        states = dict(self.env['ir.module.module'].sudo().search([]).mapped(lambda m: (m.name, m.state)))
+        self._page_all(self.admin, quotation_validity_days=24, group_warning_sale=True).execute()
+        after = dict(self.env['ir.module.module'].sudo().search([]).mapped(lambda m: (m.name, m.state)))
+        self.assertEqual(states, after)
+
+    def test_execute_respects_hidden_and_view_only(self):
+        start = self.env.company.quotation_validity_days
+        self._policy(sales='hidden')
+        self._page_all(self.admin, quotation_validity_days=start + 9).execute()
+        self.assertEqual(self.env.company.quotation_validity_days, start, "hidden: not written")
+        self._policy(sales='view')
+        with self.assertRaises(AccessError):
+            self._page_all(self.admin, quotation_validity_days=start + 9).execute()
+        self.assertEqual(self.env.company.quotation_validity_days, start, "view only: refused")
+
+    def test_execute_writes_only_the_current_company(self):
+        other = self.env['res.company'].create({'name': 'Settings Other Co'})
+        before_other = other.quotation_validity_days
+        page = self._page_all(self.admin, quotation_validity_days=31, company_id=other.id)
+        page.execute()
+        self.assertEqual(self.env.company.quotation_validity_days, 31, "the user's current company")
+        self.assertEqual(other.quotation_validity_days, before_other, "a client-sent company is ignored")
+
+    def test_execute_never_grants_technical_rights(self):
+        self._page_all(self.admin, group_warning_sale=True, group_uom=True).execute()
+        self.admin.invalidate_recordset()
+        self.assertFalse(self.admin.has_group('base.group_system'))
+        self.assertFalse(self.admin.has_group('base.group_erp_manager'))
+        with self.assertRaises(AccessError):
+            self._page_all(self.plain, quotation_validity_days=5).execute()
+        with self.assertRaises(AccessError):              # a delegate of Sales cannot save another section's value
+            self.env['ncollection.business.settings'].with_user(self.delegate).with_context(
+                nc_settings_section='purchase').create({}).execute()

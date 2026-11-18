@@ -100,12 +100,17 @@ class AccountReportXbrl(models.AbstractModel):
             return False
         ledgers = self.env._("An account-level listing: IFRS has no concept per account row, so a mapping would be "
                              "invented.")
+        gl = self.env._("An account-level listing: IFRS has no concept per account row. The XBRL Global Ledger "
+                        "taxonomy (not IFRS) could carry it; not built.")
         reasons = {
-            'ncollection.account.report.trial.balance': ledgers,
-            'ncollection.account.report.general.ledger': ledgers,
+            'ncollection.account.report.trial.balance': gl,
+            'ncollection.account.report.general.ledger': gl,
             'ncollection.account.report.partner.ledger': ledgers,
             'ncollection.account.report.statement': ledgers,
-            'ncollection.account.report.aged.partner': ledgers,
+            'ncollection.account.report.aged.partner': self.env._(
+                "Applicable (IFRS 7 ageing of receivables and payables), not built yet: no file is produced."),
+            'ncollection.account.report.asset.register': self.env._(
+                "Applicable (IAS 16 property, plant and equipment reconciliation), not built yet: no file is produced."),
             'ncollection.account.report.tax.analysis': self.env._(
                 "A tax return analysis, not an IFRS statement; a tax authority taxonomy would be needed."),
             'ncollection.account.report.uae.vat': self.env._(

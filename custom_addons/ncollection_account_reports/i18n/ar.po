@@ -2989,3 +2989,21 @@ msgstr "تصدير XBRL غير متاح لـ %(report)s. %(reason)s"
 #: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
 msgid "— not available"
 msgstr "— غير متاح"
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "An account-level listing: IFRS has no concept per account row. The XBRL Global Ledger taxonomy (not IFRS) could carry it; not built."
+msgstr "كشف على مستوى الحسابات: لا يوجد في IFRS مفهوم لكل حساب. يمكن لتصنيف XBRL لدفتر الأستاذ العام (وليس IFRS) أن يحمله؛ لم يُنفَّذ."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "Applicable (IFRS 7 ageing of receivables and payables), not built yet: no file is produced."
+msgstr "قابل للتطبيق (أعمار الذمم المدينة والدائنة وفق IFRS 7) ولم يُنفَّذ بعد: لا يُنتَج أي ملف."
+
+#. module: ncollection_account_reports
+#. odoo-python
+#: code:addons/ncollection_account_reports/models/xbrl_export.py:0
+msgid "Applicable (IAS 16 property, plant and equipment reconciliation), not built yet: no file is produced."
+msgstr "قابل للتطبيق (تسوية الممتلكات والآلات والمعدات وفق IAS 16) ولم يُنفَّذ بعد: لا يُنتَج أي ملف."
