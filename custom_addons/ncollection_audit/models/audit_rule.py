@@ -147,6 +147,7 @@ _NC_WITHHELD = {
 # minimises on a schedule this module knows nothing about.
 #
 # These models keep their OWN audit story. Flagged by security review.
+_WITHDRAWING = []   # non-empty while this process withdraws platform rules (see _nc_seed_rules)
 # The platform layer (CLAUDE.md two-layer separation); its models are never seeded (see _nc_audited_models).
 PLATFORM_MODULES = frozenset({'ncollection_saas', 'ncollection_subscription', 'ncollection_billing',
                               'ncollection_reseller'})
@@ -293,13 +294,22 @@ class AuditlogRule(models.Model):
         created = self.browse()
         # WITHDRAW this module's own rule on a model a platform module now extends (a rule seeded before that module
         # was installed): see _nc_platform_extended. Only rules this module named; anything else is left alone.
-        stale = self.sudo().with_context(active_test=False).search([('name', '=like', 'NCollection audit: %')]).filtered(
-            lambda rule: rule.model_id.model in self.env
-            and self._nc_platform_extended(self.env[rule.model_id.model]))
-        if stale:
-            if hasattr(stale, 'unsubscribe'):
-                stale.unsubscribe()
-            stale.unlink()
+        # Plain read + Python filter (a domain on the rule name recursed inside auditlog's patched search on a
+        # large module set).
+        # RE-ENTRANCE GUARD: auditlog's unlink reloads the registry, which runs this seeding again; without the guard
+        # that nested run withdraws again and the reloads never end (measured: RecursionError).
+        if not _WITHDRAWING:
+            stale = self.sudo().with_context(active_test=False).search([]).filtered(
+                lambda rule: (rule.name or '').startswith('NCollection audit:') and rule.model_id.model in self.env
+                and self._nc_platform_extended(self.env[rule.model_id.model]))
+            if stale:
+                _WITHDRAWING.append(True)
+                try:
+                    if hasattr(stale, 'unsubscribe'):
+                        stale.unsubscribe()
+                    stale.unlink()
+                finally:
+                    _WITHDRAWING.clear()
         for name in self._nc_audited_models():
             model = IrModel.search([('model', '=', name)], limit=1)
             if not model:
