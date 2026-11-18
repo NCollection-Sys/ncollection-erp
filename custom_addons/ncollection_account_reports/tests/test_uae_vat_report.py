@@ -247,3 +247,29 @@ class TestUaeVatReport(AccountTestInvoicingCommon):
         act_faf = wizard.action_export_faf()
         self.assertEqual(act_faf['type'], 'ir.actions.act_url')
         self.assertIn('/web/content/', act_faf['url'])
+
+    def test_vat_is_the_booked_tax_not_net_times_rate(self):
+        """Audit 2026-11-18: the return printed net x 5% (242.775 for a 4,855.50 sale) while the tax account holds the
+        booked, rounded VAT (242.78). The VAT boxes now read the posted tax lines, so the return equals the ledger."""
+        invoice = self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': self.partner_dubai.id,
+            'date': '2026-04-10',
+            'invoice_date': '2026-04-10',
+            'invoice_line_ids': [(0, 0, {
+                'name': 'Rounding case',
+                'account_id': self.account_income.id,
+                'price_unit': 4855.50,
+                'tax_ids': [(6, 0, [self.tax_sale_5.id])],
+            })],
+        })
+        invoice.action_post()
+        booked = -sum(invoice.line_ids.filtered('tax_line_id').mapped('balance'))
+        self.assertAlmostEqual(booked, 242.78)
+        wizard = self.env['ncollection.account.report.uae.vat'].create({
+            'company_id': self.company.id, 'date_from': '2026-04-01', 'date_to': '2026-04-30',
+            'target_move': 'posted'})
+        line_by_box = {r['box']: r for r in wizard._nc_compute_lines() if r['box']}
+        self.assertAlmostEqual(line_by_box['1b']['balance'], 4855.50)
+        self.assertEqual(round(line_by_box['1b']['vat_amount'], 6), 242.78, "the booked VAT, to the fils")
+        self.assertEqual(round(line_by_box['8']['vat_amount'], 6), 242.78)

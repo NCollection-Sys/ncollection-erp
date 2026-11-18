@@ -65,6 +65,25 @@ class NcollectionUaeVatReport(models.TransientModel):
             {'key': 'recoverable_vat', 'label': self.env._("Recoverable VAT (AED)"), 'type': 'monetary'},
         ]
 
+    def _nc_vat_kind(self, tax, booked=False):
+        """The VAT 201 box family of a tax, by the SAME rules the return has always used for the net amounts (name
+        keywords, then the rate), so the net and the booked VAT of a tax always land in the same box."""
+        rate = tax.amount
+        tax_name = (tax.name or '').lower()
+        if booked and 'tourist' in tax_name:      # the tourist refund box reads the booked tax only
+            return 'tourist'
+        if 'reverse' in tax_name:
+            return 'reverse'
+        if 'zero' in tax_name or rate == 0.0:
+            return 'zero'
+        if 'exempt' in tax_name:
+            return 'exempt'
+        if 'customs' in tax_name:
+            return 'customs'
+        if rate == 5.0 or '5%' in tax_name or 'standard' in tax_name:
+            return 'standard'
+        return False
+
     def _get_partner_emirate(self, partner):
         """Map partner to one of the 7 Emirates based on state name or code."""
         if not partner:
@@ -115,22 +134,18 @@ class NcollectionUaeVatReport(models.TransientModel):
                 continue
 
             for tax in taxes:
-                rate = tax.amount
-                tax_name = (tax.name or '').lower()
-                if 'reverse' in tax_name:
+                kind = self._nc_vat_kind(tax)
+                if kind == 'reverse':
                     box3_net += net_amt
-                    box3_vat += net_amt * (rate / 100.0) if rate else 0.0
-                elif 'zero' in tax_name or rate == 0.0:
+                elif kind == 'zero':
                     box4_net += net_amt
-                elif 'exempt' in tax_name:
+                elif kind == 'exempt':
                     box5_net += net_amt
-                elif 'customs' in tax_name:
+                elif kind == 'customs':
                     box6_net += net_amt
-                    box6_vat += net_amt * (rate / 100.0) if rate else 0.0
-                elif rate == 5.0 or '5%' in tax_name or 'standard' in tax_name:
+                elif kind == 'standard':
                     emirate = self._get_partner_emirate(line.partner_id)
                     emirate_sales[emirate]['net'] += net_amt
-                    emirate_sales[emirate]['vat'] += net_amt * 0.05
 
         # Process purchase / bill lines
         purchase_lines = lines.filtered(lambda move_line: move_line.move_id.is_purchase_document())
@@ -143,21 +158,39 @@ class NcollectionUaeVatReport(models.TransientModel):
                 continue
 
             for tax in taxes:
-                rate = tax.amount
-                tax_name = (tax.name or '').lower()
-                if 'reverse' in tax_name:
+                kind = self._nc_vat_kind(tax)
+                if kind == 'reverse':
                     box10_net += net_amt
-                    box10_vat += net_amt * (rate / 100.0) if rate else 0.0
-                elif rate == 5.0 or '5%' in tax_name or 'standard' in tax_name:
+                elif kind == 'standard':
                     box9_net += net_amt
-                    box9_vat += net_amt * 0.05
 
-        # Direct tax line aggregates (reconcile with tax_line_id postings)
+        # The VAT itself is the VAT BOOKED on the posted tax lines (tax_line_id), never net x rate: an invoice
+        # rounds its tax per line or per total, a tax can be edited by hand, and the return must equal the tax
+        # accounts (audit 2026-11-18: net x 5% printed 242.775 where the ledger holds 242.78). Reverse charge books
+        # a +100% and a -100% repartition line: the positive one is the tax of the box.
         for line in lines.filtered(lambda move_line: bool(move_line.tax_line_id)):
             tax = line.tax_line_id
-            tax_name = (tax.name or '').lower()
-            if 'tourist' in tax_name:
+            kind = self._nc_vat_kind(tax, booked=True)
+            repartition = line.tax_repartition_line_id
+            if repartition and repartition.factor_percent < 0:
+                continue
+            move = line.move_id
+            if kind == 'tourist':
                 box2_vat += (line.debit - line.credit)
+            elif move.is_sale_document():
+                vat = line.credit - line.debit
+                if kind == 'reverse':
+                    box3_vat += vat
+                elif kind == 'customs':
+                    box6_vat += vat
+                elif kind == 'standard':
+                    emirate_sales[self._get_partner_emirate(line.partner_id)]['vat'] += vat
+            elif move.is_purchase_document():
+                vat = line.debit - line.credit
+                if kind == 'reverse':
+                    box10_vat += vat
+                elif kind == 'standard':
+                    box9_vat += vat
 
         rows = []
 
