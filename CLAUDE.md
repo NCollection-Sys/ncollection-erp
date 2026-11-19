@@ -434,6 +434,7 @@ So tenant key === subdomain === database name, always.
 - `WORKSPACE_AND_TENANT_ADMINISTRATION.md` — roles = real groups, password reset, the platform's user-administration service, audit, boundaries.
 - `UAE_EINVOICING.md` — the UAE e-invoicing engine: scope, identity model, rounding analysis, validator, retention and offboarding, provisioning gate.
 - `DEPLOYMENT_DOMAIN_CONTRACT.md` — the production domain (`balancecloud.ae` + `*.balancecloud.ae`): the one `DOMAIN` setting, the wildcard route, DNS / TLS / forwarded headers / trusted proxy, what is proven where.
+- `RELEASE_SYNC_WORKFLOW.md` — local / GitHub / production stay on one release: lifecycle, intentional differences, release record, and the read-only `scripts/dev/release_sync_check.sh` (PASS/WARN/FAIL, `--json`).
 - `RUNBOOK_RELEASE_UPGRADE.md` — deploying code to a database that exists: backup, deploy, preflight, rehearse on a copy, targeted upgrade, smoke, traffic. Never `-u all`.
 - `RELEASE_COMPATIBILITY_GATE.md` — why a database the code is ahead of answers a branded 503 instead of an HTTP 500: the gate before the registry (`ncollection_core/release_gate.py`, server-wide), the states, holds, the platform's status channel, provisioning `validating`, Company Entry, Fleet Migration (platform first, enforced), and how an
   operator reads a blocked PLATFORM database (`make release-status db=ncollection`).
