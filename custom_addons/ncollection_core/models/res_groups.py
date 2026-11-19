@@ -72,8 +72,8 @@ class ResGroups(models.Model):
         user = Users.search([('login', '=', MAINTENANCE_LOGIN)], limit=1)
         if user and not user.nc_platform_proxy:
             # a real account squatting the reserved login: never promote it
-            raise UserError(env._("The login '%s' is reserved for the platform maintenance account.",
-                                  MAINTENANCE_LOGIN))
+            raise UserError(self.env._("The login '%s' is reserved for the platform maintenance account.",
+                                       MAINTENANCE_LOGIN))
         if not user:
             company = env.ref('base.main_company', raise_if_not_found=False) or env['res.company'].search([], limit=1)
             user = Users.create({

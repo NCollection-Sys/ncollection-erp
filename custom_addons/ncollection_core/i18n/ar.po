@@ -916,6 +916,12 @@ msgstr "مرجع مسؤول المنصة"
 
 #. module: ncollection_core
 #. odoo-python
+#: code:addons/ncollection_core/models/res_groups.py:0
+msgid "Platform Maintenance (system)"
+msgstr "صيانة المنصة (النظام)"
+
+#. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/user_invite.py:0 code:addons/ncollection_core/models/res_users_admin.py:0
 msgid "Please enter a valid email address."
 msgstr "يُرجى إدخال عنوان بريد إلكتروني صالح."
@@ -1154,6 +1160,12 @@ msgstr "قائمة التطبيقات تُدار بواسطة مساحة الع�
 #: code:addons/ncollection_core/models/res_users.py:0
 msgid "The login '%s' looks like an email address. A login is a username (for example sara.m); put the email in the contact email field instead."
 msgstr "اسم الدخول '%s' يبدو كعنوان بريد إلكتروني. اسم الدخول هو اسم مستخدم (مثل sara.m)؛ ضع البريد الإلكتروني في حقل البريد الإلكتروني للتواصل بدلًا من ذلك."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/models/res_groups.py:0
+msgid "The login '%s' is reserved for the platform maintenance account."
+msgstr "اسم الدخول '%s' محجوز لحساب صيانة المنصة."
 
 #. module: ncollection_core
 #. odoo-javascript

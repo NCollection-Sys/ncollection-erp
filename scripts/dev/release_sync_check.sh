@@ -51,7 +51,7 @@ manifest_version() {  # manifest_version <module>  (from the LOCAL checkout)
         "custom_addons/$1/__manifest__.py" 2>/dev/null | head -1
 }
 
-check_db_modules() {  # check_db_modules <label> <db> <psql output>
+check_db_modules() {  # check_db_modules <label> <db> <query output>
     local label="$1" db="$2" out="$3" pending stale="" missing="" name state ver want
     if [ -z "$out" ]; then report FAIL "$label db $db" "unreadable (does it exist?)"; return; fi
     pending="$(printf '%s\n' "$out" | sed -n 's/^__pending__|\([0-9]*\)|.*/\1/p')"
@@ -89,11 +89,23 @@ fi
 if [ -n "$GH_DEVELOP" ] && [ "$GH_DEVELOP" != "$EXPECTED" ]; then
     report WARN "github develop vs release" "develop is $GH_DEVELOP, checking against $EXPECTED"
 fi
-if [ -n "$(git tag --points-at "$EXPECTED" 2>/dev/null)" ] || grep -q "$(printf '%.7s' "$EXPECTED")" \
-        docs/markdown/RELEASE_SYNC_WORKFLOW.md 2>/dev/null; then
-    report PASS "release metadata" "tag or release record names $(printf '%.7s' "$EXPECTED")"
+# A release commit can never name its own hash, so its own copy of the record cannot hold its row: the row is written
+# by a LATER commit (or the release gets a tag at deploy time). Read the record from every place that may carry it, and
+# accept only a table row whose first cell is the release, never a hash that merely appears in prose.
+REC_DOC=docs/markdown/RELEASE_SYNC_WORKFLOW.md
+SHORT="$(printf '%.7s' "$EXPECTED")"
+record_has_row() {
+    { cat "$REC_DOC" 2>/dev/null
+      for ref in "$EXPECTED" "$GH_DEVELOP"; do [ -n "$ref" ] && git show "$ref:$REC_DOC" 2>/dev/null; done
+    } | grep -Eq "^\| \`${SHORT}[0-9a-f]*\` \|"
+}
+RELEASE_TAG="$(git tag --points-at "$EXPECTED" 2>/dev/null | head -1)"
+if [ -n "$RELEASE_TAG" ]; then
+    report PASS "release metadata" "tag $RELEASE_TAG names $SHORT"
+elif record_has_row; then
+    report PASS "release metadata" "release-record row names $SHORT"
 else
-    report WARN "release metadata" "no tag and no release-record row for $(printf '%.7s' "$EXPECTED")"
+    report WARN "release metadata" "no tag and no release-record row for $SHORT"
 fi
 
 # ---- Local -------------------------------------------------------------------------------------------------------

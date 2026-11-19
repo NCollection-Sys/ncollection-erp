@@ -68,6 +68,13 @@ pre-upgrade copy of `awtar` FAILs with `ncollection_core(19.0.1.33.0->19.0.1.34.
 
 ## Release record
 
+A release commit cannot contain its own hash, so this table always lags by one: the row for a release is written by the
+next commit that touches this file. The authoritative marker is therefore a **git tag** `release-<short sha>` created at
+deployment on the release commit (in the local repository and in `/opt/balancecloud`; pushing the tag is part of the
+approved push). The check accepts either a tag on the release or a row here, read from the checkout, from the release
+commit and from GitHub `develop`. Only a table row whose first cell is the release counts, never a hash in prose.
+
 | Release | Tree | GitHub develop | Production | Local runtime | Local databases |
 |---|---|---|---|---|---|
 | `01240df` | `b94043bf` | 2026-11-19 | 2026-11-19 00:13–00:15 UTC, 7 databases | 2026-11-19 14:21 UTC | `ncollection`, `awtar`, `ncollection_demo` upgraded (core 1.34.0, saas 6.30.0, account_reports 1.19.0, branding 1.21.0); backup `D:\Backups\local-sync-01240df-20261119T140601Z` |
+| next candidate (this commit) | — | not pushed | not deployed | not synced | — (record written after approval; tag `release-<sha>` at deploy) |
