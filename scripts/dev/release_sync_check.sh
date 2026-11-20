@@ -16,7 +16,8 @@
 #   NC_LOCAL_DBS      local databases to check (default: "ncollection awtar ncollection_demo")
 #   NC_PROD_SSH       user@host of production; unset = production checks are skipped (reported as WARN)
 #   NC_PROD_SSH_OPTS  extra ssh options (key, known_hosts)
-#   NC_PROD_PLATFORMS space-separated <name>:<checkout>:<runner conf>:<compose project> (default: balancecloud + atlascore)
+#   NC_PROD_PLATFORMS space-separated <name>:<checkout>:<runner conf>:<compose project>:<platform db> (default: balancecloud + atlascore)
+#   NC_LOCAL_PLATFORM_DB local platform database for the functional-parity check (default ncollection; "" = skip)
 #
 # Exit status: 0 = all PASS, 1 = at least one WARN (no FAIL), 2 = at least one FAIL.
 # Docs: docs/markdown/RELEASE_SYNC_WORKFLOW.md
@@ -134,16 +135,33 @@ else
         out="$(printf '%s\n' "$MODULE_SQL" | docker exec -i "$DBC" psql -U odoo -d "$db" -At -q 2>/dev/null)"
         check_db_modules local "$db" "$out"
     done
+    LOCAL_PLATFORM_DB="${NC_LOCAL_PLATFORM_DB-ncollection}"
+    LOCAL_ODOO="$(docker compose ps -q odoo 2>/dev/null)"
+    if [ -n "$LOCAL_PLATFORM_DB" ] && [ -n "$LOCAL_ODOO" ]; then
+        # WARN, not FAIL, locally: the dev platform's registry also names throwaway fixture tenants.
+        rc=0
+        out="$(bash "$ROOT/scripts/dev/tenant_parity_check.sh" "$LOCAL_ODOO" "$LOCAL_PLATFORM_DB" 2>&1)" || rc=$?
+        parity_report local "$rc" "$out" WARN
+    fi
 fi
 
 # ---- Production --------------------------------------------------------------------------------------------------
 # ---- Production platforms ----------------------------------------------------------------------------------------
 # Every SaaS installation on the production host, each with its own checkout, runner config and Postgres server:
-#   <name>:<checkout>:<runner conf>:<compose project>
+#   <name>:<checkout>:<runner conf>:<compose project>:<platform db>
 # Each platform is checked on its own; two platforms on different releases is drift, reported per platform.
-PLATFORMS="${NC_PROD_PLATFORMS:-balancecloud:/opt/balancecloud:/etc/balancecloud/odoo.runner.conf:balancecloud atlascore:/opt/atlascore:/etc/atlascore/odoo.runner.conf:atlascore}"
-check_platform() {  # check_platform <name> <checkout> <runner conf> <compose project>
-    local name="$1" pdir="$2" pconf="$3" project="$4" head tree dirty addons raddons dbc dbs db out
+PLATFORMS="${NC_PROD_PLATFORMS:-balancecloud:/opt/balancecloud:/etc/balancecloud/odoo.runner.conf:balancecloud:balancecloud atlascore:/opt/atlascore:/etc/atlascore/odoo.runner.conf:atlascore:atlas-core}"
+parity_report() {  # parity_report <label> <rc> <output> <severity on FAIL>
+    local label="$1" rc="$2" out="$3" sev="$4" fails
+    fails="$(printf '%s\n' "$out" | grep -E '^ +FAIL ' | sed 's/^ *FAIL *//' | head -5 | tr '\n' ';')"
+    case "$rc" in
+        0) report PASS "$label functional parity" "every tenant has its entitlement + same-plan peers' modules; views active" ;;
+        1) report "$sev" "$label functional parity" "${fails%;}" ;;
+        *) report WARN "$label functional parity" "checker could not run (tenant_parity_check.sh rc=$rc)" ;;
+    esac
+}
+check_platform() {  # check_platform <name> <checkout> <runner conf> <compose project> [platform db]
+    local name="$1" pdir="$2" pconf="$3" project="$4" pdb="${5:-}" head tree dirty addons raddons dbc dbs db out oc rc
     head="$(prod "git -C $pdir rev-parse HEAD" 2>/dev/null)"
     tree="$(prod "git -C $pdir rev-parse 'HEAD^{tree}'" 2>/dev/null)"
     if [ -z "$head" ]; then report FAIL "$name" "cannot reach $NC_PROD_SSH or $pdir is not a git checkout"; return; fi
@@ -170,6 +188,16 @@ check_platform() {  # check_platform <name> <checkout> <runner conf> <compose pr
         out="$(printf '%s\n' "$MODULE_SQL" | prod "docker exec -i $dbc psql -U odoo -d '$db' -At -q" 2>/dev/null)"
         check_db_modules "$name" "$db" "$out"
     done
+    # FUNCTIONAL PARITY (MODULE SYNC above is not enough: equal commits and versions said nothing about a module that
+    # was never installed). Run from the platform's OWN checkout, inside its OWN odoo container. Read-only.
+    [ -n "$pdb" ] || return 0
+    oc="$(prod "docker ps -q --filter label=com.docker.compose.project=$project --filter label=com.docker.compose.service=odoo" 2>/dev/null)"
+    if [ -z "$oc" ] || [ "$(printf '%s\n' "$oc" | wc -l)" != 1 ]; then
+        report WARN "$name functional parity" "no single running odoo container for compose project $project"; return 0
+    fi
+    rc=0
+    out="$(prod "bash $pdir/scripts/dev/tenant_parity_check.sh $oc '$pdb' /etc/odoo/odoo.server.conf" 2>&1)" || rc=$?
+    parity_report "$name" "$rc" "$out" FAIL
 }
 
 if [ -z "${NC_PROD_SSH:-}" ]; then
@@ -178,8 +206,8 @@ else
     # shellcheck disable=SC2086  # NC_PROD_SSH_OPTS is a word list on purpose
     prod() { ssh -o BatchMode=yes ${NC_PROD_SSH_OPTS:-} "$NC_PROD_SSH" "$@"; }
     for spec in $PLATFORMS; do
-        IFS=: read -r p_name p_dir p_conf p_project <<<"$spec"
-        check_platform "$p_name" "$p_dir" "$p_conf" "$p_project"
+        IFS=: read -r p_name p_dir p_conf p_project p_db <<<"$spec"
+        check_platform "$p_name" "$p_dir" "$p_conf" "$p_project" "$p_db"
     done
 fi
 

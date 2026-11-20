@@ -90,3 +90,22 @@ commit and from GitHub `develop`. Only a table row whose first cell is the relea
 | `01240df` | `b94043bf` | 2026-11-19 | 2026-11-19 00:13–00:15 UTC, 7 databases | 2026-11-19 14:21 UTC | `ncollection`, `awtar`, `ncollection_demo` upgraded (core 1.34.0, saas 6.30.0, account_reports 1.19.0, branding 1.21.0); backup `D:\Backups\local-sync-01240df-20261119T140601Z` |
 | `dbfd986` | `e44a03df` | 2026-11-19 | Balance Cloud 2026-11-19 23:25–23:28 UTC, 7 databases (backup `/root/nc-backups/pre-dbfd986`); Atlas Core created 2026-11-20 from it (clean bootstrap, `atlas-core`) | 2026-11-19 23:35 UTC | `ncollection`, `awtar`, `ncollection_demo`: core 1.34.1; backup `D:Backupsocal-sync-dbfd986-20261119T232935Z` |
 | next candidate (this commit) | — | not pushed | not deployed | not synced | — (record written by the next commit; tag `release-<sha>` at deploy) |
+
+## Functional parity (R-044)
+
+Equal commits, trees and module versions are **not** proof that tenants have the released features: on 2026-11-21 both
+platforms were "in sync" while every tenant provisioned after the journal operations release lacked it.
+`release_sync_check.sh` therefore also runs `scripts/dev/tenant_parity_check.sh` per platform (from the platform's own
+checkout, in its own odoo container; read-only) and reports five layers separately:
+
+| Layer | Question | Where |
+|---|---|---|
+| SOURCE SYNC | same commit and tree everywhere? | `release_sync_check.sh` (commit / tree rows) |
+| MODULE SYNC | installed version = code version, nothing pending? | `check_db_modules` + the parity checker |
+| FUNCTIONAL PARITY | every entitled module (+ dependency closure) installed, satisfied `auto_install` modules installed, every NCollection view present and active, nothing that a same-plan peer has and this tenant lacks? | `tenant_parity_check.py` |
+| EXPECTED PLATFORM-ONLY | `ncollection_saas` / `_subscription` / `_reseller` / `_billing` on the platform, never in a tenant (one in a tenant FAILS) | `tenant_parity_check.py` |
+| EXPECTED SUBSCRIPTION | plan-selectable apps a tenant's plan excludes: listed as information, never "fixed" | `tenant_parity_check.py` |
+
+Country packages and gated modules (UAE localization, UAE e-invoicing) legitimately differ between same-plan peers and
+are excluded from the peer comparison. A platform is verified only when its functional-parity row is PASS.
+New tenants are held by the same rule at birth: provisioning's module gate (`verify_modules.py`) refuses READY.

@@ -2,7 +2,7 @@
 
 **Criterion (DELIVERABLE_1_SYSTEM_DESIGN.md, P8-T05):** "changing an invoice amount produces an audit entry with old/new values, user, IP, and timestamp."
 
-**Status:** implemented and tested in `ncollection_account_audit` 19.0.1.0.0. **In the release matrix as pass 2 for `ncollection`, `awtar` and `ncollection_demo`; in no plan and never `auto_install`; not installed on the shared databases until the controlled upgrade runs.**
+**Status:** implemented and tested in `ncollection_account_audit` 19.0.1.0.0. **In the release matrix as pass 2 for `ncollection`, `awtar` and `ncollection_demo`; in no plan and never `auto_install`; not installed on the shared databases until the controlled upgrade runs.** **Since R-044 it is a companion of Accounting** (`ncollection_subscription/models/companions.py`): every tenant entitled to Accounting gets it at provisioning, and existing ones through migration `ncollection_saas` 19.0.6.32.0.
 The earlier statement that the task was "done" was wrong for this criterion; `ncollection_audit` (OCA `auditlog` infrastructure) is unchanged.
 
 ## 1. Why not OCA `auditlog` (OCA-first check, measured)

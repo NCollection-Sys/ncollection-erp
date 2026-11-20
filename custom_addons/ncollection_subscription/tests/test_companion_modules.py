@@ -12,6 +12,9 @@ from odoo.tests import TransactionCase, tagged
 from ..models.companions import COMPANION_MODULES, companion_host, companions_of
 
 CHEQUE = 'ncollection_cheque_print'
+# Everything that follows Accounting, in table order (feature parity: what every Accounting tenant is meant to have).
+ACCOUNT_COMPANIONS = [CHEQUE, 'ncollection_bank_reconciliation', 'ncollection_journal_operations',
+                      'ncollection_account_invoice_layout', 'ncollection_account_audit']
 
 
 @tagged('post_install', '-at_install')
@@ -40,12 +43,13 @@ class TestCompanionModules(TransactionCase):
 
     # ------------------------------------------------------------------ the table
     def test_the_table_is_exactly_cheque_printing_and_the_audit_app(self):
-        self.assertEqual(COMPANION_MODULES, {CHEQUE: 'account', 'ncollection_audit': 'auditlog'})
+        self.assertEqual(COMPANION_MODULES, dict({name: 'account' for name in ACCOUNT_COMPANIONS},
+                                                 ncollection_audit='auditlog'))
         self.assertEqual(companion_host('ncollection_audit'), 'auditlog')
         self.assertEqual(companions_of(['auditlog']), ['ncollection_audit'])
         self.assertEqual(companion_host(CHEQUE), 'account')
         self.assertIsNone(companion_host('account'))
-        self.assertEqual(companions_of(['crm', 'account']), [CHEQUE])
+        self.assertEqual(companions_of(['crm', 'account']), ACCOUNT_COMPANIONS)
         self.assertEqual(companions_of(['crm', 'sale']), [])
         self.assertEqual(companions_of([]), [])
 
@@ -74,8 +78,8 @@ class TestCompanionModules(TransactionCase):
         """Everything the plan named is still there, in order; the companion is the ONLY addition."""
         before = self.accounting_plan.get_allowed_module_list()
         after = self._tenant(self.accounting_plan)._nc_effective_module_list()
-        self.assertEqual([m for m in after if m != CHEQUE], before)
-        self.assertEqual(set(after) - set(before), {CHEQUE})
+        self.assertEqual([m for m in after if m not in ACCOUNT_COMPANIONS], before)
+        self.assertEqual(set(after) - set(before), set(ACCOUNT_COMPANIONS))
 
     def test_every_plan_on_this_platform_follows_the_same_rule(self):
         """Whatever plans exist (shipped or made later): cheque printing is entitled exactly when Accounting is."""
@@ -95,7 +99,7 @@ class TestCompanionModules(TransactionCase):
 
     def test_a_plan_naming_it_with_accounting_does_not_duplicate_it(self):
         plan = self._plan('BOTH', 'account,%s' % CHEQUE)
-        self.assertEqual(self._tenant(plan)._nc_effective_module_list(), ['account', CHEQUE])
+        self.assertEqual(self._tenant(plan)._nc_effective_module_list(), ['account'] + ACCOUNT_COMPANIONS)
 
     def test_the_plan_picker_never_offers_it(self):
         catalog = self.Plan.get_selectable_modules()

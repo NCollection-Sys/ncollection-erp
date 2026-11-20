@@ -16,6 +16,8 @@ from unittest.mock import patch
 from odoo.tests import TransactionCase, tagged
 
 CHEQUE = 'ncollection_cheque_print'
+ACCOUNT_COMPANIONS = [CHEQUE, 'ncollection_bank_reconciliation', 'ncollection_journal_operations',
+                      'ncollection_account_invoice_layout', 'ncollection_account_audit']
 TENANT_INSTALL = 'odoo.addons.ncollection_saas.models.module_install.TenantModuleInstall'
 MIGRATION = os.path.join(os.path.dirname(__file__), '..', 'migrations', '19.0.6.16.0', 'post-migrate.py')
 
@@ -83,7 +85,7 @@ class TestCompanionProvisioning(TransactionCase):
         captured = self._capture_install()
         self.assertTrue(tenant.run_module_install())
         installed = captured['cmd'][captured['cmd'].index('-i') + 1].split(',')
-        self.assertEqual(sorted(installed), sorted(['crm', 'account', CHEQUE]))
+        self.assertEqual(sorted(installed), sorted(['crm', 'account'] + ACCOUNT_COMPANIONS))
         self.assertEqual(captured['cmd'][captured['cmd'].index('-d') + 1], tenant.database_name)
 
     def test_the_install_job_never_installs_it_into_a_tenant_without_accounting(self):

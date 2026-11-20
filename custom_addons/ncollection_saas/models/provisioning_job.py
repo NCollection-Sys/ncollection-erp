@@ -68,6 +68,10 @@ VERIFY_LOCALIZATION_SCRIPT = os.path.join(
     os.path.dirname(__file__), '..', 'scripts', 'provisioning',
     'verify_localization.py'
 )
+# Feature parity: proves every provisioned module is installed, current and has its views active.
+VERIFY_MODULES_SCRIPT = os.path.join(
+    os.path.dirname(__file__), '..', 'scripts', 'provisioning', 'verify_modules.py'
+)
 # NOTE: the 30-min subprocess cap now lives with the runner it belongs to,
 # saas_subprocess.SUBPROCESS_TIMEOUT. A copy left here would be read as
 # authoritative and edited by someone expecting it to take effect — which is
@@ -215,6 +219,12 @@ class ProvisioningJob(models.Model):
             self._verify_localization(db)
             timings.append(('localization check', time.monotonic() - step))
 
+            # Feature parity: every module of the `-i` really installed, current, views active (`odoo -i` exits 0
+            # having skipped a module). A tenant is never READY on standard screens the platform does not show.
+            step = time.monotonic()
+            self._verify_modules(db, modules)
+            timings.append(('module check', time.monotonic() - step))
+
             step = time.monotonic()
             setup_url = self._seed_tenant(db)
             timings.append(('seed', time.monotonic() - step))
@@ -333,6 +343,20 @@ class ProvisioningJob(models.Model):
                 "Release validation failed for '%(db)s': it could not be opened (%(state)s).", db=db, state=state))
         self._append_log(self.env._(
             "Release validated: the modules match the code, the sign-in page answers, the workspace is open (READY)."))
+
+    def _verify_modules(self, db, modules):
+        """Assert every provisioned module is installed, current, views active (verify_modules.py)."""
+        with open(VERIFY_MODULES_SCRIPT, encoding='utf-8') as fh:
+            script = fh.read()
+        env_vars = os.environ.copy()
+        env_vars.pop(_SYNC_KEY_ENV, None)
+        env_vars['NC_EXPECTED_MODULES'] = ','.join(modules)
+        cmd = ['odoo', 'shell'] + self._odoo_conn_args(db) + ['--no-http', '--log-level=error']
+        out = self._run_odoo_subprocess(cmd, self.env._("module check"), stdin=script, env=env_vars)
+        detail = next((line for line in (out or '').splitlines() if line.startswith('MODULES_OK=')), '')
+        if not detail:
+            raise UserError(self.env._("Module check printed no result for '%s'.", db))
+        self._append_log(self.env._("Modules verified: %s", detail[len('MODULES_OK='):]))
 
     def _verify_localization(self, db):
         """Assert the tenant really ended up on its country's chart + currency.

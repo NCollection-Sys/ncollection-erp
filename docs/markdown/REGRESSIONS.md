@@ -1321,3 +1321,29 @@ exists cannot be unlinked by anyone, the superuser included. Delete Tenant drops
 `test_tenant_deletion.py::test_a_plain_unlink_cannot_orphan_a_live_database`.
 
 **Rule of thumb.** A record that stands for an external resource is removed by the flow that removes the resource.
+
+## R-044 — New tenants opened on Odoo's standard journal cards while the platform showed the enhanced ones ✅ GUARDED
+
+**Symptom.** Accounting dashboard, Main Cash card: the Platform Administrator saw Current / Pending Balance, Payment ·
+Receipt, Internal Transfer, Reconcile, To Reconcile, Statements, Batches, Duplicates; a tenant saw Odoo's standard card
+(one Transactions button and the chart). Measured on 2026-11-21: Balance Cloud `fresh` (provisioned 2026-11-18) and Atlas
+Core `ahmed` (provisioned 2026-11-20) lacked `ncollection_bank_reconciliation` (+ its nine OCA modules,
+`_bank_reconciliation_sale`), `ncollection_journal_operations`, `ncollection_account_invoice_layout` and
+`ncollection_account_audit`. The five older Balance Cloud tenants had them. Every check said green: same commit, same
+manifests, 0 pending upgrades.
+
+**Root cause.** Those modules reached the existing tenants by a per-database release `-i` and were never in any
+entitlement. Provisioning installs exactly `_nc_effective_module_list` (plan + localization + overrides + companions),
+and `ncollection_journal_operations` is `auto_install` only on top of `ncollection_bank_reconciliation`, which nothing
+installed. Not a view, asset, cache, group or entitlement-price problem: the module was absent from the tenant database.
+
+**Guard.** (1) The four modules are companions of `account` (`ncollection_subscription/models/companions.py`), so every
+reader of the entitlement (provisioning, the install job, config sync) names them; migration `ncollection_saas`
+19.0.6.32.0 queues the install for existing ready Accounting tenants. (2) Provisioning's module gate
+(`scripts/provisioning/verify_modules.py`) refuses READY unless every module of the `-i` is installed, current, with its
+views active, and every satisfied `auto_install` module is installed. (3) `scripts/dev/tenant_parity_check.sh` (read-only)
+compares every tenant with its entitlement AND with its same-plan peers; `release_sync_check.sh` runs it per platform.
+`test_feature_parity.py` (RED before the companion change, GREEN after).
+
+**Rule of thumb.** A feature installed into databases by hand is not shipped: put it in the entitlement, or new tenants
+will not have it.

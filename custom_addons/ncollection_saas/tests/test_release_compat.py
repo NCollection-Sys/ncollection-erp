@@ -230,6 +230,7 @@ class TestReleaseCompat(TransactionCase):
                 patch.object(type(job), '_run_odoo_init', new=fake_init), \
                 patch.object(type(job), '_module_list', return_value=['base']), \
                 patch.object(type(job), '_verify_localization'), \
+                patch.object(type(job), '_verify_modules'), \
                 patch.object(type(job), '_seed_tenant', return_value=None), \
                 patch.object(TenantRelease, '_nc_release_call', return_value=_status('ready')):
             ok = job.run_provisioning()

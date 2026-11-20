@@ -31,6 +31,18 @@ Adding another companion is one entry here (plus its manifest), with no change t
 # companion module -> the module whose entitlement it follows. Keys are technical module names.
 COMPANION_MODULES = {
     'ncollection_cheque_print': 'account',
+    # Accounting features every Accounting tenant is meant to have. They reached the EXISTING tenants by hand (a
+    # release `-i` per database), which is why a NEW tenant never got them: nothing put them in the provisioning `-i`,
+    # and `ncollection_journal_operations` is `auto_install` only on top of `ncollection_bank_reconciliation`, which
+    # no plan names. Bank Transactions & Matching (pulls the OCA reconcile / statement-import engine through its own
+    # manifest), the journal operations centre (the enhanced bank / cash journal cards), invoice layout & calculations,
+    # and the invoice amount audit. `ncollection_bank_reconciliation_sale` is deliberately NOT listed: it is
+    # `auto_install` with `sale` and arrives by itself; naming it with host `sale` would license the bank engine for a
+    # tenant whose entitlement does not name `account`.
+    'ncollection_bank_reconciliation': 'account',
+    'ncollection_journal_operations': 'account',
+    'ncollection_account_invoice_layout': 'account',
+    'ncollection_account_audit': 'account',
     # The plan picker offers OCA "Audit Log" (auditlog, an application); its own screens live under Settings >
     # Technical, which a Workspace Administrator never reaches. NCollection's Audit Log app (Home tile, read-only
     # screens, retention, tamper evidence) is what makes it usable, so it comes with it and is never ticked alone.
