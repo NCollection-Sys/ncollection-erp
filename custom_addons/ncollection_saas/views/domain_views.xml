@@ -6,18 +6,23 @@
         <field name="model">ncollection.domain</field>
         <field name="arch" type="xml">
             <list string="Domains"
-                  decoration-danger="ssl_status == 'expired'"
-                  decoration-warning="ssl_status == 'expiring'"
-                  decoration-muted="ssl_status == 'unknown'">
+                  decoration-danger="state == 'failed' or ssl_status == 'expired'"
+                  decoration-warning="state in ('pending_verification', 'dns_required', 'ssl_pending') or ssl_status == 'expiring'"
+                  decoration-muted="state == 'disabled'">
                 <field name="fqdn"/>
                 <field name="tenant_id"/>
                 <field name="domain_type"/>
-                <field name="is_wildcard"/>
+                <field name="is_primary" widget="boolean_toggle" readonly="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'active'"
+                       decoration-warning="state in ('pending_verification', 'dns_required', 'ssl_pending')"
+                       decoration-danger="state == 'failed'"/>
                 <field name="ssl_expiry"/>
                 <field name="ssl_status" widget="badge"
                        decoration-success="ssl_status == 'valid'"
                        decoration-warning="ssl_status == 'expiring'"
                        decoration-danger="ssl_status == 'expired'"/>
+                <field name="last_verified" optional="hide"/>
             </list>
         </field>
     </record>
@@ -27,24 +32,59 @@
         <field name="model">ncollection.domain</field>
         <field name="arch" type="xml">
             <form string="Domain">
+                <header>
+                    <button name="action_verify" type="object" string="Verify" class="btn-primary"
+                            invisible="domain_type != 'custom' or state not in ('pending_verification', 'dns_required', 'failed') or not id"/>
+                    <button name="action_set_primary" type="object" string="Make Primary Address"
+                            invisible="is_primary or (domain_type == 'custom' and state != 'active') or not id"
+                            confirm="Links, password resets, invitations and notifications of this tenant will use this address. Continue?"/>
+                    <button name="action_disable" type="object" string="Disable"
+                            invisible="domain_type != 'custom' or state == 'disabled' or not id"
+                            confirm="The edge stops serving this domain. If it is the primary address, the tenant falls back to its platform subdomain. Tenant data is not affected. Continue?"/>
+                    <button name="action_enable" type="object" string="Enable Again"
+                            invisible="domain_type != 'custom' or state != 'disabled'"/>
+                    <field name="state" widget="statusbar" invisible="domain_type != 'custom' or not id"
+                           statusbar_visible="pending_verification,dns_required,ssl_pending,active"/>
+                </header>
                 <sheet>
+                    <div class="oe_title">
+                        <label for="fqdn"/>
+                        <h1><field name="fqdn" placeholder="erp.customer.com" readonly="id"/></h1>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="not error_detail">
+                        <field name="error_detail" nolabel="1"/>
+                    </div>
                     <group>
-                        <group string="Domain">
-                            <field name="fqdn"/>
-                            <field name="tenant_id"/>
-                            <field name="domain_type"/>
-                            <field name="is_wildcard"/>
+                        <group string="Address">
+                            <field name="tenant_id" readonly="id" options="{'no_create': True}"/>
+                            <field name="platform_domain"/>
+                            <field name="domain_type" readonly="1" force_save="1"/>
+                            <field name="is_primary" readonly="1"/>
+                            <field name="redirect_policy" invisible="domain_type != 'custom'"/>
                         </group>
-                        <group string="SSL Certificate">
+                        <group string="Status">
+                            <field name="dns_status" invisible="domain_type != 'custom'"/>
+                            <field name="last_verified" invisible="domain_type != 'custom'"/>
+                            <field name="activated_on" invisible="not activated_on"/>
                             <field name="ssl_status" widget="badge"
                                    decoration-success="ssl_status == 'valid'"
                                    decoration-warning="ssl_status == 'expiring'"
                                    decoration-danger="ssl_status == 'expired'"/>
                             <field name="ssl_expiry"/>
-                            <field name="last_alert_date"/>
-                            <field name="active"/>
+                            <field name="cert_issuer" invisible="not cert_issuer"/>
+                            <field name="is_wildcard" invisible="domain_type == 'custom'"/>
+                            <field name="edge_reported" invisible="domain_type != 'custom'"/>
                         </group>
                     </group>
+                    <group string="DNS Instructions" invisible="domain_type != 'custom' or not id or state in ('active', 'disabled')">
+                        <field name="dns_instructions" nolabel="1" colspan="2"/>
+                    </group>
+                    <group invisible="domain_type != 'custom' or not id or state in ('active', 'disabled')">
+                        <field name="verification_record" readonly="1"/>
+                        <field name="verification_value" readonly="1"/>
+                    </group>
+                    <field name="active" invisible="1"/>
+                    <field name="last_alert_date" invisible="1"/>
                 </sheet>
                 <chatter/>
             </form>
@@ -63,6 +103,11 @@
                 <filter name="subdomain" string="Subdomains"
                         domain="[('domain_type', '=', 'subdomain')]"/>
                 <separator/>
+                <filter name="needs_action" string="Needs Action"
+                        domain="[('state', 'in', ('pending_verification', 'dns_required', 'failed'))]"/>
+                <filter name="active_state" string="Active"
+                        domain="[('state', '=', 'active')]"/>
+                <separator/>
                 <!-- ssl_expiry is stored, so this filter is DB-evaluable
                      (ssl_status is a live compute and cannot be filtered on). -->
                 <filter name="expiring" string="Expiring within 14 days"
@@ -70,6 +115,8 @@
                 <separator/>
                 <filter name="group_type" string="Group by Type"
                         context="{'group_by': 'domain_type'}"/>
+                <filter name="group_state" string="Group by Status"
+                        context="{'group_by': 'state'}"/>
             </search>
         </field>
     </record>
@@ -84,7 +131,8 @@
             </p>
             <p>
                 A domain record is created for every provisioned tenant. Platform
-                subdomains ride the wildcard certificate automatically.
+                subdomains ride the wildcard certificate automatically; a custom
+                domain is added from the tenant's Domains tab.
             </p>
         </field>
     </record>
@@ -95,5 +143,47 @@
               groups="base.group_system"
               action="action_ncollection_domain"
               sequence="60"/>
+
+    <!-- The Domains page of the tenant form: Option A (platform subdomain) or Option B (verified custom domain) -->
+    <record id="view_ncollection_tenant_form_domains" model="ir.ui.view">
+        <field name="name">ncollection.tenant.form.domains</field>
+        <field name="model">ncollection.tenant</field>
+        <field name="inherit_id" ref="ncollection_subscription.view_ncollection_tenant_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='platform_access']" position="before">
+                <page string="Domains" name="domains" groups="ncollection_subscription.group_platform_admin">
+                    <group>
+                        <group string="Address">
+                            <field name="address_mode" readonly="1"/>
+                            <field name="primary_address" readonly="1" widget="url"/>
+                        </group>
+                        <group string="Custom Domain">
+                            <div colspan="2" class="text-muted">
+                                Keep the platform subdomain, or add a domain the customer owns. It is activated only
+                                after ownership and DNS are verified and the certificate is issued; the platform
+                                subdomain always keeps working as a fallback.
+                            </div>
+                            <button name="action_add_custom_domain" type="object" string="Add Custom Domain"
+                                    class="btn-secondary" colspan="2" invisible="database_status != 'ready'"/>
+                        </group>
+                    </group>
+                    <field name="domain_ids" readonly="1" context="{'active_test': False}">
+                        <list decoration-muted="state == 'disabled'" decoration-danger="state == 'failed'">
+                            <field name="fqdn"/>
+                            <field name="domain_type"/>
+                            <field name="is_primary"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'active'"
+                                   decoration-warning="state in ('pending_verification', 'dns_required', 'ssl_pending')"
+                                   decoration-danger="state == 'failed'"/>
+                            <field name="ssl_expiry"/>
+                            <button name="action_verify" type="object" string="Verify" icon="fa-refresh"
+                                    invisible="domain_type != 'custom' or state not in ('pending_verification', 'dns_required', 'failed')"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
 
 </odoo>

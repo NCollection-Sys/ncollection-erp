@@ -22,10 +22,13 @@ may call exactly the methods below, each of which
 Passwords: a generated password is returned in the reply to the caller and nowhere else; an explicit one is applied and
 never echoed. Neither is logged or stored by this model.
 """
+import logging
 import re
 
 from odoo import SUPERUSER_ID, api, models
 from odoo.exceptions import AccessError, UserError
+
+_logger = logging.getLogger(__name__)
 
 _REF_RE = re.compile(r'^u[0-9]{1,23}$')
 _CODE_RE = re.compile(r'^[a-z][a-z0-9_]{1,63}$')
@@ -38,7 +41,12 @@ _KEYS = {
     'reset_password': {'actor', 'user_id', 'password', 'must_change'},
     'update_user': {'actor', 'user_id', 'name', 'email'},
     'set_roles': {'actor', 'user_id', 'role_codes'},
+    'set_canonical_host': {'actor', 'host', 'redirect', 'aliases'},
 }
+_HOST_RE = re.compile(r'^(?=.{4,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$')
+CANONICAL_HOST_PARAM = 'ncollection.canonical_host'
+CANONICAL_REDIRECT_PARAM = 'ncollection.canonical_redirect'
+HOST_ALIASES_PARAM = 'ncollection.host_aliases'
 
 
 class AdminService(models.AbstractModel):
@@ -164,3 +172,30 @@ class AdminService(models.AbstractModel):
         user = self._target(env, vals.get('user_id'))
         user.nc_set_roles(self._roles(env, vals.get('role_codes')).ids)
         return {'ok': True, 'roles': user.nc_role_ids.mapped('name')}
+
+    # ------------------------------------------------------------------ addresses (custom tenant domains)
+    @api.model
+    def set_canonical_host(self, vals):
+        """The workspace's canonical address, set by the platform when a domain becomes primary (or reverts).
+
+        ``host`` becomes web.base.url (https), so password resets, invitations, portal links and notification mail
+        point at it. ``aliases`` is the complete list of hostnames that may serve this workspace (the platform
+        subdomain + every ACTIVE custom domain); ``redirect`` sends a browser that opened another alias to ``host``.
+        Only hostnames from that list are ever redirected FROM, and only to ``host``, which must be in it: a value
+        the platform did not verify can never become a redirect target."""
+        env = self._service_only('set_canonical_host', vals)
+        aliases = vals.get('aliases')
+        host = str(vals.get('host') or '').strip().lower()
+        if (not isinstance(aliases, list) or not aliases or len(aliases) > 20
+                or any(not isinstance(a, str) or not _HOST_RE.fullmatch(a) for a in aliases)
+                or not _HOST_RE.fullmatch(host) or host not in aliases or not isinstance(vals.get('redirect'), bool)):
+            raise UserError(self.env._("Malformed request."))
+        params = env['ir.config_parameter']
+        params.set_param('web.base.url', 'https://%s' % host)
+        params.set_param('web.base.url.freeze', 'True')
+        params.set_param(CANONICAL_HOST_PARAM, host)
+        params.set_param(HOST_ALIASES_PARAM, ','.join(sorted(set(aliases))))
+        params.set_param(CANONICAL_REDIRECT_PARAM, 'True' if vals['redirect'] else 'False')
+        _logger.info("Canonical host set to %s (redirect=%s, %d aliases) by %s", host, vals['redirect'], len(aliases),
+                     env.context.get('nc_platform_actor'))
+        return {'ok': True, 'host': host, 'redirect': vals['redirect']}

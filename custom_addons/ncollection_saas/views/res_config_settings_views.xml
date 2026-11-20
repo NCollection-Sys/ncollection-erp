@@ -16,6 +16,21 @@
                             <field name="nc_base_domain" placeholder="example.com"/>
                         </setting>
                     </block>
+                    <block title="Custom Tenant Domains"
+                           help="A tenant may use its own verified domain (erp.customer.com) instead of, or as well as, its platform subdomain.">
+                        <setting id="nc_custom_domains_setting" string="Custom Domains"
+                                 help="Requires the edge agent on the host: docs/markdown/CUSTOM_TENANT_DOMAINS.md.">
+                            <field name="nc_custom_domains_enabled"/>
+                        </setting>
+                        <setting id="nc_custom_domain_targets" string="Where customers point their DNS"
+                                 invisible="not nc_custom_domains_enabled">
+                            <div class="content-group">
+                                <div class="row"><label for="nc_custom_domain_ipv4" class="col-lg-4 o_light_label"/><field name="nc_custom_domain_ipv4" placeholder="203.0.113.10"/></div>
+                                <div class="row"><label for="nc_custom_domain_ipv6" class="col-lg-4 o_light_label"/><field name="nc_custom_domain_ipv6" placeholder="2001:db8::10"/></div>
+                                <div class="row"><label for="nc_custom_domain_cname" class="col-lg-4 o_light_label"/><field name="nc_custom_domain_cname" placeholder="edge.example.com"/></div>
+                            </div>
+                        </setting>
+                    </block>
                 </app>
             </xpath>
         </field>

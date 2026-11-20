@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# release_sync_check.sh — READ-ONLY three-way release drift check (local runtime / GitHub develop / production).
+# release_sync_check.sh — READ-ONLY release drift check: local runtime, GitHub develop and EVERY production platform.
 #
 # Reports PASS / WARN / FAIL per check, then a one-line verdict. Never writes: no git checkout/fetch/reset, no
 # module upgrade, no deployment, no database write (every SQL statement is a SELECT, run with
@@ -16,10 +16,7 @@
 #   NC_LOCAL_DBS      local databases to check (default: "ncollection awtar ncollection_demo")
 #   NC_PROD_SSH       user@host of production; unset = production checks are skipped (reported as WARN)
 #   NC_PROD_SSH_OPTS  extra ssh options (key, known_hosts)
-#   NC_PROD_DIR       production checkout (default /opt/balancecloud)
-#   NC_PROD_DBS       production databases (default: every non-template database on the production server)
-#   NC_PROD_RUNNER_CONF  runner config whose addons_path must equal config/odoo.prod.conf (default
-#                     /etc/balancecloud/odoo.runner.conf)
+#   NC_PROD_PLATFORMS space-separated <name>:<checkout>:<runner conf>:<compose project> (default: balancecloud + atlascore)
 #
 # Exit status: 0 = all PASS, 1 = at least one WARN (no FAIL), 2 = at least one FAIL.
 # Docs: docs/markdown/RELEASE_SYNC_WORKFLOW.md
@@ -46,10 +43,13 @@ SELECT name || '|' || state || '|' || coalesce(latest_version, '') FROM ir_modul
  UNION ALL
 SELECT '__pending__|' || count(*) || '|' FROM ir_module_module WHERE state IN ('to install', 'to upgrade', 'to remove');"
 
-manifest_version() {  # manifest_version <module>  (from the LOCAL checkout)
-    sed -n "s/^[[:space:]]*['\"]version['\"][[:space:]]*:[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" \
-        "custom_addons/$1/__manifest__.py" 2>/dev/null | head -1
+manifest_version() {  # manifest_version <module>  (from the RELEASE commit, not the local checkout)
+    # Comparing against the local files would let a local runtime that is behind hide a production database that is
+    # behind too; the release is the reference for every environment.
+    git show "$EXPECTED:custom_addons/$1/__manifest__.py" 2>/dev/null \
+        | sed -n "s/^[[:space:]]*['\"]version['\"][[:space:]]*:[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" | head -1
 }
+in_release() { git cat-file -e "$EXPECTED:custom_addons/$1/__manifest__.py" 2>/dev/null; }
 
 check_db_modules() {  # check_db_modules <label> <db> <query output>
     local label="$1" db="$2" out="$3" pending stale="" missing="" name state ver want
@@ -58,14 +58,14 @@ check_db_modules() {  # check_db_modules <label> <db> <query output>
     while IFS='|' read -r name state ver; do
         [ -z "$name" ] || [ "$name" = "__pending__" ] && continue
         [ "$state" = "installed" ] || continue
-        if [ ! -f "custom_addons/$name/__manifest__.py" ]; then missing="$missing $name"; continue; fi
+        if ! in_release "$name"; then missing="$missing $name"; continue; fi
         want="$(manifest_version "$name")"
         [ "$ver" = "$want" ] || stale="$stale $name($ver->$want)"
     done <<EOF
 $out
 EOF
     if [ "${pending:-0}" != "0" ]; then report FAIL "$label db $db" "$pending module(s) pending install/upgrade/remove"
-    elif [ -n "$missing" ]; then report FAIL "$label db $db" "installed but absent from the checkout:$missing"
+    elif [ -n "$missing" ]; then report FAIL "$label db $db" "installed but absent from the release:$missing"
     elif [ -n "$stale" ]; then report FAIL "$label db $db" "upgrade pending (db->code):$stale"
     else report PASS "$label db $db" "all ncollection modules at manifest version, 0 pending"; fi
 }
@@ -137,35 +137,50 @@ else
 fi
 
 # ---- Production --------------------------------------------------------------------------------------------------
+# ---- Production platforms ----------------------------------------------------------------------------------------
+# Every SaaS installation on the production host, each with its own checkout, runner config and Postgres server:
+#   <name>:<checkout>:<runner conf>:<compose project>
+# Each platform is checked on its own; two platforms on different releases is drift, reported per platform.
+PLATFORMS="${NC_PROD_PLATFORMS:-balancecloud:/opt/balancecloud:/etc/balancecloud/odoo.runner.conf:balancecloud atlascore:/opt/atlascore:/etc/atlascore/odoo.runner.conf:atlascore}"
+check_platform() {  # check_platform <name> <checkout> <runner conf> <compose project>
+    local name="$1" pdir="$2" pconf="$3" project="$4" head tree dirty addons raddons dbc dbs db out
+    head="$(prod "git -C $pdir rev-parse HEAD" 2>/dev/null)"
+    tree="$(prod "git -C $pdir rev-parse 'HEAD^{tree}'" 2>/dev/null)"
+    if [ -z "$head" ]; then report FAIL "$name" "cannot reach $NC_PROD_SSH or $pdir is not a git checkout"; return; fi
+    if [ "$head" = "$EXPECTED" ]; then report PASS "$name commit" "$head"
+    else report FAIL "$name commit" "$head (release $EXPECTED)"; fi
+    if [ "$tree" = "$EXPECTED_TREE" ]; then report PASS "$name tree" "$tree"
+    else report FAIL "$name tree" "$tree (release ${EXPECTED_TREE:-unknown})"; fi
+    dirty="$(prod "git -C $pdir status --porcelain | wc -l" 2>/dev/null | tr -d ' ')"
+    if [ "$dirty" = "0" ]; then report PASS "$name local changes" "none (no production-only code)"
+    else report FAIL "$name local changes" "${dirty:-?} modified/untracked path(s) in $pdir"; fi
+    addons="$(prod "grep -E '^addons_path' $pconf" 2>/dev/null)"
+    raddons="$(git show "$EXPECTED:config/odoo.prod.conf" 2>/dev/null | grep -E '^addons_path')"
+    if [ -z "$addons" ]; then report WARN "$name runner conf" "could not read addons_path from $pconf"
+    elif [ "$addons" = "$raddons" ]; then report PASS "$name runner conf" "addons_path = config/odoo.prod.conf"
+    else report FAIL "$name runner conf" "addons_path differs from config/odoo.prod.conf"; fi
+    # the platform's OWN Postgres: never "the first db container" (two platforms share this host)
+    dbc="$(prod "docker ps -q --filter label=com.docker.compose.project=$project --filter label=com.docker.compose.service=db" 2>/dev/null)"
+    if [ -z "$dbc" ] || [ "$(printf '%s\n' "$dbc" | wc -l)" != 1 ]; then
+        report FAIL "$name databases" "no single running db container for compose project $project"; return
+    fi
+    dbs="$(prod "docker exec $dbc psql -U odoo -d postgres -At -c \"SELECT datname FROM pg_database WHERE NOT datistemplate AND datname <> 'postgres' ORDER BY 1\"" 2>/dev/null)"
+    [ -n "$dbs" ] || report FAIL "$name databases" "no database listed on $project's server"
+    for db in $dbs; do
+        out="$(printf '%s\n' "$MODULE_SQL" | prod "docker exec -i $dbc psql -U odoo -d '$db' -At -q" 2>/dev/null)"
+        check_db_modules "$name" "$db" "$out"
+    done
+}
+
 if [ -z "${NC_PROD_SSH:-}" ]; then
     report WARN "production" "NC_PROD_SSH not set: production checks skipped"
 else
-    PDIR="${NC_PROD_DIR:-/opt/balancecloud}"; PCONF="${NC_PROD_RUNNER_CONF:-/etc/balancecloud/odoo.runner.conf}"
     # shellcheck disable=SC2086  # NC_PROD_SSH_OPTS is a word list on purpose
     prod() { ssh -o BatchMode=yes ${NC_PROD_SSH_OPTS:-} "$NC_PROD_SSH" "$@"; }
-    P_HEAD="$(prod "git -C $PDIR rev-parse HEAD" 2>/dev/null)"
-    P_TREE="$(prod "git -C $PDIR rev-parse 'HEAD^{tree}'" 2>/dev/null)"
-    if [ -z "$P_HEAD" ]; then report FAIL "production" "cannot reach $NC_PROD_SSH or $PDIR is not a git checkout"
-    else
-        if [ "$P_HEAD" = "$EXPECTED" ]; then report PASS "production commit" "$P_HEAD"
-        else report FAIL "production commit" "$P_HEAD (release $EXPECTED)"; fi
-        if [ "$P_TREE" = "$EXPECTED_TREE" ]; then report PASS "production tree" "$P_TREE"
-        else report FAIL "production tree" "$P_TREE (release ${EXPECTED_TREE:-unknown})"; fi
-        P_DIRTY="$(prod "git -C $PDIR status --porcelain | wc -l" 2>/dev/null | tr -d ' ')"
-        if [ "$P_DIRTY" = "0" ]; then report PASS "production local changes" "none (no production-only code)"
-        else report FAIL "production local changes" "${P_DIRTY:-?} modified/untracked path(s) in $PDIR"; fi
-        P_ADDONS="$(prod "grep -E '^addons_path' $PCONF" 2>/dev/null)"
-        R_ADDONS="$(git show "$EXPECTED:config/odoo.prod.conf" 2>/dev/null | grep -E '^addons_path')"
-        if [ -z "$P_ADDONS" ]; then report WARN "production runner conf" "could not read addons_path from $PCONF"
-        elif [ "$P_ADDONS" = "$R_ADDONS" ]; then report PASS "production runner conf" "addons_path = config/odoo.prod.conf"
-        else report FAIL "production runner conf" "addons_path differs from config/odoo.prod.conf"; fi
-        P_DBC="$(prod "docker ps -q --filter label=com.docker.compose.service=db | head -1" 2>/dev/null)"
-        P_DBS="${NC_PROD_DBS:-$(prod "docker exec $P_DBC psql -U odoo -d postgres -At -c \"SELECT datname FROM pg_database WHERE NOT datistemplate AND datname <> 'postgres' ORDER BY 1\"" 2>/dev/null)}"
-        for db in $P_DBS; do
-            out="$(printf '%s\n' "$MODULE_SQL" | prod "docker exec -i $P_DBC psql -U odoo -d $db -At -q" 2>/dev/null)"
-            check_db_modules production "$db" "$out"
-        done
-    fi
+    for spec in $PLATFORMS; do
+        IFS=: read -r p_name p_dir p_conf p_project <<<"$spec"
+        check_platform "$p_name" "$p_dir" "$p_conf" "$p_project"
+    done
 fi
 
 # ---- Verdict -----------------------------------------------------------------------------------------------------

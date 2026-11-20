@@ -293,6 +293,8 @@ msgstr "تفعيل"
 
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__active model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__active
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__state__active
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
 msgid "Active"
 msgstr "نشط"
 
@@ -607,11 +609,15 @@ msgstr "الموجة الحالية"
 
 #. module: ncollection_saas
 #: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__domain_type__custom
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__address_mode__custom
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_domains
 msgid "Custom Domain"
 msgstr "نطاق مخصّص"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__nc_custom_domains_enabled
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
 msgid "Custom Domains"
 msgstr "النطاقات المخصّصة"
 
@@ -685,6 +691,7 @@ msgstr "الاسم المعروض"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__domain_ids
 msgid "Domain"
 msgstr "النطاق"
 
@@ -700,6 +707,7 @@ msgstr "نوع النطاق"
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_tree
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_domains
 msgid "Domains"
 msgstr "النطاقات"
 
@@ -803,6 +811,7 @@ msgstr "فشل: %s"
 
 #. module: ncollection_saas
 #: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_backup__status__failed model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration__state__failed model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_fleet_migration_line__state__failed model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__localization_applied_state__error model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__module_install_state__failed model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_list model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__state__failed
 msgid "Failed"
 msgstr "فشل"
 
@@ -881,6 +890,7 @@ msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.example.com."
 
 #. module: ncollection_saas
 #: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_backup_search model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_fleet_migration_search
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
 msgid "Group by Status"
 msgstr "تجميع حسب الحالة"
 
@@ -1241,7 +1251,9 @@ msgid "NCollection: scan tenant domains & SSL expiry"
 msgstr "NCollection: فحص نطاقات المستأجرين وانتهاء صلاحية SSL"
 
 #. module: ncollection_saas
+#. odoo-python
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_fleet_migration__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_role_option__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_create__name model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_user_edit__name
+#: code:addons/ncollection_saas/models/domain.py:0
 msgid "Name"
 msgstr "الاسم"
 
@@ -1430,6 +1442,7 @@ msgstr "الخطة '%s' لا ترخّص وحدات إضافية — فالوحد
 
 #. module: ncollection_saas
 #: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__domain_type__subdomain
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__address_mode__subdomain
 msgid "Platform Subdomain"
 msgstr "النطاق الفرعي للمنصّة"
 
@@ -1986,6 +1999,8 @@ msgstr "الحالة"
 
 #. module: ncollection_saas
 #: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_backup__status model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant_deletion__state
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__state
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
 msgid "Status"
 msgstr "الحالة"
 
@@ -2552,6 +2567,7 @@ msgid "Workspace address:"
 msgstr "عنوان مساحة العمل:"
 
 #. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__platform_domain
 msgid "Platform"
 msgstr "المنصّة"
 
@@ -3064,6 +3080,7 @@ msgstr "آخر ترقية فاشلة"
 
 #. module: ncollection_saas
 #: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_tenant__nc_release_state__unknown
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__dns_status__unknown
 msgid "Not checked"
 msgstr "لم يُفحص"
 
@@ -3953,3 +3970,488 @@ msgstr "إلى"
 #: model:ir.model.fields,help:ncollection_saas.field_ncollection_tenant_delete_wizard__tenant_url
 msgid "Where this tenant is reachable: <subdomain>.<base domain>. Empty until the base domain is configured."
 msgstr "المكان الذي يمكن الوصول إلى هذا المستأجر فيه: <النطاق الفرعي>.<النطاق الأساسي>. فارغ حتى يُضبط النطاق الأساسي."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/res_config_settings.py:0
+msgid "%(value)s is not a valid IPv%(version)s address."
+msgstr "%(value)s ليس عنوان IPv%(version)s صالحًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_domain.py:0
+msgid "%s has no address yet."
+msgstr "لا يوجد عنوان لـ %s بعد."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "%s is active over HTTPS."
+msgstr "النطاق %s نشط عبر HTTPS."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid ""
+"%s is inside the platform's own namespace; tenants get those addresses "
+"automatically."
+msgstr "النطاق %s ضمن نطاق المنصة نفسها؛ يحصل المستأجرون على هذه العناوين تلقائيًا."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "2001:db8::10"
+msgstr "2001:db8::10"
+
+#. module: ncollection_saas
+#: model_terms:ir.actions.act_window,help:ncollection_saas.action_ncollection_domain
+msgid ""
+"A domain record is created for every provisioned tenant. Platform\n"
+"                subdomains ride the wildcard certificate automatically; a custom\n"
+"                domain is added from the tenant's Domains tab."
+msgstr "يُنشأ سجل نطاق لكل مستأجر يتم تجهيزه. تستخدم النطاقات الفرعية للمنصة\n                الشهادة الشاملة تلقائيًا؛ ويُضاف النطاق المخصص\n                من تبويب النطاقات في سجل المستأجر."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid ""
+"A tenant may use its own verified domain (erp.customer.com) instead of, or "
+"as well as, its platform subdomain."
+msgstr "يمكن للمستأجر استخدام نطاقه الخاص الموثَّق (erp.customer.com) بدلًا من نطاقه الفرعي على المنصة أو إلى جانبه."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__activated_on
+msgid "Activated On"
+msgstr "تاريخ التفعيل"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_domains
+msgid "Add Custom Domain"
+msgstr "إضافة نطاق مخصص"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/tenant_domain.py:0
+msgid "Add a custom domain"
+msgstr "إضافة نطاق مخصص"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__address_mode
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_domains
+msgid "Address"
+msgstr "العنوان"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__redirect_policy
+msgid ""
+"Applies when this domain is primary. The platform subdomain always keeps "
+"answering (fallback); with 'redirect' a browser that opens it is sent to the"
+" primary address."
+msgstr "يُطبَّق عندما يكون هذا النطاق هو الأساسي. يظل النطاق الفرعي للمنصة يعمل دائمًا (احتياطي)؛ ومع خيار «إعادة التوجيه» يُحوَّل المتصفح الذي يفتحه إلى العنوان الأساسي."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__cert_issuer
+msgid "Cert Issuer"
+msgstr "جهة إصدار الشهادة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__dns_status__ok
+msgid "Correct"
+msgstr "صحيح"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid ""
+"Create these records at the DNS provider of %(fqdn)s, then press Verify."
+msgstr "أنشئ هذه السجلات لدى مزوّد DNS للنطاق %(fqdn)s، ثم اضغط «تحقق»."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "Custom Tenant Domains"
+msgstr "النطاقات المخصصة للمستأجرين"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Custom domains are not enabled on this platform (SaaS Settings)."
+msgstr "النطاقات المخصصة غير مفعّلة على هذه المنصة (إعدادات الإدارة)."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__state__dns_required
+msgid "DNS Configuration Required"
+msgstr "يلزم إعداد DNS"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid "DNS Instructions"
+msgstr "تعليمات DNS"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "DNS lookup failed (%s). Try again in a few minutes."
+msgstr "فشل استعلام DNS (%s). حاول مرة أخرى بعد بضع دقائق."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid "Disable"
+msgstr "تعطيل"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Disable a custom domain before removing it."
+msgstr "عطّل النطاق المخصص قبل حذفه."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__state__disabled
+msgid "Disabled"
+msgstr "معطّل"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Disabled: the edge stops serving %s at its next run."
+msgstr "تم التعطيل: تتوقف بوابة الحافة عن خدمة %s في تشغيلها التالي."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__dns_instructions
+msgid "Dns Instructions"
+msgstr "تعليمات DNS"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__dns_status
+msgid "Dns Status"
+msgstr "حالة DNS"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__nc_custom_domain_cname
+msgid "Edge CNAME Target"
+msgstr "هدف CNAME لبوابة الحافة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__nc_custom_domain_ipv4
+msgid "Edge IPv4"
+msgstr "عنوان IPv4 لبوابة الحافة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_res_config_settings__nc_custom_domain_ipv6
+msgid "Edge IPv6"
+msgstr "عنوان IPv6 لبوابة الحافة"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid "Enable Again"
+msgstr "إعادة التفعيل"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__error_detail
+msgid "Error Detail"
+msgstr "تفاصيل الخطأ"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__fqdn
+msgid "Fully-qualified hostname, e.g. erp.customer.com."
+msgstr "اسم مضيف مؤهّل بالكامل، مثل acme.example.com."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/res_config_settings.py:0
+msgid "Invalid CNAME target: %s."
+msgstr "هدف CNAME غير صالح: %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Invalid domain: %s."
+msgstr "نطاق غير صالح: %s."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_domains
+msgid ""
+"Keep the platform subdomain, or add a domain the customer owns. It is activated only\n"
+"                                after ownership and DNS are verified and the certificate is issued; the platform\n"
+"                                subdomain always keeps working as a fallback."
+msgstr "احتفظ بالنطاق الفرعي للمنصة، أو أضف نطاقًا يملكه العميل. لا يُفعَّل إلا\n                                بعد التحقق من الملكية وإعدادات DNS وإصدار الشهادة؛ ويظل النطاق الفرعي\n                                للمنصة يعمل دائمًا كعنوان احتياطي."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__edge_reported
+msgid "Last Edge Report"
+msgstr "آخر تقرير من بوابة الحافة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__last_verified
+msgid "Last Verified"
+msgstr "آخر تحقق"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_res_config_settings__nc_custom_domains_enabled
+msgid ""
+"Let Platform Administrators give a tenant its own verified domain. Needs the"
+" edge agent on the host (docs/markdown/CUSTOM_TENANT_DOMAINS.md)."
+msgstr "يتيح لمسؤولي المنصة منح المستأجر نطاقه الخاص الموثَّق. يتطلب وكيل بوابة الحافة على الخادم (docs/markdown/CUSTOM_TENANT_DOMAINS.md)."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid ""
+"Links, password resets, invitations and notifications of this tenant will "
+"use this address. Continue?"
+msgstr "ستستخدم الروابط وإعادة تعيين كلمات المرور والدعوات والإشعارات لهذا المستأجر هذا العنوان. هل تريد المتابعة؟"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__dns_status__error
+msgid "Lookup failed"
+msgstr "فشل الاستعلام"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid "Make Primary Address"
+msgstr "جعله العنوان الأساسي"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_search
+msgid "Needs Action"
+msgstr "يتطلب إجراءً"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Note"
+msgstr "ملاحظة"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Only a Platform Administrator can manage tenant domains."
+msgstr "لا يمكن إدارة نطاقات المستأجرين إلا لمسؤول المنصة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Only an active domain can become the primary address."
+msgstr "لا يمكن أن يصبح العنوان الأساسي إلا نطاقًا نشطًا."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Ownership and DNS verified; the certificate is being requested."
+msgstr "تم التحقق من الملكية وإعدادات DNS؛ جارٍ طلب الشهادة."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid ""
+"Ownership is proven, but %(fqdn)s resolves to %(found)s instead of this "
+"platform."
+msgstr "تم إثبات الملكية، لكن %(fqdn)s يشير إلى %(found)s بدلًا من هذه المنصة."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__state__pending_verification
+msgid "Pending Verification"
+msgstr "بانتظار التحقق"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Platform subdomains are created by provisioning, not by hand."
+msgstr "تُنشأ النطاقات الفرعية للمنصة عبر التجهيز وليس يدويًا."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__dns_status__wrong
+msgid "Points elsewhere"
+msgstr "يشير إلى مكان آخر"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__is_primary
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_tenant__primary_address
+msgid "Primary Address"
+msgstr "العنوان الأساسي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Primary address: %(new)s (was %(old)s)."
+msgstr "العنوان الأساسي: %(new)s (كان %(old)s)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Proves you control the domain."
+msgstr "يثبت أنك تتحكم في النطاق."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Recommended for a subdomain such as erp.example.com."
+msgstr "موصى به لنطاق فرعي مثل erp.example.com."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__dns_status__missing
+msgid "Record missing"
+msgstr "السجل غير موجود"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__redirect_policy
+msgid "Redirect Policy"
+msgstr "سياسة إعادة التوجيه"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__redirect_policy__redirect
+msgid "Redirect the other addresses to the primary"
+msgstr "إعادة توجيه العناوين الأخرى إلى العنوان الأساسي"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid ""
+"Required at the apex (a CNAME is not valid there; ALIAS/ANAME to %(target)s "
+"also works where your DNS provider offers it)."
+msgstr "مطلوب في جذر النطاق (لا يصح استخدام CNAME هناك؛ ويعمل ALIAS/ANAME إلى %(target)s أيضًا إذا كان مزوّد DNS لديك يوفره)."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid ""
+"Requires the edge agent on the host: docs/markdown/CUSTOM_TENANT_DOMAINS.md."
+msgstr "يتطلب وكيل بوابة الحافة على الخادم: docs/markdown/CUSTOM_TENANT_DOMAINS.md."
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__state__ssl_pending
+msgid "SSL Pending"
+msgstr "بانتظار شهادة SSL"
+
+#. module: ncollection_saas
+#: model:ir.model.fields.selection,name:ncollection_saas.selection__ncollection_domain__redirect_policy__alias
+msgid "Serve on every address"
+msgstr "العمل على جميع العناوين"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__verification_record
+msgid "TXT record name"
+msgstr "اسم سجل TXT"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__verification_value
+msgid "TXT record value"
+msgstr "قيمة سجل TXT"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "The TXT record %(name)s does not contain the expected value yet."
+msgstr "سجل TXT %(name)s لا يحتوي على القيمة المتوقعة بعد."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_res_config_settings__nc_custom_domain_ipv4
+msgid "The address a customer's A record must point to."
+msgstr "العنوان الذي يجب أن يشير إليه سجل A لدى العميل."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_res_config_settings__nc_custom_domain_ipv6
+msgid ""
+"The address a customer's AAAA record must point to (leave empty when the "
+"edge has no IPv6)."
+msgstr "العنوان الذي يجب أن يشير إليه سجل AAAA لدى العميل (اتركه فارغًا إذا لم يكن لبوابة الحافة عنوان IPv6)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid ""
+"The certificate is issued automatically once the records are visible. Remove"
+" any AAAA record that does not point here, or validation fails."
+msgstr "تُصدر الشهادة تلقائيًا بمجرد ظهور السجلات. احذف أي سجل AAAA لا يشير إلى هنا، وإلا سيفشل التحقق."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid ""
+"The edge stops serving this domain. If it is the primary address, the tenant"
+" falls back to its platform subdomain. Tenant data is not affected. "
+"Continue?"
+msgstr "ستتوقف بوابة الحافة عن خدمة هذا النطاق. إذا كان هو العنوان الأساسي، يعود المستأجر إلى نطاقه الفرعي على المنصة. لا تتأثر بيانات المستأجر. هل تريد المتابعة؟"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_res_config_settings__nc_custom_domain_cname
+msgid ""
+"The hostname a customer's CNAME may point to instead (subdomains only; never"
+" valid at a zone apex)."
+msgstr "اسم المضيف الذي يمكن أن يشير إليه سجل CNAME لدى العميل بدلًا من ذلك (للنطاقات الفرعية فقط؛ ولا يصح في جذر النطاق أبدًا)."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid ""
+"The platform subdomain is the tenant's fallback address and cannot be "
+"removed."
+msgstr "النطاق الفرعي للمنصة هو العنوان الاحتياطي للمستأجر ولا يمكن حذفه."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__platform_domain
+msgid "The platform this record belongs to: its base domain."
+msgstr "المنصة التي يتبع لها هذا السجل: نطاقها الأساسي."
+
+#. module: ncollection_saas
+#: model:ir.model.fields,help:ncollection_saas.field_ncollection_domain__is_primary
+msgid ""
+"The tenant's canonical address: links, password resets, invitations and "
+"notifications use it."
+msgstr "العنوان المعتمد للمستأجر: تستخدمه الروابط وإعادة تعيين كلمات المرور والدعوات والإشعارات."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "These fields change only through the domain actions: %s."
+msgstr "لا تتغير هذه الحقول إلا عبر إجراءات النطاق: %s."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Type"
+msgstr "النوع"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Use instead of the CNAME if your provider prefers address records."
+msgstr "استخدمه بدلًا من CNAME إذا كان مزوّدك يفضّل سجلات العناوين."
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "Value"
+msgstr "القيمة"
+
+#. module: ncollection_saas
+#: model:ir.model.fields,field_description:ncollection_saas.field_ncollection_domain__verification_token
+msgid "Verification Token"
+msgstr "رمز التحقق"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_tenant_form_domains
+msgid "Verify"
+msgstr "تحقق"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "Where customers point their DNS"
+msgstr "الوجهة التي يوجّه إليها العملاء سجلات DNS"
+
+#. module: ncollection_saas
+#. odoo-python
+#: code:addons/ncollection_saas/models/domain.py:0
+msgid "You are not authorised to manage the domains of %s."
+msgstr "غير مصرح لك بإدارة نطاقات %s."
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "edge.example.com"
+msgstr "edge.example.com"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_domain_form
+msgid "erp.customer.com"
+msgstr "erp.customer.com"
+
+#. module: ncollection_saas
+#: model_terms:ir.ui.view,arch_db:ncollection_saas.view_ncollection_saas_config_settings
+msgid "example.com"
+msgstr "example.com"

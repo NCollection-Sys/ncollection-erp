@@ -21,6 +21,7 @@ from . import role
 from . import res_users
 from . import res_users_admin
 from . import admin_service
+from . import canonical_host
 from . import res_users_apikeys
 from . import launcher_app
 # #374 the financial-data role gate, shared by ncollection_account_dashboard

@@ -60,8 +60,8 @@ test.describe('Tenant Administration (platform)', () => {
       { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.o_form_view .o_notebook', { timeout: 60_000 });
     const tabs = (await page.locator('.o_notebook .nav-link').allInnerTexts()).map((t) => t.trim());
-    expect(tabs).toEqual(['Overview', 'Subscription', 'Users & Access', 'Platform Access', 'System', 'Modules',
-      'Configuration Sync']);
+    expect(tabs).toEqual(['Overview', 'Subscription', 'Users & Access', 'Settings Policy', 'Domains', 'Platform Access',
+      'System', 'Modules', 'Configuration Sync']);
     await page.locator('.o_notebook .nav-link', { hasText: 'Users & Access' }).click();
     await expect(page.locator('.o_notebook')).toContainText(`e2eadm${STAMP}`);
     await expect(page.locator('.o_notebook')).toContainText('once its workspace has been provisioned');

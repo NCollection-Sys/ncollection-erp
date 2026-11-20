@@ -12,6 +12,7 @@ from . import config_sync_rekey
 from . import exchange_rate
 from . import checkout
 from . import domain
+from . import tenant_domain
 from . import backup
 from . import fleet_migration
 from . import fleet_migration_line

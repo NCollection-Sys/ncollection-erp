@@ -53,7 +53,8 @@ adding a module fails CI until someone updates this list.
 
 **Platform layer** (never queries tenant ERP models directly — Rule 3):
 - `ncollection_saas` — the provisioning engine: tenant lifecycle, provisioning jobs,
-  config-sync (+ re-key), fleet migration, backups, checkout, domains, exchange rates, and **Tenant Administration**:
+  config-sync (+ re-key), fleet migration, backups, checkout, domains (platform subdomains + VERIFIED custom tenant domains: TXT
+  proof, edge agent, pinned database — `CUSTOM_TENANT_DOMAINS.md`), exchange rates, and **Tenant Administration**:
   the tenant form's Users & Access (list users, create, activate / deactivate, change roles, reset a password incl. the
   Tenant Administrator's) through the tenant's `ncollection.admin.service` over the same derived-bearer JSON-2 channel,
   authorised on every call (platform admin + the tenant's `platform_admin_ids` allow-list); the platform stores no password.
@@ -434,7 +435,8 @@ So tenant key === subdomain === database name, always.
 - `WORKSPACE_AND_TENANT_ADMINISTRATION.md` — roles = real groups, password reset, the platform's user-administration service, audit, boundaries.
 - `UAE_EINVOICING.md` — the UAE e-invoicing engine: scope, identity model, rounding analysis, validator, retention and offboarding, provisioning gate.
 - `DEPLOYMENT_DOMAIN_CONTRACT.md` — the production domain (`balancecloud.ae` + `*.balancecloud.ae`): the one `DOMAIN` setting, the wildcard route, DNS / TLS / forwarded headers / trusted proxy, what is proven where.
-- `RELEASE_SYNC_WORKFLOW.md` — local / GitHub / production stay on one release: lifecycle, intentional differences, release record, and the read-only `scripts/dev/release_sync_check.sh` (PASS/WARN/FAIL, `--json`).
+- `RELEASE_SYNC_WORKFLOW.md` — local / GitHub / BOTH production platforms (Balance Cloud, Atlas Core) stay on one release: lifecycle, intentional differences, release record, and the read-only `scripts/dev/release_sync_check.sh` (PASS/WARN/FAIL per platform, `--json`).
+- `CUSTOM_TENANT_DOMAINS.md` — a tenant on its own verified domain (both platforms): lifecycle, DNS instructions, the edge agent (`scripts/edge/nc_edge_agent.py`), the `X-NC-Tenant-DB` pin (`ncollection_core/tenant_host_pin.py`) and its trust rule, the security matrix.
 - `RUNBOOK_RELEASE_UPGRADE.md` — deploying code to a database that exists: backup, deploy, preflight, rehearse on a copy, targeted upgrade, smoke, traffic. Never `-u all`.
 - `RELEASE_COMPATIBILITY_GATE.md` — why a database the code is ahead of answers a branded 503 instead of an HTTP 500: the gate before the registry (`ncollection_core/release_gate.py`, server-wide), the states, holds, the platform's status channel, provisioning `validating`, Company Entry, Fleet Migration (platform first, enforced), and how an
   operator reads a blocked PLATFORM database (`make release-status db=ncollection`).

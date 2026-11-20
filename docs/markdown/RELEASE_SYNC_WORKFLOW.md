@@ -1,15 +1,21 @@
-# Release synchronization workflow (local ↔ GitHub ↔ production)
+# Release synchronization workflow (local ↔ GitHub ↔ every production platform)
 
-A release is **one commit and one tree**, and it is not finished until all three places run it:
+A release is **one commit and one tree**, and it is not finished until every managed place runs it:
 
 | Place | What must hold |
 |---|---|
 | GitHub `develop` | points at the release commit (`main` is not the deploy branch) |
-| Production `/opt/balancecloud` | checked out at the release, `git status` clean, every database upgraded, 0 pending modules |
+| **Balance Cloud** production (`/opt/balancecloud`, compose project `balancecloud`) | checked out at the release, `git status` clean, every database upgraded, 0 pending modules |
+| **Atlas Core** production (`/opt/atlascore`, a git worktree of the same repository, compose project `atlascore`, its OWN Postgres server) | the same |
 | Local shared runtime (`D:\Projects\ncollection-erp`, bind-mounted into the dev `odoo` container) | checked out at the release, no modified tracked files, the local databases upgraded, 0 pending modules |
 
+The two production platforms share the code and nothing else: separate databases, tenants, filestores, secrets,
+queues, runners, certificates and backups. One release is deployed to BOTH; a platform left on an older revision is
+drift and is reported per platform. A staged rollout (one platform first) is allowed only when the release is
+reported as `BALANCE CLOUD DEPLOYED — ATLAS CORE PENDING` (or the reverse) until the second one is done.
+
 A release that is live in production while the local runtime is behind is reported as
-**`PRODUCTION DEPLOYED — LOCAL SYNC PENDING`**, never as complete.
+**`PRODUCTION DEPLOYED — LOCAL SYNC PENDING`**, never as complete. Business data is never copied between platforms.
 
 ## The check (read-only)
 
@@ -25,11 +31,11 @@ prints no secret. Exit status 0 = in sync, 1 = warnings only, 2 = at least one F
 
 | Check | FAIL when |
 |---|---|
-| local / production commit and tree | not exactly the release (local BEHIND is named with its commit count) |
+| local / each platform commit and tree | not exactly the release (local BEHIND is named with its commit count) |
 | local tracked changes | any modified tracked file (the runtime would not be the release) |
-| production local changes | anything in `git status --porcelain` — production-only code is never allowed |
-| production runner conf | `addons_path` of `/etc/balancecloud/odoo.runner.conf` differs from `config/odoo.prod.conf` |
-| every database | a module pending install/upgrade/remove, an installed `ncollection*` module whose version differs from its manifest (= upgrade pending), or one absent from the checkout |
+| each platform local changes | anything in `git status --porcelain` — production-only code is never allowed |
+| each platform runner conf | `addons_path` of `/etc/<platform>/odoo.runner.conf` differs from `config/odoo.prod.conf` |
+| every database of every platform (each read on that platform's own Postgres, selected by compose project) | a module pending install/upgrade/remove, an installed `ncollection*` module whose version differs from the RELEASE manifest (= upgrade pending), or one absent from the release |
 
 WARN: untracked files under `custom_addons/` or `config/`, an addon in the checkout that is not in the release,
 production not checked (`NC_PROD_SSH` unset), or a release with neither a tag nor a row in the release record below.
@@ -44,7 +50,9 @@ pre-upgrade copy of `awtar` FAILs with `ncollection_core(19.0.1.33.0->19.0.1.34.
    `develop` is fast-forwarded (never force-pushed). `main` is not touched.
 3. **Deploy** (`RUNBOOK_RELEASE_UPGRADE.md`): verify the candidate (commit, tree, bundle SHA-256), back up every
    database + filestore with checksums, rehearse on copies when there is a migration, upgrade each database with an
-   explicit module list (never `-u all`), verify health and accounting counts. Then run the check against production.
+   explicit module list (never `-u all`), verify health and accounting counts. Do it for **Balance Cloud and then
+   Atlas Core** (each: its own backup, its own `git -C /opt/<platform> merge --ff-only`, its own containers); an edge
+   change (nginx snippet) goes in before any code that relies on it. Then run the check against production.
 4. **Sync local** (same day):
    - `git status`: commit or keep every local change; untracked local files are left alone; no `reset --hard`, no
      forced checkout. Fast-forward the runtime branch to the release (`git merge --ff-only <release>`).
@@ -54,7 +62,8 @@ pre-upgrade copy of `awtar` FAILs with `ncollection_core(19.0.1.33.0->19.0.1.34.
      modules the release changed **that the database has installed**, start `odoo`, restart the provisioning runner,
      reload nginx.
    - Compare accounting counts before/after; run the module tests on a throwaway `nctest`.
-5. **Complete**: the check reports 0 FAIL on all three places; add a row to the release record.
+5. **Complete**: the check reports 0 FAIL on every place (local, GitHub, Balance Cloud, Atlas Core); tag the release
+   `release-<sha>` (local, both production checkouts share one repository, GitHub); add a row to the release record.
 
 ## Intentional differences (not drift)
 
@@ -65,6 +74,8 @@ pre-upgrade copy of `awtar` FAILs with `ncollection_core(19.0.1.33.0->19.0.1.34.
 | Installed-module sets | platform databases carry `ncollection_saas` (+ `mass_mailing` on the platform), tenants carry their plan's modules and country package; every database is compared with the code, not with each other. |
 | Maintenance administrator | exists in tenant databases only (`awtar` locally); platform databases have none by design. |
 | Business data, subscriptions, filestores, passwords, API keys | never synchronized between environments. A production copy is only ever restored into the isolated rehearsal stack. |
+| Atlas Core vs Balance Cloud | own `.env` secrets, own `/etc/atlascore` configs (`workers = 2`), platform database `atlas-core`, company Atlas Core (AE/AED), Enterprise plan only (Starter/Growth archived), own certificate (`atlas-core.io` + `*.atlas-core.io`) and daily backup timer. Only code is shared. |
+| `NC_TENANT_DB_HEADER=1` | set on each production platform's odoo service once its proxy snippet clears `X-NC-Tenant-DB` (custom domains); never locally unless the local edge strips it too. |
 
 ## Release record
 
@@ -77,4 +88,5 @@ commit and from GitHub `develop`. Only a table row whose first cell is the relea
 | Release | Tree | GitHub develop | Production | Local runtime | Local databases |
 |---|---|---|---|---|---|
 | `01240df` | `b94043bf` | 2026-11-19 | 2026-11-19 00:13–00:15 UTC, 7 databases | 2026-11-19 14:21 UTC | `ncollection`, `awtar`, `ncollection_demo` upgraded (core 1.34.0, saas 6.30.0, account_reports 1.19.0, branding 1.21.0); backup `D:\Backups\local-sync-01240df-20261119T140601Z` |
-| next candidate (this commit) | — | not pushed | not deployed | not synced | — (record written after approval; tag `release-<sha>` at deploy) |
+| `dbfd986` | `e44a03df` | 2026-11-19 | Balance Cloud 2026-11-19 23:25–23:28 UTC, 7 databases (backup `/root/nc-backups/pre-dbfd986`); Atlas Core created 2026-11-20 from it (clean bootstrap, `atlas-core`) | 2026-11-19 23:35 UTC | `ncollection`, `awtar`, `ncollection_demo`: core 1.34.1; backup `D:Backupsocal-sync-dbfd986-20261119T232935Z` |
+| next candidate (this commit) | — | not pushed | not deployed | not synced | — (record written by the next commit; tag `release-<sha>` at deploy) |
