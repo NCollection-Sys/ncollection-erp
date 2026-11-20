@@ -51,6 +51,10 @@ class FakePlatform(http.server.BaseHTTPRequestHandler):
         pass
 
     def _ok(self):
+        # Like production with NC_TENANT_DB_HEADER=1: ANY X-NC-Tenant-DB header (even empty) pins away from the
+        # platform database, so a request carrying one never reaches these endpoints.
+        if 'X-NC-Tenant-DB' in self.headers:
+            return False
         db = self.server.db
         return self.headers.get('Authorization') == 'Bearer ' + agent.derive_key(MASTER, db)
 

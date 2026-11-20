@@ -83,8 +83,10 @@ def call(platform, path, body=None):
     req = urllib.request.Request(
         platform['internal_url'].rstrip('/') + path, method='POST' if body is not None else 'GET',
         data=json.dumps(body).encode() if body is not None else None,
+        # NO X-NC-Tenant-DB header, not even an empty one: the platform's own host routes this request, and with the pin
+        # enabled an empty header is a malformed pin, which reaches no database (fail closed -> 404).
         headers={'Host': platform['host'], 'Authorization': 'Bearer ' + platform_key(platform),
-                 'Content-Type': 'application/json', 'X-NC-Tenant-DB': ''})
+                 'Content-Type': 'application/json'})
     with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - fixed loopback URL from root config
         return json.loads(resp.read(1024 * 1024) or b'{}')
 
