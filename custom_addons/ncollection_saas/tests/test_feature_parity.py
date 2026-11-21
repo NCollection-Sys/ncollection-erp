@@ -134,6 +134,8 @@ class TestFeatureParity(TransactionCase):
         gaining = self._tenant(self.with_accounting, ready=True)
         unaffected = self._tenant(self.without_accounting, ready=True)
         not_ready = self._tenant(self.with_accounting)
+        suspended = self._tenant(self.with_accounting, ready=True)
+        suspended.write({'status': 'suspended'})
         synced, installed = [], []
         with patch('%s._nc_enqueue_module_install' % TENANT_INSTALL, new=lambda recs: installed.extend(recs)), \
                 patch(SYNC, new=lambda recs: synced.extend(recs)):
@@ -142,6 +144,7 @@ class TestFeatureParity(TransactionCase):
         self.assertIn(gaining, synced)
         self.assertNotIn(unaffected, installed)
         self.assertNotIn(not_ready, installed)
+        self.assertNotIn(suspended, installed, "a suspended workspace is not changed behind its owner's back")
 
     def test_the_migration_does_nothing_on_a_fresh_install(self):
         self._tenant(self.with_accounting, ready=True)

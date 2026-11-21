@@ -10,7 +10,8 @@ so no plan-save hook fires. That is the tenant the enhanced journal card was mis
 Same entry points as 19.0.6.16.0, no new engine: ``_config_sync_enqueue()`` re-pushes the licence and
 ``_nc_enqueue_module_install()`` queues one deduplicated install job per ready tenant. Installing what is already
 installed is a no-op, so the tenants that received these modules by hand in earlier releases are unaffected. Only
-tenants whose entitlement includes Accounting are queued; nothing is uninstalled and no plan is edited.
+tenants whose entitlement includes Accounting and that are trial or active are queued; nothing is uninstalled, no plan
+is edited.
 """
 from odoo import SUPERUSER_ID, api
 
@@ -29,6 +30,9 @@ def migrate(cr, version):
     tenants = env['ncollection.tenant'].search([
         ('database_status', '=', 'ready'),
         ('database_name', '!=', False),
+        # a suspended or expired workspace is not changed behind its owner's back; it gets them on reactivation
+        # through the ordinary entitlement push
+        ('status', 'in', ('trial', 'active')),
     ])
     gaining = tenants.filtered(
         lambda t: any(name in ACCOUNTING_COMPANIONS for name in t._nc_effective_module_list()))

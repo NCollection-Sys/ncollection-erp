@@ -3,7 +3,7 @@
 #
 #   scripts/dev/tenant_parity_check.sh <odoo container> <platform db> [odoo config inside the container]
 #
-# Exit 0 = PARITY_RESULT=PASS, 1 = FAIL, 2 = could not run. Writes nothing anywhere.
+# Exit 0 = PARITY_RESULT=PASS, 1 = FAIL, 2 = could not run, 3 = WARN (peer gaps to investigate). Writes nothing.
 set -euo pipefail
 container=${1:?usage: tenant_parity_check.sh <odoo container> <platform db> [conf]}
 platform_db=${2:?usage: tenant_parity_check.sh <odoo container> <platform db> [conf]}
@@ -21,5 +21,6 @@ result=$(printf '%s\n' "$out" | sed -n 's/^PARITY_RESULT=//p' | tail -1)
 case "$result" in
   PASS) exit 0 ;;
   FAIL) exit 1 ;;
+  WARN) exit 3 ;;
   *) echo "tenant_parity_check: no result line (did the script run?)" >&2; exit 2 ;;
 esac

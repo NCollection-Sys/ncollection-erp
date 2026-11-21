@@ -153,10 +153,11 @@ fi
 PLATFORMS="${NC_PROD_PLATFORMS:-balancecloud:/opt/balancecloud:/etc/balancecloud/odoo.runner.conf:balancecloud:balancecloud atlascore:/opt/atlascore:/etc/atlascore/odoo.runner.conf:atlascore:atlas-core}"
 parity_report() {  # parity_report <label> <rc> <output> <severity on FAIL>
     local label="$1" rc="$2" out="$3" sev="$4" fails
-    fails="$(printf '%s\n' "$out" | grep -E '^ +FAIL ' | sed 's/^ *FAIL *//' | head -5 | tr '\n' ';')"
+    fails="$(printf '%s\n' "$out" | grep -E '^ +(FAIL|WARN) ' | sed -E 's/^ *(FAIL|WARN) *//' | head -5 | tr '\n' ';')"
     case "$rc" in
         0) report PASS "$label functional parity" "every tenant has its entitlement + same-plan peers' modules; views active" ;;
         1) report "$sev" "$label functional parity" "${fails%;}" ;;
+        3) report WARN "$label functional parity" "${fails%;}" ;;
         *) report WARN "$label functional parity" "checker could not run (tenant_parity_check.sh rc=$rc)" ;;
     esac
 }

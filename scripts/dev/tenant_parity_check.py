@@ -27,7 +27,7 @@ WHAT IT REPORTS, per database, in the categories the release workflow distinguis
                        information, never as a failure, and never "fixed".
 
 Read-only: tenant databases are opened through a plain cursor that only SELECTs, and nothing is written to the
-platform. Prints one `PARITY_JSON=` line (machine-readable) and a final `PARITY_RESULT=PASS|FAIL`.
+platform. Prints one `PARITY_JSON=` line (machine-readable) and a final `PARITY_RESULT=PASS|WARN|FAIL`.
 """
 import json
 
@@ -82,7 +82,8 @@ def inspect(cr, expected):
                 failures.append('PLATFORM-ONLY: %s is installed in a tenant' % name)
     cr.execute("""SELECT m.name, array_agg(d.name) FILTER (WHERE d.auto_install_required)
                     FROM ir_module_module m JOIN ir_module_module_dependency d ON d.module_id = m.id
-                   WHERE m.auto_install AND m.state = 'uninstalled' GROUP BY m.name""")
+                   WHERE m.auto_install AND m.state = 'uninstalled' AND m.name LIKE 'ncollection\\_%'
+                   GROUP BY m.name""")
     for name, triggers in cr.fetchall():
         manifest = get_manifest(name) or {}
         if not manifest.get('installable', True) or manifest.get('countries'):
@@ -155,15 +156,18 @@ for db, entry in tenants.items():
     gaps = sorted(m for m in {m for e in peers for m in e['ncollection']} - mine - country_specific
                   if 'localization' not in m and 'einvoicing' not in m)
     if gaps:
-        entry.setdefault('failures', []).append(
-            'PEER PARITY: same-plan (%s) tenants have %s' % (entry.get('plan'), ', '.join(gaps)))
+        entry.setdefault('warnings', []).append(
+            'PEER PARITY (investigate, do not just install): same-plan (%s) tenants have %s'
+            % (entry.get('plan'), ', '.join(gaps)))
 
 failed = {db: e['failures'] for db, e in report['databases'].items() if e.get('failures')}
 for db, entry in report['databases'].items():
-    state = 'FAIL' if entry.get('failures') else 'PASS'
+    state = 'FAIL' if entry.get('failures') else ('WARN' if entry.get('warnings') else 'PASS')
     print('%-5s %-22s %-8s installed=%s ncollection=%s views_ok=%s' % (
         state, db, entry.get('role'), entry.get('installed', '-'), len(entry.get('ncollection', [])),
         entry.get('views_ok', '-')))
+    for line in entry.get('warnings', []):
+        print('      WARN  %s' % line)
     for line in entry.get('failures', []):
         print('      FAIL  %s' % line)
     for line in entry.get('info', []):
@@ -172,4 +176,5 @@ for db, entry in report['databases'].items():
         print('      info  EXPECTED SUBSCRIPTION DIFFERENCE (plan excludes): %s'
               % ', '.join(entry['subscription_excluded']))
 print('PARITY_JSON=' + json.dumps(report, sort_keys=True))
-print('PARITY_RESULT=' + ('FAIL' if failed else 'PASS'))
+warned = any(e.get('warnings') for e in report['databases'].values())
+print('PARITY_RESULT=' + ('FAIL' if failed else 'WARN' if warned else 'PASS'))

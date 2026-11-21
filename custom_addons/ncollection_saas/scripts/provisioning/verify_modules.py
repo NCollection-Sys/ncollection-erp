@@ -52,7 +52,11 @@ if pending:
     problems.append('pending operations: %s' % ', '.join(sorted('%s(%s)' % (m.name, m.state) for m in pending)))
 
 # Odoo's auto_install rule, re-checked: a module whose dependencies are all installed must be installed itself.
-for module in Module.search([('auto_install', '=', True), ('state', '=', 'uninstalled')]):
+# Only NCollection modules: Odoo installs an auto_install module only when one of its triggers is installed in the
+# same run (ir_module.py must_install), so a generic Odoo module whose triggers were already there is legitimately
+# absent; ours are what this gate is about.
+for module in Module.search([('auto_install', '=', True), ('state', '=', 'uninstalled'),
+                             ('name', '=like', r'ncollection\_%')]):
     manifest = get_manifest(module.name) or {}
     if not manifest.get('installable', True) or manifest.get('countries'):
         continue  # not installable, or country-gated (l10n_*): Odoo itself would not auto-install it here
