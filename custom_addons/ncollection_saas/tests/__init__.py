@@ -37,3 +37,4 @@ from . import test_settings_policy_platform
 from . import test_provisioning_single_run
 from . import test_subscription_plan_install
 from . import test_custom_domain
+from . import test_feature_parity
