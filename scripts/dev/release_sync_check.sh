@@ -128,6 +128,17 @@ for m in custom_addons/*/__manifest__.py; do
     git cat-file -e "$EXPECTED:custom_addons/$mod/__manifest__.py" 2>/dev/null || { report WARN "local addon" "$mod is not in the release"; }
 done
 
+parity_report() {  # parity_report <label> <rc> <output> <severity on FAIL>
+    local label="$1" rc="$2" out="$3" sev="$4" fails
+    fails="$(printf '%s\n' "$out" | grep -E '^ +(FAIL|WARN) ' | sed -E 's/^ *(FAIL|WARN) *//' | head -5 | tr '\n' ';')"
+    case "$rc" in
+        0) report PASS "$label functional parity" "every tenant has its entitlement + same-plan peers' modules; views active" ;;
+        1) report "$sev" "$label functional parity" "${fails%;}" ;;
+        3) report WARN "$label functional parity" "${fails%;}" ;;
+        *) report WARN "$label functional parity" "checker could not run (tenant_parity_check.sh rc=$rc)" ;;
+    esac
+}
+
 DBC="$(docker compose ps -q db 2>/dev/null)"
 if [ -z "$DBC" ]; then report WARN "local databases" "db service not running: database checks skipped"
 else
@@ -151,16 +162,6 @@ fi
 #   <name>:<checkout>:<runner conf>:<compose project>:<platform db>
 # Each platform is checked on its own; two platforms on different releases is drift, reported per platform.
 PLATFORMS="${NC_PROD_PLATFORMS:-balancecloud:/opt/balancecloud:/etc/balancecloud/odoo.runner.conf:balancecloud:balancecloud atlascore:/opt/atlascore:/etc/atlascore/odoo.runner.conf:atlascore:atlas-core}"
-parity_report() {  # parity_report <label> <rc> <output> <severity on FAIL>
-    local label="$1" rc="$2" out="$3" sev="$4" fails
-    fails="$(printf '%s\n' "$out" | grep -E '^ +(FAIL|WARN) ' | sed -E 's/^ *(FAIL|WARN) *//' | head -5 | tr '\n' ';')"
-    case "$rc" in
-        0) report PASS "$label functional parity" "every tenant has its entitlement + same-plan peers' modules; views active" ;;
-        1) report "$sev" "$label functional parity" "${fails%;}" ;;
-        3) report WARN "$label functional parity" "${fails%;}" ;;
-        *) report WARN "$label functional parity" "checker could not run (tenant_parity_check.sh rc=$rc)" ;;
-    esac
-}
 check_platform() {  # check_platform <name> <checkout> <runner conf> <compose project> [platform db]
     local name="$1" pdir="$2" pconf="$3" project="$4" pdb="${5:-}" head tree dirty addons raddons dbc dbs db out oc rc
     head="$(prod "git -C $pdir rev-parse HEAD" 2>/dev/null)"

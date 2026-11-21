@@ -115,7 +115,9 @@ report = {'platform': env.cr.dbname, 'databases': {}}  # noqa: F821
 report['databases'][env.cr.dbname] = dict(inspect(env.cr, None), role='platform')  # noqa: F821
 
 Tenant = env['ncollection.tenant'].sudo().with_context(active_test=False)  # noqa: F821
-existing = set(odoo.service.db.list_dbs(True))
+# pg_database directly: list_dbs() applies the server's dbfilter and would call a live tenant "missing"
+env.cr.execute("SELECT datname FROM pg_database WHERE NOT datistemplate")  # noqa: F821
+existing = {row[0] for row in env.cr.fetchall()}  # noqa: F821
 plan_modules = set()
 for plan in env['ncollection.subscription.plan'].sudo().with_context(active_test=False).search([]):  # noqa: F821
     plan_modules |= set(plan.get_allowed_module_list())
