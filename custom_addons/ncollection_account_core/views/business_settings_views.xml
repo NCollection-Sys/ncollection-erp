@@ -10,11 +10,60 @@
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
                 <app data-string="Accounting" string="Accounting" name="account" invisible="nc_level_business == 'hidden'">
+                    <field name="nc_has_accounting_entries" invisible="1"/>
+                    <field name="nc_is_branch" invisible="1"/>
+                    <field name="nc_display_account_storno" invisible="1"/>
+                    <!-- The company's accounting identity: changeable only while the company has no accounting
+                         entries (the server refuses it otherwise, with the same reason). -->
+                    <block title="Fiscal Localization">
+                        <div class="alert alert-info mx-3 mb-2" role="status" colspan="2" invisible="not nc_has_accounting_entries">
+                            This company already has accounting entries, so its main currency, fiscal country and chart of
+                            accounts can no longer be changed safely. They are shown for reference.
+                        </div>
+                        <setting id="nc_currency_id" string="Main Currency"
+                                 help="The currency the company keeps its books in. It cannot change once journal items exist.">
+                            <field name="currency_id" options="{'no_create': True}" context="{'active_test': False}"
+                                   readonly="nc_level_business == 'view' or nc_has_accounting_entries or nc_is_branch"/>
+                        </setting>
+                        <setting id="nc_account_fiscal_country_id" string="Fiscal Country"
+                                 help="The country whose taxes and tax reports apply to this company.">
+                            <field name="account_fiscal_country_id" options="{'no_create': True}"
+                                   readonly="nc_level_business == 'view' or nc_has_accounting_entries"/>
+                        </setting>
+                        <setting id="nc_chart_template" string="Chart of Accounts"
+                                 help="Chosen once, for a company that has no chart yet: loading another chart replaces the accounts, taxes and journals.">
+                            <field name="chart_template"
+                                   readonly="nc_level_business == 'view' or nc_has_accounting_entries or nc_has_chart"/>
+                        </setting>
+                    </block>
+                    <block title="Currencies">
+                        <setting id="nc_group_multi_currency" help="Record transactions in foreign currencies.">
+                            <field name="group_multi_currency" readonly="nc_level_business == 'view'"/>
+                            <div class="mt8" invisible="not group_multi_currency">
+                                <button name="%(base.action_currency_form)d" icon="oi-arrow-right" type="action"
+                                        string="Currencies" class="btn-link"/>
+                            </div>
+                        </setting>
+                    </block>
                     <block title="Taxes">
                         <setting id="nc_sale_tax_id"><field name="sale_tax_id" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_purchase_tax_id"><field name="purchase_tax_id" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_tax_calculation_rounding_method"><field name="tax_calculation_rounding_method" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_account_price_include"><field name="account_price_include" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_tax_exigibility" help="Book taxes when the invoice is paid rather than when it is posted.">
+                            <field name="tax_exigibility" readonly="nc_level_business == 'view' or nc_is_branch"/>
+                            <div class="mt8" invisible="not tax_exigibility">
+                                <field name="tax_cash_basis_journal_id" readonly="nc_level_business == 'view'" options="{'no_create': True}"/>
+                                <field name="account_cash_basis_base_account_id" readonly="nc_level_business == 'view'" options="{'no_create': True}"/>
+                            </div>
+                        </setting>
+                        <setting id="nc_taxes_link" string="Taxes and Fiscal Positions"
+                                 help="Tax rates, and the rules that map them for foreign or exempt customers and suppliers.">
+                            <button name="%(account.action_tax_form)d" icon="oi-arrow-right" type="action"
+                                    string="Taxes" class="btn-link"/>
+                            <button name="%(account.action_account_fiscal_position_form)d" icon="oi-arrow-right" type="action"
+                                    string="Fiscal Positions" class="btn-link"/>
+                        </setting>
                     </block>
                     <block title="Invoices">
                         <setting id="nc_qr_code"><field name="qr_code" readonly="nc_level_business == 'view'"/></setting>
@@ -22,7 +71,34 @@
                         <setting id="nc_use_invoice_terms"><field name="use_invoice_terms" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_incoterm_id"><field name="incoterm_id" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_group_cash_rounding"><field name="group_cash_rounding" readonly="nc_level_business == 'view'"/></setting>
-                        <setting id="nc_group_sale_delivery_address"><field name="group_sale_delivery_address" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_sale_delivery_address"><field name="group_sale_delivery_address" readonly="nc_level_business == 'view'"/></setting>                        <setting id="nc_display_invoice_tax_company_currency"><field name="display_invoice_tax_company_currency" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_show_sale_receipts"><field name="show_sale_receipts" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_quick_edit_mode"><field name="quick_edit_mode" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_autopost_bills"><field name="autopost_bills" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_account_storno" invisible="not nc_display_account_storno" help="Only for countries where Odoo offers it; fixed once entries exist."><field name="account_storno" readonly="nc_level_business == 'view' or nc_has_accounting_entries"/></setting>
+                    </block>
+                    <block title="Customer Payments">
+                        <setting id="nc_account_use_credit_limit" help="Warn when a customer's credit limit is exceeded.">
+                            <field name="account_use_credit_limit" readonly="nc_level_business == 'view'"/>
+                            <div class="mt8" invisible="not account_use_credit_limit">
+                                <field name="account_default_credit_limit" readonly="nc_level_business == 'view'"/>
+                            </div>
+                        </setting>
+                        <setting id="nc_payment_terms_link" string="Payment Terms and Journals"
+                                 help="Default payment terms, and the bank, cash and other journals.">
+                            <button name="%(account.action_payment_term_form)d" icon="oi-arrow-right" type="action"
+                                    string="Payment Terms" class="btn-link"/>
+                            <button name="%(account.action_account_journal_form)d" icon="oi-arrow-right" type="action"
+                                    string="Journals" class="btn-link"/>
+                        </setting>
+                    </block>
+                    <block title="Analytics and Discounts">
+                        <setting id="nc_group_analytic_accounting"><field name="group_analytic_accounting" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_discount_allocation" string="Discount Allocation"
+                                 help="Accounts that receive the discounts granted or received on invoices and bills.">
+                            <field name="account_discount_income_allocation_id" readonly="nc_level_business == 'view'" options="{'no_create': True}"/>
+                            <field name="account_discount_expense_allocation_id" readonly="nc_level_business == 'view'" options="{'no_create': True}"/>
+                        </setting>
                     </block>
                     <block title="Accounting Defaults" invisible="nc_level_accounting_defaults == 'hidden'">
                         <setting id="nc_accounting_defaults" string="Accounting Defaults"
