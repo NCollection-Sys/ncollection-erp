@@ -71,6 +71,7 @@ class NcBusinessSettings(models.TransientModel):
     nc_is_branch = fields.Boolean(compute='_compute_nc_accounting_state')
     nc_display_account_storno = fields.Boolean(compute='_compute_nc_accounting_state')
     nc_localization_mismatch = fields.Boolean(compute='_compute_nc_accounting_state')
+    nc_is_tenant_admin = fields.Boolean(compute='_compute_nc_accounting_state')   # the view hides the app otherwise
     account_storno = fields.Boolean(string='Storno Accounting')
 
     # ------------------------------------------------------------------ taxes
@@ -128,12 +129,16 @@ class NcBusinessSettings(models.TransientModel):
             page.nc_is_branch = bool(company.parent_id)
             page.nc_display_account_storno = company.display_account_storno
             page.nc_localization_mismatch = self._nc_localization_mismatch(company)
+            page.nc_is_tenant_admin = self.env.su or self.env.user.has_group('ncollection_core.group_tenant_admin')
 
     # ------------------------------------------------------------------ localization consistency
     @api.model
-    def _nc_expected_chart(self, country):
-        """The chart Odoo itself picks for a country (account.chart.template._guess_chart_template)."""
-        return self.env['account.chart.template'].sudo()._guess_chart_template(country) if country else False
+    def _nc_compatible_charts(self, country):
+        """Every chart that belongs to ``country`` (a country may have several, e.g. de_skr03 / de_skr04); the
+        generic chart for a country with no localization of its own. Read from Odoo's own template registry."""
+        mapping = self.env['account.chart.template'].sudo()._get_chart_template_mapping()
+        own = {code for code, template in mapping.items() if country and template.get('country_id') == country.id}
+        return own or {'generic_coa'}
 
     @api.model
     def _nc_localization_mismatch(self, company):
@@ -143,7 +148,7 @@ class NcBusinessSettings(models.TransientModel):
         company = company.sudo()
         if not company.chart_template or not company.account_fiscal_country_id:
             return False
-        return company.chart_template != self._nc_expected_chart(company.account_fiscal_country_id)
+        return company.chart_template not in self._nc_compatible_charts(company.account_fiscal_country_id)
 
     def _nc_migration_required(self, company, detail):
         raise UserError(self.env._(
@@ -155,7 +160,7 @@ class NcBusinessSettings(models.TransientModel):
     def _nc_settings_spec(self):
         spec = super()._nc_settings_spec()
         spec.update(dict.fromkeys(NATIVE_ACCOUNTING_SETTINGS, 'native'))
-        spec.update(IDENTITY_SETTINGS)              # applied in this order: currency, fiscal country, chart ...
+        spec.update(IDENTITY_SETTINGS)              # applied in this order: fiscal country, chart, currency ...
         spec['account_storno'] = '_nc_apply_storno'  # ... then storno, which depends on the fiscal country
         spec['account_default_credit_limit'] = '_nc_apply_default_credit_limit'
         return spec
@@ -224,7 +229,7 @@ class NcBusinessSettings(models.TransientModel):
         if not country:
             raise ValidationError(self.env._("Choose an existing country."))
         company = company.sudo()
-        if company.chart_template and company.chart_template != self._nc_expected_chart(country):
+        if company.chart_template and company.chart_template not in self._nc_compatible_charts(country):
             # the existing accounts, taxes, tax report and fiscal positions belong to another country: changing the
             # label alone would make the books LOOK localized while they are not
             self._nc_migration_required(company, self.env._(
@@ -242,8 +247,6 @@ class NcBusinessSettings(models.TransientModel):
             raise UserError(self.env._(
                 "%(company)s already has a chart of accounts. Replacing it would delete its accounts, taxes and "
                 "journals; ask the platform administrator.", company=company.name))
-        if company.child_ids - self.env.user.company_ids:
-            raise AccessError(self.env._("The chart would also be loaded on branches you do not belong to."))
         Chart = self.env['account.chart.template'].sudo()
         template = Chart._get_chart_template_mapping().get(value)  # visible charts (Odoo's loader)
         if not template:
@@ -254,11 +257,23 @@ class NcBusinessSettings(models.TransientModel):
                 "The %(chart)s chart of accounts needs a localization package your subscription does not include. "
                 "Ask the platform administrator to enable it.", chart=template.get('name') or value))
         country = company.sudo().account_fiscal_country_id
-        if country and value != self._nc_expected_chart(country):
+        if country and value not in self._nc_compatible_charts(country):
             raise UserError(self.env._(
                 "The %(chart)s chart of accounts does not belong to the fiscal country %(country)s. Choose the "
                 "fiscal country first, then its own chart.", chart=template.get('name') or value,
                 country=country.name))
+        # Odoo's loader works on the whole company tree (every level of branches) and, with no entries, DELETES the
+        # accounts, taxes, journals and fiscal positions it finds there: only a truly empty tree may load a chart.
+        tree = self.env['res.company'].sudo().search([('id', 'child_of', company.id)])
+        if tree - self.env.user.company_ids:
+            raise AccessError(self.env._("The chart would also be loaded on branches you do not belong to."))
+        if tree.filtered('chart_template') or any(
+                self.env[model].sudo().with_context(active_test=False).search_count([(field, 'in', tree.ids)], limit=1)
+                for model, field in (('account.account', 'company_ids'), ('account.tax', 'company_id'),
+                                     ('account.journal', 'company_id'), ('account.fiscal.position', 'company_id'))):
+            raise UserError(self.env._(
+                "%(company)s already has accounts, taxes, journals or fiscal positions (or a branch with a chart). "
+                "Loading a chart would delete them; ask the platform administrator.", company=company.name))
         # Odoo's own loader and onboarding, as its settings page calls them (account res_config_settings.set_values)
         Chart.try_loading(value, company=company.sudo())
         company.sudo()._initiate_account_onboardings()

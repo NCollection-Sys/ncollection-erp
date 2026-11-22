@@ -273,11 +273,66 @@ class TestAccountingSettingsComplete(AccountTestInvoicingCommon):
 
     # ------------------------------------------------------------------ permissions and isolation
     def test_a_non_administrator_is_refused(self):
+        delegate = new_test_user(
+            self.env, login='acs_delegate2', groups='base.group_user,ncollection_core.group_settings_business',
+            company_id=self.env.company.id, company_ids=[(6, 0, self.env.company.ids)])
+        before = self._structures()
+        for user, vals in ((self.clerk, {'group_multi_currency': True}),
+                           (delegate, {'chart_template': 'eg'}),
+                           (delegate, {'account_fiscal_country_id': self.env.ref('base.eg').id})):
+            with self.assertRaises(AccessError):
+                self._settings(user=user, **vals).action_nc_save()
+        self.assertEqual(self._structures(), before)
+        page = self._settings(user=delegate)
+        self.assertFalse(page.nc_is_tenant_admin, 'the Accounting app is hidden from a section delegate')
+
+    # ------------------------------------------------------------------ loading a chart: only an empty tree
+    def _empty_company(self, country):
+        company = self.env['res.company'].create({'name': 'ACS Empty', 'country_id': country.id,
+                                                  'account_fiscal_country_id': country.id})
+        self.owner.sudo().company_ids |= company
+        self.assertFalse(company.chart_template)
+        return company
+
+    def test_a_chart_loads_on_an_empty_company_of_its_country(self):
+        country = self._generic_countries()[0]
+        company = self._empty_company(country)
+        settings = self._settings().with_company(company)
+        settings._nc_apply_chart_template(company, 'generic_coa')
+        self.assertEqual(company.chart_template, 'generic_coa')
+        self.assertTrue(self.env['account.account'].search_count([('company_ids', 'in', company.ids)]))
+        self.assertFalse(self.env['ir.module.module'].search([('state', 'in', ('to install', 'to upgrade'))]))
+
+    def test_a_company_without_a_chart_but_with_accounts_is_never_wiped(self):
+        country = self._generic_countries()[0]
+        company = self._empty_company(country)
+        account = self.env['account.account'].create({'name': 'ACS Hand-made', 'code': 'ACS999',
+                                                      'account_type': 'income', 'company_ids': [(6, 0, company.ids)]})
+        with self.assertRaisesRegex(UserError, 'would delete them'):
+            self._settings().with_company(company)._nc_apply_chart_template(company, 'generic_coa')
+        self.assertTrue(account.exists())
+
+    def test_a_grandchild_the_user_does_not_belong_to_blocks_the_load(self):
+        country = self._generic_countries()[0]
+        company = self._empty_company(country)
+        child = self.env['res.company'].create({'name': 'ACS Child', 'parent_id': company.id})
+        self.env['res.company'].create({'name': 'ACS Grandchild', 'parent_id': child.id})
+        self.owner.sudo().company_ids |= child                      # a member of the child, not the grandchild
         with self.assertRaises(AccessError):
-            self._settings(user=self.clerk, group_multi_currency=True).action_nc_save()
-        with self.assertRaises(AccessError):
-            self._settings()._nc_identity_guard.__func__(
-                self.env['ncollection.business.settings'].with_user(self.clerk), self.env.company, 'currency_id')
+            self._settings().with_company(company)._nc_apply_chart_template(company, 'generic_coa')
+
+    def test_every_chart_of_a_country_is_compatible(self):
+        Page = self.env['ncollection.business.settings']
+        mapping = self.env['account.chart.template']._get_chart_template_mapping()
+        by_country = {}
+        for code, template in mapping.items():
+            if template.get('country_id'):
+                by_country.setdefault(template['country_id'], set()).add(code)
+        several = {cid: codes for cid, codes in by_country.items() if len(codes) > 1}
+        self.assertTrue(several, 'expected at least one country with several charts (e.g. Germany)')
+        cid, codes = next(iter(several.items()))
+        self.assertEqual(Page._nc_compatible_charts(self.env['res.country'].browse(cid)), codes)
+        self.assertEqual(Page._nc_compatible_charts(self._generic_countries()[0]), {'generic_coa'})
 
     def test_the_owner_is_still_not_a_system_administrator(self):
         self.assertFalse(self.owner.has_group('base.group_system'))

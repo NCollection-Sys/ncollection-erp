@@ -9,11 +9,12 @@
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app data-string="Accounting" string="Accounting" name="account" invisible="nc_level_business == 'hidden'">
+                <app data-string="Accounting" string="Accounting" name="account" invisible="nc_level_business == 'hidden' or not nc_is_tenant_admin">
                     <field name="nc_has_accounting_entries" invisible="1"/>
                     <field name="nc_is_branch" invisible="1"/>
                     <field name="nc_display_account_storno" invisible="1"/>
                     <field name="nc_localization_mismatch" invisible="1"/>
+                    <field name="nc_is_tenant_admin" invisible="1"/>
                     <!-- The company's accounting identity: changeable only while the company has no accounting
                          entries (the server refuses it otherwise, with the same reason). -->
                     <block title="Fiscal Localization">
@@ -78,7 +79,8 @@
                         <setting id="nc_use_invoice_terms"><field name="use_invoice_terms" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_incoterm_id"><field name="incoterm_id" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_group_cash_rounding"><field name="group_cash_rounding" readonly="nc_level_business == 'view'"/></setting>
-                        <setting id="nc_group_sale_delivery_address"><field name="group_sale_delivery_address" readonly="nc_level_business == 'view'"/></setting>                        <setting id="nc_display_invoice_tax_company_currency"><field name="display_invoice_tax_company_currency" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_sale_delivery_address"><field name="group_sale_delivery_address" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_display_invoice_tax_company_currency"><field name="display_invoice_tax_company_currency" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_show_sale_receipts"><field name="show_sale_receipts" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_quick_edit_mode"><field name="quick_edit_mode" readonly="nc_level_business == 'view'"/></setting>
                         <setting id="nc_autopost_bills"><field name="autopost_bills" readonly="nc_level_business == 'view'"/></setting>

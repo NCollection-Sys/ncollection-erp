@@ -66,10 +66,10 @@ class ResCompany(models.Model):
         journal = vals.get('tax_cash_basis_journal_id')
         if journal and self.env['account.journal'].sudo().browse(journal).type != 'general':
             raise ValidationError(self.env._("The cash basis journal must be a miscellaneous journal."))
-        for name, types in (('account_discount_income_allocation_id', ('income', 'income_other')),
-                            ('account_discount_expense_allocation_id', ('expense', 'expense_other'))):
+        types = ('income', 'income_other', 'expense', 'expense_other')   # Odoo's own settings domain
+        for name in ('account_discount_income_allocation_id', 'account_discount_expense_allocation_id'):
             if vals.get(name) and self.env['account.account'].sudo().browse(vals[name]).account_type not in types:
-                raise ValidationError(self.env._("%(field)s must be an income or expense account of the right kind.",
+                raise ValidationError(self.env._("%(field)s must be an income or expense account.",
                                                  field=self._fields[name].string))
         if self.filtered('parent_id') and {'tax_exigibility', 'account_storno'} & set(vals):
             # root-delegated in Odoo (_get_company_root_delegated_field_names): set on the parent company

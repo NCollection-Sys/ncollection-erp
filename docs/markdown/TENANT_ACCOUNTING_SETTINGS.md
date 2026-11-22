@@ -49,6 +49,11 @@ editable through their own menus.
 
 ## Safety rules
 
+- **Localization consistency.** A chart is compatible with a fiscal country when Odoo registers it for that country (every chart of a country with several, e.g. de_skr03 / de_skr04), or it is the generic chart for a country with no localization of its own. A fiscal country that does not fit the loaded chart is refused. A company already in that state (an Egyptian company on the generic chart and its US taxes) is flagged on the page, and its currency, fiscal country and chart are frozen with an explanation: a controlled localization migration (map and keep the existing accounts, taxes and journals) is a platform procedure, not a setting. Existing tenants are never repaired automatically.
+- **Currency consistency.** A country chart keeps its country's currency; the change is refused while a journal already holds the new currency as a foreign currency.
+- **A chart loads only on an empty company tree:** no chart anywhere in the tree, no account, tax, journal or fiscal position, and every company of the tree one the user belongs to (Odoo's loader deletes what it finds there).
+- **Section delegates.** The Accounting app is hidden from a Business Settings delegate and refused on save and on a direct company write; only a Workspace Administrator changes accounting settings. The Accounting Defaults section stays delegable, as before.
+
 - **Fixed after entries:** once the company tree has accounting entries
   (`root_id._existing_accounting()`), the page shows currency, fiscal country and chart read-only,
   with the reason, and the server refuses them. Nothing is ever changed automatically.
