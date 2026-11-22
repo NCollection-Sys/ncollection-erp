@@ -3,7 +3,17 @@
 business_settings.py and res_company_delegation.py): the accounting settings and Accounting Defaults a workspace Owner
 changes, now that Odoo's General Settings and a raw res.company write belong to the platform."""
 from odoo import api, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
+
+# Settings > Accounting fields stored on res.company: a Workspace Administrator only (never a section delegate).
+# The Accounting Defaults section keeps its own, delegable, default accounts.
+ACCOUNTING_CONTROL_FIELDS = frozenset((
+    'account_sale_tax_id', 'account_purchase_tax_id', 'tax_calculation_rounding_method', 'account_price_include',
+    'qr_code', 'display_invoice_amount_total_words', 'incoterm_id', 'tax_exigibility', 'tax_cash_basis_journal_id',
+    'account_cash_basis_base_account_id', 'display_invoice_tax_company_currency', 'quick_edit_mode',
+    'autopost_bills', 'account_use_credit_limit', 'account_discount_income_allocation_id',
+    'account_discount_expense_allocation_id',
+))
 
 
 class ResCompany(models.Model):
@@ -15,9 +25,9 @@ class ResCompany(models.Model):
             # Business Settings > Accounting
             'account_sale_tax_id', 'account_purchase_tax_id', 'tax_calculation_rounding_method',
             'account_price_include', 'qr_code', 'display_invoice_amount_total_words', 'incoterm_id',
-            'tax_exigibility', 'tax_cash_basis_journal_id', 'account_cash_basis_base_account_id', 'link_qr_code',
-            'display_invoice_tax_company_currency', 'terms_type', 'quick_edit_mode', 'autopost_bills',
-            'account_storno', 'account_use_credit_limit', 'account_discount_income_allocation_id',
+            'tax_exigibility', 'tax_cash_basis_journal_id', 'account_cash_basis_base_account_id',
+            'display_invoice_tax_company_currency', 'quick_edit_mode', 'autopost_bills', 'account_use_credit_limit',
+            'account_discount_income_allocation_id',
             'account_discount_expense_allocation_id',
             # (Main Currency, Fiscal Country and Chart of Accounts are NOT here: only the Settings page's own
             #  handlers apply them, after the accounting-entries guard - wizards/business_settings.py)
@@ -45,6 +55,9 @@ class ResCompany(models.Model):
 
     def _nc_check_delegated_values(self, vals):
         result = super()._nc_check_delegated_values(vals)
+        if set(vals) & ACCOUNTING_CONTROL_FIELDS and not self.env.user.has_group('ncollection_core.group_tenant_admin'):
+            # a delegate of the Business Settings section never changes the company's accounting configuration
+            raise AccessError(self.env._("Only a workspace administrator can change the accounting settings."))
         for name, use in (('account_sale_tax_id', 'sale'), ('account_purchase_tax_id', 'purchase')):
             if vals.get(name) and self.env['account.tax'].sudo().browse(vals[name]).type_tax_use != use:
                 raise ValidationError(self.env._(
@@ -61,9 +74,6 @@ class ResCompany(models.Model):
         if self.filtered('parent_id') and {'tax_exigibility', 'account_storno'} & set(vals):
             # root-delegated in Odoo (_get_company_root_delegated_field_names): set on the parent company
             raise ValidationError(self.env._("A branch follows its parent company for this setting."))
-        if 'account_storno' in vals:
-            # only through the Settings page's own handler (country availability, no entries)
-            raise ValidationError(self.env._("Storno accounting is changed from Settings > Accounting."))
         if 'tax_exigibility' in vals and not vals['tax_exigibility'] and self.env['account.tax'].sudo().search_count(
                 [('company_id', 'child_of', self.ids), ('tax_exigibility', '=', 'on_payment')], limit=1):
             # Odoo's _onchange_tax_exigibility, at the ORM

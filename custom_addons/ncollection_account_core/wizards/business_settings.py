@@ -33,9 +33,10 @@ def _native_selection(name):
 
 # The company-identity settings and the handler applying each (see the module docstring).
 IDENTITY_SETTINGS = {
-    'currency_id': '_nc_apply_currency',
+    # applied in THIS order: the country first, then a chart that must match it, then a currency checked against both
     'account_fiscal_country_id': '_nc_apply_fiscal_country',
     'chart_template': '_nc_apply_chart_template',
+    'currency_id': '_nc_apply_currency',
 }
 
 # Native settings applied where Odoo stores them ('native' in the spec).
@@ -69,6 +70,7 @@ class NcBusinessSettings(models.TransientModel):
     nc_has_chart = fields.Boolean(compute='_compute_nc_accounting_state')
     nc_is_branch = fields.Boolean(compute='_compute_nc_accounting_state')
     nc_display_account_storno = fields.Boolean(compute='_compute_nc_accounting_state')
+    nc_localization_mismatch = fields.Boolean(compute='_compute_nc_accounting_state')
     account_storno = fields.Boolean(string='Storno Accounting')
 
     # ------------------------------------------------------------------ taxes
@@ -125,6 +127,29 @@ class NcBusinessSettings(models.TransientModel):
             page.nc_has_chart = bool(company.chart_template)
             page.nc_is_branch = bool(company.parent_id)
             page.nc_display_account_storno = company.display_account_storno
+            page.nc_localization_mismatch = self._nc_localization_mismatch(company)
+
+    # ------------------------------------------------------------------ localization consistency
+    @api.model
+    def _nc_expected_chart(self, country):
+        """The chart Odoo itself picks for a country (account.chart.template._guess_chart_template)."""
+        return self.env['account.chart.template'].sudo()._guess_chart_template(country) if country else False
+
+    @api.model
+    def _nc_localization_mismatch(self, company):
+        """True when the company's chart is not the chart of its fiscal country (e.g. an Egyptian company on the
+        generic chart with its US taxes). Its accounting identity is then frozen: only a controlled localization
+        migration, run by the platform, can bring the two together without losing accounts, taxes or journals."""
+        company = company.sudo()
+        if not company.chart_template or not company.account_fiscal_country_id:
+            return False
+        return company.chart_template != self._nc_expected_chart(company.account_fiscal_country_id)
+
+    def _nc_migration_required(self, company, detail):
+        raise UserError(self.env._(
+            "%(detail)s This needs a controlled localization migration (new chart of accounts, taxes and fiscal "
+            "positions, with the existing ones mapped and kept), run by the platform administrator. Nothing was "
+            "changed.", detail=detail))
 
     @api.model
     def _nc_settings_spec(self):
@@ -134,6 +159,19 @@ class NcBusinessSettings(models.TransientModel):
         spec['account_storno'] = '_nc_apply_storno'  # ... then storno, which depends on the fiscal country
         spec['account_default_credit_limit'] = '_nc_apply_default_credit_limit'
         return spec
+
+    @api.model
+    def _nc_accounting_setting_names(self):
+        extra = {'account_storno', 'account_default_credit_limit'}
+        return set(NATIVE_ACCOUNTING_SETTINGS) | set(IDENTITY_SETTINGS) | extra
+
+    def _nc_check_value(self, name, value):
+        # Accounting controls: a Workspace Administrator only. A delegate of the Business Settings section keeps
+        # the sales / purchase / general business settings, never the company's accounting configuration.
+        if name in self._nc_accounting_setting_names() and not (
+                self.env.su or self.env.user.has_group('ncollection_core.group_tenant_admin')):
+            raise AccessError(self.env._("Only a workspace administrator can change the accounting settings."))
+        return super()._nc_check_value(name, value)
 
     # ------------------------------------------------------------------ handlers (called after the level check)
     def _nc_identity_guard(self, company, setting):
@@ -156,6 +194,25 @@ class NcBusinessSettings(models.TransientModel):
         currency = self.env['res.currency'].sudo().browse(value).exists()
         if not currency:
             raise ValidationError(self.env._("Choose an existing currency."))
+        company = company.sudo()
+        if self._nc_localization_mismatch(company):
+            self._nc_migration_required(company, self.env._(
+                "%(company)s keeps the chart of accounts of another country than its fiscal country, so its main "
+                "currency cannot be changed on its own.", company=company.name))
+        country = company.account_fiscal_country_id
+        if company.chart_template and company.chart_template != 'generic_coa' and country.currency_id \
+                and currency != country.currency_id:
+            # a country chart (its taxes, tax report, fiscal positions) keeps the books in that country's currency
+            raise UserError(self.env._(
+                "The %(country)s chart of accounts keeps its books in %(expected)s, not %(currency)s.",
+                country=country.name, expected=country.currency_id.name, currency=currency.name))
+        foreign = self.env['account.journal'].sudo().search(
+            [('company_id', 'child_of', company.id), ('currency_id', '=', currency.id)])
+        if foreign:
+            raise UserError(self.env._(
+                "These journals are kept in %(currency)s as a foreign currency: %(journals)s. Remove that currency "
+                "from them first, or they would hold the company currency twice.",
+                currency=currency.name, journals=', '.join(foreign.mapped('name'))))
         if not currency.active:
             currency.active = True
         # elevated only after the checks above; Odoo's own res.company.write validates again (refuses after entries)
@@ -163,9 +220,18 @@ class NcBusinessSettings(models.TransientModel):
 
     def _nc_apply_fiscal_country(self, company, value):
         self._nc_identity_guard(company, 'account_fiscal_country_id')
-        if not self.env['res.country'].sudo().browse(value).exists():
+        country = self.env['res.country'].sudo().browse(value).exists()
+        if not country:
             raise ValidationError(self.env._("Choose an existing country."))
-        company.sudo().write({'account_fiscal_country_id': value})
+        company = company.sudo()
+        if company.chart_template and company.chart_template != self._nc_expected_chart(country):
+            # the existing accounts, taxes, tax report and fiscal positions belong to another country: changing the
+            # label alone would make the books LOOK localized while they are not
+            self._nc_migration_required(company, self.env._(
+                "%(company)s uses a chart of accounts that is not the %(country)s chart; changing only the fiscal "
+                "country would keep the other country's accounts and taxes.", company=company.name,
+                country=country.name))
+        company.write({'account_fiscal_country_id': country.id})
 
     def _nc_apply_chart_template(self, company, value):
         self._nc_identity_guard(company, 'chart_template')
@@ -187,6 +253,12 @@ class NcBusinessSettings(models.TransientModel):
             raise UserError(self.env._(
                 "The %(chart)s chart of accounts needs a localization package your subscription does not include. "
                 "Ask the platform administrator to enable it.", chart=template.get('name') or value))
+        country = company.sudo().account_fiscal_country_id
+        if country and value != self._nc_expected_chart(country):
+            raise UserError(self.env._(
+                "The %(chart)s chart of accounts does not belong to the fiscal country %(country)s. Choose the "
+                "fiscal country first, then its own chart.", chart=template.get('name') or value,
+                country=country.name))
         # Odoo's own loader and onboarding, as its settings page calls them (account res_config_settings.set_values)
         Chart.try_loading(value, company=company.sudo())
         company.sudo()._initiate_account_onboardings()

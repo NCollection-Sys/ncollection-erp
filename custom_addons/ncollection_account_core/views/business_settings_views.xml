@@ -13,6 +13,7 @@
                     <field name="nc_has_accounting_entries" invisible="1"/>
                     <field name="nc_is_branch" invisible="1"/>
                     <field name="nc_display_account_storno" invisible="1"/>
+                    <field name="nc_localization_mismatch" invisible="1"/>
                     <!-- The company's accounting identity: changeable only while the company has no accounting
                          entries (the server refuses it otherwise, with the same reason). -->
                     <block title="Fiscal Localization">
@@ -20,18 +21,24 @@
                             This company already has accounting entries, so its main currency, fiscal country and chart of
                             accounts can no longer be changed safely. They are shown for reference.
                         </div>
+                        <div class="alert alert-warning mx-3 mb-2" role="alert" colspan="2" invisible="not nc_localization_mismatch">
+                            This company's chart of accounts is not the chart of its fiscal country, so its taxes, tax reports
+                            and fiscal positions belong to another country. Its main currency, fiscal country and chart are
+                            locked: aligning them needs a controlled localization migration, run by the platform administrator,
+                            that maps and keeps the existing accounts, taxes and journals.
+                        </div>
                         <setting id="nc_currency_id" string="Main Currency"
                                  help="The currency the company keeps its books in. It cannot change once journal items exist.">
                             <field name="currency_id" options="{'no_create': True}" context="{'active_test': False}"
-                                   readonly="nc_level_business == 'view' or nc_has_accounting_entries or nc_is_branch"/>
+                                   readonly="nc_level_business == 'view' or nc_has_accounting_entries or nc_is_branch or nc_localization_mismatch"/>
                         </setting>
                         <setting id="nc_account_fiscal_country_id" string="Fiscal Country"
-                                 help="The country whose taxes and tax reports apply to this company.">
+                                 help="The country whose taxes and tax reports apply. Once a chart of accounts is loaded, it follows that chart: another country needs a controlled localization migration.">
                             <field name="account_fiscal_country_id" options="{'no_create': True}"
-                                   readonly="nc_level_business == 'view' or nc_has_accounting_entries"/>
+                                   readonly="nc_level_business == 'view' or nc_has_accounting_entries or nc_has_chart"/>
                         </setting>
                         <setting id="nc_chart_template" string="Chart of Accounts"
-                                 help="Chosen once, for a company that has no chart yet: loading another chart replaces the accounts, taxes and journals.">
+                                 help="Chosen once, for a company that has no chart yet, and it must be the chart of the fiscal country. Replacing a chart would delete accounts, taxes and journals: a platform procedure.">
                             <field name="chart_template"
                                    readonly="nc_level_business == 'view' or nc_has_accounting_entries or nc_has_chart"/>
                         </setting>

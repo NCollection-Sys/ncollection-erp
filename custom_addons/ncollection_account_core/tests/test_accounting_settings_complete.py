@@ -70,14 +70,140 @@ class TestAccountingSettingsComplete(AccountTestInvoicingCommon):
         self.assertTrue(again.group_multi_currency and again.group_analytic_accounting)
 
     # ------------------------------------------------------------------ the accounting identity
-    def test_currency_and_fiscal_country_change_while_there_are_no_entries(self):
+    def _generic_countries(self):
+        """Countries whose own chart IS the generic chart (no localization): consistent with generic_coa."""
+        Chart = self.env['account.chart.template']
+        return self.env['res.country'].search([('code', 'in', ('SY', 'AQ', 'BV', 'HM'))]).filtered(
+            lambda c: Chart._guess_chart_template(c) == 'generic_coa')
+
+    def _structures(self):
+        company = self.env.company
+        return (company.chart_template, company.currency_id, company.account_fiscal_country_id,
+                self.env['account.account'].search_count([('company_ids', 'in', company.ids)]),
+                self.env['account.tax'].search_count([('company_id', '=', company.id)]),
+                self.env['account.journal'].search_count([('company_id', '=', company.id)]),
+                self.env['account.fiscal.position'].search_count([('company_id', '=', company.id)]))
+
+    def test_currency_and_fiscal_country_change_when_they_stay_consistent_with_the_chart(self):
         self._no_entries()
-        other_currency = self.env.ref('base.EUR') if self.env.company.currency_id != self.env.ref('base.EUR') \
+        countries = self._generic_countries()
+        self.assertGreaterEqual(len(countries), 2, 'expected two countries served by the generic chart')
+        company = self.env.company
+        company.sudo().write({'chart_template': 'generic_coa', 'account_fiscal_country_id': countries[0].id})
+        other_currency = self.env.ref('base.EUR') if company.currency_id != self.env.ref('base.EUR') \
             else self.env.ref('base.USD')
-        country = self.env.ref('base.be')
-        self._settings(currency_id=other_currency.id, account_fiscal_country_id=country.id).action_nc_save()
-        self.assertEqual(self.env.company.currency_id, other_currency)
-        self.assertEqual(self.env.company.account_fiscal_country_id, country)
+        self._settings(currency_id=other_currency.id, account_fiscal_country_id=countries[1].id).action_nc_save()
+        self.assertEqual(company.currency_id, other_currency)
+        self.assertEqual(company.account_fiscal_country_id, countries[1])
+
+    # ------------------------------------------------------------------ an Egyptian company on the generic US chart
+    def _egypt_on_the_generic_chart(self):
+        """The production defect: fiscal country Egypt, books in EGP, but the generic chart and its US taxes."""
+        self._no_entries()
+        company = self.env.company
+        company.sudo().write({'chart_template': 'generic_coa', 'country_id': self.env.ref('base.eg').id,
+                              'account_fiscal_country_id': self.env.ref('base.eg').id})
+        return company
+
+    def test_an_egyptian_company_on_the_generic_chart_is_flagged_and_frozen(self):
+        company = self._egypt_on_the_generic_chart()
+        self.assertEqual(self.env['account.chart.template']._guess_chart_template(self.env.ref('base.eg')), 'eg')
+        page = self._settings()
+        self.assertTrue(page.nc_localization_mismatch)
+        arch = page.get_views([(False, 'form')])['views']['form']['arch']
+        self.assertIn('controlled localization migration', arch)
+        before = self._structures()
+        egp = self.env.ref('base.EGP')
+        attempts = (
+            {'currency_id': egp.id if company.currency_id != egp else self.env.ref('base.USD').id},
+            {'account_fiscal_country_id': self.env.ref('base.us').id},     # "fix" the label back to the US
+            {'account_fiscal_country_id': self.env.ref('base.ae').id},
+            {'chart_template': 'eg'},
+        )
+        for vals in attempts:
+            with self.assertRaises(UserError, msg='%s must be refused' % vals) as caught:
+                self._settings(**vals).action_nc_save()
+            self.assertTrue('localization' in str(caught.exception) or 'chart' in str(caught.exception),
+                            'the refusal must explain why: %s' % caught.exception)
+        self.assertEqual(self._structures(), before, 'nothing may change, nothing may be deleted')
+        self.assertFalse(self.env['ir.module.module'].search([('state', 'in', ('to install', 'to upgrade'))]))
+
+    def test_a_fiscal_country_that_does_not_match_the_chart_is_refused(self):
+        # a correctly localized generic company cannot be relabelled Egyptian while keeping generic accounts/taxes
+        self._no_entries()
+        company = self.env.company
+        company.sudo().write({'chart_template': 'generic_coa',
+                              'account_fiscal_country_id': self._generic_countries()[0].id})
+        before = self._structures()
+        with self.assertRaisesRegex(UserError, 'controlled localization migration'):
+            self._settings(account_fiscal_country_id=self.env.ref('base.eg').id).action_nc_save()
+        self.assertEqual(self._structures(), before)
+
+    def test_a_country_chart_keeps_its_countrys_currency(self):
+        self._no_entries()
+        company = self.env.company
+        # the rule reads only the company's chart code and fiscal country: no localization module is needed
+        code, country = 'ae', self.env.ref('base.ae')
+        self.assertTrue(country.currency_id)
+        company.sudo().write({'chart_template': code, 'account_fiscal_country_id': country.id,
+                              'currency_id': country.currency_id.id})
+        eur = self.env.ref('base.EUR')
+        other = eur if country.currency_id != eur else self.env.ref('base.USD')
+        with self.assertRaisesRegex(UserError, 'keeps its books in'):
+            self._settings(currency_id=other.id).action_nc_save()
+        self.assertEqual(company.currency_id, country.currency_id)
+
+    def test_a_journal_already_kept_in_the_new_currency_blocks_the_change(self):
+        self._no_entries()
+        company = self.env.company
+        company.sudo().write({'chart_template': 'generic_coa',
+                              'account_fiscal_country_id': self._generic_countries()[0].id})
+        eur = self.env.ref('base.EUR') if company.currency_id != self.env.ref('base.EUR') else self.env.ref('base.USD')
+        eur.active = True
+        self.company_data['default_journal_bank'].sudo().currency_id = eur
+        with self.assertRaisesRegex(UserError, 'foreign currency'):
+            self._settings(currency_id=eur.id).action_nc_save()
+        self.assertNotEqual(company.currency_id, eur)
+
+    # ------------------------------------------------------------------ delegates and accounting defaults
+    def test_a_business_settings_delegate_cannot_touch_accounting_controls(self):
+        delegate = new_test_user(
+            self.env, login='acs_delegate', groups='base.group_user,ncollection_core.group_settings_business',
+            company_id=self.env.company.id, company_ids=[(6, 0, self.env.company.ids)])
+        before = (self.env.company.autopost_bills, self.env.company.account_sale_tax_id)
+        for vals in ({'autopost_bills': not before[0]}, {'group_multi_currency': True},
+                     {'currency_id': self.env.ref('base.EUR').id}):
+            with self.assertRaises(AccessError):
+                self._settings(user=delegate, **vals).action_nc_save()
+        with self.assertRaises(AccessError):
+            self.env.company.with_user(delegate).write({'autopost_bills': not before[0]})
+        self.assertEqual((self.env.company.autopost_bills, self.env.company.account_sale_tax_id), before)
+
+    def test_accounting_defaults_set_by_the_owner_drive_the_next_invoice(self):
+        company = self.env.company
+        revenue = self.env['account.account'].create({
+            'name': 'ACS Revenue', 'code': 'ACS400', 'account_type': 'income', 'company_ids': [(6, 0, company.ids)]})
+        receivable = self.env['account.account'].create({
+            'name': 'ACS Receivable', 'code': 'ACS120', 'account_type': 'asset_receivable', 'reconcile': True,
+            'company_ids': [(6, 0, company.ids)]})
+        tax = self.env['account.tax'].create({'name': 'ACS 9', 'amount': 9, 'type_tax_use': 'sale'})
+        owner_company = company.with_user(self.owner)
+        owner_company.write({'income_account_id': revenue.id, 'nc_default_receivable_id': receivable.id})
+        self._settings(sale_tax_id=tax.id).action_nc_save()
+        partner = self.env['res.partner'].create({'name': 'ACS New Customer'})
+        product = self.env['product.product'].create({'name': 'ACS Service', 'type': 'service', 'lst_price': 100})
+        product.product_tmpl_id.categ_id.sudo().property_account_income_categ_id = False
+        product.taxes_id = False
+        invoice = self.env['account.move'].with_user(self.owner).create({
+            'move_type': 'out_invoice', 'partner_id': partner.id,
+            'invoice_line_ids': [(0, 0, {'product_id': product.id, 'quantity': 1, 'price_unit': 100})]})
+        line = invoice.invoice_line_ids
+        self.assertEqual(partner.with_company(company).property_account_receivable_id, receivable)
+        self.assertEqual(invoice.line_ids.filtered(lambda x: x.display_type == 'payment_term').account_id, receivable)
+        self.assertEqual(line.account_id, revenue)
+        self.assertEqual(company.account_sale_tax_id, tax)
+        self.assertEqual(self.env['product.product'].create({'name': 'ACS Next'}).taxes_id, tax,
+                         'a new product takes the default sales tax')
 
     def test_the_identity_is_refused_once_entries_exist_and_nothing_changes(self):
         self._post_an_invoice()
@@ -125,10 +251,11 @@ class TestAccountingSettingsComplete(AccountTestInvoicingCommon):
         company = self.env.company
         bank = self.company_data['default_journal_bank']
         receivable = self.company_data['default_account_receivable']
-        for vals in ({'tax_cash_basis_journal_id': bank.id}, {'account_discount_income_allocation_id': receivable.id},
-                     {'account_storno': True}):
+        for vals in ({'tax_cash_basis_journal_id': bank.id}, {'account_discount_income_allocation_id': receivable.id}):
             with self.assertRaises(ValidationError):
                 company.with_user(self.owner).write(vals)
+        with self.assertRaises(AccessError):   # storno only through the Settings page's own handler
+            company.with_user(self.owner).write({'account_storno': True})
         if not company.display_account_storno:
             with self.assertRaisesRegex(UserError, 'not available'):
                 self._settings(account_storno=True).action_nc_save()
