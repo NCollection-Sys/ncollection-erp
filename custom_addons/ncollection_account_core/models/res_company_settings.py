@@ -41,6 +41,18 @@ class ResCompany(models.Model):
             'expense_accrual_account_id', 'automatic_entry_default_journal_id',
         }
 
+    @api.model
+    def _nc_delegated_form_views(self):
+        return {**super()._nc_delegated_form_views(),
+                'ncollection_account_core.view_nc_accounting_defaults_form': 'accounting_defaults'}
+
+    @api.model
+    def _nc_delegated_writable_fields(self):
+        allowed = super()._nc_delegated_writable_fields()
+        if not self.env.user.has_group('ncollection_core.group_tenant_admin'):
+            allowed -= ACCOUNTING_CONTROL_FIELDS   # the same refusal _nc_check_delegated_values applies on save
+        return allowed
+
     def write(self, vals):
         """Odoo's account overrides res.company.write and sets ir.default (the default receivable / payable / income
         accounts) as the CALLER before calling super - so, when account loads after ncollection_core, a Workspace
@@ -55,7 +67,8 @@ class ResCompany(models.Model):
 
     def _nc_check_delegated_values(self, vals):
         result = super()._nc_check_delegated_values(vals)
-        if set(vals) & ACCOUNTING_CONTROL_FIELDS and not self.env.user.has_group('ncollection_core.group_tenant_admin'):
+        if set(vals) & ACCOUNTING_CONTROL_FIELDS and not self.env.user.has_group(
+                'ncollection_core.group_tenant_admin'):
             # a delegate of the Business Settings section never changes the company's accounting configuration
             raise AccessError(self.env._("Only a workspace administrator can change the accounting settings."))
         for name, use in (('account_sale_tax_id', 'sale'), ('account_purchase_tax_id', 'purchase')):

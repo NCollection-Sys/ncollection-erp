@@ -49,3 +49,4 @@ from . import test_anomaly_alerts_removed
 from . import test_label_override
 from . import test_settings_policy
 from . import test_custom_domain_tenant
+from . import test_delegated_company_forms

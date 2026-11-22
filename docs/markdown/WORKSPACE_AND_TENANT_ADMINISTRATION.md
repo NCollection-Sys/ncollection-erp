@@ -243,6 +243,16 @@ Sales and Purchase add), ONLY on companies they belong to, and every many2one va
 through `company_id`, accounts through `company_ids`); a default sales tax must be a sales tax. Anything else is not delegated and
 Odoo's own access check refuses it. Every delegated write is audited (`admin_settings_change`).
 
+**The delegated forms in the browser (2026-11-22).** Odoo 19's `ir.ui.view._postprocess_access_rights` runs per user in
+`get_view`, after the shared view cache, and sets `edit="False"` on any `res.company` form for a user without the ACL's write
+right (only `base.group_erp_manager` has it). So from Option A on, the Company, Appearance and Accounting Defaults forms opened
+**read-only** for the Owner although the delegation accepted the same save over RPC. `res.company.get_view` now re-enables
+editing for the forms listed in `_nc_delegated_form_views()` (Company, Appearance; Accounting Defaults from
+`ncollection_account_core`), and only when the form holds at least one field the user may write
+(`_nc_delegated_writable_fields()`: the same allowlist, section groups, platform level and, for accounting, the tenant-administrator-only
+fields). Every other field of the form is forced read-only. No ACL, group or record rule changed. Any other `res.company` view and
+every server check are untouched, so a crafted save is refused exactly as before.
+
 **Business Settings** (`ncollection.business.settings`, a wizard): an explicit, code-defined list per module - Sales: quotation
 validity, online signature / payment, prepayment, discounts, pro-forma, automatic invoice; Purchase: lock confirmed orders, order
 approval and its amount, purchase warnings, receipt reminder; Accounting: default sales / purchase tax, tax rounding, price

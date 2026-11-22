@@ -15,6 +15,8 @@ Anything else is not delegated and falls through to Odoo's own access check, whi
 holds base.group_erp_manager (the platform administrator) takes the native path unchanged. Each delegated write is
 audited.
 """
+from lxml import etree
+
 from odoo import api, models
 from odoo.exceptions import AccessError, ValidationError
 
@@ -86,6 +88,65 @@ class ResCompany(models.Model):
                 if owners and not (owners & company.parent_ids):
                     raise ValidationError(self.env._(
                         "%(field)s must belong to %(company)s.", field=field.string, company=company.name))
+
+    # ------------------------------------------------------------------ the delegated forms in the browser
+    # Odoo's ir.ui.view._postprocess_access_rights (run per user in get_view, AFTER the shared view cache) sets
+    # edit="False" on every res.company form for a user without the ACL's write right - everyone but
+    # base.group_erp_manager. So the delegation above worked over RPC while its own forms opened read-only. Only for
+    # the forms listed here, and only for a user the delegation would accept, the form is made editable again and every
+    # field the user may NOT write is forced read-only. The server is unchanged: the ACL, the record rules and the
+    # write() checks above decide every save exactly as before.
+
+    @api.model
+    def _nc_delegated_form_views(self):
+        """{form view xml id: the Settings section it belongs to}. Modules add their own delegated forms."""
+        return {
+            'ncollection_core.view_workspace_company_form': 'company',
+            'ncollection_core.view_workspace_appearance_form': 'appearance',
+        }
+
+    @api.model
+    def _nc_delegated_writable_fields(self):
+        """The company fields THIS user may change through the delegation: the same allowlist, section groups and
+        platform level that _nc_delegated_company_write applies to a save."""
+        from .settings_policy import RANK, SECTION_GROUP, company_field_section  # noqa: PLC0415 (same package)
+        user = self.env.user
+        admin = user.has_group(TENANT_ADMIN)
+        policy = self.env['ncollection.settings.policy']
+        editable = {}
+        allowed = set()
+        for name in self._nc_tenant_admin_company_fields() & set(self._fields):
+            section = company_field_section(name)
+            if not admin and not (section in SECTION_GROUP and user.has_group(SECTION_GROUP[section])):
+                continue
+            if section not in editable:
+                editable[section] = RANK[policy._nc_level(section)] >= RANK['edit']
+            if editable[section]:
+                allowed.add(name)
+        return allowed
+
+    @api.model
+    def get_view(self, view_id=None, view_type='form', **options):
+        result = super().get_view(view_id, view_type, **options)
+        if view_type != 'form' or self.env.su or self.env.user.has_group('base.group_erp_manager'):
+            return result   # the native path: Odoo's own access rights already apply
+        forms = {self.env.ref(xmlid, raise_if_not_found=False) for xmlid in self._nc_delegated_form_views()}
+        if result.get('id') not in {view.id for view in forms if view}:
+            return result
+        writable = self._nc_delegated_writable_fields()
+        if not writable:
+            return result   # nothing this user may change: the form stays read-only, as Odoo made it
+        node = etree.fromstring(result['arch'])
+        fields_ = [field for field in node.iter('field')
+                   if not any(parent.tag == 'field' for parent in field.iterancestors())]  # not a sub-view's field
+        if not any(field.get('name') in writable for field in fields_):
+            return result   # nothing on THIS form is the user's to change (another section, or its level is 'view')
+        node.set('edit', 'True')
+        for field in fields_:
+            if field.get('name') not in writable:
+                field.set('readonly', 'True')
+        result['arch'] = etree.tostring(node, encoding='unicode')
+        return result
 
     def _nc_audit_delegated_write(self, vals):
         self.env.user._nc_audit('admin_settings_change', 'company %s: %s' % (

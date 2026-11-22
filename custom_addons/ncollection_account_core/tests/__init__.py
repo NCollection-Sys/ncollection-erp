@@ -20,3 +20,4 @@ from . import test_payment_duplicate
 from . import test_receipt_access
 from . import test_tenant_admin_matrix
 from . import test_accounting_settings_complete
+from . import test_delegated_accounting_defaults_form

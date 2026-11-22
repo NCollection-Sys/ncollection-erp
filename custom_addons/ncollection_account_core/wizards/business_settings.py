@@ -17,7 +17,8 @@ because Odoo's settings page applies them in ways a plain field write does not:
     then). A chart whose localization module is NOT installed is refused: installing a module is a subscription
     entitlement (ncollection_subscription), never a tenant setting.
 
-The page shows all three read-only, with the reason, when they cannot be changed safely (``nc_has_accounting_entries``).
+The page shows all three read-only, with the reason, when they cannot be changed safely
+(``nc_has_accounting_entries``).
 Settings that install modules (``module_*``), the irreversible restrictive audit trail and platform-only options are
 deliberately NOT offered (docs/markdown/TENANT_ACCOUNTING_SETTINGS.md).
 """

@@ -9,7 +9,7 @@
         <field name="inherit_id" ref="ncollection_core.view_nc_business_settings_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app data-string="Accounting" string="Accounting" name="account" invisible="nc_level_business == 'hidden' or not nc_is_tenant_admin">
+                <app data-string="Accounting" string="Accounting" name="account" groups="ncollection_core.group_tenant_admin" invisible="nc_level_business == 'hidden' or not nc_is_tenant_admin">
                     <field name="nc_has_accounting_entries" invisible="1"/>
                     <field name="nc_is_branch" invisible="1"/>
                     <field name="nc_display_account_storno" invisible="1"/>
