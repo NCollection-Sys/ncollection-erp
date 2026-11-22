@@ -5,7 +5,7 @@ an accounting clerk; the Accounting app of the Settings page is not even sent to
 from lxml import etree
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import new_test_user, tagged
 
 from odoo.addons.ncollection_account_core.models.res_company_settings import ACCOUNTING_CONTROL_FIELDS
@@ -84,6 +84,32 @@ class TestDelegatedAccountingDefaultsForm(AccountTestInvoicingCommon):
         self.assertNotIn('account', apps(self.business_delegate))
         with self.assertRaises(AccessError):
             self.env.company.with_user(self.business_delegate).write({'quick_edit_mode': 'out_invoices'})
+
+    def test_every_field_of_the_defaults_page_belongs_to_the_defaults_section(self):
+        """The exchange, early-payment and accrual defaults used to fall back to 'business': a Business Settings
+        delegate could change them, an Accounting Defaults delegate could not."""
+        exchange = self.env.company.currency_exchange_journal_id
+        node = self._form(self.business_delegate)
+        self.assertFalse(self._editable(node), 'nothing on Accounting Defaults is a Business Settings field')
+        with self.assertRaises(AccessError):
+            self.env.company.with_user(self.business_delegate).write({'currency_exchange_journal_id': exchange.id})
+        node = self._form(self.defaults_delegate)
+        for name in ('currency_exchange_journal_id', 'revenue_accrual_account_id',
+                     'automatic_entry_default_journal_id'):
+            self.assertFalse(self._readonly(node, name), name)
+        self.env.company.with_user(self.defaults_delegate).write({'currency_exchange_journal_id': exchange.id})
+
+    def test_the_defaults_keep_odoos_journal_and_account_types(self):
+        sales = self.company_data['default_journal_sale']
+        receivable = self.company_data['default_account_receivable']
+        company = self.env.company.with_user(self.owner)
+        for vals in ({'currency_exchange_journal_id': sales.id}, {'automatic_entry_default_journal_id': sales.id},
+                     {'income_currency_exchange_account_id': receivable.id},
+                     {'expense_currency_exchange_account_id': receivable.id},
+                     {'revenue_accrual_account_id': receivable.id}, {'expense_accrual_account_id': receivable.id}):
+            with self.subTest(vals=list(vals)), self.assertRaises(ValidationError):
+                company.write(vals)
+        company.write({'automatic_entry_default_journal_id': self.company_data['default_journal_misc'].id})
 
     def test_a_default_set_on_the_form_drives_the_next_invoice(self):
         income = self.copy_account(self.company_data['default_account_revenue'])

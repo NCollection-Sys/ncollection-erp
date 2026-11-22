@@ -21,6 +21,8 @@ class TestAccountingDefaults(AccountTestInvoicingCommon):
                                       'reconcile': True})
         cls.inc_new = Account.create({'code': 'NCI100', 'name': 'New Income', 'account_type': 'income'})
         cls.exp_new = Account.create({'code': 'NCE100', 'name': 'New Expense', 'account_type': 'expense'})
+        cls.accrued_new = Account.create({'code': 'NCA100', 'name': 'New Accrued Revenue',
+                                          'account_type': 'asset_current'})
         cls.recv_explicit = Account.create({'code': 'NCR200', 'name': 'Explicit Receivable',
                                             'account_type': 'asset_receivable', 'reconcile': True})
         cls.owner = cls._user('nc_def_owner', 'ncollection_core.group_role_owner')
@@ -116,9 +118,9 @@ class TestAccountingDefaults(AccountTestInvoicingCommon):
     def test_native_company_accounts_are_written_through(self):
         self.company.with_user(self.owner).write({
             'income_account_id': self.inc_new.id, 'expense_account_id': self.exp_new.id,
-            'revenue_accrual_account_id': self.inc_new.id})
+            'revenue_accrual_account_id': self.accrued_new.id})
         self.assertEqual(self.company.income_account_id, self.inc_new)
-        self.assertEqual(self.company.revenue_accrual_account_id, self.inc_new)
+        self.assertEqual(self.company.revenue_accrual_account_id, self.accrued_new)
 
     # ------------------------------------------------------------------ who may
     def test_only_system_administrators_can_change_them_and_the_orm_says_so(self):

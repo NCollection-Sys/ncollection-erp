@@ -79,6 +79,24 @@ class ResCompany(models.Model):
         journal = vals.get('tax_cash_basis_journal_id')
         if journal and self.env['account.journal'].sudo().browse(journal).type != 'general':
             raise ValidationError(self.env._("The cash basis journal must be a miscellaneous journal."))
+        # Accounting Defaults: the field domains Odoo declares on res.company (the ORM does not enforce a domain)
+        for name in ('currency_exchange_journal_id', 'automatic_entry_default_journal_id'):
+            if vals.get(name) and self.env['account.journal'].sudo().browse(vals[name]).type != 'general':
+                raise ValidationError(self.env._("%(field)s must be a miscellaneous journal.",
+                                                 field=self._fields[name].string))
+        not_partner = ('asset_receivable', 'liability_payable')
+        account_rules = {
+            'income_currency_exchange_account_id': lambda a: a.internal_group == 'income',
+            'expense_currency_exchange_account_id': lambda a: a.account_type in ('expense', 'expense_other'),
+            'expense_accrual_account_id':
+                lambda a: a.internal_group == 'liability' and a.account_type not in not_partner,
+            'revenue_accrual_account_id':
+                lambda a: a.internal_group == 'asset' and a.account_type not in not_partner,
+        }
+        for name, allowed in account_rules.items():
+            if vals.get(name) and not allowed(self.env['account.account'].sudo().browse(vals[name])):
+                raise ValidationError(self.env._("%(field)s does not accept this type of account.",
+                                                 field=self._fields[name].string))
         types = ('income', 'income_other', 'expense', 'expense_other')   # Odoo's own settings domain
         for name in ('account_discount_income_allocation_id', 'account_discount_expense_allocation_id'):
             if vals.get(name) and self.env['account.account'].sudo().browse(vals[name]).account_type not in types:

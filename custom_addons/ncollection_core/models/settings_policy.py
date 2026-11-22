@@ -98,6 +98,12 @@ COMPANY_FIELD_SECTION = {
                     'document_layout'),
     **dict.fromkeys(('nc_default_receivable_id', 'nc_default_payable_id', 'income_account_id', 'expense_account_id',
                      'transfer_account_id', 'account_journal_suspense_account_id',
+                     # the rest of the Accounting Defaults page (they fell back to 'business' until 2026-11-22, so a
+                     # Business Settings delegate could change them and an Accounting Defaults delegate could not)
+                     'currency_exchange_journal_id', 'income_currency_exchange_account_id',
+                     'expense_currency_exchange_account_id', 'account_journal_early_pay_discount_gain_account_id',
+                     'account_journal_early_pay_discount_loss_account_id', 'revenue_accrual_account_id',
+                     'expense_accrual_account_id', 'automatic_entry_default_journal_id',
                      'default_cash_difference_income_account_id', 'default_cash_difference_expense_account_id'),
                     'accounting_defaults'),
     # the company fields of the application sections (Sales / Purchase / Inventory Settings)

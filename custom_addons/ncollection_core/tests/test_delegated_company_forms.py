@@ -76,6 +76,39 @@ class TestDelegatedCompanyForms(TransactionCase):
         node = self._form(self.owner, self.env.ref('base.view_company_form'))
         self.assertFalse(self._editable(node), 'only the listed Workspace Administration forms are delegated')
 
+    def test_one_user_s_form_never_reaches_another(self):
+        """get_view's per-user step runs after a cache shared by all users: serve the owner first, then check that
+        the clerk is still refused and an administrator gets Odoo's own arch, untouched."""
+        self.assertTrue(self._editable(self._form(self.owner, self.company_form)))
+        self.assertFalse(self._editable(self._form(self.clerk, self.company_form)))
+        erp = new_test_user(self.env, login='dcf_erp', groups='base.group_user,base.group_erp_manager',
+                            company_id=self.parent.id, company_ids=[(6, 0, self.parent.ids)])
+        node = self._form(erp, self.company_form)
+        self.assertIsNone(node.get('edit'), 'an administrator keeps Odoo\'s own form: nothing set by the delegation')
+        self.assertFalse(node.xpath('//field[@readonly="True"]'), 'no delegation read-only mark for an administrator')
+        self.assertTrue(self._editable(self._form(self.owner, self.company_form)))
+        self.assertFalse(self._editable(self._form(self.clerk, self.company_form)))
+
+    def test_the_form_and_the_server_agree_on_every_field(self):
+        """No drift between the view's writable set and what write() accepts: for each field on the form, the user
+        may change it on screen exactly when the server accepts the write."""
+        for user in (self.owner, self.company_delegate, self.clerk):
+            for view in (self.company_form, self.appearance_form):
+                node = self._form(user, view)
+                self.assertFalse(node.xpath('//field//field'), 'a delegated form holds no sub-view')
+                for field in node.iter('field'):
+                    name = field.get('name')
+                    shown = self._editable(node) and not self._readonly(node, name)
+                    value = self.parent._fields[name].convert_to_write(self.parent[name], self.parent)
+                    try:
+                        with self.env.cr.savepoint():
+                            self.parent.with_user(user).write({name: value})
+                        accepted = True
+                    except AccessError:
+                        accepted = False
+                    with self.subTest(user=user.login, view=view.name, field=name):
+                        self.assertEqual(shown, accepted)
+
     # ------------------------------------------------------------------ the saves behind the form
     def test_authorized_saves_persist(self):
         self.parent.with_user(self.owner).write({'city': 'Dubai', 'nc_primary_color': '#123456'})
