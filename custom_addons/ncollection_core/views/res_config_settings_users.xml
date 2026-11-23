@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Request 01: in a TENANT, user and invitation administration lives in Settings > Users (the Workspace
+         Administration Center: roles = real groups, invitations, activation, password reset). Odoo's General Settings
+         "Users" block (Invite New Users / Active Users / Manage Users / Pending Invitations) duplicated it, so it is
+         hidden here. Nothing is removed: the users action, invitations and the APIs are untouched, and the PLATFORM
+         database shows the block again (ncollection_saas: view_ncollection_saas_config_settings_users). -->
+    <record id="res_config_settings_view_form_no_users_block" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.ncollection.no.users.block</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='users_setting_container']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

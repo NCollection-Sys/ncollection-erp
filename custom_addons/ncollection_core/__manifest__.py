@@ -35,7 +35,7 @@
     # 19.0.1.21.0: Workspace Administration Center (users, roles = real groups, password reset with forced change,
     # audit) and the platform's user-administration service (ncollection.admin.service). New models, data and
     # menus, so `-u` is what applies it to an existing tenant.
-    'version': '19.0.1.35.0',
+    'version': '19.0.1.36.0',
     'category': 'Hidden',
     'summary': 'Core access rights and security for NCollection ERP',
     'author': 'NCollection',
@@ -46,7 +46,7 @@
     # DELIVERABLE_1 §2.5 matrix branding ships in every tenant DB where core
     # lives, so the edge is core -> branding (branding stays installable
     # standalone in the admin DB, so the reverse would break its admin install).
-    'depends': ['base', 'web', 'ncollection_branding'],
+    'depends': ['base', 'web', 'base_setup', 'ncollection_branding'],
     'data': [
         'security/role_groups.xml',
         'security/settings_policy_security.xml',
@@ -68,6 +68,7 @@
         'views/password_change_templates.xml',
         'views/workspace_appearance_views.xml',
         'views/business_settings_views.xml',
+        'views/res_config_settings_users.xml',
         'views/res_partner_duplicate_views.xml',
         'views/subscription_blocked_templates.xml',
         'views/launcher_app_views.xml',

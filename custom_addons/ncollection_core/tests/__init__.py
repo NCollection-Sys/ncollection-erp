@@ -50,3 +50,4 @@ from . import test_label_override
 from . import test_settings_policy
 from . import test_custom_domain_tenant
 from . import test_delegated_company_forms
+from . import test_settings_users_block

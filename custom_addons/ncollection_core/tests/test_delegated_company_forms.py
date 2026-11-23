@@ -9,7 +9,7 @@ import json
 
 from lxml import etree
 
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
 
@@ -121,8 +121,12 @@ class TestDelegatedCompanyForms(TransactionCase):
             self.parent.with_user(self.clerk).write({'city': 'Dubai'})
         with self.assertRaises(AccessError):
             self.parent.with_user(self.company_delegate).write({'nc_primary_color': '#000000'})
-        with self.assertRaises(AccessError):   # a read-only field of the form is not writable either
+        # a read-only field of the form is not writable either. On a database that already has journal items
+        # Odoo's own currency guard (UserError) may refuse first; either way nothing changes.
+        currency = self.parent.currency_id
+        with self.assertRaises(UserError):   # AccessError is a UserError
             self.parent.with_user(self.owner).write({'currency_id': self.env.ref('base.EUR').id})
+        self.assertEqual(self.parent.currency_id, currency)
 
     def test_another_company_is_never_reachable(self):
         with self.assertRaises(AccessError):
