@@ -23,8 +23,8 @@ class TestCalculationRules(AccountTestInvoicingCommon):
             'move_type': move_type, 'partner_id': self.partner_a.id, 'invoice_date': '2026-03-01',
             'invoice_line_ids': [Command.create({'name': 'Goods', 'quantity': 1, 'price_unit': 1000.0,
                                                  'tax_ids': [Command.set(self.vat5.ids)]})]})
-        self.env['ncollection.invoice.adjustment'].create({'move_id': move.id, 'type_id': self.discount.id,
-                                                            'value': 10.0})
+        self.env['ncollection.invoice.adjustment'].create(
+            {'move_id': move.id, 'type_id': self.discount.id, 'value': 10.0})
         return move
 
     def _assert_books(self, move, untaxed, tax, total):
@@ -36,7 +36,7 @@ class TestCalculationRules(AccountTestInvoicingCommon):
         self.assertAlmostEqual(sum(lines.mapped('debit')), sum(lines.mapped('credit')))
         tax_lines = lines.filtered('tax_line_id')
         self.assertAlmostEqual(abs(sum(tax_lines.mapped('balance'))), tax, msg='the tax line is the tax shown')
-        term = lines.filtered(lambda l: l.display_type == 'payment_term')
+        term = lines.filtered(lambda ln: ln.display_type == 'payment_term')
         self.assertAlmostEqual(abs(sum(term.mapped('balance'))), total, msg='receivable = total')
 
     def test_before_tax_is_the_default(self):
@@ -62,10 +62,10 @@ class TestCalculationRules(AccountTestInvoicingCommon):
     def test_a_posted_invoice_never_changes_when_the_rule_does(self):
         move = self._invoice()
         move.action_post()
-        before = [(l.account_id.id, l.balance) for l in move.line_ids]
+        before = [(ln.account_id.id, ln.balance) for ln in move.line_ids]
         self.env.company.nc_discount_tax_timing = 'after_tax'
         move.invalidate_recordset()
-        self.assertEqual([(l.account_id.id, l.balance) for l in move.line_ids], before)
+        self.assertEqual([(ln.account_id.id, ln.balance) for ln in move.line_ids], before)
         self.assertAlmostEqual(move.amount_total, 945.0)
 
     def test_preview_and_who_may_save(self):

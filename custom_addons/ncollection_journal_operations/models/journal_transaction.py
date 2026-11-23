@@ -9,8 +9,8 @@
 Every posted line on the journal's account belongs to exactly one row, and ``liquidity_balance`` is the SUM OF THOSE
 POSTED LINES (company currency), never a nominal payment amount: a bank line matched for a different amount, a
 partial match or a write-off counts exactly what was booked, on its own date. ``running_balance`` is the window sum in
-(value_date, id) order of the balance effect in the journal's balance currency; ``value_date`` is the bank date (the day
-the money moved on the account) or, while nothing moved, the document date. So the last row equals the card's Current
+(value_date, id) order of the balance effect in the journal's balance currency; ``value_date`` is the bank date
+(the day the money moved on the account) or, while nothing moved, the document date. So the last row equals the card's Current
 Balance and the row at any value date equals the ledger balance at that date. One documented exception: a payment
 confirmed in several bank lines on different days counts on the LAST of those days. Read only; nothing is stored.
 """
@@ -107,7 +107,8 @@ pay AS (
 st AS (
     -- Every posted statement line. One that settles a payment of the same journal (Mark as Paid, or matched with
     -- the payment's outstanding line) is a "settlement": its own date, its own posted amount, linked to the payment.
-    SELECT s.id, s.journal_id, j.company_id, j.balance_currency_id, m.date, m.name AS reference, s.payment_ref AS description,
+    SELECT s.id, s.journal_id, j.company_id, j.balance_currency_id, m.date, m.name AS reference,
+           s.payment_ref AS description,
            s.partner_id, s.amount,
            (SELECT COALESCE(SUM(l.balance), 0) FROM account_move_line l
              WHERE l.move_id = m.id AND l.account_id = j.default_account_id) AS liquidity,
@@ -182,7 +183,8 @@ SELECT rows.*, COALESCE(rows.bank_date, rows.date) AS value_date,
        CASE WHEN rows.amount < 0 THEN -rows.amount ELSE 0 END AS amount_out,
        -- Chronological and deterministic whatever the display order or the filters: the window runs over every row
        -- of the journal (a filter on the list never changes a row's balance), oldest first, ties by row id.
-       SUM(rows.balance_amount) OVER (PARTITION BY rows.journal_id ORDER BY COALESCE(rows.bank_date, rows.date), rows.id
+       SUM(rows.balance_amount) OVER (PARTITION BY rows.journal_id
+                                      ORDER BY COALESCE(rows.bank_date, rows.date), rows.id
                                       ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_balance
   FROM rows
 )""")

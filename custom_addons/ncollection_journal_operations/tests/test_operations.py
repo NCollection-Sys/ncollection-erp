@@ -873,9 +873,9 @@ class TestSuspenseFallback(JournalOpsCommon):
                          (0, 0, {'account_id': self.customer.property_account_receivable_id.id, 'credit': 70.0,
                                  'partner_id': self.customer.id, 'name': 'payee identified'})]})
         reclass.action_post()
-        (self._counterpart(receipt) | reclass.line_ids.filtered(lambda l: l.account_id == self.suspense)).reconcile()
+        (self._counterpart(receipt) | reclass.line_ids.filtered(lambda ln: ln.account_id == self.suspense)).reconcile()
         (invoice.line_ids | reclass.line_ids).filtered(
-            lambda l: l.account_id == self.customer.property_account_receivable_id).reconcile()
+            lambda ln: ln.account_id == self.customer.property_account_receivable_id).reconcile()
         self.assertEqual(invoice.payment_state, 'paid')
         self.assertTrue(self._counterpart(receipt).reconciled, 'suspense cleared')
 
@@ -917,16 +917,16 @@ class TestTransferFeesAndExchange(JournalOpsCommon):
                  | transfer.fee_move_id | transfer.exchange_move_id)
         for move in moves:
             self.assertAlmostEqual(sum(move.line_ids.mapped('debit')), sum(move.line_ids.mapped('credit')), 2)
-        transfer_lines = moves.line_ids.filtered(lambda l: l.account_id == self.company.transfer_account_id)
+        transfer_lines = moves.line_ids.filtered(lambda ln: ln.account_id == self.company.transfer_account_id)
         self.assertAlmostEqual(sum(transfer_lines.mapped('balance')), 0.0, 2, 'clearing account nets to zero')
         self.assertTrue(all(transfer_lines.mapped('reconciled')))
-        fee_lines = moves.line_ids.filtered(lambda l: l.account_id == self.fees)
+        fee_lines = moves.line_ids.filtered(lambda ln: ln.account_id == self.fees)
         self.assertAlmostEqual(sum(fee_lines.mapped('balance')), fee_company, 2)
         self.assertAlmostEqual(transfer.exchange_amount, exchange_company, 2)
         sent = -transfer.source_payment_id.move_id.line_ids.filtered(
-            lambda l: l.account_id != self.company.transfer_account_id).balance
+            lambda ln: ln.account_id != self.company.transfer_account_id).balance
         received = transfer.destination_payment_id.move_id.line_ids.filtered(
-            lambda l: l.account_id != self.company.transfer_account_id).balance
+            lambda ln: ln.account_id != self.company.transfer_account_id).balance
         self.assertAlmostEqual(sent, fee_company + received - exchange_company, 2, 'sent = fee + received - gain')
 
     def test_same_currency_fee_goes_to_bank_fees_and_nothing_to_exchange(self):

@@ -43,7 +43,8 @@ class TestPartnerFinancials(AccountTestInvoicingCommon):
     def test_outstanding_partial_settled_credit(self):
         inv = self._doc(self.customer, 100.0)
         self.customer.invalidate_recordset()
-        self.assertEqual((self.customer.nc_customer_status, self.customer.nc_receivable_balance), ('outstanding', 100.0))
+        self.assertEqual((self.customer.nc_customer_status, self.customer.nc_receivable_balance),
+                         ('outstanding', 100.0))
         self._pay(inv, 40.0)
         self.customer.invalidate_recordset()
         self.assertEqual((self.customer.nc_customer_status, self.customer.nc_receivable_balance), ('partial', 60.0))

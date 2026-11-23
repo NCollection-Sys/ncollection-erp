@@ -201,8 +201,8 @@ class AccountPayment(models.Model):
                     'amount_residual_currency'))) if payment.move_id and payment.state != 'draft' else 0.0)
 
     # ------------------------------------------------------------------ Request 05: Remove / Clear All
-    @api.onchange('partner_id', 'partner_type', 'payment_type', 'amount', 'currency_id', 'date', 'nc_apply_first_move_id',
-                  'destination_account_id')
+    @api.onchange('partner_id', 'partner_type', 'payment_type', 'amount', 'currency_id', 'date',
+                  'nc_apply_first_move_id', 'destination_account_id')
     def _onchange_nc_seed_allocation(self):
         """Seed (or re-seed) the selection from the automatic plan, unless the user locked it. A selection that no
         longer fits (another partner) is replaced even when locked: it could never be applied."""
@@ -249,7 +249,8 @@ class AccountPayment(models.Model):
             payment.write({'nc_alloc_seed': False, 'nc_alloc_locked': False})
             rows, _unallocated = payment.with_context(nc_alloc_auto=True)._nc_allocation_plan()
             moves = self.env['account.move'].union(*[row['move'] for row in rows])
-            payment.write({'nc_selected_move_ids': [(6, 0, moves.ids)], 'nc_alloc_seed': json.dumps(sorted(moves.ids))})
+            payment.write({'nc_selected_move_ids': [(6, 0, moves.ids)],
+                           'nc_alloc_seed': json.dumps(sorted(moves.ids))})
         return True
 
     @api.depends('state', 'amount', 'currency_id', 'date', 'partner_id', 'partner_type', 'payment_type',
