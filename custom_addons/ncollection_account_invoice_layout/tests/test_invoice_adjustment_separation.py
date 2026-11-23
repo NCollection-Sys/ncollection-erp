@@ -58,14 +58,14 @@ class TestInvoiceAdjustmentSeparation(AccountTestInvoicingCommon):
 
     # --- defaults ------------------------------------------------------------------------------------------------
     def test_a_discount_follows_the_taxes_of_the_lines_and_a_charge_its_own(self):
-        self.assertEqual(self.discount_pct.tax_mode, 'lines')
-        self.assertEqual(self.discount_fixed.tax_mode, 'lines')
+        self.assertEqual(self.discount_pct.tax_mode, 'company')  # default rule: before tax
+        self.assertEqual(self.discount_fixed.tax_mode, 'company')
         self.assertEqual(self.freight.tax_mode, 'fixed')
         with Form(self.env['ncollection.invoice.adjustment.type']) as form:
             form.name = 'X'
             form.account_id = self.company_data['default_account_revenue']
             form.kind = 'discount'
-            self.assertEqual(form.tax_mode, 'lines')
+            self.assertEqual(form.tax_mode, 'company')
             form.kind = 'charge'
             self.assertEqual(form.tax_mode, 'fixed')
 

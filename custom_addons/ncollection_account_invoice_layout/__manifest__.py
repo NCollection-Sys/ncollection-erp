@@ -2,7 +2,7 @@
 # (proprietary NCollection module — same exemption the other ncollection_* modules carry.)
 {
     'name': 'NCollection Invoice Layout & Calculations',
-    'version': '19.0.1.3.0',
+    'version': '19.0.1.4.0',
     'category': 'Accounting',
     'summary': 'Invoice line columns, fixed / percentage discounts, editable Amount and Total, '
     'invoice-level charges and discounts, discount totals',
@@ -19,6 +19,7 @@
         'security/rules.xml',
         'views/account_move_views.xml',
         'views/adjustment_views.xml',
+        'views/calculation_rules_views.xml',
         'views/column_preference_views.xml',
         'report/invoice_adjustments.xml',
     ],

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Request 07: Accounting > Configuration > Invoice Layout & Calculations > Calculation Rules -->
+    <record id="view_nc_invoice_calculation_rules_form" model="ir.ui.view">
+        <field name="name">ncollection.invoice.calculation.rules.form</field>
+        <field name="model">ncollection.invoice.calculation.rules</field>
+        <field name="arch" type="xml">
+            <form string="Calculation Rules" class="o_nc_calc_rules">
+                <sheet>
+                    <div class="oe_title"><h1>Calculation Rules</h1></div>
+                    <field name="company_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="is_uae" invisible="1"/>
+                    <group>
+                        <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                        <field name="discount_tax_timing" widget="radio"/>
+                    </group>
+                    <div class="alert alert-info py-2" role="status" invisible="discount_tax_timing != 'after_tax'">
+                        Discount after tax keeps VAT on the undiscounted amount: the discount line carries no tax, the
+                        journal entry balances and the VAT return shows the base and the tax actually invoiced, so tax is
+                        never understated. It applies to discount types set to "Calculation Rules of the company".
+                    </div>
+                    <div class="alert alert-warning py-2" role="alert" invisible="not is_uae or discount_tax_timing != 'after_tax'">
+                        UAE VAT: a discount given at the time of supply normally reduces the value of supply (VAT on the
+                        discounted amount). Use "after tax" only where your tax adviser confirms it, e.g. for a concession
+                        that is not a reduction of the price. A UAE e-invoice whose allowance carries no VAT category may be
+                        refused by the official validation; it is then blocked, never adjusted.
+                    </div>
+                    <separator string="Preview"/>
+                    <group>
+                        <group>
+                            <field name="sample_subtotal"/>
+                            <field name="sample_discount_pct"/>
+                            <field name="sample_tax_pct"/>
+                        </group>
+                    </group>
+                    <div class="o_nc_calc_preview d-flex flex-wrap gap-3">
+                        <div class="card p-3 o_nc_calc_case">
+                            <div class="fw-bold mb-2">Discount before tax</div>
+                            <div>Discount <field name="before_discount" class="d-inline"/></div>
+                            <div>Tax <field name="before_tax" class="d-inline"/></div>
+                            <div class="fw-bold">Total <field name="before_total" class="d-inline"/></div>
+                        </div>
+                        <div class="card p-3 o_nc_calc_case">
+                            <div class="fw-bold mb-2">Discount after tax</div>
+                            <div>Tax <field name="after_tax" class="d-inline"/></div>
+                            <div>Discount <field name="after_discount" class="d-inline"/></div>
+                            <div class="fw-bold">Total <field name="after_total" class="d-inline"/></div>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-3">Only draft invoices are recalculated. Posted invoices keep the lines
+                        they were posted with.</p>
+                </sheet>
+                <footer>
+                    <button name="action_save" type="object" string="Save" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_nc_invoice_calculation_rules" model="ir.actions.act_window">
+        <field name="name">Calculation Rules</field>
+        <field name="res_model">ncollection.invoice.calculation.rules</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_nc_invoice_calculation_rules" name="Calculation Rules" parent="menu_nc_invoice_layout"
+              sequence="5" action="action_nc_invoice_calculation_rules" groups="account.group_account_manager"/>
+</odoo>

@@ -194,7 +194,13 @@ class AccountMove(models.Model):
         to the largest group, so the parts always add up to the amount exactly."""
         self.ensure_one()
         currency = self.currency_id or self.company_id.currency_id
-        if adj.tax_mode != 'lines':
+        mode = adj.tax_mode
+        if mode == 'company':
+            # Request 07: the company's Calculation Rules. After tax = the discount line carries no tax.
+            if self.company_id.nc_discount_tax_timing == 'after_tax':
+                return [(self.env['account.tax'], amount)]
+            mode = 'lines'
+        if mode != 'lines':
             return [(adj.tax_ids, amount)]
         groups = {}
         for line in self.invoice_line_ids.filtered(

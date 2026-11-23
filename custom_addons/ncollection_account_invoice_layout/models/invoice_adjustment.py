@@ -87,6 +87,7 @@ class InvoiceAdjustmentType(models.Model):
     )
     tax_mode = fields.Selection(
         [
+            ('company', 'Calculation Rules of the company (discount before or after tax)'),
             ('lines', 'Same taxes as the invoice lines (split pro rata)'),
             ('fixed', 'The taxes below'),
         ],
@@ -112,13 +113,13 @@ class InvoiceAdjustmentType(models.Model):
         for vals in vals_list:
             # a discount follows the taxes of the lines it reduces unless the administrator says otherwise
             if 'tax_mode' not in vals and vals.get('kind') == 'discount':
-                vals['tax_mode'] = 'lines'
+                vals['tax_mode'] = 'company'
         return super().create(vals_list)
 
     @api.onchange('kind')
     def _onchange_kind_tax_mode(self):
         for rec in self:
-            rec.tax_mode = 'lines' if rec.kind == 'discount' else 'fixed'
+            rec.tax_mode = 'company' if rec.kind == 'discount' else 'fixed'
 
     @api.constrains('value_mode', 'basis', 'kind', 'default_value')
     def _check_type(self):

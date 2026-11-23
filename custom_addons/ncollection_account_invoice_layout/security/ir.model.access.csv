@@ -6,3 +6,4 @@ access_nc_adj_readonly,ncollection.invoice.adjustment readonly,model_ncollection
 access_nc_adj_type_readonly,ncollection.invoice.adjustment.type readonly,model_ncollection_invoice_adjustment_type,account.group_account_readonly,1,0,0,0
 access_nc_colpref_user,ncollection.invoice.column.pref user,model_ncollection_invoice_column_pref,base.group_user,1,1,1,1
 access_nc_colpref_manager,ncollection.invoice.column.pref manager,model_ncollection_invoice_column_pref,account.group_account_manager,1,1,1,1
+access_nc_calc_rules_manager,ncollection.invoice.calculation.rules manager,model_ncollection_invoice_calculation_rules,account.group_account_manager,1,1,1,0

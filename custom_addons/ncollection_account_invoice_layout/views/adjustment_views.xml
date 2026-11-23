@@ -46,7 +46,7 @@
                         <group>
                             <field name="account_id"/>
                             <field name="tax_mode"/>
-                            <field name="tax_ids" widget="many2many_tags" invisible="tax_mode == 'lines'"/>
+                            <field name="tax_ids" widget="many2many_tags" invisible="tax_mode in ('lines', 'company')"/>
                         </group>
                         <group>
                             <field name="analytic_distribution" widget="analytic_distribution" groups="analytic.group_analytic_accounting"/>
@@ -97,7 +97,7 @@
                             <field name="kind" optional="show" readonly="1"/>
                             <field name="value"/>
                             <field name="tax_ids" widget="many2many_tags" optional="show" options="{'no_create': True}"
-                                   invisible="tax_mode == 'lines'"/>
+                                   invisible="tax_mode in ('lines', 'company')"/>
                             <field name="amount"/>
                         </list>
                     </field>
