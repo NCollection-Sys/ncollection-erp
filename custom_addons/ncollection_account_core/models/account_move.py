@@ -98,7 +98,46 @@ class AccountMove(models.Model):
         explicitly to False so the document is the same whichever way it is opened: "Invoice" when posted, "Draft
         Invoice" when draft. The separate pro-forma reports (e.g. the sale order's Pro-Forma Invoice) are untouched."""
         self.ensure_one()
-        return {'proforma_invoice': False}
+        context = {'proforma_invoice': False}
+        paper = self._nc_print_setting()._nc_paperformat() if self._nc_print_setting() else False
+        if paper:
+            context['nc_print_paperformat_id'] = paper.id
+        return context
+
+    # ------------------------------------------------------------------ Request 06: per-document Print Settings
+    def _nc_print_setting(self):
+        self.ensure_one()
+        return self.env['ncollection.move.print.setting'].sudo().search([('move_id', '=', self.id)], limit=1)
+
+    def _nc_print_kind_override(self):
+        setting = self._nc_print_setting() if self.id else None
+        return setting.template_id if setting else None
+
+    def _nc_print_options_overlay(self, options):
+        setting = self._nc_print_setting() if self.id else None
+        return setting._nc_apply(options) if setting else options
+
+    def _nc_print_with_payments(self, default):
+        """Whether the printed invoice lists its payments ('Paid on ...'): this document's own choice, else the
+        report's."""
+        self.ensure_one()
+        setting = self._nc_print_setting() if self.id else None
+        if setting and setting.show_payment_history != 'default':
+            return setting.show_payment_history == 'show'
+        return default
+
+    def action_nc_print_settings(self):
+        """Print Settings of THIS document: a dialog over its own row (created on first save)."""
+        self.ensure_one()
+        self.check_access('write')
+        setting = self._nc_print_setting()
+        return {
+            'type': 'ir.actions.act_window', 'name': self.env._("Print Settings — %s", self.display_name),
+            'res_model': 'ncollection.move.print.setting', 'view_mode': 'form', 'target': 'new',
+            'res_id': setting.id or False,
+            'views': [(self.env.ref('ncollection_account_core.view_move_print_setting_form').id, 'form')],
+            'context': {'default_move_id': self.id},
+        }
 
     def action_print_pdf(self):
         """Print opens the invoice PDF in a new tab (``nc_print_in_tab``, ncollection_core's print_in_tab.js), never a

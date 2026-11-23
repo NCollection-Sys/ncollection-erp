@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 23:22+0000\n"
-"PO-Revision-Date: 2026-11-09 23:22+0000\n"
+"POT-Creation-Date: 2026-11-23 01:51+0000\n"
+"PO-Revision-Date: 2026-11-23 01:51+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -86,7 +86,8 @@ msgid "Accounting"
 msgstr "المحاسبة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction
 msgid "Action Needed"
 msgstr "يتطلب إجراءً"
 
@@ -101,12 +102,30 @@ msgid "Adjustment"
 msgstr "التعديل"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_discount model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_total_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__after_discount
+msgid "After Discount"
+msgstr "الخصم (بعد الضريبة)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__after_tax
+msgid "After Tax"
+msgstr "الضريبة (بعد الخصم)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__after_total
+msgid "After Total"
+msgstr "الإجمالي (الخصم بعد الضريبة)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_discount
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_total_discount
 msgid "All line discounts, tax-excluded: what the lines would total without any discount, minus what they total."
 msgstr "كل خصومات البنود بدون الضريبة: ما كانت ستبلغه البنود بدون أي خصم مطروحاً منه إجماليها."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_amount model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__amount model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_amount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__amount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
 msgid "Amount"
 msgstr "المبلغ"
 
@@ -128,12 +147,14 @@ msgid ""
 msgstr "المستخدم الفارغ يعني الإعداد الافتراضي للشركة. يُضبط عادةً من الفاتورة: قائمة الأعمدة ثم «ترتيب الأعمدة» ثم «تعيين كافتراضي للشركة». تُسجَّل التغييرات أدناه."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__analytic_distribution model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__analytic_distribution
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__analytic_distribution
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__analytic_distribution
 msgid "Analytic Distribution"
 msgstr "التوزيع التحليلي"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__analytic_precision model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__analytic_precision
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__analytic_precision
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__analytic_precision
 msgid "Analytic Precision"
 msgstr "دقة التحليل"
 
@@ -160,7 +181,8 @@ msgid "Arrange invoice columns"
 msgstr "ترتيب أعمدة الفاتورة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_attachment_count model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_attachment_count
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_attachment_count
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_attachment_count
 msgid "Attachment Count"
 msgstr "عدد المرفقات"
 
@@ -171,13 +193,47 @@ msgid "Back to company default"
 msgstr "العودة إلى الافتراضي للشركة"
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__before_discount
+msgid "Before Discount"
+msgstr "الخصم (قبل الضريبة)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__before_tax
+msgid "Before Tax"
+msgstr "الضريبة (الخصم قبل الضريبة)"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__before_total
+msgid "Before Total"
+msgstr "الإجمالي (الخصم قبل الضريبة)"
+
+#. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__line_ids
 msgid "Booked lines"
 msgstr "القيود المسجّلة"
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.actions.act_window,name:ncollection_account_invoice_layout.action_nc_invoice_calculation_rules
+#: model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_invoice_calculation_rules
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid "Calculation Rules"
+msgstr "قواعد الاحتساب"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__tax_mode__company
+msgid "Calculation Rules of the company (discount before or after tax)"
+msgstr "قواعد الاحتساب للشركة (الخصم قبل الضريبة أو بعدها)"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+msgid "Calculation Rules saved"
+msgstr "تم حفظ قواعد الاحتساب"
+
+#. module: ncollection_account_invoice_layout
 #. odoo-javascript
 #: code:addons/ncollection_account_invoice_layout/static/src/column_arrange.xml:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -198,12 +254,15 @@ msgid "Charge / discount"
 msgstr "رسم / خصم"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_adjustment_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_adjustment_ids model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_adjustments
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_adjustment_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_adjustment_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_adjustments
 msgid "Charges & Adjustments"
 msgstr "الرسوم والتعديلات"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.actions.act_window,name:ncollection_account_invoice_layout.action_nc_adjustment_type model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_adjustment_type
+#: model:ir.actions.act_window,name:ncollection_account_invoice_layout.action_nc_adjustment_type
+#: model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_adjustment_type
 msgid "Charges & Discounts"
 msgstr "الرسوم والخصومات"
 
@@ -240,7 +299,15 @@ msgid "Comma-separated field names, left to right."
 msgstr "أسماء الحقول من اليسار إلى اليمين، مفصولة بفواصل."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__company_id model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__company_id model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__company_id
+#: model:ir.model,name:ncollection_account_invoice_layout.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__company_id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__company_id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__company_id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__company_id
 msgid "Company"
 msgstr "الشركة"
 
@@ -250,17 +317,24 @@ msgid "Company default"
 msgstr "افتراضي الشركة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__create_uid model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__create_uid model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__create_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__create_uid
 msgid "Created by"
 msgstr "أنشأه"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__create_date model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__create_date model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__create_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__create_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__create_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__create_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__create_date
 msgid "Created on"
 msgstr "أُنشئ في"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__currency_id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__currency_id
 msgid "Currency"
 msgstr "العملة"
 
@@ -285,14 +359,55 @@ msgid "Definition"
 msgstr "التعريف"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_discount_amount model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__kind__discount model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_discount_amount
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__kind__discount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
 msgid "Discount"
 msgstr "الخصم"
 
 #. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__sample_discount_pct
+msgid "Discount %"
+msgstr "نسبة الخصم %"
+
+#. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__discount
 msgid "Discount (%)"
-msgstr "الخصم (%)"
+msgstr "خصم (%)"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid "Discount after tax"
+msgstr "الخصم بعد الضريبة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_calculation_rules__discount_tax_timing__after_tax
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__res_company__nc_discount_tax_timing__after_tax
+msgid "Discount after tax (tax on the undiscounted base; the discount carries no tax)"
+msgstr "الخصم بعد الضريبة (الضريبة على المبلغ قبل الخصم؛ لا يحمل الخصم ضريبة)"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid ""
+"Discount after tax keeps VAT on the undiscounted amount: the discount line carries no tax, the\n"
+"                        journal entry balances and the VAT return shows the base and the tax actually invoiced, so tax is\n"
+"                        never understated. It applies to discount types set to \"Calculation Rules of the company\"."
+msgstr ""
+"الخصم بعد الضريبة يُبقي ضريبة القيمة المضافة على المبلغ قبل الخصم: لا يحمل سطر الخصم ضريبة،\n"
+"                        ويتوازن القيد المحاسبي ويُظهر الإقرار الضريبي الوعاء والضريبة المفوترة فعلاً، فلا تُخفَّض الضريبة\n"
+"                        أبداً. يُطبَّق على أنواع الخصم المضبوطة على \"قواعد الاحتساب للشركة\"."
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid "Discount before tax"
+msgstr "الخصم قبل الضريبة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_calculation_rules__discount_tax_timing__before_tax
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__res_company__nc_discount_tax_timing__before_tax
+msgid "Discount before tax (reduces the taxable base)"
+msgstr "الخصم قبل الضريبة (يُخفّض الوعاء الخاضع للضريبة)"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_discount_mode
@@ -310,14 +425,27 @@ msgid "Discounted, tax-excluded line total. Typing a value solves the unit price
 msgstr "إجمالي البند بعد الخصم وبدون الضريبة. إدخال قيمة يحسب سعر الوحدة."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__display_name model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__display_name model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__display_name model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__display_name model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__display_name
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_res_company__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__distribution_analytic_account_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__distribution_analytic_account_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__distribution_analytic_account_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__distribution_analytic_account_ids
 msgid "Distribution Analytic Account"
 msgstr "حساب التوزيع التحليلي"
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+msgid "Draft invoices use them when next recalculated; posted invoices are unchanged."
+msgstr "تستخدمها مسودات الفواتير عند إعادة احتسابها التالية؛ والفواتير المرحّلة لا تتغير."
 
 #. module: ncollection_account_invoice_layout
 #. odoo-javascript
@@ -339,7 +467,13 @@ msgid "Empty = the company default."
 msgstr "فارغ = الافتراضي للشركة."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__account_move_line__nc_discount_mode__amount model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__value_mode__fixed
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__sample_subtotal
+msgid "Example Subtotal"
+msgstr "المجموع الفرعي للمثال"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__account_move_line__nc_discount_mode__amount
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__value_mode__fixed
 msgid "Fixed amount"
 msgstr "مبلغ ثابت"
 
@@ -349,17 +483,20 @@ msgid "Fixed discount"
 msgstr "خصم ثابت"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_follower_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_follower_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_follower_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_follower_ids
 msgid "Followers"
 msgstr "المتابعون"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_partner_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_partner_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_partner_ids
 msgid "Followers (Partners)"
 msgstr "المتابعون (الشركاء)"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__has_message model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__has_message
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__has_message
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__has_message
 msgid "Has Message"
 msgstr "لديه رسالة"
 
@@ -369,24 +506,46 @@ msgid "Hidden columns"
 msgstr "الأعمدة المخفية"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__id model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__id model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__id model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__id model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__id
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_res_company__id
 msgid "ID"
 msgstr "المعرّف"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction
 msgid "If checked, new messages require your attention."
 msgstr "إذا تم التحديد، فهناك رسائل جديدة تتطلب انتباهك."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_sms_error model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_sms_error
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_sms_error
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_sms_error
 msgid "If checked, some messages have a delivery error."
 msgstr "إذا تم التحديد، فإن بعض الرسائل بها خطأ في التسليم."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.actions.act_window,name:ncollection_account_invoice_layout.action_nc_colpref model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_colpref
+#: model:ir.model,name:ncollection_account_invoice_layout.model_ncollection_invoice_calculation_rules
+msgid "Invoice Calculation Rules"
+msgstr "قواعد احتساب الفاتورة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.actions.act_window,name:ncollection_account_invoice_layout.action_nc_colpref
+#: model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_colpref
 msgid "Invoice Column Defaults"
 msgstr "الأعمدة الافتراضية للفاتورة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__discount_tax_timing
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_res_company__nc_discount_tax_timing
+msgid "Invoice Discounts"
+msgstr "خصومات الفاتورة"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.ui.menu,name:ncollection_account_invoice_layout.menu_nc_invoice_layout
@@ -424,9 +583,15 @@ msgid "Invoice lines after the invoice discounts"
 msgstr "بنود الفاتورة بعد خصومات الفاتورة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_is_follower model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_is_follower
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_is_follower
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_is_follower
 msgid "Is Follower"
 msgstr "متابع"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__is_uae
+msgid "Is Uae"
+msgstr "الإمارات"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.model,name:ncollection_account_invoice_layout.model_account_move
@@ -439,7 +604,8 @@ msgid "Journal Item"
 msgstr "عنصر اليومية"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__kind model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__kind
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__kind
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__kind
 msgid "Kind"
 msgstr "النوع"
 
@@ -449,12 +615,18 @@ msgid "Label"
 msgstr "التسمية"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__write_uid model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__write_uid model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__write_uid
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__write_date model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__write_date model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__write_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__write_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__write_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__write_date
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -469,17 +641,20 @@ msgid "List Key"
 msgstr "القائمة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_adjusted_untaxed model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_adjusted_untaxed
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_adjusted_untaxed
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_adjusted_untaxed
 msgid "Live preview: product lines + charges - discounts, before tax. Equals Untaxed Amount once saved."
 msgstr "معاينة مباشرة: بنود المنتجات + الرسوم - الخصومات قبل الضريبة. تساوي المبلغ غير الخاضع للضريبة بعد الحفظ."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error
 msgid "Message Delivery error"
 msgstr "خطأ في تسليم الرسالة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_ids
 msgid "Messages"
 msgstr "الرسائل"
 
@@ -501,7 +676,8 @@ msgid "Move up"
 msgstr "تحريك لأعلى"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_has_discount model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_has_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_has_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_has_discount
 msgid "Nc Has Discount"
 msgstr "يوجد خصم"
 
@@ -512,22 +688,26 @@ msgid "No unit price at the current price precision gives exactly %(target)s. Th
 msgstr "لا يوجد سعر وحدة بدقة السعر الحالية يعطي %(target)s تماماً. تم استخدام الأقرب، %(achieved)s (سعر الوحدة %(price)s)."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction_counter model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction_counter
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction_counter
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction_counter
 msgid "Number of Actions"
 msgstr "عدد الإجراءات"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error_counter model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error_counter
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error_counter
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error_counter
 msgid "Number of errors"
 msgstr "عدد الأخطاء"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction_counter model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction_counter
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction_counter
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_needaction_counter
 msgid "Number of messages requiring action"
 msgstr "عدد الرسائل التي تتطلب إجراءً"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error_counter model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error_counter
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_error_counter
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_error_counter
 msgid "Number of messages with delivery error"
 msgstr "عدد الرسائل التي بها خطأ في التسليم"
 
@@ -543,12 +723,28 @@ msgid "Only an Accounting Manager can change the company default."
 msgstr "يمكن لمدير المحاسبة فقط تغيير الإعداد الافتراضي للشركة."
 
 #. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+msgid "Only an accounting administrator can change the calculation rules."
+msgstr "يمكن لمسؤول المحاسبة فقط تغيير قواعد الاحتساب."
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid ""
+"Only draft invoices are recalculated. Posted invoices keep the lines\n"
+"                        they were posted with."
+msgstr ""
+"تُعاد احتساب مسودات الفواتير فقط. تحتفظ الفواتير المرحّلة بالسطور\n"
+"                        التي رُحّلت بها."
+
+#. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__basis
 msgid "Only for a percentage. Discounts always use the first basis; a charge may use the second."
 msgstr "للنسبة المئوية فقط. تستخدم الخصومات دائماً الأساس الأول؛ وقد يستخدم الرسم الأساس الثاني."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__account_move_line__nc_discount_mode__percent model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__value_mode__percent
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__account_move_line__nc_discount_mode__percent
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__value_mode__percent
 msgid "Percentage"
 msgstr "نسبة مئوية"
 
@@ -564,12 +760,13 @@ msgid "Posted invoice lines cannot be re-priced here. Reset the invoice to draft
 msgstr "لا يمكن إعادة تسعير بنود فاتورة مرحّلة من هنا. أعد الفاتورة إلى مسودة أولاً، أو أصدر إشعاراً دائناً."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__rating_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__rating_ids
-msgid "Ratings"
-msgstr "التقييمات"
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid "Preview"
+msgstr "معاينة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_sms_error model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_sms_error
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_sms_error
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__message_has_sms_error
 msgid "SMS Delivery error"
 msgstr "خطأ في تسليم الرسائل النصية"
 
@@ -579,9 +776,15 @@ msgid "Same taxes as the invoice lines (split pro rata)"
 msgstr "نفس ضرائب بنود الفاتورة (موزعة بالتناسب)"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_mode model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_mode
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_mode
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_mode
 msgid "Same taxes as the invoice lines: the amount is split over the VAT groups of the invoice lines, pro rata, so each VAT base is reduced (or increased) by its own share; use it for a global discount over several VAT rates. The taxes below: one line with exactly these taxes; use it for a freight or service charge."
 msgstr "نفس ضرائب بنود الفاتورة: يُوزَّع المبلغ على مجموعات ضريبة القيمة المضافة في بنود الفاتورة بالتناسب، فينقص (أو يزيد) كل وعاء ضريبي بحصته؛ استخدمه للخصم الإجمالي على عدة نسب ضريبية. الضرائب أدناه: قيد واحد بهذه الضرائب تحديدًا؛ استخدمه لرسوم الشحن أو الخدمة."
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid "Save"
+msgstr "حفظ"
 
 #. module: ncollection_account_invoice_layout
 #. odoo-javascript
@@ -595,7 +798,8 @@ msgid "Scope"
 msgstr "النطاق"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__sequence model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__sequence
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__sequence
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__sequence
 msgid "Sequence"
 msgstr "التسلسل"
 
@@ -611,12 +815,29 @@ msgid "Set on the line that books an invoice-level charge or discount: it is man
 msgstr "يُحدَّد على البند الذي يسجّل رسماً أو خصماً على مستوى الفاتورة: يُدار من قسم الرسوم والتعديلات في الفاتورة ولا يُعدَّل هنا."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_ids
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__applies_to__vendor
+msgid "Supplier bills only"
+msgstr "فواتير الموردين فقط"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid "Tax"
+msgstr "الضريبة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_calculation_rules__sample_tax_pct
+msgid "Tax %"
+msgstr "نسبة الضريبة %"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_ids
 msgid "Taxes"
 msgstr "الضرائب"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_mode model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_mode
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__tax_mode
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_mode
 msgid "Taxes from"
 msgstr "مصدر الضرائب"
 
@@ -643,7 +864,8 @@ msgid "The discount of %(fixed)s on line \"%(line)s\" is more than the line's va
 msgstr "الخصم %(fixed)s على البند «%(line)s» أكبر من قيمة البند %(gross)s (الكمية × السعر) أو بإشارة معاكسة."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_after_discount model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_total_after_discount
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_after_discount
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_account_move__nc_total_after_discount
 msgid "The discounted, tax-excluded total of the product lines, before tax and before invoice-level charges."
 msgstr "إجمالي بنود المنتجات بعد الخصم وبدون الضريبة، قبل الضريبة وقبل رسوم الفاتورة."
 
@@ -676,7 +898,7 @@ msgstr "الضرائب أدناه"
 #. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__tax_ids
 msgid "The taxes of the booked line when Taxes from is 'The taxes below'. A VAT-able freight charge carries the sales VAT; a charge outside the VAT scope carries none."
-msgstr "ضرائب القيد المسجّل عندما يكون «مصدر الضرائب» هو «الضرائب أدناه». رسوم الشحن الخاضعة للضريبة تحمل ضريبة المبيعات؛ والرسوم خارج نطاق الضريبة لا تحمل أي ضريبة."
+msgstr "ضرائب البند المسجّل. رسم الشحن الخاضع لضريبة القيمة المضافة يحمل ضريبة المبيعات."
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
@@ -696,19 +918,42 @@ msgid "There is already a preference for this company, user and list."
 msgstr "يوجد تفضيل بالفعل لهذه الشركة وهذا المستخدم وهذه القائمة."
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_after_discount model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_total_after_discount model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_after_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_total_after_discount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
 msgid "Total After Discount"
 msgstr "الإجمالي بعد الخصم"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_discount model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_total_discount model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_total_discount
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_total_discount
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
 msgid "Total Discount"
 msgstr "إجمالي الخصم"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_total_incl model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move_line__nc_total_incl
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_invoice_layout
 msgid "Total incl. Tax"
 msgstr "الإجمالي شامل الضريبة"
+
+#. module: ncollection_account_invoice_layout
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
+msgid ""
+"UAE VAT: a discount given at the time of supply normally reduces the value of supply (VAT on the\n"
+"                        discounted amount). Use \"after tax\" only where your tax adviser confirms it, e.g. for a concession\n"
+"                        that is not a reduction of the price. A UAE e-invoice whose allowance carries no VAT category may be\n"
+"                        refused by the official validation; it is then blocked, never adjusted."
+msgstr ""
+"ضريبة القيمة المضافة في الإمارات: الخصم الممنوح وقت التوريد يُخفّض عادةً قيمة التوريد (الضريبة على\n"
+"                        المبلغ بعد الخصم). استخدم \"بعد الضريبة\" فقط حيث يؤكد مستشارك الضريبي ذلك، مثلاً لامتياز\n"
+"                        لا يُعدّ تخفيضاً للسعر. قد ترفض المصادقة الرسمية فاتورة إلكترونية إماراتية لا يحمل خصمها فئة\n"
+"                        ضريبية؛ وعندها تُحظر ولا تُعدَّل أبداً."
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
@@ -717,32 +962,34 @@ msgid "Unknown invoice line column: %s"
 msgstr "عمود غير معروف في بنود الفاتورة: %s"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_adjusted_untaxed model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_adjusted_untaxed model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_adjustments
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_bank_statement_line__nc_adjusted_untaxed
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_account_move__nc_adjusted_untaxed
+#: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_move_form_nc_adjustments
 msgid "Untaxed after Charges & Discounts"
 msgstr "غير الخاضع للضريبة بعد الرسوم والخصومات"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__user_id model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_column_pref__scope__user
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__user_id
+#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_column_pref__scope__user
 msgid "User"
 msgstr "المستخدم"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__value model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__value_mode model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__value_mode
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__value
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment__value_mode
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__value_mode
 msgid "Value"
 msgstr "القيمة"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields.selection,name:ncollection_account_invoice_layout.selection__ncollection_invoice_adjustment_type__applies_to__vendor
-msgid "Supplier bills only"
-msgstr "فواتير الموردين فقط"
-
-#. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__website_message_ids model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__website_message_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__website_message_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__website_message_ids
 msgid "Website Messages"
 msgstr "رسائل الموقع"
 
 #. module: ncollection_account_invoice_layout
-#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__website_message_ids model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__website_message_ids
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__website_message_ids
+#: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__website_message_ids
 msgid "Website communication history"
 msgstr "سجل التواصل عبر الموقع"
 
@@ -757,6 +1004,13 @@ msgid "Which of Disc.% and Discount the user entered. The other one is derived f
 msgstr "أيّ من نسبة الخصم والخصم أدخله المستخدم. يُشتق الآخر منه."
 
 #. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+msgid "You cannot change the rules of this company."
+msgstr "لا يمكنك تغيير قواعد هذه الشركة."
+
+#. module: ncollection_account_invoice_layout
 #: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_colpref_form
 msgid "product_id,name,quantity,price_unit"
 msgstr "product_id,name,quantity,price_unit"
+

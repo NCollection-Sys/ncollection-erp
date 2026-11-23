@@ -1,14 +1,19 @@
-# Arabic (ar_001) translation of ncollection_account_core.
-# NCollection ERP — P3-T08. Engineering draft; pending native review.
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* ncollection_account_core
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: ncollection_account_core\n"
+"Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"Language: ar\n"
+"POT-Creation-Date: 2026-11-23 01:50+0000\n"
+"PO-Revision-Date: 2026-11-23 01:50+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
 
 #. module: ncollection_account_core
 #. odoo-python
@@ -18,132 +23,159 @@ msgstr "%(account)s لا يمكن أن يكون %(field)s لـ %(company)s."
 
 #. module: ncollection_account_core
 #. odoo-python
-#: code:addons/ncollection_account_core/models/res_company_defaults.py:0 model:ir.actions.server,name:ncollection_account_core.action_nc_accounting_defaults model:ir.ui.menu,name:ncollection_account_core.menu_nc_accounting_defaults model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form model:ir.ui.menu,name:ncollection_account_core.menu_workspace_accounting_defaults model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
-msgid "Accounting Defaults"
-msgstr "الإعدادات الافتراضية للمحاسبة"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
-msgid "Bank, cash and transfers"
-msgstr "البنك والنقد والتحويلات"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
-msgid "Currency differences and early-payment discounts"
-msgstr "فروق العملة وخصومات الدفع المبكر"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_print_title_enabled model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title_enabled model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
-msgid "Custom print title"
-msgstr "عنوان الطباعة المخصّص"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_print_title model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
-msgid "Custom title"
-msgstr "العنوان المخصّص"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
-msgid "Customers and suppliers"
-msgstr "العملاء والموردون"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__nc_default_payable_id
-msgid "Default payable account"
-msgstr "حساب الدائنين الافتراضي"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__nc_default_receivable_id
-msgid "Default receivable account"
-msgstr "حساب المدينين الافتراضي"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
-msgid "Deferrals and accruals (Change Period)"
-msgstr "التأجيلات والاستحقاقات (تغيير الفترة)"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__display_name model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__display_name model:ir.model.fields,field_description:ncollection_account_core.field_product_template__display_name
-msgid "Display Name"
-msgstr "الاسم المعروض"
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "%(company)s already has a chart of accounts. Replacing it would delete its accounts, taxes and journals; ask the platform administrator."
+msgstr "لدى %(company)s دليل حسابات بالفعل. استبداله سيحذف حساباته وضرائبه ودفاتر يوميته؛ اطلب ذلك من مسؤول المنصة."
 
 #. module: ncollection_account_core
 #. odoo-python
-#: code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Enter the custom print title, or switch the option off."
-msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخيار."
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "%(company)s already has accounts, taxes, journals or fiscal positions (or a branch with a chart). Loading a chart would delete them; ask the platform administrator."
+msgstr "لدى %(company)s حسابات أو ضرائب أو دفاتر يومية أو أوضاع مالية بالفعل (أو فرع لديه دليل حسابات). تحميل دليل حسابات سيحذفها؛ اطلب ذلك من مسؤول المنصة."
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__id model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__id model:ir.model.fields,field_description:ncollection_account_core.field_product_template__id
-msgid "ID"
-msgstr "المعرّف"
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "%(company)s keeps the chart of accounts of another country than its fiscal country, so its main currency cannot be changed on its own."
+msgstr "يحتفظ %(company)s بدليل حسابات لدولة غير دولته المالية، لذا لا يمكن تغيير عملته الرئيسية وحدها."
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_title
-msgid "INV/2023/0001"
-msgstr "INV/2023/0001"
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "%(company)s uses a chart of accounts that is not the %(country)s chart; changing only the fiscal country would keep the other country's accounts and taxes."
+msgstr "يستخدم %(company)s دليل حسابات ليس دليل %(country)s؛ تغيير الدولة المالية وحدها سيُبقي حسابات وضرائب الدولة الأخرى."
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "%(detail)s This needs a controlled localization migration (new chart of accounts, taxes and fiscal positions, with the existing ones mapped and kept), run by the platform administrator. Nothing was changed."
+msgstr "%(detail)s يتطلب ذلك ترحيل توطين مضبوطاً (دليل حسابات وضرائب وأوضاع مالية جديدة، مع ربط الحالية والاحتفاظ بها)، يُنفّذه مسؤول المنصة. لم يتغير شيء."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "%(document)s is not an open document of %(partner)s that this payment can be applied to."
+msgstr "%(document)s ليس مستندًا مفتوحًا لدى %(partner)s يمكن تطبيق هذه الدفعة عليه."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "%(documents)s cannot receive this payment."
+msgstr "لا يمكن لـ %(documents)s استلام هذه الدفعة."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+msgid "%(field)s does not accept this type of account."
+msgstr "لا يقبل %(field)s هذا النوع من الحسابات."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+msgid "%(field)s must be a %(use)s tax."
+msgstr "يجب أن يكون %(field)s ضريبة من نوع %(use)s."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+msgid "%(field)s must be a miscellaneous journal."
+msgstr "يجب أن يكون %(field)s دفتر يومية متنوعاً."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+msgid "%(field)s must be an income or expense account."
+msgstr "يجب أن يكون %(field)s حساب إيرادات أو مصروفات."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "%(payment)s is confirmed: its allocation is a reconciliation now. Unreconcile it from the invoice's payment widget if it must change."
+msgstr "%(payment)s مؤكدة: أصبح تخصيصها تسوية الآن. ألغِ التسوية من أداة الدفعات في الفاتورة إن لزم تغييرها."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "%(setting)s cannot be changed: %(company)s already has accounting entries. Changing it now would make the posted entries, taxes and reports inconsistent."
+msgstr "لا يمكن تغيير %(setting)s: لدى %(company)s قيود محاسبية بالفعل. تغييره الآن سيجعل القيود المرحّلة والضرائب والتقارير غير متسقة."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__show_payment_history
+msgid "'Paid on <date> - <amount>' lines from the invoice's reconciled payments (Odoo's own). Default: as the report prints them. Hiding them changes nothing in the accounting."
+msgstr "سطور 'دُفع في <التاريخ> - <المبلغ>' من الدفعات المسوّاة مع الفاتورة (من Odoo نفسه). الافتراضي: كما يطبعها التقرير. إخفاؤها لا يغيّر شيئاً في المحاسبة."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_stamp_mode
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_stamp_mode
+msgid "(not stamped)"
+msgstr "(غير مختوم)"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_stamp_mode
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_stamp_mode
+msgid "(stamped)"
+msgstr "(مختوم)"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__font_size
+msgid "0: the template's size."
+msgstr "0: حجم القالب."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
 msgid ""
-"There is no automatic deferred revenue or expense engine. These are the\n"
-"                                accounts and journal the manual \"Change Period\" action on journal items uses to\n"
-"                                spread an entry across periods."
-msgstr "لا يتضمن النظام محركًا تلقائيًا للإيرادات أو المصروفات المؤجلة. هذه هي الحسابات واليومية التي يستخدمها إجراء «تغيير الفترة» اليدوي على قيود اليومية لتوزيع القيد على الفترات."
+"<span class=\"badge text-bg-warning\" invisible=\"not nc_alloc_locked\">Manual allocation</span>\n"
+"                        <span class=\"badge text-bg-light\" invisible=\"nc_alloc_locked\">Automatic: earliest due first</span>"
+msgstr ""
+"<span class=\"badge text-bg-warning\" invisible=\"not nc_alloc_locked\">تخصيص يدوي</span>\n"
+"                        <span class=\"badge text-bg-light\" invisible=\"nc_alloc_locked\">تلقائي: الأقرب استحقاقاً أولاً</span>"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_payable_id
-msgid "Payable account of every vendor that has none set on its own record (including new vendors). A vendor with an account set on its own record keeps it."
-msgstr "حساب الدائنين لكل مورد ليس له حساب خاص في سجله (بما في ذلك الموردون الجدد). المورد الذي له حساب في سجله يحتفظ به."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_print_title_enabled model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_print_title_enabled
-msgid "Print the title below instead of the standard one (Invoice, Credit Note, ...) on this document only."
-msgstr "اطبع العنوان أدناه بدلاً من العنوان القياسي (فاتورة، إشعار دائن، ...) على هذا المستند فقط."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_receivable_id
-msgid "Receivable account of every customer that has none set on its own record (including new customers). A customer with an account set on its own record keeps it."
-msgstr "حساب المدينين لكل عميل ليس له حساب خاص في سجله (بما في ذلك العملاء الجدد). العميل الذي له حساب في سجله يحتفظ به."
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
-msgid "Sales, purchases and products"
-msgstr "المبيعات والمشتريات والمنتجات"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
-msgid "TAX INVOICE"
-msgstr "فاتورة ضريبية"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_mixin.py:0
-msgid "The '%s' feature is not included in your NCollection plan. Upgrade your subscription to unlock it."
-msgstr "الميزة '%s' غير متضمّنة في خطة NCollection الخاصة بك. قم بترقية اشتراكك لإتاحتها."
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.res_config_settings_view_form_fin_palette
 msgid ""
-"The accounts new records start with, and the accounts the accounting engine posts to.\n"
-"                            These apply to this company only."
-msgstr "الحسابات التي تبدأ بها السجلات الجديدة، والحسابات التي يرحّل إليها محرك المحاسبة. تسري هذه على هذه الشركة فقط."
+"<span class=\"o_nc_fin_in fw-bold me-3\">+ 1,000.00 incoming</span>\n"
+"                        <span class=\"o_nc_fin_out fw-bold\">- 250.00 outgoing</span>"
+msgstr ""
+"<span class=\"o_nc_fin_in fw-bold me-3\">+ 1,000.00 وارد</span>\n"
+"                        <span class=\"o_nc_fin_out fw-bold\">- 250.00 صادر</span>"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.product_template_form_nc_duplicate
+msgid "<span class=\"o_stat_text\">Duplicate</span>"
+msgstr "<span class=\"o_stat_text\">نسخة مماثلة</span>"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid ""
+"<span class=\"text-muted\" invisible=\"stamp_mode != 'default' or not stamp_default_on\">(stamped)</span>\n"
+"                                    <span class=\"text-muted\" invisible=\"stamp_mode != 'default' or stamp_default_on\">(not stamped)</span>"
+msgstr ""
+"<span class=\"text-muted\" invisible=\"stamp_mode != 'default' or not stamp_default_on\">(مختوم)</span>\n"
+"                                    <span class=\"text-muted\" invisible=\"stamp_mode != 'default' or stamp_default_on\">(غير مختوم)</span>"
 
 #. module: ncollection_account_core
 #. odoo-python
-#: code:addons/ncollection_account_core/models/account_move.py:0
-msgid "The custom print title must be one line of at most %(max)s characters."
-msgstr "يجب أن يكون عنوان الطباعة المخصّص سطرًا واحدًا لا يزيد عن %(max)s حرفًا."
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+msgid "A branch follows its parent company for this setting."
+msgstr "يتبع الفرع شركته الأم في هذا الإعداد."
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_print_title model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_print_title
-msgid "e.g. TAX INVOICE or فاتورة ضريبية. The document number is still printed after it."
-msgstr "مثال: TAX INVOICE أو فاتورة ضريبية. يُطبع رقم المستند بعده كالمعتاد."
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "A branch follows its parent company's storno setting."
+msgstr "يتبع الفرع إعداد القيد العكسي (storno) لشركته الأم."
 
 #. module: ncollection_account_core
-#: model:ir.ui.menu,name:account.menu_finance model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
-msgid "Accounting"
-msgstr "المحاسبة"
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "A branch uses its parent company's currency: change it on %(parent)s."
+msgstr "يستخدم الفرع عملة شركته الأم: غيّرها في %(parent)s."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/move_print_setting.py:0
+msgid "A colour is a 6-digit hex value such as #1F5F8F."
+msgstr "اللون قيمة سداسية عشرية من 6 خانات مثل #1F5F8F."
 
 #. module: ncollection_account_core
 #. odoo-python
@@ -152,7 +184,71 @@ msgid "A negative amount cannot be written in words."
 msgstr "لا يمكن كتابة مبلغ سالب بالحروف."
 
 #. module: ncollection_account_core
-#: model:ir.model,name:ncollection_account_core.model_ncollection_amount_words model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_is_overpaid
+msgid "A posted payment that was applied to at least one document and still has an unapplied remainder: the excess it brought beyond what it settled. A payment applied to nothing is a customer credit, not this."
+msgstr "دفعة مرحّلة طُبّقت على مستند واحد على الأقل ولا يزال لديها باقٍ غير مطبّق: الزيادة التي جلبتها فوق ما سدّدته. الدفعة غير المطبّقة على أي مستند هي رصيد دائن للعميل، وليست هذه."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__paper_size__a4
+msgid "A4"
+msgstr "A4"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__paper_size__a5
+msgid "A5"
+msgstr "A5"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__primary_color
+msgid "Accent colour"
+msgstr "لون التمييز"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Accounting"
+msgstr "المحاسبة"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_defaults.py:0
+#: model:ir.actions.server,name:ncollection_account_core.action_nc_accounting_defaults
+#: model:ir.ui.menu,name:ncollection_account_core.menu_nc_accounting_defaults
+#: model:ir.ui.menu,name:ncollection_account_core.menu_workspace_accounting_defaults
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Accounting Defaults"
+msgstr "الإعدادات الافتراضية للمحاسبة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Accounts that receive the discounts granted or received on invoices and bills."
+msgstr "الحسابات التي تستلم الخصومات الممنوحة أو المستلمة على الفواتير وفواتير الموردين."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_selected_move_ids
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Allocate To"
+msgstr "تخصيص إلى"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_allocation_html
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Allocation"
+msgstr "التخصيص"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Amount"
+msgstr "المبلغ"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_payment_status
+msgid "Amount Due"
+msgstr "المبلغ المستحق"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_ncollection_amount_words
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
 msgid "Amount in words"
 msgstr "المبلغ بالحروف"
 
@@ -163,312 +259,31 @@ msgid "Amount in words is available in English and Arabic, not '%s'."
 msgstr "المبلغ بالحروف متاح بالإنجليزية والعربية فقط، وليس بلغة «%s»."
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_ir_ui_menu__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__display_name
-msgid "Display Name"
-msgstr "الاسم المعروض"
+#: model:ir.model.constraint,message:ncollection_account_core.constraint_ncollection_move_print_setting_move_unique
+msgid "An accounting document has one set of Print Settings."
+msgstr "لكل مستند محاسبي مجموعة واحدة من إعدادات الطباعة."
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_ir_ui_menu__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__id
-msgid "ID"
-msgstr "المعرّف"
+#: model:ir.model,name:ncollection_account_core.model_account_analytic_account
+msgid "Analytic Account"
+msgstr "الحساب التحليلي"
 
 #. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/amount_words.py:0
-msgid "Arabic wording is not available for this currency. Use English, or add it to the currency table."
-msgstr "الكتابة بالحروف العربية غير متاحة لهذه العملة. استخدم الإنجليزية، أو أضف العملة إلى جدول العملات."
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__group_analytic_accounting
+msgid "Analytic Accounting"
+msgstr "المحاسبة التحليلية"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_duplicate
-msgid "Duplicate"
-msgstr "نسخة مماثلة"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_can_duplicate
-msgid "Can be duplicated"
-msgstr "يمكن عمل نسخة مماثلة"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_move.py:0
-msgid "This entry was generated by a payment or a bank statement line and cannot be duplicated."
-msgstr "هذا القيد أُنشئ بواسطة دفعة أو سطر كشف حساب بنكي ولا يمكن عمل نسخة مماثلة منه."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/res_partner.py:0 model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_partner_roles
-msgid "Customer"
-msgstr "عميل"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/res_partner.py:0 model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_partner_roles
-msgid "Supplier"
-msgstr "مورد"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_customer
-msgid "Is a customer"
-msgstr "عميل"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_vendor
-msgid "Is a supplier"
-msgstr "مورد"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_customer
-msgid "Partner is a customer"
-msgstr "الشريك عميل"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_vendor
-msgid "Partner is a supplier"
-msgstr "الشريك مورد"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_can_duplicate model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_can_duplicate
-msgid "Can be duplicated"
-msgstr "يمكن عمل نسخة مماثلة"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_partner_is_customer model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_customer
-msgid "Partner is a customer"
-msgstr "الشريك عميل"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_partner_is_vendor model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_vendor
-msgid "Partner is a supplier"
-msgstr "الشريك مورد"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_users__nc_is_customer model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_customer
-msgid "Is a customer"
-msgstr "عميل"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_users__nc_is_vendor model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_vendor
-msgid "Is a supplier"
-msgstr "مورد"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_move__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__display_name model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_analytic_account__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_journal__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__display_name model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_name model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__display_name model:ir.model.fields,field_description:ncollection_account_core.field_product_supplierinfo__display_name model:ir.model.fields,field_description:ncollection_account_core.field_product_template__display_name
-msgid "Display Name"
-msgstr "اسم العرض"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__id model:ir.model.fields,field_description:ncollection_account_core.field_account_move__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__id model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id model:ir.model.fields,field_description:ncollection_account_core.field_account_analytic_account__id model:ir.model.fields,field_description:ncollection_account_core.field_account_journal__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__id model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__id model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__id model:ir.model.fields,field_description:ncollection_account_core.field_product_supplierinfo__id model:ir.model.fields,field_description:ncollection_account_core.field_product_template__id
-msgid "ID"
-msgstr "المعرّف"
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Analytics and Discounts"
+msgstr "التحليلات والخصومات"
 
 #. module: ncollection_account_core
 #. odoo-python
 #: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "%(document)s is not an open document of %(partner)s that this payment can be applied to."
-msgstr "%(document)s ليس مستندًا مفتوحًا لدى %(partner)s يمكن تطبيق هذه الدفعة عليه."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_allocation_html model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
-msgid "Allocation"
-msgstr "التخصيص"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_payment_status
-msgid "Amount Due"
-msgstr "المبلغ المستحق"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0 model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
 msgid "Applied"
 msgstr "المُطبَّق"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_apply_first_move_id
-msgid "Apply First To"
-msgstr "التطبيق أولًا على"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_amount_due model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_amount_due
-msgid "Balance Due"
-msgstr "الرصيد المستحق"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_allocation_html
-msgid "Before Confirm: how the payment will be applied. After: how it was applied (from the reconciliation)."
-msgstr "قبل التأكيد: كيف ستُطبَّق الدفعة. بعده: كيف طُبِّقت (من التسوية)."
-
-#. module: ncollection_account_core
-#: model:ir.model,name:ncollection_account_core.model_res_company
-msgid "Companies"
-msgstr "الشركات"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
-msgid "Confirm"
-msgstr "تأكيد"
-
-#. module: ncollection_account_core
-#: model:ir.model,name:ncollection_account_core.model_res_partner
-msgid "Contact"
-msgstr "جهة الاتصال"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_payment_status model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_payment_status
-msgid "Derived from the accounting (residual, due date and reconciliations); never set by hand."
-msgstr "مستخلصة من المحاسبة (المتبقي وتاريخ الاستحقاق والتسويات)؛ لا تُعيَّن يدويًا أبدًا."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Document"
-msgstr "المستند"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Due"
-msgstr "المستحق"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_tree_nc_workflow model_terms:ir.ui.view,arch_db:ncollection_account_core.view_invoice_tree_nc_payment_workflow
-msgid "Edit"
-msgstr "تعديل"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_attachment_count model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_attachment_count model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_tree_nc_workflow model_terms:ir.ui.view,arch_db:ncollection_account_core.view_invoice_tree_nc_payment_workflow
-msgid "Files"
-msgstr "الملفات"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: model:ir.model,name:ncollection_account_core.model_account_move code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Journal Entry"
-msgstr "قيد اليومية"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "No open document to apply to."
-msgstr "لا يوجد مستند مفتوح لتطبيق الدفعة عليه."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_attachment_count model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_attachment_count
-msgid "Number of files attached to this document (not the binary fields stored as attachments)."
-msgstr "عدد الملفات المرفقة بهذا المستند (وليس الحقول الثنائية المخزّنة كمرفقات)."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_eligible_move_ids
-msgid "Open Documents"
-msgstr "المستندات المفتوحة"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_apply_first_move_id
-msgid "Optional. The invoice / bill this payment settles first; any remainder goes to the partner's other open documents, earliest due first, and what is still left stays as an unapplied credit."
-msgstr "اختياري. الفاتورة التي تسددها هذه الدفعة أولًا؛ ويذهب أي متبقٍ إلى مستندات الشريك المفتوحة الأخرى، الأقدم استحقاقًا أولًا، وما يتبقى بعد ذلك يظل رصيدًا دائنًا غير مُطبَّق."
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
-msgid "Optional: earliest due first"
-msgstr "اختياري: الأقدم استحقاقًا أولًا"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__overdue
-msgid "Overdue"
-msgstr "متأخر السداد"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__overpaid
-msgid "Overpaid"
-msgstr "مدفوع بزيادة"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_amount_paid model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_amount_paid model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_payment_status
-msgid "Paid Amount"
-msgstr "المبلغ المدفوع"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__paid
-msgid "Paid in Full"
-msgstr "مدفوع بالكامل"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__partial
-msgid "Partially Paid"
-msgstr "مدفوع جزئيًا"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_payment_status
-msgid "Payment Status"
-msgstr "حالة الدفع"
-
-#. module: ncollection_account_core
-#: model:ir.model,name:ncollection_account_core.model_account_payment
-msgid "Payments"
-msgstr "الدفعات"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
-msgid "Print Receipt"
-msgstr "طباعة الإيصال"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_payment_status model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_payment_status
-msgid "Settlement Status"
-msgstr "حالة السداد"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_unallocated_amount
-msgid "The part of the payment not applied to any document (an outstanding credit on the partner's account)."
-msgstr "جزء الدفعة غير المُطبَّق على أي مستند (رصيد دائن قائم في حساب الشريك)."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_eligible_move_ids
-msgid "The partner's posted invoices / bills / credit notes this payment can be applied to."
-msgstr "فواتير الشريك وإشعاراته الدائنة المرحّلة التي يمكن تطبيق هذه الدفعة عليها."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "To apply"
-msgstr "للتطبيق"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0 model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_unallocated_amount
-msgid "Unallocated"
-msgstr "غير مخصص"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__unpaid
-msgid "Unpaid"
-msgstr "غير مدفوع"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_tree_nc_workflow model_terms:ir.ui.view,arch_db:ncollection_account_core.view_invoice_tree_nc_payment_workflow
-msgid "View"
-msgstr "عرض"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_paid model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_paid
-msgid "What has been applied to this document so far (total minus amount due), in its own currency."
-msgstr "ما طُبِّق على هذا المستند حتى الآن (الإجمالي ناقص المبلغ المستحق)، بعملته."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_due model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_due
-msgid "What is still due on this document, in its own currency (the residual amount)."
-msgstr "ما يزال مستحقًا على هذا المستند، بعملته (المبلغ المتبقي)."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Estimate: some of these documents are in a different currency from this payment. The amounts above are converted at the payment date; the final amounts, and any exchange difference, are decided by the accounting when the payment is confirmed and reconciled."
-msgstr "تقدير: بعض هذه المستندات بعملة مختلفة عن عملة هذه الدفعة. المبالغ أعلاه محوَّلة بسعر تاريخ الدفعة؛ أما المبالغ النهائية وأي فرق صرف فيحددهما النظام المحاسبي عند تأكيد الدفعة وتسويتها."
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Amount"
-msgstr "المبلغ"
 
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
@@ -481,14 +296,57 @@ msgid "Applied to documents"
 msgstr "المُطبَّق على المستندات"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_apply_first_move_id
+msgid "Apply First To"
+msgstr "التطبيق أولًا على"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/amount_words.py:0
+msgid "Arabic wording is not available for this currency. Use English, or add it to the currency table."
+msgstr "الكتابة بالحروف العربية غير متاحة لهذه العملة. استخدم الإنجليزية، أو أضف العملة إلى جدول العملات."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_is_taxable
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_is_taxable
+msgid "At least one line carries a tax that makes it a taxable supply: standard-rated or zero-rated VAT. Exempt, out-of-scope and untaxed lines are not taxable. A zero VAT amount alone does not decide it."
+msgstr "سطر واحد على الأقل يحمل ضريبة تجعله توريداً خاضعاً للضريبة: ضريبة قيمة مضافة بالنسبة الأساسية أو بنسبة الصفر. السطور المعفاة وخارج النطاق وغير الخاضعة للضريبة ليست خاضعة. لا يحسم ذلك مبلغ ضريبة صفري وحده."
+
+#. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
 msgid "Authorised signature"
 msgstr "التوقيع المعتمد"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__autopost_bills
+msgid "Auto-validate Bills"
+msgstr "التحقق التلقائي من فواتير الموردين"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Automatic"
+msgstr "تلقائي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_amount_due
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_amount_due
+msgid "Balance Due"
+msgstr "الرصيد المستحق"
+
+#. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
 msgid "Balance due"
 msgstr "الرصيد المستحق"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Bank, cash and transfers"
+msgstr "البنك والنقد والتحويلات"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_allocation_html
+msgid "Before Confirm: how the payment will be applied. After: how it was applied (from the reconciliation)."
+msgstr "قبل التأكيد: كيف ستُطبَّق الدفعة. بعده: كيف طُبِّقت (من التسوية)."
 
 #. module: ncollection_account_core
 #. odoo-python
@@ -497,226 +355,19 @@ msgid "Bill"
 msgstr "فاتورة مورّد"
 
 #. module: ncollection_account_core
-#. odoo-python
-#: model:ncollection.document.type,name:ncollection_account_core.doc_type_customer_credit_note code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Customer Credit Note"
-msgstr "إشعار دائن للعميل"
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__res_company__nc_fin_palette__blue_orange
+msgid "Blue additions / orange deductions (colour-blind friendly)"
+msgstr "إضافات بالأزرق / خصومات بالبرتقالي (مناسب لعمى الألوان)"
 
 #. module: ncollection_account_core
-#. odoo-python
-#: model:ncollection.document.type,name:ncollection_account_core.doc_type_customer_invoice code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Customer Invoice"
-msgstr "فاتورة عميل"
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__res_company__nc_fin_palette__blue_red
+msgid "Blue additions / red deductions (default)"
+msgstr "إضافات بالأزرق / خصومات بالأحمر (افتراضي)"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Date"
-msgstr "التاريخ"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Document total"
-msgstr "إجمالي المستند"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Invoice"
-msgstr "فاتورة"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc model:ir.model,name:ncollection_account_core.model_account_journal
-msgid "Journal"
-msgstr "دفتر اليومية"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Not applied (credit on account)"
-msgstr "غير مُطبَّق (رصيد دائن في الحساب)"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Paid to"
-msgstr "المدفوع إلى"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: model:ncollection.document.type,name:ncollection_account_core.doc_type_payment_receipt code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Payment Receipt"
-msgstr "إيصال دفع"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Payment amount"
-msgstr "مبلغ الدفعة"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Payment date"
-msgstr "تاريخ الدفعة"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Payment method"
-msgstr "طريقة الدفع"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Received by"
-msgstr "استلمها"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Received from"
-msgstr "مستلم من"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Reference"
-msgstr "المرجع"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Refund received from"
-msgstr "استرداد مستلم من"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Refunded to"
-msgstr "مُسترد إلى"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "Status"
-msgstr "الحالة"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "This payment has not been confirmed yet, so nothing has been applied."
-msgstr "لم تُؤكَّد هذه الدفعة بعد، لذا لم يُطبَّق منها شيء."
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
-msgid "This payment is not applied to any invoice or bill; the whole amount is held as credit on the account."
-msgstr "لم تُطبَّق هذه الدفعة على أي فاتورة؛ يُحتفظ بالمبلغ كاملًا كرصيد دائن في الحساب."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_bill code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Supplier Bill"
-msgstr "فاتورة مورّد"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_credit_note code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Supplier Credit Note"
-msgstr "إشعار دائن من المورّد"
-
-#. module: ncollection_account_core
-#: model_terms:ir.actions.act_window,help:ncollection_account_core.action_accounting_document_stamp
-msgid "Create the stamp of your invoices"
-msgstr "أنشئ ختم فواتيرك"
-
-#. module: ncollection_account_core
-#: model:ir.actions.act_window,name:ncollection_account_core.action_accounting_document_stamp model:ir.ui.menu,name:ncollection_account_core.menu_accounting_document_stamps
-msgid "Document Stamps"
-msgstr "أختام المستندات"
-
-#. module: ncollection_account_core
-#: model_terms:ir.actions.act_window,help:ncollection_account_core.action_accounting_document_stamp
-msgid ""
-"Upload your company stamp (a PNG), choose the documents it is printed on (customer invoices, credit notes,\n"
-"               vendor bills, payment receipts) and place it on the paper. The same stamp appears on View and on Print."
-msgstr "ارفع ختم شركتك (صورة PNG)، واختر المستندات التي يُطبع عليها (فواتير العملاء، الإشعارات الدائنة، فواتير الموردين، إيصالات الدفع)، وضعه على الورقة. يظهر الختم نفسه في العرض وفي الطباعة."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__nc_show_payment_status
-msgid "Payment status"
-msgstr "حالة الدفع"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_document_type__nc_show_payment_status
-msgid "Print the paid amount and the payment status (Unpaid, Partially Paid, Paid in Full...) under the totals of this document."
-msgstr "طباعة المبلغ المدفوع وحالة الدفع (غير مدفوعة، مدفوعة جزئياً، مدفوعة بالكامل...) أسفل إجماليات هذا المستند."
-
-#. module: ncollection_account_core
-#: model:ir.actions.act_window,name:ncollection_account_core.action_accounting_print_settings model:ir.ui.menu,name:ncollection_account_core.menu_accounting_print_settings
-msgid "Print Settings"
-msgstr "إعدادات الطباعة"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_line_amounts
-msgid "Total incl. Tax"
-msgstr "الإجمالي شامل الضريبة"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Sales Receipt"
-msgstr "إيصال مبيعات"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/account_move.py:0
-msgid "Purchase Receipt"
-msgstr "إيصال مشتريات"
-
-#. module: ncollection_account_core
-#. odoo-javascript
-#: code:addons/ncollection_account_core/static/src/document_lines/product_image.js:0
-msgid "Show the product image"
-msgstr "عرض صورة المنتج"
-
-#. module: ncollection_account_core
-#. odoo-javascript
-#: code:addons/ncollection_account_core/static/src/document_lines/product_image.js:0
-msgid "Product image"
-msgstr "صورة المنتج"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_stamp_mode model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_stamp_mode
-msgid "Default follows the Print Settings of this kind of document. On or Off applies to this document only. On draws the stamp chosen for this kind of document; with no stamp configured, nothing is drawn."
-msgstr "الافتراضي يتبع إعدادات الطباعة لهذا النوع من المستندات. التشغيل أو الإيقاف ينطبق على هذا المستند فقط. التشغيل يضع الختم المختار لهذا النوع من المستندات؛ وإن لم يُعدّ ختم فلا يُوضع شيء."
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_stamp_mode model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_stamp_mode
-msgid "Document Stamp"
-msgstr "ختم المستند"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_stamp_mode_editable model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_stamp_mode_editable
-msgid "Nc Stamp Mode Editable"
-msgstr "يمكن تغيير ختم المستند"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_stamp_default_on model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_stamp_default_on
-msgid "Stamped by default"
-msgstr "مختوم افتراضيًا"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_stamp_default_on model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_stamp_default_on
-msgid "What Default means for this document: its kind's Print Setting."
-msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_stamp_mode model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_stamp_mode
-msgid "(stamped)"
-msgstr "(مختوم)"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_stamp_mode model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_stamp_mode
-msgid "(not stamped)"
-msgstr "(غير مختوم)"
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/res_company_settings.py:0
-msgid "%(field)s must be a %(use)s tax."
-msgstr "يجب أن يكون %(field)s ضريبة من نوع %(use)s."
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Book taxes when the invoice is paid rather than when it is posted."
+msgstr "تسجيل الضرائب عند سداد الفاتورة بدلاً من ترحيلها."
 
 #. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_ncollection_business_settings
@@ -724,14 +375,212 @@ msgid "Business Settings"
 msgstr "إعدادات الأعمال"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_can_duplicate
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_can_duplicate
+msgid "Can be duplicated"
+msgstr "يمكن عمل نسخة مماثلة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Cancel"
+msgstr "إلغاء"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_cash_basis_base_account_id
+msgid "Cash Basis Base Account"
+msgstr "حساب وعاء الأساس النقدي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__tax_cash_basis_journal_id
+msgid "Cash Basis Journal"
+msgstr "دفتر يومية الأساس النقدي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__tax_exigibility
+msgid "Cash Basis Taxes"
+msgstr "ضرائب الأساس النقدي"
+
+#. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__group_cash_rounding
 msgid "Cash Rounding"
 msgstr "التقريب النقدي"
 
 #. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+msgid "Cash basis taxes cannot be turned off while taxes based on payment exist."
+msgstr "لا يمكن إيقاف ضرائب الأساس النقدي ما دامت توجد ضرائب مبنية على الدفع."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__chart_template
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Chart of Accounts"
+msgstr "دليل الحسابات"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "Choose an existing country."
+msgstr "اختر دولة موجودة."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "Choose an existing currency."
+msgstr "اختر عملة موجودة."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/move_print_setting.py:0
+msgid "Choose both the paper size and the orientation, or neither."
+msgstr "اختر حجم الورق والاتجاه معاً، أو لا شيء منهما."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Chosen once, for a company that has no chart yet, and it must be the chart of the fiscal country. Replacing a chart would delete accounts, taxes and journals: a platform procedure."
+msgstr "يُختار مرة واحدة، لشركة ليس لديها دليل حسابات بعد، ويجب أن يكون دليل الدولة المالية. استبدال دليل الحسابات سيحذف الحسابات والضرائب ودفاتر اليومية: إجراء خاص بالمنصة."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Clear All Allocations"
+msgstr "مسح كل التخصيصات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Columns"
+msgstr "الأعمدة"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_company_details
+msgid "Company address"
+msgstr "عنوان الشركة"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_res_config_settings
+msgid "Config Settings"
+msgstr "تهيئة الإعدادات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Confirm"
+msgstr "تأكيد"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_res_partner
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+#. module: ncollection_account_core
+#: model_terms:ir.actions.act_window,help:ncollection_account_core.action_accounting_document_stamp
+msgid "Create the stamp of your invoices"
+msgstr "أنشئ ختم فواتيرك"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Currencies"
+msgstr "العملات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Currency differences and early-payment discounts"
+msgstr "فروق العملة وخصومات الدفع المبكر"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_print_title_enabled
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title_enabled
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
+msgid "Custom print title"
+msgstr "عنوان الطباعة المخصّص"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_print_title
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_print_title
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
+msgid "Custom title"
+msgstr "العنوان المخصّص"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_partner.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_partner_roles
+msgid "Customer"
+msgstr "عميل"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+#: model:ncollection.document.type,name:ncollection_account_core.doc_type_customer_credit_note
+msgid "Customer Credit Note"
+msgstr "إشعار دائن للعميل"
+
+#. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__group_sale_delivery_address
 msgid "Customer Delivery Addresses"
 msgstr "عناوين تسليم العملاء"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+#: model:ncollection.document.type,name:ncollection_account_core.doc_type_customer_invoice
+msgid "Customer Invoice"
+msgstr "فاتورة عميل"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Customer Payments"
+msgstr "مدفوعات العملاء"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_customer_address
+msgid "Customer address"
+msgstr "عنوان العميل"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Customers and suppliers"
+msgstr "العملاء والموردون"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Date"
+msgstr "التاريخ"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_company_details__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_customer_address__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_discount__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_history__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_reference__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_quantity__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_taxes__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_unit_price__default
+msgid "Default"
+msgstr "افتراضي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_default_credit_limit
+msgid "Default Credit Limit"
+msgstr "حد الائتمان الافتراضي"
 
 #. module: ncollection_account_core
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__incoterm_id
@@ -759,44 +608,411 @@ msgid "Default Terms & Conditions"
 msgstr "الشروط والأحكام الافتراضية"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_stamp_mode
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_stamp_mode
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__stamp_mode
+msgid "Default follows the Print Settings of this kind of document. On or Off applies to this document only. On draws the stamp chosen for this kind of document; with no stamp configured, nothing is drawn."
+msgstr "الافتراضي يتبع إعدادات الطباعة لهذا النوع من المستندات. التشغيل أو الإيقاف ينطبق على هذا المستند فقط. التشغيل يضع الختم المختار لهذا النوع من المستندات؛ وإن لم يُعدّ ختم فلا يُوضع شيء."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__nc_default_payable_id
+msgid "Default payable account"
+msgstr "حساب الدائنين الافتراضي"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Default payment terms, and the bank, cash and other journals."
+msgstr "شروط الدفع الافتراضية، ودفاتر يومية البنك والنقدية وغيرها."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__nc_default_receivable_id
+msgid "Default receivable account"
+msgstr "حساب المدينين الافتراضي"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Default receivable, payable, income, expense and transfer accounts."
+msgstr "الحسابات الافتراضية للذمم المدينة والدائنة والإيرادات والمصروفات والتحويل."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Deferrals and accruals (Change Period)"
+msgstr "التأجيلات والاستحقاقات (تغيير الفترة)"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_payment_status
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_payment_status
+msgid "Derived from the accounting (residual, due date and reconciliations); never set by hand. Sorted: Overdue, Unpaid, Partially Paid, Paid in Full, Overpaid."
+msgstr "مستخلصة من المحاسبة (المتبقي وتاريخ الاستحقاق والتسويات)؛ لا تُعيَّن يدويًا أبدًا."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Discount Allocation"
+msgstr "توزيع الخصم"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_discount_expense_allocation_id
+msgid "Discount Expense Account"
+msgstr "حساب مصروف الخصم"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_discount_income_allocation_id
+msgid "Discount Income Account"
+msgstr "حساب إيراد الخصم"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_discount
+msgid "Discount column"
+msgstr "عمود الخصم"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_analytic_account__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_journal__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ir_http__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_product_supplierinfo__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_product_template__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Document"
+msgstr "المستند"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_stamp_mode
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_stamp_mode
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__stamp_mode
+msgid "Document Stamp"
+msgstr "ختم المستند"
+
+#. module: ncollection_account_core
+#: model:ir.actions.act_window,name:ncollection_account_core.action_accounting_document_stamp
+#: model:ir.ui.menu,name:ncollection_account_core.menu_accounting_document_stamps
+msgid "Document Stamps"
+msgstr "أختام المستندات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Document total"
+msgstr "إجمالي المستند"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Due"
+msgstr "المستحق"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_duplicate
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_duplicate
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_payment_term_form_nc_duplicate
+msgid "Duplicate"
+msgstr "نسخة مماثلة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_tree_nc_workflow
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_invoice_tree_nc_payment_workflow
+msgid "Edit"
+msgstr "تعديل"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Edit Accounting Defaults"
+msgstr "تعديل الإعدادات المحاسبية الافتراضية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__title
+msgid "Empty: the template's title."
+msgstr "فارغ: عنوان القالب."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Enter the custom print title, or switch the option off."
+msgstr "أدخل عنوان الطباعة المخصّص أو أوقف الخيار."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Estimate: some of these documents are in a different currency from this payment. The amounts above are converted at the payment date; the final amounts, and any exchange difference, are decided by the accounting when the payment is confirmed and reconciled."
+msgstr "تقدير: بعض هذه المستندات بعملة مختلفة عن عملة هذه الدفعة. المبالغ أعلاه محوَّلة بسعر تاريخ الدفعة؛ أما المبالغ النهائية وأي فرق صرف فيحددهما النظام المحاسبي عند تأكيد الدفعة وتسويتها."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_attachment_count
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_attachment_count
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_tree_nc_workflow
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_invoice_tree_nc_payment_workflow
+msgid "Files"
+msgstr "الملفات"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__nc_fin_palette
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_config_settings__nc_fin_palette
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.res_config_settings_view_form_fin_palette
+msgid "Financial Colours"
+msgstr "الألوان المالية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_fiscal_country_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Fiscal Country"
+msgstr "الدولة المالية"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Fiscal Localization"
+msgstr "التوطين المالي"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Fiscal Positions"
+msgstr "الأوضاع المالية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__font
+msgid "Font"
+msgstr "الخط"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Footer"
+msgstr "التذييل"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__footer_text
+msgid "Footer text"
+msgstr "نص التذييل"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__res_company__nc_fin_palette__green_red
+msgid "Green additions / red deductions"
+msgstr "إضافات بالأخضر / خصومات بالأحمر"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_ir_http
+msgid "HTTP Routing"
+msgstr "مسار HTTP"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_company_details__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_customer_address__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_discount__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_history__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_reference__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_quantity__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_taxes__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_unit_price__hide
+msgid "Hide"
+msgstr "إخفاء"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.res_config_settings_view_form_fin_palette
+msgid "How money movements are coloured in bank transactions, statements, ledgers and payments. Directions are always labelled too; statuses keep their own colours."
+msgstr "كيفية تلوين حركات الأموال في معاملات البنك وكشوف الحساب ودفاتر الأستاذ والمدفوعات. الاتجاهات موسومة دائماً أيضاً؛ وتحتفظ الحالات بألوانها الخاصة."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_analytic_account__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_journal__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_register__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment_term__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ir_http__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_account_mixin__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_amount_words__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_onboarding_onboarding_step__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_product_supplierinfo__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_product_template__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_config_settings__id
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__id
+msgid "ID"
+msgstr "المُعرف"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_title
+msgid "INV/2023/0001"
+msgstr "INV/2023/0001"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Identity"
+msgstr "الهوية"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Invoice"
+msgstr "فاتورة"
+
+#. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
 msgid "Invoices"
 msgstr "الفواتير"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__qr_code
-msgid "QR Codes on Invoices"
-msgstr "رموز QR على الفواتير"
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_customer
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_users__nc_is_customer
+msgid "Is a customer"
+msgstr "عميل"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__tax_calculation_rounding_method
-msgid "Tax Rounding Method"
-msgstr "طريقة تقريب الضريبة"
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_partner__nc_is_vendor
+#: model:ir.model.fields,field_description:ncollection_account_core.field_res_users__nc_is_vendor
+msgid "Is a supplier"
+msgstr "مورد"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_account_journal
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Journal"
+msgstr "دفتر اليومية"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+#: model:ir.model,name:ncollection_account_core.model_account_move
+msgid "Journal Entry"
+msgstr "قيد اليومية"
 
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
-msgid "Taxes"
-msgstr "الضرائب"
+msgid "Journals"
+msgstr "دفاتر اليومية"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_invoice_amount_total_words
-msgid "Total Amount in Words"
-msgstr "المبلغ الإجمالي كتابةً"
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__orientation__landscape
+msgid "Landscape"
+msgstr "أفقي"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_duplicate model_terms:ir.ui.view,arch_db:ncollection_account_core.view_payment_term_form_nc_duplicate model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_duplicate
-msgid "Duplicate"
-msgstr "نسخة مماثلة"
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
-msgid "Overpaid"
-msgstr "مدفوع بالزيادة"
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_is_taxable
-msgid "Taxable"
-msgstr "خاضع للضريبة"
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Layout"
+msgstr "التخطيط"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__paper_size__legal
+msgid "Legal"
+msgstr "Legal"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__paper_size__letter
+msgid "Letter"
+msgstr "Letter"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__currency_id
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Main Currency"
+msgstr "العملة الرئيسية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_alloc_locked
+msgid "Manual Allocation"
+msgstr "تخصيص يدوي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__font__mono
+msgid "Monospace"
+msgstr "خط ثابت العرض"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__move_id
+msgid "Move"
+msgstr "المستند"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__group_multi_currency
+msgid "Multi-Currencies"
+msgstr "تعدد العملات"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_ncollection_account_mixin
+msgid "NCollection Financial Shared Mixin"
+msgstr "المزيج المالي المشترك NCollection"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_alloc_seed
+msgid "Nc Alloc Seed"
+msgstr "بذرة التخصيص"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__nc_display_account_storno
+msgid "Nc Display Account Storno"
+msgstr "عرض القيد العكسي"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__nc_has_accounting_entries
+msgid "Nc Has Accounting Entries"
+msgstr "لديه قيود محاسبية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__nc_has_chart
+msgid "Nc Has Chart"
+msgstr "لديه دليل حسابات"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__nc_is_branch
+msgid "Nc Is Branch"
+msgstr "فرع"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__nc_is_tenant_admin
+msgid "Nc Is Tenant Admin"
+msgstr "مسؤول مساحة العمل"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__nc_localization_mismatch
+msgid "Nc Localization Mismatch"
+msgstr "عدم تطابق التوطين"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_stamp_mode_editable
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_stamp_mode_editable
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__stamp_editable
+msgid "Nc Stamp Mode Editable"
+msgstr "يمكن تغيير ختم المستند"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__res_company__nc_fin_palette__neutral
+msgid "Neutral (no colour, signs and labels only)"
+msgstr "محايد (بدون ألوان، إشارات وتسميات فقط)"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "No open document to apply to."
+msgstr "لا يوجد مستند مفتوح لتطبيق الدفعة عليه."
 
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
@@ -804,52 +1020,33 @@ msgid "Non-taxable"
 msgstr "غير خاضع للضريبة"
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_search_nc_overpaid
-msgid "Overpaid"
-msgstr "مدفوع بالزيادة"
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Not applied (credit on account)"
+msgstr "غير مُطبَّق (رصيد دائن في الحساب)"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_overpaid_amount model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_overpaid_amount
-msgid "Overpaid Amount"
-msgstr "مبلغ الزيادة المدفوعة"
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_attachment_count
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_attachment_count
+msgid "Number of files attached to this document (not the binary fields stored as attachments)."
+msgstr "عدد الملفات المرفقة بهذا المستند (وليس الحقول الثنائية المخزّنة كمرفقات)."
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_is_taxable model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_is_taxable model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
-msgid "Taxable"
-msgstr "خاضع للضريبة"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_is_overpaid model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__overpaid model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_search_nc_overpaid
-msgid "Overpaid"
-msgstr "مدفوع بالزيادة"
-
-#. module: ncollection_account_core
-#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_registered_move_ids
-msgid "Recorded Against"
-msgstr "سُجّلت مقابل"
-
-#. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.product_template_form_nc_duplicate
-msgid "<span class=\"o_stat_text\">Duplicate</span>"
-msgstr "<span class=\"o_stat_text\">نسخة مماثلة</span>"
+#: model:ir.model,name:ncollection_account_core.model_onboarding_onboarding_step
+msgid "Onboarding Step"
+msgstr "خطة تمهيدية"
 
 #. module: ncollection_account_core
 #. odoo-python
-#: code:addons/ncollection_account_core/models/account_payment.py:0
-msgid "Overpaid can only be searched with Yes or No."
-msgstr "يمكن البحث في «مدفوع بالزيادة» بنعم أو لا فقط."
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "Only a workspace administrator can change %(setting)s."
+msgstr "يمكن لمسؤول مساحة العمل فقط تغيير %(setting)s."
 
 #. module: ncollection_account_core
 #. odoo-python
-#: code:addons/ncollection_account_core/models/account_move_status.py:0
-msgid "Taxable can only be searched with Yes or No."
-msgstr "يمكن البحث في «خاضع للضريبة» بنعم أو لا فقط."
-
-#. module: ncollection_account_core
-#. odoo-python
-#: code:addons/ncollection_account_core/models/duplicate_records.py:0
-msgid "This payment is one side of an internal transfer and cannot be duplicated."
-msgstr "هذه الدفعة أحد طرفي تحويل داخلي ولا يمكن إنشاء نسخة مماثلة منها."
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "Only a workspace administrator can change the accounting settings."
+msgstr "يمكن لمسؤول مساحة العمل فقط تغيير إعدادات المحاسبة."
 
 #. module: ncollection_account_core
 #. odoo-python
@@ -858,34 +1055,104 @@ msgid "Only customer and supplier payments can be duplicated."
 msgstr "يمكن إنشاء نسخة مماثلة من دفعات العملاء والموردين فقط."
 
 #. module: ncollection_account_core
-#: model:res.groups,name:ncollection_account_core.group_platform_receipt_access
-msgid "Platform grant: Receipts & accounting (read only)"
-msgstr "منحة المنصة: الإيصالات والمحاسبة (قراءة فقط)"
-
-#. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
-msgid "Default receivable, payable, income, expense and transfer accounts."
-msgstr "الحسابات الافتراضية للذمم المدينة والدائنة والإيرادات والمصروفات والتحويل."
+msgid "Only for countries where Odoo offers it; fixed once entries exist."
+msgstr "فقط للدول التي يوفّرها Odoo لها؛ ثابت بمجرد وجود قيود."
 
 #. module: ncollection_account_core
-#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
-msgid "Edit Accounting Defaults"
-msgstr "تعديل الإعدادات المحاسبية الافتراضية"
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Open"
+msgstr "مفتوح"
 
 #. module: ncollection_account_core
-#: model:ir.model,name:ncollection_account_core.model_account_analytic_account
-msgid "Analytic Account"
-msgstr "الحساب التحليلي"
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_eligible_move_ids
+msgid "Open Documents"
+msgstr "المستندات المفتوحة"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_payment_status model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_payment_status
-msgid "Derived from the accounting (residual, due date and reconciliations); never set by hand. Sorted: Overdue, Unpaid, Partially Paid, Paid in Full, Overpaid."
-msgstr "مستخلصة من المحاسبة (المتبقي وتاريخ الاستحقاق والتسويات)؛ لا تُعيَّن يدويًا أبدًا."
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_apply_first_move_id
+msgid "Optional. The invoice / bill this payment settles first; any remainder goes to the partner's other open documents, earliest due first, and what is still left stays as an unapplied credit."
+msgstr "اختياري. الفاتورة التي تسددها هذه الدفعة أولًا؛ ويذهب أي متبقٍ إلى مستندات الشريك المفتوحة الأخرى، الأقدم استحقاقًا أولًا، وما يتبقى بعد ذلك يظل رصيدًا دائنًا غير مُطبَّق."
 
 #. module: ncollection_account_core
-#: model:ir.model,name:ncollection_account_core.model_onboarding_onboarding_step
-msgid "Onboarding Step"
-msgstr "خطة تمهيدية"
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Optional: earliest due first"
+msgstr "اختياري: الأقدم استحقاقًا أولًا"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__orientation
+msgid "Orientation"
+msgstr "الاتجاه"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__overdue
+msgid "Overdue"
+msgstr "متأخر السداد"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_is_overpaid
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__overpaid
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_search_nc_overpaid
+msgid "Overpaid"
+msgstr "مدفوع بالزيادة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_overpaid_amount
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_overpaid_amount
+msgid "Overpaid Amount"
+msgstr "مبلغ الزيادة المدفوعة"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Overpaid can only be searched with Yes or No."
+msgstr "يمكن البحث في «مدفوع بالزيادة» بنعم أو لا فقط."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Page"
+msgstr "الصفحة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_amount_paid
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_amount_paid
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_payment_status
+msgid "Paid Amount"
+msgstr "المبلغ المدفوع"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__paid
+msgid "Paid in Full"
+msgstr "مدفوع بالكامل"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Paid to"
+msgstr "المدفوع إلى"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__paper_size
+msgid "Paper Size"
+msgstr "حجم الورق"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__partial
+msgid "Partially Paid"
+msgstr "مدفوع جزئيًا"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_partner_is_customer
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_customer
+msgid "Partner is a customer"
+msgstr "الشريك عميل"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_partner_is_vendor
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_partner_is_vendor
+msgid "Partner is a supplier"
+msgstr "الشريك مورد"
 
 #. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_account_payment_register
@@ -893,9 +1160,147 @@ msgid "Pay"
 msgstr "الدفع"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_payable_id
+msgid "Payable account of every supplier that has none set on its own record (including new suppliers). A supplier with an account set on its own record keeps it."
+msgstr "حساب الدائنين لكل مورد ليس له حساب خاص في سجله (بما في ذلك الموردون الجدد). المورد الذي له حساب في سجله يحتفظ به."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Payment Details"
+msgstr "تفاصيل الدفع"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+#: model:ncollection.document.type,name:ncollection_account_core.doc_type_payment_receipt
+msgid "Payment Receipt"
+msgstr "إيصال دفع"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_invoice_document_nc_payment_status
+msgid "Payment Status"
+msgstr "حالة الدفع"
+
+#. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_account_payment_term
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
 msgid "Payment Terms"
 msgstr "شروط السداد"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Payment Terms and Journals"
+msgstr "شروط الدفع ودفاتر اليومية"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Payment amount"
+msgstr "مبلغ الدفعة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Payment date"
+msgstr "تاريخ الدفعة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_payment_history
+msgid "Payment history"
+msgstr "سجل المدفوعات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Payment method"
+msgstr "طريقة الدفع"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_payment_reference
+msgid "Payment reference"
+msgstr "مرجع الدفع"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__nc_show_payment_status
+msgid "Payment status"
+msgstr "حالة الدفع"
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_account_payment
+msgid "Payments"
+msgstr "الدفعات"
+
+#. module: ncollection_account_core
+#: model:res.groups,name:ncollection_account_core.group_platform_receipt_access
+msgid "Platform grant: Receipts & accounting (read only)"
+msgstr "منحة المنصة: الإيصالات والمحاسبة (قراءة فقط)"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__orientation__portrait
+msgid "Portrait"
+msgstr "عمودي"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Preview PDF"
+msgstr "معاينة PDF"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+msgid "Print Receipt"
+msgstr "طباعة الإيصال"
+
+#. module: ncollection_account_core
+#: model:ir.actions.act_window,name:ncollection_account_core.action_accounting_print_settings
+#: model:ir.ui.menu,name:ncollection_account_core.menu_accounting_print_settings
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_settings_button
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Print Settings"
+msgstr "إعدادات الطباعة"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/move_print_setting.py:0
+msgid "Print Settings belong to their document."
+msgstr "إعدادات الطباعة تخص مستندها."
+
+#. module: ncollection_account_core
+#: model:ir.model,name:ncollection_account_core.model_ncollection_move_print_setting
+msgid "Print Settings of one accounting document"
+msgstr "إعدادات الطباعة لمستند محاسبي واحد"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Print Settings — %s"
+msgstr "إعدادات الطباعة — %s"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__template_id
+msgid "Print Template"
+msgstr "قالب الطباعة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid ""
+"Print Templates are kept in Settings: this only chooses which one this\n"
+"                            document prints with."
+msgstr ""
+"تُحفظ قوالب الطباعة في الإعدادات: هذا يختار فقط القالب الذي يُطبع به\n"
+"                            هذا المستند."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_document_type__nc_show_payment_status
+msgid "Print the paid amount and the payment status (Unpaid, Partially Paid, Paid in Full...) under the totals of this document."
+msgstr "طباعة المبلغ المدفوع وحالة الدفع (غير مدفوعة، مدفوعة جزئياً، مدفوعة بالكامل...) أسفل إجماليات هذا المستند."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_print_title_enabled
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_print_title_enabled
+msgid "Print the title below instead of the standard one (Invoice, Credit Note, ...) on this document only."
+msgstr "اطبع العنوان أدناه بدلاً من العنوان القياسي (فاتورة، إشعار دائن، ...) على هذا المستند فقط."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__template_id
+msgid "Print this document with another Print Template of invoices (its colours, sections and columns)."
+msgstr "طباعة هذا المستند بقالب طباعة آخر للفواتير (ألوانه وأقسامه وأعمدته)."
 
 #. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_ncollection_document_type
@@ -903,9 +1308,230 @@ msgid "Printed document type"
 msgstr "نوع المستند المطبوع"
 
 #. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid ""
+"Prints lines such as \"Paid on 11/23/2026 - USD 1,000.00\" from the\n"
+"                            payments actually reconciled with this document (partial payments, reversals and refunds\n"
+"                            included). It never changes the payment state or any accounting."
+msgstr ""
+"يطبع سطوراً مثل \"دُفع في 11/23/2026 - USD 1,000.00\" من\n"
+"                            الدفعات المسوّاة فعلاً مع هذا المستند (بما فيها الدفعات الجزئية والعكوسات والمردودات).\n"
+"                            لا يغيّر أبداً حالة الدفع أو أي محاسبة."
+
+#. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_product_template
 msgid "Product"
 msgstr "المنتج"
+
+#. module: ncollection_account_core
+#. odoo-javascript
+#: code:addons/ncollection_account_core/static/src/document_lines/product_image.js:0
+msgid "Product image"
+msgstr "صورة المنتج"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Purchase Receipt"
+msgstr "إيصال مشتريات"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__qr_code
+msgid "QR Codes on Invoices"
+msgstr "رموز QR على الفواتير"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_quantity
+msgid "Quantity column"
+msgstr "عمود الكمية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__quick_edit_mode
+msgid "Quick Encoding"
+msgstr "الإدخال السريع"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_res_company__nc_default_receivable_id
+msgid "Receivable account of every customer that has none set on its own record (including new customers). A customer with an account set on its own record keeps it."
+msgstr "حساب المدينين لكل عميل ليس له حساب خاص في سجله (بما في ذلك العملاء الجدد). العميل الذي له حساب في سجله يحتفظ به."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Received by"
+msgstr "استلمها"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Received from"
+msgstr "مستلم من"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Record transactions in foreign currencies."
+msgstr "تسجيل المعاملات بالعملات الأجنبية."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_registered_move_ids
+msgid "Recorded Against"
+msgstr "سُجّلت مقابل"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Reference"
+msgstr "المرجع"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Refund received from"
+msgstr "استرداد مستلم من"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "Refunded to"
+msgstr "مُسترد إلى"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Reset to Company Defaults"
+msgstr "إعادة التعيين إلى افتراضيات الشركة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_use_credit_limit
+msgid "Sales Credit Limit"
+msgstr "حد ائتمان المبيعات"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "Sales Receipt"
+msgstr "إيصال مبيعات"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__show_sale_receipts
+msgid "Sales Receipts"
+msgstr "إيصالات المبيعات"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid "Sales, purchases and products"
+msgstr "المبيعات والمشتريات والمنتجات"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__font__sans
+msgid "Sans-serif"
+msgstr "خط بلا زوائد"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Save"
+msgstr "حفظ"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Sections"
+msgstr "الأقسام"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Sections & Columns"
+msgstr "الأقسام والأعمدة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__font__serif
+msgid "Serif"
+msgstr "خط بزوائد"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_alloc_locked
+msgid "Set when an allocation was removed or all were cleared: only the documents listed receive this payment."
+msgstr "يُضبط عند إزالة تخصيص أو مسح الكل: المستندات المدرجة فقط تستلم هذه الدفعة."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_payment_status
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_payment_status
+msgid "Settlement Status"
+msgstr "حالة السداد"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_company_details__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_customer_address__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_discount__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_history__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_reference__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_quantity__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_taxes__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_unit_price__show
+msgid "Show"
+msgstr "إظهار"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Show Payment History on Printed Invoice"
+msgstr "إظهار سجل المدفوعات في الفاتورة المطبوعة"
+
+#. module: ncollection_account_core
+#. odoo-javascript
+#: code:addons/ncollection_account_core/static/src/document_lines/product_image.js:0
+msgid "Show the product image"
+msgstr "عرض صورة المنتج"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_stamp_default_on
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_stamp_default_on
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__stamp_default_on
+msgid "Stamped by default"
+msgstr "مختوم افتراضيًا"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "Status"
+msgstr "الحالة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__account_storno
+msgid "Storno Accounting"
+msgstr "المحاسبة بالقيد العكسي (Storno)"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "Storno accounting cannot change once the company has accounting entries."
+msgstr "لا يمكن تغيير المحاسبة بالقيد العكسي بمجرد وجود قيود محاسبية للشركة."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "Storno accounting is not available for %(country)s."
+msgstr "المحاسبة بالقيد العكسي غير متاحة لـ %(country)s."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Style"
+msgstr "النمط"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_partner.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_partner_roles
+msgid "Supplier"
+msgstr "مورد"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+#: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_bill
+msgid "Supplier Bill"
+msgstr "فاتورة مورّد"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+#: model:ncollection.document.type,name:ncollection_account_core.doc_type_vendor_credit_note
+msgid "Supplier Credit Note"
+msgstr "إشعار دائن من المورّد"
 
 #. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_product_supplierinfo
@@ -913,11 +1539,363 @@ msgid "Supplier Pricelist"
 msgstr "قائمة أسعار المورد"
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_paid model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_paid
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_print_title
+msgid "TAX INVOICE"
+msgstr "فاتورة ضريبية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__header_text
+msgid "Tagline / header text"
+msgstr "الشعار / نص الترويسة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Tagline under the company details"
+msgstr "الشعار أسفل بيانات الشركة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__tax_calculation_rounding_method
+msgid "Tax Rounding Method"
+msgstr "طريقة تقريب الضريبة"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Tax rates, and the rules that map them for foreign or exempt customers and suppliers."
+msgstr "نسب الضرائب، والقواعد التي تربطها للعملاء والموردين الأجانب أو المعفيين."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_bank_statement_line__nc_is_taxable
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_move__nc_is_taxable
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_invoice_filter_nc_settlement
+msgid "Taxable"
+msgstr "خاضع للضريبة"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move_status.py:0
+msgid "Taxable can only be searched with Yes or No."
+msgstr "يمكن البحث في «خاضع للضريبة» بنعم أو لا فقط."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Taxes"
+msgstr "الضرائب"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Taxes and Fiscal Positions"
+msgstr "الضرائب والأوضاع المالية"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_taxes
+msgid "Taxes column"
+msgstr "عمود الضرائب"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_invoice_tax_company_currency
+msgid "Taxes in Company Currency"
+msgstr "الضرائب بعملة الشركة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_alloc_seed
+msgid "Technical: ids the form seeded from the automatic plan (JSON)."
+msgstr "تقني: المعرّفات التي زرعها النموذج من الخطة التلقائية (JSON)."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Template"
+msgstr "القالب"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__font__default
+msgid "Template font"
+msgstr "خط القالب"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Template paper"
+msgstr "ورق القالب"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "Template title"
+msgstr "عنوان القالب"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__text_color
+msgid "Text colour"
+msgstr "لون النص"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__font_size
+msgid "Text size (pt)"
+msgstr "حجم النص (نقطة)"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "The %(chart)s chart of accounts does not belong to the fiscal country %(country)s. Choose the fiscal country first, then its own chart."
+msgstr "دليل الحسابات %(chart)s لا ينتمي إلى الدولة المالية %(country)s. اختر الدولة المالية أولاً، ثم دليلها."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "The %(chart)s chart of accounts needs a localization package your subscription does not include. Ask the platform administrator to enable it."
+msgstr "يحتاج دليل الحسابات %(chart)s إلى حزمة توطين لا يشملها اشتراكك. اطلب من مسؤول المنصة تفعيلها."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "The %(country)s chart of accounts keeps its books in %(expected)s, not %(currency)s."
+msgstr "يحتفظ دليل حسابات %(country)s بدفاتره بعملة %(expected)s، وليس %(currency)s."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_mixin.py:0
+msgid "The '%s' feature is not included in your NCollection plan. Upgrade your subscription to unlock it."
+msgstr "الميزة '%s' غير متضمّنة في خطة NCollection الخاصة بك. قم بترقية اشتراكك لإتاحتها."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid ""
+"The accounts new records start with, and the accounts the accounting engine posts to.\n"
+"                            These apply to this company only."
+msgstr "الحسابات التي تبدأ بها السجلات الجديدة، والحسابات التي يرحّل إليها محرك المحاسبة. تسري هذه على هذه الشركة فقط."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/res_company_settings.py:0
+msgid "The cash basis journal must be a miscellaneous journal."
+msgstr "يجب أن يكون دفتر يومية الأساس النقدي دفتر يومية متنوعاً."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "The chart would also be loaded on branches you do not belong to."
+msgstr "سيُحمَّل دليل الحسابات أيضاً على فروع لا تنتمي إليها."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "The country whose taxes and tax reports apply. Once a chart of accounts is loaded, it follows that chart: another country needs a controlled localization migration."
+msgstr "الدولة التي تنطبق ضرائبها وتقاريرها الضريبية. بمجرد تحميل دليل حسابات، تتبع ذلك الدليل: دولة أخرى تتطلب ترحيل توطين مضبوطاً."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "The currency the company keeps its books in. It cannot change once journal items exist."
+msgstr "العملة التي تحتفظ الشركة بدفاترها بها. لا يمكن تغييرها بمجرد وجود بنود يومية."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "The custom print title must be one line of at most %(max)s characters."
+msgstr "يجب أن يكون عنوان الطباعة المخصّص سطرًا واحدًا لا يزيد عن %(max)s حرفًا."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_registered_move_ids
+msgid "The documents this payment was recorded against with Register Payment."
+msgstr "المستندات التي سُجّلت هذه الدفعة مقابلها عبر تسجيل الدفعة."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_overpaid_amount
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_overpaid_amount
+msgid "The excess already received for THIS document: what the payment or credit that settled it brought beyond the document's total, when that payment was applied to this document alone (see models/account_move_status.py). Zero otherwise."
+msgstr "الزيادة المستلمة بالفعل لهذا المستند: ما جلبته الدفعة أو الرصيد الدائن الذي سدّده فوق إجمالي المستند، عندما طُبّقت تلك الدفعة على هذا المستند وحده (انظر models/account_move_status.py). صفر خلاف ذلك."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_unallocated_amount
+msgid "The part of the payment not applied to any document (an outstanding credit on the partner's account)."
+msgstr "جزء الدفعة غير المُطبَّق على أي مستند (رصيد دائن قائم في حساب الشريك)."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_eligible_move_ids
+msgid "The partner's posted invoices / bills / credit notes this payment can be applied to."
+msgstr "فواتير الشريك وإشعاراته الدائنة المرحّلة التي يمكن تطبيق هذه الدفعة عليها."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "The template's footer"
+msgstr "تذييل القالب"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/move_print_setting.py:0
+msgid "The text size must be between 6 and 16 pt."
+msgstr "يجب أن يكون حجم النص بين 6 و16 نقطة."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid "The usual template for this document"
+msgstr "القالب المعتاد لهذا المستند"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
+msgid ""
+"There is no automatic deferred revenue or expense engine. These are the\n"
+"                                accounts and journal the manual \"Change Period\" action on journal items uses to\n"
+"                                spread an entry across periods."
+msgstr "لا يتضمن النظام محركًا تلقائيًا للإيرادات أو المصروفات المؤجلة. هذه هي الحسابات واليومية التي يستخدمها إجراء «تغيير الفترة» اليدوي على قيود اليومية لتوزيع القيد على الفترات."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "These journals are kept in %(currency)s as a foreign currency: %(journals)s. Remove that currency from them first, or they would hold the company currency twice."
+msgstr "تُحفظ دفاتر اليومية هذه بعملة %(currency)s كعملة أجنبية: %(journals)s. أزل تلك العملة منها أولاً، وإلا ستحمل عملة الشركة مرتين."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form
+msgid ""
+"These settings apply to this document only. Empty or Default follows its Print Template and the\n"
+"                    company's document layout; nothing here changes the company or any other document."
+msgstr ""
+"تنطبق هذه الإعدادات على هذا المستند فقط. الفارغ أو الافتراضي يتبع قالب الطباعة الخاص به وتخطيط\n"
+"                    مستندات الشركة؛ لا شيء هنا يغيّر الشركة أو أي مستند آخر."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/wizards/business_settings.py:0
+msgid "This chart of accounts does not exist."
+msgstr "دليل الحسابات هذا غير موجود."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid ""
+"This company already has accounting entries, so its main currency, fiscal country and chart of\n"
+"                            accounts can no longer be changed safely. They are shown for reference."
+msgstr ""
+"لدى هذه الشركة قيود محاسبية بالفعل، لذا لم يعد من الممكن تغيير عملتها الرئيسية ودولتها المالية ودليل\n"
+"                            حساباتها بأمان. تُعرض للاطلاع."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid ""
+"This company's chart of accounts is not the chart of its fiscal country, so its taxes, tax reports\n"
+"                            and fiscal positions belong to another country. Its main currency, fiscal country and chart are\n"
+"                            locked: aligning them needs a controlled localization migration, run by the platform administrator,\n"
+"                            that maps and keeps the existing accounts, taxes and journals."
+msgstr ""
+"دليل حسابات هذه الشركة ليس دليل دولتها المالية، لذا تنتمي ضرائبها وتقاريرها الضريبية\n"
+"                            وأوضاعها المالية إلى دولة أخرى. عملتها الرئيسية ودولتها المالية ودليلها\n"
+"                            مقفلة: تحتاج مواءمتها إلى ترحيل توطين مضبوط يُنفّذه مسؤول المنصة،\n"
+"                            يربط الحسابات والضرائب ودفاتر اليومية الحالية ويحتفظ بها."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_move.py:0
+msgid "This entry was generated by a payment or a bank statement line and cannot be duplicated."
+msgstr "هذا القيد أُنشئ بواسطة دفعة أو سطر كشف حساب بنكي ولا يمكن عمل نسخة مماثلة منه."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "This payment has not been confirmed yet, so nothing has been applied."
+msgstr "لم تُؤكَّد هذه الدفعة بعد، لذا لم يُطبَّق منها شيء."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "This payment is already confirmed."
+msgstr "هذه الدفعة مؤكدة بالفعل."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "This payment is being confirmed by another user."
+msgstr "يقوم مستخدم آخر بتأكيد هذه الدفعة."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.report_payment_receipt_document_nc
+msgid "This payment is not applied to any invoice or bill; the whole amount is held as credit on the account."
+msgstr "لم تُطبَّق هذه الدفعة على أي فاتورة؛ يُحتفظ بالمبلغ كاملًا كرصيد دائن في الحساب."
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/duplicate_records.py:0
+msgid "This payment is one side of an internal transfer and cannot be duplicated."
+msgstr "هذه الدفعة أحد طرفي تحويل داخلي ولا يمكن إنشاء نسخة مماثلة منها."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__title
+msgid "Title"
+msgstr "العنوان"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+msgid "To apply"
+msgstr "للتطبيق"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_business_settings__display_invoice_amount_total_words
+msgid "Total Amount in Words"
+msgstr "المبلغ الإجمالي كتابةً"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_form_nc_line_amounts
+msgid "Total incl. Tax"
+msgstr "الإجمالي شامل الضريبة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__move_type
+msgid "Type"
+msgstr "النوع"
+
+#. module: ncollection_account_core
+#. odoo-python
+#: code:addons/ncollection_account_core/models/account_payment.py:0
+#: model:ir.model.fields,field_description:ncollection_account_core.field_account_payment__nc_unallocated_amount
+msgid "Unallocated"
+msgstr "غير مخصص"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_unit_price
+msgid "Unit price column"
+msgstr "عمود سعر الوحدة"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__account_move__nc_payment_status__unpaid
+msgid "Unpaid"
+msgstr "غير مدفوع"
+
+#. module: ncollection_account_core
+#: model_terms:ir.actions.act_window,help:ncollection_account_core.action_accounting_document_stamp
+msgid ""
+"Upload your company stamp (a PNG), choose the documents it is printed on (customer invoices, credit notes,\n"
+"               vendor bills, payment receipts) and place it on the paper. The same stamp appears on View and on Print."
+msgstr "ارفع ختم شركتك (صورة PNG)، واختر المستندات التي يُطبع عليها (فواتير العملاء، الإشعارات الدائنة، فواتير الموردين، إيصالات الدفع)، وضعه على الورقة. يظهر الختم نفسه في العرض وفي الطباعة."
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_form_nc_workflow
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_account_payment_tree_nc_workflow
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_invoice_tree_nc_payment_workflow
+msgid "View"
+msgstr "عرض"
+
+#. module: ncollection_account_core
+#: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_business_settings_form_accounting
+msgid "Warn when a customer's credit limit is exceeded."
+msgstr "التنبيه عند تجاوز حد ائتمان العميل."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_stamp_default_on
+#: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_stamp_default_on
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__stamp_default_on
+msgid "What Default means for this document: its kind's Print Setting."
+msgstr "معنى «الافتراضي» لهذا المستند: إعداد الطباعة لنوعه."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_paid
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_paid
 msgid "What has been received for this document, in its own currency: the amount applied (total minus amount due) plus any excess. Paid Amount + Balance Due = total."
 msgstr "ما طُبِّق على هذا المستند حتى الآن (الإجمالي ناقص المبلغ المستحق)، بعملته."
 
 #. module: ncollection_account_core
-#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_due model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_due
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_amount_due
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_amount_due
 msgid "What is still due, in its own currency (the native residual). NEGATIVE when the document is overpaid: the excess already received, shown from the settlement's point of view (the native amount due and the accounting are untouched)."
 msgstr "ما يزال مستحقًا على هذا المستند، بعملته (المبلغ المتبقي)."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_account_bank_statement_line__nc_print_title
+#: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_print_title
+msgid "e.g. TAX INVOICE or فاتورة ضريبية. The document number is still printed after it."
+msgstr "مثال: TAX INVOICE أو فاتورة ضريبية. يُطبع رقم المستند بعده كالمعتاد."
+

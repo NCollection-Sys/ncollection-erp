@@ -24,3 +24,4 @@ from . import test_delegated_accounting_defaults_form
 from . import test_allocation_remove_clear
 from . import test_newest_first
 from . import test_financial_palette
+from . import test_move_print_settings

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'NCollection Account Core',
-    'version': '19.0.1.19.0',
+    'version': '19.0.1.20.0',
     'category': 'Accounting/Accounting',
     'summary': 'Shared financial base: SaaS config surface, subscription '
                'restriction hooks, common mixins and the accounting engine '
@@ -27,6 +27,8 @@
     # (FPA §4/§6). The engine-boundary guard lives in tests/test_engine_boundary.
     'data': [
         'security/platform_capabilities.xml',
+        'security/ir.model.access.csv',
+        'security/print_setting_rules.xml',
         # #474: the single financial application, named "Accounting".
         # #474: readonly < user < manager, so an accounting Administrator can
         # actually READ the native reports (measured: they could not).
@@ -39,6 +41,7 @@
         # Files / View / Edit, payment status, payment allocation + Print Receipt (models/account_payment.py).
         'views/payment_workflow_views.xml',
         'views/financial_palette_views.xml',
+        'views/move_print_setting_views.xml',
         # Settings > Accounting Defaults: the default accounts Community already has, reachable by the Owner.
         'views/accounting_defaults_views.xml',
         'views/business_settings_views.xml',

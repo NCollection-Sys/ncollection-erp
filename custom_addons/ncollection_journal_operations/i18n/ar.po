@@ -6,11 +6,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-16 05:25+0000\n"
-"PO-Revision-Date: 2026-11-16 05:25+0000\n"
+"POT-Creation-Date: 2026-11-23 01:51+0000\n"
+"PO-Revision-Date: 2026-11-23 01:51+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
-"Language: ar_001\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
@@ -24,21 +23,58 @@ msgstr "لا يمكن استخدام %(account)s مباشرة: استخدم ال
 
 #. module: ncollection_journal_operations
 #. odoo-python
+#: code:addons/ncollection_journal_operations/models/res_company.py:0
+msgid "%(account)s cannot hold unidentified payments: use a reconcilable current asset or current liability account (never a receivable, payable or bank account)."
+msgstr "لا يمكن أن يحتفظ %(account)s بالمدفوعات غير المحددة: استخدم حساب أصول متداولة أو التزامات متداولة قابلاً للتسوية (وليس حساب ذمم مدينة أو دائنة أو حساباً بنكياً)."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/res_company.py:0
+msgid "%(account)s is not an expense account."
+msgstr "%(account)s ليس حساب مصروفات."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "%(company)s has no Miscellaneous journal for the bank fee entry."
+msgstr "لا يوجد لدى %(company)s دفتر يومية متنوع لقيد الرسوم البنكية."
+
+#. module: ncollection_journal_operations
+#. odoo-python
 #: code:addons/ncollection_journal_operations/models/account_payment.py:0
 msgid "%(field)s cannot be changed on %(payment)s."
 msgstr "لا يمكن تغيير %(field)s في %(payment)s."
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_journal.py:0 code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "%(journal)s is not a bank or cash journal."
 msgstr "%(journal)s ليس دفتر بنك أو نقدية."
 
 #. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "%(method)s is not an incoming payment method of %(journal)s."
+msgstr "%(method)s ليست طريقة دفع واردة لـ %(journal)s."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "%(method)s is not an outgoing payment method of %(journal)s."
+msgstr "%(method)s ليست طريقة دفع صادرة لدفتر %(journal)s."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "%(name)s: each side completes when its bank confirms it (or with Mark as Paid)."
 msgstr "%(name)s: يكتمل كل طرف عندما يؤكده البنك الخاص به (أو بتعليمه كمدفوع)."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/account_payment.py:0
+msgid "%(partner)s is not a %(type)s."
+msgstr "%(partner)s ليس %(type)s."
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -51,6 +87,12 @@ msgstr "%(payment)s يتبع شركة أخرى."
 #: code:addons/ncollection_journal_operations/models/account_payment.py:0
 msgid "%(payment)s could not be fully settled; nothing was saved."
 msgstr "تعذّرت تسوية %(payment)s بالكامل؛ لم يُحفظ أي شيء."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/account_payment.py:0
+msgid "%(payment)s has no payee. Choose the Customer, Supplier or Account, or configure the Unidentified Payments (Suspense) account of %(company)s in Accounting Settings."
+msgstr "لا يوجد مستفيد لـ %(payment)s. اختر العميل أو المورد أو الحساب، أو قم بإعداد حساب المدفوعات غير المحددة (المعلّق) لـ %(company)s في إعدادات المحاسبة."
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -95,6 +137,20 @@ msgid "%(transfer)s is already posted."
 msgstr "تم ترحيل %(transfer)s مسبقاً."
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__expected_amount
+msgid "(Amount - Bank Fee) at the accounting rate."
+msgstr "(المبلغ - الرسوم البنكية) بسعر الصرف المحاسبي."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid ""
+",\n"
+"                                    in"
+msgstr ""
+"،\n"
+"                                    بعملة"
+
+#. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
 msgid "<i class=\"fa fa-arrow-down\" role=\"img\" aria-hidden=\"true\"/><span>Receipt</span>"
 msgstr "<i class=\"fa fa-arrow-down\" role=\"img\" aria-hidden=\"true\"/><span>سند قبض</span>"
@@ -125,9 +181,37 @@ msgid "<i class=\"fa fa-long-arrow-right fa-2x text-primary o_nc_transfer_arrow\
 msgstr "<i class=\"fa fa-long-arrow-right fa-2x text-primary o_nc_transfer_arrow\" role=\"img\" aria-label=\"إلى\" title=\"إلى\"/>"
 
 #. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+msgid "<p>No posted movement on this account yet.</p>"
+msgstr "<p>لا توجد حركة مرحّلة على هذا الحساب بعد.</p>"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid ""
+"<span class=\"o_nc_fx_title\">Exchange Rate &amp; Transfer Details</span>\n"
+"                            <span class=\"badge text-bg-light\" invisible=\"state != 'draft'\">Preview: nothing is booked yet</span>\n"
+"                            <span class=\"badge text-bg-success\" invisible=\"state == 'draft'\">Booked</span>"
+msgstr ""
+"<span class=\"o_nc_fx_title\">سعر الصرف وتفاصيل التحويل</span>\n"
+"                            <span class=\"badge text-bg-light\" invisible=\"state != 'draft'\">معاينة: لم يُسجَّل شيء بعد</span>\n"
+"                            <span class=\"badge text-bg-success\" invisible=\"state == 'draft'\">مُسجَّل</span>"
+
+#. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
 msgid "<span class=\"o_stat_text\">Payments</span>"
 msgstr "<span class=\"o_stat_text\">الدفعات</span>"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
+msgid ""
+"<span invisible=\"nc_suspense_account_id\">the Unidentified Payments (Suspense) account, which is\n"
+"                        not configured yet: set it in Accounting Settings before confirming</span>.\n"
+"                    Reclassify it once the payee is known."
+msgstr ""
+"<span invisible=\"nc_suspense_account_id\">حساب المدفوعات غير المحددة (المعلّق)، وهو\n"
+"                        غير مُعدّ بعد: قم بإعداده في إعدادات المحاسبة قبل التأكيد</span>.\n"
+"                    أعد تصنيفه عند معرفة المستفيد."
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -149,6 +233,12 @@ msgstr "احتوى استيراد كشف بنكي لاحق على هذه الح�
 
 #. module: ncollection_journal_operations
 #. odoo-python
+#: code:addons/ncollection_journal_operations/models/account_payment.py:0
+msgid "A payment without a payee must post against %(account)s."
+msgstr "يجب أن يُرحَّل الدفع بدون مستفيد على %(account)s."
+
+#. module: ncollection_journal_operations
+#. odoo-python
 #: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "A posted transfer cannot be edited."
 msgstr "لا يمكن تعديل تحويل مرحَّل."
@@ -160,7 +250,10 @@ msgid "A transfer is posted with Confirm Transfer only."
 msgstr "لا يُرحَّل التحويل إلا من خلال زر تأكيد التحويل."
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__account_id model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_counterpart_type__account model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__account model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__account_id
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_counterpart_type__account
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__account
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Account"
 msgstr "حساب"
 
@@ -170,19 +263,44 @@ msgid "Account Operations"
 msgstr "عمليات الحسابات"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__accounting_rate
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Accounting Rate"
+msgstr "سعر الصرف المحاسبي"
+
+#. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__message_needaction
 msgid "Action Needed"
 msgstr "إجراء مطلوب"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__amount model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__amount model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__amount model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__amount
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__amount
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__amount
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Amount"
 msgstr "المبلغ"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__destination_amount
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
 msgid "Amount Received"
 msgstr "المبلغ المستلم"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__difference_amount
+msgid "Amount Received - Expected Amount."
+msgstr "المبلغ المستلم - المبلغ المتوقع."
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__effective_rate
+msgid "Amount Received / Amount sent."
+msgstr "المبلغ المستلم / المبلغ المرسل."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Amount Sent"
+msgstr "المبلغ المرسل"
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -197,6 +315,11 @@ msgid "An Account payment or receipt is created from a bank or cash journal card
 msgstr "لا يُنشأ سند صرف أو قبض على حساب إلا من بطاقة دفتر بنك أو نقدية."
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__destination_payment_method_line_id
+msgid "An incoming method of the To Journal, used by the receiving payment. A method with an outstanding account keeps the money there until the receiving bank confirms it (In Progress)."
+msgstr "طريقة واردة لدفتر الاستلام تستخدمها دفعة الاستلام. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكد البنك المستلِم (قيد التنفيذ)."
+
+#. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/account_payment.py:0
 msgid "An internal transfer payment is created by its transfer only."
@@ -209,7 +332,13 @@ msgid "An operation from a journal card needs its card journal."
 msgstr "تحتاج العملية المنشأة من بطاقة الدفتر إلى دفتر البطاقة."
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_analytic_distribution model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__payment_method_line_id
+msgid "An outgoing method of the From Journal. A method with an outstanding account leaves the money there until the bank confirms it (In Progress); a method without one books it straight to the journal account."
+msgstr "طريقة صادرة من دفتر المصدر. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكده البنك (قيد التنفيذ)؛ والطريقة بدونه تقيده مباشرة في حساب الدفتر."
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_analytic_distribution
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
 msgid "Analytic"
 msgstr "التحليلي"
 
@@ -229,9 +358,56 @@ msgid "Attachment Count"
 msgstr "عدد المرفقات"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__balance_approx
+msgid "Balance Approx"
+msgstr "رصيد تقريبي"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__balance_currency_id
+msgid "Balance Currency"
+msgstr "عملة الرصيد"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__balance_amount
+msgid "Balance Effect"
+msgstr "أثر الرصيد"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Balance, last 30 days (posted)"
+msgstr "الرصيد، آخر 30 يومًا (مُرحَّل)"
+
+#. module: ncollection_journal_operations
 #: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__settlement
 msgid "Bank Confirmation"
 msgstr "تأكيد بنكي"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__bank_date
+msgid "Bank Date"
+msgstr "تاريخ البنك"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__fee_amount
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Bank Fee"
+msgstr "الرسوم البنكية"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__fee_company_amount
+msgid "Bank Fee (company currency)"
+msgstr "الرسوم البنكية (بعملة الشركة)"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__fee_move_id
+msgid "Bank Fee Entry"
+msgstr "قيد الرسوم البنكية"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_company__nc_bank_fee_account_id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_config_settings__nc_bank_fee_account_id
+msgid "Bank Fees"
+msgstr "الرسوم البنكية"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_bank_statement_line__nc_bank_import_id
@@ -241,10 +417,12 @@ msgstr "معرّف الاستيراد البنكي"
 #. module: ncollection_journal_operations
 #: model:ir.model,name:ncollection_journal_operations.model_account_bank_statement_line
 msgid "Bank Statement Line"
-msgstr "سطر كشف الحساب البنكي"
+msgstr "بند كشف الحساب البنكي"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__statement_line_id model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__bank
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__statement_line_id
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__bank
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view_menu
 msgid "Bank Transaction"
 msgstr "حركة بنكية"
 
@@ -257,6 +435,22 @@ msgstr "الحركات البنكية"
 #: model:ir.model,name:ncollection_journal_operations.model_ncollection_journal_transaction
 msgid "Bank and Cash Journal Transaction"
 msgstr "حركة دفتر البنك والنقدية"
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "Bank fee %(name)s"
+msgstr "رسوم بنكية %(name)s"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Bank fee entry:"
+msgstr "قيد الرسوم البنكية:"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__exchange_amount
+msgid "Booked by Odoo when the transfer lines were reconciled (company currency). Positive = gain."
+msgstr "سجّلها Odoo عند تسوية بنود التحويل (بعملة الشركة). موجب = ربح."
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -277,6 +471,18 @@ msgstr "دفتر البطاقة"
 
 #. module: ncollection_journal_operations
 #. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "Choose the Incoming Payment Method of %(journal)s."
+msgstr "اختر طريقة الدفع الواردة لـ %(journal)s."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "Choose the Payment Method of %(journal)s."
+msgstr "اختر طريقة الدفع لدفتر %(journal)s."
+
+#. module: ncollection_journal_operations
+#. odoo-python
 #: code:addons/ncollection_journal_operations/models/account_payment.py:0
 msgid "Choose the Type: Customer, Supplier or Account."
 msgstr "اختر النوع: عميل أو مورد أو حساب."
@@ -284,8 +490,8 @@ msgstr "اختر النوع: عميل أو مورد أو حساب."
 #. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/account_payment.py:0
-msgid "Choose the account of this operation."
-msgstr "اختر حساب هذه العملية."
+msgid "Choose the account of this operation, or configure the Unidentified Payments (Suspense) account in Accounting Settings."
+msgstr "اختر حساب هذه العملية، أو قم بإعداد حساب المدفوعات غير المحددة (المعلّق) في إعدادات المحاسبة."
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
@@ -293,14 +499,26 @@ msgid "Choose the receiving journal"
 msgstr "اختر الدفتر المستلم"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__company_id model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__company_id
+#: model:ir.model,name:ncollection_journal_operations.model_res_company
+msgid "Companies"
+msgstr "الشركات"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__company_id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__company_id
 msgid "Company"
 msgstr "الشركة"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__company_currency_id
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__company_currency_id
 msgid "Company Currency"
 msgstr "عملة الشركة"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__exchange_estimate
+msgid "Company currency: value received - value sent net of the fee, at the accounting rates. Positive = gain."
+msgstr "بعملة الشركة: القيمة المستلمة - القيمة المرسلة صافية من الرسوم، بأسعار الصرف المحاسبية. موجب = ربح."
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__company_id
@@ -311,6 +529,11 @@ msgstr "الشركة المرتبطة بهذا الدفتر"
 #: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__progress__done
 msgid "Completed"
 msgstr "مكتمل"
+
+#. module: ncollection_journal_operations
+#: model:ir.model,name:ncollection_journal_operations.model_res_config_settings
+msgid "Config Settings"
+msgstr "تهيئة الإعدادات"
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
@@ -328,17 +551,33 @@ msgid "Confirmed by Bank File"
 msgstr "مؤكَّد بملف البنك"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__create_uid model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__create_uid
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__difference_amount
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Conversion Difference"
+msgstr "فرق التحويل"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_account_payment__nc_suspense_account_id
+#: model:ir.model.fields,help:ncollection_journal_operations.field_res_company__nc_payment_suspense_account_id
+#: model:ir.model.fields,help:ncollection_journal_operations.field_res_config_settings__nc_payment_suspense_account_id
+msgid "Counterpart of a payment or receipt whose payee is not known yet. Clear it later with a reclassification entry reconciled against the suspense line. Not the bank Suspense account."
+msgstr "الطرف المقابل لدفعة أو مقبوض لم يُعرف المستفيد منه بعد. تتم تصفيته لاحقاً بقيد إعادة تصنيف يُسوّى مع بند المعلّق. ليس حساب المعلّق البنكي."
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__create_uid
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__create_date model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__create_date
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__create_date
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__currency_id model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__currency_id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__currency_id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__currency_id
 msgid "Currency"
 msgstr "العملة"
 
@@ -348,12 +587,20 @@ msgid "Current Balance"
 msgstr "الرصيد الحالي"
 
 #. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+msgid "Current Balance (posted)"
+msgstr "الرصيد الحالي (مُرحَّل)"
+
+#. module: ncollection_journal_operations
 #: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_counterpart_type__customer
 msgid "Customer"
 msgstr "عميل"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__partner_id model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__partner_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Customer / Supplier"
 msgstr "العميل / المورد"
 
@@ -368,12 +615,18 @@ msgid "Customer/Supplier"
 msgstr "العميل/المورد"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__date model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__date model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__date model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__date
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__date
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__date
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "Date"
 msgstr "التاريخ"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__memo model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__description model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__memo
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__description
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Description"
 msgstr "الوصف"
 
@@ -388,7 +641,9 @@ msgid "Destination Payment"
 msgstr "دفعة الوجهة"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__direction model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__direction model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__direction
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__direction
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Direction"
 msgstr "الاتجاه"
 
@@ -398,14 +653,80 @@ msgid "Discard"
 msgstr "تجاهل"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_bank_statement_line__display_name model:ir.model.fields,field_description:ncollection_journal_operations.field_account_journal__display_name model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__display_name model:ir.model.fields,field_description:ncollection_journal_operations.field_account_statement_import__display_name model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__display_name model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_ops_terminology__display_name model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__display_name model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_bank_statement_line__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_journal__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_statement_import__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_ops_terminology__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_company__display_name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_config_settings__display_name
 msgid "Display Name"
-msgstr "الاسم المعروض"
+msgstr "اسم العرض"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__progress__draft model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__state__draft model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__draft
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__draft
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__progress__draft
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__state__draft
 msgid "Draft"
 msgstr "مسودة"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view_menu
+msgid "Duplicate Review"
+msgstr "مراجعة التكرارات"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__effective_rate
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Effective Rate"
+msgstr "سعر الصرف الفعلي"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__exchange_move_id
+msgid "Exchange Difference Entry"
+msgstr "قيد فروق الصرف"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__exchange_amount
+msgid "Exchange Gain / Loss"
+msgstr "ربح / خسارة فروق الصرف"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Exchange Gain / Loss (booked)"
+msgstr "ربح / خسارة فروق الصرف (المُسجَّلة)"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__exchange_estimate
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Exchange Gain / Loss (estimate)"
+msgstr "ربح / خسارة فروق الصرف (تقديرية)"
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "Exchange difference %(name)s"
+msgstr "فروق صرف %(name)s"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Exchange entry:"
+msgstr "قيد فروق الصرف:"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__expected_amount
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Expected Amount"
+msgstr "المبلغ المتوقع"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_res_company__nc_bank_fee_account_id
+#: model:ir.model.fields,help:ncollection_journal_operations.field_res_config_settings__nc_bank_fee_account_id
+msgid "Expense account for bank charges entered on an internal transfer."
+msgstr "حساب المصروفات للرسوم البنكية المُدخلة على التحويل الداخلي."
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__message_follower_ids
@@ -423,7 +744,8 @@ msgid "From"
 msgstr "من"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__source_journal_id model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__source_journal_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
 msgid "From Journal"
 msgstr "من دفتر"
 
@@ -445,9 +767,18 @@ msgid "Has Message"
 msgstr "يحتوي على رسالة"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_bank_statement_line__id model:ir.model.fields,field_description:ncollection_journal_operations.field_account_journal__id model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__id model:ir.model.fields,field_description:ncollection_journal_operations.field_account_statement_import__id model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__id model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_ops_terminology__id model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__id model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_bank_statement_line__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_journal__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_statement_import__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_ops_terminology__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_company__id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_config_settings__id
 msgid "ID"
-msgstr "المعرف"
+msgstr "المُعرف"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__message_needaction
@@ -455,14 +786,15 @@ msgid "If checked, new messages require your attention."
 msgstr "إذا كان محدداً، فهناك رسائل جديدة تتطلب انتباهك."
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__message_has_error model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__message_has_sms_error
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__message_has_error
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__message_has_sms_error
 msgid "If checked, some messages have a delivery error."
 msgstr "إذا كان محدداً، فهناك رسائل بها خطأ في التسليم."
 
 #. module: ncollection_journal_operations
 #: model:ir.model,name:ncollection_journal_operations.model_account_statement_import
 msgid "Import Bank Statement Files"
-msgstr "استيراد ملفات كشوف الحساب البنكي"
+msgstr "استيراد كشف حساب بنكي"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__liquidity_balance
@@ -475,19 +807,39 @@ msgid "In Process"
 msgstr "قيد المعالجة"
 
 #. module: ncollection_journal_operations
-#. odoo-python
-#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
-msgid "In one currency the amount received must equal the amount sent."
-msgstr "عند استخدام عملة واحدة يجب أن يساوي المبلغ المستلم المبلغ المرسل."
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__in_progress
+msgid "In Progress"
+msgstr "قيد التنفيذ"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__amount_in model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__direction__in model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "In one currency the amount received plus the bank fee must equal the amount sent."
+msgstr "في عملة واحدة يجب أن يساوي المبلغ المستلم مضافاً إليه الرسوم البنكية المبلغ المرسل."
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__amount_in
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__direction__in
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "Incoming"
 msgstr "وارد"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__destination_payment_method_line_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Incoming Payment Method"
+msgstr "طريقة الدفع الواردة"
+
+#. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_journal.py:0 model:ir.model,name:ncollection_journal_operations.model_ncollection_internal_transfer model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_transfer_id model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_operation__transfer model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__transfer model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+#: model:ir.model,name:ncollection_journal_operations.model_ncollection_internal_transfer
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_transfer_id
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_operation__transfer
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__transfer
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
 msgid "Internal Transfer"
 msgstr "تحويل داخلي"
 
@@ -504,7 +856,9 @@ msgid "Internal Transfer posted"
 msgstr "تم ترحيل التحويل الداخلي"
 
 #. module: ncollection_journal_operations
-#: model:ir.actions.act_window,name:ncollection_journal_operations.action_internal_transfer model:ir.ui.menu,name:ncollection_journal_operations.menu_internal_transfer model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model:ir.actions.act_window,name:ncollection_journal_operations.action_internal_transfer
+#: model:ir.ui.menu,name:ncollection_journal_operations.menu_internal_transfer
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "Internal Transfers"
 msgstr "التحويلات الداخلية"
 
@@ -514,9 +868,10 @@ msgid "Is Follower"
 msgstr "متابع"
 
 #. module: ncollection_journal_operations
-#: model:ir.model,name:ncollection_journal_operations.model_account_journal model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__journal_id
+#: model:ir.model,name:ncollection_journal_operations.model_account_journal
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__journal_id
 msgid "Journal"
-msgstr "الدفتر"
+msgstr "دفتر اليومية"
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
@@ -524,14 +879,10 @@ msgid "Journal Entries"
 msgstr "القيود اليومية"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__move_id model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__entry
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__move_id
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__entry
 msgid "Journal Entry"
 msgstr "قيد يومية"
-
-#. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list
-msgid "Journal Items"
-msgstr "عناصر اليومية"
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -545,12 +896,14 @@ msgid "Journal operations wording"
 msgstr "مصطلحات عمليات الدفاتر"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__write_uid model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__write_uid
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__write_uid
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__write_date model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__write_date
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__write_date
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -566,7 +919,10 @@ msgstr "تعليم دفعة كمدفوعة"
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_payment.py:0 model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_account_payment_form_nc_ops model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_settle_form
+#: code:addons/ncollection_journal_operations/models/account_payment.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_account_payment_form_nc_ops
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_settle_form
 msgid "Mark as Paid"
 msgstr "تعليم كمدفوع"
 
@@ -578,7 +934,8 @@ msgstr "تعليم كمدفوع: %(payment)s"
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/wizard/payment_settle.py:0 model:ir.model.fields,field_description:ncollection_journal_operations.field_account_bank_statement_line__nc_settlement_payment_id
+#: code:addons/ncollection_journal_operations/wizard/payment_settle.py:0
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_bank_statement_line__nc_settlement_payment_id
 msgid "Marked as Paid"
 msgstr "تم التعليم كمدفوع"
 
@@ -604,7 +961,8 @@ msgid "Messages"
 msgstr "الرسائل"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__payment_method_line_id model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__payment_method_line_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Method"
 msgstr "الطريقة"
 
@@ -634,6 +992,11 @@ msgid "Nc Can Mark Paid"
 msgstr "يمكن تعليمه كمدفوع"
 
 #. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Negative balance"
+msgstr "رصيد سالب"
+
+#. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "New"
@@ -648,6 +1011,47 @@ msgstr "سند قبض جديد في هذا الدفتر"
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
 msgid "New outgoing payment from this journal"
 msgstr "سند صرف جديد من هذا الدفتر"
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "No exchange rate on or before %(date)s for this transfer's currencies: add the rate first; a transfer is never converted at a guessed rate."
+msgstr "لا يوجد سعر صرف في %(date)s أو قبله لعملات هذا التحويل: أضف السعر أولاً؛ لا يُحوَّل أي تحويل بسعر مُخمَّن."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "No exchange rate on or before the transfer date: add it before confirming."
+msgstr "لا يوجد سعر صرف في تاريخ التحويل أو قبله: أضفه قبل التأكيد."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "No incoming method on this journal"
+msgstr "لا توجد طريقة واردة في هذا الدفتر"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_account_payment__nc_suspense_fallback
+msgid "No payee yet (no Customer / Supplier, or Type Account with no account): the counterpart posts to the company's Unidentified Payments (Suspense) account, to be reclassified later."
+msgstr "لا يوجد مستفيد بعد (لا عميل / مورد، أو نوع حساب بدون حساب): يُرحَّل الطرف المقابل إلى حساب المدفوعات غير المحددة (المعلّق) للشركة، ليُعاد تصنيفه لاحقاً."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
+msgid "No payee: the counterpart posts to"
+msgstr "لا يوجد مستفيد: يُرحَّل الطرف المقابل إلى"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "No posted movements yet: the balance history appears with the first one."
+msgstr "لا توجد حركات مُرحَّلة بعد: يظهر سجل الرصيد مع أول حركة."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
+msgid "None: posts to Suspense"
+msgstr "لا شيء: يُرحَّل إلى المعلّق"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "Nothing waiting"
+msgstr "لا شيء معلّق"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__message_needaction_counter
@@ -668,6 +1072,20 @@ msgstr "عدد الرسائل التي تتطلب إجراءً"
 #: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__message_has_error_counter
 msgid "Number of messages with delivery error"
 msgstr "عدد الرسائل التي بها خطأ في التسليم"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__accounting_rate
+msgid "Odoo's rate on the transfer date: one unit sent = this many units received."
+msgstr "سعر Odoo في تاريخ التحويل: الوحدة المرسلة الواحدة = هذا العدد من الوحدات المستلمة."
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid ""
+"On confirmation the bank fee is booked to Bank Fees; what remains between the value sent and\n"
+"                            the value received is booked by Odoo as exchange gain or loss when the two sides are reconciled."
+msgstr ""
+"عند التأكيد تُسجَّل الرسوم البنكية في حساب الرسوم البنكية؛ وما يتبقى بين القيمة المرسلة\n"
+"                            والقيمة المستلمة يسجّله Odoo ربحاً أو خسارة فروق صرف عند تسوية الطرفين."
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -693,11 +1111,6 @@ msgid "Only differs from Amount when the two journals have different currencies 
 msgstr "يختلف عن المبلغ فقط عندما يكون للدفترين عملتان مختلفتان (بسعر صرف اليوم افتراضياً)."
 
 #. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list
-msgid "Open"
-msgstr "فتح"
-
-#. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_operation
 msgid "Operation"
 msgstr "العملية"
@@ -708,12 +1121,22 @@ msgid "Operations"
 msgstr "العمليات"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__amount_out model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__direction__out model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__amount_out
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__direction__out
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "Outgoing"
 msgstr "صادر"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__status__paid model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__paid
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+msgid "Outgoing Payment Method"
+msgstr "طريقة الدفع الصادرة"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__paid
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__status__paid
 msgid "Paid"
 msgstr "مدفوع"
 
@@ -734,22 +1157,36 @@ msgstr "حساب المستفيد"
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_journal.py:0 model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__payment_id model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_operation__payment model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__payment model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_payment_settle__direction__out
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__payment_id
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_operation__payment
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__payment
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_payment_settle__direction__out
 msgid "Payment"
 msgstr "سند صرف"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__payment_method_line_id model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view_menu
+msgid "Payment Batches"
+msgstr "دفعات المدفوعات"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__payment_method_line_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
 msgid "Payment Method"
 msgstr "طريقة الدفع"
 
 #. module: ncollection_journal_operations
-#: model:ir.model,name:ncollection_journal_operations.model_account_payment model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model:ir.model,name:ncollection_journal_operations.model_account_payment
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "Payments"
 msgstr "الدفعات"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__pending_balance model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__pending_balance
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_list
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Pending"
 msgstr "معلّق"
 
@@ -760,7 +1197,9 @@ msgstr "المبلغ المعلّق"
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_journal.py:0 model:ir.actions.act_window,name:ncollection_journal_operations.action_pending_payments model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+#: model:ir.actions.act_window,name:ncollection_journal_operations.action_pending_payments
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
 msgid "Pending Balance"
 msgstr "الرصيد المعلق"
 
@@ -770,14 +1209,20 @@ msgid "Pending on both banks"
 msgstr "معلّق في البنكين"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__state__posted model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__status__posted
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__state__posted
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__status__posted
 msgid "Posted"
 msgstr "مُرحَّل"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_journal_transaction__running_balance
+msgid "Posted ledger balance of the account after this row, in the currency of the Current Balance on the journal card."
+msgstr "رصيد دفتر الأستاذ المرحّل للحساب بعد هذا السطر، بعملة الرصيد الحالي على بطاقة دفتر اليومية."
+
+#. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "Posted ledger balance of the journal's account (bank-confirmed or not)"
-msgstr "الرصيد الدفتري المرحَّل لحساب الدفتر (سواء أكّده البنك أم لا)"
+msgid "Posted ledger balance of the journal's account, whether the bank has confirmed it or not. Click for every movement behind it."
+msgstr "رصيد دفتر الأستاذ المرحّل لحساب دفتر اليومية، سواء أكّده البنك أم لا. انقر لعرض كل حركة تكوّنه."
 
 #. module: ncollection_journal_operations
 #. odoo-python
@@ -786,9 +1231,14 @@ msgid "Posted: %(sender)s from %(from)s, %(receiver)s into %(to)s."
 msgstr "تم الترحيل: %(sender)s من %(from)s، و%(receiver)s إلى %(to)s."
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__rating_ids
-msgid "Ratings"
-msgstr "التقييمات"
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_suspense_fallback
+msgid "Posts to Suspense"
+msgstr "يُرحَّل إلى المعلّق"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__rate_missing
+msgid "Rate Missing"
+msgstr "سعر الصرف مفقود"
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
@@ -797,7 +1247,10 @@ msgstr "سبب التحويل"
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_journal.py:0 model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_operation__receipt model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__receipt model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_payment_settle__direction__in
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_operation__receipt
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__operation__receipt
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_payment_settle__direction__in
 msgid "Receipt"
 msgstr "سند قبض"
 
@@ -813,8 +1266,8 @@ msgstr "المقبوضات"
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "Receipts and payments still waiting on an outstanding account (incoming ↓, outgoing ↑)"
-msgstr "المقبوضات والمدفوعات التي ما زالت معلّقة في حساب معلّق (وارد ↓، صادر ↑)"
+msgid "Receipts and payments booked but still on an outstanding account: not yet in the journal's account"
+msgstr "مقبوضات ومدفوعات مقيدة لكنها ما زالت في حساب معلّق: لم تصل بعد إلى حساب الدفتر"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__destination_state
@@ -832,9 +1285,22 @@ msgid "Reconciled"
 msgstr "مطابَق"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__name model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__reference model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__payment_id model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__name
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__reference
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_payment_settle__payment_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Reference"
 msgstr "المرجع"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.res_config_settings_view_form_operations_accounts
+msgid "Required for payments without a payee"
+msgstr "مطلوب للمدفوعات بدون مستفيد"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.res_config_settings_view_form_operations_accounts
+msgid "Required for transfer bank charges"
+msgstr "مطلوب لرسوم التحويل البنكية"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__running_balance
@@ -854,8 +1320,20 @@ msgstr "مُرسَل"
 #. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "Set the Bank Fees account in the accounting settings of %(company)s."
+msgstr "قم بإعداد حساب الرسوم البنكية في إعدادات المحاسبة لـ %(company)s."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "Set the Internal Transfer account in the accounting settings of %(company)s."
 msgstr "حدّد حساب التحويل الداخلي في إعدادات المحاسبة لشركة %(company)s."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "Set the exchange difference journal and the exchange gain / loss accounts of %(company)s in the accounting settings: this transfer has a genuine exchange difference."
+msgstr "قم بإعداد دفتر يومية فروق الصرف وحسابات ربح / خسارة فروق الصرف لـ %(company)s في إعدادات المحاسبة: يوجد لهذا التحويل فرق صرف فعلي."
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,help:ncollection_journal_operations.field_account_payment__nc_operation
@@ -866,6 +1344,11 @@ msgstr "يُعيَّن عند إنشاء السجل من بطاقة دفتر ب�
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_settlement_line_ids
 msgid "Settlements"
 msgstr "التسويات"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__show_exchange
+msgid "Show Exchange"
+msgstr "عرض فروق الصرف"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__source_currency_id
@@ -883,12 +1366,18 @@ msgid "State"
 msgstr "الحالة"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__progress model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__status model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__progress
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__status
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "Status"
 msgstr "الحالة"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_counterpart_type__supplier model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_account_payment_form_nc_ops model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_account_supplier_payment_tree_nc_terms model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_invoice_tree_nc_terms model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_move_form_nc_terms
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__account_payment__nc_counterpart_type__supplier
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_account_payment_form_nc_ops
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_account_supplier_payment_tree_nc_terms
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_invoice_tree_nc_terms
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_move_form_nc_terms
 msgid "Supplier"
 msgstr "مورد"
 
@@ -913,6 +1402,11 @@ msgid "Supplier Payments"
 msgstr "مدفوعات الموردين"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_suspense_account_id
+msgid "Suspense Account"
+msgstr "حساب المعلّق"
+
+#. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
 msgid "The amount received must be positive."
@@ -920,7 +1414,8 @@ msgstr "يجب أن يكون المبلغ المستلم موجباً."
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0 model:ir.model.constraint,message:ncollection_journal_operations.constraint_ncollection_internal_transfer_amount_positive
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+#: model:ir.model.constraint,message:ncollection_journal_operations.constraint_ncollection_internal_transfer_amount_positive
 msgid "The amount to transfer must be positive."
 msgstr "يجب أن يكون مبلغ التحويل موجباً."
 
@@ -929,6 +1424,12 @@ msgstr "يجب أن يكون مبلغ التحويل موجباً."
 #: code:addons/ncollection_journal_operations/models/account_payment.py:0
 msgid "The bank already reported %(count)s unmatched transaction(s) of this amount in %(journal)s (%(refs)s). Match the payment with it in Reconcile, so it is not counted twice."
 msgstr "أبلغ البنك مسبقاً عن %(count)s حركة غير مطابَقة بهذا المبلغ في %(journal)s (%(refs)s). طابِق الدفعة معها من شاشة المطابقة حتى لا تُحتسب مرتين."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "The bank fee must be zero or more, and less than the amount sent."
+msgstr "يجب أن تكون الرسوم البنكية صفراً أو أكثر، وأقل من المبلغ المرسل."
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,help:ncollection_journal_operations.field_account_bank_statement_line__nc_bank_import_id
@@ -969,6 +1470,18 @@ msgid "The transfer could not be booked on the Internal Transfer account; nothin
 msgstr "تعذّر تسجيل التحويل في حساب التحويل الداخلي؛ لم يُحفظ أي شيء."
 
 #. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
+msgid "The transfer lines did not reconcile completely; nothing was saved."
+msgstr "لم تتم تسوية بنود التحويل بالكامل؛ لم يُحفظ شيء."
+
+#. module: ncollection_journal_operations
+#. odoo-python
+#: code:addons/ncollection_journal_operations/models/res_company.py:0
+msgid "The unidentified-payments account must differ from the transfer account and from the bank Suspense account."
+msgstr "يجب أن يختلف حساب المدفوعات غير المحددة عن حساب التحويل وعن حساب المعلّق البنكي."
+
+#. module: ncollection_journal_operations
 #: model:ir.model.fields,help:ncollection_journal_operations.field_account_bank_statement_line__nc_settlement_payment_id
 msgid "This line was created by Mark as Paid for that payment. A bank file line of the same amount imported within 7 days is recognised as this transaction instead of being added again."
 msgstr "أُنشئ هذا السطر بتعليم تلك الدفعة كمدفوعة. أي سطر في ملف بنكي بالمبلغ نفسه يُستورد خلال 7 أيام يُعرَف على أنه هذه الحركة بدلاً من إضافته مرة أخرى."
@@ -996,30 +1509,57 @@ msgid "To"
 msgstr "إلى"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__destination_journal_id model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__destination_journal_id
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
 msgid "To Journal"
 msgstr "إلى دفتر"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__status__to_reconcile model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_journal_transaction__status__to_reconcile
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "To Reconcile"
 msgstr "للمطابقة"
 
 #. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_list model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_list
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_list_pending
 msgid "Total"
 msgstr "الإجمالي"
 
 #. module: ncollection_journal_operations
 #. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_journal.py:0 model:ir.actions.act_window,name:ncollection_journal_operations.action_journal_transaction
+#: code:addons/ncollection_journal_operations/models/account_journal.py:0
+#: model:ir.actions.act_window,name:ncollection_journal_operations.action_journal_transaction
 msgid "Transactions"
 msgstr "الحركات"
 
 #. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_counterpart_type model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__operation model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__nc_status
+msgid "Transfer Status"
+msgstr "حالة التحويل"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_account_payment__nc_counterpart_type
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__operation
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_journal_transaction_search
 msgid "Type"
 msgstr "النوع"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_company__nc_payment_suspense_account_id
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_res_config_settings__nc_payment_suspense_account_id
+msgid "Unidentified Payments (Suspense)"
+msgstr "المدفوعات غير المحددة (المعلّق)"
+
+#. module: ncollection_journal_operations
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_form_operation
+msgid "Unknown yet: posts to Suspense"
+msgstr "غير معروف بعد: يُرحَّل إلى المعلّق"
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_journal_transaction__value_date
+msgid "Value Date"
+msgstr "تاريخ القيمة"
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__website_message_ids
@@ -1037,55 +1577,22 @@ msgid "What still waits on the outstanding account (signed: receipts positive, p
 msgstr "المبلغ المتبقي في الحساب المعلّق (بإشارة: المقبوضات موجبة، والمدفوعات سالبة)."
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__fee_amount
+msgid "What the banks charged, in the currency sent. Booked to the company's Bank Fees account, apart from any exchange gain or loss. Amount Received is what actually arrived."
+msgstr "ما فرضته البنوك، بالعملة المرسلة. يُسجَّل في حساب الرسوم البنكية للشركة، بمعزل عن أي ربح أو خسارة فروق صرف. المبلغ المستلم هو ما وصل فعلاً."
+
+#. module: ncollection_journal_operations
+#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_journal_transaction__bank_date
+msgid "When the money moved on the account: the payment date when it posts directly to the bank / cash account, else the date of the bank line that confirmed it. Empty while the payment is still in process."
+msgstr "وقت حركة المال على الحساب: تاريخ الدفع عندما يُرحَّل مباشرة إلى حساب البنك / النقدية، وإلا تاريخ سطر البنك الذي أكّده. فارغ ما دام الدفع قيد المعالجة."
+
+#. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_payment_settle_form
 msgid ""
 "You are confirming yourself that this money has reached (or left) the account. The system has not\n"
 "                    checked this with the bank. The amount moves from the outstanding account to the journal's account\n"
 "                    and the payment is matched with it; your name and the date are recorded on the payment."
 msgstr "أنت تؤكد بنفسك أن هذا المبلغ وصل إلى الحساب (أو خرج منه). لم يتحقق النظام من ذلك لدى البنك. يُنقل المبلغ من الحساب المعلّق إلى حساب الدفتر وتُطابَق الدفعة معه، ويُسجَّل اسمك والتاريخ على الدفعة."
-
-#. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__nc_status
-msgid "Transfer Status"
-msgstr "حالة التحويل"
-
-#. module: ncollection_journal_operations
-#: model:ir.model.fields.selection,name:ncollection_journal_operations.selection__ncollection_internal_transfer__nc_status__in_progress
-msgid "In Progress"
-msgstr "قيد التنفيذ"
-
-#. module: ncollection_journal_operations
-#. odoo-python
-#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
-msgid "Choose the Payment Method of %(journal)s."
-msgstr "اختر طريقة الدفع لدفتر %(journal)s."
-
-#. module: ncollection_journal_operations
-#. odoo-python
-#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
-msgid "%(method)s is not an outgoing payment method of %(journal)s."
-msgstr "%(method)s ليست طريقة دفع صادرة لدفتر %(journal)s."
-
-#. module: ncollection_journal_operations
-#. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_payment.py:0
-msgid "%(partner)s is not a %(type)s."
-msgstr "%(partner)s ليس %(type)s."
-
-#. module: ncollection_journal_operations
-#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__payment_method_line_id
-msgid "An outgoing method of the From Journal. A method with an outstanding account leaves the money there until the bank confirms it (In Progress); a method without one books it straight to the journal account."
-msgstr "طريقة صادرة من دفتر المصدر. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكده البنك (قيد التنفيذ)؛ والطريقة بدونه تقيده مباشرة في حساب الدفتر."
-
-#. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "posted"
-msgstr "مُرحَّل"
-
-#. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "Negative balance"
-msgstr "رصيد سالب"
 
 #. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
@@ -1098,64 +1605,12 @@ msgid "operations"
 msgstr "عمليات"
 
 #. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "Nothing waiting"
-msgstr "لا شيء معلّق"
-
-#. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "Balance, last 30 days (posted)"
-msgstr "الرصيد، آخر 30 يومًا (مُرحَّل)"
-
-#. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "Posted ledger balance of the journal's account, whether the bank has confirmed it or not"
-msgstr "الرصيد المُرحَّل لحساب الدفتر، سواء أكّده البنك أم لا"
-
-#. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "Receipts and payments booked but still on an outstanding account: not yet in the journal's account"
-msgstr "مقبوضات ومدفوعات مقيدة لكنها ما زالت في حساب معلّق: لم تصل بعد إلى حساب الدفتر"
-
-#. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
-msgid "No posted movements yet: the balance history appears with the first one."
-msgstr "لا توجد حركات مُرحَّلة بعد: يظهر سجل الرصيد مع أول حركة."
-
-#. module: ncollection_journal_operations
-#. odoo-python
-#: code:addons/ncollection_journal_operations/models/account_journal.py:0
-msgid "Current Balance (posted)"
-msgstr "الرصيد الحالي (مُرحَّل)"
-
-#. module: ncollection_journal_operations
-#. odoo-python
-#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
-msgid "%(method)s is not an incoming payment method of %(journal)s."
-msgstr "%(method)s ليست طريقة دفع واردة لـ %(journal)s."
-
-#. module: ncollection_journal_operations
-#: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__destination_payment_method_line_id
-msgid "An incoming method of the To Journal, used by the receiving payment. A method with an outstanding account keeps the money there until the receiving bank confirms it (In Progress)."
-msgstr "طريقة واردة لدفتر الاستلام تستخدمها دفعة الاستلام. الطريقة ذات الحساب المعلّق تُبقي المبلغ فيه حتى يؤكد البنك المستلِم (قيد التنفيذ)."
-
-#. module: ncollection_journal_operations
-#. odoo-python
-#: code:addons/ncollection_journal_operations/models/internal_transfer.py:0
-msgid "Choose the Incoming Payment Method of %(journal)s."
-msgstr "اختر طريقة الدفع الواردة لـ %(journal)s."
-
-#. module: ncollection_journal_operations
-#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__destination_payment_method_line_id model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
-msgid "Incoming Payment Method"
-msgstr "طريقة الدفع الواردة"
-
-#. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
-msgid "No incoming method on this journal"
-msgstr "لا توجد طريقة واردة في هذا الدفتر"
+msgid "per 1"
+msgstr "لكل 1"
 
 #. module: ncollection_journal_operations
-#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
-msgid "Outgoing Payment Method"
-msgstr "طريقة الدفع الصادرة"
+#: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.account_journal_dashboard_kanban_view
+msgid "posted"
+msgstr "مُرحَّل"
+

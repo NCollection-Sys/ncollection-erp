@@ -157,6 +157,10 @@ class NcDocumentPrintTemplate(models.Model):
         condition holds), or an empty recordset."""
         if not record:
             return self.browse()
+        # a document may choose another Print Template of its own kind (account_core: per-invoice Print Settings)
+        chosen = record._nc_print_kind_override() if hasattr(record, '_nc_print_kind_override') else None
+        if chosen:
+            return chosen.sudo()
         kinds = self.sudo().search([('report_ids.model', '=', record._name)])
         return kinds.filtered(lambda kind: kind._nc_matches(record))[:1]
 
@@ -197,7 +201,7 @@ class NcDocumentPrintTemplate(models.Model):
         # The company's address WITHOUT a country line: Odoo seeds the main company as United States, and a country
         # alone under the name says nothing a reader needs (the same rule as the financial reports' header).
         company_lines = [x for x in (partner.street, partner.street2, city) if x]
-        return {
+        options = {
             'kind': kind,
             'title': (kind.nc_title or '').strip() if kind else '',
             'header_text': kind.nc_header_text if kind else '',
@@ -216,6 +220,10 @@ class NcDocumentPrintTemplate(models.Model):
             'hidden_cells': hidden,
             'company_lines': company_lines,
         }
+        # one document's own Print Settings, on top of its template (never stored on the template or the company)
+        if record and hasattr(record, '_nc_print_options_overlay'):
+            options = record._nc_print_options_overlay(options)
+        return options
 
     # ------------------------------------------------------------------ preview
     def action_nc_preview(self):

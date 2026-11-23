@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Request 06: Print Settings of one invoice / bill / credit note (models/move_print_setting.py). -->
+    <record id="view_move_print_setting_form" model="ir.ui.view">
+        <field name="name">ncollection.move.print.setting.form</field>
+        <field name="model">ncollection.move.print.setting</field>
+        <field name="arch" type="xml">
+            <form string="Print Settings" class="o_nc_print_settings">
+                <field name="move_id" invisible="1"/>
+                <field name="company_id" invisible="1"/>
+                <field name="stamp_editable" invisible="1"/>
+                <field name="stamp_default_on" invisible="1"/>
+                <field name="move_type" invisible="1"/>
+                <div class="alert alert-light border py-2 mb-3 small" role="note">
+                    These settings apply to this document only. Empty or Default follows its Print Template and the
+                    company's document layout; nothing here changes the company or any other document.
+                </div>
+                <notebook>
+                    <page string="Layout" name="layout">
+                        <group>
+                            <group string="Identity">
+                                <field name="title" placeholder="Template title"/>
+                                <field name="header_text" placeholder="Tagline under the company details"/>
+                                <field name="show_company_details" widget="radio" options="{'horizontal': true}"/>
+                            </group>
+                            <group string="Style">
+                                <field name="primary_color" widget="color"/>
+                                <field name="text_color" widget="color"/>
+                                <field name="font"/>
+                                <field name="font_size"/>
+                            </group>
+                            <group string="Page">
+                                <field name="paper_size" placeholder="Template paper"/>
+                                <field name="orientation" required="paper_size"/>
+                            </group>
+                            <group string="Footer">
+                                <field name="footer_text" nolabel="1" colspan="2" placeholder="The template's footer"/>
+                            </group>
+                        </group>
+                    </page>
+                    <page string="Template" name="template">
+                        <group>
+                            <field name="template_id" options="{'no_create': True, 'no_open': True}"
+                                   placeholder="The usual template for this document"/>
+                        </group>
+                        <p class="text-muted small">Print Templates are kept in Settings: this only chooses which one this
+                            document prints with.</p>
+                    </page>
+                    <page string="Sections &amp; Columns" name="sections">
+                        <group>
+                            <group string="Sections">
+                                <field name="show_customer_address" widget="radio" options="{'horizontal': true}"/>
+                                <field name="show_payment_reference" widget="radio" options="{'horizontal': true}"/>
+                                <label for="stamp_mode"/>
+                                <div class="o_row">
+                                    <field name="stamp_mode" widget="selection_badge" readonly="not stamp_editable"/>
+                                    <span class="text-muted" invisible="stamp_mode != 'default' or not stamp_default_on">(stamped)</span>
+                                    <span class="text-muted" invisible="stamp_mode != 'default' or stamp_default_on">(not stamped)</span>
+                                </div>
+                            </group>
+                            <group string="Columns">
+                                <field name="show_quantity" widget="radio" options="{'horizontal': true}"/>
+                                <field name="show_unit_price" widget="radio" options="{'horizontal': true}"/>
+                                <field name="show_discount" widget="radio" options="{'horizontal': true}"/>
+                                <field name="show_taxes" widget="radio" options="{'horizontal': true}"/>
+                            </group>
+                        </group>
+                    </page>
+                    <page string="Payment Details" name="payments">
+                        <group>
+                            <field name="show_payment_history" widget="radio" options="{'horizontal': true}"
+                                   string="Show Payment History on Printed Invoice"/>
+                        </group>
+                        <p class="text-muted small">Prints lines such as "Paid on 11/23/2026 - USD 1,000.00" from the
+                            payments actually reconciled with this document (partial payments, reversals and refunds
+                            included). It never changes the payment state or any accounting.</p>
+                    </page>
+                </notebook>
+                <footer>
+                    <button name="action_save" type="object" string="Save" class="btn-primary" data-hotkey="q"/>
+                    <button name="action_preview" type="object" string="Preview PDF" icon="fa-eye" class="btn-secondary"/>
+                    <button name="action_reset" type="object" string="Reset to Company Defaults" class="btn-secondary"
+                            invisible="not id"/>
+                    <button string="Cancel" special="cancel" class="btn-link" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- The invoice form: one Print Settings button replaces the field-level Document Stamp switch. -->
+    <record id="view_move_form_nc_print_settings" model="ir.ui.view">
+        <field name="name">account.move.form.nc.print.settings</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="ncollection_account_core.view_move_form_nc_stamp_mode"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@for='nc_stamp_mode']" position="replace"/>
+            <xpath expr="//field[@name='nc_stamp_mode']/.." position="replace"/>
+        </field>
+    </record>
+    <record id="view_move_form_nc_print_settings_button" model="ir.ui.view">
+        <field name="name">account.move.form.nc.print.settings.button</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_nc_print_settings" type="object" string="Print Settings" icon="fa-sliders"
+                        invisible="move_type == 'entry' or not id" groups="account.group_account_invoice"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- "Paid on" lines: this document's own switch, else the report's (account.report_invoice_document). -->
+    <template id="report_invoice_document_nc_payment_history" inherit_id="account.report_invoice_document">
+        <xpath expr="//t[@t-call='web.external_layout']" position="before">
+            <t t-set="print_with_payments" t-value="o._nc_print_with_payments(print_with_payments)"/>
+        </xpath>
+    </template>
+</odoo>

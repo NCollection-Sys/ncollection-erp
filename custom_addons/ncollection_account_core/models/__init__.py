@@ -14,3 +14,4 @@ from . import onboarding_step
 from . import payment_register_evidence
 from . import terminology_code_strings
 from . import financial_palette
+from . import move_print_setting
