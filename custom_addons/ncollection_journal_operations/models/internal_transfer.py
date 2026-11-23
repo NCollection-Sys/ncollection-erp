@@ -335,6 +335,45 @@ class InternalTransfer(models.Model):
             'message': self.env._("%(name)s: each side completes when its bank confirms it (or with Mark as Paid).",
                                   name=name), 'next': {'type': 'ir.actions.act_window_close'}}}
 
+    def _nc_receipt_values(self):
+        """Every figure of the printed receipt, read from the POSTED entries (never from the form's live preview, which
+        follows today's rates): value sent / received in company currency, the booked accounting rate, the effective
+        rate, the bank fee and the exchange difference, plus the reconciliation sent = fee + received - gain."""
+        self.ensure_one()
+        if self.state != 'posted':
+            raise UserError(self.env._("Only a posted transfer has a receipt."))
+        clearing = self.company_id.transfer_account_id
+        ccy = self.company_id.currency_id
+
+        def _other(move):
+            return move.line_ids.filtered(lambda line: line.account_id != clearing)
+
+        sent_company = -sum(_other(self.source_payment_id.move_id).mapped('balance'))
+        received_company = sum(_other(self.destination_payment_id.move_id).mapped('balance'))
+        fee_company = sum(_other(self.fee_move_id).mapped('balance')) if self.fee_move_id else 0.0
+        exchange = self.exchange_amount or 0.0
+        source_rate = sent_company / self.amount if self.amount else 0.0           # company per source unit
+        dest_rate = received_company / self.destination_amount if self.destination_amount else 0.0
+        net_sent = self.amount - (self.fee_amount or 0.0)
+        difference = sent_company - fee_company - received_company + exchange
+        return {
+            'sent_company': sent_company,
+            'received_company': received_company,
+            'fee_company': fee_company,
+            'exchange': exchange,
+            'accounting_rate': (source_rate / dest_rate) if dest_rate else 0.0,    # destination per source unit
+            'effective_rate': (self.destination_amount / net_sent) if net_sent else 0.0,
+            'net_sent': net_sent,
+            'check_difference': ccy.round(difference),
+            'balanced': ccy.is_zero(difference),
+        }
+
+    def action_nc_print_receipt(self):
+        self.ensure_one()
+        self._nc_receipt_values()
+        return self.env.ref('ncollection_journal_operations.action_report_internal_transfer_receipt') \
+            .report_action(self)
+
     def _nc_post_fee_entry(self, name, memo, fee_account):
         """Dr Bank Fees / Cr Internal Transfer account, in the currency sent, on the transfer date, in the company's
         Miscellaneous journal. Created once (action_post is locked) and linked to the transfer."""

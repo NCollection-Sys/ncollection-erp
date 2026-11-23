@@ -8,6 +8,8 @@
                 <header>
                     <button name="action_post" string="Confirm Transfer" type="object" class="oe_highlight"
                             invisible="state != 'draft'" groups="account.group_account_user" data-hotkey="q"/>
+                    <button name="action_nc_print_receipt" string="Print Receipt" type="object" icon="fa-print"
+                            invisible="state != 'posted'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
                 </header>
                 <sheet>

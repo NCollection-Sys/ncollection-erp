@@ -971,6 +971,36 @@ class TestTransferFeesAndExchange(JournalOpsCommon):
         transfer.action_post()
         self._assert_booked(transfer, 2.0, 6.0)          # 104 received - (100 sent - 2 fee) = +6 gain
 
+    def test_receipt_figures_match_the_booked_entries(self):
+        """The printed receipt reads the POSTED entries and reconciles: sent = fee + received - gain."""
+        cases = [(self.bank, self.cash, 100.0, 5.0, None, 5.0, 0.0),
+                 (self.bank, self.eur_bank, 100.0, 2.0, 190.0, 2.0, -3.0),
+                 (self.eur_bank, self.gbp_bank, 200.0, 4.0, 52.0, 2.0, 6.0)]
+        for source, dest, amount, fee, received, fee_c, exchange in cases:
+            with self.subTest(source=source.name, dest=dest.name):
+                transfer = self._transfer(source, dest, amount, fee_amount=fee)
+                if received is not None:
+                    transfer.destination_amount = received
+                with self.assertRaises(UserError):
+                    transfer._nc_receipt_values()          # no receipt before posting
+                transfer.action_post()
+                values = transfer._nc_receipt_values()
+                self.assertTrue(values['balanced'], values)
+                self.assertAlmostEqual(values['fee_company'], fee_c, 2)
+                self.assertAlmostEqual(values['exchange'], exchange, 2)
+                self.assertAlmostEqual(values['sent_company'],
+                                       values['fee_company'] + values['received_company'] - values['exchange'], 2)
+                self.assertAlmostEqual(values['effective_rate'], transfer.destination_amount / (amount - fee))
+                html, kind = self.env['ir.actions.report']._render_qweb_html(
+                    'ncollection_journal_operations.report_internal_transfer_receipt', transfer.ids)
+                self.assertEqual(kind, 'html')
+                self.assertIn(transfer.name, html.decode())
+                action = transfer.action_nc_print_receipt()
+                # Odoo first opens Configure Document Layout when the company has none chosen yet
+                self.assertTrue(action.get('report_name') == 'ncollection_journal_operations.'
+                                'report_internal_transfer_receipt' or action.get('res_model') == 'base.document.layout',
+                                action)
+
     def test_missing_rate_is_refused(self):
         jpy = self.setup_other_currency('JPY', rates=[('2099-01-01', 150.0)])
         jpy_bank = self._nc_foreign('JPY bank', 'OPJP', jpy)

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The printed Internal Transfer receipt. Every figure comes from _nc_receipt_values(): the POSTED payments,
+         bank fee entry and exchange difference entry, never the form's live preview. -->
+    <record id="action_report_internal_transfer_receipt" model="ir.actions.report">
+        <field name="name">Internal Transfer Receipt</field>
+        <field name="model">ncollection.internal.transfer</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ncollection_journal_operations.report_internal_transfer_receipt</field>
+        <field name="report_file">ncollection_journal_operations.report_internal_transfer_receipt</field>
+        <field name="print_report_name">'Transfer Receipt - %s' % object.name</field>
+        <field name="binding_model_id" ref="model_ncollection_internal_transfer"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_internal_transfer_receipt_document">
+        <t t-call="web.external_layout">
+            <t t-set="v" t-value="o._nc_receipt_values()"/>
+            <t t-set="ccy" t-value="o.company_currency_id"/>
+            <div class="page o_nc_transfer_receipt">
+                <h2 class="mb-1">Internal Transfer Receipt</h2>
+                <div class="mb-4 text-muted"><span t-field="o.name"/> · <span t-field="o.date"/></div>
+                <div t-if="o.memo" class="mb-3"><strong>Description: </strong><span t-field="o.memo"/></div>
+
+                <table class="table table-sm table-borderless mb-4" style="width:100%">
+                    <tr>
+                        <td style="width:50%;vertical-align:top">
+                            <div class="text-muted small">From</div>
+                            <div class="fw-bold" t-field="o.source_journal_id"/>
+                            <div class="fs-4"><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.source_currency_id}"/></div>
+                            <div class="small text-muted">Payment <span t-field="o.source_payment_id.name"/></div>
+                        </td>
+                        <td style="width:50%;vertical-align:top">
+                            <div class="text-muted small">To</div>
+                            <div class="fw-bold" t-field="o.destination_journal_id"/>
+                            <div class="fs-4"><span t-field="o.destination_amount" t-options="{'widget': 'monetary', 'display_currency': o.destination_currency_id}"/></div>
+                            <div class="small text-muted">Payment <span t-field="o.destination_payment_id.name"/></div>
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="table table-sm o_main_table">
+                    <thead><tr><th>Detail</th><th class="text-end">Amount</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Amount sent</td>
+                            <td class="text-end"><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.source_currency_id}"/></td>
+                        </tr>
+                        <tr>
+                            <td>Bank fee</td>
+                            <td class="text-end"><span t-field="o.fee_amount" t-options="{'widget': 'monetary', 'display_currency': o.source_currency_id}"/></td>
+                        </tr>
+                        <tr>
+                            <td>Net amount converted</td>
+                            <td class="text-end"><span t-out="v['net_sent']" t-options="{'widget': 'monetary', 'display_currency': o.source_currency_id}"/></td>
+                        </tr>
+                        <tr t-if="o.multi_currency">
+                            <td>Accounting exchange rate (booked)</td>
+                            <td class="text-end">1 <span t-out="o.source_currency_id.name"/> = <span t-out="'%.6f' % v['accounting_rate']"/> <span t-out="o.destination_currency_id.name"/></td>
+                        </tr>
+                        <tr t-if="o.multi_currency">
+                            <td>Effective exchange rate (received ÷ net amount)</td>
+                            <td class="text-end">1 <span t-out="o.source_currency_id.name"/> = <span t-out="'%.6f' % v['effective_rate']"/> <span t-out="o.destination_currency_id.name"/></td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td>Amount received</td>
+                            <td class="text-end"><span t-field="o.destination_amount" t-options="{'widget': 'monetary', 'display_currency': o.destination_currency_id}"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h5 class="mt-4">Accounting (<span t-out="ccy.name"/>)</h5>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr><td>Value sent</td><td class="text-end"><span t-out="v['sent_company']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td></tr>
+                        <tr><td>Bank fee</td><td class="text-end"><span t-out="v['fee_company']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td></tr>
+                        <tr><td>Value received</td><td class="text-end"><span t-out="v['received_company']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td></tr>
+                        <tr>
+                            <td><t t-if="v['exchange'] &gt;= 0">Exchange gain</t><t t-else="">Exchange loss</t></td>
+                            <td class="text-end"><span t-out="abs(v['exchange'])" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td>Check: value sent = fee + value received − gain (+ loss)</td>
+                            <td class="text-end">
+                                <span t-if="v['balanced']">Balanced</span>
+                                <span t-else="" class="text-danger">Difference <span t-out="v['check_difference']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="small text-muted">
+                    Entries: <span t-field="o.source_payment_id.move_id.name"/>, <span t-field="o.destination_payment_id.move_id.name"/>
+                    <t t-if="o.fee_move_id">, <span t-field="o.fee_move_id.name"/></t>
+                    <t t-if="o.exchange_move_id">, <span t-field="o.exchange_move_id.name"/></t>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_internal_transfer_receipt">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="ncollection_journal_operations.report_internal_transfer_receipt_document"
+                   t-lang="o.env.user.lang"/>
+            </t>
+        </t>
+    </template>
+</odoo>
