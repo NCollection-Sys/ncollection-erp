@@ -37,7 +37,11 @@ import logging
 import re
 
 from odoo import api, fields, models, tools
+from odoo.exceptions import ValidationError
 from odoo.orm.identifiers import NewId
+
+from .audit_flags import capture_suppressed
+from .auditlog_log import _company_of, _doc_type_of
 
 _logger = logging.getLogger(__name__)
 
@@ -71,6 +75,20 @@ NOISY = {
 }
 MAX_TEXT = 4000           # bounded payload; a longer value is stored truncated and can never be restored
 MAX_FIELDS = 200          # bounded snapshot per record
+# NEVER natively audited, whatever a policy says: the trail itself (auditing it re-enters the capture without end),
+# the framework, authentication and the platform layer (see audit_rule.py: same rule as for the OCA rules).
+BLOCKED_PREFIX = ('auditlog.', 'ncollection.audit', 'ncollection.auth', 'ir.', 'bus.', 'base.', 'res.groups',
+                  'ncollection.label.', 'ncollection.einvoice')
+
+
+def blocked(env, name):
+    """Why ``name`` may never get a native policy, or None."""
+    from .audit_rule import SENSITIVE_MODELS
+    if name.startswith(BLOCKED_PREFIX) or name in SENSITIVE_MODELS:
+        return 'reserved'
+    if name in env and env['auditlog.rule']._nc_platform_extended(env[name]):
+        return 'platform'
+    return None
 
 
 class AuditPolicy(models.Model):
@@ -91,6 +109,14 @@ class AuditPolicy(models.Model):
         help="Added to the fields that are never recorded anyway (restricted, binary, credentials).")
 
     _model_unique = models.Constraint('unique(model_id)', 'A document type has one audit policy.')
+
+    @api.constrains('model_id')
+    def _check_model_allowed(self):
+        for policy in self:
+            if blocked(self.env, policy.model_id.model or ''):
+                raise ValidationError(self.env._(
+                    "%(model)s cannot be recorded by the Audit Log (the trail itself, the framework, authentication "
+                    "and the platform layer never are).", model=policy.model_id.model))
 
     # ---- cache -----------------------------------------------------------
 
@@ -145,7 +171,7 @@ class AuditPolicy(models.Model):
         existing = set(self.sudo().with_context(active_test=False).search([]).mapped('model'))
         created = self.browse()
         for name in DEFAULT_POLICY_MODELS:
-            if name in existing or name in oca or name not in self.env:
+            if name in existing or name in oca or name not in self.env or blocked(self.env, name):
                 continue
             model = IrModel.search([('model', '=', name)], limit=1)
             if not model or self.env[name]._transient or self.env[name]._abstract:
@@ -206,7 +232,8 @@ class Base(models.AbstractModel):
     def _ncal_policy(self, op):
         """(fields) when this model is natively audited for ``op`` here and now, else None. Cheap: one cached dict."""
         if (self._transient or self._abstract or not self.pool.ready
-                or self.env.context.get('nc_audit_skip') or self.env.context.get('install_mode')
+                or self._name.startswith(BLOCKED_PREFIX)
+                or capture_suppressed()
                 or 'ncollection.audit.policy' not in self.env):
             return None
         policy = self.env['ncollection.audit.policy']._nc_policy_map().get(self._name)
@@ -216,7 +243,9 @@ class Base(models.AbstractModel):
 
     def _ncal_snapshot(self, names, truthy_only=False):
         values = {}
-        records = self.sudo().with_context(prefetch_fields=False, active_test=False)
+        # prefetch on for full snapshots (one SELECT for all columns), off for the few fields a write names
+        records = self.sudo().with_context(active_test=False) if truthy_only else self.sudo().with_context(
+            prefetch_fields=False, active_test=False)
         for record in records:
             row = {}
             for name in names:
@@ -264,9 +293,18 @@ class Base(models.AbstractModel):
                 'model_id': model_id, 'res_id': record.id, 'method': method, 'user_id': env.uid,
                 'name': (record.display_name or '')[:64], 'log_type': 'full', 'line_ids': lines,
                 'http_request_id': request_id, 'http_session_id': session_id, 'nc_source': 'native',
+                'nc_company_id': _company_of(record), 'nc_doc_type': _doc_type_of(record),
             })
-        if vals_list:
-            Log.create(vals_list)
+        if not vals_list:
+            return
+        # Isolated: a failure here (a value the column refuses, a broken hook) loses THIS audit row, loudly, and never
+        # aborts the business write. The savepoint keeps the transaction usable after an SQL error.
+        try:
+            with env.cr.savepoint():
+                Log.create(vals_list)
+        except Exception:
+            _logger.exception("ncollection_audit: could not write the %s audit row(s) of %s %s", method, self._name,
+                              self.ids)
 
     # ---- the three hooks --------------------------------------------------
 
@@ -312,11 +350,11 @@ class Base(models.AbstractModel):
             # BEFORE the delete, like OCA: the pre-deletion values are what makes a restore possible, and a failed
             # delete rolls this row back with it.
             try:
-                old = self._ncal_snapshot(names, truthy_only=True)
+                old = self.exists()._ncal_snapshot(names, truthy_only=True)
             except Exception:
                 _logger.exception("ncollection_audit: could not snapshot %s before delete", self._name)
                 old = {record.id: {} for record in self}
-            self._ncal_write_logs('unlink', old, {})
+            self.exists()._ncal_write_logs('unlink', old, {})
         return super().unlink()
 
 

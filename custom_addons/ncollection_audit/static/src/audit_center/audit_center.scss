@@ -168,3 +168,17 @@
         .nc-au-flabel { white-space: normal; }
     }
 }
+
+// review fixes: clickable rows, middle-aligned compact rows, AA-contrast "Empty", narrow widths keep the Action badge
+.nc-au {
+    .nc-au-tr { cursor: pointer; }
+    .nc-au-table td { padding: 6px 10px; vertical-align: middle; }
+    .nc-au-empty { color: var(--nc-au-muted); }
+    .nc-au-view { padding: 4px 6px; }
+    .nc-au-sortable:focus-visible { outline: 2px solid #4c8bf5; outline-offset: -2px; }
+    .nc-au-hint .fa { margin-inline-end: 4px; }
+    @media (max-width: 900px) {
+        .nc-au-type, .nc-au-company { display: none; }
+        .nc-au-desc { min-width: 0; max-width: none; }
+    }
+}

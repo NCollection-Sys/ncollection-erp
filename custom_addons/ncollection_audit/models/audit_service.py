@@ -150,7 +150,7 @@ class AuditService(models.AbstractModel):
             domain += ['|', '|', ('name', 'ilike', text), ('model_name', 'ilike', text),
                        ('line_ids.field_description', 'ilike', text)]
         reversed_ = filters.get('reversed')
-        undone = self.env['ncollection.audit.undo'].sudo().search([]).original_log_id.ids
+        undone = self.env['ncollection.audit.undo'].sudo().search([]).mapped("original_log_ref")
         if reversed_ == 'reversed':
             domain.append(('id', 'in', undone))
         elif reversed_ == 'not_reversed':
@@ -169,14 +169,14 @@ class AuditService(models.AbstractModel):
         elif log.nc_action == 'delete':
             text = self.env._("Deleted %(type)s %(name)s", type=label, name=name)
         else:
-            labels = [line.field_description or line.field_name
+            labels = [V.label(self.env, log.model_model, line.field_name, line.field_description)
                       for line in log.line_ids[:3]]
             more = len(log.line_ids) - len(labels)
             text = self.env._("Changed %(fields)s", fields=', '.join(labels)) if labels else self.env._("Updated")
             if more > 0:
                 text += ' ' + self.env._("(+%(count)s more)", count=more)
         if log.nc_undo_id:
-            text = self.env._("Undo of event #%(id)s: %(text)s", id=log.nc_undo_id.original_log_id.id, text=text)
+            text = self.env._("Undo of event #%(id)s: %(text)s", id=log.nc_undo_id.original_log_ref, text=text)
         return text
 
     @api.model
@@ -214,7 +214,7 @@ class AuditService(models.AbstractModel):
         total = Log.search_count(domain)
         logs = Log.search(domain, offset=offset, limit=limit, order='%s %s, id %s' % (column, way, way))
         undone = set(self.env['ncollection.audit.undo'].sudo().search(
-            [('original_log_id', 'in', logs.ids)]).original_log_id.ids)
+            [('original_log_ref', 'in', logs.ids)]).mapped('original_log_ref'))
         return {'total': total, 'rows': [self._nc_row(log, undone) for log in logs]}
 
     @api.model
@@ -255,11 +255,18 @@ class AuditService(models.AbstractModel):
         rows = []
         for line in log.line_ids.sorted(lambda ln: (ln.field_description or ln.field_name or '').lower()):
             field = model._fields.get(line.field_name) if model is not None else None
-            label = line.field_description or line.field_name
+            label = V.label(self.env, log.model_model, line.field_name, line.field_description)
             if field is None:
-                rows.append({'field': line.field_name, 'label': label, 'before': line.old_value_text or '',
-                             'after': line.new_value_text or '', 'before_kind': 'value', 'after_kind': 'value',
-                             'type': 'unknown'})
+                # a field that no longer exists: its restriction cannot be checked, so only administrators see it,
+                # and a credential by name never
+                hidden = (not self.env.user.has_group('base.group_system')
+                          or V.SECRET_NAME.search(line.field_name or ''))
+                text = self.env._("Hidden (restricted field)")
+                rows.append({'field': line.field_name, 'label': label,
+                             'before': text if hidden else (line.old_value_text or ''),
+                             'after': text if hidden else (line.new_value_text or ''),
+                             'before_kind': 'masked' if hidden else 'value',
+                             'after_kind': 'masked' if hidden else 'value', 'type': 'unknown'})
                 continue
             before, before_kind = V.display(self.env, log.model_model, field, line.old_value, line.old_value_text,
                                             currency)
@@ -275,7 +282,7 @@ class AuditService(models.AbstractModel):
         record, readable = self._nc_document(log)
         if record is not None and not readable:
             raise AccessError(self.env._("You are not allowed to see this document's history."))
-        undo = self.env['ncollection.audit.undo'].sudo().search([('original_log_id', '=', log.id)], limit=1)
+        undo = self.env['ncollection.audit.undo'].sudo().search([('original_log_ref', '=', log.id)], limit=1)
         label = V.doc_label(self.env, log.nc_doc_type or log.model_model, log.model_name)
         technical = self.env.user.has_group('base.group_system')
         return {
@@ -290,7 +297,7 @@ class AuditService(models.AbstractModel):
             'source': dict(log._fields['nc_source']._description_selection(self.env)).get(log.nc_source, ''),
             'undone_by': {'id': undo.id, 'user': undo.user_id.name, 'date': fields.Datetime.to_string(
                 undo.create_date), 'log_ids': undo.result_log_ids.ids} if undo else False,
-            'undo_of': {'id': log.nc_undo_id.original_log_id.id} if log.nc_undo_id else False,
+            'undo_of': {'id': log.nc_undo_id.original_log_ref} if log.nc_undo_id else False,
             'can_undo': self.env.user.has_group('ncollection_audit.group_audit_undo'),
         }
 
@@ -314,14 +321,15 @@ class AuditService(models.AbstractModel):
     def nc_audit_history(self, model, res_id):
         logs = self._nc_history_logs(model, res_id)
         undone = set(self.env['ncollection.audit.undo'].sudo().search(
-            [('original_log_id', 'in', logs.ids)]).original_log_id.ids)
+            [('original_log_ref', 'in', logs.ids)]).mapped('original_log_ref'))
         first = logs[:1]
         exists = model in self.env and bool(self.env[model].sudo().browse(res_id).exists())
         versions = []
         for number, log in enumerate(logs, start=1):
             row = self._nc_row(log, undone)
             row['version'] = number
-            row['fields'] = [line.field_description or line.field_name for line in log.line_ids]
+            row['fields'] = [V.label(self.env, log.model_model, line.field_name, line.field_description)
+                             for line in log.line_ids]
             versions.append(row)
         return {
             'model': model, 'res_id': res_id, 'exists': exists,
@@ -393,7 +401,8 @@ class AuditService(models.AbstractModel):
                     status = 'unchanged' if V.same(field, V.parse(field, ra), V.parse(field, rb)) else 'changed'
                 except (ValueError, SyntaxError):
                     status = 'unchanged' if (ra or '') == (rb or '') else 'changed'
-            rows.append({'field': name, 'label': field.string, 'a': da, 'b': db, 'status': status,
+            rows.append({'field': name, 'label': V.label(self.env, model, name, field.string), 'a': da, 'b': db,
+                         'status': status,
                          'a_kind': kind_a, 'b_kind': kind_b})
         # GAP DETECTION: an event whose recorded OLD value is not the previous event's NEW value means something
         # changed the field without being recorded (auditing switched off, a raw SQL write, a legacy period).
@@ -406,15 +415,17 @@ class AuditService(models.AbstractModel):
                 if name in last and log.nc_action == 'update':
                     try:
                         if not V.same(field, V.parse(field, last[name]), V.parse(field, line.old_value)):
-                            gaps.append({'field': field.string, 'event': log.id})
+                            gaps.append({'field': V.label(self.env, model, name, field.string), 'event': log.id})
                     except (ValueError, SyntaxError):
                         pass
                 last[name] = line.new_value if log.nc_action != 'delete' else line.old_value
         rows.sort(key=lambda r: ({'changed': 0, 'added': 1, 'removed': 2, 'unknown': 3, 'unchanged': 4}[r['status']],
                                  (r['label'] or '').lower()))
         return {
-            'a': {'id': logs[ia].id, 'version': ia + 1, 'date': fields.Datetime.to_string(logs[ia].create_date)},
-            'b': {'id': logs[ib].id, 'version': ib + 1, 'date': fields.Datetime.to_string(logs[ib].create_date)},
+            'a': {'id': logs[ia].id, 'version': ia + 1, 'date': fields.Datetime.to_string(logs[ia].create_date),
+                  'action': logs[ia].nc_action, 'user': logs[ia].user_id.sudo().name or ''},
+            'b': {'id': logs[ib].id, 'version': ib + 1, 'date': fields.Datetime.to_string(logs[ib].create_date),
+                  'action': logs[ib].nc_action, 'user': logs[ib].user_id.sudo().name or ''},
             'rows': rows,
             'summary': {status: sum(1 for r in rows if r['status'] == status)
                         for status in ('changed', 'added', 'removed', 'unchanged', 'unknown')},

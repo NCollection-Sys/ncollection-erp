@@ -19,22 +19,27 @@ _logger = logging.getLogger(__name__)
 def migrate(cr, version):
     if not version:
         return
+    # ONLY the events that existed before 2.0 (the ones nothing has classified yet). A re-run, or events written by
+    # 2.0 itself, are never touched: their company is the one recorded at the time, not today's.
+    cr.execute("DROP TABLE IF EXISTS nc_audit_legacy")
+    cr.execute("CREATE TEMP TABLE nc_audit_legacy AS SELECT id FROM auditlog_log WHERE nc_action IS NULL")
+    LEGACY = "id IN (SELECT id FROM nc_audit_legacy)"
     cr.execute("""
         UPDATE auditlog_log
            SET nc_action = CASE method WHEN 'create' THEN 'create' WHEN 'write' THEN 'update'
                                        WHEN 'unlink' THEN 'delete' ELSE 'other' END
-         WHERE nc_action IS NULL""")
+         WHERE nc_action IS NULL AND """ + LEGACY)
     actions = cr.rowcount
     cr.execute("UPDATE auditlog_log SET nc_doc_type = model_model "
-               "WHERE nc_doc_type IS NULL AND model_model IS NOT NULL")
-    cr.execute("UPDATE auditlog_log SET nc_source = 'oca' WHERE nc_source IS NULL")
+               "WHERE nc_doc_type IS NULL AND model_model IS NOT NULL AND " + LEGACY)
+    cr.execute("UPDATE auditlog_log SET nc_source = 'oca' WHERE nc_source IS NULL AND " + LEGACY)
     cr.execute("""
         SELECT DISTINCT l.model_model, m.model
           FROM auditlog_log l
           JOIN ir_model m ON m.model = l.model_model
           JOIN ir_model_fields f ON f.model_id = m.id AND f.name = 'company_id' AND f.ttype = 'many2one'
                                 AND f.relation = 'res.company' AND f.store
-         WHERE l.nc_company_id IS NULL""")
+         WHERE l.nc_company_id IS NULL AND l.id IN (SELECT id FROM nc_audit_legacy)""")
     env = api.Environment(cr, SUPERUSER_ID, {})
     companies = 0
     for model_name, _model in cr.fetchall():
@@ -45,11 +50,12 @@ def migrate(cr, version):
             UPDATE auditlog_log l SET nc_company_id = t.company_id
               FROM "{table}" t
              WHERE l.model_model = %s AND l.res_id = t.id AND l.nc_company_id IS NULL AND t.company_id IS NOT NULL
+               AND l.id IN (SELECT id FROM nc_audit_legacy)
         """, (model_name,))
         companies += cr.rowcount
     cr.execute("""
         UPDATE auditlog_log l SET nc_company_id = l.res_id
-         WHERE l.model_model = 'res.company' AND l.nc_company_id IS NULL
+         WHERE l.model_model = 'res.company' AND l.nc_company_id IS NULL AND l.id IN (SELECT id FROM nc_audit_legacy)
            AND EXISTS (SELECT 1 FROM res_company c WHERE c.id = l.res_id)""")
     companies += cr.rowcount
     cr.execute("UPDATE auditlog_rule SET capture_record = TRUE WHERE name LIKE 'NCollection audit:%%' "

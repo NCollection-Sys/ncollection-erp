@@ -236,3 +236,13 @@ def currency_of(record):
                 return record[name]
     company = record._fields.get('company_id') and record.company_id
     return company.currency_id if company else record.env.company.currency_id
+
+
+def label(env, model, name, fallback=''):
+    """A field's label in the reader's language (the stored line label is the English one of the day it was
+    written)."""
+    if model and name and model in env:
+        field = env['ir.model.fields'].sudo()._get(model, name)
+        if field:
+            return field.field_description or fallback or name
+    return fallback or name or ''

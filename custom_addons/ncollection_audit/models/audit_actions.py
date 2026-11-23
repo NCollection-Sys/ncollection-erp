@@ -29,7 +29,16 @@ class AuditHistoryActions(models.AbstractModel):
         wanted = {name for name in wanted if name in env and not env[name]._abstract and not env[name]._transient
                   and not getattr(env[name], '_auto', True) is False}
         existing = Action.search([('state', '=', 'code'), ('code', '=like', MARKER + '%')])
-        have = {action.model_id.model: action for action in existing}
+        have = {}
+        duplicates = Action.browse()
+        for action in existing.sorted('id'):
+            if action.model_id.model in have:
+                duplicates |= action        # two workers created it at once: keep the oldest
+            else:
+                have[action.model_id.model] = action
+        existing -= duplicates
+        if duplicates:
+            duplicates.unlink()
         group = env.ref('auditlog.group_auditlog_user')
         created = 0
         for name in sorted(wanted - set(have)):

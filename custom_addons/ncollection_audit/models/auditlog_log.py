@@ -67,6 +67,8 @@ import logging
 
 from odoo import api, fields, models
 
+from .audit_flags import current_undo_id
+
 try:
     from odoo.http import request
 except ImportError:                                   # pragma: no cover
@@ -90,6 +92,10 @@ def _company_of(record):
     field = record._fields.get('company_id')
     if field is not None and field.type == 'many2one' and field.comodel_name == 'res.company':
         return record.company_id.id or False
+    # several companies (e.g. account.account.company_ids): the event belongs to one only when the record does
+    many = record._fields.get('company_ids')
+    if many is not None and many.type == 'many2many' and many.comodel_name == 'res.company':
+        return record.company_ids.id if len(record.company_ids) == 1 else False
     return False
 
 
@@ -165,7 +171,7 @@ class AuditlogLog(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         remote_addr = self._nc_remote_addr()
-        undo = self.env.context.get('nc_audit_undo_id') or False
+        undo = current_undo_id()
         for vals in vals_list:
             vals.setdefault('nc_remote_addr', remote_addr)
             vals.setdefault('nc_action', ACTIONS.get(vals.get('method'), 'other'))

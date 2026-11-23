@@ -19,14 +19,16 @@
     <record id="rule_auditlog_log_company" model="ir.rule">
         <field name="name">Audit events: own companies</field>
         <field name="model_id" ref="auditlog.model_auditlog_log"/>
-        <field name="groups" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
+        <field name="groups" eval="[(4, ref('auditlog.group_auditlog_user')), (4, ref('auditlog.group_auditlog_manager'))]"/>
         <field name="domain_force">['|', ('nc_company_id', '=', False), ('nc_company_id', 'in', company_ids)]</field>
     </record>
     <record id="rule_auditlog_log_line_company" model="ir.rule">
         <field name="name">Audit field changes: own companies</field>
         <field name="model_id" ref="auditlog.model_auditlog_log_line"/>
-        <field name="groups" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
-        <field name="domain_force">['|', ('log_id.nc_company_id', '=', False), ('log_id.nc_company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('auditlog.group_auditlog_user')), (4, ref('auditlog.group_auditlog_manager'))]"/>
+        <!-- ONE rule (group rules on a model are ORed): own companies AND, for a group-restricted field (OCA rules
+             could record those before 2.0), only holders of that field's group, also over raw RPC. -->
+        <field name="domain_force">['&amp;', '|', ('log_id.nc_company_id', '=', False), ('log_id.nc_company_id', 'in', company_ids), '|', ('field_id.groups', '=', False), ('field_id.groups', 'in', user.all_group_ids.ids)]</field>
     </record>
     <record id="rule_nc_audit_undo_company" model="ir.rule">
         <field name="name">Audit undo: own companies</field>

@@ -40,12 +40,12 @@
                 <div class="nc-au-field nc-au-pick">
                     <span>User</span>
                     <button class="btn btn-sm nc-au-pick-btn" t-on-click="() => { state.userOpen = !state.userOpen; state.typeOpen = false; }"
-                            t-att-aria-expanded="state.userOpen ? 'true' : 'false'" aria-haspopup="listbox">
+                            t-att-aria-expanded="state.userOpen ? 'true' : 'false'" aria-haspopup="true">
                         <t t-if="state.draft.user_ids.length"><t t-esc="state.draft.user_ids.length"/> selected</t>
                         <t t-else="">All users</t>
                         <i class="fa fa-caret-down" aria-hidden="true"/>
                     </button>
-                    <div t-if="state.userOpen" class="nc-au-pop" role="listbox" aria-multiselectable="true">
+                    <div t-if="state.userOpen" class="nc-au-pop" role="group" t-on-keydown="(ev) => this.onPopKey(ev)">
                         <input type="search" class="form-control form-control-sm" placeholder="Search users"
                                t-model="state.userQuery"/>
                         <div class="nc-au-pop-list">
@@ -76,12 +76,12 @@
                 <div class="nc-au-field nc-au-pick">
                     <span>Document Type</span>
                     <button class="btn btn-sm nc-au-pick-btn" t-on-click="() => { state.typeOpen = !state.typeOpen; state.userOpen = false; }"
-                            t-att-aria-expanded="state.typeOpen ? 'true' : 'false'" aria-haspopup="listbox">
+                            t-att-aria-expanded="state.typeOpen ? 'true' : 'false'" aria-haspopup="true">
                         <t t-if="state.draft.doc_types.length"><t t-esc="state.draft.doc_types.length"/> selected</t>
                         <t t-else="">All types</t>
                         <i class="fa fa-caret-down" aria-hidden="true"/>
                     </button>
-                    <div t-if="state.typeOpen" class="nc-au-pop" role="listbox" aria-multiselectable="true">
+                    <div t-if="state.typeOpen" class="nc-au-pop" role="group" t-on-keydown="(ev) => this.onPopKey(ev)">
                         <input type="search" class="form-control form-control-sm" placeholder="Search types"
                                t-model="state.typeQuery"/>
                         <div class="nc-au-pop-list">
@@ -144,7 +144,7 @@
             <div t-if="activeChips.length" class="nc-au-chips" aria-label="Active filters">
                 <span t-foreach="activeChips" t-as="chip" t-key="chip_index" class="nc-au-chip">
                     <t t-esc="chip.label"/>
-                    <button class="btn btn-link p-0" t-on-click="() => this.removeChip(chip)" aria-label="Remove filter">
+                    <button class="btn btn-link p-0" t-on-click="() => this.removeChip(chip)" t-att-aria-label="'Remove filter: ' + chip.label">
                         <i class="fa fa-times" aria-hidden="true"/>
                     </button>
                 </span>
@@ -158,37 +158,37 @@
                     <thead>
                         <tr>
                             <th class="nc-au-col-view"><span class="visually-hidden">View</span></th>
-                            <th t-att-aria-sort="ariaSort('date')" class="nc-au-sortable" t-on-click="() => this.sortBy('date')">
+                            <th t-att-aria-sort="ariaSort('date')" class="nc-au-sortable" tabindex="0" t-on-click="() => this.sortBy('date')" t-on-keydown="(ev) => this.onSortKey(ev, 'date')">
                                 Timestamp <i t-attf-class="fa fa-sort{{ state.sort === 'date' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
                             </th>
-                            <th t-att-aria-sort="ariaSort('user')" class="nc-au-sortable" t-on-click="() => this.sortBy('user')">
+                            <th t-att-aria-sort="ariaSort('user')" class="nc-au-sortable" tabindex="0" t-on-click="() => this.sortBy('user')" t-on-keydown="(ev) => this.onSortKey(ev, 'user')">
                                 User <i t-attf-class="fa fa-sort{{ state.sort === 'user' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
                             </th>
-                            <th t-att-aria-sort="ariaSort('document')" class="nc-au-sortable" t-on-click="() => this.sortBy('document')">
+                            <th t-att-aria-sort="ariaSort('document')" class="nc-au-sortable" tabindex="0" t-on-click="() => this.sortBy('document')" t-on-keydown="(ev) => this.onSortKey(ev, 'document')">
                                 Document <i t-attf-class="fa fa-sort{{ state.sort === 'document' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
                             </th>
-                            <th t-att-aria-sort="ariaSort('type')" class="nc-au-sortable" t-on-click="() => this.sortBy('type')">
+                            <th t-att-aria-sort="ariaSort('type')" class="nc-au-sortable nc-au-type" tabindex="0" t-on-click="() => this.sortBy('type')" t-on-keydown="(ev) => this.onSortKey(ev, 'type')">
                                 Document Type <i t-attf-class="fa fa-sort{{ state.sort === 'type' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
                             </th>
                             <th>Description</th>
-                            <th t-att-aria-sort="ariaSort('action')" class="nc-au-sortable" t-on-click="() => this.sortBy('action')">
+                            <th t-att-aria-sort="ariaSort('action')" class="nc-au-sortable" tabindex="0" t-on-click="() => this.sortBy('action')" t-on-keydown="(ev) => this.onSortKey(ev, 'action')">
                                 Action <i t-attf-class="fa fa-sort{{ state.sort === 'action' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
                             </th>
-                            <th t-if="showCompany" t-att-aria-sort="ariaSort('company')" class="nc-au-sortable" t-on-click="() => this.sortBy('company')">
+                            <th t-if="showCompany" t-att-aria-sort="ariaSort('company')" class="nc-au-sortable nc-au-company" tabindex="0" t-on-click="() => this.sortBy('company')" t-on-keydown="(ev) => this.onSortKey(ev, 'company')">
                                 Company <i t-attf-class="fa fa-sort{{ state.sort === 'company' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr t-if="state.loading and !state.rows.length"><td t-att-colspan="showCompany ? 8 : 7" class="nc-au-state">
+                        <tr t-if="state.loading and !state.rows.length"><td t-att-colspan="showCompany ? 8 : 7" class="nc-au-state" role="status">
                             <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"/> Loading…</td></tr>
                         <tr t-elif="!state.rows.length"><td t-att-colspan="showCompany ? 8 : 7" class="nc-au-state">
                             <i class="fa fa-history fa-2x d-block mb-2" aria-hidden="true"/>
                             No audit events match these filters.</td></tr>
                         <tr t-foreach="state.rows" t-as="row" t-key="row.id" tabindex="0" class="nc-au-tr"
-                            t-on-dblclick="() => this.openEvent(row.id)" t-on-keydown="(ev) => this.onRowKey(ev, row.id)">
+                            t-on-click="() => this.openEvent(row.id)" t-on-keydown="(ev) => this.onRowKey(ev, row.id)">
                             <td class="nc-au-col-view">
-                                <button class="btn btn-sm nc-au-view" t-on-click="() => this.openEvent(row.id)"
+                                <button class="btn btn-sm nc-au-view" t-on-click.stop="() => this.openEvent(row.id)"
                                         t-att-aria-label="'View event ' + row.id" title="View">
                                     <i class="fa fa-eye" aria-hidden="true"/>
                                 </button>
@@ -267,7 +267,7 @@
                 <div t-if="ev.request"><dt>Request</dt><dd class="nc-au-mono" t-esc="ev.request"/></div>
                 <div t-if="ev.technical_model"><dt>Technical model</dt><dd class="nc-au-mono" t-esc="ev.technical_model"/></div>
             </dl>
-            <nav class="nc-au-tabs" role="tablist">
+            <div class="nc-au-tabs" role="tablist" aria-label="Event sections">
                 <button role="tab" t-att-aria-selected="state.tab === 'changes' ? 'true' : 'false'" t-att-class="state.tab === 'changes' ? 'active' : ''" t-on-click="() => this.setTab('changes')">
                     <i class="fa fa-list" aria-hidden="true"/> Changes</button>
                 <button role="tab" t-att-aria-selected="state.tab === 'history' ? 'true' : 'false'" t-att-class="state.tab === 'history' ? 'active' : ''" t-on-click="() => this.setTab('history')">
@@ -276,7 +276,7 @@
                     <i class="fa fa-columns" aria-hidden="true"/> Compare Versions</button>
                 <button t-if="ev.can_undo" role="tab" t-att-aria-selected="state.tab === 'undo' ? 'true' : 'false'" t-att-class="state.tab === 'undo' ? 'active' : ''" t-on-click="() => this.setTab('undo')">
                     <i class="fa fa-undo" aria-hidden="true"/> Undo</button>
-            </nav>
+            </div>
 
             <!-- Changes -->
             <div t-if="state.tab === 'changes'" role="tabpanel" class="nc-au-panel">
@@ -354,8 +354,8 @@
                                        t-on-change="(e) => { state.undoSelected[r.field] = e.target.checked; }"/>
                             </td>
                             <td class="nc-au-flabel" t-esc="r.label"/>
-                            <td t-if="ev.action === 'update'" class="nc-au-old" t-esc="r.current or ''"/>
-                            <td class="nc-au-new" t-esc="r.restore or ''"/>
+                            <td t-if="ev.action === 'update'" class="nc-au-old"><t t-if="r.current" t-esc="r.current"/><span t-else="" class="nc-au-empty">Empty</span></td>
+                            <td class="nc-au-new"><t t-if="r.restore" t-esc="r.restore"/><span t-elif="r.restorable" class="nc-au-empty">Empty (the field will be cleared)</span></td>
                             <td>
                                 <span t-if="r.restorable" class="nc-au-flag nc-au-flag-ok">Can be restored</span>
                                 <span t-elif="r.conflict" class="nc-au-flag nc-au-flag-conflict">Conflict</span>
@@ -369,7 +369,7 @@
                     <li t-foreach="u.related" t-as="note" t-key="note_index" t-esc="note"/>
                 </ul>
                 <div t-if="u.available" class="nc-au-undo-bar">
-                    <button class="btn btn-danger" t-att-disabled="state.undoBusy" t-on-click="() => this.confirmUndo()">
+                    <button class="btn btn-danger" t-att-disabled="state.undoBusy or (u.kind === 'update' and !selectedFields.length)" t-on-click="() => this.confirmUndo()">
                         <i class="fa fa-undo" aria-hidden="true"/>
                         <t t-if="u.kind === 'update'">Restore selected fields</t>
                         <t t-elif="u.kind === 'create' and u.modes[0] === 'archive'">Archive document</t>
@@ -470,8 +470,8 @@
             <table class="nc-au-table nc-au-diff">
                 <thead><tr>
                     <th>Field</th>
-                    <th>Version <t t-esc="c.a.version"/> <small class="nc-au-muted" t-esc="fmtDate(c.a.date)"/></th>
-                    <th>Version <t t-esc="c.b.version"/> <small class="nc-au-muted" t-esc="fmtDate(c.b.date)"/></th>
+                    <th>Version <t t-esc="c.a.version"/> · <t t-esc="actionLabel(c.a.action)"/> · <t t-esc="c.a.user"/><div class="nc-au-muted small"><t t-esc="fmtDate(c.a.date)"/> · #<t t-esc="c.a.id"/></div></th>
+                    <th>Version <t t-esc="c.b.version"/> · <t t-esc="actionLabel(c.b.action)"/> · <t t-esc="c.b.user"/><div class="nc-au-muted small"><t t-esc="fmtDate(c.b.date)"/> · #<t t-esc="c.b.id"/></div></th>
                     <th>Status</th>
                 </tr></thead>
                 <tbody>

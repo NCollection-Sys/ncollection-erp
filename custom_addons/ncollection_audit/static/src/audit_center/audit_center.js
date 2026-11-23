@@ -258,6 +258,17 @@ export class NcAuditCenter extends Component {
         this.state.undoDone = null;
         await this.setTab(tab);
     }
+    onSortKey(ev, column) {
+        if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            this.sortBy(column);
+        }
+    }
+    onPopKey(ev) {
+        if (ev.key === "Escape") {
+            this.state.userOpen = this.state.typeOpen = false;
+        }
+    }
     onRowKey(ev, id) {
         if (ev.key === "Enter" || ev.key === " ") {
             ev.preventDefault();

@@ -503,3 +503,77 @@ class TestAuditV2(TransactionCase):
         self.assertGreaterEqual(result['total'], 1)
         self.assertLessEqual(len(history['versions']), 1000)
         self.assertLess(time.time() - started, 5.0)
+
+    # ---- regressions for the independent review findings (architecture H1-H3, security F1/F2/L1, accounting H1/M2)
+
+    def test_the_trail_itself_can_never_be_given_a_policy(self):
+        from odoo.exceptions import ValidationError
+        for name in ('auditlog.log', 'ncollection.audit.undo', 'ir.cron'):
+            with self.assertRaises(ValidationError):
+                self.Policy.create({'model_id': self.env['ir.model']._get_id(name)})
+
+    def test_a_client_context_key_cannot_switch_recording_off_or_forge_an_undo(self):
+        partner = self._partner(name='Evade', phone='1')
+        partner.with_context(nc_audit_skip=True, install_mode=True).write({'phone': '2'})
+        self.assertTrue(self._logs(partner, 'write'), "a client-sent context key must not suppress the audit")
+        mine = self._partner(name='Forge', phone='1')
+        mine.write({'phone': '2'})
+        preview = self.Undo.with_user(self.undoer).nc_undo_preview(self._logs(mine, 'write').id)
+        result = self.Undo.with_user(self.undoer).nc_undo_apply(
+            self._logs(mine, 'write').id, ['phone'], preview['fingerprint'])
+        other = self._partner(name='Other', phone='1')
+        other.with_context(nc_audit_undo_id=result['undo_id']).write({'phone': '5'})
+        self.assertFalse(self._logs(other, 'write').nc_undo_id, "Undo attribution cannot be forged by context")
+
+    def test_malformed_field_lists_are_refused_cleanly(self):
+        partner = self._partner(name='Bad Input', phone='1')
+        partner.write({'phone': '2'})
+        log = self._logs(partner, 'write')
+        for bad in ([[1]], [{'a': 1}], 'phone'):
+            with self.assertRaises(UserError):
+                self.Undo.with_user(self.undoer).nc_undo_preview(log.id, bad)
+            with self.assertRaises(UserError):
+                self.Undo.with_user(self.undoer).nc_undo_apply(log.id, bad, 'x')
+
+    def test_retention_can_prune_an_undone_event_and_the_guard_survives(self):
+        partner = self._partner(name='Pruned', phone='1')
+        partner.write({'phone': '2'})
+        log = self._logs(partner, 'write')
+        log_id = log.id
+        result = self._undo(log, ['phone'])
+        log.sudo().unlink()                          # what retention does: must not be blocked by the Undo
+        undo = self.Undo.sudo().browse(result['undo_id'])
+        self.assertTrue(undo.exists())
+        self.assertEqual(undo.original_log_ref, log_id)
+        self.assertFalse(undo.original_log_id)
+
+    def test_a_posted_payment_is_never_restored(self):
+        if 'account.payment' not in self.env:
+            self.skipTest('Accounting not installed')
+        journal = self.env['account.journal'].search([('type', '=', 'bank'), ('company_id', '=', self.company_a.id)],
+                                                     limit=1)
+        payment = self.env['account.payment'].create({
+            'payment_type': 'inbound', 'partner_type': 'customer', 'amount': 100.0, 'journal_id': journal.id,
+            'partner_id': self._partner(name='Payer').id})
+        payment.write({'amount': 150.0})
+        log = self._logs(payment, 'write')[-1:]
+        accountant = new_test_user(self.env, 'au2_pay', groups='account.group_account_manager,'
+                                   'ncollection_audit.group_audit_undo', company_id=self.company_a.id,
+                                   company_ids=[(6, 0, self.company_a.ids)])
+        self.assertTrue(self.Undo.with_user(accountant).nc_undo_preview(log.id)['available'])
+        payment.action_post()
+        preview = self.Undo.with_user(accountant).nc_undo_preview(log.id)
+        self.assertFalse(preview['available'], "a posted (in_process) payment's amount is never rewritten")
+
+    def test_company_lock_dates_are_never_restored(self):
+        if 'fiscalyear_lock_date' not in self.env['res.company']._fields:
+            self.skipTest('Accounting not installed')
+        Fields = self.env['ir.model.fields']
+        log = self.Log.sudo().create({
+            'model_id': self.env['ir.model']._get_id('res.company'), 'res_id': self.company_a.id,
+            'method': 'write', 'user_id': self.env.uid, 'name': 'C', 'log_type': 'full',
+            'nc_company_id': self.company_a.id,
+            'line_ids': [Command.create({'field_id': Fields._get('res.company', 'fiscalyear_lock_date').id,
+                                         'old_value': False, 'new_value': False})]})
+        rows = self.Undo.with_user(self.env.ref('base.user_admin')).nc_undo_preview(log.id)['rows']
+        self.assertTrue(rows and not rows[0]['restorable'])

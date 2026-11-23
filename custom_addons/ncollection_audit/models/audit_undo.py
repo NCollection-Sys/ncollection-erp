@@ -24,7 +24,7 @@ apply exactly as they do on the form. On top of that it REFUSES, with the reason
 
 Every Undo is recorded twice: in this append-only ledger (``ncollection.audit.undo``: who, when, which event, what was
 put back, the result) and as ordinary audit events written by the operation itself, linked to it. The original event
-is never edited. ``unique(original_log_id)`` makes a second Undo of the same event impossible, also under
+is never edited. ``unique(original_log_ref)`` makes a second Undo of the same event impossible, also under
 concurrency; the event row and the document row are locked (NOWAIT) while it runs, and the preview's fingerprint must
 still match at apply time, so nothing is applied that the user did not see.
 """
@@ -39,6 +39,7 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools import SQL, mute_logger
 
 from . import audit_values as V
+from .audit_flags import suppress_capture, undo_scope
 
 _logger = logging.getLogger(__name__)
 
@@ -54,7 +55,22 @@ PROTECTED_PREFIX = ('ncollection.einvoice', 'ncollection.audit', 'auditlog.', 'i
 # Accounting documents: field Undo only while draft; Create-Undo only if never posted; Delete-Undo never.
 DRAFT_ONLY = {'account.move', 'account.payment'}
 FINAL_STATES = {'posted', 'done', 'paid', 'reconciled', 'cancel', 'cancelled', 'sale', 'purchase', 'approved',
-                'locked', 'in_payment', 'validated', 'closed'}
+                'locked', 'in_payment', 'validated', 'closed',
+                # Odoo 19 account.payment (posted / cancelled / rejected) and a superseded budget
+                'in_process', 'canceled', 'rejected', 'revised'}
+# Fields Undo never restores: they reopen a period, change the books' frame, or reclassify posted history. They are
+# changed only through their own configuration screens (Lock Dates with a lock exception, the chart, the journal).
+NEVER_RESTORE = {
+    'res.company': {'fiscalyear_lock_date', 'hard_lock_date', 'tax_lock_date', 'sale_lock_date',
+                    'purchase_lock_date', 'account_fiscal_country_id', 'currency_id', 'chart_template',
+                    'account_opening_date', 'fiscalyear_last_day', 'fiscalyear_last_month'},
+    'account.account': {'account_type', 'reconcile', 'currency_id', 'code', 'company_ids'},
+    'account.journal': {'type', 'default_account_id', 'currency_id', 'code', 'suspense_account_id'},
+    'product.category': {'property_cost_method', 'property_valuation'},
+}
+# A created master record that posted entries reference is never archived by Undo (that hides balances).
+ACCOUNTING_MASTER = {'res.partner', 'account.account', 'account.journal', 'product.template',
+                     'product.product', 'account.tax', 'account.analytic.account'}
 DATE_FIELDS = ('date', 'invoice_date', 'accounting_date')
 
 
@@ -83,8 +99,11 @@ class AuditUndo(models.Model):
     _description = 'Audit Log Undo (append-only)'
     _order = 'id desc'
 
-    original_log_id = fields.Many2one('auditlog.log', string='Event Undone', required=True, readonly=True,
-                                      index=True, ondelete='restrict')
+    original_log_id = fields.Many2one('auditlog.log', string='Event Undone', readonly=True, index=True,
+                                      ondelete='set null')
+    # The event id, kept when retention later prunes the event itself (the link above then empties): the one-Undo-
+    # per-event guard and the ledger must outlive the trail's retention, which must never be blocked by an Undo.
+    original_log_ref = fields.Integer(string='Event Undone (id)', readonly=True, required=True, index=True)
     kind = fields.Selection([('update', 'Restore values'), ('create', 'Remove created document'),
                              ('delete', 'Restore deleted document')], required=True, readonly=True)
     mode = fields.Selection([('restore', 'Values restored'), ('delete', 'Deleted'), ('archive', 'Archived'),
@@ -101,7 +120,7 @@ class AuditUndo(models.Model):
     result_log_ids = fields.One2many('auditlog.log', 'nc_undo_id', string='Events Written by the Undo',
                                      readonly=True)
 
-    _original_unique = models.Constraint('unique(original_log_id)', 'This event has already been undone.')
+    _original_unique = models.Constraint('unique(original_log_ref)', 'This event has already been undone.')
 
     def write(self, vals):
         # Append-only: the only write is the engine's own pending -> done (sudo, inside the same transaction).
@@ -136,9 +155,18 @@ class AuditUndo(models.Model):
             label = dict(record._fields['state']._description_selection(env)).get(record.state, record.state)
             return env._("The document is %(state)s.", state=label)
         company = record.company_id if 'company_id' in record._fields else env.company
+        if record._name in DRAFT_ONLY:
+            sudo = record.sudo()
+            if 'state' in sudo._fields and sudo.state != 'draft':
+                return env._("Only a draft accounting document is restored by Undo.")
+            if 'move_id' in sudo._fields and sudo.move_id and sudo.move_id.state != 'draft':
+                return env._("Its journal entry is not a draft.")
         if record._name.startswith('account.') or record._name in DRAFT_ONLY:
-            locks = [d for d in (getattr(company, 'fiscalyear_lock_date', False),
-                                 getattr(company, 'hard_lock_date', False)) if d]
+            # every lock Odoo knows (fiscal, hard, tax, sales, purchases): the user's own exceptions are not applied
+            # here on purpose - a lock exception is granted for the document's own workflow, not for a blind restore
+            locks = [d for d in (getattr(company, name, False) for name in (
+                'fiscalyear_lock_date', 'hard_lock_date', 'tax_lock_date', 'sale_lock_date',
+                'purchase_lock_date')) if d]
             if locks:
                 lock = max(locks)
                 for name in DATE_FIELDS:
@@ -173,6 +201,11 @@ class AuditUndo(models.Model):
         env = self.env
         if field is None:
             return env._("This field no longer exists.")
+        if field.name in NEVER_RESTORE.get(model._name, ()):
+            return env._("Changed only from its configuration screen (it would reopen a period or reclassify posted "
+                         "entries).")
+        if getattr(field, 'company_dependent', False):
+            return env._("A per-company setting: change it from the document in the right company.")
         if V.masked(env, model._name, field):
             return env._("Restricted field: it is never restored from the trail.")
         if not field.store or field.type not in V.SUPPORTED:
@@ -205,7 +238,7 @@ class AuditUndo(models.Model):
         env = self.env
         if not env.user.has_group('ncollection_audit.group_audit_undo'):
             return self._nc_refuse(env._("You are not allowed to undo audited changes."))
-        if self.sudo().search_count([('original_log_id', '=', log.id)]):
+        if self.sudo().search_count([('original_log_ref', '=', log.id)]):
             return self._nc_refuse(env._("This event has already been undone."))
         model, record = self._nc_target(log)
         refusal = self._nc_policy_refusal(log, model)
@@ -241,7 +274,7 @@ class AuditUndo(models.Model):
         rows, vals = [], {}
         for line in log.line_ids:
             field = model._fields.get(line.field_name)
-            label = (field.string if field is not None else None) or line.field_description or line.field_name
+            label = V.label(env, model._name, line.field_name, line.field_description)
             row = {'field': line.field_name, 'label': label, 'restorable': False, 'conflict': False, 'reason': ''}
             problem = self._nc_field_problem(model, field, line)
             if problem:
@@ -258,8 +291,8 @@ class AuditUndo(models.Model):
                 continue
             now = V.current(record.sudo(), field)
             if line.field_name in later:
-                row.update(conflict=True, reason=env._("Changed again later (event #%(id)s): restoring would "
-                                                       "overwrite that change.", id=later[line.field_name]))
+                row.update(conflict=True,
+                           reason=env._("Changed again later: restoring would overwrite that change."))
             elif not V.same(field, now, recorded_new):
                 row.update(conflict=True, reason=env._("The current value is not the one this event wrote."))
             else:
@@ -287,7 +320,7 @@ class AuditUndo(models.Model):
         class _Rollback(Exception):
             pass
         try:
-            with self.env.cr.savepoint():
+            with self.env.cr.savepoint(), suppress_capture():
                 operation()
                 raise _Rollback()
         except _Rollback:
@@ -304,20 +337,20 @@ class AuditUndo(models.Model):
         env = self.env
         later = self._nc_later(log)
         if later:
-            return self._nc_refuse(env._("The document was changed after it was created (%(count)s later event(s)); "
-                                         "undo those changes first, or remove it through its own workflow.",
-                                         count=len(later)))
+            return self._nc_refuse(env._("The document was changed after it was created; undo those changes "
+                                         "first, or remove it through its own workflow."))
         if model._name in DRAFT_ONLY:
             sudo = record.sudo()
             if ('posted_before' in sudo._fields and sudo.posted_before) or (
                     'state' in sudo._fields and sudo.state != 'draft'):
                 return self._nc_refuse(env._("This accounting document has been posted."), _hint(env, model._name))
-        ok, error = self._nc_probe(lambda: record.with_context(nc_audit_skip=True).unlink())
+        ok, error = self._nc_probe(lambda: record.unlink())
         if ok:
             return {'available': True, 'kind': 'create', 'modes': ['delete'], 'rows': [], 'related': [],
                     'reason': '', 'hint': '',
                     'effect': env._("The document is deleted. The deletion itself is recorded and can be undone.")}
-        if 'active' in model._fields and record.sudo().active and record.has_access('write'):
+        if ('active' in model._fields and record.sudo().active and record.has_access('write')
+                and model._name not in ACCOUNTING_MASTER):
             return {'available': True, 'kind': 'create', 'modes': ['archive'], 'rows': [], 'related': [error],
                     'reason': '', 'hint': '',
                     'effect': env._("It cannot be deleted (%(reason)s), so it is archived instead: hidden from lists, "
@@ -335,7 +368,7 @@ class AuditUndo(models.Model):
         rows, vals, related = [], {}, []
         for line in log.line_ids:
             field = model._fields.get(line.field_name)
-            label = (field.string if field is not None else None) or line.field_description or line.field_name
+            label = V.label(env, model._name, line.field_name, line.field_description)
             row = {'field': line.field_name, 'label': label, 'restorable': False, 'conflict': False, 'reason': '',
                    'current': '', 'selected': False}
             problem = self._nc_field_problem(model, field, line)
@@ -362,7 +395,7 @@ class AuditUndo(models.Model):
             row.update(restorable=True, selected=True)
             vals[line.field_name] = value if field.type != 'many2many' else [(6, 0, value)]
             rows.append(row)
-        ok, error = self._nc_probe(lambda: model.with_context(nc_audit_skip=True).create(dict(vals)))
+        ok, error = self._nc_probe(lambda: model.create(dict(vals)))
         if not ok:
             return dict(self._nc_refuse(env._("It cannot be rebuilt: %(reason)s", reason=error)), rows=rows)
         related.append(env._("It is created as a NEW document with a new number/id. Links other documents had to the "
@@ -384,6 +417,9 @@ class AuditUndo(models.Model):
 
     @api.model
     def nc_undo_preview(self, log_id, field_names=None):
+        if field_names is not None and (not isinstance(field_names, list) or not all(
+                isinstance(name, str) for name in field_names)):
+            raise UserError(self.env._("Malformed request."))
         log = self.env['ncollection.audit.service']._nc_log(log_id)
         selected = set(field_names) if isinstance(field_names, list) else None
         analysis = self._nc_analyse(log, selected)
@@ -395,7 +431,8 @@ class AuditUndo(models.Model):
     def nc_undo_apply(self, log_id, field_names, fingerprint, mode=None):
         env = self.env
         log = env['ncollection.audit.service']._nc_log(log_id)
-        if not isinstance(field_names, list) or not isinstance(fingerprint, str):
+        if not isinstance(field_names, list) or not isinstance(fingerprint, str) or not all(
+                isinstance(name, str) for name in field_names):
             raise UserError(env._("Malformed request."))
         cr = env.cr
         try:
@@ -422,29 +459,32 @@ class AuditUndo(models.Model):
             raise UserError(env._("Choose at least one field to restore."))
         try:
             undo = self.sudo().create({
-                'original_log_id': log.id, 'kind': log.nc_action, 'user_id': env.uid, 'model': log.model_model,
+                'original_log_id': log.id, 'original_log_ref': log.id, 'kind': log.nc_action, 'user_id': env.uid,
+                'model': log.model_model,
                 'res_id': log.res_id, 'company_id': log.nc_company_id.id,
                 'field_names': ','.join(sorted(vals)) if log.nc_action == 'update' else '',
             })
         except psycopg2.errors.UniqueViolation:
             raise UserError(env._("This event has already been undone.")) from None
-        ctx = dict(env.context, nc_audit_undo_id=undo.id)
+        ctx = dict(env.context)
         details = {}
-        if log.nc_action == 'update':
-            for name in vals:
-                details[name] = [V.display_current(env, record.sudo(), model._fields[name])[0],
-                                 next(r['restore'] for r in analysis['rows'] if r['field'] == name)]
-            record.with_context(ctx).write(vals)
-            result_id = record.id
-        elif mode == 'archive':
-            record.with_context(ctx).write({'active': False})
-            result_id = record.id
-        elif log.nc_action == 'create':
-            record.with_context(ctx).unlink()
-            result_id = 0
-        else:
-            new = model.with_context(ctx).create(vals)
-            result_id = new.id
+        # the audit rows this operation writes belong to this Undo (server-side only, never a client context key)
+        with undo_scope(undo.id):
+            if log.nc_action == 'update':
+                for name in vals:
+                    details[name] = [V.display_current(env, record.sudo(), model._fields[name])[0],
+                                     next(r['restore'] for r in analysis['rows'] if r['field'] == name)]
+                record.with_context(ctx).write(vals)
+                result_id = record.id
+            elif mode == 'archive':
+                record.with_context(ctx).write({'active': False})
+                result_id = record.id
+            elif log.nc_action == 'create':
+                record.with_context(ctx).unlink()
+                result_id = 0
+            else:
+                new = model.with_context(ctx).create(vals)
+                result_id = new.id
         undo.sudo().write({'state': 'done', 'mode': mode, 'result_res_id': result_id,
                            'details': json.dumps(details, default=str)})
         # The operation's own audit rows exist when the document type is audited; when it is not (a model only an

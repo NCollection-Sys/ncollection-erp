@@ -159,3 +159,29 @@ Timestamps, users, values and digests are untouched. The new indexes are (create
   count.
 - **Digests:** the new columns (company, action, undo link) are not inside the per-row digest. Covering them needs a
   digest version, and that would make every existing row look tampered.
+- **A reader who can open a document type sees the names of all its events** (list and search), even when their
+  "own documents only" record rules hide some of those documents. Opening an event still checks the document. Audit
+  readers are Workspace Administrators and system administrators. Over raw RPC, the company rule and the
+  restricted-field rule apply at the ORM; the document-type filter is enforced by the service.
+- **An Undo preview really runs the delete / create in a savepoint and rolls it back.** A rolled-back create can
+  consume a sequence number (a gap) — the same as when a user opens and discards a form.
+- **The creation record is taken where the ORM creates the row.** Values a model sets after its own `create`
+  (for example an invoice's computed amounts) appear in that document's later events, not in the creation record.
+- **Invoice amounts, invoice lines and reconciliations are not in this trail.** Amount changes are in the Invoice
+  Amount Audit (`ncollection_account_audit`), and reconciliations are in Bank Transactions & Matching.
+
+## 5. Independent reviews (on 883116a0) and what was changed
+
+| Review | Finding | Resolution |
+|---|---|---|
+| Odoo architecture H1 | Any model (even `auditlog.log` itself) could be given a policy → endless recursion | Reserved models are refused by a constraint, by seeding and by the capture itself (`BLOCKED_PREFIX`, `SENSITIVE_MODELS`, platform-extended models). Test added. |
+| Odoo architecture H2 | `ondelete='restrict'` from the Undo ledger would block retention for good | The ledger keeps `original_log_ref` (unique) and the link is `set null`. Test: prune an undone event; the ledger and the one-Undo guard survive. |
+| Odoo architecture H3 / accounting M6 | Writing an audit row could abort the business write | `Log.create` runs inside a savepoint; a failure is logged and the business write continues. |
+| Odoo architecture H4 | Restricted-field lines could be read over raw RPC | The line record rule now requires the field's group (in the same rule as company scope, because group rules are ORed). |
+| Odoo architecture M1 / M2 / M6 | Per-field SELECTs; per-row scope lookup; duplicate actions across workers | Full snapshots prefetch; company and type are computed in the capture; duplicate actions are removed. |
+| Security F1 (HIGH) | The client context key `nc_audit_skip` / `install_mode` switched recording off | Recording is suppressed only by a server-side thread-local (`audit_flags.py`), set by the rolled-back probes. Test: a client context key still records. |
+| Security F2 | A context key forged the Undo attribution | The Undo id comes from the same server-side scope. Test added. |
+| Security M1 / M4 / L1 / L4 / L8 | One-company `company_ids`; ids leaked in conflict messages; unhashable input gave a 500; removed fields were not masked; the manager group was outside the rules | All fixed. |
+| Accounting H1 (HIGH) | Odoo 19 payment states (`in_process`, `canceled`, `rejected`) were not final → a posted payment's amount was restorable | Invoices and payments are restored only while draft, and only while their entry is a draft. The states are added. Test added. |
+| Accounting M1 / M2 / M3 / M4 / M5 | Locks; lock dates restorable; master data reclassification; archive fallback; per-company fields | All lock dates are checked. Lock / fiscal / chart / currency fields, account type and journal type / account are never restored. A referenced accounting master record is never archived. Per-company fields are refused. |
+| UI/UX | Tablet columns; untranslated labels; blank restore value; ARIA; contrast; row click; version headers | All HIGH and the listed MEDIUM items are fixed. |

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 14:18+0000\n"
-"PO-Revision-Date: 2026-11-23 14:18+0000\n"
+"POT-Creation-Date: 2026-11-23 14:52+0000\n"
+"PO-Revision-Date: 2026-11-23 14:52+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -26,6 +26,12 @@ msgstr "رقم %(id)s (محذوف)"
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "%(field)s is left empty: %(why)s"
 msgstr "يُترك %(field)s فارغًا: %(why)s"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_policy.py:0
+msgid "%(model)s cannot be recorded by the Audit Log (the trail itself, the framework, authentication and the platform layer never are)."
+msgstr "لا يمكن لسجل التدقيق تسجيل %(model)s (السجل نفسه وإطار العمل والمصادقة وطبقة المنصة لا تُسجَّل أبدًا)."
 
 #. module: ncollection_audit
 #. odoo-javascript
@@ -67,6 +73,12 @@ msgstr "لكل نوع مستند سياسة تدقيق واحدة."
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "A new document is created from the values recorded before the deletion."
 msgstr "يُنشأ مستند جديد من القيم المُسجَّلة قبل الحذف."
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_undo.py:0
+msgid "A per-company setting: change it from the document in the right company."
+msgstr "إعداد خاص بكل شركة: غيِّره من المستند ضمن الشركة الصحيحة."
 
 #. module: ncollection_audit
 #. odoo-python
@@ -321,8 +333,14 @@ msgstr "تغيير %(fields)s"
 #. module: ncollection_audit
 #. odoo-python
 #: code:addons/ncollection_audit/models/audit_undo.py:0
-msgid "Changed again later (event #%(id)s): restoring would overwrite that change."
-msgstr "تغيَّر مرة أخرى لاحقًا (الحدث رقم %(id)s): الاستعادة ستلغي ذلك التغيير."
+msgid "Changed again later: restoring would overwrite that change."
+msgstr "تغيَّر مرة أخرى لاحقًا: الاستعادة ستلغي ذلك التغيير."
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_undo.py:0
+msgid "Changed only from its configuration screen (it would reopen a period or reclassify posted entries)."
+msgstr "يُغيَّر فقط من شاشة إعداداته (فاستعادته قد تعيد فتح فترة أو تعيد تصنيف قيود مُرحَّلة)."
 
 #. module: ncollection_audit
 #. odoo-javascript
@@ -607,6 +625,12 @@ msgid "Empty"
 msgstr "فارغ"
 
 #. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Empty (the field will be cleared)"
+msgstr "فارغ (سيُفرَّغ الحقل)"
+
+#. module: ncollection_audit
 #: model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_seal_list
 msgid "Entries"
 msgstr "الإدخالات"
@@ -627,6 +651,17 @@ msgstr "معرّف الحدث"
 #: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__original_log_id
 msgid "Event Undone"
 msgstr "الحدث المُتراجَع عنه"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__original_log_ref
+msgid "Event Undone (id)"
+msgstr "الحدث المُتراجَع عنه (المعرّف)"
+
+#. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Event sections"
+msgstr "أقسام الحدث"
 
 #. module: ncollection_audit
 #: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__result_log_ids
@@ -692,6 +727,7 @@ msgstr "استلام بضائع"
 
 #. module: ncollection_audit
 #. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
 #: code:addons/ncollection_audit/models/audit_values.py:0
 msgid "Hidden (restricted field)"
 msgstr "مخفي (حقل مقيَّد)"
@@ -767,6 +803,12 @@ msgstr "يُنشأ كمستند جديد برقم/معرّف جديد. الرو�
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "It is dated in a locked period (locked up to %(date)s)."
 msgstr "تاريخه ضمن فترة مقفلة (مقفلة حتى %(date)s)."
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_undo.py:0
+msgid "Its journal entry is not a draft."
+msgstr "قيد اليومية الخاص به ليس مسودة."
 
 #. module: ncollection_audit
 #: model:ir.model.fields,help:ncollection_audit.field_ncollection_audit_undo__details
@@ -953,6 +995,12 @@ msgid "Only Create, Update and Delete events can be undone."
 msgstr "يمكن التراجع فقط عن أحداث الإنشاء والتعديل والحذف."
 
 #. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_undo.py:0
+msgid "Only a draft accounting document is restored by Undo."
+msgstr "لا يستعيد التراجع إلا المستند المحاسبي في حالة المسودة."
+
+#. module: ncollection_audit
 #. odoo-javascript
 #: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Only the first 1,000 events are shown."
@@ -1136,12 +1184,6 @@ msgstr "المرجع: %s"
 #: model:ir.model.fields.selection,name:ncollection_audit.selection__ncollection_audit_undo__kind__create
 msgid "Remove created document"
 msgstr "إزالة المستند المُنشأ"
-
-#. module: ncollection_audit
-#. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-msgid "Remove filter"
-msgstr "إزالة عامل التصفية"
 
 #. module: ncollection_audit
 #. odoo-javascript
@@ -1406,8 +1448,8 @@ msgstr "المستند لا يزال موجودًا."
 #. module: ncollection_audit
 #. odoo-python
 #: code:addons/ncollection_audit/models/audit_undo.py:0
-msgid "The document was changed after it was created (%(count)s later event(s)); undo those changes first, or remove it through its own workflow."
-msgstr "تغيَّر المستند بعد إنشائه (%(count)s حدث لاحق)؛ تراجع عن تلك التغييرات أولاً، أو أزله من خلال سير عمله."
+msgid "The document was changed after it was created; undo those changes first, or remove it through its own workflow."
+msgstr "تغيَّر المستند بعد إنشائه؛ تراجع عن تلك التغييرات أولاً، أو أزله من خلال سير عمله."
 
 #. module: ncollection_audit
 #. odoo-python
