@@ -886,3 +886,115 @@ class TestSuspenseFallback(JournalOpsCommon):
             with self.subTest(account=account.display_name), self.assertRaises(ValidationError):
                 with self.env.cr.savepoint():
                     self.company.nc_payment_suspense_account_id = account
+
+
+@tagged('post_install', '-at_install')
+class TestTransferFeesAndExchange(JournalOpsCommon):
+    """Requests 13 / 14. Company currency is the fixture's (USD). Sent = Bank Fee + value received + exchange loss
+    (or - gain), every entry balanced, the fee never doubles as an exchange difference and never posts twice."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.company.nc_bank_fee_account_id = cls.fees
+        cls.eur = cls.setup_other_currency('EUR', rates=[('2016-01-01', 2.0)])      # 1 USD = 2 EUR
+        cls.gbp = cls.setup_other_currency('GBP', rates=[('2016-01-01', 0.5)])      # 1 USD = 0.5 GBP
+        cls.eur_bank = cls._nc_foreign('EUR bank', 'OPEU', cls.eur)
+        cls.gbp_bank = cls._nc_foreign('GBP bank', 'OPGB', cls.gbp)
+
+    @classmethod
+    def _nc_foreign(cls, name, code, currency):
+        journal = cls.env['account.journal'].create({'name': name, 'type': 'bank', 'code': code,
+                                                     'currency_id': currency.id})
+        return journal
+
+    def _transfer(self, source, destination, amount, **extra):
+        return self.env['ncollection.internal.transfer'].create({
+            'source_journal_id': source.id, 'destination_journal_id': destination.id, 'amount': amount, **extra})
+
+    def _assert_booked(self, transfer, fee_company, exchange_company):
+        moves = (transfer.source_payment_id.move_id | transfer.destination_payment_id.move_id
+                 | transfer.fee_move_id | transfer.exchange_move_id)
+        for move in moves:
+            self.assertAlmostEqual(sum(move.line_ids.mapped('debit')), sum(move.line_ids.mapped('credit')), 2)
+        transfer_lines = moves.line_ids.filtered(lambda l: l.account_id == self.company.transfer_account_id)
+        self.assertAlmostEqual(sum(transfer_lines.mapped('balance')), 0.0, 2, 'clearing account nets to zero')
+        self.assertTrue(all(transfer_lines.mapped('reconciled')))
+        fee_lines = moves.line_ids.filtered(lambda l: l.account_id == self.fees)
+        self.assertAlmostEqual(sum(fee_lines.mapped('balance')), fee_company, 2)
+        self.assertAlmostEqual(transfer.exchange_amount, exchange_company, 2)
+        sent = -transfer.source_payment_id.move_id.line_ids.filtered(
+            lambda l: l.account_id != self.company.transfer_account_id).balance
+        received = transfer.destination_payment_id.move_id.line_ids.filtered(
+            lambda l: l.account_id != self.company.transfer_account_id).balance
+        self.assertAlmostEqual(sent, fee_company + received - exchange_company, 2, 'sent = fee + received - gain')
+
+    def test_same_currency_fee_goes_to_bank_fees_and_nothing_to_exchange(self):
+        transfer = self._transfer(self.bank, self.cash, 100.0, fee_amount=5.0)
+        self.assertAlmostEqual(transfer.destination_amount, 95.0)
+        self.assertTrue(transfer.show_exchange)
+        transfer.action_post()
+        self.assertFalse(transfer.exchange_move_id)
+        self._assert_booked(transfer, 5.0, 0.0)
+
+    def test_zero_fee_same_currency_is_unchanged(self):
+        transfer = self._transfer(self.bank, self.cash, 50.0)
+        self.assertFalse(transfer.show_exchange)
+        transfer.action_post()
+        self.assertFalse(transfer.fee_move_id | transfer.exchange_move_id)
+        self._assert_booked(transfer, 0.0, 0.0)
+
+    def test_company_to_foreign_with_fee_and_a_loss(self):
+        transfer = self._transfer(self.bank, self.eur_bank, 100.0, fee_amount=2.0)
+        transfer.destination_amount = 190.0
+        self.assertAlmostEqual(transfer.accounting_rate, 2.0)
+        self.assertAlmostEqual(transfer.expected_amount, 196.0)
+        self.assertAlmostEqual(transfer.difference_amount, -6.0)
+        self.assertAlmostEqual(transfer.exchange_estimate, -3.0)
+        self.assertAlmostEqual(transfer.effective_rate, 1.9)
+        transfer.action_post()
+        self._assert_booked(transfer, 2.0, -3.0)
+
+    def test_foreign_to_company_with_a_gain(self):
+        transfer = self._transfer(self.eur_bank, self.bank, 200.0)
+        transfer.destination_amount = 105.0
+        self.assertAlmostEqual(transfer.expected_amount, 100.0)
+        self.assertAlmostEqual(transfer.exchange_estimate, 5.0)
+        transfer.action_post()
+        self._assert_booked(transfer, 0.0, 5.0)
+
+    def test_third_currency_both_sides_foreign(self):
+        transfer = self._transfer(self.eur_bank, self.gbp_bank, 200.0, fee_amount=4.0)   # 4 EUR = 2 USD
+        transfer.destination_amount = 52.0                                                 # = 104 USD
+        self.assertAlmostEqual(transfer.accounting_rate, 0.25)
+        self.assertAlmostEqual(transfer.expected_amount, 49.0)
+        transfer.action_post()
+        self._assert_booked(transfer, 2.0, 6.0)          # 104 received - (100 sent - 2 fee) = +6 gain
+
+    def test_missing_rate_is_refused(self):
+        jpy = self.setup_other_currency('JPY', rates=[('2099-01-01', 150.0)])
+        jpy_bank = self._nc_foreign('JPY bank', 'OPJP', jpy)
+        transfer = self._transfer(self.bank, jpy_bank, 10.0)
+        self.assertTrue(transfer.rate_missing)
+        with self.assertRaises(UserError):
+            transfer.action_post()
+        self.assertEqual(transfer.state, 'draft')
+
+    def test_fee_without_a_fee_account_is_refused_and_bad_fees_are_rejected(self):
+        self.company.nc_bank_fee_account_id = False
+        with self.assertRaises(UserError):
+            self._transfer(self.bank, self.cash, 100.0, fee_amount=1.0).action_post()
+        self.company.nc_bank_fee_account_id = self.fees
+        for fee in (-1.0, 100.0):
+            with self.subTest(fee=fee), self.assertRaises(ValidationError):
+                self._transfer(self.bank, self.cash, 100.0, fee_amount=fee)
+
+    def test_posted_transfer_is_never_rewritten_or_posted_twice(self):
+        transfer = self._transfer(self.bank, self.eur_bank, 100.0, fee_amount=1.0)
+        transfer.action_post()
+        with self.assertRaises(UserError):
+            transfer.fee_amount = 3.0
+        with self.assertRaises(UserError):
+            transfer.action_post()
+        self.assertEqual(self.env['account.move'].search_count([('line_ids.account_id', '=', self.fees.id),
+                                                                ('id', '=', transfer.fee_move_id.id)]), 1)

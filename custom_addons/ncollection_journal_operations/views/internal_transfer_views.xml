@@ -50,8 +50,9 @@
                             <field name="source_currency_id" invisible="1"/>
                             <field name="destination_currency_id" invisible="1"/>
                             <field name="amount" readonly="state != 'draft'"/>
-                            <field name="destination_amount" invisible="not multi_currency"
-                                   readonly="state != 'draft'"/>
+                            <field name="fee_amount" readonly="state != 'draft'" invisible="state != 'draft' and not fee_amount"/>
+                            <field name="destination_amount" invisible="not multi_currency and not fee_amount"
+                                   readonly="state != 'draft' or not multi_currency"/>
                             <field name="date" readonly="state != 'draft'"/>
                         </group>
                         <group>
@@ -63,6 +64,57 @@
                             <field name="destination_payment_id" invisible="not destination_payment_id" readonly="1"/>
                         </group>
                     </group>
+                    <!-- Requests 13 / 14: one section, a preview while draft, what was booked once posted. -->
+                    <field name="show_exchange" invisible="1"/>
+                    <field name="rate_missing" invisible="1"/>
+                    <field name="company_currency_id" invisible="1"/>
+                    <div class="o_nc_fx_card" invisible="not show_exchange">
+                        <div class="o_nc_fx_head">
+                            <span class="o_nc_fx_title">Exchange Rate &amp; Transfer Details</span>
+                            <span class="badge text-bg-light" invisible="state != 'draft'">Preview: nothing is booked yet</span>
+                            <span class="badge text-bg-success" invisible="state == 'draft'">Booked</span>
+                        </div>
+                        <div class="alert alert-danger py-2 mb-2" role="alert" invisible="not rate_missing">
+                            No exchange rate on or before the transfer date: add it before confirming.
+                        </div>
+                        <div class="o_nc_fx_grid">
+                            <div class="o_nc_fx_cell"><div class="o_nc_fx_label">Amount Sent</div>
+                                <field name="amount" readonly="1" class="o_nc_fx_value"/></div>
+                            <div class="o_nc_fx_cell"><div class="o_nc_fx_label">Amount Received</div>
+                                <field name="destination_amount" readonly="1" class="o_nc_fx_value"/></div>
+                            <div class="o_nc_fx_cell" invisible="not multi_currency"><div class="o_nc_fx_label">Accounting Rate</div>
+                                <field name="accounting_rate" readonly="1" class="o_nc_fx_value"/>
+                                <div class="o_nc_fx_sub">per 1 <field name="source_currency_id" readonly="1" options="{'no_open': True}" class="d-inline"/>,
+                                    in <field name="destination_currency_id" readonly="1" options="{'no_open': True}" class="d-inline"/></div></div>
+                            <div class="o_nc_fx_cell" invisible="not multi_currency"><div class="o_nc_fx_label">Effective Rate</div>
+                                <field name="effective_rate" readonly="1" class="o_nc_fx_value"/></div>
+                            <div class="o_nc_fx_cell" invisible="not multi_currency"><div class="o_nc_fx_label">Expected Amount</div>
+                                <field name="expected_amount" readonly="1" class="o_nc_fx_value"/></div>
+                            <div class="o_nc_fx_cell" invisible="not multi_currency"><div class="o_nc_fx_label">Conversion Difference</div>
+                                <field name="difference_amount" readonly="1" class="o_nc_fx_value"
+                                       decoration-danger="difference_amount &lt; 0" decoration-info="difference_amount &gt; 0"/></div>
+                            <div class="o_nc_fx_cell"><div class="o_nc_fx_label">Bank Fee</div>
+                                <field name="fee_amount" readonly="1" class="o_nc_fx_value"/>
+                                <div class="o_nc_fx_sub" invisible="not multi_currency">
+                                    <field name="fee_company_amount" readonly="1" class="d-inline"/></div></div>
+                            <div class="o_nc_fx_cell" invisible="not multi_currency or state != 'draft'">
+                                <div class="o_nc_fx_label">Exchange Gain / Loss (estimate)</div>
+                                <field name="exchange_estimate" readonly="1" class="o_nc_fx_value"
+                                       decoration-danger="exchange_estimate &lt; 0" decoration-info="exchange_estimate &gt; 0"/></div>
+                            <div class="o_nc_fx_cell" invisible="state == 'draft' or not multi_currency">
+                                <div class="o_nc_fx_label">Exchange Gain / Loss (booked)</div>
+                                <field name="exchange_amount" readonly="1" class="o_nc_fx_value"
+                                       decoration-danger="exchange_amount &lt; 0" decoration-info="exchange_amount &gt; 0"/></div>
+                        </div>
+                        <div class="o_nc_fx_entries small" invisible="state == 'draft'">
+                            <span invisible="not fee_move_id">Bank fee entry: <field name="fee_move_id" readonly="1" class="d-inline"/></span>
+                            <span invisible="not exchange_move_id">Exchange entry: <field name="exchange_move_id" readonly="1" class="d-inline"/></span>
+                        </div>
+                        <div class="o_nc_fx_note text-muted small" invisible="state != 'draft'">
+                            On confirmation the bank fee is booked to Bank Fees; what remains between the value sent and
+                            the value received is booked by Odoo as exchange gain or loss when the two sides are reconciled.
+                        </div>
+                    </div>
                 </sheet>
                 <chatter/>
             </form>

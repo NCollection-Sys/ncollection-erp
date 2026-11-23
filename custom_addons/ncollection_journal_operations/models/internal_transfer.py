@@ -61,6 +61,36 @@ class InternalTransfer(models.Model):
     multi_currency = fields.Boolean(compute='_compute_currencies', store=True)
     date = fields.Date(required=True, default=fields.Date.context_today, tracking=True)
     memo = fields.Char(string='Description', tracking=True)
+    # ---- Requests 13 / 14: bank fee and exchange difference (docs/markdown/JOURNAL_OPERATIONS.md §6) ----
+    fee_amount = fields.Monetary(
+        string='Bank Fee', currency_field='source_currency_id', tracking=True,
+        help="What the banks charged, in the currency sent. Booked to the company's Bank Fees account, apart from "
+             "any exchange gain or loss. Amount Received is what actually arrived.")
+    company_currency_id = fields.Many2one(related='company_id.currency_id', string='Company Currency')
+    accounting_rate = fields.Float(
+        string='Accounting Rate', digits=0, compute='_compute_exchange_preview', store=True,
+        help="Odoo's rate on the transfer date: one unit sent = this many units received.")
+    effective_rate = fields.Float(string='Effective Rate', digits=0, compute='_compute_exchange_preview', store=True,
+                                  help="Amount Received / Amount sent.")
+    expected_amount = fields.Monetary(
+        string='Expected Amount', currency_field='destination_currency_id', compute='_compute_exchange_preview',
+        store=True, help="(Amount - Bank Fee) at the accounting rate.")
+    difference_amount = fields.Monetary(
+        string='Conversion Difference', currency_field='destination_currency_id',
+        compute='_compute_exchange_preview', store=True, help="Amount Received - Expected Amount.")
+    fee_company_amount = fields.Monetary(string='Bank Fee (company currency)', currency_field='company_currency_id',
+                                         compute='_compute_exchange_preview', store=True)
+    exchange_estimate = fields.Monetary(
+        string='Exchange Gain / Loss (estimate)', currency_field='company_currency_id',
+        compute='_compute_exchange_preview', store=True,
+        help="Company currency: value received - value sent net of the fee, at the accounting rates. Positive = gain.")
+    show_exchange = fields.Boolean(compute='_compute_exchange_preview', store=True)
+    rate_missing = fields.Boolean(compute='_compute_exchange_preview', store=True)
+    fee_move_id = fields.Many2one('account.move', string='Bank Fee Entry', readonly=True, copy=False)
+    exchange_move_id = fields.Many2one('account.move', string='Exchange Difference Entry', readonly=True, copy=False)
+    exchange_amount = fields.Monetary(
+        string='Exchange Gain / Loss', currency_field='company_currency_id', readonly=True, copy=False,
+        help="Booked by Odoo when the transfer lines were reconciled (company currency). Positive = gain.")
     source_payment_id = fields.Many2one('account.payment', readonly=True, copy=False)
     destination_payment_id = fields.Many2one('account.payment', readonly=True, copy=False)
     source_state = fields.Selection(related='source_payment_id.state', string='Sent')
@@ -110,16 +140,58 @@ class InternalTransfer(models.Model):
             rec.multi_currency = (bool(rec.destination_journal_id)
                                   and rec.source_currency_id != rec.destination_currency_id)
 
-    @api.depends('amount', 'date', 'source_currency_id', 'destination_currency_id')
+    @api.depends('amount', 'fee_amount', 'date', 'source_currency_id', 'destination_currency_id')
     def _compute_destination_amount(self):
         for rec in self:
+            net = rec.amount - (rec.fee_amount or 0.0)
             if rec.source_currency_id and rec.destination_currency_id and rec.company_id:
                 rec.destination_amount = rec.source_currency_id._convert(
-                    rec.amount, rec.destination_currency_id, rec.company_id, rec.date or fields.Date.today())
+                    net, rec.destination_currency_id, rec.company_id, rec.date or fields.Date.today())
             else:
-                rec.destination_amount = rec.amount
+                rec.destination_amount = net
 
-    @api.constrains('source_journal_id', 'destination_journal_id', 'destination_amount', 'amount')
+    def _nc_rate_missing(self):
+        """True when a non-company currency of the transfer has no rate on or before its date: Odoo would then
+        convert at 1.0, silently. Refused rather than guessed."""
+        self.ensure_one()
+        Rate = self.env['res.currency.rate'].sudo()
+        company = self.company_id
+        for currency in (self.source_currency_id | self.destination_currency_id) - company.currency_id:
+            if not Rate.search_count([('currency_id', '=', currency.id), ('name', '<=', self.date),
+                                      ('company_id', 'in', (company.root_id.id, company.id, False))], limit=1):
+                return True
+        return False
+
+    @api.depends('amount', 'fee_amount', 'destination_amount', 'date', 'source_currency_id',
+                 'destination_currency_id', 'company_id')
+    def _compute_exchange_preview(self):
+        """The preview the form shows before confirmation. Stored, and frozen once posted (a posted transfer cannot be
+        edited, and no rate is a dependency). What was actually BOOKED is fee_move_id / exchange_amount."""
+        for rec in self:
+            src, dst, company = rec.source_currency_id, rec.destination_currency_id, rec.company_id
+            if not (src and dst and company and rec.date and rec.amount):
+                rec.update({'accounting_rate': 0.0, 'effective_rate': 0.0, 'expected_amount': 0.0,
+                            'difference_amount': 0.0, 'fee_company_amount': 0.0, 'exchange_estimate': 0.0,
+                            'show_exchange': False, 'rate_missing': False})
+                continue
+            ccy = company.currency_id
+            rate = src._get_conversion_rate(src, dst, company, rec.date)
+            net = rec.amount - (rec.fee_amount or 0.0)
+            expected = dst.round(net * rate)
+            sent_net_company = src._convert(net, ccy, company, rec.date)
+            received_company = dst._convert(rec.destination_amount, ccy, company, rec.date)
+            rec.update({
+                'accounting_rate': rate,
+                'effective_rate': rec.destination_amount / rec.amount,
+                'expected_amount': expected,
+                'difference_amount': dst.round(rec.destination_amount - expected),
+                'fee_company_amount': src._convert(rec.fee_amount or 0.0, ccy, company, rec.date),
+                'exchange_estimate': ccy.round(received_company - sent_net_company) if src != dst else 0.0,
+                'show_exchange': src != dst or bool(rec.fee_amount),
+                'rate_missing': src != dst and rec._nc_rate_missing(),
+            })
+
+    @api.constrains('source_journal_id', 'destination_journal_id', 'destination_amount', 'amount', 'fee_amount')
     def _check_journals(self):
         for rec in self:
             if rec.source_journal_id == rec.destination_journal_id:
@@ -132,10 +204,13 @@ class InternalTransfer(models.Model):
                 raise ValidationError(self.env._("Both journals must belong to the same company."))
             if rec.destination_amount <= 0:
                 raise ValidationError(self.env._("The amount received must be positive."))
+            fee = rec.fee_amount or 0.0
+            if fee < 0 or rec.source_currency_id.compare_amounts(fee, rec.amount) >= 0:
+                raise ValidationError(self.env._("The bank fee must be zero or more, and less than the amount sent."))
             if (rec.destination_journal_id and not rec.multi_currency
-                    and rec.source_currency_id.compare_amounts(rec.destination_amount, rec.amount)):
+                    and rec.source_currency_id.compare_amounts(rec.destination_amount + fee, rec.amount)):
                 raise ValidationError(self.env._(
-                    "In one currency the amount received must equal the amount sent."))
+                    "In one currency the amount received plus the bank fee must equal the amount sent."))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -156,7 +231,8 @@ class InternalTransfer(models.Model):
             raise UserError(self.env._("A posted transfer cannot be edited."))
         return super().write(vals)
 
-    _POSTING_FIELDS = {'state', 'name', 'source_payment_id', 'destination_payment_id'}
+    _POSTING_FIELDS = {'state', 'name', 'source_payment_id', 'destination_payment_id', 'fee_move_id',
+                       'exchange_move_id', 'exchange_amount'}
 
     def _nc_set_posted(self, vals):
         """The one writer of the posting fields, called from action_post after both payments exist."""
@@ -195,6 +271,14 @@ class InternalTransfer(models.Model):
             raise UserError(self.env._(
                 "Both journals need a payment method (Outgoing on %(sender)s, Incoming on %(receiver)s).",
                 sender=self.source_journal_id.display_name, receiver=self.destination_journal_id.display_name))
+        if self.multi_currency and self._nc_rate_missing():
+            raise UserError(self.env._(
+                "No exchange rate on or before %(date)s for this transfer's currencies: add the rate first; a "
+                "transfer is never converted at a guessed rate.", date=self.date))
+        fee_account = company.nc_bank_fee_account_id
+        if self.fee_amount and not fee_account:
+            raise UserError(self.env._("Set the Bank Fees account in the accounting settings of %(company)s.",
+                                       company=company.display_name))
         name = self.env['ir.sequence'].next_by_code('ncollection.internal.transfer') or '/'
         memo = self.memo or self.env._("Internal Transfer %(name)s", name=name)
         Payment = self.env['account.payment']
@@ -214,14 +298,29 @@ class InternalTransfer(models.Model):
         (source | destination).action_post()
         source.paired_internal_transfer_payment_id = destination
         destination.paired_internal_transfer_payment_id = source
-        transfer_lines = (source.move_id | destination.move_id).line_ids.filtered(
+        fee_move = self._nc_post_fee_entry(name, memo, fee_account) if self.fee_amount else self.env['account.move']
+        moves = source.move_id | destination.move_id | fee_move
+        transfer_lines = moves.line_ids.filtered(
             lambda line: line.account_id == company.transfer_account_id and not line.reconciled)
-        if len(transfer_lines) != 2:
+        if len(transfer_lines) != 2 + len(fee_move):
             raise UserError(self.env._(
                 "The transfer could not be booked on the Internal Transfer account; nothing was saved."))
+        # What is left on the clearing account in company currency after the fee is the GENUINE exchange difference:
+        # booked explicitly to Odoo's own gain / loss accounts in its exchange journal (Odoo does not book it by itself
+        # when the two sides are in different foreign currencies), then everything is reconciled together.
+        residual = company.currency_id.round(sum(transfer_lines.mapped('balance')))
+        exchange_move = self.env['account.move']
+        if not company.currency_id.is_zero(residual):
+            exchange_move = self._nc_post_exchange_entry(name, memo, residual)
+            transfer_lines |= exchange_move.line_ids.filtered(
+                lambda line: line.account_id == company.transfer_account_id)
         transfer_lines.reconcile()
+        if any(not line.reconciled for line in transfer_lines) or len(transfer_lines.full_reconcile_id) != 1:
+            raise UserError(self.env._("The transfer lines did not reconcile completely; nothing was saved."))
+        exchange = -residual if exchange_move else 0.0     # positive = gain
         self._nc_set_posted({'name': name, 'state': 'posted', 'source_payment_id': source.id,
-                             'destination_payment_id': destination.id})
+                             'destination_payment_id': destination.id, 'fee_move_id': fee_move.id,
+                             'exchange_move_id': exchange_move.id, 'exchange_amount': exchange})
         self.message_post(body=self.env._(
             "Posted: %(sender)s from %(from)s, %(receiver)s into %(to)s.",
             sender=source.name, receiver=destination.name,
@@ -230,6 +329,53 @@ class InternalTransfer(models.Model):
             'type': 'success', 'title': self.env._('Internal Transfer posted'),
             'message': self.env._("%(name)s: each side completes when its bank confirms it (or with Mark as Paid).",
                                   name=name), 'next': {'type': 'ir.actions.act_window_close'}}}
+
+    def _nc_post_fee_entry(self, name, memo, fee_account):
+        """Dr Bank Fees / Cr Internal Transfer account, in the currency sent, on the transfer date, in the company's
+        Miscellaneous journal. Created once (action_post is locked) and linked to the transfer."""
+        company = self.company_id
+        Journal = self.env['account.journal']
+        journal = Journal.search([*Journal._check_company_domain(company), ('type', '=', 'general')], limit=1)
+        if not journal:
+            raise UserError(self.env._("%(company)s has no Miscellaneous journal for the bank fee entry.",
+                                       company=company.display_name))
+        src = self.source_currency_id
+        balance = src._convert(self.fee_amount, company.currency_id, company, self.date)
+        label = self.env._("Bank fee %(name)s", name=name)
+        move = self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': journal.id, 'date': self.date, 'ref': memo,
+            'line_ids': [
+                (0, 0, {'account_id': fee_account.id, 'name': label, 'currency_id': src.id,
+                        'amount_currency': self.fee_amount, 'balance': balance}),
+                (0, 0, {'account_id': company.transfer_account_id.id, 'name': label, 'currency_id': src.id,
+                        'amount_currency': -self.fee_amount, 'balance': -balance}),
+            ]})
+        move.action_post()
+        return move
+
+    def _nc_post_exchange_entry(self, name, memo, residual):
+        """Close ``residual`` (company currency, debit-positive) left on the transfer account: a loss when the value
+        sent net of the fee exceeds the value received, else a gain. Odoo's exchange journal and accounts only."""
+        company = self.company_id
+        journal = company.currency_exchange_journal_id
+        loss = residual > 0
+        account = company.expense_currency_exchange_account_id if loss else company.income_currency_exchange_account_id
+        if not journal or not account:
+            raise UserError(self.env._(
+                "Set the exchange difference journal and the exchange gain / loss accounts of %(company)s in the "
+                "accounting settings: this transfer has a genuine exchange difference.", company=company.display_name))
+        ccy = company.currency_id
+        label = self.env._("Exchange difference %(name)s", name=name)
+        move = self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': journal.id, 'date': self.date, 'ref': memo,
+            'line_ids': [
+                (0, 0, {'account_id': company.transfer_account_id.id, 'name': label, 'currency_id': ccy.id,
+                        'amount_currency': -residual, 'balance': -residual}),
+                (0, 0, {'account_id': account.id, 'name': label, 'currency_id': ccy.id,
+                        'amount_currency': residual, 'balance': residual}),
+            ]})
+        move.action_post()
+        return move
 
     @api.depends('state', 'source_payment_id.state', 'destination_payment_id.state')
     def _compute_progress(self):

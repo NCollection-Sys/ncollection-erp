@@ -240,3 +240,58 @@ a.o_nc_ops_balance {
         transition: none;
     }
 }
+
+// ---- Internal Transfer: Exchange Rate & Transfer Details (Requests 13 / 14) ----
+.o_nc_fx_card {
+    max-width: 960px;
+    margin-top: 0.75rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 0.5rem;
+    background-color: rgba($primary, 0.03);
+
+    .o_nc_fx_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .o_nc_fx_title {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+    .o_nc_fx_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.5rem 1rem;
+    }
+    .o_nc_fx_cell {
+        min-width: 0;
+        padding: 0.375rem 0;
+        border-bottom: 1px dashed var(--border-color, #dee2e6);
+    }
+    .o_nc_fx_label {
+        font-size: 0.78rem;
+        color: $text-muted;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+    .o_nc_fx_value {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+    .o_nc_fx_sub {
+        font-size: 0.8rem;
+        color: $text-muted;
+    }
+    .o_nc_fx_entries {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        margin-top: 0.75rem;
+    }
+    .o_nc_fx_note {
+        margin-top: 0.5rem;
+    }
+}
