@@ -24,7 +24,7 @@ class AuditHistoryActions(models.AbstractModel):
     def _nc_sync_history_actions(self):
         env = self.env
         Action = env['ir.actions.server'].sudo().with_context(active_test=False)
-        wanted = set(env['ncollection.audit.policy'].sudo().search([]).mapped('model'))
+        wanted = set(env['ncollection.audit.policy'].sudo().search([('active', '=', True)]).mapped('model'))
         wanted |= set(env['auditlog.rule'].sudo().search([('state', '=', 'confirmed')]).mapped('model_id.model'))
         wanted = {name for name in wanted if name in env and not env[name]._abstract and not env[name]._transient
                   and not getattr(env[name], '_auto', True) is False}

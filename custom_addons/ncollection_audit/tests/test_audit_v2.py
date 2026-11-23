@@ -97,12 +97,9 @@ class TestAuditV2(TransactionCase):
     def test_rolled_back_write_leaves_no_event(self):
         partner = self._partner(name='Rollback')
         count = len(self._logs(partner))
-        try:
-            with self.env.cr.savepoint():
-                partner.write({'phone': '555'})
-                raise UserError('boom')
-        except UserError:
-            pass
+        with self.assertRaises(ZeroDivisionError), self.env.cr.savepoint():
+            partner.write({'phone': '555'})
+            _ = 1 / 0       # any failure after the write rolls the savepoint back, with the audit row
         self.assertEqual(len(self._logs(partner)), count)
 
     def test_credentials_and_restricted_fields_are_never_recorded(self):

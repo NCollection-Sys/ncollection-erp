@@ -128,7 +128,8 @@ class AuditUndo(models.Model):
             raise AccessError(self.env._("Undo records cannot be changed."))
         return super().write(vals)
 
-    def unlink(self):
+    @api.ondelete(at_uninstall=False)
+    def _unlink_never(self):
         raise AccessError(self.env._("Undo records cannot be deleted."))
 
     # =====================================================================
@@ -466,7 +467,6 @@ class AuditUndo(models.Model):
             })
         except psycopg2.errors.UniqueViolation:
             raise UserError(env._("This event has already been undone.")) from None
-        ctx = dict(env.context)
         details = {}
         # the audit rows this operation writes belong to this Undo (server-side only, never a client context key)
         with undo_scope(undo.id):
@@ -474,16 +474,16 @@ class AuditUndo(models.Model):
                 for name in vals:
                     details[name] = [V.display_current(env, record.sudo(), model._fields[name])[0],
                                      next(r['restore'] for r in analysis['rows'] if r['field'] == name)]
-                record.with_context(ctx).write(vals)
+                record.write(vals)
                 result_id = record.id
             elif mode == 'archive':
-                record.with_context(ctx).write({'active': False})
+                record.write({'active': False})
                 result_id = record.id
             elif log.nc_action == 'create':
-                record.with_context(ctx).unlink()
+                record.unlink()
                 result_id = 0
             else:
-                new = model.with_context(ctx).create(vals)
+                new = model.create(vals)
                 result_id = new.id
         undo.sudo().write({'state': 'done', 'mode': mode, 'result_res_id': result_id,
                            'details': json.dumps(details, default=str)})

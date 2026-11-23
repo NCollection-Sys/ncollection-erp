@@ -12,6 +12,7 @@ ORM, never by the screen:
 
 Opening an event of a document that still exists also requires read access to THAT document (its own record rules).
 """
+import logging
 from datetime import datetime, time, timedelta
 
 import pytz
@@ -21,6 +22,8 @@ from odoo.exceptions import AccessError, UserError
 from odoo.tools.translate import LazyTranslate
 
 from . import audit_values as V
+
+_logger = logging.getLogger(__name__)
 
 _lt = LazyTranslate(__name__)
 
@@ -150,7 +153,8 @@ class AuditService(models.AbstractModel):
             domain += ['|', '|', ('name', 'ilike', text), ('model_name', 'ilike', text),
                        ('line_ids.field_description', 'ilike', text)]
         reversed_ = filters.get('reversed')
-        undone = self.env['ncollection.audit.undo'].sudo().search([]).mapped("original_log_ref")
+        undone = self.env['ncollection.audit.undo'].sudo().search(
+            [('original_log_ref', '!=', 0)]).mapped('original_log_ref')
         if reversed_ == 'reversed':
             domain.append(('id', 'in', undone))
         elif reversed_ == 'not_reversed':
@@ -417,7 +421,8 @@ class AuditService(models.AbstractModel):
                         if not V.same(field, V.parse(field, last[name]), V.parse(field, line.old_value)):
                             gaps.append({'field': V.label(self.env, model, name, field.string), 'event': log.id})
                     except (ValueError, SyntaxError):
-                        pass
+                        # a value that cannot be read back is not evidence of a gap either way
+                        _logger.debug("audit compare: unreadable value of %s on event %s", name, log.id)
                 last[name] = line.new_value if log.nc_action != 'delete' else line.old_value
         rows.sort(key=lambda r: ({'changed': 0, 'added': 1, 'removed': 2, 'unknown': 3, 'unchanged': 4}[r['status']],
                                  (r['label'] or '').lower()))

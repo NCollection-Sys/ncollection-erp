@@ -205,7 +205,7 @@ def display(env, model, field, raw, raw_text=None, currency=None):
             from odoo.tools import html2plaintext
             return html2plaintext(raw)[:MAX_TEXT], 'value'
     except (ValueError, SyntaxError, TypeError):
-        pass
+        return str(raw), 'value'       # shown as recorded when it cannot be typed
     return str(raw), 'value'
 
 

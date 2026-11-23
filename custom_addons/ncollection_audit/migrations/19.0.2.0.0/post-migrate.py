@@ -12,6 +12,7 @@ old row still verifies). Set-based SQL, safe to run again: each UPDATE only fill
 import logging
 
 from odoo import SUPERUSER_ID, api
+from odoo.tools import SQL
 
 _logger = logging.getLogger(__name__)
 
@@ -23,16 +24,17 @@ def migrate(cr, version):
     # 2.0 itself, are never touched: their company is the one recorded at the time, not today's.
     cr.execute("DROP TABLE IF EXISTS nc_audit_legacy")
     cr.execute("CREATE TEMP TABLE nc_audit_legacy AS SELECT id FROM auditlog_log WHERE nc_action IS NULL")
-    LEGACY = "id IN (SELECT id FROM nc_audit_legacy)"
     cr.execute("""
         UPDATE auditlog_log
            SET nc_action = CASE method WHEN 'create' THEN 'create' WHEN 'write' THEN 'update'
                                        WHEN 'unlink' THEN 'delete' ELSE 'other' END
-         WHERE nc_action IS NULL AND """ + LEGACY)
+         WHERE nc_action IS NULL AND id IN (SELECT id FROM nc_audit_legacy)""")
     actions = cr.rowcount
-    cr.execute("UPDATE auditlog_log SET nc_doc_type = model_model "
-               "WHERE nc_doc_type IS NULL AND model_model IS NOT NULL AND " + LEGACY)
-    cr.execute("UPDATE auditlog_log SET nc_source = 'oca' WHERE nc_source IS NULL AND " + LEGACY)
+    cr.execute("""UPDATE auditlog_log SET nc_doc_type = model_model
+                   WHERE nc_doc_type IS NULL AND model_model IS NOT NULL
+                     AND id IN (SELECT id FROM nc_audit_legacy)""")
+    cr.execute("""UPDATE auditlog_log SET nc_source = 'oca'
+                   WHERE nc_source IS NULL AND id IN (SELECT id FROM nc_audit_legacy)""")
     cr.execute("""
         SELECT DISTINCT l.model_model, m.model
           FROM auditlog_log l
@@ -46,12 +48,12 @@ def migrate(cr, version):
         if model_name not in env or not env[model_name]._auto:
             continue
         table = env[model_name]._table
-        cr.execute(f"""
+        cr.execute(SQL("""
             UPDATE auditlog_log l SET nc_company_id = t.company_id
-              FROM "{table}" t
+              FROM %s t
              WHERE l.model_model = %s AND l.res_id = t.id AND l.nc_company_id IS NULL AND t.company_id IS NOT NULL
                AND l.id IN (SELECT id FROM nc_audit_legacy)
-        """, (model_name,))
+        """, SQL.identifier(table), model_name))
         companies += cr.rowcount
     cr.execute("""
         UPDATE auditlog_log l SET nc_company_id = l.res_id
