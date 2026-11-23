@@ -21,7 +21,10 @@ payment posted any other way (the Register Payment wizard of an invoice, a list'
 a bank reconciliation) is NOT allocated here: those flows reconcile what they were asked to. The same goes for the
 list's mass "Confirm", which is Odoo's own ``action_post``; only the form's Confirm button allocates.
 """
+import json
+
 from markupsafe import Markup, escape
+from psycopg2 import errors
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
@@ -52,6 +55,18 @@ class AccountPayment(models.Model):
     nc_unallocated_amount = fields.Monetary(
         string='Unallocated', compute='_compute_nc_unallocated_amount', currency_field='currency_id',
         help="The part of the payment not applied to any document (an outstanding credit on the partner's account).")
+
+    # Request 05: the documents THIS payment will be applied to, as the user sees and edits them on the form. Seeded
+    # once from the automatic plan; a Remove (the row's x) or Clear All locks the selection so a later recalculation
+    # never re-applies a document the user took out. Payments not created on the form (seed empty) keep the automatic
+    # behaviour. Never deletes a document or the payment: it only decides what Confirm reconciles.
+    nc_selected_move_ids = fields.Many2many(
+        'account.move', 'nc_payment_allocation_move_rel', 'payment_id', 'move_id', string='Allocate To',
+        copy=False, check_company=True, domain="[('id', 'in', nc_eligible_move_ids)]")
+    nc_alloc_seed = fields.Char(copy=False, help="Technical: ids the form seeded from the automatic plan (JSON).")
+    nc_alloc_locked = fields.Boolean(
+        string='Manual Allocation', copy=False,
+        help="Set when an allocation was removed or all were cleared: only the documents listed receive this payment.")
 
     nc_is_overpaid = fields.Boolean(
         string='Overpaid', compute='_compute_nc_is_overpaid', search='_search_nc_is_overpaid',
@@ -114,6 +129,10 @@ class AccountPayment(models.Model):
             return (due, move.invoice_date or move.date, move.id)
 
         first = self.nc_apply_first_move_id
+        if self.nc_alloc_seed and not self.env.context.get('nc_alloc_auto'):
+            # the form manages this payment: only what the user kept (and the one chosen to settle first)
+            chosen = self.nc_selected_move_ids | first
+            by_move = {move: lines for move, lines in by_move.items() if move in chosen}
         moves = sorted((m for m in by_move if m != first), key=order)
         if first in by_move:
             moves.insert(0, first)
@@ -181,8 +200,61 @@ class AccountPayment(models.Model):
                 abs(sum(payment._nc_counterpart_lines().filtered(lambda line: not line.reconciled).mapped(
                     'amount_residual_currency'))) if payment.move_id and payment.state != 'draft' else 0.0)
 
+    # ------------------------------------------------------------------ Request 05: Remove / Clear All
+    @api.onchange('partner_id', 'partner_type', 'payment_type', 'amount', 'currency_id', 'date', 'nc_apply_first_move_id',
+                  'destination_account_id')
+    def _onchange_nc_seed_allocation(self):
+        """Seed (or re-seed) the selection from the automatic plan, unless the user locked it. A selection that no
+        longer fits (another partner) is replaced even when locked: it could never be applied."""
+        for payment in self:
+            if payment.state != 'draft':
+                continue
+            eligible = payment._nc_open_document_lines().move_id
+            stale = set(payment.nc_selected_move_ids._origin.ids) - set(eligible.ids)
+            if payment.nc_alloc_locked and not stale:
+                continue
+            rows, _unallocated = payment.with_context(nc_alloc_auto=True)._nc_allocation_plan()
+            moves = self.env['account.move'].union(*[row['move'] for row in rows])
+            payment.nc_selected_move_ids = moves
+            payment.nc_alloc_seed = json.dumps(sorted(moves.ids))
+            payment.nc_alloc_locked = False
+
+    @api.onchange('nc_selected_move_ids')
+    def _onchange_nc_selected_move_ids(self):
+        for payment in self:
+            seed = json.loads(payment.nc_alloc_seed or '[]')
+            if payment.nc_alloc_seed and sorted(payment.nc_selected_move_ids._origin.ids) != seed:
+                payment.nc_alloc_locked = True      # a document was removed (or added) by hand
+
+    def _nc_check_draft_allocation(self):
+        for payment in self:
+            if payment.state != 'draft':
+                raise UserError(self.env._(
+                    "%(payment)s is confirmed: its allocation is a reconciliation now. Unreconcile it from the "
+                    "invoice's payment widget if it must change.", payment=payment.display_name))
+            payment.check_access('write')
+
+    def action_nc_clear_allocations(self):
+        """Clear All Allocations: nothing is applied on Confirm; the whole amount stays unallocated (a credit on the
+        partner's account). The documents and the payment are untouched."""
+        self._nc_check_draft_allocation()
+        self.write({'nc_selected_move_ids': [(5, 0, 0)], 'nc_apply_first_move_id': False, 'nc_alloc_locked': True,
+                    'nc_alloc_seed': '[]'})
+        return True
+
+    def action_nc_auto_allocate(self):
+        """Back to the automatic plan (earliest due first)."""
+        self._nc_check_draft_allocation()
+        for payment in self:
+            payment.write({'nc_alloc_seed': False, 'nc_alloc_locked': False})
+            rows, _unallocated = payment.with_context(nc_alloc_auto=True)._nc_allocation_plan()
+            moves = self.env['account.move'].union(*[row['move'] for row in rows])
+            payment.write({'nc_selected_move_ids': [(6, 0, moves.ids)], 'nc_alloc_seed': json.dumps(sorted(moves.ids))})
+        return True
+
     @api.depends('state', 'amount', 'currency_id', 'date', 'partner_id', 'partner_type', 'payment_type',
-                 'destination_account_id', 'company_id', 'nc_apply_first_move_id', 'move_id.line_ids.amount_residual')
+                 'destination_account_id', 'company_id', 'nc_apply_first_move_id', 'move_id.line_ids.amount_residual',
+                 'nc_selected_move_ids', 'nc_alloc_seed')
     def _compute_nc_allocation(self):
         """The form's table: the PLAN before Confirm, what was applied after. (The preview converts at the payment
         date; the reconciliation itself uses Odoo's own rates, so a multi-currency preview is an estimate.)"""
@@ -237,14 +309,30 @@ class AccountPayment(models.Model):
     # ------------------------------------------------------------------ Confirm = post, then apply
     def _nc_check_apply_first(self):
         for payment in self:
+            open_moves = payment._nc_open_document_lines().move_id
             first = payment.nc_apply_first_move_id
-            if first and first not in payment._nc_open_document_lines().move_id:
+            if first and first not in open_moves:
                 raise UserError(self.env._(
                     "%(document)s is not an open document of %(partner)s that this payment can be applied to.",
                     document=first.display_name, partner=payment.partner_id.display_name))
+            # a selected document paid meanwhile simply drops out; one of another partner / company is refused
+            alien = payment.nc_selected_move_ids.filtered(
+                lambda move: move.commercial_partner_id != payment.partner_id.commercial_partner_id
+                or move.company_id not in (payment.company_id | payment.company_id._accessible_branches()))
+            if alien:
+                raise UserError(self.env._("%(documents)s cannot receive this payment.",
+                                           documents=', '.join(alien.mapped('display_name'))))
 
     def action_nc_post_and_allocate(self):
-        """The payment form's Confirm: Odoo posts the payment, then it is applied through Odoo's reconciliation."""
+        """The payment form's Confirm: Odoo posts the payment, then it is applied through Odoo's reconciliation.
+        Locked so a double click or a second user never applies the same payment twice."""
+        try:
+            self.env.cr.execute('SELECT id FROM account_payment WHERE id = ANY(%s) FOR UPDATE NOWAIT', [self.ids])
+        except errors.LockNotAvailable:
+            raise UserError(self.env._("This payment is being confirmed by another user.")) from None
+        self.invalidate_recordset(['state'])
+        if any(payment.state != 'draft' for payment in self):
+            raise UserError(self.env._("This payment is already confirmed."))
         self._nc_check_apply_first()
         self.action_post()
         self._nc_apply_allocation()

@@ -104,6 +104,30 @@
             </xpath>
             <xpath expr="//sheet/group[@name='main_group']" position="after">
                 <group string="Allocation" invisible="not partner_id">
+                    <field name="nc_alloc_seed" invisible="1"/>
+                    <field name="nc_alloc_locked" invisible="1"/>
+                    <!-- Request 05: what Confirm will apply, editable while draft. The row's x removes ONE allocation
+                         (never the invoice); Clear All leaves the whole amount unallocated; Automatic goes back to
+                         earliest due first. A removed document is never re-applied by a recalculation. -->
+                    <div colspan="2" class="o_nc_alloc_tools d-flex flex-wrap align-items-center gap-2 mb-2"
+                         invisible="state != 'draft'">
+                        <span class="badge text-bg-warning" invisible="not nc_alloc_locked">Manual allocation</span>
+                        <span class="badge text-bg-light" invisible="nc_alloc_locked">Automatic: earliest due first</span>
+                        <button name="action_nc_clear_allocations" type="object" string="Clear All Allocations"
+                                class="btn btn-link btn-sm text-danger p-0" icon="fa-times-circle"
+                                invisible="not nc_selected_move_ids"/>
+                        <button name="action_nc_auto_allocate" type="object" string="Automatic"
+                                class="btn btn-link btn-sm p-0" icon="fa-magic" invisible="not nc_alloc_locked"/>
+                    </div>
+                    <field name="nc_selected_move_ids" nolabel="1" colspan="2" invisible="state != 'draft'"
+                           options="{'no_create': True}">
+                        <list editable="bottom" class="o_nc_alloc_list" string="Allocate To">
+                            <field name="name" string="Document" readonly="1"/>
+                            <field name="invoice_date_due" string="Due" readonly="1"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="amount_residual" string="Open" readonly="1"/>
+                        </list>
+                    </field>
                     <field name="nc_allocation_html" nolabel="1" colspan="2" readonly="1"/>
                     <field name="nc_unallocated_amount" invisible="1"/>
                 </group>
