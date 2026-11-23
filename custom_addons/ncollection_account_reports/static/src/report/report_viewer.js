@@ -32,6 +32,8 @@ import { formatFloat } from "@web/core/utils/numbers";
 import { formatDate, deserializeDate } from "@web/core/l10n/dates";
 import { user } from "@web/core/user";
 
+const { DateTime } = luxon;
+
 // url key <- filter name
 const URL_KEYS = {
     date_from: "nc_df", date_to: "nc_dt", target_move: "nc_tm", company_id: "nc_co",
@@ -70,6 +72,7 @@ export class NcReportViewer extends Component {
             xbrlHelp: false,
             details: {},     // partner id -> { open, loading, rows }
             moreOpen: false, // the advanced-filters row
+            periodCustom: false, // Custom chosen in the Period list
         });
         this.mounted = false;
         this.pendingState = null;
@@ -229,12 +232,12 @@ export class NcReportViewer extends Component {
         return [
             ["custom", _t("Custom")], ["this_month", _t("This month")], ["last_month", _t("Last month")],
             ["this_quarter", _t("This quarter")], ["last_quarter", _t("Last quarter")],
-            ["this_year", _t("This year")], ["last_year", _t("Last year")],
+            ["this_year", _t("This calendar year")], ["last_year", _t("Last calendar year")],
         ];
     }
 
     presetRange(key) {
-        const now = luxon.DateTime.local();
+        const now = DateTime.local();
         const fmt = (d) => d.toISODate();
         switch (key) {
             case "this_month": return [now.startOf("month"), now.endOf("month")].map(fmt);
@@ -248,6 +251,9 @@ export class NcReportViewer extends Component {
     }
 
     get periodPreset() {
+        if (this.state.periodCustom) {
+            return "custom";              // the user chose Custom: never snap back to a matching preset
+        }
         const v = this.state.values;
         for (const [key] of this.periodPresets) {
             const r = this.presetRange(key);
@@ -260,6 +266,7 @@ export class NcReportViewer extends Component {
 
     applyPeriodPreset(key) {
         const r = this.presetRange(key);
+        this.state.periodCustom = !r;
         if (r) {
             this.state.values.date_from = r[0];
             this.state.values.date_to = r[1];
@@ -287,25 +294,54 @@ export class NcReportViewer extends Component {
             || (this.has("company_id") && this.multiCompany) || this.moreExtraFilters.length > 0;
     }
 
-    /** How many advanced filters differ from empty, so a folded row never hides an active filter. */
+    /** How many advanced filters differ from the report's own default (sent by the server per filter), so a folded
+     *  row never hides an active filter: Entries incl. drafts, another company, comparison, journals / accounts,
+     *  every extra filter of any type. */
     get moreFiltersCount() {
         const v = this.state.values;
+        const differs = (f) => {
+            const val = v[f.name];
+            if (f.type === "many2many") {
+                return (val || []).length > 0;
+            }
+            if ("default" in f) {
+                return (val ?? false) !== (f.default ?? false) && !(val === "" && !f.default);
+            }
+            return f.type === "boolean" ? !!val : false;
+        };
         let n = 0;
-        for (const name of ["journal_ids", "account_ids"]) {
-            if (this.has(name) && (v[name] || []).length) {
+        for (const name of ["target_move", "comparison_type", "journal_ids", "account_ids"]) {
+            if (this.has(name) && differs(this.field(name))) {
                 n++;
             }
         }
-        if (this.has("comparison_type") && v.comparison_type && v.comparison_type !== "none") {
+        if (this.has("company_id") && this.multiCompany && differs(this.field("company_id"))) {
             n++;
         }
         for (const f of this.moreExtraFilters) {
-            const val = v[f.name];
-            if (Array.isArray(val) ? val.length : f.type === "boolean" ? val : false) {
+            if (differs(f)) {
                 n++;
             }
         }
         return n;
+    }
+
+    /** Scope as toggle buttons: Left / Right (mirrored in RTL) move the choice, like a segmented control. */
+    onScopeKeydown(ev) {
+        const opts = this.scopeFilter ? this.scopeFilter.options.map((o) => o[0]) : [];
+        const i = opts.indexOf(this.state.values.partner_scope);
+        const rtl = getComputedStyle(ev.currentTarget).direction === "rtl";
+        const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1 }[ev.key];
+        if (!step || i < 0) {
+            return;
+        }
+        ev.preventDefault();
+        const next = opts[(i + step + opts.length) % opts.length];
+        this.setScope(next);
+        const btn = ev.currentTarget.querySelector(`[data-scope="${next}"]`);
+        if (btn) {
+            btn.focus();
+        }
     }
 
     // ------------------------------------------------------ report shape

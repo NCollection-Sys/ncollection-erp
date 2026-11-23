@@ -175,6 +175,9 @@ class TestAccountingSettingsComplete(AccountTestInvoicingCommon):
         users = self.env.ref('base.group_user').sudo()
         # The invariant must hold whatever the database's currency configuration already is: a save that changes
         # nothing is never an error, so every refused write below is the OPPOSITE of the current state.
+        eur = self.env.ref('base.EUR')
+        other_currency = eur if company.currency_id != eur else self.env.ref('base.USD')
+        other_currency.sudo().active = True            # a real, selectable currency (activating may imply the group)
         for multi_currency_on in (False, True):
             if multi_currency_on:
                 users._apply_group(multi)
@@ -182,8 +185,6 @@ class TestAccountingSettingsComplete(AccountTestInvoicingCommon):
                 users._remove_group(multi)
             current = self._settings()._nc_native_values(['group_multi_currency', 'autopost_bills'])
             self.assertEqual(current['group_multi_currency'], multi_currency_on)
-            other_currency = self.env['res.currency'].with_context(active_test=False).search(
-                [('id', '!=', company.currency_id.id)], limit=1)
             before = (company.autopost_bills, company.account_sale_tax_id, company.currency_id)
             for vals in ({'autopost_bills': not current['autopost_bills']},
                          {'group_multi_currency': not current['group_multi_currency']},

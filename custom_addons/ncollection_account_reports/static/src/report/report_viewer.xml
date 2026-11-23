@@ -67,7 +67,7 @@
                   <div class="o_nc_rep__frow">
                     <div t-if="has('date_from') and has('date_to')" class="o_nc_rep__f o_nc_rep__f--period">
                         <label for="f_pp">Period</label>
-                        <select id="f_pp" t-att-value="periodPreset" t-on-change="(ev) => this.applyPeriodPreset(ev.target.value)">
+                        <select id="f_pp" t-on-change="(ev) => this.applyPeriodPreset(ev.target.value)">
                             <t t-foreach="periodPresets" t-as="pp" t-key="pp[0]">
                                 <option t-att-value="pp[0]" t-att-selected="pp[0] === periodPreset" t-esc="pp[1]"/>
                             </t>
@@ -83,9 +83,11 @@
                     </div>
                     <div t-if="scopeFilter" class="o_nc_rep__f">
                         <span class="o_nc_rep__flabel" id="f_scope_l" t-esc="scopeFilter.label"/>
-                        <div class="o_nc_rep__seg" role="radiogroup" aria-labelledby="f_scope_l">
+                        <div class="o_nc_rep__seg" role="group" aria-labelledby="f_scope_l" t-on-keydown="onScopeKeydown">
                             <t t-foreach="scopeFilter.options" t-as="opt" t-key="opt[0]">
-                                <button type="button" role="radio" t-att-aria-checked="state.values.partner_scope === opt[0] ? 'true' : 'false'"
+                                <button type="button" t-att-data-scope="opt[0]"
+                                        t-att-aria-pressed="state.values.partner_scope === opt[0] ? 'true' : 'false'"
+                                        t-att-tabindex="state.values.partner_scope === opt[0] ? '0' : '-1'"
                                         t-att-class="'o_nc_rep__segbtn' + (state.values.partner_scope === opt[0] ? ' is-active' : '')"
                                         t-on-click="() => this.setScope(opt[0])" t-esc="opt[1]"/>
                             </t>
@@ -96,7 +98,7 @@
                     </t>
                     <div class="o_nc_rep__f o_nc_rep__f--buttons">
                         <button t-if="hasMoreFilters" type="button" class="btn btn-light o_nc_rep__more"
-                                t-att-aria-expanded="state.moreOpen ? 'true' : 'false'" aria-controls="nc_rep_more"
+                                t-att-aria-expanded="state.moreOpen ? 'true' : 'false'" t-att-aria-controls="state.moreOpen ? 'nc_rep_more' : false"
                                 t-on-click="() => this.state.moreOpen = !this.state.moreOpen">
                             <i class="fa fa-sliders" aria-hidden="true"/> More filters
                             <span t-if="moreFiltersCount" class="badge rounded-pill text-bg-primary ms-1" t-esc="moreFiltersCount"/>

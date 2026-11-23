@@ -697,3 +697,13 @@
         color: inherit;
     }
 }
+// Arabic letters must stay joined: no letter-spacing (and uppercase is meaningless) in RTL / Arabic.
+[dir="rtl"] .o_nc_rep, .o_nc_rep:lang(ar) {
+    .o_nc_rep__flabel, .o_nc_rep__f label { letter-spacing: 0; text-transform: none; }
+}
+// The brandable primary may be light: the active segment's text follows Bootstrap's contrast colour of it.
+.o_nc_rep__segbtn.is-active, .o_nc_rep__segbtn[aria-pressed="true"] {
+    background: var(--nc-color-primary, var(--bs-primary, #1f5f8f));
+    color: var(--nc-color-on-primary, var(--bs-btn-active-color, #fff));
+}
+.o_nc_rep__seg { background: var(--nc-surface, var(--bs-body-bg, #fff)); }

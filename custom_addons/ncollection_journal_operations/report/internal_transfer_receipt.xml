@@ -46,21 +46,21 @@
                             <td>Amount sent</td>
                             <td class="text-end"><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.source_currency_id}"/></td>
                         </tr>
-                        <tr>
+                        <tr t-if="o.fee_amount">
                             <td>Bank fee</td>
                             <td class="text-end"><span t-field="o.fee_amount" t-options="{'widget': 'monetary', 'display_currency': o.source_currency_id}"/></td>
                         </tr>
-                        <tr>
+                        <tr t-if="o.fee_amount">
                             <td>Net amount converted</td>
                             <td class="text-end"><span t-out="v['net_sent']" t-options="{'widget': 'monetary', 'display_currency': o.source_currency_id}"/></td>
                         </tr>
                         <tr t-if="o.multi_currency">
-                            <td>Accounting exchange rate (booked)</td>
-                            <td class="text-end">1 <span t-out="o.source_currency_id.name"/> = <span t-out="'%.6f' % v['accounting_rate']"/> <span t-out="o.destination_currency_id.name"/></td>
+                            <td>Accounting exchange rate (implied by the booked entries)</td>
+                            <td class="text-end">1 <span t-out="o.source_currency_id.name"/> = <span t-out="'%.4f' % v['accounting_rate']"/> <span t-out="o.destination_currency_id.name"/></td>
                         </tr>
                         <tr t-if="o.multi_currency">
                             <td>Effective exchange rate (received ÷ net amount)</td>
-                            <td class="text-end">1 <span t-out="o.source_currency_id.name"/> = <span t-out="'%.6f' % v['effective_rate']"/> <span t-out="o.destination_currency_id.name"/></td>
+                            <td class="text-end">1 <span t-out="o.source_currency_id.name"/> = <span t-out="'%.4f' % v['effective_rate']"/> <span t-out="o.destination_currency_id.name"/></td>
                         </tr>
                         <tr class="fw-bold">
                             <td>Amount received</td>
@@ -73,14 +73,14 @@
                 <table class="table table-sm">
                     <tbody>
                         <tr><td>Value sent</td><td class="text-end"><span t-out="v['sent_company']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td></tr>
-                        <tr><td>Bank fee</td><td class="text-end"><span t-out="v['fee_company']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td></tr>
+                        <tr t-if="o.fee_move_id"><td>Bank fee</td><td class="text-end"><span t-out="v['fee_company']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td></tr>
                         <tr><td>Value received</td><td class="text-end"><span t-out="v['received_company']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td></tr>
-                        <tr>
+                        <tr t-if="o.exchange_move_id">
                             <td><t t-if="v['exchange'] &gt;= 0">Exchange gain</t><t t-else="">Exchange loss</t></td>
                             <td class="text-end"><span t-out="abs(v['exchange'])" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></td>
                         </tr>
                         <tr class="fw-bold">
-                            <td>Check: value sent = fee + value received − gain (+ loss)</td>
+                            <td>Value sent = fee + value received − gain (+ loss); transfer account fully reconciled</td>
                             <td class="text-end">
                                 <span t-if="v['balanced']">Balanced</span>
                                 <span t-else="" class="text-danger">Difference <span t-out="v['check_difference']" t-options="{'widget': 'monetary', 'display_currency': ccy}"/></span>

@@ -858,6 +858,8 @@ class NcReportService(models.AbstractModel):
                     for p in env['res.partner'].browse(partner_ids)}
         fields_meta = []
         names = self._nc_filter_names(wizard)
+        # each filter's own default, so the viewer can tell an ACTIVE advanced filter from an untouched one
+        defaults = wizard.default_get([n for n in names if wizard._fields[n].type != 'many2many'])
         for name in names:
             field = wizard._fields[name]
             item = {'name': name, 'type': field.type,
@@ -869,6 +871,8 @@ class NcReportService(models.AbstractModel):
                 item['relation'] = field.comodel_name
             if name in _SCALAR_FILTERS or name in _M2M_FILTERS:
                 item['shared'] = True
+            if name in defaults:
+                item['default'] = defaults[name]
             fields_meta.append(item)
         values = {}
         for name in names:

@@ -344,6 +344,18 @@ class InternalTransfer(models.Model):
             raise UserError(self.env._("Only a posted transfer has a receipt."))
         clearing = self.company_id.transfer_account_id
         ccy = self.company_id.currency_id
+        moves = (self.source_payment_id.move_id | self.destination_payment_id.move_id | self.fee_move_id
+                 | self.exchange_move_id)
+        complete = self.source_payment_id and self.destination_payment_id
+        if not complete or any(move.state != 'posted' for move in moves):
+            raise UserError(self.env._(
+                "An entry of this transfer is no longer posted (reset to draft or cancelled): the receipt would not "
+                "match the books."))
+        # independent check: the clearing lines of ALL the transfer's entries are reconciled together and net to 0
+        clearing_lines = moves.line_ids.filtered(lambda line: line.account_id == clearing)
+        reconciled = (bool(clearing_lines) and all(clearing_lines.mapped('reconciled'))
+                      and len(clearing_lines.full_reconcile_id) == 1
+                      and ccy.is_zero(sum(clearing_lines.mapped('balance'))))
 
         def _other(move):
             return move.line_ids.filtered(lambda line: line.account_id != clearing)
@@ -365,7 +377,8 @@ class InternalTransfer(models.Model):
             'effective_rate': (self.destination_amount / net_sent) if net_sent else 0.0,
             'net_sent': net_sent,
             'check_difference': ccy.round(difference),
-            'balanced': ccy.is_zero(difference),
+            'balanced': ccy.is_zero(difference) and reconciled,
+            'reconciled': reconciled,
         }
 
     def action_nc_print_receipt(self):

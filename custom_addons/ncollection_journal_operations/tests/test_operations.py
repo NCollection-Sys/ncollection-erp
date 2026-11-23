@@ -1,6 +1,6 @@
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
-from odoo.tests import Form, tagged
+from odoo.tests import Form, new_test_user, tagged
 from odoo.tools.safe_eval import safe_eval
 
 from .common import JournalOpsCommon
@@ -1000,6 +1000,22 @@ class TestTransferFeesAndExchange(JournalOpsCommon):
                 receipt = 'ncollection_journal_operations.report_internal_transfer_receipt'
                 self.assertTrue(action.get('report_name') == receipt
                                 or action.get('res_model') == 'base.document.layout', action)
+                self.assertTrue(values['reconciled'])
+
+    def test_receipt_refused_when_an_entry_is_no_longer_posted_and_readonly_can_print(self):
+        transfer = self._transfer(self.bank, self.eur_bank, 100.0, fee_amount=2.0)
+        transfer.destination_amount = 190.0
+        transfer.action_post()
+        reader = new_test_user(self.env, login='nc_receipt_reader',
+                               groups='base.group_user,account.group_account_readonly')
+        values = transfer.with_user(reader)._nc_receipt_values()          # read-only accountant: same figures
+        self.assertTrue(values['balanced'])
+        html, _kind = self.env['ir.actions.report'].with_user(reader)._render_qweb_html(
+            'ncollection_journal_operations.report_internal_transfer_receipt', transfer.ids)
+        self.assertIn(transfer.name, html.decode())
+        transfer.fee_move_id.button_draft()
+        with self.assertRaises(UserError):
+            transfer._nc_receipt_values()
 
     def test_missing_rate_is_refused(self):
         jpy = self.setup_other_currency('JPY', rates=[('2099-01-01', 150.0)])

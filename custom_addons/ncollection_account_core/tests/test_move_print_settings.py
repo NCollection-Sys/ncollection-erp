@@ -103,6 +103,17 @@ class TestMovePrintSettings(AccountTestInvoicingCommon):
         self.assertEqual((self.env.company.invoice_terms, self.env.company.terms_type), company_before)
         self.assertEqual((first.narration, first.partner_bank_id, first.invoice_payment_term_id),
                          (second.narration, bank, term), 'presentation only: the document data is unchanged')
+        # Odoo's primary children of the invoice template (the layout preview, the with-payments report) still render
+        # with the switches applied: the o-shadowing around the bank node must not break them or leak.
+        for xmlid in ('account.report_invoice_document_preview', 'account.report_invoice_with_payments'):
+            view = self.env.ref(xmlid, raise_if_not_found=False)
+            if view and view._name == 'ir.ui.view':
+                ctx = {'o': first, 'doc': first, 'docs': first, 'company': first.company_id,
+                       'account_number': 'ACC', 'qr_code': False, 'print_with_payments': True,
+                       'is_html_empty': lambda v: not v}
+                html = self.env['ir.qweb']._render(view.id, ctx)
+                self.assertIn(first.name, str(html))
+        self.assertIn('INV', self._html(first), 'the document number still prints after the bank node')
 
     def test_reset_returns_to_the_defaults(self):
         setting = self._setting(self.inv_a, title='X')

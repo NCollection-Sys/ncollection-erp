@@ -60,7 +60,7 @@
                     <filter name="group_operation" string="Type" context="{'group_by': 'operation'}"/>
                     <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
                     <filter name="group_partner" string="Customer / Supplier" context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_month" string="Month" context="{'group_by': 'date:month'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'value_date:month'}"/>
                 </group>
             </search>
         </field>
