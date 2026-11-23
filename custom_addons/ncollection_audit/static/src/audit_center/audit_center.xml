@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="ncollection_audit.ActionBadge">
+    <span t-attf-class="nc-au-badge nc-au-badge-{{action}}"><t t-esc="label"/></span>
+</t>
+
+<t t-name="ncollection_audit.AuditCenter">
+<div class="o_action nc-au">
+    <!-- ============================== HEADER ============================== -->
+    <header class="nc-au-head">
+        <div class="nc-au-title">
+            <button t-if="state.view !== 'list'" class="btn btn-link nc-au-back" t-on-click="() => this.backToList()"
+                    aria-label="Back">
+                <i class="fa fa-arrow-left" aria-hidden="true"/>
+                <span>Back</span>
+            </button>
+            <h1>Audit Log</h1>
+            <span t-if="state.view === 'list'" class="nc-au-sub">
+                <t t-if="state.total"><t t-esc="state.total"/> events</t>
+            </span>
+        </div>
+    </header>
+
+    <!-- ============================== LIST ============================== -->
+    <t t-if="state.view === 'list'">
+        <section class="nc-au-filters" aria-label="Filters">
+            <div class="nc-au-row">
+                <label class="nc-au-field">
+                    <span>From</span>
+                    <input type="date" class="form-control form-control-sm" t-model="state.draft.date_from"
+                           t-on-keydown="onKeyApply"/>
+                </label>
+                <label class="nc-au-field">
+                    <span>To</span>
+                    <input type="date" class="form-control form-control-sm" t-model="state.draft.date_to"
+                           t-on-keydown="onKeyApply"/>
+                </label>
+                <!-- Users: searchable, several at once, deactivated users included (marked). -->
+                <div class="nc-au-field nc-au-pick">
+                    <span>User</span>
+                    <button class="btn btn-sm nc-au-pick-btn" t-on-click="() => { state.userOpen = !state.userOpen; state.typeOpen = false; }"
+                            t-att-aria-expanded="state.userOpen ? 'true' : 'false'" aria-haspopup="listbox">
+                        <t t-if="state.draft.user_ids.length"><t t-esc="state.draft.user_ids.length"/> selected</t>
+                        <t t-else="">All users</t>
+                        <i class="fa fa-caret-down" aria-hidden="true"/>
+                    </button>
+                    <div t-if="state.userOpen" class="nc-au-pop" role="listbox" aria-multiselectable="true">
+                        <input type="search" class="form-control form-control-sm" placeholder="Search users"
+                               t-model="state.userQuery"/>
+                        <div class="nc-au-pop-list">
+                            <label t-foreach="filteredUsers" t-as="u" t-key="u.id" class="nc-au-opt">
+                                <input type="checkbox" t-att-checked="state.draft.user_ids.includes(u.id)"
+                                       t-on-change="() => this.toggleDraft('user_ids', u.id)"/>
+                                <span t-esc="u.name"/>
+                                <small t-if="!u.active" class="text-muted"> (inactive)</small>
+                            </label>
+                            <div t-if="!filteredUsers.length" class="nc-au-none">No users</div>
+                        </div>
+                        <button class="btn btn-link btn-sm" t-on-click="() => { state.draft.user_ids = []; }">Clear</button>
+                    </div>
+                </div>
+                <div class="nc-au-field">
+                    <span>Action</span>
+                    <div class="btn-group btn-group-sm nc-au-seg" role="group" aria-label="Action">
+                        <button class="btn" t-att-class="isAction('') ? 'active' : ''" t-att-aria-pressed="isAction('') ? 'true' : 'false'"
+                                t-on-click="() => this.setAction('')">All</button>
+                        <button class="btn" t-att-class="isAction('create') ? 'active' : ''" t-att-aria-pressed="isAction('create') ? 'true' : 'false'"
+                                t-on-click="() => this.setAction('create')">Create</button>
+                        <button class="btn" t-att-class="isAction('update') ? 'active' : ''" t-att-aria-pressed="isAction('update') ? 'true' : 'false'"
+                                t-on-click="() => this.setAction('update')">Update</button>
+                        <button class="btn" t-att-class="isAction('delete') ? 'active' : ''" t-att-aria-pressed="isAction('delete') ? 'true' : 'false'"
+                                t-on-click="() => this.setAction('delete')">Delete</button>
+                    </div>
+                </div>
+                <div class="nc-au-field nc-au-pick">
+                    <span>Document Type</span>
+                    <button class="btn btn-sm nc-au-pick-btn" t-on-click="() => { state.typeOpen = !state.typeOpen; state.userOpen = false; }"
+                            t-att-aria-expanded="state.typeOpen ? 'true' : 'false'" aria-haspopup="listbox">
+                        <t t-if="state.draft.doc_types.length"><t t-esc="state.draft.doc_types.length"/> selected</t>
+                        <t t-else="">All types</t>
+                        <i class="fa fa-caret-down" aria-hidden="true"/>
+                    </button>
+                    <div t-if="state.typeOpen" class="nc-au-pop" role="listbox" aria-multiselectable="true">
+                        <input type="search" class="form-control form-control-sm" placeholder="Search types"
+                               t-model="state.typeQuery"/>
+                        <div class="nc-au-pop-list">
+                            <label t-foreach="filteredTypes" t-as="t" t-key="t.key" class="nc-au-opt">
+                                <input type="checkbox" t-att-checked="state.draft.doc_types.includes(t.key)"
+                                       t-on-change="() => this.toggleDraft('doc_types', t.key)"/>
+                                <span t-esc="t.label"/>
+                            </label>
+                            <div t-if="!filteredTypes.length" class="nc-au-none">No document types</div>
+                        </div>
+                        <button class="btn btn-link btn-sm" t-on-click="() => { state.draft.doc_types = []; }">Clear</button>
+                    </div>
+                </div>
+                <div class="nc-au-actions">
+                    <button class="btn btn-sm btn-light nc-au-more" t-on-click="() => { state.more = !state.more; }"
+                            t-att-aria-expanded="state.more ? 'true' : 'false'">
+                        <i class="fa fa-sliders" aria-hidden="true"/> More filters
+                        <span t-if="moreCount" class="badge rounded-pill nc-au-count" t-esc="moreCount"/>
+                    </button>
+                    <button class="btn btn-sm btn-primary" t-on-click="() => this.apply()">Apply</button>
+                    <button class="btn btn-sm btn-secondary" t-on-click="() => this.reset()">Reset</button>
+                </div>
+            </div>
+            <div t-if="state.more" class="nc-au-row nc-au-more-row">
+                <div t-if="showCompany" class="nc-au-field">
+                    <span>Company</span>
+                    <div class="nc-au-checks">
+                        <label t-foreach="state.options.companies" t-as="c" t-key="c.id" class="nc-au-opt">
+                            <input type="checkbox" t-att-checked="state.draft.company_ids.includes(c.id)"
+                                   t-on-change="() => this.toggleDraft('company_ids', c.id)"/>
+                            <span t-esc="c.name"/>
+                        </label>
+                    </div>
+                </div>
+                <label class="nc-au-field">
+                    <span>Document Reference</span>
+                    <input type="text" class="form-control form-control-sm" t-model="state.draft.reference"
+                           placeholder="e.g. INV/2026/0001" t-on-keydown="onKeyApply"/>
+                </label>
+                <label class="nc-au-field nc-au-narrow">
+                    <span>Record ID</span>
+                    <input type="number" min="1" class="form-control form-control-sm" t-model="state.draft.res_id"
+                           t-on-keydown="onKeyApply"/>
+                </label>
+                <label class="nc-au-field">
+                    <span>Search in description</span>
+                    <input type="search" class="form-control form-control-sm" t-model="state.draft.search"
+                           placeholder="Field, document or type" t-on-keydown="onKeyApply"/>
+                </label>
+                <label class="nc-au-field">
+                    <span>Undo</span>
+                    <select class="form-select form-select-sm" t-model="state.draft.reversed">
+                        <option value="">Any</option>
+                        <option value="reversed">Undone</option>
+                        <option value="not_reversed">Not undone</option>
+                        <option value="undo_events">Undo events only</option>
+                    </select>
+                </label>
+            </div>
+            <div t-if="activeChips.length" class="nc-au-chips" aria-label="Active filters">
+                <span t-foreach="activeChips" t-as="chip" t-key="chip_index" class="nc-au-chip">
+                    <t t-esc="chip.label"/>
+                    <button class="btn btn-link p-0" t-on-click="() => this.removeChip(chip)" aria-label="Remove filter">
+                        <i class="fa fa-times" aria-hidden="true"/>
+                    </button>
+                </span>
+            </div>
+        </section>
+
+        <section class="nc-au-card">
+            <div t-if="state.error" class="alert alert-danger m-3" role="alert" t-esc="state.error"/>
+            <div class="nc-au-table-wrap" t-att-aria-busy="state.loading ? 'true' : 'false'">
+                <table class="nc-au-table">
+                    <thead>
+                        <tr>
+                            <th class="nc-au-col-view"><span class="visually-hidden">View</span></th>
+                            <th t-att-aria-sort="ariaSort('date')" class="nc-au-sortable" t-on-click="() => this.sortBy('date')">
+                                Timestamp <i t-attf-class="fa fa-sort{{ state.sort === 'date' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
+                            </th>
+                            <th t-att-aria-sort="ariaSort('user')" class="nc-au-sortable" t-on-click="() => this.sortBy('user')">
+                                User <i t-attf-class="fa fa-sort{{ state.sort === 'user' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
+                            </th>
+                            <th t-att-aria-sort="ariaSort('document')" class="nc-au-sortable" t-on-click="() => this.sortBy('document')">
+                                Document <i t-attf-class="fa fa-sort{{ state.sort === 'document' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
+                            </th>
+                            <th t-att-aria-sort="ariaSort('type')" class="nc-au-sortable" t-on-click="() => this.sortBy('type')">
+                                Document Type <i t-attf-class="fa fa-sort{{ state.sort === 'type' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
+                            </th>
+                            <th>Description</th>
+                            <th t-att-aria-sort="ariaSort('action')" class="nc-au-sortable" t-on-click="() => this.sortBy('action')">
+                                Action <i t-attf-class="fa fa-sort{{ state.sort === 'action' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
+                            </th>
+                            <th t-if="showCompany" t-att-aria-sort="ariaSort('company')" class="nc-au-sortable" t-on-click="() => this.sortBy('company')">
+                                Company <i t-attf-class="fa fa-sort{{ state.sort === 'company' ? (state.direction === 'asc' ? '-asc' : '-desc') : '' }}" aria-hidden="true"/>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-if="state.loading and !state.rows.length"><td t-att-colspan="showCompany ? 8 : 7" class="nc-au-state">
+                            <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"/> Loading…</td></tr>
+                        <tr t-elif="!state.rows.length"><td t-att-colspan="showCompany ? 8 : 7" class="nc-au-state">
+                            <i class="fa fa-history fa-2x d-block mb-2" aria-hidden="true"/>
+                            No audit events match these filters.</td></tr>
+                        <tr t-foreach="state.rows" t-as="row" t-key="row.id" tabindex="0" class="nc-au-tr"
+                            t-on-dblclick="() => this.openEvent(row.id)" t-on-keydown="(ev) => this.onRowKey(ev, row.id)">
+                            <td class="nc-au-col-view">
+                                <button class="btn btn-sm nc-au-view" t-on-click="() => this.openEvent(row.id)"
+                                        t-att-aria-label="'View event ' + row.id" title="View">
+                                    <i class="fa fa-eye" aria-hidden="true"/>
+                                </button>
+                            </td>
+                            <td class="nc-au-ts" t-esc="fmtDate(row.date)"/>
+                            <td class="nc-au-user" t-esc="row.user"/>
+                            <td class="nc-au-doc" t-att-title="row.document"><t t-esc="row.document"/></td>
+                            <td class="nc-au-type" t-esc="row.type"/>
+                            <td class="nc-au-desc" t-att-title="row.description">
+                                <t t-esc="row.description"/>
+                                <span t-if="row.reversed" class="nc-au-flag nc-au-flag-undone">Undone</span>
+                                <span t-if="row.undo_event" class="nc-au-flag nc-au-flag-undo">Undo</span>
+                            </td>
+                            <td><t t-call="ncollection_audit.ActionBadge"><t t-set="action" t-value="row.action"/><t t-set="label" t-value="actionLabel(row.action)"/></t></td>
+                            <td t-if="showCompany" class="nc-au-company" t-esc="row.company"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <footer class="nc-au-pager">
+                <span t-esc="pageLabel"/>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-light" t-att-disabled="state.offset === 0" t-on-click="() => this.page(-1)"
+                            aria-label="Previous page"><i class="fa fa-chevron-left" aria-hidden="true"/></button>
+                    <button class="btn btn-light" t-att-disabled="state.offset + 50 >= state.total"
+                            t-on-click="() => this.page(1)" aria-label="Next page"><i class="fa fa-chevron-right" aria-hidden="true"/></button>
+                </div>
+            </footer>
+        </section>
+    </t>
+
+    <!-- ============================== RECORD HISTORY (from a document) ============================== -->
+    <t t-if="state.view === 'history' and state.history">
+        <t t-call="ncollection_audit.Timeline"/>
+    </t>
+
+    <!-- ============================== ONE EVENT ============================== -->
+    <t t-if="state.view === 'event' and state.event">
+        <t t-set="ev" t-value="state.event"/>
+        <section class="nc-au-card nc-au-event">
+            <div class="nc-au-event-head">
+                <div>
+                    <div class="nc-au-kicker"><t t-esc="ev.type"/> · <t t-esc="'#' + ev.res_id"/></div>
+                    <h2 t-esc="ev.document"/>
+                    <div class="nc-au-desc-big" t-esc="ev.description"/>
+                </div>
+                <div class="nc-au-event-side">
+                    <t t-call="ncollection_audit.ActionBadge"><t t-set="action" t-value="ev.action"/><t t-set="label" t-value="actionLabel(ev.action)"/></t>
+                    <button t-if="ev.exists" class="btn btn-sm btn-light" t-on-click="() => this.openDocument()">
+                        <i class="fa fa-external-link" aria-hidden="true"/> Open document
+                    </button>
+                    <span t-else="" class="nc-au-muted"><i class="fa fa-trash-o" aria-hidden="true"/> Document no longer exists</span>
+                </div>
+            </div>
+            <div t-if="ev.undone_by" class="nc-au-note nc-au-note-info" role="status">
+                <i class="fa fa-undo" aria-hidden="true"/>
+                Undone by <b t-esc="ev.undone_by.user"/> on <t t-esc="fmtDate(ev.undone_by.date)"/>.
+                <t t-foreach="ev.undone_by.log_ids" t-as="lid" t-key="lid">
+                    <button class="btn btn-link btn-sm p-0" t-on-click="() => this.openEvent(lid)">Event #<t t-esc="lid"/></button>
+                </t>
+            </div>
+            <div t-if="ev.undo_of" class="nc-au-note nc-au-note-info" role="status">
+                <i class="fa fa-undo" aria-hidden="true"/> This event was written by an Undo of
+                <button class="btn btn-link btn-sm p-0" t-on-click="() => this.openEvent(ev.undo_of.id)">event #<t t-esc="ev.undo_of.id"/></button>.
+            </div>
+            <dl class="nc-au-meta">
+                <div><dt>Event ID</dt><dd t-esc="ev.id"/></div>
+                <div><dt>Date and time</dt><dd t-esc="fmtDate(ev.date)"/></div>
+                <div><dt>User</dt><dd t-esc="ev.user"/></div>
+                <div t-if="ev.company"><dt>Company</dt><dd t-esc="ev.company"/></div>
+                <div><dt>Document type</dt><dd t-esc="ev.type"/></div>
+                <div><dt>Record ID</dt><dd t-esc="ev.res_id"/></div>
+                <div><dt>Fields recorded</dt><dd t-esc="ev.changes"/></div>
+                <div><dt>Recorded by</dt><dd t-esc="ev.source"/></div>
+                <div t-if="ev.ip"><dt>Client IP</dt><dd t-esc="ev.ip"/></div>
+                <div t-if="ev.request"><dt>Request</dt><dd class="nc-au-mono" t-esc="ev.request"/></div>
+                <div t-if="ev.technical_model"><dt>Technical model</dt><dd class="nc-au-mono" t-esc="ev.technical_model"/></div>
+            </dl>
+            <nav class="nc-au-tabs" role="tablist">
+                <button role="tab" t-att-aria-selected="state.tab === 'changes' ? 'true' : 'false'" t-att-class="state.tab === 'changes' ? 'active' : ''" t-on-click="() => this.setTab('changes')">
+                    <i class="fa fa-list" aria-hidden="true"/> Changes</button>
+                <button role="tab" t-att-aria-selected="state.tab === 'history' ? 'true' : 'false'" t-att-class="state.tab === 'history' ? 'active' : ''" t-on-click="() => this.setTab('history')">
+                    <i class="fa fa-history" aria-hidden="true"/> Record History</button>
+                <button role="tab" t-att-aria-selected="state.tab === 'compare' ? 'true' : 'false'" t-att-class="state.tab === 'compare' ? 'active' : ''" t-on-click="() => this.setTab('compare')">
+                    <i class="fa fa-columns" aria-hidden="true"/> Compare Versions</button>
+                <button t-if="ev.can_undo" role="tab" t-att-aria-selected="state.tab === 'undo' ? 'true' : 'false'" t-att-class="state.tab === 'undo' ? 'active' : ''" t-on-click="() => this.setTab('undo')">
+                    <i class="fa fa-undo" aria-hidden="true"/> Undo</button>
+            </nav>
+
+            <!-- Changes -->
+            <div t-if="state.tab === 'changes'" role="tabpanel" class="nc-au-panel">
+                <p t-if="!ev.lines.length" class="nc-au-muted">
+                    <t t-if="ev.action === 'delete'">The values before deletion were not recorded for this event.</t>
+                    <t t-else="">No field values were recorded for this event.</t>
+                </p>
+                <table t-else="" class="nc-au-table nc-au-diff">
+                    <thead><tr>
+                        <th>Field</th>
+                        <th t-if="ev.action !== 'create'"><t t-if="ev.action === 'delete'">Value before deletion</t><t t-else="">Before</t></th>
+                        <th t-if="ev.action !== 'delete'"><t t-if="ev.action === 'create'">Initial value</t><t t-else="">After</t></th>
+                    </tr></thead>
+                    <tbody>
+                        <tr t-foreach="visibleLines" t-as="line" t-key="line_index">
+                            <td class="nc-au-flabel" t-esc="line.label"/>
+                            <td t-if="ev.action !== 'create'" t-attf-class="nc-au-old nc-au-k-{{line.before_kind}}">
+                                <t t-if="line.before_kind === 'empty'"><span class="nc-au-empty">Empty</span></t><t t-else="" t-esc="line.before"/>
+                            </td>
+                            <td t-if="ev.action !== 'delete'" t-attf-class="nc-au-new nc-au-k-{{line.after_kind}}">
+                                <t t-if="line.after_kind === 'empty'"><span class="nc-au-empty">Empty</span></t><t t-else="" t-esc="line.after"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button t-if="ev.lines.length > 12" class="btn btn-link btn-sm" t-on-click="() => { state.showAllLines = !state.showAllLines; }">
+                    <t t-if="state.showAllLines">Show fewer</t><t t-else="">Show all <t t-esc="ev.lines.length"/> fields</t>
+                </button>
+            </div>
+
+            <!-- History -->
+            <div t-if="state.tab === 'history'" role="tabpanel" class="nc-au-panel">
+                <t t-if="state.history"><t t-call="ncollection_audit.Timeline"/></t>
+            </div>
+
+            <!-- Compare -->
+            <div t-if="state.tab === 'compare'" role="tabpanel" class="nc-au-panel">
+                <t t-call="ncollection_audit.Compare"/>
+            </div>
+
+            <!-- Undo -->
+            <div t-if="state.tab === 'undo' and state.undo" role="tabpanel" class="nc-au-panel">
+                <t t-set="u" t-value="state.undo"/>
+                <div t-if="state.undoDone" class="nc-au-note nc-au-note-ok" role="status">
+                    <i class="fa fa-check-circle" aria-hidden="true"/>
+                    Undo done (<t t-esc="state.undoDone.mode"/>).
+                    <t t-if="state.undoDone.result_res_id and ev.action === 'delete'">New document #<t t-esc="state.undoDone.result_res_id"/>.</t>
+                    <t t-foreach="state.undoDone.log_ids" t-as="lid" t-key="lid">
+                        <button class="btn btn-link btn-sm p-0" t-on-click="() => this.openEvent(lid)">Event #<t t-esc="lid"/></button>
+                    </t>
+                </div>
+                <div t-if="!u.available" class="nc-au-note nc-au-note-stop" role="alert">
+                    <i class="fa fa-ban" aria-hidden="true"/>
+                    <div><b>Undo unavailable.</b> <t t-esc="u.reason"/>
+                        <div t-if="u.hint" class="nc-au-hint"><i class="fa fa-lightbulb-o" aria-hidden="true"/> <t t-esc="u.hint"/></div>
+                    </div>
+                </div>
+                <div t-else="" class="nc-au-note nc-au-note-warn" role="status">
+                    <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
+                    <div><b>Preview.</b> <t t-esc="u.effect"/> Nothing changes until you confirm.</div>
+                </div>
+                <table t-if="u.rows.length" class="nc-au-table nc-au-diff">
+                    <thead><tr>
+                        <th t-if="u.kind === 'update'" class="nc-au-col-view"><span class="visually-hidden">Restore</span></th>
+                        <th>Field</th>
+                        <th t-if="ev.action === 'update'">Current value</th>
+                        <th>Value put back</th>
+                        <th>Status</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr t-foreach="u.rows" t-as="r" t-key="r.field" t-att-class="r.conflict ? 'nc-au-conflict' : ''">
+                            <td t-if="u.kind === 'update'" class="nc-au-col-view">
+                                <input type="checkbox" t-att-disabled="!r.restorable" t-att-aria-label="r.label"
+                                       t-att-checked="state.undoSelected[r.field]"
+                                       t-on-change="(e) => { state.undoSelected[r.field] = e.target.checked; }"/>
+                            </td>
+                            <td class="nc-au-flabel" t-esc="r.label"/>
+                            <td t-if="ev.action === 'update'" class="nc-au-old" t-esc="r.current or ''"/>
+                            <td class="nc-au-new" t-esc="r.restore or ''"/>
+                            <td>
+                                <span t-if="r.restorable" class="nc-au-flag nc-au-flag-ok">Can be restored</span>
+                                <span t-elif="r.conflict" class="nc-au-flag nc-au-flag-conflict">Conflict</span>
+                                <span t-else="" class="nc-au-flag nc-au-flag-off">Not restorable</span>
+                                <div t-if="r.reason" class="nc-au-reason" t-esc="r.reason"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <ul t-if="u.related and u.related.length" class="nc-au-related">
+                    <li t-foreach="u.related" t-as="note" t-key="note_index" t-esc="note"/>
+                </ul>
+                <div t-if="u.available" class="nc-au-undo-bar">
+                    <button class="btn btn-danger" t-att-disabled="state.undoBusy" t-on-click="() => this.confirmUndo()">
+                        <i class="fa fa-undo" aria-hidden="true"/>
+                        <t t-if="u.kind === 'update'">Restore selected fields</t>
+                        <t t-elif="u.kind === 'create' and u.modes[0] === 'archive'">Archive document</t>
+                        <t t-elif="u.kind === 'create'">Delete document</t>
+                        <t t-else="">Recreate document</t>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </t>
+</div>
+</t>
+
+<t t-name="ncollection_audit.Timeline">
+    <t t-set="h" t-value="state.history"/>
+    <section class="nc-au-card nc-au-panel">
+        <div class="nc-au-tl-head">
+            <div>
+                <div class="nc-au-kicker"><t t-esc="h.type"/> · <t t-esc="'#' + h.res_id"/></div>
+                <h2 t-esc="h.document"/>
+            </div>
+            <span t-if="!h.exists" class="nc-au-muted"><i class="fa fa-trash-o" aria-hidden="true"/> Document no longer exists</span>
+        </div>
+        <div t-if="!h.complete and h.versions.length" class="nc-au-note nc-au-note-info" role="status">
+            <i class="fa fa-info-circle" aria-hidden="true"/>
+            The recorded history does not start with the document's creation. Values before the first recorded
+            event are shown only where a later event recorded them; everything else is marked "Not recorded".
+        </div>
+        <p t-if="!h.versions.length" class="nc-au-muted">No recorded events for this document.</p>
+        <ol class="nc-au-tl">
+            <li t-foreach="h.versions.slice().reverse()" t-as="v" t-key="v.id" t-attf-class="nc-au-tl-item nc-au-tl-{{v.action}}">
+                <span class="nc-au-tl-dot" aria-hidden="true"/>
+                <div class="nc-au-tl-body">
+                    <div class="nc-au-tl-top">
+                        <b>Version <t t-esc="v.version"/></b>
+                        <t t-call="ncollection_audit.ActionBadge"><t t-set="action" t-value="v.action"/><t t-set="label" t-value="actionLabel(v.action)"/></t>
+                        <span class="nc-au-ts" t-esc="fmtDate(v.date)"/>
+                        <span class="nc-au-user"><i class="fa fa-user-o" aria-hidden="true"/> <t t-esc="v.user"/></span>
+                        <span t-if="v.reversed" class="nc-au-flag nc-au-flag-undone">Undone</span>
+                        <span t-if="v.undo_event" class="nc-au-flag nc-au-flag-undo">Undo</span>
+                    </div>
+                    <div class="nc-au-tl-desc" t-esc="v.description"/>
+                    <div class="nc-au-tl-links">
+                        <button class="btn btn-link btn-sm p-0" t-on-click="() => this.openEvent(v.id)">Details</button>
+                        <button t-if="v.version > 1" class="btn btn-link btn-sm p-0"
+                                t-on-click="() => this.compareFromTimeline(h.versions[v.version - 2].id, v.id)">Compare with previous</button>
+                    </div>
+                </div>
+            </li>
+        </ol>
+        <div t-if="h.truncated" class="nc-au-muted">Only the first 1,000 events are shown.</div>
+        <t t-if="state.view === 'history' and state.compare"><t t-call="ncollection_audit.Compare"/></t>
+    </section>
+</t>
+
+<t t-name="ncollection_audit.Compare">
+    <t t-set="h" t-value="state.history"/>
+    <div t-if="!h or h.versions.length &lt; 2" class="nc-au-muted">At least two recorded versions are needed to compare.</div>
+    <div t-else="" class="nc-au-compare">
+        <div class="nc-au-row">
+            <label class="nc-au-field">
+                <span>Version A</span>
+                <select class="form-select form-select-sm" t-model="state.compareA" t-on-change="() => this.runCompare()">
+                    <option t-foreach="h.versions" t-as="v" t-key="v.id" t-att-value="v.id">
+                        <t t-esc="'v' + v.version + ' · ' + actionLabel(v.action) + ' · ' + fmtDate(v.date)"/>
+                    </option>
+                </select>
+            </label>
+            <label class="nc-au-field">
+                <span>Version B</span>
+                <select class="form-select form-select-sm" t-model="state.compareB" t-on-change="() => this.runCompare()">
+                    <option t-foreach="h.versions" t-as="v" t-key="v.id" t-att-value="v.id">
+                        <t t-esc="'v' + v.version + ' · ' + actionLabel(v.action) + ' · ' + fmtDate(v.date)"/>
+                    </option>
+                </select>
+            </label>
+            <label class="nc-au-field nc-au-inline">
+                <input type="checkbox" t-model="state.showUnchanged"/> <span>Show unchanged fields</span>
+            </label>
+        </div>
+        <t t-if="state.compare">
+            <t t-set="c" t-value="state.compare"/>
+            <h3 class="nc-au-cmp-title">Version <t t-esc="c.a.version"/> versus Version <t t-esc="c.b.version"/></h3>
+            <div class="nc-au-summary">
+                <span class="nc-au-flag nc-au-s-changed"><t t-esc="c.summary.changed"/> changed</span>
+                <span class="nc-au-flag nc-au-s-added"><t t-esc="c.summary.added"/> added</span>
+                <span class="nc-au-flag nc-au-s-removed"><t t-esc="c.summary.removed"/> removed</span>
+                <span class="nc-au-flag nc-au-s-unchanged"><t t-esc="c.summary.unchanged"/> unchanged</span>
+                <span t-if="c.summary.unknown" class="nc-au-flag nc-au-s-unknown"><t t-esc="c.summary.unknown"/> not recorded</span>
+            </div>
+            <div t-if="c.gaps.length" class="nc-au-note nc-au-note-warn" role="status">
+                <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
+                <div>Some changes were made without being recorded (the recorded "before" value of a later event
+                    differs from the earlier "after" value):
+                    <t t-foreach="c.gaps" t-as="g" t-key="g_index"><b t-esc="g.field"/> (event #<t t-esc="g.event"/>)<t t-if="!g_last">, </t></t>.
+                </div>
+            </div>
+            <table class="nc-au-table nc-au-diff">
+                <thead><tr>
+                    <th>Field</th>
+                    <th>Version <t t-esc="c.a.version"/> <small class="nc-au-muted" t-esc="fmtDate(c.a.date)"/></th>
+                    <th>Version <t t-esc="c.b.version"/> <small class="nc-au-muted" t-esc="fmtDate(c.b.date)"/></th>
+                    <th>Status</th>
+                </tr></thead>
+                <tbody>
+                    <tr t-if="!compareRows.length"><td colspan="4" class="nc-au-state">No differences between these versions.</td></tr>
+                    <tr t-foreach="compareRows" t-as="r" t-key="r.field" t-attf-class="nc-au-cmp-{{r.status}}">
+                        <td class="nc-au-flabel" t-esc="r.label"/>
+                        <td t-attf-class="nc-au-old nc-au-k-{{r.a_kind}}"><t t-if="r.a_kind === 'empty'"><span class="nc-au-empty">Empty</span></t><t t-else="" t-esc="r.a"/></td>
+                        <td t-attf-class="nc-au-new nc-au-k-{{r.b_kind}}"><t t-if="r.b_kind === 'empty'"><span class="nc-au-empty">Empty</span></t><t t-else="" t-esc="r.b"/></td>
+                        <td><span t-attf-class="nc-au-flag nc-au-s-{{r.status}}" t-esc="statusLabel(r.status)"/></td>
+                    </tr>
+                </tbody>
+            </table>
+        </t>
+    </div>
+</t>
+
+</templates>

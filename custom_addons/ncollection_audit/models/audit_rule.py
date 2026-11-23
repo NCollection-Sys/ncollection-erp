@@ -153,6 +153,9 @@ PLATFORM_MODULES = frozenset({'ncollection_saas', 'ncollection_subscription', 'n
                               'ncollection_reseller'})
 SENSITIVE_MODELS = frozenset({
     'ncollection.auth.log',
+    # Authentication bookkeeping and the platform's one-time entry tickets: their rows are (hashes of) bearer tokens.
+    'ncollection.auth.spent_token',
+    'ncollection.platform.entry',
     # UAE e-invoices: the payload and the findings hold both parties' identifiers and the amounts, and the e-invoice
     # archive has its own append-only history and retention; copying them here would duplicate regulated records into
     # a lower-trust trail that retention does not govern.
@@ -301,7 +304,8 @@ class AuditlogRule(models.Model):
         if not _WITHDRAWING:
             stale = self.sudo().with_context(active_test=False).search([('model_id', '!=', False)]).filtered(
                 lambda rule: (rule.name or '').startswith('NCollection audit:') and rule.model_id.model in self.env
-                and self._nc_platform_extended(self.env[rule.model_id.model]))
+                and (self._nc_platform_extended(self.env[rule.model_id.model])
+                     or rule.model_id.model in SENSITIVE_MODELS))
             if stale:
                 _WITHDRAWING.append(True)
                 try:
@@ -326,6 +330,8 @@ class AuditlogRule(models.Model):
                 # as R-014, one level down — it is not enough to re-seed
                 # MISSING rules if existing ones go stale.
                 wanted = self._nc_excluded_fields(model)
+                if not existing.capture_record:
+                    existing.sudo().write({'capture_record': True})
                 if set(wanted.ids) != set(existing.fields_to_exclude_ids.ids):
                     existing.sudo().write(
                         {'fields_to_exclude_ids': [(6, 0, wanted.ids)]})
@@ -356,6 +362,8 @@ class AuditlogRule(models.Model):
                     # off rather than shipping half-attested.
                     'log_export_data': False,
                     'log_type': 'full',
+                    # The pre-deletion values: without them a deleted document can never be shown or restored.
+                    'capture_record': True,
                     'fields_to_exclude_ids': [(6, 0, excluded.ids)],
                 })
                 rule.set_to_confirmed()

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Audit Log 2.0: READ and UNDO are separate rights. Reading the trail is auditlog's user group (Workspace
+         Administrators, system administrators). Undo is its own group, implied by the Workspace Administrator only:
+         a person who may read the trail is not thereby allowed to change documents from it. Undo itself still runs
+         as that person through the ORM, so it can never do more than the person could do on the form. -->
+    <record id="group_audit_undo" model="res.groups">
+        <field name="name">Audit Log: Undo changes</field>
+        <field name="implied_ids" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
+    </record>
+    <record id="ncollection_core.group_tenant_admin" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_audit_undo'))]"/>
+    </record>
+
+    <!-- COMPANY ISOLATION. Without this, any audit reader saw the events of every company in the database (record
+         names, values, who did what). An event belongs to the company of its document; an event of no company
+         (shared master data, older events whose document is gone) stays visible to the trail's readers. Mirrored on
+         the field lines and on the Undo ledger, so neither is a side door. -->
+    <record id="rule_auditlog_log_company" model="ir.rule">
+        <field name="name">Audit events: own companies</field>
+        <field name="model_id" ref="auditlog.model_auditlog_log"/>
+        <field name="groups" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
+        <field name="domain_force">['|', ('nc_company_id', '=', False), ('nc_company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_auditlog_log_line_company" model="ir.rule">
+        <field name="name">Audit field changes: own companies</field>
+        <field name="model_id" ref="auditlog.model_auditlog_log_line"/>
+        <field name="groups" eval="[(4, ref('auditlog.group_auditlog_user'))]"/>
+        <field name="domain_force">['|', ('log_id.nc_company_id', '=', False), ('log_id.nc_company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_nc_audit_undo_company" model="ir.rule">
+        <field name="name">Audit undo: own companies</field>
+        <field name="model_id" ref="model_ncollection_audit_undo"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

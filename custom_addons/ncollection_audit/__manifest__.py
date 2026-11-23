@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Audit Trail',
-    'version': '19.0.1.2.0',
+    'version': '19.0.2.0.0',
     'category': 'Tools',
     'summary': 'Audit-trail infrastructure on OCA auditlog: client IP, seeded '
                'rules, retention and tamper evidence (P8-T05)',
@@ -40,9 +40,18 @@
     'data': [
         'security/ir.model.access.csv',
         'security/audit_security.xml',
+        'security/audit2_security.xml',
+        'views/audit_center_views.xml',
         'data/ir_cron.xml',
         'views/audit_menu.xml',
         'views/audit_seal_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'ncollection_audit/static/src/audit_center/audit_center.scss',
+            'ncollection_audit/static/src/audit_center/audit_center.js',
+            'ncollection_audit/static/src/audit_center/audit_center.xml',
+        ],
+    },
     'post_init_hook': 'post_init_hook',
 }

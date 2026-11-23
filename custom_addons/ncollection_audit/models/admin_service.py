@@ -62,7 +62,7 @@ class AdminService(models.AbstractModel):
         Log = env['auditlog.log']
         total = Log.search_count(domain)
         logs = Log.search(domain, offset=offset, limit=limit, order='create_date desc, id desc')
-        rules = env['auditlog.rule'].search_count([('state', '=', 'subscribed')])
+        rules = env['auditlog.rule'].search_count([('state', '=', 'confirmed')])
         _logger.info("Audit Log read by the platform: %s, %d rows (offset %d, model %r)",
                      env.context.get('nc_platform_actor'), len(logs), offset, model)
         return {

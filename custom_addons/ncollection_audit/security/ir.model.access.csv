@@ -3,3 +3,6 @@ access_nc_audit_seal_user,ncollection.audit.seal.user,model_ncollection_audit_se
 access_nc_audit_seal_manager,ncollection.audit.seal.manager,model_ncollection_audit_seal,auditlog.group_auditlog_manager,1,0,0,0
 auditlog.access_auditlog_log_manager,auditlog_log_manager,auditlog.model_auditlog_log,auditlog.group_auditlog_manager,1,0,0,0
 auditlog.access_auditlog_log_line_manager,auditlog_log_line_manager,auditlog.model_auditlog_log_line,auditlog.group_auditlog_manager,1,0,0,0
+access_nc_audit_policy_user,ncollection.audit.policy.user,model_ncollection_audit_policy,auditlog.group_auditlog_user,1,0,0,0
+access_nc_audit_policy_manager,ncollection.audit.policy.manager,model_ncollection_audit_policy,auditlog.group_auditlog_manager,1,1,1,0
+access_nc_audit_undo_user,ncollection.audit.undo.user,model_ncollection_audit_undo,auditlog.group_auditlog_user,1,0,0,0

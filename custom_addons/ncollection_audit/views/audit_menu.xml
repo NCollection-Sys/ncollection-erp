@@ -15,15 +15,21 @@
 
     <!-- A HOME APP (owner review 2026-11: an entitled workspace must find its Audit Log on Home, not inside Settings).
          Root menu with its own icon and an action (the launcher shows only roots that open something); the Settings
-         policy section "audit_log" governs this same menu, and Settings links to it. -->
+         policy section "audit_log" governs this same menu, and Settings links to it.
+         Audit Log 2.0: the root opens the History screen (ncollection_audit.audit_center); the raw OCA lists stay
+         one level down for administrators who want them. -->
     <menuitem id="menu_nc_audit_root" name="Audit Log" sequence="75" groups="auditlog.group_auditlog_user"
-              web_icon="auditlog,static/description/icon.png" action="auditlog.action_auditlog_log_tree"/>
-    <menuitem id="menu_nc_audit_logs" name="Activity" parent="menu_nc_audit_root" sequence="1"
-              action="auditlog.action_auditlog_log_tree"/>
+              web_icon="auditlog,static/description/icon.png" action="action_nc_audit_center"/>
+    <menuitem id="menu_nc_audit_history" name="History" parent="menu_nc_audit_root" sequence="0"
+              action="action_nc_audit_center"/>
+    <menuitem id="menu_nc_audit_logs" name="Activity (raw)" parent="menu_nc_audit_root" sequence="1"
+              action="auditlog.action_auditlog_log_tree" groups="base.group_system"/>
     <menuitem id="menu_nc_audit_lines" name="Field Changes" parent="menu_nc_audit_root" sequence="2"
-              action="auditlog.action_auditlog_line"/>
+              action="auditlog.action_auditlog_line" groups="base.group_system"/>
     <menuitem id="menu_nc_audit_sessions" name="Sessions" parent="menu_nc_audit_root" sequence="3"
               action="auditlog.action_auditlog_http_session_tree"/>
     <menuitem id="menu_nc_audit_rules_ro" name="What Is Recorded" parent="menu_nc_audit_root" sequence="8"
               action="auditlog.action_auditlog_rule_tree"/>
+    <menuitem id="menu_nc_audit_policies" name="Recorded Document Types" parent="menu_nc_audit_root" sequence="9"
+              action="action_nc_audit_policy"/>
 </odoo>
