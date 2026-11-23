@@ -489,20 +489,56 @@ class TestTransactions(JournalOpsCommon):
             'line_ids': [(0, 0, {'account_id': self.bank.default_account_id.id, 'debit': 7.0, 'name': 'adj'}),
                          (0, 0, {'account_id': self.other_income.id, 'credit': 7.0, 'name': 'adj'})]}).action_post()
         receipt._nc_mark_as_paid(day(-1))                               # the remaining 5, on its own date
-        # the documented exception: between the two confirmations of the receipt (day -10 and day -1) the row has
-        # not yet counted the 95 the ledger already holds
-        rows = self._assert_running_equals_ledger(self.bank, skip=(day(-5), day(-3)))
+        # EVERY cut-off equals the ledger, also between the receipt's two confirmations (day -10 and day -1)
+        rows = self._assert_running_equals_ledger(self.bank)
         self.assertAlmostEqual(self._ledger(self.bank), 1000 + 95 - 40 + 7 + 5)
         receipt_row = rows.filtered(lambda r: r.operation == 'receipt')
-        self.assertAlmostEqual(receipt_row.liquidity_balance, 100.0, msg="what the bank booked, not the nominal")
-        self.assertEqual(receipt_row.value_date, day(-1), "two confirmations: counted on the last bank day")
+        self.assertAlmostEqual(receipt_row.liquidity_balance, 95.0, msg="what the bank booked on its first day")
+        self.assertEqual(receipt_row.value_date, day(-10), "the first confirmation counts on its own day")
+        later = rows.filtered(lambda r: r.operation == 'settlement')
+        self.assertEqual(len(later), 1, "the second confirmation day is a row of its own")
+        self.assertEqual((later.payment_id, later.value_date), (receipt, day(-1)))
+        self.assertAlmostEqual(later.liquidity_balance, 5.0)
+        self.assertAlmostEqual(sum(rows.filtered(lambda r: r.payment_id == receipt).mapped('liquidity_balance')),
+                               100.0, msg="the receipt counts once in total: no duplicated movement")
         payment_row = rows.filtered(lambda r: r.operation == 'payment')
         self.assertEqual((payment_row.date, payment_row.bank_date), (day(-9), day(-3)))
         self.assertAlmostEqual(payment_row.liquidity_balance, -40.0)
-        self.assertFalse(rows.filtered(lambda r: r.operation == 'settlement'))
         self.assertAlmostEqual(self._figures(self.bank)['balance'], self._ledger(self.bank))
         before = rows.filtered(lambda r: r.value_date <= day(-11)).sorted(lambda r: (r.value_date, r.id))[-1]
         self.assertAlmostEqual(before.running_balance, 1000.0, msg="the receipt was not yet in the bank")
+
+    def test_confirmations_across_a_month_end_count_in_their_own_months(self):
+        """A receipt confirmed partly on the last day of a month and partly in the next: daily and monthly movements,
+        the running balance at every cut-off, the newest-first display and the card all agree with the ledger."""
+        first_of_month = fields.Date.today().replace(day=1)
+        month_end = fields.Date.subtract(first_of_month, days=1)            # last day of the previous month
+        before = fields.Date.subtract(first_of_month, days=10)
+        self._bank_line(self.bank, 500.0, 'opening', date=fields.Date.subtract(first_of_month, days=20))
+        receipt = self._op(self.bank, 'receipt', 'customer', 300.0, self.customer, date=before)
+        self._match(receipt, 120.0, month_end, 'first part, month end')
+        self._match(receipt, 80.0, fields.Date.add(first_of_month, days=1), 'second part, next month')
+        receipt._nc_mark_as_paid(fields.Date.add(first_of_month, days=2))  # the remaining 100, a third day
+        rows = self._assert_running_equals_ledger(self.bank)
+        own = rows.filtered(lambda r: r.payment_id == receipt)
+        self.assertEqual(sorted(own.mapped('value_date')),
+                         [month_end, fields.Date.add(first_of_month, days=1), fields.Date.add(first_of_month, days=2)])
+        self.assertAlmostEqual(sum(own.mapped('liquidity_balance')), 300.0, msg="counted once in total")
+        # monthly movement = ledger movement of that month
+        for start, stop in ((fields.Date.subtract(first_of_month, months=1), month_end),
+                            (first_of_month, fields.Date.add(first_of_month, days=27))):
+            month_rows = rows.filtered(lambda r: start <= r.value_date <= stop)
+            ledger = self._ledger(self.bank, stop) - self._ledger(self.bank, fields.Date.subtract(start, days=1))
+            self.assertAlmostEqual(sum(month_rows.mapped('liquidity_balance')), ledger, msg=f"month from {start}")
+        # the list shows newest first; its running balances are still the chronological ones
+        shown = self.env['ncollection.journal.transaction'].search([('journal_id', '=', self.bank.id)])
+        self.assertEqual(shown.ids, rows.sorted(lambda r: (r.value_date, r.id), reverse=True).ids)
+        self.assertAlmostEqual(shown[0].running_balance, self._ledger(self.bank))
+        self.assertAlmostEqual(self._figures(self.bank)['balance'], self._ledger(self.bank))
+        # drill-down: a later confirmation opens its bank line; nothing posted was rewritten
+        later = own.filtered(lambda r: r.operation == 'settlement')
+        self.assertTrue(later and all(r.statement_line_id for r in later))
+        self.assertTrue(all(m.state == 'posted' for m in own.move_id))
 
     def test_direct_method_counts_on_the_payment_row(self):
         method = self.bank2.inbound_payment_method_line_ids[:1]

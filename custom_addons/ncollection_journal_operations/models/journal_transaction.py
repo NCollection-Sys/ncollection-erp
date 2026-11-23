@@ -11,8 +11,9 @@ POSTED LINES (company currency), never a nominal payment amount: a bank line mat
 partial match or a write-off counts exactly what was booked, on its own date. ``running_balance`` is the window sum in
 (value_date, id) order of the balance effect in the journal's balance currency; ``value_date`` is the bank date
 (the day the money moved on the account) or, while nothing moved, the document date. So the last row equals
-the card's Current Balance and the row at any value date equals the ledger balance at that date. One documented
-exception: a payment confirmed in several bank lines on different days counts on the LAST of those days. Read only;
+the card's Current Balance and the row at any value date equals the ledger balance at that date, with no exception
+(a payment confirmed in several bank lines on different days counts on EACH of those days: its first bank date on the
+payment row, every later one on a "Bank Confirmation" row of its own, 19.0.1.5.0). Read only;
 nothing is stored.
 """
 from odoo import fields, models, tools
@@ -151,11 +152,24 @@ misc AS (
 -- confirming money that payment already stands for. It is FOLDED into that payment's row: its booked amount is added
 -- to the payment's liquidity, its date becomes the payment's bank date, and it is not a row of its own. So a payment
 -- that turns Paid moves the running balance on its own row, never on a hidden technical row and never twice.
-settle AS (
-    SELECT st.settled_payment_id AS payment_id, SUM(st.liquidity) AS liquidity, SUM(st.liquidity_jc) AS liquidity_jc,
-           BOOL_OR(st.approx) AS approx, MAX(st.date) AS bank_date, MIN(st.id) AS statement_line_id
+-- ONE GROUP PER BANK DATE (19.0.1.5.0): a payment confirmed on several days counts on EACH of those days for exactly
+-- what was booked that day. Until 19.0.1.4.0 the whole confirmation counted on the LAST day, which moved the running
+-- balance of the days in between and, across a month end, the monthly totals.
+settle_day AS (
+    SELECT st.settled_payment_id AS payment_id, st.date AS day, SUM(st.liquidity) AS day_liquidity,
+           SUM(st.liquidity_jc) AS day_liquidity_jc, BOOL_OR(st.approx) AS day_approx,
+           MIN(st.id) AS day_statement_line_id, SUM(st.amount) AS day_amount, MIN(st.move_id) AS day_move_id,
+           ROW_NUMBER() OVER (PARTITION BY st.settled_payment_id ORDER BY st.date, MIN(st.id)) AS day_rank
       FROM st JOIN pay ON pay.id = st.settled_payment_id AND pay.journal_id = st.journal_id
-     GROUP BY st.settled_payment_id
+     GROUP BY st.settled_payment_id, st.date
+),
+-- folded into the payment's own row: its FIRST bank date (unless the payment itself already moved the account, in
+-- which case every confirmation day is a row of its own)
+settle AS (
+    SELECT d.payment_id, d.day_liquidity AS liquidity, d.day_liquidity_jc AS liquidity_jc, d.day_approx AS approx,
+           d.day AS bank_date, d.day_statement_line_id AS statement_line_id
+      FROM settle_day d JOIN pay ON pay.id = d.payment_id
+     WHERE d.day_rank = 1 AND pay.liquidity = 0
 ),
 rows AS (
     SELECT pay.id * 10 + 1 AS id, pay.journal_id, pay.company_id, pay.balance_currency_id, pay.date,
@@ -168,6 +182,15 @@ rows AS (
            CASE WHEN state = 'paid' AND pending <> 0 THEN 'awaiting_bank' ELSE state END AS status,
            pay.id AS payment_id, settle.statement_line_id, move_id
       FROM pay LEFT JOIN settle ON settle.payment_id = pay.id
+    UNION ALL
+    -- every LATER confirmation day of a payment: a "Bank Confirmation" row on its own date, linked to the payment
+    SELECT d.day_statement_line_id * 10 + 4, pay.journal_id, pay.company_id, pay.balance_currency_id, d.day, d.day,
+           pay.reference, pay.description, 'settlement', CASE WHEN d.day_amount >= 0 THEN 'in' ELSE 'out' END,
+           pay.partner_id, pay.account_id, pay.payment_method_line_id, pay.currency_id, d.day_amount,
+           0, d.day_liquidity, d.day_liquidity_jc, d.day_approx, 'reconciled', pay.id, d.day_statement_line_id,
+           d.day_move_id
+      FROM settle_day d JOIN pay ON pay.id = d.payment_id
+     WHERE NOT (d.day_rank = 1 AND pay.liquidity = 0)
     UNION ALL
     -- statement lines that confirm no posted payment of this journal: ordinary bank transactions
     SELECT st.id * 10 + 2, journal_id, company_id, balance_currency_id, date, date, reference, description,
