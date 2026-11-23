@@ -34,7 +34,6 @@ GL_NS = {
     'gl-bus': 'http://www.xbrl.org/int/gl/bus/2015-03-25',
     'gl-muc': 'http://www.xbrl.org/int/gl/muc/2015-03-25',
 }
-ENTITY_SCHEME = 'https://www.ncollection.com/xbrl/entity'
 CTX = 'now'
 
 
@@ -89,7 +88,8 @@ class GlDocument:
         # convention every fact uses one instant context dated the day the file is created.
         ctx = _el(root, 'xbrli', 'context', id=CTX)
         entity = _el(ctx, 'xbrli', 'entity')
-        _el(entity, 'xbrli', 'identifier', xbrl_model._nc_entity_identifier(company), scheme=ENTITY_SCHEME)
+        _el(entity, 'xbrli', 'identifier', xbrl_model._nc_entity_identifier(company),
+            scheme=xbrl_model._nc_entity_scheme())
         period = _el(ctx, 'xbrli', 'period')
         _el(period, 'xbrli', 'instant', today.isoformat())
         self.unit_id = 'u_' + currency.name

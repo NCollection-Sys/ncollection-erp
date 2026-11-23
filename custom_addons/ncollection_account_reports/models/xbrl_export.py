@@ -32,6 +32,7 @@ not been tested against any regulator's filing rules (docs/markdown/XBRL_EXPORT.
 with elevated rights and nothing is written.
 """
 import re
+from urllib.parse import urlparse
 
 from dateutil.relativedelta import relativedelta
 from lxml import etree
@@ -51,7 +52,11 @@ NS = {
     'ifrs-full': 'https://xbrl.ifrs.org/taxonomy/2025-03-27/ifrs-full',
     'xbrldi': 'http://xbrl.org/2006/xbrldi',
 }
-ENTITY_SCHEME = 'https://www.ncollection.com/xbrl/entity'
+# The entity identifier SCHEME names the authority that assigned the identifier (XBRL 2.1 §4.7.3.1), it is not a
+# website. Before fin-ux-14 every tenant claimed https://www.ncollection.com/xbrl/entity. Now: a scheme mandated by the
+# filing profile (system parameter, e.g. an LEI scheme) wins; otherwise the TENANT is the naming authority of its own
+# identifiers, under its configured address (web.base.url: its platform subdomain or verified custom domain).
+ENTITY_SCHEME_PARAM = 'ncollection.xbrl_entity_scheme'
 
 BALANCE_SHEET_MAP = (
     ('CurrentAssets', ('current_assets',)),
@@ -202,6 +207,18 @@ class AccountReportXbrl(models.AbstractModel):
         return out
 
     @api.model
+    def _nc_entity_scheme(self):
+        params = self.env['ir.config_parameter'].sudo()
+        forced = (params.get_param(ENTITY_SCHEME_PARAM) or '').strip()
+        if re.match(r'^(https?://|urn:)[^\s]+$', forced):
+            return forced
+        host = (urlparse(params.get_param('web.base.url') or '').hostname or '').lower()
+        if host and host != 'localhost' and not host.endswith('.localhost') and not re.match(r'^[0-9.]+$', host):
+            return 'https://%s/xbrl/entity' % host
+        # no public address yet (a local database): a URN of this database, never another party's domain
+        return 'urn:x-tenant:%s:entity' % re.sub(r'[^A-Za-z0-9.-]', '-', self.env.cr.dbname)
+
+    @api.model
     def _nc_entity_identifier(self, company):
         """The company's tax registration (TRN / VAT) when it has one, otherwise a stable internal identifier.
         Plain token characters only (XBRL token)."""
@@ -237,7 +254,8 @@ class AccountReportXbrl(models.AbstractModel):
             cid = 'c_' + cid.replace('-', '') + ('_' + member if member else '')
             ctx = etree.SubElement(root, '{%s}context' % NS['xbrli'], {'id': cid})
             entity = etree.SubElement(ctx, '{%s}entity' % NS['xbrli'])
-            etree.SubElement(entity, '{%s}identifier' % NS['xbrli'], {'scheme': ENTITY_SCHEME}).text = identifier
+            etree.SubElement(entity, '{%s}identifier' % NS['xbrli'],
+                             {'scheme': self._nc_entity_scheme()}).text = identifier
             if member:
                 segment = etree.SubElement(entity, '{%s}segment' % NS['xbrli'])
                 etree.SubElement(segment, '{%s}explicitMember' % NS['xbrldi'],
