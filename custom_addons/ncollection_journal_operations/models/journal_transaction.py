@@ -11,8 +11,9 @@ POSTED LINES (company currency), never a nominal payment amount: a bank line mat
 partial match or a write-off counts exactly what was booked, on its own date. ``running_balance`` is the window sum in
 (value_date, id) order of the balance effect in the journal's balance currency; ``value_date`` is the bank date
 (the day the money moved on the account) or, while nothing moved, the document date. So the last row equals
-the card's Current Balance and the row at any value date equals the ledger balance at that date. One documented exception:
-a payment confirmed in several bank lines on different days counts on the LAST of those days. Read only; nothing is stored.
+the card's Current Balance and the row at any value date equals the ledger balance at that date. One documented
+exception: a payment confirmed in several bank lines on different days counts on the LAST of those days. Read only;
+nothing is stored.
 """
 from odoo import fields, models, tools
 
