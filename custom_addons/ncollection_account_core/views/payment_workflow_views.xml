@@ -144,6 +144,11 @@
                 <field name="nc_unallocated_amount" optional="show" invisible="state == 'draft'"/>
                 <field name="nc_attachment_count" string="Files" widget="nc_attachment_count" optional="show"/>
             </xpath>
+            <!-- Request 09.2: newest first with a stable tie-break (Odoo's own _order stops at name). A column sort is
+                 temporary: it is never stored, so the list opens newest first again from the menu. -->
+            <xpath expr="//list" position="attributes">
+                <attribute name="default_order">date desc, name desc, id desc</attribute>
+            </xpath>
             <xpath expr="//list" position="inside">
                 <button name="action_nc_view" type="object" string="View" icon="fa-eye" title="View"/>
                 <button name="action_nc_edit" type="object" string="Edit" icon="fa-pencil" title="Edit"
