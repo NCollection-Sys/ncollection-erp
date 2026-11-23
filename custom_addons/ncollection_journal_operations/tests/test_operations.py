@@ -997,9 +997,9 @@ class TestTransferFeesAndExchange(JournalOpsCommon):
                 self.assertIn(transfer.name, html.decode())
                 action = transfer.action_nc_print_receipt()
                 # Odoo first opens Configure Document Layout when the company has none chosen yet
-                self.assertTrue(action.get('report_name') == 'ncollection_journal_operations.'
-                                'report_internal_transfer_receipt' or action.get('res_model') == 'base.document.layout',
-                                action)
+                receipt = 'ncollection_journal_operations.report_internal_transfer_receipt'
+                self.assertTrue(action.get('report_name') == receipt
+                                or action.get('res_model') == 'base.document.layout', action)
 
     def test_missing_rate_is_refused(self):
         jpy = self.setup_other_currency('JPY', rates=[('2099-01-01', 150.0)])
