@@ -284,12 +284,15 @@ class Base(models.AbstractModel):
         Log = env['auditlog.log'].sudo()
         model_id = env['ir.model']._get_id(self._name)
         Fields = env['ir.model.fields'].sudo()
-        request_id = env['auditlog.http.request'].sudo().current_http_request()
-        session_id = env['auditlog.http.session'].sudo().current_http_session()
         vals_list = []
         for record in self.sudo():
             before, after = old.get(record.id, {}), new.get(record.id, {})
-            names = sorted(set(before) | set(after))
+            if method == 'write':
+                # a field whose value could not be read without computing it is not recorded at all: "False -> X"
+                # would be a false history (and an Undo could offer to restore the False)
+                names = sorted(set(before) & set(after))
+            else:
+                names = sorted(set(before) | set(after))
             lines = []
             for name in names[:MAX_FIELDS]:
                 o, n = before.get(name, False), after.get(name, False)
@@ -311,7 +314,7 @@ class Base(models.AbstractModel):
             vals_list.append({
                 'model_id': model_id, 'res_id': record.id, 'method': method, 'user_id': env.uid,
                 'name': _name_of(record), 'log_type': 'full', 'line_ids': lines,
-                'http_request_id': request_id, 'http_session_id': session_id, 'nc_source': 'native',
+                'nc_source': 'native',
                 'nc_company_id': _company_of(record), 'nc_doc_type': _doc_type_of(record),
             })
         if not vals_list:
@@ -322,8 +325,16 @@ class Base(models.AbstractModel):
         # there writes pending values whose cache that block then throws away (KeyError in _flush, measured).
         try:
             with env.cr.savepoint(flush=False):
+                # the request / session rows are written inside the same savepoint as the event rows
+                request_id = env['auditlog.http.request'].sudo().current_http_request()
+                session_id = env['auditlog.http.session'].sudo().current_http_session()
+                for vals in vals_list:
+                    vals.update(http_request_id=request_id, http_session_id=session_id)
                 Log.create(vals_list)
         except Exception:
+            # a non-flushing savepoint rolls back SQL only: forget whatever the failed rows left in the ORM cache
+            for model in ('auditlog.log', 'auditlog.log.line', 'auditlog.http.request', 'auditlog.http.session'):
+                env[model].invalidate_model()
             _logger.exception("ncollection_audit: could not write the %s audit row(s) of %s %s", method, self._name,
                               self.ids)
 

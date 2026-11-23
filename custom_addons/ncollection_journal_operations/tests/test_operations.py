@@ -540,6 +540,27 @@ class TestTransactions(JournalOpsCommon):
         self.assertTrue(later and all(r.statement_line_id for r in later))
         self.assertTrue(all(m.state == 'posted' for m in own.move_id))
 
+    def test_several_confirmations_on_one_day_are_one_movement_of_that_day(self):
+        """Two bank lines on the SAME day for one payment, and a third later: the same day is summed once (no
+        duplicate), the later day is its own row in the bank line's currency, every cut-off equals the ledger."""
+        today = fields.Date.today()
+        day = lambda n: fields.Date.add(today, days=n)  # noqa: E731
+        receipt = self._op(self.bank, 'receipt', 'customer', 90.0, self.customer, date=day(-12))
+        self._match(receipt, 30.0, day(-8), 'part one')
+        self._match(receipt, 20.0, day(-8), 'part two, same day')
+        self._match(receipt, 40.0, day(-2), 'rest')
+        rows = self._assert_running_equals_ledger(self.bank)
+        own = rows.filtered(lambda r: r.payment_id == receipt)
+        self.assertEqual(len(own), 2, "one row per confirmation DAY, not per bank line")
+        first = own.filtered(lambda r: r.operation == 'receipt')
+        later = own.filtered(lambda r: r.operation == 'settlement')
+        self.assertEqual((first.value_date, later.value_date), (day(-8), day(-2)))
+        self.assertAlmostEqual(first.liquidity_balance, 50.0)
+        self.assertAlmostEqual(later.liquidity_balance, 40.0)
+        self.assertEqual(later.currency_id, later.statement_line_id.move_id.currency_id,
+                         "a confirmation row is labelled in its bank line's currency")
+        self.assertEqual(len(set(rows.ids)), len(rows), "row ids are unique")
+
     def test_direct_method_counts_on_the_payment_row(self):
         method = self.bank2.inbound_payment_method_line_ids[:1]
         method.payment_account_id = self.bank2.default_account_id

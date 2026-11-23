@@ -159,6 +159,7 @@ settle_day AS (
     SELECT st.settled_payment_id AS payment_id, st.date AS day, SUM(st.liquidity) AS day_liquidity,
            SUM(st.liquidity_jc) AS day_liquidity_jc, BOOL_OR(st.approx) AS day_approx,
            MIN(st.id) AS day_statement_line_id, SUM(st.amount) AS day_amount, MIN(st.move_id) AS day_move_id,
+           MIN(st.currency_id) AS day_currency_id,  -- the bank line's own currency: day_amount is in it
            ROW_NUMBER() OVER (PARTITION BY st.settled_payment_id ORDER BY st.date, MIN(st.id)) AS day_rank
       FROM st JOIN pay ON pay.id = st.settled_payment_id AND pay.journal_id = st.journal_id
      GROUP BY st.settled_payment_id, st.date
@@ -186,7 +187,7 @@ rows AS (
     -- every LATER confirmation day of a payment: a "Bank Confirmation" row on its own date, linked to the payment
     SELECT d.day_statement_line_id * 10 + 4, pay.journal_id, pay.company_id, pay.balance_currency_id, d.day, d.day,
            pay.reference, pay.description, 'settlement', CASE WHEN d.day_amount >= 0 THEN 'in' ELSE 'out' END,
-           pay.partner_id, pay.account_id, pay.payment_method_line_id, pay.currency_id, d.day_amount,
+           pay.partner_id, pay.account_id, pay.payment_method_line_id, d.day_currency_id, d.day_amount,
            0, d.day_liquidity, d.day_liquidity_jc, d.day_approx, 'reconciled', pay.id, d.day_statement_line_id,
            d.day_move_id
       FROM settle_day d JOIN pay ON pay.id = d.payment_id
