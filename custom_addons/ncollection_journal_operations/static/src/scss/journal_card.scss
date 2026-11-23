@@ -84,7 +84,8 @@
     color: $danger;
 }
 
-.o_nc_ops_pending {
+.o_nc_ops_pending,
+a.o_nc_ops_balance {
     display: block;
     color: inherit;
     text-decoration: none;

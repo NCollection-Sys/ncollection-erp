@@ -49,8 +49,9 @@
             <xpath expr="//div[@id='dashboard_bank_cash_right']" position="inside">
                 <t t-if="dashboard.nc_ops">
                     <div class="o_nc_ops_figures order-first">
-                        <div t-attf-class="o_nc_ops_balance {{ dashboard.nc_balance_negative ? 'o_nc_negative' : '' }}"
-                             title="Posted ledger balance of the journal's account, whether the bank has confirmed it or not">
+                        <a type="object" name="action_nc_ops_posted_balance" role="button"
+                           t-attf-class="o_nc_ops_balance {{ dashboard.nc_balance_negative ? 'o_nc_negative' : '' }}"
+                           title="Posted ledger balance of the journal's account, whether the bank has confirmed it or not. Click for every movement behind it.">
                             <div class="o_nc_ops_label">
                                 <div>Current Balance</div>
                                 <div class="o_nc_ops_hint">posted</div>
@@ -62,7 +63,7 @@
                                 <i class="fa fa-exclamation-triangle" role="img" aria-hidden="true"/>
                                 <div>Negative balance</div>
                             </div>
-                        </div>
+                        </a>
                         <a type="object" name="action_nc_ops_pending" class="o_nc_ops_pending"
                            title="Receipts and payments booked but still on an outstanding account: not yet in the journal's account">
                             <div class="o_nc_ops_label">
@@ -97,6 +98,41 @@
                 <div t-else="" t-attf-class="{{ dashboard.nc_ops ? 'o_nc_graph' : '' }}">
                     <div t-if="dashboard.nc_ops" class="o_nc_graph_caption">Balance, last 30 days (posted)</div>
                     <field name="kanban_dashboard_graph" t-att-graph_type="['cash', 'bank', 'credit'].includes(journal_type) ? 'line' : 'bar'" widget="dashboard_graph"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Request 12: the card's second row (To Reconcile / Statements / New / Batches / Duplicates) is removed; the
+         card keeps Transactions, Reconcile (= To Reconcile), Upload and Bank Setup. Nothing becomes unreachable:
+         Statements is already in the card's menu (View), and Payment Batches, Duplicate Review and a new Bank
+         Transaction move there too. The journal methods are unchanged and still re-check access. -->
+    <record id="account_journal_dashboard_kanban_view_nav" model="ir.ui.view">
+        <field name="name">account.journal.dashboard.kanban.ncollection.operations.nav</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="ncollection_bank_reconciliation.account_journal_dashboard_kanban_view"/>
+        <field name="priority">96</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('o_nc_bank_nav')]" position="replace"/>
+        </field>
+    </record>
+    <record id="account_journal_dashboard_kanban_view_menu" model="ir.ui.view">
+        <field name="name">account.journal.dashboard.kanban.ncollection.operations.menu</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.account_journal_dashboard_kanban_view"/>
+        <field name="priority">97</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='action_card_statements']" position="after">
+                <div t-if="journal_type == 'bank' || journal_type == 'cash'">
+                    <a role="menuitem" type="object" name="action_nc_bank_batches" class="o_nc_menu_batches">Payment Batches</a>
+                </div>
+                <div t-if="journal_type == 'bank' || journal_type == 'cash'">
+                    <a role="menuitem" type="object" name="action_nc_bank_duplicates" class="o_nc_menu_duplicates">Duplicate Review</a>
+                </div>
+            </xpath>
+            <xpath expr="//div[@name='bank_customer_payment']" position="before">
+                <div t-if="journal_type == 'bank' || journal_type == 'cash'" groups="account.group_account_user">
+                    <a role="menuitem" type="object" name="action_nc_bank_new" class="o_nc_menu_new_line">Bank Transaction</a>
                 </div>
             </xpath>
         </field>

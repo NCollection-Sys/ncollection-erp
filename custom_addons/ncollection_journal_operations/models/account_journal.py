@@ -250,6 +250,17 @@ class AccountJournal(models.Model):
         action['display_name'] = f'{journal.display_name} · {self.env._("Transactions")}'
         return action
 
+    def action_nc_ops_posted_balance(self):
+        """The movements behind the card's Current Balance: every transaction row that moved the journal's account,
+        oldest balance first in the running total, newest first on screen. Its last running balance IS the Current
+        Balance (same posted lines, same currency rule); a posted ledger balance, not a bank statement balance."""
+        action = self.action_nc_ops_transactions()
+        journal = self._nc_ops_journal()
+        action['domain'] = [('journal_id', '=', journal.id), ('balance_amount', '!=', 0)]
+        action['display_name'] = f'{journal.display_name} · {self.env._("Current Balance (posted)")}'
+        action['help'] = self.env._('<p>No posted movement on this account yet.</p>')
+        return action
+
     def action_nc_ops_pending(self):
         journal = self._nc_ops_journal()
         payments = self.env['account.move.line'].search(journal._nc_pending_domain()).payment_id

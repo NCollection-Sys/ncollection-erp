@@ -784,3 +784,31 @@ class TestCardGraph(JournalOpsCommon):
         data = {self.cash.id: {}}
         self.cash._fill_bank_cash_dashboard_data(data)
         self.assertTrue(data[self.cash.id]['nc_graph_empty'])
+
+
+@tagged('post_install', '-at_install')
+class TestPostedBalanceAndCard(JournalOpsCommon):
+
+    def test_posted_balance_rows_add_up_to_the_card_and_filters_never_change_a_balance(self):
+        self._bank_line(self.bank, 250.0, 'deposit')
+        receipt = self._op(self.bank, 'receipt', 'customer', 100.0, self.customer)
+        receipt._nc_mark_as_paid()
+        self._op(self.bank, 'payment', 'supplier', 30.0, self.supplier)          # in process: no balance effect
+        self.env.flush_all()
+        action = self.bank.action_nc_ops_posted_balance()
+        Tx = self.env['ncollection.journal.transaction']
+        rows = Tx.search(action['domain'], order='value_date, id')
+        self.assertEqual(len(rows), 2, 'only rows that moved the account')
+        self.assertAlmostEqual(sum(rows.mapped('balance_amount')), self._figures(self.bank)['balance'])
+        self.assertAlmostEqual(rows[-1].running_balance, self._figures(self.bank)['balance'])
+        everything = {r.id: r.running_balance for r in Tx.search([('journal_id', '=', self.bank.id)])}
+        for row in Tx.search(action['domain'] + [('operation', '=', 'receipt')]):
+            self.assertAlmostEqual(row.running_balance, everything[row.id], msg='a filter never re-bases a row')
+
+    def test_the_five_card_shortcuts_are_gone_and_still_reachable_from_the_menu(self):
+        arch = self.env['account.journal'].get_view(
+            self.env.ref('account.account_journal_dashboard_kanban_view').id, 'kanban')['arch']
+        self.assertNotIn('o_nc_bank_nav', arch)
+        for method in ('action_nc_ops_transactions', 'action_nc_ops_reconcile', 'action_nc_bank_batches',
+                       'action_nc_bank_duplicates', 'action_nc_bank_new', 'action_nc_ops_posted_balance'):
+            self.assertIn(f'name="{method}"', arch, method)
