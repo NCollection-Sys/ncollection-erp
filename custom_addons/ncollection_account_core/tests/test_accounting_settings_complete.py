@@ -170,14 +170,41 @@ class TestAccountingSettingsComplete(AccountTestInvoicingCommon):
         delegate = new_test_user(
             self.env, login='acs_delegate', groups='base.group_user,ncollection_core.group_settings_business',
             company_id=self.env.company.id, company_ids=[(6, 0, self.env.company.ids)])
-        before = (self.env.company.autopost_bills, self.env.company.account_sale_tax_id)
-        for vals in ({'autopost_bills': not before[0]}, {'group_multi_currency': True},
-                     {'currency_id': self.env.ref('base.EUR').id}):
+        company = self.env.company
+        multi = self.env.ref('base.group_multi_currency').sudo()
+        users = self.env.ref('base.group_user').sudo()
+        # The invariant must hold whatever the database's currency configuration already is: a save that changes
+        # nothing is never an error, so every refused write below is the OPPOSITE of the current state.
+        for multi_currency_on in (False, True):
+            if multi_currency_on:
+                users._apply_group(multi)
+            else:
+                users._remove_group(multi)
+            current = self._settings()._nc_native_values(['group_multi_currency', 'autopost_bills'])
+            self.assertEqual(current['group_multi_currency'], multi_currency_on)
+            other_currency = self.env['res.currency'].with_context(active_test=False).search(
+                [('id', '!=', company.currency_id.id)], limit=1)
+            before = (company.autopost_bills, company.account_sale_tax_id, company.currency_id)
+            for vals in ({'autopost_bills': not current['autopost_bills']},
+                         {'group_multi_currency': not current['group_multi_currency']},
+                         {'currency_id': other_currency.id}):
+                with self.assertRaises(AccessError, msg='delegate wrote %s' % vals):
+                    self._settings(user=delegate, **vals).action_nc_save()
             with self.assertRaises(AccessError):
-                self._settings(user=delegate, **vals).action_nc_save()
+                company.with_user(delegate).write({'autopost_bills': not before[0]})
+            self.assertEqual((company.autopost_bills, company.account_sale_tax_id, company.currency_id), before)
+            self.assertEqual(self._settings()._nc_native_values(['group_multi_currency'])['group_multi_currency'],
+                             multi_currency_on, 'the refused save changed the multi-currency state')
+            # an authorised save of the page as it stands is accepted and changes nothing
+            self._settings(user=delegate).action_nc_save()
+            self.assertEqual((company.autopost_bills, company.account_sale_tax_id, company.currency_id), before)
+        # another company is never reachable, even to a user allowed into it
+        other = self.env['res.company'].create({'name': 'ACS Other Co'})
         with self.assertRaises(AccessError):
-            self.env.company.with_user(delegate).write({'autopost_bills': not before[0]})
-        self.assertEqual((self.env.company.autopost_bills, self.env.company.account_sale_tax_id), before)
+            other.with_user(delegate).write({'autopost_bills': not other.autopost_bills})
+        delegate.sudo().company_ids = [(4, other.id)]
+        with self.assertRaises(AccessError):
+            other.with_user(delegate).with_company(other).write({'autopost_bills': not other.autopost_bills})
 
     def test_accounting_defaults_set_by_the_owner_drive_the_next_invoice(self):
         company = self.env.company
